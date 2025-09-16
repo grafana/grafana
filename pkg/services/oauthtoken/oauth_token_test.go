@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const EXPIRED_ID_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2V4YW1wbGUuY29tIiwic3ViIjoiMTIzNDU2Nzg5MCIsImF1ZCI6InlvdXItY2xpZW50LWlkIiwiZXhwIjoxNjAwMDAwMDAwLCJpYXQiOjE2MDAwMDAwMDAsIm5hbWUiOiJKb2huIERvZSIsImVtYWlsIjoiam9obkBleGFtcGxlLmNvbSJ9.c2lnbmF0dXJl" // #nosec G101 not a hardcoded credential
@@ -64,9 +65,7 @@ func (f *FakeAuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *login.Delet
 }
 
 func TestIntegration_TryTokenRefresh(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	unexpiredToken := &oauth2.Token{
 		AccessToken:  "testaccess",
@@ -346,9 +345,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 }
 
 func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	unexpiredToken := &oauth2.Token{
 		AccessToken:  "testaccess",
@@ -630,7 +627,7 @@ func verifyUpdateExternalSessionCommand(token *oauth2.Token) func(*auth.UpdateEx
 		idToken := cmd.Token.Extra("id_token")
 		return cmd.Token.AccessToken == token.AccessToken &&
 			cmd.Token.RefreshToken == token.RefreshToken &&
-			cmd.Token.Expiry == token.Expiry &&
+			cmd.Token.Expiry.Equal(token.Expiry) &&
 			idToken == token.Extra("id_token")
 	}
 }

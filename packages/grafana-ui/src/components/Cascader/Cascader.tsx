@@ -5,9 +5,10 @@ import { PureComponent } from 'react';
 import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { withTheme2 } from '../../themes';
-import { Themeable2 } from '../../types';
+import { withTheme2 } from '../../themes/ThemeContext';
+import { Themeable2 } from '../../types/theme';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Input } from '../Input/Input';
@@ -286,7 +287,7 @@ class UnthemedCascader extends PureComponent<CascaderProps, CascaderState> {
                     {isClearable && activeLabel !== '' && (
                       <IconButton
                         name="times"
-                        aria-label="Clear selection"
+                        aria-label={t('grafana-ui.cascader.clear-button', 'Clear selection')}
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();

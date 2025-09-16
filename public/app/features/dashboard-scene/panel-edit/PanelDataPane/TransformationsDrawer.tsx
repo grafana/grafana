@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from 'react';
 
 import { DataFrame, SelectableValue, standardTransformersRegistry } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { IconButton } from '@grafana/ui';
 import { TransformationPickerNg } from 'app/features/dashboard/components/TransformationsEditor/TransformationPickerNg';
 import {
@@ -51,10 +52,13 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
     ) {
       return false;
     }
-    return (
-      t.name.toLocaleLowerCase().includes(drawerState.search.toLocaleLowerCase()) ||
-      t.description?.toLocaleLowerCase().includes(drawerState.search.toLocaleLowerCase())
-    );
+    const searchLower = drawerState.search.toLocaleLowerCase();
+    const textMatch =
+      t.name.toLocaleLowerCase().includes(searchLower) || t.description?.toLocaleLowerCase().includes(searchLower);
+    const tagMatch = t.tags?.size
+      ? Array.from(t.tags).some((tag) => tag.toLocaleLowerCase().includes(searchLower))
+      : false;
+    return textMatch || tagMatch;
   });
 
   const searchBoxSuffix = (
@@ -65,7 +69,7 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
         onClick={() => {
           setDrawerState({ ...drawerState, ...{ search: '' } });
         }}
-        tooltip="Clear search"
+        tooltip={t('dashboard-scene.transformations-drawer.search-box-suffix.tooltip-clear-search', 'Clear search')}
       />
     </>
   );

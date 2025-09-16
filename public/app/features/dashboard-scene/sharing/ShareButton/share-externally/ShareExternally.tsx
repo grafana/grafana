@@ -3,10 +3,10 @@ import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Button, ClipboardButton, Divider, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import {
   useDeletePublicDashboardMutation,
   useGetPublicDashboardQuery,
@@ -21,7 +21,7 @@ import {
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { ShareDrawerConfirmAction } from '../../ShareDrawer/ShareDrawerConfirmAction';
 import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';

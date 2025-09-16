@@ -7,13 +7,21 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { DataSourcePluginMeta, SupportedTransformationType } from '@grafana/data';
+import { SupportedTransformationType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { BackendSrv, setDataSourceSrv, BackendSrvRequest, reportInteraction } from '@grafana/runtime';
+import {
+  BackendSrv,
+  BackendSrvRequest,
+  DataSourceSrv,
+  reportInteraction,
+  setAppEvents,
+  setDataSourceSrv,
+} from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 
-import { mockDataSource, MockDataSourceSrv } from '../alerting/unified/mocks';
+import { mockDataSource } from '../alerting/unified/mocks';
 
 import CorrelationsPage from './CorrelationsPage';
 import {
@@ -22,8 +30,12 @@ import {
   createFetchCorrelationsResponse,
   createRemoveCorrelationResponse,
   createUpdateCorrelationResponse,
-} from './__mocks__/useCorrelations.mocks';
+  MockDataSourceSrv,
+} from './mocks/useCorrelations.mocks';
 import { Correlation, CreateCorrelationParams, OmitUnion } from './types';
+
+// Set app events up, otherwise plugin modules will fail to load
+setAppEvents(appEvents);
 
 const renderWithContext = async (
   datasources: ConstructorParameters<typeof MockDataSourceSrv>[0] = {},
@@ -86,10 +98,10 @@ const renderWithContext = async (
     },
   } as unknown as BackendSrv;
   const grafanaContext = getGrafanaContextMock({ backend });
-
-  const dsServer = new MockDataSourceSrv(datasources);
+  const dsServer = new MockDataSourceSrv(datasources) as unknown as DataSourceSrv;
   dsServer.get = (name: string) => {
     const dsApi = new MockDataSourceApi(name);
+    // Mock the QueryEditor component
     dsApi.components = {
       QueryEditor: () => <>{name} query editor</>,
     };
@@ -210,7 +222,6 @@ describe('CorrelationsPage', () => {
             name: 'loki',
             readOnly: false,
             jsonData: {},
-            access: 'direct',
             type: 'datasource',
           },
           { logs: true }
@@ -221,10 +232,9 @@ describe('CorrelationsPage', () => {
             name: 'prometheus',
             readOnly: false,
             jsonData: {},
-            access: 'direct',
             type: 'datasource',
           },
-          { metrics: true }
+          { metrics: true, module: 'core:plugin/prometheus' }
         ),
       });
     });
@@ -319,7 +329,6 @@ describe('CorrelationsPage', () => {
               name: 'loki',
               readOnly: false,
               jsonData: {},
-              access: 'direct',
               type: 'datasource',
             },
             {
@@ -332,11 +341,11 @@ describe('CorrelationsPage', () => {
               name: 'prometheus',
               readOnly: false,
               jsonData: {},
-              access: 'direct',
               type: 'datasource',
             },
             {
               metrics: true,
+              module: 'core:plugin/prometheus',
             }
           ),
           elastic: mockDataSource(
@@ -345,12 +354,12 @@ describe('CorrelationsPage', () => {
               name: 'elastic',
               readOnly: false,
               jsonData: {},
-              access: 'direct',
               type: 'datasource',
             },
             {
               metrics: true,
               logs: true,
+              module: 'core:plugin/elasticsearch',
             }
           ),
         },
@@ -675,15 +684,17 @@ describe('CorrelationsPage', () => {
     beforeEach(async () => {
       await renderWithContext(
         {
-          loki: mockDataSource({
-            uid: 'loki',
-            name: 'loki',
-            readOnly: true,
-            jsonData: {},
-            access: 'direct',
-            meta: { info: { logos: {} } } as DataSourcePluginMeta,
-            type: 'datasource',
-          }),
+          loki: mockDataSource(
+            {
+              uid: 'loki',
+              name: 'loki',
+              readOnly: true,
+              jsonData: {},
+              access: 'direct',
+              type: 'datasource',
+            },
+            { logs: true }
+          ),
         },
         correlations
       );

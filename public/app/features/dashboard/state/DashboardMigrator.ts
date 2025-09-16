@@ -27,12 +27,11 @@ import {
   ValueMapping,
   VariableHide,
 } from '@grafana/data';
-import { labelsToFieldsTransformer } from '@grafana/data/src/transformations/transformers/labelsToFields';
-import { mergeTransformer } from '@grafana/data/src/transformations/transformers/merge';
+import { labelsToFieldsTransformer, mergeTransformer } from '@grafana/data/internal';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { DataTransformerConfig } from '@grafana/schema';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
-import { migrateTableDisplayModeToCellOptions } from '@grafana/ui/src/components/Table/utils';
+import { migrateTableDisplayModeToCellOptions } from '@grafana/ui/internal';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { config } from 'app/core/config';
 import {
@@ -65,6 +64,7 @@ import {
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
+import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
@@ -73,6 +73,16 @@ type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
 
 /**
  * The current version of the dashboard schema.
+ *
+ * NOTE: Schema version 42 is the FINAL version for the v1 dashboard API.
+ * DO NOT increment this number or add new schema migrations.
+ *
+ * This is necessary due to the migration of the legacy dashboards API to the app platform.
+ *
+ * For panel-specific migrations, implement them as panel migrations in the
+ * individual panel plugin migration handlers instead of adding new schema versions.
+ *
+ * Legacy migration instructions (for reference only):
  * To add a dashboard migration increment this number
  * and then add your migration at the bottom of 'updateSchema'
  * hint: search "Add migration here"
@@ -81,7 +91,7 @@ type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
  * kinds/dashboard/dashboard_kind.cue
  * Example PR: #87712
  */
-export const DASHBOARD_SCHEMA_VERSION = 41;
+export const DASHBOARD_SCHEMA_VERSION = 42;
 export class DashboardMigrator {
   dashboard: DashboardModel;
 
@@ -626,6 +636,14 @@ export class DashboardMigrator {
           return panel;
         }
         panel.type = wasAngularTable ? 'table-old' : 'table';
+        // Hacky way to call the automigrate feature
+        if (panel.type === 'table-old') {
+          const newType = getPanelPluginToMigrateTo(panel);
+          if (newType) {
+            panel.autoMigrateFrom = panel.type;
+            panel.type = newType;
+          }
+        }
         return panel;
       });
     }
@@ -822,16 +840,16 @@ export class DashboardMigrator {
 
     if (oldVersion < 37) {
       panelUpgrades.push((panel: PanelModel) => {
-        if (
-          panel.options?.legend &&
+        if (panel.options?.legend && typeof panel.options.legend === 'object') {
           // There were two ways to hide the legend, this normalizes to `legend.showLegend`
-          (panel.options.legend.displayMode === 'hidden' || panel.options.legend.showLegend === false)
-        ) {
-          panel.options.legend.displayMode = 'list';
-          panel.options.legend.showLegend = false;
-        } else if (panel.options?.legend) {
-          panel.options.legend = { ...panel.options?.legend, showLegend: true };
+          if (panel.options.legend.displayMode === 'hidden' || panel.options.legend.showLegend === false) {
+            panel.options.legend.displayMode = 'list';
+            panel.options.legend.showLegend = false;
+          } else {
+            panel.options.legend = { ...panel.options.legend, showLegend: true };
+          }
         }
+
         return panel;
       });
     }
@@ -919,10 +937,18 @@ export class DashboardMigrator {
       }
     }
 
+    if (oldVersion < 42) {
+      panelUpgrades.push(migrateHideFromFunctionality);
+    }
+
     /**
-     * -==- Add migration here -==-
-     * Your migration should go below the previous
-     * block and above this (hopefully) helpful message.
+     * ⚠️  WARNING: DO NOT ADD NEW MIGRATIONS HERE ⚠️
+     *
+     * Schema version 42 is the FINAL version for the v1 dashboard API.
+     * This is due to the migration of the legacy dashboards API to the app platform.
+     *
+     * For panel-specific migrations, implement them as panel migrations in the
+     * individual panel plugin migration handlers instead of adding new schema versions.
      */
 
     if (panelUpgrades.length === 0) {
@@ -980,6 +1006,10 @@ export class DashboardMigrator {
     }
   }
 
+  // Migrates CloudWatch annotation queries that use multiple statistics into separate queries.
+  // For example, if an annotation query uses ['Max', 'Min'] statistics, it will be split into
+  // two separate annotation queries - one with 'Max' and another with 'Min'.
+  // The new annotation queries are added to the end of the annotations list.
   migrateCloudWatchAnnotationQuery() {
     for (const annotation of this.dashboard.annotations.list) {
       if (isLegacyCloudWatchAnnotationQuery(annotation)) {
@@ -1464,6 +1494,26 @@ function ensureXAxisVisibility(panel: PanelModel) {
         ],
       };
     }
+  }
+
+  return panel;
+}
+
+function migrateHideFromFunctionality(panel: PanelModel) {
+  // migrate overrides with hideFrom.viz = true to also set tooltip = true
+  // this includes the __systemRef override
+  if (panel.fieldConfig && panel.fieldConfig.overrides) {
+    panel.fieldConfig.overrides = panel.fieldConfig.overrides.map((override) => {
+      if (override.properties) {
+        override.properties = override.properties.map((property) => {
+          if (property.id === 'custom.hideFrom' && property.value?.viz === true) {
+            property.value.tooltip = true;
+          }
+          return property;
+        });
+      }
+      return override;
+    });
   }
 
   return panel;

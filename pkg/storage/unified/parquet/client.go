@@ -9,32 +9,33 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var (
-	_ resource.BatchStoreClient              = (*writerClient)(nil)
-	_ resource.BatchStore_BatchProcessClient = (*writerClient)(nil)
+	_ resourcepb.BulkStoreClient             = (*writerClient)(nil)
+	_ resourcepb.BulkStore_BulkProcessClient = (*writerClient)(nil)
 
-	errUnimplemented = errors.New("not implemented (BatchResourceWriter as BatchStoreClient shim)")
+	errUnimplemented = errors.New("not implemented (BulkResourceWriter as BulkStoreClient shim)")
 )
 
 type writerClient struct {
-	writer resource.BatchResourceWriter
+	writer resource.BulkResourceWriter
 	ctx    context.Context
 }
 
-// NewBatchResourceWriterClient wraps a BatchResourceWriter so that it can be used as a ResourceStoreClient
-func NewBatchResourceWriterClient(writer resource.BatchResourceWriter) *writerClient {
+// NewBulkResourceWriterClient wraps a BulkResourceWriter so that it can be used as a ResourceStoreClient
+func NewBulkResourceWriterClient(writer resource.BulkResourceWriter) *writerClient {
 	return &writerClient{writer: writer}
 }
 
-// Send implements resource.ResourceStore_BatchProcessClient.
-func (w *writerClient) Send(req *resource.BatchRequest) error {
+// Send implements resource.ResourceStore_BulkProcessClient.
+func (w *writerClient) Send(req *resourcepb.BulkRequest) error {
 	return w.writer.Write(w.ctx, req.Key, req.Value)
 }
 
-// BatchProcess implements resource.ResourceStoreClient.
-func (w *writerClient) BatchProcess(ctx context.Context, opts ...grpc.CallOption) (resource.BatchStore_BatchProcessClient, error) {
+// BulkProcess implements resource.ResourceStoreClient.
+func (w *writerClient) BulkProcess(ctx context.Context, _ ...grpc.CallOption) (resourcepb.BulkStore_BulkProcessClient, error) {
 	if w.ctx != nil {
 		return nil, fmt.Errorf("only one batch request supported")
 	}
@@ -42,37 +43,37 @@ func (w *writerClient) BatchProcess(ctx context.Context, opts ...grpc.CallOption
 	return w, nil
 }
 
-// CloseAndRecv implements resource.ResourceStore_BatchProcessClient.
-func (w *writerClient) CloseAndRecv() (*resource.BatchResponse, error) {
+// CloseAndRecv implements resource.ResourceStore_BulkProcessClient.
+func (w *writerClient) CloseAndRecv() (*resourcepb.BulkResponse, error) {
 	return w.writer.CloseWithResults()
 }
 
-// CloseSend implements resource.ResourceStore_BatchProcessClient.
+// CloseSend implements resource.ResourceStore_BulkProcessClient.
 func (w *writerClient) CloseSend() error {
 	return w.writer.Close()
 }
 
-// Context implements resource.ResourceStore_BatchProcessClient.
+// Context implements resource.ResourceStore_BulkProcessClient.
 func (w *writerClient) Context() context.Context {
 	return w.ctx
 }
 
-// Header implements resource.ResourceStore_BatchProcessClient.
+// Header implements resource.ResourceStore_BulkProcessClient.
 func (w *writerClient) Header() (metadata.MD, error) {
 	return nil, errUnimplemented
 }
 
-// RecvMsg implements resource.ResourceStore_BatchProcessClient.
-func (w *writerClient) RecvMsg(m any) error {
+// RecvMsg implements resource.ResourceStore_BulkProcessClient.
+func (w *writerClient) RecvMsg(_ any) error {
 	return errUnimplemented
 }
 
-// SendMsg implements resource.ResourceStore_BatchProcessClient.
-func (w *writerClient) SendMsg(m any) error {
+// SendMsg implements resource.ResourceStore_BulkProcessClient.
+func (w *writerClient) SendMsg(_ any) error {
 	return errUnimplemented
 }
 
-// Trailer implements resource.ResourceStore_BatchProcessClient.
+// Trailer implements resource.ResourceStore_BulkProcessClient.
 func (w *writerClient) Trailer() metadata.MD {
 	return nil
 }

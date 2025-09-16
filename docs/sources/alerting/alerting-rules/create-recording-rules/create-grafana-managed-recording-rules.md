@@ -28,9 +28,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/
   alerting-data-sources:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/#supported-data-sources
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#supported-data-sources
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/#supported-data-sources
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/#supported-data-sources
   configure-grafana-min-interval:
     - pattern: /docs/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#min_interval
@@ -63,20 +63,17 @@ To configure Grafana-managed recording rules, complete the following steps.
 
 This section only applies to Grafana OSS and Grafana Enterprise.
 
-First, enable the `grafanaManagedRecordingRules` [feature flag](ref:configure-feature-toggles).
-
-Then, enable the feature by setting `enabled = true` in the `[recording_rules]` section of the Grafana config .ini. Provide the URL of your Prometheus-compatible remote-write endpoint in the `url` field, along with optional credentials or headers.
+If a rule does not explicitly specify a target data source for writing (for example, if it was created before Grafana 12.1), Grafana will fall back to the `default_datasource_uid` set in the configuration:
 
 ```
 [recording_rules]
-enabled = true
-url = http://my-example-prometheus.local:9090/api/prom/push
-basic_auth_username = my-user
-basic_auth_password = my-pass
-
-[recording_rules.custom_headers]
-X-My-Header = MyValue
+default_datasource_uid = my-uid
 ```
+
+If you previously configured recording rules using the `url` and `basic_auth_*` configuration options, these are no longer supported. You must either:
+
+- Set `default_datasource_uid` in the `[recording_rules]` section of the configuration file to point to the target data source
+- Or, before upgrading to Grafana 12.1, enable the `grafanaManagedRecordingRulesDatasources` feature flag and update each recording rule individually to include a target data source
 
 ## Add new recording rule
 
@@ -84,7 +81,7 @@ To create a new Grafana-managed recording rule:
 
 1. Click **Alerts & IRM** -> **Alerting** ->
    **Alert rules**.
-1. Scroll to the **Grafana-managed section** and click **+New recording rule**.
+1. At the top of the Alert rules page, click **More** -> **New Grafana recording rule**.
 
 1. Enter the names to identify your recording rule and metric.
 

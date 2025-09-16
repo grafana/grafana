@@ -1,19 +1,19 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType } from '@grafana/data';
+import { GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
-import { CellProps, Column, InteractiveTable, Stack, useStyles2 } from '@grafana/ui';
+import { PageInfoItem } from '@grafana/runtime/internal';
+import { CellProps, Column, InteractiveTable, Stack, useStyles2, Carousel } from '@grafana/ui';
 
 import { Changelog } from '../components/Changelog';
 import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
 import { VersionList } from '../components/VersionList';
 import { shouldDisablePluginInstall } from '../helpers';
 import { usePluginConfig } from '../hooks/usePluginConfig';
-import { CatalogPlugin, Permission, PluginTabIds } from '../types';
+import { CatalogPlugin, Permission, PluginTabIds, Screenshots } from '../types';
 
-import { AppConfigCtrlWrapper } from './AppConfigWrapper';
 import Connections from './ConnectionsTab';
 import { PluginDashboards } from './PluginDashboards';
 import { PluginUsage } from './PluginUsage';
@@ -47,6 +47,10 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
     []
   );
 
+  const buildScreenshotPath = (plugin: CatalogPlugin, path: string) => {
+    return `${config.appSubUrl}/api/gnet/plugins/${plugin.id}/versions/${plugin.latestVersion}/images/${path}`;
+  };
+
   if (pageId === PluginTabIds.OVERVIEW) {
     return (
       <div
@@ -75,15 +79,15 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
     return <Changelog sanitizedHTML={plugin?.details?.changelog} />;
   }
 
-  if (pageId === PluginTabIds.CONFIG && pluginConfig?.angularConfigCtrl) {
-    return (
-      <div>
-        <AppConfigCtrlWrapper app={pluginConfig as AppPlugin} />
-      </div>
-    );
+  if (pageId === PluginTabIds.SCREENSHOTS && plugin?.details?.screenshots?.length) {
+    const carouselImages: Screenshots[] = plugin?.details?.screenshots.map((screenshot) => ({
+      path: buildScreenshotPath(plugin, screenshot.path),
+      name: screenshot.name,
+    }));
+    return <Carousel images={carouselImages} />;
   }
 
-  if (pageId === PluginTabIds.PLUGINDETAILS && config.featureToggles.pluginsDetailsRightPanel && showDetails) {
+  if (pageId === PluginTabIds.PLUGINDETAILS && showDetails) {
     return (
       <div>
         <PluginDetailsPanel pluginExtentionsInfo={info} plugin={plugin} width={'auto'} />
@@ -116,8 +120,10 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
     return (
       <>
         <Stack direction="row">
-          The {plugin.name} plugin needs a service account to be able to query Grafana. The following list contains the
-          permissions available to the service account:
+          <Trans i18nKey="plugins.plugin-details-body.needs-service-account" values={{ pluginName: plugin.name }}>
+            The {'{{pluginName}}'} plugin needs a service account to be able to query Grafana. The following list
+            contains the permissions available to the service account:
+          </Trans>
         </Stack>
         <InteractiveTable
           columns={columns}
@@ -160,7 +166,9 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
 
   return (
     <div>
-      <p>Page not found.</p>
+      <p>
+        <Trans i18nKey="plugins.plugin-details-body.page-not-found">Page not found.</Trans>
+      </p>
     </div>
   );
 }

@@ -101,7 +101,7 @@ func (api *Api) RegisterAPIEndpoints() {
 		routing.Wrap(api.DeletePublicDashboard))
 }
 
-// swagger:route GET /dashboards/public-dashboards dashboard_public listPublicDashboards
+// swagger:route GET /dashboards/public-dashboards dashboards dashboard_public listPublicDashboards
 //
 //	Get list of public dashboards
 //
@@ -122,7 +122,7 @@ func (api *Api) ListPublicDashboards(c *contextmodel.ReqContext) response.Respon
 	}
 
 	resp, err := api.PublicDashboardService.FindAllWithPagination(c.Req.Context(), &PublicDashboardListQuery{
-		OrgID: c.SignedInUser.GetOrgID(),
+		OrgID: c.GetOrgID(),
 		Query: c.Query("query"),
 		Page:  page,
 		Limit: perPage,
@@ -135,7 +135,7 @@ func (api *Api) ListPublicDashboards(c *contextmodel.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, resp)
 }
 
-// swagger:route GET /dashboards/uid/{dashboardUid}/public-dashboards dashboard_public getPublicDashboard
+// swagger:route GET /dashboards/uid/{dashboardUid}/public-dashboards dashboards dashboard_public getPublicDashboard
 //
 //	Get public dashboard by dashboardUid
 //
@@ -153,7 +153,7 @@ func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response
 		return response.Err(ErrPublicDashboardIdentifierNotSet.Errorf("GetPublicDashboard: no dashboard Uid for public dashboard specified"))
 	}
 
-	pd, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.SignedInUser.GetOrgID(), dashboardUid)
+	pd, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.GetOrgID(), dashboardUid)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -165,7 +165,7 @@ func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response
 	return response.JSON(http.StatusOK, pd)
 }
 
-// swagger:route POST /dashboards/uid/{dashboardUid}/public-dashboards dashboard_public createPublicDashboard
+// swagger:route POST /dashboards/uid/{dashboardUid}/public-dashboards dashboards dashboard_public createPublicDashboard
 //
 //	Create public dashboard for a dashboard
 //
@@ -205,7 +205,7 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	// Always set the orgID and userID from the session
 	dto := &SavePublicDashboardDTO{
 		UserId:          c.UserID,
-		OrgID:           c.SignedInUser.GetOrgID(),
+		OrgID:           c.GetOrgID(),
 		DashboardUid:    dashboardUid,
 		PublicDashboard: pdDTO,
 	}
@@ -219,7 +219,7 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, pd)
 }
 
-// swagger:route PATCH /dashboards/uid/{dashboardUid}/public-dashboards/{uid} dashboard_public updatePublicDashboard
+// swagger:route PATCH /dashboards/uid/{dashboardUid}/public-dashboards/{uid} dashboards dashboard_public updatePublicDashboard
 //
 //	Update public dashboard for a dashboard
 //
@@ -253,7 +253,7 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	dto := SavePublicDashboardDTO{
 		Uid:             uid,
 		UserId:          c.UserID,
-		OrgID:           c.SignedInUser.GetOrgID(),
+		OrgID:           c.GetOrgID(),
 		DashboardUid:    dashboardUid,
 		PublicDashboard: pdDTO,
 	}
@@ -267,7 +267,7 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, pd)
 }
 
-// swagger:route DELETE /dashboards/uid/{dashboardUid}/public-dashboards/{uid} dashboard_public deletePublicDashboard
+// swagger:route DELETE /dashboards/uid/{dashboardUid}/public-dashboards/{uid} dashboards dashboard_public deletePublicDashboard
 //
 //	Delete public dashboard for a dashboard
 //

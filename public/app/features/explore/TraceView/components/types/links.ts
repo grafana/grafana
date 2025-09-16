@@ -9,6 +9,7 @@ export enum SpanLinkType {
   Traces = 'trace',
   Metrics = 'metric',
   Profiles = 'profile',
+  ProfilesDrilldown = 'profile-drilldown',
   Session = 'session',
   Unknown = 'unknown',
 }

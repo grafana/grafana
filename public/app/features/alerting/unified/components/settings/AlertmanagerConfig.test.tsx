@@ -4,7 +4,7 @@ import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
@@ -16,7 +16,7 @@ import {
   PROVISIONED_MIMIR_ALERTMANAGER_UID,
   mockDataSources,
   setupVanillaAlertmanagerServer,
-} from './__mocks__/server';
+} from './mocks/server';
 
 const renderConfiguration = (
   alertManagerSourceName: string,
@@ -47,20 +47,11 @@ describe('Alerting Settings', () => {
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingInstanceRead]);
   });
 
-  it('should be able to reset alertmanager config', async () => {
+  it('should not be able to reset alertmanager config', async () => {
     const onReset = jest.fn();
     renderConfiguration('grafana', { onReset });
 
-    await userEvent.click(await ui.resetButton.find());
-
-    await waitFor(() => {
-      expect(ui.resetConfirmButton.query()).toBeInTheDocument();
-    });
-
-    await userEvent.click(ui.resetConfirmButton.get());
-
-    await waitFor(() => expect(onReset).toHaveBeenCalled());
-    expect(onReset).toHaveBeenLastCalledWith('grafana');
+    expect(ui.resetButton.query()).not.toBeInTheDocument();
   });
 
   it('should be able to cancel', async () => {
@@ -99,5 +90,21 @@ describe('vanilla Alertmanager', () => {
     expect(ui.cancelButton.get()).toBeInTheDocument();
     expect(ui.saveButton.get()).toBeInTheDocument();
     expect(ui.resetButton.get()).toBeInTheDocument();
+  });
+
+  it('should be able to reset non-Grafana alertmanager config', async () => {
+    const onReset = jest.fn();
+    renderConfiguration(PROVISIONED_MIMIR_ALERTMANAGER_UID, { onReset });
+
+    expect(ui.cancelButton.get()).toBeInTheDocument();
+    expect(ui.saveButton.get()).toBeInTheDocument();
+    expect(ui.resetButton.get()).toBeInTheDocument();
+
+    await userEvent.click(ui.resetButton.get());
+
+    await userEvent.click(ui.resetConfirmButton.get());
+
+    await waitFor(() => expect(onReset).toHaveBeenCalled());
+    expect(onReset).toHaveBeenLastCalledWith(PROVISIONED_MIMIR_ALERTMANAGER_UID);
   });
 });

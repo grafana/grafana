@@ -22,11 +22,11 @@ weight: 1300
 
 Keycloak OAuth2 authentication allows users to log in to Grafana using their Keycloak credentials. This guide explains how to set up Keycloak as an authentication provider in Grafana.
 
-Refer to [Generic OAuth authentication]({{< relref "../generic-oauth" >}}) for extra configuration options available for this provider.
+Refer to [Generic OAuth authentication](../generic-oauth/) for extra configuration options available for this provider.
 
-{{% admonition type="note" %}}
-If Users use the same email address in Keycloak that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers]({{< relref "../../configure-authentication#using-the-same-email-address-to-login-with-different-identity-providers" >}}) documentation for more information.
-{{% /admonition %}}
+{{< admonition type="note" >}}
+If Users use the same email address in Keycloak that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers](../#using-the-same-email-address-to-login-with-different-identity-providers) documentation for more information.
+{{< /admonition >}}
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
 correct. For example in case you are serving Grafana behind a proxy.
@@ -59,10 +59,10 @@ To configure the `kc_idp_hint` parameter for Keycloak, you need to change the `a
 auth_url = https://<PROVIDER_DOMAIN>/realms/<REALM_NAME>/protocol/openid-connect/auth?kc_idp_hint=google
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 api_url is not required if the id_token contains all the necessary user information and can add latency to the login process.
 It is useful as a fallback or if the user has more than 150 group memberships.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Keycloak configuration
 
@@ -93,9 +93,9 @@ profile
 roles
 ```
 
-{{% admonition type="warning" %}}
-These scopes do not add group claims to the id_token. Without group claims, group synchronization will not work. Group synchronization is covered further down in this document.
-{{% /admonition %}}
+{{< admonition type="warning" >}}
+These scopes do not add group claims to the `id_token`. Without group claims, teamsync will not work. Teamsync is covered further down in this document.
+{{< /admonition >}}
 
 3. For role mapping to work with the example configuration above,
    you need to create the following roles and assign them to users:
@@ -106,18 +106,16 @@ editor
 viewer
 ```
 
-## Group synchronization
+## Team sync
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
 {{< /admonition >}}
 
-By using group synchronization, you can link your Keycloak groups to teams and roles within Grafana. This allows automatically assigning users to the appropriate teams or granting them the mapped roles.
-This is useful if you want to give your users access to specific resources based on their group membership.
-Teams and roles get synchronized when the user logs in.
+[Teamsync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/) is a feature that allows you to map groups from your identity provider to Grafana teams. This is useful if you want to give your users access to specific dashboards or folders based on their group membership.
 
-To enable group synchronization, you need to add a `groups` mapper to the client configuration in Keycloak.
-This will add the `groups` claim to the id_token. You can then use the `groups` claim to map groups to teams and roles in Grafana.
+To enable teamsync, you need to add a `groups` mapper to the client configuration in Keycloak.
+This will add the `groups` claim to the id_token. You can then use the `groups` claim to map groups to teams in Grafana.
 
 1. In the client configuration, head to `Mappers` and create a mapper with the following settings:
 
@@ -143,23 +141,21 @@ If you use nested groups containing special characters such as quotes or colons,
 groups_attribute_path = reverse("Global:department")
 ```
 
-To learn more about how to configure group synchronization, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync) documentation.
-
 ## Enable Single Logout
 
 To enable Single Logout, you need to add the following option to the configuration of Grafana:
 
 ```ini
 [auth.generic_oauth]
-signout_redirect_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2F<GRAFANA_DOMAIN>%2Flogin
+signout_redirect_url = https://<PROVIDER_DOMAIN>/realms/<REALM_NAME>/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2F<GRAFANA_DOMAIN>%2Flogin
 ```
 
 As an example, `<PROVIDER_DOMAIN>` can be `keycloak-demo.grafana.org`,
 `<REALM_NAME>` can be `grafana` and `<GRAFANA_DOMAIN>` can be `play.grafana.org`.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Grafana supports ID token hints for single logout. Grafana automatically adds the `id_token_hint` parameter to the logout request if it detects OAuth as the authentication method.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Allow assigning Grafana Admin
 

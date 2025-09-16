@@ -7,7 +7,7 @@ import { Text } from './Text';
 import mdx from './Text.mdx';
 
 const meta: Meta = {
-  title: 'General/Text',
+  title: 'Foundations/Text',
   component: Text,
   parameters: {
     docs: {

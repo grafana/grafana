@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 type setUserResourcePermissionTest struct {
@@ -41,9 +42,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationStore_SetUserResourcePermission(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []setUserResourcePermissionTest{
 		{
 			desc:              "should set resource permission for user",
@@ -126,9 +126,8 @@ type setTeamResourcePermissionTest struct {
 }
 
 func TestIntegrationStore_SetTeamResourcePermission(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []setTeamResourcePermissionTest{
 		{
 			desc:              "should add new resource permission for team",
@@ -214,9 +213,8 @@ type setBuiltInResourcePermissionTest struct {
 }
 
 func TestIntegrationStore_SetBuiltInResourcePermission(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []setBuiltInResourcePermissionTest{
 		{
 			desc:              "should add new resource permission for builtin role",
@@ -298,9 +296,8 @@ type setResourcePermissionsTest struct {
 }
 
 func TestIntegrationStore_SetResourcePermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []setResourcePermissionsTest{
 		{
 			desc:              "should set all permissions provided",
@@ -371,9 +368,8 @@ type getResourcePermissionsTest struct {
 }
 
 func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []getResourcePermissionsTest{
 		{
 			desc: "should return permissions for resource id",
@@ -628,9 +624,7 @@ type orgPermission struct {
 }
 
 func TestIntegrationStore_DeleteResourcePermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	type deleteResourcePermissionsTest struct {
 		desc              string
@@ -759,10 +753,6 @@ func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
 }
 
 func TestStore_StoreActionSet(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	type actionSetTest struct {
 		desc     string
 		resource string
@@ -781,7 +771,7 @@ func TestStore_StoreActionSet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			asService := NewInMemoryActionSetStore(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets))
+			asService := NewInMemoryActionSetStore()
 			asService.StoreActionSet(GetActionSetName(tt.resource, tt.action), tt.actions)
 
 			actionSetName := GetActionSetName(tt.resource, tt.action)
@@ -792,7 +782,7 @@ func TestStore_StoreActionSet(t *testing.T) {
 }
 
 func TestStore_ResolveActionSet(t *testing.T) {
-	actionSetService := NewActionSetService(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets))
+	actionSetService := NewActionSetService()
 	actionSetService.StoreActionSet("folders:edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
 	actionSetService.StoreActionSet("folders:view", []string{"folders:read", "dashboards:read"})
 	actionSetService.StoreActionSet("dashboards:view", []string{"dashboards:read"})
@@ -835,7 +825,7 @@ func TestStore_ResolveActionSet(t *testing.T) {
 }
 
 func TestStore_ExpandActions(t *testing.T) {
-	actionSetService := NewActionSetService(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets))
+	actionSetService := NewActionSetService()
 	actionSetService.StoreActionSet("folders:edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
 	actionSetService.StoreActionSet("folders:view", []string{"folders:read", "dashboards:read"})
 	actionSetService.StoreActionSet("dashboards:view", []string{"dashboards:read"})

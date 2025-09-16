@@ -4,9 +4,11 @@ import { useAsync } from 'react-use';
 import SwaggerUI from 'swagger-ui-react';
 
 import { createTheme, monacoLanguageRegistry, SelectableValue } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Stack, Select, UserIcon, UserView, Button } from '@grafana/ui';
 import { setMonacoEnv } from 'app/core/monacoEnv';
 import { ThemeProvider } from 'app/core/utils/ConfigProvider';
+import grafanaIconSvg from 'img/grafana_icon.svg';
 
 import { NamespaceContext, WrappedPlugins } from './plugins';
 
@@ -83,7 +85,7 @@ export const Page = () => {
         <NamespaceContext.Provider value={namespace.value}>
           <div style={{ backgroundColor: '#000', padding: '10px' }}>
             <Stack justifyContent={'space-between'}>
-              <img height="40" src="public/img/grafana_icon.svg" alt="Grafana" />
+              <img height="40" src={grafanaIconSvg} alt="Grafana" />
               <Select
                 options={urls.value}
                 isClearable={false /* TODO -- when we allow a landing page, this can be true */}
@@ -95,7 +97,7 @@ export const Page = () => {
                   } else {
                     url.searchParams.delete('api');
                   }
-                  history.pushState(null, '', url);
+                  window.history.pushState(null, '', url);
                   setURL(v);
                 }}
                 value={url}
@@ -106,7 +108,9 @@ export const Page = () => {
                   <UserIcon userView={userView} />
                 ) : (
                   <a href="/login">
-                    <Button variant="primary">Login</Button>
+                    <Button variant="primary">
+                      <Trans i18nKey="swagger.login">Login</Trans>
+                    </Button>
                   </a>
                 )}
               </div>
@@ -121,9 +125,9 @@ export const Page = () => {
               tryItOutEnabled={true}
               queryConfigEnabled={false}
               persistAuthorization={false}
+              displayOperationId
             />
           )}
-
           {!url?.value && <div>...{/** TODO, we can make an api docs loading page here */}</div>}
         </NamespaceContext.Provider>
       </ThemeProvider>

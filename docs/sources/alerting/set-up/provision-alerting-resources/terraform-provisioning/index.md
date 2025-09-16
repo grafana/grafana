@@ -159,7 +159,6 @@ In this section, we'll create Terraform configurations for each alerting resourc
    ```
 
    Replace the following field values:
-
    - `<terraform_data_source_name>` with the terraform name of the data source.
    - `<terraform_folder_name>` with the terraform name of the folder.
 
@@ -233,13 +232,11 @@ In this section, we'll create Terraform configurations for each alerting resourc
    ```
 
    Replace the following field values:
-
    - `<terraform_rule_group_name>` with the name of the alert rule group.
 
    Note that the distinct Grafana resources are connected through `uid` values in their Terraform configurations. The `uid` value will be randomly generated when provisioning.
 
    To link the alert rule group with its respective data source and folder in this example, replace the following field values:
-
    - `<terraform_data_source_name>` with the terraform name of the previously defined data source.
    - `<terraform_folder_name>` with the terraform name of the previously defined folder.
 
@@ -266,7 +263,6 @@ In this section, we'll create Terraform configurations for each alerting resourc
    ```
 
    Replace the following field values:
-
    - `<terraform_contact_point_name>` with the terraform name of the contact point. It will be used to reference the contact point in other Terraform resources.
    - `<email_address>` with the email to receive alert notifications.
 
@@ -332,7 +328,6 @@ In this section, we'll create Terraform configurations for each alerting resourc
    ```
 
    Replace the following field values:
-
    - `<terraform_mute_timing_name>` with the name of the Terraform resource. It will be used to reference the mute timing in the Terraform notification policy tree.
 
 1. Continue to add more Grafana resources or [use the Terraform CLI for provisioning](#provision-grafana-resources-with-terraform).
@@ -341,11 +336,7 @@ In this section, we'll create Terraform configurations for each alerting resourc
 
 [Notification policies](ref:notification-policy) defines how to route alert instances to your contact points.
 
-{{% admonition type="warning" %}}
-
-Since the policy tree is a single resource, provisioning the `grafana_notification_policy` resource will overwrite a policy tree created through any other means.
-
-{{< /admonition >}}
+{{< docs/shared lookup="alerts/warning-provisioning-tree.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 1. Find the default notification policy tree. Alternatively, consider writing the resource in code as demonstrated in the example below.
 
@@ -367,7 +358,6 @@ Since the policy tree is a single resource, provisioning the `grafana_notificati
    ```
 
    To configure the mute timing and contact point previously created in the notification policy tree, replace the following field values:
-
    - `<terraform_data_source_name>` with the terraform name of the previously defined contact point.
    - `<terraform_folder_name>` with the terraform name of the previously defined mute timing.
 

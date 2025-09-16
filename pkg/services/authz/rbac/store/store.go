@@ -1,9 +1,8 @@
 package store
 
 import (
+	"context"
 	"fmt"
-
-	"golang.org/x/net/context"
 
 	claims "github.com/grafana/authlib/types"
 

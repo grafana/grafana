@@ -1,6 +1,7 @@
 import { SpanStatus } from '@opentelemetry/api';
 import { collectorTypes } from '@opentelemetry/exporter-collector';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { isEqual } from 'lodash';
 
 import {
   createDataFrame,
@@ -166,7 +167,7 @@ export function transformFromOTLP(
       for (const librarySpan of data.instrumentationLibrarySpans) {
         for (const span of librarySpan.spans) {
           frame.add({
-            traceID: span.traceId.length > 16 ? span.traceId.slice(16) : span.traceId,
+            traceID: span.traceId,
             spanID: span.spanId,
             parentSpanID: span.parentSpanId || '',
             operationName: span.name || '',
@@ -474,9 +475,20 @@ export function enhanceTraceQlMetricsResponse(
       const traceIDField = frame.fields.find((field: Field) => field.name === 'traceId');
       if (traceIDField) {
         const links = getDataLinks(instanceSettings);
-        traceIDField.config.links = traceIDField.config.links?.length
-          ? [...traceIDField.config.links, ...links]
-          : links;
+        const existingLinks = traceIDField.config.links || [];
+
+        // Filter out links that already exist
+        const newLinks = links.filter(
+          (link) =>
+            !existingLinks.some(
+              (existing: DataLink) =>
+                existing.title === link.title &&
+                existing.internal?.datasourceUid === link.internal?.datasourceUid &&
+                isEqual(existing.internal?.query, link.internal?.query)
+            )
+        );
+
+        traceIDField.config.links = existingLinks.length ? [...existingLinks, ...newLinks] : newLinks;
       }
       return frame;
     });

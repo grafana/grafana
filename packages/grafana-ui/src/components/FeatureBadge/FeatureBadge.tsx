@@ -1,4 +1,5 @@
 import { FeatureState } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { Badge, BadgeProps } from '../Badge/Badge';
 
@@ -30,21 +31,28 @@ function getPanelStateBadgeDisplayModel(featureState: FeatureState): BadgeProps 
 
     case FeatureState.experimental:
       return {
-        text: 'Experimental',
+        text: t('grafana-ui.feature-badge.experimental', 'Experimental'),
         icon: 'exclamation-triangle',
         color: 'orange',
       };
 
     case FeatureState.preview:
       return {
-        text: 'Preview',
+        text: t('grafana-ui.feature-badge.preview', 'Preview'),
         icon: 'rocket',
         color: 'blue',
       };
 
     case FeatureState.privatePreview:
       return {
-        text: 'Private preview',
+        text: t('grafana-ui.feature-badge.private-preview', 'Private preview'),
+        icon: 'rocket',
+        color: 'blue',
+      };
+
+    case FeatureState.new:
+      return {
+        text: t('grafana-ui.feature-badge.new', 'New!'),
         icon: 'rocket',
         color: 'blue',
       };

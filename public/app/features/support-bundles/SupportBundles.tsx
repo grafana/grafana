@@ -2,23 +2,18 @@ import { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { dateTimeFormat } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Spinner, IconButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, StoreState } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { StoreState } from 'app/types/store';
 
 import { loadBundles, removeBundle, checkBundles } from './state/actions';
 
-const subTitle = (
-  <span>
-    Support bundles allow you to easily collect and share Grafana logs, configuration, and data with the Grafana Labs
-    team.
-  </span>
-);
-
 const NewBundleButton = (
   <LinkButton icon="plus" href="support-bundles/create" variant="primary">
-    New support bundle
+    <Trans i18nKey="support-bundles.new-bundle-button.new-support-bundle">New support bundle</Trans>
   </LinkButton>
 );
 
@@ -57,15 +52,30 @@ const SupportBundlesUnconnected = ({ supportBundles, isLoading, loadBundles, rem
 
   const actions = hasAccess ? NewBundleButton : undefined;
 
+  const subTitle = (
+    <span>
+      <Trans i18nKey="support-bundles.support-bundles-unconnected.sub-title">
+        Support bundles allow you to easily collect and share Grafana logs, configuration, and data with the Grafana
+        Labs team.
+      </Trans>
+    </span>
+  );
+
   return (
     <Page navId="support-bundles" subTitle={subTitle} actions={actions}>
       <Page.Contents isLoading={isLoading}>
         <table className="filter-table form-inline">
           <thead>
             <tr>
-              <th>Created on</th>
-              <th>Requested by</th>
-              <th>Expires</th>
+              <th>
+                <Trans i18nKey="support-bundles.support-bundles-unconnected.created-on">Created on</Trans>
+              </th>
+              <th>
+                <Trans i18nKey="support-bundles.support-bundles-unconnected.requested-by">Requested by</Trans>
+              </th>
+              <th>
+                <Trans i18nKey="support-bundles.support-bundles-unconnected.expires">Expires</Trans>
+              </th>
               <th style={{ width: '32px' }} />
               <th style={{ width: '1%' }} />
               <th style={{ width: '1%' }} />
@@ -85,7 +95,7 @@ const SupportBundlesUnconnected = ({ supportBundles, isLoading, loadBundles, rem
                     target={'_self'}
                     href={`/api/support-bundles/${bundle.uid}`}
                   >
-                    Download
+                    <Trans i18nKey="support-bundles.support-bundles-unconnected.download">Download</Trans>
                   </LinkButton>
                 </th>
                 <th>
@@ -94,7 +104,7 @@ const SupportBundlesUnconnected = ({ supportBundles, isLoading, loadBundles, rem
                       onClick={() => removeBundle(bundle.uid)}
                       name="trash-alt"
                       variant="destructive"
-                      tooltip="Remove bundle"
+                      tooltip={t('support-bundles.support-bundles-unconnected.tooltip-remove-bundle', 'Remove bundle')}
                     />
                   )}
                 </th>

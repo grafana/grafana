@@ -21,7 +21,6 @@ import {
   TIME_INTERVAL_NAME_FILE_PROVISIONED,
   TIME_INTERVAL_NAME_HAPPY_PATH,
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
-import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import {
   AlertManagerCortexConfig,
@@ -30,7 +29,7 @@ import {
   MatcherOperator,
   RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import NotificationPolicies from './NotificationPoliciesPage';
 import { findRoutesMatchingFilters } from './components/notification-policies/NotificationPoliciesList';
@@ -140,13 +139,23 @@ const getRootRoute = async () => {
   return ui.rootRouteContainer.find();
 };
 
-describe.each([
-  // k8s API enabled
-  true,
-  // k8s API disabled
-  false,
-])('NotificationPolicies with alertingApiServer=%p', (apiServerEnabled) => {
-  apiServerEnabled ? testWithFeatureToggles(['alertingApiServer']) : testWithFeatureToggles([]);
+describe('NotificationPolicies', () => {
+  // combobox hack :/
+  beforeAll(() => {
+    const mockGetBoundingClientRect = jest.fn(() => ({
+      width: 120,
+      height: 120,
+      top: 0,
+      left: 0,
+      bottom: 0,
+      right: 0,
+    }));
+
+    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+      value: mockGetBoundingClientRect,
+    });
+  });
+
   beforeEach(() => {
     setupDataSources(...Object.values(dataSources));
     grantUserPermissions([
@@ -209,11 +218,9 @@ describe.each([
 
     await openDefaultPolicyEditModal();
 
-    // configure receiver & group by
-    const receiverSelect = await ui.receiverSelect.find();
-
     // The contact points are fetched from the k8s API, which we aren't overriding here
     // when we use a different
+    const receiverSelect = ui.receiverSelect.get();
     await clickSelectOption(receiverSelect, 'lotsa-emails');
 
     const groupSelect = ui.groupSelect.get();
@@ -291,7 +298,7 @@ describe.each([
 
     renderNotificationPolicies();
     const alert = await screen.findByRole('alert', { name: /error loading alertmanager config/i });
-    expect(await within(alert).findByText(errMessage)).toBeInTheDocument();
+    expect(await within(alert).findByText(new RegExp(errMessage))).toBeInTheDocument();
     expect(ui.rootRouteContainer.query()).not.toBeInTheDocument();
   });
 
@@ -369,22 +376,6 @@ describe.each([
   });
 });
 
-describe('Grafana alertmanager - config API', () => {
-  it('Converts matchers to object_matchers for grafana alertmanager', async () => {
-    const { user } = renderNotificationPolicies();
-
-    const policyIndex = 0;
-    await openEditModal(policyIndex);
-
-    // Save policy to test that format is converted to object_matchers
-    await user.click(await ui.saveButton.find());
-
-    expect(await screen.findByRole('status')).toHaveTextContent(/updated notification policies/i);
-
-    const updatedConfig = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
-    expect(updatedConfig.alertmanager_config.route?.routes?.[policyIndex].object_matchers).toMatchSnapshot();
-  });
-});
 describe('Non-Grafana alertmanagers', () => {
   it.skip('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
     makeAllAlertmanagerConfigFetchFail(getErrorResponse('alertmanager storage object not found'));

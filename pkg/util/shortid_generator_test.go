@@ -2,12 +2,10 @@ package util
 
 import (
 	"fmt"
-	"sync"
+	"strings"
 	"testing"
 
-	"cuelang.org/go/pkg/strings"
 	"github.com/stretchr/testify/require"
-	"github.com/teris-io/shortid"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
@@ -17,25 +15,6 @@ func TestAllowedCharMatchesUidPattern(t *testing.T) {
 			t.Fatalf("charset for creating new shortids contains chars not present in uid pattern")
 		}
 	}
-}
-
-// Run with "go test -race -run ^TestThreadSafe$ github.com/grafana/grafana/pkg/util"
-func TestThreadSafe(t *testing.T) {
-	// This test was used to showcase the bug, unfortunately there is
-	// no way to enable the -race flag programmatically.
-	t.Skip()
-	// Use 1000 go routines to create 100 UIDs each at roughly the same time.
-	var wg sync.WaitGroup
-	for i := 0; i < 1000; i++ {
-		go func() {
-			for ii := 0; ii < 100; ii++ {
-				_ = GenerateShortUID()
-			}
-			wg.Done()
-		}()
-		wg.Add(1)
-	}
-	wg.Wait()
 }
 
 func TestRandomUIDs(t *testing.T) {
@@ -48,19 +27,13 @@ func TestRandomUIDs(t *testing.T) {
 		if validation != nil {
 			t.Fatalf("created invalid name: %v", validation)
 		}
-
-		//	fmt.Println(v)
 	}
-	// t.FailNow()
 }
 
 func TestCaseInsensitiveCollisionsUIDs(t *testing.T) {
 	history := make(map[string]bool, 0)
-	for i := 0; i < 100000; i++ {
+	for i := range 100000 {
 		v := GenerateShortUID()
-		if false {
-			v, _ = shortid.Generate() // collides in less then 500 iterations
-		}
 
 		lower := strings.ToLower(v)
 		_, exists := history[lower]

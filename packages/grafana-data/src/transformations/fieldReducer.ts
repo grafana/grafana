@@ -17,6 +17,7 @@ export enum ReducerID {
   median = 'median',
   first = 'first',
   count = 'count',
+  countAll = 'countAll',
   range = 'range',
   diff = 'diff',
   diffperc = 'diffperc',
@@ -129,6 +130,17 @@ export enum ReducerID {
   p97 = 'p97',
   p98 = 'p98',
   p99 = 'p99',
+}
+
+export function getFieldTypeForReducer(id: ReducerID, fallback: FieldType): FieldType {
+  return id === ReducerID.count ||
+    id === ReducerID.distinctCount ||
+    id === ReducerID.changeCount ||
+    id === ReducerID.countAll
+    ? FieldType.number
+    : id === ReducerID.allIsNull || id === ReducerID.allIsZero
+      ? FieldType.boolean
+      : fallback;
 }
 
 export function isReducerID(id: string): id is ReducerID {
@@ -322,6 +334,15 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     preservesUnits: false,
   },
   {
+    id: ReducerID.countAll,
+    name: 'Count all',
+    description: 'Number of values (including empty)',
+    emptyInputResult: 0,
+    standard: false,
+    reduce: (field: Field): FieldCalcs => ({ countAll: field.values.length }),
+    preservesUnits: false,
+  },
+  {
     id: ReducerID.range,
     name: 'Range',
     description: 'Difference between minimum and maximum values',
@@ -506,7 +527,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
       }
 
       if (isNumberField) {
-        calcs.sum += currentValue;
+        calcs.sum += currentValue || 0;
         calcs.allIsNull = false;
         calcs.nonNullCount++;
 
@@ -519,15 +540,9 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
           if (calcs.lastNotNull! > currentValue) {
             // counter reset
             calcs.previousDeltaUp = false;
-            if (i === data.length - 1) {
-              // reset on last
-              calcs.delta += currentValue;
-            }
           } else {
             if (calcs.previousDeltaUp) {
               calcs.delta += step; // normal increment
-            } else {
-              calcs.delta += currentValue; // account for counter reset
             }
             calcs.previousDeltaUp = true;
           }

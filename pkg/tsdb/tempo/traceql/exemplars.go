@@ -43,6 +43,11 @@ func transformExemplarToFrame(name string, series *tempopb.TimeSeries) *data.Fra
 			traceId = strings.ReplaceAll(traceId, "\"", "")
 		}
 
+		// Skip exemplars with invalid data
+		if exemplar.GetValue() == 0 || exemplar.GetTimestampMs() <= 0 {
+			continue
+		}
+
 		// Add basic data
 		frame.AppendRow(time.UnixMilli(exemplar.GetTimestampMs()), exemplar.GetValue(), traceId)
 

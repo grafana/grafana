@@ -7,12 +7,14 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.opencensus.io/stats/view"
 	"go.uber.org/goleak"
 
 	"github.com/grafana/grafana/pkg/util/testutil/mocks"
 )
 
 func TestMain(m *testing.M) {
+	view.Stop()
 	// make sure we don't leak goroutines after tests in this package have
 	// finished, which means we haven't leaked contexts either
 	goleak.VerifyTestMain(m)

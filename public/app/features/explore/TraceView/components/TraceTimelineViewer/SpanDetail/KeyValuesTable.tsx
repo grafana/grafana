@@ -15,14 +15,13 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
 import { PropsWithChildren } from 'react';
-import * as React from 'react';
 
-import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
+import { GrafanaTheme2, PluginExtensionLink, TraceKeyValuePair } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
-import { TraceLink, TNil } from '../../types';
+import TNil from '../../types/TNil';
 
 import jsonMarkup from './jsonMarkup';
 
@@ -48,7 +47,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     row: css({
       label: 'row',
       '& > td': {
-        padding: '0.5rem 0.5rem',
+        padding: '0 0.5rem',
         height: '30px',
       },
       '&:nth-child(2n) > td': {
@@ -57,13 +56,18 @@ export const getStyles = (theme: GrafanaTheme2) => {
       [`&:not(:hover) .${copyIconClassName}`]: {
         visibility: 'hidden',
       },
+      'a span': {
+        color: `${theme.colors.text.link} !important`,
+      },
+      'a:hover span': {
+        textDecoration: 'underline',
+      },
     }),
     keyColumn: css({
       label: 'keyColumn',
       color: autoColor(theme, '#888'),
       whiteSpace: 'pre',
       width: '125px',
-      verticalAlign: 'top',
     }),
     copyColumn: css({
       label: 'copyColumn',
@@ -94,46 +98,59 @@ function parseIfComplexJson(value: unknown) {
   return value;
 }
 
+export type KeyValuesTableLink = Pick<PluginExtensionLink, 'path' | 'title' | 'onClick' | 'icon'>;
+
 interface LinkValueProps {
-  href: string;
-  title?: string;
-  children: React.ReactNode;
+  link: KeyValuesTableLink;
 }
 
-export const LinkValue = ({ href, title = '', children }: PropsWithChildren<LinkValueProps>) => {
+export const LinkValue = ({ link, children }: PropsWithChildren<LinkValueProps>) => {
+  const { path, title = '', onClick, icon = 'external-link-alt' } = link;
+
   return (
-    <a href={href} title={title} target="_blank" rel="noopener noreferrer">
-      {children} <Icon name="external-link-alt" />
+    <a href={path} title={title} onClick={onClick} target="_blank" rel="noopener noreferrer">
+      {children} <Icon name={icon} />
     </a>
   );
 };
 
 export type KeyValuesTableProps = {
   data: TraceKeyValuePair[];
-  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
+  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[]) | TNil;
+  onlyValues?: boolean;
 };
 
 export default function KeyValuesTable(props: KeyValuesTableProps) {
-  const { data, linksGetter } = props;
+  const { data, linksGetter, onlyValues } = props;
   const styles = useStyles2(getStyles);
   return (
     <div className={cx(styles.KeyValueTable)} data-testid="KeyValueTable">
       <table className={styles.table}>
         <tbody className={styles.body}>
           {data.map((row, i) => {
-            const markup = {
-              __html: jsonMarkup(parseIfComplexJson(row.value)),
-            };
+            let markup = { __html: '' };
+            if (row.type === 'code') {
+              markup = {
+                __html: `<pre style="border: none; background: none">${row.value}</pre>`,
+              };
+            } else if (row.type === 'text') {
+              markup = {
+                __html: `<span style="white-space: pre-wrap;">${row.value}</span>`,
+              };
+            } else {
+              markup = {
+                __html: jsonMarkup(parseIfComplexJson(row.value)),
+              };
+            }
+
             const jsonTable = <div className={styles.jsonTable} dangerouslySetInnerHTML={markup} />;
-            const links = linksGetter ? linksGetter(data, i) : null;
+            const links = linksGetter?.(data, i);
             let valueMarkup;
             if (links && links.length) {
               // TODO: handle multiple items
               valueMarkup = (
                 <div>
-                  <LinkValue href={links[0].url} title={links[0].text}>
-                    {jsonTable}
-                  </LinkValue>
+                  <LinkValue link={links[0]}>{jsonTable}</LinkValue>
                 </div>
               );
             } else {
@@ -142,15 +159,17 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
             return (
               // `i` is necessary in the key because row.key can repeat
               <tr className={styles.row} key={`${row.key}-${i}`}>
-                <td className={styles.keyColumn} data-testid="KeyValueTable--keyColumn">
-                  {row.key}
-                </td>
+                {!onlyValues && (
+                  <td className={styles.keyColumn} data-testid="KeyValueTable--keyColumn">
+                    {row.key}
+                  </td>
+                )}
                 <td>{valueMarkup}</td>
                 <td className={styles.copyColumn}>
                   <CopyIcon
                     className={copyIconClassName}
-                    copyText={JSON.stringify(row, null, 2)}
-                    tooltipTitle="Copy JSON"
+                    copyText={row.type === 'code' || row.type === 'text' ? row.value : JSON.stringify(row, null, 2)}
+                    tooltipTitle="Copy"
                   />
                 </td>
               </tr>

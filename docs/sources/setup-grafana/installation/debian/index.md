@@ -163,7 +163,7 @@ Complete the following steps to install Grafana using the standalone binaries:
 1. Use the binary to manually start the Grafana server:
 
    ```shell
-   /usr/local/grafana/bin/grafana-server --homepath /usr/local/grafana
+   /usr/local/grafana/bin/grafana server --homepath /usr/local/grafana
    ```
 
    {{< admonition type="note" >}}
@@ -217,4 +217,4 @@ To uninstall Grafana, run the following commands in a terminal window:
 
 ## Next steps
 
-- [Start the Grafana server]({{< relref "../../start-restart-grafana" >}})
+- [Start the Grafana server](../../start-restart-grafana/)

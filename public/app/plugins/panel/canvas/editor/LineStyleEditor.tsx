@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
-import { Field, RadioButtonGroup, Switch } from '@grafana/ui/src';
+import { t } from '@grafana/i18n';
+import { Field, RadioButtonGroup, Switch } from '@grafana/ui';
 
 import { LineStyle } from '../types';
 
@@ -53,7 +54,7 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
       {value.style !== LineStyle.Solid && (
         <>
           <br />
-          <Field label="Animate">
+          <Field label={t('canvas.line-style-editor.label-animate', 'Animate')}>
             <Switch value={value.animate} onChange={(e) => onAnimateChange(e.currentTarget.checked)} />
           </Field>
         </>

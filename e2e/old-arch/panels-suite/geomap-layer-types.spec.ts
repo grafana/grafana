@@ -13,7 +13,7 @@ describe('Geomap layer types', () => {
 
   it('Tests changing the layer type', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
-    cy.get('[data-testid="layer-drag-drop-list"]').should('be.visible');
+    cy.get('[data-testid="layer-drag-drop-list"]').scrollIntoView().should('be.visible');
     e2e.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_TYPE).should('be.visible');
     cy.get('[data-testid="layer-drag-drop-list"]').contains('markers');
 

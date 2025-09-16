@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import * as H from 'history';
 import { memo, useContext, useEffect, useMemo } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { ModalsContext, Modal, Button, useStyles2 } from '@grafana/ui';
 import { Prompt } from 'app/core/components/FormPrompt/Prompt';
@@ -124,20 +125,24 @@ export const UnsavedChangesModal = ({ onDiscard, onDismiss, onSaveDashboardClick
   return (
     <Modal
       isOpen={true}
-      title="Unsaved changes"
+      title={t('dashboard-scene.unsaved-changes-modal.title-unsaved-changes', 'Unsaved changes')}
       onDismiss={onDismiss}
       icon="exclamation-triangle"
       className={styles.modal}
     >
-      <h5>Do you want to save your changes?</h5>
+      <h5>
+        <Trans i18nKey="dashboard-scene.unsaved-changes-modal.changes">Do you want to save your changes?</Trans>
+      </h5>
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={onDismiss} fill="outline">
-          Cancel
+          <Trans i18nKey="dashboard-scene.unsaved-changes-modal.cancel">Cancel</Trans>
         </Button>
         <Button variant="destructive" onClick={onDiscard}>
-          Discard
+          <Trans i18nKey="dashboard-scene.unsaved-changes-modal.discard">Discard</Trans>
         </Button>
-        <Button onClick={onSaveDashboardClick}>Save dashboard</Button>
+        <Button onClick={onSaveDashboardClick}>
+          <Trans i18nKey="dashboard-scene.unsaved-changes-modal.save-dashboard">Save dashboard</Trans>
+        </Button>
       </Modal.ButtonRow>
     </Modal>
   );

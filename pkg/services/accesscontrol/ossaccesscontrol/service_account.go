@@ -67,8 +67,8 @@ func ProvideServiceAccountPermissions(
 			"Edit":  ServiceAccountEditActions,
 			"Admin": ServiceAccountAdminActions,
 		},
-		ReaderRoleName: "Service account permission reader",
-		WriterRoleName: "Service account permission writer",
+		ReaderRoleName: "Permission reader",
+		WriterRoleName: "Permission writer",
 		RoleGroup:      "Service accounts",
 	}
 

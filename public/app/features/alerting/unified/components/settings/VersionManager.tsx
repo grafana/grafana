@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
-import { chain, omit } from 'lodash';
+import { omit } from 'lodash';
 import moment from 'moment';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Badge,
@@ -17,10 +18,10 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
-import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { computeVersionDiff } from '../../utils/diff';
 import { stringifyErrorLike } from '../../utils/misc';
 import { Spacer } from '../Spacer';
 
@@ -80,15 +81,28 @@ const AlertmanagerConfigurationVersionManager = ({
   };
 
   if (error) {
-    return <Alert title="Failed to load configuration history">{stringifyErrorLike(error)}</Alert>;
+    return (
+      <Alert
+        title={t(
+          'alerting.alertmanager-configuration-version-manager.title-failed-to-load-configuration-history',
+          'Failed to load configuration history'
+        )}
+      >
+        {stringifyErrorLike(error)}
+      </Alert>
+    );
   }
 
   if (isLoading) {
-    return 'Loading...';
+    return <Trans i18nKey="alerting.alertmanager-configuration-version-manager.loading">Loading...</Trans>;
   }
 
   if (!historicalConfigs.length) {
-    return 'No previous configurations';
+    return (
+      <Trans i18nKey="alerting.alertmanager-configuration-version-manager.no-previous-configurations">
+        No previous configurations
+      </Trans>
+    );
   }
 
   // with this function we'll compute the diff with the previous version; that way the user can get some idea of how many lines where changed in each update that was applied
@@ -98,7 +112,7 @@ const AlertmanagerConfigurationVersionManager = ({
 
     return {
       ...config,
-      diff: priorConfig ? computeConfigDiff(config, latestConfig) : { added: 0, removed: 0 },
+      diff: priorConfig ? computeVersionDiff(config, latestConfig, normalizeConfig) : { added: 0, removed: 0 },
     };
   });
 
@@ -145,7 +159,10 @@ const AlertmanagerConfigurationVersionManager = ({
         return (
           <Stack direction="row" alignItems="center" justifyContent="flex-end">
             {isFirstItem ? (
-              <Badge text="Latest" color="blue" />
+              <Badge
+                text={t('alerting.alertmanager-configuration-version-manager.columns.text-latest', 'Latest')}
+                color="blue"
+              />
             ) : (
               <>
                 <Button
@@ -164,7 +181,7 @@ const AlertmanagerConfigurationVersionManager = ({
                     setActiveComparison([JSON.stringify(left, null, 2), JSON.stringify(right, null, 2)]);
                   }}
                 >
-                  Compare
+                  <Trans i18nKey="alerting.alertmanager-configuration-version-manager.columns.compare">Compare</Trans>
                 </Button>
                 <Button
                   variant="secondary"
@@ -176,7 +193,7 @@ const AlertmanagerConfigurationVersionManager = ({
                   }}
                   disabled={restoreVersionState.isLoading}
                 >
-                  Restore
+                  <Trans i18nKey="alerting.alertmanager-configuration-version-manager.columns.restore">Restore</Trans>
                 </Button>
               </>
             )}
@@ -188,8 +205,16 @@ const AlertmanagerConfigurationVersionManager = ({
 
   if (restoreVersionState.isLoading) {
     return (
-      <Alert severity="info" title="Restoring Alertmanager configuration">
-        This might take a while...
+      <Alert
+        severity="info"
+        title={t(
+          'alerting.alertmanager-configuration-version-manager.title-restoring-alertmanager-configuration',
+          'Restoring Alertmanager configuration'
+        )}
+      >
+        <Trans i18nKey="alerting.alertmanager-configuration-version-manager.this-might-take-a-while">
+          This might take a while...
+        </Trans>
       </Alert>
     );
   }
@@ -216,9 +241,15 @@ const AlertmanagerConfigurationVersionManager = ({
       {/* TODO make this modal persist while restore is in progress */}
       <ConfirmModal
         isOpen={confirmRestore}
-        title={'Restore Version'}
-        body={'Are you sure you want to restore the configuration to this version? All unsaved changes will be lost.'}
-        confirmText={'Yes, restore configuration'}
+        title={t('alerting.alertmanager-configuration-version-manager.title-restore-version', 'Restore version')}
+        body={t(
+          'alerting.alertmanager-configuration-version-manager.body-restore-configuration-version-unsaved-changes',
+          'Are you sure you want to restore the configuration to this version? All unsaved changes will be lost.'
+        )}
+        confirmText={t(
+          'alerting.alertmanager-configuration-version-manager.confirmText-yes-restore-configuration',
+          'Yes, restore configuration'
+        )}
         onConfirm={() => {
           if (activeRestoreVersion) {
             restoreVersion(activeRestoreVersion);
@@ -256,10 +287,10 @@ function CompareVersions({ left, right, disabled = false, onCancel, onConfirm }:
       <Stack direction="row" alignItems="center">
         <Spacer />
         <Button variant="secondary" onClick={onCancel} disabled={disabled}>
-          Return
+          <Trans i18nKey="alerting.compare-versions.return">Return</Trans>
         </Button>
         <Button icon="history" variant="primary" onClick={onConfirm} disabled={disabled}>
-          Restore
+          <Trans i18nKey="alerting.compare-versions.restore">Restore</Trans>
         </Button>
       </Stack>
     </div>
@@ -294,31 +325,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
 // these props are part of the historical config response but not the current config, so we remove them for fair comparison
 function normalizeConfig(config: AlertManagerCortexConfig) {
   return omit(config, ['id', 'last_applied']);
-}
-
-function computeConfigDiff(json1: AlertManagerCortexConfig, json2: AlertManagerCortexConfig): Diff {
-  const cleanedJson1 = normalizeConfig(json1);
-  const cleanedJson2 = normalizeConfig(json2);
-
-  const diff = jsonDiff(cleanedJson1, cleanedJson2);
-  const added = chain(diff)
-    .values()
-    .flatMap()
-    .filter((operation) => operation.op === 'add' || operation.op === 'replace' || operation.op === 'move')
-    .sumBy((operation) => operation.endLineNumber - operation.startLineNumber + 1)
-    .value();
-
-  const removed = chain(diff)
-    .values()
-    .flatMap()
-    .filter((operation) => operation.op === 'remove' || operation.op === 'replace')
-    .sumBy((operation) => operation.endLineNumber - operation.startLineNumber + 1)
-    .value();
-
-  return {
-    added,
-    removed,
-  };
 }
 
 export { AlertmanagerConfigurationVersionManager };

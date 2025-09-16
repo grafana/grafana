@@ -31,7 +31,7 @@ func (ss *SocialService) supportBundleCollectorFn(name string, sc social.SocialC
 	return func(ctx context.Context) (*supportbundles.SupportItem, error) {
 		bWriter := bytes.NewBuffer(nil)
 
-		if _, err := bWriter.WriteString(fmt.Sprintf("# OAuth %s information\n\n", name)); err != nil {
+		if _, err := fmt.Fprintf(bWriter, "# OAuth %s information\n\n", name); err != nil {
 			return nil, err
 		}
 
@@ -44,8 +44,8 @@ func (ss *SocialService) supportBundleCollectorFn(name string, sc social.SocialC
 		bWriter.WriteString("```toml\n")
 		errM := toml.NewEncoder(bWriter).Encode(oinfo)
 		if errM != nil {
-			bWriter.WriteString(
-				fmt.Sprintf("Unable to encode OAuth configuration  \n Err: %s", errM))
+			fmt.Fprintf(bWriter,
+				"Unable to encode OAuth configuration  \n Err: %s", errM)
 		}
 		bWriter.WriteString("```\n\n")
 
@@ -66,7 +66,7 @@ func (ss *SocialService) healthCheckSocialConnector(ctx context.Context, name st
 	bWriter.WriteString("## Health checks\n\n")
 	client, err := ss.GetOAuthHttpClient(name)
 	if err != nil {
-		bWriter.WriteString(fmt.Sprintf("Unable to create HTTP client  \n Err: %s\n", err))
+		fmt.Fprintf(bWriter, "Unable to create HTTP client  \n Err: %s\n", err)
 		return
 	}
 
@@ -81,12 +81,12 @@ func healthCheckEndpoint(client *http.Client, bWriter *bytes.Buffer, endpointNam
 		return
 	}
 
-	bWriter.WriteString(fmt.Sprintf("### %s URL\n\n", endpointName))
+	fmt.Fprintf(bWriter, "### %s URL\n\n", endpointName)
 	resp, err := client.Get(url)
 	_ = resp.Body.Close()
 	if err != nil {
-		bWriter.WriteString(fmt.Sprintf("Unable to GET %s URL  \n Err: %s\n\n", endpointName, err))
+		fmt.Fprintf(bWriter, "Unable to GET %s URL  \n Err: %s\n\n", endpointName, err)
 	} else {
-		bWriter.WriteString(fmt.Sprintf("Able to reach %s URL. Status Code does not need to be 200.\n Retrieved Status Code: %d \n\n", endpointName, resp.StatusCode))
+		fmt.Fprintf(bWriter, "Able to reach %s URL. Status Code does not need to be 200.\n Retrieved Status Code: %d \n\n", endpointName, resp.StatusCode)
 	}
 }

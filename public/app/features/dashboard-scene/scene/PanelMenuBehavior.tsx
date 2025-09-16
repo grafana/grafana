@@ -2,18 +2,21 @@ import {
   getTimeZone,
   InterpolateFunction,
   LinkModel,
+  locationUtil,
   PanelMenuItem,
   PanelPlugin,
+  PluginExtensionLink,
   PluginExtensionPanelContext,
   PluginExtensionPoints,
+  PluginExtensionTypes,
   urlUtil,
 } from '@grafana/data';
-import { config, getPluginLinkExtensions, locationService } from '@grafana/runtime';
-import { LocalValueVariable, sceneGraph, SceneGridRow, VizPanel, VizPanelMenu } from '@grafana/scenes';
+import { t } from '@grafana/i18n';
+import { config, locationService } from '@grafana/runtime';
+import { LocalValueVariable, sceneGraph, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { t } from 'app/core/internationalization';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
@@ -22,22 +25,40 @@ import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { createPluginExtensionsGetter } from 'app/features/plugins/extensions/getPluginExtensions';
+import { pluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
+import { GetPluginExtensions } from 'app/features/plugins/extensions/types';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
-import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashboardIntegration';
 import { dispatch } from 'app/store/store';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
-import { isInCloneChain } from '../utils/clone';
+import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
-import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
+import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
+
+let getPluginExtensions: GetPluginExtensions;
+
+function setupGetPluginExtensions() {
+  if (getPluginExtensions) {
+    return getPluginExtensions;
+  }
+
+  getPluginExtensions = createPluginExtensionsGetter(pluginExtensionRegistries);
+
+  return getPluginExtensions;
+}
+
+// Define the category for metrics drilldown links
+const METRICS_DRILLDOWN_CATEGORY = 'metrics-drilldown';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -54,7 +75,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     const dashboard = getDashboardSceneFor(panel);
     const { isEmbedded } = dashboard.state.meta;
     const exploreMenuItem = await getExploreMenuItem(panel);
-    const isReadOnlyRepeat = isInCloneChain(panel.state.key!);
+    const isReadOnlyRepeat = isRepeatCloneOrChildOf(panel);
 
     // For embedded dashboards we only have explore action for now
     if (isEmbedded) {
@@ -70,7 +91,10 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.view', `View`),
         iconClassName: 'eye',
         shortcut: 'v',
-        href: getViewPanelUrl(panel),
+        href: locationUtil.getUrlForPartial(locationService.getLocation(), {
+          viewPanel: panel.getPathId(),
+          editPanel: undefined,
+        }),
       });
     }
 
@@ -271,13 +295,9 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         iconClassName: 'question-circle',
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
-          onInspectPanel(panel, InspectTab.Help);
+          dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Help }));
         },
       });
-    }
-
-    if (config.featureToggles.exploreMetrics) {
-      await addDataTrailPanelAction(dashboard, panel, items);
     }
 
     if (exploreMenuItem) {
@@ -286,21 +306,49 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     items.push(getInspectMenuItem(plugin, panel, dashboard));
 
-    // TODO: make sure that this works reliably with the reactive extension registry
-    // (we need to be able to know in advance what extensions should be loaded for this extension point, and make it possible to await for them.)
-    const { extensions } = getPluginLinkExtensions({
+    setupGetPluginExtensions();
+
+    const { extensions } = getPluginExtensions({
       extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
       context: createExtensionContext(panel, dashboard),
       limitPerPlugin: 3,
     });
 
     if (extensions.length > 0 && !dashboard.state.isEditing) {
-      items.push({
-        text: 'Extensions',
-        iconClassName: 'plug',
-        type: 'submenu',
-        subMenu: createExtensionSubMenu(extensions),
-      });
+      const linkExtensions = extensions.filter((extension) => extension.type === PluginExtensionTypes.link);
+
+      // Separate metrics drilldown links from other links
+      const [metricsDrilldownLinks, otherLinks] = linkExtensions.reduce<[PluginExtensionLink[], PluginExtensionLink[]]>(
+        ([metricsDrilldownLinks, otherLinks], link) => {
+          if (link.category === METRICS_DRILLDOWN_CATEGORY) {
+            metricsDrilldownLinks.push(link);
+          } else {
+            otherLinks.push(link);
+          }
+          return [metricsDrilldownLinks, otherLinks];
+        },
+        [[], []]
+      );
+
+      // Add specific "Metrics drilldown" menu
+      if (metricsDrilldownLinks.length > 0) {
+        items.push({
+          text: t('dashboard-scene.panel-menu-behavior.async-func.text.metrics-drilldown', 'Metrics drilldown'),
+          iconClassName: 'code-branch',
+          type: 'submenu',
+          subMenu: createExtensionSubMenu(metricsDrilldownLinks),
+        });
+      }
+
+      // Add generic "Extensions" menu for other links
+      if (otherLinks.length > 0) {
+        items.push({
+          text: t('dashboard-scene.panel-menu-behavior.async-func.text.extensions', 'Extensions'),
+          iconClassName: 'plug',
+          type: 'submenu',
+          subMenu: createExtensionSubMenu(otherLinks),
+        });
+      }
     }
 
     if (moreSubMenu.length) {
@@ -361,20 +409,18 @@ function getInspectMenuItem(
   if (plugin && !plugin.meta.skipDataQuery) {
     inspectSubMenu.push({
       text: t('panel.header-menu.inspect-data', `Data`),
-      href: getInspectUrl(panel, InspectTab.Data),
       onClick: (e) => {
         e.preventDefault();
-        locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Data });
+        dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Data }));
       },
     });
 
     if (dashboard instanceof DashboardScene && dashboard.state.meta.canEdit) {
       inspectSubMenu.push({
         text: t('panel.header-menu.query', `Query`),
-        href: getInspectUrl(panel, InspectTab.Query),
         onClick: (e) => {
           e.preventDefault();
-          locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Query });
+          dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Query }));
         },
       });
     }
@@ -382,10 +428,9 @@ function getInspectMenuItem(
 
   inspectSubMenu.push({
     text: t('panel.header-menu.inspect-json', `Panel JSON`),
-    href: getInspectUrl(panel, InspectTab.JSON),
     onClick: (e) => {
       e.preventDefault();
-      locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.JSON });
+      dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.JSON }));
     },
   });
 
@@ -393,10 +438,9 @@ function getInspectMenuItem(
     text: t('panel.header-menu.inspect', `Inspect`),
     iconClassName: 'info-circle',
     shortcut: 'i',
-    href: getInspectUrl(panel),
     onClick: (e) => {
       if (!e.isDefaultPrevented()) {
-        locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Data });
+        dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Data }));
       }
     },
     subMenu: inspectSubMenu.length > 0 ? inspectSubMenu : undefined,
@@ -464,21 +508,6 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
     });
   }
 
-  // Handle row repeats scenario
-  if (panel.parent?.parent instanceof SceneGridRow) {
-    const row = panel.parent.parent;
-    if (row.state.$variables) {
-      row.state.$variables.state.variables.forEach((variable) => {
-        if (variable instanceof LocalValueVariable) {
-          scopedVars = {
-            ...scopedVars,
-            [variable.state.name]: { value: variable.getValue(), text: variable.getValueText() },
-          };
-        }
-      });
-    }
-  }
-
   return {
     id,
     pluginId: panel.state.pluginId,
@@ -501,8 +530,8 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
 export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
   appEvents.publish(
     new ShowConfirmModalEvent({
-      title: 'Remove panel',
-      text: 'Are you sure you want to remove this panel?',
+      title: t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel'),
+      text: t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
       icon: 'trash-alt',
       yesText: 'Remove',
       onConfirm: () => dashboard.removePanel(panel),
@@ -515,7 +544,7 @@ const onCreateAlert = async (panel: VizPanel) => {
     const formValues = await scenesPanelToRuleFormValues(panel);
     const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
       defaults: JSON.stringify(formValues),
-      returnTo: location.pathname + location.search,
+      returnTo: window.location.pathname + window.location.search,
     });
     locationService.push(ruleFormUrl);
   } catch (err) {
@@ -539,10 +568,3 @@ export function toggleVizPanelLegend(vizPanel: VizPanel): void {
 function hasLegendOptions(optionsWithLegend: unknown): optionsWithLegend is OptionsWithLegend {
   return optionsWithLegend != null && typeof optionsWithLegend === 'object' && 'legend' in optionsWithLegend;
 }
-
-const onInspectPanel = (vizPanel: VizPanel, tab?: InspectTab) => {
-  locationService.partial({
-    inspect: vizPanel.state.key,
-    inspectTab: tab,
-  });
-};

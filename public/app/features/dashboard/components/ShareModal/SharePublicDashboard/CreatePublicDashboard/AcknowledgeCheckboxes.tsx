@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { UseFormRegister } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { Checkbox, FieldSet, HorizontalGroup, LinkButton, useStyles2, VerticalGroup } from '@grafana/ui/src';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from '@grafana/i18n';
+import { Checkbox, FieldSet, LinkButton, useStyles2, Stack } from '@grafana/ui';
 
 import { SharePublicDashboardAcknowledgmentInputs } from './CreatePublicDashboard';
 
@@ -27,6 +27,7 @@ export const AcknowledgeCheckboxes = ({
   register: UseFormRegister<SharePublicDashboardAcknowledgmentInputs>;
 }) => {
   const styles = useStyles2(getStyles);
+
   const ACKNOWLEDGES: Acknowledge[] = [
     {
       type: 'publicAcknowledgment',
@@ -83,9 +84,9 @@ export const AcknowledgeCheckboxes = ({
         </Trans>
       </p>
       <FieldSet disabled={disabled}>
-        <VerticalGroup spacing="md">
+        <Stack direction="column" gap={2}>
           {ACKNOWLEDGES.map((acknowledge) => (
-            <HorizontalGroup key={acknowledge.type} spacing="none" align="center">
+            <Stack key={acknowledge.type} gap={0} alignItems="center">
               <Checkbox
                 {...register(acknowledge.type, { required: true })}
                 label={acknowledge.description}
@@ -100,9 +101,9 @@ export const AcknowledgeCheckboxes = ({
                 rel="noopener noreferrer"
                 tooltip={acknowledge.info.tooltip}
               />
-            </HorizontalGroup>
+            </Stack>
           ))}
-        </VerticalGroup>
+        </Stack>
       </FieldSet>
     </>
   );

@@ -1,8 +1,8 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/add_label_to_query.ts
 import { parser, VectorSelector } from '@prometheus-io/lezer-promql';
 
-import { PromQueryModeller } from './querybuilder/PromQueryModeller';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
+import { renderQuery } from './querybuilder/shared/rendering/query';
 import { QueryBuilderLabelFilter } from './querybuilder/shared/types';
 import { PromVisualQuery } from './querybuilder/types';
 
@@ -21,7 +21,7 @@ import { PromVisualQuery } from './querybuilder/types';
  * @param operator
  */
 export function addLabelToQuery(query: string, key: string, value: string | number, operator = '='): string {
-  if (!key || !value) {
+  if (!key) {
     throw new Error('Need label to add to query.');
   }
 
@@ -67,7 +67,6 @@ function addFilter(
   vectorSelectorPositions: VectorSelectorPosition[],
   filter: QueryBuilderLabelFilter
 ): string {
-  const modeller = new PromQueryModeller();
   let newQuery = '';
   let prev = 0;
 
@@ -84,7 +83,7 @@ function addFilter(
       // We don't want to add duplicate labels.
       match.query.labels.push(filter);
     }
-    const newLabels = modeller.renderQuery(match.query);
+    const newLabels = renderQuery(match.query);
     newQuery += start + newLabels + end;
     prev = match.to;
   }

@@ -30,8 +30,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -68,9 +67,7 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -80,8 +77,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "labels": "site=A,measure=speed,state=CA",
           "refId": "A",
@@ -89,8 +85,7 @@
         },
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "labels": "site=B,measure=speed,state=OR",
@@ -99,8 +94,7 @@
         },
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "labels": "site=B,measure=temp",
@@ -109,8 +103,7 @@
         },
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "labels": "site=A,measure=temp",
@@ -163,9 +156,7 @@
       "options": {
         "footer": {
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "frameIndex": 2,
@@ -228,9 +219,7 @@
       "options": {
         "footer": {
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
@@ -251,9 +240,7 @@
         {
           "id": "joinByLabels",
           "options": {
-            "join": [
-              "site"
-            ],
+            "join": ["site"],
             "value": "measure"
           }
         }
@@ -302,9 +289,7 @@
       "options": {
         "footer": {
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
@@ -333,10 +318,7 @@
     }
   ],
   "schemaVersion": 37,
-  "tags": [
-    "gdev",
-    "transform"
-  ],
+  "tags": ["gdev", "transform"],
   "templating": {
     "list": []
   },

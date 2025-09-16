@@ -7,6 +7,7 @@ export enum AlertState {
   Alerting = 'alerting',
   OK = 'ok',
   Pending = 'pending',
+  Recovering = 'recovering',
   Unknown = 'unknown',
 }
 

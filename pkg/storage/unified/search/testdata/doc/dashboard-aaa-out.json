@@ -8,6 +8,7 @@
   "name": "aaa",
   "rv": 1234,
   "title": "Test title",
+  "title_ngram": "Test title",
   "title_phrase": "test title",
   "description": "test description",
   "tags": [
@@ -30,7 +31,7 @@
     ],
     "errors_last_1_days": 1,
     "errors_last_7_days": 1,
-    "legacy_id": 141,
+    "grafana.app/deprecatedInternalID": 141,
     "link_count": 0,
     "panel_types": [
       "barchart",
@@ -39,7 +40,7 @@
     ],
     "schema_version": 38
   },
-  "reference": [
+  "references": [
     {
       "relation": "depends-on",
       "group": "my-custom-plugin",

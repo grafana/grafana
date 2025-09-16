@@ -1,297 +1,183 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromQueryField.tsx
 import { css, cx } from '@emotion/css';
-import { PureComponent, ReactNode } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 
 import {
+  DataFrame,
+  getDefaultTimeRange,
   isDataFrame,
-  LocalStorageValueProvider,
   QueryEditorProps,
   QueryHint,
-  TimeRange,
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { clearButtonStyles, Icon, Themeable2, withTheme2 } from '@grafana/ui';
+import { clearButtonStyles, Icon, useTheme2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
-import { roundMsToMin } from '../language_utils';
+import { getInitHints } from '../query_hints';
 import { PromOptions, PromQuery } from '../types';
 
-import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
-import { CancelablePromise, isCancelablePromiseRejection, makePromiseCancelable } from './cancelable-promise';
+import { MetricsBrowser } from './metrics-browser/MetricsBrowser';
+import { MetricsBrowserProvider } from './metrics-browser/MetricsBrowserContext';
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
 
-const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
-
-function getChooserText(metricsLookupDisabled: boolean, hasSyntax: boolean, hasMetrics: boolean) {
-  if (metricsLookupDisabled) {
-    return '(Disabled)';
-  }
-
-  if (!hasSyntax) {
-    return 'Loading metrics...';
-  }
-
-  if (!hasMetrics) {
-    return '(No metrics found)';
-  }
-
-  return 'Metrics browser';
-}
-
-interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions>, Themeable2 {
+interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions> {
   ExtraFieldElement?: ReactNode;
+  hideMetricsBrowser?: boolean;
   'data-testid'?: string;
 }
 
-interface PromQueryFieldState {
-  labelBrowserVisible: boolean;
-  syntaxLoaded: boolean;
-  hint: QueryHint | null;
-}
+export const PromQueryField = (props: PromQueryFieldProps) => {
+  const {
+    app,
+    datasource,
+    datasource: { languageProvider },
+    query,
+    ExtraFieldElement,
+    history = [],
+    data,
+    range,
+    onChange,
+    onRunQuery,
+    hideMetricsBrowser = false,
+  } = props;
 
-class PromQueryFieldClass extends PureComponent<PromQueryFieldProps, PromQueryFieldState> {
-  declare languageProviderInitializationPromise: CancelablePromise<any>;
+  const theme = useTheme2();
 
-  constructor(props: PromQueryFieldProps) {
-    super(props);
+  const [hint, setHint] = useState<QueryHint | null>(null);
+  const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
 
-    this.state = {
-      labelBrowserVisible: false,
-      syntaxLoaded: false,
-      hint: null,
-    };
-  }
+  const refreshHint = useCallback(
+    (series: DataFrame[]) => {
+      const initHints = getInitHints(datasource);
+      const initHint = initHints[0] ?? null;
 
-  componentDidMount() {
-    if (this.props.datasource.languageProvider) {
-      this.refreshMetrics();
-    }
-    this.refreshHint();
-  }
+      // If no data or empty series, use default hint
+      if (!data?.series?.length) {
+        setHint(initHint);
+        return;
+      }
 
-  componentWillUnmount() {
-    if (this.languageProviderInitializationPromise) {
-      this.languageProviderInitializationPromise.cancel();
-    }
-  }
+      const result = isDataFrame(series[0]) ? series.map(toLegacyResponseData) : series;
+      const queryHints = datasource.getQueryHints(query, result);
+      let queryHint = queryHints.length > 0 ? queryHints[0] : null;
 
-  componentDidUpdate(prevProps: PromQueryFieldProps) {
-    const {
-      data,
-      datasource: { languageProvider },
-      range,
-    } = this.props;
+      setHint(queryHint ?? initHint);
+    },
+    [data, datasource, query]
+  );
 
-    if (languageProvider !== prevProps.datasource.languageProvider) {
-      // We reset this only on DS change so we do not flesh loading state on every rangeChange which happens on every
-      // query run if using relative range.
-      this.setState({
-        syntaxLoaded: false,
-      });
-    }
+  useEffect(() => {
+    refreshHint(data?.series ?? []);
+  }, [data?.series, refreshHint]);
 
-    const changedRangeToRefresh = this.rangeChangedToRefresh(range, prevProps.range);
-    // We want to refresh metrics when language provider changes and/or when range changes (we round up intervals to a minute)
-    if (languageProvider !== prevProps.datasource.languageProvider || changedRangeToRefresh) {
-      this.refreshMetrics();
-    }
-
-    if (data && prevProps.data && prevProps.data.series !== data.series) {
-      this.refreshHint();
-    }
-  }
-
-  refreshHint = () => {
-    const { datasource, query, data } = this.props;
-    const initHints = datasource.getInitHints();
-    const initHint = initHints.length > 0 ? initHints[0] : null;
-
-    if (!data || data.series.length === 0) {
-      this.setState({
-        hint: initHint,
-      });
+  const onChangeQuery = (value: string, override?: boolean) => {
+    if (!onChange) {
       return;
     }
-
-    const result = isDataFrame(data.series[0]) ? data.series.map(toLegacyResponseData) : data.series;
-    const queryHints = datasource.getQueryHints(query, result);
-    let queryHint = queryHints.length > 0 ? queryHints[0] : null;
-
-    this.setState({ hint: queryHint ?? initHint });
-  };
-
-  refreshMetrics = async () => {
-    const {
-      range,
-      datasource: { languageProvider },
-    } = this.props;
-
-    this.languageProviderInitializationPromise = makePromiseCancelable(languageProvider.start(range));
-
-    try {
-      const remainingTasks = await this.languageProviderInitializationPromise.promise;
-      await Promise.all(remainingTasks);
-      this.onUpdateLanguage();
-    } catch (err) {
-      if (isCancelablePromiseRejection(err) && err.isCanceled) {
-        // do nothing, promise was canceled
-      } else {
-        throw err;
-      }
-    }
-  };
-
-  rangeChangedToRefresh(range?: TimeRange, prevRange?: TimeRange): boolean {
-    if (range && prevRange) {
-      const sameMinuteFrom = roundMsToMin(range.from.valueOf()) === roundMsToMin(prevRange.from.valueOf());
-      const sameMinuteTo = roundMsToMin(range.to.valueOf()) === roundMsToMin(prevRange.to.valueOf());
-      // If both are same, don't need to refresh.
-      return !(sameMinuteFrom && sameMinuteTo);
-    }
-    return false;
-  }
-
-  /**
-   * TODO #33976: Remove this, add histogram group (query = `histogram_quantile(0.95, sum(rate(${metric}[5m])) by (le))`;)
-   */
-  onChangeLabelBrowser = (selector: string) => {
-    this.onChangeQuery(selector, true);
-    this.setState({ labelBrowserVisible: false });
-  };
-
-  onChangeQuery = (value: string, override?: boolean) => {
     // Send text change to parent
-    const { query, onChange, onRunQuery } = this.props;
-    if (onChange) {
-      const nextQuery: PromQuery = { ...query, expr: value };
-      onChange(nextQuery);
+    const nextQuery: PromQuery = { ...query, expr: value };
+    onChange(nextQuery);
 
-      if (override && onRunQuery) {
-        onRunQuery();
-      }
+    if (override && onRunQuery) {
+      onRunQuery();
     }
   };
 
-  onClickChooserButton = () => {
-    this.setState((state) => ({ labelBrowserVisible: !state.labelBrowserVisible }));
+  const onChangeLabelBrowser = (selector: string) => {
+    onChangeQuery(selector, true);
+    setLabelBrowserVisible(false);
+  };
+
+  const onClickChooserButton = () => {
+    setLabelBrowserVisible(!labelBrowserVisible);
 
     reportInteraction('user_grafana_prometheus_metrics_browser_clicked', {
-      editorMode: this.state.labelBrowserVisible ? 'metricViewClosed' : 'metricViewOpen',
-      app: this.props?.app ?? '',
+      editorMode: labelBrowserVisible ? 'metricViewClosed' : 'metricViewOpen',
+      app: app ?? '',
     });
   };
 
-  onClickHintFix = () => {
-    const { datasource, query, onChange, onRunQuery } = this.props;
-    const { hint } = this.state;
+  const onClickHintFix = () => {
     if (hint?.fix?.action) {
       onChange(datasource.modifyQuery(query, hint.fix.action));
     }
     onRunQuery();
   };
 
-  onUpdateLanguage = () => {
-    const {
-      datasource: { languageProvider },
-    } = this.props;
-    const { metrics } = languageProvider;
+  return (
+    <>
+      <div
+        className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
+        data-testid={props['data-testid']}
+      >
+        {!hideMetricsBrowser && (
+          <button
+            className="gf-form-label query-keyword pointer"
+            onClick={onClickChooserButton}
+            disabled={datasource.lookupsDisabled}
+            type="button"
+            data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.openButton}
+          >
+            {datasource.lookupsDisabled ? (
+              <Trans i18nKey="grafana-prometheus.metrics-browser.disabled-label">(Disabled)</Trans>
+            ) : (
+              <Trans i18nKey="grafana-prometheus.metrics-browser.enabled-label">Metrics browser</Trans>
+            )}
+            <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
+          </button>
+        )}
 
-    if (!metrics) {
-      return;
-    }
-
-    this.setState({ syntaxLoaded: true });
-  };
-
-  render() {
-    const {
-      datasource,
-      datasource: { languageProvider },
-      query,
-      ExtraFieldElement,
-      history = [],
-      theme,
-    } = this.props;
-
-    const { labelBrowserVisible, syntaxLoaded, hint } = this.state;
-    const hasMetrics = languageProvider.metrics.length > 0;
-    const chooserText = getChooserText(datasource.lookupsDisabled, syntaxLoaded, hasMetrics);
-    const buttonDisabled = !(syntaxLoaded && hasMetrics);
-
-    return (
-      <LocalStorageValueProvider<string[]> storageKey={LAST_USED_LABELS_KEY} defaultValue={[]}>
-        {(lastUsedLabels, onLastUsedLabelsSave, onLastUsedLabelsDelete) => {
-          return (
-            <>
-              <div
-                className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
-                data-testid={this.props['data-testid']}
+        <div className="flex-grow-1 min-width-15">
+          <MonacoQueryFieldWrapper
+            languageProvider={languageProvider}
+            history={history}
+            onChange={onChangeQuery}
+            onRunQuery={onRunQuery}
+            initialValue={query.expr ?? ''}
+            placeholder={t(
+              'grafana-prometheus.components.prom-query-field.placeholder-enter-a-prom-ql-query',
+              'Enter a PromQL query…'
+            )}
+            datasource={datasource}
+            timeRange={range ?? getDefaultTimeRange()}
+          />
+        </div>
+      </div>
+      {labelBrowserVisible && (
+        <div className="gf-form">
+          <MetricsBrowserProvider
+            timeRange={range ?? getDefaultTimeRange()}
+            languageProvider={languageProvider}
+            onChange={onChangeLabelBrowser}
+          >
+            <MetricsBrowser />
+          </MetricsBrowserProvider>
+        </div>
+      )}
+      {ExtraFieldElement}
+      {hint ? (
+        <div
+          className={css({
+            flexBasis: '100%',
+          })}
+        >
+          <div className="text-warning">
+            {hint.label}{' '}
+            {hint.fix ? (
+              <button
+                type="button"
+                className={cx(clearButtonStyles(theme), 'text-link', 'muted')}
+                onClick={onClickHintFix}
               >
-                <button
-                  className="gf-form-label query-keyword pointer"
-                  onClick={this.onClickChooserButton}
-                  disabled={buttonDisabled}
-                  type="button"
-                  data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.openButton}
-                >
-                  {chooserText}
-                  <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
-                </button>
-
-                <div className="flex-grow-1 min-width-15">
-                  <MonacoQueryFieldWrapper
-                    languageProvider={languageProvider}
-                    history={history}
-                    onChange={this.onChangeQuery}
-                    onRunQuery={this.props.onRunQuery}
-                    initialValue={query.expr ?? ''}
-                    placeholder="Enter a PromQL query…"
-                    datasource={datasource}
-                  />
-                </div>
-              </div>
-              {labelBrowserVisible && (
-                <div className="gf-form">
-                  <PrometheusMetricsBrowser
-                    languageProvider={languageProvider}
-                    onChange={this.onChangeLabelBrowser}
-                    lastUsedLabels={lastUsedLabels || []}
-                    storeLastUsedLabels={onLastUsedLabelsSave}
-                    deleteLastUsedLabels={onLastUsedLabelsDelete}
-                    timeRange={this.props.range}
-                  />
-                </div>
-              )}
-
-              {ExtraFieldElement}
-              {hint ? (
-                <div
-                  className={css({
-                    flexBasis: '100%',
-                  })}
-                >
-                  <div className="text-warning">
-                    {hint.label}{' '}
-                    {hint.fix ? (
-                      <button
-                        type="button"
-                        className={cx(clearButtonStyles(theme), 'text-link', 'muted')}
-                        onClick={this.onClickHintFix}
-                      >
-                        {hint.fix.label}
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-              ) : null}
-            </>
-          );
-        }}
-      </LocalStorageValueProvider>
-    );
-  }
-}
-
-export const PromQueryField = withTheme2(PromQueryFieldClass);
+                {hint.fix.label}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+};

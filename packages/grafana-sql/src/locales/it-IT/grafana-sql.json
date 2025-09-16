@@ -1,0 +1,154 @@
+{
+  "grafana-sql": {
+    "components": {
+      "confirm-modal": {
+        "builder-mode": "La modalità generatore non visualizza le modifiche apportate al codice. Il generatore di query visualizzerà le ultime modifiche apportate in modalità generatore.",
+        "cancel": "Annulla",
+        "clipboard": "Copiare il tuo codice negli appunti?",
+        "copy-code-and-switch": "Copia codice e cambia",
+        "discard-code-and-switch": "Elimina codice e cambia",
+        "warning": "Attenzione"
+      },
+      "connection-limits": {
+        "auto-max-idle": "Inattività massima automatica",
+        "content-auto-max-idle": "Se abilitato, imposta automaticamente il numero di <1>Connessioni inattive massime</1> sullo stesso valore di <3> Connessioni aperte massime</3>. Se il numero massimo di connessioni aperte non è impostato, verrà impostato sul valore predefinito ({{defaultMaxIdle}}).",
+        "content-max-idle": "Il numero massimo di connessioni nel pool di connessioni inattive. Se <1>Connessioni aperte massine</1> è maggiore di 0 ma inferiore a <3>Connessioni inattive massime</3>, le <5>Connessioni inattive massime</5> verranno ridotte per corrispondere al limite di <8>Connessioni aperte massime</8>. Se impostato su 0, non viene mantenuta alcuna connessione inattiva.",
+        "content-max-lifetime": "La quantità massima di tempo in secondi in cui una connessione può essere riutilizzata. Se impostato su 0, le connessioni vengono riutilizzate per sempre.",
+        "content-max-open": "Il numero massimo di connessioni aperte al database. Se <1>Connessioni inattive massime</1> è maggiore di 0 e <3>Connessioni aperte massime</3> è inferiore a <5>Connessioni inattive massime</5>, <7>Connessioni inattive massime</7> verrà ridotto affinché corrisponda al limite di <9>Connessioni aperte massime</9>. Se impostato su 0, non vi è alcun limite al numero di connessioni aperte.",
+        "max-idle": "Inattive massime",
+        "max-lifetime": "Durata massima",
+        "max-open": "Aperte massime",
+        "title-connection-limits": "Limiti di collegamento"
+      },
+      "dataset-selector": {
+        "aria-label-dataset-selector": "Selettore set di dati"
+      },
+      "error-boundary": {
+        "fall-back": {
+          "error": "Errore"
+        }
+      },
+      "get-custom-operators": {
+        "custom-operators": {
+          "label": {
+            "macros": "Macro"
+          }
+        }
+      },
+      "make-render-column": {
+        "render-column": {
+          "aria-label-group-by": "Raggruppa per",
+          "title-remove-group-by-column": "Rimuovi gruppo per colonna"
+        }
+      },
+      "order-by-row": {
+        "aria-label-order-by": "Ordina per",
+        "label-limit": "Limite",
+        "label-offset": "Compensazione",
+        "label-order-by": "Ordina per"
+      },
+      "preview": {
+        "label-element": {
+          "preview": "Anteprima",
+          "tooltip-copy-to-clipboard": "Copia negli appunti"
+        }
+      },
+      "query-header": {
+        "content-invalid-query": "Query non valida. Controlla qui sotto per i dettagli. <1></1>Tuttavia, puoi comunque eseguire questa query.",
+        "editor-modes": {
+          "label-builder": "Builder",
+          "label-code": "Codice"
+        },
+        "label-dataset": "Set di dati",
+        "label-filter": "Filtro",
+        "label-format": "Formato",
+        "label-group": "Gruppo",
+        "label-order": "Ordina",
+        "label-preview": "Anteprima",
+        "label-table": "Tabella",
+        "placeholder-select-format": "Seleziona il formato",
+        "run-query": "Esegui query"
+      },
+      "query-toolbox": {
+        "content-hit-ctrlcmdreturn-to-run-query": "Premi CTRL/CMD+Invio per eseguire la query",
+        "tooltip-collapse": "Comprimi editor",
+        "tooltip-expand": "Espandi editor",
+        "tooltip-format-query": "Formato query"
+      },
+      "query-validator": {
+        "query-will-process": "<0></0> Questa query elabora <2>{{bytes}}</2> quando viene eseguita.",
+        "validating-query": "Convalida della query in corso..."
+      },
+      "raw-editor": {
+        "render-placeholder": {
+          "editing-in-expanded-code-editor": "Modifica nell'editor di codice espanso"
+        },
+        "title-query-num": "Query {{queryNum}}"
+      },
+      "select-column": {
+        "label-column": "Colonna"
+      },
+      "select-custom-function-parameters": {
+        "aria-label-parameter": "Parametro {{index}} per colonna {{columnIndex}}",
+        "render-parameters": {
+          "params": {
+            "title-remove-parameter": "Rimuovi parametro"
+          }
+        },
+        "title-add-parameter": "Aggiungi parametro"
+      },
+      "select-row": {
+        "aggregate-options": {
+          "options": {
+            "label": {
+              "aggregations": "Aggregazioni",
+              "macros": "Macro"
+            }
+          }
+        },
+        "label": {
+          "time": "tempo",
+          "value": "valore"
+        },
+        "label-alias": "Nome alternativo",
+        "label-data-operations": "Operazioni sui dati",
+        "title-add-column": "Aggiungi colonna",
+        "title-remove-column": "Rimuovi colonna"
+      },
+      "settings": {
+        "aria-label-conjunction": "Congiunzione",
+        "aria-label-field": "Campo",
+        "aria-label-operator": "Operatore",
+        "title-button-filter": "Filtro {{ buttonLabel }}"
+      },
+      "sql-query-editor-lazy": {
+        "text-loading-editor": "Caricamento editor in corso..."
+      },
+      "table-selector": {
+        "aria-label-table-selector": "Selettore tabella",
+        "placeholder-loading": "Caricamento tabelle",
+        "placeholder-select-table": "Seleziona tabella"
+      },
+      "tlssecrets-config": {
+        "content-tlsssl-client-certificate": "Per autenticarsi con un certificato client TLS/SSL, fornisci qui il certificato client.",
+        "content-tlsssl-client-key": "Per autenticarsi con un certificato TLS/SSL client, fornisci qui la chiave.",
+        "content-tlsssl-root-certificate": "Se la modalità TLS/SSL selezionata richiede un certificato radice del server, forniscilo qui",
+        "tlsssl-client-certificate": "Certificato client TLS/SSL",
+        "tlsssl-client-key": "Chiave client TLS/SSL",
+        "tlsssl-root-certificate": "Certificato radice TLS/SSL"
+      },
+      "visual-editor": {
+        "label-filter-by-column-value": "Filtra per valore colonna",
+        "label-group-by-column": "Raggruppa per colonna"
+      },
+      "widgets": {
+        "aria-label-macros-value-selector": "Selettore valore macro"
+      }
+    },
+    "utils": {
+      "get-columns-width-indices": {
+        "label-selected-columns": "Colonne selezionate"
+      }
+    }
+  }
+}

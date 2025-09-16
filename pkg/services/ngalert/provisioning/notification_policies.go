@@ -3,12 +3,14 @@ package provisioning
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"hash"
 	"hash/fnv"
 	"slices"
 	"unsafe"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/common/model"
 	"golang.org/x/exp/maps"
 
@@ -47,7 +49,7 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 		return definitions.Route{}, "", err
 	}
 
-	if rev.Config.AlertmanagerConfig.Config.Route == nil {
+	if rev.Config.AlertmanagerConfig.Route == nil {
 		return definitions.Route{}, "", fmt.Errorf("no route present in current alertmanager config")
 	}
 
@@ -86,11 +88,8 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return definitions.Route{}, "", err
 	}
 
-	receivers := map[string]struct{}{}
+	receivers := revision.GetReceiversNames()
 	receivers[""] = struct{}{} // Allow empty receiver (inheriting from parent)
-	for _, receiver := range revision.GetReceivers(nil) {
-		receivers[receiver.Name] = struct{}{}
-	}
 
 	err = tree.ValidateReceivers(receivers)
 	if err != nil {
@@ -104,12 +103,21 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	for _, mt := range revision.Config.AlertmanagerConfig.TimeIntervals {
 		timeIntervals[mt.Name] = struct{}{}
 	}
-	err = tree.ValidateMuteTimes(timeIntervals)
+	err = tree.ValidateTimeIntervals(timeIntervals)
 	if err != nil {
 		return definitions.Route{}, "", MakeErrRouteInvalidFormat(err)
 	}
 
-	revision.Config.AlertmanagerConfig.Config.Route = &tree
+	revision.Config.AlertmanagerConfig.Route = &tree
+
+	_, err = revision.Config.GetMergedAlertmanagerConfig()
+	if err != nil {
+		if errors.Is(err, definition.ErrSubtreeMatchersConflict) {
+			// TODO temporarily get the conflicting matchers
+			return definitions.Route{}, "", MakeErrRouteConflictingMatchers(fmt.Sprintf("%s", revision.Config.ExtraConfigs[0].MergeMatchers))
+		}
+		nps.log.Warn("Unable to validate the combined routing tree because of an error during merging. This could be a sign of broken external configuration. Skipping", "error", err)
+	}
 
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
@@ -143,7 +151,7 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 	if err != nil {
 		return definitions.Route{}, err
 	}
-	revision.Config.AlertmanagerConfig.Config.Route = route
+	revision.Config.AlertmanagerConfig.Route = route
 	err = nps.ensureDefaultReceiverExists(revision.Config, defaultCfg)
 	if err != nil {
 		return definitions.Route{}, err
@@ -272,7 +280,6 @@ func writeToHash(sum hash.Hash, r *definitions.Route) {
 	writeDuration(r.GroupWait)
 	writeDuration(r.GroupInterval)
 	writeDuration(r.RepeatInterval)
-	writeString(string(r.Provenance))
 	for _, route := range r.Routes {
 		writeToHash(sum, route)
 	}

@@ -29,6 +29,26 @@ export class ThresholdMapper {
           thresholds.push({ value: value, op: 'lt', visible });
           break;
         }
+        case 'eq': {
+          const value = evaluator.params[0];
+          thresholds.push({ value: value, op: 'eq', visible });
+          break;
+        }
+        case 'ne': {
+          const value = evaluator.params[0];
+          thresholds.push({ value: value, op: 'ne', visible });
+          break;
+        }
+        case 'gte': {
+          const value = evaluator.params[0];
+          thresholds.push({ value: value, op: 'ge', visible });
+          break;
+        }
+        case 'lte': {
+          const value = evaluator.params[0];
+          thresholds.push({ value: value, op: 'le', visible });
+          break;
+        }
         case 'outside_range': {
           const value1 = evaluator.params[0];
           const value2 = evaluator.params[1];
@@ -53,6 +73,33 @@ export class ThresholdMapper {
           } else {
             thresholds.push({ value: value1, op: 'gt', visible });
             thresholds.push({ value: value2, op: 'lt', visible });
+          }
+          break;
+        }
+        case 'outside_range_included': {
+          const value1 = evaluator.params[0];
+          const value2 = evaluator.params[1];
+
+          if (value1 >= value2) {
+            thresholds.push({ value: value1, op: 'ge', visible });
+            thresholds.push({ value: value2, op: 'le', visible });
+          } else {
+            thresholds.push({ value: value1, op: 'le', visible });
+            thresholds.push({ value: value2, op: 'ge', visible });
+          }
+
+          break;
+        }
+        case 'within_range_included': {
+          const value1 = evaluator.params[0];
+          const value2 = evaluator.params[1];
+
+          if (value1 >= value2) {
+            thresholds.push({ value: value1, op: 'le', visible });
+            thresholds.push({ value: value2, op: 'ge', visible });
+          } else {
+            thresholds.push({ value: value1, op: 'ge', visible });
+            thresholds.push({ value: value2, op: 'le', visible });
           }
           break;
         }

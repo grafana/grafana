@@ -11,8 +11,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -32,18 +32,30 @@ type ThresholdCommand struct {
 type ThresholdType string
 
 const (
-	ThresholdIsAbove        ThresholdType = "gt"
-	ThresholdIsBelow        ThresholdType = "lt"
-	ThresholdIsWithinRange  ThresholdType = "within_range"
-	ThresholdIsOutsideRange ThresholdType = "outside_range"
+	ThresholdIsAbove                ThresholdType = "gt"
+	ThresholdIsBelow                ThresholdType = "lt"
+	ThresholdIsEqual                ThresholdType = "eq"
+	ThresholdIsNotEqual             ThresholdType = "ne"
+	ThresholdIsGreaterThanEqual     ThresholdType = "gte"
+	ThresholdIsLessThanEqual        ThresholdType = "lte"
+	ThresholdIsWithinRange          ThresholdType = "within_range"
+	ThresholdIsOutsideRange         ThresholdType = "outside_range"
+	ThresholdIsWithinRangeIncluded  ThresholdType = "within_range_included"
+	ThresholdIsOutsideRangeIncluded ThresholdType = "outside_range_included"
 )
 
 var (
 	supportedThresholdFuncs = []string{
 		string(ThresholdIsAbove),
 		string(ThresholdIsBelow),
+		string(ThresholdIsEqual),
+		string(ThresholdIsNotEqual),
+		string(ThresholdIsGreaterThanEqual),
+		string(ThresholdIsLessThanEqual),
 		string(ThresholdIsWithinRange),
 		string(ThresholdIsOutsideRange),
+		string(ThresholdIsWithinRangeIncluded),
+		string(ThresholdIsOutsideRangeIncluded),
 	}
 )
 
@@ -60,6 +72,16 @@ func NewThresholdCommand(refID, referenceVar string, thresholdFunc ThresholdType
 			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 2", thresholdFunc, len(conditions))
 		}
 		predicate = withinRangePredicate{left: conditions[0], right: conditions[1]}
+	case ThresholdIsWithinRangeIncluded:
+		if len(conditions) < 2 {
+			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 2", thresholdFunc, len(conditions))
+		}
+		predicate = withinRangeIncludedPredicate{left: conditions[0], right: conditions[1]}
+	case ThresholdIsOutsideRangeIncluded:
+		if len(conditions) < 2 {
+			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 2", thresholdFunc, len(conditions))
+		}
+		predicate = outsideRangeIncludedPredicate{left: conditions[0], right: conditions[1]}
 	case ThresholdIsAbove:
 		if len(conditions) < 1 {
 			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 1", thresholdFunc, len(conditions))
@@ -70,6 +92,26 @@ func NewThresholdCommand(refID, referenceVar string, thresholdFunc ThresholdType
 			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 1", thresholdFunc, len(conditions))
 		}
 		predicate = lessThanPredicate{value: conditions[0]}
+	case ThresholdIsEqual:
+		if len(conditions) < 1 {
+			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 1", thresholdFunc, len(conditions))
+		}
+		predicate = equalPredicate{value: conditions[0]}
+	case ThresholdIsNotEqual:
+		if len(conditions) < 1 {
+			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 1", thresholdFunc, len(conditions))
+		}
+		predicate = notEqualPredicate{value: conditions[0]}
+	case ThresholdIsGreaterThanEqual:
+		if len(conditions) < 1 {
+			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 1", thresholdFunc, len(conditions))
+		}
+		predicate = greaterThanEqualPredicate{value: conditions[0]}
+	case ThresholdIsLessThanEqual:
+		if len(conditions) < 1 {
+			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 1", thresholdFunc, len(conditions))
+		}
+		predicate = lessThanEqualPredicate{value: conditions[0]}
 	default:
 		return nil, fmt.Errorf("expected threshold function to be one of [%s], got %s", strings.Join(supportedThresholdFuncs, ", "), thresholdFunc)
 	}
@@ -88,7 +130,7 @@ type ConditionEvalJSON struct {
 }
 
 // UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
-func UnmarshalThresholdCommand(rn *rawNode, features featuremgmt.FeatureToggles) (Command, error) {
+func UnmarshalThresholdCommand(rn *rawNode) (Command, error) {
 	cmdConfig := ThresholdCommandConfig{}
 	if err := json.Unmarshal(rn.QueryRaw, &cmdConfig); err != nil {
 		return nil, fmt.Errorf("failed to parse the threshold command: %w", err)
@@ -108,7 +150,7 @@ func UnmarshalThresholdCommand(rn *rawNode, features featuremgmt.FeatureToggles)
 	if err != nil {
 		return nil, fmt.Errorf("invalid condition: %w", err)
 	}
-	if firstCondition.UnloadEvaluator != nil && features.IsEnabledGlobally(featuremgmt.FlagRecoveryThreshold) {
+	if firstCondition.UnloadEvaluator != nil {
 		unloading, err := NewThresholdCommand(rn.RefID, referenceVar, firstCondition.UnloadEvaluator.Type, firstCondition.UnloadEvaluator.Params)
 		if err != nil {
 			return nil, fmt.Errorf("invalid unloadCondition: %w", err)
@@ -132,7 +174,7 @@ func (tc *ThresholdCommand) NeedsVars() []string {
 	return []string{tc.ReferenceVar}
 }
 
-func (tc *ThresholdCommand) Execute(_ context.Context, _ time.Time, vars mathexp.Vars, _ tracing.Tracer) (mathexp.Results, error) {
+func (tc *ThresholdCommand) Execute(_ context.Context, _ time.Time, vars mathexp.Vars, _ tracing.Tracer, _ *metrics.ExprMetrics) (mathexp.Results, error) {
 	eval := func(maybeValue *float64) *float64 {
 		if maybeValue == nil {
 			return nil
@@ -279,6 +321,24 @@ func (r outsideRangePredicate) Eval(f float64) bool {
 	return f < r.left || f > r.right
 }
 
+type withinRangeIncludedPredicate struct {
+	left  float64
+	right float64
+}
+
+func (r withinRangeIncludedPredicate) Eval(f float64) bool {
+	return f >= r.left && f <= r.right
+}
+
+type outsideRangeIncludedPredicate struct {
+	left  float64
+	right float64
+}
+
+func (r outsideRangeIncludedPredicate) Eval(f float64) bool {
+	return f <= r.left || f >= r.right
+}
+
 type lessThanPredicate struct {
 	value float64
 }
@@ -293,4 +353,36 @@ type greaterThanPredicate struct {
 
 func (r greaterThanPredicate) Eval(f float64) bool {
 	return f > r.value
+}
+
+type equalPredicate struct {
+	value float64
+}
+
+func (r equalPredicate) Eval(f float64) bool {
+	return f == r.value
+}
+
+type notEqualPredicate struct {
+	value float64
+}
+
+func (r notEqualPredicate) Eval(f float64) bool {
+	return f != r.value
+}
+
+type greaterThanEqualPredicate struct {
+	value float64
+}
+
+func (r greaterThanEqualPredicate) Eval(f float64) bool {
+	return f >= r.value
+}
+
+type lessThanEqualPredicate struct {
+	value float64
+}
+
+func (r lessThanEqualPredicate) Eval(f float64) bool {
+	return f <= r.value
 }

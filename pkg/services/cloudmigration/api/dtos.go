@@ -150,17 +150,19 @@ const (
 type ItemErrorCode string
 
 const (
-	ErrDatasourceNameConflict     ItemErrorCode = "DATASOURCE_NAME_CONFLICT"
-	ErrDatasourceInvalidURL       ItemErrorCode = "DATASOURCE_INVALID_URL"
-	ErrDatasourceAlreadyManaged   ItemErrorCode = "DATASOURCE_ALREADY_MANAGED"
-	ErrFolderNameConflict         ItemErrorCode = "FOLDER_NAME_CONFLICT"
-	ErrDashboardAlreadyManaged    ItemErrorCode = "DASHBOARD_ALREADY_MANAGED"
-	ErrLibraryElementNameConflict ItemErrorCode = "LIBRARY_ELEMENT_NAME_CONFLICT"
-	ErrUnsupportedDataType        ItemErrorCode = "UNSUPPORTED_DATA_TYPE"
-	ErrResourceConflict           ItemErrorCode = "RESOURCE_CONFLICT"
-	ErrUnexpectedStatus           ItemErrorCode = "UNEXPECTED_STATUS_CODE"
-	ErrInternalServiceError       ItemErrorCode = "INTERNAL_SERVICE_ERROR"
-	ErrGeneric                    ItemErrorCode = "GENERIC_ERROR"
+	ErrAlertRulesQuotaReached      ItemErrorCode = "ALERT_RULES_QUOTA_REACHED"
+	ErrAlertRulesGroupQuotaReached ItemErrorCode = "ALERT_RULES_GROUP_QUOTA_REACHED"
+	ErrDatasourceNameConflict      ItemErrorCode = "DATASOURCE_NAME_CONFLICT"
+	ErrDatasourceInvalidURL        ItemErrorCode = "DATASOURCE_INVALID_URL"
+	ErrDatasourceAlreadyManaged    ItemErrorCode = "DATASOURCE_ALREADY_MANAGED"
+	ErrFolderNameConflict          ItemErrorCode = "FOLDER_NAME_CONFLICT"
+	ErrDashboardAlreadyManaged     ItemErrorCode = "DASHBOARD_ALREADY_MANAGED"
+	ErrLibraryElementNameConflict  ItemErrorCode = "LIBRARY_ELEMENT_NAME_CONFLICT"
+	ErrUnsupportedDataType         ItemErrorCode = "UNSUPPORTED_DATA_TYPE"
+	ErrResourceConflict            ItemErrorCode = "RESOURCE_CONFLICT"
+	ErrUnexpectedStatus            ItemErrorCode = "UNEXPECTED_STATUS_CODE"
+	ErrInternalServiceError        ItemErrorCode = "INTERNAL_SERVICE_ERROR"
+	ErrGeneric                     ItemErrorCode = "GENERIC_ERROR"
 )
 
 // swagger:parameters getCloudMigrationRun
@@ -269,6 +271,14 @@ type CreateSnapshotRequest struct {
 	// UID of a session
 	// in: path
 	UID string `json:"uid"`
+
+	// in:body
+	// required:true
+	Body CreateSnapshotRequestDTO `json:"body"`
+}
+
+type CreateSnapshotRequestDTO struct {
+	ResourceTypes []MigrateDataType `json:"resourceTypes"`
 }
 
 // swagger:response createSnapshotResponse
@@ -294,6 +304,24 @@ type GetSnapshotParams struct {
 	// required:false
 	// default: 100
 	ResultLimit int `json:"resultLimit"`
+
+	// ResultSortColumn can be used to override the default system sort. Valid values are "name", "resource_type", and "status".
+	// in:query
+	// required:false
+	// default: default
+	ResultSortColumn string `json:"resultSortColumn"`
+
+	// ResultSortOrder is used with ResultSortColumn. Valid values are ASC and DESC.
+	// in:query
+	// required:false
+	// default: ASC
+	ResultSortOrder string `json:"resultSortOrder"`
+
+	// ErrorsOnly is used to only return resources with error statuses
+	// in:query
+	// required:false
+	// default: false
+	ErrorsOnly bool `json:"errorsOnly"`
 
 	// Session UID of a session
 	// in: path
@@ -376,4 +404,21 @@ type CancelSnapshotParams struct {
 	// UID of a snapshot
 	// in: path
 	SnapshotUID string `json:"snapshotUid"`
+}
+
+// swagger:response resourceDependenciesResponse
+type ResourceDependenciesResponse struct {
+	// in: body
+	Body ResourceDependenciesResponseDTO
+}
+
+// swagger:model ResourceDependenciesResponseDTO
+type ResourceDependenciesResponseDTO struct {
+	ResourceDependencies []ResourceDependencyDTO `json:"resourceDependencies"`
+}
+
+// swagger:model ResourceDependencyDTO
+type ResourceDependencyDTO struct {
+	ResourceType MigrateDataType   `json:"resourceType"`
+	Dependencies []MigrateDataType `json:"dependencies"`
 }

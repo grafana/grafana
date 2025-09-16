@@ -11,7 +11,7 @@
 import { useLayoutEffect, useRef } from 'react';
 import * as React from 'react';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { getPlacement } from '../../utils/tooltipUtils';
 import { Portal } from '../Portal/Portal';
 
@@ -25,6 +25,7 @@ interface Props extends Omit<React.HTMLAttributes<HTMLDivElement>, 'content'> {
   wrapperClassName?: string;
   renderArrow?: boolean;
   hidePopper?: () => void;
+  style?: React.CSSProperties;
 }
 
 export function Popover({
@@ -36,6 +37,7 @@ export function Popover({
   referenceElement,
   renderArrow,
   hidePopper,
+  style: styleOverrides,
   ...rest
 }: Props) {
   const theme = useTheme2();
@@ -89,6 +91,7 @@ export function Popover({
         style={{
           ...floatingStyles,
           ...placementStyles,
+          ...styleOverrides,
         }}
         className={wrapperClassName}
         {...rest}

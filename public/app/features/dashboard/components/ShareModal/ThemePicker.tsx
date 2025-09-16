@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { RadioButtonGroup, Field } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 interface Props {
   selectedTheme: string;

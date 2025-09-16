@@ -381,10 +381,9 @@ func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.Featu
 		instancesReaderRole, instancesWriterRole,
 		notificationsReaderRole, notificationsWriterRole,
 		alertingReaderRole, alertingWriterRole, alertingAdminRole, alertingProvisionerRole, alertingProvisioningReaderWithSecretsRole, alertingProvisioningStatus,
-	}
-
-	if features.IsEnabledGlobally(featuremgmt.FlagAlertingApiServer) {
-		fixedRoles = append(fixedRoles, receiversReaderRole, receiversCreatorRole, receiversWriterRole, templatesReaderRole, templatesWriterRole, timeIntervalsReaderRole, timeIntervalsWriterRole, routesReaderRole, routesWriterRole)
+		// k8s roles
+		receiversReaderRole, receiversCreatorRole, receiversWriterRole, templatesReaderRole, templatesWriterRole,
+		timeIntervalsReaderRole, timeIntervalsWriterRole, routesReaderRole, routesWriterRole,
 	}
 
 	return service.DeclareFixedRoles(fixedRoles...)

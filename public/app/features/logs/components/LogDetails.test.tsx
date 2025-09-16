@@ -11,12 +11,21 @@ import {
   createDataFrame,
   DataFrameType,
   CoreApp,
+  PluginExtensionPoints,
 } from '@grafana/data';
+import { setPluginLinksHook } from '@grafana/runtime';
 
 import { LogDetails, Props } from './LogDetails';
 import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
-import { createLogRow } from './__mocks__/logRow';
 import { getLogRowStyles } from './getLogRowStyles';
+import { createLogRow } from './mocks/logRow';
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
+  };
+});
 
 const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowModel>) => {
   const theme = createTheme();
@@ -294,6 +303,31 @@ describe('LogDetails', () => {
     expect(screen.getByText('value1')).toBeInTheDocument();
     expect(screen.getByText('shouldShowLinkName')).toBeInTheDocument();
     expect(screen.getByText('shouldShowLinkValue')).toBeInTheDocument();
+  });
+
+  it('should load plugin links for logs view resource attributes extension point', () => {
+    const usePluginLinksMock = jest.fn().mockReturnValue({ links: [] });
+    setPluginLinksHook(usePluginLinksMock);
+    jest.requireMock('@grafana/runtime').usePluginLinks = usePluginLinksMock;
+
+    const rowOverrides = {
+      datasourceType: 'loki',
+      datasourceUid: 'grafanacloud-logs',
+      labels: { key1: 'label1', key2: 'label2' },
+    };
+    setup(undefined, rowOverrides);
+
+    expect(usePluginLinksMock).toHaveBeenCalledWith({
+      extensionPointId: PluginExtensionPoints.LogsViewResourceAttributes,
+      limitPerPlugin: 10,
+      context: {
+        datasource: {
+          type: 'loki',
+          uid: 'grafanacloud-logs',
+        },
+        attributes: { key1: ['label1'], key2: ['label2'] },
+      },
+    });
   });
 
   describe('Label types', () => {

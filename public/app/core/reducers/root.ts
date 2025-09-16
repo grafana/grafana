@@ -1,10 +1,13 @@
 import { ReducersMapObject } from '@reduxjs/toolkit';
 import { AnyAction, combineReducers } from 'redux';
 
+import { alertingAPI as alertingPackageAPI } from '@grafana/alerting/unstable';
+import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
+import { rulesAPIv0alpha1 } from 'app/api/clients/rules/v0alpha1';
+import { shortURLAPIv1alpha1 } from 'app/api/clients/shorturl/v1alpha1';
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
-import apiKeysReducers from 'app/features/api-keys/state/reducers';
 import authConfigReducers from 'app/features/auth-config/state/reducers';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import browseDashboardsReducers from 'app/features/browse-dashboards/state/slice';
@@ -27,17 +30,21 @@ import teamsReducers from 'app/features/teams/state/reducers';
 import usersReducers from 'app/features/users/state/reducers';
 import templatingReducers from 'app/features/variables/state/keyedVariablesReducer';
 
+import { advisorAPIv0alpha1 } from '../../api/clients/advisor/v0alpha1';
+import { folderAPIv1beta1 } from '../../api/clients/folder/v1beta1';
+import { iamAPIv0alpha1 } from '../../api/clients/iam/v0alpha1';
+import { playlistAPIv0alpha1 } from '../../api/clients/playlist/v0alpha1';
+import { provisioningAPIv0alpha1 } from '../../api/clients/provisioning/v0alpha1';
 import { alertingApi } from '../../features/alerting/unified/api/alertingApi';
-import { iamApi } from '../../features/iam/api/api';
 import { userPreferencesAPI } from '../../features/preferences/api';
-import { queryLibraryApi } from '../../features/query-library/api/api';
 import { cleanUpAction } from '../actions/cleanUp';
+// Used by the API client generator
+// PLOP_INJECT_IMPORT
 
 const rootReducers = {
   ...sharedReducers,
   ...alertingReducers,
   ...teamsReducers,
-  ...apiKeysReducers,
   ...foldersReducers,
   ...dashboardReducers,
   ...exploreReducers,
@@ -57,12 +64,21 @@ const rootReducers = {
   ...authConfigReducers,
   plugins: pluginsReducer,
   [alertingApi.reducerPath]: alertingApi.reducer,
+  [alertingPackageAPI.reducerPath]: alertingPackageAPI.reducer,
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
   [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
   [cloudMigrationAPI.reducerPath]: cloudMigrationAPI.reducer,
-  [queryLibraryApi.reducerPath]: queryLibraryApi.reducer,
-  [iamApi.reducerPath]: iamApi.reducer,
+  [iamAPIv0alpha1.reducerPath]: iamAPIv0alpha1.reducer,
+  [playlistAPIv0alpha1.reducerPath]: playlistAPIv0alpha1.reducer,
   [userPreferencesAPI.reducerPath]: userPreferencesAPI.reducer,
+  [provisioningAPIv0alpha1.reducerPath]: provisioningAPIv0alpha1.reducer,
+  [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
+  [advisorAPIv0alpha1.reducerPath]: advisorAPIv0alpha1.reducer,
+  [dashboardAPIv0alpha1.reducerPath]: dashboardAPIv0alpha1.reducer,
+  [rulesAPIv0alpha1.reducerPath]: rulesAPIv0alpha1.reducer,
+  [shortURLAPIv1alpha1.reducerPath]: shortURLAPIv1alpha1.reducer,
+  // PLOP_INJECT_REDUCER
+  // Used by the API client generator
 };
 
 const addedReducers = {};

@@ -1,4 +1,4 @@
-import { TypedVariableModel } from '@grafana/data';
+import { AdHocVariableFilter, TypedVariableModel } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -10,6 +10,7 @@ import {
   QueryVariable,
   SceneVariable,
   SceneVariableSet,
+  ScopesVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -33,6 +34,10 @@ export function createVariablesForDashboard(oldModel: DashboardModel) {
     // TODO: Remove filter
     // Added temporarily to allow skipping non-compatible variables
     .filter((v): v is SceneVariable => Boolean(v));
+
+  if (config.featureToggles.scopeFilters) {
+    variableObjects.push(new ScopesVariable({ enable: true }));
+  }
 
   return new SceneVariableSet({
     variables: variableObjects,
@@ -126,8 +131,13 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     name: variable.name,
     label: variable.label,
     description: variable.description,
+    showInControlsMenu: variable.showInControlsMenu,
   };
   if (variable.type === 'adhoc') {
+    const originFilters: AdHocVariableFilter[] = [];
+    const filters: AdHocVariableFilter[] = [];
+    variable.filters?.forEach((filter) => (filter.origin ? originFilters.push(filter) : filters.push(filter)));
+
     return new AdHocFiltersVariable({
       ...commonProperties,
       description: variable.description,
@@ -135,7 +145,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
       datasource: variable.datasource,
       applyMode: 'auto',
-      filters: variable.filters ?? [],
+      originFilters,
+      filters,
       baseFilters: variable.baseFilters ?? [],
       defaultKeys: variable.defaultKeys,
       allowCustomValue: variable.allowCustomValue,
@@ -180,6 +191,11 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
       definition: variable.definition,
       allowCustomValue: variable.allowCustomValue,
+      staticOptions: variable.staticOptions?.map((option) => ({
+        label: String(option.text),
+        value: String(option.value),
+      })),
+      staticOptionsOrder: variable.staticOptionsOrder,
     });
   } else if (variable.type === 'datasource') {
     return new DataSourceVariable({
@@ -246,6 +262,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
       // @ts-expect-error
       defaultOptions: variable.options,
+      defaultValue: variable.defaultValue,
       allowCustomValue: variable.allowCustomValue,
     });
   } else {

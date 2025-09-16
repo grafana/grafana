@@ -1,15 +1,21 @@
 package resource
 
 import (
-	context "context"
+	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type WriteEvent struct {
-	Type       WatchEvent_Type // ADDED, MODIFIED, DELETED
-	Key        *ResourceKey    // the request key
-	PreviousRV int64           // only for Update+Delete
+	Type       resourcepb.WatchEvent_Type // ADDED, MODIFIED, DELETED
+	Key        *resourcepb.ResourceKey    // the request key
+	PreviousRV int64                      // only for Update+Delete
+
+	// GUID is optional and might be used when persisting an event.
+	// It is always set by the resource server.
+	GUID string
 
 	// The json payload (without resourceVersion)
 	Value []byte
@@ -21,18 +27,44 @@ type WriteEvent struct {
 	ObjectOld utils.GrafanaMetaAccessor
 }
 
-// WriteEvents after they include a resource version
+func (e *WriteEvent) Validate() error {
+	if e.Object == nil {
+		return fmt.Errorf("object is nil")
+	}
+
+	if e.Key == nil {
+		return fmt.Errorf("key is nil")
+	}
+
+	if e.Value == nil {
+		return fmt.Errorf("value is nil")
+	}
+
+	if e.Type == resourcepb.WatchEvent_UNKNOWN {
+		return fmt.Errorf("watch event type is unknown")
+	}
+
+	return nil
+}
+
+// WrittenEvent is a WriteEvent reported with a resource version.
 type WrittenEvent struct {
-	WriteEvent
+	Type       resourcepb.WatchEvent_Type
+	Key        *resourcepb.ResourceKey
+	PreviousRV int64
+
+	// The json payload (without resourceVersion)
+	Value []byte
+
 	// Metadata
 	Folder string
 
-	// The resource version
+	// The resource version.
 	ResourceVersion int64
 
 	// Timestamp when the event is created
 	Timestamp int64
 }
 
-// A function to write events
+// EventAppender is a function to write events.
 type EventAppender = func(context.Context, *WriteEvent) (int64, error)

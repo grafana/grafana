@@ -31,17 +31,17 @@ The command palette has been updated to provide a more efficient way to navigate
 
 To launch the command palette, use the keyboard shortcut `cmd + K` on Mac or `ctrl + K` on Linux/Windows.
 
-To learn more about the command palette, refer to [Search]({{< relref "../search" >}}).
+To learn more about the command palette, refer to [Search](../../search/).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-94-command-palette.png" max-width="750px" caption="Grafana command palette" >}}
 
 ### New navigation
 
-_Generally available on Grafana Cloud, and available to preview using the `topnav` [feature toggle]({{< relref "../setup-grafana/configure-grafana#feature_toggles" >}}) in all editions of Grafana._
+_Generally available on Grafana Cloud, and available to preview using the `topnav` [feature toggle](../../setup-grafana/configure-grafana/#feature_toggles) in all editions of Grafana._
 
 The navigation in Grafana has been updated with a new design and an improved structure to make it easier for you to access the data you need. With this update, you'll be able to quickly navigate between features, giving you full visibility into the health of your systems.
 
-The new navigation is gradually rolling out to all users on Grafana Cloud. If you’re using Grafana Open Source and Enterprise, you can enable this feature using the `topnav` [feature toggle]({{< relref "../setup-grafana/configure-grafana#feature_toggles" >}}).
+The new navigation is gradually rolling out to all users on Grafana Cloud. If you’re using Grafana Open Source and Enterprise, you can enable this feature using the `topnav` [feature toggle](../../setup-grafana/configure-grafana/#feature_toggles).
 
 > **Note:** The Grafana documentation has not yet been updated to reflect changes to the navigation.
 
@@ -51,11 +51,11 @@ The new navigation is gradually rolling out to all users on Grafana Cloud. If yo
 
 ## Dashboards and visualizations
 
-We've made the following changes to dashboards and visualizations. Learn more about dashboards in our [dashboards documentation]({{< relref "../dashboards" >}}).
+We've made the following changes to dashboards and visualizations. Learn more about dashboards in our [dashboards documentation](../../dashboards/).
 
 ### Dashboard panel redesign
 
-_Available to preview using the `newPanelChromeUI` [feature toggle]({{< relref "../setup-grafana/configure-grafana#feature_toggles" >}}) in all editions of Grafana_.
+_Available to preview using the `newPanelChromeUI` [feature toggle](../../setup-grafana/configure-grafana/#feature_toggles) in all editions of Grafana_.
 
 Dashboard panels contain a lot of information, some of which is difficult to discover or access from the dashboard. With our redesigned panels, we've improved accessibility and made it easier to understand the status of a panel by adding and moving key elements.
 
@@ -69,7 +69,7 @@ However, we have more planned: we’re going to make even more improvements to t
 
 ### New data source connection page in Dashboards and Explore
 
-_Available to preview using the `datasourceOnboarding` [feature toggle]({{< relref "../setup-grafana/configure-grafana#feature_toggles" >}})._
+_Available to preview using the `datasourceOnboarding` [feature toggle](../../setup-grafana/configure-grafana/#feature_toggles)._
 
 When you start your journey to create a dashboard or explore your data, but you don't have a data source connected yet, you’ll be shown a page that guides you to set up a first connection.
 
@@ -85,7 +85,7 @@ We've updated the **Details** section of a log line. Previously some of the inte
 
 {{< figure src="/static/img/logs/log-details-whats-new-9-4.png" max-width="750px" caption="Log details redesign with interactions" >}}
 
-Learn more about viewing logs in our [Logs panel documentation]({{< relref "../panels-visualizations/visualizations/logs" >}}).
+Learn more about viewing logs in our [Logs panel documentation](../../panels-visualizations/visualizations/logs/).
 
 ### Loki datasource query validation
 
@@ -95,7 +95,7 @@ We added support to validate queries and visually display errors as a query is b
 
 {{< figure src="/media/docs/grafana/logs-loki-query-validation-whats-new-9-4.png" max-width="750px" caption="Loki query validation" >}}
 
-Learn more about viewing logs in our [Logs panel documentation]({{< relref "../panels-visualizations/visualizations/logs" >}}).
+Learn more about viewing logs in our [Logs panel documentation](../../panels-visualizations/visualizations/logs/).
 
 ### Loki logs sample in Explore
 
@@ -111,7 +111,7 @@ _Available in **beta** in all editions of Grafana_
 
 Canvas is a new panel that combines the power of Grafana with the flexibility of custom elements. Canvas visualizations are extensible form-built panels that allow you to explicitly place elements within static and dynamic layouts. This empowers you to design custom visualizations and overlay data in ways that aren’t possible with standard Grafana panels, all within Grafana’s UI. If you’ve used popular UI and web design tools, then designing Canvas panels will feel very familiar.
 
-In Grafana v9.4, we have added the ability to create connections (arrows). Connections enable you to connect elements together to create more complex visualizations. We also added support for data links and a brand new server element. To learn more about the Canvas panel, refer to [Canvas]({{< relref "../panels-visualizations/visualizations/canvas" >}}).
+In Grafana v9.4, we have added the ability to create connections (arrows). Connections enable you to connect elements together to create more complex visualizations. We also added support for data links and a brand new server element. To learn more about the Canvas panel, refer to [Canvas](../../panels-visualizations/visualizations/canvas/).
 
 {{< video-embed src="/media/docs/grafana/canvas-connections-9-4-0.mp4" max-width="750px" caption="Canvas panel connections" >}}
 
@@ -127,7 +127,7 @@ We have added a configuration option that enables you to require an expiration d
 
 This change will not affect existing tokens. However, newly created tokens will require an expiration date that doesn't exceed the configuration option `token_expiration_day_limit`. This option is disabled by default.
 
-Learn more about service accounts in our [Service account documentation]({{< relref "../administration/service-accounts" >}}).
+Learn more about service accounts in our [Service account documentation](../../administration/service-accounts/).
 
 ### OAuth providers setting for skip org role sync
 
@@ -135,7 +135,7 @@ While Grafana integrates with many different auth providers, we have received re
 
 This option enables you to skip synchronization from your configured OAuth provider specifically in the auth provider section under `skip_org_role_sync`. Previously users could only do this for certain providers using the `oauth_skip_org_role_sync_update` option, but this would include all of the configured providers.
 
-Learn more about Oauth in our [Oauth configuration guide]({{< relref "../setup-grafana/configure-security/configure-authentication/generic-oauth" >}}).
+Learn more about Oauth in our [Oauth configuration guide](../../setup-grafana/configure-security/configure-authentication/generic-oauth/).
 
 ### RBAC support for Grafana OnCall plugin
 
@@ -146,7 +146,7 @@ Before RBAC support in Grafana OnCall, it was only possible to allow your organi
 
 For example, you can assign a Viewer basic role to a user in your organization (users must still have a basic role assigned) and also assign them the new Grafana OnCall RBAC role of **Schedules Editor**. This assignment enables the user to view everything in Grafana OnCall, and edit OnCall schedules.
 
-Learn more about role-based access control in our [RBAC docs]({{< relref "../administration/roles-and-permissions/access-control" >}}).
+Learn more about role-based access control in our [RBAC docs](../../administration/roles-and-permissions/access-control/).
 
 ### SAML auto login
 
@@ -154,13 +154,13 @@ We've added auto-login support for SAML authentication, which you can turn on wi
 have a unified configuration style among all authentication providers. Instead of using
 `oauth_auto_login`, use the new `auto_login` option to enable automatic login for specific OAuth providers.
 
-Learn more about SAML setup in our [SAML configuration guide]({{< relref "../setup-grafana/configure-security/configure-authentication/saml" >}}).
+Learn more about SAML setup in our [SAML configuration guide](../../setup-grafana/configure-security/configure-authentication/saml/).
 
 ## Auditing and Usage Insights: Support for Loki multi-tenancy
 
 _This feature is available for Enterprise customers_
 
-This feature adds support to push analytics events and auditing logs to Loki with multi-tenancy mode, by specifying a tenant id. Learn more about [auditing]({{< relref "../setup-grafana/configure-security/audit-grafana" >}}) and [usage insights]({{< relref "../setup-grafana/configure-security/export-logs" >}}) in our docs.
+This feature adds support to push analytics events and auditing logs to Loki with multi-tenancy mode, by specifying a tenant id. Learn more about [auditing](../../setup-grafana/configure-security/audit-grafana/) and [usage insights](../../setup-grafana/configure-security/export-logs/) in our docs.
 
 ## Reporting: Zoom in and out on your dashboard in a report PDF
 
@@ -173,11 +173,11 @@ You can modify the scale factor for each report in the report editor when you sh
 
 {{< figure src="/media/docs/grafana/FormatReportShare9.4.png" max-width="750px" caption="Scale factor feature in Share functionality" >}}
 
-Learn more about reporting in our [documentation]({{< relref "../dashboards/create-reports" >}})
+Learn more about reporting in our [documentation](../../dashboards/create-reports/)
 
 ## Alerting
 
-We've made major improvements to Grafana Alerts, from new contact points and search options to improved workflows between Alerting and OnCall. For all the details, refer to our [Alerting documentation]({{< relref "../alerting" >}}).
+We've made major improvements to Grafana Alerts, from new contact points and search options to improved workflows between Alerting and OnCall. For all the details, refer to our [Alerting documentation](../../alerting/).
 
 ### Alerting: alert rules
 
@@ -271,7 +271,7 @@ Grafana Alerting is now compatible with AWS Aurora, but does not provide technic
 
 ## Enterprise Datasources
 
-We've made improvements to all [Enterprise Datasources]({{< relref "../introduction/grafana-enterprise#enterprise-data-sources" >}}), fixing small bugs, and updating libraries. We've also added many new features and support for additional APIs. Refer to each datasource's documentation and the change log for additional information.
+We've made improvements to all [Enterprise Datasources](../../introduction/grafana-enterprise/#enterprise-data-sources), fixing small bugs, and updating libraries. We've also added many new features and support for additional APIs. Refer to each datasource's documentation and the change log for additional information.
 
 ### DataDog Datasource
 

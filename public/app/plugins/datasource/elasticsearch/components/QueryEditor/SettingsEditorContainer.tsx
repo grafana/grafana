@@ -14,6 +14,8 @@ const getStyles = (theme: GrafanaTheme2, hidden: boolean) => {
       flexDirection: 'column',
     }),
     settingsWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
       paddingTop: theme.spacing(0.5),
     }),
     icon: css({
@@ -21,7 +23,15 @@ const getStyles = (theme: GrafanaTheme2, hidden: boolean) => {
     }),
     button: css(
       {
-        justifyContent: 'start',
+        justifyContent: 'flex-start',
+        display: 'flex',
+        alignItems: 'center',
+        padding: theme.spacing(0, 1),
+        fontSize: theme.typography.bodySmall.fontSize,
+        backgroundColor: theme.colors.background.secondary,
+        height: '32px',
+        lineHeight: '32px',
+        border: 'none',
       },
       hidden && {
         color: theme.colors.text.disabled,
@@ -45,7 +55,7 @@ export const SettingsEditorContainer = ({ label, children, hidden = false }: Pro
     <InlineSegmentGroup>
       <div className={cx(styles.wrapper)}>
         <button
-          className={cx('gf-form-label query-part', styles.button, segmentStyles)}
+          className={cx(styles.button, segmentStyles)}
           onClick={() => setOpen(!open)}
           aria-expanded={open}
           type="button"

@@ -3,15 +3,15 @@ import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react
 import Prism, { Grammar, LanguageMap } from 'prismjs';
 import { memo, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
-import usePrevious from 'react-use/lib/usePrevious';
+import { usePrevious } from 'react-use';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Editor } from 'slate-react';
 
 import { DataLinkBuiltInVars, GrafanaTheme2, VariableOrigin, VariableSuggestion } from '@grafana/data';
 
-import { SlatePrism } from '../../slate-plugins';
-import { useStyles2 } from '../../themes';
+import { SlatePrism } from '../../slate-plugins/slate-prism';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { SCHEMA, makeValue } from '../../utils/slate';
 import { getInputStyles } from '../Input/Input';
 import { Portal } from '../Portal/Portal';

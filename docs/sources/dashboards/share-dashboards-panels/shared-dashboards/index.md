@@ -302,7 +302,7 @@ guaranteed because plugin developers can override this functionality. The follow
 - Panels that use frontend data sources will fail to fetch data.
 - Variables and queries including variables are not supported.
 - Exemplars will be omitted from the panel.
-- Only annotations that query the `-- Grafana --` data source are supported.
+- Only annotations that query the `-- Grafana --` data source and use the query type `Annotations & Alerts` are supported.
 - Organization annotations are not supported.
 - Grafana Live and real-time event streams are not supported.
 - Library panels are not supported.

@@ -10,7 +10,8 @@
 //          "searchWords": [
 //              "hello",
 //              "message"
-//          ]
+//          ],
+//          "total": 81
 //      },
 //      "preferredVisualisationType": "logs"
 //  }
@@ -45,7 +46,8 @@
             "searchWords": [
               "hello",
               "message"
-            ]
+            ],
+            "total": 81
           },
           "preferredVisualisationType": "logs"
         },

@@ -38,10 +38,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-func TestCallResource(t *testing.T) {
+func TestIntegrationCallResource(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	staticRootPath, err := filepath.Abs("../../public/")
 	require.NoError(t, err)
 
@@ -49,7 +52,7 @@ func TestCallResource(t *testing.T) {
 	cfg.StaticRootPath = staticRootPath
 	cfg.Azure = &azsettings.AzureSettings{}
 
-	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), nil, &cloudwatch.CloudWatchService{}, nil, nil, nil, nil,
+	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), nil, &cloudwatch.Service{}, nil, nil, nil, nil,
 		nil, nil, nil, nil, testdatasource.ProvideService(), nil, nil, nil, nil, nil, nil, nil, nil)
 
 	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)

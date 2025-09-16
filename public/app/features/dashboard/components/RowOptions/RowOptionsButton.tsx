@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import { t } from '@grafana/i18n';
 import { Icon, ModalsController } from '@grafana/ui';
 
 import { OnRowOptionsUpdate } from './RowOptionsForm';
@@ -25,7 +26,7 @@ export const RowOptionsButton = ({ repeat, title, onUpdate, warning }: RowOption
           <button
             type="button"
             className="pointer"
-            aria-label="Row options"
+            aria-label={t('dashboard.row-options-button.aria-label-row-options', 'Row options')}
             onClick={() => {
               showModal(RowOptionsModal, {
                 title,

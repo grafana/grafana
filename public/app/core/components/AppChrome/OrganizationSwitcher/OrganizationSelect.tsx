@@ -2,14 +2,16 @@ import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Icon, Select, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { UserOrg } from 'app/types';
+import { UserOrg } from 'app/types/user';
 
 import { OrganizationBaseProps } from './types';
 
 export function OrganizationSelect({ orgs, onSelectChange }: OrganizationBaseProps) {
   const styles = useStyles2(getStyles);
+
   const { orgId } = contextSrv.user;
 
   const options = useMemo(
@@ -32,7 +34,7 @@ export function OrganizationSelect({ orgs, onSelectChange }: OrganizationBasePro
 
   return (
     <Select<UserOrg>
-      aria-label="Change organization"
+      aria-label={t('navigation.org-switcher.aria-label', 'Change organization')}
       width={'auto'}
       value={value}
       prefix={<Icon className="prefix-icon" name="building" />}

@@ -21,7 +21,7 @@ describe('annotations', () => {
   it('should fetch annotation for an alertId', () => {
     const ALERT_ID = 'abc123';
     fetchAnnotations(ALERT_ID);
-    expect(get).toBeCalledWith('/api/annotations', { alertId: ALERT_ID });
+    expect(get).toBeCalledWith('/api/annotations', { alertUID: ALERT_ID });
   });
 });
 

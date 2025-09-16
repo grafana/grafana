@@ -1,6 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/operations.ts
 import { binaryScalarOperations } from './binaryScalarOperations';
-import { LabelParamEditor } from './components/LabelParamEditor';
 import {
   defaultAddOperationHandler,
   functionRendererLeft,
@@ -216,7 +215,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
         {
           name: 'Destination Label',
           type: 'string',
-          editor: LabelParamEditor,
         },
         {
           name: 'Separator',
@@ -227,7 +225,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
           type: 'string',
           restParam: true,
           optional: true,
-          editor: LabelParamEditor,
         },
       ],
       defaultParams: ['', ',', ''],
@@ -261,7 +258,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     createFunction({ id: PromOperationId.Sort }),
     createFunction({ id: PromOperationId.SortDesc }),
     createFunction({ id: PromOperationId.Sqrt }),
-    createFunction({ id: PromOperationId.Stddev }),
     createFunction({
       id: PromOperationId.Tan,
       category: PromVisualQueryOperationCategory.Trigonometric,
@@ -287,7 +283,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   return list;
 }
 
-export function createFunction(definition: Partial<QueryBuilderOperationDef>): QueryBuilderOperationDef {
+function createFunction(definition: Partial<QueryBuilderOperationDef>): QueryBuilderOperationDef {
   return {
     ...definition,
     id: definition.id!,
@@ -300,7 +296,7 @@ export function createFunction(definition: Partial<QueryBuilderOperationDef>): Q
   };
 }
 
-export function createRangeFunction(name: string, withRateInterval = false): QueryBuilderOperationDef {
+function createRangeFunction(name: string, withRateInterval = false): QueryBuilderOperationDef {
   return {
     id: name,
     name: getPromOperationDisplayName(name),
@@ -328,7 +324,7 @@ function operationTypeChangedHandlerForRangeFunction(
   return operation;
 }
 
-export function operationWithRangeVectorRenderer(
+function operationWithRangeVectorRenderer(
   model: QueryBuilderOperation,
   def: QueryBuilderOperationDef,
   innerExpr: string

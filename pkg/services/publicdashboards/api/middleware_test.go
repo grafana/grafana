@@ -177,7 +177,7 @@ func runMw(t *testing.T, ctx *contextmodel.ReqContext, httpmethod string, path s
 
 	// setup response recorder to return
 	response := httptest.NewRecorder()
-	ctx.Context.Resp = web.NewResponseWriter("GET", response)
+	ctx.Resp = web.NewResponseWriter("GET", response)
 
 	// run middleware
 	mw(ctx)

@@ -2,7 +2,11 @@ import { css } from '@emotion/css';
 import { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Icon, Stack, TextLink, useStyles2 } from '@grafana/ui';
+import lokiIconSvg from 'app/plugins/datasource/loki/img/loki_icon.svg';
+import mimirLogoSvg from 'app/plugins/datasource/prometheus/img/mimir_logo.svg';
+import prometheusLogoSvg from 'app/plugins/datasource/prometheus/img/prometheus_logo.svg';
 import { PromApplication, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { WithReturnButton } from '../../components/WithReturnButton';
@@ -24,7 +28,7 @@ const Namespace = ({ children, name, href, application }: NamespaceProps) => {
           <DataSourceIcon application={application} />
           {href ? (
             <WithReturnButton
-              title="Alert rules"
+              title={t('alerting.namespace.title-alert-rules', 'Alert rules')}
               component={
                 <TextLink href={href} inline={false}>
                   {name}
@@ -53,20 +57,11 @@ interface NamespaceIconProps {
 export const DataSourceIcon = ({ application, size = 16 }: NamespaceIconProps) => {
   switch (application) {
     case PromApplication.Prometheus:
-      return (
-        <img
-          width={size}
-          height={size}
-          src="public/app/plugins/datasource/prometheus/img/prometheus_logo.svg"
-          alt="Prometheus"
-        />
-      );
+      return <img width={size} height={size} src={prometheusLogoSvg} alt="Prometheus" />;
     case PromApplication.Mimir:
-      return (
-        <img width={size} height={size} src="public/app/plugins/datasource/prometheus/img/mimir_logo.svg" alt="Mimir" />
-      );
+      return <img width={size} height={size} src={mimirLogoSvg} alt="Mimir" />;
     case 'Loki':
-      return <img width={size} height={size} src="public/app/plugins/datasource/loki/img/loki_icon.svg" alt="Loki" />;
+      return <img width={size} height={size} src={lokiIconSvg} alt="Loki" />;
     case 'grafana':
     default:
       return <Icon name="grafana" />;

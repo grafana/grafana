@@ -6,11 +6,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
@@ -20,14 +20,14 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
 
-func ProvideDiscoveryStage(cfg *config.PluginManagementCfg, pf finder.Finder, pr registry.Service) *discovery.Discovery {
+func ProvideDiscoveryStage(cfg *config.PluginManagementCfg, pr registry.Service) *discovery.Discovery {
 	return discovery.New(cfg, discovery.Opts{
-		FindFunc: pf.Find,
-		FindFilterFuncs: []discovery.FindFilterFunc{
+		FilterFuncs: []discovery.FilterFunc{
 			discovery.NewPermittedPluginTypesFilterStep([]plugins.Type{
-				plugins.TypeDataSource, plugins.TypeApp, plugins.TypePanel, plugins.TypeSecretsManager,
+				plugins.TypeDataSource, plugins.TypeApp, plugins.TypePanel,
 			}),
 			func(ctx context.Context, _ plugins.Class, b []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
 				return NewDuplicatePluginIDFilterStep(pr).Filter(ctx, b)
@@ -43,9 +43,16 @@ func ProvideDiscoveryStage(cfg *config.PluginManagementCfg, pf finder.Finder, pr
 }
 
 func ProvideBootstrapStage(cfg *config.PluginManagementCfg, sc plugins.SignatureCalculator, a *assetpath.Service) *bootstrap.Bootstrap {
+	disableAlertingForTempoDecorateFunc := func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+		if p.ID == coreplugin.Tempo && !cfg.Features.TempoAlertingEnabled {
+			p.Alerting = false
+		}
+		return p, nil
+	}
+
 	return bootstrap.New(cfg, bootstrap.Opts{
-		ConstructFunc: bootstrap.DefaultConstructFunc(sc, a),
-		DecorateFuncs: bootstrap.DefaultDecorateFuncs(cfg),
+		ConstructFunc: bootstrap.DefaultConstructFunc(cfg, sc, a),
+		DecorateFuncs: append(bootstrap.DefaultDecorateFuncs(cfg), disableAlertingForTempoDecorateFunc),
 	})
 }
 
@@ -61,10 +68,9 @@ func ProvideValidationStage(cfg *config.PluginManagementCfg, sv signature.Valida
 
 func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Service, bp plugins.BackendFactoryProvider,
 	pm process.Manager, externalServiceRegistry auth.ExternalServiceRegistry,
-	roleRegistry pluginaccesscontrol.RoleRegistry,
-	actionSetRegistry pluginaccesscontrol.ActionSetRegistry,
-	pluginEnvProvider envvars.Provider,
-	tracer tracing.Tracer) *initialization.Initialize {
+	roleRegistry pluginaccesscontrol.RoleRegistry, actionSetRegistry pluginaccesscontrol.ActionSetRegistry,
+	pluginEnvProvider envvars.Provider, tracer tracing.Tracer, provisionedPluginsManager provisionedplugins.Manager,
+) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
 			ExternalServiceRegistrationStep(cfg, externalServiceRegistry, tracer),
@@ -74,6 +80,8 @@ func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Ser
 			RegisterActionSetsStep(actionSetRegistry),
 			ReportBuildMetrics,
 			ReportTargetMetrics,
+			ReportFSMetrics,
+			ReportCloudProvisioningMetrics(provisionedPluginsManager),
 			initialization.PluginRegistrationStep(pr),
 		},
 	})

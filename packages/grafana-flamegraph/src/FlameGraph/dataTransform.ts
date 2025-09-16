@@ -46,7 +46,7 @@ export function nestedSetToLevels(
   let offset = 0;
 
   let parent: LevelItem | undefined = undefined;
-  const uniqueLabels: Record<string, LevelItem[]> = {};
+  const uniqueLabels: Record<string, LevelItem[]> = Object.create(null);
 
   for (let i = 0; i < container.data.length; i++) {
     const currentLevel = container.getLevel(i);

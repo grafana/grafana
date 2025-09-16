@@ -442,7 +442,6 @@ func TestValidateNotificationTemplates(t *testing.T) {
 			expError: errors.New("invalid template: template: Different name than definition:1: template: multiple definition of template \"Alert Instance Template\""),
 		},
 		{
-			// This is fine as long as the template name is different from the definition, it just ignores the extra text.
 			name: "Extra text outside definition block - different template name and definition",
 			template: NotificationTemplate{
 				Name:       "Different name than definition",
@@ -452,16 +451,16 @@ func TestValidateNotificationTemplates(t *testing.T) {
 			expContent: `{{ define "Alert Instance Template" }}\nFiring: {{ .Labels.alertname }}\nSilence: {{ .SilenceURL }}\n{{ end }}[what is this?]`,
 			expError:   nil,
 		},
+		// This test used to error because our template code parsed the template with the filename as template name.
+		// However, we have since moved away from this. We keep this test to ensure we don't regress.
 		{
-			// This is NOT fine as the template name is the same as the definition.
-			// GO template parser will treat it as if it's wrapped in {{ define "Alert Instance Template" }}, thus creating a duplicate definition.
 			name: "Extra text outside definition block - same template name and definition",
 			template: NotificationTemplate{
 				Name:       "Alert Instance Template",
 				Template:   `{{ define "Alert Instance Template" }}\nFiring: {{ .Labels.alertname }}\nSilence: {{ .SilenceURL }}\n{{ end }}[what is this?]`,
 				Provenance: "test",
 			},
-			expError: errors.New("invalid template: template: Alert Instance Template:1: template: multiple definition of template \"Alert Instance Template\""),
+			expContent: `{{ define "Alert Instance Template" }}\nFiring: {{ .Labels.alertname }}\nSilence: {{ .SilenceURL }}\n{{ end }}[what is this?]`,
 		},
 	}
 

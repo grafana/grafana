@@ -1,6 +1,6 @@
 import { UrlQueryValue } from '@grafana/data';
+import { ThunkResult } from 'app/types/store';
 
-import { ThunkResult } from '../../../types';
 import { variableAdapters } from '../adapters';
 import { setOptionFromUrl } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';

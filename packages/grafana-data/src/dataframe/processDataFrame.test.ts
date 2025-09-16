@@ -388,6 +388,59 @@ describe('sorted DataFrame', () => {
   });
 });
 
+describe('sorted DataFrame by nanos', () => {
+  it('Should sort nanos with numeric timestamp', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'first', type: FieldType.time, values: [1, 1, 2, 2, 3, 3], nanos: [100, 102, 1, 2, 1000, 999] },
+        { name: 'second', type: FieldType.string, values: ['a', 'b', 'c', 'd', 'e', 'f'] },
+      ],
+    });
+
+    const sorted = sortDataFrame(frame, 0, true);
+    expect(sorted.length).toEqual(6);
+    expect(sorted.fields[0].values).toEqual([3, 3, 2, 2, 1, 1]);
+    expect(sorted.fields[1].values).toEqual(['e', 'f', 'd', 'c', 'b', 'a']);
+  });
+
+  it('Should sort by nanos with dateTime timestamp', () => {
+    const frame = toDataFrame({
+      fields: [
+        {
+          name: 'first',
+          type: FieldType.time,
+          values: [dateTime(50), dateTime(50), dateTime(100)],
+          nanos: [1, 0, 100],
+        },
+        { name: 'second', type: FieldType.string, values: ['a', 'b', 'c'] },
+      ],
+    });
+
+    const sorted = sortDataFrame(frame, 0);
+    expect(sorted.length).toEqual(3);
+    expect(sorted.fields[0].values).toEqual([dateTime(50), dateTime(50), dateTime(100)]);
+    expect(sorted.fields[1].values).toEqual(['b', 'a', 'c']);
+  });
+
+  // Not sure if we expect nanos to exist on any field type besides time fields, but the schema allows it.
+  // Keep in mind if sorting by a non time field, the nanos is expected to present on the field that is being sorted
+  it('Should sort by nanos with string timestamp', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'fist', type: FieldType.time, values: [1, 2, 3, 3] },
+        { name: 'second', type: FieldType.string, values: ['a', 'b', 'b', 'c'], nanos: [100, 0, 1, 0] },
+        { name: 'third', type: FieldType.number, values: [2000, 3000, 1000] },
+      ],
+    });
+
+    const sorted = sortDataFrame(frame, 1, true);
+    expect(sorted.length).toEqual(4);
+    expect(sorted.fields[0].values).toEqual([3, 2, 3, 1]);
+    expect(sorted.fields[0].nanos).toBeUndefined();
+    expect(sorted.fields[1].values).toEqual(['c', 'b', 'b', 'a']);
+  });
+});
+
 describe('reverse DataFrame', () => {
   const frame = toDataFrame({
     fields: [

@@ -2,6 +2,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { locationService, logInfo } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
@@ -18,13 +19,25 @@ export const ScenesNewRuleFromPanelButton = ({ panel, className }: ScenesNewRule
   const { loading, value: formValues } = useAsync(() => scenesPanelToRuleFormValues(panel), [panel]);
 
   if (loading) {
-    return <Button disabled={true}>New alert rule</Button>;
+    return (
+      <Button disabled={true}>
+        <Trans i18nKey="dashboard-scene.scenes-new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
+      </Button>
+    );
   }
 
   if (!formValues) {
     return (
-      <Alert severity="info" title="No alerting capable query found">
-        Cannot create alerts from this panel because no query to an alerting capable datasource is found.
+      <Alert
+        severity="info"
+        title={t(
+          'dashboard-scene.scenes-new-rule-from-panel-button.title-no-alerting-capable-query-found',
+          'No alerting capable query found'
+        )}
+      >
+        <Trans i18nKey="dashboard-scene.scenes-new-rule-from-panel-button.body-no-alerting-capable-query-found">
+          Cannot create alerts from this panel because no query to an alerting capable datasource is found.
+        </Trans>
       </Alert>
     );
   }
@@ -44,7 +57,7 @@ export const ScenesNewRuleFromPanelButton = ({ panel, className }: ScenesNewRule
 
   return (
     <Button icon="bell" onClick={onClick} className={className} data-testid="create-alert-rule-button">
-      New alert rule
+      <Trans i18nKey="dashboard-scene.scenes-new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
     </Button>
   );
 };

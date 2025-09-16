@@ -1,27 +1,78 @@
-# Owned by grafana-release-guild
-# Intended to be dropped into the base repo Ex: grafana/grafana
-name: Check for patch conflicts
-run-name: check-patch-conflicts-${{ github.base_ref }}-${{ github.head_ref }}
+name: Dispatch check for patch conflicts
 on:
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-    branches:
-      - "main"
-      - "v*.*.*"
-      - "release-*"
+  workflow_call:
+    inputs:
+      head_ref:
+        type: string
+        required: true
+      base_ref:
+        type: string
+        required: true
+      repo:
+        type: string
+        required: true
+      sender_login:
+        type: string
+        required: true
+      sha:
+        type: string
+        required: true
+      pr_commit_sha:
+        type: string
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
 
 # Since this is run on a pull request, we want to apply the patches intended for the
 # target branch onto the source branch, to verify compatibility before merging.
 jobs:
-  trigger_downstream_patch_check:
-    uses: grafana/security-patch-actions/.github/workflows/test-patches.yml@main
-    if: github.repository == 'grafana/grafana'
-    with:
-      src_repo: "${{ github.repository }}"
-      src_ref: "${{ github.head_ref }}" # this is the source branch name, Ex: "feature/newthing"
-      patch_repo: "${{ github.repository }}-security-patches"
-      patch_ref: "${{ github.base_ref }}" # this is the target branch name, Ex: "main"
-    secrets: inherit
+  dispatch-job:
+    env:
+      HEAD_REF: ${{ inputs.head_ref }}
+      BASE_REF: ${{ github.base_ref }}
+      REPO: ${{ inputs.repo }}
+      SENDER: ${{ inputs.sender_login }}
+      SHA: ${{ inputs.sha }}
+      PR_COMMIT_SHA: ${{ inputs.pr_commit_sha }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Get vault secrets"
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        with:
+          # App needs Actions: Read/Write for the grafana/security-patch-actions repo
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          permissions: "{\"actions\": \"write\", \"workflows\": \"write\"}"
+          repositories: "[\"security-patch-actions\"]"
+      - name: "Dispatch job"
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.generate_token.outputs.token }}
+          script: |
+            const {HEAD_REF, BASE_REF, REPO, SENDER, SHA, PR_COMMIT_SHA} = process.env;
+
+            await github.rest.actions.createWorkflowDispatch({
+                owner: 'grafana',
+                repo: 'security-patch-actions',
+                workflow_id: 'test-patches-event.yml',
+                ref: 'main',
+                inputs: {
+                  src_repo: REPO,
+                  src_ref: HEAD_REF,
+                  src_merge_sha: SHA,
+                  src_pr_commit_sha: PR_COMMIT_SHA,
+                  patch_repo: REPO + '-security-patches',
+                  patch_ref: BASE_REF,
+                  triggering_github_handle: SENDER
+                }
+            })

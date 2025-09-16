@@ -26,19 +26,30 @@ import (
 	zlogger "github.com/grafana/grafana/pkg/services/authz/zanzana/logger"
 )
 
-func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
+func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store storage.OpenFGADatastore) (*server.Server, error) {
+	logger := log.New("openfga.server")
+
 	opts := []server.OpenFGAServiceV1Option{
 		server.WithDatastore(store),
 		server.WithLogger(zlogger.New(logger)),
-		server.WithCheckQueryCacheEnabled(cfg.CheckQueryCache),
-		server.WithCheckQueryCacheTTL(cfg.CheckQueryCacheTTL),
+		server.WithCheckCacheLimit(cfg.CacheSettings.CheckCacheLimit),
+		server.WithCacheControllerEnabled(cfg.CacheSettings.CacheControllerEnabled),
+		server.WithCacheControllerTTL(cfg.CacheSettings.CacheControllerTTL),
+		server.WithCheckQueryCacheEnabled(cfg.CacheSettings.CheckQueryCacheEnabled),
+		server.WithCheckQueryCacheTTL(cfg.CacheSettings.CheckQueryCacheTTL),
+		server.WithCheckIteratorCacheEnabled(cfg.CacheSettings.CheckIteratorCacheEnabled),
+		server.WithCheckIteratorCacheMaxResults(cfg.CacheSettings.CheckIteratorCacheMaxResults),
+		server.WithCheckIteratorCacheTTL(cfg.CacheSettings.CheckIteratorCacheTTL),
 		server.WithListObjectsMaxResults(cfg.ListObjectsMaxResults),
+		server.WithListObjectsIteratorCacheEnabled(cfg.CacheSettings.ListObjectsIteratorCacheEnabled),
+		server.WithListObjectsIteratorCacheMaxResults(cfg.CacheSettings.ListObjectsIteratorCacheMaxResults),
+		server.WithListObjectsIteratorCacheTTL(cfg.CacheSettings.ListObjectsIteratorCacheTTL),
+		server.WithSharedIteratorEnabled(cfg.CacheSettings.SharedIteratorEnabled),
+		server.WithSharedIteratorLimit(cfg.CacheSettings.SharedIteratorLimit),
+		server.WithSharedIteratorTTL(cfg.CacheSettings.SharedIteratorTTL),
 		server.WithListObjectsDeadline(cfg.ListObjectsDeadline),
 	}
 
-	// FIXME(kalleep): Interceptors
-	// We probably need to at least need to add store id interceptor also
-	// would be nice to inject our own requestid?
 	srv, err := server.NewServerWithOpts(opts...)
 	if err != nil {
 		return nil, err

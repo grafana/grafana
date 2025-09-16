@@ -5,6 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
 
 import { GrafanaTheme2, PluginMeta, PluginType } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Spinner, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -43,7 +44,12 @@ export function PluginUsage({ plugin }: Props) {
     return (
       <div className={styles.wrap}>
         <div className={styles.info}>
-          {plugin.name} is used <b>{found.totalRows}</b> times.
+          <Trans
+            i18nKey="plugins.plugin-usage.num-usages"
+            values={{ pluginName: plugin.name, numUsages: found.totalRows }}
+          >
+            {'{{pluginName}}'} is used <b>{'{{numUsages}}'}</b> times.
+          </Trans>
         </div>
         <AutoSizer>
           {({ width, height }) => {
@@ -69,15 +75,26 @@ export function PluginUsage({ plugin }: Props) {
 
   if (!config.featureToggles.panelTitleSearch) {
     return (
-      <Alert title="Missing feature toggle: panelTitleSearch">
-        Plugin usage requires the new search index to find usage across dashboards
+      <Alert
+        title={t(
+          'plugins.plugin-usage.title-missing-feature-toggle-panel-title-search',
+          'Missing feature toggle: {{toggle}}',
+          { toggle: 'panelTitleSearch' }
+        )}
+        severity="warning"
+      >
+        <Trans i18nKey="plugins.plugin-usage.body-missing-feature-toggle-panel-title-search">
+          Plugin usage requires the new search index to find usage across dashboards. Please enable the feature toggle
+        </Trans>
       </Alert>
     );
   }
 
   return (
     <EmptyListCTA
-      title={`${plugin.name} is not used in any dashboards yet`}
+      title={t('plugins.plugin-usage.title-not-used-yet', '{{pluginName}} is not used in any dashboards yet', {
+        pluginName: plugin.name,
+      })}
       buttonIcon="plus"
       buttonTitle="Create Dashboard"
       buttonLink={`dashboard/new?panelType=${plugin.id}&editPanel=1`}

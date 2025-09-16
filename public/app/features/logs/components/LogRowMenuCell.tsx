@@ -10,10 +10,12 @@ import {
   MouseEvent,
 } from 'react';
 
-import { LogRowContextOptions, LogRowModel, getDefaultTimeRange, locationUtil, urlUtil } from '@grafana/data';
+import { LogRowContextOptions, LogRowModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
 import { ClipboardButton, IconButton, PopoverContent } from '@grafana/ui';
-import { getConfig } from 'app/core/config';
+
+import { handleOpenLogsContextClick } from '../utils';
 
 import { LogRowStyles } from './getLogRowStyles';
 
@@ -35,7 +37,6 @@ interface Props {
   styles: LogRowStyles;
   mouseIsOver: boolean;
   onBlur: () => void;
-  onPinToContentOutlineClick?: (row: LogRowModel, onOpenContext: (row: LogRowModel) => void) => void;
   addonBefore?: ReactNode[];
   addonAfter?: ReactNode[];
 }
@@ -66,31 +67,9 @@ export const LogRowMenuCell = memo(
       e.stopPropagation();
     }, []);
     const onShowContextClick = useCallback(
-      async (event: MouseEvent<HTMLButtonElement>) => {
+      async (event: MouseEvent<HTMLElement>) => {
         event.stopPropagation();
-        // if ctrl or meta key is pressed, open query in new Explore tab
-        if (
-          getRowContextQuery &&
-          (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey || event.nativeEvent.shiftKey)
-        ) {
-          const win = window.open('about:blank');
-          // for this request we don't want to use the cached filters from a context provider, but always want to refetch and clear
-          const query = await getRowContextQuery(row, undefined, false);
-          if (query && win) {
-            const url = urlUtil.renderUrl(locationUtil.assureBaseUrl(`${getConfig().appSubUrl}explore`), {
-              left: JSON.stringify({
-                datasource: query.datasource,
-                queries: [query],
-                range: getDefaultTimeRange(),
-              }),
-            });
-            win.location = url;
-
-            return;
-          }
-          win?.close();
-        }
-        onOpenContext(row);
+        handleOpenLogsContextClick(event, row, getRowContextQuery, onOpenContext);
       },
       [onOpenContext, getRowContextQuery, row]
     );
@@ -132,9 +111,9 @@ export const LogRowMenuCell = memo(
             size="md"
             name="gf-pin"
             onClick={() => onUnpinLine && onUnpinLine(row)}
-            tooltip="Unpin line"
+            tooltip={t('logs.log-row-menu-cell.tooltip-unpin-line', 'Unpin line')}
             tooltipPlacement="top"
-            aria-label="Unpin line"
+            aria-label={t('logs.log-row-menu-cell.aria-label-unpin-line', 'Unpin line')}
             tabIndex={0}
           />
         )}
@@ -146,9 +125,9 @@ export const LogRowMenuCell = memo(
                 size="md"
                 name="gf-show-context"
                 onClick={onShowContextClick}
-                tooltip="Show context"
+                tooltip={t('logs.log-row-menu-cell.tooltip-show-context', 'Show context')}
                 tooltipPlacement="top"
-                aria-label="Show context"
+                aria-label={t('logs.log-row-menu-cell.aria-label-show-context', 'Show context')}
                 tabIndex={0}
               />
             )}
@@ -159,7 +138,7 @@ export const LogRowMenuCell = memo(
               fill="text"
               size="md"
               getText={getLogText}
-              tooltip="Copy to clipboard"
+              tooltip={t('logs.log-row-menu-cell.tooltip-copy-to-clipboard', 'Copy to clipboard')}
               tooltipPlacement="top"
               tabIndex={0}
             />
@@ -169,9 +148,9 @@ export const LogRowMenuCell = memo(
                 size="md"
                 name="gf-pin"
                 onClick={() => onUnpinLine && onUnpinLine(row)}
-                tooltip="Unpin line"
+                tooltip={t('logs.log-row-menu-cell.tooltip-unpin-line', 'Unpin line')}
                 tooltipPlacement="top"
-                aria-label="Unpin line"
+                aria-label={t('logs.log-row-menu-cell.aria-label-unpin-line', 'Unpin line')}
                 tabIndex={0}
               />
             )}
@@ -183,14 +162,14 @@ export const LogRowMenuCell = memo(
                 onClick={() => onPinLine && onPinLine(row)}
                 tooltip={pinLineButtonTooltipTitle ?? 'Pin line'}
                 tooltipPlacement="top"
-                aria-label="Pin line"
+                aria-label={t('logs.log-row-menu-cell.aria-label-pin-line', 'Pin line')}
                 tabIndex={0}
               />
             )}
             {onPermalinkClick && row.rowId !== undefined && row.uid && (
               <IconButton
-                tooltip="Copy shortlink"
-                aria-label="Copy shortlink"
+                tooltip={t('logs.log-row-menu-cell.tooltip-copy-shortlink', 'Copy shortlink')}
+                aria-label={t('logs.log-row-menu-cell.aria-label-copy-shortlink', 'Copy shortlink')}
                 tooltipPlacement="top"
                 size="md"
                 name="share-alt"
@@ -215,7 +194,6 @@ function addClickListenersToNode(nodes: ReactNode[], row: LogRowModel) {
         return node;
       }
       return cloneElement(node, {
-        // @ts-expect-error
         onClick: (event: MouseEvent<HTMLElement>) => {
           onClick(event, row);
         },

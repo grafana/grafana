@@ -24,6 +24,7 @@ type TracingConfig struct {
 	ServiceVersion string
 
 	ProfilingIntegration bool
+	Insecure             bool
 }
 
 func ProvideTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
@@ -48,7 +49,7 @@ func NewJaegerTracingConfig(address string, propagation string) (*TracingConfig,
 	return cfg, nil
 }
 
-func NewOTLPTracingConfig(address string, propagation string) (*TracingConfig, error) {
+func NewOTLPTracingConfig(address string, propagation string, insecure bool) (*TracingConfig, error) {
 	if address == "" {
 		return nil, fmt.Errorf("address cannot be empty")
 	}
@@ -57,6 +58,7 @@ func NewOTLPTracingConfig(address string, propagation string) (*TracingConfig, e
 	cfg.enabled = otlpExporter
 	cfg.Address = address
 	cfg.Propagation = propagation
+	cfg.Insecure = insecure
 	return cfg, nil
 }
 
@@ -123,6 +125,7 @@ func ParseTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
 		tc.enabled = otlpExporter
 	}
 	tc.Propagation = section.Key("propagation").MustString("")
+	tc.Insecure = section.Key("insecure").MustBool(true)
 	return tc, nil
 }
 

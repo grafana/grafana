@@ -30,6 +30,8 @@ const config: ConfigFile = {
 
         'getDashboardByUid',
         'getLibraryElementByUid',
+
+        'getResourceDependencies',
       ],
     },
     '../public/app/features/preferences/api/user/endpoints.gen.ts': {
@@ -39,25 +41,71 @@ const config: ConfigFile = {
       apiImport: 'baseAPI',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
-    '../public/app/features/iam/api/endpoints.gen.ts': {
+    '../public/app/api/clients/iam/v0alpha1/endpoints.gen.ts': {
       schemaFile: '../data/openapi/iam.grafana.app-v0alpha1.json',
-      apiFile: '../public/app/features/iam/api/api.ts',
-      apiImport: 'iamApi',
+      apiFile: '../public/app/api/clients/iam/v0alpha1/baseAPI.ts',
       filterEndpoints: ['getDisplayMapping'],
-      exportName: 'generatedIamApi',
-      flattenArg: false,
       tag: true,
     },
-    '../public/app/features/query-library/api/endpoints.gen.ts': {
-      schemaFile: '../data/openapi/peakq.grafana.app-v0alpha1.json',
-      apiFile: '../public/app/features/query-library/api/api.ts',
-      apiImport: 'queryLibraryApi',
-      filterEndpoints: ['listQueryTemplate', 'createQueryTemplate', 'deleteQueryTemplate', 'updateQueryTemplate'],
-      exportName: 'generatedQueryLibraryApi',
-      flattenArg: false,
+    '../public/app/api/clients/provisioning/v0alpha1/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/provisioning/v0alpha1/baseAPI.ts',
+      schemaFile: '../data/openapi/provisioning.grafana.app-v0alpha1.json',
+      filterEndpoints,
+      tag: true,
+      hooks: true,
+    },
+    '../public/app/api/clients/folder/v1beta1/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/folder/v1beta1/baseAPI.ts',
+      schemaFile: '../data/openapi/folder.grafana.app-v1beta1.json',
       tag: true,
     },
+    '../public/app/api/clients/advisor/v0alpha1/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/advisor/v0alpha1/baseAPI.ts',
+      schemaFile: '../data/openapi/advisor.grafana.app-v0alpha1.json',
+      filterEndpoints: [
+        'createCheck',
+        'getCheck',
+        'listCheck',
+        'deleteCheck',
+        'updateCheck',
+        'listCheckType',
+        'updateCheckType',
+      ],
+      tag: true,
+    },
+    '../public/app/api/clients/playlist/v0alpha1/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/playlist/v0alpha1/baseAPI.ts',
+      schemaFile: '../data/openapi/playlist.grafana.app-v0alpha1.json',
+      filterEndpoints: ['listPlaylist', 'getPlaylist', 'createPlaylist', 'deletePlaylist', 'replacePlaylist'],
+      tag: true,
+    },
+    '../public/app/api/clients/dashboard/v0alpha1/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/dashboard/v0alpha1/baseAPI.ts',
+      schemaFile: '../data/openapi/dashboard.grafana.app-v0alpha1.json',
+      filterEndpoints: [
+        // Do not use any other endpoints from this version
+        // If other endpoints are required, they must be used from a newer version of the dashboard API
+        'getSearch',
+      ],
+      tag: true,
+    },
+
+    '../public/app/api/clients/shorturl/v1alpha1/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/shorturl/v1alpha1/baseAPI.ts',
+      schemaFile: '../data/openapi/shorturl.grafana.app-v1alpha1.json',
+      tag: true,
+    },
+    '../public/app/api/clients/rules/v0alpha1/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/rules/v0alpha1/baseAPI.ts',
+      schemaFile: '../data/openapi/rules.alerting.grafana.app-v0alpha1.json',
+      tag: true,
+    },
+    // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };
+
+function filterEndpoints(name: string) {
+  return !name.toLowerCase().includes('getapiresources') && !name.toLowerCase().includes('update');
+}
 
 export default config;

@@ -2,9 +2,10 @@ import { UserEvent } from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { screen, waitFor } from 'test/test-utils';
+import { screen, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
+import { setPluginLinksHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
@@ -17,7 +18,7 @@ import { setupDataSources } from 'app/features/alerting/unified/testSetup/dataso
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { MANUAL_ROUTING_KEY, SIMPLIFIED_QUERY_EDITOR_KEY } from 'app/features/alerting/unified/utils/rule-form';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { grafanaRulerGroup } from '../../../../mocks/grafanaRulerApi';
 
@@ -25,7 +26,7 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: ReactNode }) => <div>{actions}</div>,
 }));
 
-jest.setTimeout(60 * 1000);
+jest.setTimeout(90 * 1000);
 
 const dataSources = {
   default: mockDataSource(
@@ -44,26 +45,49 @@ const dataSources = {
 };
 
 const selectFolderAndGroup = async (user: UserEvent) => {
-  await user.click(await screen.findByRole('button', { name: /select folder/i }));
-  await user.click(await screen.findByLabelText(FOLDER_TITLE_HAPPY_PATH));
+  const folderPicker = ui.inputs.folder.get();
+  const folderButton = await within(folderPicker).findByRole('button', { name: /select folder/i });
+  await user.click(folderButton);
+
+  const folderOption = await within(folderPicker).findByLabelText(FOLDER_TITLE_HAPPY_PATH);
+  await user.click(folderOption);
+
   const groupInput = await ui.inputs.group.find();
-  await user.click(await byRole('combobox').find(groupInput));
+  const groupCombobox = await byRole('combobox').find(groupInput);
+  await user.click(groupCombobox);
   await clickSelectOption(groupInput, grafanaRulerGroup.name);
 };
 
-const selectContactPoint = async (user: UserEvent, contactPointName: string) => {
+const selectContactPoint = async (contactPointName: string) => {
   const contactPointInput = await ui.inputs.simplifiedRouting.contactPoint.find();
-  await user.click(byRole('combobox').get(contactPointInput));
   await clickSelectOption(contactPointInput, contactPointName);
 };
 
-setupMswServer();
-describe('Can create a new grafana managed alert using simplified routing', () => {
-  testWithFeatureToggles(['alertingSimplifiedRouting']);
+// combobox hack
+beforeEach(() => {
+  const mockGetBoundingClientRect = jest.fn(() => ({
+    width: 120,
+    height: 120,
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  }));
 
+  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+    value: mockGetBoundingClientRect,
+  });
+});
+
+setupMswServer();
+setupDataSources(dataSources.default, dataSources.am);
+
+// Setup plugin extensions hook to prevent setPluginLinksHook errors
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
+
+describe('Can create a new grafana managed alert using simplified routing', () => {
   beforeEach(() => {
     window.localStorage.clear();
-    setupDataSources(dataSources.default, dataSources.am);
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
     grantUserPermissions([
@@ -85,11 +109,9 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
   it('cannot create new grafana managed alert when using simplified routing and not selecting a contact point', async () => {
     const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
-
     const { user } = renderRuleEditor();
 
     await user.type(await ui.inputs.name.find(), 'my great new rule');
-
     await selectFolderAndGroup(user);
 
     //select contact point routing
@@ -97,10 +119,10 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
     // do not select a contact point
     // save and check that call to backend was not made
-    await user.click(ui.buttons.saveAndExit.get());
+    await user.click(ui.buttons.save.get());
+
     expect(await screen.findByText('Contact point is required.')).toBeInTheDocument();
     const capturedRequests = await capture;
-
     expect(capturedRequests).toHaveLength(0);
   });
 
@@ -126,28 +148,23 @@ describe('Can create a new grafana managed alert using simplified routing', () =
     //select contact point routing
     await user.click(ui.inputs.simplifiedRouting.contactPointRouting.get());
 
-    await selectContactPoint(user, contactPointName);
+    await selectContactPoint(contactPointName);
 
     // save and check what was sent to backend
-    await user.click(ui.buttons.saveAndExit.get());
+    await user.click(ui.buttons.save.get());
     const requests = await capture;
 
     const serializedRequests = await serializeRequests(requests);
     expect(serializedRequests).toMatchSnapshot();
   });
 
-  describe('alertingApiServer enabled', () => {
-    testWithFeatureToggles(['alertingApiServer']);
+  it('allows selecting a contact point', async () => {
+    const { user } = renderRuleEditor();
 
-    it('allows selecting a contact point when using alerting API server', async () => {
-      const { user } = renderRuleEditor();
+    await user.click(await ui.inputs.simplifiedRouting.contactPointRouting.find());
 
-      await user.click(await ui.inputs.simplifiedRouting.contactPointRouting.find());
-
-      await selectContactPoint(user, 'Email');
-
-      expect(await screen.findByText('Email')).toBeInTheDocument();
-    });
+    await selectContactPoint('lotsa-emails');
+    expect(screen.getByDisplayValue('lotsa-emails')).toBeInTheDocument();
   });
 
   describe('switch modes enabled', () => {
@@ -163,10 +180,10 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
       await selectFolderAndGroup(user);
 
-      await selectContactPoint(user, contactPointName);
+      await selectContactPoint(contactPointName);
 
       // save and check what was sent to backend
-      await user.click(ui.buttons.saveAndExit.get());
+      await user.click(ui.buttons.save.get());
       const requests = await capture;
       const serializedRequests = await serializeRequests(requests);
       expect(serializedRequests).toMatchSnapshot();
@@ -184,7 +201,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       await selectFolderAndGroup(user);
 
       // save and check what was sent to backend
-      await user.click(ui.buttons.saveAndExit.get());
+      await user.click(ui.buttons.save.get());
       const requests = await capture;
       const serializedRequests = await serializeRequests(requests);
       expect(serializedRequests).toMatchSnapshot();
@@ -202,7 +219,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Notification).get()); // switch notifications step to advanced mode
 
       // save and check what was sent to backend
-      await user.click(ui.buttons.saveAndExit.get());
+      await user.click(ui.buttons.save.get());
       const requests = await capture;
       const serializedRequests = await serializeRequests(requests);
       expect(serializedRequests).toMatchSnapshot();
@@ -217,12 +234,12 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       await user.type(await ui.inputs.name.find(), 'my great new rule');
 
       await selectFolderAndGroup(user);
-      await selectContactPoint(user, contactPointName);
+      await selectContactPoint(contactPointName);
 
       await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get()); // switch query step to advanced mode
 
       // save and check what was sent to backend
-      await user.click(ui.buttons.saveAndExit.get());
+      await user.click(ui.buttons.save.get());
       const requests = await capture;
       const serializedRequests = await serializeRequests(requests);
       expect(serializedRequests).toMatchSnapshot();

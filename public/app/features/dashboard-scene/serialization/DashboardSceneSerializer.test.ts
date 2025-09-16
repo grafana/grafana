@@ -8,13 +8,17 @@ import {
 } from '@grafana/scenes';
 import { Dashboard, VariableModel } from '@grafana/schema';
 import {
-  DashboardV2Spec,
-  defaultDashboardV2Spec,
+  Spec as DashboardV2Spec,
+  defaultSpec as defaultDashboardV2Spec,
+  defaultDataQueryKind,
   defaultPanelSpec,
   defaultTimeSettingsSpec,
   GridLayoutKind,
+  PanelKind,
   PanelSpec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+  QueryVariableKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
@@ -36,14 +40,33 @@ jest.mock('@grafana/runtime', () => ({
       getInstanceSettings: jest.fn(),
     };
   },
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    bootData: {
+      user: {
+        timezone: 'UTC',
+      },
+    },
+    defaultDatasource: '-- Grafana --',
+    datasources: {
+      '-- Grafana --': {
+        name: 'Grafana',
+        meta: { id: 'grafana' },
+        type: 'datasource',
+        uid: 'grafana',
+      },
+      prometheus: {
+        name: 'prometheus',
+        meta: { id: 'prometheus' },
+        type: 'datasource',
+        uid: 'prometheus-uid',
+      },
+    },
+  },
 }));
 
 describe('DashboardSceneSerializer', () => {
   describe('v1 schema', () => {
-    beforeEach(() => {
-      config.featureToggles.useV2DashboardsAPI = false;
-    });
-
     it('Can detect no changes', () => {
       const dashboard = setup();
       const result = dashboard.getDashboardChanges(false);
@@ -357,13 +380,85 @@ describe('DashboardSceneSerializer', () => {
 
       expect(serializer.getSnapshotUrl()).toBe('originalUrl/snapshot');
     });
+
+    describe('panel mapping methods', () => {
+      let serializer: V1DashboardSerializer;
+
+      beforeEach(() => {
+        serializer = new V1DashboardSerializer();
+      });
+
+      it('should initialize panel mapping correctly', () => {
+        const saveModel: Dashboard = {
+          title: 'hello',
+          uid: 'my-uid',
+          schemaVersion: 30,
+          panels: [
+            { id: 1, title: 'Panel 1', type: 'text' },
+            { id: 2, title: 'Panel 2', type: 'text' },
+          ],
+        };
+
+        serializer.initializeElementMapping(saveModel);
+        const mapping = serializer.getElementPanelMapping();
+
+        expect(mapping.size).toBe(2);
+        expect(mapping.get('panel-1')).toBe(1);
+        expect(mapping.get('panel-2')).toBe(2);
+      });
+
+      it('should handle empty or undefined panels in initializeMapping', () => {
+        serializer.initializeElementMapping(undefined);
+        expect(serializer.getElementPanelMapping().size).toBe(0);
+
+        serializer.initializeElementMapping({
+          title: 'hello',
+          uid: 'my-uid',
+          schemaVersion: 30,
+          panels: undefined,
+        });
+        expect(serializer.getElementPanelMapping().size).toBe(0);
+      });
+
+      it('should get panel id for element correctly', () => {
+        const saveModel: Dashboard = {
+          title: 'hello',
+          uid: 'my-uid',
+          schemaVersion: 30,
+          panels: [
+            { id: 1, title: 'Panel 1', type: 'text' },
+            { id: 2, title: 'Panel 2', type: 'text' },
+          ],
+        };
+
+        serializer.initializeElementMapping(saveModel);
+
+        expect(serializer.getPanelIdForElement('panel-1')).toBe(1);
+        expect(serializer.getPanelIdForElement('panel-2')).toBe(2);
+        expect(serializer.getPanelIdForElement('non-existent')).toBeUndefined();
+      });
+
+      it('should get element id for panel correctly', () => {
+        const saveModel: Dashboard = {
+          title: 'hello',
+          uid: 'my-uid',
+          schemaVersion: 30,
+          panels: [
+            { id: 1, title: 'Panel 1', type: 'text' },
+            { id: 2, title: 'Panel 2', type: 'text' },
+          ],
+        };
+        serializer.initializeElementMapping(saveModel);
+
+        expect(serializer.getElementIdForPanel(1)).toBe('panel-1');
+        expect(serializer.getElementIdForPanel(2)).toBe('panel-2');
+        // Should return default panel key for non-existent panel
+        expect(serializer.getElementIdForPanel(3)).toBe('panel-3');
+      });
+    });
   });
 
   describe('v2 schema', () => {
-    beforeEach(() => {
-      config.featureToggles.useV2DashboardsAPI = true;
-    });
-
     it('Can detect no changes', () => {
       const dashboard = setupV2();
       const result = dashboard.getDashboardChanges(false);
@@ -471,14 +566,14 @@ describe('DashboardSceneSerializer', () => {
             variables: [
               {
                 kind: 'GroupByVariable',
+                group: 'ds',
+                datasource: {
+                  name: 'ds-uid',
+                },
                 spec: {
                   current: {
                     text: 'Host',
                     value: 'host',
-                  },
-                  datasource: {
-                    type: 'ds',
-                    uid: 'ds-uid',
                   },
                   name: 'GroupBy',
                   options: [
@@ -513,14 +608,14 @@ describe('DashboardSceneSerializer', () => {
             variables: [
               {
                 kind: 'AdhocVariable',
+                group: 'prometheus',
+                datasource: {
+                  name: 'gdev-prometheus',
+                },
                 spec: {
                   name: 'adhoc',
                   label: 'Adhoc Label',
                   description: 'Adhoc Description',
-                  datasource: {
-                    uid: 'gdev-prometheus',
-                    type: 'prometheus',
-                  },
                   hide: 'dontHide',
                   skipUrlSync: false,
                   filters: [],
@@ -535,6 +630,7 @@ describe('DashboardSceneSerializer', () => {
                       value: 'region',
                     },
                   ],
+                  allowCustomValue: true,
                 },
               },
             ],
@@ -627,7 +723,27 @@ describe('DashboardSceneSerializer', () => {
           title: baseOptions.title,
           description: baseOptions.description,
           editable: true,
-          annotations: [],
+          annotations: [
+            {
+              kind: 'AnnotationQuery',
+              spec: {
+                builtIn: true,
+                name: 'Annotations & Alerts',
+                query: {
+                  kind: 'DataQuery',
+                  version: defaultDataQueryKind().version,
+                  group: 'grafana',
+                  datasource: {
+                    name: '-- Grafana --',
+                  },
+                  spec: {},
+                },
+                enable: true,
+                hide: true,
+                iconColor: DEFAULT_ANNOTATION_COLOR,
+              },
+            },
+          ],
           cursorSync: 'Off',
           liveNow: false,
           preload: false,
@@ -718,6 +834,7 @@ describe('DashboardSceneSerializer', () => {
               options: [],
               query: 'app1',
               skipUrlSync: false,
+              allowCustomValue: true,
             },
           },
         ]);
@@ -748,14 +865,15 @@ describe('DashboardSceneSerializer', () => {
                 id: 1,
                 title: 'Panel 1',
                 vizConfig: {
-                  kind: 'graph',
+                  kind: 'VizConfig',
+                  group: 'graph',
+                  version: '1.0.0',
                   spec: {
                     fieldConfig: {
                       defaults: { custom: { lineWidth: 2 } },
                       overrides: [],
                     },
                     options: { legend: { show: true } },
-                    pluginVersion: '1.0.0',
                   },
                 },
               },
@@ -767,16 +885,521 @@ describe('DashboardSceneSerializer', () => {
 
         const panelSpec = saveAsModel.elements['panel-1'].spec as PanelSpec;
         expect(panelSpec.vizConfig).toMatchObject({
-          kind: 'graph',
+          kind: 'VizConfig',
+          group: 'graph',
+          version: '1.0.0',
           spec: {
             fieldConfig: {
               defaults: { custom: { lineWidth: 2 } },
               overrides: [],
             },
             options: { legend: { show: true } },
-            pluginVersion: '1.0.0',
           },
         });
+      });
+
+      describe('data source references persistence', () => {
+        it('should not fill data source references for annotations when input did not contain it', () => {
+          const dashboard = setupV2({
+            annotations: [
+              {
+                kind: 'AnnotationQuery',
+                spec: {
+                  builtIn: false,
+                  enable: true,
+                  hide: false,
+                  iconColor: 'blue',
+                  name: 'prom-annotations',
+                  query: {
+                    group: 'prometheus',
+                    kind: 'DataQuery',
+                    spec: {
+                      refId: 'Anno',
+                    },
+                    version: 'v0',
+                  },
+                },
+              },
+            ],
+          });
+          const saveAsModel = serializer.getSaveAsModel(dashboard, baseOptions);
+          // referencing index 1 as transformation adds built in annotation query
+          expect(saveAsModel.annotations[1].spec.query.datasource).toBeUndefined();
+        });
+
+        it('should fill data source references for annotations when input did contain it', () => {
+          const dashboard = setupV2({
+            annotations: [
+              {
+                kind: 'AnnotationQuery',
+                spec: {
+                  builtIn: false,
+                  enable: true,
+                  hide: false,
+                  iconColor: 'blue',
+                  name: 'prom-annotations',
+                  query: {
+                    group: 'prometheus',
+                    kind: 'DataQuery',
+                    datasource: {
+                      name: 'prometheus-uid',
+                    },
+                    spec: {
+                      refId: 'Anno',
+                    },
+                    version: 'v0',
+                  },
+                },
+              },
+            ],
+          });
+          const saveAsModel = serializer.getSaveAsModel(dashboard, baseOptions);
+          // referencing index 1 as transformation adds built in annotation query
+          expect(saveAsModel.annotations[1].spec.query?.datasource).toEqual({
+            name: 'prometheus-uid',
+          });
+        });
+        it('should not fill data source references for panel queries when input did not contain it', () => {
+          const dashboard = setupV2({
+            elements: {
+              'panel-1': {
+                kind: 'Panel',
+                spec: {
+                  ...defaultPanelSpec(),
+                  data: {
+                    kind: 'QueryGroup',
+                    spec: {
+                      transformations: [],
+                      queryOptions: {},
+                      queries: [
+                        {
+                          kind: 'PanelQuery',
+                          spec: {
+                            refId: 'A',
+                            hidden: false,
+                            query: {
+                              kind: 'DataQuery',
+                              group: 'prometheus',
+                              version: 'v0',
+                              spec: {},
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          });
+          const saveAsModel = serializer.getSaveAsModel(dashboard, baseOptions);
+          expect(
+            (saveAsModel.elements['panel-1'] as PanelKind).spec.data.spec.queries[0].spec.query.datasource
+          ).toBeUndefined();
+        });
+
+        it('should fill data source references for panel queries when input did contain it', () => {
+          const dashboard = setupV2({
+            elements: {
+              'panel-1': {
+                kind: 'Panel',
+                spec: {
+                  ...defaultPanelSpec(),
+                  data: {
+                    kind: 'QueryGroup',
+                    spec: {
+                      transformations: [],
+                      queryOptions: {},
+                      queries: [
+                        {
+                          kind: 'PanelQuery',
+                          spec: {
+                            refId: 'A',
+                            hidden: false,
+                            query: {
+                              kind: 'DataQuery',
+                              group: 'prometheus',
+                              version: 'v0',
+                              datasource: {
+                                name: 'prometheus-uid',
+                              },
+                              spec: {},
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          });
+          const saveAsModel = serializer.getSaveAsModel(dashboard, baseOptions);
+          expect(
+            (saveAsModel.elements['panel-1'] as PanelKind).spec.data.spec.queries[0].spec.query.datasource
+          ).toEqual({
+            name: 'prometheus-uid',
+          });
+        });
+
+        it('should not fill data source references for query variables when input did contain it', () => {
+          const queryVariable: QueryVariableKind = {
+            kind: 'QueryVariable',
+            spec: {
+              name: 'app',
+              current: {
+                text: 'app1',
+                value: 'app1',
+              },
+              hide: 'dontHide',
+              includeAll: false,
+              label: 'Query Variable',
+              skipUrlSync: false,
+              regex: '',
+              definition: '',
+              options: [],
+              refresh: 'never',
+              sort: 'alphabeticalAsc',
+              multi: false,
+              allowCustomValue: true,
+              query: {
+                kind: 'DataQuery',
+                group: 'prometheus',
+                version: 'v0',
+                spec: {},
+              },
+            },
+          };
+          const dashboard = setupV2({
+            variables: [queryVariable],
+          });
+          const saveAsModel = serializer.getSaveAsModel(dashboard, baseOptions);
+          expect((saveAsModel.variables[0] as QueryVariableKind).spec.query.datasource).toBeUndefined();
+        });
+
+        it('should fill data source references for query variables when input did contain it', () => {
+          const queryVariable: QueryVariableKind = {
+            kind: 'QueryVariable',
+            spec: {
+              name: 'app',
+              current: {
+                text: 'app1',
+                value: 'app1',
+              },
+              hide: 'dontHide',
+              includeAll: false,
+              label: 'Query Variable',
+              skipUrlSync: false,
+              regex: '',
+              definition: '',
+              options: [],
+              refresh: 'never',
+              sort: 'alphabeticalAsc',
+              multi: false,
+              allowCustomValue: true,
+              query: {
+                kind: 'DataQuery',
+                group: 'prometheus',
+                version: 'v0',
+                datasource: {
+                  name: 'prometheus-uid',
+                },
+                spec: {},
+              },
+            },
+          };
+          const dashboard = setupV2({
+            variables: [queryVariable],
+          });
+          const saveAsModel = serializer.getSaveAsModel(dashboard, baseOptions);
+          expect((saveAsModel.variables[0] as QueryVariableKind).spec.query.datasource).toEqual({
+            name: 'prometheus-uid',
+          });
+        });
+      });
+    });
+
+    describe('panel mapping methods', () => {
+      let serializer: V2DashboardSerializer;
+      let saveModel: DashboardV2Spec;
+
+      beforeEach(() => {
+        serializer = new V2DashboardSerializer();
+        saveModel = {
+          ...defaultDashboardV2Spec(),
+          elements: {
+            'element-panel-a': {
+              kind: 'Panel',
+              spec: { ...defaultPanelSpec(), id: 1, title: 'Panel A' },
+            },
+            'element-panel-b': {
+              kind: 'Panel',
+              spec: { ...defaultPanelSpec(), id: 2, title: 'Panel B' },
+            },
+          },
+          layout: {
+            kind: 'GridLayout',
+            spec: {
+              items: [
+                {
+                  kind: 'GridLayoutItem',
+                  spec: {
+                    x: 0,
+                    y: 0,
+                    width: 12,
+                    height: 8,
+                    element: {
+                      kind: 'ElementReference',
+                      name: 'element-panel-a',
+                    },
+                  },
+                },
+                {
+                  kind: 'GridLayoutItem',
+                  spec: {
+                    x: 0,
+                    y: 0,
+                    width: 12,
+                    height: 8,
+                    element: {
+                      kind: 'ElementReference',
+                      name: 'element-panel-b',
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        };
+      });
+
+      it('should initialize panel mapping correctly', () => {
+        serializer.initializeElementMapping(saveModel);
+        const mapping = serializer.getElementPanelMapping();
+
+        expect(mapping.size).toBe(2);
+        expect(mapping.get('element-panel-a')).toBe(1);
+        expect(mapping.get('element-panel-b')).toBe(2);
+      });
+
+      it('should handle empty or undefined elements in initializeMapping', () => {
+        serializer.initializeElementMapping({} as DashboardV2Spec);
+        expect(serializer.getElementPanelMapping().size).toBe(0);
+
+        serializer.initializeElementMapping({ elements: {} } as DashboardV2Spec);
+        expect(serializer.getElementPanelMapping().size).toBe(0);
+      });
+
+      it('should get panel id for element correctly', () => {
+        serializer.initializeElementMapping(saveModel);
+
+        expect(serializer.getPanelIdForElement('element-panel-a')).toBe(1);
+        expect(serializer.getPanelIdForElement('element-panel-b')).toBe(2);
+        expect(serializer.getPanelIdForElement('non-existent')).toBeUndefined();
+      });
+
+      it('should get element id for panel correctly', () => {
+        serializer.initializeElementMapping(saveModel);
+
+        expect(serializer.getElementIdForPanel(1)).toBe('element-panel-a');
+        expect(serializer.getElementIdForPanel(2)).toBe('element-panel-b');
+        // Should return default panel key for non-existent panel
+        expect(serializer.getElementIdForPanel(3)).toBe('panel-3');
+      });
+    });
+  });
+
+  describe('Datasource References Mapping', () => {
+    describe('V2DashboardSerializer', () => {
+      let serializer: V2DashboardSerializer;
+
+      beforeEach(() => {
+        serializer = new V2DashboardSerializer();
+      });
+
+      it('should initialize datasource references mapping correctly for panels with undefined datasources', () => {
+        const saveModel: DashboardV2Spec = {
+          ...defaultDashboardV2Spec(),
+          title: 'Test Dashboard',
+          elements: {
+            'panel-1': {
+              kind: 'Panel',
+              spec: {
+                id: 1,
+                title: 'Panel 1',
+                description: '',
+                links: [],
+                vizConfig: {
+                  kind: 'VizConfig',
+                  group: 'timeseries',
+                  version: '1.0.0',
+                  spec: {
+                    options: {},
+                    fieldConfig: { defaults: {}, overrides: [] },
+                  },
+                },
+                data: {
+                  kind: 'QueryGroup',
+                  spec: {
+                    queries: [
+                      {
+                        kind: 'PanelQuery',
+                        spec: {
+                          refId: 'A',
+                          hidden: false,
+                          // No datasource defined
+                          query: { kind: 'DataQuery', version: defaultDataQueryKind().version, group: 'sql', spec: {} },
+                        },
+                      },
+                      {
+                        kind: 'PanelQuery',
+                        spec: {
+                          refId: 'B',
+                          hidden: false,
+                          query: {
+                            kind: 'DataQuery',
+                            version: defaultDataQueryKind().version,
+                            group: 'prometheus',
+                            datasource: {
+                              name: 'datasource-1',
+                            },
+                            spec: {},
+                          },
+                        },
+                      },
+                    ],
+                    queryOptions: {},
+                    transformations: [],
+                  },
+                },
+              },
+            },
+            'panel-2': {
+              kind: 'Panel',
+              spec: {
+                id: 2,
+                title: 'Panel 2',
+                description: '',
+                links: [],
+                vizConfig: {
+                  kind: 'VizConfig',
+                  group: 'timeseries',
+                  version: '1.0.0',
+                  spec: {
+                    options: {},
+                    fieldConfig: { defaults: {}, overrides: [] },
+                  },
+                },
+                data: {
+                  kind: 'QueryGroup',
+                  spec: {
+                    queries: [
+                      {
+                        kind: 'PanelQuery',
+                        spec: {
+                          refId: 'C',
+                          hidden: false,
+                          // No datasource defined
+                          query: { kind: 'DataQuery', version: defaultDataQueryKind().version, group: 'sql', spec: {} },
+                        },
+                      },
+                    ],
+                    queryOptions: {},
+                    transformations: [],
+                  },
+                },
+              },
+            },
+          },
+        };
+
+        serializer.initializeElementMapping(saveModel);
+        serializer.initializeDSReferencesMapping(saveModel);
+
+        const dsReferencesMap = serializer.getDSReferencesMapping();
+
+        // Panel 1 should have refId A in the map (no datasource)
+        expect(dsReferencesMap.panels.has('panel-1')).toBe(true);
+        expect(dsReferencesMap.panels.get('panel-1')?.has('A')).toBe(true);
+        expect(dsReferencesMap.panels.get('panel-1')?.has('B')).toBe(false); // Has datasource defined
+
+        // Panel 2 should have refId C in the map
+        expect(dsReferencesMap.panels.has('panel-2')).toBe(true);
+        expect(dsReferencesMap.panels.get('panel-2')?.has('C')).toBe(true);
+      });
+
+      it('should handle empty or undefined elements in initializeDSReferencesMapping', () => {
+        serializer.initializeDSReferencesMapping(undefined);
+        expect(serializer.getDSReferencesMapping().panels.size).toBe(0);
+
+        serializer.initializeDSReferencesMapping({} as DashboardV2Spec);
+        expect(serializer.getDSReferencesMapping().panels.size).toBe(0);
+
+        serializer.initializeDSReferencesMapping({ elements: {} } as DashboardV2Spec);
+        expect(serializer.getDSReferencesMapping().panels.size).toBe(0);
+      });
+
+      it('should initialize datasource references mapping when annotations dont have datasources', () => {
+        const saveModel: DashboardV2Spec = {
+          ...defaultDashboardV2Spec(),
+          title: 'Dashboard with annotations without datasource',
+          annotations: [
+            {
+              kind: 'AnnotationQuery',
+              spec: {
+                name: 'Annotation 1',
+                query: { kind: 'DataQuery', version: defaultDataQueryKind().version, group: 'prometheus', spec: {} },
+                enable: true,
+                hide: false,
+                iconColor: 'red',
+              },
+            },
+          ],
+        };
+
+        serializer.initializeDSReferencesMapping(saveModel);
+
+        const dsReferencesMap = serializer.getDSReferencesMapping();
+
+        // Annotation 1 should have no datasource
+        expect(dsReferencesMap.annotations.has('Annotation 1')).toBe(true);
+      });
+
+      it('should return early if the saveModel is not a V2 dashboard', () => {
+        const v1SaveModel: Dashboard = {
+          title: 'Test Dashboard',
+          uid: 'my-uid',
+          schemaVersion: 30,
+          panels: [
+            { id: 1, title: 'Panel 1', type: 'text' },
+            { id: 2, title: 'Panel 2', type: 'text' },
+          ],
+        };
+        serializer.initializeDSReferencesMapping(v1SaveModel as unknown as DashboardV2Spec);
+        expect(serializer.getDSReferencesMapping()).toEqual({
+          panels: new Map(),
+          variables: new Set(),
+          annotations: new Set(),
+        });
+        expect(serializer.getDSReferencesMapping().panels.size).toBe(0);
+      });
+    });
+
+    describe('V1DashboardSerializer', () => {
+      let serializer: V1DashboardSerializer;
+
+      beforeEach(() => {
+        serializer = new V1DashboardSerializer();
+      });
+
+      it('should return empty mapping object for V1 serializer', () => {
+        serializer.initializeDSReferencesMapping(undefined);
+        expect(serializer.getDSReferencesMapping()).toEqual({
+          panels: expect.any(Map),
+          variables: expect.any(Set),
+          annotations: expect.any(Set),
+        });
+        expect(serializer.getDSReferencesMapping().panels.size).toBe(0);
       });
     });
   });
@@ -914,6 +1537,7 @@ function setupV2(spec?: Partial<DashboardV2Spec>) {
             query: 'app1',
             allValue: '',
             includeAll: false,
+            allowCustomValue: true,
           },
         },
       ],

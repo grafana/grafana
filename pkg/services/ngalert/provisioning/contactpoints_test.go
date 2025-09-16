@@ -33,9 +33,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestContactPointService(t *testing.T) {
+func TestIntegrationContactPointService(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
@@ -195,8 +198,8 @@ func TestContactPointService(t *testing.T) {
 
 		newCp.Name = newName
 
-		svc.RenameReceiverInDependentResourcesFunc = func(ctx context.Context, orgID int64, route *definitions.Route, oldName, newName string, receiverProvenance models.Provenance) error {
-			legacy_storage.RenameReceiverInRoute(oldName, newName, route)
+		svc.RenameReceiverInDependentResourcesFunc = func(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error {
+			revision.RenameReceiverInRoutes(oldName, newName)
 			return nil
 		}
 
@@ -210,7 +213,8 @@ func TestContactPointService(t *testing.T) {
 		assert.Equal(t, "RenameReceiverInDependentResources", svc.Calls[0].Method)
 		assertInTransaction(t, svc.Calls[0].Args[0].(context.Context))
 		assert.Equal(t, int64(1), svc.Calls[0].Args[1])
-		assert.EqualValues(t, parsed.AlertmanagerConfig.Route, svc.Calls[0].Args[2])
+		revision := svc.Calls[0].Args[2].(*legacy_storage.ConfigRevision)
+		assert.EqualValues(t, parsed.AlertmanagerConfig.Route, revision.Config.AlertmanagerConfig.Route)
 		assert.Equal(t, oldName, svc.Calls[0].Args[3])
 		assert.Equal(t, newName, svc.Calls[0].Args[4])
 		assert.Equal(t, models.ProvenanceAPI, svc.Calls[0].Args[5])
@@ -360,7 +364,9 @@ func TestContactPointService(t *testing.T) {
 	})
 }
 
-func TestContactPointServiceDecryptRedact(t *testing.T) {
+func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -423,19 +429,23 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 		"webhook": func(settings map[string]any) { // add additional field to the settings because valid config does not allow it to be specified along with password
 			settings["authorization_credentials"] = "test-authz-creds"
 		},
+		"jira": func(settings map[string]any) { // add additional field to the settings because valid config does not allow it to be specified along with password
+			settings["api_token"] = "test-token"
+		},
+		"oncall": func(settings map[string]any) { // add authorization_credentials field since it's expected as a secret field
+			settings["authorization_credentials"] = "test-authz-creds"
+		},
 	}
 
 	configs := notify.AllKnownConfigsForTesting
 	keys := maps.Keys(configs)
 	slices.Sort(keys)
 	for _, integrationType := range keys {
-		cfg := configs[integrationType]
-		var settings map[string]any
-		require.NoError(t, json.Unmarshal([]byte(cfg.Config), &settings))
+		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(integrationType))()
 		if f, ok := overrides[integrationType]; ok {
-			f(settings)
+			f(integration.Settings)
 		}
-		settingsRaw, err := json.Marshal(settings)
+		settingsRaw, err := json.Marshal(integration.Settings)
 		require.NoError(t, err)
 
 		expectedFields, err := channels_config.GetSecretKeysForContactPointType(integrationType)
@@ -454,7 +464,7 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 			for _, field := range expectedFields {
 				assert.Contains(t, secureFields, field)
 				path := strings.Split(field, ".")
-				var expectedValue any = settings
+				var expectedValue any = integration.Settings
 				for _, segment := range path {
 					v, ok := expectedValue.(map[string]any)
 					if !ok {
@@ -487,7 +497,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 
 	receiverService := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), true),
-		legacy_storage.NewAlertmanagerConfigStore(configStore),
+		legacy_storage.NewAlertmanagerConfigStore(configStore, notifier.NewExtraConfigsCrypto(secretService)),
 		provisioningStore,
 		&fakeAlertRuleNotificationStore{},
 		secretService,
@@ -498,7 +508,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 	)
 
 	return NewContactPointService(
-		legacy_storage.NewAlertmanagerConfigStore(configStore),
+		legacy_storage.NewAlertmanagerConfigStore(configStore, notifier.NewExtraConfigsCrypto(secretService)),
 		secretService,
 		provisioningStore,
 		xact,

@@ -19,6 +19,7 @@ import {
   VariableSuggestion,
   VariableSuggestionsScope,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DashboardLink, VariableFormatID } from '@grafana/schema';
 import { getConfig } from 'app/core/config';
@@ -88,7 +89,7 @@ export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
     })),
   {
     value: `${DataLinkBuiltInVars.includeVars}`,
-    label: 'All variables',
+    label: t('panel.get-panel-links-variable-suggestions.label.all-variables', 'All variables'),
     documentation: 'Adds current variables',
     origin: VariableOrigin.Template,
   },
@@ -112,7 +113,7 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
   return [
     {
       value: `${DataLinkBuiltInVars.fieldName}`,
-      label: 'Name',
+      label: t('panel.get-field-vars.label.name', 'Name'),
       documentation: 'Field name of the clicked datapoint (in ms epoch)',
       origin: VariableOrigin.Field,
     },
@@ -206,7 +207,7 @@ export const getDataLinksVariableSuggestions = (
 ): VariableSuggestion[] => {
   const valueTimeVar = {
     value: `${DataLinkBuiltInVars.valueTime}`,
-    label: 'Time',
+    label: t('panel.get-data-links-variable-suggestions.value-time-var.label.time', 'Time'),
     documentation: 'Time value of the clicked datapoint (in ms epoch)',
     origin: VariableOrigin.Value,
   };
@@ -233,7 +234,10 @@ export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: Data
   const fieldVars = getFieldVars(dataFrames);
   const valueCalcVar = {
     value: `${DataLinkBuiltInVars.valueCalc}`,
-    label: 'Calculation name',
+    label: t(
+      'panel.get-calculation-value-data-links-variable-suggestions.value-calc-var.label.calculation-name',
+      'Calculation name'
+    ),
     documentation: 'Name of the calculation the value is a result of',
     origin: VariableOrigin.Value,
   };
@@ -252,18 +256,18 @@ export interface LinkService {
 
 export class LinkSrv implements LinkService {
   getLinkUrl(link: DashboardLink) {
-    let params: { [key: string]: any } = {};
+    let url = link.url ?? '';
 
     if (link.keepTime) {
-      params[`\$${DataLinkBuiltInVars.keepTime}`] = true;
+      url = urlUtil.appendQueryToUrl(url, `\$${DataLinkBuiltInVars.keepTime}`);
     }
 
     if (link.includeVars) {
-      params[`\$${DataLinkBuiltInVars.includeVars}`] = true;
+      url = urlUtil.appendQueryToUrl(url, `\$${DataLinkBuiltInVars.includeVars}`);
     }
 
-    let url = locationUtil.assureBaseUrl(urlUtil.appendQueryToUrl(link.url || '', urlUtil.toUrlParams(params)));
     url = getTemplateSrv().replace(url);
+    url = locationUtil.assureBaseUrl(url);
 
     return getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
   }

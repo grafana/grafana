@@ -10,7 +10,12 @@ import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { HistoryWrapper, LocationServiceProvider, setLocationService } from '@grafana/runtime';
+import {
+  HistoryWrapper,
+  LocationServiceProvider,
+  setChromeHeaderHeightHook,
+  setLocationService,
+} from '@grafana/runtime';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { ModalsContextProvider } from 'app/core/context/ModalsContextProvider';
 import { configureStore } from 'app/store/configureStore';
@@ -105,6 +110,8 @@ const customRender = (
   const user = userEvent.setup();
   const store = renderOptions.preloadedState ? configureStore(renderOptions?.preloadedState) : undefined;
   const AllTheProviders = renderOptions.wrapper || getWrapper({ store, renderWithRouter, ...renderOptions });
+
+  setChromeHeaderHeightHook(() => 40);
 
   return {
     ...render(ui, { wrapper: AllTheProviders, ...renderOptions }),

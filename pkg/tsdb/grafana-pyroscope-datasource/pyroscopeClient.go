@@ -46,7 +46,8 @@ type LabelPair struct {
 type Point struct {
 	Value float64
 	// Milliseconds unix timestamp
-	Timestamp int64
+	Timestamp   int64
+	Annotations []*typesv1.ProfileAnnotation
 }
 
 type ProfileResponse struct {
@@ -133,8 +134,9 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 		points := make([]*Point, len(s.Points))
 		for i, p := range s.Points {
 			points[i] = &Point{
-				Value:     p.Value,
-				Timestamp: p.Timestamp,
+				Value:       p.Value,
+				Timestamp:   p.Timestamp,
+				Annotations: p.Annotations,
 			}
 		}
 

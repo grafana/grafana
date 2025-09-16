@@ -10,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -31,6 +32,7 @@ type Service struct {
 	cacheService *localcache.CacheService
 	cfg          *setting.Cfg
 	tracer       tracing.Tracer
+	db           db.DB
 }
 
 func ProvideService(
@@ -49,6 +51,7 @@ func ProvideService(
 		teamService:  teamService,
 		cacheService: cacheService,
 		tracer:       tracer,
+		db:           db,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -100,16 +103,28 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		return nil, user.ErrEmptyUsernameAndEmail.Errorf("user cannot be created with empty username and email")
 	}
 
-	cmdOrg := org.GetOrgIDForNewUserCommand{
-		Email:        cmd.Email,
-		Login:        cmd.Login,
-		OrgID:        cmd.OrgID,
-		OrgName:      cmd.OrgName,
-		SkipOrgSetup: cmd.SkipOrgSetup,
-	}
-	orgID, err := s.orgService.GetIDForNewUser(ctx, cmdOrg)
-	if err != nil {
-		return nil, err
+	// if the user is provisioned, use the org ID from the requester
+	var orgID int64
+	var err error
+	if cmd.IsProvisioned {
+		requester, err := identity.GetRequester(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		orgID = requester.GetOrgID()
+	} else {
+		cmdOrg := org.GetOrgIDForNewUserCommand{
+			Email:        cmd.Email,
+			Login:        cmd.Login,
+			OrgID:        cmd.OrgID,
+			OrgName:      cmd.OrgName,
+			SkipOrgSetup: cmd.SkipOrgSetup,
+		}
+		orgID, err = s.orgService.GetIDForNewUser(ctx, cmdOrg)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if cmd.Email == "" {
 		cmd.Email = cmd.Login
@@ -134,6 +149,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		Updated:          timeNow(),
 		LastSeenAt:       timeNow().AddDate(-10, 0, 0),
 		IsServiceAccount: cmd.IsServiceAccount,
+		IsProvisioned:    cmd.IsProvisioned,
 	}
 
 	salt, err := util.GetRandomString(10)
@@ -158,35 +174,35 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		}
 	}
 
-	_, err = s.store.Insert(ctx, usr)
-	if err != nil {
-		return nil, err
-	}
-
-	// create org user link
-	if !cmd.SkipOrgSetup {
-		orgUser := org.OrgUser{
-			OrgID:   orgID,
-			UserID:  usr.ID,
-			Role:    org.RoleAdmin,
-			Created: time.Now(),
-			Updated: time.Now(),
-		}
-
-		if s.cfg.AutoAssignOrg && !usr.IsAdmin {
-			if len(cmd.DefaultOrgRole) > 0 {
-				orgUser.Role = org.RoleType(cmd.DefaultOrgRole)
-			} else {
-				orgUser.Role = org.RoleType(s.cfg.AutoAssignOrgRole)
-			}
-		}
-		_, err = s.orgService.InsertOrgUser(ctx, &orgUser)
+	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
+		_, err = s.store.Insert(ctx, usr)
 		if err != nil {
-			err := s.store.Delete(ctx, usr.ID)
-			return usr, err
+			return err
 		}
-	}
-	return usr, nil
+
+		// create org user link
+		if !cmd.SkipOrgSetup && !usr.IsProvisioned {
+			orgUser := org.OrgUser{
+				OrgID:   orgID,
+				UserID:  usr.ID,
+				Role:    org.RoleAdmin,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+
+			if s.cfg.AutoAssignOrg && !usr.IsAdmin {
+				if len(cmd.DefaultOrgRole) > 0 {
+					orgUser.Role = org.RoleType(cmd.DefaultOrgRole)
+				} else {
+					orgUser.Role = org.RoleType(s.cfg.AutoAssignOrgRole)
+				}
+			}
+			_, err = s.orgService.InsertOrgUser(ctx, &orgUser)
+			return err
+		}
+		return nil
+	})
+	return usr, err
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {
@@ -219,6 +235,19 @@ func (s *Service) GetByUID(ctx context.Context, query *user.GetUserByUIDQuery) (
 	defer span.End()
 
 	return s.store.GetByUID(ctx, query.UID)
+}
+
+func (s *Service) ListByIdOrUID(ctx context.Context, uids []string, ids []int64) ([]*user.User, error) {
+	if len(uids) == 0 && len(ids) == 0 {
+		return []*user.User{}, nil
+	}
+	ctx, span := s.tracer.Start(ctx, "user.ListByIdOrUID", trace.WithAttributes(
+		attribute.StringSlice("userUIDs", uids),
+		attribute.Int64Slice("userIDs", ids),
+	))
+	defer span.End()
+
+	return s.store.ListByIdOrUID(ctx, uids, ids)
 }
 
 func (s *Service) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {

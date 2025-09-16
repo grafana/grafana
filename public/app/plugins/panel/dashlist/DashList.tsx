@@ -2,31 +2,21 @@ import { take } from 'lodash';
 import { SyntheticEvent, useEffect, useMemo, useState } from 'react';
 import { useThrottle } from 'react-use';
 
-import {
-  DataLinkBuiltInVars,
-  DateTime,
-  InterpolateFunction,
-  PanelProps,
-  textUtil,
-  UrlQueryValue,
-  urlUtil,
-} from '@grafana/data';
+import { InterpolateFunction, PanelProps, textUtil } from '@grafana/data';
 import { useStyles2, IconButton, ScrollContainer } from '@grafana/ui';
 import { updateNavIndex } from 'app/core/actions';
 import { getConfig } from 'app/core/config';
-import { appEvents } from 'app/core/core';
-import { useBusEvent } from 'app/core/hooks/useBusEvent';
 import { ID_PREFIX, setStarred } from 'app/core/reducers/navBarTree';
 import { removeNavIndex } from 'app/core/reducers/navModel';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardSearchItem } from 'app/features/search/types';
-import { VariablesChanged } from 'app/features/variables/types';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { Options } from './panelcfg.gen';
 import { getStyles } from './styles';
+import { useDashListUrlParams } from './utils';
 
 type Dashboard = DashboardSearchItem & { id?: number; isSearchResult?: boolean; isRecent?: boolean };
 
@@ -179,9 +169,7 @@ export function DashList(props: PanelProps<Options>) {
   const renderList = (dashboards: Dashboard[]) => (
     <ul>
       {dashboards.map((dash) => {
-        let url = dash.url;
-
-        url = urlUtil.appendQueryToUrl(url, urlParams);
+        let url = dash.url + urlParams;
         url = getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
 
         return (
@@ -219,23 +207,4 @@ export function DashList(props: PanelProps<Options>) {
       )}
     </ScrollContainer>
   );
-}
-
-function useDashListUrlParams(props: PanelProps<Options>) {
-  // We don't care about the payload just want to get re-render when this event is published
-  useBusEvent(appEvents, VariablesChanged);
-
-  let params: { [key: string]: string | DateTime | UrlQueryValue } = {};
-
-  if (props.options.keepTime) {
-    params[`\$${DataLinkBuiltInVars.keepTime}`] = true;
-  }
-
-  if (props.options.includeVars) {
-    params[`\$${DataLinkBuiltInVars.includeVars}`] = true;
-  }
-
-  const urlParms = props.replaceVariables(urlUtil.toUrlParams(params));
-
-  return urlParms;
 }

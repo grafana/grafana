@@ -23,9 +23,9 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeValueMode, VizTextDisplayOptions } from '@grafana/schema';
 
-import { Themeable2 } from '../../types';
+import { Themeable2 } from '../../types/theme';
 import { calculateFontSize, measureText } from '../../utils/measureText';
-import { clearButtonStyles } from '../Button';
+import { clearButtonStyles } from '../Button/Button';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 const MIN_VALUE_HEIGHT = 18;
@@ -527,7 +527,6 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   const barStyles: CSSProperties = {
     borderRadius: theme.shape.radius.default,
     position: 'relative',
-    zIndex: 1,
   };
 
   const emptyBar: CSSProperties = {
@@ -689,7 +688,7 @@ function getValueStyles(
   const styles: CSSProperties = {
     color,
     height: `${height}px`,
-    width: `${width}px`,
+    maxWidth: `${width}px`,
     display: 'flex',
     alignItems: 'center',
     textWrap: 'nowrap',

@@ -1,10 +1,9 @@
 import { Suspense, useEffect, useLayoutEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom-v5-compat';
-// @ts-ignore
-import Drop from 'tether-drop';
 
-import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
+import { config, locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
 import { ErrorBoundary } from '@grafana/ui';
+import { isFrontendService } from 'app/core/utils/isFrontendService';
 
 import { useGrafana } from '../context/GrafanaContext';
 import { contextSrv } from '../services/context_srv';
@@ -46,7 +45,7 @@ export function GrafanaRoute(props: Props) {
   navigationLogger('GrafanaRoute', false, 'Rendered', props.route);
 
   return (
-    <ErrorBoundary>
+    <ErrorBoundary dependencies={[props.route]}>
       {({ error, errorInfo }) => {
         if (error) {
           return <GrafanaRouteError error={error} errorInfo={errorInfo} />;
@@ -64,6 +63,17 @@ export function GrafanaRoute(props: Props) {
 
 export function GrafanaRouteWrapper({ route }: Pick<Props, 'route'>) {
   const location = useLocation();
+
+  // Perform login check in the frontend now
+  if (isFrontendService()) {
+    const routeRequiresSignin = !route.allowAnonymous && !config.anonymousEnabled;
+    if (routeRequiresSignin && !contextSrv.isSignedIn) {
+      contextSrv.setRedirectToUrl();
+
+      return <Navigate replace to="/login" />;
+    }
+  }
+
   const roles = route.roles ? route.roles() : [];
   if (roles?.length) {
     if (!roles.some((r: string) => contextSrv.hasRole(r))) {
@@ -98,10 +108,5 @@ function cleanupDOM() {
   for (let i = 0; i < tooltipsByClass.length; i++) {
     const tooltip = tooltipsByClass[i];
     tooltip.parentElement?.removeChild(tooltip);
-  }
-
-  // cleanup tether-drop
-  for (const drop of Drop.drops) {
-    drop.destroy();
   }
 }

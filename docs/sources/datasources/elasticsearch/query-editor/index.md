@@ -32,9 +32,9 @@ refs:
 Grafana provides a query editor for Elasticsearch. Elasticsearch queries are in Lucene format.
 See [Lucene query syntax](https://www.elastic.co/guide/en/kibana/current/lucene-query.html) and [Query string syntax](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/query-dsl-query-string-query.html#query-string-syntax) if you are new to working with Lucene queries in Elasticsearch.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 When composing Lucene queries, ensure that you use uppercase boolean operators: `AND`, `OR`, and `NOT`. Lowercase versions of these operators are not supported by the Lucene query syntax.
-{{% /admonition %}}
+{{< /admonition >}}
 
 {{< figure src="/static/img/docs/elasticsearch/elastic-query-editor-10.1.png" max-width="800px" class="docs-image--no-shadow" caption="Elasticsearch query editor" >}}
 
@@ -61,7 +61,6 @@ Metrics queries aggregate data and produce a variety of calculations such as cou
 - **Alias** - Aliasing only applies to **time series queries**, where the last group is `date histogram`. This is ignored for any other type of query.
 
 - **Metric** - Metrics aggregations include:
-
   - count - see [Value count aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-valuecount-aggregation.html)
   - average - see [Avg aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-rate-aggregation.html)
   - sum - see [Sum aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-sum-aggregation.html)
@@ -78,7 +77,6 @@ You can select multiple metrics and group by multiple terms or filters when usin
 Use the **+ sign** to the right to add multiple metrics to your query. Click on the **eye icon** next to **Metric** to hide metrics, and the **garbage can icon** to remove metrics.
 
 - **Group by options** - Create multiple group by options when constructing your Elasticsearch query. Date histogram is the default option. Below is a list of options in the dropdown menu.
-
   - terms - see [Terms aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html).
   - filter - see [Filter aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-filter-aggregation.html).
   - geo hash grid - see [Geohash grid aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-geohashgrid-aggregation.html).
@@ -137,13 +135,13 @@ Run a raw data query to retrieve a table of all fields that are associated with 
 
 - **Raw data size** - Number of raw data documents. You can specify a different amount. The default is `500`.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The option to run a **raw document query** is deprecated as of Grafana v10.1.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Use template variables
 
-You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
+You can also augment queries by using [template variables](../template-variables/).
 
 Queries of `terms` have a 500-result limit by default.
 To set a custom limit, set the `size` property in your query.

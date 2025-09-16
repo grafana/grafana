@@ -1,45 +1,159 @@
-import { ReactNode, useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 
-import { Button, Input } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
+import { Alert, Input, Field, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
+import { dashboardEditActions } from '../../edit-pane/shared';
+import { getQueryRunnerFor, useDashboard } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
+import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
 import { TabItem } from './TabItem';
 
-export function getEditOptions(model: TabItem): OptionsPaneCategoryDescriptor[] {
-  const tabOptions = useMemo(() => {
-    return new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.tabs-layout.tab-options.title', 'Tab options'),
-      id: 'tab-options',
-      isOpenDefault: true,
-    }).addItem(
-      new OptionsPaneItemDescriptor({
-        title: t('dashboard.tabs-layout.tab-options.title-option', 'Title'),
-        render: () => <TabTitleInput tab={model} />,
-      })
-    );
-  }, [model]);
-
+export function useEditOptions(this: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+  const model = this;
   const { layout } = model.useState();
-  const layoutOptions = useLayoutCategory(layout);
 
-  return [tabOptions, layoutOptions];
+  const tabCategory = useMemo(
+    () =>
+      new OptionsPaneCategoryDescriptor({ title: '', id: 'tab-item-options' }).addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.tabs-layout.tab-options.title-option', 'Title'),
+          id: 'tab-options-title',
+          render: (descriptor) => <TabTitleInput id={descriptor.props.id} tab={model} isNewElement={isNewElement} />,
+        })
+      ),
+    [isNewElement, model]
+  );
+
+  const repeatCategory = useMemo(
+    () =>
+      new OptionsPaneCategoryDescriptor({
+        title: t('dashboard.tabs-layout.tab-options.repeat.title', 'Repeat options'),
+        id: 'repeat-options',
+        isOpenDefault: false,
+      }).addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.tabs-layout.tab-options.repeat.variable.title', 'Repeat by variable'),
+          id: 'tab-options-repeat-variable',
+          description: t(
+            'dashboard.tabs-layout.tab-options.repeat.variable.description',
+            'Repeat this tab for each value in the selected variable.'
+          ),
+          render: (descriptor) => <TabRepeatSelect id={descriptor.props.id} tab={model} />,
+        })
+      ),
+    [model]
+  );
+
+  const layoutCategory = useLayoutCategory(layout);
+
+  const editOptions = [tabCategory, ...layoutCategory, repeatCategory];
+
+  const conditionalRenderingCategory = useMemo(
+    () => useConditionalRenderingEditor(model.state.conditionalRendering),
+    [model]
+  );
+
+  if (conditionalRenderingCategory) {
+    editOptions.push(conditionalRenderingCategory);
+  }
+
+  return editOptions;
 }
 
-export function renderActions(tab: TabItem): ReactNode {
+function TabTitleInput({ tab, isNewElement, id }: { tab: TabItem; isNewElement: boolean; id?: string }) {
+  const { title } = tab.useState();
+  const prevTitle = useRef('');
+
+  const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
+  const hasUniqueTitle = tab.hasUniqueTitle();
+
+  return (
+    <Field
+      invalid={!hasUniqueTitle}
+      error={
+        !hasUniqueTitle ? t('dashboard.tabs-layout.tab-options.title-not-unique', 'Title should be unique') : undefined
+      }
+    >
+      <Input
+        id={id}
+        ref={ref}
+        title={t('dashboard.tabs-layout.tab-options.title-option', 'Title')}
+        value={title}
+        onFocus={() => (prevTitle.current = title || '')}
+        onBlur={() => editTabTitleAction(tab, title || '', prevTitle.current || '')}
+        onChange={(e) => tab.onChangeTitle(e.currentTarget.value)}
+      />
+    </Field>
+  );
+}
+
+function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
+  const { layout } = tab.useState();
+  const dashboard = useDashboard(tab);
+
+  const isAnyPanelUsingDashboardDS = layout.getVizPanels().some((vizPanel) => {
+    const runner = getQueryRunnerFor(vizPanel);
+    return (
+      runner?.state.datasource?.uid === SHARED_DASHBOARD_QUERY ||
+      (runner?.state.datasource?.uid === MIXED_DATASOURCE_NAME &&
+        runner?.state.queries.some((query) => query.datasource?.uid === SHARED_DASHBOARD_QUERY))
+    );
+  });
+
   return (
     <>
-      <Button size="sm" variant="secondary" icon="copy" />
-      <Button size="sm" variant="destructive" fill="outline" onClick={() => tab.onDelete()} icon="trash-alt" />
+      <RepeatRowSelect2
+        id={id}
+        sceneContext={dashboard}
+        repeat={tab.state.repeatByVariable}
+        onChange={(repeat) => tab.onChangeRepeat(repeat)}
+      />
+      {isAnyPanelUsingDashboardDS ? (
+        <Alert
+          data-testid={selectors.pages.Dashboard.Rows.Repeated.ConfigSection.warningMessage}
+          severity="warning"
+          title=""
+          topSpacing={3}
+          bottomSpacing={0}
+        >
+          <p>
+            <Trans i18nKey="dashboard.tabs-layout.tab.repeat.warning">
+              Panels in this tab use the {{ SHARED_DASHBOARD_QUERY }} data source. These panels will reference the panel
+              in the original tab, not the ones in the repeated tabs.
+            </Trans>
+          </p>
+          <TextLink
+            external
+            href={
+              'https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/create-dashboard/#configure-repeating-tabs'
+            }
+          >
+            <Trans i18nKey="dashboard.tabs-layout.tab.repeat.learn-more">Learn more</Trans>
+          </TextLink>
+        </Alert>
+      ) : undefined}
     </>
   );
 }
 
-function TabTitleInput({ tab }: { tab: TabItem }) {
-  const { title } = tab.useState();
+function editTabTitleAction(tab: TabItem, title: string, prevTitle: string) {
+  if (title === prevTitle) {
+    return;
+  }
 
-  return <Input value={title} onChange={(e) => tab.onChangeTitle(e.currentTarget.value)} />;
+  dashboardEditActions.edit({
+    description: t('dashboard.edit-actions.tab-title', 'Change tab title'),
+    source: tab,
+    perform: () => tab.onChangeTitle(title),
+    undo: () => tab.onChangeTitle(prevTitle),
+  });
 }

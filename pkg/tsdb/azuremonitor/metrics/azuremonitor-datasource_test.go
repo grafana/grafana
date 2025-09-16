@@ -301,10 +301,10 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			if tt.azureMonitorVariedProperties["resources"] != nil {
 				resourceSlice := tt.azureMonitorVariedProperties["resources"].([]dataquery.AzureMonitorResource)
 				for _, resource := range resourceSlice {
-					resources[fmt.Sprintf("/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s", *resource.ResourceGroup, *resource.ResourceName)] = resource
+					resources[strings.ToLower(fmt.Sprintf("/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s", *resource.ResourceGroup, *resource.ResourceName))] = resource
 				}
 			} else {
-				resources["/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana"] = dataquery.AzureMonitorResource{ResourceGroup: strPtr("grafanastaging"), ResourceName: strPtr("grafana")}
+				resources[strings.ToLower("/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana")] = dataquery.AzureMonitorResource{ResourceGroup: strPtr("grafanastaging"), ResourceName: strPtr("grafana")}
 			}
 
 			azureMonitorQuery := &types.AzureMonitorQuery{
@@ -368,7 +368,7 @@ func TestCustomNamespace(t *testing.T) {
 
 func TestAzureMonitorParseResponse(t *testing.T) {
 	resources := map[string]dataquery.AzureMonitorResource{}
-	resources["/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana"] =
+	resources[strings.ToLower("/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana")] =
 		dataquery.AzureMonitorResource{ResourceGroup: strPtr("grafanastaging"), ResourceName: strPtr("grafana")}
 	subscription := "12345678-aaaa-bbbb-cccc-123456789abc"
 
@@ -486,7 +486,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Params: url.Values{
 					"aggregation": {"Average"},
 				},
-				Resources:    map[string]dataquery.AzureMonitorResource{"/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanatest/providers/Microsoft.Storage/storageAccounts/testblobaccount/blobServices/default/providers/Microsoft.Insights/metrics": {ResourceGroup: strPtr("grafanatest"), ResourceName: strPtr("testblobaccount")}},
+				Resources:    map[string]dataquery.AzureMonitorResource{strings.ToLower("/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanatest/providers/Microsoft.Storage/storageAccounts/testblobaccount/blobServices/default/providers/Microsoft.Insights/metrics"): {ResourceGroup: strPtr("grafanatest"), ResourceName: strPtr("testblobaccount")}},
 				Subscription: subscription,
 			},
 		},

@@ -14,7 +14,7 @@ func TestCreateMetricsQuery_Success(t *testing.T) {
 	service := &Service{
 		logger: logger,
 	}
-	dsInfo := &Datasource{
+	dsInfo := &DatasourceInfo{
 		URL: "http://tempo:3100",
 	}
 	queryVal := "{attribute=\"value\"}"
@@ -34,12 +34,13 @@ func TestCreateMetricsQuery_Success(t *testing.T) {
 	assert.Equal(t, "http://tempo:3100/api/metrics/query_range?end=1625184000&exemplars=123&q=%7Battribute%3D%22value%22%7D&start=1625097600&step=14", req.URL.String())
 	assert.Equal(t, "application/json", req.Header.Get("Accept"))
 }
+
 func TestCreateMetricsQuery_OnlyQuery(t *testing.T) {
 	logger := backend.NewLoggerWith("logger", "tsdb.tempo.test")
 	service := &Service{
 		logger: logger,
 	}
-	dsInfo := &Datasource{
+	dsInfo := &DatasourceInfo{
 		URL: "http://tempo:3100",
 	}
 	queryVal := "{attribute=\"value\"}"
@@ -59,7 +60,7 @@ func TestCreateMetricsQuery_URLParseError(t *testing.T) {
 	service := &Service{
 		logger: logger,
 	}
-	dsInfo := &Datasource{
+	dsInfo := &DatasourceInfo{
 		URL: "http://[::1]:namedport",
 	}
 	queryVal := "{attribute=\"value\"}"
@@ -91,6 +92,11 @@ func TestQueryWithRateFunction_ReturnsTrue(t *testing.T) {
 
 func TestQueryWithAvgOverTimeFunction_ReturnsTrue(t *testing.T) {
 	result := isMetricsQuery("{} | avg_over_time(foo)")
+	assert.True(t, result)
+}
+
+func TestQueryWithSumOverTimeFunction_ReturnsTrue(t *testing.T) {
+	result := isMetricsQuery("{} | sum_over_time(foo)")
 	assert.True(t, result)
 }
 

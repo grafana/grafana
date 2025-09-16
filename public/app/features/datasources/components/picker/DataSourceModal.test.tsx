@@ -59,26 +59,18 @@ const setup = (partialProps: Partial<DataSourceModalProps> = {}) => {
   return render(<DataSourceModal {...props} />);
 };
 
-jest.mock('@grafana/runtime', () => {
-  const actual = jest.requireActual('@grafana/runtime');
-  return {
-    ...actual,
-    getTemplateSrv: () => {
-      return {
-        getVariables: () => [],
-      };
-    },
-  };
-});
-
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      getList: getListMock,
-      getInstanceSettings: getInstanceSettingsMock,
-    }),
-  };
-});
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => {
+    return {
+      getVariables: () => [],
+    };
+  },
+  getDataSourceSrv: () => ({
+    getList: getListMock,
+    getInstanceSettings: getInstanceSettingsMock,
+  }),
+}));
 
 locationUtil.initialize({
   config: { appSubUrl: '/my-sub-path' } as GrafanaConfig,
@@ -171,6 +163,7 @@ describe('DataSourceDropdown', () => {
         onDismiss: () => {},
         current: mockDS1.name,
         ...filters,
+        dataSources: mockDSList,
       };
 
       getListMock.mockClear();

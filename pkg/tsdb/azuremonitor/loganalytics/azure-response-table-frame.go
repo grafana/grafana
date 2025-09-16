@@ -210,7 +210,7 @@ var objectToStringConverter = data.FieldConverter{
 
 		data, err := json.Marshal(kustoValue)
 		if err != nil {
-			fmt.Printf("failed to marshal column value: %s", err)
+			return nil, fmt.Errorf("failed to marshal column value: %w", err)
 		}
 
 		asString := string(data)

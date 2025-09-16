@@ -14,17 +14,17 @@ title: Configure security hardening
 
 Security hardening enables you to apply additional security, which can help stop certain vulnerabilities from being exploited by a malicious attacker.
 
-{{% admonition type="note" %}}
-These settings are available in the [grafana.ini configuration file]({{< relref "../../configure-grafana#configuration-file-location" >}}). To apply changes to the configuration file, restart the Grafana server.
-{{% /admonition %}}
+{{< admonition type="note" >}}
+These settings are available in the [grafana.ini configuration file](../../configure-grafana/#configuration-file-location). To apply changes to the configuration file, restart the Grafana server.
+{{< /admonition >}}
 
 ## Additional security for cookies
 
 If Grafana uses HTTPS, you can further secure the cookie that the system uses to authenticate access to the web UI. By applying additional security to the cookie, you might mitigate certain attacks that result from an attacker obtaining the cookie value.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Grafana must use HTTPS for the following configurations to work properly.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Add a secure attribute to cookies
 
@@ -33,6 +33,7 @@ To provide mitigation against some MITM attacks, add the `Secure` attribute to t
 Example:
 
 ```toml
+[security]
 # Set to true if you host Grafana behind HTTPS. The default value is false.
 cookie_secure = true
 ```
@@ -44,13 +45,14 @@ To mitigate almost all CSRF-attacks, set the _cookie_samesite_ option to `strict
 Example:
 
 ```toml
+[security]
 # set cookie SameSite attribute. defaults to `lax`. can be set to "lax", "strict", "none" and "disabled"
 cookie_samesite = strict
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 By setting the SameSite attribute to "strict," only the user clicks within a Grafana instance work. The default option, "lax," does not produce this behavior.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Add a prefix to cookie names
 
@@ -60,6 +62,7 @@ Add a prefix to the current cookie name with either `__Secure-` or `__Host-` whe
 Example:
 
 ```toml
+[auth]
 # Login cookie name
 login_cookie_name = __Host-grafana_session
 ```
@@ -75,6 +78,7 @@ A content security policy (CSP) is an HTTP response header that controls how the
 Example:
 
 ```toml
+[security]
 # Enable adding the Content-Security-Policy header to your requests.
 # CSP enables you to control the resources the user agent can load and helps prevent XSS attacks.
 content_security_policy = true
@@ -114,8 +118,22 @@ If set to `true`, the Grafana server hides the running version number for unauth
 Example:
 
 ```toml
+[auth.anonymous]
 # mask the Grafana version number for unauthenticated users
 hide_version = true
+```
+
+### Enable auth for metrics
+
+By default, metrics from Grafana itself can be accessed without authentication. This can lead to information leakage.
+
+Example:
+
+```toml
+[metrics]
+# If both are set, basic auth will be required for the metrics endpoints
+basic_auth_username =
+basic_auth_password =
 ```
 
 ### Enforce domain verification
@@ -125,6 +143,7 @@ If set to `true`, the Grafana server redirects requests that have a Host-header 
 Example:
 
 ```toml
+[server]
 # Redirect to correct domain if host header does not match domain
 # Prevents DNS rebinding attacks
 enforce_domain = true

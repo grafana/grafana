@@ -11,10 +11,10 @@ import (
 )
 
 func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
-	ctx, span := tracer.Start(ctx, "server.BatchCheck")
+	ctx, span := s.tracer.Start(ctx, "server.BatchCheck")
 	defer span.End()
 
-	if err := authorize(ctx, r.GetNamespace()); err != nil {
+	if err := authorize(ctx, r.GetNamespace(), s.cfg); err != nil {
 		return nil, err
 	}
 
@@ -27,7 +27,7 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest
 		return nil, err
 	}
 
-	contextuals, err := s.getContextuals(ctx, r.GetSubject())
+	contextuals, err := s.getContextuals(r.GetSubject())
 	if err != nil {
 		return nil, err
 	}

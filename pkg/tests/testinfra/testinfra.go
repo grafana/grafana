@@ -17,6 +17,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/util/testutil"
+
+	"github.com/grafana/dskit/kv"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -80,7 +87,25 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 		runstore = true
 	}
 
-	env, err := server.InitializeForTest(t, cfg, serverOpts, apiServerOpts)
+	err = featuremgmt.InitOpenFeatureWithCfg(cfg)
+	require.NoError(t, err)
+
+	// Use proper database type based on the environment variable GRAFANA_TEST_DB in tests
+	testDB, err := sqlutil.GetTestDB(sqlutil.GetTestDBType())
+	require.NoError(t, err)
+	t.Cleanup(testDB.Cleanup)
+
+	dbCfg := cfg.Raw.Section("database")
+	dbCfg.Key("type").SetValue(testDB.DriverName)
+	dbCfg.Key("host").SetValue(testDB.Host)
+	dbCfg.Key("port").SetValue(testDB.Port)
+	dbCfg.Key("user").SetValue(testDB.User)
+	dbCfg.Key("password").SetValue(testDB.Password)
+	dbCfg.Key("name").SetValue(testDB.Database)
+
+	t.Log("Using test database", "type", testDB.DriverName, "host", testDB.Host, "port", testDB.Port, "user", testDB.User, "name", testDB.Database)
+
+	env, err := server.InitializeForTest(ctx, t, t, cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
 
 	require.NotNil(t, env.Cfg)
@@ -104,7 +129,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	var storage sql.UnifiedStorageGrpcService
 	if runstore {
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
-			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil)
+			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{})
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
@@ -185,16 +210,16 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.True(t, found, "Couldn't detect project root directory")
 
 	cfgDir := filepath.Join(tmpDir, "conf")
-	err := os.MkdirAll(cfgDir, 0750)
+	err := os.MkdirAll(cfgDir, 0o750)
 	require.NoError(t, err)
 	dataDir := filepath.Join(tmpDir, "data")
 	// nolint:gosec
-	err = os.MkdirAll(dataDir, 0750)
+	err = os.MkdirAll(dataDir, 0o750)
 	require.NoError(t, err)
 	logsDir := filepath.Join(tmpDir, "logs")
 	pluginsDir := filepath.Join(tmpDir, "plugins")
 	publicDir := filepath.Join(tmpDir, "public")
-	err = os.MkdirAll(publicDir, 0750)
+	err = os.MkdirAll(publicDir, 0o750)
 	require.NoError(t, err)
 
 	viewsDir := filepath.Join(publicDir, "views")
@@ -203,7 +228,7 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 
 	// add a stub manifest to the build directory
 	buildDir := filepath.Join(publicDir, "build")
-	err = os.MkdirAll(buildDir, 0750)
+	err = os.MkdirAll(buildDir, 0o750)
 	require.NoError(t, err)
 	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(`{
 		"entrypoints": {
@@ -233,7 +258,7 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		  "integrity": "sha256-k1g7TksMHFQhhQGE"
 		}
 	  }
-	  `), 0750)
+	  `), 0o750)
 	require.NoError(t, err)
 
 	emailsDir := filepath.Join(publicDir, "emails")
@@ -241,16 +266,16 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	provDir := filepath.Join(cfgDir, "provisioning")
 	provDSDir := filepath.Join(provDir, "datasources")
-	err = os.MkdirAll(provDSDir, 0750)
+	err = os.MkdirAll(provDSDir, 0o750)
 	require.NoError(t, err)
 	provNotifiersDir := filepath.Join(provDir, "notifiers")
-	err = os.MkdirAll(provNotifiersDir, 0750)
+	err = os.MkdirAll(provNotifiersDir, 0o750)
 	require.NoError(t, err)
 	provPluginsDir := filepath.Join(provDir, "plugins")
-	err = os.MkdirAll(provPluginsDir, 0750)
+	err = os.MkdirAll(provPluginsDir, 0o750)
 	require.NoError(t, err)
 	provDashboardsDir := filepath.Join(provDir, "dashboards")
-	err = os.MkdirAll(provDashboardsDir, 0750)
+	err = os.MkdirAll(provDashboardsDir, 0o750)
 	require.NoError(t, err)
 	corePluginsDir := filepath.Join(publicDir, "app/plugins")
 	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "app/plugins"), corePluginsDir)
@@ -294,6 +319,13 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = alertingSect.NewKey("max_attempts", "3")
 	require.NoError(t, err)
+
+	if opts.EnableRecordingRules {
+		recordingRulesSect, err := cfg.NewSection("recording_rules")
+		require.NoError(t, err)
+		_, err = recordingRulesSect.NewKey("enabled", "true")
+		require.NoError(t, err)
+	}
 
 	if opts.LicensePath != "" {
 		section, err := cfg.NewSection("enterprise")
@@ -468,6 +500,17 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		_, err = grafanaComSection.NewKey("api_url", opts.GrafanaComAPIURL)
 		require.NoError(t, err)
 	}
+
+	if opts.RemoteAlertmanagerURL != "" {
+		remoteAlertmanagerSection, err := getOrCreateSection("remote.alertmanager")
+		require.NoError(t, err)
+		_, err = remoteAlertmanagerSection.NewKey("enabled", "true")
+		require.NoError(t, err)
+		_, err = remoteAlertmanagerSection.NewKey("url", opts.RemoteAlertmanagerURL)
+		require.NoError(t, err)
+		_, err = remoteAlertmanagerSection.NewKey("tenant", "1")
+		require.NoError(t, err)
+	}
 	if opts.GrafanaComSSOAPIToken != "" {
 		grafanaComSection, err := getOrCreateSection("grafana_com")
 		require.NoError(t, err)
@@ -483,7 +526,31 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 	}
+	if opts.UnifiedStorageMaxPageSizeBytes > 0 {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("max_page_size_bytes", fmt.Sprintf("%d", opts.UnifiedStorageMaxPageSizeBytes))
+		require.NoError(t, err)
+	}
+	if opts.PermittedProvisioningPaths != "" {
+		_, err = pathsSect.NewKey("permitted_provisioning_paths", opts.PermittedProvisioningPaths)
+		require.NoError(t, err)
+	}
+	if opts.EnableSCIM {
+		scimSection, err := getOrCreateSection("auth.scim")
+		require.NoError(t, err)
+		_, err = scimSection.NewKey("user_sync_enabled", "true")
+		require.NoError(t, err)
+		_, err = scimSection.NewKey("group_sync_enabled", "true")
+		require.NoError(t, err)
+	}
 
+	if opts.APIServerRuntimeConfig != "" {
+		section, err := getOrCreateSection("grafana-apiserver")
+		require.NoError(t, err)
+		_, err = section.NewKey("runtime_config", opts.APIServerRuntimeConfig)
+		require.NoError(t, err)
+	}
 	dbSection, err := getOrCreateSection("database")
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
@@ -505,8 +572,9 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 
 func SQLiteIntegrationTest(t *testing.T) {
 	t.Helper()
+	testutil.SkipIntegrationTestInShortMode(t)
 
-	if testing.Short() || !db.IsTestDbSQLite() {
+	if !db.IsTestDbSQLite() {
 		t.Skip("skipping integration test")
 	}
 }
@@ -535,11 +603,19 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
+	UnifiedStorageMaxPageSizeBytes        int
+	PermittedProvisioningPaths            string
 	GrafanaComSSOAPIToken                 string
 	LicensePath                           string
+	EnableRecordingRules                  bool
+	EnableSCIM                            bool
+	APIServerRuntimeConfig                string
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType
+
+	// Remote alertmanager configuration
+	RemoteAlertmanagerURL string
 }
 
 func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) *user.User {
@@ -549,7 +625,9 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 	cfg.AutoAssignOrgId = 1
 	cmd.OrgID = 1
 
-	quotaService := quotaimpl.ProvideService(store, cfg)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), store, cfgProvider)
 	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(

@@ -18,7 +18,7 @@
     "maxDataPoints": true,
     "cacheTimeout": true
   },
-
+  "executable": "gpx_graphite",
   "info": {
     "description": "Open source time series database",
     "author": {
@@ -34,7 +34,14 @@
       {
         "name": "Graphite 1.1 Release",
         "url": "https://grafana.com/blog/2018/01/11/graphite-1.1-teaching-an-old-dog-new-tricks/"
-      }
-    ]
+      },
+      { "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" },
+      { "name": "Documentation", "url": "https://grafana.com/docs/grafana/latest/datasources/graphite/" }
+    ],
+    "version": "%VERSION%"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=10.3.0",
+    "plugins": []
   }
 }

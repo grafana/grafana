@@ -3,12 +3,14 @@ import debounce from 'debounce-promise';
 import { useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { AsyncMultiSelect, Icon, Button, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { Trans } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { FolderInfo, PermissionLevelString } from 'app/types';
+import { DashboardSearchItemType } from 'app/features/search/types';
+import { PermissionLevelString } from 'app/types/acl';
+import { FolderInfo } from 'app/types/folders';
 
 export interface FolderFilterProps {
   onChange: (folder: FolderInfo[]) => void;
@@ -34,14 +36,7 @@ export function FolderFilter({ onChange, maxMenuHeight }: FolderFilterProps): JS
   return (
     <div className={styles.container}>
       {value.length > 0 && (
-        <Button
-          size="xs"
-          icon="trash-alt"
-          fill="text"
-          className={styles.clear}
-          onClick={() => onChange([])}
-          aria-label="Clear folders"
-        >
+        <Button size="xs" icon="trash-alt" fill="text" className={styles.clear} onClick={() => onChange([])}>
           <Trans i18nKey="folder-filter.clear-folder-button">Clear folders</Trans>
         </Button>
       )}
@@ -51,10 +46,10 @@ export function FolderFilter({ onChange, maxMenuHeight }: FolderFilterProps): JS
         isLoading={loading}
         loadOptions={debouncedLoadOptions}
         maxMenuHeight={maxMenuHeight}
-        placeholder="Filter by folder"
-        noOptionsMessage="No folders found"
+        placeholder={t('folder-filter.select-placeholder', 'Filter by folder')}
+        noOptionsMessage={t('folder-filter.noOptionsMessage-no-folders-found', 'No folders found')}
         prefix={<Icon name="filter" />}
-        aria-label="Folder filter"
+        aria-label={t('folder-filter.select-aria-label', 'Folder filter')}
         defaultOptions
       />
     </div>
@@ -93,7 +88,7 @@ async function getFoldersAsOptions(
   // Use existing backend service search
   const params = {
     query: searchString,
-    type: 'folder',
+    type: DashboardSearchItemType.DashFolder,
     permission: PermissionLevelString.View,
   };
 

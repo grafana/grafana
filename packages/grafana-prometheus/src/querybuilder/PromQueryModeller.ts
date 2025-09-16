@@ -1,17 +1,22 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/PromQueryModeller.ts
-import { FUNCTIONS } from '../promql';
+import { getFunctions } from '../promql';
 
 import { getAggregationOperations } from './aggregations';
 import { getOperationDefinitions } from './operations';
-import { LokiAndPromQueryModellerBase } from './shared/LokiAndPromQueryModellerBase';
-import { PromQueryPattern, PromQueryPatternType, PromVisualQueryOperationCategory } from './types';
+import { PromQueryModellerBase } from './shared/PromQueryModellerBase';
+import {
+  PromQueryPattern,
+  PromQueryPatternType,
+  PromVisualQueryOperationCategory,
+  PromQueryModellerInterface,
+} from './types';
 
-export class PromQueryModeller extends LokiAndPromQueryModellerBase {
+export class PromQueryModeller extends PromQueryModellerBase implements PromQueryModellerInterface {
   constructor() {
     super(() => {
       const allOperations = [...getOperationDefinitions(), ...getAggregationOperations()];
       for (const op of allOperations) {
-        const func = FUNCTIONS.find((x) => x.insertText === op.id);
+        const func = getFunctions().find((x) => x.insertText === op.id);
         if (func) {
           op.documentation = func.documentation;
         }
@@ -90,5 +95,3 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase {
     ];
   }
 }
-
-export const promQueryModeller = new PromQueryModeller();

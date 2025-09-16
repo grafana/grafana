@@ -5,7 +5,7 @@ import { Auth, ConnectionSettings, convertLegacyAuthProps, AuthMethod } from '@g
 import { docsTip, overhaulStyles } from '@grafana/prometheus';
 import { Alert, SecureSocksProxySettings, useTheme2 } from '@grafana/ui';
 // NEED TO EXPORT THIS FROM GRAFANA/UI FOR EXTERNAL DS
-import { AzureAuthSettings } from '@grafana/ui/src/components/DataSourceSettings/types';
+import { AzureAuthSettings } from '@grafana/ui/internal';
 
 import { AzurePromDataSourceSettings } from './AzureCredentialsConfig';
 
@@ -139,6 +139,12 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
         <Alert title="Deprecation Notice" severity="warning">
           The SigV4 authentication in the core Prometheus data source is deprecated. Please use the Amazon Managed
           Service for Prometheus data source to authenticate with SigV4.
+        </Alert>
+      )}
+      {azureAuthSelected && (
+        <Alert title="Deprecation Notice" severity="warning">
+          Azure authentication in the core Prometheus data source is deprecated. Please use the Azure Monitor Managed
+          Service for Prometheus data source to authenticate using Azure authentication.
         </Alert>
       )}
       <Auth

@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, OneClickMode } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { DimensionContext } from 'app/features/dimensions';
-import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
+import { DimensionContext } from 'app/features/dimensions/context';
+import { ScalarDimensionEditor } from 'app/features/dimensions/editors/ScalarDimensionEditor';
 
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultBgColor } from '../element';
 
@@ -93,7 +94,6 @@ export const droneSideItem: CanvasElementItem = {
       left: options?.placement?.left,
       rotation: options?.placement?.rotation ?? 0,
     },
-    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
     links: options?.links ?? [],
   }),
 
@@ -109,12 +109,12 @@ export const droneSideItem: CanvasElementItem = {
   },
 
   registerOptionsUI: (builder) => {
-    const category = ['Drone Side'];
+    const category = [t('canvas.drone-side-item.category-drone-side', 'Drone Side')];
     builder.addCustomEditor({
       category,
       id: 'pitchAngle',
       path: 'config.pitchAngle',
-      name: 'Pitch Angle',
+      name: t('canvas.drone-side-item.name-pitch-angle', 'Pitch Angle'),
       editor: ScalarDimensionEditor,
     });
   },

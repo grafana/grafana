@@ -172,6 +172,29 @@ func TestValidatePluginRole(t *testing.T) {
 			},
 			wantErr: &ac.ErrorInvalidRole{},
 		},
+		{
+			name:     "valid core plugin permission targets plugin",
+			pluginID: "test-app",
+			role: ac.RoleDTO{
+				Name:        "plugins:test-app:reader",
+				DisplayName: "Plugin Configurator",
+				Permissions: []ac.Permission{
+					{Action: "plugins:write", Scope: "plugins:id:test-app"},
+				},
+			},
+		},
+		{
+			name:     "invalid core plugin permission targets other plugin",
+			pluginID: "test-app",
+			role: ac.RoleDTO{
+				Name:        "plugins:test-app:reader",
+				DisplayName: "Plugin Configurator",
+				Permissions: []ac.Permission{
+					{Action: "plugins:write", Scope: "plugins:id:other-app"},
+				},
+			},
+			wantErr: &ac.ErrorInvalidRole{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -1,10 +1,11 @@
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
+import { t } from '@grafana/i18n';
 import { InlineField, Input } from '@grafana/ui';
 
 import DataSource from '../../datasource';
 import { migrateStringQueriesToObjectQueries } from '../../grafanaTemplateVariableFns';
-import { AzureMonitorQuery, AzureQueryType } from '../../types';
+import { AzureMonitorQuery, AzureQueryType } from '../../types/query';
 
 const GrafanaTemplateVariableFnInput = ({
   query,
@@ -45,9 +46,18 @@ const GrafanaTemplateVariableFnInput = ({
   };
 
   return (
-    <InlineField label="Grafana template variable function">
+    <InlineField
+      label={t(
+        'components.grafana-template-variable-fn-input.label-grafana-template-variable',
+        'Grafana template variable function'
+      )}
+    >
       <Input
-        placeholder={'type a grafana template variable function, ex: Subscriptions()'}
+        placeholder={t(
+          'components.grafana-template-variable-fn-input.placeholder-grafana-template-variable',
+          'Type a grafana template variable function, e.g. {{example}}',
+          { example: 'Subscriptions()' }
+        )}
         value={inputVal}
         onChange={onChange}
         onBlur={() => onRunQuery(inputVal)}

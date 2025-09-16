@@ -6,7 +6,8 @@ The `setup` files cannot be used to create a custom `grafana` db/user since `sql
 (https://docs.microsoft.com/en-us/azure/azure-sql-edge/connect)
 
 You can connect the Grafana MSSQL datasource to this instance by using the following credentials:
-  * Host: `localhost`
-  * Database: `master`
-  * User: `sa`
-  * Password: `Password!` or whatever is set in `docker-compose.yaml` for env var `MSSQL_SA_PASSWORD`
+
+- Host: `localhost`
+- Database: `master`
+- User: `sa`
+- Password: `Password!` or whatever is set in `docker-compose.yaml` for env var `MSSQL_SA_PASSWORD`

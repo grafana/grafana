@@ -1,9 +1,9 @@
 import { FormEvent, useEffect, useState } from 'react';
 
 import { RawTimeRange, TimeRange } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, Label, Modal, Stack, Switch, TextArea } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ThemePicker } from './ThemePicker';
@@ -11,22 +11,30 @@ import { ShareModalTabProps } from './types';
 import { buildIframeHtml, getTrackingSource } from './utils';
 
 interface Props extends Omit<ShareModalTabProps, 'panel' | 'dashboard'> {
-  panel?: { timeFrom?: string; id: number };
+  panelId: string;
+  timeFrom?: string;
   dashboard: { uid: string; time: RawTimeRange };
   range?: TimeRange;
   buildIframe?: typeof buildIframeHtml;
   onCancelClick?: () => void;
 }
 
-export function ShareEmbed({ panel, dashboard, range, onCancelClick, buildIframe = buildIframeHtml }: Props) {
+export function ShareEmbed({
+  panelId,
+  timeFrom,
+  dashboard,
+  range,
+  onCancelClick,
+  buildIframe = buildIframeHtml,
+}: Props) {
   const [useCurrentTimeRange, setUseCurrentTimeRange] = useState(true);
   const [selectedTheme, setSelectedTheme] = useState('current');
   const [iframeHtml, setIframeHtml] = useState('');
 
   useEffect(() => {
-    const newIframeHtml = buildIframe(useCurrentTimeRange, dashboard.uid, selectedTheme, panel, range);
+    const newIframeHtml = buildIframe(useCurrentTimeRange, dashboard.uid, selectedTheme, panelId, timeFrom, range);
     setIframeHtml(newIframeHtml);
-  }, [selectedTheme, useCurrentTimeRange, dashboard, panel, range, buildIframe]);
+  }, [selectedTheme, useCurrentTimeRange, dashboard, panelId, timeFrom, range, buildIframe]);
 
   const onIframeHtmlChange = (event: FormEvent<HTMLTextAreaElement>) => {
     setIframeHtml(event.currentTarget.value);
@@ -49,7 +57,7 @@ export function ShareEmbed({ panel, dashboard, range, onCancelClick, buildIframe
         DashboardInteractions.embedSnippetCopy({
           currentTimeRange: useCurrentTimeRange,
           theme: selectedTheme,
-          shareResource: getTrackingSource(panel),
+          shareResource: getTrackingSource(panelId),
         });
       }}
     >

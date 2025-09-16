@@ -93,7 +93,7 @@ func TestGetResponseCode(t *testing.T) {
 			},
 		}))
 	})
-	t.Run("return 400 if there is an error in the responses", func(t *testing.T) {
+	t.Run("return 400 if there is an error in the responses but no status code", func(t *testing.T) {
 		assert.Equal(t, 400, query.GetResponseCode(&backend.QueryDataResponse{
 			Responses: map[string]backend.DataResponse{
 				"A": {
@@ -102,7 +102,7 @@ func TestGetResponseCode(t *testing.T) {
 			},
 		}))
 	})
-	t.Run("return 400 if there is a partial error", func(t *testing.T) {
+	t.Run("return 400 if there is a partial error but no status code", func(t *testing.T) {
 		assert.Equal(t, 400, query.GetResponseCode(&backend.QueryDataResponse{
 			Responses: map[string]backend.DataResponse{
 				"A": {

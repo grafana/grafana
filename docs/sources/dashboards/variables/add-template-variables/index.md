@@ -35,6 +35,7 @@ keywords:
   - nested
   - chained
   - linked
+  - best practices
 labels:
   products:
     - cloud
@@ -121,13 +122,11 @@ To create a variable, follow these steps:
    If you don't enter a display name, then the drop-down list label is the variable name.
 
 1. Choose a **Show on dashboard** option:
-
    - **Label and value** - The variable drop-down list displays the variable **Name** or **Label** value. This is the default.
    - **Value:** The variable drop-down list only displays the selected variable value and a down arrow.
    - **Nothing:** No variable drop-down list is displayed on the dashboard.
 
 1. Click one of the following links to complete the steps for adding your selected variable type:
-
    - [Query](#add-a-query-variable)
    - [Custom](#add-a-custom-variable)
    - [Textbox](#add-a-text-box-variable)
@@ -137,6 +136,13 @@ To create a variable, follow these steps:
    - [Ad hoc filters](#add-ad-hoc-filters)
 
 <!-- vale Grafana.Spelling = YES -->
+
+### Variable best practices
+
+- Variable drop-down lists are displayed in the order in which they're listed in the **Variables** in dashboard settings, so put the variables that you will change often at the top, so they will be shown first (far left on the dashboard).
+- By default, variables don't have a default value. This means that the topmost value in the drop-down list is always preselected. If you want to pre-populate a variable with an empty value, you can use the following workaround in the variable settings:
+  1. Select the **Include All Option** checkbox.
+  2. In the **Custom all value** field, enter a value like `+`.
 
 ## Add a query variable
 
@@ -157,7 +163,6 @@ Query expressions are different for each data source. For more information, refe
    For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
 
 1. In the **Query type** drop-down list, select one of the following options:
-
    - **Label names**
    - **Label values**
    - **Metrics**
@@ -166,7 +171,6 @@ Query expressions are different for each data source. For more information, refe
    - **Classic query**
 
 1. In the **Query** field, enter a query.
-
    - The query field varies according to your data source. Some data sources have custom query editors.
    - Each data source defines how the variable values are extracted. The typical implementation uses every string value returned from the data source response as a variable value. Make sure to double-check the documentation for the data source.
    - Some data sources let you provide custom "display names" for the values. For instance, the PostgreSQL, MySQL, and Microsoft SQL Server plugins handle this by looking for fields named `__text` and `__value` in the result. Other data sources may look for `text` and `value` or use a different approach. Always remember to double-check the documentation for the data source.
@@ -175,12 +179,10 @@ Query expressions are different for each data source. For more information, refe
 1. (Optional) In the **Regex** field, type a regular expression to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with a regular expression](#filter-variables-with-regex).
 1. In the **Sort** drop-down list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query is used.
 1. Under **Refresh**, select when the variable should update options:
-
    - **On dashboard load** - Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
    - **On time range change** - Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
 
 1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
-
    - **Multi-value** - Enables multiple values to be selected at the same time.
    - **Include All option** - Enables an option to include all variables.
 
@@ -200,7 +202,6 @@ For example, if you have server names or region names that never change, then yo
    You can include numbers, strings, or key/value pairs separated by a space and a colon. For example, `key1 : value1,key2 : value2`.
 
 1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
-
    - **Multi-value** - Enables multiple values to be selected at the same time.
    - **Include All option** - Enables an option to include all variables.
 
@@ -249,7 +250,6 @@ _Data source_ variables enable you to quickly change the data source for an enti
    Leave this field empty to display all instances.
 
 1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
-
    - **Multi-value** - Enables multiple values to be selected at the same time.
    - **Include All option** - Enables an option to include all variables.
 
@@ -271,7 +271,6 @@ You can use an interval variable as a parameter to group by time (for InfluxDB),
 1. (Optional) Select on the **Auto option** checkbox if you want to add the `auto` option to the list.
 
    This option allows you to specify how many times the current time range should be divided to calculate the current `auto` time span. If you turn it on, then two more options appear:
-
    - **Step count** - Select the number of times the current time range is divided to calculate the value, similar to the **Max data points** query option. For example, if the current visible time range is 30 minutes, then the `auto` interval groups the data into 30 one-minute increments. The default value is 30 steps.
    - **Min interval** - The minimum threshold below which the step count intervals does not divide the time. To continue the 30 minute example, if the minimum interval is set to 2m, then Grafana would group the data into 15 two-minute increments.
 
@@ -299,16 +298,21 @@ groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5
 ## Add ad hoc filters
 
 _Ad hoc filters_ are one of the most complex and flexible variable options available.
-Instead of a regular list of variable options, this variable allows you to build a dashboard-wide ad hoc query.
+Instead of creating a variable for each dimension by which you want to filter, ad hoc filters automatically create variables (key/value pairs) for all the dimensions returned by your data source query.
+This allows you to apply filters dashboard-wide.
 
 Ad hoc filters let you add label/value filters that are automatically added to all metric queries that use the specified data source.
 Unlike other variables, you don't use ad hoc filters in queries.
 Instead, you use ad hoc filters to write filters for existing queries.
 
-{{< admonition type="note" >}}
-Not all data sources support ad hoc filters.
-Examples of those that do include Prometheus, Loki, InfluxDB, and Elasticsearch.
-{{< /admonition >}}
+The following data sources support ad hoc filters:
+
+- Dashboard - Use this special data source to [apply ad hoc filters to data from unsupported data sources](#filter-any-data-using-the-dashboard-data-source).
+- Prometheus
+- Loki
+- InfluxDB
+- Elasticsearch
+- OpenSearch
 
 To create an ad hoc filter, follow these steps:
 
@@ -324,6 +328,60 @@ To create an ad hoc filter, follow these steps:
 1. Click **Back to dashboard** and **Exit edit**.
 
 Now you can [filter data on the dashboard](ref:filter-dashboard).
+
+### Filter any data using the Dashboard data source
+
+In cases where a data source doesn't support the use of ad hoc filters, you can use the Dashboard data source to reference that data, and then filter it in a new panel.
+This allows you to bypass the limitations of the data source in the source panel.
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-dashboard-ds-v12.2.png" max-width="750px" alt="The query section of a panel with the Dashboard data source configured" >}}
+
+To use ad hoc filters on data from an unsupported data source, follow these steps:
+
+1. Navigate to the dashboard with the panel with the data you want to filter.
+1. Click **Edit** in top-right corner of the dashboard.
+1. At the top of the dashboard, click **Add** and select **Visualization** in the drop-down list.
+1. In the **Queries** tab of the edit panel view, enter `Dashboard` in the **Data source** field and select **-- Dashboard --**.
+1. In the query configuration section, make the following selections:
+   - **Source panel** - Choose the panel with the source data.
+   - **Data** - Select **All Data** to use the data of the panel, and not just the annotations. This is the default selection.
+   - **AdHoc Filters** - Toggle on the switch to make the data from the referenced panel filterable.
+
+   {{< admonition type="note">}}
+   If you're referencing multiple panels in a dashboard with the Dashboard data source, you can only use one of those source panels at a time for ad hoc filtering.
+   {{< /admonition >}}
+
+1. Configure any other needed options for the panel.
+1. Click **Save dashboard**.
+
+Now you can filter the data from the source panel by way of the Dashboard data source.
+Add as many panels as you need.
+
+### Dashboard drilldown with ad hoc filters
+
+In table and bar chart visualizations, you can apply ad hoc filters directly from the visualization.
+To quickly apply ad hoc filter variables, follow these steps:
+
+1. To display the filter icons, hover your cursor over the table cell with the value for which you want to filter. In this example, the cell value is `ConfigMap Updated`, which is in the `alertname` column:
+
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-v12.2.png" max-width="550px" alt="Table and bar chart with ad hoc filter icon displayed on a table cell" >}}
+
+   In bar chart visualizations, hover and click the bar to display the filter button:
+
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-bar-v12.2.png" max-width="300px" alt="The ad hoc filter button in a bar chart tooltip">}}
+
+1. Click the add filter icon.
+
+   The variable pair `alertname = ConfigMap Updated` is added to the ad hoc filter and all panels using the same data source that include that variable value are filtered by that value:
+
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-applied-v12.2.png" max-width="550px" alt="Table and bar chart, filtered" >}}
+
+If one of the panels in the dashboard using that data source doesn't include that variable value, the panel won't return any data. In this example, the variable pair `_name_ = ALERTS` has been added to the ad hoc filter so the bar chart doesn't return any results:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-no-data-v12.2.png" max-width="650px" alt="Table, filtered and bar chart returning no results" >}}
+
+In cases where the data source you're using doesn't support ad hoc filtering, consider using the special Dashboard data source.
+For more information, refer to [Filter any data using the Dashboard data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#filter-any-data-using-the-dashboard-data-source).
 
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
@@ -351,6 +409,23 @@ InfluxDB and Prometheus use regular expressions, so the same variable would be i
 #### Multi-value variables with an Elastic data source
 
 Elasticsearch uses Lucene query syntax, so the same variable would be formatted as `("host1" OR "host2" OR "host3")`. In this case, every value must be escaped so that the value only contains Lucene control words and quotation marks.
+
+#### Variable indexing
+
+If you have a multi-value variable that's formatted as an array, you can use array positions to reference the values rather than the actual values.
+You can use this functionality in dashboard panels to filter data, and when you do so, the array is maintained.
+
+To reference variable values this way, use the following syntax:
+
+```text
+${query0.0}
+```
+
+The preceding syntax references the first, or `0`, position in the array.
+
+In the following example, there's an array of three values, `1t`, `2t`, and `3t`, and rather than referencing those values, the panel query references the second value in the array using the syntax `${query0.1}`:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-indexed-variables-v12.1.png" max-width="750px" alt="Panel query using variable indexing to reference a value" >}}
 
 #### Troubleshoot multi-value variables
 

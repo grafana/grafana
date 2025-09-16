@@ -2,6 +2,7 @@ package builder
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -15,15 +16,13 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
 // TODO: this (or something like it) belongs in grafana-app-sdk,
 // but lets keep it here while we iterate on a few simple examples
 type APIGroupBuilder interface {
-	// Get the main group name
-	GetGroupVersion() schema.GroupVersion
-
 	// Add the kinds to the server scheme
 	InstallSchema(scheme *runtime.Scheme) error
 
@@ -39,9 +38,23 @@ type APIGroupBuilder interface {
 	// Get OpenAPI definitions
 	GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
 
-	// Optionally add an authorization hook
-	// Standard namespace checking will happen before this is called, specifically
-	// the namespace must matches an org|stack that the user belongs to
+	// Do not return anything unless you have special circumstances! This is a list of resources that are allowed to be accessed in v0alpha1, with AllResourcesAllowed allowing all in the group.
+	// This is to prevent accidental exposure of experimental APIs. While developing, use the feature flag `grafanaAPIServerWithExperimentalAPIs`.
+	// And then, when you're ready to expose this to the end user, go to v1beta1 instead.
+	AllowedV0Alpha1Resources() []string
+}
+
+const AllResourcesAllowed = "*"
+
+type APIGroupVersionProvider interface {
+	GetGroupVersion() schema.GroupVersion
+}
+
+type APIGroupVersionsProvider interface {
+	GetGroupVersions() []schema.GroupVersion
+}
+
+type APIGroupAuthorizer interface {
 	GetAuthorizer() authorizer.Authorizer
 }
 
@@ -59,7 +72,7 @@ type APIGroupValidation interface {
 
 type APIGroupRouteProvider interface {
 	// Support direct HTTP routes from an APIGroup
-	GetAPIRoutes() *APIRoutes
+	GetAPIRoutes(gv schema.GroupVersion) *APIRoutes
 }
 
 type APIGroupPostStartHookProvider interface {
@@ -68,11 +81,12 @@ type APIGroupPostStartHookProvider interface {
 }
 
 type APIGroupOptions struct {
-	Scheme           *runtime.Scheme
-	OptsGetter       generic.RESTOptionsGetter
-	DualWriteBuilder grafanarest.DualWriteBuilder
-	MetricsRegister  prometheus.Registerer
-	StorageOptions   apistore.StorageOptionsRegister
+	Scheme              *runtime.Scheme
+	OptsGetter          generic.RESTOptionsGetter
+	DualWriteBuilder    grafanarest.DualWriteBuilder
+	MetricsRegister     prometheus.Registerer
+	StorageOptsRegister apistore.StorageOptionsRegister
+	StorageOpts         *options.StorageOptions
 }
 
 // Builders that implement OpenAPIPostProcessor are given a chance to modify the schema directly
@@ -99,4 +113,33 @@ type APIRoutes struct {
 
 type APIRegistrar interface {
 	RegisterAPI(builder APIGroupBuilder)
+}
+
+func getGroup(builder APIGroupBuilder) (string, error) {
+	if v, ok := builder.(APIGroupVersionProvider); ok {
+		return v.GetGroupVersion().Group, nil
+	}
+
+	if v, ok := builder.(APIGroupVersionsProvider); ok {
+		if len(v.GetGroupVersions()) == 0 {
+			return "", fmt.Errorf("unable to get group: builder returned no versions")
+		}
+
+		return v.GetGroupVersions()[0].Group, nil
+	}
+
+	return "", fmt.Errorf("unable to get group: builder does not implement APIGroupVersionProvider or APIGroupVersionsProvider")
+}
+
+func GetGroupVersions(builder APIGroupBuilder) []schema.GroupVersion {
+	if v, ok := builder.(APIGroupVersionProvider); ok {
+		return []schema.GroupVersion{v.GetGroupVersion()}
+	}
+
+	if v, ok := builder.(APIGroupVersionsProvider); ok {
+		return v.GetGroupVersions()
+	}
+
+	// this should never happen
+	panic("builder does not implement APIGroupVersionProvider or APIGroupVersionsProvider")
 }

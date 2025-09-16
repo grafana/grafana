@@ -7,10 +7,9 @@ package fake
 import (
 	applyconfiguration "github.com/grafana/grafana/pkg/generated/applyconfiguration"
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
-	provisioningv0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	fakeprovisioningv0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1/fake"
 	servicev0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/service/v0alpha1"
 	fakeservicev0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/service/v0alpha1/fake"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -38,9 +37,13 @@ func NewSimpleClientset(objects ...runtime.Object) *Clientset {
 	cs.discovery = &fakediscovery.FakeDiscovery{Fake: &cs.Fake}
 	cs.AddReactor("*", "*", testing.ObjectReaction(o))
 	cs.AddWatchReactor("*", func(action testing.Action) (handled bool, ret watch.Interface, err error) {
+		var opts metav1.ListOptions
+		if watchActcion, ok := action.(testing.WatchActionImpl); ok {
+			opts = watchActcion.ListOptions
+		}
 		gvr := action.GetResource()
 		ns := action.GetNamespace()
-		watch, err := o.Watch(gvr, ns)
+		watch, err := o.Watch(gvr, ns, opts)
 		if err != nil {
 			return false, nil, err
 		}
@@ -87,9 +90,13 @@ func NewClientset(objects ...runtime.Object) *Clientset {
 	cs.discovery = &fakediscovery.FakeDiscovery{Fake: &cs.Fake}
 	cs.AddReactor("*", "*", testing.ObjectReaction(o))
 	cs.AddWatchReactor("*", func(action testing.Action) (handled bool, ret watch.Interface, err error) {
+		var opts metav1.ListOptions
+		if watchActcion, ok := action.(testing.WatchActionImpl); ok {
+			opts = watchActcion.ListOptions
+		}
 		gvr := action.GetResource()
 		ns := action.GetNamespace()
-		watch, err := o.Watch(gvr, ns)
+		watch, err := o.Watch(gvr, ns, opts)
 		if err != nil {
 			return false, nil, err
 		}
@@ -103,11 +110,6 @@ var (
 	_ clientset.Interface = &Clientset{}
 	_ testing.FakeClient  = &Clientset{}
 )
-
-// ProvisioningV0alpha1 retrieves the ProvisioningV0alpha1Client
-func (c *Clientset) ProvisioningV0alpha1() provisioningv0alpha1.ProvisioningV0alpha1Interface {
-	return &fakeprovisioningv0alpha1.FakeProvisioningV0alpha1{Fake: &c.Fake}
-}
 
 // ServiceV0alpha1 retrieves the ServiceV0alpha1Client
 func (c *Clientset) ServiceV0alpha1() servicev0alpha1.ServiceV0alpha1Interface {

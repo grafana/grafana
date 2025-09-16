@@ -1,38 +1,52 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
-import { config, getBackendSrv, locationService } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
+import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
 import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
+import { AnnoKeyFolder, Resource, ResourceList } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
+import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import {
-  DashboardDTO,
-  DescendantCount,
-  DescendantCountDTO,
-  FolderDTO,
-  FolderListItemDTO,
-  ImportDashboardResponseDTO,
-  PermissionLevelString,
-  SaveDashboardResponseDTO,
-} from 'app/types';
+import { dispatch } from 'app/store/store';
+import { PermissionLevelString } from 'app/types/acl';
+import { SaveDashboardResponseDTO, ImportDashboardResponseDTO } from 'app/types/dashboard';
+import { FolderListItemDTO, FolderDTO, DescendantCount, DescendantCountDTO } from 'app/types/folders';
 
-import { t } from '../../../core/internationalization';
-import { refetchChildren, refreshParents } from '../state';
+import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
+import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
+import { refetchChildren, refreshParents } from '../state/actions';
 import { DashboardTreeSelection } from '../types';
 
+import { isProvisionedDashboard } from './isProvisioned';
 import { PAGE_SIZE } from './services';
 
-interface DeleteItemsArgs {
-  selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
+export interface DeleteFoldersArgs {
+  folderUIDs: string[];
 }
 
-interface MoveItemsArgs extends DeleteItemsArgs {
+interface DeleteDashboardsArgs {
+  dashboardUIDs: string[];
+}
+
+interface MoveDashboardsArgs {
+  destinationUID: string;
+  dashboardUIDs: string[];
+}
+
+export interface MoveFoldersArgs {
+  destinationUID: string;
+  folderUIDs: string[];
+}
+
+export interface MoveFolderArgs {
+  folderUID: string;
   destinationUID: string;
 }
 
@@ -51,12 +65,7 @@ interface ImportOptions {
 }
 
 interface RestoreDashboardArgs {
-  dashboardUID: string;
-  targetFolderUID: string;
-}
-
-interface HardDeleteDashboardArgs {
-  dashboardUID: string;
+  dashboard: Resource<Dashboard | DashboardV2Spec>;
 }
 
 export interface ListFolderQueryArgs {
@@ -101,7 +110,6 @@ export const browseDashboardsAPI = createApi({
       }),
       onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(async ({ data: folder }) => {
-          await contextSrv.fetchUserPermissions();
           dispatch(
             refetchChildren({
               parentUID: parentUid,
@@ -113,7 +121,7 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // save an existing folder (e.g. rename)
-    saveFolder: builder.mutation<FolderDTO, FolderDTO>({
+    saveFolder: builder.mutation<FolderDTO, Pick<FolderDTO, 'uid' | 'title' | 'version' | 'parentUid'>>({
       // because the getFolder calls contain the parents, renaming a parent/grandparent/etc needs to invalidate all child folders
       // we could do something smart and recursively invalidate these child folders but it doesn't seem worth it
       // instead let's just invalidate all the getFolder calls
@@ -139,22 +147,16 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // move an *individual* folder. used in the folder actions menu.
-    moveFolder: builder.mutation<void, { folder: FolderDTO; destinationUID: string }>({
+    moveFolder: builder.mutation<void, MoveFolderArgs>({
       invalidatesTags: ['getFolder'],
-      query: ({ folder, destinationUID }) => ({
-        url: `/folders/${folder.uid}/move`,
+      query: ({ folderUID, destinationUID }) => ({
+        url: `/folders/${folderUID}/move`,
         method: 'POST',
         body: { parentUID: destinationUID },
       }),
-      onQueryStarted: ({ folder, destinationUID }, { queryFulfilled, dispatch }) => {
-        const { parentUid } = folder;
+      onQueryStarted: ({ folderUID, destinationUID }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
-          dispatch(
-            refetchChildren({
-              parentUID: parentUid,
-              pageSize: PAGE_SIZE,
-            })
-          );
+          dispatch(refreshParents([folderUID]));
           dispatch(
             refetchChildren({
               parentUID: destinationUID,
@@ -209,8 +211,7 @@ export const browseDashboardsAPI = createApi({
         };
 
         for (const folderCounts of results) {
-          // TODO remove nullish coalescing once nestedFolders is toggled on
-          totalCounts.folder += folderCounts.folder ?? 0;
+          totalCounts.folder += folderCounts.folder;
           totalCounts.dashboard += folderCounts.dashboard;
           totalCounts.alertRule += folderCounts.alertrule;
           totalCounts.libraryPanel += folderCounts.librarypanel;
@@ -220,52 +221,37 @@ export const browseDashboardsAPI = createApi({
       },
     }),
 
-    // move *multiple* items (folders and dashboards). used in the move modal.
-    moveItems: builder.mutation<void, MoveItemsArgs>({
+    // move *multiple* dashboards. used in the move modal.
+    moveDashboards: builder.mutation<void, MoveDashboardsArgs>({
       invalidatesTags: ['getFolder'],
-      queryFn: async ({ selectedItems, destinationUID }, _api, _extraOptions, baseQuery) => {
-        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-        const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
-
-        // Move all the folders sequentially
-        // TODO error handling here
-        for (const folderUID of selectedFolders) {
-          await baseQuery({
-            url: `/folders/${folderUID}/move`,
-            method: 'POST',
-            body: { parentUID: destinationUID },
-          });
-        }
-
+      queryFn: async ({ dashboardUIDs, destinationUID }, _api, _extraOptions, baseQuery) => {
         // Move all the dashboards sequentially
         // TODO error handling here
-        for (const dashboardUID of selectedDashboards) {
-          if (config.featureToggles.useV2DashboardsAPI) {
-            const fullDash = await getDashboardAPI('v2').getDashboardDTO(dashboardUID);
+        for (const dashboardUID of dashboardUIDs) {
+          const fullDash = await getDashboardAPI().getDashboardDTO(dashboardUID);
+          const dashboard = isDashboardV2Resource(fullDash) ? fullDash.spec : fullDash.dashboard;
+          const k8s = isDashboardV2Resource(fullDash) ? fullDash.metadata : undefined;
 
-            await getDashboardAPI('v2').saveDashboard({
-              dashboard: fullDash.spec,
-              folderUid: destinationUID,
-              overwrite: false,
-              message: '',
-              k8s: fullDash.metadata,
-            });
-          } else {
-            const fullDash: DashboardDTO = await getDashboardAPI().getDashboardDTO(dashboardUID);
-
-            await getDashboardAPI().saveDashboard({
-              dashboard: fullDash.dashboard,
-              folderUid: destinationUID,
-              overwrite: false,
-              message: '',
-            });
+          if (config.featureToggles.provisioning) {
+            if (isProvisionedDashboard(fullDash)) {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: ['Cannot move provisioned dashboard'],
+              });
+              continue;
+            }
           }
+          await getDashboardAPI().saveDashboard({
+            dashboard,
+            folderUid: destinationUID,
+            overwrite: false,
+            message: '',
+            k8s,
+          });
         }
         return { data: undefined };
       },
-      onQueryStarted: ({ destinationUID, selectedItems }, { queryFulfilled, dispatch }) => {
-        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-        const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+      onQueryStarted: ({ destinationUID, dashboardUIDs }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
           dispatch(
             refetchChildren({
@@ -273,20 +259,62 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
-          dispatch(refreshParents([...selectedFolders, ...selectedDashboards]));
+          dispatch(refreshParents(dashboardUIDs));
         });
       },
     }),
 
-    // delete *multiple* items (folders and dashboards). used in the delete modal.
-    deleteItems: builder.mutation<void, DeleteItemsArgs>({
+    // move *multiple* folders. used in the move modal.
+    moveFolders: builder.mutation<void, MoveFoldersArgs>({
       invalidatesTags: ['getFolder'],
-      queryFn: async ({ selectedItems }, _api, _extraOptions, baseQuery) => {
-        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-        const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+      queryFn: async ({ folderUIDs, destinationUID }, _api, _extraOptions, baseQuery) => {
+        // Move all the folders sequentially
+        // TODO error handling here
+        for (const folderUID of folderUIDs) {
+          if (
+            await isProvisionedFolderCheck(dispatch, folderUID, {
+              warning: t(
+                'folders.api.folder-move-error-provisioned',
+                'Cannot move provisioned folder. To move it, move it in the repository and synchronise to apply the changes.'
+              ),
+            })
+          ) {
+            continue;
+          }
+
+          await baseQuery({
+            url: `/folders/${folderUID}/move`,
+            method: 'POST',
+            body: { parentUID: destinationUID },
+          });
+        }
+
+        return { data: undefined };
+      },
+      onQueryStarted: ({ destinationUID, folderUIDs }, { queryFulfilled, dispatch }) => {
+        queryFulfilled.then(() => {
+          dispatch(
+            refetchChildren({
+              parentUID: destinationUID,
+              pageSize: PAGE_SIZE,
+            })
+          );
+          dispatch(refreshParents(folderUIDs));
+        });
+      },
+    }),
+
+    // delete *multiple* folders. used in the delete modal.
+    deleteFolders: builder.mutation<void, DeleteFoldersArgs>({
+      invalidatesTags: ['getFolder'],
+      queryFn: async ({ folderUIDs }, _api, _extraOptions, baseQuery) => {
         // Delete all the folders sequentially
         // TODO error handling here
-        for (const folderUID of selectedFolders) {
+        for (const folderUID of folderUIDs) {
+          // This also shows warning alert
+          if (await isProvisionedFolderCheck(dispatch, folderUID)) {
+            continue;
+          }
           await baseQuery({
             url: `/folders/${folderUID}`,
             method: 'DELETE',
@@ -297,30 +325,59 @@ export const browseDashboardsAPI = createApi({
             },
           });
         }
+        return { data: undefined };
+      },
+      onQueryStarted: ({ folderUIDs }, { queryFulfilled, dispatch }) => {
+        queryFulfilled.then(() => {
+          dispatch(refreshParents(folderUIDs));
+          // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
+          deletedDashboardsCache.clear();
+        });
+      },
+    }),
+
+    // delete *multiple* dashboards. used in the delete modal.
+    deleteDashboards: builder.mutation<void, DeleteDashboardsArgs>({
+      invalidatesTags: ['getFolder'],
+      queryFn: async ({ dashboardUIDs }, _api, _extraOptions, baseQuery) => {
+        const pageStateManager = getDashboardScenePageStateManager();
         // Delete all the dashboards sequentially
         // TODO error handling here
-        for (const dashboardUID of selectedDashboards) {
-          const response = getDashboardAPI().deleteDashboard(dashboardUID, false);
+        for (const dashboardUID of dashboardUIDs) {
+          if (config.featureToggles.provisioning) {
+            const dto = await getDashboardAPI().getDashboardDTO(dashboardUID);
+            if (isProvisionedDashboard(dto)) {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: [
+                  'Cannot delete provisioned dashboard. To remove it, delete it from the repository and synchronise to apply the changes.',
+                ],
+              });
 
-          // @ts-expect-error
-          const name = response?.data?.title;
+              continue;
+            }
+          }
 
-          if (name) {
+          await getDashboardAPI().deleteDashboard(dashboardUID, true);
+
+          pageStateManager.clearDashboardCache();
+          pageStateManager.removeSceneCache(dashboardUID);
+          deletedDashboardsCache.clear();
+
+          // handling success alerts for these feature toggles
+          // for legacy response, the success alert will be triggered by showSuccessAlert function in public/app/core/services/backend_srv.ts
+          if (config.featureToggles.kubernetesDashboards) {
             appEvents.publish({
               type: AppEvents.alertSuccess.name,
-              payload: [
-                t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to Recently deleted', { name }),
-              ],
+              payload: ['Dashboard deleted'],
             });
           }
         }
         return { data: undefined };
       },
-      onQueryStarted: ({ selectedItems }, { queryFulfilled, dispatch }) => {
-        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-        const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+      onQueryStarted: ({ dashboardUIDs }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
-          dispatch(refreshParents([...selectedFolders, ...selectedDashboards]));
+          dispatch(refreshParents(dashboardUIDs));
         });
       },
     }),
@@ -329,8 +386,7 @@ export const browseDashboardsAPI = createApi({
     saveDashboard: builder.mutation<SaveDashboardResponseDTO, SaveDashboardCommand<Dashboard | DashboardV2Spec>>({
       queryFn: async (cmd) => {
         try {
-          // When we use the `useV2DashboardsAPI` flag, we can save 'v2' schema dashboards
-          if (config.featureToggles.useV2DashboardsAPI && isV2DashboardCommand(cmd)) {
+          if (isV2DashboardCommand(cmd)) {
             const response = await getDashboardAPI('v2').saveDashboard(cmd);
             return { data: response };
           }
@@ -370,56 +426,90 @@ export const browseDashboardsAPI = createApi({
           folderUid,
         },
       }),
-      onQueryStarted: ({ folderUid }, { queryFulfilled, dispatch }) => {
+      onQueryStarted: async ({ dashboard, folderUid }, { queryFulfilled, dispatch }) => {
+        // Check if a dashboard with this UID already exists to find its current folder
+        let currentFolderUid: string | undefined;
+        if (dashboard.uid) {
+          try {
+            const existingDashboard = await getDashboardAPI().getDashboardDTO(dashboard.uid);
+            currentFolderUid = isDashboardV2Resource(existingDashboard)
+              ? existingDashboard.metadata?.name
+              : existingDashboard.meta?.folderUid;
+          } catch (error) {
+            if (isFetchError(error)) {
+              if (error.status !== 404) {
+                console.error('Error fetching dashboard', error);
+              } else {
+                // Do not show the error alert if the dashboard does not exist
+                // this is expected when importing a new dashboard
+                error.isHandled = true;
+              }
+            }
+          }
+        }
+
         queryFulfilled.then(async (response) => {
+          // Refresh destination folder
           dispatch(
             refetchChildren({
               parentUID: folderUid,
               pageSize: PAGE_SIZE,
             })
           );
+
+          // If the dashboard was moved from a different folder, refresh the source folder too
+          if (currentFolderUid && currentFolderUid !== folderUid) {
+            dispatch(
+              refetchChildren({
+                parentUID: currentFolderUid,
+                pageSize: PAGE_SIZE,
+              })
+            );
+          }
+
           const dashboardUrl = locationUtil.stripBaseFromUrl(response.data.importedUrl);
           locationService.push(dashboardUrl);
         });
       },
     }),
 
-    // restore a dashboard that got soft deleted
-    restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
-      query: ({ dashboardUID, targetFolderUID }) => ({
-        url: `/dashboards/uid/${dashboardUID}/trash`,
-        body: {
-          folderUid: targetFolderUID,
-        },
-        method: 'PATCH',
-      }),
+    // RTK wrapper for the dashboard API
+    listDeletedDashboards: builder.query<ResourceList<Dashboard | DashboardV2Spec>, void>({
+      providesTags: ['getFolder'],
+      queryFn: async () => {
+        try {
+          const api = getDashboardAPI();
+          const response = await api.listDeletedDashboards({});
+
+          return { data: response };
+        } catch (error) {
+          return handleRequestError(error);
+        }
+      },
     }),
 
-    // permanently delete a dashboard. used in PermanentlyDeleteModal.
-    hardDeleteDashboard: builder.mutation<void, HardDeleteDashboardArgs>({
-      queryFn: async ({ dashboardUID }, _api, _extraOptions, baseQuery) => {
-        const response = await baseQuery({
-          url: `/dashboards/uid/${dashboardUID}/trash`,
-          method: 'DELETE',
-          showSuccessAlert: false,
-        });
+    // restore a dashboard that got deleted
+    restoreDashboard: builder.mutation<{ name: string }, RestoreDashboardArgs>({
+      invalidatesTags: ['getFolder'],
+      queryFn: async ({ dashboard }) => {
+        try {
+          const api = getDashboardAPI();
+          const response = await api.restoreDashboard(dashboard);
+          const name = response.spec.title || '';
+          const parentFolder = response.metadata?.annotations?.[AnnoKeyFolder];
 
-        // @ts-expect-error
-        const name = response?.data?.title;
+          // Refresh the contents of the folder a dashboard was restored to
+          dispatch(
+            refetchChildren({
+              parentUID: parentFolder,
+              pageSize: PAGE_SIZE,
+            })
+          );
 
-        if (name) {
-          appEvents.publish({
-            type: AppEvents.alertSuccess.name,
-            payload: [t('browse-dashboards.hard-delete.success', 'Dashboard {{name}} deleted', { name })],
-          });
+          return { data: { name } };
+        } catch (error) {
+          return handleRequestError(error);
         }
-
-        return { data: undefined };
-      },
-      onQueryStarted: ({ dashboardUID }, { queryFulfilled, dispatch }) => {
-        queryFulfilled.then(() => {
-          dispatch(refreshParents([dashboardUID]));
-        });
       },
     }),
   }),
@@ -428,16 +518,17 @@ export const browseDashboardsAPI = createApi({
 export const {
   endpoints,
   useDeleteFolderMutation,
-  useDeleteItemsMutation,
+  useDeleteFoldersMutation,
+  useDeleteDashboardsMutation,
   useGetAffectedItemsQuery,
   useGetFolderQuery,
+  useLazyGetFolderQuery,
   useMoveFolderMutation,
-  useMoveItemsMutation,
+  useMoveDashboardsMutation,
+  useMoveFoldersMutation,
   useNewFolderMutation,
   useSaveDashboardMutation,
   useSaveFolderMutation,
   useRestoreDashboardMutation,
-  useHardDeleteDashboardMutation,
+  useListDeletedDashboardsQuery,
 } = browseDashboardsAPI;
-
-export { skipToken } from '@reduxjs/toolkit/query/react';

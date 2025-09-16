@@ -29,20 +29,22 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+      "id": 2,
+      "type": "geomap",
+      "title": "Multiple Layer Types",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "h": 16,
+        "w": 18
       },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "continuous-RdYlGr"
-          },
           "custom": {
             "hideFrom": {
-              "legend": false,
               "tooltip": false,
-              "viz": false
+              "viz": false,
+              "legend": false
             }
           },
           "mappings": [],
@@ -51,7 +53,7 @@
             "steps": [
               {
                 "color": "dark-red",
-                "value": 0
+                "value": null
               },
               {
                 "color": "yellow",
@@ -62,32 +64,62 @@
                 "value": 100
               }
             ]
+          },
+          "color": {
+            "mode": "continuous-RdYlGr"
           }
         },
         "overrides": []
       },
-      "gridPos": {
-        "h": 16,
-        "w": 18,
-        "x": 0,
-        "y": 0
+      "pluginVersion": "11.6.0-pre",
+      "targets": [
+        {
+          "csvContent": "lat,lon,val\n-5,2,0\n1,5,25\n6,10,50\n9,15,75\n10,20,100",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        },
+        {
+          "scenarioId": "csv_content",
+          "refId": "B",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "csvContent": "lat,lon,alt\n45,0,0\n40,5,5\n35,10,10\n30,15, 15\n25,20,20"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-testdata-datasource"
       },
-      "id": 2,
       "options": {
+        "view": {
+          "allLayers": true,
+          "id": "fit",
+          "lat": 2.359794,
+          "lon": 8.135816,
+          "zoom": 15,
+          "lastOnly": false,
+          "layer": "markers"
+        },
+        "controls": {
+          "showZoom": true,
+          "mouseWheelZoom": true,
+          "showAttribution": true,
+          "showScale": false,
+          "showMeasure": false,
+          "showDebug": false
+        },
+        "tooltip": {
+          "mode": "details"
+        },
         "basemap": {
           "config": {
             "server": "streets"
           },
           "name": "Layer 0",
           "type": "esri-xyz"
-        },
-        "controls": {
-          "mouseWheelZoom": true,
-          "showAttribution": true,
-          "showDebug": false,
-          "showMeasure": false,
-          "showScale": false,
-          "showZoom": true
         },
         "layers": [
           {
@@ -128,36 +160,108 @@
             "location": {
               "mode": "auto"
             },
-            "name": "Layer 2",
+            "name": "route",
             "tooltip": true,
             "type": "route"
-          }
-        ],
-        "tooltip": {
-          "mode": "details"
-        },
-        "view": {
-          "allLayers": true,
-          "id": "coords",
-          "lat": 2.359794,
-          "lon": 8.135816,
-          "zoom": 4.45
-        }
-      },
-      "pluginVersion": "9.4.0-pre",
-      "targets": [
-        {
-          "csvContent": "lat,lon,val\n-5,2,0\n1,5,25\n6,10,50\n9,15,75\n10,20,100",
-          "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
           },
-          "refId": "A",
-          "scenarioId": "csv_content"
-        }
-      ],
-      "title": "Route with Colors",
-      "type": "geomap"
+          {
+            "type": "geojson",
+            "name": "geojson",
+            "config": {
+              "src": "public/maps/example-with-style.geojson",
+              "rules": [],
+              "style": {
+                "size": {
+                  "fixed": 5,
+                  "min": 2,
+                  "max": 15
+                },
+                "color": {
+                  "fixed": "dark-green"
+                },
+                "opacity": 0.4,
+                "symbol": {
+                  "mode": "fixed",
+                  "fixed": "img/icons/marker/circle.svg"
+                },
+                "symbolAlign": {
+                  "horizontal": "center",
+                  "vertical": "center"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "textAlign": "center",
+                  "textBaseline": "middle",
+                  "offsetX": 0,
+                  "offsetY": 0
+                },
+                "rotation": {
+                  "fixed": 0,
+                  "mode": "mod",
+                  "min": -360,
+                  "max": 360
+                }
+              }
+            },
+            "location": {
+              "mode": "auto"
+            },
+            "tooltip": true,
+            "filterData": {
+              "id": "byRefId",
+              "options": "B"
+            }
+          },
+          {
+            "type": "markers",
+            "name": "markers",
+            "config": {
+              "style": {
+                "size": {
+                  "fixed": 5,
+                  "min": 2,
+                  "max": 15
+                },
+                "color": {
+                  "fixed": "dark-green",
+                  "field": "alt"
+                },
+                "opacity": 0.4,
+                "symbol": {
+                  "mode": "fixed",
+                  "fixed": "img/icons/marker/circle.svg"
+                },
+                "symbolAlign": {
+                  "horizontal": "center",
+                  "vertical": "center"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "textAlign": "center",
+                  "textBaseline": "middle",
+                  "offsetX": 0,
+                  "offsetY": 0
+                },
+                "rotation": {
+                  "fixed": 0,
+                  "mode": "mod",
+                  "min": -360,
+                  "max": 360
+                }
+              },
+              "showLegend": true
+            },
+            "location": {
+              "mode": "auto"
+            },
+            "tooltip": true,
+            "filterData": {
+              "id": "byRefId",
+              "options": "B"
+            }
+          }
+        ]
+      }
     }
   ],
   "schemaVersion": 37,
@@ -171,7 +275,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Panel Tests - Geomap Route Layer",
+  "title": "Panel Tests - Geomap Fit to Data - Multiple Layer Types",
   "uid": "OYTKK3DVk",
   "version": 25,
   "weekStart": ""

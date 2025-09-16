@@ -7,7 +7,7 @@ package xorm
 import (
 	"fmt"
 
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 // Delete records, bean's non-empty fields are conditions

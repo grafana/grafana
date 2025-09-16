@@ -62,6 +62,10 @@ groups:
         execErrState: Alerting
         # <duration, required> for how long should the alert fire before alerting
         for: 60s
+        # <duration> for how long the alert should keep firing after condition stops being true
+        keepFiringFor: 120s
+        # <int> number of evaluation intervals required to resolve alert when data is missing
+        missing_series_evals_to_resolve: 3
         # <map<string, string>> a map of strings to pass around any data
         annotations:
           some_key: some_value

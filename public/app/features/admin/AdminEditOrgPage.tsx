@@ -3,12 +3,13 @@ import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 import { useAsyncFn } from 'react-use';
 
-import { NavModelItem } from '@grafana/data';
+import { NavModelItem, OrgRole } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Field, Input, Button, Legend, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
-import { OrgUser, AccessControlAction, OrgRole } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { OrgUser } from 'app/types/user';
 
 import { OrgUsersTable } from './Users/OrgUsersTable';
 import { getOrg, getOrgUsers, getUsersRoles, removeOrgUser, updateOrgName, updateOrgUserRole } from './api';
@@ -56,7 +57,10 @@ const AdminEditOrgPage = () => {
   };
 
   const renderMissingPermissionMessage = () => (
-    <Alert severity="info" title="Access denied">
+    <Alert
+      severity="info"
+      title={t('admin.admin-edit-org-page.render-missing-permission-message.title-access-denied', 'Access denied')}
+    >
       <Trans i18nKey="admin.edit-org.access-denied">
         You do not have permission to see users in this organization. To update this organization, contact your server
         administrator.
@@ -81,7 +85,10 @@ const AdminEditOrgPage = () => {
   const pageNav: NavModelItem = {
     text: orgState?.value?.name ?? '',
     icon: 'shield',
-    subTitle: 'Manage settings and user roles for an organization.',
+    subTitle: t(
+      'admin.admin-edit-org-page.page-nav.subTitle.manage-settings-roles-organization',
+      'Manage settings and user roles for an organization.'
+    ),
   };
 
   return (
@@ -93,7 +100,12 @@ const AdminEditOrgPage = () => {
           </Legend>
           {orgState.value && (
             <form onSubmit={handleSubmit(onUpdateOrgName)} style={{ maxWidth: '600px' }}>
-              <Field label="Name" invalid={!!errors.orgName} error="Name is required" disabled={!canWriteOrg}>
+              <Field
+                label={t('admin.admin-edit-org-page.label-name', 'Name')}
+                invalid={!!errors.orgName}
+                error="Name is required"
+                disabled={!canWriteOrg}
+              >
                 <Input
                   {...register('orgName', { required: true })}
                   id="org-name-input"

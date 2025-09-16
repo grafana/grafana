@@ -1,13 +1,15 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { EmptyState, Stack, TextLink, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ViewProps } from 'app/features/datasources/components/DataSourcesList';
 import { DataSourcesListCard } from 'app/features/datasources/components/DataSourcesListCard';
-import { getDataSources, useLoadDataSources } from 'app/features/datasources/state';
-import { AccessControlAction, useSelector } from 'app/types';
+import { useLoadDataSources } from 'app/features/datasources/state/hooks';
+import { getDataSources } from 'app/features/datasources/state/selectors';
+import { AccessControlAction } from 'app/types/accessControl';
+import { useSelector } from 'app/types/store';
 
 import { CatalogPlugin } from '../types';
 
@@ -83,8 +85,8 @@ export function ConnectionsList({
     <Stack direction="column" gap={2}>
       <span>
         <Trans i18nKey="plugins.details.connections-tab.description" values={{ pluginName: plugin.name }}>
-          The data source connections below are all {'{{pluginName}}'}. You can find all of your data source connections
-          of all types in{' '}
+          You currently have the following data sources configured for {'{{pluginName}}'}, click a tile to view the
+          configuration details. You can find all of your data source connections in{' '}
           <TextLink href="/connections/datasources">
             <Trans i18nKey="nav.connections.title">Connections</Trans> -{' '}
             <Trans i18nKey="nav.data-sources.title">Data sources</Trans>.

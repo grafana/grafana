@@ -2,10 +2,11 @@ import { css, cx } from '@emotion/css';
 import { PureComponent, useRef, useState } from 'react';
 import * as React from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
-import { AccessControlAction, UserDTO } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { UserDTO } from 'app/types/user';
 
 interface Props {
   user: UserDTO;
@@ -71,12 +72,18 @@ export function UserProfile({
     });
   };
 
-  const authSource = user.authLabels?.length && user.authLabels[0];
+  let authSource = user.authLabels?.length && user.authLabels[0];
+  if (user.isProvisioned) {
+    authSource = 'SCIM';
+  }
   const lockMessage = authSource ? `Synced via ${authSource}` : '';
 
-  const editLocked = user.isExternal || !contextSrv.hasPermissionInMetadata(AccessControlAction.UsersWrite, user);
+  const editLocked =
+    user.isExternal || user.isProvisioned || !contextSrv.hasPermissionInMetadata(AccessControlAction.UsersWrite, user);
   const passwordChangeLocked =
-    user.isExternal || !contextSrv.hasPermissionInMetadata(AccessControlAction.UsersPasswordUpdate, user);
+    user.isExternal ||
+    user.isProvisioned ||
+    !contextSrv.hasPermissionInMetadata(AccessControlAction.UsersPasswordUpdate, user);
   const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.UsersDelete, user);
   const canDisable = contextSrv.hasPermissionInMetadata(AccessControlAction.UsersDisable, user);
   const canEnable = contextSrv.hasPermissionInMetadata(AccessControlAction.UsersEnable, user);
@@ -90,30 +97,34 @@ export function UserProfile({
         <div>
           <table className="filter-table form-inline">
             <tbody>
-              <UserProfileRow label="Numerical identifier" value={user.id.toString()} locked={true} />
               <UserProfileRow
-                label="Name"
+                label={t('admin.user-profile.label-numerical-identifier', 'Numerical identifier')}
+                value={user.id.toString()}
+                locked={true}
+              />
+              <UserProfileRow
+                label={t('admin.user-profile.label-name', 'Name')}
                 value={user.name}
                 locked={editLocked}
                 lockMessage={lockMessage}
                 onChange={onUserNameChange}
               />
               <UserProfileRow
-                label="Email"
+                label={t('admin.user-profile.label-email', 'Email')}
                 value={user.email}
                 locked={editLocked}
                 lockMessage={lockMessage}
                 onChange={onUserEmailChange}
               />
               <UserProfileRow
-                label="Username"
+                label={t('admin.user-profile.label-username', 'Username')}
                 value={user.login}
                 locked={editLocked}
                 lockMessage={lockMessage}
                 onChange={onUserLoginChange}
               />
               <UserProfileRow
-                label="Password"
+                label={t('admin.user-profile.label-password', 'Password')}
                 value="********"
                 inputType="password"
                 locked={passwordChangeLocked}
@@ -131,9 +142,9 @@ export function UserProfile({
               </Button>
               <ConfirmModal
                 isOpen={showDeleteModal}
-                title="Delete user"
-                body="Are you sure you want to delete this user?"
-                confirmText="Delete user"
+                title={t('admin.user-profile.title-delete-user', 'Delete user')}
+                body={t('admin.user-profile.body-delete', 'Are you sure you want to delete this user?')}
+                confirmText={t('admin.user-profile.confirmText-delete-user', 'Delete user')}
                 onConfirm={handleUserDelete}
                 onDismiss={showDeleteUserModal(false)}
               />
@@ -151,9 +162,9 @@ export function UserProfile({
               </Button>
               <ConfirmModal
                 isOpen={showDisableModal}
-                title="Disable user"
-                body="Are you sure you want to disable this user?"
-                confirmText="Disable user"
+                title={t('admin.user-profile.title-disable-user', 'Disable user')}
+                body={t('admin.user-profile.body-disable', 'Are you sure you want to disable this user?')}
+                confirmText={t('admin.user-profile.confirmText-disable-user', 'Disable user')}
                 onConfirm={handleUserDisable}
                 onDismiss={showDisableUserModal(false)}
               />
@@ -280,7 +291,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
         </td>
         <td>
           <ConfirmButton
-            confirmText="Save"
+            confirmText={t('admin.user-profile-row.confirmText-save', 'Save')}
             onClick={this.onEditClick}
             onConfirm={this.onSave}
             onCancel={this.onCancelClick}

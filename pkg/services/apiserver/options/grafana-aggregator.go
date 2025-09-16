@@ -3,7 +3,6 @@ package options
 import (
 	"maps"
 
-	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/openapi"
@@ -11,6 +10,8 @@ import (
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/apiserver/pkg/server/resourceconfig"
 	"k8s.io/kube-openapi/pkg/common"
+
+	"github.com/spf13/pflag"
 
 	"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
 	aggregatorapiserver "github.com/grafana/grafana/pkg/aggregator/apiserver"
@@ -74,7 +75,7 @@ func (o *GrafanaAggregatorOptions) ApplyTo(aggregatorConfig *aggregatorapiserver
 		return err
 	}
 	// override the RESTOptionsGetter to use the in memory storage options
-	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(etcdOptions.StorageConfig)
+	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(etcdOptions.StorageConfig, nil)
 	if err != nil {
 		return err
 	}
@@ -87,8 +88,6 @@ func (o *GrafanaAggregatorOptions) ApplyTo(aggregatorConfig *aggregatorapiserver
 		return err
 	}
 	genericConfig.MergedResourceConfig = mergedResourceConfig
-
-	genericConfig.PostStartHooks = map[string]genericapiserver.PostStartHookConfigEntry{}
 
 	return nil
 }

@@ -20,4 +20,10 @@ export interface RouteDescriptor {
   routeName?: string;
   chromeless?: boolean;
   sensitive?: boolean;
+
+  /**
+   * Allow the route to be access by anonymous users.
+   * Currently only used when using the frontend-service.
+   */
+  allowAnonymous?: boolean;
 }

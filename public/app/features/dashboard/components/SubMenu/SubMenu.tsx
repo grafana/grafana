@@ -4,10 +4,11 @@ import * as React from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 
 import { AnnotationQuery, DataQuery, TypedVariableModel, GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { DashboardLink } from '@grafana/schema';
 import { stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
+import { StoreState } from 'app/types/store';
 
-import { StoreState } from '../../../../types';
 import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
 import { DashboardModel } from '../../state/DashboardModel';
 
@@ -56,7 +57,11 @@ class SubMenuUnConnected extends PureComponent<Props> {
 
     return (
       <div className={styles.submenu}>
-        <form aria-label="Template variables" className={styles.formStyles} onSubmit={this.disableSubmitOnEnter}>
+        <form
+          aria-label={t('dashboard.sub-menu-un-connected.aria-label-template-variables', 'Template variables')}
+          className={styles.formStyles}
+          onSubmit={this.disableSubmitOnEnter}
+        >
           <SubMenuItems variables={variables} readOnly={readOnlyVariables} />
         </form>
         <Annotations

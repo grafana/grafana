@@ -4,12 +4,16 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 // DashboardProvisioner is responsible for syncing dashboard from disk to
@@ -24,7 +28,7 @@ type DashboardProvisioner interface {
 }
 
 // DashboardProvisionerFactory creates DashboardProvisioners based on input
-type DashboardProvisionerFactory func(context.Context, string, dashboards.DashboardProvisioningService, org.Service, utils.DashboardStore, folder.Service) (DashboardProvisioner, error)
+type DashboardProvisionerFactory func(context.Context, string, dashboards.DashboardProvisioningService, org.Service, utils.DashboardStore, folder.Service, dualwrite.Service) (DashboardProvisioner, error)
 
 // Provisioner is responsible for syncing dashboard from disk to Grafana's database.
 type Provisioner struct {
@@ -33,6 +37,7 @@ type Provisioner struct {
 	configs            []*config
 	duplicateValidator duplicateValidator
 	provisioner        dashboards.DashboardProvisioningService
+	dual               dualwrite.Service
 }
 
 func (provider *Provisioner) HasDashboardSources() bool {
@@ -40,7 +45,7 @@ func (provider *Provisioner) HasDashboardSources() bool {
 }
 
 // New returns a new DashboardProvisioner
-func New(ctx context.Context, configDirectory string, provisioner dashboards.DashboardProvisioningService, orgService org.Service, dashboardStore utils.DashboardStore, folderService folder.Service) (DashboardProvisioner, error) {
+func New(ctx context.Context, configDirectory string, provisioner dashboards.DashboardProvisioningService, orgService org.Service, dashboardStore utils.DashboardStore, folderService folder.Service, dual dualwrite.Service) (DashboardProvisioner, error) {
 	logger := log.New("provisioning.dashboard")
 	cfgReader := &configReader{path: configDirectory, log: logger, orgExists: utils.NewOrgExistsChecker(orgService)}
 	configs, err := cfgReader.readConfig(ctx)
@@ -53,12 +58,26 @@ func New(ctx context.Context, configDirectory string, provisioner dashboards.Das
 		return nil, fmt.Errorf("%v: %w", "Failed to initialize file readers", err)
 	}
 
+	if dual != nil {
+		foldersInUnified, _ := dual.ReadFromUnified(context.Background(), folderV1.FolderResourceInfo.GroupResource())
+		if foldersInUnified {
+			for _, reader := range fileReaders {
+				reader.foldersInUnified = true
+			}
+		}
+
+		if !dual.ShouldManage(dashboardV1.DashboardResourceInfo.GroupResource()) {
+			dual = nil // not actively managed
+		}
+	}
+
 	d := &Provisioner{
 		log:                logger,
 		fileReaders:        fileReaders,
 		configs:            configs,
 		duplicateValidator: newDuplicateValidator(logger, fileReaders),
 		provisioner:        provisioner,
+		dual:               dual,
 	}
 
 	return d, nil
@@ -67,6 +86,15 @@ func New(ctx context.Context, configDirectory string, provisioner dashboards.Das
 // Provision scans the disk for dashboards and updates
 // the database with the latest versions of those dashboards.
 func (provider *Provisioner) Provision(ctx context.Context) error {
+	// skip provisioning during migrations to prevent multi-replica instances from crashing when another replica is migrating
+	if provider.dual != nil {
+		status, _ := provider.dual.Status(context.Background(), dashboardV1.DashboardResourceInfo.GroupResource())
+		if status.Migrating > 0 {
+			provider.log.Info("dashboard migrations are running, skipping provisioning", "elapsed", time.Since(time.UnixMilli(status.Migrating)))
+			return nil
+		}
+	}
+
 	provider.log.Info("starting to provision dashboards")
 
 	for _, reader := range provider.fileReaders {

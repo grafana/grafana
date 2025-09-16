@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { v4 as uuidv4 } from 'uuid';
 
-import { GrafanaTheme2, OneClickMode } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from 'app/core/config';
-import { DimensionContext } from 'app/features/dimensions';
+import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
@@ -100,7 +101,6 @@ export const triangleItem: CanvasElementItem = {
       left: options?.placement?.left,
       rotation: options?.placement?.rotation ?? 0,
     },
-    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
     links: options?.links ?? [],
   }),
 
@@ -131,20 +131,20 @@ export const triangleItem: CanvasElementItem = {
   },
 
   registerOptionsUI: (builder) => {
-    const category = ['Triangle'];
+    const category = [t('canvas.triangle-item.category-triangle', 'Triangle')];
     builder
       .addCustomEditor({
         category,
         id: 'textSelector',
         path: 'config.text',
-        name: 'Text',
+        name: t('canvas.triangle-item.name-text', 'Text'),
         editor: TextDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'config.color',
         path: 'config.color',
-        name: 'Text color',
+        name: t('canvas.triangle-item.name-text-color', 'Text color'),
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {},
@@ -152,12 +152,12 @@ export const triangleItem: CanvasElementItem = {
       .addRadio({
         category,
         path: 'config.align',
-        name: 'Align text',
+        name: t('canvas.triangle-item.name-align-text', 'Align text'),
         settings: {
           options: [
-            { value: Align.Left, label: 'Left' },
-            { value: Align.Center, label: 'Center' },
-            { value: Align.Right, label: 'Right' },
+            { value: Align.Left, label: t('canvas.triangle-item.label.left', 'Left') },
+            { value: Align.Center, label: t('canvas.triangle-item.label.center', 'Center') },
+            { value: Align.Right, label: t('canvas.triangle-item.label.right', 'Right') },
           ],
         },
         defaultValue: Align.Left,
@@ -165,12 +165,12 @@ export const triangleItem: CanvasElementItem = {
       .addRadio({
         category,
         path: 'config.valign',
-        name: 'Vertical align',
+        name: t('canvas.triangle-item.name-vertical-align', 'Vertical align'),
         settings: {
           options: [
-            { value: VAlign.Top, label: 'Top' },
-            { value: VAlign.Middle, label: 'Middle' },
-            { value: VAlign.Bottom, label: 'Bottom' },
+            { value: VAlign.Top, label: t('canvas.triangle-item.label.top', 'Top') },
+            { value: VAlign.Middle, label: t('canvas.triangle-item.label.middle', 'Middle') },
+            { value: VAlign.Bottom, label: t('canvas.triangle-item.label.bottom', 'Bottom') },
           ],
         },
         defaultValue: VAlign.Middle,
@@ -178,9 +178,9 @@ export const triangleItem: CanvasElementItem = {
       .addNumberInput({
         category,
         path: 'config.size',
-        name: 'Text size',
+        name: t('canvas.triangle-item.name-text-size', 'Text size'),
         settings: {
-          placeholder: 'Auto',
+          placeholder: t('canvas.triangle-item.placeholder.auto', 'Auto'),
         },
       });
   },

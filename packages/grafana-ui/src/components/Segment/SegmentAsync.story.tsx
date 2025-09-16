@@ -2,7 +2,7 @@ import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
 import { useState } from 'react';
 import * as React from 'react';
-import { AsyncState } from 'react-use/lib/useAsync';
+import { type AsyncState } from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
 
@@ -13,7 +13,7 @@ import { SegmentSection } from './SegmentSection';
 
 const AddButton = (
   <span className="gf-form-label query-part">
-    <Icon name="plus" />
+    <Icon aria-label="Add" name="plus" />
   </span>
 );
 
@@ -61,7 +61,7 @@ export const ArrayOptions = () => {
 };
 
 const meta: Meta<typeof SegmentAsync> = {
-  title: 'Data Source/Segment/SegmentAsync',
+  title: 'Inputs/SegmentAsync',
   component: SegmentAsync,
 };
 

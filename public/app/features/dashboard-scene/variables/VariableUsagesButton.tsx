@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton } from '@grafana/ui';
 import { NetworkGraphModal } from 'app/features/variables/inspect/NetworkGraphModal';
@@ -17,6 +18,7 @@ export const VariableUsagesButton = ({ id, usages, isAdhoc }: Props) => {
     () => usages.find((n) => (typeof n.variable === 'string' ? n.variable : n.variable.state.name) === id),
     [usages, id]
   );
+
   if (usages.length === 0 || isAdhoc || !network) {
     return null;
   }
@@ -29,7 +31,14 @@ export const VariableUsagesButton = ({ id, usages, isAdhoc }: Props) => {
   });
 
   return (
-    <NetworkGraphModal show={false} title={`Showing usages for: $${id}`} nodes={nodes} edges={network.edges}>
+    <NetworkGraphModal
+      show={false}
+      title={t('dashboard-scene.variable-usages-button.title-show-usages', 'Showing usages for: {{variableId}}', {
+        variableId: `$${id}`,
+      })}
+      nodes={nodes}
+      edges={network.edges}
+    >
       {({ showModal }) => {
         return (
           <IconButton
@@ -38,7 +47,7 @@ export const VariableUsagesButton = ({ id, usages, isAdhoc }: Props) => {
               showModal();
             }}
             name="code-branch"
-            tooltip="Show usages"
+            tooltip={t('dashboard-scene.variable-usages-button.tooltip-show-usages', 'Show usages')}
           />
         );
       }}

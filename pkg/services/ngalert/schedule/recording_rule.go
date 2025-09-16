@@ -40,7 +40,7 @@ type recordingRule struct {
 	evaluationTimestamp *atomic.Time
 	evaluationDuration  *atomic.Duration
 
-	maxAttempts int64
+	retryConfig RetryConfig
 
 	clock       clock.Clock
 	evalFactory eval.EvaluatorFactory
@@ -56,7 +56,20 @@ type recordingRule struct {
 	tracer  tracing.Tracer
 }
 
-func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKeyWithGroup, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, cfg setting.RecordingRuleSettings, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer, writer RecordingWriter, evalAppliedHook evalAppliedFunc, stopAppliedHook stopAppliedFunc) *recordingRule {
+func newRecordingRule(
+	parent context.Context,
+	key ngmodels.AlertRuleKeyWithGroup,
+	retryConfig RetryConfig,
+	clock clock.Clock,
+	evalFactory eval.EvaluatorFactory,
+	cfg setting.RecordingRuleSettings,
+	logger log.Logger,
+	metrics *metrics.Scheduler,
+	tracer tracing.Tracer,
+	writer RecordingWriter,
+	evalAppliedHook evalAppliedFunc,
+	stopAppliedHook stopAppliedFunc,
+) *recordingRule {
 	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key.AlertRuleKey))
 	return &recordingRule{
 		key:                 key,
@@ -70,7 +83,7 @@ func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKeyWithGroup
 		clock:               clock,
 		evalFactory:         evalFactory,
 		cfg:                 cfg,
-		maxAttempts:         maxAttempts,
+		retryConfig:         retryConfig,
 		evalAppliedHook:     evalAppliedHook,
 		stopAppliedHook:     stopAppliedHook,
 		logger:              logger.FromContext(ctx),
@@ -113,7 +126,7 @@ func (r *recordingRule) Eval(eval *Evaluation) (bool, *Evaluation) {
 	}
 }
 
-func (r *recordingRule) Update(lastVersion RuleVersionAndPauseStatus) bool {
+func (r *recordingRule) Update(_ *Evaluation) bool {
 	return true
 }
 
@@ -144,6 +157,10 @@ func (r *recordingRule) Run() error {
 			// TODO: Either implement me or remove from alert rules once investigated.
 
 			r.doEvaluate(ctx, eval)
+			// Call afterEval callback if it exists
+			if eval.afterEval != nil {
+				eval.afterEval()
+			}
 		case <-ctx.Done():
 			r.logger.Debug("Stopping recording rule routine")
 			return nil
@@ -186,8 +203,17 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 	))
 	defer span.End()
 
+	retryer := newExponentialBackoffRetryer(
+		r.retryConfig.MaxAttempts-1, // first attempt is not a retry
+		r.retryConfig.InitialRetryDelay,
+		r.retryConfig.MaxRetryDelay,
+		r.retryConfig.RandomizationFactor,
+		r.clock,
+	)
+	attempt := 1
+
 	var latestError error
-	for attempt := int64(1); attempt <= r.maxAttempts; attempt++ {
+	for {
 		logger := logger.New("attempt", attempt)
 		if ctx.Err() != nil {
 			span.SetStatus(codes.Error, "rule evaluation cancelled")
@@ -209,14 +235,20 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 			break
 		}
 
-		if attempt < r.maxAttempts {
-			select {
-			case <-ctx.Done():
-				logger.Error("Context has been cancelled while backing off", "attempt", attempt)
-				return
-			case <-time.After(retryDelay):
-				continue
-			}
+		retryIn := retryer.NextAttemptIn()
+		if retryIn == retryStop {
+			logger.Error("Recording rule evaluation failed after all attempts", "lastError", latestError)
+			break
+		}
+
+		attempt++
+
+		select {
+		case <-ctx.Done():
+			logger.Error("Context has been cancelled while backing off", "attempt", attempt)
+			return
+		case <-r.clock.After(retryIn):
+			continue
 		}
 	}
 
@@ -226,9 +258,6 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 		span.RecordError(latestError)
 		r.lastError.Store(latestError)
 		r.health.Store("error")
-		if r.maxAttempts > 0 {
-			logger.Error("Recording rule evaluation failed after all attempts", "lastError", latestError)
-		}
 		return
 	}
 	logger.Debug("Recording rule evaluation succeeded")
@@ -268,8 +297,9 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 		return nil
 	}
 
+	filteredLabels := ngmodels.WithoutPrivateLabels(ev.rule.Labels)
 	writeStart := r.clock.Now()
-	err = r.writer.Write(ctx, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.OrgID, ev.rule.Labels)
+	err = r.writer.WriteDatasource(ctx, ev.rule.Record.TargetDatasourceUID, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.OrgID, filteredLabels)
 	writeDur := r.clock.Now().Sub(writeStart)
 
 	if err != nil {

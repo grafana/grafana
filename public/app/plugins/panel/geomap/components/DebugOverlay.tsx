@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { Map } from 'ol';
+import Map from 'ol/Map';
 import { Coordinate } from 'ol/coordinate';
 import { transform } from 'ol/proj';
 import { PureComponent } from 'react';
@@ -7,6 +7,7 @@ import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors/src';
+import { Trans } from '@grafana/i18n';
 import { config } from 'app/core/config';
 
 interface Props {
@@ -47,11 +48,15 @@ export class DebugOverlay extends PureComponent<Props, State> {
         <table>
           <tbody>
             <tr>
-              <th>Zoom:</th>
+              <th>
+                <Trans i18nKey="geomap.debug-overlay.zoom">Zoom:</Trans>
+              </th>
               <td>{zoom?.toFixed(1)}</td>
             </tr>
             <tr>
-              <th>Center:&nbsp;</th>
+              <th>
+                <Trans i18nKey="geomap.debug-overlay.center">Center:</Trans>&nbsp;
+              </th>
               <td>
                 {center[0].toFixed(5)}, {center[1].toFixed(5)}
               </td>

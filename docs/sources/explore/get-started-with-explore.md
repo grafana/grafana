@@ -11,10 +11,23 @@ labels:
     - enterprise
     - oss
 title: Get started with Explore
+refs:
+  saved-queries:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#saved-queries
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#saved-queries
+  save-query:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#save-a-query
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#save-a-query
 weight: 5
 ---
 
 # Get started with Explore
+
+{{< shared id="explore-overview" >}}
 
 Explore is your gateway for querying, analyzing, and aggregating data in Grafana. It allows you to visually explore and iterate until you develop a working query or set of queries for building visualizations and conducting data analysis. If your data source supports graph and table data, there's no need to create a dashboard, as Explore can display the results in both formats. This facilitates quick, detailed, real-time data analysis.
 
@@ -32,19 +45,17 @@ Key features include:
 - [Query history](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/query-management/) to track and maintain your queries.
 - [Query inspector](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/explore-inspector/) to help troubleshoot query performance.
 
+{{< /shared >}}
+
 Watch the following video to get started using Explore:
 
 {{< youtube id="1q3YzX2DDM4" >}}
 
 ## Before you begin
 
-In order to access Explore, you must have either the `editor` or `administrator` role, unless the [`viewers_can_edit` option](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#viewers_can_edit) is enabled. Refer to [Role and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/) for more information on what each role can access.
+In order to access Explore, you must have either the `editor` or `administrator` basic role or the `data sources explore` role. Refer to [Role and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/) for more information on what each role can access.
 
 Refer to [Role-based access control (RBAC)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/) in Grafana Enterprise to understand how you can manage Explore with role-based permissions.
-
-{{< admonition type="note" >}}
-If you are using Grafana Cloud, open a [support ticket in the Cloud Portal](https://grafana.com/auth/sign-in) to enable the `viewers_can_edit` option.
-{{< /admonition >}}
 
 ## Explore elements
 
@@ -53,7 +64,6 @@ Explore consists of a toolbar, outline, query editor, the ability to add multipl
 - **Outline** - Keeps track of the queries and visualization panels created in Explore. Refer to [Content outline](#content-outline) for more detail.
 
 - **Toolbar** - Provides quick access to frequently used tools and settings.
-
   - **Data source picker** - Select a data source from the dropdown menu, or use absolute time.
   - **Split** - Click to compare visualizations side by side. Refer to [Split and compare](#split-and-compare) for additional detail.
   - **Add** - Click to add your exploration to a dashboard. You can also use this to declare an incident,create a forecast, detect outliers and to run an investigation.
@@ -62,8 +72,14 @@ Explore consists of a toolbar, outline, query editor, the ability to add multipl
 
 - **Query editor** - Interface where you construct the query for a specific data source. Query editor elements differ based on data source. In order to run queries across multiple data sources you need to select **Mixed** from the data source picker.
 
-- **+Add query** - Add additional queries.
-- **Query history** - Query history contains the list of queries that you created in Explore. Refer to [Query history](/docs/grafana/<GRAFANA_VERSION>/explore/query-management/#query-history) for detailed information on working with your query history.
+- **+ Add query** - Add additional queries.
+- **+ Add from saved queries** - Add a saved query. If you've already written a query, you can click the **Replace with saved query** icon to use a previously saved query instead. To [save the query](ref:save-query) for reuse, click the **Save query** icon.
+
+  {{< admonition type="note" >}}
+  [Saved queries](ref:saved-queries) is in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Cloud only.
+  {{< /admonition >}}
+
+- **Query history** - Query history contains the list of queries that you created in Explore. You can also add queries from the history to your saved queries. Refer to [Query history](/docs/grafana/<GRAFANA_VERSION>/explore/query-management/#query-history) for detailed information on working with your query history.
 - **Query inspector** - Provides detailed statistics regarding your query. Inspector functions as a kind of debugging tool that "inspects" your query. It provides query statistics under **Stats**, request response time under **Query**, data frame details under **{} JSON**, and the shape of your data under **Data**. Refer to [Query inspector in Explore](/docs/grafana/latest/explore/explore-inspector/) for additional information.
 
 ## Access Explore
@@ -131,10 +147,10 @@ Select **Mixed** from the data source dropdown to run queries across multiple da
 
 When using Explore, the URL in the browser address bar updates as you make changes to the queries. You can share or bookmark this URL.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Explore may generate long URLs, which some tools, like messaging or videoconferencing applications, might truncate due to fixed message lengths. In such cases, Explore displays a warning and loads a default state.
 If you encounter issues when sharing Explore links in these applications, you can generate shortened links. See [Share shortened link](#share-shortened-link) for more information.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Generate Explore URLs from external tools
 
@@ -204,5 +220,5 @@ Now that you are familiar with Explore you can:
 - [Build dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/)
 - Create a wide variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/)
 - [Work with logs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/)
-- [Work with traces](https://grafana.com/docs/grafana/<GRAFANA_VERSION>)
+- [Work with traces](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/trace-integration/)
 - [Create and use correlations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/correlations-editor-in-explore/)

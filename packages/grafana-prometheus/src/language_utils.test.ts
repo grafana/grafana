@@ -3,90 +3,18 @@ import { Moment } from 'moment';
 
 import { AbstractLabelOperator, AbstractQuery, DateTime, dateTime, TimeRange } from '@grafana/data';
 
+import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from './escaping';
 import {
-  escapeLabelValueInExactSelector,
-  escapeLabelValueInRegexSelector,
   expandRecordingRules,
   fixSummariesMetadata,
   getPrometheusTime,
   getRangeSnapInterval,
-  parseSelector,
   processLabels,
+  removeQuotesIfExist,
   toPromLikeQuery,
   truncateResult,
 } from './language_utils';
 import { PrometheusCacheLevel } from './types';
-
-describe('parseSelector()', () => {
-  let parsed;
-
-  it('returns a clean selector from an empty selector', () => {
-    parsed = parseSelector('{}', 1);
-    expect(parsed.selector).toBe('{}');
-    expect(parsed.labelKeys).toEqual([]);
-  });
-
-  it('returns a clean selector from an unclosed selector', () => {
-    const parsed = parseSelector('{foo');
-    expect(parsed.selector).toBe('{}');
-  });
-
-  it('returns the selector sorted by label key', () => {
-    parsed = parseSelector('{foo="bar"}');
-    expect(parsed.selector).toBe('{foo="bar"}');
-    expect(parsed.labelKeys).toEqual(['foo']);
-
-    parsed = parseSelector('{foo="bar",baz="xx"}');
-    expect(parsed.selector).toBe('{baz="xx",foo="bar"}');
-  });
-
-  it('returns a clean selector from an incomplete one', () => {
-    parsed = parseSelector('{foo}');
-    expect(parsed.selector).toBe('{}');
-
-    parsed = parseSelector('{foo="bar",baz}');
-    expect(parsed.selector).toBe('{foo="bar"}');
-
-    parsed = parseSelector('{foo="bar",baz="}');
-    expect(parsed.selector).toBe('{foo="bar"}');
-
-    // Cursor in value area counts as incomplete
-    parsed = parseSelector('{foo="bar",baz=""}', 16);
-    expect(parsed.selector).toBe('{foo="bar"}');
-
-    parsed = parseSelector('{foo="bar",baz="4"}', 17);
-    expect(parsed.selector).toBe('{foo="bar"}');
-  });
-
-  it('throws if not inside a selector', () => {
-    expect(() => parseSelector('foo{}', 0)).toThrow();
-    expect(() => parseSelector('foo{} + bar{}', 5)).toThrow();
-  });
-
-  it('returns the selector nearest to the cursor offset', () => {
-    expect(() => parseSelector('{foo="bar"} + {foo="bar"}', 0)).toThrow();
-
-    parsed = parseSelector('{foo="bar"} + {foo="bar"}', 1);
-    expect(parsed.selector).toBe('{foo="bar"}');
-
-    parsed = parseSelector('{foo="bar"} + {baz="xx"}', 1);
-    expect(parsed.selector).toBe('{foo="bar"}');
-
-    parsed = parseSelector('{baz="xx"} + {foo="bar"}', 16);
-    expect(parsed.selector).toBe('{foo="bar"}');
-  });
-
-  it('returns a selector with metric if metric is given', () => {
-    parsed = parseSelector('bar{foo}', 4);
-    expect(parsed.selector).toBe('{__name__="bar"}');
-
-    parsed = parseSelector('baz{foo="bar"}', 13);
-    expect(parsed.selector).toBe('{__name__="baz",foo="bar"}');
-
-    parsed = parseSelector('bar:metric:1m{}', 14);
-    expect(parsed.selector).toBe('{__name__="bar:metric:1m"}');
-  });
-});
 
 describe('fixSummariesMetadata', () => {
   const synthetics = {
@@ -260,6 +188,18 @@ describe('expandRecordingRules()', () => {
       },
     };
     const expected = `rate(prometheus_http_requests_total{job="prometheus", four="tops"} + prom_http_requests_sum{job="prometheus", second="album"}`;
+    const result = expandRecordingRules(query, mapping);
+    expect(result).toBe(expected);
+  });
+
+  it('when there is an empty label value it should still be able to expand the rule', () => {
+    const query = `sum(max by (cluster, container) (pod_cpu:active:kube_limits{container!="", cluster=~"pink"}))`;
+    const mapping = {
+      'pod_cpu:active:kube_limits': {
+        expandedQuery: `kube_limits{job!="", resource="cpu"} * on (namespace, pod, cluster) group_left () max by (namespace, pod, cluster) ((kube_pod_status_phase{phase=~"Pending|Running"} == 1))`,
+      },
+    };
+    const expected = `sum(max by (cluster, container) (kube_limits{job!="", resource="cpu", container!="", cluster=~"pink"} * on (namespace, pod, cluster) group_left () max by (namespace, pod, cluster) ((kube_pod_status_phase{phase=~"Pending|Running", container!="", cluster=~"pink"} == 1))))`;
     const result = expandRecordingRules(query, mapping);
     expect(result).toBe(expected);
   });
@@ -615,5 +555,61 @@ describe('processLabels', () => {
         'label2.with.dot': ['value2'],
       },
     });
+  });
+});
+
+describe('removeQuotesIfExist', () => {
+  it('removes quotes from a string with double quotes', () => {
+    const input = '"hello"';
+    const result = removeQuotesIfExist(input);
+    expect(result).toBe('hello');
+  });
+
+  it('returns the original string if it does not start and end with quotes', () => {
+    const input = 'hello';
+    const result = removeQuotesIfExist(input);
+    expect(result).toBe('hello');
+  });
+
+  it('returns the original string if it has mismatched quotes', () => {
+    const input = '"hello';
+    const result = removeQuotesIfExist(input);
+    expect(result).toBe('"hello');
+  });
+
+  it('removes quotes for strings with special characters inside quotes', () => {
+    const input = '"hello, world!"';
+    const result = removeQuotesIfExist(input);
+    expect(result).toBe('hello, world!');
+  });
+
+  it('removes quotes for strings with spaces inside quotes', () => {
+    const input = '"   "';
+    const result = removeQuotesIfExist(input);
+    expect(result).toBe('   ');
+  });
+
+  it('returns the original string for an empty string', () => {
+    const input = '';
+    const result = removeQuotesIfExist(input);
+    expect(result).toBe('');
+  });
+
+  it('returns the original string if the string only has a single quote character', () => {
+    const input = '"';
+    const result = removeQuotesIfExist(input);
+    expect(result).toBe('"');
+  });
+
+  it('handles strings with nested quotes correctly', () => {
+    const input = '"nested \"quotes\""';
+    const result = removeQuotesIfExist(input);
+    expect(result).toBe('nested \"quotes\"');
+  });
+
+  it('removes quotes from a numeric string wrapped in quotes', () => {
+    const input = '"12345"';
+    const result = removeQuotesIfExist(input);
+    expect(result).toBe('12345');
   });
 });

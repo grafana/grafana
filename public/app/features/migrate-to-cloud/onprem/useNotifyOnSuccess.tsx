@@ -1,9 +1,12 @@
 import { useRef, useEffect } from 'react';
 
+import { t } from '@grafana/i18n';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { t } from 'app/core/internationalization';
 
 import { GetSnapshotResponseDto, SnapshotDto } from '../api';
+
+import { pluralizeResourceName } from './resourceInfo';
+import { ResourceTableItem } from './types';
 
 // After the number of distinct resource types migrated exceeeds this value, we display a generic success message.
 const SUCCESS_MESSAGE_ITEM_TYPES_THRESHOLD = 4;
@@ -44,29 +47,12 @@ function getTranslatedMessage(snapshot: GetSnapshotResponseDto) {
 
     // We don't have per-resource status counts, so there's no way to accurately pluralize these
     // so we just don't :)
-    if (type === 'DASHBOARD') {
-      types.push(t('migrate-to-cloud.migrated-counts.dashboards', 'dashboards'));
-    } else if (type === 'DATASOURCE') {
-      types.push(t('migrate-to-cloud.migrated-counts.datasources', 'data sources'));
-    } else if (type === 'FOLDER') {
-      types.push(t('migrate-to-cloud.migrated-counts.folders', 'folders'));
-    } else if (type === 'LIBRARY_ELEMENT') {
-      types.push(t('migrate-to-cloud.migrated-counts.library_elements', 'library elements'));
-    } else if (type === 'MUTE_TIMING') {
-      types.push(t('migrate-to-cloud.migrated-counts.mute_timings', 'mute timings'));
-    } else if (type === 'NOTIFICATION_TEMPLATE') {
-      types.push(t('migrate-to-cloud.migrated-counts.notification_templates', 'notification templates'));
-    } else if (type === 'CONTACT_POINT') {
-      types.push(t('migrate-to-cloud.migrated-counts.contact_points', 'contact points'));
-    } else if (type === 'NOTIFICATION_POLICY') {
-      types.push(t('migrate-to-cloud.migrated-counts.notification_policies', 'notification policies'));
-    } else if (type === 'ALERT_RULE') {
-      types.push(t('migrate-to-cloud.migrated-counts.alert_rules', 'alert rules'));
-    } else if (type === 'ALERT_RULE_GROUP') {
-      types.push(t('migrate-to-cloud.migrated-counts.alert_rule_groups', 'alert rule groups'));
-    } else if (type === 'PLUGIN') {
-      types.push(t('migrate-to-cloud.migrated-counts.plugins', 'plugins'));
+    const resourceType = pluralizeResourceName(type as ResourceTableItem['type']);
+    if (!resourceType) {
+      continue;
     }
+
+    types.push(resourceType);
 
     distinctItems += 1;
   }

@@ -44,6 +44,10 @@ export interface Team extends WithAccessControlMetadata {
    * OrgId is the ID of an organisation the team belongs to.
    */
   orgId: number;
+  /**
+   * isProvisioned is set if the team has been provisioned from IdP.
+   */
+  isProvisioned: boolean;
 }
 
 export interface TeamWithRoles extends Team {

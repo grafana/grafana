@@ -46,10 +46,10 @@ import { LokiQuery } from './types';
  */
 
 export function runShardSplitQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
-  const queries = datasource
-    .interpolateVariablesInQueries(request.targets, request.scopedVars)
+  const queries = request.targets
     .filter((query) => query.expr)
-    .filter((query) => !query.hide);
+    .filter((query) => !query.hide)
+    .map((query) => datasource.applyTemplateVariables(query, request.scopedVars, request.filters));
 
   return splitQueriesByStreamShard(datasource, request, queries);
 }
@@ -87,8 +87,9 @@ function splitQueriesByStreamShard(
     }
 
     const nextRequest = () => {
+      // Find the next group to execute, which can be queries with pending shards to execute, or the next query with no shards.
       const nextGroup =
-        groups[group + 1] && groupHasPendingRequests(groups[group + 1])
+        groups[group + 1] && (groups[group + 1].shards === undefined || groupHasPendingRequests(groups[group + 1]))
           ? groups[group + 1]
           : groups.find((shardGroup) => groupHasPendingRequests(shardGroup));
 

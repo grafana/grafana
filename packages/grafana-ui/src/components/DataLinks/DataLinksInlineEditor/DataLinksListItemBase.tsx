@@ -2,9 +2,9 @@ import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
 
 import { Action, DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../../themes';
-import { t } from '../../../utils/i18n';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { Badge } from '../../Badge/Badge';
 import { Icon } from '../../Icon/Icon';
 import { IconButton } from '../../IconButton/IconButton';
@@ -31,9 +31,7 @@ export function DataLinksListItemBase<T extends DataLink | Action>({
   const styles = useStyles2(getDataLinkListItemStyles);
   const { title = '', oneClick = false } = item;
 
-  // @ts-ignore - https://github.com/microsoft/TypeScript/issues/27808
-  const url = item.url ?? item.fetch?.url ?? '';
-
+  const url = ('type' in item ? item[item.type]?.url : item.url) ?? '';
   const hasTitle = title.trim() !== '';
   const hasUrl = url.trim() !== '';
 

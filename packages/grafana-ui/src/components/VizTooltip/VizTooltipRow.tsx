@@ -4,9 +4,9 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineToast } from '../InlineToast/InlineToast';
-import { Tooltip } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipColorIndicator';
 import { ColorPlacement, VizTooltipItem } from './types';
@@ -18,6 +18,7 @@ interface VizTooltipRowProps extends Omit<VizTooltipItem, 'value'> {
   marginRight?: string;
   isPinned: boolean;
   showValueScroll?: boolean;
+  isHiddenFromViz?: boolean;
 }
 
 enum LabelValueTypes {
@@ -41,6 +42,7 @@ export const VizTooltipRow = ({
   isPinned,
   lineStyle,
   showValueScroll,
+  isHiddenFromViz,
 }: VizTooltipRowProps) => {
   const styles = useStyles2(getStyles, justify, marginRight);
 
@@ -52,8 +54,9 @@ export const VizTooltipRow = ({
         overflowY: 'auto',
       }
     : {
-        whiteSpace: 'wrap',
+        whiteSpace: 'pre-line',
         wordBreak: 'break-word',
+        lineHeight: 1.2,
       };
 
   const [showLabelTooltip, setShowLabelTooltip] = useState(false);
@@ -131,7 +134,12 @@ export const VizTooltipRow = ({
       {(color || label) && (
         <div className={styles.valueWrapper}>
           {color && colorPlacement === ColorPlacement.first && (
-            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} lineStyle={lineStyle} />
+            <VizTooltipColorIndicator
+              color={color}
+              colorIndicator={colorIndicator}
+              lineStyle={lineStyle}
+              isHollow={isHiddenFromViz}
+            />
           )}
           {!isPinned ? (
             <div className={cx(styles.label, isActive && styles.activeSeries)}>{label}</div>

@@ -13,17 +13,15 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import classNames from 'classnames';
 import { PureComponent } from 'react';
 
-import { GrafanaTheme2, LinkModel, TraceKeyValuePair, TraceLog } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, LinkModel, TimeRange, TraceLog } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { TimeZone } from '@grafana/schema';
-import { Button, clearButtonStyles, stylesFactory, withTheme2 } from '@grafana/ui';
+import { stylesFactory, withTheme2 } from '@grafana/ui';
 
-import { autoColor } from '../Theme';
-import { SpanLinkFunc } from '../types';
-import { TraceSpan, TraceLink, TraceSpanReference } from '../types/trace';
+import { SpanLinkFunc } from '../types/links';
+import { TraceSpan, TraceSpanReference } from '../types/trace';
 
 import SpanDetail, { TraceFlameGraphs } from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
@@ -64,9 +62,21 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     }),
     infoWrapper: css({
       label: 'infoWrapper',
-      border: `1px solid ${autoColor(theme, '#d3d3d3')}`,
-      borderTop: '3px solid',
       padding: '0.75rem',
+    }),
+    cell: css({
+      label: 'cell',
+      display: 'flex !important',
+      width: '100% !important',
+    }),
+    indentSpacer: css({
+      label: 'indentSpacer',
+      flex: 'none',
+    }),
+    detailWrapper: css({
+      label: 'detailWrapper',
+      flex: '1',
+      minWidth: 0,
     }),
   };
 });
@@ -76,7 +86,6 @@ export type SpanDetailRowProps = {
   columnDivision: number;
   detailState: DetailState;
   onDetailToggled: (spanID: string) => void;
-  linksGetter: (span: TraceSpan, links: TraceKeyValuePair[], index: number) => TraceLink[];
   logItemToggle: (spanID: string, log: TraceLog) => void;
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
@@ -99,10 +108,13 @@ export type SpanDetailRowProps = {
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   datasourceType: string;
+  datasourceUid: string;
   visibleSpanIds: string[];
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
+  timeRange: TimeRange;
+  app: CoreApp;
 };
 
 export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
@@ -110,15 +122,9 @@ export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
     this.props.onDetailToggled(this.props.span.spanID);
   };
 
-  _linksGetter = (items: TraceKeyValuePair[], itemIndex: number) => {
-    const { linksGetter, span } = this.props;
-    return linksGetter(span, items, itemIndex);
-  };
-
   render() {
     const {
       color,
-      columnDivision,
       detailState,
       logItemToggle,
       logsToggle,
@@ -134,66 +140,67 @@ export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
       traceStartTime,
       traceDuration,
       traceName,
-      hoverIndentGuideIds,
-      addHoverIndentGuideId,
-      removeHoverIndentGuideId,
       theme,
       createSpanLink,
       focusedSpanId,
       createFocusSpanLink,
       datasourceType,
-      visibleSpanIds,
+      datasourceUid,
       traceFlameGraphs,
       setTraceFlameGraphs,
       setRedrawListView,
+      timeRange,
+      app,
+      hoverIndentGuideIds,
+      addHoverIndentGuideId,
+      removeHoverIndentGuideId,
+      visibleSpanIds,
     } = this.props;
     const styles = getStyles(theme);
     return (
       <TimelineRow>
-        <TimelineRow.Cell width={columnDivision} style={{ overflow: 'hidden' }}>
-          <SpanTreeOffset
-            span={span}
-            showChildrenIcon={false}
-            hoverIndentGuideIds={hoverIndentGuideIds}
-            addHoverIndentGuideId={addHoverIndentGuideId}
-            removeHoverIndentGuideId={removeHoverIndentGuideId}
-            visibleSpanIds={visibleSpanIds}
-          />
-          <Button
-            fill="text"
-            onClick={this._detailToggle}
-            className={classNames(styles.expandedAccent, clearButtonStyles(theme))}
-            style={{ borderColor: color }}
-            data-testid="detail-row-expanded-accent"
-          ></Button>
-        </TimelineRow.Cell>
-        <TimelineRow.Cell width={1 - columnDivision}>
-          <div className={styles.infoWrapper} style={{ borderTopColor: color }}>
-            <SpanDetail
-              detailState={detailState}
-              linksGetter={this._linksGetter}
-              logItemToggle={logItemToggle}
-              logsToggle={logsToggle}
-              processToggle={processToggle}
-              referenceItemToggle={referenceItemToggle}
-              referencesToggle={referencesToggle}
-              warningsToggle={warningsToggle}
-              stackTracesToggle={stackTracesToggle}
+        <TimelineRow.Cell width={1} className={styles.cell}>
+          <div className={styles.indentSpacer}>
+            <SpanTreeOffset
               span={span}
-              traceToProfilesOptions={traceToProfilesOptions}
-              timeZone={timeZone}
-              tagsToggle={tagsToggle}
-              traceStartTime={traceStartTime}
-              traceDuration={traceDuration}
-              traceName={traceName}
-              createSpanLink={createSpanLink}
-              focusedSpanId={focusedSpanId}
-              createFocusSpanLink={createFocusSpanLink}
-              datasourceType={datasourceType}
-              traceFlameGraphs={traceFlameGraphs}
-              setTraceFlameGraphs={setTraceFlameGraphs}
-              setRedrawListView={setRedrawListView}
+              showChildrenIcon={false}
+              hoverIndentGuideIds={hoverIndentGuideIds}
+              addHoverIndentGuideId={addHoverIndentGuideId}
+              removeHoverIndentGuideId={removeHoverIndentGuideId}
+              visibleSpanIds={visibleSpanIds}
             />
+          </div>
+          <div className={styles.detailWrapper}>
+            <div className={styles.infoWrapper} style={{ borderTopColor: color }}>
+              <SpanDetail
+                color={color}
+                detailState={detailState}
+                logItemToggle={logItemToggle}
+                logsToggle={logsToggle}
+                processToggle={processToggle}
+                referenceItemToggle={referenceItemToggle}
+                referencesToggle={referencesToggle}
+                warningsToggle={warningsToggle}
+                stackTracesToggle={stackTracesToggle}
+                span={span}
+                traceToProfilesOptions={traceToProfilesOptions}
+                timeZone={timeZone}
+                tagsToggle={tagsToggle}
+                traceStartTime={traceStartTime}
+                traceDuration={traceDuration}
+                traceName={traceName}
+                createSpanLink={createSpanLink}
+                focusedSpanId={focusedSpanId}
+                createFocusSpanLink={createFocusSpanLink}
+                datasourceType={datasourceType}
+                datasourceUid={datasourceUid}
+                traceFlameGraphs={traceFlameGraphs}
+                setTraceFlameGraphs={setTraceFlameGraphs}
+                setRedrawListView={setRedrawListView}
+                timeRange={timeRange}
+                app={app}
+              />
+            </div>
           </div>
         </TimelineRow.Cell>
       </TimelineRow>

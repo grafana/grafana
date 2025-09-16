@@ -6,7 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -167,7 +169,7 @@ func Test_Marshaling_Validation(t *testing.T) {
 	require.Nil(t, json.Unmarshal(jsonEncoded, &tmp))
 
 	expected := []model.LabelName{"alertname"}
-	require.Equal(t, expected, tmp.AlertmanagerConfig.Config.Route.GroupBy)
+	require.Equal(t, expected, tmp.AlertmanagerConfig.Route.GroupBy)
 }
 
 func Test_RawMessageMarshaling(t *testing.T) {
@@ -214,4 +216,280 @@ func Test_RawMessageMarshaling(t *testing.T) {
 		require.NoError(t, yaml.Unmarshal(data, &n))
 		assert.Equal(t, RawMessage(`{"data":"test"}`), n.Field)
 	})
+}
+
+func TestPostableUserConfig_GetMergedAlertmanagerConfig(t *testing.T) {
+	alertmanagerCfg := PostableApiAlertingConfig{
+		Config: Config{
+			Route: &Route{
+				Receiver: "default",
+			},
+		},
+		Receivers: []*PostableApiReceiver{
+			{
+				Receiver: config.Receiver{
+					Name: "default",
+				},
+			},
+		},
+	}
+
+	testCases := []struct {
+		name          string
+		config        PostableUserConfig
+		expectedError string
+	}{
+		{
+			name: "no extra configs",
+			config: PostableUserConfig{
+				AlertmanagerConfig: alertmanagerCfg,
+			},
+		},
+		{
+			name: "valid mimir config",
+			config: PostableUserConfig{
+				AlertmanagerConfig: alertmanagerCfg,
+				ExtraConfigs: []ExtraConfiguration{
+					{
+						Identifier: "mimir-1",
+						MergeMatchers: config.Matchers{
+							{
+								Type:  labels.MatchEqual,
+								Name:  "cluster",
+								Value: "prod",
+							},
+						},
+						AlertmanagerConfig: `route:
+  receiver: mimir-receiver
+receivers:
+  - name: mimir-receiver`,
+					},
+				},
+			},
+		},
+		{
+			name: "empty identifier",
+			config: PostableUserConfig{
+				AlertmanagerConfig: alertmanagerCfg,
+				ExtraConfigs: []ExtraConfiguration{
+					{
+						Identifier:    "",
+						MergeMatchers: config.Matchers{},
+						AlertmanagerConfig: `{
+							"route": {
+								"receiver": "test"
+							}
+						}`,
+					},
+				},
+			},
+			expectedError: "invalid merge options",
+		},
+		{
+			name: "bad matcher type",
+			config: PostableUserConfig{
+				AlertmanagerConfig: alertmanagerCfg,
+				ExtraConfigs: []ExtraConfiguration{
+					{
+						Identifier: "test",
+						MergeMatchers: config.Matchers{
+							{
+								Type:  labels.MatchNotEqual,
+								Name:  "cluster",
+								Value: "prod",
+							},
+						},
+					},
+				},
+			},
+			expectedError: "only equality matchers are allowed",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := tc.config.GetMergedAlertmanagerConfig()
+			if tc.expectedError != "" {
+				require.Error(t, err)
+				require.ErrorContains(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, result.Config)
+			}
+		})
+	}
+}
+
+func TestPostableUserConfig_GetMergedTemplateDefinitions(t *testing.T) {
+	testCases := []struct {
+		name              string
+		config            PostableUserConfig
+		expectedTemplates int
+	}{
+		{
+			name: "no templates",
+			config: PostableUserConfig{
+				TemplateFiles: map[string]string{},
+				ExtraConfigs:  []ExtraConfiguration{},
+			},
+			expectedTemplates: 0,
+		},
+		{
+			name: "grafana templates only",
+			config: PostableUserConfig{
+				TemplateFiles: map[string]string{
+					"grafana-template1": "{{ define \"test\" }}Hello{{ end }}",
+					"grafana-template2": "{{ define \"test2\" }}World{{ end }}",
+				},
+				ExtraConfigs: []ExtraConfiguration{},
+			},
+			expectedTemplates: 2,
+		},
+		{
+			name: "mimir templates only",
+			config: PostableUserConfig{
+				TemplateFiles: map[string]string{},
+				ExtraConfigs: []ExtraConfiguration{
+					{
+						TemplateFiles: map[string]string{
+							"mimir-template": "{{ define \"mimir\" }}Mimir{{ end }}",
+						},
+					},
+				},
+			},
+			expectedTemplates: 1,
+		},
+		{
+			name: "mixed templates",
+			config: PostableUserConfig{
+				TemplateFiles: map[string]string{
+					"grafana-template": "{{ define \"grafana\" }}Grafana{{ end }}",
+				},
+				ExtraConfigs: []ExtraConfiguration{
+					{
+						TemplateFiles: map[string]string{
+							"mimir-template": "{{ define \"mimir\" }}Mimir{{ end }}",
+						},
+					},
+				},
+			},
+			expectedTemplates: 2,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.config.GetMergedTemplateDefinitions()
+			require.Len(t, result, tc.expectedTemplates)
+
+			templateMap := make(map[string]string)
+			kindMap := make(map[string]definition.TemplateKind)
+			for _, tmpl := range result {
+				templateMap[tmpl.Name] = tmpl.Content
+				kindMap[tmpl.Name] = tmpl.Kind
+			}
+
+			for name, content := range tc.config.TemplateFiles {
+				require.Equal(t, content, templateMap[name])
+				require.Equal(t, definition.GrafanaTemplateKind, kindMap[name])
+			}
+
+			if len(tc.config.ExtraConfigs) > 0 {
+				for name, content := range tc.config.ExtraConfigs[0].TemplateFiles {
+					require.Equal(t, content, templateMap[name])
+					require.Equal(t, definition.MimirTemplateKind, kindMap[name])
+				}
+			}
+		})
+	}
+}
+
+func TestExtraConfiguration_Validate(t *testing.T) {
+	testCases := []struct {
+		name          string
+		config        ExtraConfiguration
+		expectedError string
+	}{
+		{
+			name: "valid configuration",
+			config: ExtraConfiguration{
+				Identifier:    "test-config",
+				MergeMatchers: config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `route:
+  receiver: default
+receivers:
+  - name: default`,
+			},
+		},
+		{
+			name: "empty identifier",
+			config: ExtraConfiguration{
+				Identifier:         "",
+				MergeMatchers:      config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `route: {receiver: default}`,
+			},
+			expectedError: "identifier is required",
+		},
+		{
+			name: "invalid matcher type",
+			config: ExtraConfiguration{
+				Identifier:    "test-config",
+				MergeMatchers: config.Matchers{{Type: labels.MatchNotEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `route:
+  receiver: default
+receivers:
+  - name: default`,
+			},
+			expectedError: "only matchers with type equal are supported",
+		},
+		{
+			name: "invalid YAML alertmanager config",
+			config: ExtraConfiguration{
+				Identifier:         "test-config",
+				MergeMatchers:      config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `invalid: yaml: content: [`,
+			},
+			expectedError: "failed to parse alertmanager config",
+		},
+		{
+			name: "missing route in alertmanager config",
+			config: ExtraConfiguration{
+				Identifier:    "test-config",
+				MergeMatchers: config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `receivers:
+  - name: default`,
+			},
+			expectedError: "no routes provided",
+		},
+		{
+			name: "missing receivers in alertmanager config",
+			config: ExtraConfiguration{
+				Identifier:    "test-config",
+				MergeMatchers: config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `route:
+  receiver: default`,
+			},
+			expectedError: "undefined receiver",
+		},
+		{
+			name: "empty alertmanager config",
+			config: ExtraConfiguration{
+				Identifier:         "test-config",
+				MergeMatchers:      config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: "",
+			},
+			expectedError: "failed to parse alertmanager config",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.config.Validate()
+			if tc.expectedError == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tc.expectedError)
+			}
+		})
+	}
 }

@@ -269,32 +269,31 @@ export function LokiContextUi(props: LokiContextUiProps) {
           elevated={true}
         ></Alert>
       )}
-      <Tooltip content={'Revert to initial log context query.'}>
-        <div className={styles.iconButton}>
-          <Button
-            data-testid="revert-button"
-            icon="history-alt"
-            variant="secondary"
-            disabled={isInitialState}
-            onClick={(e) => {
-              reportInteraction('grafana_explore_logs_loki_log_context_reverted', {
-                logRowUid: row.uid,
-              });
-              setContextFilters((contextFilters) => {
-                return contextFilters.map((contextFilter) => ({
-                  ...contextFilter,
-                  // For revert to initial query we need to enable all labels and disable all parsed labels
-                  enabled: !contextFilter.nonIndexed,
-                }));
-              });
-              // We are removing the preserved labels from local storage so we can preselect the labels in the UI
-              window.localStorage.removeItem(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
-              window.localStorage.removeItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS);
-              setIncludePipelineOperations(false);
-            }}
-          />
-        </div>
-      </Tooltip>
+      <div className={styles.iconButton}>
+        <Button
+          tooltip="Revert to initial log context query"
+          data-testid="revert-button"
+          icon="history-alt"
+          variant="secondary"
+          disabled={isInitialState}
+          onClick={(e) => {
+            reportInteraction('grafana_explore_logs_loki_log_context_reverted', {
+              logRowUid: row.uid,
+            });
+            setContextFilters((contextFilters) => {
+              return contextFilters.map((contextFilter) => ({
+                ...contextFilter,
+                // For revert to initial query we need to enable all labels and disable all parsed labels
+                enabled: !contextFilter.nonIndexed,
+              }));
+            });
+            // We are removing the preserved labels from local storage so we can preselect the labels in the UI
+            window.localStorage.removeItem(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
+            window.localStorage.removeItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS);
+            setIncludePipelineOperations(false);
+          }}
+        />
+      </div>
 
       <Collapse
         collapsible={true}

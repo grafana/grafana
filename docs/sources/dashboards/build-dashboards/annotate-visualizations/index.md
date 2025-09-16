@@ -35,8 +35,6 @@ Annotations provide a way to mark points on a visualization with rich events. Th
 
 {{< figure src="/static/img/docs/v46/annotations.png" max-width="800px" alt="Annotated visualization with annotation context menu open" >}}
 
-{{< docs/play title="Annotations" url="https://play.grafana.org/d/000000010/" >}}
-
 You can annotate visualizations in three ways:
 
 - Directly in the panel, using the [built-in annotations query](#built-in-query)
@@ -142,7 +140,6 @@ To add a new annotation query to a dashboard, follow these steps:
 1. If you don't want the annotation query toggle to be displayed in the dashboard, select the **Hidden** checkbox.
 1. Select a color for the event markers.
 1. In the **Show in** drop-down, choose one of the following options:
-
    - **All panels** - The annotations are displayed on all panels that support annotations.
    - **Selected panels** - The annotations are displayed on all the panels you select.
    - **All panels except** - The annotations are displayed on all panels except the ones you select.
@@ -209,3 +206,7 @@ When adding or editing an annotation, you can define a repeating time region by 
 The above configuration produces the following result in the Time series panel:
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-timeseries-time-regions.png" max-width="600px" alt="Time series visualization with time regions business hours" >}}
+
+Toggle the **Advanced** switch and use [Cron syntax](https://en.wikipedia.org/wiki/Cron) to set more granular time region controls. The following example sets a time region of 9:00 AM, Monday to Friday:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-annotations-cron-option-v11.6.png" max-width="600px" alt="Time region query with cron syntax" >}}

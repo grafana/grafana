@@ -19,16 +19,16 @@ weight: -38
 
 Welcome to Grafana 10.1! Read on to learn about changes to dashboards and visualizations, data sources, security and authentication and more. We're particularly excited about a set of improvements to visualizing logs from [Loki](https://grafana.com/products/cloud/logs/) and other logging data sources in Explore mode, and our Flame graph panel, used to visualize profiling data from [Pyroscope](https://grafana.com/blog/2023/03/15/pyroscope-grafana-phlare-join-for-oss-continuous-profiling/?pg=oss-phlare&plcmt=top-promo-banner) and other continuous profiling data sources.
 
-For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.1, check out our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.1/index.md" >}}).
+For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.1, check out our [Upgrade Guide](../../upgrade-guide/upgrade-v10.1/).
 
 <!-- Template below
 ## Feature
 <!-- Name of contributor -->
 <!-- _[Generally available | Available in private/public preview | Experimental] in Grafana [Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced]_
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).
-{{% /admonition %}}
+{{< /admonition >}}
 -->
 <!-- Add an image, GIF or video  as below
 
@@ -102,9 +102,9 @@ _Generally available in all editions of Grafana_
 
 <!-- Nathan Marrs -->
 
-You can now choose whether to set a threshold above which values in the data should be disconnected. This can be useful in cases where you have sensors that report a value at a set interval, but you want to disconnect the values when the sensor does not respond. This feature complements the existing [connect null values functionality]({{< relref "../panels-visualizations/visualizations/time-series/#connect-null-values" >}}).
+You can now choose whether to set a threshold above which values in the data should be disconnected. This can be useful in cases where you have sensors that report a value at a set interval, but you want to disconnect the values when the sensor does not respond. This feature complements the existing [connect null values functionality](../../panels-visualizations/visualizations/time-series/#connect-null-values).
 
-To learn more, refer to our [disconnect values documentation]({{< relref "../panels-visualizations/visualizations/time-series/#disconnect-values" >}}).
+To learn more, refer to our [disconnect values documentation](../../panels-visualizations/visualizations/time-series/#disconnect-values).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-disconnect-values-examples.png" max-width="750px" caption="Disconnect values in Time series, Trend, and State timeline visualizations" >}}
 
@@ -114,9 +114,9 @@ _Available in public preview in all editions of Grafana_
 
 <!-- Nathan Marrs -->
 
-You can now display network data in the Geomap visualization by using the new beta Network layer. This layer supports the same data format as the [Node graph visualization]({{< relref "../panels-visualizations/visualizations/node-graph/#data-api" >}}).
+You can now display network data in the Geomap visualization by using the new beta Network layer. This layer supports the same data format as the [Node graph visualization](../../panels-visualizations/visualizations/node-graph/#data-api).
 
-To learn more, refer to our [Geomap network layer documentation]({{< relref "../panels-visualizations/visualizations/geomap/#network-layer-beta" >}}).
+To learn more, refer to our [Geomap network layer documentation](../../panels-visualizations/visualizations/geomap/#network-layer-beta).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-geomap-network-layer-v2.png" max-width="750px" caption="Geomap Network layer" >}}
 
@@ -128,7 +128,7 @@ _Generally available in all editions of Grafana_
 
 You can now add data links to Heatmap visualizations. This allows you to add links to other dashboards, panels, or external URLs that are relevant to the data in your heatmap. We're pleased to highlight that this feature was a community contribution.
 
-To learn more, refer to both our [Heatmap documentation]({{< relref "../panels-visualizations/visualizations/heatmap/" >}}) and our [Configure data links documentation]({{< relref "../panels-visualizations/configure-data-links/" >}}).
+To learn more, refer to both our [Heatmap documentation](../../panels-visualizations/visualizations/heatmap/) and our [Configure data links documentation](../../panels-visualizations/configure-data-links/).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-heatmap-datalinks.png" max-width="750px" caption="Heatmap datalink support" >}}
 
@@ -140,7 +140,7 @@ _Generally available in Grafana Enterprise, Cloud Free, Cloud Pro, and Cloud Adv
 
 You can now use the resume and pause report functionality to activate draft reports that have all the required fields filled in.
 
-To learn more, refer to our [Create and manage reports documentation]({{< relref "../dashboards/create-reports" >}}).
+To learn more, refer to our [Create and manage reports documentation](../../dashboards/create-reports/).
 
 ## Data sources
 
@@ -162,7 +162,7 @@ By default, the `step` parameter is set to the value of the `$__interval` variab
 
 _Generally available in all editions of Grafana_
 
-New functionality for linking of Loki log lines in Explore allows you to quickly navigate to specific log entries for precise analysis. By clicking the **Copy shortlink** button for a log line, you can generate and copy a [short URL]({{< relref "../developers/http_api/short_url/" >}}) that provides direct access to the exact log entry within an absolute time range. When you open the link, Grafana automatically scrolls to the corresponding log line and highlights it, making it easy to identify and focus on the relevant information.
+New functionality for linking of Loki log lines in Explore allows you to quickly navigate to specific log entries for precise analysis. By clicking the **Copy shortlink** button for a log line, you can generate and copy a [short URL](../../developers/http_api/short_url/) that provides direct access to the exact log entry within an absolute time range. When you open the link, Grafana automatically scrolls to the corresponding log line and highlights it, making it easy to identify and focus on the relevant information.
 
 {{< figure src="/media/docs/grafana/data-sources/loki-shortlink.png" max-width="750px" caption="New Loki log line linking" >}}
 
@@ -211,7 +211,7 @@ Currently, you can add one or more of the following filters:
 
 To only show the spans you've matched, you can enable the **Show matches only** toggle.
 
-Learn more about span filtering in our [Tempo data source documentation]({{< relref "../datasources/tempo/#span-filters" >}}).
+Learn more about span filtering in our [Tempo data source documentation](../../datasources/tempo/#span-filters).
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-tempo-span-filters-v10-1.png" max-width="750px" caption="Traces span filtering" >}}
 
@@ -322,7 +322,7 @@ Data source plugin developers can now use any plugin to visualize data in Explor
 
 _All Alerting features are generally available in all editions of Grafana_
 
-We’ve made a number of improvements to simplify the alert rule creation process as well as improvements to contact points and alert management. For all the details, refer to our [Alerting documentation]({{< relref "../alerting" >}}).
+We’ve made a number of improvements to simplify the alert rule creation process as well as improvements to contact points and alert management. For all the details, refer to our [Alerting documentation](../../alerting/).
 
 ### Alert rules
 
@@ -426,7 +426,7 @@ We've removed the `onlyExternalOrgRoleSync` feature toggle, and have defaulted t
 
 If you prefer to manage your users' organization roles manually, enable the `skip_org_role_sync` option in the Grafana configuration for your authentication provider.
 
-For context on the previous work done leading up to this change, refer to the [Grafana v9.5 What's new]({{< relref "../whatsnew/whats-new-in-v9-5/#auth-lock-organization-roles-synced-from-auth-providers" >}}).
+For context on the previous work done leading up to this change, refer to the [Grafana v9.5 What's new](../whats-new-in-v9-5/#auth-lock-organization-roles-synced-from-auth-providers).
 
 ### GitLab OIDC support
 
@@ -439,7 +439,7 @@ Grafana now supports GitLab OIDC through the `GitLab` OAuth provider in addition
 This change also allows Grafana to reduce the access scope to only the required scopes for authentication and authorization, instead
 of full read API access.
 
-To learn how to migrate your GitLab OAuth2 setup to OIDC, refer to our [GitLab authentication documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/gitlab/" >}}).
+To learn how to migrate your GitLab OAuth2 setup to OIDC, refer to our [GitLab authentication documentation](../../setup-grafana/configure-security/configure-authentication/gitlab/).
 
 ### Google OIDC and Team Sync support
 
@@ -451,7 +451,7 @@ Grafana now supports Google OIDC through the `Google` OAuth provider in addition
 
 This release also adds support for Google OIDC in Team Sync. You can now easily add users to teams by using their Google groups.
 
-To learn how to migrate your Google OAuth2 setup to OIDC and how to set up Team Sync, refer to our [Google authentication documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/google/" >}}).
+To learn how to migrate your Google OAuth2 setup to OIDC and how to set up Team Sync, refer to our [Google authentication documentation](../../setup-grafana/configure-security/configure-authentication/google/).
 
 ## Plugins
 
@@ -461,7 +461,7 @@ To learn how to migrate your Google OAuth2 setup to OIDC and how to set up Team 
 
 _Generally available in all editions of Grafana_
 
-We've made the following updates to increase awareness of the [Angular deprecation]({{< relref "../developers/angular_deprecation/" >}}) and its consequences in future releases of Grafana:
+We've made the following updates to increase awareness of the [Angular deprecation](../../developers/angular_deprecation/) and its consequences in future releases of Grafana:
 
 #### UI changes
 
@@ -471,9 +471,9 @@ We've made the following updates to increase awareness of the [Angular deprecati
 
 #### Other changes
 
-- Angular Plugins will not be loaded if [angular_support_enabled]({{< relref "../setup-grafana/configure-grafana/#angular_support_enabled" >}}) is set to `false`.
+- Angular Plugins will not be loaded if [angular_support_enabled](../../setup-grafana/configure-grafana/#angular_support_enabled) is set to `false`.
 
-Learn more in our [Angular support deprecation documentation]({{< relref "../developers/angular_deprecation/" >}}).
+Learn more in our [Angular support deprecation documentation](../../developers/angular_deprecation/).
 
 ### Deprecated provisioning of data sources with invalid UIDs
 

@@ -66,7 +66,7 @@ type Macaron struct {
 // Use this method if you want to have full control over the middleware that is used.
 func New() *Macaron {
 	m := &Macaron{Router: NewRouter()}
-	m.Router.m = m
+	m.m = m
 	m.NotFound(http.NotFound)
 	return m
 }

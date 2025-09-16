@@ -5,7 +5,7 @@ import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { getCloudRule, getGrafanaRule, grantUserPermissions, mockDataSource } from '../mocks';

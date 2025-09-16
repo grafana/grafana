@@ -11,11 +11,11 @@ import (
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -42,7 +42,7 @@ type gPRCServerService struct {
 	startedChan chan struct{}
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer tracing.Tracer, registerer prometheus.Registerer) (Provider, error) {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer) (Provider, error) {
 	s := &gPRCServerService{
 		cfg:         cfg.GRPCServer,
 		logger:      log.New("grpc-server"),
@@ -68,21 +68,28 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		}
 	}
 
+	unaryInterceptors := []grpc.UnaryServerInterceptor{
+		interceptors.LoggingUnaryInterceptor(s.logger, s.cfg.EnableLogging), // needs to be registered after tracing interceptor to get trace id
+		middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
+	}
+	streamInterceptors := []grpc.StreamServerInterceptor{
+		interceptors.TracingStreamInterceptor(tracer),
+		interceptors.LoggingStreamInterceptor(s.logger, s.cfg.EnableLogging),
+		middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
+	}
+
+	if authenticator != nil {
+		unaryInterceptors = append([]grpc.UnaryServerInterceptor{grpcAuth.UnaryServerInterceptor(authenticator.Authenticate)}, unaryInterceptors...)
+		streamInterceptors = append([]grpc.StreamServerInterceptor{grpcAuth.StreamServerInterceptor(authenticator.Authenticate)}, streamInterceptors...)
+	}
+
 	// Default auth is admin token check, but this can be overridden by
 	// services which implement ServiceAuthFuncOverride interface.
 	// See https://github.com/grpc-ecosystem/go-grpc-middleware/blob/main/interceptors/auth/auth.go#L30.
 	opts := []grpc.ServerOption{
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
-		grpc.ChainUnaryInterceptor(
-			grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
-			interceptors.LoggingUnaryInterceptor(s.logger, s.cfg.EnableLogging), // needs to be registered after tracing interceptor to get trace id
-			middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
-		),
-		grpc.ChainStreamInterceptor(
-			interceptors.TracingStreamInterceptor(tracer),
-			grpcAuth.StreamServerInterceptor(authenticator.Authenticate),
-			middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
-		),
+		grpc.ChainUnaryInterceptor(unaryInterceptors...),
+		grpc.ChainStreamInterceptor(streamInterceptors...),
 	}
 
 	if s.cfg.TLSConfig != nil {

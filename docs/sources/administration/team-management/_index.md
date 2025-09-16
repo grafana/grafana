@@ -42,6 +42,8 @@ A Team grants permissions to a wide variety of resources including:
 
 {{< admonition type="note" >}}
 All members of a Grafana Team have the same exact permissions. A single Team can't have members with different access levels to resources shared within that Team.
+
+Additionally, when a user belongs to multiple Teams that have different permission levels for the same resource, the user receives the highest (most permissive) access level from any of their Teams. For example, if a user belongs to two Teams, one with Viewer access and another with Editor access to a folder, the user will have Editor access to that folder.
 {{< /admonition >}}
 
 A user can be a `Member` or an `Administrator` for a given Team. `Members` of a Team inherit permissions from the team, but they don't have team administrator privileges, and can't edit the team itself. Team `Administrators` can add members to a team and update its settings, such as the team name, team member’s team roles, UI preferences, and home dashboard.

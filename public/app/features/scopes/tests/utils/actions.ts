@@ -5,22 +5,17 @@ import { MultiValueVariable, sceneGraph, VariableValue } from '@grafana/scenes';
 import { defaultTimeZone, TimeZone } from '@grafana/schema';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { scopesSelectorScene } from '../../instance';
+import { ScopesService } from '../../ScopesService';
 
-import {
-  dashboardReloadSpy,
-  fetchDashboardsSpy,
-  fetchNodesSpy,
-  fetchScopeSpy,
-  fetchSelectedScopesSpy,
-  getMock,
-} from './mocks';
 import {
   getDashboardFolderExpand,
   getDashboardsExpand,
   getDashboardsSearch,
   getNotFoundForFilterClear,
+  getPersistedApplicationsGrafanaSelect,
   getPersistedApplicationsMimirSelect,
+  getRecentScopeSet,
+  getRecentScopesSection,
   getResultApplicationsCloudDevSelect,
   getResultApplicationsCloudExpand,
   getResultApplicationsCloudSelect,
@@ -33,18 +28,10 @@ import {
   getResultCloudSelect,
   getSelectorApply,
   getSelectorCancel,
+  getSelectorClear,
   getSelectorInput,
   getTreeSearch,
 } from './selectors';
-
-export const clearMocks = () => {
-  fetchNodesSpy.mockClear();
-  fetchScopeSpy.mockClear();
-  fetchSelectedScopesSpy.mockClear();
-  fetchDashboardsSpy.mockClear();
-  dashboardReloadSpy.mockClear();
-  getMock.mockClear();
-};
 
 const click = async (selector: () => HTMLElement) => act(() => fireEvent.click(selector()));
 const type = async (selector: () => HTMLInputElement, value: string) => {
@@ -52,16 +39,10 @@ const type = async (selector: () => HTMLInputElement, value: string) => {
   await jest.runOnlyPendingTimersAsync();
 };
 
-export const updateScopes = async (scopes: string[]) =>
-  act(async () =>
-    scopesSelectorScene?.updateScopes(
-      scopes.map((scopeName) => ({
-        scopeName,
-        path: [],
-      }))
-    )
-  );
+export const updateScopes = async (service: ScopesService, scopes: string[]) =>
+  act(async () => service.changeScopes(scopes));
 export const openSelector = async () => click(getSelectorInput);
+export const clearSelector = async () => click(getSelectorClear);
 export const applyScopes = async () => {
   await click(getSelectorApply);
   await jest.runOnlyPendingTimersAsync();
@@ -69,11 +50,14 @@ export const applyScopes = async () => {
 export const cancelScopes = async () => click(getSelectorCancel);
 export const searchScopes = async (value: string) => type(getTreeSearch, value);
 export const clearScopesSearch = async () => type(getTreeSearch, '');
+export const expandRecentScopes = async () => click(getRecentScopesSection);
 export const expandResultApplications = async () => click(getResultApplicationsExpand);
 export const expandResultApplicationsCloud = async () => click(getResultApplicationsCloudExpand);
 export const expandResultCloud = async () => click(getResultCloudExpand);
+export const selectRecentScope = async (scope: string) => click(() => getRecentScopeSet(scope));
 export const selectResultApplicationsGrafana = async () => click(getResultApplicationsGrafanaSelect);
 export const selectPersistedApplicationsMimir = async () => click(getPersistedApplicationsMimirSelect);
+export const selectPersistedApplicationsGrafana = async () => click(getPersistedApplicationsGrafanaSelect);
 export const selectResultApplicationsMimir = async () => click(getResultApplicationsMimirSelect);
 export const selectResultApplicationsCloud = async () => click(getResultApplicationsCloudSelect);
 export const selectResultApplicationsCloudDev = async () => click(getResultApplicationsCloudDevSelect);

@@ -9,7 +9,8 @@ import {
   WithAccessControlMetadata,
 } from '@grafana/data';
 import { IconName } from '@grafana/ui';
-import { StoreState, PluginsState } from 'app/types';
+import { PluginsState } from 'app/types/plugins';
+import { StoreState } from 'app/types/store';
 
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
 
@@ -24,7 +25,6 @@ export enum PluginIconName {
   datasource = 'database',
   panel = 'credit-card',
   renderer = 'capture',
-  secretsmanager = 'key-skeleton-alt',
 }
 
 export interface CatalogPlugin extends WithAccessControlMetadata {
@@ -65,33 +65,33 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   iam?: IdentityAccessManagement;
   isProvisioned?: boolean;
   url?: string;
-  raiseAnIssueUrl?: string;
+}
+export interface Screenshots {
+  path: string;
+  name: string;
 }
 
 export interface CatalogPluginDetails {
   readme?: string;
   versions?: Version[];
-  links: Array<{
-    name: string;
-    url: string;
-  }>;
+  links: Array<{ name: string; url: string }>;
   grafanaDependency?: string;
   pluginDependencies?: PluginDependencies['plugins'];
   statusContext?: string;
   iam?: IdentityAccessManagement;
   changelog?: string;
-  lastCommitDate?: string;
   licenseUrl?: string;
   documentationUrl?: string;
+  sponsorshipUrl?: string;
+  repositoryUrl?: string;
+  raiseAnIssueUrl?: string;
   signatureType?: PluginSignatureType;
   signature?: PluginSignatureStatus;
+  screenshots?: Screenshots[] | null;
 }
 
 export interface CatalogPluginInfo {
-  logos: {
-    large: string;
-    small: string;
-  };
+  logos: { large: string; small: string };
   keywords: string[];
 }
 
@@ -108,12 +108,7 @@ export type RemotePlugin = {
   json?: {
     dependencies: PluginDependencies;
     iam?: IdentityAccessManagement;
-    info: {
-      links: Array<{
-        name: string;
-        url: string;
-      }>;
-    };
+    info: { links: Array<{ name: string; url: string }>; screenshots?: Screenshots[] | null };
   };
   links: Array<{ rel: string; href: string }>;
   name: string;
@@ -121,12 +116,7 @@ export type RemotePlugin = {
   orgName: string;
   orgSlug: string;
   orgUrl: string;
-  packages: {
-    [arch: string]: {
-      packageName: string;
-      downloadUrl: string;
-    };
-  };
+  packages: { [arch: string]: { packageName: string; downloadUrl: string } };
   popularity: number;
   readme?: string;
   signatureType: PluginSignatureType | '';
@@ -146,9 +136,10 @@ export type RemotePlugin = {
   versionSignedByOrgName: string;
   versionStatus: string;
   angularDetected?: boolean;
-  lastCommitDate?: string;
   licenseUrl?: string;
   documentationUrl?: string;
+  sponsorshipUrl?: string;
+  repositoryUrl?: string;
   raiseAnIssueUrl?: string;
 };
 
@@ -174,16 +165,10 @@ export type LocalPlugin = WithAccessControlMetadata & {
     author: Rel;
     description: string;
     links?: Rel[];
-    logos: {
-      small: string;
-      large: string;
-    };
+    logos: { small: string; large: string };
     keywords: string[];
     build: Build;
-    screenshots?: Array<{
-      path: string;
-      name: string;
-    }> | null;
+    screenshots?: Array<{ path: string; name: string }> | null;
     version: string;
     updated: string;
   };
@@ -197,7 +182,6 @@ export type LocalPlugin = WithAccessControlMetadata & {
   dependencies: PluginDependencies;
   angularDetected: boolean;
   iam?: IdentityAccessManagement;
-  raiseAnIssueUrl?: string;
 };
 
 interface IdentityAccessManagement {
@@ -246,17 +230,14 @@ export interface Org {
   avatarUrl: string;
 }
 
-export type CatalogPluginsState = {
-  loading: boolean;
-  error?: Error;
-  plugins: CatalogPlugin[];
-};
+export type CatalogPluginsState = { loading: boolean; error?: Error; plugins: CatalogPlugin[] };
 
 export enum PluginStatus {
   INSTALL = 'INSTALL',
   UNINSTALL = 'UNINSTALL',
   UPDATE = 'UPDATE',
   REINSTALL = 'REINSTALL',
+  DOWNGRADE = 'DOWNGRADE',
 }
 
 export enum PluginTabLabels {
@@ -269,6 +250,7 @@ export enum PluginTabLabels {
   CHANGELOG = 'Changelog',
   PLUGINDETAILS = 'Plugin details',
   DATASOURCE_CONNECTIONS = 'Data source connections',
+  SCREENSHOTS = 'Screenshots',
 }
 
 export enum PluginTabIds {
@@ -281,6 +263,7 @@ export enum PluginTabIds {
   CHANGELOG = 'changelog',
   PLUGINDETAILS = 'right-panel',
   DATASOURCE_CONNECTIONS = 'datasource-connections',
+  SCREENSHOTS = 'screenshots',
 }
 
 export enum RequestStatus {
@@ -288,10 +271,7 @@ export enum RequestStatus {
   Fulfilled = 'Fulfilled',
   Rejected = 'Rejected',
 }
-export type RemotePluginResponse = {
-  plugins: RemotePlugin[];
-  error?: Error;
-};
+export type RemotePluginResponse = { plugins: RemotePlugin[]; error?: Error };
 
 export type RequestInfo = {
   status: RequestStatus;
@@ -338,11 +318,6 @@ export type PluginVersion = {
   angularDetected?: boolean;
 };
 
-export type InstancePlugin = {
-  pluginSlug: string;
-  version: string;
-};
+export type InstancePlugin = { pluginSlug: string; version: string };
 
-export type ProvisionedPlugin = {
-  slug: string;
-};
+export type ProvisionedPlugin = { slug: string };

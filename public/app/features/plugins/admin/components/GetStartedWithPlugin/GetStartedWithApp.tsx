@@ -1,10 +1,11 @@
 import * as React from 'react';
 
 import { PluginMeta } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { updatePluginSettings } from '../../api';
 import { usePluginConfig } from '../../hooks/usePluginConfig';
@@ -29,7 +30,7 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
 
   const enable = () => {
     reportInteraction('plugins_detail_enable_clicked', {
-      path: location.pathname,
+      path: window.location.pathname,
       plugin_id: plugin.id,
       creator_team: 'grafana_plugins_catalog',
       schema_version: '1.0.0',
@@ -43,7 +44,7 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
 
   const disable = () => {
     reportInteraction('plugins_detail_disable_clicked', {
-      path: location.pathname,
+      path: window.location.pathname,
       plugin_id: plugin.id,
       creator_team: 'grafana_plugins_catalog',
       schema_version: '1.0.0',
@@ -59,13 +60,13 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
     <>
       {!enabled && (
         <Button variant="primary" onClick={enable}>
-          Enable
+          <Trans i18nKey="plugins.get-started-with-app.enable">Enable</Trans>
         </Button>
       )}
 
       {enabled && !autoEnabled && (
         <Button variant="destructive" onClick={disable}>
-          Disable
+          <Trans i18nKey="plugins.get-started-with-app.disable">Disable</Trans>
         </Button>
       )}
     </>

@@ -1,39 +1,49 @@
 import { useRef, useState } from 'react';
 
 import { SelectableValue, StandardEditorProps, VariableOrigin } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { HeatmapCalculationBucketConfig, HeatmapCalculationMode } from '@grafana/schema';
-import { HorizontalGroup, RadioButtonGroup, ScaleDistribution } from '@grafana/ui';
+import { RadioButtonGroup, ScaleDistribution, Stack } from '@grafana/ui';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../../utils';
 import { convertDurationToMilliseconds } from '../utils';
 
-const modeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
-  {
-    label: 'Size',
-    value: HeatmapCalculationMode.Size,
-    description: 'Split the buckets based on size',
-  },
-  {
-    label: 'Count',
-    value: HeatmapCalculationMode.Count,
-    description: 'Split the buckets based on count',
-  },
-];
-
-const logModeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
-  {
-    label: 'Split',
-    value: HeatmapCalculationMode.Size,
-    description: 'Split the buckets based on size',
-  },
-];
-
 export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<HeatmapCalculationBucketConfig>) => {
   const [isInvalid, setInvalid] = useState<boolean>(false);
 
   const modeSwitchCounter = useRef(0);
+
+  const modeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
+    {
+      label: t('transformers.axis-editor.mode-options.label.size', 'Size'),
+      value: HeatmapCalculationMode.Size,
+      description: t(
+        'transformers.axis-editor.mode-options.description.split-the-buckets-based-on-size',
+        'Split the buckets based on size'
+      ),
+    },
+    {
+      label: t('transformers.axis-editor.mode-options.label.count', 'Count'),
+      value: HeatmapCalculationMode.Count,
+      description: t(
+        'transformers.axis-editor.mode-options.description.split-the-buckets-based-on-count',
+        'Split the buckets based on count'
+      ),
+    },
+  ];
+
+  const logModeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
+    {
+      label: t('transformers.axis-editor.log-mode-options.label.split', 'Split'),
+      value: HeatmapCalculationMode.Size,
+      description: t(
+        'transformers.axis-editor.log-mode-options.description.split-the-buckets-based-on-size',
+        'Split the buckets based on size'
+      ),
+    },
+  ];
 
   const allowInterval = item.settings?.allowInterval ?? false;
 
@@ -61,7 +71,7 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
   });
 
   return (
-    <HorizontalGroup>
+    <Stack>
       <RadioButtonGroup
         value={value?.mode || HeatmapCalculationMode.Size}
         options={value?.scale?.type === ScaleDistribution.Log ? logModeOptions : modeOptions}
@@ -82,12 +92,12 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
         invalid={isInvalid}
         error={'Value needs to be an integer or a variable'}
         value={value?.value ?? ''}
-        placeholder="Auto"
+        placeholder={t('transformers.axis-editor.placeholder-auto', 'Auto')}
         onChange={(text) => {
           onValueChange({ ...value, value: text });
         }}
         suggestions={variables}
       />
-    </HorizontalGroup>
+    </Stack>
   );
 };

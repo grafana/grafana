@@ -14,7 +14,7 @@ import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSources } from '../../utils/data
 import { createViewLink } from '../../utils/misc';
 import { isAsyncRequestStatePending } from '../../utils/redux';
 import { hashRule } from '../../utils/rule-id';
-import { getRulePluginOrigin, isAlertingRule, isProvisionedRule } from '../../utils/rules';
+import { getRulePluginOrigin, isProvisionedRule, prometheusRuleType } from '../../utils/rules';
 import { calculateTotalInstances } from '../rule-viewer/RuleViewer';
 
 import { RuleActionsButtons } from './RuleActionsButtons';
@@ -34,7 +34,9 @@ export const RuleListStateView = ({ namespaces }: Props) => {
     const result: GroupedRules = new Map([
       [PromAlertingRuleState.Firing, []],
       [PromAlertingRuleState.Pending, []],
+      [PromAlertingRuleState.Recovering, []],
       [PromAlertingRuleState.Inactive, []],
+      [PromAlertingRuleState.Unknown, []],
     ]);
 
     namespaces.forEach((namespace) =>
@@ -43,7 +45,7 @@ export const RuleListStateView = ({ namespaces }: Props) => {
           // We might hit edge cases where there type = alerting, but there is no state.
           // In this case, we shouldn't try to group these alerts in the state view
           // Even though we handle this at the API layer, this is a last catch point for any edge cases
-          if (rule.promRule && isAlertingRule(rule.promRule) && rule.promRule.state) {
+          if (prometheusRuleType.alertingRule(rule.promRule) && rule.promRule.state) {
             result.get(rule.promRule.state)?.push(rule);
           }
         })
@@ -73,6 +75,8 @@ const STATE_TITLES: Record<PromAlertingRuleState, string> = {
   [PromAlertingRuleState.Firing]: 'Firing',
   [PromAlertingRuleState.Pending]: 'Pending',
   [PromAlertingRuleState.Inactive]: 'Normal',
+  [PromAlertingRuleState.Recovering]: 'Recovering',
+  [PromAlertingRuleState.Unknown]: 'Unknown',
 };
 
 const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: CombinedRule[] }) => {
@@ -103,7 +107,9 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
         const { rulerRule, promRule } = rule;
 
         const isProvisioned = rulerRule ? isProvisionedRule(rulerRule) : false;
-        const instancesCount = isAlertingRule(rule.promRule) ? calculateTotalInstances(rule.instanceTotals) : undefined;
+        const instancesCount = prometheusRuleType.alertingRule(rule.promRule)
+          ? calculateTotalInstances(rule.instanceTotals)
+          : undefined;
 
         if (!promRule) {
           return null;

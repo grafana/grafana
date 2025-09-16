@@ -50,6 +50,7 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
   return (
     <AutoSizeInputContext.Provider value={true}>
       <Input
+        data-testid="autosize-input" // consumer should override default testid
         {...restProps}
         placeholder={placeholder}
         ref={ref}
@@ -76,7 +77,6 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
             onCommitChange(event);
           }
         }}
-        data-testid="autosize-input"
       />
     </AutoSizeInputContext.Provider>
   );

@@ -14,8 +14,9 @@
 
 import { render, screen } from '@testing-library/react';
 
-import { defaultFilters } from '../../../useSearch';
-import { trace } from '../TracePageHeader.test';
+import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
+
+import { trace } from '../mocks';
 
 import TracePageSearchBar from './TracePageSearchBar';
 
@@ -23,7 +24,7 @@ describe('<TracePageSearchBar>', () => {
   const TracePageSearchBarWithProps = (props: { matches: string[] | undefined }) => {
     const searchBarProps = {
       trace: trace,
-      search: defaultFilters,
+      search: DEFAULT_SPAN_FILTERS,
       spanFilterMatches: props.matches ? new Set(props.matches) : undefined,
       showSpanFilterMatchesOnly: false,
       setShowSpanFilterMatchesOnly: jest.fn(),

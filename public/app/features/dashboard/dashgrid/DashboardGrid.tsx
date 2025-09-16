@@ -111,6 +111,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
       if (!panel.key) {
         panel.key = `panel-${panel.id}-${Date.now()}`;
       }
+      panel.title = panel.title?.substring(0, 5000);
       this.panelMap[panel.key] = panel;
 
       if (!panel.gridPos) {

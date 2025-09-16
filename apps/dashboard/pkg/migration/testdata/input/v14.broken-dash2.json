@@ -1,0 +1,1951 @@
+{
+  "__requires": [
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "8.0.0"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "datasource": "$datasource",
+        "enable": true,
+        "expr": "ALERTS{alertname=\"MetricsRolloutUnderway\", region=~\"$region\", env=~\"$environment\", alertstate=\"firing\"}",
+        "hide": false,
+        "iconColor": "rgba(255, 96, 96, 1)",
+        "name": "rollouts",
+        "showIn": 0,
+        "tags": [],
+        "titleFormat": "Rollout was underway in {{cluster}}/{{namespace}}",
+        "type": "tags"
+      }
+    ]
+  },
+  "editable": false,
+  "gnetId": null,
+  "graphTooltip": 1,
+  "hideControls": false,
+  "links": [],
+  "refresh": "5m",
+  "rows": [
+    {
+      "collapse": false,
+      "height": "250px",
+      "panels": [
+        {
+          "content": "The 'Status' panel shows an overview on the cluster health over the time.\nTo investigate failures, see a specific dashboard:\n\n- <a target=\"_blank\" href=\"./d/8280707b8f16e7b87b840fc1cc92d4c5/service-writes?${__url_time_range}&${__all_variables}\">Writes</a>\n- <a target=\"_blank\" href=\"./d/e327503188913dc38ad571c647eef643/service-reads?${__url_time_range}&${__all_variables}\">Reads</a>\n- <a target=\"_blank\" href=\"./d/631e15d5d85afb2ca8e35d62984eeaa0/service-ruler?${__url_time_range}&${__all_variables}\">Rule evaluations</a>\n- <a target=\"_blank\" href=\"./d/b0d38d318bbddd80476246d4930f9e55/service-alertmanager?${__url_time_range}&${__all_variables}\">Alerting notifications</a>\n- <a target=\"_blank\" href=\"./d/e1324ee2a434f4158c00a9ee279d3292/service-object-store?${__url_time_range}&${__all_variables}\">Object storage</a>\n",
+          "datasource": null,
+          "description": "",
+          "id": 1,
+          "mode": "markdown",
+          "span": 3,
+          "title": "",
+          "transparent": true,
+          "type": "text"
+        },
+        {
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "#7EB26D",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": 0.01
+                  },
+                  {
+                    "color": "#E24D42",
+                    "value": 0.05
+                  }
+                ]
+              }
+            }
+          },
+          "id": 2,
+          "options": {
+            "showValue": "never"
+          },
+          "span": 6,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "exemplar": false,
+              "expr": "((\n    # gRPC errors are not tracked as 5xx but \"error\".\n    sum(histogram_count(rate(http_request_duration_seconds{service=~\"gateway\", route=~\"api_v1_write\",status_code=~\"5.*|error\"}[$__rate_interval])))\n    or\n    # Handle the case no failure has been tracked yet.\n    vector(0)\n)\n/\nsum(histogram_count(rate(http_request_duration_seconds{service=~\"gateway\", route=~\"api_v1_write\"}[$__rate_interval])))\n) and on() (vector($latency_metrics) == -1)",
+              "instant": false,
+              "legendFormat": "Writes",
+              "range": true
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "exemplar": false,
+              "expr": "((\n    # gRPC errors are not tracked as 5xx but \"error\".\n    sum(rate(http_request_duration_seconds_count{service=~\"gateway\", route=~\"api_v1_write\",status_code=~\"5.*|error\"}[$__rate_interval]))\n    or\n    # Handle the case no failure has been tracked yet.\n    vector(0)\n)\n/\nsum(rate(http_request_duration_seconds_count{service=~\"gateway\", route=~\"api_v1_write\"}[$__rate_interval]))\n) and on() (vector($latency_metrics) == 1)",
+              "instant": false,
+              "legendFormat": "Writes",
+              "range": true
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "exemplar": false,
+              "expr": "((\n    # gRPC errors are not tracked as 5xx but \"error\".\n    sum(histogram_count(rate(http_request_duration_seconds{service=~\"gateway\", route=~\"api_v1_query\",status_code=~\"5.*|error\"}[$__rate_interval])))\n    or\n    # Handle the case no failure has been tracked yet.\n    vector(0)\n)\n/\nsum(histogram_count(rate(http_request_duration_seconds{service=~\"gateway\", route=~\"api_v1_query\"}[$__rate_interval])))\n) and on() (vector($latency_metrics) == -1)",
+              "instant": false,
+              "legendFormat": "Reads",
+              "range": true
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "exemplar": false,
+              "expr": "((\n    # gRPC errors are not tracked as 5xx but \"error\".\n    sum(rate(http_request_duration_seconds_count{service=~\"gateway\", route=~\"api_v1_query\",status_code=~\"5.*|error\"}[$__rate_interval]))\n    or\n    # Handle the case no failure has been tracked yet.\n    vector(0)\n)\n/\nsum(rate(http_request_duration_seconds_count{service=~\"gateway\", route=~\"api_v1_query\"}[$__rate_interval]))\n) and on() (vector($latency_metrics) == 1)",
+              "instant": false,
+              "legendFormat": "Reads",
+              "range": true
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "exemplar": false,
+              "expr": "(\n  (\n      sum(rate(monitoring_rule_evaluation_failures_total{service=~\"rule-engine\"}[$__rate_interval]))\n      +\n      # Consider missed evaluations as failures.\n      sum(rate(monitoring_rule_group_iterations_missed_total{service=~\"rule-engine\"}[$__rate_interval]))\n  )\n  or\n  # Handle the case no failure has been tracked yet.\n  vector(0)\n)\n/\nsum(rate(monitoring_rule_evaluations_total{service=~\"rule-engine\"}[$__rate_interval]))\n",
+              "instant": false,
+              "legendFormat": "Rule evaluations",
+              "range": true
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "exemplar": false,
+              "expr": "(\n  # Failed notifications from ruler to Alertmanager (handling the case the ruler metrics are missing).\n  ((sum(rate(alert_notifications_errors_total{service=~\"rule-engine\"}[$__rate_interval]))\n) or vector(0))\n  +\n  # Failed notifications from Alertmanager to receivers (handling the case the alertmanager metrics are missing).\n  ((sum(service_integration:alerting_service_notifications_failed_total:rate5m{service=~\"alerting\"}) or vector(0)\n) or vector(0))\n)\n/\n(\n  # Total notifications from ruler to Alertmanager (handling the case the ruler metrics are missing).\n  ((sum(rate(alert_notifications_sent_total{service=~\"rule-engine\"}[$__rate_interval]))\n) or vector(0))\n  +\n  # Total notifications from Alertmanager to receivers (handling the case the alertmanager metrics are missing).\n  ((sum(service_integration:alerting_service_notifications_total:rate5m{service=~\"alerting\"}) or vector(0)\n) or vector(0))\n)\n",
+              "instant": false,
+              "legendFormat": "Alerting notifications",
+              "range": true
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "exemplar": false,
+              "expr": "sum(rate(storage_operation_failures_total{env!=\"\"}[$__rate_interval]))\n/\nsum(rate(storage_operations_total{env!=\"\"}[$__rate_interval]))\n",
+              "instant": false,
+              "legendFormat": "Object storage",
+              "range": true
+            }
+          ],
+          "title": "Status",
+          "type": "state-timeline"
+        },
+        {
+          "id": 3,
+          "options": {
+            "alertInstanceLabelFilter": "env!=\"\"",
+            "alertName": "Metrics",
+            "dashboardAlerts": false,
+            "maxItems": 100,
+            "sortOrder": 3,
+            "stateFilter": {
+              "error": true,
+              "firing": true,
+              "noData": false,
+              "normal": false,
+              "pending": false
+            }
+          },
+          "span": 3,
+          "title": "Firing alerts",
+          "type": "alertlist"
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "Service cluster health",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": "250px",
+      "panels": [
+        {
+          "content": "These panels show an overview on the write path. Requests rate and latency is measured on the gateway.\nTo examine the write path in detail, see a specific dashboard:\n\n- <a target=\"_blank\" href=\"./d/8280707b8f16e7b87b840fc1cc92d4c5/service-writes?${__url_time_range}&${__all_variables}\">Writes</a>\n- <a target=\"_blank\" href=\"./d/bc9160e50b52e89e0e49c840fea3d379/service-writes-resources?${__url_time_range}&${__all_variables}\">Writes resources</a>\n- <a target=\"_blank\" href=\"./d/978c1cb452585c96697a238eaac7fe2d/service-writes-networking?${__url_time_range}&${__all_variables}\">Writes networking</a>\n- <a target=\"_blank\" href=\"./d/a9b92d3c4d1af325d872a9e9a7083d71/service-overview-resources?${__url_time_range}&${__all_variables}\">Overview resources</a>\n- <a target=\"_blank\" href=\"./d/e15c71d372cc541367a088f10d9fcd92/service-overview-networking?${__url_time_range}&${__all_variables}\">Overview networking</a>\n",
+          "datasource": null,
+          "description": "",
+          "id": 4,
+          "mode": "markdown",
+          "span": 3,
+          "title": "",
+          "transparent": true,
+          "type": "text"
+        },
+        {
+          "datasource": "$datasource",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 100,
+                "lineWidth": 0,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "normal"
+                }
+              },
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": []
+              },
+              "unit": "reqps"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "1xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#EAB839",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "2xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#7EB26D",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "3xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#6ED0E0",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "4xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#EF843C",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "5xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E24D42",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "OK"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#7EB26D",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cancel"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#A9A9A9",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "error"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E24D42",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "success"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#7EB26D",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "1xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#EAB839",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "2xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#7EB26D",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "3xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#6ED0E0",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "4xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#EF843C",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "5xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E24D42",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Canceled"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#A9A9A9",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "OK"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#7EB26D",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Success"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#7EB26D",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cancel"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#A9A9A9",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "error"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E24D42",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "id": 5,
+          "links": [],
+          "options": {
+            "legend": {
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "span": 3,
+          "targets": [
+            {
+              "expr": "(sum by (status) (\n  label_replace(label_replace(rate(http_request_duration_seconds_count{service=~\"gateway\", route=~\"api_v1_write\"}[$__rate_interval]),\n  \"status\", \"${1}xx\", \"status_code\", \"([0-9])..\"),\n  \"status\", \"${1}\", \"status_code\", \"([a-zA-Z]+)\"))\n) and on() (vector($latency_metrics) == 1)",
+              "format": "time_series",
+              "legendFormat": "{{status}}",
+              "refId": "A_classic"
+            },
+            {
+              "expr": "(sum by (status) (\n  label_replace(label_replace(histogram_count(rate(http_request_duration_seconds{service=~\"gateway\", route=~\"api_v1_write\"}[$__rate_interval])),\n  \"status\", \"${1}xx\", \"status_code\", \"([0-9])..\"),\n  \"status\", \"${1}\", \"status_code\", \"([a-zA-Z]+)\"))\n) and on() (vector($latency_metrics) == -1)",
+              "format": "time_series",
+              "legendFormat": "{{status}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Write requests / sec (gateway)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "$datasource",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 1,
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                }
+              },
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": []
+              },
+              "unit": "ms"
+            },
+            "overrides": []
+          },
+          "id": 6,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "options": {
+            "legend": {
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "span": 3,
+          "targets": [
+            {
+              "expr": "(histogram_quantile(0.99, sum by (le) (service_route:http_request_duration_seconds_bucket:sum_rate{job=~\"(.*)((gateway|service-gw.*))\", route=~\"api_v1_write\"})) * 1e3) and on() (vector($latency_metrics) == 1)",
+              "format": "time_series",
+              "legendFormat": "99th percentile",
+              "refId": "A_classic"
+            },
+            {
+              "expr": "(histogram_quantile(0.99, sum (service_route:http_request_duration_seconds:sum_rate{job=~\"(.*)((gateway|service-gw.*))\", route=~\"api_v1_write\"})) * 1e3) and on() (vector($latency_metrics) == -1)",
+              "format": "time_series",
+              "legendFormat": "99th percentile",
+              "refId": "A_native"
+            },
+            {
+              "expr": "(histogram_quantile(0.50, sum by (le) (service_route:http_request_duration_seconds_bucket:sum_rate{job=~\"(.*)((gateway|service-gw.*))\", route=~\"api_v1_write\"})) * 1e3) and on() (vector($latency_metrics) == 1)",
+              "format": "time_series",
+              "legendFormat": "50th percentile",
+              "refId": "B_classic"
+            },
+            {
+              "expr": "(histogram_quantile(0.50, sum (service_route:http_request_duration_seconds:sum_rate{job=~\"(.*)((gateway|service-gw.*))\", route=~\"api_v1_write\"})) * 1e3) and on() (vector($latency_metrics) == -1)",
+              "format": "time_series",
+              "legendFormat": "50th percentile",
+              "refId": "B_native"
+            },
+            {
+              "expr": "(1e3 * sum(service_route:http_request_duration_seconds_sum:sum_rate{job=~\"(.*)((gateway|service-gw.*))\", route=~\"api_v1_write\"}) /\nsum(service_route:http_request_duration_seconds_count:sum_rate{job=~\"(.*)((gateway|service-gw.*))\", route=~\"api_v1_write\"})\n) and on() (vector($latency_metrics) == 1)",
+              "format": "time_series",
+              "legendFormat": "Average",
+              "refId": "C_classic"
+            },
+            {
+              "expr": "(1e3 * sum(histogram_sum(service_route:http_request_duration_seconds:sum_rate{job=~\"(.*)((gateway|service-gw.*))\", route=~\"api_v1_write\"})) /\nsum(histogram_count(service_route:http_request_duration_seconds:sum_rate{job=~\"(.*)((gateway|service-gw.*))\", route=~\"api_v1_write\"}))\n) and on() (vector($latency_metrics) == -1)",
+              "format": "time_series",
+              "legendFormat": "Average",
+              "refId": "C_native"
+            }
+          ],
+          "title": "Write latency (gateway)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "$datasource",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 100,
+                "lineWidth": 0,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "normal"
+                }
+              },
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": []
+              },
+              "unit": "cps"
+            },
+            "overrides": []
+          },
+          "id": 7,
+          "links": [],
+          "options": {
+            "legend": {
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "span": 3,
+          "targets": [
+            {
+              "expr": "sum(cluster_namespace_job:ingestion_service_received_samples:rate5m{job=~\"(.*)/(distributor.*|service|metrics)\"})",
+              "format": "time_series",
+              "legendFormat": "samples / sec",
+              "legendLink": null
+            },
+            {
+              "expr": "sum(cluster_namespace_job:ingestion_service_received_exemplars:rate5m{job=~\"(.*)/(distributor.*|service|metrics)\"})",
+              "format": "time_series",
+              "legendFormat": "exemplars / sec",
+              "legendLink": null
+            }
+          ],
+          "title": "Ingestion / sec",
+          "type": "timeseries"
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "Writes",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": "250px",
+      "panels": [
+        {
+          "content": "These panels show an overview on the read path. Requests rate and latency is measured on the gateway.\nTo examine the read path in detail, see a specific dashboard:\n\n- <a target=\"_blank\" href=\"./d/e327503188913dc38ad571c647eef643/service-reads?${__url_time_range}&${__all_variables}\">Reads</a>\n- <a target=\"_blank\" href=\"./d/cc86fd5aa9301c6528986572ad974db9/service-reads-resources?${__url_time_range}&${__all_variables}\">Reads resources</a>\n- <a target=\"_blank\" href=\"./d/54b2a0a4748b3bd1aefa92ce5559a1c2/service-reads-networking?${__url_time_range}&${__all_variables}\">Reads networking</a>\n- <a target=\"_blank\" href=\"./d/a9b92d3c4d1af325d872a9e9a7083d71/service-overview-resources?${__url_time_range}&${__all_variables}\">Overview resources</a>\n- <a target=\"_blank\" href=\"./d/e15c71d372cc541367a088f10d9fcd92/service-overview-networking?${__url_time_range}&${__all_variables}\">Overview networking</a>\n- <a target=\"_blank\" href=\"./d/b3abe8d5c040395cc36615cb4334c92d/service-queries?${__url_time_range}&${__all_variables}\">Queries</a>\n- <a target=\"_blank\" href=\"./d/1b3443aea86db629e6efdb7d05c53823/service-compactor?${__url_time_range}&${__all_variables}\">Compactor</a>\n",
+          "datasource": null,
+          "description": "",
+          "id": 8,
+          "mode": "markdown",
+          "span": 3,
+          "title": "",
+          "transparent": true,
+          "type": "text"
+        },
+        {
+          "datasource": "$datasource",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 100,
+                "lineWidth": 0,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "normal"
+                }
+              },
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": []
+              },
+              "unit": "reqps"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "1xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#EAB839",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "2xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#7EB26D",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "3xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#6ED0E0",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "4xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#EF843C",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "5xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E24D42",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "OK"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#7EB26D",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cancel"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#A9A9A9",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "error"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E24D42",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "success"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#7EB26D",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "1xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#EAB839",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "2xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#7EB26D",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "3xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#6ED0E0",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "4xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#EF843C",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "5xx"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E24D42",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Canceled"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#A9A9A9",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "OK"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#7EB26D",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Success"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#7EB26D",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cancel"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#A9A9A9",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "error"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E24D42",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "id": 9,
+          "links": [],
+          "options": {
+            "legend": {
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "span": 3,
+          "targets": [
+            {
+              "expr": "(sum by (status) (\n  label_replace(label_replace(rate(http_request_duration_seconds_count{service=~\"gateway\", route=~\"api_v1_query\"}[$__rate_interval]),\n  \"status\", \"${1}xx\", \"status_code\", \"([0-9])..\"),\n  \"status\", \"${1}\", \"status_code\", \"([a-zA-Z]+)\"))\n) and on() (vector($latency_metrics) == 1)",
+              "format": "time_series",
+              "legendFormat": "{{status}}",
+              "refId": "A_classic"
+            },
+            {
+              "expr": "(sum by (status) (\n  label_replace(label_replace(histogram_count(rate(http_request_duration_seconds{service=~\"gateway\", route=~\"api_v1_query\"}[$__rate_interval])),\n  \"status\", \"${1}xx\", \"status_code\", \"([0-9])..\"),\n  \"status\", \"${1}\", \"status_code\", \"([a-zA-Z]+)\"))\n) and on() (vector($latency_metrics) == -1)",
+              "format": "time_series",
+              "legendFormat": "{{status}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Read requests / sec (gateway)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "$datasource",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 1,
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                }
+              },
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": []
+              },
+              "unit": "ms"
+            },
+            "overrides": []
+          },
+          "id": 10,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "options": {
+            "legend": {
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "span": 3,
+          "targets": [
+            {
+              "expr": "(histogram_quantile(0.99, sum by (le) (service_route:http_request_duration_seconds_bucket:sum_rate{job=~\"(.*)((gateway|service-gw.*))\", route=~\"api_v1_query\"})) * 1e3) and on() (vector($latency_metrics) == 1)",
+              "format": "time_series",
+              "legendFormat": "99th percentile",
+              "refId": "A_classic"
+            },
+            {
+              "expr": "(histogram_quantile(0.99, sum (service_route:http_request_duration_seconds:sum_rate{job=~\"(.*)((gateway|service-gw.*))\", route=~\"api_v1_query\"})) * 1e3) and on() (vector($latency_metrics) == -1)",
+              "format": "time_series",
+              "legendFormat": "99th percentile",
+              "refId": "A_native"
+            },
+            {
+              "expr": "(histogram_quantile(0.50, sum by (le) (service_route:http_request_duration_seconds_bucket:sum_rate{job=~\"(.*)((gateway|service-gw.*))\", route=~\"api_v1_query\"})) * 1e3) and on() (vector($latency_metrics) == 1)",
+              "format": "time_series",
+              "legendFormat": "50th percentile",
+              "refId": "B_classic"
+            },
+            {
+              "expr": "(histogram_quantile(0.50, sum (service_route:http_request_duration_seconds:sum_rate{job=~\"(.*)((gateway|service-gw.*))\", route=~\"api_v1_query\"})) * 1e3) and on() (vector($latency_metrics) == -1)",
+              "format": "time_series",
+              "legendFormat": "50th percentile",
+              "refId": "B_native"
+            },
+            {
+              "expr": "(1e3 * sum(service_route:http_request_duration_seconds_sum:sum_rate{job=~\"(.*)((gateway|service-gw.*))\", route=~\"api_v1_query\"}) /\nsum(service_route:http_request_duration_seconds_count:sum_rate{job=~\"(.*)((gateway|service-gw.*))\", route=~\"api_v1_query\"})\n) and on() (vector($latency_metrics) == 1)",
+              "format": "time_series",
+              "legendFormat": "Average",
+              "refId": "C_classic"
+            },
+            {
+              "expr": "(1e3 * sum(histogram_sum(service_route:http_request_duration_seconds:sum_rate{job=~\"(.*)((gateway|service-gw.*))\", route=~\"api_v1_query\"})) /\nsum(histogram_count(service_route:http_request_duration_seconds:sum_rate{job=~\"(.*)((gateway|service-gw.*))\", route=~\"api_v1_query\"}))\n) and on() (vector($latency_metrics) == -1)",
+              "format": "time_series",
+              "legendFormat": "Average",
+              "refId": "C_native"
+            }
+          ],
+          "title": "Read latency (gateway)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "$datasource",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 100,
+                "lineWidth": 0,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "normal"
+                }
+              },
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": []
+              },
+              "unit": "reqps"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byRegexp",
+                  "options": "/.*_api_v1_query($|[^_])/"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "instant queries"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#429D48",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byRegexp",
+                  "options": "/.*_api_v1_query_range($|[^_])/"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "range queries"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#F1C731",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byRegexp",
+                  "options": "/.*_api_v1_labels($|[^_])/"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "\"label names\" queries"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#2A66CF",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byRegexp",
+                  "options": "/.*_api_v1_label_name_values($|[^_])/"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "\"label values\" queries"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#9E44C1",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byRegexp",
+                  "options": "/.*_api_v1_series($|[^_])/"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "series queries"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#FFAB57",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byRegexp",
+                  "options": "/.*_api_v1_read($|[^_])/"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "remote read queries"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#C79424",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byRegexp",
+                  "options": "/.*_api_v1_metadata($|[^_])/"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "metadata queries"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#84D586",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byRegexp",
+                  "options": "/.*_api_v1_query_exemplars($|[^_])/"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "exemplar queries"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#A1C4FC",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byRegexp",
+                  "options": "/.*_api_v1_cardinality_active_series($|[^_])/"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "\"active series\" queries"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#C788DE",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byRegexp",
+                  "options": "/.*_api_v1_cardinality_label_names($|[^_])/"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "\"label name cardinality\" queries"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#3F6833",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byRegexp",
+                  "options": "/.*_api_v1_cardinality_label_values($|[^_])/"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "\"label value cardinality\" queries"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#447EBC",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "id": 11,
+          "links": [],
+          "options": {
+            "legend": {
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "span": 3,
+          "targets": [
+            {
+              "expr": "(sum by (route) (rate(http_request_duration_seconds_count{job=~\"(.*)/(query-frontend.*|service|metrics)\",route=~\"(prometheus|api_prom)(_api_v1_query|_api_v1_query_range|_api_v1_labels|_api_v1_label_name_values|_api_v1_series|_api_v1_read|_api_v1_metadata|_api_v1_query_exemplars|_api_v1_cardinality_active_series|_api_v1_cardinality_label_names|_api_v1_cardinality_label_values)\"}[$__rate_interval]))) and on() (vector($latency_metrics) == 1)",
+              "format": "time_series",
+              "legendLink": null
+            },
+            {
+              "expr": "(sum by (route) (histogram_count(rate(http_request_duration_seconds{job=~\"(.*)/(query-frontend.*|service|metrics)\",route=~\"(prometheus|api_prom)(_api_v1_query|_api_v1_query_range|_api_v1_labels|_api_v1_label_name_values|_api_v1_series|_api_v1_read|_api_v1_metadata|_api_v1_query_exemplars|_api_v1_cardinality_active_series|_api_v1_cardinality_label_names|_api_v1_cardinality_label_values)\"}[$__rate_interval])))) and on() (vector($latency_metrics) == -1)",
+              "format": "time_series",
+              "legendLink": null
+            },
+            {
+              "expr": "(sum (rate(http_request_duration_seconds_count{job=~\"(.*)/(query-frontend.*|service|metrics)\",route=~\"(prometheus|api_prom)_api_v1_.*\",route!~\"(prometheus|api_prom)(_api_v1_query|_api_v1_query_range|_api_v1_labels|_api_v1_label_name_values|_api_v1_series|_api_v1_read|_api_v1_metadata|_api_v1_query_exemplars|_api_v1_cardinality_active_series|_api_v1_cardinality_label_names|_api_v1_cardinality_label_values)\"}[$__rate_interval]))) and on() (vector($latency_metrics) == 1)",
+              "format": "time_series",
+              "legendFormat": "other",
+              "legendLink": null
+            },
+            {
+              "expr": "(sum (histogram_count(rate(http_request_duration_seconds{job=~\"(.*)/(query-frontend.*|service|metrics)\",route=~\"(prometheus|api_prom)_api_v1_.*\",route!~\"(prometheus|api_prom)(_api_v1_query|_api_v1_query_range|_api_v1_labels|_api_v1_label_name_values|_api_v1_series|_api_v1_read|_api_v1_metadata|_api_v1_query_exemplars|_api_v1_cardinality_active_series|_api_v1_cardinality_label_names|_api_v1_cardinality_label_values)\"}[$__rate_interval])))) and on() (vector($latency_metrics) == -1)",
+              "format": "time_series",
+              "legendFormat": "other",
+              "legendLink": null
+            }
+          ],
+          "title": "Queries / sec",
+          "type": "timeseries"
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "Reads",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": "250px",
+      "panels": [
+        {
+          "content": "These panels show an overview on the recording and alerting rules evaluation.\nTo examine the rules evaluation and alerts notifications in detail, see a specific dashboard:\n\n- <a target=\"_blank\" href=\"./d/631e15d5d85afb2ca8e35d62984eeaa0/service-ruler?${__url_time_range}&${__all_variables}\">Ruler</a>\n- <a target=\"_blank\" href=\"./d/b0d38d318bbddd80476246d4930f9e55/service-alertmanager?${__url_time_range}&${__all_variables}\">Alertmanager</a>\n- <a target=\"_blank\" href=\"./d/a6883fb22799ac74479c7db872451092/service-alertmanager-resources?${__url_time_range}&${__all_variables}\">Alertmanager resources</a>\n- <a target=\"_blank\" href=\"./d/a9b92d3c4d1af325d872a9e9a7083d71/service-overview-resources?${__url_time_range}&${__all_variables}\">Overview resources</a>\n- <a target=\"_blank\" href=\"./d/e15c71d372cc541367a088f10d9fcd92/service-overview-networking?${__url_time_range}&${__all_variables}\">Overview networking</a>\n",
+          "datasource": null,
+          "description": "",
+          "id": 12,
+          "mode": "markdown",
+          "span": 3,
+          "title": "",
+          "transparent": true,
+          "type": "text"
+        },
+        {
+          "datasource": "$datasource",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 1,
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                }
+              },
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": []
+              },
+              "unit": "short"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "failed"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E24D42",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "success"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#7EB26D",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "id": 13,
+          "links": [],
+          "options": {
+            "legend": {
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "span": 3,
+          "targets": [
+            {
+              "expr": "sum(rate(monitoring_rule_evaluations_total{service=~\"rule-engine\"}[$__rate_interval]))\n-\nsum(rate(monitoring_rule_evaluation_failures_total{service=~\"rule-engine\"}[$__rate_interval]))\n",
+              "format": "time_series",
+              "legendFormat": "success",
+              "legendLink": null
+            },
+            {
+              "expr": "sum(rate(monitoring_rule_evaluation_failures_total{service=~\"rule-engine\"}[$__rate_interval]))",
+              "format": "time_series",
+              "legendFormat": "failed",
+              "legendLink": null
+            },
+            {
+              "expr": "sum(rate(monitoring_rule_group_iterations_missed_total{service=~\"rule-engine\"}[$__rate_interval]))",
+              "format": "time_series",
+              "legendFormat": "missed",
+              "legendLink": null
+            }
+          ],
+          "title": "Rule evaluations / sec",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "$datasource",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 1,
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                }
+              },
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": []
+              },
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "id": 14,
+          "links": [],
+          "options": {
+            "legend": {
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "span": 3,
+          "targets": [
+            {
+              "expr": "sum (rate(monitoring_rule_evaluation_duration_seconds_sum{service=~\"rule-engine\"}[$__rate_interval]))\n  /\nsum (rate(monitoring_rule_evaluation_duration_seconds_count{service=~\"rule-engine\"}[$__rate_interval]))\n",
+              "format": "time_series",
+              "legendFormat": "average",
+              "legendLink": null
+            }
+          ],
+          "title": "Rule evaluations latency",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "$datasource",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 100,
+                "lineWidth": 0,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "normal"
+                }
+              },
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": []
+              },
+              "unit": "short"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "failed"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E24D42",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "successful"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#7EB26D",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "id": 15,
+          "links": [],
+          "options": {
+            "legend": {
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "span": 3,
+          "targets": [
+            {
+              "expr": "sum(rate(alert_notifications_sent_total{service=~\"rule-engine\"}[$__rate_interval]))\n  -\nsum(rate(alert_notifications_errors_total{service=~\"rule-engine\"}[$__rate_interval]))\n",
+              "format": "time_series",
+              "legendFormat": "successful",
+              "legendLink": null
+            },
+            {
+              "expr": "sum(rate(alert_notifications_errors_total{service=~\"rule-engine\"}[$__rate_interval]))\n",
+              "format": "time_series",
+              "legendFormat": "failed",
+              "legendLink": null
+            }
+          ],
+          "title": "Alerting notifications sent to Alertmanager / sec",
+          "type": "timeseries"
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "Recording and alerting rules",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": "250px",
+      "panels": [
+        {
+          "content": "These panels show an overview on the long-term storage (object storage).\nTo examine the storage in detail, see a specific dashboard:\n\n- <a target=\"_blank\" href=\"./d/e1324ee2a434f4158c00a9ee279d3292/service-object-store?${__url_time_range}&${__all_variables}\">Object store</a>\n- <a target=\"_blank\" href=\"./d/1b3443aea86db629e6efdb7d05c53823/service-compactor?${__url_time_range}&${__all_variables}\">Compactor</a>\n",
+          "datasource": null,
+          "description": "",
+          "id": 16,
+          "mode": "markdown",
+          "span": 3,
+          "title": "",
+          "transparent": true,
+          "type": "text"
+        },
+        {
+          "datasource": "$datasource",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 100,
+                "lineWidth": 0,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "normal"
+                }
+              },
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": []
+              },
+              "unit": "reqps"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "failed"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E24D42",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "successful"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#7EB26D",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "id": 17,
+          "links": [],
+          "options": {
+            "legend": {
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "span": 3,
+          "targets": [
+            {
+              "expr": "sum(rate(storage_operations_total{env!=\"\"}[$__rate_interval]))\n-\nsum(rate(storage_operation_failures_total{env!=\"\"}[$__rate_interval]))\n",
+              "format": "time_series",
+              "legendFormat": "successful",
+              "legendLink": null
+            },
+            {
+              "expr": "sum(rate(storage_operation_failures_total{env!=\"\"}[$__rate_interval]))\n",
+              "format": "time_series",
+              "legendFormat": "failed",
+              "legendLink": null
+            }
+          ],
+          "title": "Requests / sec",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "$datasource",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 100,
+                "lineWidth": 0,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "normal"
+                }
+              },
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": []
+              },
+              "unit": "reqps"
+            },
+            "overrides": []
+          },
+          "id": 18,
+          "links": [],
+          "options": {
+            "legend": {
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "attributes",
+              "color": "#429D48"
+            },
+            {
+              "alias": "delete",
+              "color": "#F1C731"
+            },
+            {
+              "alias": "exists",
+              "color": "#2A66CF"
+            },
+            {
+              "alias": "get",
+              "color": "#9E44C1"
+            },
+            {
+              "alias": "get_range",
+              "color": "#FFAB57"
+            },
+            {
+              "alias": "iter",
+              "color": "#C79424"
+            },
+            {
+              "alias": "upload",
+              "color": "#84D586"
+            }
+          ],
+          "span": 3,
+          "targets": [
+            {
+              "expr": "sum by(operation) (rate(storage_operations_total{env!=\"\"}[$__rate_interval]))",
+              "format": "time_series",
+              "legendFormat": "{{operation}}",
+              "legendLink": null
+            }
+          ],
+          "title": "Operations / sec",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "$datasource",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 1,
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                }
+              },
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": []
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "id": 19,
+          "links": [],
+          "options": {
+            "legend": {
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "span": 3,
+          "targets": [
+            {
+              "expr": "sum(max by(user) (max_over_time(storage_blocks_count{job=~\"(.*)/(compactor.*|service|metrics)\"}[15m])))",
+              "format": "time_series",
+              "legendFormat": "blocks",
+              "legendLink": null
+            }
+          ],
+          "title": "Total number of blocks in the storage",
+          "type": "timeseries"
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "Long-term storage (object storage)",
+      "titleSize": "h6"
+    }
+  ],
+  "schemaVersion": 14,
+  "style": "dark",
+  "tags": ["metrics", "scoped", "as-code"],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "/(dev-prometheus|ops-prometheus|service-prometheus|critical-prometheus)/",
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "classic",
+          "value": "1"
+        },
+        "description": "Choose between showing latencies based on low precision classic or high precision native histogram metrics.",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Latency metrics",
+        "multi": false,
+        "name": "latency_metrics",
+        "options": [
+          {
+            "selected": false,
+            "text": "native",
+            "value": "-1"
+          },
+          {
+            "selected": true,
+            "text": "classic",
+            "value": "1"
+          }
+        ],
+        "query": "native : -1,classic : 1",
+        "skipUrlSync": false,
+        "type": "custom",
+        "useTags": false
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "filters": [],
+        "name": "filters",
+        "type": "adhoc"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+  },
+  "timezone": "utc",
+  "title": "Service Overview Dashboard",
+  "uid": "e540f8b0ce5b02335ec443a769d1a74e",
+  "version": 0
+}

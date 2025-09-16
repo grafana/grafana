@@ -43,7 +43,7 @@ type ContactPointService struct {
 
 type receiverService interface {
 	GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error)
-	RenameReceiverInDependentResources(ctx context.Context, orgID int64, route *apimodels.Route, oldName, newName string, receiverProvenance models.Provenance) error
+	RenameReceiverInDependentResources(ctx context.Context, orgID int64, route *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error
 }
 
 func NewContactPointService(
@@ -196,13 +196,13 @@ func (ecp *ContactPointService) CreateContactPoint(
 	receiverFound := false
 	for _, receiver := range revision.Config.AlertmanagerConfig.Receivers {
 		// check if uid is already used in receiver
-		for _, rec := range receiver.PostableGrafanaReceivers.GrafanaManagedReceivers {
+		for _, rec := range receiver.GrafanaManagedReceivers {
 			if grafanaReceiver.UID == rec.UID {
 				return apimodels.EmbeddedContactPoint{}, MakeErrContactPointUidExists(rec.UID, rec.Name)
 			}
 		}
 		if receiver.Name == contactPoint.Name {
-			receiver.PostableGrafanaReceivers.GrafanaManagedReceivers = append(receiver.PostableGrafanaReceivers.GrafanaManagedReceivers, grafanaReceiver)
+			receiver.GrafanaManagedReceivers = append(receiver.GrafanaManagedReceivers, grafanaReceiver)
 			receiverFound = true
 		}
 	}
@@ -321,7 +321,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 			}
 
 			if fullRemoval {
-				if err := ecp.receiverService.RenameReceiverInDependentResources(ctx, orgID, revision.Config.AlertmanagerConfig.Route, oldReceiverName, mergedReceiver.Name, provenance); err != nil {
+				if err := ecp.receiverService.RenameReceiverInDependentResources(ctx, orgID, revision, oldReceiverName, mergedReceiver.Name, provenance); err != nil {
 					return err
 				}
 				if err := ecp.resourcePermissions.DeleteResourcePermissions(ctx, orgID, legacy_storage.NameToUid(oldReceiverName)); err != nil {

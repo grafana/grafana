@@ -1,15 +1,15 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { ComponentProps } from 'react';
 
-import { DataFrame, FieldType, LogsSortOrder, standardTransformersRegistry, toUtc } from '@grafana/data';
-import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
+import { DataFrame, FieldType, LogsSortOrder, toUtc } from '@grafana/data';
+import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
 
 import { LogsTable } from './LogsTable';
-import { getMockElasticFrame, getMockLokiFrame, getMockLokiFrameDataPlane } from './utils/testMocks.test';
+import { getMockElasticFrame, getMockLokiFrame, getMockLokiFrameDataPlane } from './utils/mocks';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -91,18 +91,7 @@ const setup = (partialProps?: Partial<ComponentProps<typeof LogsTable>>, logs?: 
 describe('LogsTable', () => {
   beforeAll(() => {
     const transformers = [extractFieldsTransformer, organizeFieldsTransformer];
-    standardTransformersRegistry.setInit(() => {
-      return transformers.map((t) => {
-        return {
-          id: t.id,
-          aliasIds: t.aliasIds,
-          name: t.name,
-          transformation: t,
-          description: t.description,
-          editor: () => null,
-        };
-      });
-    });
+    mockTransformationsRegistry(transformers);
   });
 
   let originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;

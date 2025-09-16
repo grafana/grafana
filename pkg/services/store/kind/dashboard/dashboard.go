@@ -211,15 +211,27 @@ func readDashboardIter(iter *jsoniter.Iterator, lookup DatasourceLookup) (*Dashb
 			}
 
 		case "annotations":
-			for sub := iter.ReadObject(); sub != ""; sub = iter.ReadObject() {
-				if sub == "list" {
-					for iter.ReadArray() {
-						v := iter.Read()
-						logf("[dash.anno] %v\n", v)
-					}
-				} else {
-					iter.Skip()
+			switch iter.WhatIsNext() {
+			case jsoniter.ArrayValue:
+				// dashboards v2 is an array
+				for iter.ReadArray() {
+					v := iter.Read()
+					logf("[dash.anno] %v\n", v)
 				}
+			case jsoniter.ObjectValue:
+				// dashboards v0/v1 are an object
+				for sub := iter.ReadObject(); sub != ""; sub = iter.ReadObject() {
+					if sub == "list" {
+						for iter.ReadArray() {
+							v := iter.Read()
+							logf("[dash.anno] %v\n", v)
+						}
+					} else {
+						iter.Skip()
+					}
+				}
+			default:
+				iter.Skip()
 			}
 
 		case "templating":

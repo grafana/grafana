@@ -5,14 +5,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -36,11 +40,8 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			FileHeader: zip.FileHeader{Name: zipNameV1},
 		}}}}
 
-		var loadedPaths []string
 		loader := &fakes.FakeLoader{
 			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
-				loadedPaths = append(loadedPaths, src.PluginURIs(ctx)...)
-				require.Equal(t, []string{zipNameV1}, src.PluginURIs(ctx))
 				return []*plugins.Plugin{pluginV1}, nil
 			},
 			UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
@@ -70,7 +71,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
+		inst := New(&config.PluginManagementCfg{}, fakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
 		err := inst.Add(context.Background(), pluginID, v1, testCompatOpts())
 		require.NoError(t, err)
 
@@ -98,7 +99,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 					}, nil
 				},
 			}
-			inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
+			inst := New(&config.PluginManagementCfg{}, fakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
 			err := inst.Add(context.Background(), pluginID, v1, plugins.NewAddOpts(v1, runtime.GOOS, runtime.GOARCH, url))
 			require.NoError(t, err)
 		})
@@ -114,7 +115,6 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			}}}}
 			loader.LoadFunc = func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
 				require.Equal(t, plugins.ClassExternal, src.PluginClass(ctx))
-				require.Equal(t, []string{zipNameV2}, src.PluginURIs(ctx))
 				return []*plugins.Plugin{pluginV2}, nil
 			}
 			pluginRepo.GetPluginArchiveInfoFunc = func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
@@ -154,7 +154,6 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			}}}}
 			loader.LoadFunc = func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
 				require.Equal(t, plugins.ClassExternal, src.PluginClass(ctx))
-				require.Equal(t, []string{zipNameV2}, src.PluginURIs(ctx))
 				return []*plugins.Plugin{pluginV2}, nil
 			}
 			pluginRepo.GetPluginArchiveInfoFunc = func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
@@ -223,7 +222,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		pm := New(reg, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
+		pm := New(&config.PluginManagementCfg{}, reg, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
 		err := pm.Add(context.Background(), p.ID, "3.2.0", testCompatOpts())
 		require.ErrorIs(t, err, plugins.ErrInstallCorePlugin)
 
@@ -246,7 +245,10 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		var loadedPaths []string
 		loader := &fakes.FakeLoader{
 			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
-				loadedPaths = append(loadedPaths, src.PluginURIs(ctx)...)
+				// Check if this is a LocalSource and get its paths
+				if localSrc, ok := src.(*sources.LocalSource); ok {
+					loadedPaths = append(loadedPaths, localSrc.Paths()...)
+				}
 				return []*plugins.Plugin{}, nil
 			},
 		}
@@ -285,7 +287,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
+		inst := New(&config.PluginManagementCfg{}, fakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
 		err := inst.Add(context.Background(), p3, "", testCompatOpts())
 		require.NoError(t, err)
 		require.Equal(t, []string{p1Zip, p2Zip, p3Zip}, loadedPaths)
@@ -300,7 +302,10 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		var loadedPaths []string
 		loader := &fakes.FakeLoader{
 			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
-				loadedPaths = append(loadedPaths, src.PluginURIs(ctx)...)
+				// Check if this is a LocalSource and get its paths
+				if localSrc, ok := src.(*sources.LocalSource); ok {
+					loadedPaths = append(loadedPaths, localSrc.Paths()...)
+				}
 				return []*plugins.Plugin{}, nil
 			},
 		}
@@ -334,7 +339,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
+		inst := New(&config.PluginManagementCfg{}, fakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
 		err := inst.Add(context.Background(), p1, "", testCompatOpts())
 		require.NoError(t, err)
 		require.Equal(t, []string{p2Zip, p1Zip}, loadedPaths)
@@ -351,7 +356,10 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		var loadedPaths []string
 		loader := &fakes.FakeLoader{
 			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
-				loadedPaths = append(loadedPaths, src.PluginURIs(ctx)...)
+				// Check if this is a LocalSource and get its paths
+				if localSrc, ok := src.(*sources.LocalSource); ok {
+					loadedPaths = append(loadedPaths, localSrc.Paths()...)
+				}
 				return []*plugins.Plugin{}, nil
 			},
 		}
@@ -379,7 +387,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		inst := New(reg, loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
+		inst := New(&config.PluginManagementCfg{}, reg, loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
 		err := inst.Add(context.Background(), testPluginID, "", testCompatOpts())
 		require.NoError(t, err)
 		require.Equal(t, []string{"test-plugin.zip"}, loadedPaths)
@@ -415,4 +423,101 @@ func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, b
 
 func testCompatOpts() plugins.AddOpts {
 	return plugins.NewAddOpts("10.0.0", runtime.GOOS, runtime.GOARCH, "")
+}
+
+func TestPluginInstaller_Removal(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	t.Run("LocalFS plugin removal succeeds via installer.Remove", func(t *testing.T) {
+		pluginDir := filepath.Join(tmpDir, "localfs-plugin")
+		err := os.MkdirAll(pluginDir, 0750)
+		require.NoError(t, err)
+
+		pluginJSON := `{
+			"id": "localfs-plugin",
+			"name": "LocalFS Plugin",
+			"type": "datasource",
+			"info": {
+				"version": "1.0.0"
+			}
+		}`
+		err = os.WriteFile(filepath.Join(pluginDir, "plugin.json"), []byte(pluginJSON), 0644)
+		require.NoError(t, err)
+
+		localFS := plugins.NewLocalFS(pluginDir)
+		pluginV1 := createPlugin(t, "localfs-plugin", plugins.ClassExternal, true, true, func(plugin *plugins.Plugin) {
+			plugin.Info.Version = "1.0.0"
+			plugin.FS = localFS
+		})
+
+		registry := &fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				"localfs-plugin": pluginV1,
+			},
+		}
+
+		loader := &fakes.FakeLoader{
+			UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+				return p, nil
+			},
+		}
+
+		_, err = os.Stat(pluginDir)
+		require.NoError(t, err)
+
+		inst := New(&config.PluginManagementCfg{}, registry, loader, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
+		err = inst.Remove(context.Background(), "localfs-plugin", "1.0.0")
+		require.NoError(t, err)
+
+		_, err = os.Stat(pluginDir)
+		require.True(t, os.IsNotExist(err))
+	})
+
+	t.Run("StaticFS plugin removal is skipped via installer.Remove", func(t *testing.T) {
+		pluginDir := filepath.Join(tmpDir, "staticfs-plugin")
+		err := os.MkdirAll(pluginDir, 0750)
+		require.NoError(t, err)
+
+		pluginJSON := `{
+			"id": "staticfs-plugin",
+			"name": "StaticFS Plugin",
+			"type": "datasource",
+			"info": {
+				"version": "1.0.0"
+			}
+		}`
+		err = os.WriteFile(filepath.Join(pluginDir, "plugin.json"), []byte(pluginJSON), 0644)
+		require.NoError(t, err)
+
+		localFS := plugins.NewLocalFS(pluginDir)
+		staticFS, err := plugins.NewStaticFS(localFS)
+		require.NoError(t, err)
+
+		pluginV1 := createPlugin(t, "staticfs-plugin", plugins.ClassExternal, true, true, func(plugin *plugins.Plugin) {
+			plugin.Info.Version = "1.0.0"
+			plugin.FS = staticFS
+		})
+
+		registry := &fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				"staticfs-plugin": pluginV1,
+			},
+		}
+
+		loader := &fakes.FakeLoader{
+			UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+				return p, nil
+			},
+		}
+
+		_, err = os.Stat(pluginDir)
+		require.NoError(t, err)
+
+		inst := New(&config.PluginManagementCfg{}, registry, loader, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
+		err = inst.Remove(context.Background(), "staticfs-plugin", "1.0.0")
+		require.NoError(t, err)
+
+		_, err = os.Stat(pluginDir)
+		require.ErrorIs(t, err, os.ErrNotExist)
+	})
 }

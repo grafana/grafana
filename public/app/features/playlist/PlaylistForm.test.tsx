@@ -1,8 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { Playlist } from '../../api/clients/playlist/v0alpha1';
+
 import { PlaylistForm } from './PlaylistForm';
-import { Playlist } from './types';
 
 jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   TagFilter: () => {
@@ -10,24 +11,40 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   },
 }));
 
-function getTestContext({ name, interval, items, uid }: Partial<Playlist> = {}) {
+const mockPlaylist: Playlist = {
+  spec: {
+    title: 'A test playlist',
+    interval: '10m',
+    items: [
+      { type: 'dashboard_by_uid', value: 'uid_1' },
+      { type: 'dashboard_by_uid', value: 'uid_2' },
+      { type: 'dashboard_by_tag', value: 'tag_A' },
+    ],
+  },
+  metadata: {
+    name: 'foo',
+  },
+  status: {},
+};
+
+const mockEmptyPlaylist: Playlist = {
+  spec: {
+    title: 'A test playlist',
+    interval: '10m',
+    items: [],
+  },
+  metadata: {
+    name: 'foo',
+  },
+  status: {},
+};
+
+function getTestContext(playlist: Playlist = mockPlaylist) {
   const onSubmitMock = jest.fn();
-  const playlist = { name, items, interval, uid } as unknown as Playlist;
   const { rerender } = render(<PlaylistForm onSubmit={onSubmitMock} playlist={playlist} />);
 
   return { onSubmitMock, playlist, rerender };
 }
-
-const playlist: Playlist = {
-  name: 'A test playlist',
-  interval: '10m',
-  items: [
-    { type: 'dashboard_by_uid', value: 'uid_1' },
-    { type: 'dashboard_by_uid', value: 'uid_2' },
-    { type: 'dashboard_by_tag', value: 'tag_A' },
-  ],
-  uid: 'foo',
-};
 
 function rows() {
   return screen.getAllByRole('row');
@@ -38,49 +55,27 @@ describe('PlaylistForm', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
-  describe('when mounted without playlist', () => {
-    it('then it should contain name and interval fields', () => {
-      getTestContext();
-
-      expect(screen.getByRole('textbox', { name: /playlist name/i })).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /playlist interval/i })).toBeInTheDocument();
-      expect(screen.queryByRole('row')).not.toBeInTheDocument();
-    });
-
-    it('then name field should have empty string as default value', () => {
-      getTestContext();
-
-      expect(screen.getByRole('textbox', { name: /playlist name/i })).toHaveValue('');
-    });
-
-    it('then interval field should have 5m as default value', () => {
-      getTestContext();
-
-      expect(screen.getByRole('textbox', { name: /playlist interval/i })).toHaveValue('5m');
-    });
-  });
-
   describe('when mounted with a playlist', () => {
     it('then name field should have correct value', () => {
-      getTestContext(playlist);
+      getTestContext();
 
       expect(screen.getByRole('textbox', { name: /playlist name/i })).toHaveValue('A test playlist');
     });
 
     it('then interval field should have correct value', () => {
-      getTestContext(playlist);
+      getTestContext();
 
       expect(screen.getByRole('textbox', { name: /playlist interval/i })).toHaveValue('10m');
     });
 
     it('then items row count should be correct', () => {
-      getTestContext(playlist);
+      getTestContext();
 
       expect(screen.getAllByRole('row')).toHaveLength(3);
     });
 
     it('then the first item row should be correct', () => {
-      getTestContext(playlist);
+      getTestContext();
 
       expectCorrectRow({ index: 0, type: 'dashboard_by_uid', value: 'uid_1' });
       expectCorrectRow({ index: 1, type: 'dashboard_by_uid', value: 'uid_2' });
@@ -90,7 +85,7 @@ describe('PlaylistForm', () => {
 
   describe('when deleting a playlist item', () => {
     it('then the item should be removed and other items should be correct', async () => {
-      getTestContext(playlist);
+      getTestContext();
 
       expect(rows()).toHaveLength(3);
       await userEvent.click(within(rows()[2]).getByRole('button', { name: /delete playlist item/i }));
@@ -102,26 +97,32 @@ describe('PlaylistForm', () => {
 
   describe('when submitting the form', () => {
     it('then the correct item should be submitted', async () => {
-      const { onSubmitMock } = getTestContext(playlist);
+      const { onSubmitMock } = getTestContext();
 
       await userEvent.click(screen.getByRole('button', { name: /save/i }));
       expect(onSubmitMock).toHaveBeenCalledTimes(1);
       expect(onSubmitMock).toHaveBeenCalledWith({
-        uid: 'foo',
-        name: 'A test playlist',
-        interval: '10m',
-        items: [
-          { type: 'dashboard_by_uid', value: 'uid_1' },
-          { type: 'dashboard_by_uid', value: 'uid_2' },
-          { type: 'dashboard_by_tag', value: 'tag_A' },
-        ],
+        spec: {
+          title: 'A test playlist',
+          interval: '10m',
+          items: [
+            { type: 'dashboard_by_uid', value: 'uid_1' },
+            { type: 'dashboard_by_uid', value: 'uid_2' },
+            { type: 'dashboard_by_tag', value: 'tag_A' },
+          ],
+        },
+        metadata: {
+          name: 'foo',
+        },
+        status: {},
       });
     });
 
     describe('and name is missing', () => {
       it('then an alert should appear and nothing should be submitted', async () => {
-        const { onSubmitMock } = getTestContext({ ...playlist, name: undefined });
+        const { onSubmitMock } = getTestContext();
 
+        await userEvent.clear(screen.getByRole('textbox', { name: /playlist name/i }));
         await userEvent.click(screen.getByRole('button', { name: /save/i }));
         expect(screen.getAllByRole('alert')).toHaveLength(1);
         expect(onSubmitMock).not.toHaveBeenCalled();
@@ -130,7 +131,7 @@ describe('PlaylistForm', () => {
 
     describe('and interval is missing', () => {
       it('then an alert should appear and nothing should be submitted', async () => {
-        const { onSubmitMock } = getTestContext(playlist);
+        const { onSubmitMock } = getTestContext();
 
         await userEvent.clear(screen.getByRole('textbox', { name: /playlist interval/i }));
         await userEvent.click(screen.getByRole('button', { name: /save/i }));
@@ -142,7 +143,7 @@ describe('PlaylistForm', () => {
 
   describe('when items are missing', () => {
     it('then save button is disabled', async () => {
-      getTestContext({ ...playlist, items: [] });
+      getTestContext(mockEmptyPlaylist);
 
       expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
     });

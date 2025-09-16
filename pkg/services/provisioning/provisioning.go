@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/promtypemigration"
 	prov_alerting "github.com/grafana/grafana/pkg/services/provisioning/alerting"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
@@ -35,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 func ProvideService(
@@ -57,6 +59,8 @@ func ProvideService(
 	orgService org.Service,
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
 	tracer tracing.Tracer,
+	dual dualwrite.Service,
+	promTypeMigrationProvider promtypemigration.PromTypeMigrationProvider,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
@@ -83,6 +87,8 @@ func ProvideService(
 		folderService:                folderService,
 		resourcePermissions:          resourcePermissions,
 		tracer:                       tracer,
+		migratePrometheusType:        promTypeMigrationProvider.Run,
+		dual:                         dual,
 	}
 
 	if err := s.setDashboardProvisioner(); err != nil {
@@ -94,7 +100,7 @@ func ProvideService(
 
 func (ps *ProvisioningServiceImpl) setDashboardProvisioner() error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(context.Background(), dashboardPath, ps.dashboardProvisioningService, ps.orgService, ps.dashboardService, ps.folderService)
+	dashProvisioner, err := ps.newDashboardProvisioner(context.Background(), dashboardPath, ps.dashboardProvisioningService, ps.orgService, ps.dashboardService, ps.folderService, ps.dual)
 	if err != nil {
 		return fmt.Errorf("%v: %w", "Failed to create provisioner", err)
 	}
@@ -118,6 +124,7 @@ func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionDatasources func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) error,
 	provisionPlugins func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error,
+	migratePrometheusType func(context.Context) error,
 	searchService searchV2.SearchService,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
@@ -127,6 +134,7 @@ func newProvisioningServiceImpl(
 		provisionPlugins:        provisionPlugins,
 		Cfg:                     setting.NewCfg(),
 		searchService:           searchService,
+		migratePrometheusType:   migratePrometheusType,
 	}
 
 	if err := s.setDashboardProvisioner(); err != nil {
@@ -164,37 +172,51 @@ type ProvisioningServiceImpl struct {
 	folderService                folder.Service
 	resourcePermissions          accesscontrol.ReceiverPermissionsService
 	tracer                       tracing.Tracer
+	dual                         dualwrite.Service
 	onceInitProvisioners         sync.Once
+	migratePrometheusType        func(context.Context) error
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
-	err := ps.ProvisionDatasources(ctx)
-	if err != nil {
-		ps.log.Error("Failed to provision data sources", "error", err)
-		return err
-	}
-
-	err = ps.ProvisionPlugins(ctx)
-	if err != nil {
-		ps.log.Error("Failed to provision plugins", "error", err)
-		return err
-	}
-
-	err = ps.ProvisionAlerting(ctx)
-	if err != nil {
-		ps.log.Error("Failed to provision alerting", "error", err)
-		return err
-	}
-
+	// We had to move the initialization of OSS provisioners to Run()
+	// because they need the /apis/* endpoints to be ready and listening.
+	// They query these endpoints to retrieve folders and dashboards.
 	return nil
 }
 
 func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 	var err error
 
-	// run Init Provisioners only once
+	// Run Datasources, Plugins and Alerting Provisioning only once.
+	// It can't be initialized at RunInitProvisioners because it
+	// depends on the /apis endpoints to be already running and listeningq
 	ps.onceInitProvisioners.Do(func() {
-		err = ps.RunInitProvisioners(ctx)
+		err = ps.ProvisionDatasources(ctx)
+		if err != nil {
+			ps.log.Error("Failed to provision data sources", "error", err)
+			return
+		}
+
+		err = ps.ProvisionPlugins(ctx)
+		if err != nil {
+			ps.log.Error("Failed to provision plugins", "error", err)
+			return
+		}
+
+		err = ps.ProvisionAlerting(ctx)
+		if err != nil {
+			ps.log.Error("Failed to provision alerting", "error", err)
+			return
+		}
+
+		// Migrating prom types relies on data source provisioning to already be completed
+		// If we can make services depend on other services completing first,
+		// then we should remove this from provisioning
+		err = ps.migratePrometheusType(ctx)
+		if err != nil {
+			ps.log.Error("Failed to migrate Prometheus type", "error", err)
+			return
+		}
 	})
 
 	if err != nil {
@@ -238,6 +260,8 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) error {
+	ps.mutex.Lock()
+	defer ps.mutex.Unlock()
 	datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "datasources")
 	if err := ps.provisionDatasources(ctx, datasourcePath, ps.datasourceService, ps.correlationsService, ps.orgService); err != nil {
 		err = fmt.Errorf("%v: %w", "Datasource provisioning error", err)
@@ -248,6 +272,8 @@ func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) err
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {
+	ps.mutex.Lock()
+	defer ps.mutex.Unlock()
 	appPath := filepath.Join(ps.Cfg.ProvisioningPath, "plugins")
 	if err := ps.provisionPlugins(ctx, appPath, ps.pluginStore, ps.pluginsSettings, ps.orgService); err != nil {
 		err = fmt.Errorf("%v: %w", "app provisioning error", err)
@@ -284,7 +310,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.alertingStore,
 		ps.alertingStore,
 		ps.folderService,
-		//ps.dashboardService,
+		// ps.dashboardService,
 		ps.quotaService,
 		ps.SQLStore,
 		int64(ps.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
@@ -294,7 +320,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		notifier.NewCachedNotificationSettingsValidationService(ps.alertingStore),
 		alertingauthz.NewRuleService(ps.ac),
 	)
-	configStore := legacy_storage.NewAlertmanagerConfigStore(ps.alertingStore)
+	configStore := legacy_storage.NewAlertmanagerConfigStore(ps.alertingStore, notifier.NewExtraConfigsCrypto(ps.secretService))
 	receiverSvc := notifier.NewReceiverService(
 		alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true),
 		configStore,

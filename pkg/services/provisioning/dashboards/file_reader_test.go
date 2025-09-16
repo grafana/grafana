@@ -18,15 +18,19 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
@@ -105,7 +109,9 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 	})
 }
 
-func TestDashboardFileReader(t *testing.T) {
+func TestIntegrationDashboardFileReader(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	logger := log.New("test-logger")
 	cfg := &config{}
 
@@ -123,15 +129,14 @@ func TestDashboardFileReader(t *testing.T) {
 	}
 
 	sql, cfgT := db.InitTestDBWithCfg(t)
-	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
+	features := featuremgmt.WithFeatures()
 	fStore := folderimpl.ProvideStore(sql)
 	tagService := tagimpl.ProvideService(sql)
 	dashStore, err := database.ProvideDashboardStore(sql, cfgT, features, tagService)
 	require.NoError(t, err)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sql)
 	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		dashStore, folderStore, nil, sql, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest())
+		dashStore, nil, sql, featuremgmt.WithFeatures(),
+		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	t.Run("Reading dashboards from disk", func(t *testing.T) {
 		t.Run("Can read default dashboard", func(t *testing.T) {
@@ -140,7 +145,7 @@ func TestDashboardFileReader(t *testing.T) {
 			cfg.Folder = "Team A"
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(nil, nil).Once()
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&folder.Folder{ID: 1}, nil).Once()
+			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, configName).Return(&folder.Folder{ID: 1}, nil).Once()
 			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 2}, nil).Times(2)
 			reader, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, folderSvc)
 			reader.dashboardProvisioningService = fakeService
@@ -319,7 +324,7 @@ func TestDashboardFileReader(t *testing.T) {
 			cfg.Options["foldersFromFilesStructure"] = true
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(nil, nil).Once()
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&folder.Folder{}, nil).Times(2)
+			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, configName).Return(&folder.Folder{}, nil).Times(2)
 			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(3)
 
 			reader, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, folderSvc)
@@ -357,7 +362,7 @@ func TestDashboardFileReader(t *testing.T) {
 			cfg2 := &config{Name: "2", Type: "file", OrgID: 1, Folder: "f2", Options: map[string]any{"path": containingID}}
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, mock.AnythingOfType("string")).Return(nil, nil).Times(2)
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&folder.Folder{}, nil).Times(2)
+			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, mock.Anything).Return(&folder.Folder{}, nil).Times(2)
 			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(2)
 
 			reader1, err := NewDashboardFileReader(cfg1, logger, nil, fakeStore, folderSvc)
@@ -405,7 +410,7 @@ func TestDashboardFileReader(t *testing.T) {
 				"folder": defaultDashboards,
 			},
 		}
-		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&folder.Folder{ID: 1}, nil).Once()
+		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, cfg.Name).Return(&folder.Folder{ID: 1}, nil).Once()
 
 		r, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, folderSvc)
 		require.NoError(t, err)
@@ -451,6 +456,27 @@ func TestDashboardFileReader(t *testing.T) {
 			shouldSkip := createWalkFn(noFiles)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
 			require.Nil(t, shouldSkip)
 		})
+	})
+
+	t.Run("Should resolve relative ExternalID paths to absolute paths", func(t *testing.T) {
+		setup()
+		cfg.Options["path"] = defaultDashboards
+		provisionedDashboard := []*dashboards.DashboardProvisioning{
+			{
+				Name:       configName,
+				ExternalID: "dashboard1.json",
+			},
+		}
+
+		fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(provisionedDashboard, nil).Once()
+		reader, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, folderSvc)
+		reader.dashboardProvisioningService = fakeService
+		require.NoError(t, err)
+		resolvedPath := reader.resolvedPath()
+		dashboards, err := reader.getProvisionedDashboardsByPath(context.Background(), fakeService, configName)
+		require.NoError(t, err)
+		expectedPath := filepath.Join(resolvedPath, "dashboard1.json")
+		require.Equal(t, expectedPath, dashboards[expectedPath].ExternalID)
 	})
 
 	t.Run("Given missing dashboard file", func(t *testing.T) {

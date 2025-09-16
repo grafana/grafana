@@ -16,7 +16,8 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Counter, Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import { TraceSpanReference } from '../../types/trace';
@@ -35,16 +36,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   AccordianReferences: css({
     label: 'AccordianReferences',
-    border: `1px solid ${autoColor(theme, '#d8d8d8')}`,
     position: 'relative',
     marginBottom: '0.25rem',
   }),
   AccordianReferencesHeader: css({
     label: 'AccordianReferencesHeader',
-    background: autoColor(theme, '#e4e4e4'),
     color: 'inherit',
     display: 'block',
-    padding: '0.25rem 0.5rem',
+    padding: '0.25rem 0',
     '&:hover': {
       background: autoColor(theme, '#dadada'),
     },
@@ -151,7 +150,8 @@ export function References(props: ReferenceItemProps) {
                   </span>
                 ) : (
                   <span className={cx('span-svc-name', styles.title)}>
-                    View Linked Span <Icon name="external-link-alt" />
+                    <Trans i18nKey="explore.accordian-references.view-linked-span">View Linked Span</Trans>{' '}
+                    <Icon name="external-link-alt" />
                   </span>
                 )}
                 <small className={styles.debugInfo}>
@@ -173,8 +173,7 @@ export function References(props: ReferenceItemProps) {
                 highContrast
                 interactive={interactive}
                 isOpen={openedItems ? openedItems.has(reference) : false}
-                label={'attributes'}
-                linksGetter={null}
+                label={t('explore.references.label-attributes', 'attributes')}
                 onToggle={interactive && onItemToggle ? () => onItemToggle(reference) : null}
               />
             </div>
@@ -218,9 +217,11 @@ const AccordianReferences = ({
       <HeaderComponent className={styles.AccordianReferencesHeader} {...headerProps}>
         {arrow}
         <strong>
-          <span>References</span>
+          <span>
+            <Trans i18nKey="explore.accordian-references.references">References</Trans>
+          </span>
         </strong>{' '}
-        ({data.length})
+        <Counter value={data.length} />
       </HeaderComponent>
       {isOpen && (
         <References

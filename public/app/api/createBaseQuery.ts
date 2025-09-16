@@ -8,7 +8,11 @@ interface RequestOptions extends BackendSrvRequest {
   body?: BackendSrvRequest['data'];
 }
 
-export function createBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
+interface CreateBaseQueryOptions {
+  baseURL: string;
+}
+
+export function createBaseQuery({ baseURL }: CreateBaseQueryOptions): BaseQueryFn<RequestOptions> {
   async function backendSrvBaseQuery(requestOptions: RequestOptions) {
     try {
       const { data: responseData, ...meta } = await lastValueFrom(
@@ -33,9 +37,7 @@ export function createBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<R
 }
 
 export function handleRequestError(error: unknown) {
-  if (isFetchError(error)) {
-    return { error: new Error(error.data.message) };
-  } else if (error instanceof Error) {
+  if (isFetchError(error) || error instanceof Error) {
     return { error };
   } else {
     return { error: new Error('Unknown error') };

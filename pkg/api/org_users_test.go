@@ -9,12 +9,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/services/auth/idtest"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -39,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
@@ -46,7 +45,9 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) {
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = int(testOrgID)
 
-	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), sqlStore, cfgProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
@@ -67,7 +68,9 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) {
 	require.NoError(t, err)
 }
 
-func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
+func TestIntegrationOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	hs := setupSimpleHTTPServer(featuremgmt.WithFeatures())
 	settings := hs.Cfg
 
@@ -205,12 +208,11 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 	type testCase struct {
-		desc                    string
-		SkipOrgRoleSync         bool
-		AuthEnabled             bool
-		AuthModule              string
-		shouldInvalidateIDToken bool
-		expectedCode            int
+		desc            string
+		SkipOrgRoleSync bool
+		AuthEnabled     bool
+		AuthModule      string
+		expectedCode    int
 	}
 	permissions := []accesscontrol.Permission{
 		{Action: accesscontrol.ActionOrgUsersRead, Scope: "users:*"},
@@ -220,12 +222,11 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 	}
 	tests := []testCase{
 		{
-			desc:                    "should be able to change basicRole when skip_org_role_sync true",
-			SkipOrgRoleSync:         true,
-			AuthEnabled:             true,
-			AuthModule:              login.LDAPAuthModule,
-			shouldInvalidateIDToken: true,
-			expectedCode:            http.StatusOK,
+			desc:            "should be able to change basicRole when skip_org_role_sync true",
+			SkipOrgRoleSync: true,
+			AuthEnabled:     true,
+			AuthModule:      login.LDAPAuthModule,
+			expectedCode:    http.StatusOK,
 		},
 		{
 			desc:            "should not be able to change basicRole when skip_org_role_sync false",
@@ -242,20 +243,18 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 			expectedCode:    http.StatusForbidden,
 		},
 		{
-			desc:                    "should be able to change basicRole with a basic Auth",
-			SkipOrgRoleSync:         false,
-			AuthEnabled:             false,
-			AuthModule:              "",
-			shouldInvalidateIDToken: true,
-			expectedCode:            http.StatusOK,
+			desc:            "should be able to change basicRole with a basic Auth",
+			SkipOrgRoleSync: false,
+			AuthEnabled:     false,
+			AuthModule:      "",
+			expectedCode:    http.StatusOK,
 		},
 		{
-			desc:                    "should be able to change basicRole with a basic Auth",
-			SkipOrgRoleSync:         true,
-			AuthEnabled:             true,
-			AuthModule:              "",
-			shouldInvalidateIDToken: true,
-			expectedCode:            http.StatusOK,
+			desc:            "should be able to change basicRole with a basic Auth",
+			SkipOrgRoleSync: true,
+			AuthEnabled:     true,
+			AuthModule:      "",
+			expectedCode:    http.StatusOK,
 		},
 	}
 
@@ -286,11 +285,6 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 				}
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions}
 				hs.orgService = &orgtest.FakeOrgService{}
-				idService := &idtest.MockService{}
-				if tt.shouldInvalidateIDToken {
-					idService.On("RemoveIDToken", mock.Anything, mock.Anything).Return(nil)
-				}
-				hs.idService = idService
 				hs.SocialService = &socialtest.FakeSocialService{
 					ExpectedAuthInfoProvider: &social.OAuthInfo{Enabled: tt.AuthEnabled, SkipOrgRoleSync: tt.SkipOrgRoleSync},
 				}
@@ -627,7 +621,6 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 					ExpectedUser:         &user.User{},
 					ExpectedSignedInUser: userWithPermissions(1, tt.permissions),
 				}
-				hs.idService = &idtest.FakeService{}
 				hs.accesscontrolService = &actest.FakeService{}
 			})
 
@@ -650,24 +643,16 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 		name         string
 		role         org.RoleType
 		permissions  []accesscontrol.Permission
-		setup        func(*testing.T, *idtest.MockService)
 		input        string
 		expectedCode int
 	}
 
 	tests := []testCase{
 		{
-			name:        "user with permissions can update org role",
-			permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersWrite, Scope: "users:*"}},
-			role:        org.RoleAdmin,
-			input:       `{"role": "Viewer"}`,
-			setup: func(t *testing.T, idService *idtest.MockService) {
-				idService.On("RemoveIDToken", mock.Anything, mock.MatchedBy(func(id *authn.Identity) bool {
-					return id.GetIdentityType() == types.TypeUser &&
-						id.GetID() == "user:1" &&
-						id.GetOrgID() == int64(1)
-				})).Return(nil)
-			},
+			name:         "user with permissions can update org role",
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersWrite, Scope: "users:*"}},
+			role:         org.RoleAdmin,
+			input:        `{"role": "Viewer"}`,
 			expectedCode: http.StatusOK,
 		},
 		{
@@ -694,11 +679,6 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 						AuthModule: "",
 					},
 				}
-				idService := &idtest.MockService{}
-				if tt.setup != nil {
-					tt.setup(t, idService)
-				}
-				hs.idService = idService
 				hs.accesscontrolService = &actest.FakeService{}
 				hs.userService = &usertest.FakeUserService{
 					ExpectedUser:         &user.User{},

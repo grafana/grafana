@@ -18,7 +18,9 @@
   "links": [],
   "panels": [
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 8,
         "w": 20,
@@ -105,7 +107,9 @@
       "type": "gauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 28,
         "w": 4,
@@ -177,7 +181,9 @@
       "type": "gauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 20,
         "w": 20,

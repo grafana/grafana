@@ -1,10 +1,16 @@
-import { CombinedRule, RuleGroupIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import {
+  CloudRuleIdentifier,
+  CombinedRule,
+  PrometheusRuleIdentifier,
+  RuleGroupIdentifier,
+  RuleGroupIdentifierV2,
+} from 'app/types/unified-alerting';
 
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid, getRulesSourceName, isGrafanaRulesSource } from './datasource';
-import { isGrafanaRulerRule } from './rules';
+import { rulerRuleType } from './rules';
 
 function fromCombinedRule(rule: CombinedRule): RuleGroupIdentifierV2 {
-  if (isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulesSource(rule.namespace.rulesSource)) {
+  if (rulerRuleType.grafana.rule(rule.rulerRule) && isGrafanaRulesSource(rule.namespace.rulesSource)) {
     return {
       namespace: { uid: rule.rulerRule.grafana_alert.namespace_uid },
       groupName: rule.group.name,
@@ -37,6 +43,20 @@ export function ruleGroupIdentifierV2toV1(groupIdentifier: RuleGroupIdentifierV2
   };
 }
 
+function fromRuleIdentifier(ruleIdentifier: PrometheusRuleIdentifier | CloudRuleIdentifier): RuleGroupIdentifierV2 {
+  return {
+    rulesSource: {
+      ruleSourceType: 'datasource',
+      name: ruleIdentifier.ruleSourceName,
+      uid: getDatasourceAPIUid(ruleIdentifier.ruleSourceName),
+    },
+    namespace: { name: ruleIdentifier.namespace },
+    groupName: ruleIdentifier.groupName,
+    groupOrigin: 'datasource',
+  };
+}
+
 export const groupIdentifier = {
   fromCombinedRule,
+  fromRuleIdentifier,
 };

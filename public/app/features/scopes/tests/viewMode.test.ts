@@ -1,14 +1,14 @@
 import { config } from '@grafana/runtime';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { scopesDashboardsScene, scopesSelectorScene } from '../instance';
+import { ScopesService } from '../ScopesService';
 
 import { enterEditMode, openSelector, toggleDashboards } from './utils/actions';
 import {
   expectDashboardsClosed,
-  expectDashboardsNotInDocument,
+  expectDashboardsDisabled,
   expectScopesSelectorClosed,
-  expectScopesSelectorNotInDocument,
+  expectScopesSelectorDisabled,
 } from './utils/assertions';
 import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
@@ -24,14 +24,17 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('View mode', () => {
   let dashboardScene: DashboardScene;
+  let scopesService: ScopesService;
 
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
     config.featureToggles.groupByVariable = true;
   });
 
-  beforeEach(() => {
-    dashboardScene = renderDashboard();
+  beforeEach(async () => {
+    const renderResult = await renderDashboard();
+    dashboardScene = renderResult.scene;
+    scopesService = renderResult.scopesService;
   });
 
   afterEach(async () => {
@@ -40,8 +43,8 @@ describe('View mode', () => {
 
   it('Enters view mode', async () => {
     await enterEditMode(dashboardScene);
-    expect(scopesSelectorScene?.state?.isReadOnly).toEqual(true);
-    expect(scopesDashboardsScene?.state?.isPanelOpened).toEqual(false);
+    expect(scopesService.state.readOnly).toEqual(true);
+    expect(scopesService.state.drawerOpened).toEqual(false);
   });
 
   it('Closes selector on enter', async () => {
@@ -58,11 +61,11 @@ describe('View mode', () => {
 
   it('Does not show selector when view mode is active', async () => {
     await enterEditMode(dashboardScene);
-    expectScopesSelectorNotInDocument();
+    expectScopesSelectorDisabled();
   });
 
   it('Does not show the expand button when view mode is active', async () => {
     await enterEditMode(dashboardScene);
-    expectDashboardsNotInDocument();
+    expectDashboardsDisabled();
   });
 });

@@ -14,7 +14,7 @@ const injectedRtkApi = api.injectEndpoints({
   overrideExisting: false,
 });
 export { injectedRtkApi as generatedAPI };
-export type GetUserPreferencesApiResponse = /** status 200 (empty) */ Preferences;
+export type GetUserPreferencesApiResponse = /** status 200 (empty) */ PreferencesSpec;
 export type GetUserPreferencesApiArg = void;
 export type PatchUserPreferencesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -26,26 +26,28 @@ export type UpdateUserPreferencesApiResponse =
 export type UpdateUserPreferencesApiArg = {
   updatePrefsCmd: UpdatePrefsCmd;
 };
-export type CookiePreferences = {
+export type PreferencesCookiePreferences = {
   analytics?: any;
   functional?: any;
   performance?: any;
 };
-export type NavbarPreference = {
+export type PreferencesNavbarPreference = {
   bookmarkUrls?: string[];
 };
-export type QueryHistoryPreference = {
+export type PreferencesQueryHistoryPreference = {
   /** one of: '' | 'query' | 'starred'; */
   homeTab?: string;
 };
-export type Preferences = {
-  cookiePreferences?: CookiePreferences;
+export type PreferencesSpec = {
+  cookiePreferences?: PreferencesCookiePreferences;
   /** UID for the home dashboard */
   homeDashboardUID?: string;
   /** Selected language (beta) */
   language?: string;
-  navbar?: NavbarPreference;
-  queryHistory?: QueryHistoryPreference;
+  navbar?: PreferencesNavbarPreference;
+  queryHistory?: PreferencesQueryHistoryPreference;
+  /** Selected locale (beta) */
+  regionalFormat?: string;
   /** light, dark, empty is default */
   theme?: string;
   /** The timezone selection
@@ -68,6 +70,12 @@ export type SuccessResponseBody = {
   message?: string;
 };
 export type CookieType = string;
+export type NavbarPreference = {
+  bookmarkUrls?: string[];
+};
+export type QueryHistoryPreference = {
+  homeTab?: string;
+};
 export type PatchPrefsCmd = {
   cookies?: CookieType[];
   /** The numerical :id of a favorited dashboard */
@@ -76,6 +84,7 @@ export type PatchPrefsCmd = {
   language?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
+  regionalFormat?: string;
   theme?: 'light' | 'dark';
   timezone?: 'utc' | 'browser';
   weekStart?: string;
@@ -88,6 +97,7 @@ export type UpdatePrefsCmd = {
   language?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
+  regionalFormat?: string;
   theme?: 'light' | 'dark' | 'system';
   timezone?: 'utc' | 'browser';
   weekStart?: string;

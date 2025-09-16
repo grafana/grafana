@@ -34,6 +34,10 @@ func TestInstanceStateType_IsValid(t *testing.T) {
 			expectedValidity: true,
 		},
 		{
+			instanceType:     InstanceStateRecovering,
+			expectedValidity: true,
+		},
+		{
 			instanceType:     InstanceStateType("notAValidInstanceStateType"),
 			expectedValidity: false,
 		},
@@ -94,8 +98,8 @@ func TestValidateAlertInstance(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			instance := AlertInstanceGen(func(instance *AlertInstance) {
-				instance.AlertInstanceKey.RuleOrgID = tc.orgId
-				instance.AlertInstanceKey.RuleUID = tc.uid
+				instance.RuleOrgID = tc.orgId
+				instance.RuleUID = tc.uid
 				instance.CurrentState = tc.currentState
 			})
 

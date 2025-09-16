@@ -185,6 +185,11 @@ func doBuild(binaryName, pkg string, opts BuildOpts) error {
 
 	args := []string{"build", "-ldflags", lf}
 
+	if opts.isDev {
+		// disable optimizations, so debugger will work
+		args = append(args, "-gcflags", "all=-N -l")
+	}
+
 	if opts.goos == GoOSWindows {
 		// Work around a linking error on Windows: "export ordinal too large"
 		args = append(args, "-buildmode=exe")
@@ -197,6 +202,10 @@ func doBuild(binaryName, pkg string, opts BuildOpts) error {
 	if opts.race {
 		args = append(args, "-race")
 	}
+
+	// We should not publish Grafana as a Go module, disabling vcs changes the version to (devel)
+	// and works better with SBOM and Vulnerability Scanners.
+	args = append(args, "-buildvcs=false")
 
 	args = append(args, "-o", binary)
 	args = append(args, pkg)

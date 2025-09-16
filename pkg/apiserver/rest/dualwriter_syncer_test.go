@@ -71,8 +71,8 @@ var storageListWith3itemsMissingFoo2 = &example.PodList{TypeMeta: metav1.TypeMet
 
 func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 	type testCase struct {
-		setupLegacyFn   func(m *mock.Mock)
-		setupStorageFn  func(m *mock.Mock)
+		setupLegacyFn   func(m *MockStorage)
+		setupStorageFn  func(m *MockStorage)
 		name            string
 		expectedOutcome bool
 		wantErr         bool
@@ -81,40 +81,40 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 		[]testCase{
 			{
 				name: "both stores are in sync",
-				setupLegacyFn: func(m *mock.Mock) {
+				setupLegacyFn: func(m *MockStorage) {
 					m.On("List", mock.Anything, mock.Anything).Return(legacyListWith3items, nil)
 				},
-				setupStorageFn: func(m *mock.Mock) {
+				setupStorageFn: func(m *MockStorage) {
 					m.On("List", mock.Anything, mock.Anything).Return(storageListWith3items, nil)
 				},
 				expectedOutcome: true,
 			},
 			{
 				name: "both stores are in sync - fail to list from legacy",
-				setupLegacyFn: func(m *mock.Mock) {
+				setupLegacyFn: func(m *MockStorage) {
 					m.On("List", mock.Anything, mock.Anything).Return(legacyListWith3items, errors.New("error"))
 				},
-				setupStorageFn: func(m *mock.Mock) {
+				setupStorageFn: func(m *MockStorage) {
 					m.On("List", mock.Anything, mock.Anything).Return(storageListWith3items, nil)
 				},
 				expectedOutcome: false,
 			},
 			{
 				name: "both stores are in sync - fail to list from storage",
-				setupLegacyFn: func(m *mock.Mock) {
-					m.On("List", mock.Anything, mock.Anything).Return(legacyListWith3items, nil)
+				setupLegacyFn: func(m *MockStorage) {
+					m.On("List", mock.Anything, mock.Anything).Return(legacyListWith3items, nil).Maybe()
 				},
-				setupStorageFn: func(m *mock.Mock) {
+				setupStorageFn: func(m *MockStorage) {
 					m.On("List", mock.Anything, mock.Anything).Return(storageListWith3items, errors.New("error"))
 				},
 				expectedOutcome: false,
 			},
 			{
 				name: "storage is missing 1 entry (foo4)",
-				setupLegacyFn: func(m *mock.Mock) {
+				setupLegacyFn: func(m *MockStorage) {
 					m.On("List", mock.Anything, mock.Anything).Return(legacyListWith4items, nil)
 				},
-				setupStorageFn: func(m *mock.Mock) {
+				setupStorageFn: func(m *MockStorage) {
 					m.On("List", mock.Anything, mock.Anything).Return(storageListWith3items, nil)
 					m.On("Update", mock.Anything, "foo4", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 				},
@@ -122,10 +122,10 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 			},
 			{
 				name: "storage needs to be update (foo2 is different)",
-				setupLegacyFn: func(m *mock.Mock) {
+				setupLegacyFn: func(m *MockStorage) {
 					m.On("List", mock.Anything, mock.Anything).Return(legacyListWith3itemsObj2IsDifferent, nil)
 				},
-				setupStorageFn: func(m *mock.Mock) {
+				setupStorageFn: func(m *MockStorage) {
 					m.On("List", mock.Anything, mock.Anything).Return(storageListWith3items, nil)
 					m.On("Update", mock.Anything, "foo2", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 				},
@@ -133,10 +133,10 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 			},
 			{
 				name: "storage is missing 1 entry (foo4) - fail to upsert",
-				setupLegacyFn: func(m *mock.Mock) {
+				setupLegacyFn: func(m *MockStorage) {
 					m.On("List", mock.Anything, mock.Anything).Return(legacyListWith4items, nil)
 				},
-				setupStorageFn: func(m *mock.Mock) {
+				setupStorageFn: func(m *MockStorage) {
 					m.On("List", mock.Anything, mock.Anything).Return(storageListWith3items, nil)
 					m.On("Update", mock.Anything, "foo4", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, errors.New("error"))
 				},
@@ -144,10 +144,10 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 			},
 			{
 				name: "storage has an extra 1 entry (foo4)",
-				setupLegacyFn: func(m *mock.Mock) {
+				setupLegacyFn: func(m *MockStorage) {
 					m.On("List", mock.Anything, mock.Anything).Return(legacyListWith3items, nil)
 				},
-				setupStorageFn: func(m *mock.Mock) {
+				setupStorageFn: func(m *MockStorage) {
 					m.On("List", mock.Anything, mock.Anything).Return(storageListWith4items, nil)
 					m.On("Delete", mock.Anything, "foo4", mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 				},
@@ -155,10 +155,10 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 			},
 			{
 				name: "storage has an extra 1 entry (foo4) - fail to delete",
-				setupLegacyFn: func(m *mock.Mock) {
+				setupLegacyFn: func(m *MockStorage) {
 					m.On("List", mock.Anything, mock.Anything).Return(legacyListWith3items, nil)
 				},
-				setupStorageFn: func(m *mock.Mock) {
+				setupStorageFn: func(m *MockStorage) {
 					m.On("List", mock.Anything, mock.Anything).Return(storageListWith4items, nil)
 					m.On("Delete", mock.Anything, "foo4", mock.Anything, mock.Anything).Return(exampleObj, false, errors.New("error"))
 				},
@@ -166,10 +166,10 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 			},
 			{
 				name: "storage is missing 1 entry (foo3) and has an extra 1 entry (foo4)",
-				setupLegacyFn: func(m *mock.Mock) {
+				setupLegacyFn: func(m *MockStorage) {
 					m.On("List", mock.Anything, mock.Anything).Return(legacyListWith3items, nil)
 				},
-				setupStorageFn: func(m *mock.Mock) {
+				setupStorageFn: func(m *MockStorage) {
 					m.On("List", mock.Anything, mock.Anything).Return(storageListWith3itemsMissingFoo2, nil)
 					m.On("Update", mock.Anything, "foo2", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 					m.On("Delete", mock.Anything, "foo4", mock.Anything, mock.Anything).Return(exampleObj, false, nil)
@@ -181,19 +181,14 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 	// mode 1
 	for _, tt := range tests {
 		t.Run("Mode-1-"+tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
-			s := (Storage)(nil)
-			lm := &mock.Mock{}
-			um := &mock.Mock{}
-
-			ls := legacyStoreMock{lm, l}
-			us := storageMock{um, s}
+			ls := NewMockStorage(t)
+			us := NewMockStorage(t)
 
 			if tt.setupLegacyFn != nil {
-				tt.setupLegacyFn(lm)
+				tt.setupLegacyFn(ls)
 			}
 			if tt.setupStorageFn != nil {
-				tt.setupStorageFn(um)
+				tt.setupStorageFn(us)
 			}
 
 			outcome, err := legacyToUnifiedStorageDataSyncer(context.Background(), &SyncerConfig{
@@ -201,13 +196,12 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 				LegacyStorage:     ls,
 				Storage:           us,
 				Kind:              "test.kind",
-				Reg:               p,
 				ServerLockService: &fakeServerLock{},
 				RequestInfo:       &request.RequestInfo{},
 
 				DataSyncerRecordsLimit: 1000,
 				DataSyncerInterval:     time.Hour,
-			})
+			}, NewDualWriterMetrics(nil))
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -221,19 +215,14 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 	// mode 2
 	for _, tt := range tests {
 		t.Run("Mode-2-"+tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
-			s := (Storage)(nil)
-			lm := &mock.Mock{}
-			um := &mock.Mock{}
-
-			ls := legacyStoreMock{lm, l}
-			us := storageMock{um, s}
+			ls := NewMockStorage(t)
+			us := NewMockStorage(t)
 
 			if tt.setupLegacyFn != nil {
-				tt.setupLegacyFn(lm)
+				tt.setupLegacyFn(ls)
 			}
 			if tt.setupStorageFn != nil {
-				tt.setupStorageFn(um)
+				tt.setupStorageFn(us)
 			}
 
 			outcome, err := legacyToUnifiedStorageDataSyncer(context.Background(), &SyncerConfig{
@@ -241,13 +230,12 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 				LegacyStorage:     ls,
 				Storage:           us,
 				Kind:              "test.kind",
-				Reg:               p,
 				ServerLockService: &fakeServerLock{},
 				RequestInfo:       &request.RequestInfo{},
 
 				DataSyncerRecordsLimit: 1000,
 				DataSyncerInterval:     time.Hour,
-			})
+			}, NewDualWriterMetrics(nil))
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

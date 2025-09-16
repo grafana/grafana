@@ -1,20 +1,14 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ComponentProps } from 'react';
 
-import {
-  createTheme,
-  ExploreLogsPanelState,
-  LogsSortOrder,
-  standardTransformersRegistry,
-  toUtc,
-} from '@grafana/data/src';
-import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
+import { createTheme, ExploreLogsPanelState, LogsSortOrder, toUtc } from '@grafana/data';
+import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 
 import { extractFieldsTransformer } from '../../transformers/extractFields/extractFields';
 
 import { LogsTableWrap } from './LogsTableWrap';
-import { getMockLokiFrame, getMockLokiFrameDataPlane } from './utils/testMocks.test';
+import { getMockLokiFrame, getMockLokiFrameDataPlane } from './utils/mocks';
 
 const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap>>) => {
   return (
@@ -45,18 +39,7 @@ const setup = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap>>) => 
 describe('LogsTableWrap', () => {
   beforeAll(() => {
     const transformers = [extractFieldsTransformer, organizeFieldsTransformer];
-    standardTransformersRegistry.setInit(() => {
-      return transformers.map((t) => {
-        return {
-          id: t.id,
-          aliasIds: t.aliasIds,
-          name: t.name,
-          transformation: t,
-          description: t.description,
-          editor: () => null,
-        };
-      });
-    });
+    mockTransformationsRegistry(transformers);
   });
 
   it('should render 4 table rows', async () => {

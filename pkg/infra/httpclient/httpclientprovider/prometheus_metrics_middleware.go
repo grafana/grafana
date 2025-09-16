@@ -78,7 +78,7 @@ func PrometheusMetricsMiddleware(metrics *PrometheusMetrics) httpclient.Middlewa
 			metrics.inFlightGauge.Dec()
 			metrics.requestsCounter.Inc()
 			metrics.durationSecondsHistogram.Observe(time.Since(startTime).Seconds())
-			if err != nil || (res != nil && !(res.StatusCode >= 200 && res.StatusCode <= 299)) {
+			if err != nil || (res != nil && (res.StatusCode < 200 || res.StatusCode > 299)) {
 				metrics.failureCounter.Inc()
 			}
 

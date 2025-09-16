@@ -17,7 +17,7 @@ import { DetectedFieldsResult, LabelType, LokiQuery, LokiQueryType, ParserAndLab
 
 const NS_IN_MS = 1000000;
 const EMPTY_SELECTOR = '{}';
-const HIDDEN_LABELS = ['__aggregrated_metric__', '__tenant_id__', '__stream_shard__'];
+const HIDDEN_LABELS = ['__aggregated_metric__', '__tenant_id__', '__stream_shard__'];
 
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
@@ -36,13 +36,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
   private labelsPromisesCache = new LRUCache<string, Promise<string[]>>({ max: 10 });
   private detectedLabelValuesPromisesCache = new LRUCache<string, Promise<string[]>>({ max: 10 });
 
-  constructor(datasource: LokiDatasource, initialValues?: any) {
+  constructor(datasource: LokiDatasource) {
     super();
 
     this.datasource = datasource;
     this.labelKeys = [];
-
-    Object.assign(this, initialValues);
   }
 
   request = async (
@@ -477,9 +475,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
       hasLogfmt: false,
       hasPack: false,
     };
-    if (!config.featureToggles.lokiQueryHints) {
-      return empty;
-    }
 
     const series = await this.datasource.getDataSamples(
       {
@@ -514,7 +509,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    *
    * @returns {TimeRange} The default time range
    */
-  private getDefaultTimeRange(): TimeRange {
+  getDefaultTimeRange(): TimeRange {
     return getDefaultTimeRange();
   }
 }

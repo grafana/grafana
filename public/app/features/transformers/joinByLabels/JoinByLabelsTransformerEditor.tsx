@@ -8,12 +8,15 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { Alert, HorizontalGroup, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Alert, Stack, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/joinByLabels.svg';
+import lightImage from '../images/light/joinByLabels.svg';
 import { getDistinctLabels } from '../utils';
 
-import { joinByLabelsTransformer, JoinByLabelsTransformOptions } from './joinByLabels';
+import { getJoinByLabelsTransformer, JoinByLabelsTransformOptions } from './joinByLabels';
 
 export interface Props extends TransformerUIProps<JoinByLabelsTransformOptions> {}
 
@@ -29,9 +32,23 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
     }
 
     if (!input.length) {
-      warn = <Alert title="No input found">No input (or labels) found</Alert>;
+      warn = (
+        <Alert title={t('transformers.join-by-labels-transformer-editor.info.title-no-input-found', 'No input found')}>
+          <Trans i18nKey="transformers.join-by-labels-transformer-editor.info.no-input-or-labels-found">
+            No input (or labels) found
+          </Trans>
+        </Alert>
+      );
     } else if (distinct.size === 0) {
-      warn = <Alert title="No labels found">The input does not contain any labels</Alert>;
+      warn = (
+        <Alert
+          title={t('transformers.join-by-labels-transformer-editor.info.title-no-labels-found', 'No labels found')}
+        >
+          <Trans i18nKey="transformers.join-by-labels-transformer-editor.info.input-contain-labels">
+            The input does not contain any labels
+          </Trans>
+        </Alert>
+      );
     }
 
     // Show the selected values
@@ -93,11 +110,14 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
 
       <InlineFieldRow>
         <InlineField
-          error="required"
+          error={t('transformers.join-by-labels-transformer-editor.error-required', 'Required')}
           invalid={!Boolean(options.value?.length)}
-          label={'Value'}
+          label={t('transformers.join-by-labels-transformer-editor.label-value', 'Value')}
           labelWidth={labelWidth}
-          tooltip="Select the label indicating the values name"
+          tooltip={t(
+            'transformers.join-by-labels-transformer-editor.tooltip-select-label-indicating-values',
+            'Select the label indicating the values name'
+          )}
         >
           <Select
             options={info.valueOptions}
@@ -111,12 +131,12 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
         options.join!.map((v, idx) => (
           <InlineFieldRow key={v + idx}>
             <InlineField
-              label={'Join'}
+              label={t('transformers.join-by-labels-transformer-editor.label-join', 'Join')}
               labelWidth={labelWidth}
               error="Unable to join by the value label"
               invalid={v === options.value}
             >
-              <HorizontalGroup>
+              <Stack>
                 <Select
                   options={info.joinOptions}
                   value={info.joinOptions.find((o) => o.value === v)}
@@ -133,7 +153,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
                     variant="secondary"
                   />
                 )}
-              </HorizontalGroup>
+              </Stack>
             </InlineField>
           </InlineFieldRow>
         ))
@@ -141,7 +161,10 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
         <>
           {Boolean(info.addOptions.length) && (
             <InlineFieldRow>
-              <InlineField label={'Join'} labelWidth={labelWidth}>
+              <InlineField
+                label={t('transformers.join-by-labels-transformer-editor.label-join', 'Join')}
+                labelWidth={labelWidth}
+              >
                 <Select
                   options={info.addOptions}
                   placeholder={info.addText}
@@ -157,13 +180,18 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
   );
 }
 
-export const joinByLabelsTransformRegistryItem: TransformerRegistryItem<JoinByLabelsTransformOptions> = {
-  id: joinByLabelsTransformer.id,
-  editor: JoinByLabelsTransformerEditor,
-  transformation: joinByLabelsTransformer,
-  name: joinByLabelsTransformer.name,
-  description: joinByLabelsTransformer.description,
-  state: PluginState.beta,
-  categories: new Set([TransformerCategory.Combine]),
-  help: getTransformationContent(joinByLabelsTransformer.id).helperDocs,
+export const getJoinByLabelsTransformRegistryItem: () => TransformerRegistryItem<JoinByLabelsTransformOptions> = () => {
+  const joinByLabelsTransformer = getJoinByLabelsTransformer();
+  return {
+    id: joinByLabelsTransformer.id,
+    editor: JoinByLabelsTransformerEditor,
+    transformation: joinByLabelsTransformer,
+    name: joinByLabelsTransformer.name,
+    description: joinByLabelsTransformer.description,
+    state: PluginState.beta,
+    categories: new Set([TransformerCategory.Combine]),
+    help: getTransformationContent(joinByLabelsTransformer.id).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
+  };
 };

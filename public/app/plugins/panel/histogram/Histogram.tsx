@@ -9,11 +9,9 @@ import {
   getFieldSeriesColor,
   GrafanaTheme2,
   roundDecimals,
-} from '@grafana/data';
-import {
   histogramBucketSizes,
   histogramFrameBucketMaxFieldName,
-} from '@grafana/data/src/transformations/transformers/histogram';
+} from '@grafana/data';
 import { VizLegendOptions, ScaleDistribution, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import {
   Themeable2,
@@ -24,7 +22,7 @@ import {
   measureText,
   UPLOT_AXIS_FONT_SIZE,
 } from '@grafana/ui';
-import { getStackingGroups, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
+import { getStackingGroups, preparePlotData2 } from '@grafana/ui/internal';
 
 import { defaultFieldConfig, FieldConfig, Options } from './panelcfg.gen';
 
@@ -205,6 +203,12 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
       x: true,
       y: false,
       setScale: true,
+    },
+    dataIdx: (u, _, closestIdx, xValue) =>
+      isOrdinalX ? Math.floor(xValue) : xValue < u.data[0][closestIdx] ? closestIdx - 1 : closestIdx,
+    focus: {
+      prox: 1e6,
+      bias: 1,
     },
   });
 

@@ -53,6 +53,7 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
     // find the source panel referenced in the the dashboard ds query
     const panelId = dashboardQuery.panelId;
     const vizKey = getVizPanelKeyForPanelId(panelId);
+    // We're trying to find the original panel, not a cloned one, since `panelId` alone cannot resolve clones
     const sourcePanel = findVizPanelByKey(dashboard, vizKey);
 
     if (!(sourcePanel instanceof VizPanel)) {

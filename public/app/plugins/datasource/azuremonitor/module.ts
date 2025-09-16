@@ -1,4 +1,5 @@
 import { DataSourcePlugin, DashboardLoadedEvent } from '@grafana/data';
+import { initPluginTranslations } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 
 import { ConfigEditor } from './components/ConfigEditor/ConfigEditor';
@@ -6,7 +7,14 @@ import AzureMonitorQueryEditor from './components/QueryEditor';
 import Datasource from './datasource';
 import pluginJson from './plugin.json';
 import { trackAzureMonitorDashboardLoaded } from './tracking';
-import { AzureMonitorQuery, AzureMonitorDataSourceJsonData, AzureQueryType, ResultFormat } from './types';
+import { AzureMonitorQuery, AzureQueryType, ResultFormat } from './types/query';
+import { AzureMonitorDataSourceJsonData } from './types/types';
+
+// don't load plugin translations in test environments
+// we don't use them anyway, and top-level await won't work currently in jest
+if (process.env.NODE_ENV !== 'test') {
+  await initPluginTranslations(pluginJson.id);
+}
 
 export const plugin = new DataSourcePlugin<Datasource, AzureMonitorQuery, AzureMonitorDataSourceJsonData>(Datasource)
   .setConfigEditor(ConfigEditor)

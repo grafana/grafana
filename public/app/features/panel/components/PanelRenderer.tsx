@@ -9,8 +9,9 @@ import {
   OptionDefaults,
   useFieldOverrides,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { getTemplateSrv, PanelRendererProps } from '@grafana/runtime';
-import { ErrorBoundaryAlert, usePanelContext, useTheme2 } from '@grafana/ui';
+import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 
 import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanelPlugin';
@@ -38,16 +39,7 @@ export function PanelRenderer<P extends object = {}, F extends object = {}>(prop
   const [plugin, setPlugin] = useState(syncGetPanelPlugin(pluginId));
   const [error, setError] = useState<string | undefined>();
   const optionsWithDefaults = useOptionDefaults(plugin, options, fieldConfig);
-  const { dataLinkPostProcessor } = usePanelContext();
-  const dataWithOverrides = useFieldOverrides(
-    plugin,
-    optionsWithDefaults?.fieldConfig,
-    data,
-    timeZone,
-    theme,
-    replace,
-    dataLinkPostProcessor
-  );
+  const dataWithOverrides = useFieldOverrides(plugin, optionsWithDefaults?.fieldConfig, data, timeZone, theme, replace);
 
   useEffect(() => {
     // If we already have a plugin and it's correct one do nothing
@@ -64,19 +56,37 @@ export function PanelRenderer<P extends object = {}, F extends object = {}>(prop
   }, [pluginId, plugin]);
 
   if (error) {
-    return <div>Failed to load plugin: {error}</div>;
+    return (
+      <div>
+        <Trans i18nKey="panel.panel-renderer.failed-to-load-plugin">Failed to load plugin: {{ error }}</Trans>
+      </div>
+    );
   }
 
   if (!plugin || !plugin.hasPluginId(pluginId)) {
-    return <div>Loading plugin panel...</div>;
+    return (
+      <div>
+        <Trans i18nKey="panel.panel-renderer.loading-plugin-panel">Loading plugin panel...</Trans>
+      </div>
+    );
   }
 
   if (!plugin.panel) {
-    return <div>Seems like the plugin you are trying to load does not have a panel component.</div>;
+    return (
+      <div>
+        <Trans i18nKey="panel.panel-renderer.no-panel-component">
+          Seems like the plugin you are trying to load does not have a panel component.
+        </Trans>
+      </div>
+    );
   }
 
   if (!dataWithOverrides) {
-    return <div>No panel data</div>;
+    return (
+      <div>
+        <Trans i18nKey="panel.panel-renderer.no-panel-data">No panel data</Trans>
+      </div>
+    );
   }
 
   const PanelComponent = plugin.panel;

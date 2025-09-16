@@ -149,10 +149,8 @@ func TestProcessManager_ManagedBackendPluginLifecycle(t *testing.T) {
 		wgKill.Add(1)
 		go func() {
 			bp.Kill() // manually kill process
-			for {
-				if !bp.Exited() {
-					break
-				}
+			for bp.Exited() {
+
 			}
 			wgKill.Done()
 		}()

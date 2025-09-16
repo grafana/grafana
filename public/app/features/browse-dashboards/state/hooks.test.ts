@@ -1,13 +1,13 @@
 import { configureStore } from 'app/store/configureStore';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
 import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
 import { BrowseDashboardsState } from '../types';
 
 import { useBrowseLoadingStatus } from './hooks';
 
-jest.mock('app/types', () => {
-  const original = jest.requireActual('app/types');
+jest.mock('app/types/store', () => {
+  const original = jest.requireActual('app/types/store');
   return {
     ...original,
     useSelector: jest.fn(),

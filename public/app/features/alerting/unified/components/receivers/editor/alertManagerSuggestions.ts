@@ -1,6 +1,6 @@
 import type { Monaco } from '@grafana/ui';
 
-import { AlertmanagerTemplateFunction } from './language';
+import { AlertmanagerTemplateFunction, GomplateFunctions } from './language';
 import { SuggestionDefinition } from './suggestionDefinition';
 
 export function getAlertManagerSuggestions(monaco: Monaco): SuggestionDefinition[] {
@@ -49,4 +49,16 @@ export function getAlertManagerSuggestions(monaco: Monaco): SuggestionDefinition
       kind,
     },
   ];
+}
+
+export function getGomplateSuggestions(monaco: Monaco): SuggestionDefinition[] {
+  const kind = monaco.languages.CompletionItemKind.Function;
+  return Object.values(GomplateFunctions).flatMap((functionList) =>
+    functionList.map((func) => ({
+      label: func.keyword,
+      detail: func.usage,
+      documentation: `${func.definition}\n\n${func.example}`,
+      kind,
+    }))
+  );
 }

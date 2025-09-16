@@ -1,7 +1,7 @@
 import { debounce, trim } from 'lodash';
 
 import { isEmptyObject, containsSearchFilter, VariableWithOptions, VariableOption } from '@grafana/data';
-import { StoreState, ThunkDispatch, ThunkResult } from 'app/types';
+import { StoreState, ThunkDispatch, ThunkResult } from 'app/types/store';
 
 import { variableAdapters } from '../../adapters';
 import { hasOptions } from '../../guard';

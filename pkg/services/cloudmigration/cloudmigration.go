@@ -7,6 +7,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+const (
+	ResourceStorageTypeFs = "fs"
+	ResourceStorageTypeDb = "db"
+)
+
 type Service interface {
 	// GetToken Returns the cloud migration token if it exists.
 	GetToken(ctx context.Context) (authapi.TokenView, error)
@@ -21,7 +26,7 @@ type Service interface {
 	DeleteSession(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, migUID string) (*CloudMigrationSession, error)
 	GetSessionList(ctx context.Context, orgID int64) (*CloudMigrationSessionListResponse, error)
 
-	CreateSnapshot(ctx context.Context, signedInUser *user.SignedInUser, sessionUid string) (*CloudMigrationSnapshot, error)
+	CreateSnapshot(ctx context.Context, signedInUser *user.SignedInUser, cmd CreateSnapshotCommand) (*CloudMigrationSnapshot, error)
 	GetSnapshot(ctx context.Context, query GetSnapshotsQuery) (*CloudMigrationSnapshot, error)
 	GetSnapshotList(ctx context.Context, query ListSnapshotsQuery) ([]CloudMigrationSnapshot, error)
 	UploadSnapshot(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, sessionUid string, snapshotUid string) error

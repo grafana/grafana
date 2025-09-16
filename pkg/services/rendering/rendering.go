@@ -27,18 +27,17 @@ import (
 var _ Service = (*RenderingService)(nil)
 
 type RenderingService struct {
-	log               log.Logger
-	plugin            Plugin
-	renderAction      renderFunc
-	renderCSVAction   renderCSVFunc
-	sanitizeSVGAction sanitizeFunc
-	sanitizeURL       string
-	domain            string
-	inProgressCount   int32
-	version           string
-	versionMutex      sync.RWMutex
-	capabilities      []Capability
-	pluginAvailable   bool
+	log                 log.Logger
+	plugin              Plugin
+	renderAction        renderFunc
+	renderCSVAction     renderCSVFunc
+	domain              string
+	inProgressCount     int32
+	version             string
+	versionMutex        sync.RWMutex
+	capabilities        []Capability
+	pluginAvailable     bool
+	rendererCallbackURL string
 
 	perRequestRenderKeyProvider renderKeyProvider
 	Cfg                         *setting.Cfg
@@ -74,15 +73,23 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 
 	logger := log.New("rendering")
 
-	// URL for HTTP sanitize API
-	var sanitizeURL string
-
 	//  value used for domain attribute of renderKey cookie
 	var domain string
 
+	// value used by the image renderer to make requests to Grafana
+	rendererCallbackURL := cfg.RendererCallbackUrl
+	// Default value for callback URL using a remote renderer should be AppURL
+	if cfg.RendererServerUrl != "" && rendererCallbackURL == "" {
+		rendererCallbackURL = cfg.AppURL
+	}
+
 	switch {
-	case cfg.RendererCallbackUrl != "":
-		u, err := url.Parse(cfg.RendererCallbackUrl)
+	case rendererCallbackURL != "":
+		if rendererCallbackURL[len(rendererCallbackURL)-1] != '/' {
+			rendererCallbackURL += "/"
+		}
+
+		u, err := url.Parse(rendererCallbackURL)
 		if err != nil {
 			logger.Warn("Image renderer callback url is not valid. " +
 				"Please provide a valid RendererCallbackUrl. " +
@@ -94,10 +101,6 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 		domain = cfg.HTTPAddr
 	default:
 		domain = "localhost"
-	}
-
-	if cfg.RendererUrl != "" {
-		sanitizeURL = getSanitizerURL(cfg.RendererUrl)
 	}
 
 	var renderKeyProvider renderKeyProvider
@@ -129,10 +132,6 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 				semverConstraint: ">= 3.4.0",
 			},
 			{
-				name:             SVGSanitization,
-				semverConstraint: ">= 3.5.0",
-			},
-			{
 				name:             PDFRendering,
 				semverConstraint: ">= 3.10.0",
 			},
@@ -143,18 +142,13 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 		RendererPluginManager: rm,
 		log:                   logger,
 		domain:                domain,
-		sanitizeURL:           sanitizeURL,
 		pluginAvailable:       exists,
+		rendererCallbackURL:   rendererCallbackURL,
 	}
 
 	gob.Register(&RenderUser{})
 
 	return s, nil
-}
-
-func getSanitizerURL(rendererURL string) string {
-	rendererBaseURL := strings.TrimSuffix(rendererURL, "/render")
-	return rendererBaseURL + "/sanitize"
 }
 
 func (rs *RenderingService) Run(ctx context.Context) error {
@@ -175,7 +169,6 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		})
 		rs.renderAction = rs.renderViaHTTP
 		rs.renderCSVAction = rs.renderCSVViaHTTP
-		rs.sanitizeSVGAction = rs.sanitizeViaHTTP
 
 		refreshTicker := time.NewTicker(remoteVersionRefreshInterval)
 
@@ -200,7 +193,6 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		rs.version = rp.Version()
 		rs.renderAction = rs.renderViaPlugin
 		rs.renderCSVAction = rs.renderCSVViaPlugin
-		rs.sanitizeSVGAction = rs.sanitizeSVGViaPlugin
 		<-ctx.Done()
 
 		return nil
@@ -215,7 +207,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 }
 
 func (rs *RenderingService) remoteAvailable() bool {
-	return rs.Cfg.RendererUrl != ""
+	return rs.Cfg.RendererServerUrl != ""
 }
 
 func (rs *RenderingService) IsAvailable(ctx context.Context) bool {
@@ -318,7 +310,7 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 		}
 	}
 
-	logger.Info("Rendering", "path", opts.Path, "userID", opts.AuthOpts.UserID)
+	logger.Info("Rendering", "path", opts.Path, "userID", opts.UserID)
 	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor == 0 {
 		opts.DeviceScaleFactor = 1
 	}
@@ -352,24 +344,6 @@ func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session
 	saveMetrics(elapsedTime, err, RenderCSV)
 
 	return result, err
-}
-
-func (rs *RenderingService) SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error) {
-	capability, err := rs.HasCapability(ctx, SVGSanitization)
-	if err != nil {
-		return nil, err
-	}
-
-	if !capability.IsSupported {
-		return nil, fmt.Errorf("svg sanitization unsupported, requires image renderer version: %s", capability.SemverConstraint)
-	}
-
-	start := time.Now()
-
-	action, err := rs.sanitizeSVGAction(ctx, req)
-	rs.log.Info("svg sanitization finished", "duration", time.Since(start), "filename", req.Filename, "isError", err != nil)
-
-	return action, err
 }
 
 func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderKeyProvider renderKeyProvider) (*RenderCSVResult, error) {
@@ -424,13 +398,14 @@ func (rs *RenderingService) getNewFilePath(rt RenderType) (string, error) {
 
 // getGrafanaCallbackURL creates a URL to send to the image rendering as callback for rendering a Grafana resource
 func (rs *RenderingService) getGrafanaCallbackURL(path string) string {
-	if rs.Cfg.RendererUrl != "" || rs.Cfg.RendererCallbackUrl != "" {
-		// The backend rendering service can potentially be remote.
-		// So we need to use the root_url to ensure the rendering service
-		// can reach this Grafana instance.
+	if rs.rendererCallbackURL != "" {
+		// rendererCallbackURL should be set if:
+		// - the backend rendering service is remote (default value is cfg.AppURL
+		// and set when initializing the service)
+		// - the service is a plugin and Grafana is running behind a proxy changing its domain
 
 		// &render=1 signals to the legacy redirect layer to
-		return fmt.Sprintf("%s%s&render=1", rs.Cfg.RendererCallbackUrl, path)
+		return fmt.Sprintf("%s%s&render=1", rs.rendererCallbackURL, path)
 	}
 
 	protocol := rs.Cfg.Protocol

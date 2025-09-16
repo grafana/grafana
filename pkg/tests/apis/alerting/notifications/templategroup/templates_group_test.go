@@ -11,11 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/templategroup/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -27,9 +25,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -41,19 +41,17 @@ func getTestHelper(t *testing.T) *apis.K8sTestHelper {
 }
 
 func TestIntegrationResourceIdentifier(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	client := newClient(t, helper.Org1.Admin)
+	client := common.NewTemplateGroupClient(t, helper.Org1.Admin)
 
 	newTemplate := &v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "templateGroup",
 			Content: `{{ define "test" }} test {{ end }}`,
 		},
@@ -109,9 +107,9 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
 
-		defaultDefn, err := templates.DefaultTemplate()
+		defaultDefn, err := templates.DefaultTemplate(templates.DefaultTemplatesToOmit)
 		require.NoError(t, err)
-		require.Equal(t, v0alpha1.Spec{
+		require.Equal(t, v0alpha1.TemplateGroupSpec{
 			Title:   v0alpha1.DefaultTemplateTitle,
 			Content: defaultDefn.Template,
 		}, actual.Spec)
@@ -139,9 +137,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 }
 
 func TestIntegrationAccessControl(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -217,17 +213,17 @@ func TestIntegrationAccessControl(t *testing.T) {
 		},
 	}
 
-	adminClient := newClient(t, org1.Admin)
+	adminClient := common.NewTemplateGroupClient(t, org1.Admin)
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
-			client := newClient(t, tc.user)
+			client := common.NewTemplateGroupClient(t, tc.user)
 
 			var expected = &v0alpha1.TemplateGroup{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
-				Spec: v0alpha1.Spec{
+				Spec: v0alpha1.TemplateGroupSpec{
 					Title:   fmt.Sprintf("template-group-1-%s", tc.user.Identity.GetLogin()),
 					Content: `{{ define "test" }} test {{ end }}`,
 				},
@@ -367,9 +363,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 }
 
 func TestIntegrationProvisioning(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -377,7 +371,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 	org := helper.Org1
 
 	admin := org.Admin
-	adminClient := newClient(t, admin)
+	adminClient := common.NewTemplateGroupClient(t, admin)
 
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
@@ -388,7 +382,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "template-group-1",
 			Content: `{{ define "test" }} test {{ end }}`,
 		},
@@ -420,20 +414,18 @@ func TestIntegrationProvisioning(t *testing.T) {
 }
 
 func TestIntegrationOptimisticConcurrency(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := common.NewTemplateGroupClient(t, helper.Org1.Admin)
 
 	template := v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "template-group-1",
 			Content: `{{ define "test" }} test {{ end }}`,
 		},
@@ -504,20 +496,18 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 }
 
 func TestIntegrationPatch(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := common.NewTemplateGroupClient(t, helper.Org1.Admin)
 
 	template := v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "template-group",
 			Content: `{{ define "test" }} test {{ end }}`,
 		},
@@ -565,19 +555,17 @@ func TestIntegrationPatch(t *testing.T) {
 }
 
 func TestIntegrationListSelector(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := common.NewTemplateGroupClient(t, helper.Org1.Admin)
 
 	template1 := &v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "test1",
 			Content: `{{ define "test1" }} test {{ end }}`,
 		},
@@ -589,7 +577,7 @@ func TestIntegrationListSelector(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "test2",
 			Content: `{{ define "test2" }} test {{ end }}`,
 		},
@@ -663,20 +651,4 @@ func TestIntegrationListSelector(t *testing.T) {
 		require.NotEqualf(t, templates.DefaultTemplateName, list.Items[0].Name, "Expected non-default template but got %s", list.Items[0].Name)
 		require.NotEqualf(t, templates.DefaultTemplateName, list.Items[1].Name, "Expected non-default template but got %s", list.Items[1].Name)
 	})
-}
-
-func newClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.TemplateGroup, v0alpha1.TemplateGroupList] {
-	t.Helper()
-
-	client, err := dynamic.NewForConfig(user.NewRestConfig())
-	require.NoError(t, err)
-
-	return &apis.TypedClient[v0alpha1.TemplateGroup, v0alpha1.TemplateGroupList]{
-		Client: client.Resource(
-			schema.GroupVersionResource{
-				Group:    v0alpha1.Kind().Group(),
-				Version:  v0alpha1.Kind().Version(),
-				Resource: v0alpha1.Kind().Plural(),
-			}).Namespace("default"),
-	}
 }

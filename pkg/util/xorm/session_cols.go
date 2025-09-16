@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 func setColumnInt(bean any, col *core.Column, t int64) {

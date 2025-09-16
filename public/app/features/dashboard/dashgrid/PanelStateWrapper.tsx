@@ -114,6 +114,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         canAddAnnotations: props.dashboard.canAddAnnotations.bind(props.dashboard),
         canEditAnnotations: props.dashboard.canEditAnnotations.bind(props.dashboard),
         canDeleteAnnotations: props.dashboard.canDeleteAnnotations.bind(props.dashboard),
+        canExecuteActions: props.dashboard.canExecuteActions.bind(props.dashboard),
         onAddAdHocFilter: this.onAddAdHocFilter,
         onUpdateData: this.onUpdateData,
       },
@@ -362,6 +363,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       panel.runAllPanelQueries({
         dashboardUID: dashboard.uid,
         dashboardTimezone: dashboard.getTimezone(),
+        dashboardTitle: dashboard.title,
         timeData,
         width,
       });

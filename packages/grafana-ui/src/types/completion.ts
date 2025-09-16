@@ -1,7 +1,7 @@
 import { Value } from 'slate';
 import { Editor } from 'slate-react';
 
-import { SearchFunctionType } from '../utils';
+import { SearchFunctionType } from '../utils/searchFunctions';
 
 /**
  * @internal

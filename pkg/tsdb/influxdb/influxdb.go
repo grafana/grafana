@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/fsql"
 
@@ -23,14 +22,12 @@ import (
 var logger log.Logger = log.New("tsdb.influxdb")
 
 type Service struct {
-	im       instancemgmt.InstanceManager
-	features featuremgmt.FeatureToggles
+	im instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClient httpclient.Provider, features featuremgmt.FeatureToggles) *Service {
+func ProvideService(httpClient httpclient.Provider) *Service {
 	return &Service{
-		im:       datasource.NewInstanceManager(newInstanceSettings(httpClient)),
-		features: features,
+		im: datasource.NewInstanceManager(newInstanceSettings(httpClient)),
 	}
 }
 
@@ -72,6 +69,12 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			database = settings.Database
 		}
 
+		proxyClient, err := settings.ProxyClient(ctx)
+		if err != nil {
+			logger.Error("influx proxy creation failed", "error", err)
+			return nil, fmt.Errorf("influx proxy creation failed")
+		}
+
 		model := &models.DatasourceInfo{
 			HTTPClient:    client,
 			URL:           settings.URL,
@@ -85,6 +88,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			InsecureGrpc:  jsonData.InsecureGrpc,
 			Token:         settings.DecryptedSecureJSONData["token"],
 			Timeout:       opts.Timeouts.Timeout,
+			ProxyClient:   proxyClient,
+			TLSConfig:     opts.TLS,
 		}
 		return model, nil
 	}
@@ -107,7 +112,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	case influxVersionFlux:
 		return flux.Query(ctx, dsInfo, *req)
 	case influxVersionInfluxQL:
-		return influxql.Query(ctx, tracer, dsInfo, req, s.features)
+		return influxql.Query(ctx, tracer, dsInfo, req)
 	case influxVersionSQL:
 		return fsql.Query(ctx, dsInfo, *req)
 	default:

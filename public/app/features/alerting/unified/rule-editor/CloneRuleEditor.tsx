@@ -1,5 +1,6 @@
 import { cloneDeep } from 'lodash';
 
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
@@ -10,14 +11,14 @@ import { useRuleWithLocation } from '../hooks/useCombinedRule';
 import { generateCopiedName } from '../utils/duplicate';
 import { stringifyErrorLike } from '../utils/misc';
 import { rulerRuleToFormValues } from '../utils/rule-form';
-import { getRuleName, isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from '../utils/rules';
+import { getRuleName, rulerRuleType } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
 export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier }) {
   const { loading, result: rule, error } = useRuleWithLocation({ ruleIdentifier: sourceRuleId });
 
   if (loading) {
-    return <LoadingPlaceholder text="Loading the rule..." />;
+    return <LoadingPlaceholder text={t('alerting.clone-rule-editor.text-loading-the-rule', 'Loading the rule...')} />;
   }
 
   if (rule) {
@@ -29,7 +30,7 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
 
   if (error) {
     return (
-      <Alert title="Error" severity="error">
+      <Alert title={t('alerting.clone-rule-editor.title-error', 'Error')} severity="error">
         {stringifyErrorLike(error)}
       </Alert>
     );
@@ -37,7 +38,7 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
 
   return (
     <Alert
-      title="Cannot copy the rule. The rule does not exist"
+      title={t('alerting.clone-rule-editor.title-cannot-exist', 'Cannot copy the rule. The rule does not exist')}
       buttonContent="Go back to alert list"
       onRemove={() => locationService.replace(createRelativeUrl('/alerting/list'))}
     />
@@ -45,14 +46,14 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
 }
 
 function changeRuleName(rule: RulerRuleDTO, newName: string) {
-  if (isGrafanaRulerRule(rule)) {
+  if (rulerRuleType.grafana.rule(rule)) {
     rule.grafana_alert.title = newName;
   }
-  if (isAlertingRulerRule(rule)) {
+  if (rulerRuleType.dataSource.alertingRule(rule)) {
     rule.alert = newName;
   }
 
-  if (isRecordingRulerRule(rule)) {
+  if (rulerRuleType.dataSource.recordingRule(rule)) {
     rule.record = newName;
   }
 }
@@ -64,7 +65,7 @@ export function cloneRuleDefinition(rule: RuleWithLocation<RulerRuleDTO>) {
     generateCopiedName(getRuleName(ruleClone.rule), ruleClone.group.rules.map(getRuleName))
   );
 
-  if (isGrafanaRulerRule(ruleClone.rule)) {
+  if (rulerRuleType.grafana.rule(ruleClone.rule)) {
     ruleClone.rule.grafana_alert.uid = '';
 
     // Provisioned alert rules have provisioned alert group which cannot be used in UI

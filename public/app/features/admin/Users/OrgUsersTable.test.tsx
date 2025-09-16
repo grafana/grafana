@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { OrgUser } from '../../../types';
-import { getMockUsers } from '../../users/__mocks__/userMocks';
+import { OrgUser } from 'app/types/user';
+
+import { getMockUsers } from '../../users/mocks/userMocks';
 
 import { OrgUsersTable, Props } from './OrgUsersTable';
 

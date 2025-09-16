@@ -1,0 +1,96 @@
+import { t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
+import { Badge, BadgeColor, IconName } from '@grafana/ui';
+import { Repository } from 'app/api/clients/provisioning/v0alpha1';
+
+import { PROVISIONING_URL } from '../constants';
+
+interface StatusBadgeProps {
+  repo?: Repository;
+}
+
+export function StatusBadge({ repo }: StatusBadgeProps) {
+  if (!repo) {
+    return null;
+  }
+
+  // TODO: remove after 12.2
+  if (repo.spec?.type !== 'local' && !repo.secure?.token?.name) {
+    return (
+      <Badge
+        color={'red'}
+        icon={'exclamation-triangle'}
+        style={{ cursor: 'pointer' }}
+        text={t('provisioning.inline-token-warning-badge-text', 'Token needs to be saved again')}
+        tooltip={t(
+          'inline-token-warning-badge-tooltip',
+          'The method to save the token is to re-enter it in the repository settings.'
+        )}
+        onClick={() => {
+          // navigate to edit page, rather than view page
+          locationService.push(`${PROVISIONING_URL}/${repo.metadata?.name}/edit`);
+        }}
+      />
+    );
+  }
+
+  let tooltip: string | undefined = undefined;
+  let color: BadgeColor = 'purple';
+  let text = 'Unknown';
+  let icon: IconName = 'exclamation-triangle';
+
+  if (repo.metadata?.deletionTimestamp) {
+    color = 'red';
+    text = 'Deleting';
+    icon = 'spinner';
+  } else if (!repo.spec?.sync?.enabled) {
+    color = 'red';
+    text = 'Automatic pulling disabled';
+    icon = 'info-circle';
+  } else if (!repo.status?.sync?.state?.length) {
+    color = 'darkgrey';
+    text = 'Pending';
+    icon = 'spinner';
+    tooltip = 'Waiting for health check to run';
+  } else {
+    // Sync state
+    switch (repo.status?.sync?.state) {
+      case 'success':
+        icon = 'check';
+        text = 'Up-to-date';
+        color = 'green';
+        break;
+      case 'working':
+      case 'warning':
+        color = 'orange';
+        text = 'warning';
+        icon = 'exclamation-triangle';
+        break;
+      case 'pending':
+        color = 'darkgrey';
+        text = 'Pulling';
+        icon = 'spinner';
+        break;
+      case 'error':
+        color = 'red';
+        text = 'Error';
+        icon = 'exclamation-triangle';
+        break;
+      default:
+        break;
+    }
+  }
+
+  return (
+    <Badge
+      color={color}
+      icon={icon}
+      text={text}
+      style={{ cursor: 'pointer' }}
+      tooltip={tooltip}
+      onClick={() => {
+        locationService.push(`${PROVISIONING_URL}/${repo.metadata?.name}/?tab=overview`);
+      }}
+    />
+  );
+}

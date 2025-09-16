@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { createRef, PureComponent, ReactElement } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Button,
   ConfirmButton,
@@ -14,13 +15,15 @@ import {
   useStyles2,
   withTheme2,
   Stack,
+  TextLink,
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
-import { AccessControlAction, Organization, OrgRole, Role, UserDTO, UserOrg } from 'app/types';
+import { AccessControlAction, Role } from 'app/types/accessControl';
+import { Organization } from 'app/types/organization';
+import { UserOrg, UserDTO } from 'app/types/user';
 
 import { OrgRolePicker } from './OrgRolePicker';
 
@@ -240,7 +243,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
         <td colSpan={1}>
           {canRemoveFromOrg && (
             <ConfirmButton
-              confirmText="Confirm removal"
+              confirmText={t('admin.un-themed-org-row.confirmText-confirm-removal', 'Confirm removal')}
               confirmVariant="destructive"
               onCancel={this.onCancelClick}
               onConfirm={this.onOrgRemove}
@@ -363,14 +366,14 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
       <Modal
         className={styles.modal}
         contentClassName={styles.modalContent}
-        title="Add to an organization"
+        title={t('admin.add-to-org-modal.title-add-to-an-organization', 'Add to an organization')}
         isOpen={isOpen}
         onDismiss={this.onCancel}
       >
-        <Field label="Organization">
+        <Field label={t('admin.add-to-org-modal.label-organization', 'Organization')}>
           <OrgPicker inputId="new-org-input" onSelected={this.onOrgSelect} excludeOrgs={userOrgs} autoFocus />
         </Field>
-        <Field label="Role" disabled={selectedOrg === null}>
+        <Field label={t('admin.add-to-org-modal.label-role', 'Role')} disabled={selectedOrg === null}>
           <UserRolePicker
             userId={user?.id || 0}
             orgId={selectedOrg?.id}
@@ -444,14 +447,9 @@ export function ChangeOrgButton({
                 <Trans i18nKey="admin.user-orgs.role-not-editable">
                   This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
                   the&nbsp;
-                  <a
-                    className={styles.tooltipItemLink}
-                    href={'https://grafana.com/docs/grafana/latest/auth'}
-                    rel="noreferrer"
-                    target="_blank"
-                  >
+                  <TextLink href={'https://grafana.com/docs/grafana/latest/auth'} external>
                     Grafana authentication docs
-                  </a>
+                  </TextLink>
                   &nbsp;for details.
                 </Trans>
               </div>
@@ -464,7 +462,7 @@ export function ChangeOrgButton({
         </>
       ) : (
         <ConfirmButton
-          confirmText="Save"
+          confirmText={t('admin.change-org-button.confirmText-save', 'Save')}
           onClick={onChangeRoleClick}
           onCancel={onCancelClick}
           onConfirm={onOrgRoleSave}
@@ -494,14 +492,9 @@ export const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) =
             <Trans i18nKey="admin.user-orgs.external-user-tooltip">
               This user&apos;s built-in role is not editable because it is synchronized from your auth provider. Refer
               to the&nbsp;
-              <a
-                className={styles.tooltipItemLink}
-                href={'https://grafana.com/docs/grafana/latest/auth'}
-                rel="noreferrer noopener"
-                target="_blank"
-              >
+              <TextLink href={'https://grafana.com/docs/grafana/latest/auth'} external>
                 Grafana authentication docs
-              </a>
+              </TextLink>
               &nbsp;for details.
             </Trans>
           </div>
@@ -516,9 +509,6 @@ export const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) =
 const getTooltipStyles = (theme: GrafanaTheme2) => ({
   disabledTooltip: css({
     display: 'flex',
-  }),
-  tooltipItemLink: css({
-    color: theme.v1.palette.blue95,
   }),
   lockMessageClass: css({
     fontStyle: 'italic',

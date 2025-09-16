@@ -406,13 +406,7 @@
               "id": "1",
               "meta": {},
               "settings": {
-                "percents": [
-                  25,
-                  50,
-                  75,
-                  95,
-                  99
-                ]
+                "percents": [25, 50, 75, 95, 99]
               },
               "type": "percentiles"
             }
@@ -589,9 +583,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
@@ -979,9 +971,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
@@ -1059,9 +1049,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
@@ -1106,11 +1094,7 @@
   ],
   "refresh": "",
   "schemaVersion": 38,
-  "tags": [
-    "gdev",
-    "elasticsearch",
-    "datasource-test"
-  ],
+  "tags": ["gdev", "elasticsearch", "datasource-test"],
   "templating": {
     "list": []
   },

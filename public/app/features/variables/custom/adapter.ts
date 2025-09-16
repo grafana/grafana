@@ -1,6 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import { CustomVariableModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { dispatch } from '../../../store/store';
 import { VariableAdapter } from '../adapters';
@@ -16,7 +17,10 @@ import { customVariableReducer, initialCustomVariableModelState } from './reduce
 export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableModel> => {
   return {
     id: 'custom',
-    description: 'Define variable values manually',
+    description: t(
+      'variables.create-custom-variable-adapter.description.define-variable-values-manually',
+      'Define variable values manually'
+    ),
     name: 'Custom',
     initialState: initialCustomVariableModelState,
     reducer: customVariableReducer,

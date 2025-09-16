@@ -5,6 +5,7 @@
     {
       "expr": "",
       "for": "5m",
+      "keep_firing_for": "0s",
       "labels": {
         "label1": "test-label"
       },

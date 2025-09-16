@@ -7,6 +7,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
@@ -37,28 +38,26 @@ const (
 	RelationCreate = common.RelationCreate
 	RelationDelete = common.RelationDelete
 
-	RelationFolderResourceSetView  = common.RelationFolderResourceSetView
-	RelationFolderResourceSetEdit  = common.RelationFolderResourceSetEdit
-	RelationFolderResourceSetAdmin = common.RelationFolderResourceSetAdmin
+	RelationSubresourceSetView  = common.RelationSubresourceSetView
+	RelationSubresourceSetEdit  = common.RelationSubresourceSetEdit
+	RelationSubresourceSetAdmin = common.RelationSubresourceSetAdmin
 
-	RelationFolderResourceRead   = common.RelationFolderResourceGet
-	RelationFolderResourceWrite  = common.RelationFolderResourceUpdate
-	RelationFolderResourceCreate = common.RelationFolderResourceCreate
-	RelationFolderResourceDelete = common.RelationFolderResourceDelete
+	RelationSubresourceRead   = common.RelationSubresourceGet
+	RelationSubresourceWrite  = common.RelationSubresourceUpdate
+	RelationSubresourceCreate = common.RelationSubresourceCreate
+	RelationSubresourceDelete = common.RelationSubresourceDelete
 )
 
 var (
-	RelationsFolder         = common.RelationsFolder
-	RelationsResouce        = common.RelationsResource
-	RelationsFolderResource = common.RelationsFolderResource
+	RelationsFolder      = common.RelationsTyped
+	RelationsResouce     = common.RelationsResource
+	RelationsSubresource = common.RelationsSubresource
 )
 
 const (
 	KindDashboards string = "dashboards"
 	KindFolders    string = "folders"
 )
-
-var ClusterNamespace = common.ClusterNamespace
 
 var (
 	ToAuthzExtTupleKey                  = common.ToAuthzExtTupleKey
@@ -119,8 +118,8 @@ func IsFolderResourceTuple(t *openfgav1.TupleKey) bool {
 }
 
 func MergeFolderResourceTuples(a, b *openfgav1.TupleKey) {
-	va := a.Condition.Context.Fields["group_resources"]
-	vb := b.Condition.Context.Fields["group_resources"]
+	va := a.Condition.Context.Fields["subresources"]
+	vb := b.Condition.Context.Fields["subresources"]
 	va.GetListValue().Values = append(va.GetListValue().Values, vb.GetListValue().Values...)
 }
 

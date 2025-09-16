@@ -6,11 +6,13 @@
       - "host.docker.internal:host-gateway"
     command: >
       --enable-feature=remote-write-receiver
+      --enable-feature=promql-experimental-functions
       --config.file=/etc/prometheus/prometheus.yml
       --storage.tsdb.path=/prometheus
       --web.console.libraries=/usr/share/prometheus/console_libraries
       --web.console.templates=/usr/share/prometheus/consoles
       --web.config.file=/etc/prometheus/web.yml
+      --web.enable-remote-write-receiver
 
   node_exporter:
     image: prom/node-exporter
@@ -25,7 +27,7 @@
       FD_DATASOURCE: prom
 
   alertmanager:
-    image: prom/alertmanager 
+    image: prom/alertmanager
     volumes:
     - ${PWD}/docker/blocks/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
     command: >

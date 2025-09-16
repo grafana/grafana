@@ -5,7 +5,7 @@ import * as React from 'react';
 import { getThemeById } from '@grafana/data';
 
 import { createStorybookTheme } from '../../../.storybook/storybookTheme';
-import { GlobalStyles } from '../../themes';
+import { GlobalStyles } from '../../themes/GlobalStyles/GlobalStyles';
 
 type Props = {
   context: DocsContextProps;

@@ -36,15 +36,15 @@ export interface ThemeComponents {
     background: string;
     padding: number;
   };
+  drawer: {
+    padding: number;
+  };
   textHighlight: {
     background: string;
     text: string;
   };
   sidemenu: {
     width: number;
-  };
-  menuTabs: {
-    height: number;
   };
   horizontalDrawer: {
     defaultHeight: number;
@@ -90,12 +90,16 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
       background: colors.background.canvas,
       padding: 1,
     },
+    drawer: {
+      padding: 2,
+    },
     overlay: {
-      background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.45)' : 'rgba(208, 209, 211, 0.24)',
+      background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.5)' : 'rgba(208, 209, 211, 0.5)',
     },
     sidemenu: {
       width: 57,
     },
+    // @ts-expect-error (added here to not crash plugins that might use it)
     menuTabs: {
       height: 5,
     },

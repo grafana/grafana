@@ -1,23 +1,23 @@
 import { useMemo, useState } from 'react';
-import { useAsync } from 'react-use';
 
+import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
-import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
+
+import { Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist/v0alpha1';
 
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
-import { getPlaylistAPI, searchPlaylists } from './api';
-import { Playlist } from './types';
+import { searchPlaylists } from './utils';
 
 export const PlaylistPage = () => {
-  const api = getPlaylistAPI();
-  const [forcePlaylistsFetch, setForcePlaylistsFetch] = useState(0);
+  const { data, isLoading } = useListPlaylistQuery({});
+  const [deletePlaylist] = useDeletePlaylistMutation();
   const [searchQuery, setSearchQuery] = useState('');
-  const allPlaylists = useAsync(() => api.getAllPlaylist(), [forcePlaylistsFetch]);
-  const playlists = useMemo(() => searchPlaylists(allPlaylists.value ?? [], searchQuery), [searchQuery, allPlaylists]);
+  const allPlaylists = useMemo(() => data?.items ?? [], [data?.items]);
+  const playlists = useMemo(() => searchPlaylists(allPlaylists, searchQuery), [searchQuery, allPlaylists]);
 
   const [startPlaylist, setStartPlaylist] = useState<Playlist | undefined>();
   const [playlistToDelete, setPlaylistToDelete] = useState<Playlist | undefined>();
@@ -28,18 +28,19 @@ export const PlaylistPage = () => {
     if (!playlistToDelete) {
       return;
     }
-    api.deletePlaylist(playlistToDelete.uid).finally(() => {
-      setForcePlaylistsFetch(forcePlaylistsFetch + 1);
+    deletePlaylist({
+      name: playlistToDelete.metadata?.name ?? '',
+    }).finally(() => {
       setPlaylistToDelete(undefined);
     });
   };
 
-  const showSearch = allPlaylists.loading || playlists.length > 0 || searchQuery.length > 0;
+  const showSearch = isLoading || playlists.length > 0 || searchQuery.length > 0;
 
   return (
     <Page
       actions={
-        contextSrv.isEditor ? (
+        contextSrv.isEditor && showSearch ? (
           <LinkButton href="/playlists/new">
             <Trans i18nKey="playlist-page.create-button.title">New playlist</Trans>
           </LinkButton>
@@ -50,7 +51,7 @@ export const PlaylistPage = () => {
       <Page.Contents>
         {showSearch && <PageActionBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}
 
-        {allPlaylists.loading ? (
+        {isLoading ? (
           <PlaylistPageList.Skeleton />
         ) : (
           <>
@@ -83,10 +84,10 @@ export const PlaylistPage = () => {
             )}
             {playlistToDelete && (
               <ConfirmModal
-                title={playlistToDelete.name}
+                title={playlistToDelete.spec?.title ?? ''}
                 confirmText={t('playlist-page.delete-modal.confirm-text', 'Delete')}
                 body={t('playlist-page.delete-modal.body', 'Are you sure you want to delete {{name}} playlist?', {
-                  name: playlistToDelete.name,
+                  name: playlistToDelete.spec?.title,
                 })}
                 onConfirm={onDeletePlaylist}
                 isOpen={Boolean(playlistToDelete)}

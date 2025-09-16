@@ -5,12 +5,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { ComponentSize } from '../../types/size';
 import { trimFileName } from '../../utils/file';
-import { getButtonStyles } from '../Button';
+import { getButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 
 export interface Props {
@@ -67,7 +68,7 @@ export const FileUpload = ({
 
       {showFileName && fileName && (
         <span
-          aria-label="File name"
+          aria-label={t('grafana-ui.file-upload.file-name', 'File name')}
           className={style.fileName}
           data-testid={selectors.components.FileUpload.fileNameSpan}
         >

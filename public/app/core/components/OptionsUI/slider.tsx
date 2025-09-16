@@ -5,13 +5,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { StandardEditorProps, GrafanaTheme2, SliderFieldConfigSettings } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
-import { getStyles } from '@grafana/ui/src/components/Slider/styles';
+import { getSliderStyles } from '@grafana/ui/internal';
 
 import { NumberInput } from './NumberInput';
 
 type Props = StandardEditorProps<number, SliderFieldConfigSettings>;
 
-export const SliderValueEditor = ({ value, onChange, item }: Props) => {
+export const SliderValueEditor = ({ value, onChange, item, id }: Props) => {
   // Input reference
   const inputRef = useRef<HTMLSpanElement>(null);
 
@@ -86,7 +86,7 @@ export const SliderValueEditor = ({ value, onChange, item }: Props) => {
   );
 
   // Styles
-  const styles = getStyles(theme, isHorizontal, Boolean(marks));
+  const styles = getSliderStyles(theme, isHorizontal, Boolean(marks));
   const stylesSlider = getStylesSlider(theme, inputWidth);
   const sliderInputClassNames = !isHorizontal ? [styles.sliderInputVertical] : [];
 
@@ -109,7 +109,7 @@ export const SliderValueEditor = ({ value, onChange, item }: Props) => {
           included={included}
         />
         <span className={stylesSlider.numberInputWrapper} ref={inputRef}>
-          <NumberInput value={sliderValue} onChange={onSliderInputChange} max={max} min={min} step={step} />
+          <NumberInput id={id} value={sliderValue} onChange={onSliderInputChange} max={max} min={min} step={step} />
         </span>
       </div>
     </div>

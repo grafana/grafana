@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
-import { DashboardCursorSync, PanelProps } from '@grafana/data';
+import { DashboardCursorSync, PanelProps, useDataLinksContext } from '@grafana/data';
+import { PanelDataErrorView } from '@grafana/runtime';
 import {
   AxisPlacement,
   EventBusPlugin,
@@ -9,7 +10,7 @@ import {
   usePanelContext,
   useTheme2,
 } from '@grafana/ui';
-import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
   prepareTimelineFields,
@@ -37,14 +38,20 @@ export const StateTimelinePanel = ({
   options,
   width,
   height,
+  fieldConfig,
   replaceVariables,
   onChangeTimeRange,
+  id: panelId,
 }: TimelinePanelProps) => {
   const theme = useTheme2();
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
-  const { sync, eventsScope, canAddAnnotations, dataLinkPostProcessor, eventBus } = usePanelContext();
+  const { sync, eventsScope, canAddAnnotations, eventBus, canExecuteActions } = usePanelContext();
+
+  const { dataLinkPostProcessor } = useDataLinksContext();
+
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   const { frames, warn } = useMemo(
@@ -64,12 +71,8 @@ export const StateTimelinePanel = ({
 
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
 
-  if (!paginatedFrames || warn) {
-    return (
-      <div className="panel-empty">
-        <p>{warn ?? 'No data found in response'}</p>
-      </div>
-    );
+  if (!paginatedFrames || typeof warn === 'string') {
+    return <PanelDataErrorView panelId={panelId} fieldConfig={fieldConfig} data={data} message={warn} needsTimeField />;
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
@@ -138,6 +141,7 @@ export const StateTimelinePanel = ({
                         maxHeight={options.tooltip.maxHeight}
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
+                        canExecuteActions={userCanExecuteActions}
                       />
                     );
                   }}

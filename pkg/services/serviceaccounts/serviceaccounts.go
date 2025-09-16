@@ -41,8 +41,6 @@ type Service interface {
 	DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error
 	ListTokens(ctx context.Context, query *GetSATokensQuery) ([]apikey.APIKey, error)
 
-	// API specific functions
-	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
 	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*MigrationResult, error)
 }
 
@@ -82,7 +80,7 @@ func MiddlewareServiceAccountUIDResolver(saService Service, paramName string) we
 	return func(c *contextmodel.ReqContext) {
 		// Get sa id from request, fetch service account and replace saUID with saID
 		saUID := web.Params(c.Req)[paramName]
-		id, err := handler(c.Req.Context(), c.SignedInUser.GetOrgID(), saUID)
+		id, err := handler(c.Req.Context(), c.GetOrgID(), saUID)
 		if err == nil {
 			gotParams := web.Params(c.Req)
 			gotParams[paramName] = id

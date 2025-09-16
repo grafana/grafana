@@ -102,6 +102,8 @@ Transformations are a powerful way to manipulate data returned by a query before
 - Perform mathematical operations across queries
 - Use the output of one transformation as the input to another transformation
 
+{{< docs/learning-journeys title="Transform data in a Grafana Cloud dashboard" url="https://grafana.com/docs/learning-journeys/data-transformation/" >}}
+
 For users that rely on multiple views of the same dataset, transformations offer an efficient method of creating and maintaining numerous dashboards.
 
 You can also use the output of one transformation as the input to another transformation, which results in a performance gain.
@@ -117,6 +119,16 @@ Grafana provides a number of ways that you can transform data. For a complete li
 When there are multiple transformations, Grafana applies them in the order they are listed. Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.
 
 The order in which Grafana applies transformations directly impacts the results. For example, if you use a Reduce transformation to condense all the results of one column into a single value, then you can only apply transformations to that single value.
+
+## Dashboard variables in transformations
+
+All text input fields in transformations accept [variable syntax](ref:dashboard-variable):
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-transformation-variables-v11.6.png" alt="Transformation with a mock variable in a text field" >}}
+
+When you use dashboard variables in transformations, the variables are automatically interpolated before the transformations are applied to the data.
+
+For an example, refer to [Use a dashboard variable](#use-a-dashboard-variable) in the **Filter fields by name** transformation.
 
 ## Add a transformation function to data
 
@@ -204,14 +216,6 @@ ${transformationDocsContent[transformationName].getHelperDocs(ImageRenderType.Sh
   return content;
 }
 
-export function buildMarkdownContent(): void {
-  // Build the path to the Markdown file.
-  const indexPath = resolve(__dirname, '../../' + WRITE_PATH);
-
-  // Write content to the Markdown file.
-  writeFileSync(indexPath, completeTemplate, 'utf-8');
-}
-
 export function getMarkdownContent(): string {
   const rootDir = resolve(__dirname, '../../');
   const pathToMarkdown = resolve(rootDir, WRITE_PATH);
@@ -221,3 +225,9 @@ export function getMarkdownContent(): string {
 export function getJavaScriptContent(): string {
   return completeTemplate;
 }
+
+// Build the path to the Markdown file.
+const indexPath = resolve(__dirname, '../../' + WRITE_PATH);
+
+// Write content to the Markdown file.
+writeFileSync(indexPath, completeTemplate, 'utf-8');

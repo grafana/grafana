@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import { t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
@@ -102,11 +103,11 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     );
   }
 
-  let title = 'Save dashboard';
+  let title = t('dashboard.save-dashboard-drawer.title', 'Save dashboard');
   if (isCopy) {
-    title = 'Save dashboard copy';
+    title = t('dashboard.save-dashboard-drawer.title-copy', 'Save dashboard copy');
   } else if (isProvisioned) {
-    title = 'Provisioned dashboard';
+    title = t('dashboard.save-dashboard-drawer.title-provisioned', 'Provisioned dashboard');
   }
 
   return (
@@ -116,9 +117,18 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       subtitle={dashboard.title}
       tabs={
         <TabsBar>
-          <Tab label={'Details'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
+          <Tab
+            label={t('dashboard.save-dashboard-drawer.label-details', 'Details')}
+            active={!showDiff}
+            onChangeTab={() => setShowDiff(false)}
+          />
           {data.hasChanges && (
-            <Tab label={'Changes'} active={showDiff} onChangeTab={() => setShowDiff(true)} counter={data.diffCount} />
+            <Tab
+              label={t('dashboard.save-dashboard-drawer.label-changes', 'Changes')}
+              active={showDiff}
+              onChangeTab={() => setShowDiff(true)}
+              counter={data.diffCount}
+            />
           )}
         </TabsBar>
       }

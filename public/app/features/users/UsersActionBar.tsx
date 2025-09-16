@@ -1,10 +1,12 @@
 import { connect, ConnectedProps } from 'react-redux';
 
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { RadioButtonGroup, LinkButton, FilterInput, InlineField } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, StoreState } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { StoreState } from 'app/types/store';
 
 import { selectTotal } from '../invites/state/selectors';
 
@@ -44,7 +46,7 @@ export const UsersActionBarUnconnected = ({
   showInvites,
 }: Props): JSX.Element => {
   const options = [
-    { label: 'Users', value: 'users' },
+    { label: t('users.users-action-bar-unconnected.options.label.users', 'Users'), value: 'users' },
     { label: `Pending Invites (${pendingInvitesCount})`, value: 'invites' },
   ];
   const canAddToOrg: boolean = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd);
@@ -66,7 +68,10 @@ export const UsersActionBarUnconnected = ({
         <FilterInput
           value={searchQuery}
           onChange={changeSearchQuery}
-          placeholder="Search user by login, email or name"
+          placeholder={t(
+            'users.users-action-bar-unconnected.placeholder-search-login-email',
+            'Search user by login, email or name'
+          )}
         />
       </InlineField>
       {pendingInvitesCount > 0 && (
@@ -74,7 +79,11 @@ export const UsersActionBarUnconnected = ({
           <RadioButtonGroup value={showInvites ? 'invites' : 'users'} options={options} onChange={onShowInvites} />
         </div>
       )}
-      {showInviteButton && <LinkButton href="org/users/invite">Invite</LinkButton>}
+      {showInviteButton && (
+        <LinkButton href="org/users/invite">
+          <Trans i18nKey="users.users-action-bar-unconnected.invite">Invite</Trans>
+        </LinkButton>
+      )}
       {externalUserMngLinkUrl && (
         <LinkButton
           onClick={onExternalUserMngClick}

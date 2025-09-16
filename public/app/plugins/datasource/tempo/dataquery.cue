@@ -42,12 +42,14 @@ composableKinds: DataQuery: {
 					serviceMapQuery?: string | [...string]
 					// Use service.namespace in addition to service.name to uniquely identify a service.
 					serviceMapIncludeNamespace?: bool
+					// Whether to use native histograms for service map queries
+					serviceMapUseNativeHistograms?: bool
 					// Defines the maximum number of traces that are returned from Tempo
 					limit?: int64
 					// Defines the maximum number of spans per spanset that are returned from Tempo
 					spss?: int64
 					filters: [...#TraceqlFilter]
-					// Filters that are used to query the metrics summary
+					// deprecated Filters that are used to query the metrics summary	
 					groupBy?: [...#TraceqlFilter]
 					// The type of the table that is used to display the search results
 					tableType?: #SearchTableType
@@ -84,6 +86,8 @@ composableKinds: DataQuery: {
 					valueType?: string
 					// The scope of the filter, can either be unscoped/all scopes, resource or span
 					scope?: #TraceqlSearchScope
+					// Whether the value is a custom value typed by the user
+					isCustomValue?: bool
 				} @cuetsy(kind="interface")
 			}
 		}]
