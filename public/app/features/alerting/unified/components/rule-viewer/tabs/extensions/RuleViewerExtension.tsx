@@ -7,7 +7,6 @@ import { logError } from '../../../../Analytics';
 
 export interface RuleViewerExtensionProps {
   ruleUid: string;
-  isRuleEditable: boolean;
 }
 
 let InternalRulePageEnrichmentSection: ComponentType<RuleViewerExtensionProps> | null = null;

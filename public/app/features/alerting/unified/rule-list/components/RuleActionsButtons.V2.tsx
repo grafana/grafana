@@ -121,11 +121,7 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
         <SilenceGrafanaRuleDrawer ruleUid={ruleUid} onClose={() => setShowSilenceDrawer(false)} />
       )}
       {ruleUid && showEnrichmentDrawer && (
-        <EnrichmentDrawerExtension
-          ruleUid={ruleUid}
-          onClose={() => setShowEnrichmentDrawer(false)}
-          isRuleEditable={canEditRule}
-        />
+        <EnrichmentDrawerExtension ruleUid={ruleUid} onClose={() => setShowEnrichmentDrawer(false)} />
       )}
       {redirectToClone?.identifier && (
         <RedirectToCloneRule

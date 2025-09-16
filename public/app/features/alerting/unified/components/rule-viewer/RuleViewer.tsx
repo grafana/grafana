@@ -35,7 +35,6 @@ import { logError } from '../../Analytics';
 import { defaultPageNav } from '../../RuleViewer';
 import { useRuleViewExtensionsNav } from '../../enterprise-components/rule-view-page/navigation';
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
-import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { isError, useAsync } from '../../hooks/useAsync';
 import { useRuleLocation } from '../../hooks/useCombinedRule';
 import { useHasRulerV2 } from '../../hooks/useHasRuler';
@@ -114,10 +113,6 @@ const RuleViewer = () => {
   const showError = hasError && !isPaused;
   const ruleOrigin = rulerRule ? getRulePluginOrigin(rulerRule) : getRulePluginOrigin(promRule);
 
-  const [editRuleSupported, editRuleAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Update);
-
-  const canEditRule = editRuleSupported && editRuleAllowed;
-
   const summary = annotations[Annotation.summary];
 
   return (
@@ -180,9 +175,7 @@ const RuleViewer = () => {
           {activeTab === ActiveTab.VersionHistory && rulerRuleType.grafana.rule(rule.rulerRule) && (
             <AlertVersionHistory rule={rule.rulerRule} />
           )}
-          {activeTab === ActiveTab.Enrichment && (
-            <RulePageEnrichmentSectionExtension isRuleEditable={canEditRule} ruleUid={rule.uid || ''} />
-          )}
+          {activeTab === ActiveTab.Enrichment && <RulePageEnrichmentSectionExtension ruleUid={rule.uid || ''} />}
         </TabContent>
       </Stack>
       {duplicateRuleIdentifier && (

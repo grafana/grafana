@@ -8,10 +8,9 @@ import {
 } from './EnrichmentDrawerExtension';
 
 // Mock component for testing
-const MockEnrichmentDrawer: ComponentType<EnrichmentDrawerExtensionProps> = ({ ruleUid, isRuleEditable, onClose }) => (
+const MockEnrichmentDrawer: ComponentType<EnrichmentDrawerExtensionProps> = ({ ruleUid, onClose }) => (
   <div data-testid="enrichment-drawer">
     <div data-testid="rule-uid">{ruleUid}</div>
-    <div data-testid="is-rule-editable">{isRuleEditable.toString()}</div>
     <button data-testid="close-button" onClick={onClose}>
       Close
     </button>
@@ -23,7 +22,6 @@ describe('EnrichmentDrawerExtension', () => {
   const defaultProps = {
     ruleUid: 'test-rule-uid',
     onClose: mockOnClose,
-    isRuleEditable: true,
   };
 
   beforeEach(() => {
@@ -43,23 +41,6 @@ describe('EnrichmentDrawerExtension', () => {
 
     expect(screen.getByTestId('enrichment-drawer')).toBeInTheDocument();
     expect(screen.getByTestId('rule-uid')).toHaveTextContent('test-rule-uid');
-    expect(screen.getByTestId('is-rule-editable')).toHaveTextContent('true');
-  });
-
-  it('should pass isRuleEditable prop correctly for editable rules', () => {
-    addEnrichmentDrawerExtension(MockEnrichmentDrawer);
-
-    render(<EnrichmentDrawerExtension {...defaultProps} isRuleEditable={true} />);
-
-    expect(screen.getByTestId('is-rule-editable')).toHaveTextContent('true');
-  });
-
-  it('should pass isRuleEditable prop correctly for read-only rules', () => {
-    addEnrichmentDrawerExtension(MockEnrichmentDrawer);
-
-    render(<EnrichmentDrawerExtension {...defaultProps} isRuleEditable={false} />);
-
-    expect(screen.getByTestId('is-rule-editable')).toHaveTextContent('false');
   });
 
   it('should call onClose when close button is clicked', () => {
@@ -80,18 +61,6 @@ describe('EnrichmentDrawerExtension', () => {
     render(<EnrichmentDrawerExtension {...defaultProps} ruleUid={differentRuleUid} />);
 
     expect(screen.getByTestId('rule-uid')).toHaveTextContent(differentRuleUid);
-  });
-
-  it('should re-render when isRuleEditable prop changes', () => {
-    addEnrichmentDrawerExtension(MockEnrichmentDrawer);
-
-    const { rerender } = render(<EnrichmentDrawerExtension {...defaultProps} isRuleEditable={true} />);
-
-    expect(screen.getByTestId('is-rule-editable')).toHaveTextContent('true');
-
-    rerender(<EnrichmentDrawerExtension {...defaultProps} isRuleEditable={false} />);
-
-    expect(screen.getByTestId('is-rule-editable')).toHaveTextContent('false');
   });
 
   it('should re-render when ruleUid prop changes', () => {

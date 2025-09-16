@@ -42,11 +42,9 @@ describe('rule-view-page navigation', () => {
     });
 
     it('should handle enrichment section with required props', () => {
-      const mockEnrichmentSection = jest.fn((props: { ruleUid: string; isRuleEditable: boolean }) => {
+      const mockEnrichmentSection = jest.fn((props: { ruleUid: string }) => {
         expect(props).toHaveProperty('ruleUid');
-        expect(props).toHaveProperty('isRuleEditable');
         expect(typeof props.ruleUid).toBe('string');
-        expect(typeof props.isRuleEditable).toBe('boolean');
         return null;
       });
 

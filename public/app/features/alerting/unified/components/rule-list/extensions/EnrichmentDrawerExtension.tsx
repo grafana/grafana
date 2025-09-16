@@ -8,7 +8,6 @@ import { logError } from '../../../Analytics';
 export interface EnrichmentDrawerExtensionProps {
   ruleUid: string;
   onClose: () => void;
-  isRuleEditable: boolean;
 }
 
 // Internal variable to store the extension component, for now only one component is supported
@@ -35,7 +34,7 @@ const EnrichmentDrawerExtensionComponent: ComponentType<EnrichmentDrawerExtensio
 
 export const EnrichmentDrawerExtension = memo(EnrichmentDrawerExtensionComponent, (prevProps, nextProps) => {
   // Only re-render if ruleUid changes
-  return prevProps.ruleUid === nextProps.ruleUid && prevProps.isRuleEditable === nextProps.isRuleEditable;
+  return prevProps.ruleUid === nextProps.ruleUid;
 });
 
 export function addEnrichmentDrawerExtension(component: ComponentType<EnrichmentDrawerExtensionProps>) {

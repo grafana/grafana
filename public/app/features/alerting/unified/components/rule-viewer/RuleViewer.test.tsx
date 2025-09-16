@@ -466,7 +466,6 @@ describe('RuleViewer', () => {
 
       expect(mockEnrichmentExtension).toHaveBeenCalledWith(
         expect.objectContaining({
-          isRuleEditable: true,
           ruleUid: 'test-rule-uid',
         }),
         expect.any(Object)
@@ -500,7 +499,6 @@ describe('RuleViewer', () => {
 
       expect(mockEnrichmentExtension).toHaveBeenCalledWith(
         expect.objectContaining({
-          isRuleEditable: false,
           ruleUid: 'test-rule-uid',
         }),
         expect.any(Object)
