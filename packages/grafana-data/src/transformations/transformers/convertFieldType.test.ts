@@ -452,29 +452,136 @@ describe('field convert types transformer', () => {
     ]);
   });
 
-  it('will convert time fields to strings', () => {
-    const options = {
-      conversions: [{ targetField: 'time', destinationType: FieldType.string, dateFormat: 'YYYY-MM' }],
-    };
-
-    const stringified = convertFieldTypes(options, [
-      toDataFrame({
-        fields: [
-          {
-            name: 'time',
-            type: FieldType.time,
-            values: [1626674400000, 1627020000000, 1627192800000, 1627797600000, 1627884000000],
-          },
+  describe('Format Time Transformer', () => {
+    it('will convert time fields to strings', () => {
+      const options = {
+        conversions: [
+          { targetField: 'time', destinationType: FieldType.string, dateFormat: 'YYYY-MM', timezone: 'utc' },
         ],
-      }),
-    ])[0].fields[0];
-    expect(stringified.values).toEqual([
-      '2021-07',
-      '2021-07',
-      '2021-07', // can group by month
-      '2021-08',
-      '2021-08',
-    ]);
+      };
+
+      const stringified = convertFieldTypes(options, [
+        toDataFrame({
+          fields: [
+            {
+              name: 'time',
+              type: FieldType.time,
+              values: [1626674400000, 1627020000000, 1627192800000, 1627797600000, 1627884000000],
+            },
+          ],
+        }),
+      ])[0].fields[0];
+
+      expect(stringified.values).toEqual([
+        '2021-07',
+        '2021-07',
+        '2021-07', // can group by month
+        '2021-08',
+        '2021-08',
+      ]);
+    });
+
+    it('will convert time to formatted string', () => {
+      const options = {
+        conversions: [
+          { targetField: 'time', destinationType: FieldType.string, dateFormat: 'YYYY-MM', timezone: 'utc' },
+        ],
+      };
+
+      const stringified = convertFieldTypes(options, [
+        toDataFrame({
+          fields: [
+            {
+              name: 'time',
+              type: FieldType.time,
+              values: [1612939600000, 1689192000000, 1682025600000, 1690328089000, 1691011200000],
+            },
+          ],
+        }),
+      ])[0].fields[0];
+      expect(stringified.values).toEqual(['2021-02', '2023-07', '2023-04', '2023-07', '2023-08']);
+    });
+
+    it('will match on getFieldDisplayName', () => {
+      const options = {
+        conversions: [
+          { targetField: 'Created', destinationType: FieldType.string, dateFormat: 'YYYY-MM', timezone: 'utc' },
+        ],
+      };
+
+      const stringified = convertFieldTypes(options, [
+        toDataFrame({
+          fields: [
+            {
+              name: 'created',
+              type: FieldType.time,
+              values: [1612939600000, 1689192000000, 1682025600000, 1690328089000, 1691011200000],
+              config: {
+                displayName: 'Created',
+              },
+            },
+          ],
+        }),
+      ])[0].fields[0];
+
+      expect(stringified.values).toEqual(['2021-02', '2023-07', '2023-04', '2023-07', '2023-08']);
+    });
+
+    it('will handle formats with times', () => {
+      const options = {
+        conversions: [
+          { targetField: 'time', destinationType: FieldType.string, dateFormat: 'YYYY-MM h:mm:ss a', timezone: 'utc' },
+        ],
+      };
+
+      const stringified = convertFieldTypes(options, [
+        toDataFrame({
+          fields: [
+            {
+              name: 'time',
+              type: FieldType.time,
+              values: [1612939600000, 1689192000000, 1682025600000, 1690328089000, 1691011200000],
+            },
+          ],
+        }),
+      ])[0].fields[0];
+
+      expect(stringified.values).toEqual([
+        '2021-02 6:46:40 am',
+        '2023-07 8:00:00 pm',
+        '2023-04 9:20:00 pm',
+        '2023-07 11:34:49 pm',
+        '2023-08 9:20:00 pm',
+      ]);
+    });
+
+    it('will handle null times', () => {
+      const options = {
+        conversions: [
+          { targetField: 'time', destinationType: FieldType.string, dateFormat: 'YYYY-MM h:mm:ss a', timezone: 'utc' },
+        ],
+      };
+
+      const stringified = convertFieldTypes(options, [
+        toDataFrame({
+          fields: [
+            {
+              name: 'time',
+              type: FieldType.time,
+              values: [1612939600000, 1689192000000, 1682025600000, 1690328089000, null],
+            },
+          ],
+        }),
+      ])[0].fields[0];
+
+      expect(stringified.values).toEqual([
+        '2021-02 6:46:40 am',
+        '2023-07 8:00:00 pm',
+        '2023-04 9:20:00 pm',
+        '2023-07 11:34:49 pm',
+        'Invalid date',
+      ]);
+    });
   });
 });
 
