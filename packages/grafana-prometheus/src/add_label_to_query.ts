@@ -83,7 +83,7 @@ function addFilter(
     if (labelToMatch) {
       // if label exists, check the operator, if it is different, update it.
       // We don't want to add duplicate labels.
-      if (!labelOperatorMatches(labelToMatch, filter)) {
+      if (labelToMatch.op !== filter.op) {
         match.query.labels = match.query.labels.map((label) =>
           label.label === filter.label && label.value === filter.value ? filter : label
         );
@@ -106,8 +106,4 @@ function addFilter(
  */
 function labelExists(labels: QueryBuilderLabelFilter[], filter: QueryBuilderLabelFilter) {
   return labels.find((label) => label.label === filter.label && label.value === filter.value);
-}
-
-function labelOperatorMatches(label: QueryBuilderLabelFilter, filter: QueryBuilderLabelFilter) {
-  return label.op === filter.op;
 }
