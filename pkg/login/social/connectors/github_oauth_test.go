@@ -495,6 +495,7 @@ func TestSocialGitHub_Validate(t *testing.T) {
 					"auth_url":                   "",
 					"token_url":                  "",
 					"api_url":                    "",
+					"login_prompt":               "select_account",
 				},
 			},
 			requester: &user.SignedInUser{IsGrafanaAdmin: true},
@@ -594,6 +595,17 @@ func TestSocialGitHub_Validate(t *testing.T) {
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
+		{
+			name: "fails if login prompt is invalid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"login_prompt":               "invalid",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -634,6 +646,7 @@ func TestSocialGitHub_Reload(t *testing.T) {
 					"client_id":     "new-client-id",
 					"client_secret": "new-client-secret",
 					"auth_url":      "some-new-url",
+					"login_prompt":  "login",
 				},
 			},
 			expectError: false,
@@ -641,6 +654,7 @@ func TestSocialGitHub_Reload(t *testing.T) {
 				ClientId:     "new-client-id",
 				ClientSecret: "new-client-secret",
 				AuthUrl:      "some-new-url",
+				LoginPrompt:  "login",
 			},
 			expectedConfig: &oauth2.Config{
 				ClientID:     "new-client-id",

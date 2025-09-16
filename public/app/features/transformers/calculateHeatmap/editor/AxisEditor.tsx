@@ -4,7 +4,7 @@ import { SelectableValue, StandardEditorProps, VariableOrigin } from '@grafana/d
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { HeatmapCalculationBucketConfig, HeatmapCalculationMode } from '@grafana/schema';
-import { HorizontalGroup, RadioButtonGroup, ScaleDistribution } from '@grafana/ui';
+import { RadioButtonGroup, ScaleDistribution, Stack } from '@grafana/ui';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../../utils';
@@ -71,7 +71,7 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
   });
 
   return (
-    <HorizontalGroup>
+    <Stack>
       <RadioButtonGroup
         value={value?.mode || HeatmapCalculationMode.Size}
         options={value?.scale?.type === ScaleDistribution.Log ? logModeOptions : modeOptions}
@@ -98,6 +98,6 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
         }}
         suggestions={variables}
       />
-    </HorizontalGroup>
+    </Stack>
   );
 };

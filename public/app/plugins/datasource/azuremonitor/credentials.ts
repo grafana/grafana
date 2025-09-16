@@ -8,7 +8,7 @@ import {
 } from '@grafana/azure-sdk';
 import { config } from '@grafana/runtime';
 
-import { AzureMonitorDataSourceInstanceSettings, AzureMonitorDataSourceSettings } from './types';
+import { AzureMonitorDataSourceInstanceSettings, AzureMonitorDataSourceSettings } from './types/types';
 
 export function getCredentials(
   options: AzureMonitorDataSourceSettings | AzureMonitorDataSourceInstanceSettings

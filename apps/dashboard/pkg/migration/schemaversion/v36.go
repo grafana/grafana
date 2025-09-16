@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V36 migrates dashboard datasource references from legacy string format to structured UID-based objects.
 //
 // This migration addresses a critical evolution in Grafana's datasource architecture where datasource
@@ -73,8 +75,8 @@ package schemaversion
 //	  }]
 //	}
 func V36(dsInfo DataSourceInfoProvider) SchemaVersionMigrationFunc {
-	datasources := dsInfo.GetDataSourceInfo()
-	return func(dashboard map[string]interface{}) error {
+	return func(ctx context.Context, dashboard map[string]interface{}) error {
+		datasources := dsInfo.GetDataSourceInfo(ctx)
 		dashboard["schemaVersion"] = int(36)
 
 		migrateAnnotations(dashboard, datasources)

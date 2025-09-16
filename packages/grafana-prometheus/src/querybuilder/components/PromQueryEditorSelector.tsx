@@ -22,7 +22,6 @@ import { changeEditorMode, getQueryWithDefaults } from '../state';
 import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { PromQueryCodeEditor } from './PromQueryCodeEditor';
-import { PromQueryCodeEditorAutocompleteInfo } from './PromQueryCodeEditorAutocompleteInfo';
 
 type Props = PromQueryEditorProps;
 
@@ -98,8 +97,11 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
           'grafana-prometheus.querybuilder.prom-query-editor-selector.title-parsing-error-switch-builder',
           'Parsing error: Switch to the builder mode?'
         )}
-        body="There is a syntax error, or the query structure cannot be visualized when switching to the builder mode. Parts of the query may be lost. "
-        confirmText="Continue"
+        body={t(
+          'grafana-prometheus.querybuilder.prom-query-editor-selector.body-syntax-error',
+          'There is a syntax error, or the query structure cannot be visualized when switching to the builder mode. Parts of the query may be lost.'
+        )}
+        confirmText={t('grafana-prometheus.querybuilder.prom-query-editor-selector.confirmText-continue', 'Continue')}
         onConfirm={() => {
           changeEditorMode(query, QueryEditorMode.Builder, onChange);
           setParseModalOpen(false);
@@ -145,7 +147,6 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
             <Trans i18nKey="grafana-prometheus.querybuilder.prom-query-editor-selector.run-queries">Run queries</Trans>
           </Button>
         )}
-        <PromQueryCodeEditorAutocompleteInfo datasourceUid={props.datasource.uid} editorMode={editorMode} />
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.editorToggle}>
           <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
         </div>

@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 
 import { DataFrame, MutableDataFrame } from '@grafana/data';
 import { mockTimeRange } from '@grafana/plugin-ui';
-import { DataSourceSrv, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
+import { DataSourceSrv, setDataSourceSrv, setPluginLinksHook, setPluginComponentsHook } from '@grafana/runtime';
 
 import { configureStore } from '../../../store/configureStore';
 
@@ -20,7 +20,6 @@ function getTraceView(frames: DataFrame[]) {
   return (
     <Provider store={store}>
       <TraceView
-        exploreId="left"
         dataFrames={frames}
         splitOpenFn={() => {}}
         traceProp={transformDataFrames(frames[0])!}
@@ -52,6 +51,11 @@ describe('TraceView', () => {
     setPluginLinksHook(() => ({
       isLoading: false,
       links: [],
+    }));
+
+    setPluginComponentsHook(() => ({
+      isLoading: false,
+      components: [],
     }));
 
     setDataSourceSrv({

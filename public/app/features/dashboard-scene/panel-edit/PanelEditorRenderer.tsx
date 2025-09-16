@@ -15,12 +15,15 @@ import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 import { PanelEditor } from './PanelEditor';
 import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
+import { scrollReflowMediaCondition, useScrollReflowLimit } from './useScrollReflowLimit';
 
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
   const { optionsPane } = model.useState();
   const styles = useStyles2(getStyles);
-  const [isCollapsed, setIsCollapsed] = useEditPaneCollapsed();
+  const [isInitiallyCollapsed, setIsCollapsed] = useEditPaneCollapsed();
+
+  const isScrollingLayout = useScrollReflowLimit();
 
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
     useSnappingSplitter({
@@ -28,8 +31,9 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
       dragPosition: 'end',
       initialSize: 330,
       usePixels: true,
-      collapsed: isCollapsed,
+      collapsed: isInitiallyCollapsed,
       collapseBelowPixels: 250,
+      disabled: isScrollingLayout,
     });
 
   useEffect(() => {
@@ -80,17 +84,20 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
+  const isScrollingLayout = useScrollReflowLimit();
+
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
     useSnappingSplitter({
       direction: 'column',
       dragPosition: 'start',
       initialSize: 0.5,
       collapseBelowPixels: 150,
+      disabled: isScrollingLayout,
     });
 
   containerProps.className = cx(containerProps.className, styles.container);
 
-  if (!dataPane) {
+  if (!dataPane && !isScrollingLayout) {
     primaryProps.style.flexGrow = 1;
   }
 
@@ -102,7 +109,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
         </div>
       )}
       <div {...containerProps}>
-        <div {...primaryProps}>
+        <div {...primaryProps} className={cx(primaryProps.className, isScrollingLayout && styles.fixedSizeViz)}>
           <VizWrapper panel={panel} tableView={tableView} />
         </div>
         {showLibraryPanelSaveModal && libraryPanel && (
@@ -123,7 +130,10 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
         {dataPane && (
           <>
             <div {...splitterProps} />
-            <div {...secondaryProps}>
+            <div
+              {...secondaryProps}
+              className={cx(secondaryProps.className, isScrollingLayout && styles.fullSizeEditor)}
+            >
               {splitterState.collapsed && (
                 <div className={styles.expandDataPane}>
                   <Button
@@ -163,6 +173,7 @@ function VizWrapper({ panel, tableView }: VizWrapperProps) {
 }
 
 function getStyles(theme: GrafanaTheme2) {
+  const scrollReflowMediaQuery = '@media ' + scrollReflowMediaCondition;
   return {
     pageContainer: css({
       display: 'grid',
@@ -171,6 +182,9 @@ function getStyles(theme: GrafanaTheme2) {
       gridTemplateColumns: `1fr`,
       gridTemplateRows: '1fr',
       height: '100%',
+      [scrollReflowMediaQuery]: {
+        gridTemplateColumns: `100%`,
+      },
     }),
     pageContainerWithControls: css({
       gridTemplateAreas: `
@@ -195,6 +209,15 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'absolute',
       width: '100%',
       height: '100%',
+      overflow: 'unset',
+      [scrollReflowMediaQuery]: {
+        height: 'auto',
+        display: 'grid',
+        gridTemplateColumns: 'minmax(470px, 1fr) 330px',
+        gridTemplateRows: '1fr',
+        gap: theme.spacing(1),
+        width: '100%',
+      },
     }),
     body: css({
       label: 'body',
@@ -246,6 +269,12 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       width: '100%',
       paddingLeft: theme.spacing(2),
+    }),
+    fixedSizeViz: css({
+      height: '100vh',
+    }),
+    fullSizeEditor: css({
+      height: 'max-content',
     }),
   };
 }

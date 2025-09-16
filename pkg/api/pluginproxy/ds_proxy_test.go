@@ -53,6 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -61,6 +62,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	cfg := &setting.Cfg{}
 
 	t.Run("Plugin with routes", func(t *testing.T) {

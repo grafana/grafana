@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2, dateTimeFormat, systemDateFormats, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { HorizontalGroup, IconButton, Tag, usePanelContext, useStyles2 } from '@grafana/ui';
+import { Stack, IconButton, Tag, usePanelContext, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 
 interface Props {
@@ -65,7 +65,7 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        <HorizontalGroup justify={'space-between'} align={'center'} spacing={'md'}>
+        <Stack gap={2} basis="100%" justifyContent="space-between" alignItems="center">
           <div className={styles.meta}>
             <span>
               {avatar}
@@ -93,16 +93,18 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
               )}
             </div>
           )}
-        </HorizontalGroup>
+        </Stack>
       </div>
 
       <div className={styles.body}>
         {text && <div className={styles.text} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(text) }} />}
         {alertText}
         <div>
-          <HorizontalGroup spacing="xs" wrap>
-            {annoVals.tags?.[annoIdx]?.map((t: string, i: number) => <Tag name={t} key={`${t}-${i}`} />)}
-          </HorizontalGroup>
+          <Stack gap={0.5} wrap={true}>
+            {annoVals.tags?.[annoIdx]?.map((t: string, i: number) => (
+              <Tag name={t} key={`${t}-${i}`} />
+            ))}
+          </Stack>
         </div>
       </div>
     </div>
@@ -129,13 +131,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   meta: css({
     display: 'flex',
-    justifyContent: 'space-between',
     color: theme.colors.text.primary,
     fontWeight: 400,
   }),
   editControls: css({
     display: 'flex',
-    alignItems: 'center',
     '> :last-child': {
       marginLeft: 0,
     },

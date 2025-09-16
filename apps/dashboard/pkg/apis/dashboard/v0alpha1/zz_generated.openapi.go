@@ -19,6 +19,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.AnnotationPermission":      schema_pkg_apis_dashboard_v0alpha1_AnnotationPermission(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.Dashboard":                 schema_pkg_apis_dashboard_v0alpha1_Dashboard(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.DashboardAccess":           schema_pkg_apis_dashboard_v0alpha1_DashboardAccess(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.DashboardClient":           schema_pkg_apis_dashboard_v0alpha1_DashboardClient(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.DashboardConversionStatus": schema_pkg_apis_dashboard_v0alpha1_DashboardConversionStatus(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.DashboardHit":              schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.DashboardJSONCodec":        schema_pkg_apis_dashboard_v0alpha1_DashboardJSONCodec(ref),
@@ -221,6 +222,26 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardAccess(ref common.ReferenceCall
 	}
 }
 
+func schema_pkg_apis_dashboard_v0alpha1_DashboardClient(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"client": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana-app-sdk/resource.TypedClient[T,L]"),
+						},
+					},
+				},
+				Required: []string{"client"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana-app-sdk/resource.TypedClient[T,L]"},
+	}
+}
+
 func schema_pkg_apis_dashboard_v0alpha1_DashboardConversionStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -236,24 +257,22 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardConversionStatus(ref common.Ref
 							Format:      "",
 						},
 					},
-					"storedVersion": {
+					"error": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",
-							Default:     "",
+							Description: "The error message from the conversion. Empty if the conversion has not failed.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"error": {
+					"storedVersion": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The error message from the conversion. Empty if the conversion has not failed.",
-							Default:     "",
+							Description: "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 				},
-				Required: []string{"failed", "storedVersion", "error"},
+				Required: []string{"failed"},
 			},
 		},
 	}

@@ -107,3 +107,50 @@ cookie_secure = true
 ```
 
 Ensure `cookie_secure` is set to true to ensure that cookies are only sent over HTTPS.
+
+### Troubleshoot Graph API calls
+
+When setting up SAML authentication with Azure AD, you may encounter issues with Graph API calls. This can happen if the Azure AD application is not properly configured to allow Graph API access.
+
+To help in the troubleshooting process, test the Graph API calls using the following commands:
+
+```bash
+curl -X POST "{token_url}" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials&client_id={client_id}&client_secret={client_secret}&scope=https://graph.microsoft.com/.default"
+```
+
+Where the following values come from your [SAML configuration](../saml-configuration-options/_index.md#saml-configuration-options):
+
+- `token_url`: The token URL of your Azure AD application.
+- `client_id`: The client ID of your Azure AD application.
+- `client_secret`: The client secret of your Azure AD application.
+
+The response should look like:
+
+```json
+{
+  "access_token": "...ACCESS_TOKEN...",
+  "token_type": "Bearer",
+  "expires_in": 3600
+}
+```
+
+Use the `access_token` to test the Graph API calls.
+
+```bash
+curl -X GET "https://graph.microsoft.com/v1.0/groups" \
+  -H "Authorization: Bearer ${access_token}" \
+  -H "Content-Type: application/json"
+```
+
+The response should look like:
+
+```json
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#Collection(Edm.String)",
+  "value": ["29f2e7c8-9b9d-443c-bc62-7d8cdcfcfe59", "f0224e82-0eb8-4eda-8979-0c36e98deb00"]
+}
+```
+
+If the second call fails due to 401 or 403, you may need to check the Azure AD application settings to ensure that Graph API access is enabled.

@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Alert, ClipboardButton, Divider, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, ClipboardButton, Divider, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 import ShareInternallyConfiguration from '../ShareInternallyConfiguration';
@@ -78,15 +78,10 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
             bottomSpacing={0}
           >
             <Trans i18nKey="share-modal.link.render-instructions">
-              To render a panel image, you must install the{' '}
-              <a
-                href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="external-link"
-              >
+              To render an image, you must install the{' '}
+              <TextLink href="https://grafana.com/grafana/plugins/grafana-image-renderer" external>
                 Grafana image renderer plugin
-              </a>
+              </TextLink>
               . Please contact your Grafana administrator to install the plugin.
             </Trans>
           </Alert>

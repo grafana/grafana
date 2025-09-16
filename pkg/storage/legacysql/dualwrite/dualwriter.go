@@ -187,6 +187,22 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 		return nil, fmt.Errorf("name or generatename have to be set")
 	}
 
+	readFromUnifiedWriteToBothStorages := d.readUnified && d.legacy != nil && d.unified != nil
+
+	permissions := ""
+	if readFromUnifiedWriteToBothStorages {
+		objIn, err := utils.MetaAccessor(in)
+		if err != nil {
+			return nil, err
+		}
+
+		// keep permissions, we will set it back after the object is created
+		permissions = objIn.GetAnnotation(utils.AnnoKeyGrantPermissions)
+		if permissions != "" {
+			objIn.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation for now
+		}
+	}
+
 	// create in legacy first, and then unistore. if unistore fails, but legacy succeeds,
 	// will try to cleanup the object in legacy.
 	createdFromLegacy, err := d.legacy.Create(ctx, in, createValidation, options)
@@ -202,6 +218,17 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 	}
 	accCreated.SetResourceVersion("")
 	accCreated.SetUID("")
+
+	if readFromUnifiedWriteToBothStorages {
+		objCopy, err := utils.MetaAccessor(createdCopy)
+		if err != nil {
+			return nil, err
+		}
+		// restore the permissions annotation, as we removed it before creating in legacy
+		if permissions != "" {
+			objCopy.SetAnnotation(utils.AnnoKeyGrantPermissions, permissions)
+		}
+	}
 
 	// If unified storage is the primary storage, let's just create it in the foreground and return it.
 	if d.readUnified {
@@ -250,10 +277,20 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	// we want to delete from legacy first, otherwise if the delete from unistore was successful,
 	// but legacy failed, the user would get a failure, but not be able to retry the delete
 	// as they would not be able to see the object in unistore anymore.
+
+	// By setting RemovePermissions to false in the context, we will skip the deletion of permissions
+	// in the legacy store. This is needed as otherwise the permissions would be missing when executing
+	// the delete operation in the unified storage store.
+	ctx = utils.SetFolderRemovePermissions(ctx, false)
+
 	objFromLegacy, asyncLegacy, err := d.legacy.Delete(ctx, name, deleteValidation, options)
 	if err != nil && (!d.readUnified || !d.errorIsOK && !apierrors.IsNotFound(err)) {
 		return nil, false, err
 	}
+
+	// We can now flip it again.
+	ctx = utils.SetFolderRemovePermissions(ctx, true)
+
 	// If unified storage is our primary store, just delete it and return
 	if d.readUnified {
 		objFromStorage, asyncStorage, err := d.unified.Delete(ctx, name, deleteValidation, options)

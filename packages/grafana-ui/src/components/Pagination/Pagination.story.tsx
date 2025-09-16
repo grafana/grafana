@@ -5,7 +5,7 @@ import { Pagination } from './Pagination';
 import mdx from './Pagination.mdx';
 
 const meta: Meta<typeof Pagination> = {
-  title: 'Buttons/Pagination',
+  title: 'Navigation/Pagination',
   component: Pagination,
   parameters: {
     docs: {

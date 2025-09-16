@@ -13,7 +13,6 @@ import (
 	claims "github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -28,7 +27,7 @@ var (
 	_ rest.Storage              = (*LegacyStore)(nil)
 )
 
-var resource = iamv0.TeamResourceInfo
+var resource = iamv0alpha1.TeamResourceInfo
 
 func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient) *LegacyStore {
 	return &LegacyStore{store, ac}
@@ -64,7 +63,7 @@ func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	res, err := common.List(
-		ctx, resource.GetName(), s.ac, common.PaginationFromListOptions(options),
+		ctx, resource, s.ac, common.PaginationFromListOptions(options),
 		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0alpha1.Team], error) {
 			found, err := s.store.ListTeams(ctx, ns, legacy.ListTeamQuery{
 				Pagination: p,

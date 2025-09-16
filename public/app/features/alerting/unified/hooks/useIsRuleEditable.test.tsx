@@ -5,7 +5,8 @@ import { Provider } from 'react-redux';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction, FolderDTO } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { FolderDTO } from 'app/types/folders';
 
 import { setupMswServer } from '../mockApi';
 import { mockDataSource, mockFolder, mockRulerAlertingRule, mockRulerGrafanaRule } from '../mocks';

@@ -17,16 +17,17 @@ import {
 import { contextSrv } from 'app/core/core';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
+import { isExtraConfig } from '../../utils/alertmanager/extraConfigs';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
-import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
+import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';
 
 import { ContactPoint } from './ContactPoint';
 import { NotificationTemplates } from './NotificationTemplates';
@@ -140,8 +141,12 @@ const ContactPointsTab = () => {
       ) : (
         <ContactPointsList contactPoints={contactPoints} search={search} pageSize={DEFAULT_PAGE_SIZE} />
       )}
+
       {/* Grafana manager Alertmanager does not support global config, Mimir and Cortex do */}
-      {!isGrafanaManagedAlertmanager && <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />}
+      {/* Extra configs also don't support global config */}
+      {!isGrafanaManagedAlertmanager && !isExtraConfig(selectedAlertmanager!) && (
+        <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />
+      )}
       {ExportDrawer}
     </>
   );
@@ -220,7 +225,7 @@ export const ContactPointsPageContents = () => {
 
   return (
     <>
-      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager!} />
+      <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager!} />
       <Stack direction="column">
         <TabsBar>
           {showContactPointsTab && (

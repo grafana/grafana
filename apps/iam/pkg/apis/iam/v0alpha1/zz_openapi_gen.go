@@ -186,6 +186,13 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref common.ReferenceCallback) com
 							Format:      "",
 						},
 					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"version": {
 						SchemaProps: spec.SchemaProps{
 							Default: 0,
@@ -215,7 +222,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref common.ReferenceCallback) com
 						},
 					},
 				},
-				Required: []string{"title", "version", "group", "permissions"},
+				Required: []string{"title", "description", "version", "group", "permissions"},
 			},
 		},
 		Dependencies: []string{
@@ -740,6 +747,13 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 							Format:      "",
 						},
 					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"version": {
 						SchemaProps: spec.SchemaProps{
 							Default: 0,
@@ -769,7 +783,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 						},
 					},
 				},
-				Required: []string{"title", "version", "group", "permissions"},
+				Required: []string{"title", "description", "version", "group", "permissions"},
 			},
 		},
 		Dependencies: []string{
@@ -1097,23 +1111,16 @@ func schema_pkg_apis_iam_v0alpha1_ResourcePermissionspecPermission(ref common.Re
 							Format:      "",
 						},
 					},
-					"verbs": {
+					"verb": {
 						SchemaProps: spec.SchemaProps{
-							Description: "list of actions granted to the user (e.g. \"admin\" or \"get\", \"update\")",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
+							Description: "action set granted to the user (e.g. \"admin\" or \"edit\", \"view\")",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
-				Required: []string{"kind", "name", "verbs"},
+				Required: []string{"kind", "name", "verb"},
 			},
 		},
 	}
@@ -1600,6 +1607,13 @@ func schema_pkg_apis_iam_v0alpha1_RoleSpec(ref common.ReferenceCallback) common.
 							Format:      "",
 						},
 					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"version": {
 						SchemaProps: spec.SchemaProps{
 							Default: 0,
@@ -1629,7 +1643,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleSpec(ref common.ReferenceCallback) common.
 						},
 					},
 				},
-				Required: []string{"title", "version", "group", "permissions"},
+				Required: []string{"title", "description", "version", "group", "permissions"},
 			},
 		},
 		Dependencies: []string{
@@ -1863,13 +1877,6 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccountSpec(ref common.ReferenceCallbac
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"title": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
 					"disabled": {
 						SchemaProps: spec.SchemaProps{
 							Default: false,
@@ -1877,8 +1884,29 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccountSpec(ref common.ReferenceCallbac
 							Format:  "",
 						},
 					},
+					"plugin": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"role": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 				},
-				Required: []string{"title", "disabled"},
+				Required: []string{"disabled", "plugin", "role", "title"},
 			},
 		},
 	}

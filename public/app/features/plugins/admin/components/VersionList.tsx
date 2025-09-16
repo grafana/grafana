@@ -128,29 +128,51 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    padding: theme.spacing(2, 4, 3),
-  }),
-  currentVersion: css({
-    fontWeight: theme.typography.fontWeightBold,
-  }),
-  spinner: css({
-    marginLeft: theme.spacing(1),
-  }),
+  container: css({ padding: theme.spacing(2, 4, 3) }),
+  currentVersion: css({ fontWeight: theme.typography.fontWeightBold }),
+  spinner: css({ marginLeft: theme.spacing(1) }),
   table: css({
     tableLayout: 'fixed',
     width: '100%',
-    'td, th': {
-      padding: `${theme.spacing()} 0`,
-    },
-    th: {
-      fontSize: theme.typography.h5.fontSize,
-    },
-    td: {
-      wordBreak: 'break-word',
-    },
-    'tbody tr:nth-child(odd)': {
-      background: theme.colors.emphasize(theme.colors.background.primary, 0.02),
+    'td, th': { padding: `${theme.spacing()} 0` },
+    th: { fontSize: theme.typography.h5.fontSize },
+    td: { wordBreak: 'break-word' },
+    'tbody tr:nth-child(odd)': { background: theme.colors.emphasize(theme.colors.background.primary, 0.02) },
+
+    // Display table as cards on narrow screens
+    [theme.breakpoints.down('md')]: {
+      tableLayout: 'auto',
+      thead: { display: 'none' },
+      tbody: { display: 'block' },
+      'tbody tr': {
+        display: 'block',
+        marginBottom: theme.spacing(2),
+        padding: theme.spacing(2),
+        background: theme.colors.background.primary,
+        border: `1px solid ${theme.colors.border.weak}`,
+        borderRadius: theme.shape.radius.default,
+        boxShadow: theme.shadows.z1,
+      },
+      'tbody td': {
+        display: 'block',
+        padding: `${theme.spacing(0.5)} 0`,
+        borderBottom: `1px solid ${theme.colors.border.weak}`,
+        textAlign: 'left',
+        '&:last-child': { borderBottom: 'none' },
+        '&:before': {
+          content: 'attr(data-label)',
+          display: 'inline-block',
+          fontWeight: theme.typography.fontWeightMedium,
+          color: theme.colors.text.secondary,
+          fontSize: theme.typography.size.sm,
+          marginRight: theme.spacing(1),
+          minWidth: '120px',
+        },
+      },
+      'tbody td:nth-child(1)': { '&:before': { content: '"Version:"' } },
+      'tbody td:nth-child(2)': { '&:before': { content: '"Action:"' } },
+      'tbody td:nth-child(3)': { '&:before': { content: '"Release date:"' } },
+      'tbody td:nth-child(4)': { '&:before': { content: '"Dependency:"' } },
     },
   }),
 });

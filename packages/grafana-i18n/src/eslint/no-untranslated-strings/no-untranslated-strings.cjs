@@ -24,7 +24,21 @@ const createRule = ESLintUtils.RuleCreator(
 /**
  * JSX props to check for untranslated strings
  */
-const propsToCheck = ['content', 'label', 'description', 'placeholder', 'aria-label', 'title', 'text', 'tooltip'];
+const propsToCheck = [
+  'content',
+  'label',
+  'description',
+  'placeholder',
+  'aria-label',
+  'ariaLabel',
+  'title',
+  'text',
+  'tooltip',
+  'confirmText',
+  'body',
+  'noOptionsMessage',
+  'loadingMessage',
+];
 
 /**
  * Object properties to check for untranslated strings
@@ -34,11 +48,15 @@ const propertiesToCheck = [
   'description',
   'placeholder',
   'aria-label',
+  'ariaLabel',
   'title',
   'subTitle',
   'text',
   'tooltip',
   'message',
+  'confirmText',
+  'placeholderText',
+  'noFieldsMessage',
 ];
 
 /** @type {RuleDefinition} */
@@ -103,7 +121,7 @@ const noUntranslatedStrings = createRule({
         if (
           isUntranslated &&
           // TODO: Remove this check in the future when we've fixed all cases of untranslated properties
-          // For now, we're only reporting the issues that can be auto-fixed, rather than adding to betterer results
+          // For now, we're only reporting the issues that can be auto-fixed, rather than adding to eslint suppressions
           errorCanBeFixed
         ) {
           context.report({

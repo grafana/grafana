@@ -1,13 +1,16 @@
-import { HttpResponse } from 'msw';
+import { uniqueId } from 'lodash';
+import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { Props } from 'react-virtualized-auto-sizer';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
-import { AccessControlAction } from 'app/types';
+import { setPluginLinksHook } from '@grafana/runtime';
+import { AccessControlAction } from 'app/types/accessControl';
+import { GrafanaPromRuleGroupDTO, GrafanaPromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../mockApi';
-import { grantUserPermissions, mockRulerGrafanaRule, mockRulerRuleGroup } from '../mocks';
+import { grantUserPermissions, mockGrafanaPromAlertingRule, mockRulerGrafanaRule, mockRulerRuleGroup } from '../mocks';
 import {
   mimirDataSource,
   setFolderResponse,
@@ -38,8 +41,7 @@ const ui = {
   header: byRole('heading', { level: 1 }),
   editLink: byRole('link', { name: 'Edit' }),
   exportButton: byRole('button', { name: 'Export' }),
-  tableRow: byTestId('row'),
-  rowsTable: byTestId('dynamic-table'),
+  ruleItem: byRole('treeitem'),
   export: {
     dialog: byRole('dialog', { name: /Drawer title Export .* rules/ }),
     jsonTab: byRole('tab', { name: /JSON/ }),
@@ -50,10 +52,16 @@ const ui = {
   },
 };
 
-setupMswServer();
+const server = setupMswServer();
 
 describe('GroupDetailsPage', () => {
   beforeEach(() => {
+    // mock this...
+    setPluginLinksHook(() => ({
+      links: [],
+      isLoading: false,
+    }));
+
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
       AccessControlAction.AlertingRuleUpdate,
@@ -63,25 +71,71 @@ describe('GroupDetailsPage', () => {
   });
 
   describe('Grafana managed rules', () => {
-    const rule1 = mockRulerGrafanaRule({ for: '10m' }, { title: 'High CPU Usage' });
-    const rule2 = mockRulerGrafanaRule({ for: '5m' }, { title: 'Memory Pressure' });
-    const provisionedRule = mockRulerGrafanaRule({ for: '10m' }, { title: 'Provisioned Rule', provenance: 'api' });
+    const folder = { uid: 'test-folder-uid', canSave: true, title: 'test-folder-title' } as const;
+
+    const rule1 = mockRulerGrafanaRule({ for: '10m' }, { title: 'High CPU Usage', uid: uniqueId() });
+    const rule2 = mockRulerGrafanaRule({ for: '5m' }, { title: 'Memory Pressure', uid: uniqueId() });
+
+    const provisionedRule = mockRulerGrafanaRule(
+      { for: '10m' },
+      { uid: uniqueId(), title: 'Provisioned Rule', provenance: 'api' }
+    );
 
     const group = mockRulerRuleGroup({
       name: 'test-group-cpu',
       interval: '3m',
       rules: [rule1, rule2],
     });
+    const promGroup: GrafanaPromRuleGroupDTO = {
+      name: group.name,
+      rules: [
+        mockGrafanaPromAlertingRule({
+          uid: rule1.grafana_alert.uid,
+          name: rule1.grafana_alert.title,
+        }),
+        mockGrafanaPromAlertingRule({
+          uid: rule2.grafana_alert.uid,
+          name: rule2.grafana_alert.title,
+        }),
+      ],
+      interval: 180,
+      folderUid: folder.uid,
+      file: folder.title,
+    };
 
     const provisionedGroup = mockRulerRuleGroup({
       name: 'provisioned-group-cpu',
       interval: '15m',
       rules: [provisionedRule],
     });
+    const promProvisionedGroup: GrafanaPromRuleGroupDTO = {
+      name: provisionedGroup.name,
+      interval: 900,
+      rules: [
+        mockGrafanaPromAlertingRule({
+          uid: provisionedRule.grafana_alert.uid,
+          name: provisionedRule.grafana_alert.title,
+          provenance: provisionedRule.grafana_alert.provenance,
+        }),
+      ],
+      folderUid: folder.uid,
+      file: folder.title,
+    };
 
     beforeEach(() => {
       setRulerRuleGroupHandler({ response: HttpResponse.json(group) });
-      setFolderResponse({ uid: 'test-folder-uid', canSave: true, title: 'test-folder-title' });
+      server.use(
+        http.get('/api/prometheus/grafana/api/v1/rules', () =>
+          HttpResponse.json<GrafanaPromRulesResponse>({
+            status: 'success',
+            data: {
+              groups: [promGroup],
+            },
+          })
+        )
+      );
+
+      setFolderResponse(folder);
       setGrafanaRuleGroupExportResolver(({ request }) => {
         const url = new URL(request.url);
         return HttpResponse.text(
@@ -106,22 +160,24 @@ describe('GroupDetailsPage', () => {
         '/alerting/grafana/namespaces/test-folder-uid/groups/test-group-cpu/edit?returnTo=%2Falerting%2Fgrafana%2Fnamespaces%2Ftest-folder-uid%2Fgroups%2Ftest-group-cpu%2Fview'
       );
 
-      const tableRows = await ui.tableRow.findAll(await ui.rowsTable.find());
-      expect(tableRows).toHaveLength(2);
+      expect(await screen.findByRole('treeitem', { name: rule1.grafana_alert.title })).toBeInTheDocument();
 
-      expect(within(tableRows[0]).getByRole('link', { name: rule1.grafana_alert.title })).toHaveAttribute(
+      const alertRuleItems = await ui.ruleItem.findAll();
+      expect(alertRuleItems).toHaveLength(2);
+
+      // assert rule 1
+      expect(within(alertRuleItems[0]).getByRole('link', { name: rule1.grafana_alert.title })).toHaveAttribute(
         'href',
         `/alerting/grafana/${rule1.grafana_alert.uid}/view`
       );
-      expect(tableRows[0]).toHaveTextContent(String(rule1.for));
-      expect(tableRows[0]).toHaveTextContent('5');
+      expect(alertRuleItems[0]).toHaveTextContent(rule1.grafana_alert.title);
 
-      expect(within(tableRows[1]).getByRole('link', { name: rule2.grafana_alert.title })).toHaveAttribute(
+      // assert rule 2
+      expect(within(alertRuleItems[1]).getByRole('link', { name: rule2.grafana_alert.title })).toHaveAttribute(
         'href',
         `/alerting/grafana/${rule2.grafana_alert.uid}/view`
       );
-      expect(tableRows[1]).toHaveTextContent(String(rule2.for));
-      expect(tableRows[1]).toHaveTextContent('3');
+      expect(alertRuleItems[1]).toHaveTextContent(rule2.grafana_alert.title);
     });
 
     it('should render error alert when API returns an error', async () => {
@@ -164,10 +220,12 @@ describe('GroupDetailsPage', () => {
       // Act
       renderGroupDetailsPage('grafana', 'test-folder-uid', group.name);
 
-      const tableRows = await ui.tableRow.findAll(await ui.rowsTable.find());
+      // Wait until rule items are rendered
+      expect(await screen.findByRole('treeitem', { name: rule1.grafana_alert.title })).toBeInTheDocument();
+      const alertRuleItems = ui.ruleItem.getAll();
 
       // Assert
-      expect(tableRows).toHaveLength(2);
+      expect(alertRuleItems).toHaveLength(2);
       expect(ui.editLink.query()).not.toBeInTheDocument(); // Edit button should not be present
     });
 
@@ -177,24 +235,39 @@ describe('GroupDetailsPage', () => {
       // Act
       renderGroupDetailsPage('grafana', 'test-folder-uid', group.name);
 
-      const tableRows = await ui.tableRow.findAll(await ui.rowsTable.find());
+      // wait for rule items to render
+      expect(await screen.findByRole('treeitem', { name: rule1.grafana_alert.title })).toBeInTheDocument();
+
+      const alertRuleItems = await ui.ruleItem.findAll();
 
       // Assert
-      expect(tableRows).toHaveLength(2);
+      expect(alertRuleItems).toHaveLength(2);
       expect(ui.editLink.query()).not.toBeInTheDocument(); // Edit button should not be present
     });
 
     it('should not allow editing if the group is provisioned', async () => {
       setRulerRuleGroupHandler({ response: HttpResponse.json(provisionedGroup) });
+      server.use(
+        http.get('/api/prometheus/grafana/api/v1/rules', () =>
+          HttpResponse.json<GrafanaPromRulesResponse>({
+            status: 'success',
+            data: {
+              groups: [promProvisionedGroup],
+            },
+          })
+        )
+      );
 
       // Act
       renderGroupDetailsPage('grafana', 'test-folder-uid', provisionedGroup.name);
+      // wait for rule items to render
+      expect(await screen.findByRole('treeitem', { name: provisionedRule.grafana_alert.title })).toBeInTheDocument();
 
-      const tableRows = await ui.tableRow.findAll(await ui.rowsTable.find());
+      const alertRuleItems = await ui.ruleItem.findAll();
 
       // Assert
-      expect(tableRows).toHaveLength(1);
-      expect(tableRows[0]).toHaveTextContent('Provisioned Rule');
+      expect(alertRuleItems).toHaveLength(1);
+      expect(alertRuleItems[0]).toHaveTextContent('Provisioned Rule');
       expect(ui.editLink.query()).not.toBeInTheDocument();
       expect(ui.exportButton.query()).toBeInTheDocument();
     });

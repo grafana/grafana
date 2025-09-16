@@ -1,5 +1,16 @@
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
-import { from, lastValueFrom, MonoTypeOperatorFunction, Observable, Subject, Subscription, throwError } from 'rxjs';
+import {
+  from,
+  lastValueFrom,
+  MonoTypeOperatorFunction,
+  Observable,
+  Observer,
+  OperatorFunction,
+  Subject,
+  Subscriber,
+  Subscription,
+  throwError,
+} from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import {
   catchError,
@@ -25,7 +36,8 @@ import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
-import { DashboardDTO, FolderDTO } from 'app/types';
+import { DashboardDTO } from 'app/types/dashboard';
+import { FolderDTO } from 'app/types/folders';
 
 import { ShowModalReactEvent } from '../../types/events';
 import { isContentTypeJson, parseInitFromOptions, parseResponseBody, parseUrlFromOptions } from '../utils/fetch';
@@ -148,13 +160,6 @@ export class BackendSrv implements BackendService {
     const requestId = options.requestId ?? `chunked-${this.chunkRequestId++}`;
     const controller = new AbortController();
 
-    let url: string;
-    try {
-      url = parseUrlFromOptions(options);
-    } catch (error) {
-      return throwError(() => error);
-    }
-
     const init = parseInitFromOptions({
       ...options,
       requestId,
@@ -162,62 +167,10 @@ export class BackendSrv implements BackendService {
     });
 
     return new Observable((observer) => {
-      let done = false;
       // Calling fromFetch explicitly avoids the request queue
-      const sub = this.dependencies.fromFetch(url, init).subscribe({
-        next: (response) => {
-          const rsp = {
-            status: response.status,
-            statusText: response.statusText,
-            ok: response.ok,
-            headers: response.headers,
-            url: response.url,
-            type: response.type,
-            redirected: response.redirected,
-            config: options,
-            traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
-            data: undefined,
-          };
-
-          if (!response.body) {
-            observer.next(rsp);
-            observer.complete();
-            return;
-          }
-
-          const reader = response.body.getReader();
-          async function process() {
-            while (reader && !done) {
-              if (controller.signal.aborted) {
-                reader.cancel(controller.signal.reason);
-                console.log(requestId, 'signal.aborted');
-                return;
-              }
-              const chunk = await reader.read();
-              observer.next({
-                ...rsp,
-                data: chunk.value,
-              });
-              if (chunk.done) {
-                done = true;
-                console.log(requestId, 'done');
-              }
-            }
-          }
-          process()
-            .then(() => {
-              console.log(requestId, 'complete');
-              observer.complete();
-            }) // runs in background
-            .catch((e) => {
-              console.log(requestId, 'catch', e);
-              observer.error(e);
-            }); // from abort
-        },
-        error: (e) => {
-          observer.error(e);
-        },
-      });
+      const sub = parseUrlFromOptions(options)
+        .pipe(mergeMap((url) => this.dependencies.fromFetch(url, init)))
+        .subscribe(this.getChunkedResponseObserver({ controller, observer, options, requestId }));
 
       return function unsubscribe() {
         console.log(requestId, 'unsubscribe');
@@ -225,6 +178,76 @@ export class BackendSrv implements BackendService {
         sub.unsubscribe();
       };
     });
+  }
+
+  private getChunkedResponseObserver({
+    controller,
+    observer,
+    options,
+    requestId,
+  }: {
+    controller: AbortController;
+    observer: Subscriber<FetchResponse<Uint8Array<ArrayBufferLike> | undefined>>;
+    options: BackendSrvRequest;
+    requestId: string;
+  }): Partial<Observer<Response>> {
+    let done = false;
+    return {
+      next: (response) => {
+        const rsp = {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok,
+          headers: response.headers,
+          url: response.url,
+          type: response.type,
+          redirected: response.redirected,
+          config: options,
+          traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
+          data: undefined,
+        };
+
+        if (!response.body) {
+          observer.next(rsp);
+          observer.complete();
+          return;
+        }
+
+        const reader = response.body.getReader();
+
+        // Setup onabort callback so that we can cancel the reader properly
+        controller.signal.onabort = () => {
+          reader.cancel(controller.signal.reason);
+          console.log(requestId, 'signal.aborted');
+        };
+
+        async function process() {
+          while (reader && !done) {
+            const chunk = await reader.read();
+            observer.next({
+              ...rsp,
+              data: chunk.value,
+            });
+            if (chunk.done) {
+              done = true;
+              console.log(requestId, 'done');
+            }
+          }
+        }
+        process()
+          .then(() => {
+            console.log(requestId, 'complete');
+            observer.complete();
+          }) // runs in background
+          .catch((e) => {
+            console.log(requestId, 'catch', e);
+            observer.error(e);
+          }); // from abort
+      },
+      error: (e) => {
+        observer.error(e);
+      },
+    };
   }
 
   private internalFetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
@@ -247,7 +270,8 @@ export class BackendSrv implements BackendService {
       options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
     }
 
-    return this.getFromFetchStream<T>(options).pipe(
+    return parseUrlFromOptions(options).pipe(
+      this.getFromFetchStream<T>(options),
       this.handleStreamResponse<T>(options),
       this.handleStreamError(options),
       this.handleStreamCancellation(options)
@@ -301,38 +325,36 @@ export class BackendSrv implements BackendService {
     return options;
   }
 
-  private getFromFetchStream<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
-    const init = parseInitFromOptions(options);
+  private getFromFetchStream<T>(options: BackendSrvRequest): OperatorFunction<string, FetchResponse<T>> {
+    return (inputStream) =>
+      inputStream.pipe(
+        mergeMap((url) => {
+          const init = parseInitFromOptions(options);
 
-    let url: string;
-    try {
-      url = parseUrlFromOptions(options);
-    } catch (error) {
-      return throwError(() => error);
-    }
+          return this.dependencies.fromFetch(url, init).pipe(
+            mergeMap(async (response) => {
+              const { status, statusText, ok, headers, url, type, redirected } = response;
 
-    return this.dependencies.fromFetch(url, init).pipe(
-      mergeMap(async (response) => {
-        const { status, statusText, ok, headers, url, type, redirected } = response;
+              const responseType = options.responseType ?? (isContentTypeJson(headers) ? 'json' : undefined);
 
-        const responseType = options.responseType ?? (isContentTypeJson(headers) ? 'json' : undefined);
-
-        const data = await parseResponseBody<T>(response, responseType);
-        const fetchResponse: FetchResponse<T> = {
-          status,
-          statusText,
-          ok,
-          data,
-          headers,
-          url,
-          type,
-          redirected,
-          config: options,
-          traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
-        };
-        return fetchResponse;
-      })
-    );
+              const data = await parseResponseBody<T>(response, responseType);
+              const fetchResponse: FetchResponse<T> = {
+                status,
+                statusText,
+                ok,
+                data,
+                headers,
+                url,
+                type,
+                redirected,
+                config: options,
+                traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
+              };
+              return fetchResponse;
+            })
+          );
+        })
+      );
   }
 
   showApplicationErrorAlert(err: FetchError) {}

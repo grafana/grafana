@@ -64,6 +64,29 @@ describe('CloudWatchLogsQueryRunner', () => {
   });
 
   describe('handleLogQueries', () => {
+    it('appends -logs to the requestId', async () => {
+      const { runner, queryMock } = setupMockedLogsQueryRunner();
+
+      const request = {
+        ...LogsRequestMock,
+        requestId: 'mockId',
+      };
+      await expect(runner.handleLogQueries(LogsRequestMock.targets, request, queryMock)).toEmitValuesWith(() => {
+        expect(queryMock.mock.calls[0][0].requestId).toEqual('mockId-logs');
+      });
+    });
+
+    it('does not append -logs to the requestId if requestId is not provided', async () => {
+      const { runner, queryMock } = setupMockedLogsQueryRunner();
+
+      const request = {
+        ...LogsRequestMock,
+      };
+      await expect(runner.handleLogQueries(LogsRequestMock.targets, request, queryMock)).toEmitValuesWith(() => {
+        expect(queryMock.mock.calls[0][0].requestId).toEqual('');
+      });
+    });
+
     it('should request to start each query and then request to get the query results', async () => {
       const { runner } = setupMockedLogsQueryRunner();
 

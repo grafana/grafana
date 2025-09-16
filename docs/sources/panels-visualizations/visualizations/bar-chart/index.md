@@ -88,6 +88,22 @@ While the first field can be time-based and you can use a bar chart to plot time
 
 We recommend that you only use one dataset in a bar chart because using multiple datasets can result in unexpected behavior.
 
+<!-- vale Grafana.WordList = NO -->
+<!-- vale Grafana.Spelling = NO -->
+
+## Apply ad hoc filters from the bar chart
+
+In bar charts, you can apply ad hoc filters directly from the visualization.
+
+To display the filter button, hover your cursor over the bar that has the value for which you want to filter and click the bar:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-bar-v12.2.png" max-width="300px" alt="The ad hoc filter button in a bar chart tooltip">}}
+
+For more information about applying ad hoc filters this way, refer to [Dashboard drilldown with ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#dashboard-drilldown-with-ad-hoc-filters).
+
+<!-- vale Grafana.Spelling = YES -->
+<!-- vale Grafana.WordList = YES -->
+
 ## Configuration options
 
 {{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -130,7 +146,6 @@ Set the mode of the gradient fill. Fill gradient is based on the line color. To 
 - **Opacity** - Transparency of the gradient is calculated based on the values on the y-axis. Opacity of the fill is increasing with the values on the Y-axis.
 - **Hue** - Gradient color is generated based on the hue of the line color.
 - **Scheme** - The bar receives a gradient color defined by the **Standard options > Color scheme** selection.
-
   - **From thresholds** - If the **Color scheme** selection is **From thresholds (by value)**, then each bar is the color of the defined threshold.
 
     {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-colors-by-thresholds-v11.3.png" alt="Color scheme From thresholds" caption="Color scheme: From thresholds" >}}

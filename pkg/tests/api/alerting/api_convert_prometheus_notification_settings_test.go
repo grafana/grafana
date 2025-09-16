@@ -13,6 +13,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
@@ -20,9 +21,12 @@ const (
 )
 
 func TestIntegrationConvertPrometheusNotificationSettings(t *testing.T) {
-	testinfra.SQLiteIntegrationTest(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
+
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,

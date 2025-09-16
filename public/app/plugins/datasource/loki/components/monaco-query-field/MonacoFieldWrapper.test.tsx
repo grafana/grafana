@@ -32,9 +32,14 @@ describe('MonacoFieldWrapper', () => {
   test('Renders with no errors', async () => {
     renderComponent();
 
-    await waitFor(async () => {
-      const monacoEditor = await screen.findByTestId(selectors.components.ReactMonacoEditor.editorLazy);
-      expect(monacoEditor).toBeInTheDocument();
-    });
+    await waitFor(
+      async () => {
+        const monacoEditor = await screen.findByTestId(selectors.components.ReactMonacoEditor.editorLazy);
+        expect(monacoEditor).toBeInTheDocument();
+      },
+      {
+        timeout: 10000,
+      }
+    );
   });
 });

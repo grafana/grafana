@@ -130,11 +130,11 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 	}
 
 	// process the response the same way DSNode does. Use plugin ID as data source type. Semantically, they are the same.
-	responseType, result, err = s.converter.Convert(ctx, mlPluginID, dataFrames, false)
+	responseType, result, err = s.converter.Convert(ctx, mlPluginID, dataFrames)
 	return result, err
 }
 
-func (s *Service) buildMLNode(dp *simple.DirectedGraph, rn *rawNode, req *Request) (Node, error) {
+func (s *Service) buildMLNode(_ *simple.DirectedGraph, rn *rawNode, req *Request) (Node, error) {
 	if rn.TimeRange == nil {
 		return nil, errors.New("time range must be specified")
 	}

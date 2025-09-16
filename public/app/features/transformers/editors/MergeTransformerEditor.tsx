@@ -6,10 +6,12 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { MergeTransformerOptions } from '@grafana/data/internal';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { FieldValidationMessage } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/merge.svg';
+import lightImage from '../images/light/merge.svg';
 
 export const MergeTransformerEditor = ({ input, options, onChange }: TransformerUIProps<MergeTransformerOptions>) => {
   if (input.length <= 1) {
@@ -25,13 +27,17 @@ export const MergeTransformerEditor = ({ input, options, onChange }: Transformer
   return null;
 };
 
-export const mergeTransformerRegistryItem: TransformerRegistryItem<MergeTransformerOptions> = {
+export const getMergeTransformerRegistryItem: () => TransformerRegistryItem<MergeTransformerOptions> = () => ({
   id: DataTransformerID.merge,
   editor: MergeTransformerEditor,
   transformation: standardTransformers.mergeTransformer,
-  name: standardTransformers.mergeTransformer.name,
-  description: `Merge many series/tables and return a single table where mergeable values will be combined into the same row.
-                Useful for showing multiple series, tables or a combination of both visualized in a table.`,
+  name: t('transformers.merge-transformer-editor.name.merge', 'Merge series/tables'),
+  description: t(
+    'transformers.merge-transformer-editor.description.merge-multiple-series',
+    'Merge multiple series. Values will be combined into one row.'
+  ),
   categories: new Set([TransformerCategory.Combine]),
   help: getTransformationContent(DataTransformerID.merge).helperDocs,
-};
+  imageDark: darkImage,
+  imageLight: lightImage,
+});

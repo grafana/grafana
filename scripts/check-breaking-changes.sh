@@ -34,6 +34,11 @@ while IFS=" " read -r -a package; do
     continue
   fi
 
+  # Skip packages that don't exist in the base (packages introduced in PR)
+  if [[ ! -f "./base/@$PACKAGE_PATH.tgz" ]]; then
+    continue
+  fi
+
   # Extract the npm package tarballs into separate directories e.g. ./base/@grafana-data.tgz -> ./base/grafana-data/
   mkdir "$PREV"
   tar -xf "./base/@$PACKAGE_PATH.tgz" --strip-components=1 -C "$PREV"
@@ -66,6 +71,11 @@ echo "is_breaking=$EXIT_CODE" >>"$GITHUB_OUTPUT"
 echo "message=$GITHUB_MESSAGE" >>"$GITHUB_OUTPUT"
 mkdir -p ./levitate
 echo "$GITHUB_LEVITATE_MARKDOWN" >./levitate/levitate.md
+
+if [[ "$IS_FORK" == "true" ]]; then
+  cat ./levitate/levitate.md >> "$GITHUB_STEP_SUMMARY"
+  exit $EXIT_CODE
+fi
 
 # We will exit the workflow accordingly at another step
 exit 0

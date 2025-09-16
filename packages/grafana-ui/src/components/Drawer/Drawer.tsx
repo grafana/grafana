@@ -13,6 +13,7 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getDragStyles } from '../DragHandle/DragHandle';
 import { IconButton } from '../IconButton/IconButton';
+import { Stack } from '../Layout/Stack/Stack';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Text } from '../Text/Text';
 
@@ -154,8 +155,8 @@ export function Drawer({
               />
             </div>
             {typeof title === 'string' ? (
-              <div className={styles.titleWrapper}>
-                <Text element="h3" {...titleProps}>
+              <Stack direction="column">
+                <Text element="h3" truncate {...titleProps}>
                   {title}
                 </Text>
                 {subtitle && (
@@ -163,7 +164,7 @@ export function Drawer({
                     {subtitle}
                   </div>
                 )}
-              </div>
+              </Stack>
             ) : (
               title
             )}
@@ -325,14 +326,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       right: theme.spacing(1),
       top: theme.spacing(1),
     }),
-    titleWrapper: css({
-      label: 'drawer-title',
-      overflowWrap: 'break-word',
-    }),
     subtitle: css({
       label: 'drawer-subtitle',
       color: theme.colors.text.secondary,
-      paddingTop: theme.spacing(1),
     }),
     content: css({
       padding: theme.spacing(theme.components.drawer?.padding ?? 2),

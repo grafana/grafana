@@ -7,7 +7,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { Grid, TextLink, ToolbarButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { config } from 'app/core/config';
-import { StoreState } from 'app/types';
+import { StoreState } from 'app/types/store';
 
 import AuthDrawer from './AuthDrawer';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
@@ -46,7 +46,6 @@ export const AuthConfigPageUnconnected = ({
   }, [loadSettings]);
 
   const [showDrawer, setShowDrawer] = useState(false);
-
   const authProviders = getRegisteredAuthProviders();
   const availableProviders = authProviders.filter((p) => !providerStatuses[p.id]?.hide);
   const onProviderCardClick = (providerType: string, enabled: boolean) => {

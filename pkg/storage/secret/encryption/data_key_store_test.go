@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
@@ -30,8 +29,9 @@ func TestEncryptionStoreImpl_DataKeyLifecycle(t *testing.T) {
 	// Initialize data key storage with a fake db
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	tracer := noop.NewTracerProvider().Tracer("test")
-	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-	store, err := ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
+	store, err := ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
+	require.NoError(t, err)
+	globalStore, err := ProvideGlobalDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -73,8 +73,8 @@ func TestEncryptionStoreImpl_DataKeyLifecycle(t *testing.T) {
 	require.Equal(t, dataKey.UID, currentKey.UID)
 	require.Equal(t, dataKey.Namespace, currentKey.Namespace)
 
-	// Test GetAllDataKeys
-	allKeys, err := store.GetAllDataKeys(ctx, "test-namespace")
+	// Test ListDataKeys
+	allKeys, err := store.ListDataKeys(ctx, "test-namespace")
 	require.NoError(t, err)
 	require.Len(t, allKeys, 1)
 	require.Equal(t, dataKey.UID, allKeys[0].UID)
@@ -103,6 +103,15 @@ func TestEncryptionStoreImpl_DataKeyLifecycle(t *testing.T) {
 	require.Equal(t, unchangingDataKey.UID, staticKey.UID)
 	require.Equal(t, unchangingDataKey.Namespace, staticKey.Namespace)
 	require.True(t, staticKey.Active)
+
+	// Test DisableAllDataKeys
+	err = globalStore.DisableAllDataKeys(ctx)
+	require.NoError(t, err)
+
+	// Verify that remaining data keys are disabled
+	disabledKey, err = store.GetDataKey(ctx, "static-namespace", "static-uid")
+	require.NoError(t, err)
+	require.False(t, disabledKey.Active)
 }
 
 type PassThroughEncryptionProvider struct{}

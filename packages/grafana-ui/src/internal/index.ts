@@ -45,7 +45,7 @@ export {
 } from '../components/MatchersUI/utils';
 export type { FieldMatcherUIRegistryItem } from '../components/MatchersUI/types';
 export { RefIDMultiPicker, RefIDPicker, stringsToRegexp } from '../components/MatchersUI/FieldsByFrameRefIdMatcher';
-export { allFieldTypeIconOptions } from '../components/MatchersUI/FieldTypeMatcherEditor';
+export { getAllFieldTypeIconOptions } from '../components/MatchersUI/FieldTypeMatcherEditor';
 
 export { getStyles as getSliderStyles } from '../components/Slider/styles';
 export { getSelectStyles } from '../components/Select/getSelectStyles';
@@ -83,7 +83,7 @@ export { ConfirmContent, type ConfirmContentProps } from '../components/ConfirmM
 export { EmotionPerfTest } from '../components/ThemeDemos/EmotionPerfTest';
 
 export { VizTooltipContent } from '../components/VizTooltip/VizTooltipContent';
-export { VizTooltipFooter } from '../components/VizTooltip/VizTooltipFooter';
+export { VizTooltipFooter, type AdHocFilterModel } from '../components/VizTooltip/VizTooltipFooter';
 export { VizTooltipHeader } from '../components/VizTooltip/VizTooltipHeader';
 export { VizTooltipWrapper } from '../components/VizTooltip/VizTooltipWrapper';
 export { VizTooltipRow } from '../components/VizTooltip/VizTooltipRow';

@@ -32,9 +32,10 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	authtypes "github.com/grafana/authlib/types"
-
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -60,6 +61,9 @@ type StorageOptions struct {
 
 	// Add internalID label when missing
 	RequireDeprecatedInternalID bool
+
+	// Process inline secure values
+	SecureValues secrets.InlineSecureValueSupport
 
 	// Temporary fix to support adding default permissions AfterCreate
 	Permissions DefaultPermissionSetter
@@ -163,8 +167,27 @@ func NewStorage(
 	return s, func() {}, nil
 }
 
+// CompactRevision implements storage.Interface.
+// https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apiserver/pkg/storage/interfaces.go#L278
+// https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L204
+func (s *Storage) CompactRevision() int64 {
+	return 0
+}
+
+// SetKeysFunc allows to override the function used to get keys from storage.
+// This allows to replace default function that fetches keys from storage with one using cache.
+// https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apiserver/pkg/storage/interfaces.go#L273
+func (s *Storage) SetKeysFunc(storage.KeysFunc) {
+	// noop
+}
+
+// Stats implements storage.Interface.
+func (s *Storage) Stats(ctx context.Context) (storage.Stats, error) {
+	return storage.Stats{}, nil
+}
+
 // GetCurrentResourceVersion implements storage.Interface.
-// See: https://github.com/kubernetes/kubernetes/blob/v1.33.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L647
+// See: https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L686
 func (s *Storage) GetCurrentResourceVersion(ctx context.Context) (uint64, error) {
 	// Although not totally accurate, this is sufficient
 	return uint64(time.Now().UnixMicro()), nil
@@ -183,33 +206,33 @@ func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Obje
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
-	var err error
-	var permissions string
-	req := &resourcepb.CreateRequest{}
-	req.Value, permissions, err = s.prepareObjectForStorage(ctx, obj)
+	v, err := s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
 		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_ADDED, key, obj, out)
 	}
-
+	req := &resourcepb.CreateRequest{
+		Value: v.raw.Bytes(),
+	}
 	req.Key, err = s.getKey(key)
 	if err != nil {
 		return err
 	}
 
-	grantPermissions, err := afterCreatePermissionCreator(ctx, req.Key, permissions, obj, s.opts.Permissions)
+	v.permissionCreator, err = afterCreatePermissionCreator(ctx, req.Key, v.grantPermissions, obj, s.opts.Permissions)
 	if err != nil {
 		return err
 	}
 
 	rsp, err := s.store.Create(ctx, req)
 	if err != nil {
-		return resource.GetError(resource.AsErrorResult(err))
+		return v.finish(ctx, resource.GetError(resource.AsErrorResult(err)), s.opts.SecureValues)
 	}
 	if rsp.Error != nil {
+		err = resource.GetError(rsp.Error)
 		if rsp.Error.Code == http.StatusConflict {
-			return storage.NewKeyExistsError(key, 0)
+			err = storage.NewKeyExistsError(key, 0)
 		}
-		return resource.GetError(rsp.Error)
+		return v.finish(ctx, err, s.opts.SecureValues)
 	}
 
 	if _, err := s.convertToObject(req.Value, out); err != nil {
@@ -231,12 +254,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		})
 	}
 
-	// Synchronous AfterCreate permissions -- allows users to become "admin" of the thing they made
-	if grantPermissions != nil {
-		return grantPermissions(ctx)
-	}
-
-	return nil
+	return v.finish(ctx, nil, s.opts.SecureValues)
 }
 
 // Delete removes the specified key and returns the value that existed at that spot.
@@ -305,6 +323,11 @@ func (s *Storage) Delete(
 	if rsp.Error != nil {
 		return resource.GetError(rsp.Error)
 	}
+
+	if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta); err != nil {
+		logging.FromContext(ctx).Warn("failed to delete inline secure values", "err", err)
+	}
+
 	if err := s.versioner.UpdateObject(out, uint64(rsp.ResourceVersion)); err != nil {
 		return err
 	}
@@ -588,21 +611,27 @@ func (s *Storage) GuaranteedUpdate(
 		break
 	}
 
-	req.Value, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
+	v, err := s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
 	if err != nil {
 		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
 	}
 
-	var rv uint64
 	// Only update (for real) if the bytes have changed
+	var rv uint64
+	req.Value = v.raw.Bytes()
 	if !bytes.Equal(req.Value, existingBytes) {
 		updateResponse, err := s.store.Update(ctx, req)
 		if err != nil {
-			return resource.GetError(resource.AsErrorResult(err))
+			err = resource.GetError(resource.AsErrorResult(err))
+		} else if updateResponse.Error != nil {
+			err = resource.GetError(updateResponse.Error)
 		}
-		if updateResponse.Error != nil {
-			return resource.GetError(updateResponse.Error)
+
+		// Cleanup secure values
+		if err = v.finish(ctx, err, s.opts.SecureValues); err != nil {
+			return err
 		}
+
 		rv = uint64(updateResponse.ResourceVersion)
 	}
 
@@ -617,12 +646,6 @@ func (s *Storage) GuaranteedUpdate(
 	}
 
 	return nil
-}
-
-// Count returns number of different entries under the key (generally being path prefix).
-// TODO: Implement count.
-func (s *Storage) Count(key string) (int64, error) {
-	return 0, nil
 }
 
 // RequestWatchProgress requests the a watch stream progress status be sent in the

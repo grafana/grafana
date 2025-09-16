@@ -3,8 +3,8 @@ import { css, keyframes } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Button, HorizontalGroup, Spinner, useStyles2, VerticalGroup } from '@grafana/ui';
-import { DashboardInitPhase } from 'app/types';
+import { Button, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { DashboardInitPhase } from 'app/types/dashboard';
 
 export interface Props {
   initPhase: DashboardInitPhase;
@@ -19,16 +19,16 @@ export const DashboardLoading = ({ initPhase }: Props) => {
   return (
     <div className={styles.dashboardLoading}>
       <div className={styles.dashboardLoadingText}>
-        <VerticalGroup spacing="md">
-          <HorizontalGroup align="center" justify="center" spacing="xs">
+        <Stack direction="column" gap={2}>
+          <Stack alignItems="center" justifyContent="center" gap={0.5}>
             <Spinner inline={true} /> {initPhase}
-          </HorizontalGroup>{' '}
-          <HorizontalGroup align="center" justify="center">
+          </Stack>{' '}
+          <Stack alignItems="center" justifyContent="center">
             <Button variant="secondary" size="md" icon="repeat" onClick={cancelVariables}>
               <Trans i18nKey="dashboard.dashboard-loading.cancel-loading-dashboard">Cancel loading dashboard</Trans>
             </Button>
-          </HorizontalGroup>
-        </VerticalGroup>
+          </Stack>
+        </Stack>
       </div>
     </div>
   );

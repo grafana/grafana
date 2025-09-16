@@ -19,10 +19,6 @@ func RegisterDependencies(
 	secretDBMigrator contracts.SecretDBMigrator,
 	accessControlService accesscontrol.Service,
 ) (*DependencyRegisterer, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) || !features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
-		return nil, nil
-	}
-
 	// Permissions for requests in multi-tenant mode will come from HG.
 	if err := registerAccessControlRoles(accessControlService); err != nil {
 		return nil, fmt.Errorf("registering access control roles: %w", err)

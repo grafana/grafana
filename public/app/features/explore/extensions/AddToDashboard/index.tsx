@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Modal, ToolbarButton } from '@grafana/ui';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
 import { getExploreItemSelector } from '../../state/selectors';
 

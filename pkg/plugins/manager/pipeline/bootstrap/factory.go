@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 )
 
 type pluginFactoryFunc func(p *plugins.FoundBundle, pluginClass plugins.Class, sig plugins.Signature) (*plugins.Plugin, error)
@@ -27,7 +28,7 @@ func NewDefaultPluginFactory(features *config.Features, assetPath *assetpath.Ser
 
 func (f *DefaultPluginFactory) createPlugin(bundle *plugins.FoundBundle, class plugins.Class,
 	sig plugins.Signature) (*plugins.Plugin, error) {
-	parentInfo := assetpath.NewPluginInfo(bundle.Primary.JSONData, class, bundle.Primary.FS, nil)
+	parentInfo := pluginassets.NewPluginInfo(bundle.Primary.JSONData, class, bundle.Primary.FS, nil)
 	plugin, err := f.newPlugin(bundle.Primary, class, sig, parentInfo)
 	if err != nil {
 		return nil, err
@@ -39,7 +40,7 @@ func (f *DefaultPluginFactory) createPlugin(bundle *plugins.FoundBundle, class p
 
 	plugin.Children = make([]*plugins.Plugin, 0, len(bundle.Children))
 	for _, child := range bundle.Children {
-		childInfo := assetpath.NewPluginInfo(child.JSONData, class, child.FS, &parentInfo)
+		childInfo := pluginassets.NewPluginInfo(child.JSONData, class, child.FS, &parentInfo)
 		cp, err := f.newPlugin(*child, class, sig, childInfo)
 		if err != nil {
 			return nil, err
@@ -52,7 +53,7 @@ func (f *DefaultPluginFactory) createPlugin(bundle *plugins.FoundBundle, class p
 }
 
 func (f *DefaultPluginFactory) newPlugin(p plugins.FoundPlugin, class plugins.Class, sig plugins.Signature,
-	info assetpath.PluginInfo) (*plugins.Plugin, error) {
+	info pluginassets.PluginInfo) (*plugins.Plugin, error) {
 	baseURL, err := f.assetPath.Base(info)
 	if err != nil {
 		return nil, fmt.Errorf("base url: %w", err)
@@ -77,16 +78,14 @@ func (f *DefaultPluginFactory) newPlugin(p plugins.FoundPlugin, class plugins.Cl
 		return nil, err
 	}
 
-	if f.features.LocalizationForPlugins {
-		if err := setTranslations(plugin, f.assetPath, info); err != nil {
-			return nil, err
-		}
+	if err := setTranslations(plugin, f.assetPath, info); err != nil {
+		return nil, err
 	}
 
 	return plugin, nil
 }
 
-func setImages(p *plugins.Plugin, assetPath *assetpath.Service, info assetpath.PluginInfo) error {
+func setImages(p *plugins.Plugin, assetPath *assetpath.Service, info pluginassets.PluginInfo) error {
 	var err error
 	for _, dst := range []*string{&p.Info.Logos.Small, &p.Info.Logos.Large} {
 		if len(*dst) == 0 {
@@ -109,7 +108,7 @@ func setImages(p *plugins.Plugin, assetPath *assetpath.Service, info assetpath.P
 	return nil
 }
 
-func setTranslations(p *plugins.Plugin, assetPath *assetpath.Service, info assetpath.PluginInfo) error {
+func setTranslations(p *plugins.Plugin, assetPath *assetpath.Service, info pluginassets.PluginInfo) error {
 	translations, err := assetPath.GetTranslations(info)
 	if err != nil {
 		return fmt.Errorf("set translations: %w", err)

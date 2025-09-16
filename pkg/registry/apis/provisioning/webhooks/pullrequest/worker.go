@@ -8,11 +8,36 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+func ProvidePullRequestWorker(
+	cfg *setting.Cfg,
+	renderer rendering.Service,
+	blobstore resource.ResourceClient,
+	configProvider apiserver.RestConfigProvider,
+) *PullRequestWorker {
+	urlProvider := func(_ string) string {
+		return cfg.AppURL
+	}
+
+	// FIXME: we should create providers for client and parsers, so that we don't have
+	// multiple connections for webhooks
+	clients := resources.NewClientFactory(configProvider)
+	parsers := resources.NewParserFactory(clients)
+	screenshotRenderer := NewScreenshotRenderer(renderer, blobstore)
+	evaluator := NewEvaluator(screenshotRenderer, parsers, urlProvider)
+	commenter := NewCommenter()
+
+	return NewPullRequestWorker(evaluator, commenter)
+}
 
 //go:generate mockery --name=PullRequestRepo --structname=MockPullRequestRepo --inpackage --filename=mock_pullrequest_repo.go --with-expecter
 type PullRequestRepo interface {

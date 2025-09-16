@@ -1,4 +1,4 @@
-import { GrafanaBootConfig } from '@grafana/runtime';
+import { BootData } from '@grafana/data';
 
 import { e2e } from '../utils';
 
@@ -22,7 +22,7 @@ describe('Panels smokescreen', () => {
       visitDashboardAtStart: false,
     });
 
-    cy.window().then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
+    cy.window().then((win: Cypress.AUTWindow & { grafanaBootData: BootData }) => {
       // Loop through every panel type and ensure no crash
       Object.entries(win.grafanaBootData.settings.panels).forEach(([_, panel]) => {
         // TODO: Remove Flame Graph check as part of addressing #66803

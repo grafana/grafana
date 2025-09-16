@@ -26,12 +26,11 @@ import { LogListControls } from './panel/LogListControls';
 import { ScrollToLogsEvent } from './panel/virtualization';
 
 export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
-  hasUnescapedContent?: boolean;
   loading: boolean;
   logsMeta?: LogsMetaItem[];
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
   logOptionsStorageKey?: string;
-  onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
+  onLogOptionsChange?: (option: LogListControlOptions, value: string | boolean | string[]) => void;
   range: TimeRange;
   filterLevels?: LogLevel[];
 
@@ -63,7 +62,6 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
       deduplicatedRows,
       dedupStrategy,
       filterLevels,
-      hasUnescapedContent,
       showLabels,
       showTime,
       logsMeta,
@@ -84,7 +82,6 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
         enableLogDetails={false}
         filterLevels={filterLevels}
         fontSize="default"
-        hasUnescapedContent={hasUnescapedContent}
         logOptionsStorageKey={logOptionsStorageKey}
         logs={deduplicatedRows ?? []}
         logsMeta={logsMeta}

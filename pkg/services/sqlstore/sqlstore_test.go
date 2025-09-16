@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -24,6 +25,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationIsUniqueConstraintViolation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	store, _ := InitTestDB(t)
 
 	testCases := []struct {

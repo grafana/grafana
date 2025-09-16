@@ -202,8 +202,12 @@ func groupResults(results *data.Frame, groupingFieldNames []string, fromSyncQuer
 				groupLabels := generateLabels(groupingFields, i)
 
 				// set the group key as the display name for sync queries
-				for j := 1; j < len(newFrame.Fields); j++ {
+				for j := 0; j < len(newFrame.Fields); j++ {
 					valueField := newFrame.Fields[j]
+					// the time field might not be the first field so we check it here and skip the field if it is
+					if valueField.Type().Time() {
+						continue
+					}
 					if valueField.Config == nil {
 						valueField.Config = &data.FieldConfig{}
 					}

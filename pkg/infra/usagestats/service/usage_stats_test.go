@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -156,6 +157,8 @@ func TestMetrics(t *testing.T) {
 }
 
 func TestIntegrationGetUsageReport_IncludesMetrics(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := dbtest.NewFakeDB()
 	uss := createService(t, sqlStore, true)
 	metricName := "stats.test_metric.count"

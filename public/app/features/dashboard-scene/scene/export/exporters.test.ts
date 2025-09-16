@@ -2,11 +2,13 @@ import { find } from 'lodash';
 
 import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta, TypedVariableModel } from '@grafana/data';
 import { Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   DatasourceVariableKind,
+  LibraryPanelKind,
+  PanelKind,
   QueryVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { createAdHocVariableAdapter } from 'app/features/variables/adhoc/adapter';
@@ -50,8 +52,36 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 jest.mock('app/features/library-panels/state/api', () => ({
-  getLibraryPanel: jest.fn().mockReturnValue(
-    Promise.resolve({
+  getLibraryPanel: jest.fn().mockImplementation((uid: string) => {
+    if (uid === 'test-library-panel-uid') {
+      return Promise.resolve({
+        name: 'Test Library Panel',
+        uid: 'test-library-panel-uid',
+        model: {
+          type: 'timeseries',
+          datasource: {
+            type: 'testdb',
+            uid: 'gfdb',
+          },
+          targets: [
+            {
+              refId: 'A',
+              datasource: {
+                type: 'testdb',
+                uid: 'gfdb',
+              },
+            },
+          ],
+          id: 123,
+          title: 'Test Library Panel',
+        },
+      });
+    }
+    if (uid === 'invalid-uid') {
+      return Promise.reject(new Error('Library panel not found'));
+    }
+    // Default behavior for other UIDs
+    return Promise.resolve({
       name: 'Testing lib panel 1',
       uid: 'abc-123',
       model: {
@@ -60,9 +90,18 @@ jest.mock('app/features/library-panels/state/api', () => ({
           type: 'testdb',
           uid: '${DS_GFDB}',
         },
+        targets: [
+          {
+            refId: 'A',
+            datasource: {
+              type: 'testdb',
+              uid: '${DS_GFDB}',
+            },
+          },
+        ],
       },
-    })
-  ),
+    });
+  }),
 }));
 
 variableAdapters.register(createQueryVariableAdapter());
@@ -514,6 +553,12 @@ describe('dashboard exporter v1', () => {
       expect(element.kind).toBe(LibraryElementKind.Panel);
       expect(element.model).toEqual({
         datasource: { type: 'testdb', uid: '${DS_GFDB}' },
+        targets: [
+          {
+            datasource: { type: 'testdb', uid: '${DS_GFDB}' },
+            refId: 'A',
+          },
+        ],
         type: 'graph',
       });
     });
@@ -528,6 +573,12 @@ describe('dashboard exporter v1', () => {
           type: 'testdb',
           uid: '${DS_GFDB}',
         },
+        targets: [
+          {
+            datasource: { type: 'testdb', uid: '${DS_GFDB}' },
+            refId: 'A',
+          },
+        ],
       });
     });
   });
@@ -549,13 +600,12 @@ describe('dashboard exporter v2', () => {
               {
                 kind: 'PanelQuery',
                 spec: {
-                  datasource: {
-                    type: 'prometheus',
-                    uid: '${datasourceVar}',
-                  },
                   hidden: false,
                   query: {
-                    kind: 'prometheus',
+                    datasource: {
+                      name: '${datasourceVar}',
+                    },
+                    group: 'prometheus',
                     spec: {
                       editorMode: 'builder',
                       expr: 'go_goroutines{job="prometheus"}',
@@ -583,7 +633,7 @@ describe('dashboard exporter v2', () => {
   it('should replace datasource in a query variable', async () => {
     const { dashboard } = await setup();
     const variable = dashboard.variables[0] as QueryVariableKind;
-    expect(variable.spec.datasource?.uid).toBeUndefined();
+    expect(variable.spec.query.datasource?.name).toBeUndefined();
   });
 
   it('do not expose datasource name and id in datasource variable', async () => {
@@ -597,16 +647,7 @@ describe('dashboard exporter v2', () => {
     const { dashboard } = await setup();
     const annotationQuery = dashboard.annotations[0];
 
-    expect(annotationQuery.spec.datasource?.uid).toBeUndefined();
-  });
-
-  it('should remove library panels from layout', async () => {
-    const { dashboard, originalSchema } = await setup();
-    const elementRef = 'panel-2';
-    const libraryPanel = dashboard.elements[elementRef];
-    const origLibraryPanel = originalSchema.elements[elementRef];
-    expect(origLibraryPanel.kind).toBe('LibraryPanel');
-    expect(libraryPanel).toBeUndefined();
+    expect(annotationQuery.spec.query?.datasource?.name).toBeUndefined();
   });
 
   it('should not remove datasource ref from panel that uses a datasource variable', async () => {
@@ -616,11 +657,124 @@ describe('dashboard exporter v2', () => {
     if (panel.kind !== 'Panel') {
       throw new Error('Panel should be a Panel');
     }
+    expect(panel.spec.data.spec.queries[0].spec.query.datasource?.name).toBe('${datasourceVar}');
+    expect(panel.spec.data.spec.queries[0].spec.query.group).toBe('prometheus');
+  });
 
-    expect(panel.spec.data.spec.queries[0].spec.datasource).toEqual({
-      type: 'prometheus',
-      uid: '${datasourceVar}',
-    });
+  it('should convert library panels to inline panels when sharing externally', async () => {
+    const setupWithLibraryPanel = async (isSharingExternally: boolean) => {
+      const schemaCopy = JSON.parse(JSON.stringify(handyTestingSchema));
+
+      // Add a library panel to test conversion
+      schemaCopy.elements['test-library-panel'] = {
+        kind: 'LibraryPanel',
+        spec: {
+          id: 123,
+          title: 'Test Library Panel',
+          libraryPanel: {
+            uid: 'test-library-panel-uid',
+            name: 'Test Library Panel',
+          },
+        },
+      };
+
+      // Handle makeExportableV2 union return type: DashboardV2Spec | { error: unknown }
+      const dashboard = await makeExportableV2(schemaCopy, isSharingExternally);
+      if (typeof dashboard === 'object' && 'error' in dashboard) {
+        throw dashboard.error;
+      }
+      return { dashboard, originalSchema: schemaCopy };
+    };
+
+    const { dashboard } = await setupWithLibraryPanel(true); // isSharingExternally = true
+
+    // Library panel should be converted to inline panel
+    const convertedPanel = dashboard.elements['test-library-panel'] as PanelKind;
+    expect(convertedPanel.kind).toBe('Panel');
+    expect(convertedPanel.spec.id).toBe(123);
+
+    // Check that the panel was properly converted
+    expect(convertedPanel.spec.data.spec.queries[0].spec.query.kind).toBe('DataQuery');
+    expect(convertedPanel.spec.data.spec.queries[0].spec.refId).toBe('A');
+  });
+
+  it('should keep library panels as-is when not sharing externally', async () => {
+    const setupWithLibraryPanel = async (isSharingExternally: boolean) => {
+      const schemaCopy = JSON.parse(JSON.stringify(handyTestingSchema));
+
+      // Add a library panel
+      schemaCopy.elements['test-library-panel'] = {
+        kind: 'LibraryPanel',
+        spec: {
+          id: 124,
+          title: 'Test Library Panel',
+          libraryPanel: {
+            uid: 'abc-123',
+            name: 'Testing lib panel 1',
+          },
+        },
+      };
+
+      // Handle makeExportableV2 union return type: DashboardV2Spec | { error: unknown }
+      const dashboard = await makeExportableV2(schemaCopy, isSharingExternally);
+      if (typeof dashboard === 'object' && 'error' in dashboard) {
+        throw dashboard.error;
+      }
+      return { dashboard, originalSchema: schemaCopy };
+    };
+
+    const { dashboard } = await setupWithLibraryPanel(false); // isSharingExternally = false
+
+    // Library panel should remain as library panel
+    const libraryPanel = dashboard.elements['test-library-panel'];
+    expect(libraryPanel.kind).toBe('LibraryPanel');
+    expect((libraryPanel as LibraryPanelKind).spec.libraryPanel.uid).toBe('abc-123');
+  });
+
+  it('should handle library panel conversion errors gracefully', async () => {
+    // Mock console.error to avoid Jest warnings
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const setupWithInvalidLibraryPanel = async () => {
+      const schemaCopy = JSON.parse(JSON.stringify(handyTestingSchema));
+
+      // Add a library panel with invalid uid that will cause getLibraryPanel to fail
+      schemaCopy.elements['invalid-library-panel'] = {
+        kind: 'LibraryPanel',
+        spec: {
+          id: 125,
+          title: 'Invalid Library Panel',
+          libraryPanel: {
+            uid: 'invalid-uid',
+            name: 'Invalid Library Panel',
+          },
+        },
+      };
+
+      // Handle makeExportableV2 union return type: DashboardV2Spec | { error: unknown }
+      const dashboard = await makeExportableV2(schemaCopy, true); // isSharingExternally = true
+      if (typeof dashboard === 'object' && 'error' in dashboard) {
+        throw dashboard.error;
+      }
+
+      return { dashboard, originalSchema: schemaCopy };
+    };
+
+    const { dashboard } = await setupWithInvalidLibraryPanel();
+
+    // Should return a placeholder panel
+    const placeholderPanel = dashboard.elements['invalid-library-panel'];
+    expect(placeholderPanel.kind).toBe('Panel');
+    expect((placeholderPanel as PanelKind).spec.id).toBe(125);
+    expect((placeholderPanel as PanelKind).spec.title).toBe('Invalid Library Panel');
+    expect((placeholderPanel as PanelKind).spec.vizConfig.kind).toBe('VizConfig');
+    expect((placeholderPanel as PanelKind).spec.vizConfig.group).toBe('text');
+
+    // Verify console.error was called
+    expect(consoleSpy).toHaveBeenCalledWith('Failed to load library panel invalid-uid:', expect.any(Error));
+
+    // Restore console.error
+    consoleSpy.mockRestore();
   });
 });
 

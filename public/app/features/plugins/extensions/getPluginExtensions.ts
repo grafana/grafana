@@ -172,7 +172,12 @@ export const getPluginExtensions: GetExtensions = ({
       pluginId: addedComponent.pluginId,
       title: addedComponent.title,
       description: addedComponent.description ?? '',
-      component: wrapWithPluginContext(addedComponent.pluginId, addedComponent.component, componentLog),
+      component: wrapWithPluginContext({
+        pluginId: addedComponent.pluginId,
+        extensionTitle: addedComponent.title,
+        Component: addedComponent.component,
+        log: componentLog,
+      }),
     };
 
     extensions.push(extension);

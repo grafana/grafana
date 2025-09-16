@@ -5,7 +5,7 @@ import {
 } from '../components/MetricsQueryEditor/setQueryValue';
 import { parseResourceDetails } from '../components/ResourcePicker/utils';
 import TimegrainConverter from '../time_grain_converter';
-import { AzureMetricDimension, AzureMonitorQuery, AzureQueryType } from '../types';
+import { AzureMetricDimension, AzureMonitorQuery, AzureQueryType } from '../types/query';
 
 const OLD_DEFAULT_DROPDOWN_VALUE = 'select';
 

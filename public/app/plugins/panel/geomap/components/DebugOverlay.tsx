@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { Map } from 'ol';
+import Map from 'ol/Map';
 import { Coordinate } from 'ol/coordinate';
 import { transform } from 'ol/proj';
 import { PureComponent } from 'react';

@@ -1,6 +1,7 @@
 import { updateNavIndex } from 'app/core/actions';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { FolderDTO, ThunkResult } from 'app/types';
+import { FolderDTO } from 'app/types/folders';
+import { ThunkResult } from 'app/types/store';
 
 import { buildNavModel } from './navModel';
 import { loadFolder } from './reducers';

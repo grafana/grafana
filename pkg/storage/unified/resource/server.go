@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"iter"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -20,19 +21,12 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
+	"github.com/grafana/dskit/ring"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
-)
-
-const (
-	// DefaultMaxBackoff is the default maximum backoff duration for enqueue operations.
-	DefaultMaxBackoff = 1 * time.Second
-	// DefaultMinBackoff is the default minimum backoff duration for enqueue operations.
-	DefaultMinBackoff = 100 * time.Millisecond
-	// DefaultMaxRetries is the default maximum number of retries for enqueue operations.
-	DefaultMaxRetries = 3
 )
 
 // ResourceServer implements all gRPC services
@@ -113,12 +107,23 @@ type StorageBackend interface {
 	// ListHistory is like ListIterator, but it returns the history of a resource
 	ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
 
+	// ListModifiedSince will return all resources that have changed since the given resource version.
+	// If a resource has changes, only the latest change will be returned.
+	ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error])
+
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
 	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
 
 	// Get resource stats within the storage backend.  When namespace is empty, it will apply to all
 	GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error)
+}
+
+type ModifiedResource struct {
+	Action          resourcepb.WatchEvent_Type
+	Key             resourcepb.ResourceKey
+	Value           []byte
+	ResourceVersion int64
 }
 
 type ResourceStats struct {
@@ -149,6 +154,13 @@ type QOSEnqueuer interface {
 	Enqueue(ctx context.Context, tenantID string, runnable func()) error
 }
 
+type QueueConfig struct {
+	MaxBackoff time.Duration
+	MinBackoff time.Duration
+	MaxRetries int
+	Timeout    time.Duration
+}
+
 type BlobConfig struct {
 	// The CDK configuration URL
 	URL string
@@ -171,15 +183,10 @@ type SearchOptions struct {
 	// Skip building index on startup for small indexes
 	InitMinCount int
 
-	// Build empty index on startup for large indexes so that
-	// we don't re-attempt to build the index later.
-	InitMaxCount int
-
-	// Channel to watch for index events (for testing)
-	IndexEventsChan chan *IndexEvent
-
 	// Interval for periodic index rebuilds (0 disables periodic rebuilds)
 	RebuildInterval time.Duration
+
+	Ring *ring.Ring
 }
 
 type ResourceServerOptions struct {
@@ -205,6 +212,9 @@ type ResourceServerOptions struct {
 	// Link RBAC
 	AccessClient claims.AccessClient
 
+	// Manage secure values
+	SecureValues secrets.InlineSecureValueSupport
+
 	// Callbacks for startup and shutdown
 	Lifecycle LifecycleHooks
 
@@ -222,10 +232,14 @@ type ResourceServerOptions struct {
 	MaxPageSizeBytes int
 
 	// QOSQueue is the quality of service queue used to enqueue
-	QOSQueue QOSEnqueuer
+	QOSQueue  QOSEnqueuer
+	QOSConfig QueueConfig
+
+	Ring           *ring.Ring
+	RingLifecycler *ring.BasicLifecycler
 }
 
-func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
+func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	if opts.Tracer == nil {
 		opts.Tracer = noop.NewTracerProvider().Tracer("resource-server")
 	}
@@ -255,6 +269,19 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 	if opts.QOSQueue == nil {
 		opts.QOSQueue = scheduler.NewNoopQueue()
+	}
+
+	if opts.QOSConfig.Timeout == 0 {
+		opts.QOSConfig.Timeout = 30 * time.Second
+	}
+	if opts.QOSConfig.MaxBackoff == 0 {
+		opts.QOSConfig.MaxBackoff = 1 * time.Second
+	}
+	if opts.QOSConfig.MinBackoff == 0 {
+		opts.QOSConfig.MinBackoff = 100 * time.Millisecond
+	}
+	if opts.QOSConfig.MaxRetries == 0 {
+		opts.QOSConfig.MaxRetries = 3
 	}
 
 	// Initialize the blob storage
@@ -291,6 +318,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		blob:             blobstore,
 		diagnostics:      opts.Diagnostics,
 		access:           opts.AccessClient,
+		secure:           opts.SecureValues,
 		writeHooks:       opts.WriteHooks,
 		lifecycle:        opts.Lifecycle,
 		now:              opts.Now,
@@ -301,11 +329,12 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		maxPageSizeBytes: opts.MaxPageSizeBytes,
 		reg:              opts.Reg,
 		queue:            opts.QOSQueue,
+		queueConfig:      opts.QOSConfig,
 	}
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics)
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.Ring, opts.RingLifecycler)
 		if err != nil {
 			return nil, err
 		}
@@ -327,6 +356,7 @@ type server struct {
 	log            *slog.Logger
 	backend        StorageBackend
 	blob           BlobSupport
+	secure         secrets.InlineSecureValueSupport
 	search         *searchSupport
 	diagnostics    resourcepb.DiagnosticsServer
 	access         claims.AccessClient
@@ -349,6 +379,7 @@ type server struct {
 	maxPageSizeBytes int
 	reg              prometheus.Registerer
 	queue            QOSEnqueuer
+	queueConfig      QueueConfig
 }
 
 // Init implements ResourceServer.
@@ -404,6 +435,8 @@ func (s *server) Stop(ctx context.Context) error {
 }
 
 // Old value indicates an update -- otherwise a create
+//
+//nolint:gocyclo
 func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, value, oldValue []byte) (*WriteEvent, *resourcepb.ErrorResult) {
 	tmp := &unstructured.Unstructured{}
 	err := tmp.UnmarshalJSON(value)
@@ -457,6 +490,11 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}
+	}
+
+	// Verify that this resource can reference secure values
+	if err := canReferenceSecureValues(ctx, obj, event.ObjectOld, s.secure); err != nil {
+		return nil, err
 	}
 
 	if key.Namespace != obj.GetNamespace() {
@@ -602,8 +640,8 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		res *resourcepb.CreateResponse
 		err error
 	)
-	runErr := s.runInQueue(ctx, req.Key.Namespace, func() {
-		res, err = s.create(ctx, user, req)
+	runErr := s.runInQueue(ctx, req.Key.Namespace, func(queueCtx context.Context) {
+		res, err = s.create(queueCtx, user, req)
 	})
 	if runErr != nil {
 		return HandleQueueError(runErr, func(e *resourcepb.ErrorResult) *resourcepb.CreateResponse {
@@ -656,8 +694,8 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		res *resourcepb.UpdateResponse
 		err error
 	)
-	runErr := s.runInQueue(ctx, req.Key.Namespace, func() {
-		res, err = s.update(ctx, user, req)
+	runErr := s.runInQueue(ctx, req.Key.Namespace, func(queueCtx context.Context) {
+		res, err = s.update(queueCtx, user, req)
 	})
 	if runErr != nil {
 		return HandleQueueError(runErr, func(e *resourcepb.ErrorResult) *resourcepb.UpdateResponse {
@@ -724,8 +762,8 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		err error
 	)
 
-	runErr := s.runInQueue(ctx, req.Key.Namespace, func() {
-		res, err = s.delete(ctx, user, req)
+	runErr := s.runInQueue(ctx, req.Key.Namespace, func(queueCtx context.Context) {
+		res, err = s.delete(queueCtx, user, req)
 	})
 	if runErr != nil {
 		return HandleQueueError(runErr, func(e *resourcepb.ErrorResult) *resourcepb.DeleteResponse {
@@ -782,6 +820,11 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		return nil, apierrors.NewBadRequest(
 			fmt.Sprintf("unable to read previous object, %v", err))
 	}
+	oldObj, err := utils.MetaAccessor(marker)
+	if err != nil {
+		return nil, err
+	}
+
 	obj, err := utils.MetaAccessor(marker)
 	if err != nil {
 		return nil, err
@@ -793,6 +836,8 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	obj.SetUpdatedBy(user.GetUID())
 	obj.SetGeneration(utils.DeletedGeneration)
 	obj.SetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig, "") // clears it
+	event.ObjectOld = oldObj
+	event.Object = obj
 	event.Value, err = marker.MarshalJSON()
 	if err != nil {
 		return nil, apierrors.NewBadRequest(
@@ -828,8 +873,8 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 		res *resourcepb.ReadResponse
 		err error
 	)
-	runErr := s.runInQueue(ctx, req.Key.Namespace, func() {
-		res, err = s.read(ctx, user, req)
+	runErr := s.runInQueue(ctx, req.Key.Namespace, func(queueCtx context.Context) {
+		res, err = s.read(queueCtx, user, req)
 	})
 	if runErr != nil {
 		return HandleQueueError(runErr, func(e *resourcepb.ErrorResult) *resourcepb.ReadResponse {
@@ -900,7 +945,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	}
 
 	if req.Limit < 1 {
-		req.Limit = 50 // default max 50 items in a page
+		req.Limit = 500 // default max 500 items in a page
 	}
 	maxPageBytes := s.maxPageSizeBytes
 	pageBytes := 0
@@ -1247,10 +1292,18 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 }
 
 func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("search index not configured")
+	}
+
 	return s.search.ListManagedObjects(ctx, req)
 }
 
 func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("search index not configured")
+	}
+
 	return s.search.CountManagedObjects(ctx, req)
 }
 
@@ -1335,40 +1388,44 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 	return rsp, nil
 }
 
-func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func()) error {
-	boff := backoff.New(ctx, backoff.Config{
-		MinBackoff: DefaultMinBackoff,
-		MaxBackoff: DefaultMaxBackoff,
-		MaxRetries: DefaultMaxRetries,
+func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error {
+	// Enforce a timeout for the entire operation, including queueing and execution.
+	queueCtx, cancel := context.WithTimeout(ctx, s.queueConfig.Timeout)
+	defer cancel()
+
+	done := make(chan struct{})
+	wrappedRunnable := func() {
+		defer close(done)
+		runnable(queueCtx)
+	}
+
+	// Retry enqueueing with backoff, respecting the timeout context.
+	boff := backoff.New(queueCtx, backoff.Config{
+		MinBackoff: s.queueConfig.MinBackoff,
+		MaxBackoff: s.queueConfig.MaxBackoff,
+		MaxRetries: s.queueConfig.MaxRetries,
 	})
 
-	var (
-		wg  sync.WaitGroup
-		err error
-	)
-	wg.Add(1)
-	wrapped := func() {
-		defer wg.Done()
-		runnable()
-	}
-	for boff.Ongoing() {
-		err = s.queue.Enqueue(ctx, tenantID, wrapped)
+	for {
+		err := s.queue.Enqueue(queueCtx, tenantID, wrappedRunnable)
 		if err == nil {
+			// Successfully enqueued.
 			break
 		}
-		s.log.Warn("failed to enqueue runnable, retrying",
-			"maxRetries", DefaultMaxRetries,
-			"tenantID", tenantID,
-			"error", err)
+
+		s.log.Warn("failed to enqueue runnable, retrying", "tenantID", tenantID, "error", err)
+		if !boff.Ongoing() {
+			// Backoff finished (retries exhausted or context canceled).
+			return fmt.Errorf("failed to enqueue for tenant %s: %w", tenantID, err)
+		}
 		boff.Wait()
 	}
-	if err != nil {
-		s.log.Error("failed to enqueue runnable",
-			"maxRetries", DefaultMaxRetries,
-			"tenantID", tenantID,
-			"error", err)
-		return fmt.Errorf("failed to enqueue runnable for tenant %s: %w", tenantID, err)
+
+	// Wait for the runnable to complete or for the context to be done.
+	select {
+	case <-done:
+		return nil // Completed successfully.
+	case <-queueCtx.Done():
+		return queueCtx.Err() // Timed out or canceled while waiting for execution.
 	}
-	wg.Wait()
-	return nil
 }

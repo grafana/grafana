@@ -10,7 +10,7 @@ import { getIconForItem } from 'app/features/search/service/utils';
 
 import { Indent } from '../../../core/components/Indent/Indent';
 import { FolderRepo } from '../../../core/components/NestedFolderPicker/FolderRepo';
-import { useChildrenByParentUIDState } from '../state';
+import { useChildrenByParentUIDState } from '../state/hooks';
 import { DashboardsTreeCellProps } from '../types';
 
 import { makeRowID } from './utils';

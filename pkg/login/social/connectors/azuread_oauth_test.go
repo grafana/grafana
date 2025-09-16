@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-jose/go-jose/v3"
-	"github.com/go-jose/go-jose/v3/jwt"
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
@@ -880,10 +880,10 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 						tt.claims.ClaimNames.Groups: {Endpoint: server.URL},
 					}
 				}
-				raw, err = jwt.Signed(sig).Claims(cl).Claims(tt.claims).CompactSerialize()
+				raw, err = jwt.Signed(sig).Claims(cl).Claims(tt.claims).Serialize()
 				require.NoError(t, err)
 			} else {
-				raw, err = jwt.Signed(sig).Claims(cl).CompactSerialize()
+				raw, err = jwt.Signed(sig).Claims(cl).Serialize()
 				require.NoError(t, err)
 			}
 
@@ -1054,10 +1054,10 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 						tt.claims.ClaimNames.Groups: {Endpoint: server.URL},
 					}
 				}
-				raw, err = jwt.Signed(sig).Claims(cl).Claims(tt.claims).CompactSerialize()
+				raw, err = jwt.Signed(sig).Claims(cl).Claims(tt.claims).Serialize()
 				require.NoError(t, err)
 			} else {
-				raw, err = jwt.Signed(sig).Claims(cl).CompactSerialize()
+				raw, err = jwt.Signed(sig).Claims(cl).Serialize()
 				require.NoError(t, err)
 			}
 
@@ -1276,6 +1276,22 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
+		{
+			name: "fails if login prompt is invalid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_authentication":      "client_secret_post",
+					"client_id":                  "client-id",
+					"client_secret":              "client_secret",
+					"allowed_groups":             "0bb9c9cc-4945-418f-9b6a-c1d3b81141b0, 6034d328-0e6a-4240-8d03-cb9f2c1f16e4",
+					"allow_assign_grafana_admin": "true",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
+					"login_prompt":               "invalid",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1315,6 +1331,7 @@ func TestSocialAzureAD_Reload(t *testing.T) {
 					"client_id":     "new-client-id",
 					"client_secret": "new-client-secret",
 					"auth_url":      "some-new-url",
+					"login_prompt":  "select_account",
 				},
 			},
 			expectError: false,
@@ -1322,6 +1339,7 @@ func TestSocialAzureAD_Reload(t *testing.T) {
 				ClientId:     "new-client-id",
 				ClientSecret: "new-client-secret",
 				AuthUrl:      "some-new-url",
+				LoginPrompt:  "select_account",
 			},
 			expectedConfig: &oauth2.Config{
 				ClientID:     "new-client-id",

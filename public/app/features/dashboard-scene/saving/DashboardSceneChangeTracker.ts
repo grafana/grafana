@@ -15,10 +15,10 @@ import {
 } from '@grafana/scenes';
 import { createWorker } from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
 
-import { ConditionalRenderingData } from '../conditional-rendering/ConditionalRenderingData';
-import { ConditionalRenderingGroup } from '../conditional-rendering/ConditionalRenderingGroup';
-import { ConditionalRenderingTimeRangeSize } from '../conditional-rendering/ConditionalRenderingTimeRangeSize';
-import { ConditionalRenderingVariable } from '../conditional-rendering/ConditionalRenderingVariable';
+import { ConditionalRenderingData } from '../conditional-rendering/conditions/ConditionalRenderingData';
+import { ConditionalRenderingTimeRangeSize } from '../conditional-rendering/conditions/ConditionalRenderingTimeRangeSize';
+import { ConditionalRenderingVariable } from '../conditional-rendering/conditions/ConditionalRenderingVariable';
+import { ConditionalRenderingGroup } from '../conditional-rendering/group/ConditionalRenderingGroup';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene, PERSISTED_PROPS } from '../scene/DashboardScene';
@@ -46,19 +46,23 @@ export class DashboardSceneChangeTracker {
   }
 
   static isUpdatingPersistedState({ payload }: SceneObjectStateChangedEvent) {
+    const partialUpdateKeys = Object.keys(payload.partialUpdate);
+
     // If there are no changes in the state, the check is not needed
-    if (Object.keys(payload.partialUpdate).length === 0) {
+    if (partialUpdateKeys.length === 0) {
       return false;
     }
 
-    // Any change in the panel should trigger a change detection
+    // Any change in the grid item should trigger a change detection
     // The PanelTimeRange includes the overrides configuration
-    if (
-      payload.changedObject instanceof VizPanel ||
-      payload.changedObject instanceof DashboardGridItem ||
-      payload.changedObject instanceof PanelTimeRange
-    ) {
+    if (payload.changedObject instanceof DashboardGridItem || payload.changedObject instanceof PanelTimeRange) {
       return true;
+    }
+    // Panels contain a _renderCounter state prop which should not be marked as a change
+    if (payload.changedObject instanceof VizPanel) {
+      if (partialUpdateKeys.length > 1 || partialUpdateKeys[0] !== '_renderCounter') {
+        return true;
+      }
     }
     // SceneQueryRunner includes the DS configuration
     if (payload.changedObject instanceof SceneQueryRunner) {

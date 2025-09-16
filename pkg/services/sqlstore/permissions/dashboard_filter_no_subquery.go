@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -107,36 +106,22 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses(di
 
 			permSelector.WriteRune(')')
 
-			switch f.features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
-			case true:
-				if len(permSelectorArgs) > 0 {
-					switch f.recursiveQueriesAreSupported {
-					case true:
-						recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
-						f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs, orgID)
-						builder.WriteString("(folder.uid IN (SELECT uid FROM " + recQueryName)
-					default:
-						nestedFoldersSelectors, nestedFoldersArgs := f.nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "folder", "uid", "", orgID)
-						builder.WriteRune('(')
-						builder.WriteString(nestedFoldersSelectors)
-						args = append(args, nestedFoldersArgs...)
-					}
-					f.folderIsRequired = true
-					builder.WriteString(") AND NOT dashboard.is_folder)")
-				} else {
-					builder.WriteString("( 1 = 0 AND NOT dashboard.is_folder)")
+			if len(permSelectorArgs) > 0 {
+				switch f.recursiveQueriesAreSupported {
+				case true:
+					recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
+					f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs, orgID)
+					builder.WriteString("(folder.uid IN (SELECT uid FROM " + recQueryName)
+				default:
+					nestedFoldersSelectors, nestedFoldersArgs := f.nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "folder", "uid", "", orgID)
+					builder.WriteRune('(')
+					builder.WriteString(nestedFoldersSelectors)
+					args = append(args, nestedFoldersArgs...)
 				}
-			default:
-				builder.WriteString("(")
-				if len(permSelectorArgs) > 0 {
-					builder.WriteString("folder.uid IN ")
-					builder.WriteString(permSelector.String())
-					args = append(args, permSelectorArgs...)
-					f.folderIsRequired = true
-				} else {
-					builder.WriteString("1 = 0 ")
-				}
-				builder.WriteString(" AND NOT dashboard.is_folder)")
+				f.folderIsRequired = true
+				builder.WriteString(") AND NOT dashboard.is_folder)")
+			} else {
+				builder.WriteString("( 1 = 0 AND NOT dashboard.is_folder)")
 			}
 
 			// Include all the dashboards under the root if the user has the required permissions on the root (used to be the General folder)
@@ -181,33 +166,22 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses(di
 			}
 			permSelector.WriteRune(')')
 
-			switch f.features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
-			case true:
-				if len(permSelectorArgs) > 0 {
-					switch f.recursiveQueriesAreSupported {
-					case true:
-						recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
-						f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs, orgID)
-						builder.WriteString("(dashboard.uid IN ")
-						builder.WriteString(fmt.Sprintf("(SELECT uid FROM %s)", recQueryName))
-					default:
-						nestedFoldersSelectors, nestedFoldersArgs := f.nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "dashboard", "uid", "", orgID)
-						builder.WriteRune('(')
-						builder.WriteString(nestedFoldersSelectors)
-						builder.WriteRune(')')
-						args = append(args, nestedFoldersArgs...)
-					}
-				} else {
-					builder.WriteString("(1 = 0")
-				}
-			default:
-				if len(permSelectorArgs) > 0 {
+			if len(permSelectorArgs) > 0 {
+				switch f.recursiveQueriesAreSupported {
+				case true:
+					recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
+					f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs, orgID)
 					builder.WriteString("(dashboard.uid IN ")
-					builder.WriteString(permSelector.String())
-					args = append(args, permSelectorArgs...)
-				} else {
-					builder.WriteString("(1 = 0")
+					builder.WriteString(fmt.Sprintf("(SELECT uid FROM %s)", recQueryName))
+				default:
+					nestedFoldersSelectors, nestedFoldersArgs := f.nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "dashboard", "uid", "", orgID)
+					builder.WriteRune('(')
+					builder.WriteString(nestedFoldersSelectors)
+					builder.WriteRune(')')
+					args = append(args, nestedFoldersArgs...)
 				}
+			} else {
+				builder.WriteString("(1 = 0")
 			}
 			builder.WriteString(" AND dashboard.is_folder)")
 		} else {

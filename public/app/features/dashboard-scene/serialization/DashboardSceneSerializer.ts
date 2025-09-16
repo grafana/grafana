@@ -1,5 +1,5 @@
 import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { AnnoKeyDashboardSnapshotOriginalUrl, ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
@@ -12,7 +12,7 @@ import {
   getV2SchemaVariables,
 } from 'app/features/dashboard/utils/tracking';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
-import { DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardMeta, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getDashboardChanges';
 import { DashboardChangeInfo } from '../saving/shared';
@@ -288,7 +288,7 @@ export class V2DashboardSerializer
         const panelQueries = elementPanel.spec.data.spec.queries;
 
         for (const query of panelQueries) {
-          if (!query.spec.datasource) {
+          if (!query.spec.query.datasource?.name) {
             const elementId = this.getElementIdForPanel(elementPanel.spec.id);
             if (!this.defaultDsReferencesMap.panels.has(elementId)) {
               this.defaultDsReferencesMap.panels.set(elementId, new Set());
@@ -306,7 +306,7 @@ export class V2DashboardSerializer
     if (saveModel?.variables) {
       for (const variable of saveModel.variables) {
         // for query variables that dont have a ds defined add them to the list
-        if (variable.kind === 'QueryVariable' && !variable.spec.datasource) {
+        if (variable.kind === 'QueryVariable' && !variable.spec.query.datasource?.name) {
           this.defaultDsReferencesMap.variables.add(variable.spec.name);
         }
       }
@@ -315,7 +315,7 @@ export class V2DashboardSerializer
     // initialize annotations ds references map
     if (saveModel?.annotations) {
       for (const annotation of saveModel.annotations) {
-        if (!annotation.spec.datasource) {
+        if (!annotation.spec.query?.datasource?.name) {
           this.defaultDsReferencesMap.annotations.add(annotation.spec.name);
         }
       }
@@ -409,7 +409,7 @@ export class V2DashboardSerializer
       'elements' in this.initialSaveModel
         ? Object.values(this.initialSaveModel.elements)
             .filter((e) => e.kind === 'Panel')
-            .map((p) => p.spec.vizConfig.kind)
+            .map((p) => p.spec.vizConfig.group)
         : [];
     const panels = getPanelPluginCounts(panelPluginIds);
     const variables =

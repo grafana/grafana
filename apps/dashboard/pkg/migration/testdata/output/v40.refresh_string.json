@@ -1,7 +1,7 @@
 {
   "panels": [],
   "refresh": "1m",
-  "schemaVersion": 41,
+  "schemaVersion": 42,
   "time": {
     "from": "now-6h",
     "to": "now"

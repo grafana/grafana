@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -234,12 +233,12 @@ func TestServicebuildPipeLine(t *testing.T) {
 		},
 	}
 	s := Service{
-		features: featuremgmt.WithFeatures(featuremgmt.FlagExpressionParser),
-		cfg:      setting.NewCfg(),
+		cfg:    setting.NewCfg(),
+		tracer: &testTracer{},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nodes, err := s.buildPipeline(tt.req)
+			nodes, err := s.buildPipeline(t.Context(), tt.req)
 			if tt.expectErrContains != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tt.expectErrContains)

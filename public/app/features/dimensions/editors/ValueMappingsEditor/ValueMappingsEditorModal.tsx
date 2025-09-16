@@ -186,9 +186,10 @@ export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPic
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   tableWrap: css({
+    // TODO remove maxHeight/overflow when Modal.ButtonRow is sticky
     maxHeight: 'calc(80vh - 170px)',
-    minHeight: '40px',
     overflow: 'auto',
+    minHeight: '40px',
   }),
 
   editTable: css({

@@ -16,27 +16,12 @@ import { QueryOptionGroup } from '../shared/QueryOptionGroup';
 
 import { getLegendModeLabel, PromQueryLegendEditor } from './PromQueryLegendEditor';
 
-export interface UIOptions {
-  exemplars: boolean;
-  type: boolean;
-  format: boolean;
-  minStep: boolean;
-  legend: boolean;
-  resolution: boolean;
-}
-
-export interface PromQueryBuilderOptionsProps {
+interface PromQueryBuilderOptionsProps {
   query: PromQuery;
   app?: CoreApp;
   onChange: (update: PromQuery) => void;
   onRunQuery: () => void;
 }
-
-const FORMAT_OPTIONS: Array<SelectableValue<PromQueryFormat>> = [
-  { label: 'Time series', value: 'time_series' },
-  { label: 'Table', value: 'table' },
-  { label: 'Heatmap', value: 'heatmap' },
-];
 
 const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4, 5, 10], (value: number) => ({
   value,
@@ -45,6 +30,24 @@ const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4,
 
 export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
   ({ query, app, onChange, onRunQuery }) => {
+    const FORMAT_OPTIONS: Array<SelectableValue<PromQueryFormat>> = [
+      {
+        label: t(
+          'grafana-prometheus.querybuilder.prom-query-builder-options.format-options.label-time-series',
+          'Time series'
+        ),
+        value: 'time_series',
+      },
+      {
+        label: t('grafana-prometheus.querybuilder.prom-query-builder-options.format-options.label-table', 'Table'),
+        value: 'table',
+      },
+      {
+        label: t('grafana-prometheus.querybuilder.prom-query-builder-options.format-options.label-heatmap', 'Heatmap'),
+        value: 'heatmap',
+      },
+    ];
+
     const onChangeFormat = (value: SelectableValue<PromQueryFormat>) => {
       onChange({ ...query, format: value.value });
       onRunQuery();
@@ -182,17 +185,25 @@ function getQueryTypeValue(query: PromQuery) {
 function getCollapsedInfo(query: PromQuery, formatOption: string, queryType: string, app?: CoreApp): string[] {
   const items: string[] = [];
 
-  items.push(`Legend: ${getLegendModeLabel(query.legendFormat)}`);
-  items.push(`Format: ${formatOption}`);
-  items.push(`Step: ${query.interval ?? 'auto'}`);
-  items.push(`Type: ${queryType}`);
+  items.push(
+    t('grafana-prometheus.querybuilder.get-collapsed-info.legend', 'Legend: {{value}}', {
+      value: getLegendModeLabel(query.legendFormat),
+    })
+  );
+  items.push(
+    t('grafana-prometheus.querybuilder.get-collapsed-info.format', 'Format: {{value}}', { value: formatOption })
+  );
+  items.push(
+    t('grafana-prometheus.querybuilder.get-collapsed-info.step', 'Step: {{value}}', { value: query.interval ?? 'auto' })
+  );
+  items.push(t('grafana-prometheus.querybuilder.get-collapsed-info.type', 'Type: {{value}}', { value: queryType }));
 
   if (shouldShowExemplarSwitch(query, app)) {
-    if (query.exemplar) {
-      items.push(`Exemplars: true`);
-    } else {
-      items.push(`Exemplars: false`);
-    }
+    items.push(
+      t('grafana-prometheus.querybuilder.get-collapsed-info.exemplars', 'Exemplars: {{value}}', {
+        value: query.exemplar ? 'true' : 'false',
+      })
+    );
   }
   return items;
 }

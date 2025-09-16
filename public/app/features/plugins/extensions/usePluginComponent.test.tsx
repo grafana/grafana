@@ -382,7 +382,7 @@ describe('usePluginComponent()', () => {
 
     // Should log an error in dev mode
     expect(log.error).toHaveBeenCalledWith(
-      'Attempted to mutate object property "c" from extension with id myorg-extensions-app',
+      'Attempted to mutate object property "c" from extension with id myorg-extensions-app and version unknown',
       {
         stack: expect.any(String),
       }
@@ -438,7 +438,7 @@ describe('usePluginComponent()', () => {
 
     // Should log a warning
     expect(log.warning).toHaveBeenCalledWith(
-      'Attempted to mutate object property "c" from extension with id myorg-extensions-app',
+      'Attempted to mutate object property "c" from extension with id myorg-extensions-app and version unknown',
       {
         stack: expect.any(String),
       }

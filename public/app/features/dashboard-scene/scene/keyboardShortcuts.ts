@@ -4,13 +4,16 @@ import { sceneGraph, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
+import { InspectTab } from 'app/features/inspector/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
+import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
+import { findVizPanelByPathId } from '../utils/pathId';
+import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -19,20 +22,24 @@ import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutMana
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
-  let vizPanelKey: string | null = null;
+  let vizPanelPathId: string | null = null;
 
   const canEdit = scene.canEditDashboard();
 
   const panelAttentionSubscription = appEvents.subscribe(SetPanelAttentionEvent, (event) => {
     if (typeof event.payload.panelId === 'string') {
-      vizPanelKey = event.payload.panelId;
+      vizPanelPathId = event.payload.panelId;
     }
   });
 
   function withFocusedPanel(scene: DashboardScene, fn: (vizPanel: VizPanel) => void) {
     return () => {
-      const vizPanel = sceneGraph.findObject(scene, (o) => o.state.key === vizPanelKey);
-      if (vizPanel && vizPanel instanceof VizPanel) {
+      if (vizPanelPathId == null) {
+        return;
+      }
+
+      const vizPanel = findVizPanelByPathId(scene, vizPanelPathId);
+      if (vizPanel) {
         fn(vizPanel);
         return;
       }
@@ -43,15 +50,10 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'v',
     onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-      if (scene.state.viewPanelScene) {
-        locationService.push(
-          locationUtil.getUrlForPartial(locationService.getLocation(), {
-            viewPanel: undefined,
-          })
-        );
+      if (scene.state.viewPanel) {
+        locationService.partial({ viewPanel: undefined });
       } else {
-        const url = locationUtil.stripBaseFromUrl(getViewPanelUrl(vizPanel));
-        locationService.push(url);
+        locationService.partial({ viewPanel: vizPanel.getPathId(), editPanel: undefined });
       }
     }),
   });
@@ -111,15 +113,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'i',
     onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-      if (scene.state.inspectPanelKey) {
-        locationService.push(
-          locationUtil.getUrlForPartial(locationService.getLocation(), {
-            inspect: undefined,
-          })
-        );
-      } else {
-        locationService.push(locationUtil.stripBaseFromUrl(getInspectUrl(vizPanel)));
-      }
+      scene.showModal(new PanelInspectDrawer({ panelRef: vizPanel.getRef(), currentTab: InspectTab.Data }));
     }),
   });
 

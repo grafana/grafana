@@ -55,9 +55,7 @@ type Tarball struct {
 	// Dependent artifacts
 	Backend        *pipeline.Artifact
 	Frontend       *pipeline.Artifact
-	NPMPackages    *pipeline.Artifact
 	BundledPlugins *pipeline.Artifact
-	Storybook      *pipeline.Artifact
 }
 
 func NewTarballFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
@@ -164,7 +162,7 @@ func NewTarball(
 	if err != nil {
 		return nil, err
 	}
-	frontendArtifact, err := NewFrontend(ctx, log, version, artifact, enterprise, src, cache)
+	frontendArtifact, err := NewFrontend(ctx, log, artifact, version, enterprise, src, cache)
 	if err != nil {
 		return nil, err
 	}
@@ -174,15 +172,6 @@ func NewTarball(
 		return nil, err
 	}
 
-	npmArtifact, err := NewNPMPackages(ctx, log, artifact, src, version, cache)
-	if err != nil {
-		return nil, err
-	}
-
-	storybookArtifact, err := NewStorybook(ctx, log, artifact, src, version, cache)
-	if err != nil {
-		return nil, err
-	}
 	tarball := &Tarball{
 		Name:         name,
 		Distribution: distro,
@@ -195,9 +184,7 @@ func NewTarball(
 
 		Backend:        backendArtifact,
 		Frontend:       frontendArtifact,
-		NPMPackages:    npmArtifact,
 		BundledPlugins: bundledPluginsArtifact,
-		Storybook:      storybookArtifact,
 	}
 
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
@@ -239,16 +226,6 @@ func (t *Tarball) BuildFile(ctx context.Context, b *dagger.Container, opts *pipe
 		return nil, err
 	}
 
-	npmDir, err := opts.Store.Directory(ctx, t.NPMPackages)
-	if err != nil {
-		return nil, err
-	}
-
-	storybookDir, err := opts.Store.Directory(ctx, t.Storybook)
-	if err != nil {
-		return nil, err
-	}
-
 	pluginsDir, err := opts.Store.Directory(ctx, t.BundledPlugins)
 	if err != nil {
 		return nil, err
@@ -277,8 +254,6 @@ func (t *Tarball) BuildFile(ctx context.Context, b *dagger.Container, opts *pipe
 		targz.NewMappedDir("packaging/wrappers", grafanaDir.Directory("packaging/wrappers")),
 		targz.NewMappedDir("bin", backendDir),
 		targz.NewMappedDir("public", frontendDir),
-		targz.NewMappedDir("npm-artifacts", npmDir),
-		targz.NewMappedDir("storybook", storybookDir),
 		targz.NewMappedDir("plugins-bundled", pluginsDir),
 	}
 
@@ -329,9 +304,7 @@ func (t *Tarball) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error
 	return []*pipeline.Artifact{
 		t.Backend,
 		t.Frontend,
-		t.NPMPackages,
 		t.BundledPlugins,
-		t.Storybook,
 	}, nil
 }
 
@@ -378,8 +351,12 @@ func verifyTarball(
 		WithExposedPort(3000).AsService(dagger.ContainerAsServiceOpts{
 		Args: []string{"./bin/grafana", "server"},
 	})
+	result, err := e2e.ValidatePackage(ctx, d, svc, src, yarnCache, nodeVersion)
+	if err != nil {
+		return err
+	}
 
-	if _, err := containers.ExitError(ctx, e2e.ValidatePackage(d, svc, src, yarnCache, nodeVersion)); err != nil {
+	if _, err := containers.ExitError(ctx, result); err != nil {
 		return err
 	}
 	return nil

@@ -9,7 +9,7 @@ import { InfoBox } from './InfoBox';
 import mdx from './InfoBox.mdx';
 
 const meta: Meta = {
-  title: 'Layout/InfoBox',
+  title: 'Information/Deprecated/InfoBox',
   component: InfoBox,
   decorators: [],
   parameters: {

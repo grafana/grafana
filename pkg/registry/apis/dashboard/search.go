@@ -43,7 +43,7 @@ type SearchHandler struct {
 }
 
 func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboardSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
-	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), dashboardv0alpha1.DashboardResourceInfo.GroupResource(), resourceClient, legacyDashboardSearcher)
+	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), dashboardv0alpha1.DashboardResourceInfo.GroupResource(), resourceClient, legacyDashboardSearcher, features)
 	return &SearchHandler{
 		client:   searchClient,
 		log:      log.New("grafana-apiserver.dashboards.search"),
@@ -406,11 +406,6 @@ func asResourceKey(ns string, k string) (*resourcepb.ResourceKey, error) {
 }
 
 func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, user identity.Requester) ([]string, error) {
-	if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering) {
-		s.log.Warn("Tried to search for 'sharedwithme' dashboards with ", featuremgmt.FlagUnifiedStorageSearchPermissionFiltering, " disabled")
-		return []string{}, nil
-	}
-
 	// gets dashboards that the user was granted read access to
 	permissions := user.GetPermissions()
 	dashboardPermissions := permissions[dashboards.ActionDashboardsRead]

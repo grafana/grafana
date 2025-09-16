@@ -18,9 +18,10 @@ func NewCoreRolespecPermission() *CoreRolespecPermission {
 // +k8s:openapi-gen=true
 type CoreRoleSpec struct {
 	// Display name of the role
-	Title   string `json:"title"`
-	Version int64  `json:"version"`
-	Group   string `json:"group"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Version     int64  `json:"version"`
+	Group       string `json:"group"`
 	// TODO:
 	// delegatable?: bool
 	// created?

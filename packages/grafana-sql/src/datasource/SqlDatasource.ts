@@ -35,8 +35,6 @@ import { MACRO_NAMES } from '../constants';
 import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat } from '../types';
 import migrateAnnotation from '../utils/migration';
 
-import { isSqlDatasourceDatabaseSelectionFeatureFlagEnabled } from './../components/QueryEditorFeatureFlag.utils';
-
 export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
   id: number;
   responseParser: ResponseParser;
@@ -127,13 +125,11 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
 
   query(request: DataQueryRequest<SQLQuery>): Observable<DataQueryResponse> {
     // This logic reenables the previous SQL behavior regarding what databases are available for the user to query.
-    if (isSqlDatasourceDatabaseSelectionFeatureFlagEnabled()) {
-      const databaseIssue = this.checkForDatabaseIssue(request);
+    const databaseIssue = this.checkForDatabaseIssue(request);
 
-      if (!!databaseIssue) {
-        const error = new Error(databaseIssue);
-        return throwError(() => error);
-      }
+    if (!!databaseIssue) {
+      const error = new Error(databaseIssue);
+      return throwError(() => error);
     }
 
     request.targets.forEach((target) => {

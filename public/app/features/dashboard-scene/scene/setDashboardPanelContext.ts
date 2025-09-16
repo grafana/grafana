@@ -133,6 +133,11 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     updateAdHocFilterVariable(filterVar, newFilter);
   };
 
+  context.canExecuteActions = () => {
+    const dashboard = getDashboardSceneFor(vizPanel);
+    return dashboard.canEditDashboard();
+  };
+
   context.onUpdateData = (frames: DataFrame[]): Promise<boolean> => {
     // TODO
     //return onUpdatePanelSnapshotData(this.props.panel, frames);

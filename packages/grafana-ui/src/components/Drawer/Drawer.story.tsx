@@ -140,6 +140,90 @@ LongContent.args = {
   title: 'Drawer title with long content',
 };
 
+export const LongTitle: StoryFn<typeof Drawer> = (args) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <>
+      <Button onClick={() => setIsOpen(true)}>Open drawer</Button>
+      {isOpen && (
+        <Drawer {...args} onClose={() => setIsOpen(false)}>
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
+            dolore magna aliqua. Iaculis nunc sed augue lacus viverra vitae. Malesuada pellentesque elit eget gravida
+            cum sociis. Pretium vulputate sapien nec sagittis aliquam malesuada bibendum arcu. Cras adipiscing enim eu
+            turpis egestas. Ut lectus arcu bibendum at varius. Nulla pellentesque dignissim enim sit amet venenatis
+            urna. Tempus urna et pharetra pharetra massa massa ultricies mi quis. Vitae congue mauris rhoncus aenean.
+            Enim ut tellus elementum sagittis vitae et.
+          </p>
+          <p>
+            Arcu non odio euismod lacinia at quis risus sed vulputate. Sit amet consectetur adipiscing elit ut. Dictum
+            fusce ut placerat orci nulla pellentesque dignissim. Lectus nulla at volutpat diam ut venenatis tellus. Sed
+            cras ornare arcu dui. Eget mauris pharetra et ultrices neque ornare aenean euismod. Mi quis hendrerit dolor
+            magna. Commodo viverra maecenas accumsan lacus vel facilisis. Eget mi proin sed libero enim sed. Magna ac
+            placerat vestibulum lectus mauris ultrices eros in. Mattis nunc sed blandit libero volutpat.
+          </p>
+          <p>
+            Cursus in hac habitasse platea dictumst quisque sagittis purus. Viverra adipiscing at in tellus. Semper eget
+            duis at tellus at urna condimentum. Egestas fringilla phasellus faucibus scelerisque eleifend. Sem nulla
+            pharetra diam sit amet nisl. Ut ornare lectus sit amet est placerat in egestas erat. Id neque aliquam
+            vestibulum morbi blandit cursus risus. In iaculis nunc sed augue. Eu volutpat odio facilisis mauris sit.
+            Quisque egestas diam in arcu cursus euismod. At quis risus sed vulputate odio ut enim blandit volutpat.
+            Cursus risus at ultrices mi tempus imperdiet nulla malesuada. Sed adipiscing diam donec adipiscing tristique
+            risus nec. Id neque aliquam vestibulum morbi. Pretium nibh ipsum consequat nisl vel pretium lectus quam.
+            Platea dictumst quisque sagittis purus sit. Nascetur ridiculus mus mauris vitae ultricies leo.
+          </p>
+          <p>
+            Cursus in hac habitasse platea dictumst quisque sagittis purus. Viverra adipiscing at in tellus. Semper eget
+            duis at tellus at urna condimentum. Egestas fringilla phasellus faucibus scelerisque eleifend. Sem nulla
+            pharetra diam sit amet nisl. Ut ornare lectus sit amet est placerat in egestas erat. Id neque aliquam
+            vestibulum morbi blandit cursus risus. In iaculis nunc sed augue. Eu volutpat odio facilisis mauris sit.
+            Quisque egestas diam in arcu cursus euismod. At quis risus sed vulputate odio ut enim blandit volutpat.
+            Cursus risus at ultrices mi tempus imperdiet nulla malesuada. Sed adipiscing diam donec adipiscing tristique
+            risus nec. Id neque aliquam vestibulum morbi. Pretium nibh ipsum consequat nisl vel pretium lectus quam.
+            Platea dictumst quisque sagittis purus sit. Nascetur ridiculus mus mauris vitae ultricies leo.
+          </p>
+          <p>
+            Cursus in hac habitasse platea dictumst quisque sagittis purus. Viverra adipiscing at in tellus. Semper eget
+            duis at tellus at urna condimentum. Egestas fringilla phasellus faucibus scelerisque eleifend. Sem nulla
+            pharetra diam sit amet nisl. Ut ornare lectus sit amet est placerat in egestas erat. Id neque aliquam
+            vestibulum morbi blandit cursus risus. In iaculis nunc sed augue. Eu volutpat odio facilisis mauris sit.
+            Quisque egestas diam in arcu cursus euismod. At quis risus sed vulputate odio ut enim blandit volutpat.
+            Cursus risus at ultrices mi tempus imperdiet nulla malesuada. Sed adipiscing diam donec adipiscing tristique
+            risus nec. Id neque aliquam vestibulum morbi. Pretium nibh ipsum consequat nisl vel pretium lectus quam.
+            Platea dictumst quisque sagittis purus sit. Nascetur ridiculus mus mauris vitae ultricies leo.
+          </p>
+          <p>
+            Cursus in hac habitasse platea dictumst quisque sagittis purus. Viverra adipiscing at in tellus. Semper eget
+            duis at tellus at urna condimentum. Egestas fringilla phasellus faucibus scelerisque eleifend. Sem nulla
+            pharetra diam sit amet nisl. Ut ornare lectus sit amet est placerat in egestas erat. Id neque aliquam
+            vestibulum morbi blandit cursus risus. In iaculis nunc sed augue. Eu volutpat odio facilisis mauris sit.
+            Quisque egestas diam in arcu cursus euismod. At quis risus sed vulputate odio ut enim blandit volutpat.
+            Cursus risus at ultrices mi tempus imperdiet nulla malesuada. Sed adipiscing diam donec adipiscing tristique
+            risus nec. Id neque aliquam vestibulum morbi. Pretium nibh ipsum consequat nisl vel pretium lectus quam.
+            Platea dictumst quisque sagittis purus sit. Nascetur ridiculus mus mauris vitae ultricies leo.
+          </p>
+          <p>
+            Cursus in hac habitasse platea dictumst quisque sagittis purus. Viverra adipiscing at in tellus. Semper eget
+            duis at tellus at urna condimentum. Egestas fringilla phasellus faucibus scelerisque eleifend. Sem nulla
+            pharetra diam sit amet nisl. Ut ornare lectus sit amet est placerat in egestas erat. Id neque aliquam
+            vestibulum morbi blandit cursus risus. In iaculis nunc sed augue. Eu volutpat odio facilisis mauris sit.
+            Quisque egestas diam in arcu cursus euismod. At quis risus sed vulputate odio ut enim blandit volutpat.
+            Cursus risus at ultrices mi tempus imperdiet nulla malesuada. Sed adipiscing diam donec adipiscing tristique
+            risus nec. Id neque aliquam vestibulum morbi. Pretium nibh ipsum consequat nisl vel pretium lectus quam.
+            Platea dictumst quisque sagittis purus sit. Nascetur ridiculus mus mauris vitae ultricies leo.
+          </p>
+        </Drawer>
+      )}
+    </>
+  );
+};
+LongTitle.args = {
+  title: `This is a very long title! Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+          incididunt ut labore et dolore magna aliqua. Cursus in hac habitasse platea dictumst quisque sagittis
+          purus. Viverra adipiscing at in tellus. Semper eget duis at tellus at urna condimentum. Egestas fringilla
+          phasellus faucibus scelerisque eleifend. Sem nulla`,
+};
+
 export const WithTabs: StoryFn<typeof Drawer> = (args) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('options');

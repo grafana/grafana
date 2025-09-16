@@ -330,3 +330,4 @@ export const LogRows = memo(
     );
   }
 );
+LogRows.displayName = 'LogRows';

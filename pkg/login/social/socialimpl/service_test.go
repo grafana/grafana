@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -29,6 +30,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationSocialService_ProvideService(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testCases := []struct {
 		name                                string
 		setup                               func(t *testing.T)
@@ -36,7 +39,7 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 		expectedGenericOAuthSkipOrgRoleSync bool
 	}{
 		{
-			name:                                "should load all social connectors when ssoSettingsApi is enabled",
+			name:                                "should load all social connectors",
 			expectedSocialMapLength:             7,
 			expectedGenericOAuthSkipOrgRoleSync: false,
 		},
@@ -125,6 +128,8 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 }
 
 func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testCases := []struct {
 		name                        string
 		rawIniContent               string

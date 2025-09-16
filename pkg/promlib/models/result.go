@@ -20,7 +20,7 @@ func ResultTypeFromFrame(frame *data.Frame) ResultType {
 	if frame.Meta.Custom == nil {
 		return ResultTypeUnknown
 	}
-	custom, ok := frame.Meta.Custom.(map[string]string)
+	custom, ok := frame.Meta.Custom.(map[string]any)
 	if !ok {
 		return ResultTypeUnknown
 	}

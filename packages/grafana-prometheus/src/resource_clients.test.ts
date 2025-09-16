@@ -836,6 +836,11 @@ describe('BaseResourceClient', () => {
     constructor() {
       super(mockRequest, mockDatasource);
     }
+
+    // Expose protected method for testing
+    public testGetEffectiveLimit(limit?: number): number {
+      return this.getEffectiveLimit(limit);
+    }
   }
 
   let client: TestBaseResourceClient;
@@ -843,6 +848,26 @@ describe('BaseResourceClient', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     client = new TestBaseResourceClient();
+  });
+
+  describe('getEffectiveLimit', () => {
+    it('should return the provided limit when a number is given', () => {
+      expect(client.testGetEffectiveLimit(1000)).toBe(1000);
+      expect(client.testGetEffectiveLimit(500)).toBe(500);
+      expect(client.testGetEffectiveLimit(100000)).toBe(100000);
+    });
+
+    it('should return 0 when limit is 0 (valid for unlimited)', () => {
+      expect(client.testGetEffectiveLimit(0)).toBe(0);
+    });
+
+    it('should return datasource seriesLimit when limit is undefined', () => {
+      expect(client.testGetEffectiveLimit(undefined)).toBe(DEFAULT_SERIES_LIMIT);
+    });
+
+    it('should return datasource seriesLimit when no limit is provided', () => {
+      expect(client.testGetEffectiveLimit()).toBe(DEFAULT_SERIES_LIMIT);
+    });
   });
 
   describe('querySeries', () => {

@@ -7,7 +7,8 @@ import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { Prompt } from 'app/core/components/FormPrompt/Prompt';
-import { CORRELATION_EDITOR_POST_CONFIRM_ACTION, ExploreItemState, useDispatch, useSelector } from 'app/types';
+import { CORRELATION_EDITOR_POST_CONFIRM_ACTION, ExploreItemState } from 'app/types/explore';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { CorrelationUnsavedChangesModal } from './CorrelationUnsavedChangesModal';
 import { showModalMessage } from './correlationEditLogic';

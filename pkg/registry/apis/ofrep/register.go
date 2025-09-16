@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -32,6 +33,8 @@ var _ builder.APIGroupVersionProvider = (*APIBuilder)(nil)
 
 const ofrepPath = "/ofrep/v1/evaluate/flags"
 
+const namespaceMismatchMsg = "rejecting request with namespace mismatch"
+
 var groupVersion = schema.GroupVersion{
 	Group:   "features.grafana.app",
 	Version: "v0alpha1",
@@ -57,10 +60,23 @@ func NewAPIBuilder(providerType string, url *url.URL, insecure bool, caFile stri
 	}
 }
 
-func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg, staticEvaluator featuremgmt.StaticFlagEvaluator) *APIBuilder {
+func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg) (*APIBuilder, error) {
+	if !cfg.OpenFeature.APIEnabled {
+		return nil, nil
+	}
+
+	var staticEvaluator featuremgmt.StaticFlagEvaluator //  No static evaluator needed for non-static provider
+	var err error
+	if cfg.OpenFeature.ProviderType == setting.StaticProviderType {
+		staticEvaluator, err = featuremgmt.CreateStaticEvaluator(cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create static evaluator: %w", err)
+		}
+	}
+
 	b := NewAPIBuilder(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, true, "", staticEvaluator)
 	apiregistration.RegisterAPI(b)
-	return b
+	return b, nil
 }
 
 func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
@@ -126,7 +142,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
-				Path: "ofrep/v1/evaluate/flags/",
+				Path: "ofrep/v1/evaluate/flags",
 				Spec: &spec3.PathProps{
 					Post: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
@@ -225,8 +241,8 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 
 func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	if !b.validateNamespace(r) {
-		b.logger.Error("stackId in evaluation context does not match requested namespace")
-		http.Error(w, "stackId in evaluation context does not match requested namespace", http.StatusUnauthorized)
+		b.logger.Error(namespaceMismatchMsg)
+		http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 		return
 	}
 
@@ -255,8 +271,8 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 
 func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	if !b.validateNamespace(r) {
-		b.logger.Error("stackId in evaluation context does not match requested namespace")
-		http.Error(w, "stackId in evaluation context does not match requested namespace", http.StatusUnauthorized)
+		b.logger.Error(namespaceMismatchMsg)
+		http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 		return
 	}
 
@@ -279,25 +295,25 @@ func writeResponse(statusCode int, result any, logger log.Logger, w http.Respons
 	}
 }
 
-func (b *APIBuilder) stackIdFromEvalCtx(body []byte) int64 {
-	// Extract stackID from request body without consuming it
+func (b *APIBuilder) namespaceFromEvalCtx(body []byte) string {
+	// Extract namespace from request body without consuming it
 	var evalCtx struct {
 		Context struct {
-			StackID int64 `json:"stackId"` // TODO -- replace with namespace "stackId" ONLY makes sense in cloud
+			Namespace string `json:"namespace"`
 		} `json:"context"`
 	}
 
 	if err := json.Unmarshal(body, &evalCtx); err != nil {
 		b.logger.Debug("Failed to unmarshal evaluation context", "error", err, "body", string(body))
-		return 0
+		return ""
 	}
 
-	if evalCtx.Context.StackID <= 0 {
-		b.logger.Debug("Invalid or missing stackId in evaluation context", "stackId", evalCtx.Context.StackID)
-		return 0
+	if evalCtx.Context.Namespace == "" {
+		b.logger.Debug("namespace missing from evaluation context", "namespace", evalCtx.Context.Namespace)
+		return ""
 	}
 
-	return evalCtx.Context.StackID
+	return evalCtx.Context.Namespace
 }
 
 // isAuthenticatedRequest returns true if the request is authenticated
@@ -306,10 +322,10 @@ func (b *APIBuilder) isAuthenticatedRequest(r *http.Request) bool {
 	if !ok {
 		return false
 	}
-	return user.GetIdentityType() != ""
+	return user.GetIdentityType() != types.TypeUnauthenticated
 }
 
-// validateNamespace checks if the stackId in the evaluation context matches the namespace in the request
+// validateNamespace checks if the namespace in the evaluation context matches the namespace in the request
 func (b *APIBuilder) validateNamespace(r *http.Request) bool {
 	// Extract namespace from request context or URL path
 	var namespace string
@@ -324,13 +340,7 @@ func (b *APIBuilder) validateNamespace(r *http.Request) bool {
 		namespace = mux.Vars(r)["namespace"]
 	}
 
-	info, err := types.ParseNamespace(namespace)
-	if err != nil {
-		b.logger.Error("Error parsing namespace", "error", err)
-		return false
-	}
-
-	// Extract stackId from feature flag evaluation context
+	// Extract namespace from feature flag evaluation context
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		b.logger.Error("Error reading evaluation request body", "error", err)
@@ -338,8 +348,9 @@ func (b *APIBuilder) validateNamespace(r *http.Request) bool {
 	}
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
+	evalCtxNamespace := b.namespaceFromEvalCtx(body)
 	// "default" namespace case can only occur in on-prem grafana
-	if b.stackIdFromEvalCtx(body) == info.StackID {
+	if (namespace == "default" && evalCtxNamespace == "") || (evalCtxNamespace == namespace) {
 		return true
 	}
 

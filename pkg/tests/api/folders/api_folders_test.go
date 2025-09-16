@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/models"
+
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -17,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/retryer"
+	"github.com/grafana/grafana/pkg/util/testutil"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,22 +28,15 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestGetFolders(t *testing.T) {
-	testGetFolders(t, []string{featuremgmt.FlagNestedFolders})
-}
+func TestIntegrationGetFolders(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
-func TestGetFoldersK8s(t *testing.T) {
-	testGetFolders(t, []string{featuremgmt.FlagNestedFolders, featuremgmt.FlagKubernetesClientDashboardsFolders})
-}
-
-func testGetFolders(t *testing.T, featureToggles []string) {
 	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableFeatureToggles:  featureToggles,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)

@@ -17,10 +17,12 @@ var (
 	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
 
 	// The SQL Commands
-	sqlEncryptedValueCreate = mustTemplate("encrypted_value_create.sql")
-	sqlEncryptedValueRead   = mustTemplate("encrypted_value_read.sql")
-	sqlEncryptedValueUpdate = mustTemplate("encrypted_value_update.sql")
-	sqlEncryptedValueDelete = mustTemplate("encrypted_value_delete.sql")
+	sqlEncryptedValueCreate   = mustTemplate("encrypted_value_create.sql")
+	sqlEncryptedValueRead     = mustTemplate("encrypted_value_read.sql")
+	sqlEncryptedValueUpdate   = mustTemplate("encrypted_value_update.sql")
+	sqlEncryptedValueDelete   = mustTemplate("encrypted_value_delete.sql")
+	sqlEncryptedValueListAll  = mustTemplate("encrypted_value_list_all.sql")
+	sqlEncryptedValueCountAll = mustTemplate("encrypted_value_count_all.sql")
 
 	sqlDataKeyCreate      = mustTemplate("data_key_create.sql")
 	sqlDataKeyRead        = mustTemplate("data_key_read.sql")
@@ -28,6 +30,7 @@ var (
 	sqlDataKeyList        = mustTemplate("data_key_list.sql")
 	sqlDataKeyDisable     = mustTemplate("data_key_disable.sql")
 	sqlDataKeyDelete      = mustTemplate("data_key_delete.sql")
+	sqlDataKeyDisableAll  = mustTemplate("data_key_disable_all.sql")
 )
 
 // TODO: Move this to a common place so that all stores can use
@@ -55,7 +58,8 @@ func (r createEncryptedValue) Validate() error {
 type readEncryptedValue struct {
 	sqltemplate.SQLTemplate
 	Namespace string
-	UID       string
+	Name      string
+	Version   int64
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
@@ -67,7 +71,8 @@ func (r readEncryptedValue) Validate() error {
 type updateEncryptedValue struct {
 	sqltemplate.SQLTemplate
 	Namespace     string
-	UID           string
+	Name          string
+	Version       int64
 	EncryptedData []byte
 	Updated       int64
 }
@@ -81,13 +86,32 @@ func (r updateEncryptedValue) Validate() error {
 type deleteEncryptedValue struct {
 	sqltemplate.SQLTemplate
 	Namespace string
-	UID       string
+	Name      string
+	Version   int64
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r deleteEncryptedValue) Validate() error {
 	return nil // TODO
 }
+
+type listAllEncryptedValues struct {
+	sqltemplate.SQLTemplate
+	Limit        int64
+	Offset       int64
+	HasUntilTime bool
+	UntilTime    int64
+}
+
+func (r listAllEncryptedValues) Validate() error { return nil }
+
+type countAllEncryptedValues struct {
+	sqltemplate.SQLTemplate
+	HasUntilTime bool
+	UntilTime    int64
+}
+
+func (r countAllEncryptedValues) Validate() error { return nil }
 
 /*************************************/
 /**-- Data Key Queries --**/
@@ -137,3 +161,10 @@ type deleteDataKey struct {
 }
 
 func (r deleteDataKey) Validate() error { return nil }
+
+type disableAllDataKeys struct {
+	sqltemplate.SQLTemplate
+	Updated time.Time
+}
+
+func (r disableAllDataKeys) Validate() error { return nil }

@@ -1,16 +1,15 @@
 import { Navigate, Routes, Route, useLocation } from 'react-router-dom-v5-compat';
 
-import { StoreState, useSelector } from 'app/types';
+import { StoreState, useSelector } from 'app/types/store';
 
 import { ROUTES } from './constants';
-import {
-  AddNewConnectionPage,
-  DataSourceDashboardsPage,
-  DataSourceDetailsPage,
-  DataSourcesListPage,
-  EditDataSourcePage,
-  NewDataSourcePage,
-} from './pages';
+import { AddNewConnectionPage } from './pages/AddNewConnectionPage';
+import ConnectionsHomePage from './pages/ConnectionsHomePage';
+import { DataSourceDashboardsPage } from './pages/DataSourceDashboardsPage';
+import { DataSourceDetailsPage } from './pages/DataSourceDetailsPage';
+import { DataSourcesListPage } from './pages/DataSourcesListPage';
+import { EditDataSourcePage } from './pages/EditDataSourcePage';
+import { NewDataSourcePage } from './pages/NewDataSourcePage';
 
 function RedirectToAddNewConnection() {
   const { search } = useLocation();
@@ -32,7 +31,7 @@ export default function Connections() {
   return (
     <Routes>
       {/* Redirect to "Add new connection" by default */}
-      <Route caseSensitive path={'/'} element={<Navigate replace to={ROUTES.AddNewConnection} />} />
+      <Route caseSensitive path={'/'} element={<ConnectionsHomePage />} />
       {/* The route paths need to be relative to the parent path (ROUTES.Base), so we need to remove that part */}
       <Route caseSensitive path={ROUTES.DataSources.replace(ROUTES.Base, '')} element={<DataSourcesListPage />} />
       <Route caseSensitive path={ROUTES.DataSourcesNew.replace(ROUTES.Base, '')} element={<NewDataSourcePage />} />

@@ -10,12 +10,21 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { dispatch } from 'app/store/store';
 
+import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1alpha1/shorturl_object_gen';
+import { BASE_URL as k8sShortURLBaseAPI } from '../../api/clients/shorturl/v1alpha1/baseAPI';
 import { ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
 
 import { copyStringToClipboard } from './explore';
 
 function buildHostUrl() {
   return `${window.location.protocol}//${window.location.host}${config.appSubUrl}`;
+}
+
+export function buildShortUrl(k8sShortUrl: ShortURL) {
+  const key = k8sShortUrl.metadata.name;
+  const orgId = k8sShortUrl.metadata.namespace;
+  const hostUrl = buildHostUrl();
+  return `${hostUrl}/goto/${key}?orgId=${orgId}`;
 }
 
 function getRelativeURLPath(url: string) {
@@ -25,23 +34,53 @@ function getRelativeURLPath(url: string) {
 
 export const createShortLink = memoizeOne(async function (path: string) {
   try {
-    const shortLink = await getBackendSrv().post(`/api/short-urls`, {
-      path: getRelativeURLPath(path),
-    });
-    return shortLink.url;
+    if (config.featureToggles.useKubernetesShortURLsAPI) {
+      // TODO: this is not ideal, we should use the RTK API but we can't call a hook from here and
+      // this util function is being called from several places, will require a bigger refactor including some code that
+      // is deprecated.
+      const k8sShortUrl: ShortURL = await getBackendSrv().post(`${k8sShortURLBaseAPI}/shorturls`, {
+        spec: {
+          path: getRelativeURLPath(path),
+        },
+      });
+      return buildShortUrl(k8sShortUrl);
+    } else {
+      // Old short URL API
+      const shortLink = await getBackendSrv().post(`/api/short-urls`, {
+        path: getRelativeURLPath(path),
+      });
+      return shortLink.url;
+    }
   } catch (err) {
     console.error('Error when creating shortened link: ', err);
     dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
   }
 });
 
+/**
+ * Creates a ClipboardItem for the shortened link. This is used due to clipboard issues in Safari after making async calls.
+ * See https://github.com/grafana/grafana/issues/106889
+ * @param path - The long path to share.
+ * @returns A ClipboardItem for the shortened link.
+ */
+const createShortLinkClipboardItem = (path: string) => {
+  return new ClipboardItem({
+    'text/plain': createShortLink(path),
+  });
+};
+
 export const createAndCopyShortLink = async (path: string) => {
-  const shortLink = await createShortLink(path);
-  if (shortLink) {
-    copyStringToClipboard(shortLink);
+  if (typeof ClipboardItem !== 'undefined' && navigator.clipboard.write) {
+    navigator.clipboard.write([createShortLinkClipboardItem(path)]);
     dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
   } else {
-    dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
+    const shortLink = await createShortLink(path);
+    if (shortLink) {
+      copyStringToClipboard(shortLink);
+      dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
+    } else {
+      dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
+    }
   }
 };
 
@@ -82,7 +121,7 @@ export const getShareUrlParams = (
   const urlParamsUpdate: UrlQueryMap = {};
 
   if (panel) {
-    urlParamsUpdate.viewPanel = panel.state.key;
+    urlParamsUpdate.viewPanel = panel.getPathId();
   }
 
   if (opts.useAbsoluteTimeRange) {

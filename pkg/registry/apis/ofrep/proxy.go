@@ -1,16 +1,22 @@
 package ofrep
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"os"
 	"path"
+	"strconv"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
+
+	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
 )
 
 func (b *APIBuilder) proxyAllFlagReq(isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
@@ -22,20 +28,31 @@ func (b *APIBuilder) proxyAllFlagReq(isAuthedUser bool, w http.ResponseWriter, r
 
 	proxy.ModifyResponse = func(resp *http.Response) error {
 		if resp.StatusCode == http.StatusOK && !isAuthedUser {
-			var result map[string]interface{}
+			var result goffmodel.OFREPBulkEvaluateSuccessResponse
 			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 				return err
 			}
 			_ = resp.Body.Close()
 
-			filtered := make(map[string]any)
-			for k, v := range result {
-				if isPublicFlag(k) {
-					filtered[k] = v
+			var filteredFlags []goffmodel.OFREPFlagBulkEvaluateSuccessResponse
+			for _, f := range result.Flags {
+				if isPublicFlag(f.Key) {
+					filteredFlags = append(filteredFlags, f)
 				}
 			}
 
-			writeResponse(http.StatusOK, filtered, b.logger, w)
+			result.Flags = filteredFlags
+			newBodyBytes, err := json.Marshal(result)
+			if err != nil {
+				logger.Error("Failed to encode filtered result", "error", err)
+				return err
+			}
+
+			// Replace the body
+			resp.Body = io.NopCloser(bytes.NewReader(newBodyBytes))
+			resp.ContentLength = int64(len(newBodyBytes))
+			resp.Header.Set("Content-Length", strconv.Itoa(len(newBodyBytes)))
+			resp.Header.Set("Content-Type", "application/json")
 		}
 
 		return nil

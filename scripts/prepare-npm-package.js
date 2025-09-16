@@ -52,25 +52,34 @@ try {
   // then generate an additional "nested" package.json for typescript resolution that
   // doesn't use the exports property in package.json.
   if (process.env.ALIAS_PACKAGE_NAME) {
-    const aliasName = process.env.ALIAS_PACKAGE_NAME;
+    const aliasNames = process.env.ALIAS_PACKAGE_NAME.split(',');
+
+    const additionalExports = aliasNames.reduce((acc, alias) => {
+      acc[`./${alias}`] = {
+        import: {
+          types: typesIndex.replace('index', alias),
+          default: esmIndex.replace('index', alias),
+        },
+        require: {
+          types: typesIndex.replace('index', alias),
+          default: cjsIndex.replace('index', alias),
+        },
+      };
+      return acc;
+    }, {});
+
     pkgJson.update({
       exports: {
         ...pkgJson.content.exports,
-        [`./${aliasName}`]: {
-          import: {
-            types: typesIndex.replace('index', aliasName),
-            default: esmIndex.replace('index', aliasName),
-          },
-          require: {
-            types: typesIndex.replace('index', aliasName),
-            default: cjsIndex.replace('index', aliasName),
-          },
-        },
+        ...additionalExports,
       },
-      files: [...pkgJson.content.files, aliasName],
+      files: [...pkgJson.content.files, ...aliasNames],
     });
     await pkgJson.save();
-    await createAliasPackageJsonFiles(pkgJson.content, aliasName);
+
+    for await (const aliasName of aliasNames) {
+      await createAliasPackageJsonFiles(pkgJson.content, aliasName);
+    }
   }
 } catch (e) {
   console.error(e);

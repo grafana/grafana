@@ -10,10 +10,12 @@ export default [
     input: entryPoint,
     plugins,
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-runtime')],
+    treeshake: false,
   },
   {
     input: 'src/unstable.ts',
     plugins,
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-runtime')],
+    treeshake: false,
   },
 ];

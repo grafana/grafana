@@ -10,12 +10,12 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/jobs`,
           params: {
+            pretty: queryArg.pretty,
             allowWatchBookmarks: queryArg.allowWatchBookmarks,
             continue: queryArg['continue'],
             fieldSelector: queryArg.fieldSelector,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
-            pretty: queryArg.pretty,
             resourceVersion: queryArg.resourceVersion,
             resourceVersionMatch: queryArg.resourceVersionMatch,
             sendInitialEvents: queryArg.sendInitialEvents,
@@ -25,6 +25,43 @@ const injectedRtkApi = api
         }),
         providesTags: ['Job'],
       }),
+      createJob: build.mutation<CreateJobApiResponse, CreateJobApiArg>({
+        query: (queryArg) => ({
+          url: `/jobs`,
+          method: 'POST',
+          body: queryArg.job,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['Job'],
+      }),
+      deletecollectionJob: build.mutation<DeletecollectionJobApiResponse, DeletecollectionJobApiArg>({
+        query: (queryArg) => ({
+          url: `/jobs`,
+          method: 'DELETE',
+          params: {
+            pretty: queryArg.pretty,
+            continue: queryArg['continue'],
+            dryRun: queryArg.dryRun,
+            fieldSelector: queryArg.fieldSelector,
+            gracePeriodSeconds: queryArg.gracePeriodSeconds,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            labelSelector: queryArg.labelSelector,
+            limit: queryArg.limit,
+            orphanDependents: queryArg.orphanDependents,
+            propagationPolicy: queryArg.propagationPolicy,
+            resourceVersion: queryArg.resourceVersion,
+            resourceVersionMatch: queryArg.resourceVersionMatch,
+            sendInitialEvents: queryArg.sendInitialEvents,
+            timeoutSeconds: queryArg.timeoutSeconds,
+          },
+        }),
+        invalidatesTags: ['Job'],
+      }),
       getJob: build.query<GetJobApiResponse, GetJobApiArg>({
         query: (queryArg) => ({
           url: `/jobs/${queryArg.name}`,
@@ -33,6 +70,35 @@ const injectedRtkApi = api
           },
         }),
         providesTags: ['Job'],
+      }),
+      replaceJob: build.mutation<ReplaceJobApiResponse, ReplaceJobApiArg>({
+        query: (queryArg) => ({
+          url: `/jobs/${queryArg.name}`,
+          method: 'PUT',
+          body: queryArg.job,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['Job'],
+      }),
+      deleteJob: build.mutation<DeleteJobApiResponse, DeleteJobApiArg>({
+        query: (queryArg) => ({
+          url: `/jobs/${queryArg.name}`,
+          method: 'DELETE',
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            gracePeriodSeconds: queryArg.gracePeriodSeconds,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            orphanDependents: queryArg.orphanDependents,
+            propagationPolicy: queryArg.propagationPolicy,
+          },
+        }),
+        invalidatesTags: ['Job'],
       }),
       listRepository: build.query<ListRepositoryApiResponse, ListRepositoryApiArg>({
         query: (queryArg) => ({
@@ -161,6 +227,7 @@ const injectedRtkApi = api
             ref: queryArg.ref,
             message: queryArg.message,
             skipDryRun: queryArg.skipDryRun,
+            originalPath: queryArg.originalPath,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -177,6 +244,7 @@ const injectedRtkApi = api
             ref: queryArg.ref,
             message: queryArg.message,
             skipDryRun: queryArg.skipDryRun,
+            originalPath: queryArg.originalPath,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -192,6 +260,7 @@ const injectedRtkApi = api
             ref: queryArg.ref,
             message: queryArg.message,
             skipDryRun: queryArg.skipDryRun,
+            originalPath: queryArg.originalPath,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -227,6 +296,10 @@ const injectedRtkApi = api
       }),
       getRepositoryJobsWithPath: build.query<GetRepositoryJobsWithPathApiResponse, GetRepositoryJobsWithPathApiArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/jobs/${queryArg.uid}` }),
+        providesTags: ['Repository'],
+      }),
+      getRepositoryRefs: build.query<GetRepositoryRefsApiResponse, GetRepositoryRefsApiArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/refs` }),
         providesTags: ['Repository'],
       }),
       getRepositoryRenderWithPath: build.query<
@@ -289,6 +362,8 @@ const injectedRtkApi = api
 export { injectedRtkApi as generatedAPI };
 export type ListJobApiResponse = /** status 200 OK */ JobList;
 export type ListJobApiArg = {
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
   /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
   allowWatchBookmarks?: boolean;
   /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
@@ -303,8 +378,6 @@ export type ListJobApiArg = {
     
     The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
   limit?: number;
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
   /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
     
     Defaults to unset */
@@ -332,12 +405,109 @@ export type ListJobApiArg = {
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
   watch?: boolean;
 };
+export type CreateJobApiResponse = /** status 200 OK */
+  | Job
+  | /** status 201 Created */ Job
+  | /** status 202 Accepted */ Job;
+export type CreateJobApiArg = {
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  job: Job;
+};
+export type DeletecollectionJobApiResponse = /** status 200 OK */ Status;
+export type DeletecollectionJobApiArg = {
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
+    
+    This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
+  continue?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** A selector to restrict the list of returned objects by their fields. Defaults to everything. */
+  fieldSelector?: string;
+  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
+  gracePeriodSeconds?: number;
+  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
+  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
+  /** A selector to restrict the list of returned objects by their labels. Defaults to everything. */
+  labelSelector?: string;
+  /** limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.
+    
+    The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
+  limit?: number;
+  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
+  orphanDependents?: boolean;
+  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
+  propagationPolicy?: string;
+  /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
+    
+    Defaults to unset */
+  resourceVersion?: string;
+  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
+    
+    Defaults to unset */
+  resourceVersionMatch?: string;
+  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
+    
+    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
+      is interpreted as "data at least as new as the provided `resourceVersion`"
+      and the bookmark event is send when the state is synced
+      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
+      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
+      bookmark event is send when the state is synced at least to the moment
+      when request started being processed.
+    - `resourceVersionMatch` set to any other value or unset
+      Invalid error is returned.
+    
+    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
+  sendInitialEvents?: boolean;
+  /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
+  timeoutSeconds?: number;
+};
 export type GetJobApiResponse = /** status 200 OK */ Job;
 export type GetJobApiArg = {
   /** name of the Job */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
+};
+export type ReplaceJobApiResponse = /** status 200 OK */ Job | /** status 201 Created */ Job;
+export type ReplaceJobApiArg = {
+  /** name of the Job */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  job: Job;
+};
+export type DeleteJobApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
+export type DeleteJobApiArg = {
+  /** name of the Job */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
+  gracePeriodSeconds?: number;
+  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
+  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
+  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
+  orphanDependents?: boolean;
+  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
+  propagationPolicy?: string;
 };
 export type ListRepositoryApiResponse = /** status 200 OK */ RepositoryList;
 export type ListRepositoryApiArg = {
@@ -523,6 +693,8 @@ export type ReplaceRepositoryFilesWithPathApiArg = {
   message?: string;
   /** do not pro-actively verify the payload */
   skipDryRun?: boolean;
+  /** path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/') */
+  originalPath?: string;
   body: {
     [key: string]: any;
   };
@@ -539,6 +711,8 @@ export type CreateRepositoryFilesWithPathApiArg = {
   message?: string;
   /** do not pro-actively verify the payload */
   skipDryRun?: boolean;
+  /** path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/') */
+  originalPath?: string;
   body: {
     [key: string]: any;
   };
@@ -555,6 +729,8 @@ export type DeleteRepositoryFilesWithPathApiArg = {
   message?: string;
   /** do not pro-actively verify the payload */
   skipDryRun?: boolean;
+  /** path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/') */
+  originalPath?: string;
 };
 export type GetRepositoryHistoryApiResponse = /** status 200 OK */ string;
 export type GetRepositoryHistoryApiArg = {
@@ -589,6 +765,18 @@ export type GetRepositoryJobsWithPathApiArg = {
   name: string;
   /** Original Job UID */
   uid: string;
+};
+export type GetRepositoryRefsApiResponse = /** status 200 OK */ {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: any[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: any;
+};
+export type GetRepositoryRefsApiArg = {
+  /** name of the RefList */
+  name: string;
 };
 export type GetRepositoryRenderWithPathApiResponse = unknown;
 export type GetRepositoryRenderWithPathApiArg = {
@@ -633,6 +821,7 @@ export type CreateRepositoryTestApiArg = {
     /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
     kind?: string;
     metadata?: any;
+    secure?: any;
     spec?: any;
     status?: any;
   };
@@ -733,9 +922,37 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
+export type ResourceRef = {
+  /** Group is the group of the resource, such as "dashboard.grafana.app". */
+  group?: string;
+  /** Kind is the type of resource, for example, "Dashboard". */
+  kind?: string;
+  /** Name is the name of the resource, such as a dashboard UID. */
+  name?: string;
+};
+export type DeleteJobOptions = {
+  /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
+  paths?: string[];
+  /** Ref to the branch or commit hash to delete from */
+  ref?: string;
+  /** Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
+  resources?: ResourceRef[];
+};
 export type MigrateJobOptions = {
   /** Preserve history (if possible) */
   history?: boolean;
+  /** Message to use when committing the changes in a single commit */
+  message?: string;
+};
+export type MoveJobOptions = {
+  /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
+  paths?: string[];
+  /** Ref to the branch or commit hash that should move */
+  ref?: string;
+  /** Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
+  resources?: ResourceRef[];
+  /** Destination path for the move (e.g. "new-location/") */
+  targetPath?: string;
 };
 export type PullRequestJobOptions = {
   /** The specific commit hash that triggered this notice */
@@ -752,22 +969,30 @@ export type SyncJobOptions = {
   incremental: boolean;
 };
 export type ExportJobOptions = {
-  /** Target branch for export (only git) */
+  /** FIXME: we should validate this in admission hooks Target branch for export (only git) */
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
-  /** Prefix in target file system */
+  /** Message to use when committing the changes in a single commit */
+  message?: string;
+  /** FIXME: we should validate this in admission hooks Prefix in target file system */
   path?: string;
 };
 export type JobSpec = {
   /** Possible enum values:
+     - `"delete"` deletes files in the remote repository
      - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
+     - `"move"` moves files in the remote repository
      - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
      - `"pull"` replicates the remote branch in the local copy of the repository.
      - `"push"` replicates the local copy of the repository in the remote branch. */
-  action?: 'migrate' | 'pr' | 'pull' | 'push';
+  action?: 'delete' | 'migrate' | 'move' | 'pr' | 'pull' | 'push';
+  /** Delete when the action is `delete` */
+  delete?: DeleteJobOptions;
   /** Required when the action is `migrate` */
   migrate?: MigrateJobOptions;
+  /** Move when the action is `move` */
+  move?: MoveJobOptions;
   /** Pull request options */
   pr?: PullRequestJobOptions;
   /** Required when the action is `pull` */
@@ -792,6 +1017,16 @@ export type JobResourceSummary = {
   update?: number;
   write?: number;
 };
+export type RepositoryUrLs = {
+  /** Compare this version to the target branch */
+  compareURL?: string;
+  /** A URL that will create a new pull request for this branch */
+  newPullRequestURL?: string;
+  /** A URL pointing to the repository this lives in */
+  repositoryURL?: string;
+  /** A URL pointing to the file or ref in the repository */
+  sourceURL?: string;
+};
 export type JobStatus = {
   errors?: string[];
   finished?: number;
@@ -803,10 +1038,13 @@ export type JobStatus = {
      - `"error"` Finished with errors
      - `"pending"` Job has been submitted, but not processed yet
      - `"success"` Finished with success
+     - `"warning"` Finished with some non-critical errors
      - `"working"` The job is running */
-  state?: 'error' | 'pending' | 'success' | 'working';
+  state?: 'error' | 'pending' | 'success' | 'warning' | 'working';
   /** Summary of processed actions */
   summary?: JobResourceSummary[];
+  /** URLs contains URLs for the reference branch or commit if applicable. */
+  url?: RepositoryUrLs;
 };
 export type Job = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -831,148 +1069,6 @@ export type JobList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   items: Job[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata?: ListMeta;
-};
-export type GitRepositoryConfig = {
-  /** The branch to use in the repository. */
-  branch: string;
-  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
-  encryptedToken?: string;
-  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
-    
-    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
-  path?: string;
-  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
-  token?: string;
-  /** The repository URL (e.g. `https://github.com/example/test.git`). */
-  url?: string;
-};
-export type GitHubRepositoryConfig = {
-  /** The branch to use in the repository. */
-  branch: string;
-  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
-  encryptedToken?: string;
-  /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
-  generateDashboardPreviews?: boolean;
-  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
-    
-    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
-  path?: string;
-  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
-  token?: string;
-  /** The repository URL (e.g. `https://github.com/example/test`). */
-  url?: string;
-};
-export type LocalRepositoryConfig = {
-  path?: string;
-};
-export type SyncOptions = {
-  /** Enabled must be saved as true before any sync job will run */
-  enabled: boolean;
-  /** When non-zero, the sync will run periodically */
-  intervalSeconds?: number;
-  /** Where values should be saved
-    
-    Possible enum values:
-     - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
-     - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
-  target: 'folder' | 'instance';
-};
-export type RepositorySpec = {
-  /** Repository description */
-  description?: string;
-  /** The repository on Git. Mutually exclusive with local | github | git. */
-  git?: GitRepositoryConfig;
-  /** The repository on GitHub. Mutually exclusive with local | github | git. */
-  github?: GitHubRepositoryConfig;
-  /** The repository on the local file system. Mutually exclusive with local | github. */
-  local?: LocalRepositoryConfig;
-  /** Sync settings -- how values are pulled from the repository into grafana */
-  sync: SyncOptions;
-  /** The repository display name (shown in the UI) */
-  title: string;
-  /** The repository type.  When selected oneOf the values below should be non-nil
-    
-    Possible enum values:
-     - `"git"`
-     - `"github"`
-     - `"local"` */
-  type: 'git' | 'github' | 'local';
-  /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
-  workflows: ('branch' | 'write')[];
-};
-export type HealthStatus = {
-  /** When the health was checked last time */
-  checked?: number;
-  /** When not healthy, requests will not be executed */
-  healthy: boolean;
-  /** Summary messages (can be shown to users) Will only be populated when not healthy */
-  message?: string[];
-};
-export type ResourceCount = {
-  count: number;
-  group: string;
-  resource: string;
-};
-export type SyncStatus = {
-  /** When the sync job finished */
-  finished?: number;
-  /** Incremental synchronization for versioned repositories */
-  incremental?: boolean;
-  /** The ID for the job that ran this sync */
-  job?: string;
-  /** The repository ref when the last successful sync ran */
-  lastRef?: string;
-  /** Summary messages (will be shown to users) */
-  message: string[];
-  /** When the next sync check is scheduled */
-  scheduled?: number;
-  /** When the sync job started */
-  started?: number;
-  /** pending, running, success, error
-    
-    Possible enum values:
-     - `"error"` Finished with errors
-     - `"pending"` Job has been submitted, but not processed yet
-     - `"success"` Finished with success
-     - `"working"` The job is running */
-  state: 'error' | 'pending' | 'success' | 'working';
-};
-export type WebhookStatus = {
-  encryptedSecret?: string;
-  id?: number;
-  lastEvent?: number;
-  secret?: string;
-  subscribedEvents?: string[];
-  url?: string;
-};
-export type RepositoryStatus = {
-  /** This will get updated with the current health status (and updated periodically) */
-  health: HealthStatus;
-  /** The generation of the spec last time reconciliation ran */
-  observedGeneration: number;
-  /** The object count when sync last ran */
-  stats?: ResourceCount[];
-  /** Sync information with the last sync information */
-  sync: SyncStatus;
-  /** Webhook Information (if applicable) */
-  webhook: WebhookStatus;
-};
-export type Repository = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata?: ObjectMeta;
-  spec?: RepositorySpec;
-  status?: RepositoryStatus;
-};
-export type RepositoryList = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  items: Repository[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
@@ -1021,6 +1117,207 @@ export type Status = {
   /** Status of the operation. One of: "Success" or "Failure". More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status */
   status?: string;
 };
+export type InlineSecureValue =
+  | {
+      /** Create a secure value -- this is only used for POST/PUT */
+      create?: string;
+      /** Name in the secret service (reference) */
+      name: string;
+      /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
+      remove?: boolean;
+    }
+  | {
+      /** Create a secure value -- this is only used for POST/PUT */
+      create: string;
+      /** Name in the secret service (reference) */
+      name?: string;
+      /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
+      remove?: boolean;
+    }
+  | {
+      /** Create a secure value -- this is only used for POST/PUT */
+      create?: string;
+      /** Name in the secret service (reference) */
+      name?: string;
+      /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
+      remove: boolean;
+    };
+export type SecureValues = {
+  /** Token used to connect the configured repository */
+  token?: InlineSecureValue;
+  /** Some webhooks (including github) require a secret key value */
+  webhookSecret?: InlineSecureValue;
+};
+export type BitbucketRepositoryConfig = {
+  /** The branch to use in the repository. */
+  branch: string;
+  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
+    
+    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
+  path?: string;
+  /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
+  tokenUser?: string;
+  /** The repository URL (e.g. `https://bitbucket.org/example/test`). */
+  url?: string;
+};
+export type GitRepositoryConfig = {
+  /** The branch to use in the repository. */
+  branch: string;
+  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
+    
+    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
+  path?: string;
+  /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
+  tokenUser?: string;
+  /** The repository URL (e.g. `https://github.com/example/test.git`). */
+  url?: string;
+};
+export type GitHubRepositoryConfig = {
+  /** The branch to use in the repository. */
+  branch: string;
+  /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
+  generateDashboardPreviews?: boolean;
+  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
+    
+    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
+  path?: string;
+  /** The repository URL (e.g. `https://github.com/example/test`). */
+  url?: string;
+};
+export type GitLabRepositoryConfig = {
+  /** The branch to use in the repository. */
+  branch: string;
+  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
+    
+    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
+  path?: string;
+  /** The repository URL (e.g. `https://gitlab.com/example/test`). */
+  url?: string;
+};
+export type LocalRepositoryConfig = {
+  path?: string;
+};
+export type SyncOptions = {
+  /** Enabled must be saved as true before any sync job will run */
+  enabled: boolean;
+  /** When non-zero, the sync will run periodically */
+  intervalSeconds?: number;
+  /** Where values should be saved
+    
+    Possible enum values:
+     - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
+     - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
+  target: 'folder' | 'instance';
+};
+export type RepositorySpec = {
+  /** The repository on Bitbucket. Mutually exclusive with local | github | git. */
+  bitbucket?: BitbucketRepositoryConfig;
+  /** Repository description */
+  description?: string;
+  /** The repository on Git. Mutually exclusive with local | github | git. */
+  git?: GitRepositoryConfig;
+  /** The repository on GitHub. Mutually exclusive with local | github | git. */
+  github?: GitHubRepositoryConfig;
+  /** The repository on GitLab. Mutually exclusive with local | github | git. */
+  gitlab?: GitLabRepositoryConfig;
+  /** The repository on the local file system. Mutually exclusive with local | github. */
+  local?: LocalRepositoryConfig;
+  /** Sync settings -- how values are pulled from the repository into grafana */
+  sync: SyncOptions;
+  /** The repository display name (shown in the UI) */
+  title: string;
+  /** The repository type.  When selected oneOf the values below should be non-nil
+    
+    Possible enum values:
+     - `"bitbucket"`
+     - `"git"`
+     - `"github"`
+     - `"gitlab"`
+     - `"local"` */
+  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
+  /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
+  workflows: ('branch' | 'write')[];
+};
+export type HealthStatus = {
+  /** When the health was checked last time */
+  checked?: number;
+  /** The type of the error
+    
+    Possible enum values:
+     - `"health"`
+     - `"hook"` */
+  error?: 'health' | 'hook';
+  /** When not healthy, requests will not be executed */
+  healthy: boolean;
+  /** Summary messages (can be shown to users) Will only be populated when not healthy */
+  message?: string[];
+};
+export type ResourceCount = {
+  count: number;
+  group: string;
+  resource: string;
+};
+export type SyncStatus = {
+  /** When the sync job finished */
+  finished?: number;
+  /** Incremental synchronization for versioned repositories */
+  incremental?: boolean;
+  /** The ID for the job that ran this sync */
+  job?: string;
+  /** The repository ref when the last successful sync ran */
+  lastRef?: string;
+  /** Summary messages (will be shown to users) */
+  message: string[];
+  /** When the next sync check is scheduled */
+  scheduled?: number;
+  /** When the sync job started */
+  started?: number;
+  /** pending, running, success, error
+    
+    Possible enum values:
+     - `"error"` Finished with errors
+     - `"pending"` Job has been submitted, but not processed yet
+     - `"success"` Finished with success
+     - `"warning"` Finished with some non-critical errors
+     - `"working"` The job is running */
+  state: 'error' | 'pending' | 'success' | 'warning' | 'working';
+};
+export type WebhookStatus = {
+  id?: number;
+  lastEvent?: number;
+  subscribedEvents?: string[];
+  url?: string;
+};
+export type RepositoryStatus = {
+  /** This will get updated with the current health status (and updated periodically) */
+  health: HealthStatus;
+  /** The generation of the spec last time reconciliation ran */
+  observedGeneration: number;
+  /** The object count when sync last ran */
+  stats?: ResourceCount[];
+  /** Sync information with the last sync information */
+  sync: SyncStatus;
+  /** Webhook Information (if applicable) */
+  webhook: WebhookStatus;
+};
+export type Repository = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ObjectMeta;
+  secure?: SecureValues;
+  spec?: RepositorySpec;
+  status?: RepositoryStatus;
+};
+export type RepositoryList = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: Repository[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ListMeta;
+};
 export type ResourceRepositoryInfo = {
   /** The name (identifier) */
   name: string;
@@ -1031,10 +1328,12 @@ export type ResourceRepositoryInfo = {
   /** The repository type
     
     Possible enum values:
+     - `"bitbucket"`
      - `"git"`
      - `"github"`
+     - `"gitlab"`
      - `"local"` */
-  type: 'git' | 'github' | 'local';
+  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
 };
 export type Unstructured = {
   [key: string]: any;
@@ -1059,8 +1358,9 @@ export type ResourceObjects = {
     Possible enum values:
      - `"create"`
      - `"delete"`
+     - `"move"`
      - `"update"` */
-  action?: 'create' | 'delete' | 'update';
+  action?: 'create' | 'delete' | 'move' | 'update';
   /** The value returned from a dryRun request */
   dryRun?: Unstructured;
   /** The same value, currently saved in the grafana database */
@@ -1071,16 +1371,6 @@ export type ResourceObjects = {
   type: ResourceType;
   /** For write events, this will return the value that was added or updated */
   upsert?: Unstructured;
-};
-export type ResourceUrLs = {
-  /** Compare this version to the target branch */
-  compareURL?: string;
-  /** A URL that will create a new pull requeset for this branch */
-  newPullRequestURL?: string;
-  /** A URL pointing to the repository this lives in */
-  repositoryURL?: string;
-  /** A URL pointing to the this file in the repository */
-  sourceURL?: string;
 };
 export type ResourceWrapper = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1102,7 +1392,7 @@ export type ResourceWrapper = {
   /** The modified time in the remote file system */
   timestamp?: Time;
   /** Typed links for this file (only supported by external systems, github etc) */
-  urls?: ResourceUrLs;
+  urls?: RepositoryUrLs;
 };
 export type ResourceListItem = {
   folder?: string;
@@ -1168,16 +1458,20 @@ export type RepositoryView = {
   /** The repository type
     
     Possible enum values:
+     - `"bitbucket"`
      - `"git"`
      - `"github"`
+     - `"gitlab"`
      - `"local"` */
-  type: 'git' | 'github' | 'local';
+  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
   /** The supported workflows */
   workflows: ('branch' | 'write')[];
 };
 export type RepositoryViewList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
+  /** AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc) */
+  availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'gitlab' | 'local')[];
   items: RepositoryView[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
@@ -1202,10 +1496,16 @@ export type ResourceStats = {
   /** Stats for each manager */
   managed?: ManagerStats[];
   metadata?: any;
+  /** Stats across all unified storage When legacy storage is still used, this will offer a shim */
+  unmanaged?: ResourceCount[];
 };
 export const {
   useListJobQuery,
+  useCreateJobMutation,
+  useDeletecollectionJobMutation,
   useGetJobQuery,
+  useReplaceJobMutation,
+  useDeleteJobMutation,
   useListRepositoryQuery,
   useCreateRepositoryMutation,
   useDeletecollectionRepositoryMutation,
@@ -1222,6 +1522,7 @@ export const {
   useGetRepositoryJobsQuery,
   useCreateRepositoryJobsMutation,
   useGetRepositoryJobsWithPathQuery,
+  useGetRepositoryRefsQuery,
   useGetRepositoryRenderWithPathQuery,
   useGetRepositoryResourcesQuery,
   useGetRepositoryStatusQuery,

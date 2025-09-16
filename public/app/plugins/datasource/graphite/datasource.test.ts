@@ -1,7 +1,6 @@
 import { isArray } from 'lodash';
 import moment from 'moment';
 import { of } from 'rxjs';
-import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import {
   AbstractLabelMatcher,
@@ -11,19 +10,27 @@ import {
   dateTime,
   getFrameDisplayName,
   MetricFindValue,
+  ScopedVars,
 } from '@grafana/data';
-import { BackendSrvRequest } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { BackendSrvRequest, FetchResponse, getTemplateSrv, TemplateSrv, VariableInterpolation } from '@grafana/runtime';
 
 import { fromString } from './configuration/parseLokiLabelMappings';
 import { GraphiteDatasource } from './datasource';
 import { GraphiteQuery, GraphiteQueryType } from './types';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 
+const fetchMock = jest.fn();
+
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => backendSrv,
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getBackendSrv: () => ({
+    fetch: fetchMock,
+  }),
+  getTemplateSrv: () => {
+    return {
+      replace: (s: string) => s,
+    };
+  },
 }));
 
 interface Context {
@@ -31,9 +38,19 @@ interface Context {
   ds: GraphiteDatasource;
 }
 
-describe('graphiteDatasource', () => {
-  const fetchMock = jest.spyOn(backendSrv, 'fetch');
+const createFetchResponse = <T>(data: T): FetchResponse<T> => ({
+  data,
+  status: 200,
+  url: 'http://localhost:3000/api/query',
+  config: { url: 'http://localhost:3000/api/query' },
+  type: 'basic',
+  statusText: 'Ok',
+  redirected: false,
+  headers: new Headers(),
+  ok: true,
+});
 
+describe('graphiteDatasource', () => {
   let ctx = {} as Context;
 
   beforeEach(() => {
@@ -46,8 +63,9 @@ describe('graphiteDatasource', () => {
         rollupIndicatorEnabled: true,
       },
     };
-    const templateSrv = new TemplateSrv();
+    const templateSrv = getTemplateSrv();
     const ds = new GraphiteDatasource(instanceSettings, templateSrv);
+
     ctx = { templateSrv, ds };
   });
 
@@ -449,7 +467,22 @@ describe('graphiteDatasource', () => {
     });
 
     it('should replace target placeholder when nesting query references with template variables', () => {
-      ctx.templateSrv.init([{ type: 'query', name: 'metric', current: { value: ['aMetricName'] } }]);
+      const originalReplace = ctx.templateSrv.replace;
+      ctx.templateSrv.replace = jest
+        .fn()
+        .mockImplementation(
+          (
+            target?: string | undefined,
+            scopedVars?: ScopedVars | undefined,
+            format?: string | Function,
+            interpolations?: VariableInterpolation[]
+          ): string => {
+            if (target?.includes('[[metric]]')) {
+              return target.replaceAll('[[metric]]', 'aMetricName');
+            }
+            return originalReplace(target, scopedVars, format, interpolations);
+          }
+        );
       const originalTargetMap = {
         A: '[[metric]]',
         B: 'sumSeries(#A)',
@@ -465,7 +498,22 @@ describe('graphiteDatasource', () => {
     });
 
     it('should use scoped variables when nesting query references', () => {
-      ctx.templateSrv.init([{ type: 'query', name: 'metric', current: { value: ['globalValue'] } }]);
+      const originalReplace = ctx.templateSrv.replace;
+      ctx.templateSrv.replace = jest
+        .fn()
+        .mockImplementation(
+          (
+            target?: string | undefined,
+            scopedVars?: ScopedVars | undefined,
+            format?: string | Function,
+            interpolations?: VariableInterpolation[]
+          ): string => {
+            if (target?.includes('$metric')) {
+              return target.replaceAll('$metric', 'scopedValue');
+            }
+            return originalReplace(target, scopedVars, format, interpolations);
+          }
+        );
 
       const originalTargetMap = {
         A: '$metric',
@@ -488,7 +536,22 @@ describe('graphiteDatasource', () => {
     });
 
     it('should apply scoped variables to nested references with hidden targets', () => {
-      ctx.templateSrv.init([{ type: 'query', name: 'server', current: { value: ['global'] } }]);
+      const originalReplace = ctx.templateSrv.replace;
+      ctx.templateSrv.replace = jest
+        .fn()
+        .mockImplementation(
+          (
+            target?: string | undefined,
+            scopedVars?: ScopedVars | undefined,
+            format?: string | Function,
+            interpolations?: VariableInterpolation[]
+          ): string => {
+            if (target?.includes('$server')) {
+              return target.replaceAll('$server', scopedVars?.server?.value);
+            }
+            return originalReplace(target, scopedVars, format, interpolations);
+          }
+        );
 
       const originalTargetMap = {
         A: '$server.cpu',
@@ -594,13 +657,22 @@ describe('graphiteDatasource', () => {
 
     describe('when formatting targets', () => {
       it('does not attempt to glob for one variable', () => {
-        ctx.templateSrv.init([
-          {
-            type: 'query',
-            name: 'metric',
-            current: { value: ['b'] },
-          },
-        ]);
+        const originalReplace = ctx.templateSrv.replace;
+        ctx.templateSrv.replace = jest
+          .fn()
+          .mockImplementation(
+            (
+              target?: string | undefined,
+              scopedVars?: ScopedVars | undefined,
+              format?: string | Function,
+              interpolations?: VariableInterpolation[]
+            ): string => {
+              if (target?.includes('$metric')) {
+                return target.replaceAll('$metric', 'b');
+              }
+              return originalReplace(target, scopedVars, format, interpolations);
+            }
+          );
 
         const originalTargetMap = {
           A: 'my.$metric.*',
@@ -615,13 +687,23 @@ describe('graphiteDatasource', () => {
       });
 
       it('globs for more than one variable', () => {
-        ctx.templateSrv.init([
-          {
-            type: 'query',
-            name: 'metric',
-            current: { value: ['a', 'b'] },
-          },
-        ]);
+        const originalReplace = ctx.templateSrv.replace;
+        ctx.templateSrv.replace = jest
+          .fn()
+          .mockImplementation(
+            (
+              target?: string | undefined,
+              scopedVars?: ScopedVars | undefined,
+              format?: string | Function,
+              interpolations?: VariableInterpolation[]
+            ): string => {
+              if (target?.includes('[[metric]]')) {
+                return target.replaceAll('[[metric]]', '{a,b}');
+              }
+              return originalReplace(target, scopedVars, format, interpolations);
+            }
+          );
+
         const originalTargetMap = { A: 'my.[[metric]].*' };
         const results = ctx.ds.buildGraphiteParams(
           {
@@ -721,13 +803,22 @@ describe('graphiteDatasource', () => {
     });
 
     it('/metrics/find should be POST', () => {
-      ctx.templateSrv.init([
-        {
-          type: 'query',
-          name: 'foo',
-          current: { value: ['bar'] },
-        },
-      ]);
+      const originalReplace = ctx.templateSrv.replace;
+      ctx.templateSrv.replace = jest
+        .fn()
+        .mockImplementation(
+          (
+            target?: string | undefined,
+            scopedVars?: ScopedVars | undefined,
+            format?: string | Function,
+            interpolations?: VariableInterpolation[]
+          ): string => {
+            if (target?.includes('[[foo]]')) {
+              return target.replaceAll('[[foo]]', 'bar');
+            }
+            return originalReplace(target, scopedVars, format, interpolations);
+          }
+        );
       ctx.ds.metricFindQuery('[[foo]]').then((data) => {
         results = data;
       });
@@ -739,6 +830,22 @@ describe('graphiteDatasource', () => {
     });
 
     it('should interpolate $__searchFilter with searchFilter', () => {
+      const originalReplace = ctx.templateSrv.replace;
+      ctx.templateSrv.replace = jest
+        .fn()
+        .mockImplementation(
+          (
+            target?: string | undefined,
+            scopedVars?: ScopedVars | undefined,
+            format?: string | Function,
+            interpolations?: VariableInterpolation[]
+          ): string => {
+            if (target?.includes('$__searchFilter')) {
+              return target.replaceAll('$__searchFilter', 'backend*');
+            }
+            return originalReplace(target, scopedVars, format, interpolations);
+          }
+        );
       ctx.ds.metricFindQuery('app.$__searchFilter', { searchFilter: 'backend' }).then((data) => {
         results = data;
       });
@@ -750,6 +857,22 @@ describe('graphiteDatasource', () => {
     });
 
     it('should interpolate $__searchFilter with default when searchFilter is missing', () => {
+      const originalReplace = ctx.templateSrv.replace;
+      ctx.templateSrv.replace = jest
+        .fn()
+        .mockImplementation(
+          (
+            target?: string | undefined,
+            scopedVars?: ScopedVars | undefined,
+            format?: string | Function,
+            interpolations?: VariableInterpolation[]
+          ): string => {
+            if (target?.includes('$__searchFilter')) {
+              return target.replaceAll('$__searchFilter', '*');
+            }
+            return originalReplace(target, scopedVars, format, interpolations);
+          }
+        );
       ctx.ds.metricFindQuery('app.$__searchFilter', {}).then((data) => {
         results = data;
       });
@@ -988,7 +1111,7 @@ describe('graphiteDatasource', () => {
 function accessScenario(name: string, url: string, fn: ({ headers }: { headers: Record<string, unknown> }) => void) {
   describe('access scenario ' + name, () => {
     const ctx = {
-      templateSrv: new TemplateSrv(),
+      templateSrv: getTemplateSrv(),
       instanceSettings: { url: 'url', name: 'graphiteProd', jsonData: {} },
     };
 

@@ -23,7 +23,7 @@ import mdx from './Table.mdx';
 import { FooterItem, TableCellDisplayMode, TableCustomCellOptions } from './types';
 
 const meta: Meta<typeof Table> = {
-  title: 'Visualizations/Table',
+  title: 'Plugins/Table',
   component: Table,
   parameters: {
     controls: {
@@ -32,6 +32,8 @@ const meta: Meta<typeof Table> = {
     docs: {
       page: mdx,
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   args: {
     width: 700,

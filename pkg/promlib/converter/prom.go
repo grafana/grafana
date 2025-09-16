@@ -1140,8 +1140,8 @@ streamField:
 	return parsedLabelsMap, structuredMetadataMap, nil
 }
 
-func resultTypeToCustomMeta(resultType string) map[string]string {
-	return map[string]string{"resultType": resultType}
+func resultTypeToCustomMeta(resultType string) map[string]any {
+	return map[string]any{"resultType": resultType}
 }
 
 func timeFromFloat(fv float64) time.Time {

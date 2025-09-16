@@ -13,12 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationDataAccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	defaultAddDatasourceCommand := datasources.AddDataSourceCommand{
 		OrgID:  10,
 		Name:   "nisse",
@@ -108,33 +108,6 @@ func TestIntegrationDataAccess(t *testing.T) {
 			cmd.UID = "test/uid"
 			_, err := ss.AddDataSource(context.Background(), &cmd)
 			require.ErrorContains(t, err, "invalid format of UID")
-		})
-
-		t.Run("fires an event when the datasource is added", func(t *testing.T) {
-			db := db.InitTestDB(t)
-			sqlStore := SqlStore{db: db}
-			var created *events.DataSourceCreated
-			db.Bus().AddEventListener(func(ctx context.Context, e *events.DataSourceCreated) error {
-				created = e
-				return nil
-			})
-
-			_, err := sqlStore.AddDataSource(context.Background(), &defaultAddDatasourceCommand)
-			require.NoError(t, err)
-
-			require.Eventually(t, func() bool {
-				return assert.NotNil(t, created)
-			}, time.Second, time.Millisecond)
-
-			query := datasources.GetDataSourcesQuery{OrgID: 10}
-			dataSources, err := sqlStore.GetDataSources(context.Background(), &query)
-			require.NoError(t, err)
-			require.Equal(t, 1, len(dataSources))
-
-			require.Equal(t, dataSources[0].ID, created.ID)
-			require.Equal(t, dataSources[0].UID, created.UID)
-			require.Equal(t, int64(10), created.OrgID)
-			require.Equal(t, "nisse", created.Name)
 		})
 	})
 
@@ -281,7 +254,10 @@ func TestIntegrationDataAccess(t *testing.T) {
 		t.Run("Can not delete datasource with wrong orgID", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ds := initDatasource(db)
-			ss := SqlStore{db: db}
+			ss := SqlStore{
+				db:     db,
+				logger: log.NewNopLogger(),
+			}
 
 			err := ss.DeleteDataSource(context.Background(),
 				&datasources.DeleteDataSourceCommand{ID: ds.ID, OrgID: 123123})
@@ -322,7 +298,10 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 	t.Run("does not fire an event when the datasource is not deleted", func(t *testing.T) {
 		db := db.InitTestDB(t)
-		ss := SqlStore{db: db}
+		ss := SqlStore{
+			db:     db,
+			logger: log.NewNopLogger(),
+		}
 
 		var called bool
 		db.Bus().AddEventListener(func(ctx context.Context, e *events.DataSourceDeleted) error {

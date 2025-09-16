@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/go-jose/go-jose/v3/jwt"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
@@ -162,7 +162,7 @@ func TestLegacyAuthorizer(t *testing.T) {
 		},
 	}
 
-	authz := newLegacyAuthorizer(acimpl.ProvideAccessControl(featuremgmt.WithFeatures("nestedFolders")))
+	authz := newLegacyAuthorizer(acimpl.ProvideAccessControl(featuremgmt.WithFeatures()))
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

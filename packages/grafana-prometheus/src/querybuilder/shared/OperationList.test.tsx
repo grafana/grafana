@@ -39,7 +39,7 @@ describe('OperationList', () => {
 
   it('removes an operation', async () => {
     const { onChange } = setup();
-    const removeOperationButtons = screen.getAllByTitle('Remove operation');
+    const removeOperationButtons = screen.getAllByLabelText('Remove operation');
     expect(removeOperationButtons).toHaveLength(2);
     await userEvent.click(removeOperationButtons[1]);
     expect(onChange).toHaveBeenCalledWith({

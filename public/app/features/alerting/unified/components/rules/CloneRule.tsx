@@ -56,7 +56,7 @@ export function RedirectToCloneRule({
           </p>
         </div>
       }
-      confirmText="Copy"
+      confirmText={t('alerting.redirect-to-clone-rule.confirmText-copy', 'Copy')}
       onConfirm={() => setStage('redirect')}
       onDismiss={onDismiss}
     />

@@ -60,6 +60,25 @@ describe('LogsQueryEditor.TimeManagement', () => {
     );
   });
 
+  it('should render correctly even if no tables are in the schema', async () => {
+    const mockDatasource = createMockDatasource();
+    const query = createMockQuery({ azureLogAnalytics: { timeColumn: undefined } });
+    const onChange = jest.fn();
+
+    render(
+      <TimeManagement
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onQueryChange={onChange}
+        setError={() => {}}
+        schema={FakeSchemaData.getLogAnalyticsFakeEngineSchema([])}
+      />
+    );
+
+    expect(screen.getByText('Time-range')).toBeInTheDocument();
+  });
+
   it('should render the default value if no time columns exist', async () => {
     const mockDatasource = createMockDatasource();
     const query = createMockQuery();

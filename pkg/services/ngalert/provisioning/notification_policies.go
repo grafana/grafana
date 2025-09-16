@@ -3,12 +3,14 @@ package provisioning
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"hash"
 	"hash/fnv"
 	"slices"
 	"unsafe"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/common/model"
 	"golang.org/x/exp/maps"
 
@@ -86,11 +88,8 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return definitions.Route{}, "", err
 	}
 
-	receivers := map[string]struct{}{}
+	receivers := revision.GetReceiversNames()
 	receivers[""] = struct{}{} // Allow empty receiver (inheriting from parent)
-	for _, receiver := range revision.GetReceivers(nil) {
-		receivers[receiver.Name] = struct{}{}
-	}
 
 	err = tree.ValidateReceivers(receivers)
 	if err != nil {
@@ -113,7 +112,11 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 
 	_, err = revision.Config.GetMergedAlertmanagerConfig()
 	if err != nil {
-		return definitions.Route{}, "", fmt.Errorf("new routing tree is not compatible with extra configuration: %w", err)
+		if errors.Is(err, definition.ErrSubtreeMatchersConflict) {
+			// TODO temporarily get the conflicting matchers
+			return definitions.Route{}, "", MakeErrRouteConflictingMatchers(fmt.Sprintf("%s", revision.Config.ExtraConfigs[0].MergeMatchers))
+		}
+		nps.log.Warn("Unable to validate the combined routing tree because of an error during merging. This could be a sign of broken external configuration. Skipping", "error", err)
 	}
 
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {

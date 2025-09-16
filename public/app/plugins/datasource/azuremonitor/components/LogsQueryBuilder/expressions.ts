@@ -1,4 +1,4 @@
-import { QueryEditorProperty, QueryEditorPropertyType } from '../../types';
+import { QueryEditorProperty, QueryEditorPropertyType } from '../../types/types';
 
 export enum QueryEditorExpressionType {
   Property = 'property',

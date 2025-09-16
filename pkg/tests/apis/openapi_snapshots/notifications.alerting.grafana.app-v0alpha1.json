@@ -3412,6 +3412,7 @@
         "type": "object",
         "required": [
           "type",
+          "version",
           "settings"
         ],
         "properties": {
@@ -3437,6 +3438,10 @@
           },
           "uid": {
             "type": "string"
+          },
+          "version": {
+            "type": "string",
+            "default": ""
           }
         }
       },

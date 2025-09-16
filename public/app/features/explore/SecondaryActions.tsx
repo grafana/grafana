@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
 import { createDatasourcesList } from '../../core/utils/richHistory';
 import { MIXED_DATASOURCE_NAME } from '../../plugins/datasource/mixed/MixedDataSource';
@@ -74,12 +74,19 @@ export function SecondaryActions({
           {queryLibraryEnabled && (
             <ToolbarButton
               data-testid={selectors.pages.Explore.General.addFromQueryLibrary}
-              aria-label={t('explore.secondary-actions.add-from-query-library', 'Add query from library')}
+              aria-label={t('explore.secondary-actions.add-from-query-library', 'Add from saved queries')}
               variant="canvas"
-              onClick={() => openQueryLibraryDrawer(activeDatasources, onSelectQueryFromLibrary)}
+              onClick={() =>
+                openQueryLibraryDrawer({
+                  datasourceFilters: activeDatasources,
+                  onSelectQuery: onSelectQueryFromLibrary,
+                  options: { context: CoreApp.Explore },
+                })
+              }
               icon="plus"
+              disabled={addQueryRowButtonDisabled}
             >
-              <Trans i18nKey="explore.secondary-actions.add-from-query-library">Add query from library</Trans>
+              <Trans i18nKey="explore.secondary-actions.add-from-query-library">Add from saved queries</Trans>
             </ToolbarButton>
           )}
         </>

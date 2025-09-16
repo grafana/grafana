@@ -3,7 +3,7 @@ import { CustomVariableModel } from '@grafana/data';
 import { Context, createContext } from '../mocks/datasource';
 import createMockQuery from '../mocks/query';
 import { singleVariable } from '../mocks/variables';
-import { AzureLogsQuery, AzureMonitorQuery, AzureQueryType, AzureTracesQuery } from '../types';
+import { AzureLogsQuery, AzureMonitorQuery, AzureQueryType, AzureTracesQuery } from '../types/query';
 
 import AzureLogAnalyticsDatasource from './azure_log_analytics_datasource';
 import FakeSchemaData from './mocks/schema';

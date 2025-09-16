@@ -83,6 +83,7 @@ func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataS
 		ss.logger.Error("Failed getting data source", "err", err, "uid", query.UID, "id", query.ID, "name", query.Name, "orgId", query.OrgID) // nolint:staticcheck
 		return nil, err
 	} else if !has {
+		ss.logger.Debug("Data source not found", "uid", query.UID, "id", query.ID, "name", query.Name, "orgId", query.OrgID) // nolint:staticcheck
 		return nil, datasources.ErrDataSourceNotFound
 	}
 
@@ -299,14 +300,6 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 				return err
 			}
 		}
-
-		sess.PublishAfterCommit(&events.DataSourceCreated{
-			Timestamp: time.Now(),
-			Name:      cmd.Name,
-			ID:        ds.ID,
-			UID:       cmd.UID,
-			OrgID:     cmd.OrgID,
-		})
 		return nil
 	})
 }

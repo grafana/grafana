@@ -1,14 +1,12 @@
-import { css } from '@emotion/css';
 import React from 'react';
 
 import {
   DataSourceJsonData,
   DataSourcePluginOptionsEditorProps,
-  GrafanaTheme2,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { ConfigSection } from '@grafana/plugin-ui';
-import { InlineFieldRow, InlineField, InlineSwitch, Alert, Stack, useStyles2 } from '@grafana/ui';
+import { InlineFieldRow, InlineField, InlineSwitch, Alert, Stack, TextLink } from '@grafana/ui';
 
 import { FeatureName, featuresToTempoVersion } from '../datasource';
 
@@ -21,7 +19,6 @@ interface StreamingOptions extends DataSourceJsonData {
 interface Props extends DataSourcePluginOptionsEditorProps<StreamingOptions> {}
 
 export const StreamingSection = ({ options, onOptionsChange }: Props) => {
-  const styles = useStyles2(getStyles);
   return (
     <ConfigSection
       title="Streaming"
@@ -29,14 +26,9 @@ export const StreamingSection = ({ options, onOptionsChange }: Props) => {
       description={
         <Stack gap={0.5}>
           <div>Enable streaming for different Tempo features.</div>
-          <a
-            href={'https://grafana.com/docs/tempo/latest/traceql/#stream-query-results'}
-            target={'_blank'}
-            rel="noreferrer"
-            className={styles.a}
-          >
+          <TextLink external href={'https://grafana.com/docs/tempo/latest/traceql/#stream-query-results'}>
             Learn more
-          </a>
+          </TextLink>
         </Stack>
       }
     >
@@ -86,16 +78,4 @@ export const StreamingSection = ({ options, onOptionsChange }: Props) => {
       </InlineFieldRow>
     </ConfigSection>
   );
-};
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    a: css({
-      color: theme.colors.text.link,
-      textDecoration: 'underline',
-      marginLeft: '5px',
-      '&:hover': {
-        textDecoration: 'none',
-      },
-    }),
-  };
 };

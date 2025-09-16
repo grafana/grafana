@@ -33,14 +33,6 @@ type GetReceiversQuery struct {
 	Decrypt bool
 }
 
-// ListReceiversQuery represents a query for listing receiver groups.
-type ListReceiversQuery struct {
-	OrgID  int64
-	Names  []string
-	Limit  int
-	Offset int
-}
-
 // ReceiverMetadata contains metadata about a receiver's usage in routes and rules.
 type ReceiverMetadata struct {
 	InUseByRules  []AlertRuleKey
@@ -153,10 +145,19 @@ type Integration struct {
 	SecureSettings map[string]string
 }
 
+func (integration *Integration) ResourceType() string {
+	return "contactPoint"
+}
+
+func (integration *Integration) ResourceID() string {
+	return integration.UID
+}
+
 // IntegrationConfig represents the configuration of an integration. It contains the type and information about the fields.
 type IntegrationConfig struct {
-	Type   string
-	Fields map[string]IntegrationField
+	Type    string
+	Version string
+	Fields  map[string]IntegrationField
 }
 
 // IntegrationField represents a field in an integration configuration.
@@ -199,17 +200,40 @@ func (f IntegrationFieldPath) With(segment string) IntegrationFieldPath {
 	return newPath
 }
 
-// IntegrationConfigFromType returns an integration configuration for a given integration type. If the integration type is
-// not found an error is returned.
-func IntegrationConfigFromType(integrationType string) (IntegrationConfig, error) {
+// IntegrationConfigFromType returns an integration configuration for a given integration type of a given version.
+// If version is nil, the current version of the integration is used.
+// Returns an error if the integration type is not found or if the specified version does not exist.
+//
+// Parameters:
+//
+//	integrationType - The type of integration to get configuration for
+//	version - Optional specific version to get configuration for, uses latest if nil
+//
+// Returns:
+//
+//	IntegrationConfig - The integration configuration
+//	error - Error if integration type not found or invalid version specified
+func IntegrationConfigFromType(integrationType string, version *string) (IntegrationConfig, error) {
 	config, err := channels_config.ConfigForIntegrationType(integrationType)
 	if err != nil {
 		return IntegrationConfig{}, err
 	}
-
-	integrationConfig := IntegrationConfig{Type: config.Type, Fields: make(map[string]IntegrationField, len(config.Options))}
-
-	for _, option := range config.Options {
+	var versionConfig channels_config.NotifierPluginVersion
+	if version == nil {
+		versionConfig = config.GetCurrentVersion()
+	} else {
+		var ok bool
+		versionConfig, ok = config.GetVersion(*version)
+		if !ok {
+			return IntegrationConfig{}, fmt.Errorf("version %s not found in config", *version)
+		}
+	}
+	integrationConfig := IntegrationConfig{
+		Type:    config.Type,
+		Version: versionConfig.Version,
+		Fields:  make(map[string]IntegrationField, len(versionConfig.Options)),
+	}
+	for _, option := range versionConfig.Options {
 		integrationConfig.Fields[option.PropertyName] = notifierOptionToIntegrationField(option)
 	}
 	return integrationConfig, nil
@@ -267,7 +291,8 @@ func traverseFields(flds map[string]IntegrationField, parentPath IntegrationFiel
 
 func (config *IntegrationConfig) Clone() IntegrationConfig {
 	clone := IntegrationConfig{
-		Type: config.Type,
+		Type:    config.Type,
+		Version: config.Version,
 	}
 
 	if len(config.Fields) > 0 {

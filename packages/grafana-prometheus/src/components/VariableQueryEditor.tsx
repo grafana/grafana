@@ -25,7 +25,7 @@ import {
   StandardPromVariableQuery,
 } from '../types';
 
-export const variableOptions = [
+const variableOptions = [
   { label: 'Label names', value: QueryType.LabelNames },
   { label: 'Label values', value: QueryType.LabelValues },
   { label: 'Metrics', value: QueryType.MetricNames },
@@ -76,11 +76,6 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
 
   // label filters have been added as a filter for metrics in label values query type
   const [labelFilters, setLabelFilters] = useState<QueryBuilderLabelFilter[]>([]);
-
-  useEffect(() => {
-    datasource.languageProvider.start(range);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (!query) {

@@ -5,7 +5,8 @@ import { ConfirmButton, ConfirmModal, Button, Stack } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
 import { formatDate } from 'app/core/internationalization/dates';
-import { AccessControlAction, UserSession } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { UserSession } from 'app/types/user';
 
 interface Props {
   sessions: UserSession[];
@@ -92,7 +93,7 @@ class BaseUserSessions extends PureComponent<Props, State> {
                       <td>
                         {canLogout && (
                           <ConfirmButton
-                            confirmText="Confirm logout"
+                            confirmText={t('admin.base-user-sessions.confirmText-confirm-logout', 'Confirm logout')}
                             confirmVariant="destructive"
                             onConfirm={this.onSessionRevoke(session.id)}
                           >
@@ -115,8 +116,11 @@ class BaseUserSessions extends PureComponent<Props, State> {
             <ConfirmModal
               isOpen={showLogoutModal}
               title={t('admin.base-user-sessions.title-force-logout-from-all-devices', 'Force logout from all devices')}
-              body="Are you sure you want to force logout from all devices?"
-              confirmText="Force logout"
+              body={t(
+                'admin.base-user-sessions.body-force-logout-from-all-devices',
+                'Are you sure you want to force logout from all devices?'
+              )}
+              confirmText={t('admin.base-user-sessions.confirmText-force-logout', 'Force logout')}
               onConfirm={this.onAllSessionsRevoke}
               onDismiss={this.dismissLogoutConfirmationModal}
             />

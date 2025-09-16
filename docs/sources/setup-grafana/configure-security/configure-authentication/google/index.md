@@ -45,10 +45,6 @@ First, you need to create a Google OAuth Client:
 
 ## Configure Google authentication client using the Grafana UI
 
-{{< admonition type="note" >}}
-Available behind the `ssoSettingsAPI` feature toggle, which is enabled by default.
-{{< /admonition >}}
-
 As a Grafana Admin, you can configure Google OAuth client from within Grafana using the Google UI. To do this, navigate to **Administration > Authentication > Google** page and fill in the form. If you have a current configuration in the Grafana configuration file then the form will be pre-populated with those values otherwise the form will contain default values.
 
 After you have filled in the form, click **Save**. If the save was successful, Grafana will apply the new configurations.
@@ -60,10 +56,6 @@ If you run Grafana in high availability mode, configuration changes may not get 
 {{< /admonition >}}
 
 ## Configure Google authentication client using the Terraform provider
-
-{{< admonition type="note" >}}
-Available behind the `ssoSettingsAPI` feature toggle, which is enabled by default. Supported in the Terraform provider since v2.12.0.
-{{< /admonition >}}
 
 ```terraform
 resource "grafana_sso_settings" "google_sso_settings" {
@@ -166,6 +158,10 @@ auto_login = true
 ```
 
 ### Configure team synchronization
+
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
+{{< /admonition >}}
 
 With team sync, you can easily add users to teams by utilizing their Google groups. To set up team sync for Google OAuth, refer to the following example.
 
@@ -294,6 +290,7 @@ The following table outlines the various Google OAuth configuration options. You
 | `scopes`                     | No       | Yes                | List of comma- or space-separated OAuth2 scopes.                                                                                                                                                                                                                                                                                                                                                                                                                                                | `openid email profile`                             |
 | `allow_sign_up`              | No       | Yes                | Controls Grafana user creation through the Google login. Only existing Grafana users can log in with Google if set to `false`.                                                                                                                                                                                                                                                                                                                                                                  | `true`                                             |
 | `auto_login`                 | No       | Yes                | Set to `true` to enable users to bypass the login screen and automatically log in. This setting is ignored if you configure multiple auth providers to use auto-login.                                                                                                                                                                                                                                                                                                                          | `false`                                            |
+| `login_prompt`               | No       | Yes                | Indicates the type of user interaction when the user logs in with Google. Available values are `login`, `consent` and `select_account`.                                                                                                                                                                                                                                                                                                                                                         |                                                    |
 | `hosted_domain`              | No       | Yes                | Specifies the domain to restrict access to users from that domain. This value is appended to the authorization request using the `hd` parameter.                                                                                                                                                                                                                                                                                                                                                |                                                    |
 | `validate_hd`                | No       | Yes                | Set to `false` to disable the validation of the `hd` parameter from the Google ID token. For more informatiion, refer to [Enable Google OAuth in Grafana](#enable-google-oauth-in-grafana).                                                                                                                                                                                                                                                                                                     | `true`                                             |
 | `role_attribute_strict`      | No       | Yes                | Set to `true` to deny user login if the Grafana org role cannot be extracted using `role_attribute_path` or `org_mapping`. For more information on user role mapping, refer to [Configure role mapping](#configure-role-mapping).                                                                                                                                                                                                                                                               | `false`                                            |
