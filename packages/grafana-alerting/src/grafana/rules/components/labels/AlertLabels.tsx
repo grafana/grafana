@@ -10,14 +10,14 @@ import { isPrivateLabel } from '../../utils/labels';
 
 import { AlertLabel, LabelSize } from './AlertLabel';
 
-interface Props {
+export interface AlertLabelsProps {
   labels: Record<string, string>;
   commonLabels?: Record<string, string>;
   size?: LabelSize;
   onClick?: (label: string, value: string) => void;
 }
 
-export const AlertLabels = ({ labels, commonLabels = {}, size, onClick }: Props) => {
+export const AlertLabels = ({ labels, commonLabels = {}, size, onClick }: AlertLabelsProps) => {
   const styles = useStyles2(getStyles, size);
   const [showCommonLabels, setShowCommonLabels] = useState(false);
 
