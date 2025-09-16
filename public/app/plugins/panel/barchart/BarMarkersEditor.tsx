@@ -61,10 +61,19 @@ export const BarMarkersEditor = (props: StandardEditorProps<MarkerSettings[]>) =
 
   return (
     <div>
-      {/* Button to add a new marker */}
-      <Button onClick={handleAddMarker}>
+      <Button
+        onClick={handleAddMarker}
+        style={{
+          backgroundColor: '#111217', // grey background
+          border: '1px solid rgb(204, 204, 220)', // lighter grey border
+          minWidth: '180px', // wider
+          height: '32px', // shorter
+        }}
+        
+      >
         {t('barchart.barmarkers-editor.add-marker', 'Add Marker')}
       </Button>
+
       {/* Render each marker as a grouped UI element */}
       {markers.map((marker: MarkerSettings) => (
         <div

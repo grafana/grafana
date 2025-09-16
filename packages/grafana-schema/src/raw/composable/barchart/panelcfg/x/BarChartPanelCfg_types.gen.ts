@@ -35,6 +35,39 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    */
   groupWidth: number;
   /**
+   * Custom markers persisted with the panel. Each marker targets an x-group or index.
+   */
+  markers?: Array<{
+    id?: string;
+    /**
+     * canonical x value to match against the x field (string or numeric)
+     */
+    xValue?: (string | number | number);
+    /**
+     * direct aligned index into the x values
+     */
+    xIndex: number;
+    /**
+     * optional series reference by field name
+     */
+    yValue?: (number | number);
+    /**
+     * the y value a marker is set at.
+     */
+    seriesField?: string;
+    /**
+     * optional series reference by index
+     */
+    seriesIdx?: number;
+    opts?: {
+      label?: string;
+      color?: string;
+      width?: number;
+      shape?: string;
+      isRotated: boolean;
+    };
+  }>;
+  /**
    * Controls the orientation of the bar chart, either vertical or horizontal.
    */
   orientation: common.VizOrientation;
@@ -70,6 +103,7 @@ export const defaultOptions: Partial<Options> = {
   barWidth: 0.97,
   fullHighlight: false,
   groupWidth: 0.7,
+  markers: [],
   orientation: common.VizOrientation.Auto,
   showValue: common.VisibilityMode.Auto,
   stacking: common.StackingMode.None,

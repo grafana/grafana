@@ -52,6 +52,28 @@ composableKinds: PanelCfg: {
 					showValue: common.VisibilityMode & (*"auto" | _)
 					// Controls the width of bars. 1 = Max width, 0 = Min width.
 					barWidth: float64 & >=0 & <=1 | *0.97
+				// Custom markers persisted with the panel. Each marker targets an x-group or index.
+				markers?: [...{
+					id?: string
+					// canonical x value to match against the x field (string or numeric)
+					xValue?: string | float | int
+					// direct aligned index into the x values
+					xIndex: int32
+					// optional series reference by field name
+					yValue?: float | int
+					// the y value a marker is set at.
+					seriesField?: string
+					// optional series reference by index
+					seriesIdx?: int32
+					
+					opts?: {
+						label?: string
+						color?: string
+						width?: float64
+						shape?: string
+						isRotated: bool |*false
+					}
+				}]
 					// Controls the width of groups. 1 = max with, 0 = min width.
 					groupWidth: float64 & >=0 & <=1 | *0.7
 					// Enables mode which highlights the entire bar area and shows tooltip when cursor

@@ -17,7 +17,13 @@ const intervals = systemDateFormats.interval;
 
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
-import { BarMarkerDetails } from './barmarkers';
+import { BarMarker, demoMarkers, singleBarMarker } from './barmarkers';
+import { Marker, ResolvedMarker } from './markerTypes';
+import { Builder } from '@react-awesome-query-builder/ui';
+import { markersLayer } from '../geomap/layers/data/markersLayer';
+import { drawMarkers } from '../candlestick/utils';
+import { single } from 'ix/iterable/single';
+import { markerList } from './utils';
 
 
 const groupDistr = SPACE_BETWEEN;
@@ -33,6 +39,7 @@ const LABEL_OFFSET_FACTOR_HZ = 0.15;
 // max distance
 const LABEL_OFFSET_MAX_VT = 5;
 const LABEL_OFFSET_MAX_HZ = 10;
+
 
 // text baseline middle runs through the middle of lowercase letters
 // since bar values are numbers and uppercase-like, we want the middle of uppercase
@@ -59,6 +66,7 @@ export interface BarsOptions {
   text?: VizTextDisplayOptions;
   hoverMulti?: boolean;
   legend?: VizLegendOptions;
+  markers?: Marker[];
   xSpacing?: number;
   xTimeAuto?: boolean;
   negY?: boolean[];
@@ -132,6 +140,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     xSpacing = 0,
     hoverMulti = false,
     timeZone = 'browser',
+    markers
   } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
@@ -295,6 +304,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     : {};
 
   let barsBuilder = uPlot.paths.bars!({
+    
     radius: pctStacked
       ? 0
       : !isStacked
@@ -331,6 +341,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         hSpace = Math.min(hSpace, val < 0 ? lft : u.bbox.width - (lft + wid));
       }
 
+
+    
       let barRect = { x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx };
 
       if (!isStacked && opts.fullHighlight) {
@@ -342,6 +354,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           barRect.w = u.bbox.width;
         }
       }
+      
+      
 
       
       qt.add(barRect);
@@ -452,6 +466,34 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             w: textMetrics.width * scaleFactor,
             h: (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor,
           };
+
+            // Match markers to bars and compute marker positions
+        if (markers && Array.isArray(opts.markers)) {
+          for (const marker of markers) {
+            // Only add marker if it matches this bar
+          if (
+          (marker.seriesIdx === undefined || marker.seriesIdx === seriesIdx) &&
+          (marker.xIndex  === dataIdx) 
+            ) {
+          // Compute marker position at center of bar
+          const markerX = (labels[dataIdx][seriesIdx].x);
+          const markerY = marker.yValue;
+
+          const m : ResolvedMarker = {
+            id: marker.id,
+            x: markerX,
+            y: markerY ?? (top + hgt / 2),
+          
+
+                        opts: marker.opts ?? { color: theme.colors.text.secondary, width: 20, isRotated: !isXHorizontal },
+
+          };
+          markerList.push(m);
+            }
+          }
+        }
+
+      
         }
       }
     },

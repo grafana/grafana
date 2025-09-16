@@ -1,9 +1,10 @@
-// Migration-safe marker types for the barchart plugin.
-export type MarkerOpts = {
-  color?: string;
+export type BarMarkerOpts = {
+  label?: string;
   width?: number;
+  color?: string;
+  shape?: string;
+  isRotated: boolean
 };
-
 /**
  * User-specified marker persisted in panel options (runtime shape).
  * Keep this file stable so it can be imported without touching generated files.
@@ -15,10 +16,11 @@ export interface Marker {
   // optional direct index into aligned x (dataIdx)
   xIndex?: number | null;
   // optional reference to series by name or index
+  yValue? : number | null;
+  // the y value a marker is set at.
   seriesField?: string | null;
   seriesIdx?: number | null;
-  label?: string | null;
-  opts?: MarkerOpts | null;
+  opts?: BarMarkerOpts | null;
 }
 
 /**
@@ -27,11 +29,10 @@ export interface Marker {
  */
 export interface ResolvedMarker {
   id?: string;
-  xValue?: string | number | null;
-  dataIdx: number | null; // index into aligned x (u.data[0]) or null if unresolved
-  uSeriesIdx?: number | null; // index into u.data (same indexing as aligned fields)
+  x: number
+  y:  number
   label?: string | null;
-  opts?: MarkerOpts | null;
+  opts?: BarMarkerOpts | null;
 }
 
 export default {};
