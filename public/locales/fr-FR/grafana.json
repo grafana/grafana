@@ -156,8 +156,11 @@
       "title": "Obtenir Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Tester le mappage des utilisateurs",
-      "test-mapping-run-button": "Exécuter"
+      "test-mapping-run-button": "Exécuter",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -2058,9 +2061,6 @@
       "text-loading-rules": "Chargement des règles...",
       "title-dashboard-not-saved": "Tableau de bord non enregistré"
     },
-    "paused-badge": {
-      "paused": "En pause"
-    },
     "payload-editor": {
       "edit-payload": "Modifier la charge utile",
       "label-add-custom-alert-instance": "Ajouter une instance d’alerte personnalisée",
@@ -2212,9 +2212,6 @@
       "label-time-range": "Période",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Intervalle = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> à maintenant"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2560,6 +2557,10 @@
       "recovering": "{{recoveringStats}} en cours de récupération",
       "error_one": "{{count}} erreurs",
       "error_other": "{{count}} erreurs"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Sélectionnez « Grafana géré » à moins que vous n’ayez une source de données Mimir, Loki ou Cortex avec l’API Ruler activée."
@@ -3663,7 +3664,13 @@
       "text": "Aucun résultat n'a été trouvé pour votre requête"
     },
     "restore": {
-      "success": "Tableau de bord {{name}} restauré"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Si vous avez un accès direct à la cible, copiez le JSON et collez-le à cet endroit.",
     "trash-state-manager": {
@@ -9235,7 +9242,8 @@
       "disable-button": "Désactiver",
       "discard-button": "Abandonner",
       "save-and-enable-button": "Enregistrer et activer",
-      "save-button": "Enregistrer"
+      "save-button": "Enregistrer",
+      "test-button": ""
     },
     "documentation": "documentation",
     "host": {
@@ -9629,10 +9637,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "Déduplication",
-      "disable-highlighting": "Désactiver la surbrillance",
       "disable-prettify-json": "Réduire les journaux JSON",
-      "display-level": "Afficher les niveaux",
       "display-level-all": "Tous les niveaux",
       "download": "Télécharger les journaux",
       "download-logs": {
@@ -9640,18 +9647,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Activer la surbrillance",
       "escape-newlines": "Correction des séquences de sauts de ligne et de tabulations incorrectement échappées dans les lignes du journal",
-      "font-size-default": "Utiliser une petite taille de police",
-      "font-size-small": "Utiliser la taille de police par défaut",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "Fermer la recherche",
       "hide-timestamps": "Masquer les horodatages",
       "hide-unique-labels": "Masquer les étiquettes uniques",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "Trié par les journaux les plus récents en premier - Cliquez pour afficher les plus anciens en premier",
       "oldest-first": "Trié par les journaux les plus anciens en premier - Cliquez pour afficher les plus récents en premier",
@@ -9667,8 +9695,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "Dérouler les lignes",
       "wrap-lines": "Enrouler les lignes"
@@ -11351,7 +11389,11 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Aucun résultat ne correspond à votre requête",
-      "placeholder-search": "Rechercher"
+      "placeholder-search": "Rechercher",
+      "all-resources-managed_one": "",
+      "all-resources-managed_other": "",
+      "partial-managed_one": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11649,6 +11691,7 @@
       "tooltip-unhealthy-repository": "Impossible de fusionner un référentiel en mauvais état"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Inclure les commits pour chaque valeur historique",
       "synchronization-options": "Options de synchronisation"
     },
@@ -11672,6 +11715,8 @@
       "alert-point-3": "La durée de ce processus dépend du nombre de ressources impliquées.",
       "alert-point-4": "Les administrateurs d’instances d’entreprise peuvent afficher une bannière d’annonce aux utilisateurs. Consultez <2>ce guide</2> pour obtenir des instructions étape par étape.",
       "alert-title": "Important : aucune donnée ou configuration ne sera perdue, mais les tableaux de bord seront temporairement indisponibles pendant quelques minutes.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Terminer",
       "button-start": "Commencer la synchronisation",
       "discard-modal": {
@@ -12773,6 +12818,7 @@
     "description-column-filter": "Active ou désactive les filtres de champ dans le tableau",
     "description-frozen-columns": "",
     "description-min-column-width": "La largeur minimale pour le redimensionnement automatique des colonnes",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Texte alternatif qui sera affiché si une image ne peut pas être affichée ou pour les utilisateurs qui utilisent un lecteur d’écran",
@@ -12803,6 +12849,7 @@
     "name-max-height": "",
     "name-min-column-width": "Largeur minimale de colonne",
     "name-show-table-header": "Afficher l’en-tête du tableau",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Retour à la ligne dans l’en-tête",
