@@ -445,11 +445,6 @@ func (s *legacySQLStore) DeleteServiceAccount(ctx context.Context, ns claims.Nam
 			return fmt.Errorf("failed to scan user ID: %w", err)
 		}
 
-		// Close rows to avoid the bad connection error
-		if rows != nil {
-			_ = rows.Close()
-		}
-
 		orgUserReq := newDeleteOrgUser(sql, userID)
 		if err := orgUserReq.Validate(); err != nil {
 			return err

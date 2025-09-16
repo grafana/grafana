@@ -546,11 +546,6 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 			return fmt.Errorf("failed to scan user ID: %w", err)
 		}
 
-		// Close rows to avoid the bad connection error
-		if rows != nil {
-			_ = rows.Close()
-		}
-
 		orgUserReq := deleteOrgUserQuery{
 			SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
 			OrgUserTable: sql.Table("org_user"),
