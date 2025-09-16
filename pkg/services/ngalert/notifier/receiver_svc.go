@@ -142,12 +142,7 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 		return nil, err
 	}
 
-	prov, err := rs.loadProvenances(ctx, q.OrgID)
-	if err != nil {
-		return nil, err
-	}
-
-	rcv, err := revision.GetReceiver(legacy_storage.NameToUid(q.Name), prov)
+	rcv, err := rs.getReceiverByUID(ctx, q.OrgID, legacy_storage.NameToUid(q.Name), revision)
 	if err != nil {
 		return nil, err
 	}
@@ -263,12 +258,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		return err
 	}
 
-	prov, err := rs.loadProvenances(ctx, orgID)
-	if err != nil {
-		return err
-	}
-
-	existing, err := revision.GetReceiver(uid, prov)
+	existing, err := rs.getReceiverByUID(ctx, orgID, uid, revision)
 	if err != nil {
 		if errors.Is(err, legacy_storage.ErrReceiverNotFound) {
 			return nil
@@ -408,12 +398,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	prov, err := rs.loadProvenances(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	existing, err := revision.GetReceiver(r.GetUID(), prov)
+	existing, err := rs.getReceiverByUID(ctx, orgID, r.GetUID(), revision)
 	if err != nil {
 		return nil, err
 	}
@@ -740,4 +725,16 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 		rs.log.FromContext(ctx).Info("Updated rules and routes that use renamed receiver", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRoutes)
 	}
 	return nil
+}
+
+func (rs *ReceiverService) getReceiverByUID(ctx context.Context, orgID int64, uid string, revision *legacy_storage.ConfigRevision) (*models.Receiver, error) {
+	prov, err := rs.loadProvenances(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	rcv, err := revision.GetReceiver(uid, prov)
+	if err == nil {
+		return rcv, nil
+	}
+	return nil, err
 }
