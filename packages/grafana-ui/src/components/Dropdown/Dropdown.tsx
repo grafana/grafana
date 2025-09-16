@@ -2,9 +2,7 @@ import { css } from '@emotion/css';
 import {
   FloatingFocusManager,
   autoUpdate,
-  flip,
   offset as floatingUIOffset,
-  shift,
   useClick,
   useDismiss,
   useFloating,
@@ -16,7 +14,6 @@ import { CSSTransition } from 'react-transition-group';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { DOMUtil } from '../..';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
 import { renderOrCallToRender } from '../../utils/reactUtils';
