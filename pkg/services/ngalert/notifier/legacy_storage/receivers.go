@@ -127,52 +127,6 @@ func (rev *ConfigRevision) GetReceiversNames() map[string]struct{} {
 	return result
 }
 
-func DecryptedReceivers(receivers []*definitions.PostableApiReceiver, decryptFn models.DecryptFn) ([]*definitions.PostableApiReceiver, error) {
-	decrypted := make([]*definitions.PostableApiReceiver, len(receivers))
-	for i, r := range receivers {
-		// We don't care about the provenance here, so we pass ProvenanceNone.
-		rcv, err := PostableApiReceiverToReceiver(r, models.ProvenanceNone, models.ResourceOriginGrafana)
-		if err != nil {
-			return nil, err
-		}
-
-		err = rcv.Decrypt(decryptFn)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt receiver %q: %w", rcv.Name, err)
-		}
-
-		postable, err := ReceiverToPostableApiReceiver(rcv)
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert Receiver %q to APIReceiver: %w", rcv.Name, err)
-		}
-		decrypted[i] = postable
-	}
-	return decrypted, nil
-}
-
-func EncryptedReceivers(receivers []*definitions.PostableApiReceiver, encryptFn models.EncryptFn) ([]*definitions.PostableApiReceiver, error) {
-	encrypted := make([]*definitions.PostableApiReceiver, len(receivers))
-	for i, r := range receivers {
-		// We don't care about the provenance here, so we pass ProvenanceNone.
-		rcv, err := PostableApiReceiverToReceiver(r, models.ProvenanceNone, models.ResourceOriginGrafana)
-		if err != nil {
-			return nil, err
-		}
-
-		err = rcv.Encrypt(encryptFn)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt receiver %q: %w", rcv.Name, err)
-		}
-
-		postable, err := ReceiverToPostableApiReceiver(rcv)
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert Receiver %q to APIReceiver: %w", rcv.Name, err)
-		}
-		encrypted[i] = postable
-	}
-	return encrypted, nil
-}
-
 // RenameReceiverInRoutes renames all references to a receiver in routes. Returns number of routes that were updated
 func (rev *ConfigRevision) RenameReceiverInRoutes(oldName, newName string) int {
 	return renameReceiverInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route)
