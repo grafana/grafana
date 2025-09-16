@@ -9,7 +9,7 @@ describe('Label', () => {
 
     const item = screen.getByTestId('label-value');
     expect(item).toBeInTheDocument();
-    expect(screen.getByRole('listitem', { name: 'foo: bar' })).toBeInTheDocument();
+    expect(item).toHaveAttribute('aria-label', 'foo: bar');
     expect(screen.getByText('foo')).toBeInTheDocument();
     expect(screen.getByText('bar')).toBeInTheDocument();
   });
