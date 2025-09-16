@@ -3,17 +3,103 @@ import { useMemo } from 'react';
 import { Labels } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Box, Drawer, Stack } from '@grafana/ui';
+import { VizConfigBuilders } from '@grafana/scenes';
+import { VizPanel, useDataTransformer, useQueryRunner } from '@grafana/scenes-react';
+import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
+import { Alert, Box, Drawer, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { isExpressionQuery } from '../../../../expressions/guards';
 import { AlertLabels } from '../../components/AlertLabels';
 import { useCombinedRule } from '../../hooks/useCombinedRule';
 import { stringifyErrorLike } from '../../utils/misc';
+
+// Visualization config for query charts
+const queryChartConfig = VizConfigBuilders.timeseries()
+  .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
+  .setCustomFieldConfig('showPoints', VisibilityMode.Auto)
+  .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+  .setOption('legend', { showLegend: false, displayMode: LegendDisplayMode.Hidden })
+  .build();
 
 interface InstanceDetailsDrawerProps {
   ruleUID: string;
   instanceLabels: Labels;
   onClose: () => void;
+}
+
+interface QueryVisualizationProps {
+  query: AlertQuery;
+  instanceLabels: Labels;
+}
+
+function QueryVisualization({ query, instanceLabels }: QueryVisualizationProps) {
+  // Convert query to range query for visualization
+  const visualizationQuery = useMemo(() => {
+    const model = { ...query.model, refId: query.refId };
+
+    // For Prometheus queries, ensure we use range queries for better visualization
+    if ('instant' in model) {
+      model.instant = false;
+      model.range = true;
+    }
+
+    return model;
+  }, [query.model, query.refId]);
+
+  // Create the base data provider
+  const baseDataProvider = useQueryRunner({
+    datasource: { uid: query.datasourceUid },
+    queries: [visualizationQuery],
+  });
+
+  // Create transformations to convert labels to fields, then filter by instance labels
+  const transformations = useMemo(() => {
+    const filters = Object.entries(instanceLabels).map(([labelName, labelValue]) => ({
+      fieldName: labelName,
+      config: {
+        id: 'equal',
+        options: {
+          value: labelValue,
+        },
+      },
+    }));
+
+    return [
+      {
+        id: 'labelsToFields',
+        options: {},
+      },
+      {
+        id: 'filterByValue',
+        options: {
+          filters,
+          type: 'include',
+          match: 'all',
+        },
+      },
+    ];
+  }, [instanceLabels]);
+
+  // Apply transformation to filter data
+  const filteredDataProvider = useDataTransformer({
+    data: baseDataProvider,
+    transformations,
+  });
+
+  return (
+    <Box key={query.refId} height={36}>
+      <VizPanel
+        title=""
+        viz={queryChartConfig}
+        dataProvider={filteredDataProvider}
+        hoverHeader={true}
+        displayMode="transparent"
+        collapsible={false}
+      />
+    </Box>
+  );
 }
 
 export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: InstanceDetailsDrawerProps) {
@@ -35,6 +121,15 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
     ruleIdentifier,
   });
 
+  // Extract and filter data queries (non-expression queries)
+  const dataQueries = useMemo(() => {
+    if (!rule?.rulerRule || !('grafana_alert' in rule.rulerRule) || !rule.rulerRule.grafana_alert.data) {
+      return [];
+    }
+
+    return rule.rulerRule.grafana_alert.data.filter((query: AlertQuery) => !isExpressionQuery(query.model));
+  }, [rule]);
+
   if (error) {
     return (
       <Drawer title={t('alerting.triage.instance-details', 'Instance Details')} onClose={onClose} size="md">
@@ -55,13 +150,28 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
     <Drawer
       title={t('alerting.instance-details-drawer.title-instance-details', 'Instance Details')}
       onClose={onClose}
-      size="md"
+      size="lg"
     >
       <Stack direction="column" gap={3}>
         {/* Instance Labels */}
         <Box>
           <AlertLabels labels={instanceLabels} />
         </Box>
+
+        {/* Query Visualizations */}
+        {dataQueries.length > 0 && (
+          <Box>
+            <Stack direction="column" gap={2}>
+              {dataQueries.map((query, index) => (
+                <QueryVisualization
+                  key={query.refId || `query-${index}`}
+                  query={query}
+                  instanceLabels={instanceLabels}
+                />
+              ))}
+            </Stack>
+          </Box>
+        )}
       </Stack>
     </Drawer>
   );
