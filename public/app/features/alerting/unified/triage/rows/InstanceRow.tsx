@@ -20,9 +20,9 @@ import {
 } from '@grafana/ui';
 
 import { overrideToFixedColor } from '../../home/Insights';
+import { InstanceDetailsDrawer } from '../instance-details/InstanceDetailsDrawer';
 
 import { GenericRow } from './GenericRow';
-import { InstanceDetailsDrawer } from './InstanceDetailsDrawer';
 
 interface Instance {
   labels: Labels;

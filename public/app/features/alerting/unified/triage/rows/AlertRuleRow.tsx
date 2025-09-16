@@ -6,12 +6,12 @@ import { IconButton, Stack, Text, TextLink } from '@grafana/ui';
 import { MetaText } from '../../components/MetaText';
 import { WithReturnButton } from '../../components/WithReturnButton';
 import { rulesNav } from '../../utils/navigation';
+import { RuleDetailsDrawer } from '../rule-details/RuleDetailsDrawer';
 import { AlertRuleInstances } from '../scene/AlertRuleInstances';
 import { AlertRuleSummary } from '../scene/AlertRuleSummary';
 import { AlertRuleRow as AlertRuleRowType } from '../types';
 
 import { GenericRow } from './GenericRow';
-import { RuleDetailsDrawer } from './RuleDetailsDrawer';
 
 interface AlertRuleRowProps {
   row: AlertRuleRowType;
