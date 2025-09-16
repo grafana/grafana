@@ -60,6 +60,17 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       defaultValue: false,
     });
 
+    // In the old panel this is an independent option, in the new panel is linked to wrapLogMessage
+    if (!config.featureToggles.newLogsPanel || context.options?.wrapLogMessage) {
+      builder.addBooleanSwitch({
+        path: 'prettifyLogMessage',
+        name: t('logs.name-prettify-json', 'Prettify JSON'),
+        category,
+        description: '',
+        defaultValue: false,
+      });
+    }
+
     if (config.featureToggles.newLogsPanel) {
       builder.addBooleanSwitch({
         path: 'syntaxHighlighting',
@@ -69,17 +80,6 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
           'logs.description-enable-logs-highlighting',
           'Use a predefined coloring scheme to highlight relevant parts of the log lines'
         ),
-      });
-    }
-
-    // In the old panel this is an independent option, in the new panel is linked to wrapLogMessage
-    if (!config.featureToggles.newLogsPanel || context.options?.wrapLogMessage) {
-      builder.addBooleanSwitch({
-        path: 'prettifyLogMessage',
-        name: t('logs.name-prettify-json', 'Prettify JSON'),
-        category,
-        description: '',
-        defaultValue: false,
       });
     }
 
