@@ -1,6 +1,7 @@
 import { VariableModel } from '@grafana/schema/dist/esm/index';
 import { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { DashboardCreatedProps } from 'app/features/dashboard-scene/utils/tracking';
 
 import { DashboardModel } from '../state/DashboardModel';
 
@@ -24,6 +25,10 @@ export function trackDashboardLoaded(dashboard: DashboardModel, duration?: numbe
     duration,
     isScene: false,
   });
+}
+
+export function trackDashboardCreatedOrSaved(name: 'created' | 'saved', trackingProps: DashboardCreatedProps) {
+  DashboardInteractions.dashboardCreatedOrSaved(name, trackingProps);
 }
 
 export function getPanelPluginCounts(panels: string[] | string[]) {

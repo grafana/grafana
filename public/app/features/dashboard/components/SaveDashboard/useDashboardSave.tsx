@@ -15,6 +15,7 @@ import { DashboardSavedEvent } from 'app/types/events';
 import { useDispatch } from 'app/types/store';
 
 import { updateDashboardUidLastUsedDatasource } from '../../utils/dashboard';
+import { trackDashboardCreatedOrSaved } from '../../utils/tracking';
 
 import { SaveDashboardOptions } from './types';
 
@@ -95,6 +96,3 @@ export const useDashboardSave = (isCopy = false) => {
 
   return { state, onDashboardSave };
 };
-function trackDashboardCreatedOrSaved(arg0: string, arg1: { name: string; url: string }) {
-  throw new Error('Function not implemented.');
-}

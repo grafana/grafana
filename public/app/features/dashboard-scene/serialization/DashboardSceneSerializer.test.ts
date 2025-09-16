@@ -12,7 +12,6 @@ import {
   defaultSpec as defaultDashboardV2Spec,
   defaultDataQueryKind,
   defaultPanelSpec,
-  defaultTimeSettingsSpec,
   GridLayoutKind,
   PanelKind,
   PanelSpec,
@@ -27,12 +26,12 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { getTestDashboardSceneFromSaveModel } from '../utils/test-utils';
 import { findVizPanelByKey } from '../utils/utils';
 
 import { V1DashboardSerializer, V2DashboardSerializer } from './DashboardSceneSerializer';
 import nestedDashboard from './testfiles/nested_dashboard.json';
-import { getPanelElement, transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
-import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
+import { getPanelElement } from './transformSaveModelSchemaV2ToScene';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -1477,87 +1476,5 @@ function setup(override: Partial<Dashboard> = {}) {
 }
 
 function setupV2(spec?: Partial<DashboardV2Spec>) {
-  const dashboard = transformSaveModelSchemaV2ToScene({
-    kind: 'DashboardWithAccessInfo',
-    spec: {
-      ...defaultDashboardV2Spec(),
-      title: 'hello',
-      timeSettings: {
-        ...defaultTimeSettingsSpec(),
-        autoRefresh: '10s',
-        from: 'now-1h',
-        to: 'now',
-      },
-      elements: {
-        'panel-1': {
-          kind: 'Panel',
-          spec: {
-            ...defaultPanelSpec(),
-            id: 1,
-            title: 'Panel 1',
-          },
-        },
-      },
-      layout: {
-        kind: 'GridLayout',
-        spec: {
-          items: [
-            {
-              kind: 'GridLayoutItem',
-              spec: {
-                x: 0,
-                y: 0,
-                width: 12,
-                height: 8,
-                element: {
-                  kind: 'ElementReference',
-                  name: 'panel-1',
-                },
-              },
-            },
-          ],
-        },
-      },
-      variables: [
-        {
-          kind: 'CustomVariable',
-          spec: {
-            name: 'app',
-            label: 'Query Variable',
-            description: 'A query variable',
-            skipUrlSync: false,
-            hide: 'dontHide',
-            options: [],
-            multi: false,
-            current: {
-              text: 'app1',
-              value: 'app1',
-            },
-            query: 'app1',
-            allValue: '',
-            includeAll: false,
-            allowCustomValue: true,
-          },
-        },
-      ],
-      ...spec,
-    },
-    apiVersion: 'v1',
-    metadata: {
-      name: 'dashboard-test',
-      resourceVersion: '1',
-      creationTimestamp: '2023-01-01T00:00:00Z',
-    },
-    access: {
-      canEdit: true,
-      canSave: true,
-      canStar: true,
-      canShare: true,
-    },
-  });
-
-  const initialSaveModel = transformSceneToSaveModelSchemaV2(dashboard);
-  dashboard.setInitialSaveModel(initialSaveModel);
-
-  return dashboard;
+  return getTestDashboardSceneFromSaveModel(spec);
 }

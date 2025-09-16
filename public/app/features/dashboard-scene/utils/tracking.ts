@@ -24,14 +24,10 @@ export interface DashboardCreatedProps {
   [key: string]: unknown;
 }
 
-export function trackDashboardCreatedOrSaved(name: 'created' | 'saved', trackingProps: DashboardCreatedProps) {
-  DashboardInteractions.dashboardCreatedOrSaved(name, trackingProps);
-}
-
 export function isV2TrackingInfo(
   t: DashboardTrackingInfo | DashboardV2TrackingInfo
 ): t is DashboardV2TrackingInfo & DashboardTrackingInfo {
-  return 'autoLayout' in t;
+  return 'autoLayoutCount' in t;
 }
 
 export function trackDashboardSceneCreatedOrSaved(
