@@ -163,7 +163,7 @@ const LogLineComponent = memo(
         if (frameId) {
           cancelAnimationFrame(frameId);
         }
-      }
+      };
     }, [handleLogLineResize]);
 
     useEffect(() => {
