@@ -7,6 +7,7 @@ import {
   DataFrame,
   alignTimeRangeCompareData,
   shouldAlignTimeCompare,
+  useDataLinksContext,
   FieldType,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
@@ -46,10 +47,11 @@ export const TimeSeriesPanel = ({
     onThresholdsChange,
     canEditThresholds,
     showThresholds,
-    dataLinkPostProcessor,
     eventBus,
     canExecuteActions,
   } = usePanelContext();
+
+  const { dataLinkPostProcessor } = useDataLinksContext();
 
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
   // Vertical orientation is not available for users through config.
@@ -57,7 +59,6 @@ export const TimeSeriesPanel = ({
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
   const { frames, compareDiffMs } = useMemo(() => {
     let frames = prepareGraphableFields(data.series, config.theme2, timeRange);
-
     if (frames != null) {
       let compareDiffMs: number[] = [0];
 
@@ -76,7 +77,7 @@ export const TimeSeriesPanel = ({
           const needsAlignment = shouldAlignTimeCompare(frame, frames, timeRange);
 
           if (needsAlignment) {
-            alignTimeRangeCompareData(frame, diffMs, config.theme2.colors.text.disabled);
+            alignTimeRangeCompareData(frame, diffMs, config.theme2);
           }
         }
       });

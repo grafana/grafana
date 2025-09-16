@@ -340,6 +340,13 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
+			Name:        "queryCacheRequestDeduplication",
+			Description: "Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight",
+			Stage:       FeatureStageExperimental,
+			Expression:  "false", // enabled by default
+			Owner:       grafanaOperatorExperienceSquad,
+		},
+		{
 			Name:        "permissionsFilterRemoveSubquery",
 			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
 			Stage:       FeatureStageExperimental,
@@ -457,10 +464,24 @@ var (
 		},
 		{
 			Name:            "kubernetesShortURLs",
-			Description:     "Routes short url requests from /api to the /apis endpoint",
+			Description:     "Enables k8s short url api and uses it under the hood when handling legacy /api",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
+		},
+		{
+			Name:         "useKubernetesShortURLsAPI",
+			Description:  "Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:            "kubernetesAlertingRules",
+			Description:     "Adds support for Kubernetes alerting and recording rules",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
 		},
 		{
 			Name:        "dashboardDisableSchemaValidationV1",
@@ -1310,6 +1331,15 @@ var (
 			Expression:        "false",
 		},
 		{
+			Name:              "alertingEnrichmentAssistantInvestigations",
+			Description:       "Enable Assistant Investigations enrichment type.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
 			Name:              "alertingAIAnalyzeCentralStateHistory",
 			Description:       "Enable AI-analyze central state history.",
 			Stage:             FeatureStageExperimental,
@@ -1343,9 +1373,10 @@ var (
 		},
 		{
 			Name:        "elasticsearchCrossClusterSearch",
-			Description: "Enables cross cluster search in the Elasticsearch datasource",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       awsDatasourcesSquad,
+			Description: "Enables cross cluster search in the Elasticsearch data source",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:         "unifiedHistory",
@@ -1665,13 +1696,6 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:         "multiTenantFrontend",
-			Description:  "Register MT frontend",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaFrontendPlatformSquad,
-		},
-		{
 			Name:         "alertingListViewV2PreviewToggle",
 			Description:  "Enables the alerting list view v2 preview toggle",
 			FrontendOnly: true,
@@ -1739,6 +1763,24 @@ var (
 		{
 			Name:              "alertEnrichment",
 			Description:       "Enable configuration of alert enrichments in Grafana Cloud.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertEnrichmentMultiStep",
+			Description:       "Allow multiple steps per enrichment.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertEnrichmentConditional",
+			Description:       "Enable conditional alert enrichment steps.",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
@@ -1921,16 +1963,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:              "unifiedStorageSearchAfterWriteExperimentalAPI",
-			Description:       "Enable experimental search-after-write guarantees to unified-storage search endpoints",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaSearchAndStorageSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			RequiresRestart:   true,
-			Expression:        "false",
-		},
-		{
 			Name:         "teamFolders",
 			Description:  "Enables team folders functionality",
 			Stage:        FeatureStageExperimental,
@@ -1971,6 +2003,24 @@ var (
 			RequiresRestart: true,
 			Owner:           grafanaPartnerPluginsSquad,
 			Expression:      "false",
+		},
+		{
+			Name:              "dskitBackgroundServices",
+			Description:       "Enables dskit background service wrapper",
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Stage:             FeatureStageExperimental,
+			RequiresRestart:   true,
+			Owner:             grafanaPluginsPlatformSquad,
+			Expression:        "false",
+		},
+		{
+			Name:            "pluginContainers",
+			Description:     "Enables running plugins in containers",
+			Stage:           FeatureStagePrivatePreview,
+			Owner:           grafanaPluginsPlatformSquad,
+			Expression:      "false",
+			RequiresRestart: true,
 		},
 	}
 )

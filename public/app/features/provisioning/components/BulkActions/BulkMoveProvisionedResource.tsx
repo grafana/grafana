@@ -137,6 +137,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
                     clearErrors('targetFolderUID');
                   }}
                   repositoryName={repository.name}
+                  excludeUIDs={[...Object.keys(selectedItems?.folder).map((uid) => uid)]}
                 />
               </Field>
               <ResourceEditFormSharedFields

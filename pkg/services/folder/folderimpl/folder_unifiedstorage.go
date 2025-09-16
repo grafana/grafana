@@ -3,13 +3,13 @@ package folderimpl
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/selection"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -511,6 +511,8 @@ func (s *Service) createOnApiServer(ctx context.Context, cmd *folder.CreateFolde
 		Description:  cmd.Description,
 		ParentUID:    cmd.ParentUID,
 		SignedInUser: cmd.SignedInUser,
+		// pass along provisioning details
+		ManagerKindClassicFP: cmd.ManagerKindClassicFP, // nolint:staticcheck
 	}
 
 	f, err := s.unifiedStore.Create(ctx, *cmd)
@@ -560,14 +562,15 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 
 	user := cmd.SignedInUser
 
-	foldr, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
-		UID:            cmd.UID,
-		OrgID:          cmd.OrgID,
-		NewTitle:       cmd.NewTitle,
-		NewDescription: cmd.NewDescription,
-		SignedInUser:   user,
-		Overwrite:      cmd.Overwrite,
-		Version:        cmd.Version,
+	folder, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
+		UID:                  cmd.UID,
+		OrgID:                cmd.OrgID,
+		NewTitle:             cmd.NewTitle,
+		NewDescription:       cmd.NewDescription,
+		SignedInUser:         user,
+		Overwrite:            cmd.Overwrite,
+		Version:              cmd.Version,
+		ManagerKindClassicFP: cmd.ManagerKindClassicFP, // nolint:staticcheck
 	})
 
 	if err != nil {
@@ -577,7 +580,7 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 	if cmd.NewTitle != nil {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 
-		if err := s.publishFolderFullPathUpdatedEventViaApiServer(ctx, foldr.Updated, cmd.OrgID, cmd.UID); err != nil {
+		if err := s.publishFolderFullPathUpdatedEventViaApiServer(ctx, folder.Updated, cmd.OrgID, cmd.UID); err != nil {
 			return nil, err
 		}
 	}
@@ -585,7 +588,7 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 	// always expose the dashboard store sequential ID
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 
-	return foldr, nil
+	return folder, nil
 }
 
 func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFolderCommand) error {

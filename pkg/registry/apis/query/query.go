@@ -152,6 +152,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 						}
 					}
 				}
+				connectLogger.Debug("responder sending status code", "statusCode", statusCode)
 			},
 
 			func(err error) {

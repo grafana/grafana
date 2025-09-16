@@ -209,7 +209,7 @@
           "path": "public/plugins/grafana-azure-monitor-datasource/img/azure_monitor_cpu.png"
         }
       ],
-      "version": "12.1.0-pre",
+      "version": "12.2.0-pre",
       "updated": "",
       "keywords": [
         "azure",
@@ -880,7 +880,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.1.0-pre",
+      "version": "12.2.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -934,7 +934,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.1.0-pre",
+      "version": "12.2.0-pre",
       "updated": "",
       "keywords": [
         "grafana",
@@ -1000,12 +1000,12 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
+      "version": "12.2.0-pre",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1217,7 +1217,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.1.0-pre",
+      "version": "12.2.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1325,7 +1325,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.1.0-pre",
+      "version": "12.2.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1375,7 +1375,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.1.0-pre",
+      "version": "12.2.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1425,7 +1425,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.1.0-pre",
+      "version": "12.2.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1629,7 +1629,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.1.0-pre",
+      "version": "12.2.0-pre",
       "updated": "",
       "keywords": [
         "grafana",
@@ -1734,7 +1734,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.1.0-pre",
+      "version": "12.2.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -2042,7 +2042,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.1.0-pre",
+      "version": "12.2.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -2092,7 +2092,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.1.0-pre",
+      "version": "12.2.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -2445,7 +2445,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.1.0-pre",
+      "version": "12.2.0-pre",
       "updated": "",
       "keywords": null
     },

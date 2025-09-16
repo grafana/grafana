@@ -17,6 +17,21 @@ import { getDashboardSceneFor } from '../../utils/utils';
 
 import { EditableVariableType, getNextAvailableId, getVariableScene, getVariableTypeSelectOptions } from './utils';
 
+function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {
+  const variableListId = useId();
+  const options = useMemo(() => {
+    return new OptionsPaneCategoryDescriptor({ title: '', id: 'variables' }).addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: variableListId,
+        skipField: true,
+        render: () => <VariableList set={set} />,
+      })
+    );
+  }, [set, variableListId]);
+
+  return [options];
+}
 export class VariableSetEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
   public readonly typeName = 'Variable';
@@ -35,23 +50,7 @@ export class VariableSetEditableElement implements EditableDashboardElement {
     return this.set.state.variables;
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    const variableListId = useId();
-    const set = this.set;
-
-    const options = useMemo(() => {
-      return new OptionsPaneCategoryDescriptor({ title: '', id: 'variables' }).addItem(
-        new OptionsPaneItemDescriptor({
-          title: '',
-          id: variableListId,
-          skipField: true,
-          render: () => <VariableList set={set} />,
-        })
-      );
-    }, [set, variableListId]);
-
-    return [options];
-  }
+  public useEditPaneOptions = useEditPaneOptions.bind(this, this.set);
 }
 
 function VariableList({ set }: { set: SceneVariableSet }) {

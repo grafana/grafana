@@ -1,3 +1,4 @@
+import { mockPromRecordingRule } from '../mocks';
 import { alertingFactory } from '../mocks/server/db';
 
 import { getMatchingPromRule, getMatchingRulerRule, matchRulesGroup } from './ruleMatching';
@@ -114,6 +115,36 @@ describe('getMatchingRulerRule', () => {
     const match = getMatchingRulerRule(rulerGroup, promRule);
     expect(match).toBeUndefined();
   });
+
+  it('should match recording rule with comments in expr against prometheus rule without comments', () => {
+    // Create multiple ruler recording rules with same name to force query comparison
+    const rulerRuleWithComments = alertingFactory.ruler.recordingRule.build({
+      record: 'service_condition',
+      labels: {},
+      expr: `# Check production services first
+max by (service) (up{env="production"})
+or
+# Fall back to staging for missing production metrics
+max by (service) (up{env="staging"}) * 0.8`,
+    });
+    // Add another ruler rule with same name but different query to force comparison logic
+    const rulerRuleOther = alertingFactory.ruler.recordingRule.build({
+      record: 'service_condition',
+      labels: {},
+      expr: `up == 1`,
+    });
+    const rulerGroup = alertingFactory.ruler.group.build({ rules: [rulerRuleWithComments, rulerRuleOther] });
+
+    // Create corresponding prometheus rule with the same query but comments stripped and normalized
+    const promRule = mockPromRecordingRule({
+      name: 'service_condition',
+      labels: {},
+      query: `max by (service) (up{env="production"}) or max by (service) (up{env="staging"}) * 0.8`,
+    });
+
+    const match = getMatchingRulerRule(rulerGroup, promRule);
+    expect(match).toBe(rulerRuleWithComments);
+  });
 });
 
 describe('getMatchingPromRule', () => {
@@ -228,6 +259,36 @@ describe('getMatchingPromRule', () => {
     const match = getMatchingPromRule(promGroup, rulerRule);
     expect(match).toBeUndefined();
   });
+
+  it('should match prometheus recording rule without comments against ruler rule with comments', () => {
+    // Create multiple prometheus recording rules with same name to force query comparison
+    const promRuleWithoutComments = mockPromRecordingRule({
+      name: 'service_condition',
+      labels: {},
+      query: `max by (service) (up{env="production"}) or max by (service) (up{env="staging"}) * 0.8`,
+    });
+    // Add another prometheus rule with same name but different query to force comparison logic
+    const promRuleOther = mockPromRecordingRule({
+      name: 'service_condition',
+      labels: {},
+      query: `up == 1`,
+    });
+    const promGroup = alertingFactory.prometheus.group.build({ rules: [promRuleWithoutComments, promRuleOther] });
+
+    // Create corresponding ruler rule with comments in the expression
+    const rulerRule = alertingFactory.ruler.recordingRule.build({
+      record: 'service_condition',
+      labels: {},
+      expr: `# Check production services first
+max by (service) (up{env="production"})
+or
+# Fall back to staging for missing production metrics
+max by (service) (up{env="staging"}) * 0.8`,
+    });
+
+    const match = getMatchingPromRule(promGroup, rulerRule);
+    expect(match).toBe(promRuleWithoutComments);
+  });
 });
 
 describe('matchRulesGroup', () => {
@@ -339,5 +400,45 @@ describe('matchRulesGroup', () => {
     expect(result.matches.get(rulerRule2)).toBe(promRule2);
     expect(result.promOnlyRules).toHaveLength(1);
     expect(result.promOnlyRules[0]).toBe(promRule3);
+  });
+
+  it('should match rules group where ruler rules have comments and prometheus rules do not', () => {
+    // Create ruler recording rules with comments - both have same name and empty labels like in real scenario
+    const rulerRule1 = alertingFactory.ruler.recordingRule.build({
+      record: 'service_condition',
+      labels: {},
+      expr: `(max by (environment, namespace, service, area) (service_condition{area_check!="", monitored="true"}))`,
+    });
+    const rulerRule2 = alertingFactory.ruler.recordingRule.build({
+      record: 'service_condition',
+      labels: {},
+      expr: `# Check production services first
+max by (service) (up{env="production"})
+or
+# Fall back to staging for missing production metrics
+max by (service) (up{env="staging"}) * 0.8`,
+    });
+    const rulerGroup = alertingFactory.ruler.group.build({ rules: [rulerRule1, rulerRule2] });
+
+    // Create corresponding prometheus rules without comments (normalized queries) - both have same name and empty labels
+    const promRule1 = mockPromRecordingRule({
+      name: 'service_condition',
+      labels: {},
+      query: `(max by (environment, namespace, service, area) (service_condition{area_check!="",monitored="true"}))`,
+    });
+    const promRule2 = mockPromRecordingRule({
+      name: 'service_condition',
+      labels: {},
+      query: `max by (service) (up{env="production"}) or max by (service) (up{env="staging"}) * 0.8`,
+    });
+    const promGroup = alertingFactory.prometheus.group.build({ rules: [promRule1, promRule2] });
+
+    const result = matchRulesGroup(rulerGroup, promGroup);
+
+    // Both rules should be matched despite comments in ruler rules
+    expect(result.matches.size).toBe(2);
+    expect(result.matches.get(rulerRule1)).toBe(promRule1);
+    expect(result.matches.get(rulerRule2)).toBe(promRule2);
+    expect(result.promOnlyRules).toHaveLength(0);
   });
 });
