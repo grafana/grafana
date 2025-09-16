@@ -3,13 +3,30 @@
 package storage
 
 import (
-    "fmt"
-    "os"
-    "syscall"
+	"fmt"
+	"os"
+	"path/filepath"
+	"syscall"
 )
+
+// chownFunc is a function type for changing file ownership
+type chownFunc func(name string, uid, gid int) error
+
+// ownershipChanger handles changing file ownership
+type ownershipChanger struct {
+	chown chownFunc
+}
+
+// defaultOwnershipChanger uses the real os.Chown function
+var defaultOwnershipChanger = &ownershipChanger{chown: os.Chown}
 
 // matchOwnershipToParent ensures child directory and all its contents inherit ownership from parent dir (UID/GID).
 func matchOwnershipToParent(child, parent string) error {
+	return matchOwnershipToParentWithChanger(child, parent, defaultOwnershipChanger)
+}
+
+// matchOwnershipToParentWithChanger is the testable version that accepts a custom ownership changer
+func matchOwnershipToParentWithChanger(child, parent string, changer *ownershipChanger) error {
 	parentInfo, err := os.Stat(parent)
 	if err != nil {
 		return err
@@ -30,6 +47,6 @@ func matchOwnershipToParent(child, parent string) error {
 		if err != nil {
 			return err
 		}
-		return os.Chown(path, uid, gid)
+		return changer.chown(path, uid, gid)
 	})
 }
