@@ -130,7 +130,7 @@ type APIBuilder struct {
 	extraWorkers []jobs.Worker
 }
 
-func newStandaloneClientsFactory(configProvider apiserver.RestConfigProvider, tokenExchangeClient *authnlib.TokenExchangeClient, tlsConfig rest.TLSClientConfig) resources.ClientFactory {
+func newStandaloneClientsFactory(configProvider apiserver.RestConfigProvider, tokenExchangeClient *authnlib.TokenExchangeClient, tlsConfig clientrest.TLSClientConfig) resources.ClientFactory {
 	apiServerURLs := map[string]string{
 		resources.DashboardResource.Group: "https://localhost:6447",
 		resources.FolderResource.Group:    "https://localhost:6446",
@@ -175,7 +175,7 @@ func NewAPIBuilder(
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
 	tokenExchangeClient *authnlib.TokenExchangeClient, // optional, only used when onlyApiServer is true
-	tlsConfig *rest.TLSClientConfig, // optional, only used when onlyApiServer is true
+	tlsConfig *clientrest.TLSClientConfig, // optional, only used when onlyApiServer is true
 ) *APIBuilder {
 	var clients resources.ClientFactory
 	if onlyApiServer {
