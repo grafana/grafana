@@ -334,6 +334,11 @@ export const LogListContextProvider = ({
     });
   }, [filterLevels]);
 
+  // Sync details mode
+  useEffect(() => {
+    setDetailsMode(detailsModeProp);
+  }, [detailsModeProp]);
+
   // Sync font size
   useEffect(() => {
     setLogListState((logListState) => ({ ...logListState, fontSize }));
