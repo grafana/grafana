@@ -75,6 +75,7 @@ export interface Props {
   permalinkedLogId?: string;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
+  prettifyJSON?: boolean;
   setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
   showTime: boolean;
@@ -143,6 +144,9 @@ export const LogList = ({
   permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
+  prettifyJSON = logOptionsStorageKey
+    ? store.getBool(`${logOptionsStorageKey}.prettifyLogMessage`, true)
+    : true,
   setDisplayedFields,
   showControls,
   showTime,
@@ -186,6 +190,7 @@ export const LogList = ({
       permalinkedLogId={permalinkedLogId}
       pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
       pinnedLogs={pinnedLogs}
+      prettifyJSON={prettifyJSON}
       setDisplayedFields={setDisplayedFields}
       showControls={showControls}
       showTime={showTime}

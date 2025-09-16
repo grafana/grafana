@@ -233,9 +233,7 @@ export const LogListContextProvider = ({
   permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
-  prettifyJSON: prettifyJSONProp = logOptionsStorageKey
-    ? store.getBool(`${logOptionsStorageKey}.prettifyLogMessage`, true)
-    : true,
+  prettifyJSON: prettifyJSONProp,
   setDisplayedFields,
   showControls,
   showTime,
@@ -282,6 +280,7 @@ export const LogListContextProvider = ({
       showTime,
       syntaxHighlighting,
       wrapLogMessage,
+      prettifyJSON,
       detailsWidth,
       detailsMode,
       withDisplayedFields: displayedFields.length > 0,
@@ -314,7 +313,6 @@ export const LogListContextProvider = ({
       showTime,
       sortOrder,
       syntaxHighlighting,
-      wrapLogMessage,
     };
     if (!shallowCompare(logListState, newState)) {
       setLogListState(newState);
@@ -328,7 +326,6 @@ export const LogListContextProvider = ({
     showTime,
     sortOrder,
     syntaxHighlighting,
-    wrapLogMessage,
   ]);
 
   // Sync filter levels
@@ -388,6 +385,18 @@ export const LogListContextProvider = ({
     observer.observe(containerElement);
     return () => observer.disconnect();
   }, [containerElement, detailsMode, logOptionsStorageKey, showControls]);
+  
+  // Sync prettifyJSON
+  useEffect(() => {
+    if (prettifyJSONProp !== undefined) {
+      setPrettifyJSONState(prettifyJSONProp);
+    }
+  }, [prettifyJSONProp]);
+
+  // Sync wrapLogMessage
+  useEffect(() => {
+    setWrapLogMessageState(wrapLogMessageProp);
+  }, [wrapLogMessageProp]);
 
   // Sync timestamp resolution
   useEffect(() => {

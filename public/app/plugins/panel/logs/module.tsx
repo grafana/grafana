@@ -63,14 +63,17 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
     if (config.featureToggles.newLogsPanel) {
       builder.addBooleanSwitch({
         path: 'syntaxHighlighting',
-        name: t('logs.name-enable-syntax-highlighting', 'Enable syntax highlighting'),
+        name: t('logs.name-enable-logs-highlighting', 'Enable logs highlighting'),
         category,
         description: t(
-          'logs.description-enable-syntax-highlighting',
-          'Use a predefined syntax coloring grammar to highlight relevant parts of the log lines'
+          'logs.description-enable-logs-highlighting',
+          'Use a predefined coloring scheme to highlight relevant parts of the log lines'
         ),
       });
-    } else {
+    }
+
+    // In the old panel this is an independent option, in the new panel is linked to wrapLogMessage
+    if (!config.featureToggles.newLogsPanel || context.options?.wrapLogMessage) {
       builder.addBooleanSwitch({
         path: 'prettifyLogMessage',
         name: t('logs.name-prettify-json', 'Prettify JSON'),
