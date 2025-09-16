@@ -475,10 +475,8 @@ function handleRedirectTo(): void {
   let decodedRedirectTo = decodeURIComponent(redirectTo);
   if (decodedRedirectTo.startsWith('/goto/')) {
     // In this case there should be a request to the backend
-    if (config.appSubUrl && !decodedRedirectTo.startsWith(config.appSubUrl)) {
-      decodedRedirectTo = config.appSubUrl + decodedRedirectTo;
-    }
-    window.location.replace(decodedRedirectTo);
+    const urlToRedirectTo = locationUtil.assureBaseUrl(decodedRedirectTo);
+    window.location.replace(urlToRedirectTo);
     return;
   }
   // Ensure that the appsuburl is stripped from the redirect to in case of a frontend redirect
