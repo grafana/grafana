@@ -3,9 +3,11 @@
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 
-const CODEOWNERS_FILE_PATH = '.github/CODEOWNERS';
-const CODEOWNERS_COVERAGE_DIR = 'codeowners-manifest';
-const RAW_AUDIT_JSONL_PATH = `${CODEOWNERS_COVERAGE_DIR}/audit-raw.jsonl`;
+const {
+  CODEOWNERS_FILE_PATH,
+  CODEOWNERS_MANIFEST_DIR,
+  RAW_AUDIT_JSONL_PATH
+} = require('./constants.js');
 
 /**
  * Generate raw CODEOWNERS audit data using github-codeowners CLI
@@ -61,8 +63,8 @@ async function generateCodeownersRawAudit(codeownersPath, outputPath) {
 if (require.main === module) {
   (async () => {
     try {
-      if (!fs.existsSync(CODEOWNERS_COVERAGE_DIR)) {
-        fs.mkdirSync(CODEOWNERS_COVERAGE_DIR, { recursive: true });
+      if (!fs.existsSync(CODEOWNERS_MANIFEST_DIR)) {
+        fs.mkdirSync(CODEOWNERS_MANIFEST_DIR, { recursive: true });
       }
 
       console.log(`🍣 Getting raw CODEOWNERS data for manifest ...`);

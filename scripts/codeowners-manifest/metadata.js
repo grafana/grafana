@@ -3,9 +3,11 @@
 const { execSync } = require('node:child_process');
 const fs = require('node:fs');
 
-const CODEOWNERS_FILE_PATH = '.github/CODEOWNERS';
-const CODEOWNERS_MANIFEST_DIR = 'codeowners-manifest';
-const CODEOWNERS_MANIFEST_METADATA_FILENAME = `${CODEOWNERS_MANIFEST_DIR}/metadata.json`;
+const {
+  CODEOWNERS_FILE_PATH,
+  CODEOWNERS_MANIFEST_DIR,
+  METADATA_JSON_PATH
+} = require('./constants.js');
 
 /**
  * @typedef {Object} CodeownersMetadata
@@ -44,14 +46,14 @@ if (require.main === module) {
     const metadata = generateCodeownersMetadata(
       CODEOWNERS_FILE_PATH,
       CODEOWNERS_MANIFEST_DIR,
-      CODEOWNERS_MANIFEST_METADATA_FILENAME
+      METADATA_JSON_PATH
     );
 
     console.log(`🗂️ Files list hash: ${metadata.filesHash}`);
     console.log(`📜 CODEOWNERS hash: ${metadata.codeownersHash}`);
 
-    fs.writeFileSync(CODEOWNERS_MANIFEST_METADATA_FILENAME, JSON.stringify(metadata, null, 2), 'utf8');
-    console.log(`💾 Metadata written to: ${CODEOWNERS_MANIFEST_METADATA_FILENAME}`);
+    fs.writeFileSync(METADATA_JSON_PATH, JSON.stringify(metadata, null, 2), 'utf8');
+    console.log(`💾 Metadata written to: ${METADATA_JSON_PATH}`);
   } catch (error) {
     console.error('❌ Error generating codeowners metadata:', error.message);
     process.exit(1);

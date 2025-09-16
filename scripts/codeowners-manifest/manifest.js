@@ -4,11 +4,12 @@ const fs = require('node:fs');
 const { stat } = require('node:fs/promises');
 const readline = require('node:readline');
 
-const CODEOWNERS_COVERAGE_DIR = 'codeowners-manifest';
-const RAW_AUDIT_JSONL_PATH = `${CODEOWNERS_COVERAGE_DIR}/audit-raw.jsonl`;
-const TEAMS_BY_FILENAME_JSON_PATH = `${CODEOWNERS_COVERAGE_DIR}/teams-by-filename.json`;
-const FILENAMES_BY_TEAM_JSON_PATH = `${CODEOWNERS_COVERAGE_DIR}/filenames-by-team.json`;
-const TEAMS_JSON_PATH = `${CODEOWNERS_COVERAGE_DIR}/teams.json`;
+const {
+  RAW_AUDIT_JSONL_PATH,
+  TEAMS_BY_FILENAME_JSON_PATH,
+  FILENAMES_BY_TEAM_JSON_PATH,
+  TEAMS_JSON_PATH
+} = require('./constants.js');
 
 /**
  * Generate codeowners manifest files from raw audit data

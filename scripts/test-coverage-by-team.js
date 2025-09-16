@@ -3,8 +3,9 @@
 const cp = require('node:child_process');
 const fs = require('node:fs');
 
+const { TEAMS_JSON_PATH: CODEOWNERS_MANIFEST_TEAMS_PATH } = require('./codeowners-manifest/constants.js');
+
 const JEST_CONFIG_PATH = 'jest.config.codeowner.js';
-const CODEOWNERS_MANIFEST_TEAMS_PATH = 'codeowners-manifest/teams.json';
 
 /**
  * Run test coverage for a specific team

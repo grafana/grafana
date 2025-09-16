@@ -2,17 +2,18 @@
 
 const fs = require('node:fs');
 
+const {
+  CODEOWNERS_FILE_PATH,
+  CODEOWNERS_MANIFEST_DIR,
+  RAW_AUDIT_JSONL_PATH,
+  TEAMS_BY_FILENAME_JSON_PATH,
+  FILENAMES_BY_TEAM_JSON_PATH,
+  TEAMS_JSON_PATH,
+  METADATA_JSON_PATH
+} = require('./constants.js');
 const { generateCodeownersManifest } = require('./manifest.js');
 const { generateCodeownersMetadata } = require('./metadata.js');
 const { generateCodeownersRawAudit } = require('./raw.js');
-
-const CODEOWNERS_FILE_PATH = '.github/CODEOWNERS';
-const CODEOWNERS_COVERAGE_DIR = 'codeowners-manifest';
-const RAW_AUDIT_JSONL_PATH = `${CODEOWNERS_COVERAGE_DIR}/audit-raw.jsonl`;
-const TEAMS_BY_FILENAME_JSON_PATH = `${CODEOWNERS_COVERAGE_DIR}/teams-by-filename.json`;
-const FILENAMES_BY_TEAM_JSON_PATH = `${CODEOWNERS_COVERAGE_DIR}/filenames-by-team.json`;
-const TEAMS_JSON_PATH = `${CODEOWNERS_COVERAGE_DIR}/teams.json`;
-const METADATA_JSON_PATH = `${CODEOWNERS_COVERAGE_DIR}/metadata.json`;
 
 /**
  * Generate complete codeowners manifest including raw audit, metadata, and processed files
@@ -71,9 +72,9 @@ if (require.main === module) {
     try {
       console.log('📋 Generating complete codeowners manifest...');
 
-      const wasGenerated = await generateCodeownersManifestComplete(
+      const wasGenerated =       await generateCodeownersManifestComplete(
         CODEOWNERS_FILE_PATH,
-        CODEOWNERS_COVERAGE_DIR,
+        CODEOWNERS_MANIFEST_DIR,
         RAW_AUDIT_JSONL_PATH,
         TEAMS_JSON_PATH,
         TEAMS_BY_FILENAME_JSON_PATH,
