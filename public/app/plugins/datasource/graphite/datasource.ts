@@ -371,17 +371,14 @@ export class GraphiteDatasource
     return this.frontendQuery(options, originalTargetMap, formattedRefIdsMap);
   }
 
-  addTracingHeaders(
-    httpOptions: BackendSrvRequest,
-    options: { dashboardId?: number; panelId?: number; panelPluginId?: string }
-  ) {
-    const proxyMode = !this.url.match(/^http/);
+  addTracingHeaders(httpOptions: BackendSrvRequest, options: Partial<DataQueryRequest<GraphiteQuery>>) {
+    const proxyMode = !this.url?.match(/^http/);
     if (!httpOptions.headers) {
       httpOptions.headers = {};
     }
     if (proxyMode) {
-      if (options.dashboardId) {
-        httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+      if (options.dashboardUID) {
+        httpOptions.headers['X-Dashboard-Id'] = options.dashboardUID;
       }
       if (options.panelId) {
         httpOptions.headers['X-Panel-Id'] = options.panelId;

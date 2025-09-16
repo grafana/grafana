@@ -1,15 +1,18 @@
 import { isArray } from 'lodash';
 import moment from 'moment';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 import {
   AbstractLabelMatcher,
   AbstractLabelOperator,
+  CoreApp,
   DataQueryRequest,
+  DataQueryResponse,
   dateMath,
   dateTime,
   getFrameDisplayName,
   MetricFindValue,
+  PluginType,
   ScopedVars,
 } from '@grafana/data';
 import {
@@ -23,7 +26,7 @@ import {
 
 import { fromString } from './configuration/parseLokiLabelMappings';
 import { GraphiteDatasource } from './datasource';
-import { GraphiteQuery, GraphiteQueryType } from './types';
+import { GraphiteQuery, GraphiteQueryType, GraphiteType } from './types';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 
 const fetchMock = jest.fn();
@@ -59,19 +62,49 @@ const createFetchResponse = <T>(data: T): FetchResponse<T> => ({
   ok: true,
 });
 
+const instanceSettings = {
+  id: 1,
+  uid: 'graphiteUid',
+  type: 'graphite',
+  readOnly: false,
+  access: 'proxy' as 'proxy',
+  meta: {
+    id: '1',
+    name: 'graphite',
+    type: PluginType.datasource,
+    info: {
+      description: 'Graphite datasource',
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      keywords: ['graphite', 'datasource'],
+      links: [],
+      logos: {
+        large: '',
+        small: '',
+      },
+      screenshots: [],
+      updated: '',
+      version: '',
+    },
+    module: '',
+    baseUrl: '',
+  },
+  url: '/api/datasources/proxy/1',
+  name: 'graphiteProd',
+  jsonData: {
+    rollupIndicatorEnabled: true,
+    graphiteType: GraphiteType.Default,
+  },
+};
+
 describe('graphiteDatasource', () => {
   let ctx = {} as Context;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    const instanceSettings = {
-      url: '/api/datasources/proxy/1',
-      name: 'graphiteProd',
-      jsonData: {
-        rollupIndicatorEnabled: true,
-      },
-    };
     const templateSrv = getTemplateSrv();
     const ds = new GraphiteDatasource(instanceSettings, templateSrv);
     ds.postResource = postResourceMock;
@@ -197,19 +230,33 @@ describe('graphiteDatasource', () => {
   });
 
   describe('When querying graphite with one target using query editor target spec', () => {
-    let response: unknown;
+    let response: Observable<DataQueryResponse>;
     let requestOptions: BackendSrvRequest;
 
     beforeEach(() => {
-      const query = {
+      const query: DataQueryRequest<GraphiteQuery> = {
         panelId: 3,
-        dashboardId: 5,
-        range: { from: dateTime('2022-04-01T00:00:00'), to: dateTime('2022-07-01T00:00:00') },
+        dashboardUID: '5',
+        range: {
+          from: dateTime('2022-04-01T00:00:00'),
+          to: dateTime('2022-07-01T00:00:00'),
+          raw: {
+            from: '1648789200',
+            to: '1656655200',
+          },
+        },
         targets: [
           { target: 'prod1.count', refId: 'A' },
           { target: 'prod2.count', refId: 'B' },
         ],
         maxDataPoints: 500,
+        requestId: '',
+        interval: '1m',
+        intervalMs: 60000,
+        scopedVars: {},
+        timezone: 'utc',
+        app: CoreApp.Dashboard,
+        startTime: 0,
       };
       fetchMock.mockImplementation((options) => {
         requestOptions = options;
@@ -226,11 +273,11 @@ describe('graphiteDatasource', () => {
         );
       });
 
-      response = ctx.ds.query(query as unknown as DataQueryRequest<GraphiteQuery>);
+      response = ctx.ds.query(query);
     });
 
     it('X-Dashboard and X-Panel headers to be set!', () => {
-      expect(requestOptions.headers?.['X-Dashboard-Id']).toBe(5);
+      expect(requestOptions.headers?.['X-Dashboard-Id']).toBe('5');
       expect(requestOptions.headers?.['X-Panel-Id']).toBe(3);
     });
 
@@ -256,7 +303,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('should return series list', async () => {
-      await expect(response).toEmitValuesWith((values: any) => {
+      await expect(response).toEmitValuesWith((values: DataQueryResponse[]) => {
         const results = values[0];
         expect(results.data.length).toBe(1);
         expect(results.data[0].name).toBe('prod1.count');
@@ -264,7 +311,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('should convert to millisecond resolution', async () => {
-      await expect(response).toEmitValuesWith((values: any) => {
+      await expect(response).toEmitValuesWith((values: DataQueryResponse[]) => {
         const results = values[0];
         expect(results.data[0].fields[1].values[0]).toBe(10);
       });
@@ -272,7 +319,12 @@ describe('graphiteDatasource', () => {
   });
 
   describe('when fetching Graphite Events as annotations', () => {
-    let results: any;
+    let results: Array<{
+      annotation: string;
+      time: string;
+      title: string;
+      tags?: string[];
+    }>;
     let errorSpy: jest.SpyInstance;
 
     beforeEach(() => {
@@ -289,7 +341,8 @@ describe('graphiteDatasource', () => {
           fromAnnotations: true,
           tags: ['tag1'],
           queryType: 'tags',
-        } as GraphiteQuery,
+          refId: 'Anno',
+        },
       ],
 
       range: {
@@ -324,6 +377,9 @@ describe('graphiteDatasource', () => {
 
       it('should parse the tags string into an array', () => {
         expect(isArray(results[0].tags)).toEqual(true);
+        if (!results[0].tags) {
+          throw new Error('tags not defined');
+        }
         expect(results[0].tags.length).toEqual(2);
         expect(results[0].tags[0]).toEqual('tag1');
         expect(results[0].tags[1]).toEqual('tag2');
@@ -353,6 +409,9 @@ describe('graphiteDatasource', () => {
 
       it('should parse the tags string into an array', () => {
         expect(isArray(results[0].tags)).toEqual(true);
+        if (!results[0].tags) {
+          throw new Error('tags not defined');
+        }
         expect(results[0].tags.length).toEqual(2);
         expect(results[0].tags[0]).toEqual('tag1');
         expect(results[0].tags[1]).toEqual('tag2');
@@ -372,7 +431,12 @@ describe('graphiteDatasource', () => {
   });
 
   describe('when fetching Graphite Events as annotations (backend)', () => {
-    let results: any;
+    let results: Array<{
+      annotation: string;
+      time: string;
+      title: string;
+      tags?: string[];
+    }>;
     let errorSpy: jest.SpyInstance;
 
     beforeEach(() => {
@@ -391,7 +455,8 @@ describe('graphiteDatasource', () => {
           fromAnnotations: true,
           tags: ['tag1'],
           queryType: 'tags',
-        } as GraphiteQuery,
+          refId: 'Anno',
+        },
       ],
 
       range: {
@@ -426,6 +491,9 @@ describe('graphiteDatasource', () => {
 
       it('should parse the tags string into an array', () => {
         expect(isArray(results[0].tags)).toEqual(true);
+        if (!results[0].tags) {
+          throw new Error('tags not defined');
+        }
         expect(results[0].tags.length).toEqual(2);
         expect(results[0].tags[0]).toEqual('tag1');
         expect(results[0].tags[1]).toEqual('tag2');
@@ -455,6 +523,9 @@ describe('graphiteDatasource', () => {
 
       it('should parse the tags string into an array', () => {
         expect(isArray(results[0].tags)).toEqual(true);
+        if (!results[0].tags) {
+          throw new Error('tags not defined');
+        }
         expect(results[0].tags.length).toEqual(2);
         expect(results[0].tags[0]).toEqual('tag1');
         expect(results[0].tags[1]).toEqual('tag2');
@@ -505,11 +576,17 @@ describe('graphiteDatasource', () => {
   });
 
   describe('building graphite params', () => {
+    const defaultQueryProperties = {
+      from: 'now-1h',
+      until: 'now',
+      format: 'json',
+    };
     it('should return empty array if no targets', () => {
       const originalTargetMap = { A: '' };
       const results = ctx.ds.buildGraphiteParams(
         {
-          targets: [{}],
+          targets: [],
+          ...defaultQueryProperties,
         },
         originalTargetMap
       );
@@ -523,7 +600,11 @@ describe('graphiteDatasource', () => {
       };
       const results = ctx.ds.buildGraphiteParams(
         {
-          targets: [{ target: 'prod1.{test,test2}' }, { target: 'prod2.count' }],
+          targets: [
+            { target: 'prod1.{test,test2}', refId: 'A' },
+            { target: 'prod2.count', refId: 'B' },
+          ],
+          ...defaultQueryProperties,
         },
         originalTargetMap
       );
@@ -538,7 +619,12 @@ describe('graphiteDatasource', () => {
       };
       const results = ctx.ds.buildGraphiteParams(
         {
-          targets: [{ target: 'series1' }, { target: 'series2' }, { target: 'asPercent(#A,#B)' }],
+          targets: [
+            { target: 'series1', refId: 'A' },
+            { target: 'series2', refId: 'B' },
+            { target: 'asPercent(#A,#B)', refId: 'C ' },
+          ],
+          ...defaultQueryProperties,
         },
         originalTargetMap
       );
@@ -554,10 +640,11 @@ describe('graphiteDatasource', () => {
       const results = ctx.ds.buildGraphiteParams(
         {
           targets: [
-            { target: 'series1', hide: true },
-            { target: 'sumSeries(#A)', hide: true },
-            { target: 'asPercent(#A,#B)' },
+            { target: 'series1', hide: true, refId: 'A' },
+            { target: 'sumSeries(#A)', hide: true, refId: 'B' },
+            { target: 'asPercent(#A,#B)', refId: 'C' },
           ],
+          ...defaultQueryProperties,
         },
         originalTargetMap
       );
@@ -572,7 +659,12 @@ describe('graphiteDatasource', () => {
       };
       const results = ctx.ds.buildGraphiteParams(
         {
-          targets: [{ target: 'series1' }, { target: 'sumSeries(#A)' }, { target: 'asPercent(#A,#B)' }],
+          targets: [
+            { target: 'series1', refId: 'A' },
+            { target: 'sumSeries(#A)', refId: 'B' },
+            { target: 'asPercent(#A,#B)', refId: 'C' },
+          ],
+          ...defaultQueryProperties,
         },
         originalTargetMap
       );
@@ -603,7 +695,12 @@ describe('graphiteDatasource', () => {
       };
       const results = ctx.ds.buildGraphiteParams(
         {
-          targets: [{ target: '[[metric]]' }, { target: 'sumSeries(#A)' }, { target: 'asPercent(#A,#B)' }],
+          targets: [
+            { target: '[[metric]]', refId: 'A' },
+            { target: 'sumSeries(#A)', refId: 'B' },
+            { target: 'asPercent(#A,#B)', refId: 'C' },
+          ],
+          ...defaultQueryProperties,
         },
         originalTargetMap
       );
@@ -639,7 +736,11 @@ describe('graphiteDatasource', () => {
 
       const results = ctx.ds.buildGraphiteParams(
         {
-          targets: [{ target: '$metric' }, { target: 'sumSeries(#A)' }],
+          targets: [
+            { target: '$metric', refId: 'A' },
+            { target: 'sumSeries(#A)', refId: 'B' },
+          ],
+          ...defaultQueryProperties,
         },
         originalTargetMap,
         scopedVars
@@ -677,7 +778,11 @@ describe('graphiteDatasource', () => {
 
       const results = ctx.ds.buildGraphiteParams(
         {
-          targets: [{ target: '$server.cpu', hide: true }, { target: 'avg(#A)' }],
+          targets: [
+            { target: '$server.cpu', hide: true, refId: 'A' },
+            { target: 'avg(#A)', refId: 'B' },
+          ],
+          ...defaultQueryProperties,
         },
         originalTargetMap,
         scopedVars
@@ -692,7 +797,8 @@ describe('graphiteDatasource', () => {
       };
       const results = ctx.ds.buildGraphiteParams(
         {
-          targets: [{ target: 'sumSeries(carbon.test.test-host.cpuUsage, #A)' }],
+          targets: [{ target: 'sumSeries(carbon.test.test-host.cpuUsage, #A)', refId: 'A' }],
+          ...defaultQueryProperties,
         },
         originalTargetMap
       );
@@ -712,11 +818,14 @@ describe('graphiteDatasource', () => {
           targets: [
             {
               target: 'sumSeries(carbon.test.test-host.cpuUsage, #A, #B)',
+              refId: 'A',
             },
             {
               target: 'add(carbon.test.test-host.cpuUsage, 1.5)',
+              refId: 'B',
             },
           ],
+          ...defaultQueryProperties,
         },
         originalTargetMap
       );
@@ -734,7 +843,8 @@ describe('graphiteDatasource', () => {
       };
       const results = ctx.ds.buildGraphiteParams(
         {
-          targets: [{ target: "summarize(prod.25m.count, '25m', 'sum')" }],
+          targets: [{ target: "summarize(prod.25m.count, '25m', 'sum')", refId: 'A' }],
+          ...defaultQueryProperties,
         },
         originalTargetMap
       );
@@ -747,7 +857,8 @@ describe('graphiteDatasource', () => {
       };
       const results = ctx.ds.buildGraphiteParams(
         {
-          targets: [{ target: "summarize(prod.5M.count, '5M', 'sum')" }],
+          targets: [{ target: "summarize(prod.5M.count, '5M', 'sum')", refId: 'A' }],
+          ...defaultQueryProperties,
         },
         originalTargetMap
       );
@@ -761,11 +872,15 @@ describe('graphiteDatasource', () => {
       };
       const results = ctx.ds.buildGraphiteParams(
         {
-          targets: [{ target: 'series1' }, { target: '' }],
+          targets: [
+            { target: 'series1', refId: 'A' },
+            { target: '', refId: 'B' },
+          ],
+          ...defaultQueryProperties,
         },
         originalTargetMap
       );
-      expect(results.length).toBe(2);
+      expect(results.length).toBe(4);
     });
 
     describe('when formatting targets', () => {
@@ -792,11 +907,12 @@ describe('graphiteDatasource', () => {
         };
         const results = ctx.ds.buildGraphiteParams(
           {
-            targets: [{ target: 'my.$metric.*' }],
+            targets: [{ target: 'my.$metric.*', refId: 'A' }],
+            ...defaultQueryProperties,
           },
           originalTargetMap
         );
-        expect(results).toStrictEqual(['target=my.b.*', 'format=json']);
+        expect(results).toStrictEqual(['target=my.b.*', 'from=now-1h', 'until=now', 'format=json']);
       });
 
       it('globs for more than one variable', () => {
@@ -820,12 +936,13 @@ describe('graphiteDatasource', () => {
         const originalTargetMap = { A: 'my.[[metric]].*' };
         const results = ctx.ds.buildGraphiteParams(
           {
-            targets: [{ target: 'my.[[metric]].*' }],
+            targets: [{ target: 'my.[[metric]].*', refId: 'A' }],
+            ...defaultQueryProperties,
           },
           originalTargetMap
         );
 
-        expect(results).toStrictEqual(['target=my.%7Ba%2Cb%7D.*', 'format=json']);
+        expect(results).toEqual(['target=my.%7Ba%2Cb%7D.*', 'from=now-1h', 'until=now', 'format=json']);
       });
     });
   });
@@ -854,7 +971,8 @@ describe('graphiteDatasource', () => {
       const results = ctx.ds.backendBuildGraphiteQueries(
         {
           targets: [],
-        } as any,
+          ...defaultQueryProperties,
+        },
         originalTargetMap
       );
       expect(results.length).toBe(0);
@@ -1552,37 +1670,58 @@ describe('graphiteDatasource', () => {
   });
 });
 
-function accessScenario(name: string, url: string, fn: ({ headers }: { headers: Record<string, unknown> }) => void) {
-  describe('access scenario ' + name, () => {
+describe('access scenarios', () => {
+  describe('access scenario with proxy access', () => {
     const ctx = {
       templateSrv: getTemplateSrv(),
-      instanceSettings: { url: 'url', name: 'graphiteProd', jsonData: {} },
+      instanceSettings: { ...instanceSettings, url: 'url', name: 'graphiteProd' },
     };
 
-    const httpOptions = {
+    const httpOptions: BackendSrvRequest = {
       headers: {},
-      url,
+      url: '/api/datasources/proxy/1',
     };
 
     describe('when using proxy mode', () => {
-      const options = { dashboardId: 1, panelId: 2 };
+      const options = { dashboardUID: '1', panelId: 2 };
 
       it('tracing headers should be added', () => {
-        ctx.instanceSettings.url = url;
+        ctx.instanceSettings.url = '/api/datasources/proxy/1';
         const ds = new GraphiteDatasource(ctx.instanceSettings, ctx.templateSrv);
         ds.addTracingHeaders(httpOptions, options);
-        fn(httpOptions);
+        if (!httpOptions.headers) {
+          throw new Error('headers not set');
+        }
+        expect(httpOptions.headers['X-Dashboard-Id']).toBe('1');
+        expect(httpOptions.headers['X-Panel-Id']).toBe(2);
       });
     });
   });
-}
 
-accessScenario('with proxy access', '/api/datasources/proxy/1', (httpOptions) => {
-  expect(httpOptions.headers['X-Dashboard-Id']).toBe(1);
-  expect(httpOptions.headers['X-Panel-Id']).toBe(2);
-});
+  describe('access scenario with direct access', () => {
+    const ctx = {
+      templateSrv: getTemplateSrv(),
+      instanceSettings: { ...instanceSettings, url: 'url', name: 'graphiteProd' },
+    };
 
-accessScenario('with direct access', 'http://localhost:8080', (httpOptions) => {
-  expect(httpOptions.headers['X-Dashboard-Id']).toBe(undefined);
-  expect(httpOptions.headers['X-Panel-Id']).toBe(undefined);
+    const httpOptions: BackendSrvRequest = {
+      headers: {},
+      url: 'http://localhost:8080',
+    };
+
+    describe('when using proxy mode', () => {
+      const options = { dashboardUid: '1', panelId: 2 };
+
+      it('tracing headers should be added', () => {
+        ctx.instanceSettings.url = 'http://localhost:8080';
+        const ds = new GraphiteDatasource(ctx.instanceSettings, ctx.templateSrv);
+        ds.addTracingHeaders(httpOptions, options);
+        if (!httpOptions.headers) {
+          throw new Error('headers not set');
+        }
+        expect(httpOptions.headers['X-Dashboard-Id']).toBe(undefined);
+        expect(httpOptions.headers['X-Panel-Id']).toBe(undefined);
+      });
+    });
+  });
 });
