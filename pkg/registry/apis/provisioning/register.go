@@ -19,17 +19,21 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/transport"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	authnlib "github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
@@ -77,6 +81,20 @@ type JobHistoryConfig struct {
 	Loki *loki.Config `json:"loki,omitempty"`
 }
 
+// directConfigProvider is a simple RestConfigProvider that always returns the same rest.Config
+// it implements apiserver.RestConfigProvider
+type directConfigProvider struct {
+	cfg *rest.Config
+}
+
+func NewDirectConfigProvider(cfg *rest.Config) apiserver.RestConfigProvider {
+	return &directConfigProvider{cfg: cfg}
+}
+
+func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config, error) {
+	return r.cfg, nil
+}
+
 type APIBuilder struct {
 	// onlyApiServer used to disable starting controllers for the standalone API server.
 	// HACK:This will be removed once we have proper wire providers for the controllers.
@@ -111,6 +129,33 @@ type APIBuilder struct {
 	extraWorkers []jobs.Worker
 }
 
+func newStandaloneClientsFactory(configProvider apiserver.RestConfigProvider, tokenExchangeClient *authnlib.TokenExchangeClient, tlsConfig rest.TLSClientConfig) resources.ClientFactory {
+	apiServerURLs := map[string]string{
+		resources.DashboardResource.Group: "https://localhost:6447",
+		resources.FolderResource.Group:    "https://localhost:6446",
+		provisioning.GROUP:                "loopback",
+	}
+	configProviders := make(map[string]apiserver.RestConfigProvider)
+
+	for group, url := range apiServerURLs {
+		if url == "loopback" {
+			configProviders[group] = configProvider
+			continue
+		}
+		config := &rest.Config{
+			APIPath: "/apis",
+			Host:    url,
+			WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
+				return authrt.NewRoundTripper(tokenExchangeClient, rt, group)
+			}),
+			TLSClientConfig: tlsConfig,
+		}
+		configProviders[group] = NewDirectConfigProvider(config)
+	}
+
+	return resources.NewClientFactoryForMultipleAPIServers(configProviders)
+}
+
 // NewAPIBuilder creates an API builder.
 // It avoids anything that is core to Grafana, such that it can be used in a multi-tenant service down the line.
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
@@ -128,8 +173,10 @@ func NewAPIBuilder(
 	extraBuilders []ExtraBuilder,
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
+	tokenExchangeClient *authnlib.TokenExchangeClient,
+	tlsConfig rest.TLSClientConfig,
 ) *APIBuilder {
-	clients := resources.NewClientFactory(configProvider)
+	clients := newStandaloneClientsFactory(configProvider, tokenExchangeClient, tlsConfig)
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceListerForMigrations(unified, legacyMigrator, storageStatus)
 

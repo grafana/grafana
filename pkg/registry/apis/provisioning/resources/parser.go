@@ -145,6 +145,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		}
 	}
 
+	parsed.Upsert = parsed.Obj
 	parsed.GVK = *gvk
 
 	if r.urls != nil {
