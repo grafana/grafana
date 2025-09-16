@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, getTagColorsFromName, useStyles2 } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 
 import { isPrivateLabel } from '../../utils/labels';
 
@@ -14,7 +14,7 @@ export interface AlertLabelsProps {
   labels: Record<string, string>;
   commonLabels?: Record<string, string>;
   size?: LabelSize;
-  onClick?: (label: string, value: string) => void;
+  onClick?: ([value, key]: [string, string | undefined]) => void;
 }
 
 export const AlertLabels = ({ labels, commonLabels = {}, size, onClick }: AlertLabelsProps) => {
@@ -38,11 +38,11 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, onClick }: AlertL
           <AlertLabel
             key={label + value}
             size={size}
-            label={label}
+            labelKey={label}
             value={value}
-            color={getLabelColor(label)}
+            colorBy="key"
             onClick={onClick}
-            asListItem={true}
+            role="listitem"
           />
         );
       })}
@@ -79,10 +79,6 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, onClick }: AlertL
     </div>
   );
 };
-
-function getLabelColor(input: string): string {
-  return getTagColorsFromName(input).color;
-}
 
 const getStyles = (theme: GrafanaTheme2, size?: LabelSize) => {
   return {

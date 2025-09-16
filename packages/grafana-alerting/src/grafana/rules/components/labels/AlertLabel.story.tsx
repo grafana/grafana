@@ -15,9 +15,10 @@ export default meta;
 export const Basic: StoryObj<typeof AlertLabel> = {
   render: (args: ComponentProps<typeof AlertLabel>) => (
     <Stack direction="column" alignItems="flex-start" gap={1}>
-      <AlertLabel {...args} asListItem={false} label="alertname" value="HighErrorRate" />
-      <AlertLabel {...args} asListItem={false} label="instance" value="web-01" />
-      <AlertLabel {...args} asListItem={false} label="job" value="nginx" />
+      <AlertLabel role={'listitem'} labelKey="alertname" value="HighErrorRate" />
+      <AlertLabel role={'listitem'} labelKey="instance" value="web-01" />
+      <AlertLabel role={'listitem'} labelKey="job" value="nginx" />
+      <AlertLabel role={'listitem'} value="hello, world!" />
     </Stack>
   ),
 };
@@ -26,11 +27,11 @@ export const Sizes: StoryObj<typeof AlertLabel> = {
   render: (args: ComponentProps<typeof AlertLabel>) => (
     <Stack direction="column" alignItems="flex-start" gap={1}>
       <Text>md</Text>
-      <AlertLabel {...args} asListItem={false} label="zone" value="us-east-1" size="md" />
+      <AlertLabel role={'listitem'} labelKey="zone" value="us-east-1" size="md" />
       <Text>sm</Text>
-      <AlertLabel {...args} asListItem={false} label="zone" value="us-east-1" size="sm" />
+      <AlertLabel role={'listitem'} labelKey="zone" value="us-east-1" size="sm" />
       <Text>xs</Text>
-      <AlertLabel {...args} asListItem={false} label="zone" value="us-east-1" size="xs" />
+      <AlertLabel role={'listitem'} labelKey="zone" value="us-east-1" size="xs" />
     </Stack>
   ),
 };
@@ -39,10 +40,10 @@ export const Clickable: StoryObj<typeof AlertLabel> = {
   render: (args: ComponentProps<typeof AlertLabel>) => (
     <AlertLabel
       {...args}
-      asListItem={false}
-      label="region"
+      role={'listitem'}
+      labelKey="region"
       value="eu-central-1"
-      onClick={(label, value) => console.log('clicked', label, value)}
+      onClick={([value, key]) => console.log('clicked', key, value)}
     />
   ),
 };
@@ -50,8 +51,12 @@ export const Clickable: StoryObj<typeof AlertLabel> = {
 export const WithIconAndColor: StoryObj<typeof AlertLabel> = {
   render: (args: ComponentProps<typeof AlertLabel>) => (
     <Stack direction="column" alignItems="flex-start" gap={1}>
-      <AlertLabel {...args} asListItem={false} icon="tag-alt" label="owner" value="team-a" color="#268bd2" />
-      <AlertLabel {...args} asListItem={false} icon="tag-alt" label="env" value="prod" color="#2aa198" />
+      <AlertLabel role={'listitem'} icon="tag-alt" labelKey="owner" value="team-a" color="#268bd2" />
+      <AlertLabel role={'listitem'} icon="tag-alt" labelKey="env" value="prod" color="#2aa198" />
+      <hr />
+      <AlertLabel role={'listitem'} icon="tag-alt" labelKey="env" value="prod" colorBy="key" />
+      <AlertLabel role={'listitem'} icon="tag-alt" labelKey="env" value="prod" colorBy="value" />
+      <AlertLabel role={'listitem'} icon="tag-alt" labelKey="env" value="prod" colorBy="both" />
     </Stack>
   ),
 };

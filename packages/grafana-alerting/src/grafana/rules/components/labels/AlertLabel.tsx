@@ -1,78 +1,96 @@
-import { css } from '@emotion/css';
-import { CSSProperties, ReactNode, useMemo } from 'react';
+import { css, cx } from '@emotion/css';
+import { CSSProperties, HTMLAttributes, useMemo } from 'react';
 import tinycolor2 from 'tinycolor2';
+import { MergeExclusive } from 'type-fest';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
-import { Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, getTagColorsFromName, useStyles2 } from '@grafana/ui';
 
 export type LabelSize = 'md' | 'sm' | 'xs';
 
-interface Props {
+interface BaseProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick' | 'className'> {
   icon?: IconName;
-  label?: ReactNode;
-  value: ReactNode;
-  color?: string;
+  labelKey?: string;
+  value: string;
   size?: LabelSize;
-  onClick?: (label: string, value: string) => void;
-  asListItem?: boolean;
+  onClick?: ([value, key]: [string, string | undefined]) => void;
 }
 
-const AlertLabel = ({ label, value, icon, color, size = 'md', onClick, asListItem = false }: Props) => {
-  const styles = useStyles2(getStyles, color, size);
-  const ariaLabel = `${label}: ${value}`;
-  const labelStr = label?.toString() ?? '';
-  const valueStr = value?.toString() ?? '';
+type Props = BaseProps & MergeExclusive<{ color?: string }, { colorBy?: 'key' | 'value' | 'both' }>;
+
+const AlertLabel = (props: Props) => {
+  const { labelKey, value, icon, color, size = 'md', onClick, ...rest } = props;
+  const theColor = getColorFromProps(props);
+  const styles = useStyles2(getStyles, theColor, size);
+
+  const ariaLabel = `${labelKey}: ${value}`;
+  const keyless = !Boolean(labelKey);
 
   const innerLabel = useMemo(
     () => (
       <Stack direction="row" gap={0} alignItems="stretch">
-        <div className={styles.label}>
-          <Stack direction="row" gap={0.5} alignItems="center">
-            {icon && <Icon name={icon} />}
-            {label && (
-              <span className={styles.labelText} title={label.toString()}>
-                {label ?? ''}
-              </span>
-            )}
-          </Stack>
-        </div>
-        <div className={styles.value} title={value?.toString()}>
+        {labelKey && (
+          <div className={styles.label}>
+            <Stack direction="row" gap={0.5} alignItems="center">
+              {icon && <Icon name={icon} />}
+              {labelKey && (
+                <span className={styles.labelText} title={labelKey.toString()}>
+                  {labelKey ?? ''}
+                </span>
+              )}
+            </Stack>
+          </div>
+        )}
+        <div className={cx(styles.value, keyless && styles.valueWithoutKey)} title={value?.toString()}>
           {value ?? '-'}
         </div>
       </Stack>
     ),
-    [icon, label, value, styles]
+    [labelKey, styles.label, styles.labelText, styles.value, styles.valueWithoutKey, icon, keyless, value]
   );
 
   return (
-    <div
-      className={styles.wrapper}
-      role={asListItem ? 'listitem' : undefined}
-      aria-label={ariaLabel}
-      data-testid="label-value"
-    >
+    <div className={styles.wrapper} aria-label={ariaLabel} data-testid="label-value" {...rest}>
       {onClick ? (
-        <div
+        <button
+          type="button"
           className={styles.clickable}
-          role="button"
-          tabIndex={0}
-          key={labelStr + valueStr}
-          onClick={() => onClick(labelStr, valueStr)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              onClick(labelStr, valueStr);
-              e.preventDefault();
-            }
-          }}
+          key={labelKey + value}
+          onClick={() => onClick([value, labelKey])}
         >
           {innerLabel}
-        </div>
+        </button>
       ) : (
         innerLabel
       )}
     </div>
   );
 };
+
+function getColorFromProps({
+  color,
+  colorBy,
+  labelKey,
+  value,
+}: Pick<Props, 'color' | 'colorBy' | 'labelKey' | 'value'>) {
+  if (color) {
+    return getTagColorsFromName(color).color;
+  }
+
+  if (colorBy === 'key') {
+    return getTagColorsFromName(labelKey).color;
+  }
+
+  if (colorBy === 'value') {
+    return getTagColorsFromName(value).color;
+  }
+
+  if (colorBy === 'both') {
+    return getTagColorsFromName(labelKey + value).color;
+  }
+
+  return;
+}
 
 const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
   const backgroundColor = color ?? theme.colors.secondary.main;
@@ -128,6 +146,14 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
       borderBottomLeftRadius: theme.shape.borderRadius(2),
     }),
     clickable: css({
+      border: 'none',
+      background: 'none',
+      outline: 'none',
+      boxShadow: 'none',
+
+      padding: 0,
+      margin: 0,
+
       '&:hover': {
         opacity: 0.8,
         cursor: 'pointer',
@@ -145,6 +171,11 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       maxWidth: '300px',
+    }),
+    valueWithoutKey: css({
+      borderTopLeftRadius: theme.shape.borderRadius(2),
+      borderBottomLeftRadius: theme.shape.borderRadius(2),
+      borderLeft: `solid 1px ${borderColor}`,
     }),
   };
 };
