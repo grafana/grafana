@@ -4,6 +4,7 @@ import { Faro, Instrumentation } from '@grafana/faro-core';
 import * as faroWebSdkModule from '@grafana/faro-web-sdk';
 import { BrowserConfig, FetchTransport, SessionInstrumentation } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
+import { config } from '@grafana/runtime';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import {
@@ -15,6 +16,7 @@ import {
 describe('GrafanaJavascriptAgentEchoBackend', () => {
   let mockedSetUser: jest.Mock;
   let initializeFaroMock: jest.SpyInstance<Faro, [config: BrowserConfig]>;
+  let originalUserAgent: string;
 
   beforeEach(() => {
     // arrange
@@ -46,12 +48,21 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
       instrumentations: mockedInstrumentations,
       internalLogger: mockedInternalLogger,
     });
+
+    config.featureToggles.filterOutBotsFromFrontendLogs = false;
+    originalUserAgent = navigator.userAgent;
   });
 
   afterEach(() => {
     jest.resetAllMocks();
     jest.resetModules();
     jest.clearAllMocks();
+
+    // Restore original navigator.userAgent
+    Object.defineProperty(navigator, 'userAgent', {
+      writable: true,
+      value: originalUserAgent,
+    });
   });
 
   const buildInfo: BuildInfo = {
@@ -152,6 +163,24 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     expect(initializeFaroMock.mock.calls[1][0].instrumentations?.length).toEqual(2);
     expect(initializeFaroMock.mock.calls[1][0].instrumentations?.[0]).toBeInstanceOf(TracingInstrumentation);
     expect(initializeFaroMock.mock.calls[1][0].instrumentations?.[1]).toBeInstanceOf(SessionInstrumentation);
+  });
+
+  it('correctly sets samplingRate when feature toggle is disabled', async () => {
+    new GrafanaJavascriptAgentBackend({ ...options });
+
+    expect(initializeFaroMock.mock.calls[0][0].sessionTracking?.samplingRate).toEqual(1);
+  });
+
+  it('correctly sets samplingRate when feature toggle is enabled and user agent is a bot', async () => {
+    config.featureToggles.filterOutBotsFromFrontendLogs = true;
+    Object.defineProperty(navigator, 'userAgent', {
+      writable: true,
+      value: 'Googlebot/2.1 (+http://www.google.com/bot.html)',
+    });
+
+    new GrafanaJavascriptAgentBackend({ ...options });
+
+    expect(initializeFaroMock.mock.calls[0][0].sessionTracking?.samplingRate).toEqual(0);
   });
 
   //@FIXME - make integration test work
