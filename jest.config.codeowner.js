@@ -138,6 +138,7 @@ module.exports = {
         cleanCache: true,
         onEnd: (coverageResults) => {
           console.log(`📄 Coverage report saved to file://${path.resolve(outputDir)}/index.html`);
+          // TODO: Emit coverage metrics https://github.com/grafana/grafana/issues/111208
         },
       },
     ],

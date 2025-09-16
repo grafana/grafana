@@ -1060,6 +1060,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 
 /scripts/codeowners-manifest/ @grafana/dataviz-squad
 /scripts/test-coverage-by-codeowner.js @grafana/dataviz-squad
+/jest.config.codeowner.js @grafana/dataviz-squad
 
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/frontend-ops
