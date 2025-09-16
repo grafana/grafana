@@ -3,7 +3,10 @@ import userEvent from '@testing-library/user-event';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  useCreateRepositoryJobsMutation,
+  useDeleteRepositoryFilesWithPathMutation,
+} from 'app/api/clients/provisioning/v0alpha1';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { ProvisionedDashboardData, useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
@@ -16,6 +19,7 @@ jest.mock('../../hooks/useProvisionedDashboardData', () => ({
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useDeleteRepositoryFilesWithPathMutation: jest.fn(),
+  useCreateRepositoryJobsMutation: jest.fn(),
   provisioningAPIv0alpha1: {
     endpoints: {
       listRepository: {
@@ -57,9 +61,13 @@ jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
 }));
 
 const mockDeleteRepoFile = jest.fn();
+const mockCreateJob = jest.fn();
 const mockPublish = jest.fn();
 const mockUseDeleteRepositoryFiles = useDeleteRepositoryFilesWithPathMutation as jest.MockedFunction<
   typeof useDeleteRepositoryFilesWithPathMutation
+>;
+const mockUseCreateRepositoryJobs = useCreateRepositoryJobsMutation as jest.MockedFunction<
+  typeof useCreateRepositoryJobsMutation
 >;
 const mockUseProvisionedDashboardData = useProvisionedDashboardData as jest.MockedFunction<
   typeof useProvisionedDashboardData
@@ -142,6 +150,10 @@ function setup(options: SetupOptions = {}) {
   mockUseDeleteRepositoryFiles.mockReturnValue([
     mockDeleteRepoFile,
     createMockRequestState(requestState) as ReturnType<typeof useDeleteRepositoryFilesWithPathMutation>[1],
+  ]);
+  mockUseCreateRepositoryJobs.mockReturnValue([
+    mockCreateJob,
+    createMockRequestState(requestState) as ReturnType<typeof useCreateRepositoryJobsMutation>[1],
   ]);
 
   return {
@@ -233,9 +245,8 @@ describe('DeleteProvisionedDashboardDrawer', () => {
       const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
       await user.click(deleteButton);
 
-      expect(consoleSpy).toHaveBeenCalledWith('Missing required fields for deletion:', {
+      expect(consoleSpy).toHaveBeenCalledWith('Missing required repository for deletion:', {
         repo: '',
-        path: 'dashboards/test.json',
       });
       expect(mockDeleteRepoFile).not.toHaveBeenCalled();
       consoleSpy.mockRestore();
@@ -257,17 +268,10 @@ describe('DeleteProvisionedDashboardDrawer', () => {
         },
       });
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-
       const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
       await user.click(deleteButton);
 
-      expect(consoleSpy).toHaveBeenCalledWith('Missing required fields for deletion:', {
-        repo: 'test-repo',
-        path: '',
-      });
-      expect(mockDeleteRepoFile).not.toHaveBeenCalled();
-      consoleSpy.mockRestore();
+      expect(mockDeleteRepoFile).toHaveBeenCalled();
     });
   });
 

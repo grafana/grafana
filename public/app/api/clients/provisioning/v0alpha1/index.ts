@@ -222,7 +222,16 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
           // Force a refetch of subfolders if user has opened them, so user see latest data
           if (job.status?.state === 'success' && (job.spec?.action === 'delete' || job.spec?.action === 'move')) {
             const state = getState().browseDashboards;
-            dispatch(clearFolders(Object.keys(state.childrenByParentUID)));
+            const action = job.spec?.action;
+            let childrenKeys = Object.keys(state.childrenByParentUID);
+
+            if (action === 'delete') {
+              // Do not clear deleted resources to avoid 404s when refetching them
+              const deletedResourceNames =
+                job.spec?.[action]?.resources?.map((resource) => resource.name).filter(Boolean) || [];
+              childrenKeys = childrenKeys.filter((key) => !deletedResourceNames.includes(key));
+            }
+            dispatch(clearFolders(childrenKeys));
           }
         } catch (e) {
           console.error('Error in getRepositoryJobsWithPath:', e);
