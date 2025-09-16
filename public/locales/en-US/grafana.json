@@ -509,7 +509,6 @@
       "export": "Export",
       "manage-enrichments": "Manage enrichments",
       "silence-notifications": "Silence notifications",
-      "view-enrichments": "View enrichments",
       "with-modifications": "With modifications"
     },
     "alert-missing-evaluations-to-stale": {
