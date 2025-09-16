@@ -210,6 +210,11 @@ export interface FeatureToggles {
   */
   awsAsyncQueryCaching?: boolean;
   /**
+  * Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
+  * @default false
+  */
+  queryCacheRequestDeduplication?: boolean;
+  /**
   * Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
   */
   permissionsFilterRemoveSubquery?: boolean;
@@ -274,9 +279,13 @@ export interface FeatureToggles {
   */
   kubernetesDashboards?: boolean;
   /**
-  * Routes short url requests from /api to the /apis endpoint
+  * Enables k8s short url api and uses it under the hood when handling legacy /api
   */
   kubernetesShortURLs?: boolean;
+  /**
+  * Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
+  */
+  useKubernetesShortURLsAPI?: boolean;
   /**
   * Adds support for Kubernetes alerting and recording rules
   */
