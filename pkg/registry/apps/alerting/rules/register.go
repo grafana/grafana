@@ -2,7 +2,6 @@ package rules
 
 import (
 	"context"
-	"fmt"
 
 	restclient "k8s.io/client-go/rest"
 
@@ -40,7 +39,7 @@ func RegisterAppInstaller(
 	ng *ngalert.AlertNG,
 ) (*AlertingRulesAppInstaller, error) {
 	if ng.IsDisabled() {
-		return nil, fmt.Errorf("alerting rules app installer cannot be registered when ngalert is disabled")
+		return nil, nil
 	}
 
 	installer := &AlertingRulesAppInstaller{
