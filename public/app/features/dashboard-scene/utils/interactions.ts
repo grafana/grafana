@@ -37,7 +37,7 @@ export const DashboardInteractions = {
   addVariableButtonClicked: (properties: { source: 'edit_pane' | 'settings_pane' }) => {
     reportDashboardInteraction('add_variable_button_clicked', properties);
   },
-  
+
   // Dashboard edit item actions
   // dashboards_edit_action_clicked: when user adds or removes an item in edit mode
   // props: { item: string } - item is one of: add_panel, group_row, group_tab, ungroup, paste_panel, remove_row, remove_tab
