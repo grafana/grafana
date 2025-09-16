@@ -364,14 +364,6 @@
       "tooltip-assigned-role": "A licensed role will be assigned when this user signs in"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "Hide common labels",
-      "show": {
-        "tooltip": "Show common labels"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Active timings"
@@ -485,11 +477,6 @@
     },
     "alert-label-dropdown": {
       "placeholder-select": "Choose {{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "Labels",
-      "common-labels-count_one": "+{{count}} common labels",
-      "common-labels-count_other": "+{{count}} common labels"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "Muting, grouping and timings (optional)",
