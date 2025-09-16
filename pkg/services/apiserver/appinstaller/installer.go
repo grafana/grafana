@@ -7,9 +7,6 @@ import (
 	"maps"
 	"time"
 
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
@@ -18,6 +15,10 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstore "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/kube-openapi/pkg/common"
+
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
