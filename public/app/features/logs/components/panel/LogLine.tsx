@@ -142,14 +142,19 @@ const LogLineComponent = memo(
     }, [height, index, log.collapsed, log.uid, onOverflow, virtualization]);
 
     useLayoutEffect(() => {
-      if (wrapLogMessage) {
-        handleLogLineResize();
-      }
-    });
+      handleLogLineResize();
+    }, [handleLogLineResize, detailsMode]);
 
     useLayoutEffect(() => {
-      handleLogLineResize();
-    }, [detailsMode, handleLogLineResize]);
+      if (!logLineRef.current) {
+        return;
+      }
+      const observer = new ResizeObserver(() => {
+        handleLogLineResize();
+      });
+      observer.observe(logLineRef.current);
+      return () => observer.disconnect();
+    }, [handleLogLineResize]);
 
     useEffect(() => {
       if (!wrapLogMessage) {
