@@ -274,7 +274,7 @@ func transformTraceSearchResponseSubFrame(trace *tempopb.TraceSearchMetadata, sp
 	for _, attribute := range spanSet.Attributes {
 		spanDynamicAttributes[attribute.Key] = &DataFrameField{
 			Name:   attribute.Key,
-			Type:   []string{},
+			Type:   getTypeForAttribute(attribute),
 			Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
 		}
 	}
@@ -286,7 +286,7 @@ func transformTraceSearchResponseSubFrame(trace *tempopb.TraceSearchMetadata, sp
 		for _, attribute := range span.Attributes {
 			spanDynamicAttributes[attribute.Key] = &DataFrameField{
 				Name:   attribute.Key,
-				Type:   []string{},
+				Type:   getTypeForAttribute(attribute),
 				Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
 			}
 		}
@@ -301,7 +301,7 @@ func transformTraceSearchResponseSubFrame(trace *tempopb.TraceSearchMetadata, sp
 	frame := data.NewFrame("Spans")
 	panelsState := data.ExplorePanelsState(map[string]interface{}{"trace": map[string]interface{}{"spanId": "${__value.raw}"}})
 	frame.Fields = append(frame.Fields, data.NewField("traceIdHidden", nil, []string{}).SetConfig(&data.FieldConfig{
-		Custom: map[string]interface{}{"hidden": true},
+		Custom: map[string]interface{}{"hideFrom": map[string]interface{}{"viz": true}},
 	}))
 	frame.Fields = append(frame.Fields, data.NewField("spanID", nil, []string{}).SetConfig(&data.FieldConfig{
 		DisplayNameFromDS: "Span ID",
@@ -329,7 +329,7 @@ func transformTraceSearchResponseSubFrame(trace *tempopb.TraceSearchMetadata, sp
 	}))
 	frame.Fields = append(frame.Fields, data.NewField("name", nil, []string{}).SetConfig(&data.FieldConfig{
 		DisplayNameFromDS: "Name",
-		Custom:            map[string]interface{}{"hidden": !hasNameAttribute},
+		Custom:            map[string]interface{}{"hideFrom": map[string]interface{}{"viz": !hasNameAttribute}},
 	}))
 	for _, attributeName := range spanAttributeNames {
 		field := spanDynamicAttributes[attributeName]
@@ -376,7 +376,7 @@ func transformSpanSearchResponse(pCtx backend.PluginContext, response *tempopb.S
 				for _, attribute := range spanSet.Attributes {
 					spanDynamicAttributes[attribute.Key] = &DataFrameField{
 						Name:   attribute.Key,
-						Type:   []string{},
+						Type:   getTypeForAttribute(attribute),
 						Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
 					}
 				}
@@ -387,7 +387,7 @@ func transformSpanSearchResponse(pCtx backend.PluginContext, response *tempopb.S
 					for _, attribute := range span.Attributes {
 						spanDynamicAttributes[attribute.Key] = &DataFrameField{
 							Name:   attribute.Key,
-							Type:   []string{},
+							Type:   getTypeForAttribute(attribute),
 							Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
 						}
 					}
@@ -405,7 +405,7 @@ func transformSpanSearchResponse(pCtx backend.PluginContext, response *tempopb.S
 	spansFrame := data.NewFrame("Spans")
 	panelsState := data.ExplorePanelsState(map[string]interface{}{"trace": map[string]interface{}{"spanId": "${__value.raw}"}})
 	spansFrame.Fields = append(spansFrame.Fields, data.NewField("traceIdHidden", nil, []string{}).SetConfig(&data.FieldConfig{
-		Custom: map[string]interface{}{"hidden": true},
+		Custom: map[string]interface{}{"hideFrom": map[string]interface{}{"viz": true}},
 	}))
 	spansFrame.Fields = append(spansFrame.Fields, data.NewField("traceService", nil, []string{}).SetConfig(&data.FieldConfig{
 		DisplayNameFromDS: "Trace Service",
@@ -440,7 +440,7 @@ func transformSpanSearchResponse(pCtx backend.PluginContext, response *tempopb.S
 	}))
 	spansFrame.Fields = append(spansFrame.Fields, data.NewField("name", nil, []string{}).SetConfig(&data.FieldConfig{
 		DisplayNameFromDS: "Name",
-		Custom:            map[string]interface{}{"hidden": !hasNameAttribute},
+		Custom:            map[string]interface{}{"hideFrom": map[string]interface{}{"viz": !hasNameAttribute}},
 	}))
 	for _, attributeName := range spanAttributeNames {
 		field := spanDynamicAttributes[attributeName]
@@ -486,7 +486,7 @@ func transformSpanSearchResponse(pCtx backend.PluginContext, response *tempopb.S
 					if attribute, ok := traceData.attributes[attributeName]; ok {
 						spansFrame.Fields[attributeIndex].Append(attribute)
 					} else {
-						spansFrame.Fields[attributeIndex].Append("")
+						spansFrame.Fields[attributeIndex].Append(nil)
 					}
 					attributeIndex++
 				}
@@ -524,16 +524,25 @@ func transformSpanToTraceData(span *tempopb.Span, spanSet *tempopb.SpanSet, trac
 	}
 
 	for _, attribute := range allAttributes {
-		if attribute.Value.GetStringValue() != "" {
-			attributes[attribute.Key] = attribute.Value.GetStringValue()
-		} else if attribute.Value.GetIntValue() != 0 {
-			attributes[attribute.Key] = attribute.Value.GetIntValue()
-		} else if attribute.Value.GetDoubleValue() != 0 {
-			attributes[attribute.Key] = attribute.Value.GetDoubleValue()
-		} else if attribute.Value.GetBoolValue() {
-			attributes[attribute.Key] = attribute.Value.GetBoolValue()
-		} else if string(attribute.Value.GetBytesValue()) != "" {
-			attributes[attribute.Key] = attribute.Value.GetBytesValue()
+		switch attribute.Value.GetValue().(type) {
+		case *v1.AnyValue_StringValue:
+			val := attribute.Value.GetStringValue()
+			attributes[attribute.Key] = &val
+		case *v1.AnyValue_IntValue:
+			val := attribute.Value.GetIntValue()
+			attributes[attribute.Key] = &val
+		case *v1.AnyValue_DoubleValue:
+			val := attribute.Value.GetDoubleValue()
+			attributes[attribute.Key] = &val
+		case *v1.AnyValue_BoolValue:
+			val := attribute.Value.GetBoolValue()
+			attributes[attribute.Key] = &val
+		case *v1.AnyValue_BytesValue:
+			val := attribute.Value.GetBytesValue()
+			attributes[attribute.Key] = &val
+		default:
+			val := attribute.Value.GetValue()
+			attributes[attribute.Key] = &val
 		}
 	}
 
@@ -545,4 +554,20 @@ func transformSpanToTraceData(span *tempopb.Span, spanSet *tempopb.SpanSet, trac
 		duration:      float64(span.DurationNanos),
 		attributes:    attributes,
 	}
+}
+
+func getTypeForAttribute(attribute *v1.KeyValue) interface{} {
+	switch attribute.Value.GetValue().(type) {
+	case *v1.AnyValue_StringValue:
+		return []*string{}
+	case *v1.AnyValue_IntValue:
+		return []*int64{}
+	case *v1.AnyValue_DoubleValue:
+		return []*float64{}
+	case *v1.AnyValue_BoolValue:
+		return []*bool{}
+	case *v1.AnyValue_BytesValue:
+		return []*[]byte{}
+	}
+	return []*string{}
 }
