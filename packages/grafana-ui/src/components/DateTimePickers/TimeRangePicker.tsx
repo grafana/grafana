@@ -55,6 +55,7 @@ export interface TimeRangePickerProps {
   onChangeFiscalYearStartMonth?: (month: number) => void;
   onMoveBackward: () => void;
   onMoveForward: () => void;
+  moveDuration?: string;
   onZoom: () => void;
   onError?: (error?: string) => void;
   history?: TimeRange[];
@@ -78,6 +79,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     value,
     onMoveBackward,
     onMoveForward,
+    moveDuration,
     onZoom,
     onError,
     timeZone,
@@ -153,8 +155,14 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
         aria-label={t('time-picker.range-picker.backwards-time-aria-label', 'Move time range backwards')}
         variant={variant}
         onClick={onMoveBackward}
-        icon="angle-left"
+        icon="angle-double-left"
         type="button"
+        iconSize="xl"
+        tooltip={
+          moveDuration
+            ? t('time-picker.range-picker.backwards-time-tooltip', 'Pan {{moveDuration}} backwards', { moveDuration })
+            : t('time-picker.range-picker.backwards-time-aria-label', 'Move time range backwards')
+        }
         narrow
       />
 
@@ -209,10 +217,16 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
       <ToolbarButton
         aria-label={t('time-picker.range-picker.forwards-time-aria-label', 'Move time range forwards')}
         onClick={onMoveForward}
-        icon="angle-right"
-        narrow
+        icon="angle-double-right"
         type="button"
         variant={variant}
+        iconSize="xl"
+        tooltip={
+          moveDuration
+            ? t('time-picker.range-picker.forwards-time-tooltip', 'Pan {{moveDuration}} forwards', { moveDuration })
+            : t('time-picker.range-picker.forwards-time-aria-label', 'Move time range forwards')
+        }
+        narrow
       />
 
       <Tooltip content={ZoomOutTooltip} placement="bottom">
