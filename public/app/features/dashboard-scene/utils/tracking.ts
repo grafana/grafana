@@ -3,6 +3,7 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboa
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { DashboardInteractions } from './interactions';
+import { store } from '@grafana/data';
 
 export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: number) {
   const trackingInformation = dashboard.getTrackingInformation();
@@ -148,3 +149,10 @@ function getStructure(layout: DashboardV2Spec['layout']): StructureNode[] {
       return [];
   }
 }
+
+export const trackDashboardSceneEditButtonClicked = () => {
+  const outlineExpandedByDefault = !store.getBool('grafana.dashboard.edit-pane.outline.collapsed', true);
+  DashboardInteractions.editButtonClicked({
+    outlineExpanded: outlineExpandedByDefault,
+  });
+};

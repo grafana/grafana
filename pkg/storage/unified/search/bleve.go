@@ -47,6 +47,12 @@ const (
 	indexStorageFile   = "file"
 )
 
+// Keys used to store internal data in index.
+const (
+	internalRVKey        = "rv"         // Encoded as big-endian int64
+	internalBuildInfoKey = "build_info" // Encoded as JSON of IndexBuildInfo struct
+)
+
 var _ resource.SearchBackend = &bleveBackend{}
 var _ resource.ResourceIndex = &bleveIndex{}
 
@@ -63,6 +69,8 @@ type BleveOptions struct {
 
 	// Index cache TTL for bleve indices. 0 disables expiration for in-memory indexes.
 	IndexCacheTTL time.Duration
+
+	BuildVersion string
 
 	Logger *slog.Logger
 }
@@ -199,13 +207,38 @@ func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
 // newBleveIndex creates a new bleve index with consistent configuration.
 // If path is empty, creates an in-memory index.
 // If path is not empty, creates a file-based index at the specified path.
-func newBleveIndex(path string, mapper mapping.IndexMapping) (bleve.Index, error) {
+func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time, buildVersion string) (bleve.Index, error) {
 	kvstore := bleve.Config.DefaultKVStore
 	if path == "" {
 		// use in-memory kvstore
 		kvstore = bleve.Config.DefaultMemKVStore
 	}
-	return bleve.NewUsing(path, mapper, bleve.Config.DefaultIndexType, kvstore, nil)
+	ix, err := bleve.NewUsing(path, mapper, bleve.Config.DefaultIndexType, kvstore, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	bi := IndexBuildInfo{
+		BuildTime:    buildTime.Unix(),
+		BuildVersion: buildVersion,
+	}
+
+	biBytes, err := json.Marshal(bi)
+	if err != nil {
+		cErr := ix.Close()
+		return nil, errors.Join(fmt.Errorf("failed to store index build info: %w", err), cErr)
+	}
+
+	if err = ix.SetInternal([]byte(internalBuildInfoKey), biBytes); err != nil {
+		cErr := ix.Close()
+		return nil, errors.Join(fmt.Errorf("failed to store index build info: %w", err), cErr)
+	}
+	return ix, nil
+}
+
+type IndexBuildInfo struct {
+	BuildTime    int64  `json:"build_time"`    // Unix seconds timestamp of time when the index was built
+	BuildVersion string `json:"build_version"` // Grafana version used when building the index
 }
 
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
@@ -304,7 +337,7 @@ func (b *bleveBackend) BuildIndex(
 					return nil, fmt.Errorf("invalid path %s", indexDir)
 				}
 
-				index, err = newBleveIndex(indexDir, mapper)
+				index, err = newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion)
 				if errors.Is(err, bleve.ErrorIndexPathExists) {
 					now = now.Add(time.Second) // Bump time for next try
 					index = nil                // Bleve actually returns non-nil value with ErrorIndexPathExists
@@ -319,7 +352,7 @@ func (b *bleveBackend) BuildIndex(
 			defer closeIndexOnExit(index, indexDir) // Close index, and delete new index directory.
 		}
 	} else {
-		index, err = newBleveIndex("", mapper)
+		index, err = newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion)
 		if err != nil {
 			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
 		}
@@ -652,8 +685,6 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	return b.index.Batch(batch)
 }
 
-var internalRVKey = []byte("rv")
-
 func (b *bleveIndex) updateResourceVersion(rv int64) error {
 	if rv == 0 {
 		return nil
@@ -672,13 +703,13 @@ func setRV(index bleve.Index, rv int64) error {
 	buf := make([]byte, 8)
 	binary.BigEndian.PutUint64(buf, uint64(rv))
 
-	return index.SetInternal(internalRVKey, buf)
+	return index.SetInternal([]byte(internalRVKey), buf)
 }
 
 // getRV will call index.GetInternal to retrieve the RV saved in the index. If index is closed, it will return a
 // bleve.ErrorIndexClosed error. If there's no RV saved in the index, or it's invalid format, it will return 0
 func getRV(index bleve.Index) (int64, error) {
-	raw, err := index.GetInternal(internalRVKey)
+	raw, err := index.GetInternal([]byte(internalRVKey))
 	if err != nil {
 		return 0, err
 	}
@@ -688,6 +719,17 @@ func getRV(index bleve.Index) (int64, error) {
 	}
 
 	return int64(binary.BigEndian.Uint64(raw)), nil
+}
+
+func getBuildInfo(index bleve.Index) (IndexBuildInfo, error) {
+	raw, err := index.GetInternal([]byte(internalBuildInfoKey))
+	if err != nil {
+		return IndexBuildInfo{}, err
+	}
+
+	res := IndexBuildInfo{}
+	err = json.Unmarshal(raw, &res)
+	return res, err
 }
 
 func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
@@ -1050,7 +1092,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		queryPhrase.Analyzer = standard.Name
 
 		// Query 3: Match query with standard analyzer
-		queryAnalyzed := bleve.NewMatchQuery(req.Query)
+		queryAnalyzed := bleve.NewMatchQuery(removeSmallTerms(req.Query))
 		queryAnalyzed.Analyzer = standard.Name
 		queryAnalyzed.Operator = query.MatchQueryOperatorAnd // Make sure all terms from the query are matched
 
@@ -1134,6 +1176,23 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	return searchrequest, nil
+}
+
+func removeSmallTerms(query string) string {
+	words := strings.Fields(query)
+	validWords := make([]string, 0, len(words))
+
+	for _, word := range words {
+		if len(word) >= EDGE_NGRAM_MIN_TOKEN {
+			validWords = append(validWords, word)
+		}
+	}
+
+	if len(validWords) == 0 {
+		return query
+	}
+
+	return strings.Join(validWords, " ")
 }
 
 func (b *bleveIndex) stopUpdaterAndCloseIndex() error {
