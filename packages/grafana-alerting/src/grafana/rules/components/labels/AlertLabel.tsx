@@ -14,9 +14,10 @@ interface Props {
   color?: string;
   size?: LabelSize;
   onClick?: (label: string, value: string) => void;
+  asListItem?: boolean;
 }
 
-const AlertLabel = ({ label, value, icon, color, size = 'md', onClick }: Props) => {
+const AlertLabel = ({ label, value, icon, color, size = 'md', onClick, asListItem = false }: Props) => {
   const styles = useStyles2(getStyles, color, size);
   const ariaLabel = `${label}: ${value}`;
   const labelStr = label?.toString() ?? '';
@@ -44,7 +45,12 @@ const AlertLabel = ({ label, value, icon, color, size = 'md', onClick }: Props) 
   );
 
   return (
-    <div className={styles.wrapper} role="listitem" aria-label={ariaLabel} data-testid="label-value">
+    <div
+      className={styles.wrapper}
+      role={asListItem ? 'listitem' : undefined}
+      aria-label={ariaLabel}
+      data-testid="label-value"
+    >
       {onClick ? (
         <div
           className={styles.clickable}

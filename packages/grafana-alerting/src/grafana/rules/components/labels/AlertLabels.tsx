@@ -42,34 +42,39 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, onClick }: Props)
             value={value}
             color={getLabelColor(label)}
             onClick={onClick}
+            asListItem={true}
           />
         );
       })}
 
       {!showCommonLabels && hasCommonLabels && (
-        <Button
-          variant="secondary"
-          fill="text"
-          onClick={() => setShowCommonLabels(true)}
-          tooltip={tooltip}
-          tooltipPlacement="top"
-          size="sm"
-        >
-          <Trans i18nKey="alerting.alert-labels.common-labels-count" count={commonLabelsCount}>
-            +{'{{count}}'} common labels
-          </Trans>
-        </Button>
+        <div role="listitem">
+          <Button
+            variant="secondary"
+            fill="text"
+            onClick={() => setShowCommonLabels(true)}
+            tooltip={tooltip}
+            tooltipPlacement="top"
+            size="sm"
+          >
+            <Trans i18nKey="alerting.alert-labels.common-labels-count" count={commonLabelsCount}>
+              +{'{{count}}'} common labels
+            </Trans>
+          </Button>
+        </div>
       )}
       {showCommonLabels && hasCommonLabels && (
-        <Button
-          variant="secondary"
-          fill="text"
-          onClick={() => setShowCommonLabels(false)}
-          tooltipPlacement="top"
-          size="sm"
-        >
-          <Trans i18nKey="alert-labels.button.hide">Hide common labels</Trans>
-        </Button>
+        <div role="listitem">
+          <Button
+            variant="secondary"
+            fill="text"
+            onClick={() => setShowCommonLabels(false)}
+            tooltipPlacement="top"
+            size="sm"
+          >
+            <Trans i18nKey="alert-labels.button.hide">Hide common labels</Trans>
+          </Button>
+        </div>
       )}
     </div>
   );
