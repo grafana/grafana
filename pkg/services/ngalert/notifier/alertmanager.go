@@ -12,7 +12,9 @@ import (
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers"
 	alertingTemplates "github.com/grafana/alerting/templates"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/common/model"
 
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 
@@ -429,6 +431,16 @@ func (am *alertmanager) PutAlerts(_ context.Context, postableAlerts apimodels.Po
 // SilenceState returns the current internal state of silences.
 func (am *alertmanager) SilenceState(_ context.Context) (alertingNotify.SilenceState, error) {
 	return am.Base.SilenceState()
+}
+
+// Mutes returns the list of silence IDs that mute the given labels
+func (am *alertmanager) GetSilenceIds(labels data.Labels) ([]string, error) {
+	// Convert data.Labels to model.LabelSet
+	labelSet := make(model.LabelSet, len(labels))
+	for k, v := range labels {
+		labelSet[model.LabelName(k)] = model.LabelValue(v)
+	}
+	return am.Base.Mutes(labelSet)
 }
 
 // AlertValidationError is the error capturing the validation errors

@@ -79,6 +79,11 @@ type remoteLokiClient interface {
 	MaxQuerySize() int
 }
 
+// MuteChecker is an interface for checking if an alert is muted based on its labels
+type MuteChecker interface {
+	GetSilenceIds(orgID int64, labels data.Labels) ([]string, error)
+}
+
 // RemoteLokibackend is a state.Historian that records state history to an external Loki instance.
 type RemoteLokiBackend struct {
 	client         remoteLokiClient
@@ -89,9 +94,10 @@ type RemoteLokiBackend struct {
 	logAll         bool
 	ac             AccessControl
 	ruleStore      RuleStore
+	muteChecker    MuteChecker
 }
 
-func NewRemoteLokiBackend(logger log.Logger, cfg LokiConfig, req client.Requester, metrics *metrics.Historian, tracer tracing.Tracer, ruleStore RuleStore, ac AccessControl) *RemoteLokiBackend {
+func NewRemoteLokiBackend(logger log.Logger, cfg LokiConfig, req client.Requester, metrics *metrics.Historian, tracer tracing.Tracer, ruleStore RuleStore, ac AccessControl, muteChecker MuteChecker) *RemoteLokiBackend {
 	return &RemoteLokiBackend{
 		client:         NewHistorianExportClient(cfg, req, metrics, logger, tracer),
 		externalLabels: cfg.ExternalLabels,
@@ -101,6 +107,7 @@ func NewRemoteLokiBackend(logger log.Logger, cfg LokiConfig, req client.Requeste
 		logAll:         cfg.LogAll,
 		ac:             ac,
 		ruleStore:      ruleStore,
+		muteChecker:    muteChecker,
 	}
 }
 
@@ -111,7 +118,7 @@ func (h *RemoteLokiBackend) TestConnection(ctx context.Context) error {
 // Record writes a number of state transitions for a given rule to an external Loki instance.
 func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
-	logStream := StatesToStream(rule, states, h.externalLabels, logger, h.logAll)
+	logStream := StatesToStream(rule, states, h.externalLabels, logger, h.logAll, h.muteChecker)
 
 	errCh := make(chan error, 1)
 	if len(logStream.Values) == 0 {
@@ -278,7 +285,7 @@ func merge(res []Stream, folderUIDToFilter []string) (*data.Frame, error) {
 	return frame, nil
 }
 
-func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger, logAll bool) Stream {
+func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger, logAll bool, muteChecker MuteChecker) Stream {
 	labels := mergeLabels(make(map[string]string), externalLabels)
 	// System-defined labels take precedence over user-defined external labels.
 	labels[StateHistoryLabelKey] = StateHistoryLabelValue
@@ -291,8 +298,16 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		if !shouldRecord(state) && !logAll {
 			continue
 		}
-		state.Labels[MonitorNameLabel] = rule.Title
-		sanitizedLabels := removePrivateLabels(state.Labels)
+		// Create a copy of labels to avoid modifying the original state
+		// If labels are nil, initialize an empty map
+		var labelsCopy data.Labels
+		if state.Labels != nil {
+			labelsCopy = state.Labels.Copy()
+		} else {
+			labelsCopy = data.Labels{}
+		}
+		labelsCopy[MonitorNameLabel] = rule.Title
+		sanitizedLabels := removePrivateLabels(labelsCopy)
 		var errMsg string
 		if state.State.State == eval.Error {
 			errMsg = state.Error.Error()
@@ -310,6 +325,16 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			thresholdInputValue = value
 		}
 
+		// Check if the alert is muted
+		var silenceIds []string
+		var err error
+		if muteChecker != nil {
+			silenceIds, err = muteChecker.GetSilenceIds(rule.OrgID, labelsCopy)
+			if err != nil {
+				logger.Error("Failed to check if alert is muted", "error", err, "labels", labelsCopy)
+			}
+		}
+
 		entry := LokiEntry{
 			SchemaVersion:             1,
 			Previous:                  state.PreviousFormatted(),
@@ -318,7 +343,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			Condition:                 rule.Condition,
 			DashboardUID:              rule.DashboardUID,
 			PanelID:                   rule.PanelID,
-			Fingerprint:               calculateFingerprint(state.Labels),
+			Fingerprint:               calculateFingerprint(labelsCopy),
 			RuleTitle:                 rule.Title,
 			RuleID:                    rule.ID,
 			RuleUID:                   rule.UID,
@@ -327,6 +352,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			Error:                     errMsg,
 			EvaluationDurationSeconds: state.EvaluationDuration.Seconds(),
 			ThresholdInputValue:       thresholdInputValue,
+			SilenceIds:                silenceIds,
 		}
 
 		jsn, err := json.Marshal(entry)
@@ -389,6 +415,7 @@ type LokiEntry struct {
 	Annotations               map[string]string `json:"annotations"`
 	EvaluationDurationSeconds float64           `json:"evaluationDurationSeconds"`
 	ThresholdInputValue       float64           `json:"thresholdInputValue"`
+	SilenceIds                []string          `json:"silenceIds"`
 }
 
 func valuesAsDataBlob(state *state.State) *simplejson.Json {

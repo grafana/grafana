@@ -43,7 +43,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 			l := log.NewNopLogger()
 			states := singleFromNormal(&state.State{State: eval.Normal})
 
-			res := StatesToStream(rule, states, nil, l)
+			res := StatesToStream(rule, states, nil, l, false, nil)
 
 			require.Empty(t, res.Values)
 		})
@@ -53,7 +53,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 			l := log.NewNopLogger()
 			states := singleFromNormal(&state.State{State: eval.Error, Error: fmt.Errorf("oh no")})
 
-			res := StatesToStream(rule, states, nil, l)
+			res := StatesToStream(rule, states, nil, l, false, nil)
 
 			entry := requireSingleEntry(t, res)
 			require.Contains(t, entry.Error, "oh no")
@@ -64,7 +64,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 			l := log.NewNopLogger()
 			states := singleFromNormal(&state.State{State: eval.NoData})
 
-			res := StatesToStream(rule, states, nil, l)
+			res := StatesToStream(rule, states, nil, l, false, nil)
 
 			_ = requireSingleEntry(t, res)
 		})
@@ -77,7 +77,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 				Labels: data.Labels{"a": "b"},
 			})
 
-			res := StatesToStream(rule, states, nil, l)
+			res := StatesToStream(rule, states, nil, l, false, nil)
 
 			exp := map[string]string{
 				StateHistoryLabelKey: StateHistoryLabelValue,
@@ -96,7 +96,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 				Labels: data.Labels{"__private__": "b"},
 			})
 
-			res := StatesToStream(rule, states, nil, l)
+			res := StatesToStream(rule, states, nil, l, false, nil)
 
 			require.NotContains(t, res.Stream, "__private__")
 		})
@@ -109,7 +109,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 				Labels: data.Labels{"a": "b"},
 			})
 
-			res := StatesToStream(rule, states, nil, l)
+			res := StatesToStream(rule, states, nil, l, false, nil)
 
 			entry := requireSingleEntry(t, res)
 
@@ -126,7 +126,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 				Labels: data.Labels{"statelabel": "labelvalue"},
 			})
 
-			res := StatesToStream(rule, states, nil, l)
+			res := StatesToStream(rule, states, nil, l, false, nil)
 
 			entry := requireSingleEntry(t, res)
 			require.Contains(t, entry.InstanceLabels, "statelabel")
@@ -144,10 +144,10 @@ func TestRemoteLokiBackend(t *testing.T) {
 				},
 			})
 
-			res := StatesToStream(rule, states, nil, l)
+			res := StatesToStream(rule, states, nil, l, false, nil)
 
 			entry := requireSingleEntry(t, res)
-			require.Len(t, entry.InstanceLabels, 3)
+			require.Len(t, entry.InstanceLabels, 4) // 3 original labels + monitor_name
 		})
 
 		t.Run("serializes values when regular", func(t *testing.T) {
@@ -158,7 +158,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 				Values: map[string]float64{"A": 2.0, "B": 5.5},
 			})
 
-			res := StatesToStream(rule, states, nil, l)
+			res := StatesToStream(rule, states, nil, l, false, nil)
 
 			entry := requireSingleEntry(t, res)
 			require.NotNil(t, entry.Values)
@@ -177,7 +177,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 				Labels: data.Labels{"a": "b"},
 			})
 
-			res := StatesToStream(rule, states, nil, l)
+			res := StatesToStream(rule, states, nil, l, false, nil)
 
 			entry := requireSingleEntry(t, res)
 			require.Equal(t, rule.Condition, entry.Condition)
@@ -195,13 +195,73 @@ func TestRemoteLokiBackend(t *testing.T) {
 				},
 			})
 
-			res := StatesToStream(rule, states, nil, l)
+			res := StatesToStream(rule, states, nil, l, false, nil)
 
 			entry := requireSingleEntry(t, res)
-			exp := labelFingerprint(states[0].Labels)
+			// The fingerprint should include the monitor_name label that was added
+			labelsWithMonitorName := states[0].Labels.Copy()
+			labelsWithMonitorName["monitor_name"] = rule.Title
+			exp := labelFingerprint(labelsWithMonitorName)
 			require.Equal(t, exp, entry.Fingerprint)
 		})
+
+		t.Run("sets is_muted field when muteChecker is provided", func(t *testing.T) {
+			rule := createTestRule()
+			l := log.NewNopLogger()
+			states := singleFromNormal(&state.State{
+				State: eval.Alerting,
+				Labels: data.Labels{
+					"alertname": "test",
+					"instance":  "localhost",
+				},
+			})
+
+			// Create a mock mute checker
+			muteChecker := &mockMuteChecker{
+				silenceIds: []string{"123"},
+			}
+
+			res := StatesToStream(rule, states, nil, l, false, muteChecker)
+
+			entry := requireSingleEntry(t, res)
+			require.True(t, len(entry.SilenceIds) > 0, "Alert should be marked as muted")
+		})
+
+		t.Run("sets is_muted to false when alert is not muted", func(t *testing.T) {
+			rule := createTestRule()
+			l := log.NewNopLogger()
+			states := singleFromNormal(&state.State{
+				State: eval.Alerting,
+				Labels: data.Labels{
+					"alertname": "test",
+					"instance":  "localhost",
+				},
+			})
+
+			// Create a mock mute checker that returns false
+			muteChecker := &mockMuteChecker{
+				silenceIds: []string{},
+			}
+
+			res := StatesToStream(rule, states, nil, l, false, muteChecker)
+
+			entry := requireSingleEntry(t, res)
+			require.False(t, len(entry.SilenceIds) > 0, "Alert should not be marked as muted")
+		})
 	})
+}
+
+// mockMuteChecker is a test implementation of MuteChecker
+type mockMuteChecker struct {
+	silenceIds []string
+	err   error
+}
+
+func (m *mockMuteChecker) GetSilenceIds(orgID int64, labels data.Labels) ([]string, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	return m.silenceIds, nil
 }
 
 func TestBuildLogQuery(t *testing.T) {
@@ -890,7 +950,7 @@ func createTestLokiBackend(t *testing.T, req client.Requester, met *metrics.Hist
 	lokiBackendLogger := log.New("ngalert.state.historian", "backend", "loki")
 	rules := fakes.NewRuleStore(t)
 	ac := &acfakes.FakeRuleService{}
-	return NewRemoteLokiBackend(lokiBackendLogger, cfg, req, met, tracing.InitializeTracerForTest(), rules, ac)
+	return NewRemoteLokiBackend(lokiBackendLogger, cfg, req, met, tracing.InitializeTracerForTest(), rules, ac, nil)
 }
 
 func singleFromNormal(st *state.State) []state.StateTransition {
