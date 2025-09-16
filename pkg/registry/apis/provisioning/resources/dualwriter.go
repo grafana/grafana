@@ -77,6 +77,10 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 		return nil, err
 	}
 
+	if opts.Ref == "" {
+		return nil, apierrors.NewBadRequest("delete operations are only supported on non-default branches")
+	}
+
 	if safepath.IsDir(opts.Path) {
 		return r.deleteFolder(ctx, opts)
 	}
