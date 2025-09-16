@@ -2,12 +2,12 @@ import { render, waitFor } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
+import { testWithFeatureToggles } from '@grafana/test-utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { alertingFactory } from '../../mocks/server/db';
-import { testWithFeatureToggles } from '../../test/test-utils';
 
 import ImportToGMARules from './ImportToGMARules';
 
@@ -49,7 +49,7 @@ alertingFactory.dataSource.mimir().build({ meta: { alerting: true } });
 
 describe('ImportToGMARules', () => {
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleCreate]);
-  testWithFeatureToggles(['alertingImportYAMLUI', 'alertingMigrationUI']);
+  testWithFeatureToggles({ enable: ['alertingImportYAMLUI', 'alertingMigrationUI'] });
 
   it('should render the import source options', () => {
     render(<ImportToGMARules />);

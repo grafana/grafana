@@ -6,6 +6,7 @@ import { screen } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { FeatureToggles } from '@grafana/data';
+import { testWithFeatureToggles } from '@grafana/test-utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
@@ -15,7 +16,6 @@ import { grantUserPermissions, mockDataSource } from './mocks';
 import { grafanaRulerGroup } from './mocks/grafanaRulerApi';
 import { captureRequests, serializeRequests } from './mocks/server/events';
 import { FOLDER_TITLE_HAPPY_PATH } from './mocks/server/handlers/search';
-import { testWithFeatureToggles } from './test/test-utils';
 import { setupDataSources } from './testSetup/datasources';
 import { setupPluginsExtensionsHook } from './testSetup/plugins';
 
@@ -72,7 +72,7 @@ describe('RuleEditor grafana recording rules', () => {
   });
 
   const testCreateGrafanaRR = (featureToggles: Array<keyof FeatureToggles>, testName: string) => {
-    testWithFeatureToggles(featureToggles);
+    testWithFeatureToggles({ enable: featureToggles });
 
     it(testName, async () => {
       const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
@@ -98,7 +98,7 @@ describe('RuleEditor grafana recording rules', () => {
   };
 
   const testCreateGrafanaRRWithInvalidMetricName = (featureToggles: Array<keyof FeatureToggles>, testName: string) => {
-    testWithFeatureToggles(featureToggles);
+    testWithFeatureToggles({ enable: featureToggles });
 
     it(testName, async () => {
       const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));

@@ -2,10 +2,10 @@ import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { reportInteraction } from '@grafana/runtime';
+import { testWithFeatureToggles } from '@grafana/test-utils';
 
 import { mockLocalStorage } from '../mocks';
 import { getPreviewToggle, setPreviewToggle } from '../previewToggles';
-import { testWithFeatureToggles } from '../test/test-utils';
 
 import { RuleListPageTitle } from './RuleListPageTitle';
 
@@ -56,7 +56,7 @@ describe('RuleListPageTitle', () => {
   });
 
   describe('with alertingListViewV2PreviewToggle enabled and alertingListViewV2 disabled', () => {
-    testWithFeatureToggles(['alertingListViewV2PreviewToggle']);
+    testWithFeatureToggles({ enable: ['alertingListViewV2PreviewToggle'] });
 
     it('should show enable v2 button', () => {
       renderRuleListPageTitle();
@@ -85,7 +85,7 @@ describe('RuleListPageTitle', () => {
   });
 
   describe('with alertingListViewV2PreviewToggle enabled and alertingListViewV2 enabled', () => {
-    testWithFeatureToggles(['alertingListViewV2PreviewToggle', 'alertingListViewV2']);
+    testWithFeatureToggles({ enable: ['alertingListViewV2PreviewToggle', 'alertingListViewV2'] });
 
     it('should show disable v2 button', () => {
       renderRuleListPageTitle();
