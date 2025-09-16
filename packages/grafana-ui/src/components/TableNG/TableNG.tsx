@@ -172,6 +172,9 @@ export function TableNG(props: TableNGProps) {
     [data.fields, initialSortBy]
   );
   const [sortColumns, setSortColumns] = useState<SortColumn[]>(initialSortColumns);
+  // FIXME: this is a bad, temporary solution just to get things working completely for now.
+  // we should not have another state variable just for a second representation of the sorted rows here.
+  const [localSortedRows, setLocalSortedRows] = useState<TableRow[]>(rows);
 
   // vt scrollbar accounting for column auto-sizing
 
@@ -276,7 +279,11 @@ export function TableNG(props: TableNGProps) {
   const commonDataGridProps = useMemo(
     () =>
       ({
-        sortRows: applySort,
+        sortRows: (...args) => {
+          const sortedRows = applySort(...args);
+          setLocalSortedRows(sortedRows);
+          return sortedRows;
+        },
         filterRows,
         enableVirtualization: enableVirtualization !== false && rowHeight !== 'auto',
         defaultColumnOptions: {
@@ -684,9 +691,7 @@ export function TableNG(props: TableNGProps) {
           ),
           renderSummaryCell: ({ row }) => (
             <SummaryCell
-              // FIXME: this needs to be sortedRows. what we actually need to do here is hook this up
-              // correctly with the bottomSummaryRows prop on DataGrid.
-              rows={rows}
+              rows={localSortedRows}
               footers={footers}
               field={field}
               colIdx={i}
@@ -713,6 +718,7 @@ export function TableNG(props: TableNGProps) {
       getCellColorInlineStyles,
       getTextColorForBackground,
       isUniformFooter,
+      localSortedRows,
       maxRowHeight,
       numFrozenColsFullyInView,
       onCellFilterAdded,
