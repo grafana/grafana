@@ -92,6 +92,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     hint: css({
       marginRight: theme.spacing(1),
+      marginBottom: theme.spacing(1),
     }),
   };
 };
