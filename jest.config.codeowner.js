@@ -5,13 +5,33 @@ const baseConfig = require('./jest.config.js');
 
 const CODEOWNERS_MANIFEST_FILENAMES_BY_TEAM_PATH = 'codeowners-manifest/filenames-by-team.json';
 
+/**
+ * Create a filesystem-safe directory structure for different owner types
+ * @param {string} owner - CODEOWNERS owner (username, team, or email)
+ * @returns {string} Directory path relative to coverage/by-team/
+ */
+function createOwnerDirectory(owner) {
+  if (owner.includes('@') && owner.includes('/')) {
+    // Example: @grafana/dataviz-squad
+    const [org, team] = owner.substring(1).split('/');
+    return `teams/${org}/${team}`;
+  } else if (owner.startsWith('@')) {
+    // Example: @jesdavpet
+    return `users/${owner.substring(1)}`;
+  } else {
+    // Example: user@domain.tld
+    const [user, domain] = owner.split('@');
+    return `emails/${user}-at-${domain}`;
+  }
+}
+
 const teamName = process.env.TEAM_NAME;
 if (!teamName) {
   console.error('ERROR: TEAM_NAME environment variable is required');
   process.exit(1);
 }
 
-const outputDir = `./coverage/by-team/${teamName.replace(/[@\/]/g, '-')}`;
+const outputDir = `./coverage/by-team/${createOwnerDirectory(teamName)}`;
 
 const codeownersFilePath = path.join(__dirname, CODEOWNERS_MANIFEST_FILENAMES_BY_TEAM_PATH);
 let teamFiles = [];
