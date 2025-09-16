@@ -5,6 +5,7 @@ import {
   FieldType,
   identityOverrideProcessor,
   PanelPlugin,
+  SelectableValue,
   VizOrientation,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -19,6 +20,7 @@ import { TickSpacingEditor } from './TickSpacingEditor';
 import { changeToBarChartPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
+import { common } from 'app/plugins/datasource/azuremonitor/components/TracesQueryEditor/consts';
 // import { Data } from 'ol/DataTile';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
@@ -206,9 +208,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         path: 'clusteredStacking',
         name: 'Stack clusters',
         settings: {
-          options: getGraphFieldOptions().stacking,
+          options: getGraphFieldOptions().stacking
         },
-        defaultValue: defaultOptions.stacking,
+        defaultValue: StackingMode.None,
         showIf: (c) => {
           return c.groupByField !== "" && c.groupByField !== undefined; // only show if no group field is selected
         },

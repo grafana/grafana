@@ -714,7 +714,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
   function prepData(frames: DataFrame[], stackingGroups: StackingGroup[]) {
     alignedTotals = null;
     return preparePlotData2(frames[0], stackingGroups, 
-      // getClustersFromArray(Array.from(frames[0].fields[groupByFieldIdx === -1 ? 0 : groupByFieldIdx].values), groupByField),
+      getClustersFromArray(Array.from(frames[0].fields[groupByFieldIdx === -1 ? 0 : groupByFieldIdx].values), groupByField),
       ({ totals }) => { alignedTotals = totals; });
   }
 

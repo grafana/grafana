@@ -156,9 +156,18 @@ export function getStackingGroups(frame: DataFrame) {
 export function preparePlotData2(
   frame: DataFrame,
   stackingGroups: StackingGroup[],
-  onStackMeta?: (meta: StackMeta) => void
+  clusters?: number[],
+  onStackMeta?: (meta: StackMeta) => void,
 ): AlignedData {
   let data = Array(frame.fields.length);
+
+  // // TODO remove, testing
+  // let data = Array(3);
+  // data[0] = Array.from(['A','B','C']);
+  // data[1] = Array.from([10,4,8]);
+  // data[2] = Array.from([15,4,8]);
+  // return data;
+  
 
   let stacksQty = stackingGroups.length;
 
@@ -168,6 +177,12 @@ export function preparePlotData2(
   let accums = Array.from({ length: stacksQty }, () => zeroArr.slice());
 
   let anyValsAtX = Array.from({ length: stacksQty }, () => falseArr.slice());
+
+  // if (clusters && dataLen !== clusters.length) { // clustering is enabled
+  //   const clusterLength = clusters.length;
+  //   zeroArr = stacksQty > 0 ? Array(clusterLength).fill(0) : [];
+  //   accums = Array.from({ length: stacksQty }, () => zeroArr.slice());
+  // }
 
   // figure out at which time indices each stacking group has any values
   // (needed to avoid absorbing initial accum 0s at unrelated joined timestamps)
@@ -225,10 +240,37 @@ export function preparePlotData2(
     }
 
     let stackingMode = custom.stacking?.mode;
+    let clusteredStackingMode = custom.clusteredStacking?.mode;
 
-    if (!stackingMode || stackingMode === StackingMode.None) {
+    if ((!stackingMode || stackingMode === StackingMode.None) && (!clusteredStackingMode || clusteredStackingMode === StackingMode.None)) {
       data[i] = vals;
+    } else if (!clusteredStackingMode || clusteredStackingMode === StackingMode.None){
+      let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
+
+      let accum = accums[stackIdx];
+      let groupValsAtX = anyValsAtX[stackIdx];
+      let stacked = (data[i] = Array(dataLen));
+
+      for (let i = 0; i < dataLen; i++) {
+        let v = vals[i];
+
+        if (v != null) {
+          stacked[i] = accum[i] += v;
+        } else {
+          stacked[i] = groupValsAtX[i] ? accum[i] : v;
+        }
+      }
     } else {
+      // const clusterCount = clusters.length;
+      // let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
+
+      // let accum = accums[stackIdx]; // accumulated values
+      // let groupValsAtX = anyValsAtX[stackIdx];
+      // let stacked = (data[i]) = Array();
+
+      // let clusterIdx = 0;
+
+      // TODO change into stacking for clusters
       let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
 
       let accum = accums[stackIdx];
@@ -265,7 +307,7 @@ export function preparePlotData2(
     }
 
     let stackingMode = field.config.custom?.stacking?.mode;
-
+    
     if (stackingMode === StackingMode.Percent) {
       let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
       let accum = accums[stackIdx];

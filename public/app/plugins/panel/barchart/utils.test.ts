@@ -77,7 +77,7 @@ function mockDataFrame() {
   df1.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
   df2.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
-  const info = prepSeries([df1], fieldConfig, StackingMode.None, createTheme());
+  const info = prepSeries([df1], fieldConfig, StackingMode.None, StackingMode.None, createTheme());
 
   if (info.series.length === 0) {
     throw new Error('Bar chart not prepared correctly');
@@ -170,7 +170,7 @@ describe('BarChart utils', () => {
 
   describe('prepareGraphableFrames', () => {
     it('will return empty string when there are no frames in the response', () => {
-      const info = prepSeries([], fieldConfig, StackingMode.None, createTheme());
+      const info = prepSeries([], fieldConfig, StackingMode.None, StackingMode.None,createTheme());
 
       expect(info.warn).toBe('');
       expect(info.series).toHaveLength(0);
@@ -185,6 +185,7 @@ describe('BarChart utils', () => {
           },
         ],
         fieldConfig,
+        StackingMode.None,
         StackingMode.None,
         createTheme()
       );
@@ -202,7 +203,7 @@ describe('BarChart utils', () => {
       });
       df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
-      const info = prepSeries([df], fieldConfig, StackingMode.None, createTheme());
+      const info = prepSeries([df], fieldConfig, StackingMode.None, StackingMode.None,createTheme());
       const warning = assertIsDefined('warn' in info ? info : null);
       expect(warning.warn).toEqual('Bar charts require a string or time field');
     });
@@ -216,7 +217,7 @@ describe('BarChart utils', () => {
       });
       df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
-      const info = prepSeries([df], fieldConfig, StackingMode.None, createTheme());
+      const info = prepSeries([df], fieldConfig, StackingMode.None,StackingMode.None, createTheme());
       const warning = assertIsDefined('warn' in info ? info : null);
       expect(warning.warn).toEqual('No numeric fields found');
     });
@@ -230,7 +231,7 @@ describe('BarChart utils', () => {
       });
       df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
-      const info = prepSeries([df], fieldConfig, StackingMode.None, createTheme());
+      const info = prepSeries([df], fieldConfig, StackingMode.None,StackingMode.None, createTheme());
 
       const field = info.series[0].fields[1];
       expect(field.values).toMatchInlineSnapshot(`
@@ -255,7 +256,7 @@ describe('BarChart utils', () => {
       });
       df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
-      const info = prepSeries([df], fieldConfig, StackingMode.Percent, createTheme());
+      const info = prepSeries([df], fieldConfig, StackingMode.Percent,StackingMode.None, createTheme());
 
       expect(info.series[0].fields[0].config.unit).toBeUndefined();
       expect(info.series[0].fields[1].config.unit).toBeUndefined();
@@ -267,7 +268,7 @@ describe('BarChart utils', () => {
       const df = createDataFrame({
         fields: [],
       });
-      const info = prepSeries([df], fieldConfig, StackingMode.Percent, createTheme());
+      const info = prepSeries([df], fieldConfig, StackingMode.Percent, StackingMode.None,createTheme());
       const groupByField = "testField"
       expect(getClustersFromField(info.series, groupByField)).toEqual([]);
     });
@@ -283,7 +284,7 @@ describe('BarChart utils', () => {
       });
       df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
-      const info = prepSeries([df], fieldConfig, StackingMode.Percent, createTheme());
+      const info = prepSeries([df], fieldConfig, StackingMode.Percent,StackingMode.None, createTheme());
       expect(getClustersFromField(info.series, undefined)).toEqual([]);
       expect(getClustersFromField(info.series, "")).toEqual([]);
       expect(getClustersFromField(info.series, "non-existent")).toEqual([]);
@@ -299,7 +300,7 @@ describe('BarChart utils', () => {
         ],
       });
       df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
-      const info = prepSeries([df], fieldConfig, StackingMode.Percent, createTheme());
+      const info = prepSeries([df], fieldConfig, StackingMode.Percent, StackingMode.None,createTheme());
       expect(getClustersFromField(info.series, "station")).toEqual([2,2]);
     });
     it('should return correct clusters for a large amount of fields', () => {
@@ -312,7 +313,7 @@ describe('BarChart utils', () => {
         ],
       });
       df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
-      const info = prepSeries([df], fieldConfig, StackingMode.Percent, createTheme());
+      const info = prepSeries([df], fieldConfig, StackingMode.Percent, StackingMode.None,createTheme());
       expect(getClustersFromField(info.series, "station")).toEqual([3,2,3,3,2,2,2,2,2,2,2,2,2,2]);
     });
   });
@@ -327,7 +328,7 @@ describe('BarChart utils', () => {
         ],
       });
       df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
-      const info = prepSeries([df], fieldConfig, StackingMode.Percent, createTheme());
+      const info = prepSeries([df], fieldConfig, StackingMode.Percent, StackingMode.None,createTheme());
       const distinctValues = getDistinctValuesFromField(info.series[0].fields[0]);
       expect(distinctValues.length).toEqual(14);
       expect(distinctValues).toEqual(['ML01','ML02_5','ML02','ML03','ML04','ML06','ML07_5','ML07','ML08','PB01','PB02','PB03','PB04','PB05']);

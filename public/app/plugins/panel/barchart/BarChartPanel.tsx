@@ -40,6 +40,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     groupWidth,
     groupByField,
     stacking,
+    clusteredStacking,
     legend,
     tooltip,
     text,
@@ -71,8 +72,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
 
       
   const info = useMemo(
-    () => prepSeries(data.series, fieldConfig, stacking, theme, xField, colorByField),
-    [data.series, fieldConfig, stacking, theme, xField, colorByField]
+    () => prepSeries(data.series, fieldConfig, stacking, clusteredStacking, theme, xField, colorByField),
+    [data.series, fieldConfig, stacking, clusteredStacking, theme, xField, colorByField]
   );
 
   const vizSeries = useMemo(

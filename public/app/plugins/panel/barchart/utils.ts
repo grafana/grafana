@@ -54,6 +54,7 @@ export function prepSeries(
   frames: DataFrame[],
   fieldConfig: FieldConfigSource,
   stacking: StackingMode,
+  clusteredStacking: StackingMode,
   theme: GrafanaTheme2,
   xFieldName?: string,
   colorFieldName?: string
@@ -115,7 +116,7 @@ export function prepSeries(
                 },
                 clusteredStacking: {
                   cluster: '_',
-                  mode: stacking,
+                  mode: clusteredStacking,
                 }
               },
             },
