@@ -64,7 +64,6 @@ export function useSaveDashboard(isCopy = false) {
         appEvents.publish(new DashboardSavedEvent());
         notifyApp.success(t('dashboard-scene.use-save-dashboard.message-dashboard-saved', 'Dashboard saved'));
 
-         
         updateDashboardUidLastUsedDatasource(resultData.uid);
 
         if (isCopy) {
