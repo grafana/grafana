@@ -14,12 +14,12 @@ export const testWithFeatureToggles = ({
   const originalToggles = { ...config.featureToggles };
 
   beforeEach(() => {
-    enable?.forEach((featureToggle) => {
+    for (const featureToggle of enable || []) {
       config.featureToggles[featureToggle] = true;
-    });
-    disable?.forEach((featureToggle) => {
+    }
+    for (const featureToggle of disable || []) {
       config.featureToggles[featureToggle] = false;
-    });
+    }
   });
 
   afterEach(() => {
@@ -35,12 +35,12 @@ export const testWithLicenseFeatures = ({ enable, disable }: { enable?: string[]
   beforeEach(() => {
     config.licenseInfo.enabledFeatures = config.licenseInfo.enabledFeatures || {};
 
-    enable?.forEach((feature) => {
+    for (const feature of enable || []) {
       config.licenseInfo.enabledFeatures[feature] = true;
-    });
-    disable?.forEach((feature) => {
+    }
+    for (const feature of disable || []) {
       config.licenseInfo.enabledFeatures[feature] = false;
-    });
+    }
   });
 
   afterEach(() => {
