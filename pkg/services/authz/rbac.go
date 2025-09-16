@@ -180,6 +180,16 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 		grpc.WithChainStreamInterceptor(streamInterceptors...),
 	}
 
+	// // if we serve the client as a load balancer
+	if clientCfg.loadBalancingEnabled {
+		// Use round_robin to balances requests more evenly over the available Grafana replicas.
+		opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy": "round_robin"}`))
+
+		// Disable looking up service config from TXT DNS records.
+		// This reduces the number of requests made to the DNS servers.
+		opts = append(opts, grpc.WithDisableServiceConfig())
+	}
+
 	conn, err := grpc.NewClient(clientCfg.remoteAddress, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create authz client to remote server: %w", err)

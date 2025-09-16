@@ -31,6 +31,13 @@ listen = false
 mode = "inproc"
 ```
 
+For load balancing you would want to enable the load balancing configuration. This sets sane default for multiple pods to be evenly distributed with load across the different pods.
+
+```ini
+[authorization]
+load_balancing_enabled = true
+```
+
 ### Example
 
 Here is an example to connect the authorization client to a remote grpc server.
