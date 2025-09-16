@@ -756,6 +756,8 @@ func Test_isPathWithinRoot(t *testing.T) {
 	}
 }
 
+const buildVersion = "1.2.3-456"
+
 func setupBleveBackend(t *testing.T, fileThreshold int, cacheTTL time.Duration, dir string) (*bleveBackend, prometheus.Gatherer) {
 	if dir == "" {
 		dir = t.TempDir()
@@ -768,6 +770,7 @@ func setupBleveBackend(t *testing.T, fileThreshold int, cacheTTL time.Duration, 
 		FileThreshold: int64(fileThreshold),
 		IndexCacheTTL: cacheTTL,
 		Logger:        slog.New(logtest.NewNopHandler(t)),
+		BuildVersion:  buildVersion,
 	}, tracing.NewNoopTracerService(), metrics)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
@@ -1396,6 +1399,24 @@ func TestIndexUpdateWithErrors(t *testing.T) {
 		_, err = idx.UpdateIndex(ctx, "test")
 		require.ErrorIs(t, err, context.Canceled)
 	})
+}
+
+func TestIndexBuildInfo(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	be, _ := setupBleveBackend(t, 100, 1*time.Minute, "")
+	index, err := be.BuildIndex(t.Context(), ns, 10, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
+	require.NoError(t, err)
+
+	buildInfo, err := getBuildInfo(index.(*bleveIndex).index)
+	require.NoError(t, err)
+	require.NotNil(t, buildInfo)
+	require.Equal(t, buildVersion, buildInfo.BuildVersion)
+	require.InDelta(t, float64(time.Now().Unix()), buildInfo.BuildTime, 30) // allow 30 seconds of drift
 }
 
 func searchTitle(t *testing.T, idx resource.ResourceIndex, query string, limit int, ns resource.NamespacedResource) *resourcepb.ResourceSearchResponse {
