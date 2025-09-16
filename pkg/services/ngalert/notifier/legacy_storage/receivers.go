@@ -1,6 +1,7 @@
 package legacy_storage
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 
@@ -78,13 +79,21 @@ func (rev *ConfigRevision) ReceiverNameUsedByRoutes(name string) bool {
 }
 
 // ReceiverUseByName returns a map of receiver names to the number of times they are used in routes.
-func (rev *ConfigRevision) ReceiverUseByName() map[string]int {
-	m := make(map[string]int)
-	receiverUseCounts([]*definitions.Route{rev.Config.AlertmanagerConfig.Route}, m)
-	return m
+func (rev *ConfigRevision) ReceiverUseByName(includeImported bool) (map[string]int, error) {
+	cfg := rev.Config.AlertmanagerConfig
+	if includeImported {
+		merged, err := rev.Config.GetMergedAlertmanagerConfig()
+		if err != nil {
+			return nil, errors.Join(ErrIncludeImported, err)
+		}
+		cfg = merged.Config
+	}
+	m := make(map[string]int, len(cfg.Receivers))
+	receiverUseCounts([]*definitions.Route{cfg.Route}, m)
+	return m, nil
 }
 
-func (rev *ConfigRevision) GetReceiver(uid string, prov provenances) (*models.Receiver, error) {
+func (rev *ConfigRevision) GetReceiver(uid string, prov provenances, includeImported bool) (*models.Receiver, error) {
 	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
 		if NameToUid(r.GetName()) != uid {
 			continue
@@ -95,21 +104,55 @@ func (rev *ConfigRevision) GetReceiver(uid string, prov provenances) (*models.Re
 		}
 		return recv, nil
 	}
+	if !includeImported {
+		return nil, ErrReceiverNotFound.Errorf("")
+	}
+
+	merged, err := rev.Config.GetMergedAlertmanagerConfig()
+	if err != nil {
+		return nil, errors.Join(ErrIncludeImported, err)
+	}
+	for _, r := range merged.Config.Receivers {
+		if NameToUid(r.GetName()) != uid {
+			continue
+		}
+		recv, err := PostableApiReceiverToReceiver(r, GetReceiverProvenance(prov, r, models.ResourceOriginImported), models.ResourceOriginImported)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
+		}
+		return recv, nil
+	}
 	return nil, ErrReceiverNotFound.Errorf("")
 }
 
-func (rev *ConfigRevision) GetReceivers(uids []string, prov provenances) ([]*models.Receiver, error) {
+func (rev *ConfigRevision) GetReceivers(uids []string, prov provenances, includeImported bool) ([]*models.Receiver, error) {
+	allReceivers := rev.Config.AlertmanagerConfig.Receivers
+	var grafanaOrigin map[string]struct{}
+	if includeImported {
+		grafanaOrigin = rev.GetReceiversNames()
+		merged, err := rev.Config.GetMergedAlertmanagerConfig()
+		if err != nil {
+			return nil, errors.Join(ErrIncludeImported, err)
+		}
+		allReceivers = merged.Config.Receivers
+	}
 	capacity := len(uids)
 	if capacity == 0 {
-		capacity = len(rev.Config.AlertmanagerConfig.Receivers)
+		capacity = len(allReceivers)
 	}
 	receivers := make([]*models.Receiver, 0, capacity)
-	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
+	for _, r := range allReceivers {
 		uid := NameToUid(r.GetName())
 		if len(uids) > 0 && !slices.Contains(uids, uid) {
 			continue
 		}
-		recv, err := PostableApiReceiverToReceiver(r, GetReceiverProvenance(prov, r, models.ResourceOriginGrafana), models.ResourceOriginGrafana)
+		origin := models.ResourceOriginGrafana
+		if includeImported {
+			if _, exists := grafanaOrigin[uid]; !exists {
+				origin = models.ResourceOriginImported
+			}
+		}
+		recv, err := PostableApiReceiverToReceiver(r, GetReceiverProvenance(prov, r, origin), origin)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
 		}

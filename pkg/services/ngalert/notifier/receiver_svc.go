@@ -55,6 +55,7 @@ type ReceiverService struct {
 	provenanceValidator    validation.ProvenanceStatusTransitionValidator
 	resourcePermissions    ac.ReceiverPermissionsService
 	tracer                 tracing.Tracer
+	includeImported        bool
 }
 
 type alertRuleNotificationSettingsStore interface {
@@ -201,9 +202,15 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 		return nil, err
 	}
 
-	receivers, err := revision.GetReceivers(uids, prov)
+	receivers, err := revision.GetReceivers(uids, prov, rs.includeImported)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, legacy_storage.ErrIncludeImported) {
+			rs.log.FromContext(ctx).Warn("Unable to include imported receivers. Read only Grafana receivers", "err", err)
+			receivers, err = revision.GetReceivers(uids, prov, false)
+		}
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	span.AddEvent("Loaded receivers", trace.WithAttributes(
@@ -513,7 +520,15 @@ func (rs *ReceiverService) InUseMetadata(ctx context.Context, orgID int64, recei
 	if err != nil {
 		return nil, err
 	}
-	receiverUses := revision.ReceiverUseByName()
+	receiverUses, err := revision.ReceiverUseByName(rs.includeImported)
+	if err != nil {
+		if errors.Is(err, legacy_storage.ErrIncludeImported) && rs.includeImported {
+			receiverUses, err = revision.ReceiverUseByName(false)
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	q := models.ListNotificationSettingsQuery{OrgID: orgID}
 	if len(receivers) == 1 {
@@ -732,9 +747,13 @@ func (rs *ReceiverService) getReceiverByUID(ctx context.Context, orgID int64, ui
 	if err != nil {
 		return nil, err
 	}
-	rcv, err := revision.GetReceiver(uid, prov)
+	rcv, err := revision.GetReceiver(uid, prov, rs.includeImported)
 	if err == nil {
 		return rcv, nil
+	}
+	if errors.Is(err, legacy_storage.ErrIncludeImported) && rs.includeImported {
+		rs.log.FromContext(ctx).Warn("Unable to include imported receivers. Read only Grafana receivers", "err", err)
+		return revision.GetReceiver(uid, prov, false)
 	}
 	return nil, err
 }

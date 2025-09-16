@@ -1,6 +1,10 @@
 package legacy_storage
 
-import "github.com/grafana/grafana/pkg/apimachinery/errutil"
+import (
+	"errors"
+
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+)
 
 var (
 	ErrNoAlertmanagerConfiguration  = errutil.Internal("alerting.notification.configMissing", errutil.WithPublicMessage("No alertmanager configuration present in this organization"))
@@ -12,6 +16,7 @@ var (
 		"Invalid receiver: '{{ .Public.Reason }}'",
 		errutil.WithPublic("Invalid receiver: '{{ .Public.Reason }}'"),
 	)
+	ErrIncludeImported = errors.New("failed to merge imported configuration")
 )
 
 func makeErrBadAlertmanagerConfiguration(err error) error {
