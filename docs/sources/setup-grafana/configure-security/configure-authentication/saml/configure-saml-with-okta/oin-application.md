@@ -20,6 +20,13 @@ The Grafana Labs application can be found in the <a href="https://www.okta.com/i
 - Grafana Enterprise or a paid Grafana Cloud account.
 - Admin privileges in both Grafana and Okta.
 
+## Supported Features
+
+- SAML Single Sign-On (SSO)
+- SAML Attribute Mapping
+- SAML Group Mapping
+- SAML External ID Mapping for SCIM provisioning
+
 ## Configure SAML using the OIN application
 
 ### At the Okta Integration Network catalog
