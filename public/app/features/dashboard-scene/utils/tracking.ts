@@ -18,27 +18,18 @@ export interface DashboardCreatedProps {
   [key: string]: unknown;
 }
 
-export function isV2TrackingInfo(
-  t: DashboardTrackingInfo & DashboardV2TrackingInfo
-): t is DashboardV2TrackingInfo & DashboardTrackingInfo {
-  return 'autoLayoutCount' in t;
-}
-
 export function trackDashboardSceneCreatedOrSaved(
   name: 'created' | 'saved',
   dashboard: DashboardScene,
   initialProperties: DashboardCreatedProps
 ) {
   const trackingInformation = dashboard.getTrackingInformation();
-  const v2TrackingFields =
-    trackingInformation && isV2TrackingInfo(trackingInformation)
-      ? {
-          numPanels: trackingInformation.panels_count,
-          conditionalRenderRules: trackingInformation.conditionalRenderRulesCount,
-          autoLayout: trackingInformation.autoLayoutCount,
-          customGridLayout: trackingInformation.customGridLayoutCount,
-        }
-      : {};
+  const v2TrackingFields = {
+    numPanels: trackingInformation?.panels_count,
+    conditionalRenderRules: trackingInformation?.conditionalRenderRulesCount,
+    autoLayout: trackingInformation?.autoLayoutCount,
+    customGridLayout: trackingInformation?.customGridLayoutCount,
+  };
 
   DashboardInteractions.dashboardCreatedOrSaved(name, {
     ...initialProperties,
