@@ -6,22 +6,16 @@ import { isFetchError } from '@grafana/runtime';
 import { VizConfigBuilders } from '@grafana/scenes';
 import { VizPanel, useDataTransformer, useQueryRunner } from '@grafana/scenes-react';
 import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
-import { Alert, Box, Drawer, Stack, Text } from '@grafana/ui';
+import { Alert, Box, Drawer, Stack } from '@grafana/ui';
 import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { isExpressionQuery } from '../../../../expressions/guards';
 import { AlertLabels } from '../../components/AlertLabels';
+import { getThresholdsForQueries } from '../../components/rule-editor/util';
 import { useCombinedRule } from '../../hooks/useCombinedRule';
 import { stringifyErrorLike } from '../../utils/misc';
-
-// Visualization config for query charts
-const queryChartConfig = VizConfigBuilders.timeseries()
-  .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
-  .setCustomFieldConfig('showPoints', VisibilityMode.Auto)
-  .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
-  .setOption('legend', { showLegend: false, displayMode: LegendDisplayMode.Hidden })
-  .build();
+import { rulerRuleType } from '../../utils/rules';
 
 interface InstanceDetailsDrawerProps {
   ruleUID: string;
@@ -32,9 +26,10 @@ interface InstanceDetailsDrawerProps {
 interface QueryVisualizationProps {
   query: AlertQuery;
   instanceLabels: Labels;
+  thresholds?: ReturnType<typeof getThresholdsForQueries>;
 }
 
-function QueryVisualization({ query, instanceLabels }: QueryVisualizationProps) {
+function QueryVisualization({ query, instanceLabels, thresholds }: QueryVisualizationProps) {
   // Convert query to range query for visualization
   const visualizationQuery = useMemo(() => {
     const model = { ...query.model, refId: query.refId };
@@ -88,13 +83,31 @@ function QueryVisualization({ query, instanceLabels }: QueryVisualizationProps) 
     transformations,
   });
 
+  // Create visualization config with thresholds if available
+  const vizConfig = useMemo(() => {
+    const baseConfig = VizConfigBuilders.timeseries()
+      .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
+      .setCustomFieldConfig('showPoints', VisibilityMode.Auto)
+      .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+      .setOption('legend', { showLegend: false, displayMode: LegendDisplayMode.Hidden });
+
+    // Apply thresholds if available for this query
+    const queryThresholds = thresholds?.[query.refId];
+    if (queryThresholds) {
+      baseConfig
+        .setThresholds(queryThresholds.config)
+        .setCustomFieldConfig('thresholdsStyle', { mode: queryThresholds.mode });
+    }
+
+    return baseConfig.build();
+  }, [query.refId, thresholds]);
+
   return (
     <Box key={query.refId} height={36}>
       <VizPanel
-        title=""
-        viz={queryChartConfig}
+        title={query.refId}
+        viz={vizConfig}
         dataProvider={filteredDataProvider}
-        hoverHeader={true}
         displayMode="transparent"
         collapsible={false}
       />
@@ -128,6 +141,20 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
     }
 
     return rule.rulerRule.grafana_alert.data.filter((query: AlertQuery) => !isExpressionQuery(query.model));
+  }, [rule]);
+
+  // Extract threshold definitions from expression queries
+  const thresholds = useMemo(() => {
+    const rulerRule = rule?.rulerRule;
+    const grafanaRule = rulerRuleType.grafana.rule(rulerRule) ? rulerRule : undefined;
+    if (!grafanaRule) {
+      return {};
+    }
+
+    const allQueries = grafanaRule.grafana_alert.data;
+    const condition = grafanaRule.grafana_alert.condition;
+
+    return getThresholdsForQueries(allQueries, condition);
   }, [rule]);
 
   if (error) {
@@ -167,6 +194,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
                   key={query.refId || `query-${index}`}
                   query={query}
                   instanceLabels={instanceLabels}
+                  thresholds={thresholds}
                 />
               ))}
             </Stack>
