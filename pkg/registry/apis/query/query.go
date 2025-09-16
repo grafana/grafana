@@ -267,17 +267,17 @@ func prepareQuery(
 			q.Datasource = dsRef
 		}
 
-		jb, merr := json.Marshal(q)
-		if merr != nil {
-			connectLogger.Error("error marshalling query", "err", merr)
-			continue
+		jsonBytes, err := json.Marshal(q)
+		if err != nil {
+			connectLogger.Error("error marshalling query", "err", err)
 		}
-		sj, uerr := simplejson.NewJson(jb)
-		if uerr != nil {
-			connectLogger.Error("error creating simplejson for query", "err", uerr)
-			continue
+
+		sjQuery, err := simplejson.NewJson(jsonBytes)
+		if err != nil {
+			connectLogger.Error("error creating simplejson for query", "err", err)
 		}
-		jsonQueries = append(jsonQueries, sj)
+
+		jsonQueries = append(jsonQueries, sjQuery)
 	}
 
 	mReq := dtos.MetricRequest{
@@ -286,46 +286,52 @@ func prepareQuery(
 		Queries: jsonQueries,
 	}
 
-	cache := &MyCacheService{legacy: b.legacyDatasourceLookup}
+	cache := &MyCacheService{
+		legacy: b.legacyDatasourceLookup,
+	}
 	headers := ExtractKnownHeaders(httpreq.Header)
 
-	// Instance, settings, and logger
-	inst, err := b.instanceProvider.GetInstance(ctx, headers)
+	instance, err := b.instanceProvider.GetInstance(ctx, headers)
 	if err != nil {
 		connectLogger.Error("failed to get instance configuration settings", "err", err)
 		return nil, err
 	}
-	instCfg := inst.GetSettings()
-	lg := inst.GetLogger(connectLogger)
 
-	// Datasource client builder
-	builder := dsquerierclient.NewQsDatasourceClientBuilderWithInstance(inst, ctx, lg)
+	instanceConfig := instance.GetSettings()
+	dsQuerierLoggerWithSlug := instance.GetLogger(connectLogger)
+
+	// Datasource client qsDsClientBuilder
+	qsDsClientBuilder := dsquerierclient.NewQsDatasourceClientBuilderWithInstance(
+		instance,
+		ctx,
+		dsQuerierLoggerWithSlug,
+	)
 
 	// Expressions service
-	exprSvc := expr.ProvideService(
+	exprService := expr.ProvideService(
 		&setting.Cfg{
-			ExpressionsEnabled:            instCfg.ExpressionsEnabled,
-			SQLExpressionCellLimit:        instCfg.SQLExpressionCellLimit,
-			SQLExpressionOutputCellLimit:  instCfg.SQLExpressionOutputCellLimit,
-			SQLExpressionTimeout:          instCfg.SQLExpressionTimeout,
-			SQLExpressionQueryLengthLimit: instCfg.SQLExpressionQueryLengthLimit,
+			ExpressionsEnabled:            instanceConfig.ExpressionsEnabled,
+			SQLExpressionCellLimit:        instanceConfig.SQLExpressionCellLimit,
+			SQLExpressionOutputCellLimit:  instanceConfig.SQLExpressionOutputCellLimit,
+			SQLExpressionTimeout:          instanceConfig.SQLExpressionTimeout,
+			SQLExpressionQueryLengthLimit: instanceConfig.SQLExpressionQueryLengthLimit,
 		},
 		nil, // plugins.Client
 		nil, // *plugincontext.Provider
-		instCfg.FeatureToggles,
-		nil,      // prometheus.Registerer
-		b.tracer, // tracing.Tracer
-		builder,  // dsquerierclient.QSDatasourceClientBuilder
+		instanceConfig.FeatureToggles,
+		nil,               // prometheus.Registerer
+		b.tracer,          // tracing.Tracer
+		qsDsClientBuilder, // dsquerierclient.QSDatasourceClientBuilder
 	)
 
 	return &preparedQuery{
 		mReq:          mReq,
 		cache:         cache,
 		headers:       headers,
-		logger:        lg,
-		builder:       builder,
-		exprSvc:       exprSvc,
-		reportMetrics: func() { inst.ReportMetrics() },
+		logger:        dsQuerierLoggerWithSlug,
+		builder:       qsDsClientBuilder,
+		exprSvc:       exprService,
+		reportMetrics: func() { instance.ReportMetrics() },
 	}, nil
 }
 
