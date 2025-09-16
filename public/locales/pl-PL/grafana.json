@@ -156,8 +156,11 @@
       "title": "Skorzystaj z Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Przetestuj mapowanie użytkowników",
-      "test-mapping-run-button": "Uruchom"
+      "test-mapping-run-button": "Uruchom",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -9291,7 +9294,8 @@
       "disable-button": "Wyłącz",
       "discard-button": "Odrzuć",
       "save-and-enable-button": "Zapisz i włącz",
-      "save-button": "Zapisz"
+      "save-button": "Zapisz",
+      "test-button": ""
     },
     "documentation": "dokumentacja",
     "host": {
@@ -12906,6 +12910,7 @@
     "description-column-filter": "Włącza/wyłącza filtry pól w tabeli",
     "description-frozen-columns": "",
     "description-min-column-width": "Minimalna szerokość dla automatycznej zmiany rozmiaru kolumny",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Alternatywny tekst wyświetlany, jeśli obraz nie może być wyświetlony, lub w przypadku użytkowników korzystających z czytnika ekranu",
@@ -12936,6 +12941,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minimalna szerokość kolumny",
     "name-show-table-header": "Pokaż nagłówek tabeli",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Zawijaj tekst nagłówka",
