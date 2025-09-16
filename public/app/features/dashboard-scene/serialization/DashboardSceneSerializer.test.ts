@@ -673,7 +673,7 @@ describe('DashboardSceneSerializer', () => {
         expect(serializer.getTrackingInformation(dashboard)).toBe(undefined);
       });
 
-      it('provides dashboard tracking information with from initial save model', () => {
+      it('provides dashboard tracking information from initial save model', () => {
         const dashboard = setupV2(nestedDashboard as Partial<DashboardV2Spec>);
 
         expect(dashboard.getTrackingInformation()).toEqual({
