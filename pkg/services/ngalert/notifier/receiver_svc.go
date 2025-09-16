@@ -286,14 +286,17 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 
 	existing, err := revision.GetReceiver(uid, prov)
 	if err != nil {
-		if errors.Is(err, legacy_storage.ErrReceiverNotFound) {
-			return nil
+		if !errors.Is(err, legacy_storage.ErrReceiverNotFound) {
+			return err
 		}
-		return err
-	}
-
-	if existing.Origin != models.ResourceOriginGrafana {
-		return makeErrReceiverOrigin(existing, "delete")
+		if rs.includeImported {
+			// try to get the imported receiver and return a specific error if it exists
+			result := rs.getImportedReceivers(ctx, span, []string{uid}, revision)
+			if len(result) > 0 {
+				return makeErrReceiverOrigin(result[0], "delete")
+			}
+		}
+		return nil
 	}
 
 	logger := rs.log.FromContext(ctx).New("receiver", existing.Name, "uid", uid, "version", version, "integrations", existing.GetIntegrationTypes())
@@ -411,6 +414,10 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		attribute.StringSlice("integrations", r.GetIntegrationTypes()),
 	))
 	defer span.End()
+	// check origin of the provided receiver
+	if r.Origin != models.ResourceOriginGrafana {
+		return nil, makeErrReceiverOrigin(r, "update")
+	}
 
 	if err := rs.authz.AuthorizeUpdate(ctx, user, r); err != nil {
 		return nil, err
@@ -431,6 +438,13 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 
 	existing, err := revision.GetReceiver(r.GetUID(), prov)
 	if err != nil {
+		if errors.Is(err, legacy_storage.ErrReceiverNotFound) && rs.includeImported {
+			// try to get the imported receiver and return a specific error if it exists
+			result := rs.getImportedReceivers(ctx, span, []string{r.GetUID()}, revision)
+			if len(result) > 0 {
+				return nil, makeErrReceiverOrigin(result[0], "update")
+			}
+		}
 		return nil, err
 	}
 
@@ -454,10 +468,6 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	err = rs.checkOptimisticConcurrency(existing, r.Version)
 	if err != nil {
 		return nil, err
-	}
-
-	if existing.Origin != models.ResourceOriginGrafana {
-		return nil, makeErrReceiverOrigin(existing, "update")
 	}
 
 	if err := rs.provenanceValidator(existing.Provenance, r.Provenance); err != nil {
