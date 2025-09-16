@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
 import { startTransition, useCallback, useMemo, useRef, useState } from 'react';
 
-import { DataFrameType, GrafanaTheme2, store } from '@grafana/data';
+import { TimeRange, DataFrameType, GrafanaTheme2, store } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { ControlledCollapse, useStyles2 } from '@grafana/ui';
 
@@ -18,13 +18,19 @@ interface LogLineDetailsComponentProps {
   log: LogListModel;
   logOptionsStorageKey?: string;
   logs: LogListModel[];
+  timeRange: TimeRange;
 }
 
-export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: LogLineDetailsComponentProps) => {
+export const LogLineDetailsComponent = ({
+  log,
+  logOptionsStorageKey,
+  logs,
+  timeRange,
+}: LogLineDetailsComponentProps) => {
   const [search, setSearch] = useState('');
   const inputRef = useRef('');
   const styles = useStyles2(getStyles);
-  const extensionLinks = useAttributesExtensionLinks(log);
+  const extensionLinks = useAttributesExtensionLinks(log, timeRange);
   const fieldsWithLinks = useMemo(() => {
     const fieldsWithLinks = log.fields.filter((f) => f.links?.length);
     const displayedFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex !== log.entryFieldIndex).sort();

@@ -464,6 +464,7 @@ const LogListComponent = ({
           logOptionsStorageKey={logOptionsStorageKey}
           logs={filteredLogs}
           onResize={handleLogDetailsResize}
+          timeRange={timeRange}
         />
       )}
       {showControls && <LogListControls eventBus={eventBus} />}

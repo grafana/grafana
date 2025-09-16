@@ -1036,6 +1036,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onLogOptionsChange={onLogOptionsChange}
                   hasUnescapedContent={hasUnescapedContent}
                   filterLevels={filterLevels}
+                  timeRange={props.range}
                 />
               </div>
             )}
@@ -1093,6 +1094,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                       onPinLine={onPinToContentOutlineClick}
                       pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                       renderPreview
+                      timeRange={props.range}
                     />
                   </InfiniteScroll>
                 </div>

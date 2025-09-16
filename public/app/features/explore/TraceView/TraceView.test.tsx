@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { Provider } from 'react-redux';
 
-import { DataFrame, MutableDataFrame, TimeRange } from '@grafana/data';
+import { DataFrame, MutableDataFrame } from '@grafana/data';
+import { mockTimeRange } from '@grafana/plugin-ui';
 import { DataSourceSrv, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
 
 import { configureStore } from '../../../store/configureStore';
@@ -25,7 +26,7 @@ function getTraceView(frames: DataFrame[]) {
         traceProp={transformDataFrames(frames[0])!}
         datasource={undefined}
         topOfViewRef={topOfViewRef}
-        timeRange={{} as TimeRange}
+        timeRange={mockTimeRange()}
       />
     </Provider>
   );

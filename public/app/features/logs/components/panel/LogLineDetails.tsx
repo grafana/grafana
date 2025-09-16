@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { Resizable } from 're-resizable';
 import { useCallback, useRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { getDragStyles, useStyles2 } from '@grafana/ui';
 
 import { LogLineDetailsComponent } from './LogLineDetailsComponent';
@@ -15,9 +15,10 @@ export interface Props {
   logOptionsStorageKey?: string;
   logs: LogListModel[];
   onResize(): void;
+  timeRange: TimeRange;
 }
 
-export const LogLineDetails = ({ containerElement, logOptionsStorageKey, logs, onResize }: Props) => {
+export const LogLineDetails = ({ containerElement, logOptionsStorageKey, logs, onResize, timeRange }: Props) => {
   const { detailsWidth, setDetailsWidth, showDetails } = useLogListContext();
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
@@ -48,7 +49,12 @@ export const LogLineDetails = ({ containerElement, logOptionsStorageKey, logs, o
     >
       <div className={styles.container} ref={containerRef}>
         <div className={styles.scrollContainer}>
-          <LogLineDetailsComponent log={showDetails[0]} logOptionsStorageKey={logOptionsStorageKey} logs={logs} />
+          <LogLineDetailsComponent
+            log={showDetails[0]}
+            logOptionsStorageKey={logOptionsStorageKey}
+            logs={logs}
+            timeRange={timeRange}
+          />
         </div>
       </div>
     </Resizable>
