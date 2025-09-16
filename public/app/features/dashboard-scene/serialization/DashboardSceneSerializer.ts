@@ -50,7 +50,7 @@ export interface DashboardSceneSerializerLike<T, M, I = T, E = T | { error: unkn
     }
   ) => DashboardChangeInfo;
   onSaveComplete(saveModel: T, result: SaveDashboardResponseDTO): void;
-  getTrackingInformation: (s: DashboardScene) => DashboardTrackingInfo | DashboardV2TrackingInfo | undefined;
+  getTrackingInformation: (s: DashboardScene) => (DashboardTrackingInfo & Partial<DashboardV2TrackingInfo>) | undefined;
   getSnapshotUrl: () => string | undefined;
   getPanelIdForElement: (elementId: string) => number | undefined;
   getElementIdForPanel: (panelId: number) => string | undefined;
@@ -411,12 +411,8 @@ export class V2DashboardSerializer
     return this.metadata;
   }
 
-  getTrackingInformation(s: DashboardScene): (DashboardTrackingInfo & DashboardV2TrackingInfo) | undefined {
+  getTrackingInformation(s: DashboardScene): (DashboardTrackingInfo & Partial<DashboardV2TrackingInfo>) | undefined {
     if (!this.initialSaveModel) {
-      return undefined;
-    }
-    // type guard for initialSaveModel as DashboardV2Spec
-    if (!isDashboardV2Spec(this.initialSaveModel)) {
       return undefined;
     }
 
@@ -437,7 +433,7 @@ export class V2DashboardSerializer
       panels_count: panelPluginIds.length || 0,
       settings_nowdelay: undefined,
       settings_livenow: !!this.initialSaveModel.liveNow,
-      ...getDashboardV2TrackingFields(this.initialSaveModel),
+      ...(isDashboardV2Spec(this.initialSaveModel) ? getDashboardV2TrackingFields(this.initialSaveModel) : {}),
       ...panels,
       ...variables,
     };
