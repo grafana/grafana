@@ -33,6 +33,7 @@ import {
   LogLineVirtualization,
   DEFAULT_LINE_HEIGHT,
 } from './virtualization';
+import { LogLabels } from '../LogLabels';
 
 export interface Props {
   displayedFields: string[];
@@ -118,6 +119,7 @@ const LogLineComponent = memo(
       fontSize,
       hasLogsWithErrors,
       hasSampledLogs,
+      showUniqueLabels,
       timestampResolution,
       onLogLineHover,
     } = useLogListContext();
@@ -280,6 +282,7 @@ const LogLineComponent = memo(
             logs={logs}
             log={log}
             onResize={handleLogLineResize}
+            timeRange={timeRange}
             timeZone={timeZone}
           />
         )}
