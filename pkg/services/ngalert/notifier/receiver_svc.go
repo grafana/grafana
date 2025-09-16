@@ -55,6 +55,7 @@ type ReceiverService struct {
 	provenanceValidator    validation.ProvenanceStatusTransitionValidator
 	resourcePermissions    ac.ReceiverPermissionsService
 	tracer                 tracing.Tracer
+	includeImported        bool
 }
 
 type alertRuleNotificationSettingsStore interface {
@@ -108,6 +109,7 @@ func NewReceiverService(
 	log log.Logger,
 	resourcePermissions ac.ReceiverPermissionsService,
 	tracer tracing.Tracer,
+	includeStaged bool,
 ) *ReceiverService {
 	return &ReceiverService{
 		authz:                  authz,
@@ -120,6 +122,7 @@ func NewReceiverService(
 		provenanceValidator:    validation.ValidateProvenanceRelaxed,
 		resourcePermissions:    resourcePermissions,
 		tracer:                 tracer,
+		includeImported:        includeStaged,
 	}
 }
 
@@ -149,7 +152,15 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 
 	rcv, err := revision.GetReceiver(legacy_storage.NameToUid(q.Name), prov)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, legacy_storage.ErrReceiverNotFound) && rs.includeImported {
+			imported := rs.getImportedReceivers(ctx, span, []string{legacy_storage.NameToUid(q.Name)}, revision)
+			if len(imported) > 0 {
+				rcv = imported[0]
+			}
+		}
+		if rcv == nil {
+			return nil, err
+		}
 	}
 
 	span.AddEvent("Loaded receiver", trace.WithAttributes(
@@ -215,6 +226,11 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 		attribute.String("concurrency_token", revision.ConcurrencyToken),
 		attribute.Int("count", len(receivers)),
 	))
+
+	if rs.includeImported {
+		imported := rs.getImportedReceivers(ctx, span, uids, revision)
+		receivers = append(receivers, imported...)
+	}
 
 	filterFn := rs.authz.FilterReadDecrypted
 	if !q.Decrypt {
@@ -740,4 +756,24 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 		rs.log.FromContext(ctx).Info("Updated rules and routes that use renamed receiver", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRoutes)
 	}
 	return nil
+}
+
+func (rs *ReceiverService) getImportedReceivers(ctx context.Context, span trace.Span, uids []string, revision *legacy_storage.ConfigRevision) []*models.Receiver {
+	var result []*models.Receiver
+	imported, err := revision.Imported()
+	if err == nil {
+		result, err = imported.GetReceivers(uids)
+	}
+	if err != nil {
+		rs.log.FromContext(ctx).Warn("Unable to include imported receivers. Skipping", "err", err)
+		span.RecordError(err, trace.WithAttributes(
+			attribute.String("concurrency_token", revision.ConcurrencyToken),
+		))
+	} else if len(result) > 0 { // if the list is empty, then we do not have any imported configuration
+		span.AddEvent("Loaded importedReceivers receivers", trace.WithAttributes(
+			attribute.String("concurrency_token", revision.ConcurrencyToken),
+			attribute.Int("count", len(result)),
+		))
+	}
+	return result
 }
