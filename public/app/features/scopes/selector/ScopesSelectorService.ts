@@ -1,5 +1,5 @@
 import { Scope, ScopeNode, store as storeImpl } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { getDashboardSceneInteractionProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
@@ -15,8 +15,6 @@ import {
   treeNodeAtPath,
 } from './scopesTreeUtils';
 import { NodesMap, RecentScope, RecentScopeSchema, ScopeSchema, ScopesMap, SelectedScope, TreeNode } from './types';
-import { behaviors } from '@grafana/scenes';
-import { getDashboardComponentInteractionCallback } from 'app/features/dashboard/services/DashboardProfiler';
 
 export const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
 
@@ -49,16 +47,11 @@ export interface ScopesSelectorServiceState {
 }
 
 export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServiceState> {
-  private interactionProfiler = new behaviors.SceneInteractionProfiler({
-    enableProfiling:
-      config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === 'metadata.name') !== -1,
-    onProfileComplete: getDashboardComponentInteractionCallback('metadata.name', 'dashboard.title'),
-  });
-
   constructor(
     private apiClient: ScopesApiClient,
     private dashboardsService: ScopesDashboardsService,
-    private store = storeImpl
+    private store = storeImpl,
+    private interactionProfiler: SceneInteractionProfiler = getDashboardSceneInteractionProfiler()
   ) {
     super({
       loading: false,

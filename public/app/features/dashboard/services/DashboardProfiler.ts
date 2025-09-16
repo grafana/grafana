@@ -1,8 +1,8 @@
 import { logMeasurement, reportInteraction } from '@grafana/runtime';
-import { SceneInteractionProfileEvent, SceneRenderProfiler } from '@grafana/scenes';
-import { InteractionProfileResult } from '@grafana/scenes/src/behaviors';
+import { SceneInteractionProfileEvent, SceneRenderProfiler, SceneInteractionProfiler } from '@grafana/scenes';
 
 let dashboardSceneProfiler: SceneRenderProfiler | undefined;
+let dashboardInteractionProfiler: SceneInteractionProfiler | undefined;
 
 export function getDashboardSceneProfiler() {
   if (!dashboardSceneProfiler) {
@@ -11,10 +11,17 @@ export function getDashboardSceneProfiler() {
   return dashboardSceneProfiler;
 }
 
+export function getDashboardSceneInteractionProfiler() {
+  if (!dashboardInteractionProfiler) {
+    dashboardInteractionProfiler = new SceneInteractionProfiler();
+  }
+  return dashboardInteractionProfiler;
+}
+
 export function getDashboardComponentInteractionCallback(uid: string, title: string) {
-  return (e: InteractionProfileResult) => {
+  return (e: SceneInteractionProfileEvent) => {
     const payload = {
-      duration: e.interactionDuration,
+      duration: e.duration,
       networkDuration: e.networkDuration,
       startTs: e.startTs,
       endTs: e.endTs,
@@ -22,12 +29,12 @@ export function getDashboardComponentInteractionCallback(uid: string, title: str
     };
 
     reportInteraction('dashboard_interaction', {
-      interactionType: e.interaction,
+      interactionType: e.origin,
       uid,
       ...payload,
     });
 
-    logMeasurement(`dashboard_interaction`, payload, { interactionType: e.interaction, dashboard: uid, title: title });
+    logMeasurement(`dashboard_interaction`, payload, { interactionType: e.origin, dashboard: uid, title: title });
   };
 }
 

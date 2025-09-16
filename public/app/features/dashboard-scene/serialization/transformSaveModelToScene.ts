@@ -25,6 +25,7 @@ import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
 import {
   getDashboardComponentInteractionCallback,
   getDashboardInteractionCallback,
+  getDashboardSceneInteractionProfiler,
   getDashboardSceneProfiler,
 } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -303,20 +304,15 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
       onProfileComplete: getDashboardInteractionCallback(oldModel.uid, oldModel.title),
     },
-    getDashboardSceneProfiler()
+    getDashboardSceneProfiler(),
+    getDashboardSceneInteractionProfiler()
   );
-
-  const interactionProfilerBehavior = new behaviors.SceneInteractionProfiler({
-    enableProfiling: config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
-    onProfileComplete: getDashboardComponentInteractionCallback(oldModel.uid, oldModel.title),
-  });
 
   const behaviorList: SceneObjectState['$behaviors'] = [
     new behaviors.CursorSync({
       sync: oldModel.graphTooltip,
     }),
     queryController,
-    interactionProfilerBehavior,
     registerDashboardMacro,
     registerPanelInteractionsReporter,
     new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
