@@ -4,9 +4,10 @@ import (
 	"context"
 	"slices"
 
+	"k8s.io/client-go/rest"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
