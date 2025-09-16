@@ -155,6 +155,7 @@ export const StatusHistoryPanel = ({
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
                         canExecuteActions={userCanExecuteActions}
+                        visualizationType="state-timeline"
                       />
                     );
                   }}

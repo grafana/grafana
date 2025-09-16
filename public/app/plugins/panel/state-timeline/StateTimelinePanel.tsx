@@ -142,6 +142,7 @@ export const StateTimelinePanel = ({
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
                         canExecuteActions={userCanExecuteActions}
+                        visualizationType="state-timeline"
                       />
                     );
                   }}

@@ -182,6 +182,7 @@ export const TimeSeriesPanel = ({
                       dataLinks={dataLinks}
                       canExecuteActions={userCanExecuteActions}
                       compareDiffMs={compareDiffMs}
+                      visualizationType="timeseries"
                     />
                   );
                 }}

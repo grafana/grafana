@@ -148,6 +148,7 @@ export const TrendPanel = ({
                       dataLinks={dataLinks}
                       hideZeros={options.tooltip.hideZeros}
                       canExecuteActions={userCanExecuteActions}
+                      visualizationType="trend"
                     />
                   );
                 }}
