@@ -148,6 +148,7 @@ const LogLineComponent = memo(
     });
 
     useLayoutEffect(() => {
+      handleLogLineResize();
     }, [detailsMode, handleLogLineResize]);
 
     useEffect(() => {
