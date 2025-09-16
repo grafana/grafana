@@ -43,7 +43,7 @@ func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) (*models.Re
 		return nil, err
 	}
 
-	return PostableApiReceiverToReceiver(postable, receiver.Provenance, receiver.Origin)
+	return PostableApiReceiverToReceiver(postable, receiver.Provenance, models.ResourceOriginGrafana)
 }
 
 func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) (*models.Receiver, error) {
@@ -69,7 +69,7 @@ func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) (*models.Re
 		return nil, err
 	}
 
-	return PostableApiReceiverToReceiver(newReceiver, receiver.Provenance, receiver.Origin)
+	return PostableApiReceiverToReceiver(newReceiver, receiver.Provenance, models.ResourceOriginGrafana)
 }
 
 // ReceiverNameUsedByRoutes checks if a receiver name is used in any routes.
