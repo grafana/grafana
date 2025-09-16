@@ -484,8 +484,8 @@ func (d *dataStore) processGroupResourceStats(ctx context.Context, groupResource
 	}
 
 	// Maps to track counts per namespace for this group/resource
-	namespaceCounts := make(map[string]map[string]bool) // namespace -> resource name -> exists (not deleted)
-	namespaceVersions := make(map[string]int64)         // namespace -> latest resource version
+	namespaceCounts := make(map[string]int64)   // namespace -> count of existing resources
+	namespaceVersions := make(map[string]int64) // namespace -> latest resource version
 
 	// Track current resource being processed
 	var currentResourceKey string
@@ -494,14 +494,15 @@ func (d *dataStore) processGroupResourceStats(ctx context.Context, groupResource
 	// Helper function to process the last seen resource
 	processLastResource := func() {
 		if lastDataKey != nil {
-			// Initialize maps if needed
-			if _, exists := namespaceCounts[lastDataKey.Namespace]; !exists {
-				namespaceCounts[lastDataKey.Namespace] = make(map[string]bool)
+			// Initialize namespace version if not exists
+			if _, exists := namespaceVersions[lastDataKey.Namespace]; !exists {
 				namespaceVersions[lastDataKey.Namespace] = 0
 			}
 
-			// Track whether this resource name exists (not deleted)
-			namespaceCounts[lastDataKey.Namespace][lastDataKey.Name] = lastDataKey.Action != DataActionDeleted
+			// If resource exists (not deleted), increment the count for this namespace
+			if lastDataKey.Action != DataActionDeleted {
+				namespaceCounts[lastDataKey.Namespace]++
+			}
 
 			// Update to latest resource version seen
 			if lastDataKey.ResourceVersion > namespaceVersions[lastDataKey.Namespace] {
@@ -534,15 +535,7 @@ func (d *dataStore) processGroupResourceStats(ctx context.Context, groupResource
 
 	// Convert namespace counts to ResourceStats
 	stats := make([]ResourceStats, 0, len(namespaceCounts))
-	for ns, names := range namespaceCounts {
-		// Count how many names actually exist (not deleted)
-		count := int64(0)
-		for _, exists := range names {
-			if exists {
-				count++
-			}
-		}
-
+	for ns, count := range namespaceCounts {
 		// Skip if count is below or equal to minimum
 		if count <= int64(minCount) {
 			continue
