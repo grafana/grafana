@@ -35,6 +35,7 @@ export interface Props {
 interface State {
   running?: boolean;
   response?: AnnotationQueryResponse;
+  isReplacingQuery?: boolean;
 }
 
 export default class StandardAnnotationQueryEditor extends PureComponent<Props, State> {
@@ -50,10 +51,20 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     }
   }
 
-  verifyDataSource() {
+  async verifyDataSource() {
     const { datasource, annotation } = this.props;
 
-    // Handle any migration issues
+    // when we are replacing an annotation with a saved query and we have a different datasource, we should skip the check
+    // the parent component will take care of updating the annotation
+    if (
+      annotation.datasource?.uid !== datasource?.uid ||
+      (annotation.datasource?.type !== datasource?.type && this.state.isReplacingQuery)
+    ) {
+      this.setState({ isReplacingQuery: false });
+      return;
+    }
+
+    // Normal case: datasources match, verify with props.datasource
     const processor = {
       ...standardAnnotationSupport,
       ...datasource.annotations,
@@ -234,9 +245,10 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     });
   };
 
-  onQueryReplace = (replacedQuery: DataQuery) => {
+  onQueryReplace = async (replacedQuery: DataQuery) => {
     const { annotation, onChange } = this.props;
-    // Handle cross-datasource replacement
+    this.setState({ isReplacingQuery: true });
+    // Handle cross-datasource replacement with datasource preparation
     const updatedAnnotation = updateAnnotationFromSavedQuery(annotation, replacedQuery);
     onChange(updatedAnnotation);
   };

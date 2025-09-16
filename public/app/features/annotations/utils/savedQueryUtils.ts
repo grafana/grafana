@@ -32,20 +32,32 @@ export function getDataQueryFromAnnotationForSavedQueries(
  * Supports both v1 dashboards (uses target field) and v2 dashboards (uses query.spec field).
  */
 export function updateAnnotationFromSavedQuery(annotation: AnnotationQuery, replacedQuery: DataQuery): AnnotationQuery {
-  const updatedAnnotation: AnnotationQuery = {
-    ...annotation, // Keep all annotation-specific fields (enable, iconColor, mappings, etc.)
+  // Step 1: Create annotation with replaced query data
+  // Clean annotation - only keep annotation-specific fields, not old query data
+  const cleanAnnotation = {
+    name: annotation.name,
+    enable: annotation.enable,
+    hide: annotation.hide,
+    iconColor: annotation.iconColor,
+    mappings: annotation.mappings,
+    filter: annotation.filter,
+    type: annotation.type,
+    builtIn: annotation.builtIn,
+  };
+
+  const tempAnnotation: AnnotationQuery = {
+    ...cleanAnnotation, // Keep ONLY annotation-specific fields
     datasource: replacedQuery.datasource,
-    target: replacedQuery, // v1 format
+    target: replacedQuery, // v1 format - clean query
   };
 
   // For v2 dashboards, also update query.spec
-  // TODO: Double check this is correct from v2 perspective
   if (annotation.query && annotation.query.spec) {
-    updatedAnnotation.query = {
+    tempAnnotation.query = {
       ...annotation.query,
       spec: { ...replacedQuery },
     };
   }
 
-  return updatedAnnotation;
+  return tempAnnotation;
 }
