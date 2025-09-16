@@ -2,8 +2,8 @@ import { store } from '@grafana/data';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { DashboardTrackingInfo, DashboardV2TrackingInfo } from '../serialization/DashboardSceneSerializer';
 import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
+import { DashboardTrackingInfo, DashboardV2TrackingInfo } from '../serialization/DashboardSceneSerializer';
 
 import { DashboardInteractions } from './interactions';
 

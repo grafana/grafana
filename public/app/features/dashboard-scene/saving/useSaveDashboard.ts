@@ -16,6 +16,7 @@ import { useDispatch } from 'app/types/store';
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardInteractions } from '../utils/interactions';
+import { trackDashboardSceneCreatedOrSaved } from '../utils/tracking';
 
 export function useSaveDashboard(isCopy = false) {
   const dispatch = useDispatch();
@@ -101,7 +102,4 @@ export function useSaveDashboard(isCopy = false) {
   );
 
   return { state, onSaveDashboard };
-}
-function trackDashboardSceneCreatedOrSaved(arg0: string, scene: DashboardScene, arg2: { name: string; url: string }) {
-  throw new Error('Function not implemented.');
 }
