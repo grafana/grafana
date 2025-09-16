@@ -1169,7 +1169,7 @@ export interface FeatureToggles {
   pluginContainers?: boolean;
   /**
   * Run search queries through the tempo backend
-  * @default true
+  * @default false
   */
   tempoSearchBackendMigration?: boolean;
 }

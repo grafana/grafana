@@ -82,7 +82,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
 | `dashboardDsAdHocFiltering`            | Enables adhoc filtering support for the dashboard datasource                                                                                                  | Yes                |
 | `adhocFiltersInTooltips`               | Enable adhoc filter buttons in visualization tooltips                                                                                                         | Yes                |
-| `tempoSearchBackendMigration`          | Run search queries through the tempo backend                                                                                                                  | Yes                |
+| `tempoSearchBackendMigration`          | Run search queries through the tempo backend                                                                                                                  |                    |
 
 ## Public preview feature toggles
 

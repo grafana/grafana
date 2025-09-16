@@ -2027,7 +2027,7 @@ var (
 			Description:     "Run search queries through the tempo backend",
 			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaOSSBigTent,
-			Expression:      "true",
+			Expression:      "false",
 			RequiresRestart: true,
 		},
 	}

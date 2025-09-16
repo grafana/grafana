@@ -3433,15 +3433,18 @@
     {
       "metadata": {
         "name": "tempoSearchBackendMigration",
-        "resourceVersion": "1758021496544",
-        "creationTimestamp": "2025-09-16T11:18:16Z"
+        "resourceVersion": "1758029567165",
+        "creationTimestamp": "2025-09-16T11:18:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-16 13:32:47.165146 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Run search queries through the tempo backend",
         "stage": "GA",
         "codeowner": "@grafana/oss-big-tent",
         "requiresRestart": true,
-        "expression": "true"
+        "expression": "false"
       }
     },
     {
