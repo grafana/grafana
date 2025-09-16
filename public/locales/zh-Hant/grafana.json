@@ -156,8 +156,11 @@
       "title": "取得 Grafana 企業版"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "測試使用者對應",
-      "test-mapping-run-button": "執行"
+      "test-mapping-run-button": "執行",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -9213,7 +9216,8 @@
       "disable-button": "停用",
       "discard-button": "捨棄",
       "save-and-enable-button": "儲存並啟用",
-      "save-button": "儲存"
+      "save-button": "儲存",
+      "test-button": ""
     },
     "documentation": "文件",
     "host": {
@@ -9601,10 +9605,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "重複資料",
-      "disable-highlighting": "停用醒目提示",
       "disable-prettify-json": "收闔 JSON 紀錄",
-      "display-level": "顯示層級",
       "display-level-all": "所有層級",
       "download": "下載日誌",
       "download-logs": {
@@ -9612,18 +9615,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "啟用醒目提示",
       "escape-newlines": "修復紀錄行中新行和分頁序列的錯誤轉義",
-      "font-size-default": "使用較小的字型",
-      "font-size-small": "使用預設的字型大小",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "關閉搜尋",
       "hide-timestamps": "隱藏時間戳記",
       "hide-unique-labels": "隱藏唯一標籤",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "按最新紀錄排序 - 按一下以顯示最舊紀錄",
       "oldest-first": "按最舊紀錄排序 - 按一下以顯示最新紀錄",
@@ -9639,8 +9663,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "取消換行",
       "wrap-lines": "換行"
@@ -11316,7 +11350,9 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "沒有符合您查詢的結果",
-      "placeholder-search": "搜尋"
+      "placeholder-search": "搜尋",
+      "all-resources-managed_other": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
@@ -12736,6 +12772,7 @@
     "description-column-filter": "啟用/停用表格中的欄位篩選條件",
     "description-frozen-columns": "",
     "description-min-column-width": "欄自動調整大小的最小寬度",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "若圖片無法顯示或為使用螢幕閱讀器的使用者顯示的替代文字",
@@ -12766,6 +12803,7 @@
     "name-max-height": "",
     "name-min-column-width": "最小欄寬",
     "name-show-table-header": "顯示表格頁首",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "換行標題文字",

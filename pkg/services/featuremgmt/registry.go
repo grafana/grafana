@@ -340,6 +340,13 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
+			Name:        "queryCacheRequestDeduplication",
+			Description: "Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight",
+			Stage:       FeatureStageExperimental,
+			Expression:  "false", // enabled by default
+			Owner:       grafanaOperatorExperienceSquad,
+		},
+		{
 			Name:        "permissionsFilterRemoveSubquery",
 			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
 			Stage:       FeatureStageExperimental,
@@ -457,10 +464,17 @@ var (
 		},
 		{
 			Name:            "kubernetesShortURLs",
-			Description:     "Routes short url requests from /api to the /apis endpoint",
+			Description:     "Enables k8s short url api and uses it under the hood when handling legacy /api",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
+		},
+		{
+			Name:         "useKubernetesShortURLsAPI",
+			Description:  "Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
 		},
 		{
 			Name:            "kubernetesAlertingRules",

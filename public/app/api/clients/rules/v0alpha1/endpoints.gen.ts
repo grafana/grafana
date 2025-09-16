@@ -846,19 +846,25 @@ export type AlertRuleSpec = {
   annotations?: {
     [key: string]: string;
   };
-  data: {
+  execErrState: 'Error' | 'Ok' | 'Alerting' | 'KeepLast';
+  expressions: {
     [key: string]: {
-      datasourceUID: string;
+      /** The UID of the datasource to run this expression against. If omitted, the expression will be run against the `__expr__` datasource */
+      datasourceUID?: string;
       model: any;
-      queryType: string;
+      /** The type of query if this is a query expression */
+      queryType?: string;
       relativeTimeRange?: {
         from: string;
         to: string;
       };
+      /** Used to mark the expression to be used as the final source for the rule evaluation
+            Only one expression in a rule can be marked as the source
+            For AlertRules, this is the expression that will be evaluated against the alerting condition
+            For RecordingRules, this is the expression that will be recorded */
       source?: boolean;
     };
   };
-  execErrState: 'Error' | 'Ok' | 'Alerting' | 'KeepLast';
   for?: any & any;
   keepFiringFor?: any & any;
   labels?: {
@@ -982,15 +988,21 @@ export type Status = {
 };
 export type Patch = object;
 export type RecordingRuleSpec = {
-  data: {
+  expressions: {
     [key: string]: {
-      datasourceUID: string;
+      /** The UID of the datasource to run this expression against. If omitted, the expression will be run against the `__expr__` datasource */
+      datasourceUID?: string;
       model: any;
-      queryType: string;
+      /** The type of query if this is a query expression */
+      queryType?: string;
       relativeTimeRange?: {
         from: string;
         to: string;
       };
+      /** Used to mark the expression to be used as the final source for the rule evaluation
+            Only one expression in a rule can be marked as the source
+            For AlertRules, this is the expression that will be evaluated against the alerting condition
+            For RecordingRules, this is the expression that will be recorded */
       source?: boolean;
     };
   };

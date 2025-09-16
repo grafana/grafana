@@ -156,8 +156,11 @@
       "title": "Grafana Enterpriseを入手する"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "テストユーザーマッピング",
-      "test-mapping-run-button": "Run"
+      "test-mapping-run-button": "Run",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -9213,7 +9216,8 @@
       "disable-button": "無効にする",
       "discard-button": "破棄",
       "save-and-enable-button": "保存して有効にする",
-      "save-button": "保存"
+      "save-button": "保存",
+      "test-button": ""
     },
     "documentation": "文書",
     "host": {
@@ -9601,10 +9605,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "重複排除",
-      "disable-highlighting": "ハイライトを無効にする",
       "disable-prettify-json": "JSONログを折りたたむ",
-      "display-level": "表示レベル",
       "display-level-all": "すべてのレベル",
       "download": "ログをダウンロード",
       "download-logs": {
@@ -9612,18 +9615,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "ハイライトを有効にする",
       "escape-newlines": "ログ行で誤ってエスケープされた改行とタブシーケンスを修正",
-      "font-size-default": "小さいフォントサイズを使用",
-      "font-size-small": "デフォルトのフォントサイズを使用",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "検索を閉じる",
       "hide-timestamps": "タイムスタンプを非表示",
       "hide-unique-labels": "一意のラベルを非表示",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "最新のログ順に並び替え - クリックして最も古いログを最初に表示",
       "oldest-first": "古いログ順に並び替え - クリックして最新のログを最初に表示",
@@ -9639,8 +9663,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "行の折り返しを解除",
       "wrap-lines": "行を折り返す"
@@ -11316,7 +11350,9 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "クエリに一致する結果なし",
-      "placeholder-search": "検索"
+      "placeholder-search": "検索",
+      "all-resources-managed_other": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
@@ -12736,6 +12772,7 @@
     "description-column-filter": "テーブルのフィールドフィルターを有効/無効化",
     "description-frozen-columns": "",
     "description-min-column-width": "列の自動サイズ変更の最小幅",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "画像が表示できない場合やスクリーンリーダーを使用するユーザーのために表示される代替テキスト",
@@ -12766,6 +12803,7 @@
     "name-max-height": "",
     "name-min-column-width": "最小列幅",
     "name-show-table-header": "テーブルヘッダーを表示",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "ヘッダーテキストの折り返し",

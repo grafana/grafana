@@ -156,8 +156,11 @@
       "title": "Consigue Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Prueba de asignación de usuarios",
-      "test-mapping-run-button": "Ejecutar"
+      "test-mapping-run-button": "Ejecutar",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -9239,7 +9242,8 @@
       "disable-button": "Deshabilitar",
       "discard-button": "Descartar",
       "save-and-enable-button": "Guardar y habilitar",
-      "save-button": "Guardar"
+      "save-button": "Guardar",
+      "test-button": ""
     },
     "documentation": "documentación",
     "host": {
@@ -9633,10 +9637,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "Deduplicación",
-      "disable-highlighting": "Desactivar resaltado",
       "disable-prettify-json": "Contraer logs JSON",
-      "display-level": "Mostrar niveles",
       "display-level-all": "Todos los niveles",
       "download": "Descargar registros",
       "download-logs": {
@@ -9644,18 +9647,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Activar resaltado",
       "escape-newlines": "Corregir las secuencias de tabulación y de nueva línea que escaparon incorrectamente en las líneas de log",
-      "font-size-default": "Utilizar tamaño de fuente pequeño",
-      "font-size-small": "Utilizar tamaño de fuente predeterminado",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "Cerrar la búsqueda",
       "hide-timestamps": "Ocultar marcas de tiempo",
       "hide-unique-labels": "Ocultar etiquetas únicas",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "Ordenado por los logs más nuevos primero: haga clic para mostrar los más antiguos primero",
       "oldest-first": "Ordenado por los logs más antiguos primero: haga clic para mostrar los más nuevos primero",
@@ -9671,8 +9695,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "Desajustar líneas",
       "wrap-lines": "Ajustar líneas"
@@ -11355,7 +11389,11 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "No hay resultados que coincidan con tu consulta",
-      "placeholder-search": "Buscar"
+      "placeholder-search": "Buscar",
+      "all-resources-managed_one": "",
+      "all-resources-managed_other": "",
+      "partial-managed_one": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
@@ -12780,6 +12818,7 @@
     "description-column-filter": "Habilita/deshabilita los filtros de campo en la tabla",
     "description-frozen-columns": "",
     "description-min-column-width": "El ancho mínimo para el cambio de tamaño automático de las columnas",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Texto alternativo que se mostrará si no se puede visualizar una imagen o para los usuarios que utilizan un lector de pantalla",
@@ -12810,6 +12849,7 @@
     "name-max-height": "",
     "name-min-column-width": "Ancho mínimo de columna",
     "name-show-table-header": "Mostrar encabezado de tabla",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Ajustar texto del encabezado",

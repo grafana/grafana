@@ -156,8 +156,11 @@
       "title": "Skaffa Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Testa användarmappning",
-      "test-mapping-run-button": "Kör"
+      "test-mapping-run-button": "Kör",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -9239,7 +9242,8 @@
       "disable-button": "Inaktivera",
       "discard-button": "Kassera",
       "save-and-enable-button": "Spara och aktivera",
-      "save-button": "Spara"
+      "save-button": "Spara",
+      "test-button": ""
     },
     "documentation": "dokumentation",
     "host": {
@@ -9633,10 +9637,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "Avduplicering",
-      "disable-highlighting": "Inaktivera markering",
       "disable-prettify-json": "Dölj JSON-loggar",
-      "display-level": "Visa nivåer",
       "display-level-all": "Alla nivåer",
       "download": "Ladda ner loggar",
       "download-logs": {
@@ -9644,18 +9647,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Aktivera markering",
       "escape-newlines": "Åtgärda felaktiga undantagstecken för radbrytningar och tabbar i loggrader",
-      "font-size-default": "Använd liten teckenstorlek",
-      "font-size-small": "Använd standardteckenstorlek",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "Stäng sökning",
       "hide-timestamps": "Dölj tidsstämplar",
       "hide-unique-labels": "Dölj unika etiketter",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "Sorterat efter nyaste loggar först – klicka om du vill visa äldsta först",
       "oldest-first": "Sorterat efter äldsta loggar först – klicka om du vill visa nyaste först",
@@ -9671,8 +9695,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "Ta bort radbrytningar",
       "wrap-lines": "Radbryt linjer"
@@ -11355,7 +11389,11 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Inga resultat som matchar din fråga",
-      "placeholder-search": "Sök"
+      "placeholder-search": "Sök",
+      "all-resources-managed_one": "",
+      "all-resources-managed_other": "",
+      "partial-managed_one": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
@@ -12780,6 +12818,7 @@
     "description-column-filter": "Aktiverar/inaktiverar fältfilter i tabellen",
     "description-frozen-columns": "",
     "description-min-column-width": "Minsta bredd för automatisk storleksändring av kolumn",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Alternativ text som kommer att visas om en bild inte kan visas eller för användare som använder en skärmläsare",
@@ -12810,6 +12849,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minsta kolumnbredd",
     "name-show-table-header": "Visa tabellsidhuvud",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Radbryt rubriktext",
