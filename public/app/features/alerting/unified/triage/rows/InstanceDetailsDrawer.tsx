@@ -4,15 +4,19 @@ import { Labels } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { VizConfigBuilders } from '@grafana/scenes';
-import { VizPanel, useDataTransformer, useQueryRunner } from '@grafana/scenes-react';
+import { VizPanel, useDataTransformer, useQueryRunner, useTimeRange } from '@grafana/scenes-react';
 import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
-import { Alert, Box, Drawer, Stack } from '@grafana/ui';
+import { Alert, Box, Drawer, Icon, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { isExpressionQuery } from '../../../../expressions/guards';
+import { stateHistoryApi } from '../../api/stateHistoryApi';
 import { AlertLabels } from '../../components/AlertLabels';
 import { getThresholdsForQueries } from '../../components/rule-editor/util';
+import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
+import { useRuleHistoryRecords } from '../../components/rules/central-state-history/useRuleHistoryRecords';
+import { LogRecord } from '../../components/rules/state-history/common';
 import { useCombinedRule } from '../../hooks/useCombinedRule';
 import { stringifyErrorLike } from '../../utils/misc';
 import { rulerRuleType } from '../../utils/rules';
@@ -27,6 +31,23 @@ interface QueryVisualizationProps {
   query: AlertQuery;
   instanceLabels: Labels;
   thresholds?: ReturnType<typeof getThresholdsForQueries>;
+}
+
+interface StateTransitionProps {
+  record: LogRecord;
+}
+
+function StateTransition({ record }: StateTransitionProps) {
+  return (
+    <Stack gap={1} direction="row" alignItems="center">
+      <EventState state={record.line.previous} showLabel addFilter={() => {}} type="from" />
+      <Icon name="arrow-right" size="sm" />
+      <EventState state={record.line.current} showLabel addFilter={() => {}} type="to" />
+      <Text variant="bodySmall" color="secondary">
+        {new Date(record.timestamp).toLocaleString()}
+      </Text>
+    </Stack>
+  );
 }
 
 function QueryVisualization({ query, instanceLabels, thresholds }: QueryVisualizationProps) {
@@ -116,6 +137,9 @@ function QueryVisualization({ query, instanceLabels, thresholds }: QueryVisualiz
 }
 
 export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: InstanceDetailsDrawerProps) {
+  // Get the current time range from the scene
+  const [timeRange] = useTimeRange();
+
   // Create rule identifier for Grafana managed rules
   const ruleIdentifier: GrafanaRuleIdentifier = useMemo(
     () => ({
@@ -156,6 +180,29 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
 
     return getThresholdsForQueries(allQueries, condition);
   }, [rule]);
+
+  // Fetch state history for this specific instance
+  const {
+    data: stateHistoryData,
+    isLoading: stateHistoryLoading,
+    isError: stateHistoryError,
+  } = stateHistoryApi.endpoints.getRuleHistory.useQuery({
+    ruleUid: ruleUID,
+    labels: instanceLabels,
+    limit: 10,
+    from: timeRange.from.unix(),
+    to: timeRange.to.unix(),
+  });
+
+  // Process state history data into LogRecords
+  const { historyRecords } = useRuleHistoryRecords(stateHistoryData, {
+    labels: Object.entries(instanceLabels)
+      .map(([key, value]) => `${key}=${value}`)
+      .join(','),
+  });
+
+  // Sort by timestamp (most recent first) and limit to recent entries
+  const recentTransitions = historyRecords.sort((a, b) => b.timestamp - a.timestamp).slice(0, 10);
 
   if (error) {
     return (
@@ -200,6 +247,36 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
             </Stack>
           </Box>
         )}
+
+        {/* State History */}
+        <Box>
+          <Text variant="h6">{t('alerting.instance-details.state-history', 'Recent State Changes')}</Text>
+          {stateHistoryLoading && (
+            <LoadingPlaceholder text={t('alerting.instance-details.loading-history', 'Loading state history...')} />
+          )}
+          {stateHistoryError && (
+            <Alert
+              severity="error"
+              title={t('alerting.instance-details.history-error', 'Failed to load state history')}
+            >
+              {t(
+                'alerting.instance-details.history-error-desc',
+                'Unable to fetch state transition history for this instance.'
+              )}
+            </Alert>
+          )}
+          {!stateHistoryLoading && !stateHistoryError && (
+            <Stack direction="column" gap={1}>
+              {recentTransitions.length > 0 ? (
+                recentTransitions.map((record, index) => (
+                  <StateTransition key={`${record.timestamp}-${index}`} record={record} />
+                ))
+              ) : (
+                <Text color="secondary">{t('alerting.instance-details.no-history', 'No recent state changes')}</Text>
+              )}
+            </Stack>
+          )}
+        </Box>
       </Stack>
     </Drawer>
   );
