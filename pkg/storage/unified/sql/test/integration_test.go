@@ -72,7 +72,7 @@ func TestIntegrationStorageServer(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	unitest.RunStorageServerTest(t, func(ctx context.Context) resource.StorageBackend {
-		return newTestBackend(t, false, 0)
+		return newTestBackend(t, true, 0)
 	})
 }
 
