@@ -982,14 +982,14 @@ type ListAlertRulesQuery struct {
 	HasPrometheusRuleDefinition *bool
 
 	// New fields for fuzzy search and additional filters
-	FreeFormSearch   string   // Free text search in rule names
-	NamespaceSearch  string   // Fuzzy search in namespace names
-	GroupNameSearch  string   // Fuzzy search in group names
-	RuleNameSearch   string   // Fuzzy search in rule names
-	Labels           []string // Label matchers for rules
-	RuleType         RuleTypeFilter // Filter by rule type (alerting/recording)
-	DatasourceUIDs   []string // Filter by datasource UIDs in queries
-	ExcludePlugins   bool     // Hide plugin-provided rules
+	FreeFormSearch  string         // Free text search in rule names
+	NamespaceSearch string         // Fuzzy search in namespace names
+	GroupNameSearch string         // Fuzzy search in group names
+	RuleNameSearch  string         // Fuzzy search in rule names
+	Labels          []string       // Label matchers for rules
+	RuleType        RuleTypeFilter // Filter by rule type (alerting/recording)
+	DatasourceUIDs  []string       // Filter by datasource UIDs in queries
+	ExcludePlugins  bool           // Hide plugin-provided rules
 }
 
 type ListAlertRulesExtendedQuery struct {

@@ -26,12 +26,12 @@ type StreamedRule struct {
 	RuleGroup    string
 	Title        string
 	// Lazy-loaded fields - only parsed when needed
-	rawData              string
-	rawLabels            string
-	rawAnnotations       string
+	rawData                 string
+	rawLabels               string
+	rawAnnotations          string
 	rawNotificationSettings string
-	rawMetadata          string
-	rawRecord            string
+	rawMetadata             string
+	rawRecord               string
 }
 
 // ConversionCache caches parsed JSON data to avoid repeated unmarshaling
@@ -39,7 +39,7 @@ type ConversionCache struct {
 	mu sync.RWMutex
 	// Cache parsed notification settings by raw JSON string
 	notificationSettings map[string][]ngmodels.NotificationSettings
-	// Cache parsed labels by raw JSON string  
+	// Cache parsed labels by raw JSON string
 	labels map[string]map[string]string
 	// Cache parsed metadata
 	metadata map[string]ngmodels.AlertRuleMetadata
@@ -47,8 +47,8 @@ type ConversionCache struct {
 
 var conversionCache = &ConversionCache{
 	notificationSettings: make(map[string][]ngmodels.NotificationSettings),
-	labels:              make(map[string]map[string]string),
-	metadata:            make(map[string]ngmodels.AlertRuleMetadata),
+	labels:               make(map[string]map[string]string),
+	metadata:             make(map[string]ngmodels.AlertRuleMetadata),
 }
 
 // StreamAlertRules processes alert rules in a streaming fashion to handle large datasets efficiently
@@ -86,7 +86,7 @@ func (st DBstore) StreamAlertRules(ctx context.Context, query *ngmodels.ListAler
 		// Use Iterate for true streaming - processes one row at a time without loading all into memory
 		return q.Iterate(new(alertRule), func(idx int, bean interface{}) error {
 			rule := bean.(*alertRule)
-			
+
 			// Quick pre-filter before expensive conversion
 			if !st.quickFilterCheck(rule, query) {
 				return nil // Skip this rule
@@ -328,7 +328,7 @@ func needsFullData(query *ngmodels.ListAlertRulesQuery) bool {
 
 func matchesLabelFilters(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesQuery) bool {
 	labels := rule.GetLabels()
-	
+
 	// Check exclude plugins
 	if query.ExcludePlugins {
 		if _, ok := labels["__grafana_origin"]; ok {
@@ -414,14 +414,14 @@ func matchesTextFilters(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRules
 			return false
 		}
 	}
-	
+
 	// Rule name search
 	if s := strings.TrimSpace(strings.ToLower(query.RuleNameSearch)); s != "" {
 		if !strings.Contains(strings.ToLower(rule.Title), s) {
 			return false
 		}
 	}
-	
+
 	// Group name search
 	if s := strings.TrimSpace(strings.ToLower(query.GroupNameSearch)); s != "" {
 		if !strings.Contains(strings.ToLower(rule.RuleGroup), s) {
@@ -435,17 +435,17 @@ func matchesTextFilters(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRules
 // BatchStreamAlertRules processes rules in batches for better performance
 func (st DBstore) BatchStreamAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery, batchSize int, batchProcessor func([]*ngmodels.AlertRule) error) error {
 	batch := make([]*ngmodels.AlertRule, 0, batchSize)
-	
+
 	return st.StreamAlertRules(ctx, query, func(rule *ngmodels.AlertRule) bool {
 		batch = append(batch, rule)
-		
+
 		if len(batch) >= batchSize {
 			if err := batchProcessor(batch); err != nil {
 				return false
 			}
 			batch = batch[:0] // Reset batch
 		}
-		
+
 		return true
 	})
 }
