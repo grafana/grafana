@@ -3,6 +3,7 @@ import { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { EditableDashboardElementInfo } from 'app/features/dashboard-scene/scene/types/EditableDashboardElement';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { DashboardCreatedProps } from 'app/features/dashboard-scene/utils/tracking';
 
 import { DashboardModel } from '../state/DashboardModel';
 
@@ -37,6 +38,10 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
     isScene: true,
     ...trackingInformation,
   });
+}
+
+export function trackDashboardCreatedOrSaved(name: 'created' | 'saved', trackingProps: DashboardCreatedProps) {
+  DashboardInteractions.dashboardCreatedOrSaved(name, trackingProps);
 }
 
 export const trackDeleteDashboardElement = (element: EditableDashboardElementInfo) => {
