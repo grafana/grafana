@@ -122,7 +122,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.17.0 // @grafana/alerting-backend
 	github.com/huandu/xstrings v1.5.0 // @grafana/partner-datasources
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0 // @grafana/partner-datasources
-	github.com/influxdata/influxql v1.4.0 // @grafana/partner-datasources
+	github.com/influxdata/influxql v1.4.1 // @grafana/partner-datasources
 	github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf // @grafana/grafana-app-platform-squad
 	github.com/jackc/pgx/v5 v5.7.5 // @grafana/grafana-search-and-storage
 	github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-access-team
