@@ -4,6 +4,7 @@ import (
 	"github.com/google/wire"
 
 	"github.com/grafana/grafana/pkg/registry/apps/advisor"
+	"github.com/grafana/grafana/pkg/registry/apps/advisor2"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
@@ -22,4 +23,5 @@ var WireSet = wire.NewSet(
 	plugins.RegisterAppInstaller,
 	shorturl.RegisterAppInstaller,
 	rules.RegisterAppInstaller,
+	advisor2.RegisterAppInstaller,
 )
