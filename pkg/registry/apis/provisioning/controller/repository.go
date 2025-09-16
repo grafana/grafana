@@ -458,8 +458,11 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Apply all patch operations
-	if err := rc.statusPatcher.Patch(ctx, obj, patchOperations...); err != nil {
-		return err
+	if len(patchOperations) > 0 {
+		err := rc.statusPatcher.Patch(ctx, obj, patchOperations...)
+		if err != nil {
+			return fmt.Errorf("status patch operations failed: %w", err)
+		}
 	}
 
 	// Trigger sync job after we have applied all patch operations
