@@ -304,9 +304,13 @@ const LogListComponent = ({
     [filterLogs, levelFilteredLogs, matchingUids]
   );
 
-  const resetAfterIndex = useCallback((index: number) => {
-    listRef.current?.resetAfterIndex(index);
-    overflowIndexRef.current = Infinity;
+  // When log lines report size discrepancies, we debounce the calculation reset to give time to
+  // use the smallest log index to reset the heights.
+  const debouncedResetAfterIndex = useMemo(() => {
+    return debounce((index: number) => {
+      listRef.current?.resetAfterIndex(index);
+      overflowIndexRef.current = Infinity;
+    }, 0);
   }, []);
 
   const debouncedScrollToItem = useMemo(() => {
@@ -351,7 +355,6 @@ const LogListComponent = ({
       setListHeight(getListHeight(containerElement, app, searchVisible));
       if (widthRef.current !== entry.contentRect.width) {
         widthRef.current = entry.contentRect.width;
-        listRef.current?.resetAfterIndex(0);
       }
     };
     const observer = new ResizeObserver((entries: ResizeObserverEntry[]) => {
@@ -373,9 +376,9 @@ const LogListComponent = ({
         return;
       }
       overflowIndexRef.current = index < overflowIndexRef.current ? index : overflowIndexRef.current;
-      resetAfterIndex(overflowIndexRef.current);
+      debouncedResetAfterIndex(overflowIndexRef.current);
     },
-    [resetAfterIndex, virtualization, widthContainer]
+    [debouncedResetAfterIndex, virtualization, widthContainer]
   );
 
   const handleScrollPosition = useCallback(
