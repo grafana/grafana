@@ -152,8 +152,23 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	storage := map[string]rest.Storage{}
 
 	teamResource := iamv0.TeamResourceInfo
-	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.store, b.legacyAccessClient)
+	teamLegacyStore := team.NewLegacyStore(b.store, b.legacyAccessClient)
+	storage[teamResource.StoragePath()] = teamLegacyStore
 	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
+
+	if b.enableDualWriter {
+		teamStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamResource, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+
+		teamDW, err := opts.DualWriteBuilder(teamResource.GroupResource(), teamLegacyStore, teamStore)
+		if err != nil {
+			return err
+		}
+
+		storage[teamResource.StoragePath()] = teamDW
+	}
 
 	teamBindingResource := iamv0.TeamBindingResourceInfo
 	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
@@ -313,6 +328,8 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 			return b.validateCreateUser(ctx, a, o)
 		case *iamv0.ServiceAccount:
 			return serviceaccount.ValidateOnCreate(ctx, typedObj)
+		case *iamv0.Team:
+			return team.ValidateOnCreate(ctx, typedObj)
 		}
 		return nil
 	case admission.Update:

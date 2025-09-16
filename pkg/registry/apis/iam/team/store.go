@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/team"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 var (
@@ -26,6 +27,9 @@ var (
 	_ rest.Lister               = (*LegacyStore)(nil)
 	_ rest.Storage              = (*LegacyStore)(nil)
 	_ rest.Creater              = (*LegacyStore)(nil)
+	_ rest.CollectionDeleter    = (*LegacyStore)(nil)
+	_ rest.GracefulDeleter      = (*LegacyStore)(nil)
+	_ rest.Updater              = (*LegacyStore)(nil)
 )
 
 var resource = iamv0alpha1.TeamResourceInfo
@@ -60,6 +64,20 @@ func (s *LegacyStore) NewList() runtime.Object {
 
 func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return resource.TableConverter().ConvertToTable(ctx, object, tableOptions)
+}
+
+func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
+}
+
+// Delete implements rest.GracefulDeleter.
+func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
+}
+
+// Update implements rest.Updater.
+func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
 }
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
