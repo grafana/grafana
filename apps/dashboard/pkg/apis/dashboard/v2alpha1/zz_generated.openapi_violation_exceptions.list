@@ -39,6 +39,7 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardTimeSettingsSpec,QuickRanges
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardV2alpha1FieldConfigSourceOverrides,Properties
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,LibraryPanelStatus,Warnings
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardClient,client
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind,ConditionalRenderingDataKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind,ConditionalRenderingTimeRangeSizeKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind,ConditionalRenderingVariableKind

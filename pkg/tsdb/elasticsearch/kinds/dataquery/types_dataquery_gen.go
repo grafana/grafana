@@ -12,8 +12,9 @@
 package dataquery
 
 import (
+	bytes "bytes"
 	json "encoding/json"
-	fmt "fmt"
+	errors "errors"
 )
 
 type BucketAggregation = DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested
@@ -1562,29 +1563,37 @@ func (resource StringOrDataqueryInlineScript) MarshalJSON() ([]byte, error) {
 	return []byte("null"), nil
 }
 
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode StringOrDataqueryInlineScript from JSON.
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrDataqueryInlineScript` from JSON.
 func (resource *StringOrDataqueryInlineScript) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
-	fields := make(map[string]json.RawMessage)
-	if err := json.Unmarshal(raw, &fields); err != nil {
-		return err
+
+	var errList []error
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
 	}
 
-	if fields["String"] != nil {
-		if err := json.Unmarshal(fields["String"], &resource.String); err != nil {
-			return fmt.Errorf("error decoding field 'String': %w", err)
-		}
+	// DataqueryInlineScript
+	var DataqueryInlineScript DataqueryInlineScript
+	dataqueryInlineScriptdec := json.NewDecoder(bytes.NewReader(raw))
+	dataqueryInlineScriptdec.DisallowUnknownFields()
+	if err := dataqueryInlineScriptdec.Decode(&DataqueryInlineScript); err != nil {
+		errList = append(errList, err)
+		resource.DataqueryInlineScript = nil
+	} else {
+		resource.DataqueryInlineScript = &DataqueryInlineScript
+		return nil
 	}
 
-	if fields["DataqueryInlineScript"] != nil {
-		if err := json.Unmarshal(fields["DataqueryInlineScript"], &resource.DataqueryInlineScript); err != nil {
-			return fmt.Errorf("error decoding field 'DataqueryInlineScript': %w", err)
-		}
-	}
-
-	return nil
+	return errors.Join(errList...)
 }
 
 type BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics struct {

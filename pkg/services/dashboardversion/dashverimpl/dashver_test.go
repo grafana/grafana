@@ -15,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	claims "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -458,8 +457,10 @@ func TestRestoreVersion(t *testing.T) {
 		result, err := dashboardVersionService.RestoreVersion(context.Background(), cmd)
 		require.Error(t, err)
 		require.Nil(t, result)
-		require.ErrorIs(t, err, dashboards.ErrDashboardNotFound)
 
+		if !apierrors.IsNotFound(err) {
+			require.ErrorIs(t, err, dashboards.ErrDashboardNotFound)
+		}
 		dashboardService.AssertExpectations(t)
 	})
 

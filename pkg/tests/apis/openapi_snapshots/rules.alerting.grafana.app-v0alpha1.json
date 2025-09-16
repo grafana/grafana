@@ -2298,20 +2298,10 @@
             ]
           },
           "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleSpec"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleSpec"
           },
           "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleStatus"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
@@ -2321,6 +2311,55 @@
             "version": "v0alpha1"
           }
         ]
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleDatasourceUID": {
+        "type": "string"
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleExpression": {
+        "type": "object",
+        "required": [
+          "model"
+        ],
+        "properties": {
+          "datasourceUID": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleDatasourceUID"
+          },
+          "model": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "queryType": {
+            "description": "The type of query if this is a query expression",
+            "type": "string"
+          },
+          "relativeTimeRange": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleRelativeTimeRange"
+          },
+          "source": {
+            "description": "Used to mark the expression to be used as the final source for the rule evaluation\nOnly one expression in a rule can be marked as the source\nFor AlertRules, this is the expression that will be evaluated against the alerting condition\nFor RecordingRules, this is the expression that will be recorded",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleExpressionMap": {
+        "description": "TODO: validate that only one can specify source=true\n\u0026 struct.MinFields(1) This doesn't work in Cue \u003cv0.12.0 as per",
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleExpression"
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleIntervalTrigger": {
+        "type": "object",
+        "required": [
+          "interval"
+        ],
+        "properties": {
+          "interval": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePromDuration"
+          }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleList": {
         "type": "object",
@@ -2365,6 +2404,63 @@
           }
         ]
       },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleOperatorState": {
+        "type": "object",
+        "required": [
+          "lastEvaluation",
+          "state"
+        ],
+        "properties": {
+          "descriptiveState": {
+            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
+            "type": "string"
+          },
+          "details": {
+            "description": "details contains any extra information that is operator-specific",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "lastEvaluation": {
+            "description": "lastEvaluation is the ResourceVersion last evaluated",
+            "type": "string"
+          },
+          "state": {
+            "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
+            "type": "string",
+            "enum": [
+              "success",
+              "in_progress",
+              "failed"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePromDuration": {
+        "type": "string"
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePromDurationWMillis": {
+        "type": "string"
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleRelativeTimeRange": {
+        "type": "object",
+        "required": [
+          "from",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePromDurationWMillis"
+          },
+          "to": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePromDurationWMillis"
+          }
+        },
+        "additionalProperties": false
+      },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleSpec": {
         "type": "object",
         "required": [
@@ -2378,91 +2474,26 @@
           "annotations": {
             "type": "object",
             "additionalProperties": {
-              "type": "string"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleTemplateString"
             }
           },
           "execErrState": {
             "type": "string",
-            "default": "Error",
-            "enum": [
-              "Error",
-              "Ok",
-              "Alerting",
-              "KeepLast"
-            ]
+            "default": "Error"
           },
           "expressions": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "required": [
-                "model"
-              ],
-              "properties": {
-                "datasourceUID": {
-                  "description": "The UID of the datasource to run this expression against. If omitted, the expression will be run against the `__expr__` datasource",
-                  "type": "string",
-                  "pattern": "^[a-zA-Z0-9_-]+$"
-                },
-                "model": {},
-                "queryType": {
-                  "description": "The type of query if this is a query expression",
-                  "type": "string"
-                },
-                "relativeTimeRange": {
-                  "type": "object",
-                  "required": [
-                    "from",
-                    "to"
-                  ],
-                  "properties": {
-                    "from": {
-                      "type": "string",
-                      "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$"
-                    },
-                    "to": {
-                      "type": "string",
-                      "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$"
-                    }
-                  }
-                },
-                "source": {
-                  "description": "Used to mark the expression to be used as the final source for the rule evaluation\nOnly one expression in a rule can be marked as the source\nFor AlertRules, this is the expression that will be evaluated against the alerting condition\nFor RecordingRules, this is the expression that will be recorded",
-                  "type": "boolean"
-                }
-              }
-            }
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleExpressionMap"
           },
           "for": {
-            "type": "string",
-            "allOf": [
-              {
-                "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$"
-              },
-              {
-                "not": {
-                  "pattern": "hmuµn"
-                }
-              }
-            ]
+            "type": "string"
           },
           "keepFiringFor": {
-            "type": "string",
-            "allOf": [
-              {
-                "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$"
-              },
-              {
-                "not": {
-                  "pattern": "hmuµn"
-                }
-              }
-            ]
+            "type": "string"
           },
           "labels": {
             "type": "object",
             "additionalProperties": {
-              "type": "string"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleTemplateString"
             }
           },
           "missingSeriesEvalsToResolve": {
@@ -2471,13 +2502,7 @@
           },
           "noDataState": {
             "type": "string",
-            "default": "NoData",
-            "enum": [
-              "NoData",
-              "Ok",
-              "Alerting",
-              "KeepLast"
-            ]
+            "default": "NoData"
           },
           "notificationSettings": {
             "type": "object",
@@ -2488,7 +2513,7 @@
               "activeTimeIntervals": {
                 "type": "array",
                 "items": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleTimeIntervalRef"
                 }
               },
               "groupBy": {
@@ -2498,54 +2523,25 @@
                 }
               },
               "groupInterval": {
-                "type": "string",
-                "allOf": [
-                  {
-                    "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$"
-                  },
-                  {
-                    "not": {
-                      "pattern": "hmuµn"
-                    }
-                  }
-                ]
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePromDuration"
               },
               "groupWait": {
-                "type": "string",
-                "allOf": [
-                  {
-                    "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$"
-                  },
-                  {
-                    "not": {
-                      "pattern": "hmuµn"
-                    }
-                  }
-                ]
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePromDuration"
               },
               "muteTimeIntervals": {
                 "type": "array",
                 "items": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleTimeIntervalRef"
                 }
               },
               "receiver": {
                 "type": "string"
               },
               "repeatInterval": {
-                "type": "string",
-                "allOf": [
-                  {
-                    "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$"
-                  },
-                  {
-                    "not": {
-                      "pattern": "hmuµn"
-                    }
-                  }
-                ]
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePromDuration"
               }
-            }
+            },
+            "additionalProperties": false
           },
           "panelRef": {
             "type": "object",
@@ -2556,14 +2552,14 @@
             "properties": {
               "dashboardUID": {
                 "type": "string",
-                "minLength": 1,
-                "pattern": "^[a-zA-Z0-9_-]+$"
+                "minLength": 1
               },
               "panelID": {
                 "type": "integer",
                 "minimum": 0
               }
-            }
+            },
+            "additionalProperties": false
           },
           "paused": {
             "type": "boolean"
@@ -2572,28 +2568,10 @@
             "type": "string"
           },
           "trigger": {
-            "type": "object",
-            "required": [
-              "interval"
-            ],
-            "properties": {
-              "interval": {
-                "type": "string",
-                "allOf": [
-                  {
-                    "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$"
-                  },
-                  {
-                    "not": {
-                      "pattern": "hmuµn"
-                    }
-                  }
-                ]
-              }
-            }
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleIntervalTrigger"
           }
         },
-        "additionalProperties": true
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleStatus": {
         "type": "object",
@@ -2601,44 +2579,27 @@
           "additionalFields": {
             "description": "additionalFields is reserved for future use",
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {}
+            }
           },
           "operatorStates": {
             "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
             "type": "object",
             "additionalProperties": {
-              "type": "object",
-              "required": [
-                "lastEvaluation",
-                "state"
-              ],
-              "properties": {
-                "descriptiveState": {
-                  "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
-                  "type": "string"
-                },
-                "details": {
-                  "description": "details contains any extra information that is operator-specific",
-                  "type": "object",
-                  "additionalProperties": true
-                },
-                "lastEvaluation": {
-                  "description": "lastEvaluation is the ResourceVersion last evaluated",
-                  "type": "string"
-                },
-                "state": {
-                  "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
-                  "type": "string",
-                  "enum": [
-                    "success",
-                    "in_progress",
-                    "failed"
-                  ]
-                }
-              }
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleOperatorState"
             }
           }
-        }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleTemplateString": {
+        "type": "string"
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleTimeIntervalRef": {
+        "description": "TODO(@moustafab): validate regex for time interval ref",
+        "type": "string"
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRule": {
         "type": "object",
@@ -2660,20 +2621,10 @@
             ]
           },
           "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleSpec"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleSpec"
           },
           "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleStatus"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
@@ -2683,6 +2634,55 @@
             "version": "v0alpha1"
           }
         ]
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleDatasourceUID": {
+        "type": "string"
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleExpression": {
+        "type": "object",
+        "required": [
+          "model"
+        ],
+        "properties": {
+          "datasourceUID": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleDatasourceUID"
+          },
+          "model": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "queryType": {
+            "description": "The type of query if this is a query expression",
+            "type": "string"
+          },
+          "relativeTimeRange": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleRelativeTimeRange"
+          },
+          "source": {
+            "description": "Used to mark the expression to be used as the final source for the rule evaluation\nOnly one expression in a rule can be marked as the source\nFor AlertRules, this is the expression that will be evaluated against the alerting condition\nFor RecordingRules, this is the expression that will be recorded",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleExpressionMap": {
+        "description": "TODO: validate that only one can specify source=true\n\u0026 struct.MinFields(1) This doesn't work in Cue \u003cv0.12.0 as per",
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleExpression"
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleIntervalTrigger": {
+        "type": "object",
+        "required": [
+          "interval"
+        ],
+        "properties": {
+          "interval": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRulePromDuration"
+          }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleList": {
         "type": "object",
@@ -2727,6 +2727,63 @@
           }
         ]
       },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleOperatorState": {
+        "type": "object",
+        "required": [
+          "lastEvaluation",
+          "state"
+        ],
+        "properties": {
+          "descriptiveState": {
+            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
+            "type": "string"
+          },
+          "details": {
+            "description": "details contains any extra information that is operator-specific",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "lastEvaluation": {
+            "description": "lastEvaluation is the ResourceVersion last evaluated",
+            "type": "string"
+          },
+          "state": {
+            "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
+            "type": "string",
+            "enum": [
+              "success",
+              "in_progress",
+              "failed"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRulePromDuration": {
+        "type": "string"
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRulePromDurationWMillis": {
+        "type": "string"
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleRelativeTimeRange": {
+        "type": "object",
+        "required": [
+          "from",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRulePromDurationWMillis"
+          },
+          "to": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRulePromDurationWMillis"
+          }
+        },
+        "additionalProperties": false
+      },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleSpec": {
         "type": "object",
         "required": [
@@ -2738,90 +2795,31 @@
         ],
         "properties": {
           "expressions": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "required": [
-                "model"
-              ],
-              "properties": {
-                "datasourceUID": {
-                  "description": "The UID of the datasource to run this expression against. If omitted, the expression will be run against the `__expr__` datasource",
-                  "type": "string",
-                  "pattern": "^[a-zA-Z0-9_-]+$"
-                },
-                "model": {},
-                "queryType": {
-                  "description": "The type of query if this is a query expression",
-                  "type": "string"
-                },
-                "relativeTimeRange": {
-                  "type": "object",
-                  "required": [
-                    "from",
-                    "to"
-                  ],
-                  "properties": {
-                    "from": {
-                      "type": "string",
-                      "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$"
-                    },
-                    "to": {
-                      "type": "string",
-                      "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$"
-                    }
-                  }
-                },
-                "source": {
-                  "description": "Used to mark the expression to be used as the final source for the rule evaluation\nOnly one expression in a rule can be marked as the source\nFor AlertRules, this is the expression that will be evaluated against the alerting condition\nFor RecordingRules, this is the expression that will be recorded",
-                  "type": "boolean"
-                }
-              }
-            }
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleExpressionMap"
           },
           "labels": {
             "type": "object",
             "additionalProperties": {
-              "type": "string"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleTemplateString"
             }
           },
           "metric": {
-            "type": "string",
-            "pattern": "^[a-zA-Z_:][a-zA-Z0-9_:]*$"
+            "type": "string"
           },
           "paused": {
             "type": "boolean"
           },
           "targetDatasourceUID": {
-            "type": "string",
-            "pattern": "^[a-zA-Z0-9_-]+$"
+            "type": "string"
           },
           "title": {
             "type": "string"
           },
           "trigger": {
-            "type": "object",
-            "required": [
-              "interval"
-            ],
-            "properties": {
-              "interval": {
-                "type": "string",
-                "allOf": [
-                  {
-                    "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$"
-                  },
-                  {
-                    "not": {
-                      "pattern": "hmuµn"
-                    }
-                  }
-                ]
-              }
-            }
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleIntervalTrigger"
           }
         },
-        "additionalProperties": true
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleStatus": {
         "type": "object",
@@ -2829,44 +2827,23 @@
           "additionalFields": {
             "description": "additionalFields is reserved for future use",
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {}
+            }
           },
           "operatorStates": {
             "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
             "type": "object",
             "additionalProperties": {
-              "type": "object",
-              "required": [
-                "lastEvaluation",
-                "state"
-              ],
-              "properties": {
-                "descriptiveState": {
-                  "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
-                  "type": "string"
-                },
-                "details": {
-                  "description": "details contains any extra information that is operator-specific",
-                  "type": "object",
-                  "additionalProperties": true
-                },
-                "lastEvaluation": {
-                  "description": "lastEvaluation is the ResourceVersion last evaluated",
-                  "type": "string"
-                },
-                "state": {
-                  "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
-                  "type": "string",
-                  "enum": [
-                    "success",
-                    "in_progress",
-                    "failed"
-                  ]
-                }
-              }
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleOperatorState"
             }
           }
-        }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleTemplateString": {
+        "type": "string"
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",

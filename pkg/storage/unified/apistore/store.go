@@ -167,8 +167,27 @@ func NewStorage(
 	return s, func() {}, nil
 }
 
+// CompactRevision implements storage.Interface.
+// https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apiserver/pkg/storage/interfaces.go#L278
+// https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L204
+func (s *Storage) CompactRevision() int64 {
+	return 0
+}
+
+// SetKeysFunc allows to override the function used to get keys from storage.
+// This allows to replace default function that fetches keys from storage with one using cache.
+// https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apiserver/pkg/storage/interfaces.go#L273
+func (s *Storage) SetKeysFunc(storage.KeysFunc) {
+	// noop
+}
+
+// Stats implements storage.Interface.
+func (s *Storage) Stats(ctx context.Context) (storage.Stats, error) {
+	return storage.Stats{}, nil
+}
+
 // GetCurrentResourceVersion implements storage.Interface.
-// See: https://github.com/kubernetes/kubernetes/blob/v1.33.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L647
+// See: https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L686
 func (s *Storage) GetCurrentResourceVersion(ctx context.Context) (uint64, error) {
 	// Although not totally accurate, this is sufficient
 	return uint64(time.Now().UnixMicro()), nil
@@ -627,12 +646,6 @@ func (s *Storage) GuaranteedUpdate(
 	}
 
 	return nil
-}
-
-// Count returns number of different entries under the key (generally being path prefix).
-// TODO: Implement count.
-func (s *Storage) Count(key string) (int64, error) {
-	return 0, nil
 }
 
 // RequestWatchProgress requests the a watch stream progress status be sent in the

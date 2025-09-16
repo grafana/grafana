@@ -1,6 +1,12 @@
 package plugins
 
 import (
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/rest"
+	restclient "k8s.io/client-go/rest"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
@@ -9,11 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/generic"
-	"k8s.io/apiserver/pkg/registry/rest"
-	restclient "k8s.io/client-go/rest"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
@@ -43,7 +44,7 @@ func RegisterAppInstaller(
 		ManifestData:   *apis.LocalManifest().ManifestData,
 		SpecificConfig: specificConfig,
 	}
-	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.ManifestGoTypeAssociator, apis.ManifestCustomRouteResponsesAssociator)
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, &apis.GoTypeAssociator{})
 	if err != nil {
 		return nil, err
 	}

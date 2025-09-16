@@ -27,14 +27,7 @@ var (
 	ErrShortURLInvalidPath  = fmt.Errorf("invalid short URL path")
 )
 
-type ShortURLConfig struct{}
-
 func New(cfg app.Config) (app.App, error) {
-	shortURLConfig, ok := cfg.SpecificConfig.(*ShortURLConfig)
-	if !ok || shortURLConfig == nil {
-		return nil, fmt.Errorf("invalid or missing ShortURLConfig")
-	}
-
 	cfg.KubeConfig.APIPath = "apis"
 	client, err := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig()).
 		ClientFor(shorturlv1alpha1.ShortURLKind())

@@ -46,8 +46,7 @@
         "metadata": {
           "name": "aaa",
           "namespace": "default",
-          "resourceVersion": "10",
-          "creationTimestamp": null
+          "resourceVersion": "10"
         }
       }
     },
@@ -67,8 +66,7 @@
         "metadata": {
           "name": "bbb",
           "namespace": "default",
-          "resourceVersion": "10",
-          "creationTimestamp": null
+          "resourceVersion": "10"
         }
       }
     }

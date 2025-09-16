@@ -44,7 +44,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, runtime.Version(), info.GoVersion)
 		require.Equal(t, "1", info.Major)
-		require.Equal(t, "33", info.Minor)
+		require.Equal(t, "34", info.Minor)
 
 		// Make sure the gitVersion is parsable
 		v, err := version.Parse(info.GitVersion)

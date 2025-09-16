@@ -40,15 +40,13 @@ func RegisterAppInstaller(
 		service:    service,
 		namespacer: request.GetNamespaceMapper(cfg),
 	}
-	specificConfig := any(&shorturlapp.ShortURLConfig{})
-	provider := simple.NewAppProvider(apis.LocalManifest(), specificConfig, shorturlapp.New)
+	provider := simple.NewAppProvider(apis.LocalManifest(), nil, shorturlapp.New)
 
 	appCfg := app.Config{
-		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
-		ManifestData:   *apis.LocalManifest().ManifestData,
-		SpecificConfig: specificConfig,
+		KubeConfig:   restclient.Config{}, // this will be overridden by the installer's InitializeApp method
+		ManifestData: *apis.LocalManifest().ManifestData,
 	}
-	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appCfg, apis.ManifestGoTypeAssociator, apis.ManifestCustomRouteResponsesAssociator)
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appCfg, &apis.GoTypeAssociator{})
 	if err != nil {
 		return nil, err
 	}
