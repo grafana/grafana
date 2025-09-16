@@ -1,0 +1,83 @@
+#!/usr/bin/env node
+
+const { spawn } = require('node:child_process');
+const fs = require('node:fs');
+
+const CODEOWNERS_FILE_PATH = '.github/CODEOWNERS';
+const CODEOWNERS_COVERAGE_DIR = 'codeowners-manifest';
+const RAW_AUDIT_JSONL_PATH = `${CODEOWNERS_COVERAGE_DIR}/audit-raw.jsonl`;
+
+/**
+ * Generate raw CODEOWNERS audit data using github-codeowners CLI
+ * @param {string} codeownersPath - Path to CODEOWNERS file
+ * @param {string} outputPath - Path to write audit JSONL file
+ */
+async function generateCodeownersRawAudit(codeownersPath, outputPath) {
+  const hasCodeowners = fs.existsSync(codeownersPath);
+  if (!hasCodeowners) {
+    throw new Error(`CODEOWNERS file not found at: ${codeownersPath}`);
+  }
+
+  return new Promise((resolve, reject) => {
+    const outputStream = fs.createWriteStream(outputPath);
+
+    const child = spawn('yarn', ['github-codeowners', 'audit', '--output', 'jsonl'], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      cwd: process.cwd(),
+      shell: true,
+    });
+
+    let stderrData = '';
+    child.stderr.on('data', (data) => {
+      stderrData += data.toString();
+    });
+
+    child.stdout.pipe(outputStream);
+
+    child.on('close', (code) => {
+      outputStream.end();
+      if (code === 0) {
+        resolve();
+      } else {
+        const error = new Error(`github-codeowners process exited with code ${code}`);
+        if (stderrData) {
+          error.message += `\nStderr: ${stderrData.trim()}`;
+        }
+        reject(error);
+      }
+    });
+
+    child.on('error', (err) => {
+      outputStream.end();
+      if (err.code === 'ENOENT') {
+        reject(new Error('yarn command not found. Please ensure yarn and github-codeowners are available'));
+      } else {
+        reject(err);
+      }
+    });
+  });
+}
+
+if (require.main === module) {
+  (async () => {
+    try {
+      if (!fs.existsSync(CODEOWNERS_COVERAGE_DIR)) {
+        fs.mkdirSync(CODEOWNERS_COVERAGE_DIR, { recursive: true });
+      }
+
+      console.log(`🍣 Getting raw CODEOWNERS data for manifest ...`);
+      await generateCodeownersRawAudit(CODEOWNERS_FILE_PATH, RAW_AUDIT_JSONL_PATH);
+
+      // Show file size for verification
+      const stats = fs.statSync(RAW_AUDIT_JSONL_PATH);
+      const fileSizeMB = (stats.size / 1024 / 1024).toFixed(2);
+      console.log(`✅ Raw audit data written to: ${RAW_AUDIT_JSONL_PATH}`);
+      console.log(`   📊 Generated ${fileSizeMB} MB of audit data`);
+    } catch (e) {
+      console.error('❌ Error generating raw audit:', e.message);
+      process.exit(1);
+    }
+  })();
+}
+
+module.exports = { generateCodeownersRawAudit };

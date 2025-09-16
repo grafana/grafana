@@ -13,7 +13,7 @@
     "codeowners-manifest": "yarn codeowners-manifest:clean && yarn codeowners-manifest:raw && node ./scripts/generate-codeowners-manifest.js",
     "codeowners-manifest:clean": "rm -rf codeowners-manifest && mkdir -p codeowners-manifest",
     "codeowners-manifest:metadata": "node ./scripts/generate-codeowners-metadata.js",
-    "codeowners-manifest:raw": "echo \"🍣 Getting raw CODEOWNERS data for manifest ...\" && github-codeowners audit --output jsonl >> codeowners-manifest/audit-raw.jsonl",
+    "codeowners-manifest:raw": "node ./scripts/generate-codeowners-raw-audit.js",
     "dev": "NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
     "e2e:old-arch": "./e2e/start-and-run-suite old-arch",
