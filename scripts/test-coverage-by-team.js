@@ -36,7 +36,6 @@ if (require.main === module) {
   }
 
   try {
-    console.log(`🧪 Running test coverage for team: ${teamName}`);
     runTestCoverageByTeam(teamName, CODEOWNERS_MANIFEST_TEAMS_PATH, JEST_CONFIG_PATH);
   } catch (e) {
     if (e.code === 'ENOENT') {

@@ -49,11 +49,9 @@ if (require.main === module) {
       METADATA_JSON_PATH
     );
 
-    console.log(`🗂️ Files list hash: ${metadata.filesHash}`);
-    console.log(`📜 CODEOWNERS hash: ${metadata.codeownersHash}`);
-
     fs.writeFileSync(METADATA_JSON_PATH, JSON.stringify(metadata, null, 2), 'utf8');
-    console.log(`💾 Metadata written to: ${METADATA_JSON_PATH}`);
+    console.log('✅ Metadata generated:');
+    console.log(`   • ${METADATA_JSON_PATH}`);
   } catch (error) {
     console.error('❌ Error generating codeowners metadata:', error.message);
     process.exit(1);

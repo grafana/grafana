@@ -73,7 +73,7 @@ if (require.main === module) {
         TEAMS_BY_FILENAME_JSON_PATH,
         FILENAMES_BY_TEAM_JSON_PATH
       );
-      console.log('✅ Codeowners manifest generation completed:');
+      console.log('✅ Manifest files generated:');
       console.log(`   • ${TEAMS_JSON_PATH}`);
       console.log(`   • ${TEAMS_BY_FILENAME_JSON_PATH}`);
       console.log(`   • ${FILENAMES_BY_TEAM_JSON_PATH}`);

@@ -69,12 +69,8 @@ if (require.main === module) {
 
       console.log(`🍣 Getting raw CODEOWNERS data for manifest ...`);
       await generateCodeownersRawAudit(CODEOWNERS_FILE_PATH, RAW_AUDIT_JSONL_PATH);
-
-      // Show file size for verification
-      const stats = fs.statSync(RAW_AUDIT_JSONL_PATH);
-      const fileSizeMB = (stats.size / 1024 / 1024).toFixed(2);
-      console.log(`✅ Raw audit data written to: ${RAW_AUDIT_JSONL_PATH}`);
-      console.log(`   📊 Generated ${fileSizeMB} MB of audit data`);
+      console.log('✅ Raw audit generated:');
+      console.log(`   • ${RAW_AUDIT_JSONL_PATH}`);
     } catch (e) {
       console.error('❌ Error generating raw audit:', e.message);
       process.exit(1);

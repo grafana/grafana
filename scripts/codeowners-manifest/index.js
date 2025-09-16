@@ -83,9 +83,10 @@ if (require.main === module) {
       );
 
       if (wasGenerated) {
-        console.log('✅ Complete codeowners manifest generation finished');
+        console.log('✅ Complete manifest generated:');
+        console.log(`   • ${CODEOWNERS_MANIFEST_DIR}/`);
       } else {
-        console.log('✅ Manifest is up-to-date, skipped generation');
+        console.log('✅ Manifest up-to-date, skipped generation');
       }
     } catch (e) {
       console.error('❌ Error generating codeowners manifest:', e.message);
