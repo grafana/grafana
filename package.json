@@ -34,7 +34,7 @@
     "e2e:plugin:build:dev": "nx run-many -t dev --projects='@test-plugins/*' --maxParallel=100",
     "test": "jest --notify --watch",
     "test:coverage": "jest --coverage",
-    "test:coverage:by-codeowner": "yarn codeowners-manifest && node scripts/test-coverage-by-team.js",
+    "test:coverage:by-codeowner": "yarn codeowners-manifest && node scripts/test-coverage-by-codeowner.js",
     "test:storybook": "yarn workspace @grafana/ui storybook:test",
     "test:coverage:changes": "jest --coverage --changedSince=origin/main",
     "test:accessibility-report": "./scripts/generate-a11y-report.sh",

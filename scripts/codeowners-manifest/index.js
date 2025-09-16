@@ -6,9 +6,9 @@ const {
   CODEOWNERS_FILE_PATH,
   CODEOWNERS_MANIFEST_DIR,
   RAW_AUDIT_JSONL_PATH,
-  TEAMS_BY_FILENAME_JSON_PATH,
-  FILENAMES_BY_TEAM_JSON_PATH,
-  TEAMS_JSON_PATH,
+  CODEOWNERS_BY_FILENAME_JSON_PATH,
+  FILENAMES_BY_CODEOWNER_JSON_PATH,
+  CODEOWNERS_JSON_PATH,
   METADATA_JSON_PATH
 } = require('./constants.js');
 const { generateCodeownersManifest } = require('./manifest.js');
@@ -17,21 +17,21 @@ const { generateCodeownersRawAudit } = require('./raw.js');
 
 /**
  * Generate complete codeowners manifest including raw audit, metadata, and processed files
- * @param {string} codeownersPath - Path to CODEOWNERS file
+ * @param {string} codeownersFilePath - Path to CODEOWNERS file
  * @param {string} manifestDir - Directory for manifest files
  * @param {string} rawAuditPath - Path for raw audit JSONL file
- * @param {string} teamsPath - Path for teams.json
- * @param {string} teamsByFilenamePath - Path for teams-by-filename.json
- * @param {string} filenamesByTeamPath - Path for filenames-by-team.json
+ * @param {string} codeownersJsonPath - Path for teams.json
+ * @param {string} codeownersByFilenamePath - Path for teams-by-filename.json
+ * @param {string} filenamesByCodeownerPath - Path for filenames-by-team.json
  * @param {string} metadataPath - Path for metadata.json
  */
 async function generateCodeownersManifestComplete(
-  codeownersPath,
+  codeownersFilePath,
   manifestDir,
   rawAuditPath,
-  teamsPath,
-  teamsByFilenamePath,
-  filenamesByTeamPath,
+  codeownersJsonPath,
+  codeownersByFilenamePath,
+  filenamesByCodeownerPath,
   metadataPath
 ) {
   const hasManifestDirectory = fs.existsSync(manifestDir);
@@ -39,7 +39,7 @@ async function generateCodeownersManifestComplete(
     fs.mkdirSync(manifestDir, { recursive: true });
   }
 
-  const newMetadata = generateCodeownersMetadata(codeownersPath, manifestDir, 'metadata.json');
+  const newMetadata = generateCodeownersMetadata(codeownersFilePath, manifestDir, 'metadata.json');
 
   let isCacheUpToDate = false;
   const hasExistingMetadata = fs.existsSync(metadataPath);
@@ -58,8 +58,8 @@ async function generateCodeownersManifestComplete(
   }
 
   if (!isCacheUpToDate) {
-    await generateCodeownersRawAudit(codeownersPath, rawAuditPath);
-    await generateCodeownersManifest(rawAuditPath, teamsPath, teamsByFilenamePath, filenamesByTeamPath);
+    await generateCodeownersRawAudit(codeownersFilePath, rawAuditPath);
+    await generateCodeownersManifest(rawAuditPath, codeownersJsonPath, codeownersByFilenamePath, filenamesByCodeownerPath);
     fs.writeFileSync(metadataPath, JSON.stringify(newMetadata, null, 2), 'utf8');
     return true;
   }
@@ -72,13 +72,13 @@ if (require.main === module) {
     try {
       console.log('📋 Generating complete codeowners manifest...');
 
-      const wasGenerated =       await generateCodeownersManifestComplete(
+      const wasGenerated = await generateCodeownersManifestComplete(
         CODEOWNERS_FILE_PATH,
         CODEOWNERS_MANIFEST_DIR,
         RAW_AUDIT_JSONL_PATH,
-        TEAMS_JSON_PATH,
-        TEAMS_BY_FILENAME_JSON_PATH,
-        FILENAMES_BY_TEAM_JSON_PATH,
+        CODEOWNERS_JSON_PATH,
+        CODEOWNERS_BY_FILENAME_JSON_PATH,
+        FILENAMES_BY_CODEOWNER_JSON_PATH,
         METADATA_JSON_PATH
       );
 
