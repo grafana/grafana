@@ -1172,7 +1172,7 @@ func removeSmallTerms(query string) string {
 	validWords := make([]string, 0, len(words))
 
 	for _, word := range words {
-		if len(strings.TrimSpace(word)) >= EDGE_NGRAM_MIN_TOKEN {
+		if len(word) >= EDGE_NGRAM_MIN_TOKEN {
 			validWords = append(validWords, word)
 		}
 	}
