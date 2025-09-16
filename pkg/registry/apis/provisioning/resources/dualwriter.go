@@ -77,6 +77,7 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 		return nil, err
 	}
 
+	// FIXME: improve this check to check for the exact branch
 	if opts.Ref == "" {
 		return nil, apierrors.NewBadRequest("delete operations are only supported on non-default branches")
 	}
@@ -276,6 +277,7 @@ func (r *DualReadWriter) MoveResource(ctx context.Context, opts DualWriteOptions
 		return nil, err
 	}
 
+	// FIXME: improve this check to check for the exact branch
 	if opts.Ref == "" {
 		return nil, apierrors.NewBadRequest("move operations are only supported on non-default branches")
 	}
