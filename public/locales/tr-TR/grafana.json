@@ -156,8 +156,11 @@
       "title": "Grafana Enterprise'ı edinin"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Kullanıcı eşleme testi",
-      "test-mapping-run-button": "Çalıştır"
+      "test-mapping-run-button": "Çalıştır",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -9239,7 +9242,8 @@
       "disable-button": "Devre dışı bırak",
       "discard-button": "Temizle",
       "save-and-enable-button": "Kaydet ve etkinleştir",
-      "save-button": "Kaydet"
+      "save-button": "Kaydet",
+      "test-button": ""
     },
     "documentation": "belgeler",
     "host": {
@@ -12814,6 +12818,7 @@
     "description-column-filter": "Tablo içindeki alan filtrelerini etkinleştir/devre dışı bırak",
     "description-frozen-columns": "",
     "description-min-column-width": "Sütunların otomatik olarak yeniden boyutlandırılması için minimum genişlik",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Görsel görüntülenemediğinde veya ekran okuyucu kullanan kullanıcılar için gösterilecek alternatif metin",
@@ -12844,6 +12849,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minimum sütun genişliği",
     "name-show-table-header": "Tablo başlığını göster",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Başlık metnini kaydır",

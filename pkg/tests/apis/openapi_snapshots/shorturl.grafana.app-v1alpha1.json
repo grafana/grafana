@@ -865,6 +865,55 @@
         }
       ]
     },
+    "/apis/shorturl.grafana.app/v1alpha1/namespaces/{namespace}/shorturls/{name}/goto": {
+      "get": {
+        "tags": [
+          "ShortURL"
+        ],
+        "description": "connect GET requests to goto of ShortURL",
+        "operationId": "getShortURLGoto",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.GetGoto"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "shorturl.grafana.app",
+          "version": "v1alpha1",
+          "kind": "ResourceCallOptions"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ResourceCallOptions",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/shorturl.grafana.app/v1alpha1/namespaces/{namespace}/shorturls/{name}/status": {
       "get": {
         "tags": [
@@ -1158,6 +1207,17 @@
   },
   "components": {
     "schemas": {
+      "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.GetGoto": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL": {
         "type": "object",
         "properties": {
