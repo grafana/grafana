@@ -1058,6 +1058,9 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/codemods/explicit-barrel-imports.cjs @grafana/frontend-ops
 /scripts/rtk-client-generator/ @grafana/grafana-search-navigate-organise
 
+/scripts/codeowners-manifest/ @grafana/dataviz-squad
+/scripts/test-coverage-by-codeowner.js @grafana/dataviz-squad
+
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
