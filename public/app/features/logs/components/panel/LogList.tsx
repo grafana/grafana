@@ -89,7 +89,7 @@ export interface Props {
 
 export type LogListFontSize = 'default' | 'small';
 
-export type LogListControlOptions = keyof LogListState | 'wrapLogMessage' | 'prettifyJSON';
+export type LogListControlOptions = keyof LogListState | 'wrapLogMessage' | 'prettifyLogMessage';
 
 type LogListComponentProps = Omit<
   Props,

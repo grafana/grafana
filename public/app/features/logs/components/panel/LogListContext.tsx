@@ -151,8 +151,6 @@ export type LogListState = Pick<
   | 'timestampResolution'
 >;
 
-export type LogListOption = keyof LogListState | 'wrapLogMessage' | 'prettifyJSON';
-
 export interface Props {
   app: CoreApp;
   children?: ReactNode;
@@ -492,7 +490,7 @@ export const LogListContextProvider = ({
       if (logOptionsStorageKey) {
         store.set(`${logOptionsStorageKey}.prettifyLogMessage`, prettifyJSON);
       }
-      onLogOptionsChange?.('prettifyJSON', prettifyJSON);
+      onLogOptionsChange?.('prettifyLogMessage', prettifyJSON);
     },
     [logOptionsStorageKey, onLogOptionsChange]
   );
