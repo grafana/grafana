@@ -53,6 +53,11 @@ type NotifierPluginVersion struct {
 	Plugin    *VersionedNotifierPlugin `json:"-"`
 }
 
+// GetSecretFieldsPaths returns a list of paths for fields marked as secure within the NotifierPluginVersion's options.
+func (v NotifierPluginVersion) GetSecretFieldsPaths() []string {
+	return getSecretFields("", v.Options)
+}
+
 // NotifierOption holds information about options specific for the NotifierPlugin.
 type NotifierOption struct {
 	Element        ElementType      `json:"element"`
