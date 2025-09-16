@@ -40,8 +40,9 @@ func TestEventKey_String(t *testing.T) {
 				Name:            "test-resource",
 				ResourceVersion: 1000,
 				Action:          "created",
+				Folder:          "test-folder",
 			},
-			expected: "1000~default~apps~resource~test-resource~created",
+			expected: "1000~default~apps~resource~test-resource~created~test-folder",
 		},
 		{
 			name: "empty namespace",
@@ -52,8 +53,9 @@ func TestEventKey_String(t *testing.T) {
 				Name:            "test-resource",
 				ResourceVersion: 2000,
 				Action:          "updated",
+				Folder:          "test-folder",
 			},
-			expected: "2000~~apps~resource~test-resource~updated",
+			expected: "2000~~apps~resource~test-resource~updated~test-folder",
 		},
 		{
 			name: "special characters in name",
@@ -64,8 +66,9 @@ func TestEventKey_String(t *testing.T) {
 				Name:            "test-resource-with-dashes",
 				ResourceVersion: 3000,
 				Action:          "deleted",
+				Folder:          "test-folder",
 			},
-			expected: "3000~test-ns~apps~resource~test-resource-with-dashes~deleted",
+			expected: "3000~test-ns~apps~resource~test-resource-with-dashes~deleted~test-folder",
 		},
 	}
 
@@ -86,7 +89,7 @@ func TestEventKey_Validate(t *testing.T) {
 	}{
 		{
 			name: "valid key",
-			key:  "1000~default~apps~resource~test-resource~created",
+			key:  "1000~default~apps~resource~test-resource~created~test-folder",
 			expected: EventKey{
 				ResourceVersion: 1000,
 				Namespace:       "default",
@@ -94,11 +97,12 @@ func TestEventKey_Validate(t *testing.T) {
 				Resource:        "resource",
 				Name:            "test-resource",
 				Action:          "created",
+				Folder:          "test-folder",
 			},
 		},
 		{
 			name: "empty namespace",
-			key:  "2000~~apps~resource~test-resource~updated",
+			key:  "2000~~apps~resource~test-resource~updated~",
 			expected: EventKey{
 				ResourceVersion: 2000,
 				Namespace:       "",
@@ -110,7 +114,7 @@ func TestEventKey_Validate(t *testing.T) {
 		},
 		{
 			name: "special characters in name",
-			key:  "3000~test-ns~apps~resource~test-resource-with-dashes~updated",
+			key:  "3000~test-ns~apps~resource~test-resource-with-dashes~updated~",
 			expected: EventKey{
 				ResourceVersion: 3000,
 				Namespace:       "test-ns",
@@ -122,17 +126,17 @@ func TestEventKey_Validate(t *testing.T) {
 		},
 		{
 			name:        "invalid key - too few parts",
-			key:         "1000~default~apps~resource",
+			key:         "1000~default~apps~resource~",
 			expectError: true,
 		},
 		{
 			name:        "invalid key - too many parts",
-			key:         "1000~default~apps~resource~test~extra~parts",
+			key:         "1000~default~apps~resource~test~extra~parts~",
 			expectError: true,
 		},
 		{
 			name:        "invalid resource version",
-			key:         "invalid~default~apps~resource~test~cerated",
+			key:         "invalid~default~apps~resource~test~cerated~",
 			expectError: true,
 		},
 		{
