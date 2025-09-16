@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -16,13 +16,16 @@ import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/provisionin
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
+import { StepStatusInfo } from '../../Wizard/types';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
+import { StatusInfo } from '../../types';
 import { MoveActionAvailableTargetWarning } from '../Shared/MoveActionAvailableTargetWarning';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { generateTimestamp } from '../utils/timestamp';
 
+import { BulkActionError } from './BulkActionError';
 import { MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
 import { BulkActionFormData, BulkActionProvisionResourceProps, getTargetFolderPathInRepo } from './utils';
 
@@ -36,6 +39,7 @@ interface FormProps extends BulkActionProvisionResourceProps {
 function FormContent({ initialValues, selectedItems, repository, workflowOptions, onDismiss }: FormProps) {
   // States
   const [job, setJob] = useState<Job>();
+  const [jobError, setJobError] = useState<string | StatusInfo>();
   const [targetFolderUID, setTargetFolderUID] = useState<string | undefined>(undefined);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
@@ -109,20 +113,30 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
     }
   };
 
+  const onStatusChange = useCallback((statusInfo: StepStatusInfo) => {
+    if (statusInfo.status === 'error' && statusInfo.error) {
+      setJobError(statusInfo.error);
+    }
+  }, []);
+
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(handleSubmitForm)}>
         <Stack direction="column" gap={2}>
-          <MoveActionAvailableTargetWarning />
-          <Box paddingBottom={2}>
-            <Trans i18nKey="browse-dashboards.bulk-move-resources-form.move-total">In total, this will affect:</Trans>
-            <DescendantCount selectedItems={{ ...selectedItems, panel: {}, $all: false }} />
-          </Box>
-
           {hasSubmitted && job ? (
-            <JobStatus watch={job} jobType="move" />
+            <>
+              <BulkActionError error={jobError} />
+              <JobStatus watch={job} jobType="move" onStatusChange={onStatusChange} />
+            </>
           ) : (
             <>
+              <MoveActionAvailableTargetWarning />
+              <Box paddingBottom={2}>
+                <Trans i18nKey="browse-dashboards.bulk-move-resources-form.move-total">
+                  In total, this will affect:
+                </Trans>
+                <DescendantCount selectedItems={{ ...selectedItems, panel: {}, $all: false }} />
+              </Box>
               {/* Target folder selection */}
               <Field
                 noMargin
