@@ -117,8 +117,14 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		MinTime: s.cfg.KeepaliveMinTime,
 	}
 
-	opts = append(opts, grpc.KeepaliveParams(keepaliveParams))
-	opts = append(opts, grpc.KeepaliveEnforcementPolicy(keepalivePolicy))
+	// Only add keepalive options if any values are configured
+	if s.cfg.MaxConnectionAge > 0 || s.cfg.MaxConnectionAgeGrace > 0 || s.cfg.MaxConnectionIdle > 0 ||
+		s.cfg.KeepaliveTime > 0 || s.cfg.KeepaliveTimeout > 0 {
+		opts = append(opts, grpc.KeepaliveParams(keepaliveParams))
+	}
+	if s.cfg.KeepaliveMinTime > 0 {
+		opts = append(opts, grpc.KeepaliveEnforcementPolicy(keepalivePolicy))
+	}
 
 	s.server = grpc.NewServer(opts...)
 	return s, nil
