@@ -13,7 +13,6 @@ import {
   DisplayValue,
   LinkModel,
   DisplayValueAlignmentFactors,
-  DataFrame,
   DisplayProcessor,
 } from '@grafana/data';
 import {
