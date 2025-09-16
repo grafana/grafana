@@ -1,5 +1,4 @@
 import { DataFrame, ActionModel, Field, InterpolateFunction, LinkModel } from '@grafana/data';
-import { ActionContext } from 'app/features/actions/analytics';
 import { getActions } from 'app/features/actions/utils';
 
 export const getDataLinks = (field: Field, rowIdx: number) => {
@@ -30,7 +29,7 @@ export const getFieldActions = (
   field: Field,
   replaceVars: InterpolateFunction,
   rowIndex: number,
-  actionInstrumentationContext?: ActionContext
+  visualizationType?: string
 ) => {
   const actions: Array<ActionModel<Field>> = [];
   const actionLookup = new Set<string>();
@@ -44,7 +43,7 @@ export const getFieldActions = (
     {
       valueRowIndex: rowIndex,
     },
-    actionInstrumentationContext
+    visualizationType
   );
 
   actionsModel.forEach((action) => {

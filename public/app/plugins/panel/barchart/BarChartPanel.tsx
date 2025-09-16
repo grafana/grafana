@@ -14,7 +14,6 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import { AdHocFilterModel, FILTER_FOR_OPERATOR, TooltipHoverMode } from '@grafana/ui/internal';
-import { getInstrumentationContext } from 'app/features/actions/analytics';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
@@ -127,8 +126,6 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     [prepData, vizSeries, info.color]
   );
 
-  const context = useMemo(() => getInstrumentationContext('barchart', id), [id]);
-
   if (info.warn != null || builder == null) {
     return (
       <PanelDataErrorView
@@ -203,7 +200,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                   <TimeSeriesTooltip
                     series={vizSeries[0]}
                     _rest={info._rest}
-                    context={context}
+                    visualizationType="barchart"
                     dataIdxs={dataIdxs}
                     seriesIdx={seriesIdx}
                     mode={options.tooltip.mode}

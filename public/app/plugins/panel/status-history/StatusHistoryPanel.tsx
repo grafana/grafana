@@ -18,7 +18,6 @@ import {
   prepareTimelineLegendItems,
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
-import { getInstrumentationContext } from 'app/features/actions/analytics';
 
 import { StateTimelineTooltip2 } from '../state-timeline/StateTimelineTooltip2';
 import { containerStyles, usePagination } from '../state-timeline/utils';
@@ -54,8 +53,6 @@ export const StatusHistoryPanel = ({
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
-
-  const context = useMemo(() => getInstrumentationContext('status-history', panelId), [panelId]);
 
   const { frames, warn } = useMemo(
     () => prepareTimelineFields(data.series, false, timeRange, theme),
@@ -156,7 +153,7 @@ export const StatusHistoryPanel = ({
                         maxHeight={options.tooltip.maxHeight}
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
-                        context={context}
+                        visualizationType="status-history"
                       />
                     );
                   }}

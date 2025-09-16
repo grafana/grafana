@@ -16,7 +16,6 @@ import { TooltipHoverMode } from '@grafana/ui/internal';
 import { XYFieldMatchers } from 'app/core/components/GraphNG/types';
 import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
-import { getInstrumentationContext } from 'app/features/actions/analytics';
 import { findFieldIndex } from 'app/features/dimensions/utils';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
@@ -37,7 +36,6 @@ export const TrendPanel = ({
 }: PanelProps<Options>) => {
   const { dataLinkPostProcessor } = useDataLinksContext();
 
-  const context = useMemo(() => getInstrumentationContext('trend', id), [id]);
   // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
   const trendXFieldName =
     options.xField ?? data.series[0]?.fields.find((field) => field.type === FieldType.number)?.name;
@@ -138,7 +136,7 @@ export const TrendPanel = ({
                     <TimeSeriesTooltip
                       series={alignedDataFrame}
                       dataIdxs={dataIdxs}
-                      context={context}
+                      visualizationType="trend"
                       seriesIdx={seriesIdx}
                       mode={options.tooltip.mode}
                       sortOrder={options.tooltip.sort}

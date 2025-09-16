@@ -24,7 +24,7 @@ import { createAbsoluteUrl, RelativeUrl } from '../alerting/unified/utils/url';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { getNextRequestId } from '../query/state/PanelQueryRunner';
 
-import { reportActionTrigger, ActionContext } from './analytics';
+import { reportActionTrigger } from './analytics';
 
 /** @internal */
 export const isInfinityActionWithAuth = (action: Action): boolean => {
@@ -62,7 +62,7 @@ export const getActions = (
   replaceVariables: InterpolateFunction,
   actions: Action[],
   config: ValueLinkConfig,
-  context?: ActionContext
+  visualizationType?: string
 ): Array<ActionModel<Field>> => {
   if (!actions || actions.length === 0) {
     return [];
@@ -100,8 +100,8 @@ export const getActions = (
             actionVars
           )(action.confirmation || `Are you sure you want to ${action.title}?`),
         onClick: (evt: MouseEvent, origin: Field, actionVars?: ActionVariableInput) => {
-          if (context?.visualizationType) {
-            reportActionTrigger(action.type, action.oneClick ?? false, context);
+          if (visualizationType) {
+            reportActionTrigger(action.type, action.oneClick ?? false, visualizationType);
           }
 
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

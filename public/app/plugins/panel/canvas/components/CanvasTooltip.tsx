@@ -22,7 +22,6 @@ import {
   VizTooltipItem,
   CloseButton,
 } from '@grafana/ui/internal';
-import { getInstrumentationContext } from 'app/features/actions/analytics';
 import { getActions, getActionsDefaultField } from 'app/features/actions/utils';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
@@ -38,7 +37,6 @@ export const CanvasTooltip = ({ scene }: Props) => {
   const styles = useStyles2(getStyles);
   const { canExecuteActions } = usePanelContext();
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
-  const context = useMemo(() => getInstrumentationContext('canvas', scene.panel.props.id), [scene.panel.props.id]);
 
   const onClose = () => {
     if (scene?.tooltipCallback && scene.tooltipPayload) {
@@ -130,7 +128,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
       scene.panel.props.replaceVariables!,
       element.options.actions ?? [],
       config,
-      context
+      'canvas'
     );
 
     actionsModel.forEach((action) => {
