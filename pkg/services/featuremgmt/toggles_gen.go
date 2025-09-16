@@ -1046,4 +1046,8 @@ const (
 	// FlagPluginContainers
 	// Enables running plugins in containers
 	FlagPluginContainers = "pluginContainers"
+
+	// FlagFilterOutBotsFromFrontendLogs
+	// Filter out bots from collecting data for Frontend Observability
+	FlagFilterOutBotsFromFrontendLogs = "filterOutBotsFromFrontendLogs"
 )

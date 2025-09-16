@@ -1564,6 +1564,20 @@
     },
     {
       "metadata": {
+        "name": "filterOutBotsFromFrontendLogs",
+        "resourceVersion": "1758000919535",
+        "creationTimestamp": "2025-09-16T05:35:19Z"
+      },
+      "spec": {
+        "description": "Filter out bots from collecting data for Frontend Observability",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "foldersAppPlatformAPI",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-07-03T14:15:23Z"

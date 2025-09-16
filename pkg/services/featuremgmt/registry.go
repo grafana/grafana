@@ -2022,6 +2022,14 @@ var (
 			Expression:      "false",
 			RequiresRestart: true,
 		},
+		{
+			Name:         "filterOutBotsFromFrontendLogs",
+			Description:  "Filter out bots from collecting data for Frontend Observability",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
 	}
 )
 
