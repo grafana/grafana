@@ -1,9 +1,10 @@
+import { store } from '@grafana/data';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
 import { DashboardInteractions } from './interactions';
-import { store } from '@grafana/data';
 
 export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: number) {
   const trackingInformation = dashboard.getTrackingInformation();
@@ -15,6 +16,19 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
     ...trackingInformation,
   });
 }
+
+export const trackDeleteDashboardElement = (element: EditableDashboardElementInfo) => {
+  switch (element?.typeName) {
+    case 'Row':
+      DashboardInteractions.trackRemoveRowClick();
+      break;
+    case 'Tab':
+      DashboardInteractions.trackRemoveTabClick();
+      break;
+    default:
+      break;
+  }
+};
 
 export function getNoOfConditionalRulesInDashboard(layout: DashboardV2Spec['layout']): number {
   const l = castLayoutKind(layout);
