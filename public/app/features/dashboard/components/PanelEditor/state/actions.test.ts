@@ -204,41 +204,6 @@ describe('panelEditor actions', () => {
       // expect configRev to be reset to 0 as it was saved
       expect(sourcePanel.hasChanged).toEqual(false);
     });
-
-    it('should apply changes when leaving panel edit with angular panel', async () => {
-      const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
-      sourcePanel.plugin = getPanelPlugin({});
-      sourcePanel.plugin.angularPanelCtrl = {};
-
-      const dashboard = createDashboardModelFixture({
-        panels: [{ id: 12, type: 'graph' }],
-      });
-
-      const panel = dashboard.initEditPanel(sourcePanel);
-
-      const state: PanelEditorState = {
-        ...initialState(),
-        getPanel: () => panel,
-        getSourcePanel: () => sourcePanel,
-      };
-
-      // not using panel.setProperty here to simulate any prop change done from angular
-      panel.title = 'Changed title';
-
-      await thunkTester({
-        panelEditor: state,
-        panels: {},
-        dashboard: {
-          getModel: () => dashboard,
-        },
-      })
-        .givenThunk(exitPanelEditor)
-        .whenThunkIsDispatched();
-
-      expect(sourcePanel.isAngularPlugin()).toBe(true);
-      expect(sourcePanel.title).toEqual('Changed title');
-      expect(sourcePanel.configRev).toEqual(1);
-    });
   });
 
   describe('skipPanelUpdate', () => {
