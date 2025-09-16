@@ -9,12 +9,15 @@ import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Drawer, Field, Input, Spinner, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
+  Job,
   RepositoryView,
   useCreateRepositoryFilesWithPathMutation,
   useGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
+import { StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 
 import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { ProvisionedDashboardFormData } from '../../types/form';
@@ -48,6 +51,7 @@ export function MoveProvisionedDashboardForm({
   targetFolderTitle,
   repository,
   onDismiss,
+  onSuccess,
 }: Props) {
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const { editPanel: panelEditor } = dashboard.useState();
@@ -67,6 +71,8 @@ export function MoveProvisionedDashboardForm({
   const { createBulkJob, isLoading: isCreatingJob } = useBulkActionJob();
   const [moveFile, moveRequest] = useCreateRepositoryFilesWithPathMutation();
   const [targetPath, setTargetPath] = useState<string>('');
+  const [job, setJob] = useState<Job>();
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const navigate = useNavigate();
 
@@ -171,16 +177,10 @@ export function MoveProvisionedDashboardForm({
         return;
       }
 
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: [
-          t(
-            'dashboard-scene.move-provisioned-dashboard-form.queued',
-            'Dashboard move has been queued and will be processed in the background. You can continue working while the changes are applied.'
-          ),
-        ],
-      });
-      onDismiss();
+      if (result.job) {
+        setJob(result.job);
+        setHasSubmitted(true);
+      }
     } catch (error) {
       showError(error);
     }
@@ -195,6 +195,14 @@ export function MoveProvisionedDashboardForm({
       repoType: info.repoType,
     });
     navigate(url);
+  };
+
+  const handleJobStatusChange = (statusInfo: StepStatusInfo) => {
+    if (statusInfo.status === 'success') {
+      dashboard.setState({ isDirty: false });
+      panelEditor?.onDiscard();
+      navigate('/dashboards');
+    }
   };
 
   useProvisionedRequestHandler({
@@ -220,79 +228,86 @@ export function MoveProvisionedDashboardForm({
       subtitle={dashboard.state.title}
       onClose={onDismiss}
     >
-      <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(handleSubmitForm)}>
-          <Stack direction="column" gap={2}>
-            {readOnly && (
-              <Alert
-                title={t(
-                  'dashboard-scene.move-provisioned-dashboard-form.title-this-repository-is-read-only',
-                  'This repository is read only'
-                )}
-              >
-                <Trans i18nKey="dashboard-scene.move-provisioned-dashboard-form.move-read-only-message">
-                  This dashboard cannot be moved directly from Grafana because the repository is read-only. To move this
-                  dashboard, please move the file in your Git repository.
-                </Trans>
-              </Alert>
-            )}
-
-            {isLoadingFileData && (
-              <Stack alignItems="center" gap={2}>
-                <Spinner />
-                <div>
-                  {t(
-                    'dashboard-scene.move-provisioned-dashboard-form.loading-dashboard-data',
-                    'Loading dashboard data'
+      {hasSubmitted && job ? (
+        <JobStatus watch={job} jobType="move" onStatusChange={handleJobStatusChange} />
+      ) : (
+        <FormProvider {...methods}>
+          <form onSubmit={handleSubmit(handleSubmitForm)}>
+            <Stack direction="column" gap={2}>
+              {readOnly && (
+                <Alert
+                  title={t(
+                    'dashboard-scene.move-provisioned-dashboard-form.title-this-repository-is-read-only',
+                    'This repository is read only'
                   )}
-                </div>
+                >
+                  <Trans i18nKey="dashboard-scene.move-provisioned-dashboard-form.move-read-only-message">
+                    This dashboard cannot be moved directly from Grafana because the repository is read-only. To move
+                    this dashboard, please move the file in your Git repository.
+                  </Trans>
+                </Alert>
+              )}
+
+              {isLoadingFileData && (
+                <Stack alignItems="center" gap={2}>
+                  <Spinner />
+                  <div>
+                    {t(
+                      'dashboard-scene.move-provisioned-dashboard-form.loading-dashboard-data',
+                      'Loading dashboard data'
+                    )}
+                  </div>
+                </Stack>
+              )}
+
+              {currentFileData?.errors?.length && currentFileData.errors.length > 0 && (
+                <Alert
+                  title={t(
+                    'dashboard-scene.move-provisioned-dashboard-form.file-load-error',
+                    'Error loading dashboard'
+                  )}
+                  severity="error"
+                >
+                  {currentFileData.errors.map((error, index) => (
+                    <div key={index}>{error}</div>
+                  ))}
+                </Alert>
+              )}
+
+              <Field
+                noMargin
+                label={t('dashboard-scene.move-provisioned-dashboard-form.target-path-label', 'Target path')}
+              >
+                <Input readOnly value={targetPath} />
+              </Field>
+
+              <ResourceEditFormSharedFields
+                resourceType="dashboard"
+                isNew={isNew}
+                readOnly={readOnly}
+                workflow={workflow}
+                workflowOptions={workflowOptions}
+                repository={repository}
+              />
+
+              <Stack gap={2}>
+                <Button variant="secondary" onClick={onDismiss} fill="outline">
+                  <Trans i18nKey="dashboard-scene.move-provisioned-dashboard-form.cancel-action">Cancel</Trans>
+                </Button>
+                <Button
+                  variant="primary"
+                  type="submit"
+                  disabled={isLoading || readOnly || isLoadingFileData || !currentFileData?.resource?.file}
+                >
+                  {isLoading
+                    ? t('dashboard-scene.move-provisioned-dashboard-form.moving', 'Moving...')
+                    : t('dashboard-scene.move-provisioned-dashboard-form.move-action', 'Move dashboard')}
+                </Button>
               </Stack>
-            )}
-
-            {currentFileData?.errors?.length && currentFileData.errors.length > 0 && (
-              <Alert
-                title={t('dashboard-scene.move-provisioned-dashboard-form.file-load-error', 'Error loading dashboard')}
-                severity="error"
-              >
-                {currentFileData.errors.map((error, index) => (
-                  <div key={index}>{error}</div>
-                ))}
-              </Alert>
-            )}
-
-            <Field
-              noMargin
-              label={t('dashboard-scene.move-provisioned-dashboard-form.target-path-label', 'Target path')}
-            >
-              <Input readOnly value={targetPath} />
-            </Field>
-
-            <ResourceEditFormSharedFields
-              resourceType="dashboard"
-              isNew={isNew}
-              readOnly={readOnly}
-              workflow={workflow}
-              workflowOptions={workflowOptions}
-              repository={repository}
-            />
-
-            <Stack gap={2}>
-              <Button variant="secondary" onClick={onDismiss} fill="outline">
-                <Trans i18nKey="dashboard-scene.move-provisioned-dashboard-form.cancel-action">Cancel</Trans>
-              </Button>
-              <Button
-                variant="primary"
-                type="submit"
-                disabled={isLoading || readOnly || isLoadingFileData || !currentFileData?.resource?.file}
-              >
-                {isLoading
-                  ? t('dashboard-scene.move-provisioned-dashboard-form.moving', 'Moving...')
-                  : t('dashboard-scene.move-provisioned-dashboard-form.move-action', 'Move dashboard')}
-              </Button>
             </Stack>
-          </Stack>
-        </form>
-      </FormProvider>
+          </form>
+        </FormProvider>
+      )}
     </Drawer>
   );
 }

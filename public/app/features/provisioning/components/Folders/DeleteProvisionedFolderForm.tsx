@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -6,8 +7,10 @@ import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import { Box, Button, Stack } from '@grafana/ui';
 import { Folder } from 'app/api/clients/folder/v1beta1';
-import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { Job, RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
+import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
+import { StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 import { FolderDTO } from 'app/types/folders';
 
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
@@ -35,6 +38,8 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
   const { createBulkJob, isLoading } = useBulkActionJob();
   const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
   const navigate = useNavigate();
+  const [job, setJob] = useState<Job>();
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch } = methods;
@@ -96,16 +101,10 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
         return;
       }
 
-      getAppEvents().publish({
-        type: AppEvents.alertSuccess.name,
-        payload: [
-          t(
-            'browse-dashboards.delete-provisioned-folder-form.queued',
-            'Folder deletion has been queued and will be processed in the background. The folder and all its contents will be removed from your repository shortly.'
-          ),
-        ],
-      });
-      onDismiss?.();
+      if (result.job) {
+        setJob(result.job);
+        setHasSubmitted(true);
+      }
     } catch (error) {
       showError(error);
     }
@@ -120,6 +119,13 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
         repoType: info.repoType,
       });
       navigate(url);
+    }
+  };
+
+  const handleJobStatusChange = (statusInfo: StepStatusInfo) => {
+    if (statusInfo.status === 'success') {
+      onDismiss?.();
+      navigate('/dashboards');
     }
   };
 
@@ -143,44 +149,50 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
   });
 
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(handleSubmitForm)}>
-        <Stack direction="column" gap={2}>
-          <Box paddingBottom={2}>
-            <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.delete-warning">
-              This will delete this folder and all its descendants. In total, this will affect:
-            </Trans>
-            <DescendantCount
-              selectedItems={{
-                folder: { [resourceId]: true },
-                dashboard: {},
-                panel: {},
-                $all: false,
-              }}
-            />
-          </Box>
+    <>
+      {hasSubmitted && job ? (
+        <JobStatus watch={job} jobType="delete" onStatusChange={handleJobStatusChange} />
+      ) : (
+        <FormProvider {...methods}>
+          <form onSubmit={handleSubmit(handleSubmitForm)}>
+            <Stack direction="column" gap={2}>
+              <Box paddingBottom={2}>
+                <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.delete-warning">
+                  This will delete this folder and all its descendants. In total, this will affect:
+                </Trans>
+                <DescendantCount
+                  selectedItems={{
+                    folder: { [resourceId]: true },
+                    dashboard: {},
+                    panel: {},
+                    $all: false,
+                  }}
+                />
+              </Box>
 
-          <ResourceEditFormSharedFields
-            resourceType="folder"
-            isNew={false}
-            workflow={workflow}
-            workflowOptions={workflowOptions}
-            repository={repository}
-          />
+              <ResourceEditFormSharedFields
+                resourceType="folder"
+                isNew={false}
+                workflow={workflow}
+                workflowOptions={workflowOptions}
+                repository={repository}
+              />
 
-          <Stack gap={2}>
-            <Button variant="secondary" fill="outline" onClick={onDismiss}>
-              <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.button-cancel">Cancel</Trans>
-            </Button>
-            <Button type="submit" disabled={isLoading || request.isLoading} variant="destructive">
-              {isLoading || request.isLoading
-                ? t('browse-dashboards.delete-provisioned-folder-form.button-deleting', 'Deleting...')
-                : t('browse-dashboards.delete-provisioned-folder-form.button-delete', 'Delete')}
-            </Button>
-          </Stack>
-        </Stack>
-      </form>
-    </FormProvider>
+              <Stack gap={2}>
+                <Button variant="secondary" fill="outline" onClick={onDismiss}>
+                  <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.button-cancel">Cancel</Trans>
+                </Button>
+                <Button type="submit" disabled={isLoading || request.isLoading} variant="destructive">
+                  {isLoading || request.isLoading
+                    ? t('browse-dashboards.delete-provisioned-folder-form.button-deleting', 'Deleting...')
+                    : t('browse-dashboards.delete-provisioned-folder-form.button-delete', 'Delete')}
+                </Button>
+              </Stack>
+            </Stack>
+          </form>
+        </FormProvider>
+      )}
+    </>
   );
 }
 
