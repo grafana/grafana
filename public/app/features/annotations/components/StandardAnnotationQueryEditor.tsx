@@ -54,13 +54,14 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   verifyDataSource() {
     const { datasource, annotation } = this.props;
 
-    // when we are replacing an annotation with a saved query and we have a different datasource, we should skip the check
-    // the parent component will take care of updating the annotation
-    if (
-      annotation.datasource?.uid !== datasource?.uid ||
-      (annotation.datasource?.type !== datasource?.type && this.state.isReplacingQuery)
-    ) {
-      this.setState({ isReplacingQuery: false });
+    // Always skip verification during active replacement to prevent race conditions
+    // The new updateAnnotationFromSavedQuery handles preparation internally
+    if (this.state.isReplacingQuery) {
+      return;
+    }
+
+    // Skip verification if datasources don't match - wait for parent to load correct datasource
+    if (annotation.datasource?.uid !== datasource?.uid || annotation.datasource?.type !== datasource?.type) {
       return;
     }
 
@@ -247,10 +248,18 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
 
   onQueryReplace = async (replacedQuery: DataQuery) => {
     const { annotation, onChange } = this.props;
-    this.setState({ isReplacingQuery: true });
-    // Handle cross-datasource replacement with datasource preparation
-    const updatedAnnotation = updateAnnotationFromSavedQuery(annotation, replacedQuery);
-    onChange(updatedAnnotation);
+
+    try {
+      this.setState({ isReplacingQuery: true });
+      // Use new async updateAnnotationFromSavedQuery that returns properly prepared annotation
+      const preparedAnnotation = await updateAnnotationFromSavedQuery(annotation, replacedQuery);
+      onChange(preparedAnnotation);
+    } catch (error) {
+      console.error('Failed to replace annotation query:', error);
+      // On error, reset the replacing state but don't change the annotation
+    } finally {
+      this.setState({ isReplacingQuery: false });
+    }
   };
 
   render() {
