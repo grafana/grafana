@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -30,6 +31,11 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+// initMutex is a global lock to ensure that database initialization and migration
+// only happens once at a time across all concurrent integration tests in this package.
+// This prevents race conditions where multiple tests try to alter the same table simultaneously.
+var initMutex = &sync.Mutex{}
+
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
@@ -38,6 +44,9 @@ func TestIntegrationStorageServer(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	unitest.RunStorageServerTest(t, func(ctx context.Context) resource.StorageBackend {
+		initMutex.Lock()
+		defer initMutex.Unlock()
+
 		dbstore := db.InitTestDB(t)
 		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 		require.NoError(t, err)
@@ -61,6 +70,9 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+			initMutex.Lock()
+			defer initMutex.Unlock()
+
 			dbstore := db.InitTestDB(t)
 			eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 			require.NoError(t, err)
@@ -80,6 +92,9 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+			initMutex.Lock()
+			defer initMutex.Unlock()
+
 			dbstore := db.InitTestDB(t)
 			eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 			require.NoError(t, err)
