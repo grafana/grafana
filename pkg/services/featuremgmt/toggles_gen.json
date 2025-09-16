@@ -3432,6 +3432,20 @@
     },
     {
       "metadata": {
+        "name": "tempoSearchBackendMigration",
+        "resourceVersion": "1758021496544",
+        "creationTimestamp": "2025-09-16T11:18:16Z"
+      },
+      "spec": {
+        "description": "Run search queries through the tempo backend",
+        "stage": "GA",
+        "codeowner": "@grafana/oss-big-tent",
+        "requiresRestart": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "timeComparison",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-07-24T20:07:28Z"

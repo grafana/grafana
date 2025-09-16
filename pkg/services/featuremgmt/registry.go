@@ -2022,6 +2022,14 @@ var (
 			Expression:      "false",
 			RequiresRestart: true,
 		},
+		{
+			Name:            "tempoSearchBackendMigration",
+			Description:     "Run search queries through the tempo backend",
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaOSSBigTent,
+			Expression:      "true",
+			RequiresRestart: true,
+		},
 	}
 )
 
