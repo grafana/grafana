@@ -530,7 +530,7 @@ func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern strin
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := HTTPServer{
 			Cfg:             cfg,
-			pluginStore:     pluginstore.New(pluginRegistry, &fakes.FakeLoader{}),
+			pluginStore:     pluginstore.New(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{}),
 			pluginFileStore: filestore.ProvideService(pluginRegistry),
 			log:             log.NewNopLogger(),
 			pluginsCDNService: pluginscdn.ProvideService(&config.PluginManagementCfg{
@@ -642,7 +642,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.PluginSettings = &pluginSettings
-				hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{})
+				hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
 				hs.managedPluginsService = managedplugins.NewNoop()
 				var err error
@@ -830,7 +830,7 @@ func Test_PluginsSettings(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.PluginSettings = &pluginSettings
-				hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{})
+				hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
 				errTracker := pluginerrs.ProvideErrorTracker()
 				if tc.errCode != "" {
@@ -898,7 +898,7 @@ func Test_UpdatePluginSetting(t *testing.T) {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
 			hs.Cfg = setting.NewCfg()
 			hs.PluginSettings = &pluginSettings
-			hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{})
+			hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
 			hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
 			hs.managedPluginsService = managedplugins.NewNoop()
 			hs.log = log.NewNopLogger()
