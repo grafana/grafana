@@ -73,8 +73,7 @@ func TestIntegrationAvailableChannels(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
-		fpath := path.Join("test-data", "alert-notifiers-v2-snapshot.json")
-		expectedBytes, err := os.ReadFile(fpath)
+		expectedBytes, err := os.ReadFile(path.Join("test-data", "alert-notifiers-v2-snapshot.json"))
 		require.NoError(t, err)
 
 		require.NoError(t, err)
@@ -82,7 +81,7 @@ func TestIntegrationAvailableChannels(t *testing.T) {
 			var prettyJSON bytes.Buffer
 			err := json.Indent(&prettyJSON, b, "", "  ")
 			require.NoError(t, err)
-			err = os.WriteFile(fpath, prettyJSON.Bytes(), 0o644)
+			err = os.WriteFile(path.Join("test-data", "alert-notifiers-v2-snapshot.json"), prettyJSON.Bytes(), 0o644)
 			require.NoError(t, err)
 		}
 	})
