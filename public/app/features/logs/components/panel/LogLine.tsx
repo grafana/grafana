@@ -149,11 +149,21 @@ const LogLineComponent = memo(
       if (!logLineRef.current) {
         return;
       }
-      const observer = new ResizeObserver(() => {
-        handleLogLineResize();
-      });
+      let frameId: number;
+      const handleResize = () => {
+        if (frameId) {
+          cancelAnimationFrame(frameId);
+        }
+        frameId = requestAnimationFrame(() => handleLogLineResize());
+      };
+      const observer = new ResizeObserver(handleResize);
       observer.observe(logLineRef.current);
-      return () => observer.disconnect();
+      return () => {
+        observer.disconnect();
+        if (frameId) {
+          cancelAnimationFrame(frameId);
+        }
+      }
     }, [handleLogLineResize]);
 
     useEffect(() => {
