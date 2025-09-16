@@ -1,12 +1,51 @@
 import { of } from 'rxjs';
 
+import { PluginType } from '@grafana/data';
 import { BackendSrv, getBackendSrv, setBackendSrv } from '@grafana/runtime';
 
 import { GraphiteDatasource } from './datasource';
+import { GraphiteType } from './types';
 
 interface Context {
   ds: GraphiteDatasource;
 }
+
+const instanceSettings = {
+  id: 1,
+  uid: 'graphiteUid',
+  type: 'graphite',
+  readOnly: false,
+  access: 'proxy' as 'proxy',
+  meta: {
+    id: '1',
+    name: 'graphite',
+    type: PluginType.datasource,
+    info: {
+      description: 'Graphite datasource',
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      keywords: ['graphite', 'datasource'],
+      links: [],
+      logos: {
+        large: '',
+        small: '',
+      },
+      screenshots: [],
+      updated: '',
+      version: '',
+    },
+    module: '',
+    baseUrl: '',
+  },
+  url: '/api/datasources/proxy/1',
+  name: 'graphiteProd',
+  jsonData: {
+    rollupIndicatorEnabled: true,
+    graphiteType: GraphiteType.Default,
+  },
+};
 
 let origBackendSrv: BackendSrv;
 describe('graphiteDatasource integration with backendSrv and fetch', () => {
@@ -15,13 +54,7 @@ describe('graphiteDatasource integration with backendSrv and fetch', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     origBackendSrv = getBackendSrv();
-    const instanceSettings = {
-      url: '/api/datasources/proxy/1',
-      name: 'graphiteProd',
-      jsonData: {
-        rollupIndicatorEnabled: true,
-      },
-    };
+
     const ds = new GraphiteDatasource(instanceSettings);
     ctx = { ds };
   });

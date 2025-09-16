@@ -10,6 +10,9 @@ export type ParamDef = {
   multiple?: boolean;
   optional?: boolean;
   version?: string;
+  required?: boolean;
+  default?: string | number;
+  suggestions?: string[];
 };
 
 export interface FuncDef {
@@ -25,6 +28,7 @@ export interface FuncDef {
    * True if the function was not found on the list of available function descriptions.
    */
   unknown?: boolean;
+  group?: string;
 }
 
 export type FuncDefs = {
@@ -34,12 +38,17 @@ export type FuncDefs = {
 const index: FuncDefs = {};
 
 function addFuncDef(funcDef: Partial<FuncDef> & { name: string; category: string }) {
-  funcDef.params = funcDef.params || [];
-  funcDef.defaultParams = funcDef.defaultParams || [];
+  funcDef.params = funcDef.params ?? [];
+  funcDef.defaultParams = funcDef.defaultParams ?? [];
 
-  index[funcDef.name] = funcDef as FuncDef;
+  const updatedFuncDef: FuncDef = {
+    ...funcDef,
+    params: funcDef.params || [],
+    defaultParams: funcDef.defaultParams || [],
+  };
+  index[funcDef.name] = updatedFuncDef;
   if (funcDef.shortName) {
-    index[funcDef.shortName] = funcDef as FuncDef;
+    index[funcDef.shortName] = updatedFuncDef;
   }
 }
 
@@ -1147,7 +1156,7 @@ function getFuncDefs(graphiteVersion: string, idx?: FuncDefs | null): FuncDefs {
 }
 
 // parse response from graphite /functions endpoint into internal format
-function parseFuncDefs(rawDefs: any): FuncDefs {
+function parseFuncDefs(rawDefs: Record<string, FuncDef>): FuncDefs {
   const funcDefs: FuncDefs = {};
 
   forEach(rawDefs || {}, (funcDef, funcName) => {

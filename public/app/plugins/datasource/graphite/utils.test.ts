@@ -39,6 +39,7 @@ describe('Graphite utils', () => {
       data: {
         message: SAMPLE_500_PAGE,
       },
+      config: { url: '' },
     };
 
     expect(reduceError(error)).toMatchObject({
@@ -54,6 +55,7 @@ describe('Graphite utils', () => {
       data: {
         message: 'ERROR MESSAGE',
       },
+      config: { url: '' },
     };
 
     expect(reduceError(error)).toMatchObject({
@@ -69,6 +71,7 @@ describe('Graphite utils', () => {
       data: {
         message: 'ERROR MESSAGE',
       },
+      config: { url: '' },
     };
 
     expect(reduceError(error)).toMatchObject({

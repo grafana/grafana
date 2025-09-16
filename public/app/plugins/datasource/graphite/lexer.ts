@@ -87,12 +87,23 @@ for (let i = 0; i < 128; i++) {
 
 const identifierPartTable = identifierStartTable;
 
+type ScanReturnType = null | ScanReturn;
+interface ScanReturn {
+  type: string;
+  value: string;
+  base?: number;
+  isMalformed?: boolean;
+  pos?: number;
+  isUnclosed?: boolean;
+  quote?: string;
+}
+
 export class Lexer {
-  input: any;
+  input: string;
   char: number;
   from: number;
 
-  constructor(expression: any) {
+  constructor(expression: string) {
     this.input = expression;
     this.char = 1;
     this.from = 1;
@@ -150,7 +161,7 @@ export class Lexer {
     return null;
   }
 
-  scanTemplateSequence() {
+  scanTemplateSequence(): ScanReturnType {
     if (this.peek() === '[' && this.peek(1) === '[') {
       return {
         type: 'templateStart',
@@ -176,7 +187,7 @@ export class Lexer {
    * to Identifier this method can also produce BooleanLiteral
    * (true/false) and NullLiteral (null).
    */
-  scanIdentifier() {
+  scanIdentifier(): ScanReturnType {
     let id = '';
     let index = 0;
     let type, char;
@@ -334,7 +345,7 @@ export class Lexer {
    * This method's implementation was heavily influenced by the
    * scanNumericLiteral function in the Esprima parser's source code.
    */
-  scanNumericLiteral(): any {
+  scanNumericLiteral(): ScanReturnType {
     let index = 0;
     let value = '';
     const length = this.input.length;
@@ -551,7 +562,7 @@ export class Lexer {
     return false;
   }
 
-  scanPunctuator() {
+  scanPunctuator(): ScanReturnType {
     const ch1 = this.peek();
 
     if (this.isPunctuator(ch1)) {
@@ -576,7 +587,7 @@ export class Lexer {
    *   var str = "hello\
    *   world";
    */
-  scanStringLiteral() {
+  scanStringLiteral(): ScanReturnType {
     const quote = this.peek();
 
     // String must start with a quote.

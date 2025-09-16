@@ -1,6 +1,6 @@
 import { DataQueryRequest, DataSourceJsonData, TimeRange } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, TimeZone } from '@grafana/schema';
 
 import { GraphiteDatasource } from './datasource';
 
@@ -21,10 +21,28 @@ export interface GraphiteQuery extends DataQuery {
 }
 
 export interface GraphiteOptions extends DataSourceJsonData {
-  graphiteVersion: string;
+  graphiteVersion?: string;
   graphiteType: GraphiteType;
   rollupIndicatorEnabled?: boolean;
-  importConfiguration: GraphiteQueryImportConfiguration;
+  importConfiguration?: GraphiteQueryImportConfiguration;
+}
+
+// Used for the frontend render request
+export interface GraphiteQueryParameters {
+  from: string | number;
+  until: string | number;
+  targets: GraphiteQuery[];
+  format: string;
+  cacheTimeout?: string | number;
+  maxDataPoints?: number;
+}
+
+export interface GraphiteAPIOptions {
+  requestId?: string;
+  range?: TimeRange;
+  timezone?: TimeZone;
+  limit?: number;
+  searchFilter?: string;
 }
 
 export enum GraphiteType {
@@ -33,7 +51,7 @@ export enum GraphiteType {
 }
 
 export interface MetricTankRequestMeta {
-  [key: string]: any;
+  [key: string]: Record<string, number>;
 }
 
 export interface MetricTankSeriesMeta {
@@ -91,7 +109,7 @@ export type GraphiteTag = {
 };
 
 export type GraphiteQueryEditorDependencies = {
-  target: any;
+  target: string;
   datasource: GraphiteDatasource;
   range?: TimeRange;
   templateSrv: TemplateSrv;

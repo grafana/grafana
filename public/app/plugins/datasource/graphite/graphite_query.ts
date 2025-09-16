@@ -6,7 +6,7 @@ import { TemplateSrv } from '@grafana/runtime';
 import { GraphiteDatasource } from './datasource';
 import { FuncInstance } from './gfunc';
 import { AstNode, Parser } from './parser';
-import { GraphiteSegment } from './types';
+import { GraphiteQuery as GraphiteQueryType, GraphiteSegment } from './types';
 import { arrayMove } from './utils';
 
 export type GraphiteTagOperator = '=' | '=~' | '!=' | '!=~';
@@ -41,7 +41,12 @@ export default class GraphiteQuery {
   templateSrv: TemplateSrv | undefined;
   scopedVars?: ScopedVars;
 
-  constructor(datasource: GraphiteDatasource, target: any, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
+  constructor(
+    datasource: GraphiteDatasource,
+    target: GraphiteTarget,
+    templateSrv?: TemplateSrv,
+    scopedVars?: ScopedVars
+  ) {
     this.datasource = datasource;
     this.target = target;
     this.templateSrv = templateSrv;
@@ -206,7 +211,7 @@ export default class GraphiteQuery {
     return reduce(this.functions, wrapFunction, metricPath);
   }
 
-  updateModelTarget(targets: any) {
+  updateModelTarget(targets: GraphiteQueryType[]) {
     if (!this.target.textEditor) {
       this.target.target = this.generateQueryString();
     }
@@ -285,7 +290,7 @@ export default class GraphiteQuery {
           if (tag.length === 3) {
             return {
               key: tag[0],
-              operator: tag[1] as GraphiteTagOperator,
+              operator: tag[1],
               value: tag[2],
             };
           }
