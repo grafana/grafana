@@ -51,7 +51,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     }
   }
 
-  async verifyDataSource() {
+  verifyDataSource() {
     const { datasource, annotation } = this.props;
 
     // when we are replacing an annotation with a saved query and we have a different datasource, we should skip the check
