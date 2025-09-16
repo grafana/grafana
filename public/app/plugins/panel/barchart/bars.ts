@@ -596,7 +596,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
 
     if (isClusteredStacked) {
       barsPctLayout = [null, ...distrClusteredStacked(u.data[0].length, u.data.length - 1, clusters.length, clusters)];
-    } else if (isStacked) {
+    } else 
+      if (isStacked) {
       barsPctLayout = [null, ...distrStacked(u.data[0].length, u.data.length - 1, clusters.length, clusters)];
     } else {
       barsPctLayout = [null, ...distrNonStacked(u.data[0].length, u.data.length - 1, clusters.length, clusters)]
@@ -713,7 +714,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
   function prepData(frames: DataFrame[], stackingGroups: StackingGroup[]) {
     alignedTotals = null;
     return preparePlotData2(frames[0], stackingGroups, 
-      getClustersFromArray(Array.from(frames[0].fields[groupByFieldIdx === -1 ? 0 : groupByFieldIdx].values), groupByField),
+      // getClustersFromArray(Array.from(frames[0].fields[groupByFieldIdx === -1 ? 0 : groupByFieldIdx].values), groupByField),
       ({ totals }) => { alignedTotals = totals; });
   }
 
