@@ -8,7 +8,7 @@ import (
 
 const (
 	MIN_VERSION    = 13
-	LATEST_VERSION = 42
+	LATEST_VERSION = 43
 
 	// The pluginVersion to set after simulating auto-migrate for angular panels
 	pluginVersionForAutoMigrate = "12.1.0"
@@ -67,6 +67,7 @@ func GetMigrations(dsInfoProvider DataSourceInfoProvider) map[int]SchemaVersionM
 		40: V40,
 		41: V41,
 		42: V42,
+		43: V43,
 	}
 }
 
