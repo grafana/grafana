@@ -1468,6 +1468,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 			OrgID:       query.OrgId,
 			Title:       hit.Title,
 			Slug:        slugify.Slugify(hit.Title),
+			Description: hit.Description,
 			IsFolder:    false,
 			FolderUID:   hit.Folder,
 			FolderTitle: folderTitle,
@@ -1569,6 +1570,7 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 			FolderUID:   item.FolderUID,
 			FolderTitle: item.FolderTitle,
 			Tags:        []string{},
+			Description: item.Description,
 		}
 
 		if item.Tags != nil {
