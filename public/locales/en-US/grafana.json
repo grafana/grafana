@@ -5076,9 +5076,8 @@
       },
       "panel": {
         "modal": {
-          "body": "Are you sure you want to change the layout?",
+          "body": "Changing the layout will reset all panel positions and sizes.",
           "confirm": "Change layout",
-          "description": "Changing the layout will reset all panel positions and sizes.",
           "dismiss": "Cancel",
           "title": "Change layout"
         }

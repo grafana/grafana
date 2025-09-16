@@ -87,11 +87,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
       <ConfirmModal
         isOpen={!!newLayout}
         title={t('dashboard.layout.panel.modal.title', 'Change layout')}
-        body={t('dashboard.layout.panel.modal.body', 'Are you sure you want to change the layout?')}
-        description={t(
-          'dashboard.layout.panel.modal.description',
-          'Changing the layout will reset all panel positions and sizes.'
-        )}
+        body={t('dashboard.layout.panel.modal.body', 'Changing the layout will reset all panel positions and sizes.')}
         confirmText={t('dashboard.layout.panel.modal.confirm', 'Change layout')}
         dismissText={t('dashboard.layout.panel.modal.dismiss', 'Cancel')}
         confirmButtonVariant="primary"
