@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { AlertLabels } from '@grafana/alerting/internal';
+import { AlertLabels } from '@grafana/alerting/unstable';
 import { DataFrame, GrafanaTheme2, TimeRange, dateTime } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Field, Icon, Input, Label, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';

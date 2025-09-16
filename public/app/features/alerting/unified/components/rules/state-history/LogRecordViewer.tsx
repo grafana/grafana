@@ -3,7 +3,7 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import { groupBy, uniqueId } from 'lodash';
 import { Fragment, memo, useEffect, useRef } from 'react';
 
-import { AlertLabel } from '@grafana/alerting/internal';
+import { AlertLabel } from '@grafana/alerting/unstable';
 import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';

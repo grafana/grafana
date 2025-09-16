@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { FC, useCallback, useMemo, useState } from 'react';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from 'react-hook-form';
 
-import { AlertLabels } from '@grafana/alerting/internal';
+import { AlertLabels } from '@grafana/alerting/unstable';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ComboboxOption, Field, InlineLabel, Input, Space, Stack, Text, useStyles2 } from '@grafana/ui';

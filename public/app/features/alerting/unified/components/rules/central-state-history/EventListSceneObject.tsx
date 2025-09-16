@@ -3,7 +3,7 @@ import { ReactElement, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useMeasure } from 'react-use';
 
-import { AlertLabels } from '@grafana/alerting/internal';
+import { AlertLabels } from '@grafana/alerting/unstable';
 import { GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {

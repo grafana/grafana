@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useDebounce, useDeepCompareEffect } from 'react-use';
 
-import { AlertLabels } from '@grafana/alerting/internal';
+import { AlertLabels } from '@grafana/alerting/unstable';
 import { GrafanaTheme2, dateTime } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Icon, LoadingPlaceholder, Tooltip, useStyles2 } from '@grafana/ui';

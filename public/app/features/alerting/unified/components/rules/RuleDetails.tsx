@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { AlertLabels } from '@grafana/alerting/internal';
+import { AlertLabels } from '@grafana/alerting/unstable';
 import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Tooltip, useStyles2 } from '@grafana/ui';

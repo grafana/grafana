@@ -3,8 +3,7 @@ import { chain, truncate } from 'lodash';
 import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { AlertLabels } from '@grafana/alerting/internal';
-import { StateText } from '@grafana/alerting/unstable';
+import { AlertLabels, StateText } from '@grafana/alerting/unstable';
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
