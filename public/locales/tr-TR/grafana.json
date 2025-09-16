@@ -504,6 +504,7 @@
       "copy-link": "Bağlantıyı kopyala",
       "duplicate": "Çoğalt",
       "export": "Dışa aktar",
+      "manage-enrichments": "",
       "silence-notifications": "Bildirimleri sessize al",
       "with-modifications": "Değişikliklerle birlikte"
     },
@@ -1121,7 +1122,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -2056,9 +2058,6 @@
       "text-loading-rules": "Kurallar yükleniyor...",
       "title-dashboard-not-saved": "Pano kaydedilmedi"
     },
-    "paused-badge": {
-      "paused": "Duraklatıldı"
-    },
     "payload-editor": {
       "edit-payload": "Yükü düzenle",
       "label-add-custom-alert-instance": "Özel uyarı örneği ekle",
@@ -2210,9 +2209,6 @@
       "label-time-range": "Zaman Aralığı",
       "max-data-points": "MD (Maks. Veri Noktası) = {{maxDataPoints}}",
       "min-interval": "Min. Aralık = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> itibarıyla şimdiye kadar"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2558,6 +2554,10 @@
       "recovering": "{{recoveringStats}} eski durumuna döndürülüyor",
       "error_one": "{{count}} hata",
       "error_other": "{{count}} hata"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Ruler API etkin olan bir Mimir, Loki veya Cortex veri kaynağınız yoksa \"Grafana tarafından yönetilen\" seçeneğini belirleyin."
@@ -3042,6 +3042,7 @@
       "page-nav": {
         "text": {
           "details": "Ayrıntılar",
+          "enrichment": "",
           "history": "Geçmiş",
           "instances": "Örnekler",
           "query-and-conditions": "Sorgu ve koşullar",
@@ -3660,7 +3661,13 @@
       "text": "Sorgunuz için sonuç bulunamadı"
     },
     "restore": {
-      "success": "{{name}} panosu geri yüklendi"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Hedefe doğrudan erişiminiz varsa JSON'u kopyalayıp oraya yapıştırın.",
     "trash-state-manager": {
@@ -9626,10 +9633,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "Yinelenenleri kaldırma",
-      "disable-highlighting": "Vurgulamayı devre dışı bırak",
       "disable-prettify-json": "JSON günlük kayıtlarını daralt",
-      "display-level": "Seviyeleri göster",
       "display-level-all": "Tüm seviyeler",
       "download": "Günlükleri indir",
       "download-logs": {
@@ -9637,18 +9643,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Vurgulamayı etkinleştir",
       "escape-newlines": "Günlük kaydı satırlarındaki kaçış karakterli satır sonu ve sekme dizilerini düzelt",
-      "font-size-default": "Küçük yazı tipi boyutu kullan",
-      "font-size-small": "Varsayılan yazı tipi boyutunu kullan",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "Aramayı kapat",
       "hide-timestamps": "Zaman damgalarını gizle",
       "hide-unique-labels": "Benzersiz etiketleri gizle",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "Günlükler yeniden eskiye sıralandı: En eskileri göstermek için tıklayın",
       "oldest-first": "Günlükler eskiden yeniye sıralandı: En yenileri göstermek için tıklayın",
@@ -9664,8 +9691,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "Satırları çöz",
       "wrap-lines": "Satırları kaydır"
@@ -11211,11 +11248,11 @@
       "description-clear-repository-connection": "Bu depo bağlantısı için net bir ad ekleyin",
       "empty": "Boş",
       "error-field-required": "Bu alan gereklidir.",
-      "ext-storage": "Harici depolama",
-      "grafana": "Grafana örneği",
+      "external-storage-label": "",
       "label-display-name": "Görünen ad",
       "placeholder-my-repository-connection": "Depo bağlantım",
       "text-loading-resource-information": "Kaynak bilgileri yükleniyor...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} pano",
       "dashboards-count_other": "{{count}} pano",
       "files-count_one": "{{count}} dosya",
@@ -11263,7 +11300,9 @@
     },
     "connect-repository-button": {
       "configure": "Yapılandır",
-      "repository-limit-info-alert": "Depo sınırına ulaşıldı ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Sil",
@@ -11346,7 +11385,11 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Sorgunuzla eşleşen sonuç yok",
-      "placeholder-search": "Ara"
+      "placeholder-search": "Ara",
+      "all-resources-managed_one": "",
+      "all-resources-managed_other": "",
+      "partial-managed_one": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11644,6 +11687,7 @@
       "tooltip-unhealthy-repository": "İyi durumda olmayan bir depo çekilemedi"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Her geçmiş değer için yürütmeyi dahil et",
       "synchronization-options": "Senkronizasyon seçenekleri"
     },
@@ -11667,6 +11711,8 @@
       "alert-point-3": "Bu işlemin süresi dâhil olan kaynakların sayısına bağlıdır.",
       "alert-point-4": "Enterprise örnek yöneticileri, kullanıcılara bir duyuru afişi gösterebilir. Adım adım talimatlar için <2>bu kılavuza</2> bakın.",
       "alert-title": "Önemli: Veri veya yapılandırma kaybı yaşanmayacak ancak panolar birkaç dakika boyunca geçici olarak kullanılamayacaktır.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Sonlandır",
       "button-start": "Senkronizasyonu başlat",
       "discard-modal": {

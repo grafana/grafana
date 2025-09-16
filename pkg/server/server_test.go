@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -49,7 +50,7 @@ func (s *testService) IsDisabled() bool {
 
 func testServer(t *testing.T, services ...registry.BackgroundService) *Server {
 	t.Helper()
-	s, err := newServer(Options{}, setting.NewCfg(), nil, &acimpl.Service{}, nil, backgroundsvcs.NewBackgroundServiceRegistry(services...), prometheus.NewRegistry())
+	s, err := newServer(Options{}, setting.NewCfg(), nil, &acimpl.Service{}, nil, backgroundsvcs.NewBackgroundServiceRegistry(services...), tracing.NewNoopTracerService(), prometheus.NewRegistry())
 	require.NoError(t, err)
 	// Required to skip configuration initialization that causes
 	// DI errors in this test.
@@ -75,7 +76,7 @@ func TestServer_Shutdown(t *testing.T) {
 		defer close(ch)
 
 		// Wait until all services launched.
-		for _, svc := range s.backgroundServices {
+		for _, svc := range s.backgroundServiceRegistry.GetServices() {
 			if !svc.(*testService).isDisabled {
 				<-svc.(*testService).started
 			}

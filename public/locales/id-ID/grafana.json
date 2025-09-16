@@ -500,6 +500,7 @@
       "copy-link": "Salin tautan",
       "duplicate": "Duplikasikan",
       "export": "Ekspor",
+      "manage-enrichments": "",
       "silence-notifications": "Senyapkan pemberitahuan",
       "with-modifications": "Dengan modifikasi"
     },
@@ -1115,7 +1116,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -2049,9 +2051,6 @@
       "text-loading-rules": "Memuat aturan...",
       "title-dashboard-not-saved": "Dasbor tidak disimpan"
     },
-    "paused-badge": {
-      "paused": "Dijeda"
-    },
     "payload-editor": {
       "edit-payload": "Edit payload",
       "label-add-custom-alert-instance": "Tambah instans peringatan kustom",
@@ -2201,9 +2200,6 @@
       "label-time-range": "Rentang Waktu",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> hingga sekarang"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2545,6 +2541,10 @@
       "recording": "{{recordingStats}} perekaman",
       "recovering": "{{recoveringStats}} memulihkan",
       "error_other": "{{count}} kesalahan"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Pilih &ldquo;dikelola Grafana&rdquo; kecuali Anda memiliki sumber data Mimir, Loki, atau Cortex yang mengaktifkan API Ruler."
@@ -3029,6 +3029,7 @@
       "page-nav": {
         "text": {
           "details": "Detail",
+          "enrichment": "",
           "history": "Sejarah",
           "instances": "Instans",
           "query-and-conditions": "Kueri dan syarat",
@@ -3642,7 +3643,10 @@
       "text": "Hasil untuk kueri Anda tidak ditemukan"
     },
     "restore": {
-      "success": "Dasbor {{name}} dipulihkan"
+      "success": "",
+      "all-failed_other": "",
+      "failed-count_other": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Jika Anda memiliki akses langsung ke target, salin JSON dan tempel di sana.",
     "trash-state-manager": {
@@ -9597,10 +9601,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "Deduplikasi",
-      "disable-highlighting": "Nonaktifkan penyorotan",
       "disable-prettify-json": "Ciutkan log JSON",
-      "display-level": "Tampilkan level",
       "display-level-all": "Semua level",
       "download": "Unduh log",
       "download-logs": {
@@ -9608,18 +9611,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Aktifkan penyorotan",
       "escape-newlines": "Perbaiki escape sequence baris baru dan tab yang salah di baris log",
-      "font-size-default": "Gunakan ukuran fon kecil",
-      "font-size-small": "Gunakan ukuran fon default",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "Tutup pencarian",
       "hide-timestamps": "Sembunyikan stempel waktu",
       "hide-unique-labels": "Sembunyikan label unik",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "Diurutkan berdasarkan log terbaru lebih dulu - Klik untuk menampilkan yang paling lama lebih dulu",
       "oldest-first": "Diurutkan berdasarkan log paling lama lebih dulu - Klik untuk menampilkan yang terbaru lebih dulu",
@@ -9635,8 +9659,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "Batal terapkan wrap pada baris",
       "wrap-lines": "Terapkan wrap pada baris"
@@ -11179,11 +11213,11 @@
       "description-clear-repository-connection": "Tambahkan nama yang jelas untuk koneksi repositori ini",
       "empty": "Kosong",
       "error-field-required": "Bidang ini wajib diisi.",
-      "ext-storage": "Penyimpanan eksternal",
-      "grafana": "Instans Grafana",
+      "external-storage-label": "",
       "label-display-name": "Nama tampilan",
       "placeholder-my-repository-connection": "Koneksi repositori saya",
       "text-loading-resource-information": "Memuat informasi sumber daya...",
+      "unmanaged-resources-label": "",
       "dashboards-count_other": "{{count}} dasbor",
       "files-count_other": "{{count}} file",
       "folders-count_other": "{{count}} folder"
@@ -11228,7 +11262,8 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurasikan",
-      "repository-limit-info-alert": "Batas repositori tercapai ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Hapus",
@@ -11311,7 +11346,9 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Tidak ada hasil yang cocok dengan kueri Anda",
-      "placeholder-search": "Cari"
+      "placeholder-search": "Cari",
+      "all-resources-managed_other": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11609,6 +11646,7 @@
       "tooltip-unhealthy-repository": "Tidak dapat menerapkan pull pada repositori yang tidak sehat"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Sertakan commit untuk setiap nilai historis",
       "synchronization-options": "Opsi sinkronisasi"
     },
@@ -11632,6 +11670,8 @@
       "alert-point-3": "Durasi proses ini bergantung pada jumlah sumber daya yang terlibat.",
       "alert-point-4": "Administrator instans Enterprise dapat menampilkan banner pengumuman kepada pengguna. Lihat <2>panduan ini</2> untuk petunjuk langkah demi langkah.",
       "alert-title": "Penting: Tidak ada data atau konfigurasi yang akan hilang, tetapi dasbor tidak akan tersedia sementara selama beberapa menit.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Selesai",
       "button-start": "Mulai sinkronisasi",
       "discard-modal": {

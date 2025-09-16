@@ -504,6 +504,7 @@
       "copy-link": "Hivatkozás másolása",
       "duplicate": "Duplikálás",
       "export": "Exportálás",
+      "manage-enrichments": "",
       "silence-notifications": "Némítási értesítések",
       "with-modifications": "Módosításokkal"
     },
@@ -1121,7 +1122,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -2056,9 +2058,6 @@
       "text-loading-rules": "Szabályok betöltése…",
       "title-dashboard-not-saved": "Az irányítópult nincs mentve"
     },
-    "paused-badge": {
-      "paused": "Szüneteltetett"
-    },
     "payload-editor": {
       "edit-payload": "Hasznos tartalom szerkesztése",
       "label-add-custom-alert-instance": "Egyéni riasztási példány hozzáadása",
@@ -2210,9 +2209,6 @@
       "label-time-range": "Időtartomány",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. intervallum = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> és a jelen között"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2558,6 +2554,10 @@
       "recovering": "{{recoveringStats}} helyreáll",
       "error_one": "{{count}} hiba",
       "error_other": "{{count}} hiba"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Válassza a „Grafana által felügyelt” lehetőséget, kivéve, ha Mimir-, Loki- vagy Cortex-adatforrása van engedélyezett Ruler API-val."
@@ -3042,6 +3042,7 @@
       "page-nav": {
         "text": {
           "details": "Részletek",
+          "enrichment": "",
           "history": "Előzmények",
           "instances": "Példányok",
           "query-and-conditions": "Lekérdezés és feltételek",
@@ -3660,7 +3661,13 @@
       "text": "Nincs találat a lekérdezésre"
     },
     "restore": {
-      "success": "{{name}} irányítópult visszaállítva"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Ha közvetlen hozzáférése van a célhoz, másolja ki a JSON-kódot, és illessze be oda.",
     "trash-state-manager": {
@@ -9626,10 +9633,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "Duplikálás megszüntetése",
-      "disable-highlighting": "Kiemelés letiltása",
       "disable-prettify-json": "JSON-naplók összecsukása",
-      "display-level": "Szintek megjelenítése",
       "display-level-all": "Minden szint",
       "download": "Naplók letöltése",
       "download-logs": {
@@ -9637,18 +9643,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Kiemelés engedélyezése",
       "escape-newlines": "Helytelenül értelmezett újsor- és tabulátorkarakteres szekvenciák javítása a naplósorokban",
-      "font-size-default": "Kis betűméret használata",
-      "font-size-small": "Alapértelmezett betűméret használata",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "Keresés bezárása",
       "hide-timestamps": "Időbélyegek elrejtése",
       "hide-unique-labels": "Egyedi címkék elrejtése",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "Rendezés a legújabb naplók szerint – kattintson, hogy a legrégebbi naplók jelenjenek meg elsőként",
       "oldest-first": "Rendezés a legrégebbi naplók szerint – kattintson, hogy a legújabb naplók jelenjenek meg elsőként",
@@ -9664,8 +9691,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "Sortörés megszüntetése",
       "wrap-lines": "Sortörés"
@@ -11211,11 +11248,11 @@
       "description-clear-repository-connection": "Adjon egy egyértelmű nevet ehhez az adattári kapcsolathoz",
       "empty": "Üres",
       "error-field-required": "A mező kitöltése kötelező.",
-      "ext-storage": "Külső tárhely",
-      "grafana": "Grafana-példány",
+      "external-storage-label": "",
       "label-display-name": "Megjelenített név",
       "placeholder-my-repository-connection": "Saját adattári kapcsolat",
       "text-loading-resource-information": "Erőforrás-információk betöltése…",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} irányítópult",
       "dashboards-count_other": "{{count}} irányítópult",
       "files-count_one": "{{count}} fájl",
@@ -11263,7 +11300,9 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurálás",
-      "repository-limit-info-alert": "Elérte az adattár korlátját ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Törlés",
@@ -11346,7 +11385,11 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Nincs találat a lekérdezésre",
-      "placeholder-search": "Keresés"
+      "placeholder-search": "Keresés",
+      "all-resources-managed_one": "",
+      "all-resources-managed_other": "",
+      "partial-managed_one": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11644,6 +11687,7 @@
       "tooltip-unhealthy-repository": "Nem lehet beolvasni egy nem megfelelő állapotú adattárat"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Változtatások belefoglalása minden előzményértékhez",
       "synchronization-options": "Szinkronizálási beállítások"
     },
@@ -11667,6 +11711,8 @@
       "alert-point-3": "A folyamat időtartama az érintett erőforrások számától függ.",
       "alert-point-4": "A vállalati példányok adminisztrátorai megjeleníthetnek egy értesítési szalagot a felhasználóknak. A lépésenkénti utasításokat lásd az <2>útmutatóban</2>.",
       "alert-title": "Fontos: Egyetlen adat vagy konfiguráció sem fog elveszni, de az irányítópultok néhány percig átmenetileg nem lesznek elérhetők.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Befejezés",
       "button-start": "Szinkronizálás indítása",
       "discard-modal": {
