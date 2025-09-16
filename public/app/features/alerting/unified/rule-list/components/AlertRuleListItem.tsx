@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import pluralize from 'pluralize';
 import { ReactNode, forwardRef, memo, useEffect, useId } from 'react';
 
+import { StateIcon } from '@grafana/alerting/unstable';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
@@ -21,9 +22,8 @@ import { createContactPointSearchLink, makeDataSourceLink } from '../../utils/mi
 import { RulePluginOrigin } from '../../utils/rules';
 
 import { ListItem } from './ListItem';
-import { RuleListIcon, RuleOperation } from './RuleListIcon';
 import { RuleLocation } from './RuleLocation';
-import { calculateNextEvaluationEstimate } from './util';
+import { calculateNextEvaluationEstimate, normalizeHealth, normalizeState } from './util';
 
 export interface AlertRuleListItemProps {
   name: string;
@@ -47,7 +47,7 @@ export interface AlertRuleListItemProps {
   contactPoint?: string;
   actions?: ReactNode;
   origin?: RulePluginOrigin;
-  operation?: RuleOperation;
+  operation?: 'creating' | 'deleting';
   // the grouped view doesn't need to show the location again – it's redundant
   showLocation?: boolean;
   querySourceUIDs?: string[];
@@ -143,6 +143,9 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     );
   }
 
+  const ruleHealth = normalizeHealth(health);
+  const ruleState = normalizeState(state);
+
   return (
     <ListItem
       aria-labelledby={listItemAriaId}
@@ -159,7 +162,9 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
         </Stack>
       }
       description={<Summary content={summary} error={error} />}
-      icon={<RuleListIcon state={state} health={health} isPaused={isPaused} operation={operation} />}
+      icon={
+        <StateIcon type="alerting" state={ruleState} health={ruleHealth} isPaused={isPaused} operation={operation} />
+      }
       actions={actions}
       meta={metadata}
     />
@@ -207,6 +212,8 @@ export function RecordingRuleListItem({
     metadata.push(<QuerySourceIcons queriedDatasourceUIDs={querySourceUIDs} />);
   }
 
+  const ruleHealth = normalizeHealth(health);
+
   return (
     <ListItem
       title={
@@ -222,7 +229,7 @@ export function RecordingRuleListItem({
         </Stack>
       }
       description={<Summary error={error} />}
-      icon={<RuleListIcon recording={true} health={health} isPaused={isPaused} />}
+      icon={<StateIcon type="recording" health={ruleHealth} isPaused={isPaused} />}
       actions={actions}
       meta={metadata}
     />
@@ -236,7 +243,7 @@ interface RuleOperationListItemProps {
   groupUrl?: string;
   rulesSource?: RulesSourceIdentifier;
   application?: RulesSourceApplication;
-  operation: RuleOperation;
+  operation: 'creating' | 'deleting';
   showLocation?: boolean;
 }
 
@@ -275,7 +282,7 @@ export function RuleOperationListItem({
           <Text id={listItemAriaId}>{name}</Text>
         </Stack>
       }
-      icon={<RuleListIcon operation={operation} />}
+      icon={<StateIcon operation={operation} />}
       meta={metadata}
     />
   );

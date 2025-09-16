@@ -7,6 +7,7 @@ import {
   DataFrame,
   alignTimeRangeCompareData,
   shouldAlignTimeCompare,
+  useDataLinksContext,
   FieldType,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
@@ -46,10 +47,11 @@ export const TimeSeriesPanel = ({
     onThresholdsChange,
     canEditThresholds,
     showThresholds,
-    dataLinkPostProcessor,
     eventBus,
     canExecuteActions,
   } = usePanelContext();
+
+  const { dataLinkPostProcessor } = useDataLinksContext();
 
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
   // Vertical orientation is not available for users through config.

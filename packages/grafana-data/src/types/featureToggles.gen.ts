@@ -210,6 +210,11 @@ export interface FeatureToggles {
   */
   awsAsyncQueryCaching?: boolean;
   /**
+  * Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
+  * @default false
+  */
+  queryCacheRequestDeduplication?: boolean;
+  /**
   * Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
   */
   permissionsFilterRemoveSubquery?: boolean;
@@ -274,9 +279,17 @@ export interface FeatureToggles {
   */
   kubernetesDashboards?: boolean;
   /**
-  * Routes short url requests from /api to the /apis endpoint
+  * Enables k8s short url api and uses it under the hood when handling legacy /api
   */
   kubernetesShortURLs?: boolean;
+  /**
+  * Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
+  */
+  useKubernetesShortURLsAPI?: boolean;
+  /**
+  * Adds support for Kubernetes alerting and recording rules
+  */
+  kubernetesAlertingRules?: boolean;
   /**
   * Disable schema validation for dashboards/v1
   */
@@ -762,6 +775,11 @@ export interface FeatureToggles {
   */
   alertingEnrichmentPerRule?: boolean;
   /**
+  * Enable Assistant Investigations enrichment type.
+  * @default false
+  */
+  alertingEnrichmentAssistantInvestigations?: boolean;
+  /**
   * Enable AI-analyze central state history.
   * @default false
   */
@@ -780,7 +798,8 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchUI?: boolean;
   /**
-  * Enables cross cluster search in the Elasticsearch datasource
+  * Enables cross cluster search in the Elasticsearch data source
+  * @default false
   */
   elasticsearchCrossClusterSearch?: boolean;
   /**
@@ -1114,11 +1133,6 @@ export interface FeatureToggles {
   */
   newClickhouseConfigPageDesign?: boolean;
   /**
-  * Enable experimental search-after-write guarantees to unified-storage search endpoints
-  * @default false
-  */
-  unifiedStorageSearchAfterWriteExperimentalAPI?: boolean;
-  /**
   * Enables team folders functionality
   * @default false
   */
@@ -1148,4 +1162,9 @@ export interface FeatureToggles {
   * @default false
   */
   dskitBackgroundServices?: boolean;
+  /**
+  * Enables running plugins in containers
+  * @default false
+  */
+  pluginContainers?: boolean;
 }

@@ -30,7 +30,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagInvestigationsBackend,
 			featuremgmt.FlagGrafanaAdvisor,
+			featuremgmt.FlagKubernetesAlertingRules,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // all datasources
+			featuremgmt.FlagKubernetesShortURLs,
 		},
 	})
 
@@ -42,7 +44,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, runtime.Version(), info.GoVersion)
 		require.Equal(t, "1", info.Major)
-		require.Equal(t, "33", info.Minor)
+		require.Equal(t, "34", info.Minor)
 
 		// Make sure the gitVersion is parsable
 		v, err := version.Parse(info.GitVersion)
@@ -94,6 +96,12 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}, {
 		Group:   "notifications.alerting.grafana.app",
 		Version: "v0alpha1",
+	}, {
+		Group:   "rules.alerting.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "shorturl.grafana.app",
+		Version: "v1alpha1",
 	}}
 	for _, gv := range groups {
 		VerifyOpenAPISnapshots(t, dir, gv, h)

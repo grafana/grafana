@@ -10,10 +10,8 @@ spec:
   permissions:
   - kind: User
     name: few8wwtp1si68e
-    verbs:
-    - edit
+    verb: edit
   - kind: BasicRole
     name: Editor
-    verbs:
-    - view
+    verb: view
   

@@ -581,7 +581,6 @@ func (s *service) running(ctx context.Context) error {
 			return err
 		}
 	case <-ctx.Done():
-		return ctx.Err()
 	}
 	return nil
 }
