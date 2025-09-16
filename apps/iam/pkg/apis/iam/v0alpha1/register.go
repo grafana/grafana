@@ -262,6 +262,8 @@ func AddAuthZKnownTypes(scheme *runtime.Scheme) error {
 		&CoreRoleList{},
 		&Role{},
 		&RoleList{},
+		&RoleBinding{},
+		&RoleBindingList{},
 
 		// What is this about?
 		&metav1.PartialObjectMetadata{},
@@ -274,8 +276,6 @@ func AddResourcePermissionKnownTypes(scheme *runtime.Scheme, version schema.Grou
 	scheme.AddKnownTypes(version,
 		&ResourcePermission{},
 		&ResourcePermissionList{},
-		&RoleBinding{},
-		&RoleBindingList{},
 
 		// What is this about?
 		&metav1.PartialObjectMetadata{},
