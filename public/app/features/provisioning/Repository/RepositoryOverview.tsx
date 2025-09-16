@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -52,7 +53,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
-        <Grid columns={columns} gap={2}>
+        <Grid columns={{ xs: 1, sm: 2, lg: columns }} gap={2}>
           <div className={styles.cardContainer}>
             <Card noMargin className={styles.card}>
               <Card.Heading>
@@ -271,7 +272,7 @@ function getFolderURL(repo: Repository) {
   return '/dashboards';
 }
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     cardContainer: css({
       height: '100%',
@@ -285,6 +286,7 @@ const getStyles = () => {
       marginTop: 'auto',
     }),
     labelColumn: css({
+      minWidth: theme.spacing(10),
       gridColumn: 'span 3',
     }),
     valueColumn: css({
