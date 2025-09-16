@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type Provenances map[string]models.Provenance
+type provenances = map[string]models.Provenance
 
 func (rev *ConfigRevision) DeleteReceiver(uid string) {
 	// Remove the receiver from the configuration.
@@ -84,7 +84,7 @@ func (rev *ConfigRevision) ReceiverUseByName() map[string]int {
 	return m
 }
 
-func (rev *ConfigRevision) GetReceiver(uid string, prov Provenances) (*models.Receiver, error) {
+func (rev *ConfigRevision) GetReceiver(uid string, prov provenances) (*models.Receiver, error) {
 	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
 		if NameToUid(r.GetName()) != uid {
 			continue
@@ -98,7 +98,7 @@ func (rev *ConfigRevision) GetReceiver(uid string, prov Provenances) (*models.Re
 	return nil, ErrReceiverNotFound.Errorf("")
 }
 
-func (rev *ConfigRevision) GetReceivers(uids []string, prov Provenances) ([]*models.Receiver, error) {
+func (rev *ConfigRevision) GetReceivers(uids []string, prov provenances) ([]*models.Receiver, error) {
 	capacity := len(uids)
 	if capacity == 0 {
 		capacity = len(rev.Config.AlertmanagerConfig.Receivers)
@@ -175,7 +175,7 @@ func EncryptedReceivers(receivers []*definitions.PostableApiReceiver, encryptFn 
 
 // RenameReceiverInRoutes renames all references to a receiver in routes. Returns number of routes that were updated
 func (rev *ConfigRevision) RenameReceiverInRoutes(oldName, newName string) int {
-	return RenameReceiverInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route)
+	return renameReceiverInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route)
 }
 
 // validateReceiver checks if the given receiver conflicts in name or integration UID with existing receivers.
@@ -207,7 +207,7 @@ func (rev *ConfigRevision) validateReceiver(p *definitions.PostableApiReceiver) 
 	return nil
 }
 
-func RenameReceiverInRoute(oldName, newName string, routes ...*definitions.Route) int {
+func renameReceiverInRoute(oldName, newName string, routes ...*definitions.Route) int {
 	if len(routes) == 0 {
 		return 0
 	}
@@ -217,7 +217,7 @@ func RenameReceiverInRoute(oldName, newName string, routes ...*definitions.Route
 			route.Receiver = newName
 			updated++
 		}
-		updated += RenameReceiverInRoute(oldName, newName, route.Routes...)
+		updated += renameReceiverInRoute(oldName, newName, route.Routes...)
 	}
 	return updated
 }
