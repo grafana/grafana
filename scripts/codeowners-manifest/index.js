@@ -2,9 +2,9 @@
 
 const fs = require('node:fs');
 
-const { generateCodeownersManifest } = require('./generate-codeowners-manifest.js');
-const { generateCodeownersMetadata } = require('./generate-codeowners-metadata.js');
-const { generateCodeownersRawAudit } = require('./generate-codeowners-raw-audit.js');
+const { generateCodeownersManifest } = require('./manifest.js');
+const { generateCodeownersMetadata } = require('./metadata.js');
+const { generateCodeownersRawAudit } = require('./raw.js');
 
 const CODEOWNERS_FILE_PATH = '.github/CODEOWNERS';
 const CODEOWNERS_COVERAGE_DIR = 'codeowners-manifest';
