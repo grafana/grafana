@@ -156,8 +156,11 @@
       "title": "取得 Grafana 企業版"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "測試使用者對應",
-      "test-mapping-run-button": "執行"
+      "test-mapping-run-button": "執行",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -9213,7 +9216,8 @@
       "disable-button": "停用",
       "discard-button": "捨棄",
       "save-and-enable-button": "儲存並啟用",
-      "save-button": "儲存"
+      "save-button": "儲存",
+      "test-button": ""
     },
     "documentation": "文件",
     "host": {
@@ -12768,6 +12772,7 @@
     "description-column-filter": "啟用/停用表格中的欄位篩選條件",
     "description-frozen-columns": "",
     "description-min-column-width": "欄自動調整大小的最小寬度",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "若圖片無法顯示或為使用螢幕閱讀器的使用者顯示的替代文字",
@@ -12798,6 +12803,7 @@
     "name-max-height": "",
     "name-min-column-width": "最小欄寬",
     "name-show-table-header": "顯示表格頁首",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "換行標題文字",
