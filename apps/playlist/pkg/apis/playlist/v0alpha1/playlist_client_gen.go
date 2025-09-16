@@ -76,7 +76,7 @@ func (c *PlaylistClient) Patch(ctx context.Context, identifier resource.Identifi
 	return c.client.Patch(ctx, identifier, req, opts)
 }
 
-func (c *PlaylistClient) UpdateStatus(ctx context.Context, newStatus PlaylistStatus, opts resource.UpdateOptions) (*Playlist, error) {
+func (c *PlaylistClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus PlaylistStatus, opts resource.UpdateOptions) (*Playlist, error) {
 	return c.client.Update(ctx, &Playlist{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       PlaylistKind().Kind(),
@@ -84,6 +84,8 @@ func (c *PlaylistClient) UpdateStatus(ctx context.Context, newStatus PlaylistSta
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			ResourceVersion: opts.ResourceVersion,
+			Namespace:       identifier.Namespace,
+			Name:            identifier.Name,
 		},
 		Status: newStatus,
 	}, resource.UpdateOptions{

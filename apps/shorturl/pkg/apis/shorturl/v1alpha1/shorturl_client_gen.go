@@ -79,7 +79,7 @@ func (c *ShortURLClient) Patch(ctx context.Context, identifier resource.Identifi
 	return c.client.Patch(ctx, identifier, req, opts)
 }
 
-func (c *ShortURLClient) UpdateStatus(ctx context.Context, newStatus ShortURLStatus, opts resource.UpdateOptions) (*ShortURL, error) {
+func (c *ShortURLClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus ShortURLStatus, opts resource.UpdateOptions) (*ShortURL, error) {
 	return c.client.Update(ctx, &ShortURL{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       ShortURLKind().Kind(),
@@ -87,6 +87,8 @@ func (c *ShortURLClient) UpdateStatus(ctx context.Context, newStatus ShortURLSta
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			ResourceVersion: opts.ResourceVersion,
+			Namespace:       identifier.Namespace,
+			Name:            identifier.Name,
 		},
 		Status: newStatus,
 	}, resource.UpdateOptions{

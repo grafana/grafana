@@ -76,7 +76,7 @@ func (c *PluginMetaClient) Patch(ctx context.Context, identifier resource.Identi
 	return c.client.Patch(ctx, identifier, req, opts)
 }
 
-func (c *PluginMetaClient) UpdateStatus(ctx context.Context, newStatus PluginMetaStatus, opts resource.UpdateOptions) (*PluginMeta, error) {
+func (c *PluginMetaClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus PluginMetaStatus, opts resource.UpdateOptions) (*PluginMeta, error) {
 	return c.client.Update(ctx, &PluginMeta{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       PluginMetaKind().Kind(),
@@ -84,6 +84,8 @@ func (c *PluginMetaClient) UpdateStatus(ctx context.Context, newStatus PluginMet
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			ResourceVersion: opts.ResourceVersion,
+			Namespace:       identifier.Namespace,
+			Name:            identifier.Name,
 		},
 		Status: newStatus,
 	}, resource.UpdateOptions{

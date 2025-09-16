@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	v0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 )
@@ -61,6 +62,10 @@ var appManifestData = app.ManifestData{
 					},
 				},
 			},
+			Routes: app.ManifestVersionRoutes{
+				Namespaced: map[string]spec3.PathProps{},
+				Cluster:    map[string]spec3.PathProps{},
+			},
 		},
 	},
 }
@@ -90,6 +95,7 @@ var customRouteToGoResponseType = map[string]any{}
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
 // kind may be empty for custom routes which are not kind subroutes. Leading slashes are removed from subroute paths.
 // If there is no association for the provided kind, version, custom route path, and method, exists will return false.
+// Resource routes (those without a kind) should prefix their route with "<namespace>/" if the route is namespaced (otherwise the route is assumed to be cluster-scope)
 func ManifestCustomRouteResponsesAssociator(kind, version, path, verb string) (goType any, exists bool) {
 	if len(path) > 0 && path[0] == '/' {
 		path = path[1:]
@@ -108,7 +114,21 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 	return goType, exists
 }
 
+var customRouteToGoRequestBodyType = map[string]any{}
+
+func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+	goType, exists = customRouteToGoRequestBodyType[fmt.Sprintf("%s|%s|%s|%s", version, kind, path, strings.ToUpper(verb))]
+	return goType, exists
+}
+
 type GoTypeAssociator struct{}
+
+func NewGoTypeAssociator() *GoTypeAssociator {
+	return &GoTypeAssociator{}
+}
 
 func (g *GoTypeAssociator) KindToGoType(kind, version string) (goType resource.Kind, exists bool) {
 	return ManifestGoTypeAssociator(kind, version)
@@ -118,4 +138,7 @@ func (g *GoTypeAssociator) CustomRouteReturnGoType(kind, version, path, verb str
 }
 func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb string) (goType runtime.Object, exists bool) {
 	return ManifestCustomRouteQueryAssociator(kind, version, path, verb)
+}
+func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
+	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
 }

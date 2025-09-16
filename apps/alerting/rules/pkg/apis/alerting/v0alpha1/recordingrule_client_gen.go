@@ -76,7 +76,7 @@ func (c *RecordingRuleClient) Patch(ctx context.Context, identifier resource.Ide
 	return c.client.Patch(ctx, identifier, req, opts)
 }
 
-func (c *RecordingRuleClient) UpdateStatus(ctx context.Context, newStatus RecordingRuleStatus, opts resource.UpdateOptions) (*RecordingRule, error) {
+func (c *RecordingRuleClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus RecordingRuleStatus, opts resource.UpdateOptions) (*RecordingRule, error) {
 	return c.client.Update(ctx, &RecordingRule{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       RecordingRuleKind().Kind(),
@@ -84,6 +84,8 @@ func (c *RecordingRuleClient) UpdateStatus(ctx context.Context, newStatus Record
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			ResourceVersion: opts.ResourceVersion,
+			Namespace:       identifier.Namespace,
+			Name:            identifier.Name,
 		},
 		Status: newStatus,
 	}, resource.UpdateOptions{

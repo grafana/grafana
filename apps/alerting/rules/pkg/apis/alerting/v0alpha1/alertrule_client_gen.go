@@ -76,7 +76,7 @@ func (c *AlertRuleClient) Patch(ctx context.Context, identifier resource.Identif
 	return c.client.Patch(ctx, identifier, req, opts)
 }
 
-func (c *AlertRuleClient) UpdateStatus(ctx context.Context, newStatus AlertRuleStatus, opts resource.UpdateOptions) (*AlertRule, error) {
+func (c *AlertRuleClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus AlertRuleStatus, opts resource.UpdateOptions) (*AlertRule, error) {
 	return c.client.Update(ctx, &AlertRule{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       AlertRuleKind().Kind(),
@@ -84,6 +84,8 @@ func (c *AlertRuleClient) UpdateStatus(ctx context.Context, newStatus AlertRuleS
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			ResourceVersion: opts.ResourceVersion,
+			Namespace:       identifier.Namespace,
+			Name:            identifier.Name,
 		},
 		Status: newStatus,
 	}, resource.UpdateOptions{

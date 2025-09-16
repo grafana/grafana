@@ -76,7 +76,7 @@ func (c *PluginInstallClient) Patch(ctx context.Context, identifier resource.Ide
 	return c.client.Patch(ctx, identifier, req, opts)
 }
 
-func (c *PluginInstallClient) UpdateStatus(ctx context.Context, newStatus PluginInstallStatus, opts resource.UpdateOptions) (*PluginInstall, error) {
+func (c *PluginInstallClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus PluginInstallStatus, opts resource.UpdateOptions) (*PluginInstall, error) {
 	return c.client.Update(ctx, &PluginInstall{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       PluginInstallKind().Kind(),
@@ -84,6 +84,8 @@ func (c *PluginInstallClient) UpdateStatus(ctx context.Context, newStatus Plugin
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			ResourceVersion: opts.ResourceVersion,
+			Namespace:       identifier.Namespace,
+			Name:            identifier.Name,
 		},
 		Status: newStatus,
 	}, resource.UpdateOptions{

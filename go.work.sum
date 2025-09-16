@@ -1008,9 +1008,11 @@ github.com/grafana/dskit v0.0.0-20250818234656-8ff9c6532e85/go.mod h1:kImsvJ1xnm
 github.com/grafana/go-gelf/v2 v2.0.1 h1:BOChP0h/jLeD+7F9mL7tq10xVkDG15he3T1zHuQaWak=
 github.com/grafana/go-gelf/v2 v2.0.1/go.mod h1:lexHie0xzYGwCgiRGcvZ723bSNyNI8ZRD4s0CLobh90=
 github.com/grafana/gomemcache v0.0.0-20250228145437-da7b95fd2ac1/go.mod h1:j/s0jkda4UXTemDs7Pgw/vMT06alWc42CHisvYac0qw=
+github.com/grafana/grafana-api-golang-client v0.27.0/go.mod h1:uNLZEmgKtTjHBtCQMwNn3qsx2mpMb8zU+7T4Xv3NR9Y=
 github.com/grafana/grafana-app-sdk v0.40.1/go.mod h1:4P8h7VB6KcDjX9bAoBQc6IP8iNylxe6bSXLR9gA39gM=
 github.com/grafana/grafana-app-sdk v0.41.0 h1:SYHN3U7B1myRKY3UZZDkFsue9TDmAOap0UrQVTqtYBU=
 github.com/grafana/grafana-app-sdk v0.41.0/go.mod h1:Wg/3vEZfok1hhIWiHaaJm+FwkosfO98o8KbeLFEnZpY=
+github.com/grafana/grafana-app-sdk v0.44.0/go.mod h1:1pYGEBrgG8i6pKmmsNXvtAr15jZ4iLtyHU4yj7T6XaI=
 github.com/grafana/grafana-app-sdk/logging v0.38.0/go.mod h1:Y/bvbDhBiV/tkIle9RW49pgfSPIPSON8Q4qjx3pyqDk=
 github.com/grafana/grafana-app-sdk/logging v0.39.0 h1:3GgN5+dUZYqq74Q+GT9/ET+yo+V54zWQk/Q2/JsJQB4=
 github.com/grafana/grafana-app-sdk/logging v0.39.0/go.mod h1:WhDENSnaGHtyVVwZGVnAR7YLvh2xlLDYR3D7E6h7XVk=
@@ -1018,13 +1020,17 @@ github.com/grafana/grafana-app-sdk/logging v0.39.1/go.mod h1:WhDENSnaGHtyVVwZGVn
 github.com/grafana/grafana-app-sdk/logging v0.40.0/go.mod h1:otUD9XpJD7A5sCLb8mcs9hIXGdeV6lnhzVwe747g4RU=
 github.com/grafana/grafana-app-sdk/logging v0.43.0/go.mod h1:0xrjKSGY5z+NLGuGsXQpxiCHR4Smu79i/CbAfdkaB1M=
 github.com/grafana/grafana-app-sdk/logging v0.43.1/go.mod h1:0xrjKSGY5z+NLGuGsXQpxiCHR4Smu79i/CbAfdkaB1M=
+github.com/grafana/grafana-app-sdk/logging v0.43.2/go.mod h1:Gh/nBWnspK3oDNWtiM5qUF/fardHzOIEez+SPI3JeHA=
+github.com/grafana/grafana-app-sdk/logging v0.44.0/go.mod h1:Gh/nBWnspK3oDNWtiM5qUF/fardHzOIEez+SPI3JeHA=
 github.com/grafana/grafana-app-sdk/plugin v0.41.0 h1:ShUvGpAVzM3UxcsfwS6l/lwW4ytDeTbCQXf8w2P8Yp8=
 github.com/grafana/grafana-app-sdk/plugin v0.41.0/go.mod h1:YIhimVfAqtOp3kdhxOanaSZjypVKh/bYxf9wfFfhDm0=
 github.com/grafana/grafana-aws-sdk v0.38.2 h1:TzQD0OpWsNjtldi5G5TLDlBRk8OyDf+B5ujcoAu4Dp0=
 github.com/grafana/grafana-aws-sdk v0.38.2/go.mod h1:j3vi+cXYHEFqjhBGrI6/lw1TNM+dl0Y3f0cSnDOPy+s=
 github.com/grafana/grafana-aws-sdk v1.0.2 h1:98eBuHYFmgvH0xO9kKf4RBsEsgQRp8EOA/9yhDIpkss=
 github.com/grafana/grafana-aws-sdk v1.0.2/go.mod h1:hO7q7yWV+t6dmiyJjMa3IbuYnYkBua+G/IAlOPVIYKE=
+github.com/grafana/grafana-aws-sdk v1.2.0/go.mod h1:bBo7qOmM3f61vO+2JxTolNUph1l2TmtzmWcU9/Im+8A=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6/go.mod h1:V7y2BmsWxS3A9Ohebwn4OiSfJJqi//4JQydQ8fHTduo=
+github.com/grafana/grafana-cloud-migration-snapshot v1.9.0/go.mod h1:nOHgq4Oa829qmBKA5KIXw5Ipo3rhLs0d6A8UI9Nw8Zk=
 github.com/grafana/grafana-plugin-sdk-go v0.263.0/go.mod h1:U43Cnrj/9DNYyvFcNdeUWNjMXTKNB0jcTcQGpWKd2gw=
 github.com/grafana/grafana-plugin-sdk-go v0.267.0/go.mod h1:OuwS4c/JYgn0rr/w5zhJBpLo4gKm/vw15RsfpYAvK9Q=
 github.com/grafana/grafana-plugin-sdk-go v0.269.1/go.mod h1:yv2KbO4mlr9WuDK2f+2gHAMTwwLmLuqaEnrPXTRU+OI=
@@ -1051,7 +1057,6 @@ github.com/grafana/grafana/pkg/aggregator v0.0.0-20250121113133-e747350fee2d/go.
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250121113133-e747350fee2d/go.mod h1:tfLnBpPYgwrBMRz4EXqPCZJyCjEG4Ev37FSlXnocJ2c=
 github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250121113133-e747350fee2d/go.mod h1:CXpwZ3Mkw6xVlGKc0SqUxqXCP3Uv182q6qAQnLaLxRg=
 github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250514132646-acbc7b54ed9e/go.mod h1:xrKQcxQxz+IUF90ybtfENFeEXtlj9nAsX/3Fw0KEIeQ=
-github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 h1:/5LKSYgLmAhwA4m6iGUD4w1YkydEWWjazn9qxCFT8W0=
 github.com/grafana/nanogit v0.0.0-20250616082354-5e94194d02ed h1:59JF1WhHLT+lNX89Tm1OzOEySMVMASAhaPbsRjtp8Kc=
 github.com/grafana/nanogit v0.0.0-20250616082354-5e94194d02ed/go.mod h1:OIAAKNgG5fpuJQRNO1lUSj9nc18Xl3O7M8fjIlBO1cI=
 github.com/grafana/nanogit v0.0.0-20250619160700-ebf70d342aa5 h1:MAQ2B0cu0V1S91ZjVa7NomNZFjaR2SmdtvdwhqBtyhU=
@@ -1452,6 +1457,7 @@ github.com/spf13/cobra v1.8.1/go.mod h1:wHxEcudfqmLYa8iTfL+OuZPbBZkmvliBWKIezN3k
 github.com/spf13/jwalterweatherman v1.1.0 h1:ue6voC5bR5F8YxI5S67j9i582FU4Qvo2bmqnqMYADFk=
 github.com/spkg/bom v0.0.0-20160624110644-59b7046e48ad h1:fiWzISvDn0Csy5H0iwgAuJGQTUpVfEMJJd4nRFXogbc=
 github.com/stoewer/go-strcase v1.2.0/go.mod h1:IBiWB2sKIp3wVVQ3Y035++gc+knqhUQag1KpM8ahLw8=
+github.com/stretchr/testify v1.11.0/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
 github.com/substrait-io/substrait v0.66.1-0.20250205013839-a30b3e2d7ec6 h1:XqtxwYFCjS4L0o1QD4ipGHCuFG94U0f6BeldbilGQjU=
 github.com/substrait-io/substrait v0.66.1-0.20250205013839-a30b3e2d7ec6/go.mod h1:MPFNw6sToJgpD5Z2rj0rQrdP/Oq8HG7Z2t3CAEHtkHw=
 github.com/substrait-io/substrait-go/v3 v3.9.1 h1:2yfHDHpK6KMcvLd0bJVzUJoeXO+K98yS+ciBruxD9po=
@@ -1888,7 +1894,7 @@ golang.org/x/telemetry v0.0.0-20250710130107-8d8967aff50b/go.mod h1:4ZwOYna0/zsO
 golang.org/x/telemetry v0.0.0-20250807160809-1a19826ec488 h1:3doPGa+Gg4snce233aCWnbZVFsyFMo/dR40KK/6skyE=
 golang.org/x/telemetry v0.0.0-20250807160809-1a19826ec488/go.mod h1:fGb/2+tgXXjhjHsTNdVEEMZNWA0quBnfrO+AfoDSAKw=
 golang.org/x/term v0.30.0/go.mod h1:NYYFdzHoI5wRh/h5tDMdMqCqPJZEuNqVR5xJLd/n67g=
-golang.org/x/term v0.34.0/go.mod h1:5jC53AEywhIVebHgPVeg0mj8OD3VO9OzclacVrqpaAw=
+golang.org/x/term v0.32.0/go.mod h1:uZG1FhGx848Sqfsq4/DlJr3xGGsYMu/L5GW4abiaEPQ=
 golang.org/x/text v0.17.0/go.mod h1:BuEKDfySbSR4drPmRPG/7iBdf8hvFMuRexcpahXilzY=
 golang.org/x/text v0.21.0/go.mod h1:4IBbMaMmOPCJ8SecivzSH54+73PCFmPWxNTLm+vZkEQ=
 golang.org/x/text v0.22.0/go.mod h1:YRoo4H8PVmsu+E3Ou7cqLVH8oXWIHVoX0jqUWALQhfY=
