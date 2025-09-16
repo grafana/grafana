@@ -4,7 +4,7 @@
 
 export { INHERITABLE_KEYS, type InheritableProperties } from './grafana/notificationPolicies/utils';
 export { AlertLabels } from './grafana/rules/components/labels/AlertLabels';
-export { AlertLabel } from './grafana/rules/components/labels/AlertLabel';
+export { AlertLabel, type AlertLabelProps } from './grafana/rules/components/labels/AlertLabel';
 // keep label utils internal to the app for now
 
 export default {};

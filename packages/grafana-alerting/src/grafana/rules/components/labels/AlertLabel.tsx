@@ -144,3 +144,4 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
 };
 
 export { AlertLabel };
+export type AlertLabelProps = Props;
