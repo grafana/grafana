@@ -1,7 +1,7 @@
 import { config, getDataSourceSrv } from '@grafana/runtime';
+import { testWithFeatureToggles } from '@grafana/test-utils';
 
 import { mockAlertQuery, mockDataSource, mockReduceExpression, mockThresholdExpression } from '../mocks';
-import { testWithFeatureToggles } from '../test/test-utils';
 import { RuleFormType } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
 import { DataSourceType, getDefaultOrFirstCompatibleDataSource } from '../utils/datasource';
@@ -76,7 +76,7 @@ describe('formValuesFromQueryParams', () => {
   });
 
   describe('when simplified query editor is enabled', () => {
-    testWithFeatureToggles(['alertingQueryAndExpressionsStepMode']);
+    testWithFeatureToggles({ enable: ['alertingQueryAndExpressionsStepMode'] });
 
     it('should enable simplified query editor if queries are transformable to simple condition', () => {
       const result = formValuesFromQueryParams(

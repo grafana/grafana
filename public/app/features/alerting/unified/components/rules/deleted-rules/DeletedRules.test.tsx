@@ -1,6 +1,7 @@
 import { produce } from 'immer';
 import { render, screen } from 'test/test-utils';
 
+import { testWithFeatureToggles } from '@grafana/test-utils';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -9,12 +10,14 @@ import { setupMswServer } from '../../../mockApi';
 import { grantUserRole, mockFolder } from '../../../mocks';
 import { grafanaRulerRule } from '../../../mocks/grafanaRulerApi';
 import { setFolderResponse } from '../../../mocks/server/configure';
-import { grantPermissionsHelper, testWithFeatureToggles } from '../../../test/test-utils';
+import { grantPermissionsHelper } from '../../../test/test-utils';
 
 import { DeletedRules } from './DeletedRules';
 
 setupMswServer();
-testWithFeatureToggles(['alertingRulePermanentlyDelete', 'alertingRuleRecoverDeleted', 'alertRuleRestore']);
+testWithFeatureToggles({
+  enable: ['alertingRulePermanentlyDelete', 'alertingRuleRecoverDeleted', 'alertRuleRestore'],
+});
 beforeEach(() => {
   grantUserRole('Admin');
   grantPermissionsHelper([
