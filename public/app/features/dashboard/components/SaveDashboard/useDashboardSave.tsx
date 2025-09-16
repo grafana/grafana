@@ -3,13 +3,14 @@ import { useAsyncFn } from 'react-use';
 
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { DashboardSavedEvent } from 'app/types/events';
 import { useDispatch } from 'app/types/store';
 
@@ -61,15 +62,9 @@ export const useDashboardSave = (isCopy = false) => {
         updateDashboardUidLastUsedDatasource(result.uid);
 
         if (isCopy) {
-          reportInteraction('grafana_dashboard_copied', {
-            name: dashboard.title,
-            url: result.url,
-          });
+          DashboardInteractions.dashboardCopied({ name: dashboard.title || '', url: result.url });
         } else {
-          reportInteraction(`grafana_dashboard_${dashboard.id ? 'saved' : 'created'}`, {
-            name: dashboard.title,
-            url: result.url,
-          });
+          trackDashboardCreatedOrSaved(dashboard.id ? 'saved' : 'created', { name: dashboard.title, url: result.url });
         }
 
         const currentPath = locationService.getLocation().pathname;
@@ -100,3 +95,6 @@ export const useDashboardSave = (isCopy = false) => {
 
   return { state, onDashboardSave };
 };
+function trackDashboardCreatedOrSaved(arg0: string, arg1: { name: string; url: string }) {
+  throw new Error('Function not implemented.');
+}

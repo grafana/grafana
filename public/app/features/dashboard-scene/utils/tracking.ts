@@ -2,6 +2,7 @@ import { store } from '@grafana/data';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardTrackingInfo, DashboardV2TrackingInfo } from '../serialization/DashboardSceneSerializer';
 import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
 import { DashboardInteractions } from './interactions';
@@ -14,6 +15,44 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
     duration,
     isScene: true,
     ...trackingInformation,
+  });
+}
+
+export interface DashboardCreatedProps {
+  name: string;
+  url: string;
+  [key: string]: unknown;
+}
+
+export function trackDashboardCreatedOrSaved(name: 'created' | 'saved', trackingProps: DashboardCreatedProps) {
+  DashboardInteractions.dashboardCreatedOrSaved(name, trackingProps);
+}
+
+export function isV2TrackingInfo(
+  t: DashboardTrackingInfo | DashboardV2TrackingInfo
+): t is DashboardV2TrackingInfo & DashboardTrackingInfo {
+  return 'autoLayout' in t;
+}
+
+export function trackDashboardSceneCreatedOrSaved(
+  name: 'created' | 'saved',
+  dashboard: DashboardScene,
+  initialProperties: DashboardCreatedProps
+) {
+  const trackingInformation = dashboard.getTrackingInformation();
+  const v2TrackingFields =
+    trackingInformation && isV2TrackingInfo(trackingInformation)
+      ? {
+          numPanels: trackingInformation.panels_count,
+          conditionalRenderRules: trackingInformation.conditionalRenderRulesCount,
+          autoLayout: trackingInformation.autoLayoutCount,
+          customGridLayout: trackingInformation.customGridLayoutCount,
+        }
+      : {};
+
+  DashboardInteractions.dashboardCreatedOrSaved(name, {
+    ...initialProperties,
+    ...v2TrackingFields,
   });
 }
 
