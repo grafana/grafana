@@ -17,5 +17,6 @@ export const POLISH_POLAND = 'pl-PL';
 export const SWEDISH_SWEDEN = 'sv-SE';
 export const TURKISH_TURKEY = 'tr-TR';
 export const CHINESE_TRADITIONAL = 'zh-Hant';
-export const DEFAULT_LANGUAGE = BRAZILIAN_PORTUGUESE;
+
+export const DEFAULT_LANGUAGE = ENGLISH_S;
 export const PSEUDO_LOCALE = 'pseudo';

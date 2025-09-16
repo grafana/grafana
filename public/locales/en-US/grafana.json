@@ -7588,7 +7588,7 @@
       "submit-button": "Submit",
       "tooltip-skip-button": "If you skip you will be prompted to change password next time you log in."
     },
-    "contact-admin": "Did you forget your username or email? Contact your Grafana administrator.",
+    "contact-admin": "Did you forget your username or email? Contact us.",
     "email-sent": "An email with a reset link has been sent to the email address. You should receive it shortly.",
     "reset-password-header": "Reset password",
     "send-email-button": "Send reset email",
