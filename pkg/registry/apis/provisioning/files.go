@@ -25,14 +25,15 @@ const (
 )
 
 type filesConnector struct {
-	getter  RepoGetter
-	access  authlib.AccessChecker
-	parsers resources.ParserFactory
-	clients resources.ClientFactory
+	getter        RepoGetter
+	access        authlib.AccessChecker
+	parsers       resources.ParserFactory
+	clients       resources.ClientFactory
+	onlyApiServer bool
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access authlib.AccessChecker) *filesConnector {
-	return &filesConnector{getter: getter, parsers: parsers, clients: clients, access: access}
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access authlib.AccessChecker, onlyApiServer bool) *filesConnector {
+	return &filesConnector{getter: getter, parsers: parsers, clients: clients, access: access, onlyApiServer: onlyApiServer}
 }
 
 func (*filesConnector) New() runtime.Object {
@@ -105,7 +106,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 		folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree())
-		dualReadWriter := resources.NewDualReadWriter(readWriter, parser, folders, c.access)
+		dualReadWriter := resources.NewDualReadWriter(readWriter, parser, folders, c.access, c.onlyApiServer)
 		query := r.URL.Query()
 		opts := resources.DualWriteOptions{
 			Ref:          query.Get("ref"),

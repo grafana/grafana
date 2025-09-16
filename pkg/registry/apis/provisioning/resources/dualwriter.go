@@ -18,13 +18,24 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// DualReadWriter is a wrapper around a repository that can read and write resources
+// DualReadWriter is a wrapper around a repository that can read from and write resources
+// into both the Git repository as well as in Grafana. It isn't a dual writer in the sense of what unistore handling calls dual writing.
+
+// Standard provisioning Authorizer has already run by the time DualReadWriter is called
+// for incoming requests from external actors. For internal requests, the authorization
+// checks that are performed here offer additional protection.
+
+// qq: why do we need to run the authorization checks again for external actors who have
+// already successfully authorized at the provisioning authorizer?
+
 // TODO: it does not support folders yet
 type DualReadWriter struct {
 	repo    repository.ReaderWriter
 	parser  Parser
 	folders *FolderManager
 	access  authlib.AccessChecker
+
+	onlyApiServer bool // Used to determine authz rules for standalone vs embedded apiserver
 }
 
 type DualWriteOptions struct {
@@ -40,8 +51,8 @@ type DualWriteOptions struct {
 	Branch       string // Configured default branch
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access authlib.AccessChecker) *DualReadWriter {
-	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access}
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access authlib.AccessChecker, onlyApiServer bool) *DualReadWriter {
+	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access, onlyApiServer: onlyApiServer}
 }
 
 func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*ParsedResource, error) {
@@ -496,7 +507,41 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 		return apierrors.NewUnauthorized(err.Error())
 	}
 
+	// apply authz rules for the standalone API server
+	if r.onlyApiServer {
+		if identity.IsServiceIdentity(ctx) {
+			// A Grafana sub-system should have full access. We trust them to make wise decisions.
+			return nil
+		}
+
+		var name string
+		if parsed.Existing != nil {
+			name = parsed.Existing.GetName()
+		} else {
+			name = parsed.DryRunResponse.GetName()
+		}
+
+		rsp, err := r.access.Check(ctx, id, authlib.CheckRequest{
+			Group:     parsed.GVR.Group,
+			Resource:  parsed.GVR.Resource,
+			Namespace: id.GetNamespace(),
+			Name:      name,
+			Folder:    parsed.Meta.GetFolder(),
+			Verb:      verb,
+		})
+		if err != nil || !rsp.Allowed {
+			return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
+				fmt.Errorf("no access to read the embedded file"))
+		}
+
+		return nil
+	}
+
+	// apply authz rules for the embedded apiserver
+
 	// Use configured permissions for get+delete
+	// NOTE: we historically provide VerbGet even when request is to delete in the embedded apiserver
+	// is that what we want?
 	if parsed.Existing != nil && (verb == utils.VerbGet || verb == utils.VerbDelete) {
 		rsp, err := r.access.Check(ctx, id, authlib.CheckRequest{
 			Group:     parsed.GVR.Group,
