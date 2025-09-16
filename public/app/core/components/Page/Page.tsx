@@ -50,8 +50,10 @@ export const Page: PageType = ({
     }
   }, [navModel, pageNav, chrome, layout]);
 
+  const isPrimaryBg = (background ?? getDefaultBackgroundForLayout(layout)) === 'primary';
+
   return (
-    <div className={cx(styles.wrapper, className)} {...otherProps}>
+    <div className={cx(styles.wrapper, isPrimaryBg && styles.wrapperPrimary, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
         <NativeScrollbar
           // This id is used by the image renderer to scroll through the dashboard
@@ -101,18 +103,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       position: 'relative',
     }),
+    wrapperPrimary: css({
+      label: 'page-wrapper-primary',
+      background: theme.colors.background.primary,
+    }),
     pageContent: css({
       label: 'page-content',
       flexGrow: 1,
-    }),
-    primaryBg: css({
-      background: theme.colors.background.primary,
     }),
     pageInner: css({
       label: 'page-inner',
       padding: theme.spacing(2),
       borderBottom: 'none',
-      background: theme.colors.background.primary,
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
@@ -132,3 +134,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+function getDefaultBackgroundForLayout(layout: PageLayoutType) {
+  return layout === PageLayoutType.Standard ? 'primary' : 'canvas';
+}

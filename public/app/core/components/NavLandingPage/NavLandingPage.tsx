@@ -32,7 +32,7 @@ export function NavLandingPage({ navId, header }: Props) {
   }
 
   return (
-    <Page navId={node.id}>
+    <Page navId={node.id} background="canvas">
       <Page.Contents>
         {components?.length > 0 ? (
           components.map((Component, idx) => <Component key={idx} node={node} />)

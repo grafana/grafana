@@ -29,6 +29,8 @@ export interface Props extends Omit<CardContainerProps, 'disableEvents' | 'disab
   isCompact?: boolean;
   /** Remove the bottom margin */
   noMargin?: boolean;
+  /** set to true if placed directly on canvas */
+  isOnCanvas?: boolean;
 }
 
 export interface CardInterface extends FC<Props> {
@@ -62,6 +64,7 @@ export const Card: CardInterface = ({
   isCompact,
   className,
   noMargin,
+  isOnCanvas,
   ...htmlProps
 }) => {
   const hasHeadingComponent = useMemo(
@@ -71,7 +74,15 @@ export const Card: CardInterface = ({
 
   const disableHover = disabled || (!onClick && !href);
   const onCardClick = onClick && !disabled ? onClick : undefined;
-  const styles = useStyles2(getCardContainerStyles, disabled, disableHover, isSelected, isCompact, noMargin);
+  const styles = useStyles2(
+    getCardContainerStyles,
+    disabled,
+    disableHover,
+    isSelected,
+    isCompact,
+    noMargin,
+    isOnCanvas
+  );
 
   return (
     <CardContainer
