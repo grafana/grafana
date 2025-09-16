@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import pluralize from 'pluralize';
 import { ReactNode, forwardRef, memo, useEffect, useId } from 'react';
 
-import { AlertLabels } from '@grafana/alerting';
+import { AlertLabels } from '@grafana/alerting/internal';
 import { StateIcon } from '@grafana/alerting/unstable';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';

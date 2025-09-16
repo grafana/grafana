@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { AlertLabels } from '@grafana/alerting';
+import { AlertLabels } from '@grafana/alerting/internal';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Stack, TextLink, useStyles2 } from '@grafana/ui';
