@@ -27,7 +27,7 @@ func (s *Service) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/functions", handleResourceReq(s.handleFunctions, s))
 	mux.HandleFunc("/tags/autoComplete/tags", handleResourceReq(s.handleTagsAutocomplete, s))
 	mux.HandleFunc("/tags/autoComplete/values", handleResourceReq(s.handleTagValuesAutocomplete, s))
-
+	mux.HandleFunc("/version", handleResourceReq(s.handleVersion, s))
 	return mux
 }
 
@@ -99,7 +99,6 @@ func (s *Service) handleEvents(ctx context.Context, dsInfo *datasourceInfo, even
 
 	req, err := s.createRequest(ctx, dsInfo, URLParams{
 		SubPath:     "events/get_data",
-		Method:      http.MethodGet,
 		QueryParams: queryParams,
 	})
 	if err != nil {
@@ -179,7 +178,6 @@ func (s *Service) handleMetricsExpand(ctx context.Context, dsInfo *datasourceInf
 
 	req, err := s.createRequest(ctx, dsInfo, URLParams{
 		SubPath:     "metrics/expand",
-		Method:      http.MethodGet,
 		QueryParams: queryParams,
 	})
 	if err != nil {
@@ -215,7 +213,6 @@ func (s *Service) handleTagsAutocomplete(ctx context.Context, dsInfo *datasource
 	}
 	req, err := s.createRequest(ctx, dsInfo, URLParams{
 		SubPath:     "tags/autoComplete/tags",
-		Method:      http.MethodGet,
 		QueryParams: queryParams,
 	})
 	if err != nil {
@@ -247,7 +244,6 @@ func (s *Service) handleTagValuesAutocomplete(ctx context.Context, dsInfo *datas
 
 	req, err := s.createRequest(ctx, dsInfo, URLParams{
 		SubPath:     "tags/autoComplete/values",
-		Method:      http.MethodGet,
 		QueryParams: queryParams,
 	})
 	if err != nil {
@@ -267,10 +263,30 @@ func (s *Service) handleTagValuesAutocomplete(ctx context.Context, dsInfo *datas
 	return tagValuesResponse, statusCode, nil
 }
 
+func (s *Service) handleVersion(ctx context.Context, dsInfo *datasourceInfo, _ *any) ([]byte, int, error) {
+	req, err := s.createRequest(ctx, dsInfo, URLParams{
+		SubPath: "version",
+	})
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create version request %v", err)
+	}
+
+	version, _, statusCode, err := doGraphiteRequest[string](ctx, dsInfo, s.logger, req, false)
+	if err != nil {
+		return nil, statusCode, fmt.Errorf("version request failed: %v", err)
+	}
+
+	versionResponse, err := json.Marshal(version)
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to marshal version response: %s", err)
+	}
+
+	return versionResponse, statusCode, nil
+}
+
 func (s *Service) handleFunctions(ctx context.Context, dsInfo *datasourceInfo, _ *any) ([]byte, int, error) {
 	req, err := s.createRequest(ctx, dsInfo, URLParams{
 		SubPath: "functions",
-		Method:  http.MethodGet,
 	})
 	if err != nil {
 		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create functions request %v", err)
