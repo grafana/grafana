@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"iter"
 	"maps"
-	"os"
 	"strings"
 
 	"github.com/grafana/alerting/receivers/jira"
@@ -28,8 +27,6 @@ const (
 
 // GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.
 func GetAvailableNotifiers() []*NotifierPlugin {
-	hostname, _ := os.Hostname()
-
 	pushoverSoundOptions := []SelectOption{
 		{
 			Value: "default",
@@ -512,7 +509,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "The unique location of the affected system, preferably a hostname or FQDN. You can use templates",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  hostname,
+					Placeholder:  "grafana.local",
 					PropertyName: "source",
 				},
 				{ // New in 9.4.

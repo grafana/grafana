@@ -4288,7 +4288,7 @@
             "inputType": "text",
             "label": "Source",
             "description": "The unique location of the affected system, preferably a hostname or FQDN. You can use templates",
-            "placeholder": "GRAFANA",
+            "placeholder": "grafana.local",
             "propertyName": "source",
             "selectOptions": null,
             "showWhen": {
