@@ -156,8 +156,11 @@
       "title": "Grafana Enterprise 사용하기"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "사용자 매핑 테스트",
-      "test-mapping-run-button": "실행"
+      "test-mapping-run-button": "실행",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -9213,7 +9216,8 @@
       "disable-button": "비활성화",
       "discard-button": "삭제",
       "save-and-enable-button": "저장 및 활성화",
-      "save-button": "저장"
+      "save-button": "저장",
+      "test-button": ""
     },
     "documentation": "문서",
     "host": {
@@ -12768,6 +12772,7 @@
     "description-column-filter": "테이블에서 필드 필터 활성화/비활성화",
     "description-frozen-columns": "",
     "description-min-column-width": "열 자동 크기 조정을 위한 최소 너비",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "이미지를 표시할 수 없거나 화면 리더를 이용하는 사용자를 위해 표시되는 대체 텍스트",
@@ -12798,6 +12803,7 @@
     "name-max-height": "",
     "name-min-column-width": "열 최소 너비",
     "name-show-table-header": "테이블 머리말 표시",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "머리말 텍스트 줄 바꿈",

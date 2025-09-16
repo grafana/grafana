@@ -156,8 +156,11 @@
       "title": "Skaffa Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Testa användarmappning",
-      "test-mapping-run-button": "Kör"
+      "test-mapping-run-button": "Kör",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -9239,7 +9242,8 @@
       "disable-button": "Inaktivera",
       "discard-button": "Kassera",
       "save-and-enable-button": "Spara och aktivera",
-      "save-button": "Spara"
+      "save-button": "Spara",
+      "test-button": ""
     },
     "documentation": "dokumentation",
     "host": {
@@ -12814,6 +12818,7 @@
     "description-column-filter": "Aktiverar/inaktiverar fältfilter i tabellen",
     "description-frozen-columns": "",
     "description-min-column-width": "Minsta bredd för automatisk storleksändring av kolumn",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Alternativ text som kommer att visas om en bild inte kan visas eller för användare som använder en skärmläsare",
@@ -12844,6 +12849,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minsta kolumnbredd",
     "name-show-table-header": "Visa tabellsidhuvud",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Radbryt rubriktext",

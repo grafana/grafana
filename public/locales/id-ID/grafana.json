@@ -156,8 +156,11 @@
       "title": "Dapatkan Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Uji pemetaan pengguna",
-      "test-mapping-run-button": "Jalankan"
+      "test-mapping-run-button": "Jalankan",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -9213,7 +9216,8 @@
       "disable-button": "Nonaktifkan",
       "discard-button": "Buang",
       "save-and-enable-button": "Simpan dan aktifkan",
-      "save-button": "Simpan"
+      "save-button": "Simpan",
+      "test-button": ""
     },
     "documentation": "dokumentasi",
     "host": {
@@ -12768,6 +12772,7 @@
     "description-column-filter": "Mengaktifkan/menonaktifkan filter bidang di tabel",
     "description-frozen-columns": "",
     "description-min-column-width": "Lebar minimum untuk perubahan ukuran kolom otomatis",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Teks alternatif yang akan ditampilkan jika gambar tidak dapat ditampilkan atau untuk pengguna yang menggunakan pembaca layar",
@@ -12798,6 +12803,7 @@
     "name-max-height": "",
     "name-min-column-width": "Lebar kolom minimum",
     "name-show-table-header": "Tampilkan header tabel",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Bungkus teks header",

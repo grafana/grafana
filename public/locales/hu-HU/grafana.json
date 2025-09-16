@@ -156,8 +156,11 @@
       "title": "A Grafana Enterprise beszerzése"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Felhasználói hozzárendelés tesztelése",
-      "test-mapping-run-button": "Futtatás"
+      "test-mapping-run-button": "Futtatás",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -9239,7 +9242,8 @@
       "disable-button": "Letiltás",
       "discard-button": "Elvetés",
       "save-and-enable-button": "Mentés és engedélyezés",
-      "save-button": "Mentés"
+      "save-button": "Mentés",
+      "test-button": ""
     },
     "documentation": "dokumentáció",
     "host": {
@@ -12814,6 +12818,7 @@
     "description-column-filter": "Engedélyezi/letiltja a mezőszűrőket a táblázatban",
     "description-frozen-columns": "",
     "description-min-column-width": "Az oszlop automatikus átméretezésének minimális szélessége",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Helyettesítő szöveg, amely akkor jelenik meg, ha egy kép nem jeleníthető meg, és amely a képernyőolvasót használó felhasználóknak hasznos",
@@ -12844,6 +12849,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minimális oszlopszélesség",
     "name-show-table-header": "Táblázatfejléc megjelenítése",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Fejléc szövegének tördelése",

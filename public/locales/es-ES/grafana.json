@@ -156,8 +156,11 @@
       "title": "Consigue Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Prueba de asignación de usuarios",
-      "test-mapping-run-button": "Ejecutar"
+      "test-mapping-run-button": "Ejecutar",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -9239,7 +9242,8 @@
       "disable-button": "Deshabilitar",
       "discard-button": "Descartar",
       "save-and-enable-button": "Guardar y habilitar",
-      "save-button": "Guardar"
+      "save-button": "Guardar",
+      "test-button": ""
     },
     "documentation": "documentación",
     "host": {
@@ -12814,6 +12818,7 @@
     "description-column-filter": "Habilita/deshabilita los filtros de campo en la tabla",
     "description-frozen-columns": "",
     "description-min-column-width": "El ancho mínimo para el cambio de tamaño automático de las columnas",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Texto alternativo que se mostrará si no se puede visualizar una imagen o para los usuarios que utilizan un lector de pantalla",
@@ -12844,6 +12849,7 @@
     "name-max-height": "",
     "name-min-column-width": "Ancho mínimo de columna",
     "name-show-table-header": "Mostrar encabezado de tabla",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Ajustar texto del encabezado",

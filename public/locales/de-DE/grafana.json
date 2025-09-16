@@ -156,8 +156,11 @@
       "title": "Holen Sie sich Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Testbenutzer-Mapping",
-      "test-mapping-run-button": "Ausführen"
+      "test-mapping-run-button": "Ausführen",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -9239,7 +9242,8 @@
       "disable-button": "Deaktivieren",
       "discard-button": "Verwerfen",
       "save-and-enable-button": "Speichern und aktivieren",
-      "save-button": "Speichern"
+      "save-button": "Speichern",
+      "test-button": ""
     },
     "documentation": "Dokumentation",
     "host": {
@@ -12814,6 +12818,7 @@
     "description-column-filter": "Aktiviert/deaktiviert Feldfilter in der Tabelle",
     "description-frozen-columns": "",
     "description-min-column-width": "Die Mindestbreite für die automatische Größenänderung der Spalte",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Alternativer Text, der angezeigt wird, wenn ein Bild nicht angezeigt werden kann, oder für Nutzer, die einen Screenreader verwenden",
@@ -12844,6 +12849,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minimale Spaltenbreite",
     "name-show-table-header": "Tabellenüberschirft anzeigen",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Kopfzeilentext umbrechen",

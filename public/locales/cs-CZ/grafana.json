@@ -156,8 +156,11 @@
       "title": "Získejte Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Testovat mapování uživatele",
-      "test-mapping-run-button": "Spustit"
+      "test-mapping-run-button": "Spustit",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -9291,7 +9294,8 @@
       "disable-button": "Deaktivovat",
       "discard-button": "Zahodit",
       "save-and-enable-button": "Uložit a povolit",
-      "save-button": "Uložit"
+      "save-button": "Uložit",
+      "test-button": ""
     },
     "documentation": "dokumentace",
     "host": {
@@ -12906,6 +12910,7 @@
     "description-column-filter": "Povolit/zakázat filtry polí v tabulce",
     "description-frozen-columns": "",
     "description-min-column-width": "Minimální šířka pro automatickou změnu velikosti sloupce",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Alternativní text, který se zobrazí, pokud nelze zobrazit obrázek, nebo pro uživatele, kteří používají čtečku obrazovky",
@@ -12936,6 +12941,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minimální šířka sloupce",
     "name-show-table-header": "Zobrazit záhlaví tabulky",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Zalomit text záhlaví",

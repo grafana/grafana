@@ -156,8 +156,11 @@
       "title": "Ontvang Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Test gebruikerstoewijzing",
-      "test-mapping-run-button": "Uitvoeren"
+      "test-mapping-run-button": "Uitvoeren",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -9239,7 +9242,8 @@
       "disable-button": "Uitschakelen",
       "discard-button": "Negeren",
       "save-and-enable-button": "Opslaan en inschakelen",
-      "save-button": "Opslaan"
+      "save-button": "Opslaan",
+      "test-button": ""
     },
     "documentation": "documentatie",
     "host": {
@@ -12814,6 +12818,7 @@
     "description-column-filter": "Schakelt veldfilters in tabel in/uit",
     "description-frozen-columns": "",
     "description-min-column-width": "De minimale breedte voor het automatisch aanpassen van de kolomgrootte",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Alternatieve tekst die wordt weergegeven als een afbeelding niet kan worden weergegeven of voor gebruikers die een schermlezer gebruiken",
@@ -12844,6 +12849,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minimale kolombreedte",
     "name-show-table-header": "Header tabel tonen",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Koptekst laten teruglopen",

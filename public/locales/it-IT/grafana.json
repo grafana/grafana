@@ -156,8 +156,11 @@
       "title": "Scegli Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Mappatura utente di prova",
-      "test-mapping-run-button": "Esegui"
+      "test-mapping-run-button": "Esegui",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -9239,7 +9242,8 @@
       "disable-button": "Disabilita",
       "discard-button": "Rimuovi’",
       "save-and-enable-button": "Salva e abilita",
-      "save-button": "Salva"
+      "save-button": "Salva",
+      "test-button": ""
     },
     "documentation": "documentazione",
     "host": {
@@ -12814,6 +12818,7 @@
     "description-column-filter": "Abilita/disabilita i filtri di campo nella tabella",
     "description-frozen-columns": "",
     "description-min-column-width": "La larghezza minima per il ridimensionamento automatico della colonna",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Testo alternativo che verrà visualizzato se un'immagine non può essere visualizzata o per gli utenti che utilizzano un lettore di schermo",
@@ -12844,6 +12849,7 @@
     "name-max-height": "",
     "name-min-column-width": "Larghezza minima colonna",
     "name-show-table-header": "Mostra intestazione tabella",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Testo intestazione a capo",
