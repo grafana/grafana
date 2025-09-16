@@ -144,9 +144,7 @@ export const LogList = ({
   permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
-  prettifyJSON = logOptionsStorageKey
-    ? store.getBool(`${logOptionsStorageKey}.prettifyLogMessage`, true)
-    : true,
+  prettifyJSON = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.prettifyLogMessage`, true) : true,
   setDisplayedFields,
   showControls,
   showTime,
