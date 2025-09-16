@@ -18,6 +18,7 @@ import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip } from '@grafana/ui';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LogLabels } from '../LogLabels';
 import { LogMessageAnsi } from '../LogMessageAnsi';
 
 import { HighlightedLogRenderer } from './HighlightedLogRenderer';
@@ -33,7 +34,6 @@ import {
   LogLineVirtualization,
   DEFAULT_LINE_HEIGHT,
 } from './virtualization';
-import { LogLabels } from '../LogLabels';
 
 export interface Props {
   displayedFields: string[];
