@@ -19,8 +19,9 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/client-go/rest"
+	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -84,14 +85,14 @@ type JobHistoryConfig struct {
 // directConfigProvider is a simple RestConfigProvider that always returns the same rest.Config
 // it implements apiserver.RestConfigProvider
 type directConfigProvider struct {
-	cfg *rest.Config
+	cfg *clientrest.Config
 }
 
-func NewDirectConfigProvider(cfg *rest.Config) apiserver.RestConfigProvider {
+func NewDirectConfigProvider(cfg *clientrest.Config) apiserver.RestConfigProvider {
 	return &directConfigProvider{cfg: cfg}
 }
 
-func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config, error) {
+func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
 	return r.cfg, nil
 }
 
@@ -142,7 +143,7 @@ func newStandaloneClientsFactory(configProvider apiserver.RestConfigProvider, to
 			configProviders[group] = configProvider
 			continue
 		}
-		config := &rest.Config{
+		config := &clientrest.Config{
 			APIPath: "/apis",
 			Host:    url,
 			WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
@@ -173,10 +174,15 @@ func NewAPIBuilder(
 	extraBuilders []ExtraBuilder,
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
-	tokenExchangeClient *authnlib.TokenExchangeClient,
-	tlsConfig rest.TLSClientConfig,
+	tokenExchangeClient *authnlib.TokenExchangeClient, // optional, only used when onlyApiServer is true
+	tlsConfig *rest.TLSClientConfig, // optional, only used when onlyApiServer is true
 ) *APIBuilder {
-	clients := newStandaloneClientsFactory(configProvider, tokenExchangeClient, tlsConfig)
+	var clients resources.ClientFactory
+	if onlyApiServer {
+		clients = newStandaloneClientsFactory(configProvider, tokenExchangeClient, *tlsConfig)
+	} else {
+		clients = resources.NewClientFactory(configProvider)
+	}
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceListerForMigrations(unified, legacyMigrator, storageStatus)
 
@@ -273,6 +279,8 @@ func RegisterAPIService(
 		extraBuilders,
 		extraWorkers,
 		createJobHistoryConfigFromSettings(cfg),
+		nil,
+		nil,
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
