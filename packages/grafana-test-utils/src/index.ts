@@ -8,3 +8,4 @@
 // This is also exported as `@grafana/test-utils/matchers` but we cannot use that in places
 // where the tsconfig is not set to moduleResolution: bundler so we export it here also.
 export { matchers } from './matchers';
+export { testWithFeatureToggles, testWithLicenseFeatures } from './utils/features';
