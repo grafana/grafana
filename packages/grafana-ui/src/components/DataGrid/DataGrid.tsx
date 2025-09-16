@@ -12,7 +12,7 @@ import {
   SortColumn,
 } from 'react-data-grid';
 
-import { colorManipulator, DataFrame, Field, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
@@ -20,7 +20,7 @@ import { CellRenderer } from './CellRenderer';
 import { HeaderCellRenderer } from './HeaderCellRenderer';
 import { PaginatedDataGrid } from './PaginatedDataGrid';
 import { ColumnTypes, TableRow, TableSummaryRow } from './types';
-import { applySort, frameToRecords, getColumnTypes } from './utils';
+import { applySort, frameToRecords, getColumnTypes, predicateByName } from './utils';
 
 export interface DataGridProps
   extends Omit<ComponentProps<typeof RDG<TableRow, TableSummaryRow>>, 'sortColumns' | 'rows'> {
@@ -130,7 +130,11 @@ export function DataGrid({
   const columns = useMemo(
     () =>
       _columns.map((col) => {
-        const field = data.fields.find((f) => f.name === col.name || getFieldDisplayName(f) === col.name);
+        if (typeof col.name !== 'string') {
+          return col;
+        }
+
+        const field = data.fields.find(predicateByName(col.name));
 
         // if we couldn't find the matching field, or if this is a group column, just return it as-is
         if (!field || 'children' in col) {

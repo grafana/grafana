@@ -1,8 +1,23 @@
 import { SortColumn } from 'react-data-grid';
 
-import { DataFrame, Field, FieldType, getFieldDisplayName, LinkModel } from '@grafana/data';
+import { DataFrame, Field, FieldType, LinkModel } from '@grafana/data';
 
 import { ColumnTypes, Comparator, TableRow } from './types';
+
+/**
+ * @internal
+ * returns the display name of a field
+ * returns the display name of a field.
+ * We intentionally do not want to use @grafana/data's getFieldDisplayName here,
+ * instead we have a call to cacheFieldDisplayNames up in TablePanel to handle this
+ * before we begin.
+ */
+export const getDisplayName = (field: Field): string => field.state?.displayName ?? field.name;
+
+/**
+ * @internal given a field name or display name, returns a predicate function that checks if a field matches that name.
+ */
+export const predicateByName = (name: string) => (f: Field) => f.name === name || getDisplayName(f) === name;
 
 /**
  * @internal
@@ -16,7 +31,7 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
       rows[rowCount] = {
         __depth: 0,
         __index: i,
-        ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(getFieldDisplayName(field))}: values[${fieldIdx}][i]`).join(',')}
+        ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(getDisplayName(field))}: values[${fieldIdx}][i]`).join(',')}
       };
       rowCount += 1;
       if (rows[rowCount-1]['__nestedFrames']){
@@ -85,7 +100,7 @@ export function getColumnTypes(fields: Field[]): ColumnTypes {
       case FieldType.nestedFrames:
         return { ...acc, ...getColumnTypes(field.values[0]?.[0]?.fields ?? []) };
       default:
-        return { ...acc, [getFieldDisplayName(field)]: field.type };
+        return { ...acc, [getDisplayName(field)]: field.type };
     }
   }, {});
 }
@@ -101,7 +116,7 @@ export function applySort(
   }
 
   const sortNanos = sortColumns.map(
-    (c) => fields.find((f) => f.type === FieldType.time && getFieldDisplayName(f) === c.columnKey)?.nanos
+    (c) => fields.find((f) => f.type === FieldType.time && getDisplayName(f) === c.columnKey)?.nanos
   );
 
   const compareRows = (a: TableRow, b: TableRow): number => {

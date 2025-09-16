@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { SortDirection } from 'react-data-grid';
 
-import { Field, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
+import { Field, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
+
+import { getDisplayName } from './utils';
 
 export interface HeaderCellRendererProps {
   field: Field;
@@ -16,7 +18,7 @@ export const HeaderCellRenderer = ({ field, direction }: HeaderCellRendererProps
 
   return (
     <>
-      <span className={styles.headerCellLabel}>{getFieldDisplayName(field)}</span>
+      <span className={styles.headerCellLabel}>{getDisplayName(field)}</span>
       {direction && (
         <Icon
           className={cx(styles.headerCellIcon, styles.headerSortIcon)}
