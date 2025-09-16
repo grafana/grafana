@@ -28,12 +28,17 @@ type DualReadWriter struct {
 }
 
 type DualWriteOptions struct {
-	Path         string
+	Path string
+	// Ref is the target branch
+	// For local resources it does not make any sense, but for
+	// git-based repositories it does. Empty ref means to target
+	// the configured default branch
 	Ref          string
 	Message      string
 	Data         []byte
 	SkipDryRun   bool
 	OriginalPath string // Used for move operations
+	Branch       string // Configured default branch
 }
 
 func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access authlib.AccessChecker) *DualReadWriter {
@@ -264,7 +269,8 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 	// Behaves the same running sync after writing
 	// FIXME: to make sure if behaves in the same way as in sync, we should
 	// we should refactor the code to use the same function.
-	if opts.Ref == "" && parsed.Client != nil {
+	shouldUpdate := opts.Ref == "" || (opts.Ref == opts.Branch && opts.Branch != "")
+	if shouldUpdate && parsed.Client != nil {
 		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path); err != nil {
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
