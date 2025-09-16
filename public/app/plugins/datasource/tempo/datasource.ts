@@ -758,8 +758,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     targets: { [type: string]: TempoQuery[] },
     queryValue: string
   ) => {
-    console.log('featureToggleDisabled, using old logic.');
     const startTime = performance.now();
+    const tableType = targets.traceqlSearch?.[0]?.tableType ?? targets.traceql?.[0]?.tableType;
+
     return this._request('/api/search', {
       q: queryValue,
       limit: options.targets[0].limit ?? DEFAULT_LIMIT,
@@ -775,7 +776,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           query: queryValue ?? '',
         });
         return {
-          data: formatTraceQLResponse(response.data.traces, this.instanceSettings, targets.traceqlSearch[0].tableType),
+          data: formatTraceQLResponse(response.data.traces, this.instanceSettings, tableType),
         };
       }),
       catchError((err) => {
