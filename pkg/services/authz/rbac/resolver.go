@@ -13,6 +13,44 @@ import (
 
 type ScopeResolverFunc func(scope string) (string, error)
 
+func (s *Service) fetchServiceAccounts(ctx context.Context, ns types.NamespaceInfo) (map[int64]string, error) {
+	serviceAccounts, err := s.identityStore.ListServiceAccounts(ctx, ns, legacy.ListServiceAccountsQuery{})
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch service accounts: %w", err)
+	}
+	saIDs := make(map[int64]string, len(serviceAccounts.Items))
+	for _, sa := range serviceAccounts.Items {
+		saIDs[sa.ID] = sa.UID
+	}
+	return saIDs, nil
+}
+
+// Should return an error if we fail to build the resolver.
+func (s *Service) newServiceAccountNameResolver(ctx context.Context, ns types.NamespaceInfo) (ScopeResolverFunc, error) {
+	return func(scope string) (string, error) {
+		saIDs, err := s.fetchServiceAccounts(ctx, ns)
+		if err != nil {
+			return "", fmt.Errorf("could not build resolver: %w", err)
+		}
+
+		serviceAccountIDStr := strings.TrimPrefix(scope, "serviceaccounts:id:")
+		if serviceAccountIDStr == "" {
+			return "", fmt.Errorf("service account ID is empty")
+		}
+		if serviceAccountIDStr == "*" {
+			return "serviceaccounts:uid:*", nil
+		}
+		serviceAccountID, err := strconv.ParseInt(serviceAccountIDStr, 10, 64)
+		if err != nil {
+			return "", fmt.Errorf("invalid service account ID %s: %w", serviceAccountIDStr, err)
+		}
+		if serviceAccountName, ok := saIDs[serviceAccountID]; ok {
+			return "serviceaccounts:uid:" + serviceAccountName, nil
+		}
+		return "", fmt.Errorf("service account ID %s not found", serviceAccountIDStr)
+	}, nil
+}
+
 func (s *Service) fetchTeams(ctx context.Context, ns types.NamespaceInfo) (map[int64]string, error) {
 	key := teamIDsCacheKey(ns.Value)
 	res, err, _ := s.sf.Do(key, func() (any, error) {
@@ -96,6 +134,9 @@ func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, scop
 	}
 	if scopePrefix == "permissions:type:" {
 		return permissionsDelegateResolverFunc, nil
+	}
+	if scopePrefix == "serviceaccounts:id:" {
+		return s.newServiceAccountNameResolver(ctx, ns)
 	}
 	// No resolver found for the given scope prefix.
 	return nil, nil
