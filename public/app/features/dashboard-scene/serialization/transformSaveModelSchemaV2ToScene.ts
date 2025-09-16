@@ -52,7 +52,10 @@ import {
   AnnoKeyEmbedded,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { getDashboardSceneProfilerWithMetadata } from 'app/features/dashboard/services/DashboardProfiler';
+import {
+  getDashboardSceneProfilerWithMetadata,
+  enablePanelProfilingForDashboard,
+} from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
@@ -61,7 +64,6 @@ import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsData
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
-import { DashboardPanelProfilingBehavior } from '../scene/DashboardPanelProfilingBehavior';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
@@ -208,10 +210,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         }),
         // Analytics aggregator lifecycle management (initialization, observer registration, cleanup)
         dashboardAnalyticsInitializer,
-        // Add panel profiling behavior when dashboard profiling is enabled
-        ...(config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === dashboardId?.toString()) !== -1
-          ? [new DashboardPanelProfilingBehavior()]
-          : []),
+        // Panel profiling is now handled by composed SceneRenderProfiler
       ],
       $data: new DashboardDataLayerSet({
         annotationLayers,
@@ -233,6 +232,9 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   );
 
   dashboardScene.setInitialSaveModel(dto.spec, dto.metadata, apiVersion);
+
+  // Enable panel profiling for this dashboard using the composed SceneRenderProfiler
+  enablePanelProfilingForDashboard(dashboardScene, metadata.name);
 
   return dashboardScene;
 }

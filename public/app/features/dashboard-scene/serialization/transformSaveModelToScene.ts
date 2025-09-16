@@ -22,7 +22,10 @@ import {
 } from '@grafana/scenes';
 import { isWeekStart } from '@grafana/ui';
 import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
-import { getDashboardSceneProfilerWithMetadata } from 'app/features/dashboard/services/DashboardProfiler';
+import {
+  getDashboardSceneProfilerWithMetadata,
+  enablePanelProfilingForDashboard,
+} from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
@@ -35,7 +38,7 @@ import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsData
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
-import { DashboardPanelProfilingBehavior } from '../scene/DashboardPanelProfilingBehavior';
+// DashboardPanelProfilingBehavior removed - now using composed SceneRenderProfiler
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -320,10 +323,8 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     dashboardAnalyticsInitializer,
   ];
 
-  // Add panel profiling behavior when dashboard profiling is enabled
-  if (config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1) {
-    behaviorList.push(new DashboardPanelProfilingBehavior());
-  }
+  // Panel profiling is now handled by composed SceneRenderProfiler
+  // Will be enabled in the dashboard creation below
 
   let body: DashboardLayoutManager;
 
@@ -379,6 +380,9 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     },
     serializerVersion
   );
+
+  // Enable panel profiling for this dashboard using the composed SceneRenderProfiler
+  enablePanelProfilingForDashboard(dashboardScene, uid);
 
   return dashboardScene;
 }
