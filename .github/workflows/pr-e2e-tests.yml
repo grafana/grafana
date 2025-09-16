@@ -69,7 +69,7 @@ jobs:
         with:
           version: 0.18.8
           verb: run
-          args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" > out.txt
+          args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64:nocgo -a docker:grafana:linux/amd64:nocgo --grafana-dir="${PWD}" > out.txt
       - name: Cat built artifact
         if: steps.cache.outputs.cache-hit != 'true'
         run: cat out.txt
