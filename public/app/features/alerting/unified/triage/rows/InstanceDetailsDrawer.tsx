@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from 'react';
 
-import { AnnotationEvent, DataFrame, DataTopic, Labels, arrayToDataFrame } from '@grafana/data';
+import { AnnotationEvent, DataFrame, DataTopic, Labels, LoadingState, arrayToDataFrame } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { VizConfigBuilders } from '@grafana/scenes';
-import { VizPanel, useDataTransformer, useQueryRunner, useTimeRange } from '@grafana/scenes-react';
+import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
+import { TimeRangePicker, VizPanel, useDataTransformer, useQueryRunner, useTimeRange } from '@grafana/scenes-react';
 import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
 import { Alert, Box, Drawer, Icon, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
@@ -87,6 +87,7 @@ function StateTransition({ record }: StateTransitionProps) {
 }
 
 function QueryVisualization({ query, instanceLabels, thresholds, recentTransitions = [] }: QueryVisualizationProps) {
+  const [timeRange] = useTimeRange();
   // Convert query to range query for visualization
   const visualizationQuery = useMemo(() => {
     const model = { ...query.model, refId: query.refId };
@@ -140,25 +141,25 @@ function QueryVisualization({ query, instanceLabels, thresholds, recentTransitio
     transformations,
   });
 
-  // Create annotation data for the visualization
   const annotationsData = useMemo(() => {
     return recentTransitions.length > 0 ? [createAnnotationsDataFrame(recentTransitions)] : [];
   }, [recentTransitions]);
 
-  // Patch the data provider with annotations after it's created
-  useEffect(() => {
-    if (annotationsData.length > 0 && filteredDataProvider.state.data) {
-      const currentData = filteredDataProvider.state.data;
-      // Update the data provider state to include annotations
-      filteredDataProvider.setState({
-        ...filteredDataProvider.state,
+  // Get the data from the data provider
+  const { data } = filteredDataProvider.useState();
+
+  const dataProvider = useMemo(
+    () =>
+      new SceneDataNode({
         data: {
-          ...currentData,
+          series: data?.series || [],
+          state: data?.state || LoadingState.NotStarted,
+          timeRange: timeRange,
           annotations: annotationsData,
         },
-      });
-    }
-  }, [annotationsData, filteredDataProvider]);
+      }),
+    [annotationsData, data?.series, data?.state, timeRange]
+  );
 
   // Create visualization config with thresholds if available
   const vizConfig = useMemo(() => {
@@ -184,7 +185,7 @@ function QueryVisualization({ query, instanceLabels, thresholds, recentTransitio
       <VizPanel
         title={query.refId}
         viz={vizConfig}
-        dataProvider={filteredDataProvider}
+        dataProvider={dataProvider}
         displayMode="transparent"
         collapsible={false}
       />
@@ -279,12 +280,9 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
       size="lg"
     >
       <Stack direction="column" gap={3}>
-        {/* Instance Labels */}
-        <Box>
-          <AlertLabels labels={instanceLabels} />
-        </Box>
-
-        {/* Query Visualizations */}
+        <Stack justifyContent="flex-end">
+          <TimeRangePicker />
+        </Stack>
         {dataQueries.length > 0 && (
           <Box>
             <Stack direction="column" gap={2}>
@@ -300,6 +298,10 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
             </Stack>
           </Box>
         )}
+
+        <Box>
+          <AlertLabels labels={instanceLabels} />
+        </Box>
 
         {/* State History */}
         <Box>
