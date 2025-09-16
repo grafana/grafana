@@ -13012,8 +13012,10 @@
     },
     "range-picker": {
       "backwards-time-aria-label": "Move time range backwards",
+      "backwards-time-tooltip": "Pan {{moveDuration}} backwards",
       "current-time-selected": "Time range selected: {{currentTimeRange}}",
       "forwards-time-aria-label": "Move time range forwards",
+      "forwards-time-tooltip": "Pan {{moveDuration}} forwards",
       "to": "to",
       "zoom-out-button": "Zoom out time range",
       "zoom-out-tooltip": "Time range zoom out <1></1> CTRL+Z"
