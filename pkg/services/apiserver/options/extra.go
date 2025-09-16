@@ -44,12 +44,17 @@ func (o *ExtraOptions) ApplyTo(c *genericapiserver.RecommendedConfig) error {
 	handler := slogadapter.New(log.New("grafana-apiserver"))
 	logger := slog.New(handler)
 	if err := utilfeature.DefaultMutableFeatureGate.SetFromMap(map[string]bool{
-		string(genericfeatures.APIServerTracing): false,
-		string(genericfeatures.WatchList):        true,
+		string(genericfeatures.WatchList): true,
 	}); err != nil {
 		return err
 	}
-	// if verbosity is 8+, response bodies will be logged. versboity of 7 should then be the max
+
+	// disabling configured trace provider
+	if c.TracerProvider != nil {
+		c.TracerProvider = nil
+	}
+
+	// if verbosity is 8+, response bodies will be logged. verbosity of 7 should then be the max
 	if o.Verbosity > 7 {
 		o.Verbosity = 7
 	}
