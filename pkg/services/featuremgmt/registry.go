@@ -328,7 +328,7 @@ var (
 			Description:     "Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.",
 			Stage:           FeatureStageExperimental,
 			FrontendOnly:    false,
-			Owner:           grafanaOperatorExperienceSquad,
+			Owner:           grafanaBackendServicesSquad,
 			RequiresRestart: true,
 			HideFromDocs:    true,
 		},
