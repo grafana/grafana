@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis"
 	rulesApp "github.com/grafana/grafana/apps/alerting/rules/pkg/app"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
@@ -39,6 +40,7 @@ func RegisterAppInstaller(
 	ng *ngalert.AlertNG,
 ) (*AlertingRulesAppInstaller, error) {
 	if ng.IsDisabled() {
+		log.New("app-registry").Info("Skipping Kubernetes Alerting Rules apiserver (rules.alerting.grafana.app): Unified Alerting is disabled")
 		return nil, nil
 	}
 
