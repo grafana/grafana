@@ -22,4 +22,9 @@ type ListRequest struct {
 	Resource     string
 	Verb         string
 	Action       string
+	Options      *ListRequestOptions
+}
+
+type ListRequestOptions struct {
+	SkipCache bool
 }
