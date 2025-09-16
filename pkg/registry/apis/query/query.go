@@ -241,28 +241,43 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 	}), nil
 }
 
-func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuilder, httpreq *http.Request, responder responderWrapper, connectLogger log.Logger) (*backend.QueryDataResponse, error) {
-	var jsonQueries = make([]*simplejson.Json, 0, len(raw.Queries))
-	for _, query := range raw.Queries {
-		dsRef, err := getValidDataSourceRef(ctx, query.Datasource, query.DatasourceID, b.legacyDatasourceLookup)
-		if err != nil {
-			connectLogger.Error("error getting valid datasource ref", err)
-		}
-		if dsRef != nil {
-			query.Datasource = dsRef
+type preparedQuery struct {
+	mReq          dtos.MetricRequest
+	cache         datasources.CacheService
+	headers       map[string]string
+	logger        log.Logger
+	builder       dsquerierclient.QSDatasourceClientBuilder
+	exprSvc       *expr.Service
+	reportMetrics func()
+}
+
+func prepareQuery(
+	ctx context.Context,
+	raw query.QueryDataRequest,
+	b QueryAPIBuilder,
+	httpreq *http.Request,
+	connectLogger log.Logger,
+) (*preparedQuery, error) {
+	// Normalize DS refs and build []*simplejson.Json
+	jsonQueries := make([]*simplejson.Json, 0, len(raw.Queries))
+	for _, q := range raw.Queries {
+		if dsRef, derr := getValidDataSourceRef(ctx, q.Datasource, q.DatasourceID, b.legacyDatasourceLookup); derr != nil {
+			connectLogger.Error("error getting valid datasource ref", "err", derr)
+		} else if dsRef != nil {
+			q.Datasource = dsRef
 		}
 
-		jsonBytes, err := json.Marshal(query)
-		if err != nil {
-			connectLogger.Error("error marshalling", err)
+		jb, merr := json.Marshal(q)
+		if merr != nil {
+			connectLogger.Error("error marshalling query", "err", merr)
+			continue
 		}
-
-		sjQuery, _ := simplejson.NewJson(jsonBytes)
-		if err != nil {
-			connectLogger.Error("error unmarshalling", err)
+		sj, uerr := simplejson.NewJson(jb)
+		if uerr != nil {
+			connectLogger.Error("error creating simplejson for query", "err", uerr)
+			continue
 		}
-
-		jsonQueries = append(jsonQueries, sjQuery)
+		jsonQueries = append(jsonQueries, sj)
 	}
 
 	mReq := dtos.MetricRequest{
@@ -271,56 +286,69 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 		Queries: jsonQueries,
 	}
 
-	cache := &MyCacheService{
-		legacy: b.legacyDatasourceLookup,
-	}
-
+	cache := &MyCacheService{legacy: b.legacyDatasourceLookup}
 	headers := ExtractKnownHeaders(httpreq.Header)
 
-	instance, err := b.instanceProvider.GetInstance(ctx, headers)
+	// Instance, settings, and logger
+	inst, err := b.instanceProvider.GetInstance(ctx, headers)
 	if err != nil {
 		connectLogger.Error("failed to get instance configuration settings", "err", err)
+		return nil, err
+	}
+	instCfg := inst.GetSettings()
+	lg := inst.GetLogger(connectLogger)
+
+	// Datasource client builder
+	builder := dsquerierclient.NewQsDatasourceClientBuilderWithInstance(inst, ctx, lg)
+
+	// Expressions service
+	exprSvc := expr.ProvideService(
+		&setting.Cfg{
+			ExpressionsEnabled:            instCfg.ExpressionsEnabled,
+			SQLExpressionCellLimit:        instCfg.SQLExpressionCellLimit,
+			SQLExpressionOutputCellLimit:  instCfg.SQLExpressionOutputCellLimit,
+			SQLExpressionTimeout:          instCfg.SQLExpressionTimeout,
+			SQLExpressionQueryLengthLimit: instCfg.SQLExpressionQueryLengthLimit,
+		},
+		nil, // plugins.Client
+		nil, // *plugincontext.Provider
+		instCfg.FeatureToggles,
+		nil,      // prometheus.Registerer
+		b.tracer, // tracing.Tracer
+		builder,  // dsquerierclient.QSDatasourceClientBuilder
+	)
+
+	return &preparedQuery{
+		mReq:          mReq,
+		cache:         cache,
+		headers:       headers,
+		logger:        lg,
+		builder:       builder,
+		exprSvc:       exprSvc,
+		reportMetrics: func() { inst.ReportMetrics() },
+	}, nil
+}
+
+func handlePreparedQuery(ctx context.Context, pq *preparedQuery) (*backend.QueryDataResponse, error) {
+	resp, err := service.QueryData(ctx, pq.logger, pq.cache, pq.exprSvc, pq.mReq, pq.builder, pq.headers)
+	pq.reportMetrics()
+	return resp, err
+}
+
+func handleQuery(
+	ctx context.Context,
+	raw query.QueryDataRequest,
+	b QueryAPIBuilder,
+	httpreq *http.Request,
+	responder responderWrapper,
+	connectLogger log.Logger,
+) (*backend.QueryDataResponse, error) {
+	pq, err := prepareQuery(ctx, raw, b, httpreq, connectLogger)
+	if err != nil {
 		responder.Error(err)
 		return nil, err
 	}
-
-	instanceConfig := instance.GetSettings()
-
-	dsQuerierLoggerWithSlug := instance.GetLogger(connectLogger)
-
-	qsDsClientBuilder := dsquerierclient.NewQsDatasourceClientBuilderWithInstance(
-		instance,
-		ctx,
-		dsQuerierLoggerWithSlug,
-	)
-
-	exprService := expr.ProvideService(
-		&setting.Cfg{
-			ExpressionsEnabled:            instanceConfig.ExpressionsEnabled,
-			SQLExpressionCellLimit:        instanceConfig.SQLExpressionCellLimit,
-			SQLExpressionOutputCellLimit:  instanceConfig.SQLExpressionOutputCellLimit,
-			SQLExpressionTimeout:          instanceConfig.SQLExpressionTimeout,
-			SQLExpressionQueryLengthLimit: instanceConfig.SQLExpressionQueryLengthLimit,
-		},
-		nil,
-		nil,
-		instanceConfig.FeatureToggles,
-		nil,
-		b.tracer,
-		qsDsClientBuilder,
-	)
-
-	qdr, err := service.QueryData(ctx, dsQuerierLoggerWithSlug, cache, exprService, mReq, qsDsClientBuilder, headers)
-
-	// tell the `instance` structure that it can now report
-	// metrics that are only reported once during a request
-	instance.ReportMetrics()
-
-	if err != nil {
-		return qdr, err
-	}
-
-	return qdr, nil
+	return handlePreparedQuery(ctx, pq)
 }
 
 type responderWrapper struct {

@@ -2,17 +2,11 @@ package query
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strconv"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/services/dsquerierclient"
-	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
@@ -209,82 +203,24 @@ func (r *sqlSchemaREST) Connect(connectCtx context.Context, name string, _ runti
 	}), nil
 }
 
-func handleSQLSchemaQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuilder, httpreq *http.Request, responder responderWrapper, connectLogger log.Logger) (expr.SQLSchemaResponse, error) {
-	spew.Dump("SQLSchemaRequest", raw)
-	var jsonQueries = make([]*simplejson.Json, 0, len(raw.Queries))
-	for _, query := range raw.Queries {
-		jsonBytes, err := json.Marshal(query)
-		if err != nil {
-			connectLogger.Error("error marshalling", err)
-		}
+func handlePreparedSQLSchema(ctx context.Context, pq *preparedQuery) (expr.SQLSchemaResponse, error) {
+	resp, err := service.GetSQLSchemas(ctx, pq.logger, pq.cache, pq.exprSvc, pq.mReq, pq.builder, pq.headers)
+	pq.reportMetrics()
+	return resp, err
+}
 
-		sjQuery, _ := simplejson.NewJson(jsonBytes)
-		if err != nil {
-			connectLogger.Error("error unmarshalling", err)
-		}
-
-		jsonQueries = append(jsonQueries, sjQuery)
-	}
-
-	mReq := dtos.MetricRequest{
-		From:    raw.From,
-		To:      raw.To,
-		Queries: jsonQueries,
-	}
-
-	cache := &MyCacheService{
-		legacy: b.legacyDatasourceLookup,
-	}
-
-	headers := ExtractKnownHeaders(httpreq.Header)
-
-	instance, err := b.instanceProvider.GetInstance(ctx, headers)
+func handleSQLSchemaQuery(
+	ctx context.Context,
+	raw query.QueryDataRequest,
+	b QueryAPIBuilder,
+	httpreq *http.Request,
+	responder responderWrapper,
+	connectLogger log.Logger,
+) (expr.SQLSchemaResponse, error) {
+	pq, err := prepareQuery(ctx, raw, b, httpreq, connectLogger)
 	if err != nil {
-		connectLogger.Error("failed to get instance configuration settings", "err", err)
 		responder.Error(err)
 		return nil, err
 	}
-
-	instanceConfig := instance.GetSettings()
-
-	dsQuerierLoggerWithSlug := instance.GetLogger(connectLogger)
-
-	qsDsClientBuilder := dsquerierclient.NewQsDatasourceClientBuilderWithInstance(
-		instance,
-		ctx,
-		dsQuerierLoggerWithSlug,
-	)
-
-	exprService := expr.ProvideService(
-		&setting.Cfg{
-			ExpressionsEnabled:            instanceConfig.ExpressionsEnabled,
-			SQLExpressionCellLimit:        instanceConfig.SQLExpressionCellLimit,
-			SQLExpressionOutputCellLimit:  instanceConfig.SQLExpressionOutputCellLimit,
-			SQLExpressionTimeout:          instanceConfig.SQLExpressionTimeout,
-			SQLExpressionQueryLengthLimit: instanceConfig.SQLExpressionQueryLengthLimit,
-		},
-		nil,
-		nil,
-		instanceConfig.FeatureToggles,
-		nil,
-		b.tracer,
-		qsDsClientBuilder,
-	)
-
-	//exprService.GetSQLSchemas(ctx, req)
-
-	//qdr, err := service.QueryData(ctx, dsQuerierLoggerWithSlug, cache, exprService, mReq, qsDsClientBuilder, headers)
-
-	schemaRsp, err := service.GetSQLSchemas(ctx, dsQuerierLoggerWithSlug, cache, exprService, mReq, qsDsClientBuilder, headers)
-
-	// service.
-	// tell the `instance` structure that it can now report
-	// metrics that are only reported once during a request
-	instance.ReportMetrics()
-
-	if err != nil {
-		return schemaRsp, err
-	}
-
-	return schemaRsp, nil
+	return handlePreparedSQLSchema(ctx, pq)
 }
