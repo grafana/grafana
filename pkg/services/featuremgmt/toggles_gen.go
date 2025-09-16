@@ -347,6 +347,10 @@ const (
 	// Enables experimental new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
+	// FlagDashboardUndoRedo
+	// Enables undo/redo in dynamic dashboards
+	FlagDashboardUndoRedo = "dashboardUndoRedo"
+
 	// FlagPanelFilterVariable
 	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
 	FlagPanelFilterVariable = "panelFilterVariable"
@@ -502,10 +506,6 @@ const (
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
 	FlagLogsExploreTableDefaultVisualization = "logsExploreTableDefaultVisualization"
-
-	// FlagNewDashboardSharingComponent
-	// Enables the new sharing drawer design
-	FlagNewDashboardSharingComponent = "newDashboardSharingComponent"
 
 	// FlagAlertingListViewV2
 	// Enables the new alert list view design
@@ -1050,4 +1050,8 @@ const (
 	// FlagPluginContainers
 	// Enables running plugins in containers
 	FlagPluginContainers = "pluginContainers"
+
+	// FlagFilterOutBotsFromFrontendLogs
+	// Filter out bots from collecting data for Frontend Observability
+	FlagFilterOutBotsFromFrontendLogs = "filterOutBotsFromFrontendLogs"
 )

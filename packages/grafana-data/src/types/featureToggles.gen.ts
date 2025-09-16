@@ -384,6 +384,10 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Enables undo/redo in dynamic dashboards
+  */
+  dashboardUndoRedo?: boolean;
+  /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
   panelFilterVariable?: boolean;
@@ -552,11 +556,6 @@ export interface FeatureToggles {
   * Sets the logs table as default visualisation in logs explore
   */
   logsExploreTableDefaultVisualization?: boolean;
-  /**
-  * Enables the new sharing drawer design
-  * @default true
-  */
-  newDashboardSharingComponent?: boolean;
   /**
   * Enables the new alert list view design
   */
@@ -1171,4 +1170,9 @@ export interface FeatureToggles {
   * @default false
   */
   pluginContainers?: boolean;
+  /**
+  * Filter out bots from collecting data for Frontend Observability
+  * @default false
+  */
+  filterOutBotsFromFrontendLogs?: boolean;
 }
