@@ -26,7 +26,6 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
 import { useSelector } from 'app/types/store';
 
-import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { selectFolderRepository } from '../../provisioning/utils/selectors';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
@@ -47,7 +46,7 @@ interface Props {
 }
 
 export const NavToolbarActions = memo<Props>(({ dashboard }) => {
-  const hasNewToolbar = config.featureToggles.dashboardNewLayouts && config.featureToggles.newDashboardSharingComponent;
+  const hasNewToolbar = config.featureToggles.dashboardNewLayouts;
 
   return hasNewToolbar ? (
     <AppChromeUpdate
@@ -322,26 +321,6 @@ export function ToolbarActions({ dashboard }: Props) {
   });
 
   const showShareButton = uid && !isEditing && !meta.isSnapshot && !isPlaying;
-  toolbarActions.push({
-    group: 'main-buttons',
-    condition: !config.featureToggles.newDashboardSharingComponent && showShareButton,
-    render: () => (
-      <Button
-        key="share-dashboard-button"
-        tooltip={t('dashboard.toolbar.share.tooltip', 'Share dashboard')}
-        size="sm"
-        className={styles.buttonWithExtraMargin}
-        fill="outline"
-        onClick={() => {
-          DashboardInteractions.toolbarShareClick();
-          locationService.partial({ shareView: shareDashboardType.link });
-        }}
-        data-testid={selectors.components.NavToolbar.shareDashboard}
-      >
-        <Trans i18nKey="dashboard.toolbar.share.label">Share</Trans>
-      </Button>
-    ),
-  });
 
   toolbarActions.push({
     group: 'main-buttons',
@@ -358,7 +337,7 @@ export function ToolbarActions({ dashboard }: Props) {
         }
         key="edit"
         className={styles.buttonWithExtraMargin}
-        variant={config.featureToggles.newDashboardSharingComponent ? 'secondary' : 'primary'}
+        variant={'secondary'}
         size="sm"
         data-testid={selectors.components.NavToolbar.editDashboard.editButton}
         disabled={isReadOnlyRepo}
@@ -391,13 +370,13 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'new-share-dashboard-buttons',
-    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
+    condition: showShareButton,
     render: () => <ExportButton key="new-export-dashboard-button" dashboard={dashboard} />,
   });
 
   toolbarActions.push({
     group: 'new-share-dashboard-buttons',
-    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
+    condition: showShareButton,
     render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
   });
 

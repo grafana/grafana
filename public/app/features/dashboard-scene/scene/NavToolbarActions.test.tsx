@@ -4,7 +4,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { LocationServiceProvider, config, locationService } from '@grafana/runtime';
+import { LocationServiceProvider, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DashboardMeta } from 'app/types/dashboard';
@@ -145,25 +145,14 @@ describe('NavToolbarActions', () => {
   });
 
   describe('Given new sharing button', () => {
-    it('Should show old share button when newDashboardSharingComponent FF is disabled', async () => {
-      setup();
-
-      expect(await screen.findByText('Share')).toBeInTheDocument();
-      const newShareButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
-      expect(newShareButton).not.toBeInTheDocument();
-      const newExportButton = screen.queryByRole('button', { name: /export dashboard/i });
-      expect(newExportButton).not.toBeInTheDocument();
-    });
-    it('Should show new share button when newDashboardSharingComponent FF is enabled', async () => {
-      config.featureToggles.newDashboardSharingComponent = true;
+    it('Should show new share button', async () => {
       setup();
 
       expect(await screen.queryByTestId(selectors.pages.Dashboard.DashNav.shareButton)).not.toBeInTheDocument();
       const newShareButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
       expect(newShareButton).toBeInTheDocument();
     });
-    it('Should show new export button when newDashboardSharingComponent FF is enabled', async () => {
-      config.featureToggles.newDashboardSharingComponent = true;
+    it('Should show new export button', async () => {
       setup();
       const newExportButton = screen.getByRole('button', { name: /export dashboard/i });
       expect(newExportButton).toBeInTheDocument();
