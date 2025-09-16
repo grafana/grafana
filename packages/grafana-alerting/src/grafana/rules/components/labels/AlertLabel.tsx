@@ -19,8 +19,8 @@ interface BaseProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick' | 'cl
 type Props = BaseProps & MergeExclusive<{ color?: string }, { colorBy?: 'key' | 'value' | 'both' }>;
 
 const AlertLabel = (props: Props) => {
-  const { labelKey, value, icon, color, size = 'md', onClick, ...rest } = props;
-  const theColor = getColorFromProps(props);
+  const { labelKey, value, icon, color, colorBy, size = 'md', onClick, ...rest } = props;
+  const theColor = getColorFromProps({ color, colorBy, labelKey, value });
   const styles = useStyles2(getStyles, theColor, size);
 
   const ariaLabel = `${labelKey}: ${value}`;
