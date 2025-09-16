@@ -61,9 +61,10 @@ export async function updateAnnotationFromSavedQuery(
     ...cleanAnnotation,
   };
 
-  // Step 3: Handle v1 vs v2 dashboard format (either/or, not both)
+  // Step 3: Handle v1 vs v2 dashboard format
   if (annotation.query?.spec) {
-    // v2 dashboard - only update query.spec, no target field
+    // v2 dashboard - maintain both target and query.spec (StandardAnnotationQueryEditor keeps them in sync)
+    tempAnnotation.target = queryFields;
     tempAnnotation.query = {
       ...annotation.query,
       spec: { ...queryFields },
