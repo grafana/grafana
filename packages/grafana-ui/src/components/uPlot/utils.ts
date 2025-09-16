@@ -156,7 +156,8 @@ export function getStackingGroups(frame: DataFrame) {
 export function preparePlotData2(
   frame: DataFrame,
   stackingGroups: StackingGroup[],
-  onStackMeta?: (meta: StackMeta) => void
+  clusters?: number[],
+  onStackMeta?: (meta: StackMeta) => void,
 ): AlignedData {
   let data = Array(frame.fields.length);
 
@@ -168,6 +169,12 @@ export function preparePlotData2(
   let accums = Array.from({ length: stacksQty }, () => zeroArr.slice());
 
   let anyValsAtX = Array.from({ length: stacksQty }, () => falseArr.slice());
+
+  if (clusters && dataLen !== clusters.length) { // clustering is enabled
+    const clusterLength = clusters.length;
+    zeroArr = stacksQty > 0 ? Array(clusterLength).fill(0) : [];
+    accums = Array.from({ length: stacksQty }, () => zeroArr.slice());
+  }
 
   // figure out at which time indices each stacking group has any values
   // (needed to avoid absorbing initial accum 0s at unrelated joined timestamps)
@@ -225,10 +232,11 @@ export function preparePlotData2(
     }
 
     let stackingMode = custom.stacking?.mode;
+    let clusteredStackingMode = custom.stacking?.mode;
 
     if (!stackingMode || stackingMode === StackingMode.None) {
       data[i] = vals;
-    } else {
+    } else if (!clusteredStackingMode || clusteredStackingMode === StackingMode.None || !clusters) {
       let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
 
       let accum = accums[stackIdx];
@@ -244,6 +252,18 @@ export function preparePlotData2(
           stacked[i] = groupValsAtX[i] ? accum[i] : v;
         }
       }
+    } else {
+      const clusterCount = clusters.length;
+      let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
+
+      let accum = accums[stackIdx]; // accumulated values
+      let groupValsAtX = anyValsAtX[stackIdx];
+      let stacked = (data[i]) = Array();
+
+      let clusterIdx = 0;
+
+      for ()
+
     }
   });
 
@@ -265,7 +285,7 @@ export function preparePlotData2(
     }
 
     let stackingMode = field.config.custom?.stacking?.mode;
-
+    
     if (stackingMode === StackingMode.Percent) {
       let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
       let accum = accums[stackIdx];

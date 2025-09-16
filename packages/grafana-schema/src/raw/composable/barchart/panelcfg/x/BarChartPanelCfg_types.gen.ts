@@ -26,6 +26,10 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    */
   clusterWidth: number;
   /**
+   * Controls whether clusters are stacked or not
+   */
+  clusteredStacking: common.StackingMode;
+  /**
    * Use the color value for a sibling field to color each bar value.
    */
   colorByField?: string;
@@ -77,6 +81,7 @@ export const defaultOptions: Partial<Options> = {
   barRadius: 0,
   barWidth: 0.97,
   clusterWidth: 0.7,
+  clusteredStacking: common.StackingMode.None,
   fullHighlight: false,
   groupWidth: 0.7,
   orientation: common.VizOrientation.Auto,

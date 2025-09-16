@@ -116,6 +116,7 @@ describe('BarChart utils', () => {
         xTickLabelRotation: 0,
         xTickLabelMaxLength: 20,
         stacking: StackingMode.None,
+        clusteredStacking: StackingMode.None,
         tooltip: {
           mode: TooltipDisplayMode.None,
           sort: SortOrder.None,

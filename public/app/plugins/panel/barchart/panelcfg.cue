@@ -48,6 +48,8 @@ composableKinds: PanelCfg: {
 					xTickLabelSpacing?: int32 | *0
 					// Controls whether bars are stacked or not, either normally or in percent mode.
 					stacking: common.StackingMode & (*"none" | _)
+					// Controls whether clusters are stacked or not
+					clusteredStacking: common.StackingMode & (*"none" | _)
 					// This controls whether values are shown on top or to the left of bars.
 					showValue: common.VisibilityMode & (*"auto" | _)
 					// Controls the width of bars. 1 = Max width, 0 = Min width.

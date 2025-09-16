@@ -202,6 +202,17 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         },
         defaultValue: defaultOptions.stacking,
       })
+      .addRadio({
+        path: 'clusteredStacking',
+        name: 'Stack clusters',
+        settings: {
+          options: getGraphFieldOptions().stacking,
+        },
+        defaultValue: defaultOptions.stacking,
+        showIf: (c) => {
+          return c.groupByField !== "" && c.groupByField !== undefined; // only show if no group field is selected
+        },
+      })
       .addFieldNamePicker({ 
         path: 'groupByField',
         name: 'Group by',

@@ -113,6 +113,10 @@ export function prepSeries(
                   group: '_',
                   mode: stacking,
                 },
+                clusteredStacking: {
+                  cluster: '_',
+                  mode: stacking,
+                }
               },
             },
           };
@@ -171,6 +175,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     barWidth,
     barRadius = 0,
     stacking,
+    clusteredStacking,
     text,
     tooltip,
     xTickLabelRotation,
@@ -274,6 +279,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     barWidth,
     barRadius,
     stacking,
+    clusteredStacking,
     groupByField,
     rawValue,
     getColor,
