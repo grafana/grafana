@@ -10,7 +10,7 @@ interface ProgressBarProps {
 }
 const ProgressBar = ({ progress, topBottomSpacing }: ProgressBarProps) => {
   const styles = useStyles2(getStyles, topBottomSpacing);
-  const previousProgress = useRef<number>(0);
+  const previousProgress = useRef(0);
   const shouldAnimate = progress !== undefined && progress > previousProgress.current;
 
   useEffect(() => {

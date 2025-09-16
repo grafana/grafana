@@ -154,7 +154,6 @@ export function DeleteProvisionedDashboardForm({
     handlers: {
       onDismiss,
       onBranchSuccess: ({ path, urls }, info) => onBranchSuccess(path, info, urls),
-      onWriteSuccess: () => {}, // Not used since write workflow handles success directly
       onError: showError,
     },
   });
