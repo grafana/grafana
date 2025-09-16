@@ -1092,12 +1092,22 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		queryPhrase.Analyzer = standard.Name
 
 		// Query 3: Match query with standard analyzer
-		queryAnalyzed := bleve.NewMatchQuery(removeSmallTerms(req.Query))
+		words, cleanQuery := cleanQuery(req.Query)
+		queryAnalyzed := bleve.NewMatchQuery(cleanQuery)
 		queryAnalyzed.Analyzer = standard.Name
 		queryAnalyzed.Operator = query.MatchQueryOperatorAnd // Make sure all terms from the query are matched
 
+		var searchQuery *query.DisjunctionQuery
+		if words == 1 {
+			// Query 4: wildcard matching on title
+			titleWildcard := bleve.NewWildcardQuery("*" + cleanQuery + "*")
+			titleWildcard.SetField(resource.SEARCH_FIELD_TITLE)
+			searchQuery = bleve.NewDisjunctionQuery(queryExact, queryAnalyzed, queryPhrase, titleWildcard)
+		} else {
+			searchQuery = bleve.NewDisjunctionQuery(queryExact, queryAnalyzed, queryPhrase)
+		}
+
 		// At least one of the queries must match
-		searchQuery := bleve.NewDisjunctionQuery(queryExact, queryAnalyzed, queryPhrase)
 		queries = append(queries, searchQuery)
 	}
 
@@ -1178,7 +1188,8 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	return searchrequest, nil
 }
 
-func removeSmallTerms(query string) string {
+// cleanQuery removes terms smaller than EDGE_NGRAM_MIN_TOKEN and returns how many terms the original query has
+func cleanQuery(query string) (int, string) {
 	words := strings.Fields(query)
 	validWords := make([]string, 0, len(words))
 
@@ -1189,10 +1200,10 @@ func removeSmallTerms(query string) string {
 	}
 
 	if len(validWords) == 0 {
-		return query
+		return 0, query
 	}
 
-	return strings.Join(validWords, " ")
+	return len(words), strings.Join(validWords, " ")
 }
 
 func (b *bleveIndex) stopUpdaterAndCloseIndex() error {
