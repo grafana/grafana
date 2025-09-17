@@ -58,6 +58,7 @@ func NewDualWriter(
 
 	// Force using storage only -- regardless of internal synchronization state
 	if mode == grafanarest.Mode5 {
+		builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, mode, grafanarest.Mode5)
 		return storage, nil
 	}
 
