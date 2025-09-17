@@ -55,7 +55,7 @@ type FolderAPIBuilder struct {
 	acService            accesscontrol.Service
 	ac                   accesscontrol.AccessControl
 	storage              grafanarest.Storage
-	permissionStore      reconcilers.PermissionStore
+	permissionStore      reconcilers.PermissionStore // TODO this should maybe just be the IAM app so we don't have a direct dependency on zanzana; maybe this should happen in the operator as well?
 
 	authorizer authorizer.Authorizer
 	parents    parentsGetter
@@ -93,11 +93,12 @@ func RegisterAPIService(cfg *setting.Cfg,
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient) *FolderAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, zanzanaClient zanzana.Client) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
-		authorizer:   newMultiTenantAuthorizer(ac),
-		searcher:     searcher,
-		ignoreLegacy: true,
+		authorizer:      newMultiTenantAuthorizer(ac),
+		searcher:        searcher,
+		ignoreLegacy:    true,
+		permissionStore: reconcilers.NewZanzanaPermissionStore(zanzanaClient),
 	}
 }
 func (b *FolderAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -144,6 +145,8 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	dualWriteBuilder := opts.DualWriteBuilder
 	storage := map[string]rest.Storage{}
 
+	log := logging.FromContext(context.Background())
+
 	if b.ignoreLegacy {
 		opts.StorageOptsRegister(resourceInfo.GroupResource(), apistore.StorageOptions{
 			EnableFolderSupport:         true,
@@ -152,6 +155,14 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
 		if err != nil {
 			return err
+		}
+		// TODO extract this to a method
+		if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+			log.Info("Enabling Zanzana folder propagation hooks")
+			store.BeginCreate = b.beginCreate
+			store.BeginUpdate = b.beginUpdate
+		} else {
+			log.Info("Zanzana is not enabled; skipping folder propagation hooks")
 		}
 		storage[resourceInfo.StoragePath()] = store
 		apiGroupInfo.VersionedResourcesStorageMap[folders.VERSION] = storage
@@ -183,7 +194,6 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 			return err
 		}
 
-		log := logging.FromContext(context.Background())
 		if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 			log.Info("Enabling Zanzana folder propagation hooks")
 			store.BeginCreate = b.beginCreate

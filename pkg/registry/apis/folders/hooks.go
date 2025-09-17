@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+// TODO can we use Context.Background() and use `AfterCreate` and `AfterUpdate` instead?
+
 // "Almost nobody should use this hook" but we do because we need ctx and AfterCreate doesn't have it.
 func (b *FolderAPIBuilder) beginCreate(ctx context.Context, obj runtime.Object, _ *metav1.CreateOptions) (registry.FinishFunc, error) {
 	log := logging.FromContext(ctx)
@@ -36,6 +38,7 @@ func (b *FolderAPIBuilder) beginCreate(ctx context.Context, obj runtime.Object, 
 	}, nil
 }
 
+// TODO do we get an update when we delete things? maybe a soft delete to update the dateDeleted or something? Maybe this can handle deletes too
 // "Almost nobody should use this hook" but we do because we need ctx and AfterUpdate doesn't have it.
 func (b *FolderAPIBuilder) beginUpdate(ctx context.Context, obj runtime.Object, old runtime.Object, _ *metav1.UpdateOptions) (registry.FinishFunc, error) {
 	log := logging.FromContext(ctx)
