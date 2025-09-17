@@ -447,10 +447,8 @@ export function prepareTimelineFields(
   }
 
   // Check if all non-time fields are hidden from visualization
-  const hasVisibleFields = frames.some((frame) => 
-    frame.fields.some((field) => 
-      field.type !== FieldType.time && !field.config.custom?.hideFrom?.viz
-    )
+  const hasVisibleFields = frames.some((frame) =>
+    frame.fields.some((field) => field.type !== FieldType.time && !field.config.custom?.hideFrom?.viz)
   );
 
   if (!hasVisibleFields) {

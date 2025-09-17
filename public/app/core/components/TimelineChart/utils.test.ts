@@ -570,32 +570,32 @@ describe('prepareTimelineFields with hidden series', () => {
       toDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          { 
-            name: 'value1', 
-            type: FieldType.number, 
+          {
+            name: 'value1',
+            type: FieldType.number,
             values: [10, 20, 30],
             config: {
               custom: {
-                hideFrom: { viz: true }
-              }
-            }
+                hideFrom: { viz: true },
+              },
+            },
           },
-          { 
-            name: 'value2', 
-            type: FieldType.string, 
+          {
+            name: 'value2',
+            type: FieldType.string,
             values: ['a', 'b', 'c'],
             config: {
               custom: {
-                hideFrom: { viz: true }
-              }
-            }
+                hideFrom: { viz: true },
+              },
+            },
           },
         ],
       }),
     ];
 
     const result = prepareTimelineFields(frames, true, { from: 0, to: 100 } as any, {} as any);
-    
+
     expect(result.warn).toBe('');
     expect(result.frames).toBeUndefined();
   });
@@ -605,32 +605,32 @@ describe('prepareTimelineFields with hidden series', () => {
       toDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          { 
-            name: 'value1', 
-            type: FieldType.number, 
+          {
+            name: 'value1',
+            type: FieldType.number,
             values: [10, 20, 30],
             config: {
               custom: {
-                hideFrom: { viz: true }
-              }
-            }
+                hideFrom: { viz: true },
+              },
+            },
           },
-          { 
-            name: 'value2', 
-            type: FieldType.string, 
+          {
+            name: 'value2',
+            type: FieldType.string,
             values: ['a', 'b', 'c'],
             config: {
               custom: {
-                hideFrom: { viz: false }
-              }
-            }
+                hideFrom: { viz: false },
+              },
+            },
           },
         ],
       }),
     ];
 
     const result = prepareTimelineFields(frames, true, { from: 0, to: 100 } as any, {} as any);
-    
+
     expect(result.warn).toBeUndefined();
     expect(result.frames).toBeDefined();
     expect(result.frames).toHaveLength(1);
@@ -641,17 +641,17 @@ describe('prepareTimelineFields with hidden series', () => {
       toDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          { 
-            name: 'value1', 
-            type: FieldType.number, 
-            values: [10, 20, 30]
+          {
+            name: 'value1',
+            type: FieldType.number,
+            values: [10, 20, 30],
           },
         ],
       }),
     ];
 
     const result = prepareTimelineFields(frames, true, { from: 0, to: 100 } as any, {} as any);
-    
+
     expect(result.warn).toBeUndefined();
     expect(result.frames).toBeDefined();
     expect(result.frames).toHaveLength(1);
