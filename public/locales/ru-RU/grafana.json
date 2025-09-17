@@ -156,8 +156,11 @@
       "title": "Получение Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Тестирование сопоставления пользователей",
-      "test-mapping-run-button": "Выполнить"
+      "test-mapping-run-button": "Выполнить",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -9291,7 +9294,8 @@
       "disable-button": "Отключить",
       "discard-button": "Отменить",
       "save-and-enable-button": "Сохранить и включить",
-      "save-button": "Сохранить"
+      "save-button": "Сохранить",
+      "test-button": ""
     },
     "documentation": "документация",
     "host": {
@@ -12906,6 +12910,7 @@
     "description-column-filter": "Включает/отключает фильтры полей в таблице",
     "description-frozen-columns": "",
     "description-min-column-width": "Минимальная ширина для автоматического изменения размера столбцов",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Альтернативный текст, который будет отображаться, если невозможно показать изображение, или для пользователей, которые используют программу чтения с экрана",
@@ -12936,6 +12941,7 @@
     "name-max-height": "",
     "name-min-column-width": "Минимальная ширина столбца",
     "name-show-table-header": "Показать заголовок таблицы",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Перенос текста заголовка",
