@@ -241,7 +241,6 @@ func TestCanSearchByTitle(t *testing.T) {
 			})
 		})
 	}
-
 }
 
 func newTestQuery(query string) *resourcepb.ResourceSearchRequest {
