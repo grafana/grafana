@@ -309,9 +309,7 @@ describe('Plugin details page', () => {
 
       expect(await queryByRole('button', { name: /Install/ })).not.toBeInTheDocument();
       expect(await queryByRole('button', { name: /Uninstall/ })).toBeInTheDocument();
-      expect(
-        queryByText(bannerText)
-      ).toBeInTheDocument();
+      expect(queryByText(bannerText)).toBeInTheDocument();
       expect(queryByRole('link', { name: /learn more/i })).toBeInTheDocument();
     });
 
