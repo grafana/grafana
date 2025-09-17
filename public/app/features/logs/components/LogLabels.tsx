@@ -165,6 +165,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     button: css({
       height: theme.spacing(2.75),
-    })
+    }),
   };
 };
