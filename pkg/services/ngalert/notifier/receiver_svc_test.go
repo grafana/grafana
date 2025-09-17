@@ -1557,6 +1557,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService) *ReceiverS
 		log.NewNopLogger(),
 		fakes.NewFakeReceiverPermissionsService(),
 		tracing.InitializeTracerForTest(),
+		true,
 	)
 }
 
