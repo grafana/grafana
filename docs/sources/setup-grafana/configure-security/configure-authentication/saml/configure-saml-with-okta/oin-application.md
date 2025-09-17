@@ -13,14 +13,14 @@ weight: 590
 
 Grafana offers multiple ways to configure the SAML authentication flow. This guide focuses on configuring the authentication flow using the Okta Integration Network (OIN) application.
 
-The Grafana Labs application can be found in the <a href="https://www.okta.com/integrations/" target="_blank">Okta Integration Network catalog</a>.
+The Grafana Labs application can be found in the [Okta Integration Network catalog](https://www.okta.com/integrations/).
 
 ## Prerequisites
 
 - Grafana Enterprise or a paid Grafana Cloud account.
 - Admin privileges in both Grafana and Okta.
 
-## Supported Features
+## Supported features
 
 - SAML Single Sign-On (SSO)
 - SAML Attribute Mapping
