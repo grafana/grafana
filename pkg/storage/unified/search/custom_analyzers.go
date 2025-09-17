@@ -10,6 +10,7 @@ import (
 )
 
 const TITLE_ANALYZER = "title_analyzer"
+const EDGE_NGRAM_MIN_TOKEN = 3.0
 
 func RegisterCustomAnalyzers(mapper *mapping.IndexMappingImpl) error {
 	return registerTitleAnalyzer(mapper)
@@ -22,7 +23,7 @@ func registerTitleAnalyzer(mapper *mapping.IndexMappingImpl) error {
 	// Define an N-Gram tokenizer (for substring search)
 	edgeNgramTokenFilter := map[string]interface{}{
 		"type": edgengram.Name,
-		"min":  3.0,
+		"min":  EDGE_NGRAM_MIN_TOKEN,
 		"max":  10.0,
 		"back": edgengram.FRONT,
 	}

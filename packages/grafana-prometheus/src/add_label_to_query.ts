@@ -79,8 +79,17 @@ function addFilter(
     const start = query.substring(prev, match.from);
     const end = isLast ? query.substring(match.to) : '';
 
-    if (!labelExists(match.query.labels, filter)) {
+    const labelToMatch = labelExists(match.query.labels, filter);
+    if (labelToMatch) {
+      // if label exists, check the operator, if it is different, update it.
       // We don't want to add duplicate labels.
+      if (labelToMatch.op !== filter.op) {
+        match.query.labels = match.query.labels.map((label) =>
+          label.label === filter.label && label.value === filter.value ? filter : label
+        );
+      }
+    } else {
+      // label does not exist, add as is.
       match.query.labels.push(filter);
     }
     const newLabels = renderQuery(match.query);
