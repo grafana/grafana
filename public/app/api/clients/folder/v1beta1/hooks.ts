@@ -13,10 +13,12 @@ import {
   useMoveFoldersMutation as useMoveFoldersMutationLegacy,
   useSaveFolderMutation as useLegacySaveFolderMutation,
   useMoveFolderMutation as useMoveFolderMutationLegacy,
+  useGetAffectedItemsQuery as useLegacyGetAffectedItemsQuery,
   MoveFoldersArgs,
   DeleteFoldersArgs,
   MoveFolderArgs,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { DashboardTreeSelection } from 'app/features/browse-dashboards/types';
 import { FolderDTO, NewFolder } from 'app/types/folders';
 
 import kbn from '../../../../core/utils/kbn';
@@ -49,6 +51,7 @@ import {
   CreateFolderApiArg,
   useReplaceFolderMutation,
   ReplaceFolderApiArg,
+  useGetAffectedItemsQuery,
 } from './index';
 
 function getFolderUrl(uid: string, title: string): string {
@@ -391,6 +394,26 @@ function useRefreshFolders() {
       );
     }
   };
+}
+
+export function useGetAffectedItems({ folder, dashboard }: Pick<DashboardTreeSelection, 'folder' | 'dashboard'>) {
+  const folderUIDs = Object.keys(folder).filter((uid) => folder[uid]);
+  const dashboardUIDs = Object.keys(dashboard).filter((uid) => dashboard[uid]);
+
+  // TODO: Remove constant condition here once we have a solution for the app platform counts
+  // As of now, the counts are not calculated recursively, so we need to use the legacy API
+  const shouldUseAppPlatformAPI = false && Boolean(config.featureToggles.foldersAppPlatformAPI);
+  const hookParams:
+    | Parameters<typeof useLegacyGetAffectedItemsQuery>[0]
+    | Parameters<typeof useGetAffectedItemsQuery>[0] = {
+    folderUIDs,
+    dashboardUIDs,
+  };
+
+  const legacyResult = useLegacyGetAffectedItemsQuery(!shouldUseAppPlatformAPI ? hookParams : skipToken);
+  const appPlatformResult = useGetAffectedItemsQuery(shouldUseAppPlatformAPI ? hookParams : skipToken);
+
+  return shouldUseAppPlatformAPI ? appPlatformResult : legacyResult;
 }
 
 function combinedState(
