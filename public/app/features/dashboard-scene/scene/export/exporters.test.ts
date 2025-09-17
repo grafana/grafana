@@ -144,7 +144,7 @@ describe('dashboard exporter v1', () => {
     expect(exported.templating.list[0].datasource.uid).toBe('${DS_GFDB}');
   });
 
-  it('do not expose datasource name and id in a in a template variable of type datasource', async () => {
+  it('templateize datasource uid in a datasource variable that is used in a panel', async () => {
     const dashboard: Dashboard = {
       title: 'My dashboard',
       revision: 1,
@@ -159,6 +159,10 @@ describe('dashboard exporter v1', () => {
           type: 'timeseries',
           title: 'My panel title',
           gridPos: { x: 0, y: 0, w: 1, h: 1 },
+          datasource: {
+            type: 'prometheus',
+            uid: '${ds_var}',
+          },
         },
       ],
       templating: {
@@ -172,7 +176,7 @@ describe('dashboard exporter v1', () => {
             hide: 0,
             includeAll: false,
             multi: false,
-            name: 'query1',
+            name: 'ds_var',
             options: [],
             query: 'prometheus',
             refresh: 1,
@@ -188,7 +192,11 @@ describe('dashboard exporter v1', () => {
     });
     const exported = (await makeExportableV1(dashboardModel)) as DashboardJson;
     const value = exported?.templating?.list ? exported?.templating?.list[0].current : '';
-    expect(value).toEqual({});
+    expect(value).toEqual({
+      selected: true,
+      text: '',
+      value: '${DS_GFDB}',
+    });
   });
 
   it('replaces datasource ref in library panel', async () => {
