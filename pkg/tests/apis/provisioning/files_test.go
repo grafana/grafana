@@ -50,7 +50,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 2, len(folders.Items))
 
-	t.Run("delete individual dashboard file, should delete from repo and grafana", func(t *testing.T) {
+	t.Run("delete individual dashboard file, should delete from repo and grafana after a sync", func(t *testing.T) {
 		result := helper.AdminREST.Delete().
 			Namespace("default").
 			Resource("repositories").
@@ -58,6 +58,9 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 			SubResource("files", "dashboard1.json").
 			Do(ctx)
 		require.NoError(t, result.Error())
+		// Verify dashboard still exists in Grafana with same content but may have updated path references
+		helper.SyncAndWait(t, repo, nil)
+
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard1.json")
 		require.Error(t, err)
 		dashboards, err = helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
@@ -65,7 +68,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 		require.Equal(t, 2, len(dashboards.Items))
 	})
 
-	t.Run("delete folder, should delete from repo and grafana all nested resources too", func(t *testing.T) {
+	t.Run("delete folder, should delete from repo and grafana all nested resources too after a sync", func(t *testing.T) {
 		// need to delete directly through the url, because the k8s client doesn't support `/` in a subresource
 		// but that is needed by gitsync to know that it is a folder
 		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
@@ -77,6 +80,9 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 		// nolint:errcheck
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		// Verify dashboard still exists in Grafana with same content but may have updated path references
+		helper.SyncAndWait(t, repo, nil)
 
 		// should be deleted from the repo
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder")
@@ -156,6 +162,9 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation should succeed")
 
+		// Sync and wait
+		helper.SyncAndWait(t, repo, nil)
+
 		// Verify the file moved in the repository
 		movedObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "simple-move.json")
 		require.NoError(t, err, "moved file should exist in repository")
@@ -174,7 +183,6 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.Error(t, err, "original file should no longer exist")
 
 		// Verify dashboard still exists in Grafana with same content but may have updated path references
-		helper.SyncAndWait(t, repo, nil)
 		_, err = helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
 		require.NoError(t, err, "dashboard should still exist in Grafana after move")
 	})
@@ -197,6 +205,9 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		// nolint:errcheck
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation should succeed")
+
+		// Sync and wait
+		helper.SyncAndWait(t, repo, nil)
 
 		// Check folders were created and validate hierarchy
 		folderList, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
@@ -270,6 +281,9 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "move with content update should succeed")
 
+		// Sync and wait
+		helper.SyncAndWait(t, repo, nil)
+
 		// Verify the moved file has updated content (should now be text-options dashboard)
 		movedObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "updated", "content-updated.json")
 		require.NoError(t, err, "moved file should exist in repository")
@@ -335,6 +349,9 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.NoError(t, err, "should read response body")
 		t.Logf("Response Body: %s", string(body))
 		require.Equal(t, http.StatusOK, resp.StatusCode, "directory move should succeed")
+
+		// Sync and wait
+		helper.SyncAndWait(t, repo, nil)
 
 		// Verify source directory no longer exists
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "source-dir")
