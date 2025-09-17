@@ -8,7 +8,7 @@ type Props = {
 
 export function ShareSpanButton(props: Props) {
   const { focusSpanLink } = props;
-  const { interpolatedParams, ...linkProps } = focusSpanLink;
+  const { interpolatedParams, ...linkProps } = focusSpanLink ?? {};
   return (
     <span>
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
