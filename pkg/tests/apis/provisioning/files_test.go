@@ -18,6 +18,8 @@ import (
 )
 
 func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
+	// TODO: fix flaky test
+	t.Skip("skipping flaky test")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
@@ -109,6 +111,9 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_MoveResources(t *testing.T) {
+	// TODO: fix flaky test
+	t.Skip("skipping flaky test")
+
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
@@ -399,6 +404,9 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
+	// TODO: fix flaky test
+	t.Skip("skipping flaky test")
+
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)

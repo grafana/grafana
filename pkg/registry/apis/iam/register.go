@@ -372,7 +372,6 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 		case *iamv0.ServiceAccount:
 			return serviceaccount.MutateOnCreate(ctx, typedObj)
 		}
-		return nil
 	case admission.Update:
 		return nil
 	case admission.Delete:
