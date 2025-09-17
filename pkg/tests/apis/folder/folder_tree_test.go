@@ -45,7 +45,7 @@ func TestIntegrationFolderTree(t *testing.T) {
 	modes := []grafanarest.DualWriterMode{
 		// grafanarest.Mode1, (nothing new tested)
 		grafanarest.Mode2, // write both, read legacy
-		// grafanarest.Mode3, // write both, read unified
+		grafanarest.Mode3, // write both, read unified
 		// grafanarest.Mode4,
 		// grafanarest.Mode5,
 	}
@@ -387,24 +387,32 @@ func getFoldersFromAPIServerList(t *testing.T, who apis.User) *FolderView {
 	require.NoError(t, err)
 	client := dyn.Resource(gvr).Namespace(ns)
 
-	result, err := client.List(context.Background(), v1.ListOptions{Limit: 1000})
-	if apierrors.IsForbidden(err) {
-		return &FolderView{} // empty list
-	}
-	require.NoError(t, err)
-
-	lookup := make(map[string]*FolderView, len(result.Items))
-	for _, hit := range result.Items {
-		obj, err := utils.MetaAccessor(&hit)
+	lookup := map[string]*FolderView{}
+	continueToken := ""
+	for {
+		result, err := client.List(context.Background(), v1.ListOptions{Limit: 1000, Continue: continueToken})
+		if apierrors.IsForbidden(err) {
+			return &FolderView{} // empty list
+		}
 		require.NoError(t, err)
 
-		title, _, err := unstructured.NestedString(hit.Object, "spec", "title")
-		require.NoError(t, err)
+		for _, hit := range result.Items {
+			obj, err := utils.MetaAccessor(&hit)
+			require.NoError(t, err)
 
-		lookup[hit.GetName()] = &FolderView{
-			Name:   hit.GetName(),
-			Title:  title,
-			Parent: obj.GetFolder(),
+			title, _, err := unstructured.NestedString(hit.Object, "spec", "title")
+			require.NoError(t, err)
+
+			lookup[hit.GetName()] = &FolderView{
+				Name:   hit.GetName(),
+				Title:  title,
+				Parent: obj.GetFolder(),
+			}
+		}
+
+		continueToken = result.GetContinue()
+		if continueToken == "" {
+			break
 		}
 	}
 
