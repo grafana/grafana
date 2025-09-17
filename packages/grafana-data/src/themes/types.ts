@@ -43,12 +43,6 @@ export interface ThemeRichColor {
   main: string;
   /** Used for hover */
   shade: string;
-  /**
-   * Used for active state
-   */
-  activeTransparent: string;
-  activeTransparentSecondary: string;
-  activeMain: string;
   /** Used for text */
   text: string;
   /** Used for borders */

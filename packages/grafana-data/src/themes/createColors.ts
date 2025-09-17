@@ -282,9 +282,6 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
   }
 
   const getRichColor = ({ color, name }: GetRichColorProps): ThemeRichColor => {
-    const transparentAlpha = 0.15;
-    const activeTransparentAlpha = 0.195;
-    const activeTransparentSubtle = 0.1;
     color = { ...color, name };
     if (!color.main) {
       color.main = base[name].main;
@@ -298,19 +295,8 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     if (!color.shade) {
       color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
     }
-
-    if (!color.activeMain) {
-      color.activeMain = base.mode === 'light' ? darken(color.main, 0.25) : lighten(color.main, 0.2);
-    }
-    if (!color.activeTransparent) {
-      color.activeTransparent = alpha(color.main, activeTransparentAlpha);
-    }
-    if (!color.activeTransparentSecondary) {
-      color.activeTransparentSecondary = alpha(color.main, activeTransparentSubtle);
-    }
-
     if (!color.transparent) {
-      color.transparent = alpha(color.main, transparentAlpha);
+      color.transparent = alpha(color.main, 0.15);
     }
     if (!color.contrastText) {
       color.contrastText = getContrastText(color.main);

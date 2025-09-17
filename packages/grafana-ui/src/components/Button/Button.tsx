@@ -300,14 +300,8 @@ function addTransform(transitions: string[]) {
 }
 
 function getActiveButtonStyles(color: ThemeRichColor, theme: GrafanaTheme2, fill: ButtonFill) {
-  let background = fill === 'solid' ? color.activeMain : color.activeTransparent;
-
-  if (color.name === 'secondary') {
-    background = color.activeTransparentSecondary;
-  }
-
   return {
-    background,
+    background: fill === 'solid' ? color.main : color.transparent,
     transform: 'scale(0.95)',
   };
 }
@@ -334,7 +328,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
         duration: theme.transitions.duration.short,
       }),
 
-      '&:hover': {
+      '&:hover, &:focus': {
         background: color.transparent,
         borderColor: theme.colors.emphasize(outlineBorderColor, 0.25),
         color: color.text,
@@ -355,14 +349,10 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
         duration: theme.transitions.duration.short,
       }),
 
-      '&:focus': {
-        outline: 'none',
-        textDecoration: 'none',
-      },
-
-      '&:hover': {
+      '&:hover, &:focus': {
         background: color.transparent,
         textDecoration: 'none',
+        outline: 'none',
       },
 
       '&:active, &:active:hover': {
@@ -384,6 +374,11 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       color: color.contrastText,
       boxShadow: theme.shadows.z1,
       borderColor: hoverBorderColor,
+    },
+
+    '&:focus': {
+      background: color.shade,
+      color: color.contrastText,
     },
 
     '&:active, &:active:hover': {
