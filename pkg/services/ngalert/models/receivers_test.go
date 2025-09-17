@@ -46,7 +46,7 @@ func TestReceiver_EncryptDecrypt(t *testing.T) {
 			decrypedIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
 
 			encrypted := decrypedIntegration.Clone()
-			secrets, err := channels_config.GetSecretKeysForContactPointType(integrationType)
+			secrets, err := channels_config.GetSecretKeysForContactPointType(integrationType, channels_config.V1)
 			assert.NoError(t, err)
 			for _, key := range secrets {
 				val, ok, err := extractField(encrypted.Settings, NewIntegrationFieldPath(key))
@@ -82,7 +82,7 @@ func TestIntegration_Redact(t *testing.T) {
 			validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
 
 			expected := validIntegration.Clone()
-			secrets, err := channels_config.GetSecretKeysForContactPointType(integrationType)
+			secrets, err := channels_config.GetSecretKeysForContactPointType(integrationType, channels_config.V1)
 			assert.NoError(t, err)
 			for _, key := range secrets {
 				err := setField(expected.Settings, NewIntegrationFieldPath(key), func(current any) any {
@@ -247,12 +247,12 @@ func TestSecretsIntegrationConfig(t *testing.T) {
 			assert.NoError(t, err)
 
 			t.Run("v1 is current", func(t *testing.T) {
-				configv1, err := IntegrationConfigFromType(integrationType, util.Pointer("v1"))
+				configv1, err := IntegrationConfigFromType(integrationType, util.Pointer(string(channels_config.V1)))
 				assert.NoError(t, err)
 				assert.Equal(t, config, configv1)
 			})
 
-			secrets, err := channels_config.GetSecretKeysForContactPointType(integrationType)
+			secrets, err := channels_config.GetSecretKeysForContactPointType(integrationType, channels_config.V1)
 			assert.NoError(t, err)
 			allSecrets := make(map[string]struct{}, len(secrets))
 			for _, key := range secrets {
