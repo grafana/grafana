@@ -148,7 +148,7 @@ func (rev *ConfigRevision) GetReceivers(uids []string, prov provenances, include
 		}
 		origin := models.ResourceOriginGrafana
 		if includeImported {
-			if _, exists := grafanaOrigin[uid]; !exists {
+			if _, exists := grafanaOrigin[r.GetName()]; !exists {
 				origin = models.ResourceOriginImported
 			}
 		}
