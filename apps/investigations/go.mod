@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/investigations
 go 1.24.6
 
 require (
-	github.com/grafana/grafana-app-sdk v0.44.0
+	github.com/grafana/grafana-app-sdk v0.45.0
 	k8s.io/apimachinery v0.34.1
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b
