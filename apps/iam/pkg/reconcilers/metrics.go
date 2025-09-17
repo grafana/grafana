@@ -12,7 +12,7 @@ type ReconcilerMetrics struct {
 }
 
 // NewReconcilerMetrics creates a new set of metrics for the reconciler
-func NewReconcilerMetrics(registerer prometheus.Registerer) *ReconcilerMetrics {
+func NewReconcilerMetrics(registerer prometheus.Registerer, namespace string) *ReconcilerMetrics {
 	// Labels for comprehensive reconcile tracking
 	operationLabels := []string{"action", "outcome"}
 	operationValues := map[string][]string{
@@ -30,7 +30,7 @@ func NewReconcilerMetrics(registerer prometheus.Registerer) *ReconcilerMetrics {
 	metrics := &ReconcilerMetrics{
 		ReconcileOperations: metricutil.NewCounterVecStartingAtZero(
 			prometheus.CounterOpts{
-				Namespace: "grafana",
+				Namespace: namespace,
 				Subsystem: "iam_folder_reconciler",
 				Name:      "folder_reconcile_operations_total",
 				Help:      "Total number of folder reconcile operations by action and outcome",

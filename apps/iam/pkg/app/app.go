@@ -25,10 +25,10 @@ type InformerConfig struct {
 }
 
 type AppConfig struct {
-	ZanzanaClientCfg          authz.ZanzanaClientConfig
-	InformerConfig            InformerConfig
-	FolderReconcilerNamespace string
-	MetricsRegisterer         prometheus.Registerer
+	ZanzanaClientCfg  authz.ZanzanaClientConfig
+	InformerConfig    InformerConfig
+	Namespace         string
+	MetricsRegisterer prometheus.Registerer
 }
 
 func Provider(appCfg app.SpecificConfig) app.Provider {
@@ -75,7 +75,7 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	// Initialize metrics first so they can be shared across components
-	metrics := reconcilers.NewReconcilerMetrics(appSpecificConfig.MetricsRegisterer)
+	metrics := reconcilers.NewReconcilerMetrics(appSpecificConfig.MetricsRegisterer, appSpecificConfig.Namespace)
 
 	folderReconciler, err := reconcilers.NewFolderReconciler(reconcilers.ReconcilerConfig{
 		ZanzanaCfg: appSpecificConfig.ZanzanaClientCfg,
@@ -87,12 +87,6 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	logging.DefaultLogger.Info("FolderReconciler created")
-
-	reconcilerOptions := simple.UnmanagedKindReconcileOptions{}
-
-	if cfg.SpecificConfig.(AppConfig).FolderReconcilerNamespace != "" {
-		reconcilerOptions.Namespace = cfg.SpecificConfig.(AppConfig).FolderReconcilerNamespace
-	}
 
 	config := simple.AppConfig{
 		Name:       cfg.ManifestData.AppName,
@@ -109,9 +103,8 @@ func New(cfg app.Config) (app.App, error) {
 		},
 		UnmanagedKinds: []simple.AppUnmanagedKind{
 			{
-				Kind:             foldersKind.FolderKind(),
-				Reconciler:       folderReconciler,
-				ReconcileOptions: reconcilerOptions,
+				Kind:       foldersKind.FolderKind(),
+				Reconciler: folderReconciler,
 			},
 		},
 	}

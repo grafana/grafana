@@ -123,6 +123,7 @@ func buildIAMConfigFromSettings(cfg *setting.Cfg, registerer prometheus.Register
 	metricsSection := cfg.SectionWithEnvOverrides("metrics")
 	iamCfg.RunnerConfig.MetricsConfig.Enabled = metricsSection.Key("enabled").MustBool(true)
 	iamCfg.RunnerConfig.MetricsConfig.Namespace = metricsSection.Key("namespace").MustString("grafana-iam")
+	iamCfg.AppConfig.Namespace = iamCfg.RunnerConfig.MetricsConfig.Namespace
 	iamCfg.AppConfig.MetricsRegisterer = registerer
 
 	return &iamCfg, nil
