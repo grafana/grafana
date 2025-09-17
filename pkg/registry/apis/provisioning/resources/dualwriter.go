@@ -23,11 +23,9 @@ import (
 // into both the Git repository as well as in Grafana. It isn't a dual writer in the sense of what unistore handling calls dual writing.
 
 // Standard provisioning Authorizer has already run by the time DualReadWriter is called
-// for incoming requests from external actors. For internal requests, the authorization
-// checks that are performed here offer additional protection.
-
-// qq: why do we need to run the authorization checks again for external actors who have
-// already successfully authorized at the provisioning authorizer?
+// for incoming requests from actors, external or internal. However, since it is the files
+// connector that redirects here, the external resources such as dashboards
+// end up requiring additional authorization checks which the DualReadWriter performs here.
 
 // TODO: it does not support folders yet
 type DualReadWriter struct {
