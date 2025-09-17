@@ -156,8 +156,11 @@
       "title": "Obtenir Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Tester le mappage des utilisateurs",
-      "test-mapping-run-button": "Exécuter"
+      "test-mapping-run-button": "Exécuter",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -3597,6 +3600,7 @@
       "button-cancel": "Annuler",
       "button-delete": "Supprimer",
       "button-deleting": "Suppression en cours…",
+      "commit": "",
       "delete-warning": "Cette opération supprimera ce dossier ainsi que tous ses éléments enfants. Au total, cela concernera :",
       "success-message": "Dossier supprimé avec succès"
     },
@@ -5404,10 +5408,6 @@
       "save-dashboard-short": "Enregistrer",
       "save-library-panel": "Enregistrer le panneau de la bibliothèque",
       "settings": "Paramètres du tableau de bord",
-      "share": {
-        "label": "Partager",
-        "tooltip": "Partager un tableau de bord"
-      },
       "share-button": "Partager",
       "unlink-library-panel": "Dissocier le panneau de la bibliothèque",
       "unmark-favorite": "Supprimer des favoris"
@@ -5658,14 +5658,6 @@
         "title": {
           "new-dashboard": "Nouveau tableau de bord"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "Révoquer l’URL publique"
-      },
-      "title": {
-        "revoke-public-url": "Désactiver l'URL publique"
       }
     },
     "constant-variable-form": {
@@ -5922,13 +5914,12 @@
       "usage-count_other": "Utilisé sur {{count}} tableaux de bord"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "Erreur lors du déplacement du tableau de bord",
       "api-error": "Échec du déplacement du tableau de bord",
       "cancel-action": "Annuler",
       "current-file-not-found": "Le fichier du tableau de bord actuel est introuvable",
       "drawer-title": "Déplacer un tableau de bord provisionné",
       "file-load-error": "Erreur lors du chargement du tableau de bord",
-      "loading-file-data": "Chargement des données du tableau de bord",
+      "loading-dashboard-data": "",
       "move-action": "Déplacer le tableau de bord",
       "move-read-only-message": "Ce tableau de bord ne peut pas être déplacé directement depuis Grafana, car le dépôt est en lecture seule. Pour déplacer ce tableau de bord, déplacez le fichier directement dans votre dépôt Git.",
       "moving": "Déplacement en cours…",
@@ -9239,7 +9230,8 @@
       "disable-button": "Désactiver",
       "discard-button": "Abandonner",
       "save-and-enable-button": "Enregistrer et activer",
-      "save-button": "Enregistrer"
+      "save-button": "Enregistrer",
+      "test-button": ""
     },
     "documentation": "documentation",
     "host": {
@@ -9269,8 +9261,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "Annuler",
-      "create": "Créer un panneau de bibliothèque",
       "error": "Un panneau de bibliothèque avec ce nom existe déjà",
       "folder": "Enregistrer dans le dossier",
       "folder-description": "Les autorisations du panneau de bibliothèque sont dérivées des autorisations du dossier",
@@ -10338,9 +10328,6 @@
     },
     "profiles": {
       "title": "Profils"
-    },
-    "public": {
-      "title": "Tableaux de bord publics"
     },
     "recently-deleted": {
       "subtitle": "Tous les éléments répertoriés ici depuis plus de 30 jours seront automatiquement supprimés.",
@@ -11761,7 +11748,6 @@
       "email-share-type-option-label": "Uniquement les personnes spécifiées",
       "pause-sharing-dashboard-label": "Interrompre le partage du tableau de bord",
       "public-share-type-option-label": "Toute personne ayant un lien",
-      "revoke-body": "Voulez-vous vraiment révoquer cette URL ? Le tableau de bord ne sera plus public.",
       "revoke-public-URL-button": "Désactiver l'URL publique",
       "revoke-public-URL-button-title": "Désactiver l'URL publique",
       "settings-title": "Paramètres"
@@ -11775,7 +11761,6 @@
       "success-pause": "L'accès à votre tableau de bord a été mis en pause",
       "success-resume": "Votre accès au tableau de bord a été réactivé",
       "success-update": "Les paramètres ont été mis à jour avec succès",
-      "success-update-old": "Le tableau de bord public a été mis à jour !",
       "time-range-label": "Plage temporelle",
       "time-range-tooltip": "Le tableau de bord partagé utilise les paramètres de plage temporelle par défaut du tableau de bord"
     },
@@ -11783,10 +11768,6 @@
       "generate-public-url-button": "Générer une URL publique",
       "unsupported-features-desc": "Actuellement, nous ne prenons pas en charge les variables de modèle ou les données provenant des utilisateurs",
       "welcome-title": "Bienvenue dans les tableaux de bord publics !"
-    },
-    "delete-modal": {
-      "revoke-body-text": "Voulez-vous vraiment révoquer cette URL ? Le tableau de bord ne sera plus public.",
-      "revoke-title": "Désactiver l'URL publique"
     },
     "email-sharing": {
       "accept-button": "Accepter",
@@ -11817,11 +11798,8 @@
       "success-share-type-change": "Accès au tableau de bord mis à jour : seules les personnes spécifiques peuvent désormais y accéder avec le lien"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Contactez votre administrateur pour obtenir l’autorisation de/d’{{action}} les tableaux de bord publics",
-      "no-upsert-perm-alert-title": "Vous n’avez pas l’autorisation de/d’{{ action }} un tableau de bord public",
       "save-dashboard-changes-alert-title": "Veuillez enregistrer les modifications de votre tableau de bord avant de modifier la configuration publique",
       "unsupport-data-source-alert-readmore-link": "En savoir plus sur les sources de données prises en charge",
-      "unsupported-data-source-alert-desc": "Ce tableau de bord comprend des sources de données qui ne sont pas prises en charge pour les tableaux de bord publics. Les panneaux qui utilisent ces sources de données peuvent ne pas fonctionner correctement : {{unsupportedDataSources}}.",
       "unsupported-data-source-alert-title": "Sources de données non prises en charge",
       "unsupported-template-variable-alert-desc": "Ce tableau de bord public peut ne pas fonctionner car il utilise des variables de modèle",
       "unsupported-template-variable-alert-title": "Les variables de modèle ne sont pas prises en charge"
@@ -11855,8 +11833,7 @@
       "time-range-text": "Plage de temps = "
     },
     "share": {
-      "success-delete": "Votre tableau de bord n'est plus partageable",
-      "success-delete-old": "Le tableau de bord public a été supprimé !"
+      "success-delete": "Votre tableau de bord n'est plus partageable"
     },
     "share-configuration": {
       "share-type-label": "Accès au lien"
@@ -11875,24 +11852,6 @@
       "revoke-access-button": "Révoquer l'accès",
       "revoke-access-description": "Voulez-vous vraiment révoquer cet accès ? Le tableau de bord ne pourra plus être partagé.",
       "unsupported-data-source-alert-desc": "Certaines sources de données de ce tableau de bord ne sont pas prises en charge pour les tableaux de bord partagés. Les panneaux qui utilisent ces sources de données peuvent ne pas fonctionner correctement : {{unsupportedDataSources}}."
-    },
-    "sharing": {
-      "success-creation": "Le tableau de bord est public !"
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "Configurer le tableau de bord public",
-      "revoke-button-text": "Désactiver l'URL publique",
-      "revoke-button-tooltip": "Désactiver l'URL du tableau de bord public",
-      "view-button-tooltip": "Afficher le tableau de bord public"
-    },
-    "empty-state": {
-      "message": "Vous n'avez pas encore créé de tableaux de bord publics",
-      "more-info": "Créez un tableau de bord public à partir de n'importe quel tableau de bord existant via le modal <1>Partager</1>. <4>En savoir plus</4>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "Suspendre le partage"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11900,8 +11859,6 @@
       "external-link": "Lien externe",
       "loading-text": "Chargement en cours...",
       "open-dashboard-list-text": "Ouvrir la liste des tableaux de bord",
-      "public-dashboard-link": "URL du tableau de bord public",
-      "public-dashboard-setting": "Paramètres du tableau de bord public",
       "sharing-setting": "Paramètres de partage"
     },
     "delete-user-modal": {
@@ -11909,14 +11866,12 @@
       "delete-user-cancel-button": "Annuler",
       "delete-user-revoke-access-button": "Révoquer l'accès",
       "revoke-access-title": "Révoquer l'accès",
-      "revoke-user-access-modal-desc-line1": "Souhaitez-vous vraiment retirer l'accès pour {{email}} ?",
-      "revoke-user-access-modal-desc-line2": "Cette action retirera immédiatement l'accès de {{email}}&apos;s à tous les tableaux de bord publics."
+      "revoke-user-access-modal-desc-line1": "Souhaitez-vous vraiment retirer l'accès pour {{email}} ?"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "Cette action révoquera immédiatement l'accès de {{email}}&apos;s à tous les tableaux de bord partagés."
     },
     "modal": {
-      "dashboard-modal-title": "Tableaux de bord publics",
       "shared-dashboard-modal-title": "Tableaux de bord partagés"
     },
     "table-body": {
@@ -12418,8 +12373,6 @@
       "export": "Exporter",
       "library-panel": "Panneau de bibliothèque",
       "link": "Lien",
-      "panel-embed": "Intégrer",
-      "public-dashboard": "Tableau de bord public",
       "public-dashboard-title": "Tableau de bord public",
       "snapshot": "Instantané"
     },
@@ -12814,6 +12767,7 @@
     "description-column-filter": "Active ou désactive les filtres de champ dans le tableau",
     "description-frozen-columns": "",
     "description-min-column-width": "La largeur minimale pour le redimensionnement automatique des colonnes",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Texte alternatif qui sera affiché si une image ne peut pas être affichée ou pour les utilisateurs qui utilisent un lecteur d’écran",
@@ -12844,6 +12798,7 @@
     "name-max-height": "",
     "name-min-column-width": "Largeur minimale de colonne",
     "name-show-table-header": "Afficher l’en-tête du tableau",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Retour à la ligne dans l’en-tête",
@@ -14013,7 +13968,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Utilisateurs du tableau de bord public",
       "shared-dashboard-users-tab-title": "Utilisateurs du tableau de bord partagé"
     }
   },

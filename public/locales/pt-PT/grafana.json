@@ -156,8 +156,11 @@
       "title": "Obtenha o Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Mapeamento de utilizador de teste",
-      "test-mapping-run-button": "Executar"
+      "test-mapping-run-button": "Executar",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -3597,6 +3600,7 @@
       "button-cancel": "Cancelar",
       "button-delete": "Eliminar",
       "button-deleting": "A eliminar...",
+      "commit": "",
       "delete-warning": "Isto eliminará esta pasta e todas as suas descendentes. No total, isto afetará:",
       "success-message": "Pasta eliminada com sucesso"
     },
@@ -5404,10 +5408,6 @@
       "save-dashboard-short": "Guardar",
       "save-library-panel": "Guardar painel de biblioteca",
       "settings": "Definições do painel de controlo",
-      "share": {
-        "label": "Partilhar",
-        "tooltip": "Partilhar o painel de controlo"
-      },
       "share-button": "Partilhar",
       "unlink-library-panel": "Desassociar painel de biblioteca",
       "unmark-favorite": "Desmarcar como favorito"
@@ -5658,14 +5658,6 @@
         "title": {
           "new-dashboard": "Novo painel de controlo"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "Revogar URL público"
-      },
-      "title": {
-        "revoke-public-url": "Revogar URL público"
       }
     },
     "constant-variable-form": {
@@ -5922,13 +5914,12 @@
       "usage-count_other": "Utilizado em {{count}} painéis de controlo"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "Erro ao mover o painel de controlo",
       "api-error": "Não foi possível mover o painel de controlo",
       "cancel-action": "Cancelar",
       "current-file-not-found": "Não foi possível encontrar o ficheiro do painel de controlo atual",
       "drawer-title": "Painel de controlo provisionado",
       "file-load-error": "Erro ao carregar o painel de controlo",
-      "loading-file-data": "A carregar dados do painel de controlo",
+      "loading-dashboard-data": "",
       "move-action": "Mover painel de controlo",
       "move-read-only-message": "Este painel de controlo não pode ser movido diretamente da Grafana porque o repositório é apenas de leitura. Para mover este painel de controlo, mova o ficheiro no seu repositório Git.",
       "moving": "A mover...",
@@ -9239,7 +9230,8 @@
       "disable-button": "Desativar",
       "discard-button": "Descartar",
       "save-and-enable-button": "Guardar e ativar",
-      "save-button": "Guardar"
+      "save-button": "Guardar",
+      "test-button": ""
     },
     "documentation": "documentação",
     "host": {
@@ -9269,8 +9261,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "Cancelar",
-      "create": "Criar painel de biblioteca",
       "error": "Já existe um painel de biblioteca com este nome",
       "folder": "Guardar na pasta",
       "folder-description": "As permissões do painel de biblioteca são derivadas das permissões da pasta",
@@ -10338,9 +10328,6 @@
     },
     "profiles": {
       "title": "Profiles"
-    },
-    "public": {
-      "title": "Painéis de controlo públicos"
     },
     "recently-deleted": {
       "subtitle": "Quaisquer elementos listados aqui por mais de 30 dias serão eliminados automaticamente.",
@@ -11761,7 +11748,6 @@
       "email-share-type-option-label": "Apenas pessoas especificadas",
       "pause-sharing-dashboard-label": "Pausar a partilha do painel de controlo",
       "public-share-type-option-label": "Qualquer pessoa com o link",
-      "revoke-body": "Tem a certeza de que pretende revogar este URL? O painel de controlo deixará de ser público.",
       "revoke-public-URL-button": "Revogar URL público",
       "revoke-public-URL-button-title": "Revogar URL público",
       "settings-title": "Definições"
@@ -11775,7 +11761,6 @@
       "success-pause": "O seu acesso ao painel de controlo foi pausado",
       "success-resume": "O seu acesso ao painel de controlo foi retomado",
       "success-update": "As definições foram atualizadas com sucesso",
-      "success-update-old": "Painel de controlo público atualizado!",
       "time-range-label": "Intervalo de tempo",
       "time-range-tooltip": "O painel de controlo partilhado utiliza as definições de intervalo de tempo padrão do painel de controlo"
     },
@@ -11783,10 +11768,6 @@
       "generate-public-url-button": "Gerar URL público",
       "unsupported-features-desc": "Atualmente, não suportamos variáveis de modelos ou origens de dados de frontend",
       "welcome-title": "Damos-lhe as boas-vindas aos painéis de controlo públicos!"
-    },
-    "delete-modal": {
-      "revoke-body-text": "Tem a certeza de que pretende revogar este URL? O painel de controlo deixará de ser público.",
-      "revoke-title": "Revogar URL público"
     },
     "email-sharing": {
       "accept-button": "Aceitar",
@@ -11817,11 +11798,8 @@
       "success-share-type-change": "Acesso ao painel de controlo atualizado: agora, apenas pessoas específicas podem aceder com o link"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Contacte o seu administrador para obter permissão para {{action}} painéis de controlo públicos",
-      "no-upsert-perm-alert-title": "Não tem permissão para {{ action }} um painel de controlo público",
       "save-dashboard-changes-alert-title": "Guarde as alterações do seu painel de controlo antes de atualizar a configuração pública",
       "unsupport-data-source-alert-readmore-link": "Leia mais sobre as origens de dados suportadas",
-      "unsupported-data-source-alert-desc": "Existem origens de dados neste painel de controlo que não são suportadas para painéis de controlo públicos. Os painéis que utilizam estas origens de dados podem não funcionar corretamente: {{unsupportedDataSources}}.",
       "unsupported-data-source-alert-title": "Origens de dados não suportadas",
       "unsupported-template-variable-alert-desc": "Este painel de controlo público pode não funcionar, uma vez que utiliza variáveis de modelo",
       "unsupported-template-variable-alert-title": "As variáveis de modelo não são suportadas"
@@ -11855,8 +11833,7 @@
       "time-range-text": "Intervalo de tempo = "
     },
     "share": {
-      "success-delete": "O seu painel de controlo já não pode ser partilhado",
-      "success-delete-old": "Painel de controlo público eliminado!"
+      "success-delete": "O seu painel de controlo já não pode ser partilhado"
     },
     "share-configuration": {
       "share-type-label": "Acesso ao link"
@@ -11875,24 +11852,6 @@
       "revoke-access-button": "Revogar acesso",
       "revoke-access-description": "Tem a certeza de que pretende revogar este acesso? O painel de controlo já não pode ser partilhado.",
       "unsupported-data-source-alert-desc": "Existem origens de dados neste painel de controlo que não são suportadas para painéis de controlo partilhados. Os painéis que utilizam estas origens de dados podem não funcionar corretamente: {{unsupportedDataSources}}."
-    },
-    "sharing": {
-      "success-creation": "O painel de controlo é público!"
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "Configurar o painel de controlo público",
-      "revoke-button-text": "Revogar URL público",
-      "revoke-button-tooltip": "Revogar o URL do painel de controlo público",
-      "view-button-tooltip": "Ver o painel de controlo público"
-    },
-    "empty-state": {
-      "message": "Ainda não criou qualquer painel de controlo",
-      "more-info": "Crie um painel público a partir de qualquer painel de controlo existente através do modal <1>Partilhar</1>. <4>Saiba mais</4>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "Pausar partilha"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11900,8 +11859,6 @@
       "external-link": "Link externo",
       "loading-text": "A carregar...",
       "open-dashboard-list-text": "Abrir lista de painéis de controlo",
-      "public-dashboard-link": "URL do painel de controlo público",
-      "public-dashboard-setting": "Definições do painel de controlo público",
       "sharing-setting": "Definições de partilha"
     },
     "delete-user-modal": {
@@ -11909,14 +11866,12 @@
       "delete-user-cancel-button": "Cancelar",
       "delete-user-revoke-access-button": "Revogar acesso",
       "revoke-access-title": "Revogar acesso",
-      "revoke-user-access-modal-desc-line1": "Tem a certeza de que pretende revogar o acesso a {{email}}?",
-      "revoke-user-access-modal-desc-line2": "Esta ação revogará imediatamente o acesso de {{email}}&apos;s a todos os painéis de controlo públicos."
+      "revoke-user-access-modal-desc-line1": "Tem a certeza de que pretende revogar o acesso a {{email}}?"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "Esta ação revogará imediatamente o acesso de {{email}}&apos;s a todos os painéis de controlo partilhados."
     },
     "modal": {
-      "dashboard-modal-title": "Painéis de controlo públicos",
       "shared-dashboard-modal-title": "Painéis de controlo partilhados"
     },
     "table-body": {
@@ -12418,8 +12373,6 @@
       "export": "Exportar",
       "library-panel": "Painel de biblioteca",
       "link": "Link",
-      "panel-embed": "Incorporar",
-      "public-dashboard": "Painel de controlo público",
       "public-dashboard-title": "Painel de controlo público",
       "snapshot": "Imagem instantânea"
     },
@@ -12814,6 +12767,7 @@
     "description-column-filter": "Ativa/desativa filtros de campo na tabela",
     "description-frozen-columns": "",
     "description-min-column-width": "A largura mínima para o redimensionamento automático da coluna",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Texto alternativo que será exibido se uma imagem não puder ser exibida ou para utilizadores que utilizem um leitor de ecrã",
@@ -12844,6 +12798,7 @@
     "name-max-height": "",
     "name-min-column-width": "Largura mínima da coluna",
     "name-show-table-header": "Mostrar o cabeçalho da tabela",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Encapsular o texto do cabeçalho",
@@ -14013,7 +13968,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Utilizadores do painel de controlo público",
       "shared-dashboard-users-tab-title": "Utilizadores do painel de controlo partilhado"
     }
   },

@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/blevesearch/bleve/v2"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
@@ -756,23 +757,72 @@ func Test_isPathWithinRoot(t *testing.T) {
 	}
 }
 
-func setupBleveBackend(t *testing.T, fileThreshold int, cacheTTL time.Duration, dir string) (*bleveBackend, prometheus.Gatherer) {
-	if dir == "" {
-		dir = t.TempDir()
-	}
+const (
+	buildVersion         = "12.3.45-789"
+	defaultFileThreshold = 5
+	defaultIndexCacheTTL = 1 * time.Minute
+)
+
+func setupBleveBackend(t *testing.T, options ...setupOption) (*bleveBackend, prometheus.Gatherer) {
 	reg := prometheus.NewRegistry()
 	metrics := resource.ProvideIndexMetrics(reg)
 
-	backend, err := NewBleveBackend(BleveOptions{
-		Root:          dir,
-		FileThreshold: int64(fileThreshold),
-		IndexCacheTTL: cacheTTL,
+	opts := BleveOptions{
+		FileThreshold: defaultFileThreshold,
+		IndexCacheTTL: defaultIndexCacheTTL,
 		Logger:        slog.New(logtest.NewNopHandler(t)),
-	}, tracing.NewNoopTracerService(), metrics)
+		BuildVersion:  buildVersion,
+	}
+	for _, opt := range options {
+		opt(&opts)
+	}
+	if opts.Root == "" {
+		opts.Root = t.TempDir()
+	}
+
+	backend, err := NewBleveBackend(opts, tracing.NewNoopTracerService(), metrics)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	t.Cleanup(backend.CloseAllIndexes)
 	return backend, reg
+}
+
+type setupOption func(options *BleveOptions)
+
+func withIndexCacheTTL(ttl time.Duration) setupOption {
+	return func(options *BleveOptions) {
+		options.IndexCacheTTL = ttl
+	}
+}
+
+func withFileThreshold(threshold int) setupOption {
+	return func(options *BleveOptions) {
+		options.FileThreshold = int64(threshold)
+	}
+}
+
+func withRootDir(root string) setupOption {
+	return func(options *BleveOptions) {
+		options.Root = root
+	}
+}
+
+func withBuildVersion(version string) setupOption {
+	return func(options *BleveOptions) {
+		options.BuildVersion = version
+	}
+}
+
+func withMinBuildVersion(version *semver.Version) setupOption {
+	return func(options *BleveOptions) {
+		options.MinBuildVersion = version
+	}
+}
+
+func withMaxFileIndexAge(maxAge time.Duration) setupOption {
+	return func(options *BleveOptions) {
+		options.MaxFileIndexAge = maxAge
+	}
 }
 
 func TestBuildIndexExpiration(t *testing.T) {
@@ -783,7 +833,7 @@ func TestBuildIndexExpiration(t *testing.T) {
 	}
 
 	t.Run("memory based indexes should expire", func(t *testing.T) {
-		backend, reg := setupBleveBackend(t, 5, time.Nanosecond, "")
+		backend, reg := setupBleveBackend(t, withIndexCacheTTL(time.Nanosecond))
 
 		builtIndex, err := backend.BuildIndex(context.Background(), ns, 1 /* below FileThreshold */, nil, "test", indexTestDocs(ns, 1, 100), nil, false)
 		require.NoError(t, err)
@@ -803,7 +853,7 @@ func TestBuildIndexExpiration(t *testing.T) {
 	})
 
 	t.Run("file based indexes should NOT expire", func(t *testing.T) {
-		backend, reg := setupBleveBackend(t, 5, time.Nanosecond, "")
+		backend, reg := setupBleveBackend(t, withIndexCacheTTL(time.Nanosecond))
 
 		// size=100 is above FileThreshold, this will be file-based index
 		builtIndex, err := backend.BuildIndex(context.Background(), ns, 100, nil, "test", indexTestDocs(ns, 1, 100), nil, false)
@@ -837,7 +887,7 @@ func TestCloseAllIndexes(t *testing.T) {
 	}
 
 	tmpDir := t.TempDir()
-	backend1, reg := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	backend1, reg := setupBleveBackend(t, withRootDir(tmpDir))
 	_, err := backend1.BuildIndex(context.Background(), ns, 10 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
 	require.NoError(t, err)
 	_, err = backend1.BuildIndex(context.Background(), ns2, 1 /* memory based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
@@ -858,84 +908,82 @@ func TestBuildIndex(t *testing.T) {
 		Resource:  "resource",
 	}
 
-	type RV string
-	const (
-		RVLessThan   RV = "less"
-		RVBiggerThan RV = "more"
-		RVSame       RV = "same"
-	)
+	const alwaysRebuildDueToAge = 1 * time.Nanosecond
+	const neverRebuildDueToAge = 1 * time.Hour
+
 	for _, rebuild := range []bool{false, true} {
-		for _, sameSize := range []bool{false, true} {
-			for _, documentRV := range []RV{RVLessThan, RVSame, RVBiggerThan} {
-				shouldRebuild := rebuild
-
-				testName := ""
-				if shouldRebuild {
-					testName += "should NOT reuse index "
-				} else {
-					testName += "should reuse index "
-				}
-
-				if sameSize {
-					testName += "on same size "
-				} else {
-					testName += "on different size "
-				}
-
-				switch documentRV {
-				case RVLessThan:
-					testName += "and documentRV < indexRV "
-				case RVBiggerThan:
-					testName += "and documentRV > indexRV "
-				case RVSame:
-					testName += "and documentRV = indexRV "
-				}
-
-				if rebuild {
-					testName += "when rebuild is true "
-				} else {
-					testName += "when rebuild is false "
-				}
-
-				t.Run(testName, func(t *testing.T) {
-					tmpDir := t.TempDir()
-
-					var size int64 = 10
-					var rv int64 = 100
-					backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, size, rv, 10, rebuild)
-					backend1.CloseAllIndexes()
-
-					if !sameSize {
-						size = 11
+		for _, version := range []string{"", "12.5.123"} {
+			for _, minBuildVersion := range []*semver.Version{nil, semver.MustParse("12.0.0"), semver.MustParse("13.0.0")} {
+				for _, maxIndexAge := range []time.Duration{0, alwaysRebuildDueToAge, neverRebuildDueToAge} {
+					shouldRebuild := rebuild
+					if minBuildVersion != nil {
+						shouldRebuild = shouldRebuild || version == "" || minBuildVersion.GreaterThan(semver.MustParse(version))
 					}
-					switch documentRV {
-					case RVBiggerThan:
-						rv = 101
-					case RVLessThan:
-						rv = 99
-					case RVSame:
+					if maxIndexAge > 0 {
+						shouldRebuild = shouldRebuild || maxIndexAge == alwaysRebuildDueToAge
 					}
-					backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, size, rv, 1000, rebuild)
 
-					cnt, err := idx.DocCount(context.Background(), "")
-					require.NoError(t, err)
+					testName := ""
 					if shouldRebuild {
-						require.Equal(t, int64(1000), cnt, "Index has been not rebuilt")
+						testName += "should REBUILD index"
 					} else {
-						require.Equal(t, int64(10), cnt, "Index has not been reused")
+						testName += "should REUSE index"
 					}
-					backend2.CloseAllIndexes()
-				})
+
+					if rebuild {
+						testName += " when rebuild is true"
+					} else {
+						testName += " when rebuild is false"
+					}
+
+					if version != "" {
+						testName += " build version is " + version
+					} else {
+						testName += " build version is empty"
+					}
+
+					if minBuildVersion != nil {
+						testName += " min build version is " + minBuildVersion.String()
+					} else {
+						testName += " min build version is nil"
+					}
+
+					testName += " max index age is " + maxIndexAge.String()
+
+					t.Run(testName, func(t *testing.T) {
+						tmpDir := t.TempDir()
+
+						const (
+							firstIndexDocsCount  = 10
+							secondIndexDocsCount = 1000
+						)
+
+						{
+							backend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(tmpDir), withBuildVersion(version))
+							_, err := backend.BuildIndex(context.Background(), ns, firstIndexDocsCount, nil, "test", indexTestDocs(ns, firstIndexDocsCount, 100), nil, rebuild)
+							require.NoError(t, err)
+							backend.CloseAllIndexes()
+						}
+
+						// Make sure we pass at least 1 nanosecond (alwaysRebuildDueToAge) to ensure that the index needs to be rebuild.
+						time.Sleep(1 * time.Millisecond)
+
+						newBackend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(tmpDir), withBuildVersion(version), withMinBuildVersion(minBuildVersion), withMaxFileIndexAge(maxIndexAge))
+						idx, err := newBackend.BuildIndex(context.Background(), ns, secondIndexDocsCount, nil, "test", indexTestDocs(ns, secondIndexDocsCount, 100), nil, rebuild)
+						require.NoError(t, err)
+
+						cnt, err := idx.DocCount(context.Background(), "")
+						require.NoError(t, err)
+						if shouldRebuild {
+							require.Equal(t, int64(secondIndexDocsCount), cnt, "Index has been not rebuilt")
+						} else {
+							require.Equal(t, int64(firstIndexDocsCount), cnt, "Index has not been reused")
+						}
+					})
+				}
 			}
 		}
 	}
-}
-
-func createBleveBackendAndIndex(t *testing.T, tmpDir string, ns resource.NamespacedResource, size, rv int64, docCount int, rebuild bool) (*bleveBackend, resource.ResourceIndex) {
-	backend, _ := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
-	idx, err := backend.BuildIndex(context.Background(), ns, size /* file based */, nil, "test", indexTestDocs(ns, docCount, rv), nil, rebuild)
-	require.NoError(t, err)
-	return backend, idx
 }
 
 func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
@@ -955,7 +1003,7 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 		"file, file":           {false, false},
 	} {
 		t.Run(name, func(t *testing.T) {
-			backend, reg := setupBleveBackend(t, 5, time.Nanosecond, "")
+			backend, reg := setupBleveBackend(t, withIndexCacheTTL(time.Nanosecond))
 
 			firstSize := 100
 			if testCase.firstInMemory {
@@ -1077,7 +1125,7 @@ func updateTestDocs(ns resource.NamespacedResource, docs int) resource.UpdateFn 
 func TestCleanOldIndexes(t *testing.T) {
 	dir := t.TempDir()
 
-	b, _ := setupBleveBackend(t, 5, time.Nanosecond, dir)
+	b, _ := setupBleveBackend(t, withRootDir(dir))
 
 	t.Run("with skip", func(t *testing.T) {
 		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-1/a"), 0750))
@@ -1113,7 +1161,7 @@ func TestBleveIndexWithFailures(t *testing.T) {
 }
 
 func testBleveIndexWithFailures(t *testing.T, fileBased bool) {
-	backend, _ := setupBleveBackend(t, 5, time.Nanosecond, "")
+	backend, _ := setupBleveBackend(t)
 
 	ns := resource.NamespacedResource{
 		Namespace: "test",
@@ -1143,8 +1191,8 @@ func TestIndexUpdate(t *testing.T) {
 		Resource:  "resource",
 	}
 
-	be, _ := setupBleveBackend(t, 5, 1*time.Minute, "")
-	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false)
+	be, _ := setupBleveBackend(t)
+	idx, err := be.BuildIndex(t.Context(), ns, defaultFileThreshold*2 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false)
 	require.NoError(t, err)
 
 	resp := searchTitle(t, idx, "gen", 10, ns)
@@ -1174,7 +1222,7 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 		Resource:  "resource",
 	}
 
-	be, _ := setupBleveBackend(t, 5, 1*time.Minute, "")
+	be, _ := setupBleveBackend(t)
 
 	updaterFn := func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
 		var items []*resource.BulkIndexItem
@@ -1220,7 +1268,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 		Resource:  "resource",
 	}
 
-	be, _ := setupBleveBackend(t, 5, 1*time.Minute, "")
+	be, _ := setupBleveBackend(t)
 
 	_, err := be.BuildIndex(t.Context(), ns, 10, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false)
 	require.NoError(t, err)
@@ -1306,7 +1354,7 @@ func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
 		Resource:  "resource",
 	}
 
-	be, _ := setupBleveBackend(t, 5, 1*time.Minute, "")
+	be, _ := setupBleveBackend(t)
 
 	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false)
 	require.NoError(t, err)
@@ -1365,7 +1413,7 @@ func TestIndexUpdateWithErrors(t *testing.T) {
 		Resource:  "resource",
 	}
 
-	be, _ := setupBleveBackend(t, 5, 1*time.Minute, "")
+	be, _ := setupBleveBackend(t)
 
 	updateErr := fmt.Errorf("failed to update index")
 	updaterFn := func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
@@ -1396,6 +1444,33 @@ func TestIndexUpdateWithErrors(t *testing.T) {
 		_, err = idx.UpdateIndex(ctx, "test")
 		require.ErrorIs(t, err, context.Canceled)
 	})
+}
+
+func TestIndexBuildInfo(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	be, _ := setupBleveBackend(t, withFileThreshold(100))
+	index, err := be.BuildIndex(t.Context(), ns, 10, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
+	require.NoError(t, err)
+
+	buildInfo, err := getBuildInfo(index.(*bleveIndex).index)
+	require.NoError(t, err)
+	require.NotNil(t, buildInfo)
+	require.Equal(t, buildVersion, buildInfo.BuildVersion)
+	require.InDelta(t, float64(time.Now().Unix()), buildInfo.BuildTime, 30) // allow 30 seconds of drift
+}
+
+func TestInvalidBuildVersion(t *testing.T) {
+	opts := BleveOptions{
+		Root:         t.TempDir(),
+		BuildVersion: "invalid",
+	}
+	_, err := NewBleveBackend(opts, tracing.NewNoopTracerService(), nil)
+	require.ErrorContains(t, err, "cannot parse build version")
 }
 
 func searchTitle(t *testing.T, idx resource.ResourceIndex, query string, limit int, ns resource.NamespacedResource) *resourcepb.ResourceSearchResponse {

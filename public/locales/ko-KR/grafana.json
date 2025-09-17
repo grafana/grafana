@@ -156,8 +156,11 @@
       "title": "Grafana Enterprise 사용하기"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "사용자 매핑 테스트",
-      "test-mapping-run-button": "실행"
+      "test-mapping-run-button": "실행",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -3579,6 +3582,7 @@
       "button-cancel": "취소",
       "button-delete": "삭제",
       "button-deleting": "삭제 중…",
+      "commit": "",
       "delete-warning": "이 작업을 수행하면 이 폴더와 모든 하위 폴더가 삭제됩니다. 이는 전체적으로 다음에 영향을 미칩니다.",
       "success-message": "폴더가 삭제되었습니다"
     },
@@ -5382,10 +5386,6 @@
       "save-dashboard-short": "저장",
       "save-library-panel": "라이브러리 패널 저장",
       "settings": "대시보드 설정",
-      "share": {
-        "label": "공유",
-        "tooltip": "대시보드 공유"
-      },
       "share-button": "공유",
       "unlink-library-panel": "라이브러리 패널 연결 해제",
       "unmark-favorite": "즐겨찾기 표시 취소"
@@ -5636,14 +5636,6 @@
         "title": {
           "new-dashboard": "새 대시보드"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "공개 URL 철회"
-      },
-      "title": {
-        "revoke-public-url": "공개 URL 철회"
       }
     },
     "constant-variable-form": {
@@ -5899,13 +5891,12 @@
       "usage-count_other": "{{count}}개의 대시보드에서 사용됨"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "대시보드 이동 중 오류 발생",
       "api-error": "대시보드를 이동하지 못했습니다",
       "cancel-action": "취소",
       "current-file-not-found": "현재 대시보드 파일을 찾을 수 없습니다",
       "drawer-title": "프로비저닝된 대시보드 이동",
       "file-load-error": "대시보드 로딩 중 오류 발생",
-      "loading-file-data": "대시보드 데이터 로딩 중",
+      "loading-dashboard-data": "",
       "move-action": "대시보드 이동",
       "move-read-only-message": "리포지토리가 읽기 전용이므로 이 대시보드를 Grafana에서 직접 이동할 수 없습니다. 이 대시보드를 이동하려면 Git 리포지토리에서 파일을 이동하세요.",
       "moving": "이동 중...",
@@ -9213,7 +9204,8 @@
       "disable-button": "비활성화",
       "discard-button": "삭제",
       "save-and-enable-button": "저장 및 활성화",
-      "save-button": "저장"
+      "save-button": "저장",
+      "test-button": ""
     },
     "documentation": "문서",
     "host": {
@@ -9243,8 +9235,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "취소",
-      "create": "라이브러리 패널 생성",
       "error": "이미 존재하는 라이브러리 패널 이름입니다.",
       "folder": "폴더에 저장",
       "folder-description": "라이브러리 패널 권한은 폴더 권한에서 파생됩니다.",
@@ -10306,9 +10296,6 @@
     },
     "profiles": {
       "title": "프로필"
-    },
-    "public": {
-      "title": "공개 대시보드"
     },
     "recently-deleted": {
       "subtitle": "여기에 30일 이상 기재된 모든 항목이 자동으로 삭제됩니다.",
@@ -11720,7 +11707,6 @@
       "email-share-type-option-label": "지정된 사용자만",
       "pause-sharing-dashboard-label": "대시보드 공유 일시 중지",
       "public-share-type-option-label": "링크를 보유한 모든 사용자",
-      "revoke-body": "이 URL을 정말 철회하시겠어요? 대시보드가 더 이상 공개되지 않습니다.",
       "revoke-public-URL-button": "공개 URL 철회",
       "revoke-public-URL-button-title": "공개 URL 철회",
       "settings-title": "설정"
@@ -11734,7 +11720,6 @@
       "success-pause": "대시보드에 대한 액세스 권한이 일시 중지되었습니다.",
       "success-resume": "대시보드에 대한 액세스 권한이 재개되었습니다.",
       "success-update": "설정이 성공적으로 업데이트되었습니다.",
-      "success-update-old": "공개 대시보드가 업데이트되었습니다!",
       "time-range-label": "시간 범위",
       "time-range-tooltip": "공유 대시보드는 대시보드의 기본 시간 범위 설정을 사용합니다."
     },
@@ -11742,10 +11727,6 @@
       "generate-public-url-button": "공개 URL 생성",
       "unsupported-features-desc": "현재 템플릿 변수 또는 프런트엔드 데이터 소스는 지원하지 않습니다.",
       "welcome-title": "공개 대시보드에 오신 것을 환영합니다!"
-    },
-    "delete-modal": {
-      "revoke-body-text": "이 URL을 정말 철회하시겠어요? 대시보드가 더 이상 공개되지 않습니다.",
-      "revoke-title": "공개 URL 철회"
     },
     "email-sharing": {
       "accept-button": "수락",
@@ -11776,11 +11757,8 @@
       "success-share-type-change": "대시보드 액세스 권한이 업데이트됨: 이제 특정한 사용자만 링크를 통해 액세스할 수 있습니다."
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "공개 대시보드에 대한 {{action}} 권한을 얻으려면 관리자에게 문의하세요",
-      "no-upsert-perm-alert-title": "공개 대시보드에 {{ action }}할 권한이 없습니다",
       "save-dashboard-changes-alert-title": "공개 구성을 업데이트하기 전에 대시보드 변경 사항을 저장하세요.",
       "unsupport-data-source-alert-readmore-link": "지원되는 데이터 소스에 대해 자세히 알아보기",
-      "unsupported-data-source-alert-desc": "이 대시보드에는 공개 대시보드에서 지원되지 않는 데이터 소스가 있습니다. 다음과 같은 데이터 소스를 사용하는 패널이 제대로 작동하지 않을 수 있습니다: {{unsupportedDataSources}}",
       "unsupported-data-source-alert-title": "지원되지 않는 데이터 소스",
       "unsupported-template-variable-alert-desc": "이 공개 대시보드는 템플릿 변수를 사용하고 있기 때문에  작동하지 않을 수 있습니다.",
       "unsupported-template-variable-alert-title": "템플릿 변수는 지원되지 않습니다."
@@ -11814,8 +11792,7 @@
       "time-range-text": "시간 범위 = "
     },
     "share": {
-      "success-delete": "대시보드를 더 이상 공유할 수 없습니다.",
-      "success-delete-old": "공개 대시보드가 삭제되었습니다!"
+      "success-delete": "대시보드를 더 이상 공유할 수 없습니다."
     },
     "share-configuration": {
       "share-type-label": "링크 액세스 권한"
@@ -11834,24 +11811,6 @@
       "revoke-access-button": "액세스 권한 철회",
       "revoke-access-description": "정말 이 액세스 권한을 철회하시겠어요? 대시보드를 더 이상 공유할 수 없습니다.",
       "unsupported-data-source-alert-desc": "이 대시보드에는 공유 대시보드에서 지원되지 않는 데이터 소스가 있습니다. 다음과 같은 데이터 소스를 사용하는 패널이 제대로 작동하지 않을 수 있습니다: {{unsupportedDataSources}}"
-    },
-    "sharing": {
-      "success-creation": "대시보드가 공개되었습니다!"
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "공개 대시보드 구성",
-      "revoke-button-text": "공개 URL 철회",
-      "revoke-button-tooltip": "공개 대시보드 URL 철회",
-      "view-button-tooltip": "공개 대시보드 보기"
-    },
-    "empty-state": {
-      "message": "아직 생성된 공개 대시보드가 없습니다.",
-      "more-info": "<1>공유</1> 모달을 통해 기존 대시보드에서 공개 대시보드를 생성합니다. <2>자세히 알아보기</2>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "공유 일시 중지"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11859,8 +11818,6 @@
       "external-link": "외부 링크",
       "loading-text": "로딩 중...",
       "open-dashboard-list-text": "대시보드 목록 열기",
-      "public-dashboard-link": "공개 대시보드 URL",
-      "public-dashboard-setting": "공개 대시보드 설정",
       "sharing-setting": "공유 설정"
     },
     "delete-user-modal": {
@@ -11868,14 +11825,12 @@
       "delete-user-cancel-button": "취소",
       "delete-user-revoke-access-button": "액세스 권한 철회",
       "revoke-access-title": "액세스 권한 철회",
-      "revoke-user-access-modal-desc-line1": "정말 {{email}}에 대한 액세스 권한을 철회하시겠어요?",
-      "revoke-user-access-modal-desc-line2": "이 작업을 수행하면 모든 공개 대시보드에 대한 {{email}}의 액세스 권한이 즉시 철회됩니다."
+      "revoke-user-access-modal-desc-line1": "정말 {{email}}에 대한 액세스 권한을 철회하시겠어요?"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "이 작업을 수행하면 모든 공유 대시보드에 대한 {{email}}의 액세스 권한이 즉시 철회됩니다."
     },
     "modal": {
-      "dashboard-modal-title": "공개 대시보드",
       "shared-dashboard-modal-title": "공유된 대시보드"
     },
     "table-body": {
@@ -12373,8 +12328,6 @@
       "export": "내보내기",
       "library-panel": "라이브러리 패널",
       "link": "링크",
-      "panel-embed": "임베드",
-      "public-dashboard": "공개 대시보드",
       "public-dashboard-title": "공개 대시보드",
       "snapshot": "스냅샷"
     },
@@ -12768,6 +12721,7 @@
     "description-column-filter": "테이블에서 필드 필터 활성화/비활성화",
     "description-frozen-columns": "",
     "description-min-column-width": "열 자동 크기 조정을 위한 최소 너비",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "이미지를 표시할 수 없거나 화면 리더를 이용하는 사용자를 위해 표시되는 대체 텍스트",
@@ -12798,6 +12752,7 @@
     "name-max-height": "",
     "name-min-column-width": "열 최소 너비",
     "name-show-table-header": "테이블 머리말 표시",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "머리말 텍스트 줄 바꿈",
@@ -13967,7 +13922,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "공개 대시보드 사용자",
       "shared-dashboard-users-tab-title": "공유 대시보드 사용자"
     }
   },

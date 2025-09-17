@@ -156,8 +156,11 @@
       "title": "Scegli Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Mappatura utente di prova",
-      "test-mapping-run-button": "Esegui"
+      "test-mapping-run-button": "Esegui",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -3597,6 +3600,7 @@
       "button-cancel": "Annulla",
       "button-delete": "Elimina",
       "button-deleting": "Eliminazione in corso...",
+      "commit": "",
       "delete-warning": "Questa operazione eliminerà questa cartella e tutti i suoi discendenti. In totale, questo influenzerà:",
       "success-message": "Cartella eliminata correttamente"
     },
@@ -5404,10 +5408,6 @@
       "save-dashboard-short": "Salva",
       "save-library-panel": "Salva pannello della libreria",
       "settings": "Impostazioni dashboard",
-      "share": {
-        "label": "Condividi",
-        "tooltip": "Condividi dashboard"
-      },
       "share-button": "Condividi",
       "unlink-library-panel": "Scollega pannello della libreria",
       "unmark-favorite": "Rimuovi dai preferiti"
@@ -5658,14 +5658,6 @@
         "title": {
           "new-dashboard": "Nuovo dashboard"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "Revoca URL pubblico"
-      },
-      "title": {
-        "revoke-public-url": "Revoca URL pubblico"
       }
     },
     "constant-variable-form": {
@@ -5922,13 +5914,12 @@
       "usage-count_other": "Utilizzato su {{count}} dashboard"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "Errore durante lo spostamento della dashboard",
       "api-error": "Impossibile spostare la dashboard",
       "cancel-action": "Annulla",
       "current-file-not-found": "Impossibile trovare il file della dashboard corrente",
       "drawer-title": "Sposta la dashboard configurata",
       "file-load-error": "Errore durante il caricamento della dashboard",
-      "loading-file-data": "Caricamento dati dashboard",
+      "loading-dashboard-data": "",
       "move-action": "Sposta dashboard",
       "move-read-only-message": "Questa dashboard non può essere spostata direttamente da Grafana perché il repository è di sola lettura. Per spostare questa dashboard, sposta il file nel repository Git.",
       "moving": "Spostamento in corso...",
@@ -9239,7 +9230,8 @@
       "disable-button": "Disabilita",
       "discard-button": "Rimuovi’",
       "save-and-enable-button": "Salva e abilita",
-      "save-button": "Salva"
+      "save-button": "Salva",
+      "test-button": ""
     },
     "documentation": "documentazione",
     "host": {
@@ -9269,8 +9261,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "Annulla",
-      "create": "Crea pannello della libreria",
       "error": "Esiste già un pannello della libreria con questo nome",
       "folder": "Salva nella cartella",
       "folder-description": "Le autorizzazioni del pannello della libreria derivano dalle autorizzazioni della cartella",
@@ -10338,9 +10328,6 @@
     },
     "profiles": {
       "title": "Profili"
-    },
-    "public": {
-      "title": "Dashboard pubblici"
     },
     "recently-deleted": {
       "subtitle": "Tutti gli elementi elencati qui per più di 30 giorni verranno eliminati automaticamente.",
@@ -11761,7 +11748,6 @@
       "email-share-type-option-label": "Solo persone specificate",
       "pause-sharing-dashboard-label": "Sospendi la condivisione del dashboard",
       "public-share-type-option-label": "Chiunque abbia un link",
-      "revoke-body": "Vuoi davvero revocare questo URL? Il dashboard non sarà più pubblico.",
       "revoke-public-URL-button": "Revoca URL pubblico",
       "revoke-public-URL-button-title": "Revoca URL pubblico",
       "settings-title": "Impostazioni"
@@ -11775,7 +11761,6 @@
       "success-pause": "L'accesso al dashboard è stato sospeso",
       "success-resume": "L'accesso al dashboard è stato ripristinato",
       "success-update": "Le impostazioni sono state salvate correttamente",
-      "success-update-old": "Dashboard pubblico aggiornato.",
       "time-range-label": "Intervallo di tempo",
       "time-range-tooltip": "Il dashboard condiviso utilizza le impostazioni dell'intervallo di tempo predefinite del dashboard"
     },
@@ -11783,10 +11768,6 @@
       "generate-public-url-button": "Genera URL pubblico",
       "unsupported-features-desc": "Al momento non supportiamo variabili di modello o origini dati frontend",
       "welcome-title": "Ti diamo il benvenuto nei dashboard pubblici!"
-    },
-    "delete-modal": {
-      "revoke-body-text": "Vuoi davvero revocare questo URL? Il dashboard non sarà più pubblico.",
-      "revoke-title": "Revoca URL pubblico"
     },
     "email-sharing": {
       "accept-button": "Accetta",
@@ -11817,11 +11798,8 @@
       "success-share-type-change": "Accesso al dashboard aggiornato: solo alcune persone possono ora accedere con il link"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Contatta il tuo amministratore per ottenere l'autorizzazione a {{action}} le dashboard pubbliche",
-      "no-upsert-perm-alert-title": "Non hai l'autorizzazione per {{ action }} una dashboard pubblica",
       "save-dashboard-changes-alert-title": "Salva le modifiche al dashboard prima di aggiornare la configurazione pubblica",
       "unsupport-data-source-alert-readmore-link": "Scopri di più sulle origini dati supportate",
-      "unsupported-data-source-alert-desc": "In questo dashboard sono presenti origini dati non supportate per i dashboard pubblici. I pannelli che utilizzano queste origini dati potrebbero non funzionare correttamente: {{unsupportedDataSources}}.",
       "unsupported-data-source-alert-title": "Origini dati non supportate",
       "unsupported-template-variable-alert-desc": "Questo dashboard pubblico potrebbe non funzionare poiché utilizza variabili di modello",
       "unsupported-template-variable-alert-title": "Le variabili di modello non sono supportate"
@@ -11855,8 +11833,7 @@
       "time-range-text": "Intervallo di tempo = "
     },
     "share": {
-      "success-delete": "Il tuo dashboard non è più condivisibile",
-      "success-delete-old": "Dashboard pubblico eliminato."
+      "success-delete": "Il tuo dashboard non è più condivisibile"
     },
     "share-configuration": {
       "share-type-label": "Accesso al link"
@@ -11875,24 +11852,6 @@
       "revoke-access-button": "Revoca accesso",
       "revoke-access-description": "Vuoi davvero revocare questo accesso? Il dashboard non può più essere condiviso.",
       "unsupported-data-source-alert-desc": "In questo dashboard sono presenti origini dati non supportate per i dashboard condivisi. I pannelli che utilizzano queste origini dati potrebbero non funzionare correttamente: {{unsupportedDataSources}}."
-    },
-    "sharing": {
-      "success-creation": "Il dashboard è pubblico."
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "Configura dashboard pubblico",
-      "revoke-button-text": "Revoca URL pubblico",
-      "revoke-button-tooltip": "Revoca URL dashboard pubblico",
-      "view-button-tooltip": "Visualizza dashboard pubblico"
-    },
-    "empty-state": {
-      "message": "Non hai ancora creato nessun dashboard pubblico",
-      "more-info": "Crea un dashboard pubblico da qualsiasi dashboard esistente tramite la modalità <1>Condividi</1>. <4>Ulteriori informazioni</4>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "Sospendi condivisione"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11900,8 +11859,6 @@
       "external-link": "Collegamento esterno",
       "loading-text": "Caricamento in corso...",
       "open-dashboard-list-text": "Apri l'elenco dei dashboard",
-      "public-dashboard-link": "URL dashboard pubblico",
-      "public-dashboard-setting": "Impostazioni dashboard pubblico",
       "sharing-setting": "Impostazioni di condivisione"
     },
     "delete-user-modal": {
@@ -11909,14 +11866,12 @@
       "delete-user-cancel-button": "Annulla",
       "delete-user-revoke-access-button": "Revoca accesso",
       "revoke-access-title": "Revoca accesso",
-      "revoke-user-access-modal-desc-line1": "Vuoi davvero revocare l'accesso a {{email}}?",
-      "revoke-user-access-modal-desc-line2": "Questa azione revoca immediatamente l'accesso a {{email}} a tutti i dashboard pubblici."
+      "revoke-user-access-modal-desc-line1": "Vuoi davvero revocare l'accesso a {{email}}?"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "Questa azione revoca immediatamente l'accesso a {{email}} a tutti i dashboard condivisi."
     },
     "modal": {
-      "dashboard-modal-title": "Dashboard pubblici",
       "shared-dashboard-modal-title": "Dashboard condivisi"
     },
     "table-body": {
@@ -12418,8 +12373,6 @@
       "export": "Esporta",
       "library-panel": "Pannello della libreria",
       "link": "Link",
-      "panel-embed": "Incorpora",
-      "public-dashboard": "Dashboard pubblico",
       "public-dashboard-title": "Dashboard pubblico",
       "snapshot": "Istantanea"
     },
@@ -12814,6 +12767,7 @@
     "description-column-filter": "Abilita/disabilita i filtri di campo nella tabella",
     "description-frozen-columns": "",
     "description-min-column-width": "La larghezza minima per il ridimensionamento automatico della colonna",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Testo alternativo che verrà visualizzato se un'immagine non può essere visualizzata o per gli utenti che utilizzano un lettore di schermo",
@@ -12844,6 +12798,7 @@
     "name-max-height": "",
     "name-min-column-width": "Larghezza minima colonna",
     "name-show-table-header": "Mostra intestazione tabella",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Testo intestazione a capo",
@@ -14013,7 +13968,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Utenti dashboard pubblico",
       "shared-dashboard-users-tab-title": "Utenti con dashboard condiviso"
     }
   },
