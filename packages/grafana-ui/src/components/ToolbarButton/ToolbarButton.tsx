@@ -159,7 +159,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: `1px solid ${theme.colors.secondary.border}`,
       whiteSpace: 'nowrap',
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background', 'box-shadow', 'border-color', 'color'], {
+        transition: theme.transitions.create(['background-color', 'border-color', 'color', 'transform'], {
           duration: theme.transitions.duration.short,
         }),
       },

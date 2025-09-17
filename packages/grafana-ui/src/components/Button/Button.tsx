@@ -263,6 +263,12 @@ export const getButtonStyles = (props: StyleProps) => {
       ...variantStyles,
       ':disabled': disabledStyles,
       '&[disabled]': disabledStyles,
+
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
     }),
     disabled: css(disabledStyles, {
       '&:hover': css(disabledStyles),
@@ -290,15 +296,6 @@ export const getButtonStyles = (props: StyleProps) => {
   };
 };
 
-function addTransform(transitions: string[]) {
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!prefersReducedMotion) {
-    transitions.push('transform');
-  }
-
-  return transitions;
-}
-
 export function getActiveButtonStyles(color: ThemeRichColor, fill: ButtonFill) {
   return {
     background: fill === 'solid' ? color.main : color.transparent,
@@ -324,9 +321,6 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       background: 'transparent',
       color: color.text,
       border: `1px solid ${outlineBorderColor}`,
-      transition: theme.transitions.create(addTransform(['background-color', 'border-color', 'color']), {
-        duration: theme.transitions.duration.short,
-      }),
 
       '&:hover, &:focus': {
         background: color.transparent,
@@ -345,9 +339,6 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       background: 'transparent',
       color: color.text,
       border: '1px solid transparent',
-      transition: theme.transitions.create(addTransform(['background-color', 'color', 'border-color']), {
-        duration: theme.transitions.duration.short,
-      }),
 
       '&:hover, &:focus': {
         background: color.transparent,
@@ -365,9 +356,6 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
     background: color.main,
     color: color.contrastText,
     border: `1px solid ${borderColor}`,
-    transition: theme.transitions.create(addTransform(['background-color', 'box-shadow', 'border-color', 'color']), {
-      duration: theme.transitions.duration.short,
-    }),
 
     '&:hover': {
       background: color.shade,
