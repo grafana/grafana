@@ -159,7 +159,7 @@ export function SaveProvisionedDashboardForm({
 
     createOrUpdateFile({
       // Skip adding ref to the default branch request
-      // ref: ref === repository?.branch ? undefined : ref,
+      ref: ref === repository?.branch ? undefined : ref,
       name: repo,
       path,
       message,
