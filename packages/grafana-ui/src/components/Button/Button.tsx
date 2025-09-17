@@ -265,7 +265,7 @@ export const getButtonStyles = (props: StyleProps) => {
       '&[disabled]': disabledStyles,
 
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
+        transition: theme.transitions.create(['background-color', 'border-color', 'color', 'transform'], {
           duration: theme.transitions.duration.short,
         }),
       },
