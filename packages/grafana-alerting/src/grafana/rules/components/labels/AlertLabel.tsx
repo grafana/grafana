@@ -71,11 +71,13 @@ function getAccessibleTagColor(name?: string): string | undefined {
   if (!name) {
     return;
   }
-  const options = { level: 'AA', size: 'small' } as const;
   const attempts = Array.from({ length: 6 }, (_, i) => name + '-'.repeat(i));
   const readableAttempt = attempts.find((attempt) => {
     const candidate = getTagColorsFromName(attempt).color;
-    return tinycolor2.isReadable(candidate, '#000', options) || tinycolor2.isReadable(candidate, '#fff', options);
+    return (
+      tinycolor2.isReadable(candidate, '#000', { level: 'AA' }) ||
+      tinycolor2.isReadable(candidate, '#fff', { level: 'AA' })
+    );
   });
   const chosen = readableAttempt ?? name;
   return getTagColorsFromName(chosen).color;
