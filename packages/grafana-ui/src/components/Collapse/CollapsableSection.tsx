@@ -9,6 +9,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
+
 export interface Props {
   label: ReactNode;
   isOpen: boolean;
@@ -112,10 +113,10 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   header: css({
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
     cursor: 'pointer',
     boxSizing: 'border-box',
     position: 'relative',
+    justifyContent: 'space-between',
     fontSize: theme.typography.size.lg,
     padding: `${theme.spacing(0.5)} 0`,
     '&:focus-within': getFocusStyles(theme),
