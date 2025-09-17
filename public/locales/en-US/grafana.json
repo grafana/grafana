@@ -11012,7 +11012,6 @@
       "body-not-published": "This plugin is not published to <2>grafana.com/plugins</2> and can't be managed via the catalog.",
       "enterprise-plugin-info": "This plugin is only available in Grafana Cloud and Grafana Enterprise.",
       "learn-more": "Learn more",
-      "no-valid-grafana-enterprise-license-detected": "No valid Grafana Enterprise license detected.",
       "title-dev-alert": "This is a development build of the plugin and can't be uninstalled.",
       "title-plugin-doesnt-support-version-grafana": "This plugin doesn't support your version of Grafana.",
       "title-remote-plugins-unavailable": "The install controls have been disabled because the Grafana server cannot access grafana.com.",
@@ -11374,9 +11373,10 @@
       "all-resources-managed_one": "All {{count}} resource is managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
       "no-results-matching-your-query": "No results matching your query",
-      "partial-managed_one": "{{managedCount}}/{{count}} resources managed. {{unmanagedCount}} resources aren't managed as code yet.",
-      "partial-managed_other": "{{managedCount}}/{{count}} resources managed. {{unmanagedCount}} resources aren't managed as code yet.",
-      "placeholder-search": "Search"
+      "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed.",
+      "placeholder-search": "Search",
+      "unmanaged-resources_one": "{{count}} resource isn't managed as code yet.",
+      "unmanaged-resources_other": "{{count}} resources aren't managed as code yet."
     },
     "get-default-values": {
       "title": {
