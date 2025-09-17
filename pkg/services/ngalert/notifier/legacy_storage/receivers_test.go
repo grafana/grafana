@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/alerting/definition"
 	"github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -305,7 +306,7 @@ func TestGetReceiver(t *testing.T) {
 
 	t.Run("should return ErrReceiverNotFound if receiver does not exists", func(t *testing.T) {
 		rev := getConfigRevisionForTest()
-		_, err := rev.GetReceiver("not-found", nil)
+		_, err := rev.GetReceiver("not-found", nil, false)
 		require.ErrorIs(t, err, ErrReceiverNotFound)
 	})
 
@@ -330,43 +331,73 @@ func TestGetReceiver(t *testing.T) {
 			},
 		}
 		rev := getConfigRevisionForTest()
-		result, err := rev.GetReceiver(NameToUid("receiver1"), prov)
+		result, err := rev.GetReceiver(NameToUid("receiver1"), prov, false)
 		require.NoError(t, err)
 		require.Equal(t, expected, result)
+	})
+
+	t.Run("should return receiver from extra config if included imported", func(t *testing.T) {
+
 	})
 }
 
 func TestGetReceivers(t *testing.T) {
 	rev := getConfigRevisionForTest()
-
 	t.Run("should return all receivers with correct provenance", func(t *testing.T) {
-		prov := provenances{
-			"integration-uid-1": "test",
-			"integration-uid-2": "some",
-		}
-		receivers, err := rev.GetReceivers(nil, prov)
-		require.NoError(t, err)
-		require.Len(t, receivers, len(rev.Config.AlertmanagerConfig.Receivers))
-		for _, r := range receivers {
-			assert.Equalf(t, NameToUid(r.Name), r.UID, "receiver UID should be function of receiver name")
-			assert.Equal(t, r.Origin, models.ResourceOriginGrafana)
-			if r.Name == "receiver1" {
-				assert.EqualValues(t, "test", r.Provenance)
-			} else if r.Name == "dupe-receiver" && r.Integrations[0].UID == "integration-uid-2" {
-				assert.EqualValues(t, "some", r.Provenance)
-			} else {
-				assert.Empty(t, r.Provenance)
+		var grafanaReceivers []*models.Receiver
+		t.Run("only Grafana when includeImported is false", func(t *testing.T) {
+			prov := provenances{
+				"integration-uid-1": "test",
+				"integration-uid-2": "some",
 			}
-		}
+			var err error
+			grafanaReceivers, err = rev.GetReceivers(nil, prov, false)
+			require.NoError(t, err)
+			require.Len(t, grafanaReceivers, len(rev.Config.AlertmanagerConfig.Receivers))
+			for _, r := range grafanaReceivers {
+				assert.Equalf(t, NameToUid(r.Name), r.UID, "receiver UID should be function of receiver name")
+				assert.Equal(t, r.Origin, models.ResourceOriginGrafana)
+				if r.Name == "receiver1" {
+					assert.EqualValues(t, "test", r.Provenance)
+				} else if r.Name == "dupe-receiver" && r.Integrations[0].UID == "integration-uid-2" {
+					assert.EqualValues(t, "some", r.Provenance)
+				} else {
+					assert.Empty(t, r.Provenance)
+				}
+			}
+		})
+		t.Run("All receivers when includeImported is true", func(t *testing.T) {
+			prov := provenances{
+				"integration-uid-1": "test",
+				"integration-uid-2": "some",
+			}
+			receivers, err := rev.GetReceivers(nil, prov, true)
+			require.NoError(t, err)
+			require.Len(t, receivers, len(grafanaReceivers)+2)
+			var grafanaOrigin []*models.Receiver
+			var importedOrigin []*models.Receiver
+			for _, r := range receivers {
+				if r.Origin == models.ResourceOriginGrafana {
+					grafanaOrigin = append(grafanaOrigin, r)
+				} else {
+					importedOrigin = append(importedOrigin, r)
+				}
+			}
+			assert.ElementsMatch(t, grafanaReceivers, grafanaOrigin)
+			assert.Len(t, importedOrigin, 2)
+			for _, r := range importedOrigin {
+				assert.Equal(t, models.ProvenanceConvertedPrometheus, r.Provenance)
+			}
+		})
 	})
 	t.Run("should filter by uids", func(t *testing.T) {
-		receivers, err := rev.GetReceivers([]string{"not-found-1", "not-found-2"}, nil)
+		receivers, err := rev.GetReceivers([]string{"not-found-1", "not-found-2"}, nil, false)
 		require.NoError(t, err)
 		require.Empty(t, receivers)
-		receivers, err = rev.GetReceivers([]string{NameToUid("receiver1")}, nil)
+		receivers, err = rev.GetReceivers([]string{NameToUid("receiver1")}, nil, false)
 		require.NoError(t, err)
 		require.Len(t, receivers, 1)
-		expected, err := rev.GetReceiver(NameToUid("receiver1"), nil)
+		expected, err := rev.GetReceiver(NameToUid("receiver1"), nil, false)
 		require.NoError(t, err)
 		require.Equal(t, expected, receivers[0])
 	})
@@ -420,7 +451,9 @@ func TestReceiverUseByName(t *testing.T) {
 		"dupe-receiver":         1,
 		"some-missing-receiver": 1,
 	}
-	require.Equal(t, expected, rev.ReceiverUseByName())
+	actual, err := rev.ReceiverUseByName(false)
+	require.NoError(t, err)
+	require.Equal(t, expected, actual)
 }
 
 func TestRenameReceiverInRoutes(t *testing.T) {
@@ -455,7 +488,9 @@ func TestRenameReceiverInRoutes(t *testing.T) {
 			"missing-receiver": 1,
 			"dupe-receiver":    1,
 		}
-		require.Equal(t, expected, rev.ReceiverUseByName())
+		actual, err := rev.ReceiverUseByName(false)
+		require.NoError(t, err)
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("should rename all references", func(t *testing.T) {
@@ -466,7 +501,9 @@ func TestRenameReceiverInRoutes(t *testing.T) {
 			"missing-receiver": 1,
 			"dupe-receiver":    1,
 		}
-		require.Equal(t, expected, rev.ReceiverUseByName())
+		actual, err := rev.ReceiverUseByName(false)
+		require.NoError(t, err)
+		require.Equal(t, expected, actual)
 	})
 }
 
@@ -516,6 +553,35 @@ func getConfigRevisionForTest() *ConfigRevision {
 							},
 						},
 					},
+				},
+			},
+			ExtraConfigs: []definitions.ExtraConfiguration{
+				{
+					Identifier:    "test",
+					MergeMatchers: []*labels.Matcher{{Type: labels.MatchEqual, Name: "cluster", Value: "prod"}},
+					TemplateFiles: nil,
+					AlertmanagerConfig: `
+route:
+  receiver: receiver1
+  routes:
+    - receiver: email-receiver
+receivers:
+  - name: receiver1
+    webhook_configs:
+      - url: 'https://webhook.example.com/alerts'
+        http_config:
+          basic_auth:
+            username: 'admin'
+            password: 'super-secret-password'
+      - url: 'https://slack.com/webhook/ABC123'
+        send_resolved: true
+  - name: email-receiver
+    email_configs:
+      - to: 'alerts@example.com'
+        from: 'grafana@example.com'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'grafana@example.com'
+        auth_password: 'another-secret-password'`,
 				},
 			},
 		},
