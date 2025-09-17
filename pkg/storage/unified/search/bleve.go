@@ -88,6 +88,9 @@ type bleveBackend struct {
 	cache   map[resource.NamespacedResource]*bleveIndex
 
 	indexMetrics *resource.BleveIndexMetrics
+
+	metricsUpdaterCancel func()
+	metricsUpdaterWg     sync.WaitGroup
 }
 
 func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
@@ -129,7 +132,14 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 		indexMetrics: indexMetrics,
 	}
 
-	go be.updateIndexSizeMetric(opts.Root)
+	if be.indexMetrics != nil {
+		ctx, cancel := context.WithCancel(context.Background())
+		be.metricsUpdaterCancel = cancel
+		be.metricsUpdaterWg.Add(1)
+		go be.updateIndexSizeMetric(ctx, opts.Root)
+	} else {
+		be.metricsUpdaterCancel = func() { /* empty */ }
+	}
 
 	return be, nil
 }
@@ -184,16 +194,17 @@ func (b *bleveBackend) getCachedIndex(key resource.NamespacedResource) *bleveInd
 }
 
 // updateIndexSizeMetric sets the total size of all file-based indices metric.
-func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
-	if b.indexMetrics == nil {
-		return
-	}
+func (b *bleveBackend) updateIndexSizeMetric(ctx context.Context, indexPath string) {
+	defer b.metricsUpdaterWg.Done()
 
-	for {
+	for ctx.Err() == nil {
 		var totalSize int64
 
 		err := filepath.WalkDir(indexPath, func(path string, info os.DirEntry, err error) error {
 			if err != nil {
+				return err
+			}
+			if err = ctx.Err(); err != nil {
 				return err
 			}
 			if !info.IsDir() {
@@ -212,7 +223,12 @@ func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
 			b.log.Error("got error while trying to calculate bleve file index size", "error", err)
 		}
 
-		time.Sleep(60 * time.Second)
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(60 * time.Second):
+			continue
+		}
 	}
 }
 
@@ -626,7 +642,15 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, minBuildTi
 	return nil, "", 0
 }
 
-func (b *bleveBackend) CloseAllIndexes() {
+// Stop closes all indexes and stops background tasks.
+func (b *bleveBackend) Stop() {
+	b.closeAllIndexes()
+
+	b.metricsUpdaterCancel()
+	b.metricsUpdaterWg.Wait()
+}
+
+func (b *bleveBackend) closeAllIndexes() {
 	b.cacheMx.Lock()
 	defer b.cacheMx.Unlock()
 
