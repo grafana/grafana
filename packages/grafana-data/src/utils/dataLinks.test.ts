@@ -48,7 +48,7 @@ describe('mapInternalLinkToExplore', () => {
         title: 'dsName',
         href: `/explore?left=${encodeURIComponent('{"datasource":"uid","queries":[{"query":"12344"}]}')}`,
         onClick: undefined,
-        interpolation: {
+        interpolatedParams: {
           query: {
             query: '12344',
             datasource: {
