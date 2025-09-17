@@ -1,6 +1,6 @@
 import { PluginExtensionPoints } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, usePluginLinks, useFavoriteDatasources, getDataSourceSrv } from '@grafana/runtime';
+import { config, usePluginLinks, useFavoriteDatasources, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, LinkButton, Menu, Icon, IconButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 
@@ -8,6 +8,8 @@ import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
 import { useDataSource } from '../state/hooks';
 import { trackCreateDashboardClicked, trackDsConfigClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
+
+import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './picker/DataSourcePicker';
 
 interface Props {
   uid: string;
@@ -26,11 +28,16 @@ const FavoriteButton = ({ uid }: { uid: string }) => {
         key={`favorite-${isFavorite ? 'favorite-mono' : 'star-default'}`}
         name={isFavorite ? 'favorite' : 'star'}
         iconType={isFavorite ? 'mono' : 'default'}
-        onClick={() =>
+        onClick={() => {
+          reportInteraction(INTERACTION_EVENT_NAME, {
+            item: INTERACTION_ITEM.TOGGLE_FAVORITE,
+            ds_type: dataSourceInstance.type,
+            is_favorite: !isFavorite,
+          });
           isFavorite
             ? favoriteDataSources.removeFavoriteDatasource(dataSourceInstance)
-            : favoriteDataSources.addFavoriteDatasource(dataSourceInstance)
-        }
+            : favoriteDataSources.addFavoriteDatasource(dataSourceInstance);
+        }}
         disabled={favoriteDataSources.isLoading}
         tooltip={
           isFavorite

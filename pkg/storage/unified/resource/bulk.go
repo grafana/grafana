@@ -240,11 +240,11 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 	if rsp.Error == nil && s.search != nil {
 		// Rebuild any changed indexes
 		for _, summary := range rsp.Summary {
-			_, _, err := s.search.build(ctx, NamespacedResource{
+			_, err := s.search.build(ctx, NamespacedResource{
 				Namespace: summary.Namespace,
 				Group:     summary.Group,
 				Resource:  summary.Resource,
-			}, summary.Count, summary.ResourceVersion, "rebuildAfterBatchLoad", true)
+			}, summary.Count, "rebuildAfterBatchLoad", true)
 			if err != nil {
 				s.log.Warn("error building search index after batch load", "err", err)
 				rsp.Error = &resourcepb.ErrorResult{

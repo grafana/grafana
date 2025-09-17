@@ -1011,6 +1011,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             hasData && (
               <div className={styles.logRowsWrapper} data-testid="logRows">
                 <ControlledLogRows
+                  ref={logsContainerRef}
                   logsTableFrames={props.logsFrames}
                   width={width}
                   updatePanelState={updatePanelState}

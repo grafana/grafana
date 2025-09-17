@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"time"
 
 	"github.com/spf13/pflag"
 
@@ -20,6 +21,12 @@ type GRPCServerSettings struct {
 	MaxRecvMsgSize int
 	MaxSendMsgSize int
 
+	MaxConnectionAge      time.Duration
+	MaxConnectionAgeGrace time.Duration
+	KeepaliveTime         time.Duration
+	KeepaliveTimeout      time.Duration
+	KeepaliveMinTime      time.Duration
+	MaxConnectionIdle     time.Duration
 	// Internal fields
 	useTLS   bool
 	certFile string
@@ -119,6 +126,14 @@ func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 	cfg.GRPCServer.MaxRecvMsgSize = server.Key("max_recv_msg_size").MustInt(0)
 	cfg.GRPCServer.MaxSendMsgSize = server.Key("max_send_msg_size").MustInt(0)
 
+	// Read connection management options from INI file
+	cfg.GRPCServer.MaxConnectionAge = server.Key("max_connection_age").MustDuration(0)
+	cfg.GRPCServer.MaxConnectionAgeGrace = server.Key("max_connection_age_grace").MustDuration(0)
+	cfg.GRPCServer.MaxConnectionIdle = server.Key("max_connection_idle").MustDuration(0)
+	cfg.GRPCServer.KeepaliveTime = server.Key("keepalive_time").MustDuration(0)
+	cfg.GRPCServer.KeepaliveTimeout = server.Key("keepalive_timeout").MustDuration(0)
+	cfg.GRPCServer.KeepaliveMinTime = server.Key("keepalive_min_time").MustDuration(0)
+
 	return cfg.GRPCServer.processAddress()
 }
 
@@ -134,4 +149,12 @@ func (c *GRPCServerSettings) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.useTLS, "grpc-server-use-tls", false, "Enable TLS for the gRPC server")
 	fs.StringVar(&c.certFile, "grpc-server-cert-file", "", "Path to the certificate file for the gRPC server")
 	fs.StringVar(&c.keyFile, "grpc-server-key-file", "", "Path to the certificate key file for the gRPC server")
+
+	// Connection management options
+	fs.DurationVar(&c.MaxConnectionAge, "grpc-server-max-connection-age", 0, "Maximum amount of time a connection may exist before it will be closed (e.g. 30s)")
+	fs.DurationVar(&c.MaxConnectionAgeGrace, "grpc-server-max-connection-age-grace", 0, "Additional time to allow for pending RPCs to complete before forcibly closing connections (e.g. 5s)")
+	fs.DurationVar(&c.MaxConnectionIdle, "grpc-server-max-connection-idle", 0, "Maximum amount of idle time before a connection is closed (e.g. 15s)")
+	fs.DurationVar(&c.KeepaliveTime, "grpc-server-keepalive-time", 0, "Frequency of server-to-client pings to check if a connection is still active (e.g. 10s)")
+	fs.DurationVar(&c.KeepaliveTimeout, "grpc-server-keepalive-timeout", 0, "Amount of time the server waits for a response to keepalive pings before closing the connection (e.g. 3s)")
+	fs.DurationVar(&c.KeepaliveMinTime, "grpc-server-keepalive-min-time", 0, "Minimum amount of time a client should wait before sending a keepalive ping (e.g. 5s)")
 }

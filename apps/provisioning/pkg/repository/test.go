@@ -84,6 +84,17 @@ func ValidateRepository(repo Repository) field.ErrorList {
 		}
 	}
 
+	if slices.Contains(cfg.Finalizers, RemoveOrphanResourcesFinalizer) &&
+		slices.Contains(cfg.Finalizers, ReleaseOrphanResourcesFinalizer) {
+		list = append(list,
+			field.Invalid(
+				field.NewPath("medatada", "finalizers"),
+				cfg.Finalizers,
+				"cannot have both remove and release orphan resources finalizers",
+			),
+		)
+	}
+
 	return list
 }
 

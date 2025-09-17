@@ -6,6 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { DashboardInteractions } from '../../utils/interactions';
 import { getDefaultVizPanel } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
@@ -31,7 +32,10 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
         fill="text"
         icon="plus"
         data-testid={selectors.components.CanvasGridAddActions.addPanel}
-        onClick={() => layoutManager.addPanel(getDefaultVizPanel())}
+        onClick={() => {
+          layoutManager.addPanel(getDefaultVizPanel());
+          DashboardInteractions.trackAddPanelClick();
+        }}
       >
         <Trans i18nKey="dashboard.canvas-actions.add-panel">Add panel</Trans>
       </Button>
@@ -41,15 +45,19 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
             <Menu.Item
               icon="list-ul"
               label={t('dashboard.canvas-actions.group-into-row', 'Group into row')}
+              testId={selectors.components.CanvasGridAddActions.addRow}
               onClick={() => {
                 addNewRowTo(layoutManager);
+                DashboardInteractions.trackGroupRowClick();
               }}
             ></Menu.Item>
             <Menu.Item
               icon="layers"
+              testId={selectors.components.CanvasGridAddActions.addTab}
               label={t('dashboard.canvas-actions.group-into-tab', 'Group into tab')}
               onClick={() => {
                 addNewTabTo(layoutManager);
+                DashboardInteractions.trackGroupTabClick();
               }}
             ></Menu.Item>
           </Menu>
@@ -67,11 +75,13 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
       {renderUngroupAction(layoutManager)}
       {hasCopiedPanel && layoutManager.pastePanel && (
         <Button
+          data-testid={selectors.components.CanvasGridAddActions.pastePanel}
           variant="primary"
           fill="text"
           icon="clipboard-alt"
           onClick={() => {
             layoutManager.pastePanel?.();
+            DashboardInteractions.trackPastePanelClick();
           }}
         >
           <Trans i18nKey="dashboard.canvas-actions.paste-panel">Paste panel</Trans>
@@ -91,6 +101,7 @@ function renderUngroupAction(layoutManager: DashboardLayoutManager) {
   const parentLayout = dashboardSceneGraph.getLayoutManagerFor(layoutManager.parent!);
 
   const onUngroup = () => {
+    DashboardInteractions.trackUngroupClick();
     ungroupLayout(parentLayout, layoutManager);
   };
 

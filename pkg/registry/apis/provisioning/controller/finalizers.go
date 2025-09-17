@@ -19,15 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-// RemoveOrphanResourcesFinalizer removes everything this repo created
-const RemoveOrphanResourcesFinalizer = "remove-orphan-resources"
-
-// ReleaseOrphanResourcesFinalizer removes the metadata for anything this repo created
-const ReleaseOrphanResourcesFinalizer = "release-orphan-resources"
-
-// CleanFinalizer calls the "OnDelete" function for resource
-const CleanFinalizer = "cleanup"
-
 type finalizer struct {
 	lister        resources.ResourceLister
 	clientFactory resources.ClientFactory
@@ -41,7 +32,7 @@ func (f *finalizer) process(ctx context.Context,
 
 	for _, finalizer := range finalizers {
 		switch finalizer {
-		case CleanFinalizer:
+		case repository.CleanFinalizer:
 			// NOTE: the controller loop will never get run unless a finalizer is set
 			hooks, ok := repo.(repository.Hooks)
 			if ok {
@@ -50,7 +41,7 @@ func (f *finalizer) process(ctx context.Context,
 				}
 			}
 
-		case ReleaseOrphanResourcesFinalizer:
+		case repository.ReleaseOrphanResourcesFinalizer:
 			err := f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
 					patchAnnotations, err := getPatchedAnnotations(item)
@@ -67,7 +58,7 @@ func (f *finalizer) process(ctx context.Context,
 				return err
 			}
 
-		case RemoveOrphanResourcesFinalizer:
+		case repository.RemoveOrphanResourcesFinalizer:
 			err := f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
 					return client.Delete(ctx, item.Name, v1.DeleteOptions{})
@@ -169,14 +160,36 @@ func sortResourceListForDeletion(list *provisioning.ResourceList) {
 	// Sort by the following logic:
 	// - Put folders at the end so that we empty them first.
 	// - Sort folders by depth so that we remove the deepest first
+	// - If the repo is created within a folder in grafana, make sure that folder is last.
 	sort.Slice(list.Items, func(i, j int) bool {
-		switch {
-		case list.Items[i].Group != folders.RESOURCE:
-			return true
-		case list.Items[j].Group != folders.RESOURCE:
-			return false
-		default:
-			return len(strings.Split(list.Items[i].Path, "/")) > len(strings.Split(list.Items[j].Path, "/"))
+		isFolderI := list.Items[i].Group == folders.GroupVersion.Group
+		isFolderJ := list.Items[j].Group == folders.GroupVersion.Group
+
+		// non-folders always go first in the order of deletion.
+		if isFolderI != isFolderJ {
+			return !isFolderI
 		}
+
+		// if both are not folders, keep order (doesn't matter)
+		if !isFolderI && !isFolderJ {
+			return false
+		}
+
+		hasFolderI := list.Items[i].Folder != ""
+		hasFolderJ := list.Items[j].Folder != ""
+		// if one folder is in the root (i.e. does not have a folder specified), put that last
+		if hasFolderI != hasFolderJ {
+			return hasFolderI
+		}
+
+		// if both are nested folder, sort by depth, with the deepest one being first
+		depthI := len(strings.Split(list.Items[i].Path, "/"))
+		depthJ := len(strings.Split(list.Items[j].Path, "/"))
+		if depthI != depthJ {
+			return depthI > depthJ
+		}
+
+		// otherwise, keep order (doesn't matter)
+		return false
 	})
 }

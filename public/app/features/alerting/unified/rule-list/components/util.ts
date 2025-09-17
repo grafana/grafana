@@ -1,6 +1,10 @@
 import { addMilliseconds, formatDistanceToNowStrict, isBefore } from 'date-fns';
+import { ComponentProps } from 'react';
 
+import { StateIcon } from '@grafana/alerting/unstable';
 import { dateTime, dateTimeFormat, isValidDate } from '@grafana/data';
+import { RuleHealth } from 'app/types/unified-alerting';
+import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { isNullDate, parsePrometheusDuration } from '../../utils/time';
 
@@ -68,4 +72,50 @@ export function getRelativeEvaluationInterval(lastEvaluation?: string) {
   }
 
   return formatDistanceToNowStrict(new Date(lastEvaluation));
+}
+
+type NormalizedHealth = ComponentProps<typeof StateIcon>['health'];
+export function normalizeHealth(health?: RuleHealth): NormalizedHealth {
+  if (!health) {
+    return;
+  }
+
+  // backwards compatibility with Prometheus rule state
+  if (health === 'err') {
+    return 'error';
+  }
+
+  if (isValidHealth(health)) {
+    return health;
+  }
+
+  return;
+}
+
+function isValidHealth(health: string): health is NonNullable<NormalizedHealth> {
+  const valid: Array<NonNullable<NormalizedHealth>> = ['nodata', 'error'] as const;
+  return valid.some((v) => v === health);
+}
+
+type NormalizedState = ComponentProps<typeof StateIcon>['state'];
+export function normalizeState(state?: PromAlertingRuleState): NormalizedState {
+  if (!state) {
+    return 'unknown';
+  }
+
+  // backwards compatibility with Prometheus rule state
+  if (state === 'inactive') {
+    return 'normal';
+  }
+
+  if (isValidState(state)) {
+    return state;
+  }
+
+  return;
+}
+
+function isValidState(state: string): state is NonNullable<NormalizedState> {
+  const valid: Array<NonNullable<NormalizedState>> = ['normal', 'firing', 'pending', 'unknown', 'recovering'] as const;
+  return valid.some((v) => v === state);
 }

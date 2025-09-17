@@ -5,6 +5,7 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1,LibraryPanelStatus,Warnings
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1,SearchResults,Hits
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1,SortableFields,Fields
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1,DashboardClient,client
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1,SortBy,Descending
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1,SortableField,Field
 API rule violation: names_match,github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1,Unstructured,Object

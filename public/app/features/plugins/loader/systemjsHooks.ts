@@ -2,8 +2,8 @@ import { config } from '@grafana/runtime';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
 
-import { resolveWithCache } from './cache';
 import { LOAD_PLUGIN_CSS_REGEX, JS_CONTENT_TYPE_REGEX, SHARED_DEPENDENCY_PREFIX } from './constants';
+import { resolvePluginUrlWithCache } from './pluginInfoCache';
 import { SystemJS } from './systemjs';
 import { SystemJSWithLoaderHooks } from './types';
 import { isHostedOnCDN } from './utils';
@@ -44,13 +44,13 @@ export function decorateSystemJSResolve(
       (cleanedUrl.endsWith('.js') || cleanedUrl.endsWith('.css')) && !isHostedOnCDN(cleanedUrl);
     // Add a cache query param for filesystem module.js requests
     // CDN hosted plugins contain the version in the path so skip
-    return isFileSystemModule ? resolveWithCache(cleanedUrl) : cleanedUrl;
+    return isFileSystemModule ? resolvePluginUrlWithCache(cleanedUrl) : cleanedUrl;
   } catch (err) {
     // Provide fallback for plugins that use `loadPluginCss` to load theme styles.
     if (LOAD_PLUGIN_CSS_REGEX.test(id)) {
       const resolvedUrl = getLoadPluginCssUrl(id);
       const url = originalResolve.apply(this, [resolvedUrl, parentUrl]);
-      return resolveWithCache(url);
+      return resolvePluginUrlWithCache(url);
     }
     console.warn(`SystemJS: failed to resolve '${id}'`);
     return id;

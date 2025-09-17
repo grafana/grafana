@@ -58,6 +58,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -277,6 +278,11 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 	nsInfo, err := claims.ParseNamespace(a.GetNamespace())
 	if err != nil {
 		return fmt.Errorf("%v: %w", "failed to parse namespace", err)
+	}
+
+	// HACK: deletion validation currently doesn't work for the standalone case. So we currently skip it.
+	if b.isStandalone && util.IsInterfaceNil(b.dashboardProvisioningService) {
+		return nil
 	}
 
 	// The name of the resource is the dashboard UID

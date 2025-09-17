@@ -188,6 +188,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () => <NavLandingPage navId="testing-and-synthetics" />,
     },
     {
+      path: '/adaptive-telemetry',
+      component: () => <NavLandingPage navId="adaptive-telemetry" />,
+    },
+    {
       path: '/monitoring',
       component: () => <Navigate replace to="/observability" />,
     },

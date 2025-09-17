@@ -10,11 +10,14 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	idStore "github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -64,8 +67,61 @@ func (s *ResourcePermSqlBackend) ListHistory(context.Context, *resourcepb.ListRe
 	return 0, errNotImplemented
 }
 
-func (s *ResourcePermSqlBackend) ListIterator(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {
-	return 0, errNotImplemented
+func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, callback func(resource.ListIterator) error) (int64, error) {
+	opts := req.Options
+	if opts == nil || opts.Key == nil || opts.Key.Namespace == "" {
+		return 0, apierrors.NewBadRequest("list requires a valid namespace")
+	}
+	ns, err := types.ParseNamespace(opts.Key.Namespace)
+	if err != nil {
+		return 0, err
+	}
+	if ns.OrgID <= 0 {
+		return 0, apierrors.NewBadRequest(errInvalidNamespace.Error())
+	}
+
+	if req.ResourceVersion != 0 {
+		return 0, apierrors.NewBadRequest("list with explicit resourceVersion is not supported by this storage backend")
+	}
+
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 50
+	}
+
+	token, err := readContinueToken(req.NextPageToken)
+	if err != nil {
+		return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid continue token: %v", err))
+	}
+
+	pagination := &common.Pagination{
+		Limit:    limit,
+		Continue: token.offset,
+	}
+
+	dbHelper, err := s.dbProvider(request.WithNamespace(ctx, ns.Value))
+	if err != nil {
+		logger := s.logger.FromContext(ctx)
+		logger.Error("Failed to get database helper", "error", err)
+		return 0, errDatabaseHelper
+	}
+
+	iterator, err := s.newRoleIterator(ctx, dbHelper, ns, pagination)
+	if iterator != nil {
+		defer func() {
+			_ = iterator.Close()
+		}()
+	}
+	if err != nil {
+		return 0, err
+	}
+
+	err = callback(iterator)
+	if err != nil {
+		return 0, err
+	}
+
+	return s.latestUpdate(ctx, dbHelper, ns), nil
 }
 
 func (s *ResourcePermSqlBackend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
@@ -92,7 +148,7 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 		return rsp
 	}
 
-	dbHelper, err := s.dbProvider(ctx)
+	dbHelper, err := s.dbProvider(request.WithNamespace(ctx, ns.Value))
 	if err != nil {
 		// Hide the error from the user, but log it
 		logger := s.logger.FromContext(ctx)
@@ -101,7 +157,12 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 		return rsp
 	}
 
-	resourcePermission, err := s.getResourcePermission(ctx, dbHelper, ns, req.Key.Name)
+	var resourcePermission *v0alpha1.ResourcePermission
+	err = dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+		resourcePermission, err = s.getResourcePermission(ctx, dbHelper, tx, ns, req.Key.Name)
+		return err
+	})
+
 	if err != nil {
 		if errors.Is(err, errNotFound) {
 			rsp.Error = resource.AsErrorResult(
@@ -116,6 +177,7 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 	}
 
 	rsp.ResourceVersion = resourcePermission.GetUpdateTimestamp().UnixMilli()
+	resourcePermission.Namespace = ns.Value // ensure namespace is set, this is required when existing and new resources are compared for updates
 	rsp.Value, err = json.Marshal(resourcePermission)
 	if err != nil {
 		rsp.Error = resource.AsErrorResult(err)
@@ -170,7 +232,7 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 		return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid key %q: %v", event.Key, err.Error()))
 	}
 
-	dbHelper, err := s.dbProvider(ctx)
+	dbHelper, err := s.dbProvider(request.WithNamespace(ctx, ns.Value))
 	if err != nil {
 		// Hide the error from the user, but log it
 		logger := s.logger.FromContext(ctx)
@@ -190,7 +252,7 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 	switch event.Type {
 	case resourcepb.WatchEvent_DELETED:
 		err = s.deleteResourcePermission(ctx, dbHelper, ns, event.Key.Name)
-	case resourcepb.WatchEvent_ADDED:
+	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
 		{
 			var v0resourceperm *v0alpha1.ResourcePermission
 			v0resourceperm, err = getResourcePermissionFromEvent(event)
@@ -209,13 +271,21 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 				)
 			}
 
-			rv, err = s.createResourcePermission(ctx, dbHelper, ns, mapper, grn, v0resourceperm)
+			if event.Type == resourcepb.WatchEvent_ADDED {
+				rv, err = s.createResourcePermission(ctx, dbHelper, ns, mapper, grn, v0resourceperm)
+				if err != nil && errors.Is(err, errConflict) {
+					return 0, apierrors.NewConflict(v0alpha1.ResourcePermissionInfo.GroupResource(), event.Key.Name, err)
+				}
+			} else {
+				rv, err = s.updateResourcePermission(ctx, dbHelper, ns, mapper, grn, v0resourceperm)
+				if errors.Is(err, errNotFound) {
+					return 0, apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), event.Key.Name)
+				}
+			}
+
 			if err != nil {
 				if errors.Is(err, errInvalidSpec) || errors.Is(err, errInvalidName) {
 					return 0, apierrors.NewBadRequest(err.Error())
-				}
-				if errors.Is(err, errConflict) {
-					return 0, apierrors.NewConflict(v0alpha1.ResourcePermissionInfo.GroupResource(), event.Key.Name, err)
 				}
 				return 0, err
 			}

@@ -39,11 +39,11 @@ func (s *Service) runTraceQlQuery(ctx context.Context, pCtx backend.PluginContex
 		return s.runTraceQlQueryMetrics(ctx, pCtx, backendQuery, tempoQuery)
 	}
 
-	return s.runTraceQlQuerySearch()
+	return s.runTraceQlQuerySearch(ctx, pCtx, backendQuery)
 }
 
-func (s *Service) runTraceQlQuerySearch() (*backend.DataResponse, error) {
-	return nil, fmt.Errorf("backend TraceQL search queries are not supported")
+func (s *Service) runTraceQlQuerySearch(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
+	return s.Search(ctx, pCtx, query)
 }
 
 func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.PluginContext, backendQuery backend.DataQuery, tempoQuery *dataquery.TempoQuery) (*backend.DataResponse, error) {

@@ -290,6 +290,7 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
               value={meta.folderUid}
               onChange={dashboard.isManagedRepository() ? model.onProvisionedFolderChange : model.onFolderChange}
               repositoryName={dashboard.getManagerIdentity()}
+              excludeUIDs={meta?.folderUid ? [meta.folderUid] : undefined}
             />
           </Field>
 

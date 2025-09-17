@@ -128,6 +128,37 @@ func (r RepositoryType) IsGit() bool {
 	return r == GitRepositoryType || r == GitHubRepositoryType || r == BitbucketRepositoryType || r == GitLabRepositoryType
 }
 
+// Branch returns the branch for git-based repositories
+// or an empty string for local repositories
+func (r *Repository) Branch() string {
+	if !r.Spec.Type.IsGit() {
+		return ""
+	}
+
+	switch r.Spec.Type {
+	case GitHubRepositoryType:
+		if r.Spec.GitHub != nil {
+			return r.Spec.GitHub.Branch
+		}
+	case GitRepositoryType:
+		if r.Spec.Git != nil {
+			return r.Spec.Git.Branch
+		}
+	case BitbucketRepositoryType:
+		if r.Spec.Bitbucket != nil {
+			return r.Spec.Bitbucket.Branch
+		}
+	case GitLabRepositoryType:
+		if r.Spec.GitLab != nil {
+			return r.Spec.GitLab.Branch
+		}
+	default:
+		return ""
+	}
+
+	return ""
+}
+
 type RepositorySpec struct {
 	// The repository display name (shown in the UI)
 	Title string `json:"title"`

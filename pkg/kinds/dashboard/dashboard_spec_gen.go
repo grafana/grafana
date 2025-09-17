@@ -272,6 +272,8 @@ type DashboardLink struct {
 	Tags []string `json:"tags"`
 	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
 	AsDropdown bool `json:"asDropdown"`
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	Placement string `json:"placement,omitempty"`
 	// If true, the link will be opened in a new tab
 	TargetBlank bool `json:"targetBlank"`
 	// If true, includes current template variables values in the link as query params
@@ -285,6 +287,7 @@ func NewDashboardLink() *DashboardLink {
 	return &DashboardLink{
 		Tags:        []string{},
 		AsDropdown:  false,
+		Placement:   DashboardLinkPlacement,
 		TargetBlank: false,
 		IncludeVars: false,
 		KeepTime:    false,
@@ -298,6 +301,10 @@ const (
 	DashboardLinkTypeLink       DashboardLinkType = "link"
 	DashboardLinkTypeDashboards DashboardLinkType = "dashboards"
 )
+
+// Dashboard Link placement. Defines where the link should be displayed.
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+const DashboardLinkPlacement = "inControlsMenu"
 
 // Transformations allow to manipulate data returned by a query before the system applies a visualization.
 // Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
@@ -420,6 +427,8 @@ type FieldConfig struct {
 	Color *FieldColor `json:"color,omitempty"`
 	// The behavior when clicking on a result
 	Links []any `json:"links,omitempty"`
+	// Define interactive HTTP requests that can be triggered from data visualizations.
+	Actions []Action `json:"actions,omitempty"`
 	// Alternative to empty string
 	NoValue *string `json:"noValue,omitempty"`
 	// custom is specified by the FieldConfig field
@@ -646,6 +655,92 @@ const (
 	FieldColorSeriesByModeMax  FieldColorSeriesByMode = "max"
 	FieldColorSeriesByModeLast FieldColorSeriesByMode = "last"
 )
+
+// Dashboard action
+type Action struct {
+	Type         ActionType            `json:"type"`
+	Title        string                `json:"title"`
+	Fetch        *FetchOptions         `json:"fetch,omitempty"`
+	Infinity     *InfinityOptions      `json:"infinity,omitempty"`
+	Confirmation *string               `json:"confirmation,omitempty"`
+	OneClick     *bool                 `json:"oneClick,omitempty"`
+	Variables    []ActionVariable      `json:"variables,omitempty"`
+	Style        *DashboardActionStyle `json:"style,omitempty"`
+}
+
+// NewAction creates a new Action object.
+func NewAction() *Action {
+	return &Action{}
+}
+
+// Dashboard action type
+type ActionType string
+
+const (
+	ActionTypeFetch    ActionType = "fetch"
+	ActionTypeInfinity ActionType = "infinity"
+)
+
+// Fetch options
+type FetchOptions struct {
+	Method HttpRequestMethod `json:"method"`
+	Url    string            `json:"url"`
+	Body   *string           `json:"body,omitempty"`
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	QueryParams [][]string `json:"queryParams,omitempty"`
+	Headers     [][]string `json:"headers,omitempty"`
+}
+
+// NewFetchOptions creates a new FetchOptions object.
+func NewFetchOptions() *FetchOptions {
+	return &FetchOptions{}
+}
+
+type HttpRequestMethod string
+
+const (
+	HttpRequestMethodGET    HttpRequestMethod = "GET"
+	HttpRequestMethodPUT    HttpRequestMethod = "PUT"
+	HttpRequestMethodPOST   HttpRequestMethod = "POST"
+	HttpRequestMethodDELETE HttpRequestMethod = "DELETE"
+	HttpRequestMethodPATCH  HttpRequestMethod = "PATCH"
+)
+
+// Infinity options
+type InfinityOptions struct {
+	Method HttpRequestMethod `json:"method"`
+	Url    string            `json:"url"`
+	Body   *string           `json:"body,omitempty"`
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	QueryParams   [][]string `json:"queryParams,omitempty"`
+	Headers       [][]string `json:"headers,omitempty"`
+	DatasourceUid string     `json:"datasourceUid"`
+}
+
+// NewInfinityOptions creates a new InfinityOptions object.
+func NewInfinityOptions() *InfinityOptions {
+	return &InfinityOptions{}
+}
+
+type ActionVariable struct {
+	Key  string `json:"key"`
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
+// NewActionVariable creates a new ActionVariable object.
+func NewActionVariable() *ActionVariable {
+	return &ActionVariable{
+		Type: ActionVariableType,
+	}
+}
+
+// Action variable type
+const ActionVariableType = "string"
 
 type DynamicConfigValue struct {
 	Id    string `json:"id"`
@@ -1033,6 +1128,15 @@ func NewDashboardSpecialValueMapOptions() *DashboardSpecialValueMapOptions {
 	return &DashboardSpecialValueMapOptions{
 		Result: *NewValueMappingResult(),
 	}
+}
+
+type DashboardActionStyle struct {
+	BackgroundColor *string `json:"backgroundColor,omitempty"`
+}
+
+// NewDashboardActionStyle creates a new DashboardActionStyle object.
+func NewDashboardActionStyle() *DashboardActionStyle {
+	return &DashboardActionStyle{}
 }
 
 type PanelRepeatDirection string

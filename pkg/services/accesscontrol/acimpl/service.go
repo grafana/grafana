@@ -73,11 +73,8 @@ func ProvideService(
 		return nil, err
 	}
 
-	// Migrating scopes that haven't been split yet to have kind, attribute and identifier in the DB
-	// This will be removed once we've:
-	// 1) removed the feature toggle and
-	// 2) have released enough versions not to support a version without split scopes
-	if err := migrator.MigrateScopeSplit(db, service.log); err != nil {
+	// Migrating to remove deprecated permissions from the database
+	if err := migrator.MigrateRemoveDeprecatedPermissions(db, service.log); err != nil {
 		return nil, err
 	}
 
@@ -699,7 +696,7 @@ func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchO
 	if searchOptions.Scope != "" {
 		// Permissions including the scope should also match
 		scopes := append(searchOptions.Wildcards(), searchOptions.Scope)
-		if !slices.Contains[[]string, string](scopes, permission.Scope) {
+		if !slices.Contains(scopes, permission.Scope) {
 			return false
 		}
 	}

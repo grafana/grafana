@@ -202,6 +202,10 @@ var (
 
 	grafanaPluginTargetInfoDesc *prometheus.GaugeVec
 
+	grafanaPluginFileSystemInfoDesc *prometheus.GaugeVec
+
+	grafanaPluginProvisioningInfoDesc *prometheus.GaugeVec
+
 	// StatsTotalLibraryPanels is a metric of total number of library panels stored in Grafana.
 	StatsTotalLibraryPanels prometheus.Gauge
 
@@ -213,6 +217,9 @@ var (
 
 	// MStatTotalCorrelations is a metric total amount of correlations
 	MStatTotalCorrelations prometheus.Gauge
+
+	// MStatTotalRepositories is a metric total amount of repositories
+	MStatTotalRepositories prometheus.Gauge
 )
 
 const (
@@ -575,6 +582,18 @@ func init() {
 		Namespace: ExporterName,
 	}, []string{"plugin_id", "target"})
 
+	grafanaPluginFileSystemInfoDesc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "plugin_filesystem_info",
+		Help:      "A metric with a constant '1' value labeled by pluginId and filesystem type",
+		Namespace: ExporterName,
+	}, []string{"plugin_id", "filesystem_type"})
+
+	grafanaPluginProvisioningInfoDesc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "plugin_provisioning_info",
+		Help:      "A metric with a constant '1' value labeled by pluginId and cloud provisioning method",
+		Namespace: ExporterName,
+	}, []string{"plugin_id", "provisioning_method"})
+
 	StatsTotalDashboardVersions = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard_versions",
 		Help:      "total amount of dashboard versions in the database",
@@ -658,6 +677,12 @@ func init() {
 		Help:      "total amount of correlations",
 		Namespace: ExporterName,
 	})
+
+	MStatTotalRepositories = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_repositories",
+		Help:      "total amount of repositories",
+		Namespace: ExporterName,
+	})
 }
 
 // SetBuildInformation sets the build information for this binary
@@ -711,6 +736,14 @@ func SetPluginBuildInformation(pluginID, pluginType, version, signatureStatus st
 
 func SetPluginTargetInformation(pluginID, target string) {
 	grafanaPluginTargetInfoDesc.WithLabelValues(pluginID, target).Set(1)
+}
+
+func SetPluginFSInformation(pluginID, fsType string) {
+	grafanaPluginFileSystemInfoDesc.WithLabelValues(pluginID, fsType).Set(1)
+}
+
+func SetPluginProvisioningInformation(pluginID, provisioningMethod string) {
+	grafanaPluginProvisioningInfoDesc.WithLabelValues(pluginID, provisioningMethod).Set(1)
 }
 
 func initMetricVars(reg prometheus.Registerer) {
@@ -768,6 +801,8 @@ func initMetricVars(reg prometheus.Registerer) {
 		StatsTotalDataSources,
 		grafanaPluginBuildInfoDesc,
 		grafanaPluginTargetInfoDesc,
+		grafanaPluginFileSystemInfoDesc,
+		grafanaPluginProvisioningInfoDesc,
 		StatsTotalDashboardVersions,
 		StatsTotalAnnotations,
 		StatsTotalAlertRules,
@@ -778,6 +813,7 @@ func initMetricVars(reg prometheus.Registerer) {
 		MPublicDashboardRequestCount,
 		MPublicDashboardDatasourceQuerySuccess,
 		MStatTotalCorrelations,
+		MStatTotalRepositories,
 		MFolderIDsAPICount,
 		MFolderIDsServiceCount,
 	)

@@ -444,6 +444,10 @@ func NewFakePluginFS(base string) *FakePluginFS {
 	}
 }
 
+func (f *FakePluginFS) Type() string {
+	return "fake"
+}
+
 func (f *FakePluginFS) Open(name string) (fs.File, error) {
 	if f.OpenFunc != nil {
 		return f.OpenFunc(name)

@@ -49,6 +49,7 @@ type SystemStats struct {
 	PublicDashboards          int64
 	Correlations              int64
 	DatabaseCreatedTime       *time.Time
+	Repositories              int64
 
 	// name of the driver
 	DatabaseDriver string

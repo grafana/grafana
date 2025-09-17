@@ -5,17 +5,22 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 
 	"github.com/grafana/authlib/authn"
+	"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/stretchr/testify/require"
 )
 
 type fakeExchanger struct {
-	resp *authn.TokenExchangeResponse
-	err  error
+	resp   *authn.TokenExchangeResponse
+	err    error
+	gotReq *authn.TokenExchangeRequest
 }
 
 func (f *fakeExchanger) Exchange(_ context.Context, req authn.TokenExchangeRequest) (*authn.TokenExchangeResponse, error) {
+	f.gotReq = &req
 	return f.resp, f.err
 }
 
@@ -59,5 +64,43 @@ func TestRoundTripper_PropagatesExchangeError(t *testing.T) {
 			_ = resp.Body.Close()
 		}
 		t.Fatalf("expected error, got nil")
+	}
+}
+
+func TestRoundTripper_AudiencesAndNamespace(t *testing.T) {
+	tests := []struct {
+		name          string
+		audience      string
+		wantAudiences []string
+	}{
+		{
+			name:          "adds group when custom audience",
+			audience:      "example-audience",
+			wantAudiences: []string{"example-audience", v0alpha1.GROUP},
+		},
+		{
+			name:          "no duplicate when group audience",
+			audience:      v0alpha1.GROUP,
+			wantAudiences: []string{v0alpha1.GROUP},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fx := &fakeExchanger{resp: &authn.TokenExchangeResponse{Token: "abc123"}}
+			tr := NewRoundTripper(fx, roundTripperFunc(func(_ *http.Request) (*http.Response, error) {
+				rr := httptest.NewRecorder()
+				rr.WriteHeader(http.StatusOK)
+				return rr.Result(), nil
+			}), tt.audience)
+
+			req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example", nil)
+			resp, err := tr.RoundTrip(req)
+			require.NoError(t, err)
+			_, _ = io.Copy(io.Discard, resp.Body)
+			_ = resp.Body.Close()
+			require.NotNil(t, fx.gotReq)
+			require.True(t, reflect.DeepEqual(fx.gotReq.Audiences, tt.wantAudiences))
+		})
 	}
 }

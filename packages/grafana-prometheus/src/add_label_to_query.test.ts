@@ -66,6 +66,15 @@ describe('addLabelToQuery()', () => {
     );
   });
 
+  it('should modify existing labels if the operator is different', () => {
+    expect(addLabelToQuery(addLabelToQuery('foo{x="yy"}', 'bar', 'baz', '!='), 'bar', 'baz', '=')).toBe(
+      'foo{x="yy", bar="baz"}'
+    );
+    expect(addLabelToQuery(addLabelToQuery('foo{x="yy"}', 'bar', 'baz', '='), 'bar', 'baz', '!=')).toBe(
+      'foo{x="yy", bar!="baz"}'
+    );
+  });
+
   it('should not remove filters', () => {
     expect(addLabelToQuery('{x="y"} |="yy"', 'bar', 'baz')).toBe('{x="y", bar="baz"} |="yy"');
     expect(addLabelToQuery('{x="y"} |="yy" !~"xx"', 'bar', 'baz')).toBe('{x="y", bar="baz"} |="yy" !~"xx"');

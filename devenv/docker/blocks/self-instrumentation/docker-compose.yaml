@@ -42,6 +42,7 @@
       - --stability.level=experimental # Enable all functionality
     ports:
       - '12345:12345'
+      - '12347:12347'
     volumes:
       - ./docker/blocks/self-instrumentation/config.alloy:/etc/alloy/config.alloy
       - ../data/log:/var/log/grafana:ro # Mount Grafana logs directory

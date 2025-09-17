@@ -3,6 +3,7 @@ import { chain, truncate } from 'lodash';
 import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
+import { StateText } from '@grafana/alerting/unstable';
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -40,6 +41,7 @@ import { useHasRulerV2 } from '../../hooks/useHasRuler';
 import { useRuleGroupConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { useReturnTo } from '../../hooks/useReturnTo';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
+import { normalizeHealth, normalizeState } from '../../rule-list/components/util';
 import { Annotation } from '../../utils/constants';
 import { getRulesSourceUid, ruleIdentifierToRuleSourceIdentifier } from '../../utils/datasource';
 import { labelsSize } from '../../utils/labels';
@@ -63,9 +65,7 @@ import { RedirectToCloneRule } from '../rules/CloneRule';
 
 import { ContactPointLink } from './ContactPointLink';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
-import PausedBadge from './PausedBadge';
 import { useAlertRule } from './RuleContext';
-import { RecordingBadge, StateBadge } from './StateBadges';
 import { AlertVersionHistory } from './tabs/AlertVersionHistory';
 import { Details } from './tabs/Details';
 import { History } from './tabs/History';
@@ -307,6 +307,9 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
 
   const { returnTo } = useReturnTo(returnToHref);
 
+  const textHealth = normalizeHealth(health);
+  const textState = normalizeState(state);
+
   return (
     <Stack direction="row" gap={1} minWidth={0} alignItems="center">
       {returnToHref && (
@@ -321,15 +324,9 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
       <Text variant="h1" truncate>
         {name}
       </Text>
-      {paused ? (
-        <PausedBadge />
-      ) : (
-        <>
-          {/* recording rules won't have a state */}
-          {state && <StateBadge state={state} health={health} />}
-          {isRecordingRule && <RecordingBadge health={health} />}
-        </>
-      )}
+      {/* recording rules won't have a state */}
+      {state && <StateText type="alerting" state={textState} health={textHealth} isPaused={paused} />}
+      {isRecordingRule && <StateText type="recording" health={textHealth} isPaused={paused} />}
     </Stack>
   );
 };

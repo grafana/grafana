@@ -2,7 +2,7 @@ import { PluginType, patchArrayVectorProrotypeMethods } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
-import { resolveWithCache } from '../loader/cache';
+import { resolvePluginUrlWithCache } from '../loader/pluginInfoCache';
 import { isHostedOnCDN, resolveModulePath } from '../loader/utils';
 
 import { SandboxEnvironment, SandboxPluginMeta } from './types';
@@ -49,7 +49,7 @@ export async function loadScriptIntoSandbox(url: string, sandboxEnv: SandboxEnvi
 
 export async function getPluginCode(meta: SandboxPluginMeta): Promise<string> {
   if (isHostedOnCDN(meta.module)) {
-    // Load plugin from CDN, no need for "resolveWithCache" as CDN URLs already include the version
+    // Load plugin from CDN, no need for "resolvePluginUrlWithCache" as CDN URLs already include the version
     const url = meta.module;
     const response = await fetch(url);
 
@@ -67,9 +67,9 @@ export async function getPluginCode(meta: SandboxPluginMeta): Promise<string> {
     return pluginCode;
   } else {
     let modulePath = resolveModulePath(meta.module);
-    // resolveWithCache will append a query parameter with its version
+    // resolvePluginUrlWithCache will append a query parameter with its version
     // to ensure correct cached version is served for local plugins
-    const pluginCodeUrl = resolveWithCache(modulePath);
+    const pluginCodeUrl = resolvePluginUrlWithCache(modulePath);
     const response = await fetch(pluginCodeUrl);
 
     let pluginCode = await response.text();

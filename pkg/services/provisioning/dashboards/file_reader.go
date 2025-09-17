@@ -40,6 +40,7 @@ type FileReader struct {
 	dashboardStore               utils.DashboardStore
 	FoldersFromFilesStructure    bool
 	folderService                folder.Service
+	foldersInUnified             bool
 
 	mux                     sync.RWMutex
 	usageTracker            *usageTracker
@@ -380,6 +381,14 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 	// do not allow the creation of folder with uid "general"
 	if result != nil && result.UID == accesscontrol.GeneralFolderUID {
 		return 0, "", dashboards.ErrFolderInvalidUID
+	}
+
+	// When we expect folders in unified storage, they should have a manager indicated
+	if err == nil && result != nil && result.ManagedBy == "" && fr.foldersInUnified {
+		result, err = service.UpdateFolderWithManagedByAnnotation(ctx, result, fr.Cfg.Name)
+		if err != nil {
+			return 0, "", fmt.Errorf("unable to update provisioned folder")
+		}
 	}
 
 	// dashboard folder not found. create one.

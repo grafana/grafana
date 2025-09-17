@@ -106,6 +106,8 @@ func buildIAMConfigFromSettings(cfg *setting.Cfg) (*iamConfig, error) {
 	}
 	iamCfg.AppConfig.ZanzanaClientCfg.URL = zanzanaURL
 
+	iamCfg.AppConfig.InformerConfig.MaxConcurrentWorkers = operatorSec.Key("max_concurrent_workers").MustUint64(20)
+
 	folderAppURL := operatorSec.Key("folder_app_url").MustString("")
 	if folderAppURL == "" {
 		return nil, fmt.Errorf("folder_app_url is required in [operator] section")
@@ -126,6 +128,10 @@ func buildIAMConfigFromSettings(cfg *setting.Cfg) (*iamConfig, error) {
 		return nil, fmt.Errorf("failed to build kube config: %w", err)
 	}
 	iamCfg.RunnerConfig.KubeConfig = *kubeConfig
+
+	metricsSection := cfg.SectionWithEnvOverrides("metrics")
+	iamCfg.RunnerConfig.MetricsConfig.Enabled = metricsSection.Key("enabled").MustBool(true)
+	iamCfg.RunnerConfig.MetricsConfig.Namespace = metricsSection.Key("namespace").MustString("grafana-iam")
 
 	return &iamCfg, nil
 }

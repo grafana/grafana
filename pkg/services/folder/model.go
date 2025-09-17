@@ -158,6 +158,13 @@ type UpdateFolderCommand struct {
 	Overwrite bool `json:"overwrite"`
 
 	SignedInUser identity.Requester `json:"-"`
+
+	// When running classic file provisioning with folders saved in kubernetes,
+	// folders will be marked with a manager of kind ManagerKindClassicFP
+	// NOTE: this is ignored when running legacy SQL storage
+	//
+	// Deprecated: this should only be used by the legacy file provisioning system
+	ManagerKindClassicFP string `json:"-"`
 }
 
 // MoveFolderCommand captures the information required by the folder service

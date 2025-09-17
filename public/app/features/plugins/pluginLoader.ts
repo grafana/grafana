@@ -21,7 +21,7 @@ import {
 } from './extensions/registry/setup';
 import { importPluginModule } from './importer/importPluginModule';
 import { pluginImporter } from './importer/pluginImporter';
-import { getPluginFromCache } from './loader/cache';
+import { getPluginInfoFromCache } from './loader/pluginInfoCache';
 // SystemJS has to be imported before the sharedDependenciesMap
 import { SystemJS } from './loader/systemjs';
 // eslint-disable-next-line import/order
@@ -40,7 +40,7 @@ const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototyp
 // it will load the plugin using a script tag. The logic that sets loadingStrategy comes from the backend.
 // See: pkg/services/pluginsintegration/pluginassets/pluginassets.go
 systemJSPrototype.shouldFetch = function (url) {
-  const pluginInfo = getPluginFromCache(url);
+  const pluginInfo = getPluginInfoFromCache(url);
   const jsTypeRegEx = /^[^#?]+\.(js)([?#].*)?$/;
 
   if (!jsTypeRegEx.test(url)) {

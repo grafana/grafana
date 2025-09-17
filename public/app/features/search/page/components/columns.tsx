@@ -128,7 +128,7 @@ export const generateColumns = (
         <div key={key} className={styles.cell} {...cellProps}>
           {!response.isItemLoaded(p.row.index) ? (
             <Skeleton width={200} />
-          ) : isDeleted ? (
+          ) : isDeleted || !p.userProps.href ? (
             <span className={classNames}>{name}</span>
           ) : (
             <a href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>

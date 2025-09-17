@@ -245,7 +245,7 @@ type ListAlertRulesStore interface {
 }
 
 type ListAlertRulesStoreV2 interface {
-	ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesByGroupQuery) (ngmodels.RulesGroup, string, error)
+	ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (ngmodels.RulesGroup, string, error)
 }
 
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) response.Response {
@@ -487,7 +487,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		return ruleResponse
 	}
 
-	byGroupQuery := ngmodels.ListAlertRulesByGroupQuery{
+	byGroupQuery := ngmodels.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
 			OrgID:         opts.OrgID,
 			NamespaceUIDs: namespaceUIDs,
@@ -496,8 +496,8 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 			RuleGroups:    ruleGroups,
 			ReceiverName:  receiverName,
 		},
-		GroupLimit:         maxGroups,
-		GroupContinueToken: nextToken,
+		Limit:         maxGroups,
+		ContinueToken: nextToken,
 	}
 	ruleList, continueToken, err := store.ListAlertRulesByGroup(opts.Ctx, &byGroupQuery)
 	if err != nil {

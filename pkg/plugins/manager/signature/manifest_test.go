@@ -345,6 +345,10 @@ func newPathSeparatorOverrideFS(sep string, ufs plugins.FS) (fsPathSeparatorFile
 	}, nil
 }
 
+func (f fsPathSeparatorFiles) Type() string {
+	return f.FS.Type()
+}
+
 // Files returns LocalFS.Files(), but all path separators for the current platform (filepath.Separator)
 // are replaced with f.separator.
 func (f fsPathSeparatorFiles) Files() ([]string, error) {

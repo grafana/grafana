@@ -201,7 +201,7 @@ func (s *service) starting(ctx context.Context) error {
 		}
 	}
 
-	authzClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracing)
+	authzClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracing, s.reg)
 	if err != nil {
 		return err
 	}

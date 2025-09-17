@@ -6,9 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/stretchr/testify/assert"
-
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -17,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -68,7 +68,7 @@ func TestIntegrationShortURL(t *testing.T) {
 			AppModeProduction:    false, // required for  unified storage
 			DisableAnonymous:     true,
 			APIServerStorageType: options.StorageTypeUnified,
-			EnableFeatureToggles: []string{"kubernetesShortURLs"},
+			EnableFeatureToggles: []string{featuremgmt.FlagKubernetesShortURLs},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode0,
@@ -78,60 +78,38 @@ func TestIntegrationShortURL(t *testing.T) {
 		doLegacyOnlyTests(t, helper)
 	})
 
-	t.Run("with dual write (unified storage, mode 1)", func(t *testing.T) {
-		mode := grafanarest.Mode1
-		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    false,
-			DisableAnonymous:     true,
-			APIServerStorageType: options.StorageTypeUnified,
-			EnableFeatureToggles: []string{"kubernetesShortURLs"},
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				RESOURCEGROUP: {
-					DualWriterMode: mode,
+	for _, mode := range []grafanarest.DualWriterMode{
+		grafanarest.Mode1,
+		grafanarest.Mode2,
+		// grafanarest.Mode3, TODO: the /goto function needs to use an UpdateStatus client
+		// grafanarest.Mode4,
+	} {
+		t.Run(fmt.Sprintf("with dual write (unified storage, mode %d)", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    false,
+				DisableAnonymous:     true,
+				APIServerStorageType: options.StorageTypeUnified,
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagKubernetesShortURLs,
 				},
-			},
-		})
-		doDualWriteTests(t, helper, mode)
-	})
-
-	t.Run("with dual write (unified storage, mode 2)", func(t *testing.T) {
-		mode := grafanarest.Mode2
-		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    false,
-			DisableAnonymous:     true,
-			APIServerStorageType: options.StorageTypeUnified,
-			EnableFeatureToggles: []string{"kubernetesShortURLs"},
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				RESOURCEGROUP: {
-					DualWriterMode: mode,
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					RESOURCEGROUP: {
+						DualWriterMode: mode,
+					},
 				},
-			},
+			})
+			doDualWriteTests(t, helper, mode)
 		})
-		doDualWriteTests(t, helper, mode)
-	})
-
-	t.Run("with dual write (unified storage, mode 3)", func(t *testing.T) {
-		mode := grafanarest.Mode3
-		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    false,
-			DisableAnonymous:     true,
-			APIServerStorageType: options.StorageTypeUnified,
-			EnableFeatureToggles: []string{"kubernetesShortURLs"},
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				RESOURCEGROUP: {
-					DualWriterMode: mode,
-				},
-			},
-		})
-		doDualWriteTests(t, helper, mode)
-	})
+	}
 
 	t.Run("with dual write (unified storage, mode 5)", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    false,
 			DisableAnonymous:     true,
 			APIServerStorageType: options.StorageTypeUnified,
-			EnableFeatureToggles: []string{"kubernetesShortURLs"},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagKubernetesShortURLs,
+			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode5,

@@ -83,14 +83,12 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
 
     let scene: SceneObject | undefined = undefined;
 
-    if (!panel.isAngularPlugin()) {
-      try {
-        const oldModel = new DashboardModel(snapshot, { isEmbedded: true });
-        const dash = createDashboardSceneFromDashboardModel(oldModel, snapshot);
-        scene = dash.state.body; // skip the wrappers
-      } catch (ex) {
-        console.log('Error creating scene:', ex);
-      }
+    try {
+      const oldModel = new DashboardModel(snapshot, { isEmbedded: true });
+      const dash = createDashboardSceneFromDashboardModel(oldModel, snapshot);
+      scene = dash.state.body; // skip the wrappers
+    } catch (ex) {
+      console.log('Error creating scene:', ex);
     }
 
     this.setState({ snapshot, snapshotText, markdownText, snapshotSize, snapshotUpdate: snapshotUpdate + 1, scene });
