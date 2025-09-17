@@ -22,7 +22,6 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         name: t('logs.name-unique-labels', 'Unique labels'),
         category,
         description: '',
-        defaultValue: false,
       });
 
     if (!config.featureToggles.newLogsPanel) {
