@@ -472,6 +472,11 @@
     "alert-instance-state-filter": {
       "state": "State"
     },
+    "alert-instances-table": {
+      "created": "Created",
+      "labels": "Labels",
+      "state": "State"
+    },
     "alert-label": {
       "tooltip-remove-label": "Remove label"
     },

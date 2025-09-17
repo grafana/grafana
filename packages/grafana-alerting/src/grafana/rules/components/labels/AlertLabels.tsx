@@ -6,28 +6,32 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import { isPrivateLabel } from '../../utils/labels';
+import { findCommonLabels, isPrivateLabel } from '../../utils/labels';
 
 import { AlertLabel, LabelSize } from './AlertLabel';
 
 export interface AlertLabelsProps {
   labels: Record<string, string>;
-  commonLabels?: Record<string, string>;
+  displayCommonLabels?: boolean;
+  labelSets?: Array<Record<string, string>>;
   size?: LabelSize;
   onClick?: ([value, key]: [string | undefined, string | undefined]) => void;
 }
 
-export const AlertLabels = ({ labels, commonLabels = {}, size, onClick }: AlertLabelsProps) => {
+export const AlertLabels = ({ labels, displayCommonLabels, labelSets, size, onClick }: AlertLabelsProps) => {
   const styles = useStyles2(getStyles, size);
   const [showCommonLabels, setShowCommonLabels] = useState(false);
+
+  const computedCommonLabels =
+    displayCommonLabels && Array.isArray(labelSets) && labelSets.length > 1 ? findCommonLabels(labelSets) : {};
 
   const labelsToShow = chain(labels)
     .toPairs()
     .reject(isPrivateLabel)
-    .reject(([key]) => (showCommonLabels ? false : key in commonLabels))
+    .reject(([key]) => (showCommonLabels ? false : key in computedCommonLabels))
     .value();
 
-  const commonLabelsCount = Object.keys(commonLabels).length;
+  const commonLabelsCount = Object.keys(computedCommonLabels).length;
   const hasCommonLabels = commonLabelsCount > 0;
   const tooltip = t('alert-labels.button.show.tooltip', 'Show common labels');
 

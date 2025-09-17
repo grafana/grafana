@@ -35,6 +35,14 @@ export const Basic: StoryObj<typeof AlertLabels> = {
 
 export const WithCommonLabels: StoryObj<typeof AlertLabels> = {
   render: (args: ComponentProps<typeof AlertLabels>) => (
-    <AlertLabels {...args} labels={{ foo: 'bar', bar: 'baz', baz: 'qux' }} commonLabels={{ foo: 'bar', baz: 'qux' }} />
+    <AlertLabels
+      {...args}
+      labels={{ foo: 'bar', bar: 'baz', baz: 'qux' }}
+      displayCommonLabels
+      labelSets={[
+        { foo: 'bar', bar: 'baz', baz: 'qux' },
+        { foo: 'bar', baz: 'qux', quux: 'corge' },
+      ]}
+    />
   ),
 };
