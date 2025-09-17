@@ -67,6 +67,20 @@ const AlertLabel = (props: Props) => {
   );
 };
 
+function getAccessibleTagColor(name?: string): string | undefined {
+  if (!name) {
+    return;
+  }
+  const options = { level: 'AA', size: 'small' } as const;
+  const attempts = Array.from({ length: 6 }, (_, i) => name + '-'.repeat(i));
+  const readableAttempt = attempts.find((attempt) => {
+    const candidate = getTagColorsFromName(attempt).color;
+    return tinycolor2.isReadable(candidate, '#000', options) || tinycolor2.isReadable(candidate, '#fff', options);
+  });
+  const chosen = readableAttempt ?? name;
+  return getTagColorsFromName(chosen).color;
+}
+
 function getColorFromProps({
   color,
   colorBy,
@@ -74,19 +88,19 @@ function getColorFromProps({
   value,
 }: Pick<Props, 'color' | 'colorBy' | 'labelKey' | 'value'>) {
   if (color) {
-    return getTagColorsFromName(color).color;
+    return getAccessibleTagColor(color);
   }
 
   if (colorBy === 'key') {
-    return getTagColorsFromName(labelKey).color;
+    return getAccessibleTagColor(labelKey);
   }
 
   if (colorBy === 'value') {
-    return getTagColorsFromName(value).color;
+    return getAccessibleTagColor(value);
   }
 
   if (colorBy === 'both' && labelKey && value) {
-    return getTagColorsFromName(labelKey + value).color;
+    return getAccessibleTagColor(labelKey + value);
   }
 
   return;
