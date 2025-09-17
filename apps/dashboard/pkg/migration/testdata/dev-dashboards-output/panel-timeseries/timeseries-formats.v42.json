@@ -711,7 +711,6 @@
         }
       ],
       "title": "timeseries-long",
-      "transformations": [],
       "type": "table"
     },
     {

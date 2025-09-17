@@ -2367,7 +2367,6 @@
         }
       ],
       "title": "List",
-      "transformations": [],
       "type": "timeseries"
     },
     {
@@ -2520,7 +2519,6 @@
         }
       ],
       "title": "List legend to the right ",
-      "transformations": [],
       "type": "timeseries"
     },
     {
@@ -2672,7 +2670,6 @@
         }
       ],
       "title": "Table",
-      "transformations": [],
       "type": "timeseries"
     },
     {
@@ -2824,7 +2821,6 @@
         }
       ],
       "title": "Table to the right",
-      "transformations": [],
       "type": "timeseries"
     },
     {
@@ -3314,7 +3310,6 @@
         }
       ],
       "title": "Diff number of datapoints and multi series tooltip",
-      "transformations": [],
       "type": "timeseries"
     },
     {

@@ -1624,7 +1624,6 @@
         }
       ],
       "title": "Mixed Styles",
-      "transformations": [],
       "type": "timeseries"
     },
     {
@@ -2274,7 +2273,6 @@
         }
       ],
       "title": "1,2,3,4 Unstacked",
-      "transformations": [],
       "type": "timeseries"
     },
     {
@@ -2378,7 +2376,6 @@
         }
       ],
       "title": "Stack Normal Groups A + B / C + D",
-      "transformations": [],
       "type": "timeseries"
     },
     {
@@ -2482,7 +2479,6 @@
         }
       ],
       "title": "Stack 100% Groups A + B / C + D",
-      "transformations": [],
       "type": "timeseries"
     },
     {
@@ -2616,7 +2612,6 @@
         }
       ],
       "title": "https://github.com/grafana/grafana/pull/44359",
-      "transformations": [],
       "type": "timeseries"
     },
     {
@@ -2750,7 +2745,6 @@
         }
       ],
       "title": "Connect null values = always",
-      "transformations": [],
       "type": "timeseries"
     },
     {
@@ -2884,7 +2878,6 @@
         }
       ],
       "title": "Connect null values = never",
-      "transformations": [],
       "type": "timeseries"
     },
     {

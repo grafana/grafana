@@ -28,7 +28,6 @@
     {
       "id": 1,
       "title": "Panel with transformations remains unchanged",
-      "transformations": [],
       "type": "timeseries"
     },
     {

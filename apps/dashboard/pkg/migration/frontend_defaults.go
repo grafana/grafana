@@ -101,10 +101,7 @@ func applyPanelDefaults(panel map[string]interface{}) {
 	if panel["links"] == nil {
 		panel["links"] = []interface{}{}
 	}
-	// Don't set default transformations - frontend omits empty arrays in save model
-	// if panel["transformations"] == nil {
-	//	panel["transformations"] = []interface{}{}
-	// }
+
 	if _, exists := panel["fieldConfig"]; !exists {
 		panel["fieldConfig"] = map[string]interface{}{
 			"defaults":  map[string]interface{}{},
@@ -522,7 +519,7 @@ func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool)
 		"transparent":         false,
 		"options":             map[string]interface{}{},
 		"links":               []interface{}{},
-		// Don't set default transformations - frontend omits empty arrays in save model
+		// Don't include transformations in defaults - use explicit cleanup logic instead
 		// "transformations":     []interface{}{},
 		"fieldConfig": map[string]interface{}{
 			"defaults":  map[string]interface{}{},
@@ -545,6 +542,19 @@ func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool)
 		}
 	}
 
+	// Remove empty transformations array - frontend omits empty arrays in save model
+	// BUT preserve empty arrays that were explicitly set in original input AND are nested panels
+	if transformations, ok := panel["transformations"].([]interface{}); ok && len(transformations) == 0 {
+		// Preserve empty arrays for nested panels that had them in original input
+		// Remove empty arrays for top-level panels (matches frontend isEqual filtering)
+		if panel["_originallyHadTransformations"] == true && isNested {
+			// Keep empty transformations array for nested panels
+		} else {
+			// Remove empty transformations array for top-level panels or panels that didn't have them originally
+			delete(panel, "transformations")
+		}
+	}
+
 	// Remove null values recursively to match frontend's JSON.stringify/parse behavior
 	// Pass panel type information to help with threshold handling
 	panelType := ""
@@ -559,6 +569,9 @@ func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool)
 
 	// Filter out properties that match defaults (matches frontend's isEqual logic)
 	filterDefaultValues(panel, originalProperties)
+
+	// Clean up internal markers
+	delete(panel, "_originallyHadTransformations")
 }
 
 // filterDefaultValues removes properties that match the default values (matches frontend's isEqual logic)
@@ -581,7 +594,7 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 		"transparent":         false,
 		"options":             map[string]interface{}{},
 		"links":               []interface{}{},
-		// Don't set default transformations - frontend omits empty arrays in save model
+		// Don't include transformations in defaults - use explicit cleanup logic instead
 		// "transformations":     []interface{}{},
 		"fieldConfig": map[string]interface{}{
 			"defaults":  map[string]interface{}{},
@@ -1153,4 +1166,33 @@ func cleanupFieldConfigOverrides(overrides []interface{}) {
 func isArray(value interface{}) bool {
 	_, ok := value.([]interface{})
 	return ok
+}
+
+// trackOriginalTransformations marks panels that had transformations in the original input
+// This is needed to match frontend hasOwnProperty behavior
+func trackOriginalTransformations(dashboard map[string]interface{}) {
+	if panels, ok := dashboard["panels"].([]interface{}); ok {
+		for _, panelInterface := range panels {
+			if panel, ok := panelInterface.(map[string]interface{}); ok {
+				trackPanelOriginalTransformations(panel)
+			}
+		}
+	}
+}
+
+// trackPanelOriginalTransformations recursively tracks transformations in panels and nested panels
+func trackPanelOriginalTransformations(panel map[string]interface{}) {
+	// Mark if this panel had transformations in original input
+	if _, hasTransformations := panel["transformations"]; hasTransformations {
+		panel["_originallyHadTransformations"] = true
+	}
+
+	// Handle nested panels in row panels
+	if nestedPanels, ok := panel["panels"].([]interface{}); ok {
+		for _, nestedPanelInterface := range nestedPanels {
+			if nestedPanel, ok := nestedPanelInterface.(map[string]interface{}); ok {
+				trackPanelOriginalTransformations(nestedPanel)
+			}
+		}
+	}
 }

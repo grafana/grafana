@@ -853,7 +853,6 @@
         }
       ],
       "title": "Logs",
-      "transformations": [],
       "type": "logs"
     },
     {
@@ -1011,7 +1010,6 @@
         }
       ],
       "title": "Raw data in table",
-      "transformations": [],
       "type": "table"
     },
     {

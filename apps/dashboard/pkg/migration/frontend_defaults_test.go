@@ -739,6 +739,230 @@ func TestApplyPanelDefaults(t *testing.T) {
 }
 
 // TestCleanupPanelForSave tests the core panel cleanup logic for save model
+func TestTransformationsArrayContextAwareLogic(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		isNested    bool
+		hasOriginal bool
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "top_level_panel_removes_empty_transformations",
+			input: map[string]interface{}{
+				"type":            "timeseries",
+				"title":           "Top-level Panel",
+				"transformations": []interface{}{},
+			},
+			isNested:    false,
+			hasOriginal: true, // Had transformations in original input
+			expected: map[string]interface{}{
+				"type":  "timeseries",
+				"title": "Top-level Panel",
+				// transformations removed for top-level panels
+			},
+			description: "Top-level panels should remove empty transformations arrays even if originally present",
+		},
+		{
+			name: "nested_panel_preserves_empty_transformations",
+			input: map[string]interface{}{
+				"type":            "timeseries",
+				"title":           "Nested Panel",
+				"transformations": []interface{}{},
+			},
+			isNested:    true,
+			hasOriginal: true, // Had transformations in original input
+			expected: map[string]interface{}{
+				"type":            "timeseries",
+				"title":           "Nested Panel",
+				"transformations": []interface{}{}, // preserved for nested panels
+			},
+			description: "Nested panels should preserve empty transformations arrays that were originally present",
+		},
+		{
+			name: "nested_panel_removes_added_transformations",
+			input: map[string]interface{}{
+				"type":            "table",
+				"title":           "Nested Panel Without Original",
+				"transformations": []interface{}{},
+			},
+			isNested:    true,
+			hasOriginal: false, // Did NOT have transformations in original input
+			expected: map[string]interface{}{
+				"type":  "table",
+				"title": "Nested Panel Without Original",
+				// transformations removed - wasn't in original input
+			},
+			description: "Nested panels should remove empty transformations arrays that were added during migration",
+		},
+		{
+			name: "preserve_non_empty_transformations",
+			input: map[string]interface{}{
+				"type":  "timeseries",
+				"title": "Panel with actual transformations",
+				"transformations": []interface{}{
+					map[string]interface{}{
+						"id": "reduce",
+						"options": map[string]interface{}{
+							"reducers": []interface{}{"mean"},
+						},
+					},
+				},
+			},
+			isNested:    false,
+			hasOriginal: true,
+			expected: map[string]interface{}{
+				"type":  "timeseries",
+				"title": "Panel with actual transformations",
+				"transformations": []interface{}{
+					map[string]interface{}{
+						"id": "reduce",
+						"options": map[string]interface{}{
+							"reducers": []interface{}{"mean"},
+						},
+					},
+				},
+			},
+			description: "Non-empty transformations arrays should always be preserved",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a copy of input for testing
+			panel := make(map[string]interface{})
+			for k, v := range tt.input {
+				panel[k] = v
+			}
+
+			// Set the original transformations marker if needed
+			if tt.hasOriginal {
+				panel["_originallyHadTransformations"] = true
+			}
+
+			// Apply the cleanup logic
+			cleanupPanelForSaveWithContext(panel, tt.isNested)
+
+			// Verify the result
+			if !compareValues(panel, tt.expected) {
+				t.Errorf("Test %s failed.\nExpected: %+v\nGot: %+v", tt.name, tt.expected, panel)
+			}
+		})
+	}
+}
+
+func TestTrackOriginalTransformations(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "track_top_level_panel_with_transformations",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":              1,
+						"type":            "timeseries",
+						"title":           "Panel with transformations",
+						"transformations": []interface{}{},
+					},
+					map[string]interface{}{
+						"id":    2,
+						"type":  "table",
+						"title": "Panel without transformations",
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":                            1,
+						"type":                          "timeseries",
+						"title":                         "Panel with transformations",
+						"transformations":               []interface{}{},
+						"_originallyHadTransformations": true, // marker added
+					},
+					map[string]interface{}{
+						"id":    2,
+						"type":  "table",
+						"title": "Panel without transformations",
+						// no marker added
+					},
+				},
+			},
+			description: "Should mark panels that had transformations in original input",
+		},
+		{
+			name: "track_nested_panels_in_row",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":    1,
+						"type":  "row",
+						"title": "Row Panel",
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":              10,
+								"type":            "timeseries",
+								"title":           "Nested Panel with transformations",
+								"transformations": []interface{}{},
+							},
+							map[string]interface{}{
+								"id":    11,
+								"type":  "table",
+								"title": "Nested Panel without transformations",
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":    1,
+						"type":  "row",
+						"title": "Row Panel",
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":                            10,
+								"type":                          "timeseries",
+								"title":                         "Nested Panel with transformations",
+								"transformations":               []interface{}{},
+								"_originallyHadTransformations": true, // marker added to nested panel
+							},
+							map[string]interface{}{
+								"id":    11,
+								"type":  "table",
+								"title": "Nested Panel without transformations",
+								// no marker added
+							},
+						},
+					},
+				},
+			},
+			description: "Should recursively mark nested panels that had transformations in original input",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a deep copy of input for testing
+			dashboard := deepCopy(tt.input).(map[string]interface{})
+
+			// Apply the tracking logic
+			trackOriginalTransformations(dashboard)
+
+			// Verify the result
+			if !compareValues(dashboard, tt.expected) {
+				t.Errorf("Test %s failed.\nExpected: %+v\nGot: %+v", tt.name, tt.expected, dashboard)
+			}
+		})
+	}
+}
+
 func TestCleanupPanelForSave(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -793,6 +1017,20 @@ func TestCleanupPanelForSave(t *testing.T) {
 				"options":     map[string]interface{}{"custom": "value"},
 			},
 			description: "Non-default values should be preserved in panel save model",
+		},
+		{
+			name: "remove_empty_transformations_array_top_level",
+			input: map[string]interface{}{
+				"type":            "timeseries",
+				"title":           "Test Panel",
+				"transformations": []interface{}{}, // Empty array should be removed for top-level panels
+			},
+			expected: map[string]interface{}{
+				"type":  "timeseries",
+				"title": "Test Panel",
+				// transformations should be removed for top-level panels
+			},
+			description: "Empty transformations arrays should be removed from top-level panels to match frontend behavior",
 		},
 	}
 

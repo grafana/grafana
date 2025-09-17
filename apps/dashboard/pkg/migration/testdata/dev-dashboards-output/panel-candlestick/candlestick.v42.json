@@ -262,7 +262,6 @@
         }
       ],
       "title": "Price Only, Hollow Candles",
-      "transformations": [],
       "type": "candlestick"
     },
     {
@@ -351,7 +350,6 @@
         }
       ],
       "title": "Price Only, OHLC Bars",
-      "transformations": [],
       "type": "candlestick"
     },
     {
@@ -473,7 +471,6 @@
         }
       ],
       "title": "Volume Only,  Alt Colors, 100% Opacity",
-      "transformations": [],
       "type": "candlestick"
     }
   ],

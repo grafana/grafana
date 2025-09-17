@@ -346,7 +346,6 @@
         }
       ],
       "title": "Orders",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -412,7 +411,6 @@
         }
       ],
       "title": "Customers",
-      "transformations": [],
       "type": "table"
     },
     {
