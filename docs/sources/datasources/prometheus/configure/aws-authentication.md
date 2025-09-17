@@ -2,7 +2,7 @@
 aliases:
   - ../data-sources/prometheus/
   - ../features/datasources/prometheus/
-description: Guide for authenticating with Amazon managed service for Prometheus in Grafana
+description: Guide for authenticating with Amazon Managed Service for Prometheus in Grafana
 keywords:
   - grafana
   - prometheus
@@ -92,7 +92,7 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
 ---
-# Connect to Amazon managed service for Prometheus
+# Connect to Amazon Managed Service for Prometheus
 
 1. In the data source configuration page, locate the **Auth** section
 2. Enable **SigV4 auth**
@@ -106,7 +106,7 @@ refs:
    | **Secret Access Key** | Your AWS secret key (if using access key auth) | `wJalrXUtn...` |
    | **Assume Role ARN** | IAM role ARN (optional) | `arn:aws:iam::123456789:role/GrafanaRole` |
 
-4. Set the **HTTP URL** to your Amazon managed service for Prometheus workspace endpoint:
+4. Set the **HTTP URL** to your Amazon Managed Service for Prometheus workspace endpoint:
    ```
    https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-12345678-1234-1234-1234-123456789012/
    ```
@@ -120,7 +120,7 @@ refs:
 apiVersion: 1
 datasources:
   - name: Amazon Managed Prometheus
-    type: prometheus
+    type: grafana-amazonprometheus-datasource
     access: proxy
     url: https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-12345678-1234-1234-1234-123456789012/
     jsonData:
@@ -129,7 +129,7 @@ datasources:
       sigV4Region: us-west-2
 ```
 
-# Migrate to Amazon managed service for Prometheus
+# Migrate to Amazon Managed Service for Prometheus
 
 Learn more about why this is happening: [Prometheus data source update: Redefining our big tent philosophy](https://grafana.com/blog/2025/06/16/prometheus-data-source-update-redefining-our-big-tent-philosophy/)
 
@@ -138,9 +138,9 @@ Learn more about why this is happening: [Prometheus data source update: Redefini
 - Ensure you have the organization administrator role
 - If you are self hosting Grafana, back up your existing dashboard configurations and queries
 
-## Migrate on Grafana cloud
+## Migrate on grafana Cloud
 
-Grafana cloud users will be automatically migrated to the relevant version of Prometheus. No action needs to be taken.
+grafana Cloud users will be automatically migrated to the relevant version of Prometheus. No action needs to be taken.
 
 ## Migrate in air-gapped environments
 
@@ -178,13 +178,13 @@ The banner displays one of the following messages:
 - Verify the `prometheusTypeMigration` feature toggle is enabled
 - Restart Grafana after enabling the feature toggle
 
-**Amazon managed service for Prometheus is not installed**
-- Verify that Amazon managed service for Prometheus is installed by going to **Connections** > **Add new connection** and search for "Amazon managed service for Prometheus"
-- Install Amazon managed service for Prometheus if not already installed
+**Amazon Managed Service for Prometheus is not installed**
+- Verify that Amazon Managed Service for Prometheus is installed by going to **Connections** > **Add new connection** and search for "Amazon Managed Service for Prometheus"
+- Install Amazon Managed Service for Prometheus if not already installed
 
 ### Rolling the migration back without a backup
 
-If you do not have a backup of your Grafana before the migration, you can run the script below. It will find all the Amazon managed service for Prometheus data source instances that were migrated from core Prometheus and revert them back to core Prometheus.
+If you do not have a backup of your Grafana instance before the migration, you can run the script below. It will find all the Amazon Managed Service for Prometheus data source instances that were migrated from core Prometheus and revert them back to core Prometheus.
 
 To revert the migration:
 
