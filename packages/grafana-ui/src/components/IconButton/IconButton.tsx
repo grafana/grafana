@@ -132,11 +132,15 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
       color: iconColor,
       borderRadius: theme.shape.radius.default,
 
+      '&:active': {
+        transform: activeButtonStyle.transform,
+      },
+
       '&[disabled], &:disabled': {
         cursor: 'not-allowed',
         color: theme.colors.action.disabledText,
         opacity: 0.65,
-        transform: 'none !important',
+        transform: 'none',
       },
 
       '&:before': {
@@ -164,10 +168,6 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
             variant === 'secondary' ? theme.colors.action.hover : colorManipulator.alpha(iconColor, 0.12),
           opacity: 1,
         },
-      },
-
-      '&:active': {
-        transform: activeButtonStyle.transform,
       },
     }),
     icon: css({

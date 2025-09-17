@@ -381,7 +381,7 @@ function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, 
     boxShadow: 'none',
     color: theme.colors.text.disabled,
     transition: 'none',
-    transform: 'none !important',
+    transform: 'none',
     background: theme.colors.action.disabledBackground,
   };
 
