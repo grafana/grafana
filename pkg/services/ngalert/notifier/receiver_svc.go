@@ -145,7 +145,7 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 		return nil, err
 	}
 
-	rcv, err := rs.getReceiverByUID(ctx, q.OrgID, legacy_storage.NameToUid(q.Name), revision)
+	rcv, err := rs.getReceiverByUID(ctx, span, q.OrgID, legacy_storage.NameToUid(q.Name), revision)
 	if err != nil {
 		return nil, err
 	}
@@ -208,6 +208,9 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	if err != nil {
 		if errors.Is(err, legacy_storage.ErrIncludeImported) {
 			rs.log.FromContext(ctx).Warn("Unable to include imported receivers. Read only Grafana receivers", "err", err)
+			span.AddEvent("Unable to include imported receivers", trace.WithAttributes(
+				attribute.String("err", err.Error()),
+			))
 			receivers, err = revision.GetReceivers(uids, prov, false)
 		}
 		if err != nil {
@@ -267,7 +270,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		return err
 	}
 
-	existing, err := rs.getReceiverByUID(ctx, orgID, uid, revision)
+	existing, err := rs.getReceiverByUID(ctx, span, orgID, uid, revision)
 	if err != nil {
 		if errors.Is(err, legacy_storage.ErrReceiverNotFound) {
 			return nil
@@ -407,7 +410,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	existing, err := rs.getReceiverByUID(ctx, orgID, r.GetUID(), revision)
+	existing, err := rs.getReceiverByUID(ctx, span, orgID, r.GetUID(), revision)
 	if err != nil {
 		return nil, err
 	}
@@ -744,7 +747,7 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 	return nil
 }
 
-func (rs *ReceiverService) getReceiverByUID(ctx context.Context, orgID int64, uid string, revision *legacy_storage.ConfigRevision) (*models.Receiver, error) {
+func (rs *ReceiverService) getReceiverByUID(ctx context.Context, span trace.Span, orgID int64, uid string, revision *legacy_storage.ConfigRevision) (*models.Receiver, error) {
 	prov, err := rs.loadProvenances(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -755,6 +758,9 @@ func (rs *ReceiverService) getReceiverByUID(ctx context.Context, orgID int64, ui
 	}
 	if errors.Is(err, legacy_storage.ErrIncludeImported) && rs.includeImported {
 		rs.log.FromContext(ctx).Warn("Unable to include imported receivers. Read only Grafana receivers", "err", err)
+		span.AddEvent("Unable to include imported receivers", trace.WithAttributes(
+			attribute.String("err", err.Error()),
+		))
 		return revision.GetReceiver(uid, prov, false)
 	}
 	return nil, err
