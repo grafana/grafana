@@ -5,11 +5,11 @@ go 1.24.6
 require (
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/authlib/types v0.0.0-20250721184729-1593a38e4933
-	github.com/grafana/grafana-app-sdk/logging v0.44.0
+	github.com/grafana/grafana-app-sdk/logging v0.45.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
 	github.com/prometheus/client_golang v1.23.2
 	github.com/stretchr/testify v1.11.1
-	go.opentelemetry.io/contrib/propagators/jaeger v1.36.0
+	go.opentelemetry.io/contrib/propagators/jaeger v1.37.0
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/trace v1.38.0
 	k8s.io/apimachinery v0.34.1

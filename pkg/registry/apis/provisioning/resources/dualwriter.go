@@ -28,12 +28,16 @@ type DualReadWriter struct {
 }
 
 type DualWriteOptions struct {
-	Path         string
+	Path string
+	// Ref is the target branch
+	// Local repositories do not use this, all other repository types do.
+	// Empty ref means to target the configured default branch
 	Ref          string
 	Message      string
 	Data         []byte
 	SkipDryRun   bool
 	OriginalPath string // Used for move operations
+	Branch       string // Configured default branch
 }
 
 func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access authlib.AccessChecker) *DualReadWriter {
@@ -89,7 +93,7 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 	}
 
 	// HACK: manual set to the provided branch so that the parser can possible read the file
-	if opts.Ref != "" {
+	if r.shouldUpdateGrafanaDB(opts, nil) {
 		file.Ref = opts.Ref
 	}
 
@@ -119,7 +123,7 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 	}
 
 	// Delete the file in the grafana database using the parser's Run method
-	if opts.Ref == "" {
+	if r.shouldUpdateGrafanaDB(opts, nil) {
 		err = parsed.Run(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("delete resource from storage: %w", err)
@@ -170,7 +174,7 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 	}
 	wrap.URLs = urls
 
-	if opts.Ref == "" {
+	if r.shouldUpdateGrafanaDB(opts, nil) {
 		folderName, err := r.folders.EnsureFolderPathExist(ctx, opts.Path)
 		if err != nil {
 			return nil, err
@@ -264,7 +268,7 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 	// Behaves the same running sync after writing
 	// FIXME: to make sure if behaves in the same way as in sync, we should
 	// we should refactor the code to use the same function.
-	if opts.Ref == "" && parsed.Client != nil {
+	if r.shouldUpdateGrafanaDB(opts, parsed) {
 		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path); err != nil {
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
@@ -339,7 +343,7 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 	}
 
 	// Handle folder management for main branch
-	if opts.Ref == "" {
+	if r.shouldUpdateGrafanaDB(opts, nil) {
 		// Ensure destination folder path exists
 		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path); err != nil {
 			return nil, fmt.Errorf("ensure destination folder path exists: %w", err)
@@ -461,7 +465,7 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	}
 
 	// Update the grafana database if this is the main branch
-	if opts.Ref == "" && newParsed.Client != nil {
+	if r.shouldUpdateGrafanaDB(opts, newParsed) {
 		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path); err != nil {
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
@@ -535,7 +539,7 @@ func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, _ string) er
 func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
 	// if the ref is set, it is not the active branch, so just delete the files from the branch
 	// and do not delete the items from grafana itself
-	if opts.Ref != "" {
+	if r.shouldUpdateGrafanaDB(opts, nil) {
 		err := r.repo.Delete(ctx, opts.Path, opts.Ref, opts.Message)
 		if err != nil {
 			return nil, fmt.Errorf("error deleting folder from repository: %w", err)
@@ -676,4 +680,18 @@ func (r *DualReadWriter) deleteChildren(ctx context.Context, childrenResources [
 	}
 
 	return nil
+}
+
+// shouldUpdateGrafanaDB returns true if we have an empty ref (targeting the configured branch)
+// or if the ref matches the configured branch
+func (r *DualReadWriter) shouldUpdateGrafanaDB(opts DualWriteOptions, parsed *ParsedResource) bool {
+	if parsed != nil && parsed.Client == nil {
+		return false
+	}
+
+	if opts.Ref != "" && opts.Ref != opts.Branch {
+		return false
+	}
+
+	return true
 }
