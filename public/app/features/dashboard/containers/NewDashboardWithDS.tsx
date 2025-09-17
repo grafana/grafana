@@ -22,6 +22,8 @@ export default function NewDashboardWithDS() {
 
     dispatch(setInitialDatasource(datasourceUid));
 
+    console.log('datasourceUid', ds);
+
     locationService.replace('/dashboard/new');
   }, [datasourceUid, dispatch]);
 
