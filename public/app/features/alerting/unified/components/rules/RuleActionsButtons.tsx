@@ -1,3 +1,4 @@
+import { isString } from 'lodash';
 import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
@@ -7,7 +8,7 @@ import { useDeleteModal } from 'app/features/alerting/unified/components/rule-vi
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/silences/SilenceGrafanaRuleDrawer';
 import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredRules';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
@@ -16,8 +17,9 @@ import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datas
 import { groupIdentifier } from '../../utils/groupIdentifier';
 import { createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { rulerRuleType } from '../../utils/rules';
+import { getRuleUID, prometheusRuleType, rulerRuleType } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
+import { EnrichmentDrawerExtension } from '../rule-list/extensions/EnrichmentDrawerExtension';
 
 import { RedirectToCloneRule } from './CloneRule';
 
@@ -44,6 +46,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
   const [deleteModal, showDeleteModal] = useDeleteModal(redirectToListView);
 
   const [showSilenceDrawer, setShowSilenceDrawer] = useState<boolean>(false);
+  const [showEnrichmentDrawer, setShowEnrichmentDrawer] = useState<boolean>(false);
 
   const [redirectToClone, setRedirectToClone] = useState<
     { identifier: RuleIdentifier; isProvisioned: boolean } | undefined
@@ -104,6 +107,12 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
     return null;
   }
 
+  // determine if this rule can be silenced by checking for Grafana Alert rule type and extracting the UID
+  const ruleUid = getRuleUID(rule.rulerRule ?? rule.promRule);
+  const silenceableRule =
+    isString(ruleUid) &&
+    (rulerRuleType.grafana.alertingRule(rule.rulerRule) || prometheusRuleType.grafana.alertingRule(rule.promRule));
+
   return (
     <Stack gap={1} alignItems="center" wrap="nowrap">
       {buttons}
@@ -119,6 +128,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
           }
         }}
         handleSilence={() => setShowSilenceDrawer(true)}
+        handleManageEnrichments={() => setShowEnrichmentDrawer(true)}
         handleDuplicateRule={() => setRedirectToClone({ identifier, isProvisioned })}
         onPauseChange={() => {
           // Uses INSTANCES_DISPLAY_LIMIT + 1 here as exporting LIMIT_ALERTS from RuleList has the side effect
@@ -132,8 +142,11 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
         buttonSize={buttonSize}
       />
       {deleteModal}
-      {rulerRuleType.grafana.alertingRule(rule.rulerRule) && showSilenceDrawer && (
-        <SilenceGrafanaRuleDrawer rulerRule={rule.rulerRule} onClose={() => setShowSilenceDrawer(false)} />
+      {silenceableRule && showSilenceDrawer && (
+        <SilenceGrafanaRuleDrawer ruleUid={ruleUid} onClose={() => setShowSilenceDrawer(false)} />
+      )}
+      {ruleUid && showEnrichmentDrawer && (
+        <EnrichmentDrawerExtension ruleUid={ruleUid} onClose={() => setShowEnrichmentDrawer(false)} />
       )}
       {redirectToClone?.identifier && (
         <RedirectToCloneRule

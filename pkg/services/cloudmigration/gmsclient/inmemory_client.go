@@ -57,7 +57,7 @@ func (c *memoryClientImpl) StartSnapshot(_ context.Context, sess cloudmigration.
 	c.mx.Unlock()
 
 	return &cloudmigration.StartSnapshotResponse{
-		EncryptionKey:        publicKey[:],
+		GMSPublicKey:         publicKey[:],
 		SnapshotID:           snapshotUid,
 		MaxItemsPerPartition: 10,
 		Algo:                 "nacl",

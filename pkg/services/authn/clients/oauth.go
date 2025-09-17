@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -70,12 +71,14 @@ var (
 
 func ProvideOAuth(
 	name string, cfg *setting.Cfg, oauthService oauthtoken.OAuthTokenService,
-	socialService social.Service, settingsProviderService setting.Provider, features featuremgmt.FeatureToggles,
+	socialService social.Service, settingsProviderService setting.Provider,
+	features featuremgmt.FeatureToggles, tracer trace.Tracer,
 ) *OAuth {
 	providerName := strings.TrimPrefix(name, "auth.client.")
 	return &OAuth{
 		name, fmt.Sprintf("oauth_%s", providerName), providerName,
-		log.New(name), cfg, settingsProviderService, oauthService, socialService, features,
+		log.New(name), cfg, tracer, settingsProviderService, oauthService,
+		socialService, features,
 	}
 }
 
@@ -85,6 +88,7 @@ type OAuth struct {
 	providerName string
 	log          log.Logger
 	cfg          *setting.Cfg
+	tracer       trace.Tracer
 
 	settingsProviderSvc setting.Provider
 	oauthService        oauthtoken.OAuthTokenService
@@ -97,6 +101,9 @@ func (c *OAuth) Name() string {
 }
 
 func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+	ctx, span := c.tracer.Start(ctx, "authn.oauth.Authenticate")
+	defer span.End()
+
 	r.SetMeta(authn.MetaKeyAuthModule, c.moduleName)
 
 	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
@@ -232,6 +239,9 @@ func (c *OAuth) GetConfig() authn.SSOClientConfig {
 }
 
 func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redirect, error) {
+	ctx, span := c.tracer.Start(ctx, "authn.oauth.RedirectURL") //nolint:ineffassign,staticcheck
+	defer span.End()
+
 	var opts []oauth2.AuthCodeOption
 
 	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
@@ -274,6 +284,9 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 }
 
 func (c *OAuth) Logout(ctx context.Context, user identity.Requester, sessionToken *auth.UserToken) (*authn.Redirect, bool) {
+	ctx, span := c.tracer.Start(ctx, "authn.oauth.Logout")
+	defer span.End()
+
 	token := c.oauthService.GetCurrentOAuthToken(ctx, user, sessionToken)
 
 	userID, err := identity.UserIdentifier(user.GetID())

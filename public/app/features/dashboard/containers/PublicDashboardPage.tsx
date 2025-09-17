@@ -14,7 +14,8 @@ import {
   PublicDashboardPageRouteSearchParams,
 } from 'app/features/dashboard/containers/types';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { useSelector, useDispatch, DashboardInitError } from 'app/types';
+import { DashboardInitError } from 'app/types/dashboard';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { DashNavTimeControls } from '../components/DashNav/DashNavTimeControls';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';

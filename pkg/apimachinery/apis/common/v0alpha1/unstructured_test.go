@@ -10,13 +10,13 @@ import (
 
 func TestDeepCopyJSON(t *testing.T) {
 	obj := &Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"int":    int(2),
 			"int16":  int16(2),
 			"int32":  int32(2),
 			"uint64": uint64(2),
 			"ref": &ObjectReference{
-				Resource: "x",
+				Kind: "x",
 			},
 			"array": []any{
 				int(1), int64(2), "hello",
@@ -25,7 +25,7 @@ func TestDeepCopyJSON(t *testing.T) {
 			"bool":   true,
 			"map": map[string]any{
 				"x": &ObjectReference{
-					Resource: "x",
+					Kind: "x",
 				},
 			},
 			"object": &v1.APIGroup{

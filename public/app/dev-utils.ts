@@ -3,7 +3,7 @@ import store from 'app/core/store';
 
 import { sendAppNotification } from './core/copy/appNotification';
 import { PreferencesService } from './core/services/PreferencesService';
-import { AppNotificationSeverity } from './types';
+import { AppNotificationSeverity } from './types/appNotifications';
 
 export const STORAGE_MOCK_API_KEY = 'grafana.dev.mockApi';
 

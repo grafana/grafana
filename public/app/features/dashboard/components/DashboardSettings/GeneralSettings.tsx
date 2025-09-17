@@ -29,12 +29,6 @@ import { SettingsPageProps } from './types';
 
 export type Props = SettingsPageProps & ConnectedProps<typeof connector>;
 
-const GRAPH_TOOLTIP_OPTIONS = [
-  { value: 0, label: 'Default' },
-  { value: 1, label: 'Shared crosshair' },
-  { value: 2, label: 'Shared Tooltip' },
-];
-
 export function GeneralSettingsUnconnected({
   dashboard,
   updateTimeZone,
@@ -44,6 +38,20 @@ export function GeneralSettingsUnconnected({
   const [renderCounter, setRenderCounter] = useState(0);
   const [dashboardTitle, setDashboardTitle] = useState(dashboard.title);
   const [dashboardDescription, setDashboardDescription] = useState(dashboard.description);
+  const GRAPH_TOOLTIP_OPTIONS = [
+    { value: 0, label: t('dashboard.general-settings-unconnected.graph_tooltip_options.label.default', 'Default') },
+    {
+      value: 1,
+      label: t(
+        'dashboard.general-settings-unconnected.graph_tooltip_options.label.shared-crosshair',
+        'Shared crosshair'
+      ),
+    },
+    {
+      value: 2,
+      label: t('dashboard.general-settings-unconnected.graph_tooltip_options.label.shared-tooltip', 'Shared tooltip'),
+    },
+  ];
 
   const pageNav = sectionNav.node.parentItem;
 

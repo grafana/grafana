@@ -4,19 +4,11 @@
     "alwaysStrict": true,
     "declaration": false,
     "resolveJsonModule": true,
-    "moduleResolution": "bundler"
-  },
-  "ts-node": {
-    "compilerOptions": {
-      "module": "commonjs",
-      "target": "es5",
-      "moduleResolution": "Node",
-      "esModuleInterop": true
-    },
-    "transpileOnly": true
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "allowImportingTsExtensions": true
   },
   "extends": "@grafana/tsconfig",
-
   "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
   "include": ["./types", "."]
 }

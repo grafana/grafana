@@ -39,21 +39,17 @@ export interface QueryBuilderOperationDef<T = any> extends RegistryItem {
   changeTypeHandler?: (op: QueryBuilderOperation, newDef: QueryBuilderOperationDef<T>) => QueryBuilderOperation;
 }
 
-export type QueryBuilderAddOperationHandler<T> = (
-  def: QueryBuilderOperationDef,
-  query: T,
-  modeller: VisualQueryModeller
-) => T;
+type QueryBuilderAddOperationHandler<T> = (def: QueryBuilderOperationDef, query: T, modeller: VisualQueryModeller) => T;
 
-export type QueryBuilderExplainOperationHandler = (op: QueryBuilderOperation, def?: QueryBuilderOperationDef) => string;
+type QueryBuilderExplainOperationHandler = (op: QueryBuilderOperation, def?: QueryBuilderOperationDef) => string;
 
-export type QueryBuilderOnParamChangedHandler = (
+type QueryBuilderOnParamChangedHandler = (
   index: number,
   operation: QueryBuilderOperation,
   operationDef: QueryBuilderOperationDef
 ) => QueryBuilderOperation;
 
-export type QueryBuilderOperationRenderer = (
+type QueryBuilderOperationRenderer = (
   model: QueryBuilderOperation,
   def: QueryBuilderOperationDef,
   innerExpr: string
@@ -73,16 +69,6 @@ export interface QueryBuilderOperationParamDef {
   minWidth?: number;
   editor?: ComponentType<QueryBuilderOperationParamEditorProps> | string;
   runQueryOnEnter?: boolean;
-}
-
-export interface QueryBuilderOperationEditorProps {
-  operation: QueryBuilderOperation;
-  index: number;
-  query: any;
-  datasource: DataSourceApi;
-  queryModeller: VisualQueryModeller;
-  onChange: (index: number, update: QueryBuilderOperation) => void;
-  onRemove: (index: number) => void;
 }
 
 export interface QueryBuilderOperationParamEditorProps {
@@ -112,4 +98,18 @@ export interface VisualQueryModeller {
   getCategories(): string[];
 
   getOperationDef(id: string): QueryBuilderOperationDef | undefined;
+}
+
+export interface VisualQueryBinary<T> {
+  operator: string;
+  vectorMatchesType?: 'on' | 'ignoring';
+  vectorMatches?: string;
+  query: T;
+}
+
+export interface PrometheusVisualQuery {
+  metric?: string;
+  labels: QueryBuilderLabelFilter[];
+  operations: QueryBuilderOperation[];
+  binaryQueries?: Array<VisualQueryBinary<PrometheusVisualQuery>>;
 }

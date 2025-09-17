@@ -8,7 +8,7 @@ import { notTimeFieldMatcher } from '../matchers/predicates';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
-import { reduceFields, reduceTransformer, ReduceTransformerOptions } from './reduce';
+import { reduceFields, reduceTransformer, ReduceTransformerMode, ReduceTransformerOptions } from './reduce';
 
 const seriesAWithSingleField = toDataFrame({
   name: 'A',
@@ -576,6 +576,64 @@ describe('Reducer Transformer', () => {
               6,
               6,
               6,
+            ],
+          },
+        ]
+      `);
+    });
+  });
+
+  it('reduce fields mode keeps distinct label values with multiple reducers', async () => {
+    const cfg: DataTransformerConfig<ReduceTransformerOptions> = {
+      id: DataTransformerID.reduce,
+      options: {
+        mode: ReduceTransformerMode.ReduceFields,
+        reducers: [ReducerID.max, ReducerID.count],
+        labelsToFields: false,
+      },
+    };
+
+    const seriesA = toDataFrame({
+      length: 3,
+      fields: [{ name: 'value', config: {}, labels: { category: 'apple' }, type: FieldType.number, values: [3, 4, 5] }],
+    });
+
+    const seriesB = toDataFrame({
+      fields: [
+        { name: 'value', config: {}, labels: { category: 'orange' }, type: FieldType.number, values: [6, 7, 8] },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
+      const processed = received[0];
+
+      expect(processed.length).toEqual(2);
+      expect(processed[0].fields).toMatchInlineSnapshot(`
+        [
+          {
+            "config": {},
+            "labels": {
+              "category": "apple",
+              "reducer": "Max",
+            },
+            "name": "value",
+            "state": undefined,
+            "type": "number",
+            "values": [
+              5,
+            ],
+          },
+          {
+            "config": {},
+            "labels": {
+              "category": "apple",
+              "reducer": "Count",
+            },
+            "name": "value",
+            "state": undefined,
+            "type": "number",
+            "values": [
+              3,
             ],
           },
         ]

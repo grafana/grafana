@@ -2,6 +2,7 @@ import {
   getTimeZone,
   InterpolateFunction,
   LinkModel,
+  locationUtil,
   PanelMenuItem,
   PanelPlugin,
   PluginExtensionLink,
@@ -12,7 +13,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { LocalValueVariable, sceneGraph, SceneGridRow, VizPanel, VizPanelMenu } from '@grafana/scenes';
+import { LocalValueVariable, sceneGraph, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -29,14 +30,14 @@ import { pluginExtensionRegistries } from 'app/features/plugins/extensions/regis
 import { GetPluginExtensions } from 'app/features/plugins/extensions/types';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { dispatch } from 'app/store/store';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
-import { ShareModal } from '../sharing/ShareModal';
-import { isInCloneChain } from '../utils/clone';
+import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
-import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
+import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -73,7 +74,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     const dashboard = getDashboardSceneFor(panel);
     const { isEmbedded } = dashboard.state.meta;
     const exploreMenuItem = await getExploreMenuItem(panel);
-    const isReadOnlyRepeat = isInCloneChain(panel.state.key!);
+    const isReadOnlyRepeat = isRepeatCloneOrChildOf(panel);
 
     // For embedded dashboards we only have explore action for now
     if (isEmbedded) {
@@ -89,7 +90,10 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.view', `View`),
         iconClassName: 'eye',
         shortcut: 'v',
-        href: getViewPanelUrl(panel),
+        href: locationUtil.getUrlForPartial(locationService.getLocation(), {
+          viewPanel: panel.getPathId(),
+          editPanel: undefined,
+        }),
       });
     }
 
@@ -104,89 +108,78 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (config.featureToggles.newDashboardSharingComponent) {
-      const subMenu: PanelMenuItem[] = [];
+    const subMenu: PanelMenuItem[] = [];
+    subMenu.push({
+      text: t('share-panel.menu.share-link-title', 'Share link'),
+      iconClassName: 'link',
+      shortcut: 'p u',
+      onClick: () => {
+        DashboardInteractions.sharingCategoryClicked({
+          item: shareDashboardType.link,
+          shareResource: getTrackingSource(panel?.getRef()),
+        });
+
+        const drawer = new ShareDrawer({
+          shareView: shareDashboardType.link,
+          panelRef: panel.getRef(),
+        });
+
+        dashboard.showModal(drawer);
+      },
+    });
+    subMenu.push({
+      text: t('share-panel.menu.share-embed-title', 'Share embed'),
+      iconClassName: 'arrow',
+      shortcut: 'p e',
+      onClick: () => {
+        DashboardInteractions.sharingCategoryClicked({
+          item: shareDashboardType.embed,
+          shareResource: getTrackingSource(panel.getRef()),
+        });
+
+        const drawer = new ShareDrawer({
+          shareView: shareDashboardType.embed,
+          panelRef: panel.getRef(),
+        });
+
+        dashboard.showModal(drawer);
+      },
+    });
+
+    if (
+      contextSrv.isSignedIn &&
+      config.snapshotEnabled &&
+      contextSrv.hasPermission(AccessControlAction.SnapshotsCreate)
+    ) {
       subMenu.push({
-        text: t('share-panel.menu.share-link-title', 'Share link'),
-        iconClassName: 'link',
-        shortcut: 'p u',
+        text: t('share-panel.menu.share-snapshot-title', 'Share snapshot'),
+        iconClassName: 'camera',
+        shortcut: 'p s',
         onClick: () => {
           DashboardInteractions.sharingCategoryClicked({
-            item: shareDashboardType.link,
-            shareResource: getTrackingSource(panel?.getRef()),
-          });
-
-          const drawer = new ShareDrawer({
-            shareView: shareDashboardType.link,
-            panelRef: panel.getRef(),
-          });
-
-          dashboard.showModal(drawer);
-        },
-      });
-      subMenu.push({
-        text: t('share-panel.menu.share-embed-title', 'Share embed'),
-        iconClassName: 'arrow',
-        shortcut: 'p e',
-        onClick: () => {
-          DashboardInteractions.sharingCategoryClicked({
-            item: shareDashboardType.embed,
+            item: shareDashboardType.snapshot,
             shareResource: getTrackingSource(panel.getRef()),
           });
 
           const drawer = new ShareDrawer({
-            shareView: shareDashboardType.embed,
+            shareView: shareDashboardType.snapshot,
             panelRef: panel.getRef(),
           });
 
           dashboard.showModal(drawer);
         },
       });
-
-      if (
-        contextSrv.isSignedIn &&
-        config.snapshotEnabled &&
-        contextSrv.hasPermission(AccessControlAction.SnapshotsCreate)
-      ) {
-        subMenu.push({
-          text: t('share-panel.menu.share-snapshot-title', 'Share snapshot'),
-          iconClassName: 'camera',
-          shortcut: 'p s',
-          onClick: () => {
-            DashboardInteractions.sharingCategoryClicked({
-              item: shareDashboardType.snapshot,
-              shareResource: getTrackingSource(panel.getRef()),
-            });
-
-            const drawer = new ShareDrawer({
-              shareView: shareDashboardType.snapshot,
-              panelRef: panel.getRef(),
-            });
-
-            dashboard.showModal(drawer);
-          },
-        });
-      }
-
-      items.push({
-        type: 'submenu',
-        text: t('panel.header-menu.share', 'Share'),
-        iconClassName: 'share-alt',
-        subMenu,
-        onClick: (e) => {
-          e.preventDefault();
-        },
-      });
-    } else {
-      items.push({
-        text: t('panel.header-menu.share', 'Share'),
-        iconClassName: 'share-alt',
-        onClick: () => {
-          dashboard.showModal(new ShareModal({ panelRef: panel.getRef() }));
-        },
-        shortcut: 'p s',
-      });
     }
+
+    items.push({
+      type: 'submenu',
+      text: t('panel.header-menu.share', 'Share'),
+      iconClassName: 'share-alt',
+      subMenu,
+      onClick: (e) => {
+        e.preventDefault();
+      },
+    });
 
     if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
       moreSubMenu.push({
@@ -231,32 +224,18 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           },
         });
       } else {
-        if (config.featureToggles.newDashboardSharingComponent) {
-          moreSubMenu.push({
-            text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
-            iconClassName: 'plus-square',
-            onClick: () => {
-              const drawer = new ShareDrawer({
-                shareView: shareDashboardType.libraryPanel,
-                panelRef: panel.getRef(),
-              });
+        moreSubMenu.push({
+          text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
+          iconClassName: 'plus-square',
+          onClick: () => {
+            const drawer = new ShareDrawer({
+              shareView: shareDashboardType.libraryPanel,
+              panelRef: panel.getRef(),
+            });
 
-              dashboard.showModal(drawer);
-            },
-          });
-        } else {
-          moreSubMenu.push({
-            text: t('panel.header-menu.create-library-panel', `Create library panel`),
-            onClick: () => {
-              dashboard.showModal(
-                new ShareModal({
-                  panelRef: panel.getRef(),
-                  activeTab: shareDashboardType.libraryPanel,
-                })
-              );
-            },
-          });
-        }
+            dashboard.showModal(drawer);
+          },
+        });
       }
     }
 
@@ -290,7 +269,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         iconClassName: 'question-circle',
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
-          onInspectPanel(panel, InspectTab.Help);
+          dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Help }));
         },
       });
     }
@@ -404,20 +383,18 @@ function getInspectMenuItem(
   if (plugin && !plugin.meta.skipDataQuery) {
     inspectSubMenu.push({
       text: t('panel.header-menu.inspect-data', `Data`),
-      href: getInspectUrl(panel, InspectTab.Data),
       onClick: (e) => {
         e.preventDefault();
-        locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Data });
+        dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Data }));
       },
     });
 
     if (dashboard instanceof DashboardScene && dashboard.state.meta.canEdit) {
       inspectSubMenu.push({
         text: t('panel.header-menu.query', `Query`),
-        href: getInspectUrl(panel, InspectTab.Query),
         onClick: (e) => {
           e.preventDefault();
-          locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Query });
+          dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Query }));
         },
       });
     }
@@ -425,10 +402,9 @@ function getInspectMenuItem(
 
   inspectSubMenu.push({
     text: t('panel.header-menu.inspect-json', `Panel JSON`),
-    href: getInspectUrl(panel, InspectTab.JSON),
     onClick: (e) => {
       e.preventDefault();
-      locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.JSON });
+      dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.JSON }));
     },
   });
 
@@ -436,10 +412,9 @@ function getInspectMenuItem(
     text: t('panel.header-menu.inspect', `Inspect`),
     iconClassName: 'info-circle',
     shortcut: 'i',
-    href: getInspectUrl(panel),
     onClick: (e) => {
       if (!e.isDefaultPrevented()) {
-        locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Data });
+        dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Data }));
       }
     },
     subMenu: inspectSubMenu.length > 0 ? inspectSubMenu : undefined,
@@ -507,21 +482,6 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
     });
   }
 
-  // Handle row repeats scenario
-  if (panel.parent?.parent instanceof SceneGridRow) {
-    const row = panel.parent.parent;
-    if (row.state.$variables) {
-      row.state.$variables.state.variables.forEach((variable) => {
-        if (variable instanceof LocalValueVariable) {
-          scopedVars = {
-            ...scopedVars,
-            [variable.state.name]: { value: variable.getValue(), text: variable.getValueText() },
-          };
-        }
-      });
-    }
-  }
-
   return {
     id,
     pluginId: panel.state.pluginId,
@@ -582,10 +542,3 @@ export function toggleVizPanelLegend(vizPanel: VizPanel): void {
 function hasLegendOptions(optionsWithLegend: unknown): optionsWithLegend is OptionsWithLegend {
   return optionsWithLegend != null && typeof optionsWithLegend === 'object' && 'legend' in optionsWithLegend;
 }
-
-const onInspectPanel = (vizPanel: VizPanel, tab?: InspectTab) => {
-  locationService.partial({
-    inspect: vizPanel.state.key,
-    inspectTab: tab,
-  });
-};

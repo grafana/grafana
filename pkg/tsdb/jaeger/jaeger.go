@@ -8,10 +8,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
-
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 )
 
 var logger = backend.NewLoggerWith("logger", "tsdb.jaeger")
@@ -20,7 +19,7 @@ type Service struct {
 	im instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	return &Service{
 		im: datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 	}
@@ -36,7 +35,7 @@ type datasourceJSONData struct {
 	} `json:"traceIdTimeParams"`
 }
 
-func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		httpClientOptions, err := settings.HTTPClientOptions(ctx)
 		if err != nil {

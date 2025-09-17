@@ -25,13 +25,13 @@ import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
-import { QueryGroupOptions } from 'app/types';
 import {
   PanelOptionsChangedEvent,
   PanelQueriesChangedEvent,
   PanelTransformationsChangedEvent,
   RenderEvent,
 } from 'app/types/events';
+import { QueryGroupOptions } from 'app/types/query';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { TimeOverrideResult } from '../utils/panel';
@@ -458,7 +458,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     }
 
     if (plugin.onPanelMigration) {
-      if (version !== this.pluginVersion) {
+      if (version !== this.pluginVersion || plugin.shouldMigrate?.(this)) {
         const newPanelOptions = plugin.onPanelMigration(this);
         this.options = await newPanelOptions;
         this.pluginVersion = version;
@@ -509,7 +509,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const oldOptions = this.getOptionsToRemember();
     const prevFieldConfig = this.fieldConfig;
     const oldPluginId = this.type;
-    const wasAngular = this.isAngularPlugin() || Boolean(autoMigrateAngular[oldPluginId]);
+    const angularId = this.autoMigrateFrom || oldPluginId;
+    const wasAngular = Boolean(autoMigrateAngular[angularId]);
     this.cachedPluginOptions[oldPluginId] = {
       properties: oldOptions,
       fieldConfig: prevFieldConfig,
@@ -616,12 +617,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   hasTitle() {
     return this.title && this.title.length > 0;
-  }
-
-  isAngularPlugin(): boolean {
-    return (
-      (this.plugin && this.plugin.angularPanelCtrl) !== undefined || (this.plugin?.meta?.angular?.detected ?? false)
-    );
   }
 
   destroy() {

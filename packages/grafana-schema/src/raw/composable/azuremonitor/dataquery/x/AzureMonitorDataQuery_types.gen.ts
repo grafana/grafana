@@ -37,6 +37,7 @@ export interface AzureMonitorQuery extends common.DataQuery {
    * @deprecated Legacy template variable support.
    */
   grafanaTemplateVariableFn?: GrafanaTemplateVariableQuery;
+  keepCookies?: Array<string>;
   /**
    * Namespace used in template variable queries
    */
@@ -73,6 +74,7 @@ export interface AzureMonitorQuery extends common.DataQuery {
 }
 
 export const defaultAzureMonitorQuery: Partial<AzureMonitorQuery> = {
+  keepCookies: [],
   subscriptions: [],
 };
 

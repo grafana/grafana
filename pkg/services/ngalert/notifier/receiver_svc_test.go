@@ -31,9 +31,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
@@ -62,6 +65,8 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 }
 
 func TestIntegrationReceiverService_GetReceivers(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
@@ -92,6 +97,8 @@ func TestIntegrationReceiverService_GetReceivers(t *testing.T) {
 }
 
 func TestIntegrationReceiverService_DecryptRedact(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
@@ -212,7 +219,7 @@ func TestReceiverService_Delete(t *testing.T) {
 		name             string
 		user             identity.Requester
 		deleteUID        string
-		callerProvenance definitions.Provenance
+		callerProvenance models.Provenance
 		version          string
 		storeSettings    map[models.AlertRuleKey][]models.NotificationSettings
 		existing         *models.Receiver
@@ -234,7 +241,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			name:             "service deletes receiver with provenance",
 			user:             writer,
 			deleteUID:        baseReceiver.UID,
-			callerProvenance: definitions.Provenance(models.ProvenanceAPI),
+			callerProvenance: models.ProvenanceAPI,
 			existing:         util.Pointer(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceAPI), models.ReceiverMuts.WithIntegrations(slackIntegration, emailIntegration))),
 		},
 		{
@@ -265,7 +272,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			name:             "delete provisioning provenance fails when caller is ProvenanceNone",
 			user:             writer,
 			deleteUID:        baseReceiver.UID,
-			callerProvenance: definitions.Provenance(models.ProvenanceNone),
+			callerProvenance: models.ProvenanceNone,
 			existing:         util.Pointer(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
 			expectedErr:      validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceFile, models.ProvenanceNone),
 		},
@@ -273,9 +280,9 @@ func TestReceiverService_Delete(t *testing.T) {
 			name:             "delete provisioning provenance fails when caller is a different type", // TODO: This should fail once we move from lenient to strict validation.
 			user:             writer,
 			deleteUID:        baseReceiver.UID,
-			callerProvenance: definitions.Provenance(models.ProvenanceFile),
+			callerProvenance: models.ProvenanceFile,
 			existing:         util.Pointer(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceAPI))),
-			//expectedErr:      validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceAPI, models.ProvenanceFile),
+			// expectedErr:      validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceAPI, models.ProvenanceFile),
 		},
 		{
 			name:        "delete receiver with optimistic version mismatch fails",
@@ -396,6 +403,12 @@ func TestReceiverService_Create(t *testing.T) {
 				models.CopyIntegrationWith(emailIntegration, models.IntegrationMuts.WithUID(generated(1))),
 			), models.ReceiverMuts.Encrypted(models.Base64Enrypt)),
 			expectedProvenances: map[string]models.Provenance{generated(0): models.ProvenanceNone, generated(1): models.ProvenanceNone}, // Mark UIDs as generated so that test will insert generated UID.
+		},
+		{
+			name:        "create receiver with non-Grafana origin fails",
+			user:        writer,
+			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithOrigin(models.ResourceOriginImported)),
+			expectedErr: ErrReceiverOrigin,
 		},
 		{
 			name: "create integration with invalid UID fails",
@@ -519,9 +532,13 @@ func TestReceiverService_Create(t *testing.T) {
 			if tc.expectedStored != nil {
 				revision, err := sut.cfgStore.Get(context.Background(), writer.GetOrgID())
 				require.NoError(t, err)
-				rcv, err := revision.GetReceiver(legacy_storage.NameToUid(tc.expectedStored.Name))
-				require.NoError(t, err)
-				assert.Equal(t, tc.expectedStored, rcv)
+				for _, apiReceiver := range revision.Config.AlertmanagerConfig.Receivers {
+					if apiReceiver.Name == tc.expectedStored.Name {
+						assert.Equal(t, tc.expectedStored, apiReceiver)
+						return
+					}
+				}
+				t.Fatalf("expected to find receiver %q in revision", tc.expectedStored.Name)
 			}
 		})
 	}
@@ -673,7 +690,7 @@ func TestReceiverService_Update(t *testing.T) {
 			user:     writer,
 			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceAPI)),
 			existing: util.Pointer(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
-			//expectedErr: validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceFile, models.ProvenanceAPI),
+			// expectedErr: validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceFile, models.ProvenanceAPI),
 			expectedUpdate: models.CopyReceiverWith(baseReceiver,
 				models.ReceiverMuts.WithProvenance(models.ProvenanceAPI),
 				rm.Encrypted(models.Base64Enrypt)),
@@ -725,11 +742,9 @@ func TestReceiverService_Update(t *testing.T) {
 				// Create route after receivers as they will be referenced.
 				revision, err := sut.cfgStore.Get(context.Background(), tc.user.GetOrgID())
 				require.NoError(t, err)
-				result, err := revision.CreateReceiver(tc.existing)
+				created, err := revision.CreateReceiver(tc.existing)
 				require.NoError(t, err)
 
-				created, err := legacy_storage.PostableApiReceiverToReceiver(result, tc.existing.Provenance)
-				require.NoError(t, err)
 				err = sut.cfgStore.Save(context.Background(), revision, tc.user.GetOrgID())
 				require.NoError(t, err)
 
@@ -1404,7 +1419,7 @@ func TestReceiverServiceAC_Delete(t *testing.T) {
 				return false
 			}
 			for _, recv := range allReceivers() {
-				err := sut.DeleteReceiver(context.Background(), recv.UID, definitions.Provenance(models.ProvenanceNone), versions[recv.UID], orgId, usr)
+				err := sut.DeleteReceiver(context.Background(), recv.UID, models.ProvenanceNone, versions[recv.UID], orgId, usr)
 				if hasAccess(recv.UID) {
 					require.NoErrorf(t, err, "should have access to receiver '%s', but doesn't", recv.Name)
 				} else {
@@ -1470,18 +1485,22 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 				legacy_storage.NameToUid("receiver1"): {
 					InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule1uid"}},
 					InUseByRoutes: 2,
+					CanUse:        true,
 				},
 				legacy_storage.NameToUid("receiver2"): {
 					InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule1uid"}, {OrgID: 1, UID: "rule2uid"}},
 					InUseByRoutes: 1,
+					CanUse:        true,
 				},
 				legacy_storage.NameToUid("receiver3"): {
 					InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule2uid"}},
 					InUseByRoutes: 2,
+					CanUse:        true,
 				},
 				legacy_storage.NameToUid("receiver4"): {
 					InUseByRules:  []models.AlertRuleKey{},
 					InUseByRoutes: 1,
+					CanUse:        true,
 				},
 			},
 		},
@@ -1529,7 +1548,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService) *ReceiverS
 
 	return NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), false),
-		legacy_storage.NewAlertmanagerConfigStore(store),
+		legacy_storage.NewAlertmanagerConfigStore(store, NewExtraConfigsCrypto(encryptSvc)),
 		provisioningStore,
 		&fakeAlertRuleNotificationStore{},
 		encryptSvc,

@@ -1,13 +1,17 @@
 import { config, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { Status } from '@grafana/schema/src/schema/dashboard/v2alpha1/types.status.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Status } from '@grafana/schema/src/schema/dashboard/v2';
 import { Resource } from 'app/features/apiserver/types';
-import { DashboardDataDTO, DashboardDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardWithAccessInfo } from './types';
+
+export function isV2StoredVersion(version: string | undefined): boolean {
+  return version === 'v2alpha1' || version === 'v2beta1';
+}
 
 export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
   const isDashboardSceneEnabled = config.featureToggles.dashboardScene;
@@ -74,6 +78,10 @@ export function isV1DashboardCommand(
   return !isDashboardV2Spec(cmd.dashboard);
 }
 
+export function isV1ClassicDashboard(obj: Dashboard | DashboardV2Spec): obj is Dashboard {
+  return !isDashboardV2Spec(obj);
+}
+
 export function isV2DashboardCommand(
   cmd: SaveDashboardCommand<Dashboard | DashboardV2Spec>
 ): cmd is SaveDashboardCommand<DashboardV2Spec> {
@@ -92,15 +100,15 @@ export function getFailedVersion(
 }
 
 /**
- * Helper function to check if a dashboard resource has a failed conversion from a specific version family
+ * Helper function to check if a dashboard resource has a failed conversion from specific versions
  * @param item - Dashboard resource item
- * @param versionPrefix - Version prefix to check (e.g., 'v1', 'v2')
- * @returns True if conversion failed and stored version starts with the specified prefix
+ * @param versionPrefixes - Array of version prefixes to check (e.g., ['v1', 'v2'])
+ * @returns True if conversion failed and stored version starts with any of the specified prefixes
  */
 export function failedFromVersion(
   item: Resource<Dashboard | DashboardV2Spec | DashboardDataDTO, Status>,
-  versionPrefix: string
+  versionPrefixes: string[]
 ): boolean {
   const storedVersion = getFailedVersion(item);
-  return !!storedVersion && storedVersion.startsWith(versionPrefix);
+  return !!storedVersion && versionPrefixes.some((prefix) => storedVersion.startsWith(prefix));
 }

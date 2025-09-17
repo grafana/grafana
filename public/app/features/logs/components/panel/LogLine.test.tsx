@@ -1,20 +1,26 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { CoreApp, createTheme, getDefaultTimeRange, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-import { createLogLine } from '../__mocks__/logRow';
+import { createLogLine } from '../mocks/logRow';
 
-import { getStyles, LogLine, Props } from './LogLine';
+import { getGridTemplateColumns, getStyles, LogLine, Props } from './LogLine';
 import { LogListFontSize } from './LogList';
-import { LogListContextProvider } from './LogListContext';
+import { LogListContextProvider, LogListContext } from './LogListContext';
 import { LogListSearchContext } from './LogListSearchContext';
-import { defaultProps } from './__mocks__/LogListContext';
+import { defaultProps, defaultValue } from './__mocks__/LogListContext';
 import { LogListModel } from './processing';
 import { LogLineVirtualization } from './virtualization';
 
+jest.mock('@grafana/assistant', () => ({
+  ...jest.requireActual('@grafana/assistant'),
+  useAssistant: jest.fn(() => [true, jest.fn()]),
+}));
+
 jest.mock('./LogListContext');
+jest.mock('../LogDetails');
 
 const theme = createTheme();
 const virtualization = new LogLineVirtualization(theme, 'default');
@@ -36,7 +42,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
   beforeEach(() => {
     log = createLogLine(
       { labels: { place: 'luna' }, entry: `log message 1` },
-      { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization }
+      { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization, wrapLogMessage: true }
     );
     contextProps.logs = [log];
     contextProps.fontSize = fontSize;
@@ -44,10 +50,13 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       displayedFields: [],
       index: 0,
       log,
+      logs: [log],
       onClick: jest.fn(),
       showTime: true,
       style: {},
       styles: styles,
+      timeRange: getDefaultTimeRange(),
+      timeZone: 'browser',
       wrapLogMessage: true,
     };
   });
@@ -70,6 +79,38 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     );
     expect(screen.queryByText(log.timestamp)).not.toBeInTheDocument();
     expect(screen.getByText('log message 1')).toBeInTheDocument();
+  });
+
+  test('Renders a log line with millisecond timestamps', () => {
+    log.timestamp = '2025-08-06 11:35:19.504';
+    render(
+      <LogListContext.Provider
+        value={{
+          ...defaultValue,
+          timestampResolution: 'ms',
+        }}
+      >
+        <LogLine {...defaultProps} />
+      </LogListContext.Provider>
+    );
+    expect(screen.getByText('2025-08-06 11:35:19.504')).toBeInTheDocument();
+  });
+
+  test('Renders a log line with nanosecond timestamps', () => {
+    log.timestamp = '2025-08-06 11:35:19.504';
+    log.timeEpochMs = 1754472919504;
+    log.timeEpochNs = '1754472919504133766';
+    render(
+      <LogListContext.Provider
+        value={{
+          ...defaultValue,
+          timestampResolution: 'ns',
+        }}
+      >
+        <LogLine {...defaultProps} />
+      </LogListContext.Provider>
+    );
+    expect(screen.getByText('2025-08-06 11:35:19.504133766')).toBeInTheDocument();
   });
 
   test('Renders a log line with displayed fields', () => {
@@ -175,6 +216,17 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       await userEvent.click(screen.getByLabelText('Log menu'));
       expect(screen.getByText('Copy log line')).toBeInTheDocument();
     });
+
+    test('The menu can be clicked', async () => {
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} />
+        </LogListContextProvider>
+      );
+      expect(screen.queryByText('Copy log line')).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button'));
+      expect(screen.getByText('Copy log line')).toBeInTheDocument();
+    });
   });
 
   describe('Syntax highlighting', () => {
@@ -226,7 +278,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       jest.spyOn(virtualization, 'getTruncationLength').mockReturnValue(5);
       log = createLogLine(
         { labels: { place: 'luna' }, entry: `log message 1` },
-        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization }
+        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization, wrapLogMessage: true }
       );
     });
 
@@ -280,6 +332,23 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       await userEvent.click(await screen.findByText('show more'));
       await userEvent.click(await screen.findByText('show less'));
       expect(onOverflow).toHaveBeenCalledTimes(2);
+    });
+
+    test('When the collapsed state changes, the log line contents re-render', async () => {
+      log.collapsed = true;
+      log.raw = 'The full contents of the log line';
+
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
+      );
+
+      expect(screen.queryByText(log.raw)).not.toBeInTheDocument();
+
+      await userEvent.click(await screen.findByText('show more'));
+
+      expect(screen.getByText(log.raw)).toBeInTheDocument();
     });
 
     test('Syncs the collapsed state with collapsed status changes in the log', async () => {
@@ -423,5 +492,125 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       expect(screen.queryByText('luna')).not.toBeInTheDocument();
       expect(screen.getByText('un')).toBeInTheDocument();
     });
+  });
+
+  describe('Inline details', () => {
+    test('Details are not rendered if details mode is not inline', () => {
+      render(
+        <LogListContext.Provider
+          value={{
+            ...defaultValue,
+            showDetails: [log],
+            detailsMode: 'sidebar',
+            detailsDisplayed: jest.fn().mockReturnValue(true),
+          }}
+        >
+          <LogLine {...defaultProps} />
+        </LogListContext.Provider>
+      );
+      expect(screen.queryByPlaceholderText('Search field names and values')).not.toBeInTheDocument();
+    });
+
+    test('Details are rendered if details mode is inline', () => {
+      render(
+        <LogListContext.Provider
+          value={{
+            ...defaultValue,
+            showDetails: [log],
+            detailsMode: 'inline',
+            detailsDisplayed: jest.fn().mockReturnValue(true),
+          }}
+        >
+          <LogLine {...defaultProps} />
+        </LogListContext.Provider>
+      );
+      expect(screen.getByPlaceholderText('Search field names and values')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('getGridTemplateColumns', () => {
+  test('Gets the template columns for the default visualization mode', () => {
+    expect(
+      getGridTemplateColumns(
+        [
+          {
+            field: 'timestamp',
+            width: 23,
+          },
+          {
+            field: 'level',
+            width: 4,
+          },
+        ],
+        []
+      )
+    ).toBe('23px 4px 1fr');
+  });
+
+  test('Gets the template columns when displayed fields are used', () => {
+    expect(
+      getGridTemplateColumns(
+        [
+          {
+            field: 'timestamp',
+            width: 23,
+          },
+          {
+            field: 'level',
+            width: 4,
+          },
+        ],
+        ['field']
+      )
+    ).toBe('23px 4px');
+  });
+
+  test('Gets the template columns when displayed fields are used', () => {
+    expect(
+      getGridTemplateColumns(
+        [
+          {
+            field: 'timestamp',
+            width: 23,
+          },
+          {
+            field: 'level',
+            width: 4,
+          },
+          {
+            field: 'field',
+            width: 4,
+          },
+        ],
+        ['field']
+      )
+    ).toBe('23px 4px 4px');
+  });
+
+  test('Gets the template columns when displayed fields are used', () => {
+    expect(
+      getGridTemplateColumns(
+        [
+          {
+            field: 'timestamp',
+            width: 23,
+          },
+          {
+            field: 'level',
+            width: 4,
+          },
+          {
+            field: 'field',
+            width: 4,
+          },
+          {
+            field: LOG_LINE_BODY_FIELD_NAME,
+            width: 20,
+          },
+        ],
+        ['field']
+      )
+    ).toBe('23px 4px 4px 20px');
   });
 });

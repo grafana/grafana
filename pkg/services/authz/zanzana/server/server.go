@@ -9,9 +9,11 @@ import (
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -42,8 +44,9 @@ type Server struct {
 	storesMU *sync.Mutex
 	cache    *localcache.CacheService
 
-	logger log.Logger
-	tracer tracing.Tracer
+	logger  log.Logger
+	tracer  tracing.Tracer
+	metrics *metrics
 }
 
 type storeInfo struct {
@@ -51,7 +54,7 @@ type storeInfo struct {
 	ModelID string
 }
 
-func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger log.Logger, tracer tracing.Tracer) (*Server, error) {
+func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) (*Server, error) {
 	channel := &inprocgrpc.Channel{}
 	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
@@ -62,9 +65,10 @@ func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger 
 		storesMU:      &sync.Mutex{},
 		stores:        make(map[string]storeInfo),
 		cfg:           cfg,
-		cache:         localcache.New(cfg.CheckQueryCacheTTL, cacheCleanInterval),
+		cache:         localcache.New(cfg.CacheSettings.CheckQueryCacheTTL, cacheCleanInterval),
 		logger:        logger,
 		tracer:        tracer,
+		metrics:       newZanzanaServerMetrics(reg),
 	}
 
 	return s, nil
@@ -87,8 +91,21 @@ func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys,
 				User:     subject,
 				Relation: common.RelationSetView,
 				Object: common.NewGroupResourceIdent(
-					dashboardalpha1.DashboardResourceInfo.GroupResource().Group,
-					dashboardalpha1.DashboardResourceInfo.GroupResource().Resource,
+					dashboardV2alpha1.DashboardResourceInfo.GroupResource().Group,
+					dashboardV2alpha1.DashboardResourceInfo.GroupResource().Resource,
+					"",
+				),
+			},
+		)
+
+		contextuals = append(
+			contextuals,
+			&openfgav1.TupleKey{
+				User:     subject,
+				Relation: common.RelationSetView,
+				Object: common.NewGroupResourceIdent(
+					dashboardV2beta1.DashboardResourceInfo.GroupResource().Group,
+					dashboardV2beta1.DashboardResourceInfo.GroupResource().Resource,
 					"",
 				),
 			},

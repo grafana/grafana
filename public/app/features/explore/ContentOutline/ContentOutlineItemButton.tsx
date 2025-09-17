@@ -92,6 +92,10 @@ export function ContentOutlineItemButton({
       </button>
       {onRemove && (
         <Button
+          aria-label={t(
+            'explore.content-outline-item-button.body.aria-label-content-outline-item-delete-button',
+            'Delete item'
+          )}
           variant="destructive"
           className={styles.deleteButton}
           icon="times"

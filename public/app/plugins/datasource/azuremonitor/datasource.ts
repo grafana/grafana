@@ -18,7 +18,8 @@ import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analyti
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
 import ResourcePickerData from './resourcePicker/resourcePickerData';
-import { AzureMonitorDataSourceJsonData, AzureMonitorQuery, AzureQueryType } from './types';
+import { AzureMonitorQuery, AzureQueryType } from './types/query';
+import { AzureMonitorDataSourceJsonData } from './types/types';
 import migrateAnnotation from './utils/migrateAnnotation';
 import migrateQuery from './utils/migrateQuery';
 import { VariableSupport } from './variables';
@@ -34,6 +35,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   azureResourceGraphDatasource: AzureResourceGraphDatasource;
   currentUserAuth: boolean;
   currentUserAuthFallbackAvailable: boolean;
+  defaultSubscriptionId?: string;
 
   pseudoDatasource: {
     [key in AzureQueryType]?: AzureMonitorDatasource | AzureLogAnalyticsDatasource | AzureResourceGraphDatasource;
@@ -77,6 +79,8 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       this.currentUserAuth = instanceSettings.jsonData.azureAuthType === 'currentuser';
       this.currentUserAuthFallbackAvailable = false;
     }
+
+    this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {
@@ -239,6 +243,10 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     });
   }
 
+  getLocations(subscriptions: string[]) {
+    return this.azureMonitorDatasource.getLocations(subscriptions);
+  }
+
   interpolateVariablesInQueries(queries: AzureMonitorQuery[], scopedVars: ScopedVars): AzureMonitorQuery[] {
     const mapped = queries.map((query) => {
       if (!query.queryType) {
@@ -283,6 +291,10 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       }
     }
     return { ...query, azureLogAnalytics: { ...query.azureLogAnalytics, query: expression } };
+  }
+
+  getDefaultSubscriptionId() {
+    return this.defaultSubscriptionId || '';
   }
 }
 

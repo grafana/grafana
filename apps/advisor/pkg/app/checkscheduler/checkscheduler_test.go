@@ -103,6 +103,69 @@ func TestRunner_checkLastCreated_UnprocessedCheck(t *testing.T) {
 	assert.Equal(t, expectedAnnotations, patchOperation.Value)
 }
 
+func TestRunner_checkLastCreated_PaginatedResponse(t *testing.T) {
+	// Create checks with different creation times
+	past := time.Now().Add(-1 * time.Hour)
+	now := time.Now()
+
+	mockClient := &MockClient{
+		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+			if options.Continue == "" {
+				// First page - return oldest and middle checks with continue token
+				return &advisorv0alpha1.CheckList{
+					ListMeta: metav1.ListMeta{
+						Continue: "continue-token-123",
+					},
+					Items: []advisorv0alpha1.Check{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name:              "check-1",
+								CreationTimestamp: metav1.NewTime(past),
+								Annotations: map[string]string{
+									checks.StatusAnnotation: "completed",
+								},
+							},
+						},
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name:              "check-2",
+								CreationTimestamp: metav1.NewTime(past),
+								Annotations: map[string]string{
+									checks.StatusAnnotation: "completed",
+								},
+							},
+						},
+					},
+				}, nil
+			}
+			// Second page - verify continue token is passed and return newest check
+			assert.Equal(t, "continue-token-123", options.Continue)
+			return &advisorv0alpha1.CheckList{
+				Items: []advisorv0alpha1.Check{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:              "check-3",
+							CreationTimestamp: metav1.NewTime(now),
+							Annotations: map[string]string{
+								checks.StatusAnnotation: "completed",
+							},
+						},
+					},
+				},
+			}, nil
+		},
+	}
+
+	runner := &Runner{
+		client: mockClient,
+		log:    &logging.NoOpLogger{},
+	}
+
+	lastCreated, err := runner.checkLastCreated(context.Background(), &logging.NoOpLogger{})
+	assert.NoError(t, err)
+	assert.Equal(t, now.Truncate(time.Second), lastCreated.Truncate(time.Second))
+}
+
 func TestRunner_createChecks_ErrorOnCreate(t *testing.T) {
 	mockCheckService := &MockCheckService{checks: []checks.Check{&mockCheck{id: "check-1"}}}
 

@@ -15,15 +15,15 @@ import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsR
 import { AddedFunctionsRegistry } from '../extensions/registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from '../extensions/registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from '../extensions/registry/ExposedComponentsRegistry';
+import { importAppPlugin } from '../pluginLoader';
 import { getPluginSettings } from '../pluginSettings';
-import { importAppPlugin } from '../plugin_loader';
 
 import AppRootPage from './AppRootPage';
 
 jest.mock('../pluginSettings', () => ({
   getPluginSettings: jest.fn(),
 }));
-jest.mock('../plugin_loader', () => ({
+jest.mock('../pluginLoader', () => ({
   importAppPlugin: jest.fn(),
 }));
 

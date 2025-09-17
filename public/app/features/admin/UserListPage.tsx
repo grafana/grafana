@@ -9,9 +9,9 @@ import { config } from '@grafana/runtime';
 import { useStyles2, TabsBar, Tab } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { isEmailSharingEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { Page } from '../../core/components/Page/Page';
-import { AccessControlAction } from '../../types';
 import { UsersListPageContent } from '../users/UsersListPage';
 
 import { UserListAdminPageContent } from './UserListAdminPage';
@@ -30,11 +30,7 @@ const selectors = e2eSelectors.pages.UserListPage;
 const PublicDashboardsTab = ({ view, setView }: { view: TabView | null; setView: (v: TabView | null) => void }) => {
   return (
     <Tab
-      label={
-        config.featureToggles.newDashboardSharingComponent
-          ? t('users-access-list.tabs.shared-dashboard-users-tab-title', 'Shared dashboard users')
-          : t('users-access-list.tabs.public-dashboard-users-tab-title', 'Public dashboard users')
-      }
+      label={t('users-access-list.tabs.shared-dashboard-users-tab-title', 'Shared dashboard users')}
       active={view === TabView.PUBLIC_DASHBOARDS}
       onChangeTab={() => setView(TabView.PUBLIC_DASHBOARDS)}
       data-testid={selectors.tabs.publicDashboardsUsers}

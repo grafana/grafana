@@ -218,7 +218,7 @@ export function fieldToStringField(
         if (joinWith?.length && Array.isArray(v)) {
           return v.join(joinWith);
         }
-        return field.type === FieldType.other ? JSON.stringify(v) : `${v}`;
+        return JSON.stringify(v);
       });
       break;
 

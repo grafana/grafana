@@ -1,6 +1,6 @@
 import { DataFrameView, SelectableValue } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { PermissionLevelString } from 'app/types';
+import { PermissionLevelString } from 'app/types/acl';
 
 import { ManagerKind } from '../../apiserver/types';
 
@@ -41,6 +41,7 @@ export interface SearchQuery {
   starred?: boolean;
   permission?: PermissionLevelString;
   deleted?: boolean;
+  offset?: number;
 }
 
 export interface DashboardQueryResult {

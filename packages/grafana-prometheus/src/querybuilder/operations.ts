@@ -258,7 +258,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     createFunction({ id: PromOperationId.Sort }),
     createFunction({ id: PromOperationId.SortDesc }),
     createFunction({ id: PromOperationId.Sqrt }),
-    createFunction({ id: PromOperationId.Stddev }),
     createFunction({
       id: PromOperationId.Tan,
       category: PromVisualQueryOperationCategory.Trigonometric,
@@ -284,7 +283,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   return list;
 }
 
-export function createFunction(definition: Partial<QueryBuilderOperationDef>): QueryBuilderOperationDef {
+function createFunction(definition: Partial<QueryBuilderOperationDef>): QueryBuilderOperationDef {
   return {
     ...definition,
     id: definition.id!,
@@ -297,7 +296,7 @@ export function createFunction(definition: Partial<QueryBuilderOperationDef>): Q
   };
 }
 
-export function createRangeFunction(name: string, withRateInterval = false): QueryBuilderOperationDef {
+function createRangeFunction(name: string, withRateInterval = false): QueryBuilderOperationDef {
   return {
     id: name,
     name: getPromOperationDisplayName(name),
@@ -325,7 +324,7 @@ function operationTypeChangedHandlerForRangeFunction(
   return operation;
 }
 
-export function operationWithRangeVectorRenderer(
+function operationWithRangeVectorRenderer(
   model: QueryBuilderOperation,
   def: QueryBuilderOperationDef,
   innerExpr: string

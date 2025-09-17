@@ -2,6 +2,7 @@ import { createRef, CSSProperties, PointerEvent as ReactPointerEvent } from 'rea
 
 import { SceneLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutOrchestratorFor } from '../../utils/utils';
 
 import { AutoGridItem } from './AutoGridItem';
@@ -21,9 +22,6 @@ export interface AutoGridLayoutState extends SceneObjectState, AutoGridLayoutOpt
    * For media query for screens smaller than md breakpoint
    */
   md?: AutoGridLayoutOptions;
-
-  /** True when the items should be lazy loaded */
-  isLazy?: boolean;
 
   /** True when the items should be draggable */
   isDraggable?: boolean;
@@ -95,6 +93,10 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   }
 
   public isDraggable(): boolean {
+    if (isRepeatCloneOrChildOf(this)) {
+      return false;
+    }
+
     return this.state.isDraggable ?? false;
   }
 

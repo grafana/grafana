@@ -23,7 +23,8 @@ export interface OptionsPaneItemInfo {
   useShowIf?: () => boolean;
   overrides?: OptionPaneItemOverrideInfo[];
   addon?: ReactNode;
-  id?: string;
+  /** Must be unique on the page! */
+  id: string;
 }
 
 /**
@@ -31,11 +32,14 @@ export interface OptionsPaneItemInfo {
  */
 export class OptionsPaneItemDescriptor {
   parent!: OptionsPaneCategoryDescriptor;
+  props: OptionsPaneItemInfo;
 
-  constructor(public props: OptionsPaneItemInfo) {}
+  constructor(props: OptionsPaneItemInfo) {
+    this.props = { ...props };
+  }
 
   render(searchQuery?: string) {
-    return <OptionsPaneItem key={this.props.title} itemDescriptor={this} searchQuery={searchQuery} />;
+    return <OptionsPaneItem key={this.props.id} itemDescriptor={this} searchQuery={searchQuery} />;
   }
 
   useShowIf() {

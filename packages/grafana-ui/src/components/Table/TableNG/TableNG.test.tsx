@@ -1,7 +1,17 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { applyFieldOverrides, createTheme, DataFrame, EventBus, FieldType, toDataFrame } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  createTheme,
+  DataFrame,
+  DataLink,
+  EventBus,
+  FieldType,
+  LinkModel,
+  toDataFrame,
+} from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { TableCellBackgroundDisplayMode } from '@grafana/schema';
 
 import { PanelContext, PanelContextProvider } from '../../../components/PanelChrome';
@@ -133,13 +143,13 @@ const createNestedDataFrame = (): DataFrame => {
         name: '__depth',
         type: FieldType.number,
         values: [0, 0],
-        config: { custom: { hidden: true } },
+        config: { custom: { hideFrom: { viz: true } } },
       },
       {
         name: '__index',
         type: FieldType.number,
         values: [0, 1],
-        config: { custom: { hidden: true } },
+        config: { custom: { hideFrom: { viz: true } } },
       },
       {
         name: '__nestedFrames',
@@ -452,18 +462,22 @@ describe('TableNG', () => {
     });
 
     it('renders footer with aggregations when footerOptions are provided', () => {
+      const baseFrame = createBasicDataFrame();
+      // Create a filter function that only shows rows with A1
+      const frameWithReducers = {
+        ...baseFrame,
+        fields: baseFrame.fields.map((field) => ({
+          ...field,
+          config: {
+            ...field.config,
+            custom: {
+              footer: { reducers: ['sum'] },
+            },
+          },
+        })),
+      };
       const { container } = render(
-        <TableNG
-          enableVirtualization={false}
-          data={createBasicDataFrame()}
-          width={800}
-          height={600}
-          footerOptions={{
-            show: true,
-            reducer: ['sum'],
-            countRows: false,
-          }}
-        />
+        <TableNG enableVirtualization={false} data={frameWithReducers} width={800} height={600} />
       );
 
       // Check for footer row
@@ -472,36 +486,6 @@ describe('TableNG', () => {
 
       // Sum of Column B values (1+2+3=6)
       expect(screen.getByText('6')).toBeInTheDocument();
-    });
-
-    it('renders row count in footer when countRows is true', () => {
-      const { container } = render(
-        <TableNG
-          enableVirtualization={false}
-          data={createBasicDataFrame()}
-          width={800}
-          height={600}
-          footerOptions={{
-            show: true,
-            reducer: ['count'],
-            countRows: true, // Enable row counting
-          }}
-        />
-      );
-
-      // Check for footer row
-      const footerRow = container.querySelector('.rdg-summary-row');
-      expect(footerRow).toBeInTheDocument();
-
-      // Get the text content of the footer cells
-      const footerCells = footerRow?.querySelectorAll('[role="gridcell"]');
-      const footerTexts = Array.from(footerCells || []).map((cell) => cell.textContent);
-
-      // The first cell should contain the row count (3 rows)
-      expect(footerTexts[0]).toBe('Count3');
-
-      // There should be no other footer cells
-      expect(footerTexts[1]).toBe('');
     });
   });
 
@@ -1137,28 +1121,36 @@ describe('TableNG', () => {
     it('updates footer calculations when rows are filtered', () => {
       // Create a filtered frame with only the first row
       const baseFrame = createBasicDataFrame();
+
+      const baseFrameWithReducers = {
+        ...baseFrame,
+        fields: baseFrame.fields.map((field) => ({
+          ...field,
+          state: {
+            calcs: {
+              sum: {
+                value: 6,
+                formattedValue: '6',
+                reducerName: 'sum',
+              },
+            },
+          },
+          config: { ...field.config, custom: { footer: { reducers: ['sum'] } } },
+        })),
+      };
+
       const filteredFrame = {
         ...baseFrame,
-        length: 1,
         fields: baseFrame.fields.map((field) => ({
           ...field,
           values: field.name === 'Column A' ? ['A1'] : field.name === 'Column B' ? [1] : field.values.slice(0, 1),
+          config: { ...field.config, custom: { footer: { reducers: ['sum'] } } },
         })),
       };
 
       // Render with unfiltered data and footer options
       const { container, rerender } = render(
-        <TableNG
-          enableVirtualization={false}
-          data={baseFrame}
-          width={800}
-          height={600}
-          footerOptions={{
-            show: true,
-            reducer: ['sum'],
-            countRows: false,
-          }}
-        />
+        <TableNG enableVirtualization={false} data={baseFrameWithReducers} width={800} height={600} />
       );
 
       // Check initial footer sum (1+2+3=6)
@@ -1173,20 +1165,7 @@ describe('TableNG', () => {
       expect(initialFooterTexts[1]).toBe('6');
 
       // Rerender with filtered data
-      rerender(
-        <TableNG
-          enableVirtualization={false}
-          data={filteredFrame}
-          width={800}
-          height={600}
-          footerOptions={{
-            show: true,
-            reducer: ['sum'],
-            countRows: false,
-          }}
-        />
-      );
-
+      rerender(<TableNG enableVirtualization={false} data={filteredFrame} width={800} height={600} />);
       // Check filtered footer sum (should be 1)
       const filteredFooter = container.querySelector('.rdg-summary-row');
       expect(filteredFooter).toBeInTheDocument();
@@ -1232,57 +1211,6 @@ describe('TableNG', () => {
     });
   });
 
-  // TODO we need to test this with an e2e rather than a unit test, because the element dimensions calcs
-  // don't work in unit tests (no clientWidth/Height)
-  describe.skip('Resizing', () => {
-    beforeEach(() => {
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
-      window.HTMLElement.prototype.setPointerCapture = jest.fn();
-      window.HTMLElement.prototype.hasPointerCapture = jest.fn();
-      window.HTMLElement.prototype.releasePointerCapture = jest.fn();
-      window.HTMLElement.prototype.getBoundingClientRect = jest.fn(() => ({
-        width: 100,
-        height: 20,
-        top: 0,
-        left: 0,
-        bottom: 0,
-        right: 0,
-        x: 0,
-        y: 0,
-        toJSON: jest.fn(() => ''),
-      }));
-    });
-
-    it('calls onColumnResize when column is resized', async () => {
-      const onColumnResize = jest.fn();
-
-      const { container } = render(
-        <TableNG
-          enableVirtualization={false}
-          data={createBasicDataFrame()}
-          width={800}
-          height={600}
-          onColumnResize={onColumnResize}
-        />
-      );
-
-      // Find resize handle
-      const resizeHandles = container.querySelectorAll('.rdg-header-row > [role="columnheader"] > div:last-child');
-      const handle = resizeHandles[0];
-
-      if (!handle) {
-        throw new Error('Resize handle not found');
-      }
-
-      // simulate a click, then drag, then release.
-      await userEvent.pointer({ keys: '[MouseLeft>]', coords: { x: 0, y: 0 }, target: handle });
-      await userEvent.pointer({ coords: { x: 250, y: 0 }, target: handle });
-      await userEvent.pointer({ keys: '[/MouseLeft]', coords: { x: 250, y: 0 }, target: handle });
-
-      await waitFor(() => expect(onColumnResize).toHaveBeenCalled());
-    });
-  });
-
   describe('Text wrapping', () => {
     it('defaults to not wrapping text', () => {
       const { container } = render(
@@ -1299,10 +1227,7 @@ describe('TableNG', () => {
       const frame = createBasicDataFrame();
       frame.fields.forEach((field) => {
         if (field.config?.custom) {
-          field.config.custom.cellOptions = {
-            ...field.config.custom.cellOptions,
-            wrapText: true,
-          };
+          field.config.custom.wrapText = true;
         }
       });
 
@@ -1315,9 +1240,7 @@ describe('TableNG', () => {
           fieldConfig={{
             defaults: {
               custom: {
-                cellOptions: {
-                  wrapText: true,
-                },
+                wrapText: true,
               },
             },
             overrides: [],
@@ -1331,34 +1254,6 @@ describe('TableNG', () => {
 
       // In the getStyles function, when textWrap is true, whiteSpace is set to 'pre-line'
       expect(cellStyles.getPropertyValue('white-space')).toBe('pre-line');
-    });
-  });
-
-  describe('Context menu', () => {
-    it('should show context menu on right-click', async () => {
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={400} height={400} />
-      );
-
-      const cell = container.querySelector('[role="gridcell"]');
-      expect(cell).toBeInTheDocument();
-
-      // Trigger context menu directly on the cell element
-      if (cell) {
-        fireEvent.contextMenu(cell);
-      }
-
-      // Check that context menu is shown
-      const menu = await screen.findByRole('menu');
-      expect(menu).toBeInTheDocument();
-
-      // Check for the Inspect value menu item
-      const menuItem = await screen.findByText('Inspect value');
-      expect(menuItem).toBeInTheDocument();
-
-      // close the menu
-      await userEvent.click(container);
-      expect(menuItem).not.toBeInTheDocument();
     });
   });
 
@@ -1680,6 +1575,57 @@ describe('TableNG', () => {
       await userEvent.unhover(screen.getAllByRole('row')[1]);
 
       expect(mockEventBus.publish).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Displays data Links', () => {
+    function toLinkModel(link: DataLink): LinkModel {
+      return {
+        href: link.url,
+        title: link.title,
+        target: link.targetBlank ? '_blank' : '_self',
+        origin: link.origin || 'panel',
+      };
+    }
+
+    it('shows multiple datalinks in the tooltip', async () => {
+      const dataFrame = createBasicDataFrame();
+      const links: DataLink[] = [
+        { url: 'http://asdasd.com', title: 'Test Title' },
+        { url: 'http://asdasd2.com', title: 'Test Title2' },
+      ];
+
+      dataFrame.fields[0].config.links = links;
+      dataFrame.fields[0].getLinks = () => links.map(toLinkModel);
+
+      render(<TableNG enableVirtualization={false} data={dataFrame} width={800} height={600} />);
+
+      const cell = screen.getByText('A1');
+      await userEvent.click(cell);
+
+      const tooltip = screen.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper);
+      expect(tooltip).toBeInTheDocument();
+
+      expect(screen.getByText('Test Title')).toBeInTheDocument();
+      expect(screen.getByText('Test Title2')).toBeInTheDocument();
+    });
+
+    it('does not show tooltip for a single link', async () => {
+      const dataFrame = createBasicDataFrame();
+
+      const links: DataLink[] = [{ url: 'http://asdasd.com', title: 'Test Title' }];
+
+      dataFrame.fields[0].config.links = links;
+      dataFrame.fields[0].getLinks = () => links.map(toLinkModel);
+
+      render(<TableNG enableVirtualization={false} data={dataFrame} width={800} height={600} />);
+
+      const cell = screen.getByText('A1');
+
+      // we need to click the parent since the cell itself is a link.
+      await userEvent.click(cell.parentElement!);
+
+      expect(screen.queryByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).not.toBeInTheDocument();
     });
   });
 });

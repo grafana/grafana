@@ -12,7 +12,9 @@
 package dataquery
 
 import (
+	bytes "bytes"
 	json "encoding/json"
+	errors "errors"
 )
 
 type AzureMonitorQuery struct {
@@ -52,13 +54,14 @@ type AzureMonitorQuery struct {
 	CustomNamespace *string `json:"customNamespace,omitempty"`
 	// Used only for exemplar queries from Prometheus
 	Query *string `json:"query,omitempty"`
+	// Used to configure the HTTP request timeout
+	Timeout *float64 `json:"timeout,omitempty"`
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource any `json:"datasource,omitempty"`
-	// Used to configure the HTTP request timeout
-	Timeout *float64 `json:"timeout,omitempty"`
+	Datasource  any      `json:"datasource,omitempty"`
+	KeepCookies []string `json:"keepCookies,omitempty"`
 }
 
 // NewAzureMonitorQuery creates a new AzureMonitorQuery object.
@@ -834,4 +837,75 @@ type StringOrBoolOrFloat64OrSelectableValue struct {
 // NewStringOrBoolOrFloat64OrSelectableValue creates a new StringOrBoolOrFloat64OrSelectableValue object.
 func NewStringOrBoolOrFloat64OrSelectableValue() *StringOrBoolOrFloat64OrSelectableValue {
 	return &StringOrBoolOrFloat64OrSelectableValue{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `StringOrBoolOrFloat64OrSelectableValue` as JSON.
+func (resource StringOrBoolOrFloat64OrSelectableValue) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+	if resource.Bool != nil {
+		return json.Marshal(resource.Bool)
+	}
+	if resource.Float64 != nil {
+		return json.Marshal(resource.Float64)
+	}
+	if resource.SelectableValue != nil {
+		return json.Marshal(resource.SelectableValue)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrBoolOrFloat64OrSelectableValue` from JSON.
+func (resource *StringOrBoolOrFloat64OrSelectableValue) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	// Bool
+	var Bool bool
+	if err := json.Unmarshal(raw, &Bool); err != nil {
+		errList = append(errList, err)
+		resource.Bool = nil
+	} else {
+		resource.Bool = &Bool
+		return nil
+	}
+
+	// Float64
+	var Float64 float64
+	if err := json.Unmarshal(raw, &Float64); err != nil {
+		errList = append(errList, err)
+		resource.Float64 = nil
+	} else {
+		resource.Float64 = &Float64
+		return nil
+	}
+
+	// SelectableValue
+	var SelectableValue SelectableValue
+	selectableValuedec := json.NewDecoder(bytes.NewReader(raw))
+	selectableValuedec.DisallowUnknownFields()
+	if err := selectableValuedec.Decode(&SelectableValue); err != nil {
+		errList = append(errList, err)
+		resource.SelectableValue = nil
+	} else {
+		resource.SelectableValue = &SelectableValue
+		return nil
+	}
+
+	return errors.Join(errList...)
 }

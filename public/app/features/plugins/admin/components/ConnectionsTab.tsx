@@ -6,8 +6,10 @@ import { EmptyState, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ViewProps } from 'app/features/datasources/components/DataSourcesList';
 import { DataSourcesListCard } from 'app/features/datasources/components/DataSourcesListCard';
-import { getDataSources, useLoadDataSources } from 'app/features/datasources/state';
-import { AccessControlAction, useSelector } from 'app/types';
+import { useLoadDataSources } from 'app/features/datasources/state/hooks';
+import { getDataSources } from 'app/features/datasources/state/selectors';
+import { AccessControlAction } from 'app/types/accessControl';
+import { useSelector } from 'app/types/store';
 
 import { CatalogPlugin } from '../types';
 

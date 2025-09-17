@@ -60,7 +60,7 @@ export const ArcOptionsEditor = ({ value, onChange, context }: ArcOptionsEditorP
               icon="minus"
               variant="secondary"
               onClick={() => removeArc(i)}
-              title={t('nodeGraph.arc-options-editor.title-remove-arc', 'Remove arc')}
+              aria-label={t('nodeGraph.arc-options-editor.title-remove-arc', 'Remove arc')}
             />
           </div>
         );

@@ -40,7 +40,14 @@ func Verify(
 		WithExposedPort(3000)
 
 		// TODO: Add LICENSE to containers and implement validation
-	container := e2e.ValidatePackage(d, service.AsService(), src, yarnCache, nodeVersion)
+	container, err := e2e.ValidatePackage(ctx, d, service.AsService(dagger.ContainerAsServiceOpts{
+		UseEntrypoint: false,
+		Args:          []string{"grafana", "server"},
+	}), src, yarnCache, nodeVersion)
+	if err != nil {
+		return err
+	}
+
 	_, err = containers.ExitError(ctx, container)
 	return err
 }

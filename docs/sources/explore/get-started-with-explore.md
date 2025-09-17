@@ -11,6 +11,17 @@ labels:
     - enterprise
     - oss
 title: Get started with Explore
+refs:
+  saved-queries:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#saved-queries
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#saved-queries
+  save-query:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#save-a-query
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#save-a-query
 weight: 5
 ---
 
@@ -53,7 +64,6 @@ Explore consists of a toolbar, outline, query editor, the ability to add multipl
 - **Outline** - Keeps track of the queries and visualization panels created in Explore. Refer to [Content outline](#content-outline) for more detail.
 
 - **Toolbar** - Provides quick access to frequently used tools and settings.
-
   - **Data source picker** - Select a data source from the dropdown menu, or use absolute time.
   - **Split** - Click to compare visualizations side by side. Refer to [Split and compare](#split-and-compare) for additional detail.
   - **Add** - Click to add your exploration to a dashboard. You can also use this to declare an incident,create a forecast, detect outliers and to run an investigation.
@@ -62,8 +72,14 @@ Explore consists of a toolbar, outline, query editor, the ability to add multipl
 
 - **Query editor** - Interface where you construct the query for a specific data source. Query editor elements differ based on data source. In order to run queries across multiple data sources you need to select **Mixed** from the data source picker.
 
-- **+Add query** - Add additional queries.
-- **Query history** - Query history contains the list of queries that you created in Explore. Refer to [Query history](/docs/grafana/<GRAFANA_VERSION>/explore/query-management/#query-history) for detailed information on working with your query history.
+- **+ Add query** - Add additional queries.
+- **+ Add from saved queries** - Add a saved query. If you've already written a query, you can click the **Replace with saved query** icon to use a previously saved query instead. To [save the query](ref:save-query) for reuse, click the **Save query** icon.
+
+  {{< admonition type="note" >}}
+  [Saved queries](ref:saved-queries) is in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Cloud only.
+  {{< /admonition >}}
+
+- **Query history** - Query history contains the list of queries that you created in Explore. You can also add queries from the history to your saved queries. Refer to [Query history](/docs/grafana/<GRAFANA_VERSION>/explore/query-management/#query-history) for detailed information on working with your query history.
 - **Query inspector** - Provides detailed statistics regarding your query. Inspector functions as a kind of debugging tool that "inspects" your query. It provides query statistics under **Stats**, request response time under **Query**, data frame details under **{} JSON**, and the shape of your data under **Data**. Refer to [Query inspector in Explore](/docs/grafana/latest/explore/explore-inspector/) for additional information.
 
 ## Access Explore
@@ -204,5 +220,5 @@ Now that you are familiar with Explore you can:
 - [Build dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/)
 - Create a wide variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/)
 - [Work with logs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/)
-- [Work with traces](https://grafana.com/docs/grafana/<GRAFANA_VERSION>)
+- [Work with traces](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/trace-integration/)
 - [Create and use correlations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/correlations-editor-in-explore/)

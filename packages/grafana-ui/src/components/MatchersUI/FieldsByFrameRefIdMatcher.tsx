@@ -41,10 +41,11 @@ export interface Props {
   data: DataFrame[];
   onChange: (value: string) => void;
   placeholder?: string;
+  id?: string;
 }
 
 // Not exported globally... but used in grafana core
-export function RefIDPicker({ value, data, onChange, placeholder }: Props) {
+export function RefIDPicker({ value, data, onChange, placeholder, id }: Props) {
   const listOfRefIds = useMemo(() => getListOfQueryRefIds(data), [data]);
 
   const [priorSelectionState, updatePriorSelectionState] = useState<{
@@ -77,6 +78,7 @@ export function RefIDPicker({ value, data, onChange, placeholder }: Props) {
   }
   return (
     <Select
+      inputId={id}
       options={listOfRefIds}
       onChange={onFilterChange}
       isClearable={true}
@@ -114,9 +116,10 @@ export interface MultiProps {
   data: DataFrame[];
   onChange: (value: string[]) => void;
   placeholder?: string;
+  id?: string;
 }
 
-export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiProps) {
+export function RefIDMultiPicker({ value, data, onChange, placeholder, id }: MultiProps) {
   const listOfRefIds = useMemo(() => getListOfQueryRefIds(data), [data]);
 
   const [priorSelectionState, updatePriorSelectionState] = useState<{
@@ -129,7 +132,6 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
 
   const currentValue = useMemo(() => {
     let extractedRefIds = new Set<string>();
-
     if (value) {
       if (value.startsWith('/^')) {
         try {
@@ -152,8 +154,10 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
     }
 
     const newRefIds = [...extractedRefIds].map(toOption);
+    const recoveredRefIDs =
+      recoverMultiRefIdMissing(newRefIds, priorSelectionState.refIds, priorSelectionState.value) ?? [];
 
-    return recoverMultiRefIdMissing(newRefIds, priorSelectionState.refIds, priorSelectionState.value);
+    return recoveredRefIDs.length > 0 ? recoveredRefIDs : newRefIds.length > 0 ? newRefIds : undefined;
   }, [value, listOfRefIds, priorSelectionState]);
 
   const onFilterChange = useCallback(
@@ -171,6 +175,7 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
   }
   return (
     <MultiSelect
+      inputId={id}
       options={listOfRefIds}
       onChange={onFilterChange}
       isClearable={true}
@@ -199,7 +204,9 @@ function getListOfQueryRefIds(data: DataFrame[]): Array<SelectableValue<string>>
   for (const [refId, frames] of queries.entries()) {
     values.push({
       value: refId,
-      label: `Query: ${refId ?? '(missing refId)'}`,
+      label: refId
+        ? t('grafana-ui.matchers-ui.get-list-of-query-ref-ids.label', 'Query: {{refId}}', { refId })
+        : t('grafana-ui.matchers-ui.get-list-of-query-ref-ids.label-missing-ref-id', 'Query: (missing refId)'),
       description: getFramesDescription(frames),
     });
   }
@@ -208,11 +215,17 @@ function getListOfQueryRefIds(data: DataFrame[]): Array<SelectableValue<string>>
 }
 
 function getFramesDescription(frames: DataFrame[]): string {
-  return `Frames (${frames.length}):
-    ${frames
-      .slice(0, Math.min(3, frames.length))
-      .map((x) => getFrameDisplayName(x))
-      .join(', ')} ${frames.length > 3 ? '...' : ''}`;
+  return t(
+    'grafana-ui.matchers-ui.get-list-of-query-ref-ids.description',
+    'Frames ({{framesCount}}): {{framesNames}}',
+    {
+      framesCount: frames.length,
+      framesNames: `${frames
+        .slice(0, Math.min(3, frames.length))
+        .map((x) => getFrameDisplayName(x))
+        .join(', ')} ${frames.length > 3 ? '...' : ''}`,
+    }
+  );
 }
 
 /**

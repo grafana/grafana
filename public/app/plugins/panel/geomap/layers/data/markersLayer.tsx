@@ -1,4 +1,4 @@
-import Map from 'ol/Map';
+import OpenLayersMap from 'ol/Map';
 import { Point } from 'ol/geom';
 import { VectorImage } from 'ol/layer';
 import LayerGroup from 'ol/layer/Group';
@@ -14,7 +14,9 @@ import {
   GrafanaTheme2,
   FrameGeometrySourceMode,
   EventBus,
+  PanelOptionsEditorBuilder,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
 
@@ -22,7 +24,7 @@ import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegen
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { StyleEditor } from '../../editor/StyleEditor';
 import { getWebGLStyle, textMarker } from '../../style/markers';
-import { DEFAULT_SIZE, defaultStyleConfig, StyleConfig } from '../../style/types';
+import { DEFAULT_SIZE, defaultStyleConfig, StyleConfig, StyleConfigValues } from '../../style/types';
 import { getDisplacement, getRGBValues, getStyleConfigState, styleUsesText } from '../../style/utils';
 import { getStyleDimension } from '../../utils/utils';
 
@@ -67,7 +69,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: Map, options: MapLayerOptions<MarkersConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: OpenLayersMap, options: MapLayerOptions<MarkersConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -86,8 +88,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     let hasVector = hasText;
 
     const layers = new LayerGroup({
-      // If text and no symbol, only show text - fall back on default symbol
-      layers: hasVector && symbol ? [symbolLayer, vectorLayer] : hasVector && !symbol ? [vectorLayer] : [symbolLayer],
+      layers: hasVector ? (symbol ? [symbolLayer, vectorLayer] : [vectorLayer]) : [symbolLayer],
     });
 
     const legendProps = new ReplaySubject<MarkersLegendProps>(1);
@@ -122,12 +123,24 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
           // Track if we find any line strings during feature processing
           let hasLineString = false;
+          // Track coordinates to avoid rendering duplicate markers at the same location
+          const processedMarkers = new Set<string>();
+
+          // Helper function to create a robust uniqueness key
+          const createMarkerKey = (coordinates: number[], markerValues: StyleConfigValues): string => {
+            const coord = `${coordinates[0]},${coordinates[1]}`;
+            const { color, size, text, rotation } = markerValues;
+            return `markerAddressKey|${coord}|${color}|${size}|${text}|${rotation}`;
+          };
 
           source.forEachFeature((feature) => {
-            const isLineString = feature.getGeometry()?.getType() === 'LineString';
+            const geometry = feature.getGeometry();
+            const isLineString = geometry?.getType() === 'LineString';
+
             if (isLineString) {
               hasLineString = true;
             }
+
             const idx: number = feature.get('rowIndex');
             const dims = style.dims;
             const values = { ...style.base };
@@ -144,7 +157,30 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             if (dims?.rotation) {
               values.rotation = dims.rotation.get(idx);
             }
-            if (!isLineString) {
+
+            // For point geometries, check if we've already processed this marker
+            if (geometry?.getType() === 'Point') {
+              const coordinates = geometry.getCoordinates();
+
+              // Skip this feature if coordinates are invalid
+              if (!coordinates || coordinates.length < 2) {
+                return;
+              }
+
+              const markerKey = createMarkerKey(coordinates, values);
+
+              // Skip this feature if we've already processed a marker with identical properties
+              if (processedMarkers.has(markerKey)) {
+                return;
+              }
+              processedMarkers.add(markerKey);
+            }
+
+            // Set style to be used by LineString
+            if (isLineString) {
+              const lineStringStyle = style.maker(values);
+              feature.setStyle(lineStringStyle);
+            } else {
               const colorString = tinycolor(theme.visualization.getColorByName(values.color)).toString();
               const colorValues = getRGBValues(colorString);
 
@@ -167,12 +203,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               const textStyle = textMarker(values);
               feature.setStyle(textStyle);
             }
-
-            // Set style to be used by LineString
-            if (isLineString) {
-              const lineStringStyle = style.maker(values);
-              feature.setStyle(lineStringStyle);
-            }
           });
 
           // Update hasVector state after processing all features
@@ -181,10 +211,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           // Update layer visibility based on current hasVector state
           const layersArray = layers.getLayers();
           layersArray.clear();
-          if (hasVector && symbol) {
-            layersArray.extend([symbolLayer, vectorLayer]);
-          } else if (hasVector && !symbol) {
-            layersArray.extend([vectorLayer]);
+          if (hasVector) {
+            layersArray.extend(symbol ? [symbolLayer, vectorLayer] : [vectorLayer]);
           } else {
             layersArray.extend([symbolLayer]);
           }
@@ -194,12 +222,12 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       },
 
       // Marker overlay options
-      registerOptionsUI: (builder) => {
+      registerOptionsUI: (builder: PanelOptionsEditorBuilder<MapLayerOptions<MarkersConfig>>) => {
         builder
           .addCustomEditor({
             id: 'config.style',
             path: 'config.style',
-            name: 'Styles',
+            name: t('geomap.markers-layer.name-styles', 'Styles'),
             editor: StyleEditor,
             settings: {
               displayRotation: true,
@@ -208,8 +236,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           })
           .addBooleanSwitch({
             path: 'config.showLegend',
-            name: 'Show legend',
-            description: 'Show map legend',
+            name: t('geomap.markers-layer.name-show-legend', 'Show legend'),
+            description: t('geomap.markers-layer.description-show-legend', 'Show map legend'),
             defaultValue: defaultOptions.showLegend,
           });
       },

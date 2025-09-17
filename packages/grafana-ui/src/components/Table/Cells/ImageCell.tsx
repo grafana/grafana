@@ -3,7 +3,12 @@ import { useState } from 'react';
 import { getCellLinks } from '../../../utils/table';
 import { DataLinksActionsTooltip, renderSingleLink } from '../DataLinksActionsTooltip';
 import { TableCellDisplayMode, TableCellProps } from '../types';
-import { DataLinksActionsTooltipCoords, getCellOptions, getDataLinksActionsTooltipUtils } from '../utils';
+import {
+  tooltipOnClickHandler,
+  DataLinksActionsTooltipCoords,
+  getCellOptions,
+  getDataLinksActionsTooltipUtils,
+} from '../utils';
 
 const DATALINKS_HEIGHT_OFFSET = 10;
 
@@ -37,9 +42,7 @@ export const ImageCell = (props: TableCellProps) => {
       {...cellProps}
       className={tableStyles.cellContainer}
       style={{ ...cellProps.style, cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
-      onClick={({ clientX, clientY }) => {
-        setTooltipCoords({ clientX, clientY });
-      }}
+      onClick={tooltipOnClickHandler(setTooltipCoords)}
     >
       {/* If there are data links/actions, we render them with image */}
       {/* Otherwise we simply render the image */}

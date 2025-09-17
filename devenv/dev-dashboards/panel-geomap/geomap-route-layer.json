@@ -76,8 +76,7 @@
         {
           "csvContent": "lat,lon,val\n-5,2,0\n1,5,25\n6,10,50\n9,15,75\n10,20,100",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -86,13 +85,14 @@
           "scenarioId": "csv_content",
           "refId": "B",
           "datasource": {
-            "uid": "PD8C576611E62080A",
             "type": "grafana-testdata-datasource"
           },
           "csvContent": "lat,lon,alt\n45,0,0\n40,5,5\n35,10,10\n30,15, 15\n25,20,20"
         }
       ],
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "options": {
         "view": {
           "allLayers": true,

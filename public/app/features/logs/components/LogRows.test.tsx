@@ -6,7 +6,7 @@ import { LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../utils';
 
 import { LogRows, Props } from './LogRows';
-import { createLogRow } from './__mocks__/logRow';
+import { createLogRow } from './mocks/logRow';
 
 jest.mock('../utils', () => ({
   ...jest.requireActual('../utils'),

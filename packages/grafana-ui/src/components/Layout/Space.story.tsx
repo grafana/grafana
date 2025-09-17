@@ -7,7 +7,7 @@ import { Space } from './Space';
 import mdx from './Space.mdx';
 
 const meta: Meta<typeof Space> = {
-  title: 'General/Layout/Space',
+  title: 'Layout/Space',
   component: Space,
   parameters: {
     docs: {

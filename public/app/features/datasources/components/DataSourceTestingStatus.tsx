@@ -1,13 +1,21 @@
 import { css, cx } from '@emotion/css';
 import { HTMLAttributes } from 'react';
 
-import { DataSourceSettings as DataSourceSettingsType, GrafanaTheme2 } from '@grafana/data';
+import {
+  DataSourceSettings as DataSourceSettingsType,
+  GrafanaTheme2,
+  PluginExtensionPoints,
+  PluginExtensionLink,
+  PluginExtensionDataSourceConfigStatusContext,
+} from '@grafana/data';
+import { sanitizeUrl } from '@grafana/data/internal';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { TestingStatus, config } from '@grafana/runtime';
+import { TestingStatus, config, usePluginLinks, usePluginComponents, renderLimitedComponents } from '@grafana/runtime';
 import { AlertVariant, Alert, useTheme2, Link, useStyles2 } from '@grafana/ui';
 
 import { contextSrv } from '../../../core/core';
+import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
 import { trackCreateDashboardClicked } from '../tracking';
 
 export type Props = {
@@ -22,6 +30,7 @@ interface AlertMessageProps extends HTMLAttributes<HTMLDivElement> {
   exploreUrl: string;
   dataSourceId: string;
   onDashboardLinkClicked: () => void;
+  extensionLinks?: PluginExtensionLink[];
 }
 
 const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
@@ -35,6 +44,11 @@ const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
     disabled: css({
       pointerEvents: 'none',
       color: theme.colors.text.secondary,
+    }),
+    extensionLinks: css({
+      display: 'inline-flex',
+      marginTop: theme.spacing(0.5),
+      gap: theme.spacing(1),
     }),
   };
 };
@@ -148,6 +162,49 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
   };
   const styles = useStyles2(getTestingStatusStyles);
 
+  // Extensions context
+  const extensionStatusContext: PluginExtensionDataSourceConfigStatusContext = {
+    dataSource: {
+      type: dataSource.type,
+      uid: dataSource.uid,
+      name: dataSource.name,
+      typeName: dataSource.typeName,
+    },
+    testingStatus,
+    severity,
+  };
+
+  const { links: allStatusLinks } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.DataSourceConfigStatus,
+    context: extensionStatusContext,
+    limitPerPlugin: 1,
+  });
+
+  const { components: extensionComponents } = usePluginComponents<PluginExtensionDataSourceConfigStatusContext>({
+    extensionPointId: PluginExtensionPoints.DataSourceConfigStatus,
+  });
+
+  // Existing error-specific extensions (backward compatibility)
+  const { links: allErrorLinks } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.DataSourceConfigErrorStatus,
+    context: {
+      dataSource: {
+        type: dataSource.type,
+        uid: dataSource.uid,
+        name: dataSource.name,
+      },
+      testingStatus,
+    },
+    limitPerPlugin: 3,
+  });
+
+  // Filter to only allow grafana-owned plugins
+  const statusLinks = allStatusLinks.filter((link) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(link.pluginId));
+  const errorLinks = allErrorLinks.filter((link) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(link.pluginId));
+
+  // Combine links: show error-specific only for errors, status-general for all
+  const extensionLinks = severity === 'error' ? [...statusLinks, ...errorLinks] : statusLinks;
+
   if (message) {
     return (
       <div className={cx('gf-form-group', styles.container)}>
@@ -169,6 +226,33 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
               ) : null}
             </>
           )}
+          {extensionLinks.length > 0 && (
+            <div className={styles.linksContainer}>
+              {extensionLinks.map((link) => {
+                return (
+                  <a
+                    key={link.id}
+                    href={link.path ? sanitizeUrl(link.path) : undefined}
+                    onClick={link.onClick}
+                    className={styles.pluginLink}
+                    title={link.description}
+                  >
+                    {link.title}
+                  </a>
+                );
+              })}
+            </div>
+          )}
+          {extensionComponents.length > 0 && (
+            <div className={styles.linksContainer}>
+              {renderLimitedComponents<PluginExtensionDataSourceConfigStatusContext>({
+                props: extensionStatusContext,
+                components: extensionComponents,
+                limit: 2,
+                pluginId: ALLOWED_DATASOURCE_EXTENSION_PLUGINS,
+              })}
+            </div>
+          )}
         </Alert>
       </div>
     );
@@ -183,5 +267,24 @@ const getTestingStatusStyles = (theme: GrafanaTheme2) => ({
   }),
   moreLink: css({
     marginBlock: theme.spacing(1),
+  }),
+  linksContainer: css({
+    display: 'flex',
+    justifyContent: 'flex-end',
+    marginTop: theme.spacing(1),
+  }),
+  pluginLink: css({
+    color: theme.colors.text.link,
+    textDecoration: 'none',
+    marginLeft: theme.spacing(2),
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.fontWeightMedium,
+    '&:hover': {
+      color: theme.colors.text.primary,
+      textDecoration: 'underline',
+    },
+    '&:first-child': {
+      marginLeft: 0,
+    },
   }),
 });

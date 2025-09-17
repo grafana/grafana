@@ -11,7 +11,7 @@
       JAEGER_SAMPLER_PARAM: 1
     labels:
       namespace: tns
-    logging: 
+    logging:
       driver: loki
       options:
         loki-url: 'http://localhost:3100/api/prom/push'
@@ -27,7 +27,7 @@
     command:
       - '-log.level=debug'
       - 'http://db'
-    links:
+    depends_on:
       - db
     ports:
       - 0.0.0.0:8001:80
@@ -38,7 +38,7 @@
       JAEGER_SAMPLER_PARAM: 1
     labels:
       namespace: tns
-    logging: 
+    logging:
       driver: loki
       options:
         loki-url: 'http://localhost:3100/api/prom/push'
@@ -54,7 +54,7 @@
     command:
       - '-log.level=debug'
       - 'http://app'
-    links:
+    depends_on:
       - app
     ports:
       - 0.0.0.0:8002:80
@@ -65,7 +65,7 @@
       JAEGER_SAMPLER_PARAM: 1
     labels:
       namespace: tns
-    logging: 
+    logging:
       driver: loki
       options:
         loki-url: 'http://localhost:3100/api/prom/push'
@@ -93,7 +93,7 @@
       - --enable-feature=native-histograms
     volumes:
       - ./docker/blocks/tempo/prometheus.yaml:/etc/prometheus.yaml
-    links:
+    depends_on:
       - app
       - db
       - loadgen
@@ -101,7 +101,7 @@
       - "9090:9090"
     labels:
       namespace: monitoring
-    logging: 
+    logging:
       driver: loki
       options:
         loki-url: 'http://localhost:3100/api/prom/push'
@@ -117,7 +117,7 @@
       - "3100:3100"
     labels:
       namespace: monitoring
-    logging: 
+    logging:
       driver: loki
       options:
         loki-url: 'http://localhost:3100/api/prom/push'

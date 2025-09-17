@@ -148,8 +148,9 @@ export class UnifiedSearcher implements GrafanaSearcher {
       const field = first.fields.find((f) => f.name === meta.sortBy);
       if (field) {
         const name = getSortFieldDisplayName(field.name);
-        meta.sortBy = name;
-        field.name = name; // make it look nicer
+        // We don't want to directly change the field name, just the display name
+        // When the columns names get generated it uses getFieldDisplayName(), which will check if there is a field.config.displayName
+        field.config.displayName = name;
       }
     }
 
@@ -202,7 +203,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       totalRows: meta.count ?? first.length,
       view,
       loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
-        loadMax = Math.max(loadMax, stopIndex);
+        loadMax = Math.max(loadMax, stopIndex + 1);
         if (!pending) {
           pending = getNextPage();
         }
@@ -259,6 +260,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
     let uri = searchURI;
     uri += `?query=${encodeURIComponent(query.query ?? '*')}`;
     uri += `&limit=${query.limit ?? pageSize}`;
+
+    if (query.offset) {
+      uri += `&offset=${query.offset}`;
+    }
 
     if (!isEmpty(query.location)) {
       uri += `&folder=${query.location}`;
@@ -381,7 +386,8 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
 }
 
 async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
-  const uri = `${searchURI}?type=folders`;
+  // TODO: use proper pagination for search.
+  const uri = `${searchURI}?type=folders&limit=100000`;
   const rsp = getBackendSrv()
     .get<SearchAPIResponse>(uri)
     .then((rsp) => {

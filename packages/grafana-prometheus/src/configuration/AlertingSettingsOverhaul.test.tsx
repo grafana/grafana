@@ -3,7 +3,7 @@ import { render } from '@testing-library/react';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 
-import { createDefaultConfigOptions } from '../test/__mocks__/datasource';
+import { createDefaultConfigOptions } from '../test/mocks/datasource';
 
 import { AlertingSettingsOverhaul } from './AlertingSettingsOverhaul';
 

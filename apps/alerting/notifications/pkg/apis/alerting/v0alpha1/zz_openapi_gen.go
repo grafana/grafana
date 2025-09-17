@@ -108,6 +108,13 @@ func schema_pkg_apis_alerting_v0alpha1_ReceiverIntegration(ref common.ReferenceC
 							Format:  "",
 						},
 					},
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"disableResolveMessage": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"boolean"},
@@ -144,7 +151,7 @@ func schema_pkg_apis_alerting_v0alpha1_ReceiverIntegration(ref common.ReferenceC
 						},
 					},
 				},
-				Required: []string{"type", "settings"},
+				Required: []string{"type", "version", "settings"},
 			},
 		},
 	}

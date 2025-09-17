@@ -137,6 +137,8 @@ export interface LogRowContextOptions {
   direction?: LogRowContextQueryDirection;
   limit?: number;
   scopedVars?: ScopedVars;
+  // Optional. Size of the time window to get logs before of after the referenced entry.
+  timeWindowMs?: number;
 }
 
 export enum LogRowContextQueryDirection {
@@ -181,6 +183,9 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
     origQuery?: TQuery,
     scopedVars?: ScopedVars
   ): React.ReactNode;
+
+  // Does the datasource support the user adjusting the time range in the logs context window? https://github.com/grafana/grafana/pull/109901
+  supportsAdjustableWindow?: boolean;
 }
 
 export const hasLogsContextSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {

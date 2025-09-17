@@ -3,13 +3,12 @@ package sync
 import (
 	"context"
 	"fmt"
-	"sort"
 	"strings"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 type ResourceFileChange struct {
@@ -143,17 +142,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 	}
 
 	// Deepest first (stable sort order)
-	sort.Slice(changes, func(i, j int) bool {
-		if safepath.Depth(changes[i].Path) > safepath.Depth(changes[j].Path) {
-			return true
-		}
-
-		if safepath.Depth(changes[i].Path) < safepath.Depth(changes[j].Path) {
-			return false
-		}
-
-		return changes[i].Path < changes[j].Path
-	})
+	safepath.SortByDepth(changes, func(c ResourceFileChange) string { return c.Path }, false)
 
 	return changes, nil
 }

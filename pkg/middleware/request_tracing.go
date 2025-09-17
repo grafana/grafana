@@ -45,8 +45,10 @@ var unnamedHandlers = []struct {
 	pathPattern *regexp.Regexp
 	handler     string
 }{
+	{handler: "plugin-assets", pathPattern: regexp.MustCompile("^/public/plugins/")},
+	{handler: "public-build-assets", pathPattern: regexp.MustCompile("^/public/build/")}, // All Grafana core assets should come from this path
 	{handler: "public-assets", pathPattern: regexp.MustCompile("^/favicon.ico")},
-	{handler: "public-assets", pathPattern: regexp.MustCompile("^/public/")},
+	{handler: "public-assets", pathPattern: regexp.MustCompile("^/public/")}, // Fallback for other assets, this should go down to 0
 	{handler: "/metrics", pathPattern: regexp.MustCompile("^/metrics")},
 	{handler: "/healthz", pathPattern: regexp.MustCompile("^/healthz")},
 	{handler: "/api/health", pathPattern: regexp.MustCompile("^/api/health")},
@@ -71,14 +73,23 @@ func RouteOperationName(req *http.Request) (string, bool) {
 	return "", false
 }
 
-func RequestTracing(tracer tracing.Tracer) web.Middleware {
+// Paths that don't need tracing spans applied to them because of the
+// little value that would provide us
+func SkipTracingPaths(req *http.Request) bool {
+	return strings.HasPrefix(req.URL.Path, "/public/") ||
+		req.URL.Path == "/robots.txt" ||
+		req.URL.Path == "/favicon.ico" ||
+		req.URL.Path == "/api/health"
+}
+
+func TraceAllPaths(req *http.Request) bool {
+	return true
+}
+
+func RequestTracing(tracer trace.Tracer, shouldTrace func(*http.Request) bool) web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			// skip tracing for a few endpoints
-			if strings.HasPrefix(req.URL.Path, "/public/") ||
-				req.URL.Path == "/robots.txt" ||
-				req.URL.Path == "/favicon.ico" ||
-				req.URL.Path == "/api/health" {
+			if !shouldTrace(req) {
 				next.ServeHTTP(w, req)
 				return
 			}

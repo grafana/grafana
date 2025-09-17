@@ -1,25 +1,16 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/OperationInfoButton.tsx
 import { css } from '@emotion/css';
-import {
-  autoUpdate,
-  flip,
-  offset,
-  shift,
-  useClick,
-  useDismiss,
-  useFloating,
-  useInteractions,
-} from '@floating-ui/react';
+import { autoUpdate, offset, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { memo, useState } from 'react';
 
 import { GrafanaTheme2, renderMarkdown } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FlexItem } from '@grafana/plugin-ui';
-import { Button, Portal, useStyles2 } from '@grafana/ui';
+import { Button, floatingUtils, Portal, useStyles2 } from '@grafana/ui';
 
 import { QueryBuilderOperation, QueryBuilderOperationDef } from './types';
 
-export interface Props {
+interface Props {
   operation: QueryBuilderOperation;
   def: QueryBuilderOperationDef;
 }
@@ -29,16 +20,7 @@ export const OperationInfoButton = memo<Props>(({ def, operation }) => {
   const [show, setShow] = useState(false);
 
   // the order of middleware is important!
-  const middleware = [
-    offset(16),
-    flip({
-      fallbackAxisSideDirection: 'end',
-      // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: false,
-      boundary: document.body,
-    }),
-    shift(),
-  ];
+  const middleware = [offset(16), ...floatingUtils.getPositioningMiddleware()];
 
   const { context, refs, floatingStyles } = useFloating({
     open: show,
@@ -56,7 +38,7 @@ export const OperationInfoButton = memo<Props>(({ def, operation }) => {
   return (
     <>
       <Button
-        title={t(
+        tooltip={t(
           'grafana-prometheus.querybuilder.operation-info-button.title-click-to-show-description',
           'Click to show description'
         )}
@@ -78,7 +60,7 @@ export const OperationInfoButton = memo<Props>(({ def, operation }) => {
                 onClick={() => setShow(false)}
                 fill="text"
                 variant="secondary"
-                title={t(
+                aria-label={t(
                   'grafana-prometheus.querybuilder.operation-info-button.title-remove-operation',
                   'Remove operation'
                 )}

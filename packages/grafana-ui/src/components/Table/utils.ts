@@ -114,7 +114,12 @@ export function getColumns(
 
   for (const [fieldIndex, field] of data.fields.entries()) {
     const fieldTableOptions: TableFieldOptions = field.config.custom || {};
-    if (fieldTableOptions.hidden || field.type === FieldType.nestedFrames) {
+    if (
+      // @ts-ignore this was the former hidden option; we support it for legacy use cases while TableRT is being sunset.
+      fieldTableOptions.hidden ||
+      fieldTableOptions.hideFrom?.viz ||
+      field.type === FieldType.nestedFrames
+    ) {
       continue;
     }
 
@@ -196,6 +201,8 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return DataLinksCell;
     case TableCellDisplayMode.Actions:
       return ActionsCell;
+    case TableCellDisplayMode.Pill:
+      return DefaultCell; // Legacy table doesn't support pill cells, fallback to default
   }
 
   if (field.type === FieldType.geo) {
@@ -764,14 +771,38 @@ export function guessLongestField(fieldConfig: FieldConfigSource, data: DataFram
   return longestField;
 }
 
-export type DataLinksActionsTooltipCoords = {
+export interface DataLinksActionsTooltipState {
+  coords: DataLinksActionsTooltipCoords;
+  links?: LinkModel[];
+  actions?: ActionModel[];
+}
+
+export interface DataLinksActionsTooltipCoords {
   clientX: number;
   clientY: number;
-};
+}
 
 export const getDataLinksActionsTooltipUtils = (links: LinkModel[], actions?: ActionModel[]) => {
   const hasMultipleLinksOrActions = links.length > 1 || Boolean(actions?.length);
   const shouldShowLink = links.length === 1 && !Boolean(actions?.length);
 
   return { shouldShowLink, hasMultipleLinksOrActions };
+};
+
+const shouldTriggerTooltip = (event: React.MouseEvent<HTMLElement>): boolean => {
+  return event.target === event.currentTarget;
+};
+
+/**
+ * Creates an onClick handler for table cells that only triggers tooltip when clicking directly on the cell
+ * @param setTooltipCoords - function to set tooltip coordinates
+ * @returns onClick handler
+ */
+export const tooltipOnClickHandler = (setTooltipCoords: (coords: DataLinksActionsTooltipCoords) => void) => {
+  return (event: React.MouseEvent<HTMLElement>) => {
+    if (shouldTriggerTooltip(event)) {
+      const { clientX, clientY } = event;
+      setTooltipCoords({ clientX, clientY });
+    }
+  };
 };

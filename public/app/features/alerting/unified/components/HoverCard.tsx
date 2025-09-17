@@ -17,6 +17,10 @@ export interface PopupCardProps {
   showAfter?: number;
   arrow?: boolean;
   showOn?: 'click' | 'hover';
+  disableBlur?: boolean;
+  isOpen?: boolean;
+  onClose?: () => void;
+  onToggle?: () => void;
 }
 
 export const PopupCard = ({
@@ -29,6 +33,10 @@ export const PopupCard = ({
   wrapperClassName,
   disabled = false,
   showOn = 'hover',
+  disableBlur = false,
+  isOpen,
+  onClose,
+  onToggle,
   ...rest
 }: PopupCardProps) => {
   const popoverRef = useRef<HTMLElement>(null);
@@ -52,19 +60,37 @@ export const PopupCard = ({
   return (
     <PopoverController content={body} hideAfter={100}>
       {(showPopper, hidePopper, popperProps) => {
+        // Use manual control if provided, otherwise use internal state
+        const isManuallyControlled = isOpen !== undefined;
+        const shouldShow = isManuallyControlled ? isOpen : popperProps.show;
+
+        const handleClose = () => {
+          if (onClose) {
+            onClose();
+          } else {
+            hidePopper();
+          }
+        };
+
+        const handleShow = () => {
+          if (!isManuallyControlled) {
+            showPopper();
+          }
+        };
+
         // support hover and click interaction
         const onClickProps = {
-          onClick: showPopper,
+          onClick: onToggle || (isManuallyControlled ? handleClose : showPopper),
         };
 
         const onHoverProps = {
-          onMouseLeave: hidePopper,
-          onMouseEnter: showPopper,
+          onMouseLeave: handleClose,
+          onMouseEnter: handleShow,
         };
 
         const blurFocusProps = {
-          onBlur: hidePopper,
-          onFocus: showPopper,
+          onBlur: handleClose,
+          onFocus: handleShow,
         };
 
         return (
@@ -72,26 +98,29 @@ export const PopupCard = ({
             {popoverRef.current && (
               <GrafanaPopover
                 {...popperProps}
+                show={shouldShow}
                 {...rest}
                 wrapperClassName={classnames(styles.popover, wrapperClassName)}
                 referenceElement={popoverRef.current}
                 renderArrow={arrow}
                 // @TODO
                 // if we want interaction with the content we should not pass blur / focus handlers but then clicking outside doesn't close the popper
-                {...blurFocusProps}
+                {...(disableBlur ? {} : blurFocusProps)}
                 // if we want hover interaction we have to make sure we add the leave / enter handlers
                 {...(showOnHover ? onHoverProps : {})}
+                hidePopper={handleClose}
               />
             )}
 
             {cloneElement(children, {
               ref: popoverRef,
-              onFocus: showPopper,
-              onBlur: hidePopper,
+              onFocus: handleShow,
+              onBlur: disableBlur ? undefined : handleClose,
               tabIndex: 0,
               // make sure we pass the correct interaction handlers here to the element we want to interact with
               ...(showOnHover ? onHoverProps : {}),
-              ...(showOnClick ? onClickProps : {}),
+              // Only add click handling if we have onToggle or not manually controlled
+              ...(showOnClick && (onToggle || !isManuallyControlled) ? onClickProps : {}),
             })}
           </>
         );

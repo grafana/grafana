@@ -5,7 +5,7 @@ import { PureComponent, ReactNode } from 'react';
 import { PanelProps, PanelPlugin, PluginType, PanelPluginMeta } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
-import { AppNotificationSeverity } from 'app/types';
+import { AppNotificationSeverity } from 'app/types/appNotifications';
 import grafanaIconSvg from 'img/grafana_icon.svg';
 
 interface Props {

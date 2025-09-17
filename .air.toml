@@ -7,9 +7,9 @@ exclude_unchanged = true
 follow_symlink = true
 include_dir = ["apps", "conf", "devenv/dev-dashboards", "pkg", "public/views"]
 include_ext = ["go", "ini", "toml", "html", "json"]
-pre_cmd = ["make gen-go", "make gen-jsonnet"]
-rerun_delay = 1000
-stop_on_error = true
+stop_on_error = false
+send_interrupt = true
+kill_delay = 500
 
 [log]
 time = true

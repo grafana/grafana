@@ -6,6 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
@@ -13,9 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/stretchr/testify/require"
-
-	"google.golang.org/grpc"
 )
 
 func TestUnifiedStorageClient(t *testing.T) {
@@ -45,6 +45,7 @@ func TestUnifiedStorageClient(t *testing.T) {
 				nil,
 				nil,
 				nil,
+				nil,
 			)
 			require.NoError(t, err)
 
@@ -65,9 +66,9 @@ func TestUnifiedStorageClient(t *testing.T) {
 
 			client, err := newClient(
 				options.StorageOptions{
-					StorageType:        options.StorageTypeUnifiedGrpc,
-					Address:            resourceServerAddress,
-					IndexServerAddress: indexServerAddress,
+					StorageType:         options.StorageTypeUnifiedGrpc,
+					Address:             resourceServerAddress,
+					SearchServerAddress: indexServerAddress,
 				},
 				&setting.Cfg{},
 				featuremgmt.WithFeatures(),
@@ -75,6 +76,7 @@ func TestUnifiedStorageClient(t *testing.T) {
 				nil,
 				nil,
 				authlib.FixedAccessClient(true),
+				nil,
 				nil,
 				nil,
 				nil,

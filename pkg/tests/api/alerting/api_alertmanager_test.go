@@ -22,9 +22,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationAMConfigAccess(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -354,6 +357,8 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 }
 
 func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -504,9 +509,12 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 }
 
 func TestIntegrationAlertmanagerStatus(t *testing.T) {
-	testinfra.SQLiteIntegrationTest(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
+
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,

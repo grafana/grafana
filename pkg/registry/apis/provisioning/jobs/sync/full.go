@@ -2,13 +2,12 @@ package sync
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -68,7 +67,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 			}
 
 			if change.Existing == nil || change.Existing.Name == "" {
-				result.Error = errors.New("missing existing reference")
+				result.Error = fmt.Errorf("processing deletion for file %s: missing existing reference", change.Path)
 				progress.Record(ctx, result)
 				continue
 			}
@@ -83,14 +82,16 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 			}
 
 			// TODO: should we use the clients or the resource manager instead?
-			client, _, err := clients.ForResource(versionlessGVR)
+			client, _, err := clients.ForResource(ctx, versionlessGVR)
 			if err != nil {
 				result.Error = fmt.Errorf("get client for deleted object: %w", err)
 				progress.Record(ctx, result)
 				continue
 			}
 
-			result.Error = client.Delete(ctx, change.Existing.Name, metav1.DeleteOptions{})
+			if err := client.Delete(ctx, change.Existing.Name, metav1.DeleteOptions{}); err != nil {
+				result.Error = fmt.Errorf("deleting resource %s/%s %s: %w", change.Existing.Group, change.Existing.Resource, change.Existing.Name, err)
+			}
 			progress.Record(ctx, result)
 			continue
 		}
@@ -106,7 +107,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 
 			folder, err := repositoryResources.EnsureFolderPathExist(ctx, change.Path)
 			if err != nil {
-				result.Error = err
+				result.Error = fmt.Errorf("ensuring folder exists at path %s: %w", change.Path, err)
 				progress.Record(ctx, result)
 				continue
 			}
@@ -122,9 +123,12 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 			Path:     change.Path,
 			Action:   change.Action,
 			Name:     name,
-			Error:    err,
 			Resource: gvk.Kind,
 			Group:    gvk.Group,
+		}
+
+		if err != nil {
+			result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
 		}
 		progress.Record(ctx, result)
 	}

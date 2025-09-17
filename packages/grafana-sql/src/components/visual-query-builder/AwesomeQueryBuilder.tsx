@@ -165,7 +165,7 @@ export const settings: Settings = {
     return (
       <Button
         type="button"
-        title={t('grafana-sql.components.settings.title-button-filter', '{{ buttonLabel }} filter', {
+        aria-label={t('grafana-sql.components.settings.title-button-filter', '{{ buttonLabel }} filter', {
           buttonLabel: buttonProps?.label,
         })}
         onClick={buttonProps?.onClick}

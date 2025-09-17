@@ -1,7 +1,30 @@
 // NOTE: these two functions are similar to the escapeLabelValueIn* functions
 // in language_utils.ts, but they are not exactly the same algorithm, and we found
 
+import { QueryVariableModel, CustomVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
+export function interpolateQueryExpr(
+  value: string | string[] = [],
+  variable: QueryVariableModel | CustomVariableModel
+) {
+  // if no multi or include all do not regexEscape
+  if (!variable.multi && !variable.includeAll) {
+    return prometheusRegularEscape(value);
+  }
+
+  if (typeof value === 'string') {
+    return prometheusSpecialRegexEscape(value);
+  }
+
+  const escapedValues = value.map((val) => prometheusSpecialRegexEscape(val));
+
+  if (escapedValues.length === 1) {
+    return escapedValues[0];
+  }
+
+  return '(' + escapedValues.join('|') + ')';
+}
 
 // no way to reuse one in the another or vice versa.
 export function prometheusRegularEscape<T>(value: T) {

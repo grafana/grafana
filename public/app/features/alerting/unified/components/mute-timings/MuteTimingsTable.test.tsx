@@ -7,7 +7,7 @@ import {
 } from 'app/features/alerting/unified/mocks/server/configure';
 import { setAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { grantUserPermissions } from '../../mocks';
 import { TIME_INTERVAL_UID_HAPPY_PATH } from '../../mocks/server/handlers/k8s/timeIntervals.k8s';

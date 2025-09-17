@@ -3,7 +3,7 @@ import { chain } from 'lodash';
 import { Combobox, ComboboxOption } from '@grafana/ui';
 
 import type { ContactPoint } from '../../../api/v0alpha1/types';
-import { useListContactPointsv0alpha1 } from '../../hooks/useContactPoints';
+import { useListContactPoints } from '../../hooks/v0alpha1/useContactPoints';
 import { getContactPointDescription } from '../../utils';
 
 import { CustomComboBoxProps } from './ComboBox.types';
@@ -17,7 +17,10 @@ export type ContactPointSelectorProps = CustomComboBoxProps<ContactPoint>;
  * @TODO make ComboBox accept a ReactNode so we can use icons and such
  */
 function ContactPointSelector(props: ContactPointSelectorProps) {
-  const { currentData: contactPoints, isLoading } = useListContactPointsv0alpha1();
+  const { currentData: contactPoints, isLoading } = useListContactPoints(
+    {},
+    { refetchOnFocus: true, refetchOnMountOrArgChange: true }
+  );
 
   // Create a mapping of options with their corresponding contact points
   const contactPointOptions = chain(contactPoints?.items)

@@ -5,7 +5,7 @@ import { Tag } from './Tag';
 import mdx from './Tag.mdx';
 
 const meta: Meta<typeof Tag> = {
-  title: 'Forms/Tags/Tag',
+  title: 'Information/Tag',
   component: Tag,
   parameters: {
     docs: {

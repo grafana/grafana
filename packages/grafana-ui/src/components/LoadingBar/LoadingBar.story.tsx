@@ -10,7 +10,7 @@ import { LoadingBar, LoadingBarProps } from './LoadingBar';
 import mdx from './LoadingBar.mdx';
 
 const meta: Meta<typeof LoadingBar> = {
-  title: 'General/LoadingBar',
+  title: 'Information/LoadingBar',
   component: LoadingBar,
   parameters: {
     controls: {},

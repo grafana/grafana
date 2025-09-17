@@ -12,7 +12,9 @@
 package dataquery
 
 import (
+	bytes "bytes"
 	json "encoding/json"
+	errors "errors"
 )
 
 type BucketAggregation = DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested
@@ -1547,6 +1549,51 @@ type StringOrDataqueryInlineScript struct {
 // NewStringOrDataqueryInlineScript creates a new StringOrDataqueryInlineScript object.
 func NewStringOrDataqueryInlineScript() *StringOrDataqueryInlineScript {
 	return &StringOrDataqueryInlineScript{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `StringOrDataqueryInlineScript` as JSON.
+func (resource StringOrDataqueryInlineScript) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+	if resource.DataqueryInlineScript != nil {
+		return json.Marshal(resource.DataqueryInlineScript)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrDataqueryInlineScript` from JSON.
+func (resource *StringOrDataqueryInlineScript) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	// DataqueryInlineScript
+	var DataqueryInlineScript DataqueryInlineScript
+	dataqueryInlineScriptdec := json.NewDecoder(bytes.NewReader(raw))
+	dataqueryInlineScriptdec.DisallowUnknownFields()
+	if err := dataqueryInlineScriptdec.Decode(&DataqueryInlineScript); err != nil {
+		errList = append(errList, err)
+		resource.DataqueryInlineScript = nil
+	} else {
+		resource.DataqueryInlineScript = &DataqueryInlineScript
+		return nil
+	}
+
+	return errors.Join(errList...)
 }
 
 type BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics struct {

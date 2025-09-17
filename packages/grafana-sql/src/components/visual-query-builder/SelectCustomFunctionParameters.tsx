@@ -94,7 +94,7 @@ export function SelectCustomFunctionParameters({
             data-testid={selectors.components.SQLQueryEditor.selectInputParameter}
             addonAfter={
               <Button
-                title={t(
+                aria-label={t(
                   'grafana-sql.components.select-custom-function-parameters.render-parameters.params.title-remove-parameter',
                   'Remove parameter'
                 )}
@@ -127,7 +127,7 @@ export function SelectCustomFunctionParameters({
         variant="secondary"
         size="md"
         icon="plus"
-        title={t('grafana-sql.components.select-custom-function-parameters.title-add-parameter', 'Add parameter')}
+        aria-label={t('grafana-sql.components.select-custom-function-parameters.title-add-parameter', 'Add parameter')}
       />
       <InlineLabel className={styles.label}>)</InlineLabel>
     </>

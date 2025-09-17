@@ -16,7 +16,8 @@ import (
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -32,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards" // TODO: Check if we can remove this import
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -55,22 +57,19 @@ type TestContext struct {
 	OrgID                     int64
 }
 
-// TestIntegrationValidation tests the dashboard K8s API
-func TestIntegrationValidation(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test2")
-	}
+// TestIntegrationDashboardAPIValidation tests the dashboard K8s API with validation checks
+func TestIntegrationDashboardAPIValidation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
-	// TODO: Skip mode3 - borken due to race conditions while setting default permissions across storage backends
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous: true,
 				EnableFeatureToggles: []string{
-					featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
 					featuremgmt.FlagUnifiedStorageSearch,
+					featuremgmt.FlagKubernetesDashboards, // Enable FE-only dashboard feature flag
 				},
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
@@ -78,50 +77,150 @@ func TestIntegrationValidation(t *testing.T) {
 					},
 				}})
 
-			testIntegrationValidationForServer(t, helper, dualWriterMode)
+			t.Cleanup(func() {
+				helper.Shutdown()
+			})
+
+			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+
+			t.Run("Dashboard validation tests", func(t *testing.T) {
+				runDashboardValidationTests(t, org1Ctx)
+			})
+
+			t.Run("Dashboard quota tests", func(t *testing.T) {
+				runQuotaTests(t, org1Ctx)
+			})
+		})
+	}
+
+	for _, dualWriterMode := range dualWriterModes {
+		t.Run(fmt.Sprintf("DualWriterMode %d - kubernetesDashboards disabled", dualWriterMode), func(t *testing.T) {
+			// Create a K8sTestHelper which will set up a real API server
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous: true,
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagUnifiedStorageSearch,
+				},
+				DisableFeatureToggles: []string{
+					featuremgmt.FlagKubernetesDashboards,
+				},
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
+				}})
+
+			t.Cleanup(func() {
+				helper.Shutdown()
+			})
+
+			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+
+			t.Run("Dashboard permission tests", func(t *testing.T) {
+				runDashboardPermissionTests(t, org1Ctx, false)
+			})
 		})
 	}
 }
 
-func testIntegrationValidationForServer(t *testing.T, helper *apis.K8sTestHelper, dualWriterMode rest.DualWriterMode) {
-	t.Cleanup(func() {
-		helper.Shutdown()
-	})
+// TestIntegrationDashboardAPIAuthorization tests the dashboard K8s API with authorization checks
+func TestIntegrationDashboardAPIAuthorization(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
-	// Create test contexts organization
-	org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
-	org2Ctx := createTestContext(t, helper, helper.OrgB, dualWriterMode)
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	for _, dualWriterMode := range dualWriterModes {
+		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous: true,
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagUnifiedStorageSearch,
+				},
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
+					"folders.folder.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
+				}})
 
-	t.Run("Organization 1 tests", func(t *testing.T) {
-		t.Run("Dashboard validation tests", func(t *testing.T) {
-			runDashboardValidationTests(t, org1Ctx)
+			t.Cleanup(func() {
+				helper.Shutdown()
+			})
+
+			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+			org2Ctx := createTestContext(t, helper, helper.OrgB, dualWriterMode)
+
+			t.Run("Authorization tests for all identity types", func(t *testing.T) {
+				runAuthorizationTests(t, org1Ctx)
+			})
+
+			t.Run("Dashboard permission tests", func(t *testing.T) {
+				runDashboardPermissionTests(t, org1Ctx, true)
+			})
+
+			t.Run("Cross-organization tests", func(t *testing.T) {
+				runCrossOrgTests(t, org1Ctx, org2Ctx)
+			})
+
+			t.Run("Dashboard HTTP API test", func(t *testing.T) {
+				runDashboardHttpTest(t, org1Ctx, org2Ctx)
+			})
 		})
+	}
+}
 
-		t.Run("Dashboard quota tests", func(t *testing.T) {
-			runQuotaTests(t, org1Ctx)
+// TestIntegrationDashboardAPI tests the dashboard K8s API
+func TestIntegrationDashboardAPI(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	for _, dualWriterMode := range dualWriterModes {
+		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
+			// Create a K8sTestHelper which will set up a real API server
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous: true,
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagUnifiedStorageSearch,
+					featuremgmt.FlagKubernetesDashboards,
+				},
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
+					"folders.folder.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
+				}})
+
+			t.Cleanup(func() {
+				helper.Shutdown()
+			})
+
+			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+			org2Ctx := createTestContext(t, helper, helper.OrgB, dualWriterMode)
+
+			t.Run("Dashboard LIST API test", func(t *testing.T) {
+				runDashboardListTests(t, org1Ctx)
+			})
+
+			t.Run("Authorization tests for all identity types", func(t *testing.T) {
+				runAuthorizationTests(t, org1Ctx)
+			})
+
+			t.Run("Dashboard permission tests", func(t *testing.T) {
+				runDashboardPermissionTests(t, org1Ctx, true)
+			})
+
+			t.Run("Dashboard HTTP API test", func(t *testing.T) {
+				runDashboardHttpTest(t, org1Ctx, org2Ctx)
+			})
+
+			t.Run("Cross-organization tests", func(t *testing.T) {
+				runCrossOrgTests(t, org1Ctx, org2Ctx)
+			})
 		})
-
-		t.Run("Authorization tests for all identity types", func(t *testing.T) {
-			runAuthorizationTests(t, org1Ctx)
-		})
-
-		t.Run("Dashboard permission tests", func(t *testing.T) {
-			runDashboardPermissionTests(t, org1Ctx)
-		})
-
-		t.Run("Dashboard LIST API test", func(t *testing.T) {
-			t.Skip("Skip LIST")
-			runDashboardListTest(t, org1Ctx)
-		})
-	})
-
-	t.Run("Dashboard HTTP API test", func(t *testing.T) {
-		runDashboardHttpTest(t, org1Ctx, org2Ctx)
-	})
-
-	t.Run("Cross-organization tests", func(t *testing.T) {
-		runCrossOrgTests(t, org1Ctx, org2Ctx)
-	})
+	}
 }
 
 // Auth identity types (user or token) with resource client
@@ -138,6 +237,8 @@ type Identity struct {
 func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 	t.Helper()
 
+	// Get a new resource client for admin user
+	// TODO: we need to figure out why reusing the same client results in slower tests
 	adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
 	editorClient := getResourceClient(t, ctx.Helper, ctx.EditorUser, getDashboardGVR())
 
@@ -284,7 +385,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 							},
 							"spec": map[string]interface{}{
 								"title":         "Dashboard Title",
-								"schemaVersion": 41,
+								"schemaVersion": 42,
 								"editable":      "elephant",
 								"time":          9000,
 								"uid":           strings.Repeat("a", 100),
@@ -305,7 +406,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 							},
 							"spec": map[string]interface{}{
 								"title":         "Dashboard Title",
-								"schemaVersion": 41,
+								"schemaVersion": 42,
 								"editable":      "elephant",
 								"time":          9000,
 								"uid":           strings.Repeat("a", 100),
@@ -315,11 +416,29 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 				},
 				{
 					name:          "v2alpha1 dashboard with correct spec should not throw on v2",
-					resourceInfo:  dashboardV2.DashboardResourceInfo,
+					resourceInfo:  dashboardV2alpha1.DashboardResourceInfo,
 					expectSpecErr: false,
 					testObject: &unstructured.Unstructured{
 						Object: map[string]interface{}{
-							"apiVersion": dashboardV2.DashboardResourceInfo.TypeMeta().APIVersion,
+							"apiVersion": dashboardV2alpha1.DashboardResourceInfo.TypeMeta().APIVersion,
+							"kind":       "Dashboard",
+							"metadata": map[string]interface{}{
+								"generateName": "test-",
+							},
+							"spec": map[string]interface{}{
+								"title":       "Dashboard Title",
+								"description": "valid description",
+							},
+						},
+					},
+				},
+				{
+					name:          "v2beta1 dashboard with correct spec should not throw on v2",
+					resourceInfo:  dashboardV2beta1.DashboardResourceInfo,
+					expectSpecErr: false,
+					testObject: &unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": dashboardV2beta1.DashboardResourceInfo.TypeMeta().APIVersion,
 							"kind":       "Dashboard",
 							"metadata": map[string]interface{}{
 								"generateName": "test-",
@@ -528,9 +647,6 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 	})
 
 	t.Run("Dashboard refresh interval validations", func(t *testing.T) {
-		// Create test client
-		adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
-
 		// Store original settings to restore after test
 		origCfg := ctx.Helper.GetEnv().Cfg
 		origMinRefreshInterval := origCfg.MinRefreshInterval
@@ -664,33 +780,6 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.NoError(t, err)
 		})
 	})
-}
-
-// skipIfMode skips the current test if running in any of the specified modes
-// Usage: skipIfMode(t, rest.Mode1, rest.Mode4)
-// or with a message: skipIfMode(t, "Known issue with conflict detection", rest.Mode1, rest.Mode4)
-// nolint:unused
-func (c *TestContext) skipIfMode(t *testing.T, args ...interface{}) {
-	t.Helper()
-
-	message := "Test not supported in this dual writer mode"
-	modes := []rest.DualWriterMode{}
-
-	// Parse args - first string is considered a message, all rest.DualWriterMode values are modes to skip
-	for _, arg := range args {
-		if msg, ok := arg.(string); ok {
-			message = msg
-		} else if mode, ok := arg.(rest.DualWriterMode); ok {
-			modes = append(modes, mode)
-		}
-	}
-
-	// Check if current mode is in the list of modes to skip
-	for _, mode := range modes {
-		if c.DualWriterMode == mode {
-			t.Skipf("%s (mode %d)", message, c.DualWriterMode)
-		}
-	}
 }
 
 // Run tests for quota validation
@@ -921,7 +1010,7 @@ func createDashboardObject(t *testing.T, title string, folderUID string, generat
 			},
 			"spec": map[string]interface{}{
 				"title":         title,
-				"schemaVersion": 41,
+				"schemaVersion": 42,
 			},
 		},
 	}
@@ -1041,6 +1130,10 @@ func updateDashboard(t *testing.T, client *apis.K8sResourceClient, dashboard *un
 func runAuthorizationTests(t *testing.T, ctx TestContext) {
 	t.Helper()
 
+	// Get a new resource client for admin user
+	// TODO: we need to figure out why reusing the same client results in slower tests
+	adminClient := getServiceAccountResourceClient(t, ctx.Helper, ctx.AdminServiceAccountToken, ctx.OrgID, getDashboardGVR())
+
 	// Get clients for each identity type and role
 	adminUserClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
 	editorUserClient := getResourceClient(t, ctx.Helper, ctx.EditorUser, getDashboardGVR())
@@ -1063,11 +1156,13 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 		{Name: "Viewer token", DashboardClient: viewerTokenClient, Type: "token"},
 	}
 
+	// TODO: re-enable admin cleanup clients when we have figured out why reusing the same client results in slower tests
+	// TODO: This is currently disabled to avoid issues with reusing the same client in tests.
 	// Get admin clients for cleanup based on identity type
-	adminCleanupClients := map[string]*apis.K8sResourceClient{
-		"user":  adminUserClient,
-		"token": adminTokenClient,
-	}
+	// adminCleanupClients := map[string]*apis.K8sResourceClient{
+	//		"user":  adminUserClient,
+	//		"token": adminTokenClient,
+	//	}
 
 	// Define test cases for different roles
 	type roleTest struct {
@@ -1113,8 +1208,9 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 	for _, identity := range identities {
 		identity := identity // Capture range variable
 		t.Run(identity.Name, func(t *testing.T) {
+			// TODO: This is currently disabled to avoid issues with reusing the same client in tests.
 			// Get admin client for cleanup based on identity type
-			adminClient := adminCleanupClients[identity.Type]
+			// adminClient := adminCleanupClients[identity.Type]
 
 			// Get role capabilities for this identity
 			roleCapabilities := authTests[identity.DashboardClient]
@@ -1225,7 +1321,7 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 }
 
 // Run tests for dashboard permissions
-func runDashboardPermissionTests(t *testing.T, ctx TestContext) {
+func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashboardsEnabled bool) {
 	t.Helper()
 
 	// Get clients for each user
@@ -1348,8 +1444,22 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext) {
 		// Clean up dashboard
 		err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 		require.NoError(t, err)
-		err = viewerClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
-		require.NoError(t, err)
+
+		if kubernetesDashboardsEnabled {
+			// In case kubernetesDashboards feature flag is set to true,
+			// we don't grant admin permission to dashboard creator on nested folders.
+			// This means that the viewer will not be able to delete the dashboard.
+			err = viewerClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
+			require.Error(t, err)
+			err = adminClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
+			require.NoError(t, err)
+		} else {
+			// In case kubernetesDashboards feature flag is set to false,
+			// we grant admin permission to dashboard creator on nested folders.
+			// This means that the viewer will be able to delete the dashboard.
+			err = viewerClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
+			require.NoError(t, err)
+		}
 
 		// Clean up the folder
 		err = adminFolderClient.Resource.Delete(context.Background(), folderUID, v1.DeleteOptions{})
@@ -1923,7 +2033,7 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 							},
 							"spec": {
 								"title": "%s",
-								"schemaVersion": 41,
+								"schemaVersion": 42,
 								"layout": {
 									"kind": "GridLayout",
 									"items": []
@@ -2034,6 +2144,8 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 
 // Helper function to retrieve a dashboard via HTTP
 func getDashboardViaHTTP(t *testing.T, ctx *TestContext, dashboardPath string, user apis.User) (map[string]interface{}, error) {
+	t.Helper()
+
 	getResp := apis.DoRequest(ctx.Helper, apis.RequestParams{
 		User:   user,
 		Method: http.MethodGet,
@@ -2131,7 +2243,7 @@ func testDashboardHttpUpdateMethods(t *testing.T, ctx TestContext, dashboardPath
 }
 
 // Test dashboard list API with complex permission scenarios
-func runDashboardListTest(t *testing.T, ctx TestContext) {
+func runDashboardListTests(t *testing.T, ctx TestContext) {
 	t.Helper()
 
 	// Make sure no dashboards exist before we start
@@ -2160,8 +2272,8 @@ func runDashboardListTest(t *testing.T, ctx TestContext) {
 	// Define a map of user types to their clients
 	clients := map[string]struct {
 		userClient   *apis.K8sResourceClient
-		tokenClient  *apis.K8sResourceClient
 		folderClient *apis.K8sResourceClient
+		tokenClient  *apis.K8sResourceClient
 	}{
 		"Admin": {
 			userClient:   getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()),
@@ -2260,6 +2372,24 @@ func runDashboardListTest(t *testing.T, ctx TestContext) {
 	folders := make([]*folder.Folder, len(folderConfigs))
 	folderDashboards := make([]*unstructured.Unstructured, len(folderConfigs))
 
+	// Clean up
+	t.Cleanup(func() {
+		// Delete all root dashboards
+		for _, dash := range rootDashboards {
+			err := adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+			require.NoError(t, err)
+		}
+
+		// Delete all folder dashboards and folders
+		for i, folder := range folders {
+			err := adminClient.Resource.Delete(context.Background(), folderDashboards[i].GetName(), v1.DeleteOptions{})
+			require.NoError(t, err)
+
+			err = adminFolderClient.Resource.Delete(context.Background(), folder.UID, v1.DeleteOptions{})
+			require.NoError(t, err)
+		}
+	})
+
 	// Create all test resources (folders, dashboards) in one loop
 	for i, fc := range folderConfigs {
 		// Create root dashboard
@@ -2352,132 +2482,54 @@ func runDashboardListTest(t *testing.T, ctx TestContext) {
 
 	// Test LIST operation for each identity
 	for _, identity := range identities {
-		t.Run(fmt.Sprintf("LIST operation for %s", identity.Name), func(t *testing.T) {
-			// Get dashboards visible to this identity
-			clients := []apis.K8sResourceClient{
-				*identity.DashboardClient,
-				*identity.FolderClient,
-			}
+		// Get dashboards visible to this identity
+		clients := []apis.K8sResourceClient{
+			*identity.DashboardClient,
+			*identity.FolderClient,
+		}
+		for _, client := range clients {
+			t.Run(fmt.Sprintf("LIST operation for %s and %s", identity.Name, client.Args.GVR), func(t *testing.T) {
+				// Use the client to list all resources
+				dashList, err := client.Resource.List(context.Background(), v1.ListOptions{})
+				require.NoError(t, err)
 
-			for _, client := range clients {
-				t.Run(fmt.Sprintf("LIST operation for %s", client.Args.GVR), func(t *testing.T) {
-					listOpts := v1.ListOptions{}
-					dashList, err := client.Resource.List(context.Background(), listOpts)
+				if len(dashList.Items) == 0 {
+					t.Logf("WARNING: Got empty dashboard list for %s", identity.Name)
+				}
+
+				require.NotEmpty(t, dashList.Items)
+
+				// Extract dashboard titles
+				dashTitles := make([]string, 0, len(dashList.Items))
+				for _, dash := range dashList.Items {
+					meta, err := utils.MetaAccessor(&dash)
 					require.NoError(t, err)
-					require.NotEmpty(t, dashList.Items)
 
-					// Extract dashboard titles
-					dashTitles := make([]string, 0, len(dashList.Items))
-					for _, dash := range dashList.Items {
-						meta, err := utils.MetaAccessor(&dash)
-						require.NoError(t, err)
+					dashTitles = append(dashTitles, meta.FindTitle(""))
+				}
 
-						dashTitles = append(dashTitles, meta.FindTitle(""))
-					}
+				// Verify expectations
+				var expectedTitles []string
+				if client.Args.GVR == getDashboardGVR() {
+					expectedTitles = expectations[identity.Name]
+				} else {
+					expectedTitles = folderPermissions[identity.Name]
+				}
+				require.ElementsMatch(t, expectedTitles, dashTitles)
 
-					// Verify expectations
-					var expectedTitles []string
-					if client.Args.GVR == getDashboardGVR() {
-						expectedTitles = expectations[identity.Name]
-					} else {
-						expectedTitles = folderPermissions[identity.Name]
-					}
-					require.ElementsMatch(t, expectedTitles, dashTitles)
-
-					// Verify all expected items are found
-					for _, expected := range expectedTitles {
-						found := false
-						for _, title := range dashTitles {
-							if title == expected {
-								found = true
-								break
-							}
+				// Verify all expected items are found
+				for _, expected := range expectedTitles {
+					found := false
+					for _, title := range dashTitles {
+						if title == expected {
+							found = true
+							break
 						}
-						require.True(t, found, "%s should see dashboard '%s' but didn't", identity.Name, expected)
 					}
-				})
-			}
-		})
-	}
-
-	// Clean up
-	t.Run("Cleanup dashboards and folders", func(t *testing.T) {
-		// Delete all root dashboards
-		for _, dash := range rootDashboards {
-			err := adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
-			require.NoError(t, err)
-		}
-
-		// Delete all folder dashboards and folders
-		for i, folder := range folders {
-			err := adminClient.Resource.Delete(context.Background(), folderDashboards[i].GetName(), v1.DeleteOptions{})
-			require.NoError(t, err)
-
-			err = adminFolderClient.Resource.Delete(context.Background(), folder.UID, v1.DeleteOptions{})
-			require.NoError(t, err)
-		}
-	})
-}
-
-// TODO: this only works on mode0-3 right now. In modes 4/5, we need to start returning the connections endpoint
-// from retrieving the panel count from search / indexing the dashboard library panels
-func TestDashboardWithLibraryPanel(t *testing.T) {
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3}
-	for _, dualWriterMode := range dualWriterModes {
-		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous: true,
-				EnableFeatureToggles: []string{
-					"unifiedStorageSearch",
-					"kubernetesClientDashboardsFolders",
-				},
+					require.True(t, found, "%s should see dashboard '%s' but didn't", identity.Name, expected)
+				}
 			})
-			ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
-			adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
-
-			// create the library element first
-			libraryElement := map[string]interface{}{
-				"kind": 1,
-				"name": "Test Library Panel",
-				"model": map[string]interface{}{
-					"type":  "timeseries",
-					"title": "Test Library Panel",
-				},
-			}
-			libraryElementURL := "/api/library-elements"
-			libraryElementData, err := postHelper(t, &ctx, libraryElementURL, libraryElement, ctx.AdminUser)
-			require.NoError(t, err)
-			require.NotNil(t, libraryElementData)
-			data := libraryElementData["result"].(map[string]interface{})
-			uid := data["uid"].(string)
-			require.NotEmpty(t, uid)
-
-			// then reference the library element in the dashboard
-			dashboard := createDashboardObject(t, "Library Panel Test", "", 1)
-			dashboard.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
-				map[string]interface{}{
-					"id":    1,
-					"title": "Library Panel",
-					"type":  "library-panel-ref",
-					"libraryPanel": map[string]interface{}{
-						"uid":  uid,
-						"name": "Test Library Panel",
-					},
-				},
-			}
-
-			createdDash, err := adminClient.Resource.Create(context.Background(), dashboard, v1.CreateOptions{})
-			require.NoError(t, err)
-			require.NotNil(t, createdDash)
-
-			// should have created a library panel connection
-			connectionsURL := fmt.Sprintf("/api/library-elements/%s/connections", uid)
-			connectionsData, err := getDashboardViaHTTP(t, &ctx, connectionsURL, ctx.AdminUser)
-			require.NoError(t, err)
-			require.NotNil(t, connectionsData)
-			connections := connectionsData["result"].([]interface{})
-			require.Len(t, connections, 1)
-		})
+		}
 	}
 }
 

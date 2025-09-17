@@ -84,7 +84,14 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
                 vector.current.addInteraction(map, m.geometry, showSegments, clearPrevious);
               }}
             />
-            <Button className={measureStyle.button} icon="times" variant="secondary" size="sm" onClick={toggleMenu} />
+            <Button
+              aria-label={t('geomap.measure-overlay.aria-label-close', 'Close measure tools')}
+              className={measureStyle.button}
+              icon="times"
+              variant="secondary"
+              size="sm"
+              onClick={toggleMenu}
+            />
           </div>
           <Select
             className={measureStyle.unitSelect}

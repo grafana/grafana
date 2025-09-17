@@ -7,7 +7,7 @@ import { clone } from 'lodash';
  * @param start - First timestamp (ms)
  * @param step - step duration (ms)
  */
-export const getMockTimeFrameArray = (length: number, start: number, step: number) => {
+const getMockTimeFrameArray = (length: number, start: number, step: number) => {
   let timeValues: number[] = [];
   for (let i = 0; i < length; i++) {
     timeValues.push(start + i * step);
@@ -21,7 +21,7 @@ export const getMockTimeFrameArray = (length: number, start: number, step: numbe
  * @param values
  * @param high
  */
-export const getMockValueFrameArray = (length: number, values = 0): number[] => {
+const getMockValueFrameArray = (length: number, values = 0): number[] => {
   return Array(length).fill(values);
 };
 

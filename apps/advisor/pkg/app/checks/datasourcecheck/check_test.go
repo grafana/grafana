@@ -107,7 +107,7 @@ func TestCheck_Run(t *testing.T) {
 
 		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
-		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusError}}
+		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: "test message"}}
 		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
 			{ID: 1, Slug: "prometheus", Status: "active"},
 		}}
@@ -125,6 +125,7 @@ func TestCheck_Run(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Len(t, failures, 1)
 		assert.Equal(t, "health-check", failures[0].StepID)
+		assert.Contains(t, *failures[0].MoreInfo, "test message")
 	})
 
 	t.Run("should skip health check when plugin does not support backend health checks", func(t *testing.T) {

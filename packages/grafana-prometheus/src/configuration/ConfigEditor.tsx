@@ -12,7 +12,7 @@ import { AlertingSettingsOverhaul } from './AlertingSettingsOverhaul';
 import { DataSourceHttpSettingsOverhaul } from './DataSourceHttpSettingsOverhaul';
 import { PromSettings } from './PromSettings';
 import { overhaulStyles } from './shared/utils';
-export type PrometheusConfigProps = DataSourcePluginOptionsEditorProps<PromOptions>;
+type PrometheusConfigProps = DataSourcePluginOptionsEditorProps<PromOptions>;
 
 export const ConfigEditor = (props: PrometheusConfigProps) => {
   const { options, onOptionsChange } = props;
@@ -30,7 +30,7 @@ export const ConfigEditor = (props: PrometheusConfigProps) => {
       )}
       <DataSourceDescription
         dataSourceName="Prometheus"
-        docsLink="https://grafana.com/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/"
+        docsLink="https://grafana.com/docs/grafana/latest/datasources/prometheus/configure/"
       />
       <hr className={`${styles.hrTopSpace} ${styles.hrBottomSpace}`} />
       <DataSourceHttpSettingsOverhaul

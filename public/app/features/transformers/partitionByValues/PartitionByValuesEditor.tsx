@@ -14,15 +14,17 @@ import {
   InlineFieldRow,
   ValuePicker,
   Button,
-  HorizontalGroup,
+  Stack,
   FieldValidationMessage,
   RadioButtonGroup,
 } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/partitionByValues.svg';
+import lightImage from '../images/light/partitionByValues.svg';
 
-import { partitionByValuesTransformer, PartitionByValuesTransformerOptions } from './partitionByValues';
+import { getPartitionByValuesTransformer, PartitionByValuesTransformerOptions } from './partitionByValues';
 
 export function PartitionByValuesEditor({
   input,
@@ -117,7 +119,7 @@ export function PartitionByValuesEditor({
           labelWidth={10}
           grow={true}
         >
-          <HorizontalGroup>
+          <Stack>
             {fieldNames.map((name) => (
               <Button key={name} icon="times" variant="secondary" size="md" onClick={() => removeField(name)}>
                 {name}
@@ -131,9 +133,10 @@ export function PartitionByValuesEditor({
                 onChange={addField}
                 label={t('transformers.partition-by-values-editor.label-select-field', 'Select field')}
                 icon="plus"
+                isFullWidth={false}
               />
             )}
-          </HorizontalGroup>
+          </Stack>
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
@@ -178,13 +181,19 @@ export function PartitionByValuesEditor({
   );
 }
 
-export const partitionByValuesTransformRegistryItem: TransformerRegistryItem<PartitionByValuesTransformerOptions> = {
-  id: DataTransformerID.partitionByValues,
-  editor: PartitionByValuesEditor,
-  transformation: partitionByValuesTransformer,
-  name: partitionByValuesTransformer.name,
-  description: partitionByValuesTransformer.description,
-  state: PluginState.alpha,
-  categories: new Set([TransformerCategory.Reformat]),
-  help: getTransformationContent(DataTransformerID.partitionByValues).helperDocs,
-};
+export const getPartitionByValuesTransformRegistryItem: () => TransformerRegistryItem<PartitionByValuesTransformerOptions> =
+  () => {
+    const partitionByValuesTransformer = getPartitionByValuesTransformer();
+    return {
+      id: DataTransformerID.partitionByValues,
+      editor: PartitionByValuesEditor,
+      transformation: partitionByValuesTransformer,
+      name: partitionByValuesTransformer.name,
+      description: partitionByValuesTransformer.description,
+      state: PluginState.alpha,
+      categories: new Set([TransformerCategory.Reformat]),
+      help: getTransformationContent(DataTransformerID.partitionByValues).helperDocs,
+      imageDark: darkImage,
+      imageLight: lightImage,
+    };
+  };

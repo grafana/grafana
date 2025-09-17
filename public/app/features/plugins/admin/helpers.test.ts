@@ -1,7 +1,6 @@
 import { PluginErrorCode, PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { getLocalPluginMock, getRemotePluginMock, getCatalogPluginMock } from './__mocks__';
 import {
   mapToCatalogPlugin,
   mapRemoteToCatalog,
@@ -15,6 +14,7 @@ import {
   isNonAngularVersion,
   isDisabledAngularPlugin,
 } from './helpers';
+import { getLocalPluginMock, getRemotePluginMock, getCatalogPluginMock } from './mocks/mockHelpers';
 import { RemotePlugin, LocalPlugin, RemotePluginStatus, Version, CatalogPlugin } from './types';
 
 describe('Plugins/Helpers', () => {

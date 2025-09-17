@@ -9,7 +9,8 @@ import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
 import { OrgRolePicker } from 'app/features/admin/OrgRolePicker';
-import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
+import { Role, AccessControlAction } from 'app/types/accessControl';
+import { ServiceAccountDTO } from 'app/types/serviceaccount';
 
 type ServiceAccountListItemProps = {
   serviceAccount: ServiceAccountDTO;

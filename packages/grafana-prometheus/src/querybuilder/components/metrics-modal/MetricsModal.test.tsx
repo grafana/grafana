@@ -7,11 +7,12 @@ import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data'
 import { PrometheusDatasource } from '../../../datasource';
 import { PrometheusLanguageProviderInterface } from '../../../language_provider';
 import { EmptyLanguageProviderMock } from '../../../language_provider.mock';
-import { getMockTimeRange } from '../../../test/__mocks__/datasource';
+import { getMockTimeRange } from '../../../test/mocks/datasource';
 import { PromOptions } from '../../../types';
 import { PromVisualQuery } from '../../types';
 
-import { MetricsModal, metricsModaltestIds } from './MetricsModal';
+import { MetricsModal } from './MetricsModal';
+import { metricsModaltestIds } from './testIds';
 
 // don't care about interaction tracking in our unit tests
 jest.mock('@grafana/runtime', () => ({
@@ -116,28 +117,6 @@ describe('MetricsModal', () => {
     });
   });
 
-  it('shows results metrics per page chosen by the user', async () => {
-    setup(defaultQuery, listOfMetrics);
-    const resultsPerPageInput = screen.getByTestId(metricsModaltestIds.resultsPerPage);
-    await userEvent.type(resultsPerPageInput, '12');
-    const metricInsideRange = screen.getByText('j');
-    expect(metricInsideRange).toBeInTheDocument();
-  });
-
-  it('paginates lots of metrics and does not run out of memory', async () => {
-    const lotsOfMetrics: string[] = [...Array(100000).keys()].map((i) => '' + i);
-    setup(defaultQuery, lotsOfMetrics);
-    await waitFor(() => {
-      // doesn't break on loading
-      expect(screen.getByText('0')).toBeInTheDocument();
-    });
-    const resultsPerPageInput = screen.getByTestId(metricsModaltestIds.resultsPerPage);
-    // doesn't break on changing results per page
-    await userEvent.type(resultsPerPageInput, '11');
-    const metricInsideRange = screen.getByText('9');
-    expect(metricInsideRange).toBeInTheDocument();
-  });
-
   // Fuzzy search
   it('searches and filter by metric name with a fuzzy search', async () => {
     // search for a_bucket by name
@@ -169,14 +148,6 @@ describe('MetricsModal', () => {
       metricABucket = screen.getByText('a_bucket');
       expect(metricABucket).toBeInTheDocument();
     });
-
-    const showSettingsButton = screen.getByTestId(metricsModaltestIds.showAdditionalSettings);
-    expect(showSettingsButton).toBeInTheDocument();
-    await userEvent.click(showSettingsButton);
-
-    const metadataSwitch = screen.getByTestId(metricsModaltestIds.searchWithMetadata);
-    expect(metadataSwitch).toBeInTheDocument();
-    await userEvent.click(metadataSwitch);
 
     const searchMetric = screen.getByTestId(metricsModaltestIds.searchMetric);
     expect(searchMetric).toBeInTheDocument();
@@ -248,6 +219,34 @@ function createDatasource(withLabels?: boolean) {
 
   // display different results if their labels are selected in the PromVisualQuery
   if (withLabels) {
+    languageProvider.queryMetricsMetadata = jest.fn().mockResolvedValue({
+      'with-labels': {
+        type: 'with-labels-type',
+        help: 'with-labels-help',
+      },
+    });
+  } else {
+    // all metrics - create metadata for all metrics in listOfMetrics
+    const mockMetadata: Record<string, { type: string; help: string }> = {};
+    listOfMetrics.forEach((metric) => {
+      if (metric === 'all-metrics') {
+        mockMetadata[metric] = { type: 'all-metrics-type', help: 'all-metrics-help' };
+      } else if (metric === 'a_bucket') {
+        mockMetadata[metric] = { type: 'histogram', help: 'for functions' };
+      } else if (metric === 'new_histogram') {
+        mockMetadata[metric] = { type: 'histogram', help: 'a native histogram' };
+      } else if (metric === 'a') {
+        mockMetadata[metric] = { type: 'counter', help: 'a-metric-help' };
+      } else {
+        mockMetadata[metric] = { type: 'counter', help: `${metric} metric help` };
+      }
+    });
+
+    languageProvider.queryMetricsMetadata = jest.fn().mockResolvedValue(mockMetadata);
+  }
+
+  // Also mock the retrieveMetricsMetadata method that might be used elsewhere
+  if (withLabels) {
     languageProvider.retrieveMetricsMetadata = jest.fn().mockReturnValue({
       'with-labels': {
         type: 'with-labels-type',
@@ -255,26 +254,23 @@ function createDatasource(withLabels?: boolean) {
       },
     });
   } else {
-    // all metrics
-    languageProvider.retrieveMetricsMetadata = jest.fn().mockReturnValue({
-      'all-metrics': {
-        type: 'all-metrics-type',
-        help: 'all-metrics-help',
-      },
-      a: {
-        type: 'counter',
-        help: 'a-metric-help',
-      },
-      a_bucket: {
-        type: 'histogram',
-        help: 'for functions',
-      },
-      new_histogram: {
-        type: 'histogram',
-        help: 'a native histogram',
-      },
-      // missing metadata for other metrics is tested for, see below
+    // Create the same metadata structure for retrieveMetricsMetadata
+    const mockMetadata: Record<string, { type: string; help: string }> = {};
+    listOfMetrics.forEach((metric) => {
+      if (metric === 'all-metrics') {
+        mockMetadata[metric] = { type: 'all-metrics-type', help: 'all-metrics-help' };
+      } else if (metric === 'a_bucket') {
+        mockMetadata[metric] = { type: 'histogram', help: 'for functions' };
+      } else if (metric === 'new_histogram') {
+        mockMetadata[metric] = { type: 'histogram', help: 'a native histogram' };
+      } else if (metric === 'a') {
+        mockMetadata[metric] = { type: 'counter', help: 'a-metric-help' };
+      } else {
+        mockMetadata[metric] = { type: 'counter', help: `${metric} metric help` };
+      }
     });
+
+    languageProvider.retrieveMetricsMetadata = jest.fn().mockReturnValue(mockMetadata);
   }
 
   const datasource = new PrometheusDatasource(

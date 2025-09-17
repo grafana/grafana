@@ -94,7 +94,6 @@ To create the integration, follow the same steps as described in [Configure an O
 1. Navigate to **Alerts & IRM** -> **IRM** -> **Integrations**.
 1. Click **+ New integration**.
 1. Select either **Alertmanager** or **Webhook** integration from the list.
-
    - **Alertmanager** integration – Includes preconfigured IRM templates for processing Grafana and Prometheus alerts.
 
    - **Webhook** integration – Uses default IRM templates for general alert processing.

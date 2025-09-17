@@ -6,7 +6,8 @@ import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { FormatAsFieldProps, ResultFormat } from '../../types';
+import { ResultFormat } from '../../types/query';
+import { FormatAsFieldProps } from '../../types/types';
 
 import { Field } from './Field';
 

@@ -54,3 +54,4 @@ export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen, folderNam
     />
   );
 });
+DeleteModal.displayName = 'DeleteModal';

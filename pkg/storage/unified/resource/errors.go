@@ -4,14 +4,16 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	grpcstatus "google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	grpcstatus "google.golang.org/grpc/status"
-
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
 // Package-level errors.
@@ -46,6 +48,66 @@ func NewNotFoundError(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
 			Group: key.Group,
 			Kind:  key.Resource, // yup, resource as kind same is true in apierrors.NewNotFound()
 			Name:  key.Name,
+		},
+	}
+}
+
+func NewTooManyRequestsError(msg string) *resourcepb.ErrorResult {
+	return &resourcepb.ErrorResult{
+		Message: msg,
+		Code:    http.StatusTooManyRequests,
+		Reason:  string(metav1.StatusReasonTooManyRequests),
+	}
+}
+
+func newInvalidFieldError(
+	obj utils.GrafanaMetaAccessor,
+	detail string,
+	path string,
+	morePath ...string,
+) *resourcepb.ErrorResult {
+	gvk := obj.GetGroupVersionKind()
+	return &resourcepb.ErrorResult{
+		Message: detail,
+		Code:    http.StatusUnprocessableEntity,
+		Reason:  string(metav1.StatusReasonInvalid),
+		Details: &resourcepb.ErrorDetails{
+			Name:  obj.GetName(),
+			Group: gvk.Group,
+			Kind:  gvk.Kind,
+			Uid:   string(obj.GetUID()),
+			Causes: []*resourcepb.ErrorCause{
+				{
+					Reason: string(field.ErrorTypeForbidden),
+					Field:  field.NewPath(path, morePath...).String(),
+				},
+			},
+		},
+	}
+}
+
+func newRequiredFieldError(
+	obj utils.GrafanaMetaAccessor,
+	detail string,
+	path string,
+	morePath ...string,
+) *resourcepb.ErrorResult {
+	gvk := obj.GetGroupVersionKind()
+	return &resourcepb.ErrorResult{
+		Message: detail,
+		Code:    http.StatusUnprocessableEntity,
+		Reason:  string(metav1.StatusReasonInvalid),
+		Details: &resourcepb.ErrorDetails{
+			Name:  obj.GetName(),
+			Group: gvk.Group,
+			Kind:  gvk.Kind,
+			Uid:   string(obj.GetUID()),
+			Causes: []*resourcepb.ErrorCause{
+				{
+					Reason: string(field.ErrorTypeRequired),
+					Field:  field.NewPath(path, morePath...).String(),
+				},
+			},
 		},
 	}
 }
@@ -124,4 +186,11 @@ func GetError(res *resourcepb.ErrorResult) error {
 		}
 	}
 	return status
+}
+
+func HandleQueueError[T any](err error, makeResp func(*resourcepb.ErrorResult) *T) (*T, error) {
+	if errors.Is(err, scheduler.ErrTenantQueueFull) {
+		return makeResp(NewTooManyRequestsError("tenant queue is full, please try again later")), nil
+	}
+	return makeResp(AsErrorResult(err)), nil
 }

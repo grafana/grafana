@@ -6,7 +6,7 @@ import { PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
 import { notFoundToNullOrThrow } from '../../api/util';
-import { ruleGroupReducer } from '../../reducers/ruler/ruleGroups';
+import { addRuleAction, ruleGroupReducer } from '../../reducers/ruler/ruleGroups';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
 import { getDatasourceAPIUid } from '../../utils/datasource';
 
@@ -62,10 +62,15 @@ export function useProduceNewRuleGroup() {
       .catch(notFoundToNullOrThrow);
 
     const initialRuleGroupDefinition = latestRuleGroupDefinition ?? createBlankRuleGroup(groupName);
-    const newRuleGroupDefinition = actions.reduce(
-      (ruleGroup, action) => ruleGroupReducer(ruleGroup, action),
-      initialRuleGroupDefinition
-    );
+    const newRuleGroupDefinition = actions.reduce((ruleGroup, action) => {
+      // This is a workaround to ensure that the interval is set correctly when adding a rule to an existing rule group.
+      // The interval is set to default for DMA rules even for existing rule groups with a non-default interval.
+      // We no longer allow setting the interval for existing groups, but still allow that when you create a new rule group.
+      if (latestRuleGroupDefinition && addRuleAction.match(action)) {
+        action.payload.interval = latestRuleGroupDefinition.interval;
+      }
+      return ruleGroupReducer(ruleGroup, action);
+    }, initialRuleGroupDefinition);
 
     return { newRuleGroupDefinition, rulerConfig };
   };

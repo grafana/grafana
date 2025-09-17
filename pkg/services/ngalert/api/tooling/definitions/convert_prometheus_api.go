@@ -5,7 +5,7 @@ import (
 )
 
 // Route for mimirtool
-// swagger:route GET /convert/prometheus/config/v1/rules convert_prometheus RouteConvertPrometheusGetRules
+// swagger:route GET /convert/prometheus/config/v1/rules convert_prometheus stable RouteConvertPrometheusGetRules
 //
 // Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.
 //
@@ -18,7 +18,7 @@ import (
 //       404: NotFound
 
 // Route for cortextool
-// swagger:route GET /convert/api/prom/rules convert_prometheus RouteConvertPrometheusCortexGetRules
+// swagger:route GET /convert/api/prom/rules convert_prometheus stable RouteConvertPrometheusCortexGetRules
 //
 // Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.
 //
@@ -31,7 +31,7 @@ import (
 //       404: NotFound
 
 // Route for mimirtool
-// swagger:route GET /convert/prometheus/config/v1/rules/{NamespaceTitle} convert_prometheus RouteConvertPrometheusGetNamespace
+// swagger:route GET /convert/prometheus/config/v1/rules/{NamespaceTitle} convert_prometheus stable RouteConvertPrometheusGetNamespace
 //
 // Gets Grafana-managed alert rules that were imported from Prometheus-compatible sources for a specified namespace (folder).
 //
@@ -44,7 +44,7 @@ import (
 //       404: NotFound
 
 // Route for cortextool
-// swagger:route GET /convert/api/prom/rules/{NamespaceTitle} convert_prometheus RouteConvertPrometheusCortexGetNamespace
+// swagger:route GET /convert/api/prom/rules/{NamespaceTitle} convert_prometheus stable RouteConvertPrometheusCortexGetNamespace
 //
 // Gets Grafana-managed alert rules that were imported from Prometheus-compatible sources for a specified namespace (folder).
 //
@@ -57,7 +57,7 @@ import (
 //       404: NotFound
 
 // Route for mimirtool
-// swagger:route GET /convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group} convert_prometheus RouteConvertPrometheusGetRuleGroup
+// swagger:route GET /convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group} convert_prometheus stable RouteConvertPrometheusGetRuleGroup
 //
 // Gets a single rule group in Prometheus-compatible format if it was imported from a Prometheus-compatible source.
 //
@@ -70,7 +70,7 @@ import (
 //       404: NotFound
 
 // Route for cortextool
-// swagger:route GET /convert/api/prom/rules/{NamespaceTitle}/{Group} convert_prometheus RouteConvertPrometheusCortexGetRuleGroup
+// swagger:route GET /convert/api/prom/rules/{NamespaceTitle}/{Group} convert_prometheus stable RouteConvertPrometheusCortexGetRuleGroup
 //
 // Gets a single rule group in Prometheus-compatible format if it was imported from a Prometheus-compatible source.
 //
@@ -82,7 +82,7 @@ import (
 //       403: ForbiddenError
 //       404: NotFound
 
-// swagger:route POST /convert/prometheus/config/v1/rules convert_prometheus RouteConvertPrometheusPostRuleGroups
+// swagger:route POST /convert/prometheus/config/v1/rules convert_prometheus stable RouteConvertPrometheusPostRuleGroups
 //
 // Converts the submitted rule groups into Grafana-Managed Rules.
 //
@@ -97,7 +97,7 @@ import (
 //       202: ConvertPrometheusResponse
 //       403: ForbiddenError
 
-// swagger:route POST /convert/api/prom/rules convert_prometheus RouteConvertPrometheusCortexPostRuleGroups
+// swagger:route POST /convert/api/prom/rules convert_prometheus stable RouteConvertPrometheusCortexPostRuleGroups
 //
 // Converts the submitted rule groups into Grafana-Managed Rules.
 //
@@ -113,7 +113,7 @@ import (
 //       403: ForbiddenError
 
 // Route for mimirtool
-// swagger:route POST /convert/prometheus/config/v1/rules/{NamespaceTitle} convert_prometheus RouteConvertPrometheusPostRuleGroup
+// swagger:route POST /convert/prometheus/config/v1/rules/{NamespaceTitle} convert_prometheus stable RouteConvertPrometheusPostRuleGroup
 //
 // Converts a Prometheus rule group into a Grafana rule group and creates or updates it within the specified namespace.
 // If the group already exists and was not imported from a Prometheus-compatible source initially,
@@ -133,7 +133,7 @@ import (
 //       x-raw-request: true
 
 // Route for cortextool
-// swagger:route POST /convert/api/prom/rules/{NamespaceTitle} convert_prometheus RouteConvertPrometheusCortexPostRuleGroup
+// swagger:route POST /convert/api/prom/rules/{NamespaceTitle} convert_prometheus stable RouteConvertPrometheusCortexPostRuleGroup
 //
 // Converts a Prometheus rule group into a Grafana rule group and creates or updates it within the specified namespace.
 // If the group already exists and was not imported from a Prometheus-compatible source initially,
@@ -153,7 +153,7 @@ import (
 //       x-raw-request: true
 
 // Route for mimirtool
-// swagger:route DELETE /convert/prometheus/config/v1/rules/{NamespaceTitle} convert_prometheus RouteConvertPrometheusDeleteNamespace
+// swagger:route DELETE /convert/prometheus/config/v1/rules/{NamespaceTitle} convert_prometheus stable RouteConvertPrometheusDeleteNamespace
 //
 // Deletes all rule groups that were imported from Prometheus-compatible sources within the specified namespace.
 //
@@ -165,7 +165,7 @@ import (
 //       403: ForbiddenError
 
 // Route for cortextool
-// swagger:route DELETE /convert/api/prom/rules/{NamespaceTitle} convert_prometheus RouteConvertPrometheusCortexDeleteNamespace
+// swagger:route DELETE /convert/api/prom/rules/{NamespaceTitle} convert_prometheus stable RouteConvertPrometheusCortexDeleteNamespace
 //
 // Deletes all rule groups that were imported from Prometheus-compatible sources within the specified namespace.
 //
@@ -177,7 +177,7 @@ import (
 //       403: ForbiddenError
 
 // Route for mimirtool
-// swagger:route DELETE /convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group} convert_prometheus RouteConvertPrometheusDeleteRuleGroup
+// swagger:route DELETE /convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group} convert_prometheus stable RouteConvertPrometheusDeleteRuleGroup
 //
 // Deletes a specific rule group if it was imported from a Prometheus-compatible source.
 //
@@ -189,7 +189,7 @@ import (
 //       403: ForbiddenError
 
 // Route for cortextool
-// swagger:route DELETE /convert/api/prom/rules/{NamespaceTitle}/{Group} convert_prometheus RouteConvertPrometheusCortexDeleteRuleGroup
+// swagger:route DELETE /convert/api/prom/rules/{NamespaceTitle}/{Group} convert_prometheus stable RouteConvertPrometheusCortexDeleteRuleGroup
 //
 // Deletes a specific rule group if it was imported from a Prometheus-compatible source.
 //

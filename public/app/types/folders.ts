@@ -6,6 +6,7 @@ export interface FolderListItemDTO {
   uid: string;
   title: string;
   managedBy?: ManagerKind;
+  parentUid?: string;
 }
 
 export type FolderParent = Pick<FolderDTO, 'title' | 'uid' | 'url'>;
@@ -32,6 +33,9 @@ export interface FolderDTO extends WithAccessControlMetadata {
   version?: number;
 }
 
+/** Minimal data required to create a new folder */
+export type NewFolder = Pick<FolderDTO, 'title' | 'parentUid'>;
+
 export interface FolderState {
   id: number;
   uid: string;
@@ -44,8 +48,7 @@ export interface FolderState {
 }
 
 export interface DescendantCountDTO {
-  // TODO: make this required once nestedFolders is enabled by default
-  folder?: number;
+  folder: number;
   dashboard: number;
   librarypanel: number;
   alertrule: number;

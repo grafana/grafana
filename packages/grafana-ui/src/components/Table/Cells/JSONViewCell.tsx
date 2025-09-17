@@ -7,7 +7,7 @@ import { CellActions } from '../CellActions';
 import { DataLinksActionsTooltip, renderSingleLink } from '../DataLinksActionsTooltip';
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellProps } from '../types';
-import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../utils';
+import { tooltipOnClickHandler, DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../utils';
 
 export function JSONViewCell(props: TableCellProps): JSX.Element {
   const { cell, tableStyles, cellProps, field, row } = props;
@@ -25,7 +25,12 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
       value = JSON.parse(value);
     } catch {} // ignore errors
   } else {
-    displayValue = JSON.stringify(value, null, ' ');
+    try {
+      // JSON may refer to itself, which errors on stringify
+      displayValue = JSON.stringify(value, null, ' ');
+    } catch {
+      displayValue = undefined; // if it won't stringify, mark undefined
+    }
   }
 
   const links = getCellLinks(field, row) || [];
@@ -37,10 +42,7 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
   return (
     <div {...cellProps} className={inspectEnabled ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer}>
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
-      <div
-        className={cx(tableStyles.cellText, txt)}
-        onClick={({ clientX, clientY }) => setTooltipCoords({ clientX, clientY })}
-      >
+      <div className={cx(tableStyles.cellText, txt)} onClick={tooltipOnClickHandler(setTooltipCoords)}>
         {shouldShowLink ? (
           renderSingleLink(links[0], displayValue)
         ) : shouldShowTooltip ? (
