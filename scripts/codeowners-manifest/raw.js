@@ -3,11 +3,7 @@
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 
-const {
-  CODEOWNERS_FILE_PATH,
-  CODEOWNERS_MANIFEST_DIR,
-  RAW_AUDIT_JSONL_PATH
-} = require('./constants.js');
+const { CODEOWNERS_FILE_PATH, CODEOWNERS_MANIFEST_DIR, RAW_AUDIT_JSONL_PATH } = require('./constants.js');
 
 /**
  * Generate raw CODEOWNERS audit data using github-codeowners CLI

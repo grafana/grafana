@@ -3,11 +3,7 @@
 const { execSync } = require('node:child_process');
 const fs = require('node:fs');
 
-const {
-  CODEOWNERS_FILE_PATH,
-  CODEOWNERS_MANIFEST_DIR,
-  METADATA_JSON_PATH
-} = require('./constants.js');
+const { CODEOWNERS_FILE_PATH, CODEOWNERS_MANIFEST_DIR, METADATA_JSON_PATH } = require('./constants.js');
 
 /**
  * @typedef {Object} CodeownersMetadata
@@ -43,11 +39,7 @@ if (require.main === module) {
       fs.mkdirSync(CODEOWNERS_MANIFEST_DIR, { recursive: true });
     }
 
-    const metadata = generateCodeownersMetadata(
-      CODEOWNERS_FILE_PATH,
-      CODEOWNERS_MANIFEST_DIR,
-      METADATA_JSON_PATH
-    );
+    const metadata = generateCodeownersMetadata(CODEOWNERS_FILE_PATH, CODEOWNERS_MANIFEST_DIR, METADATA_JSON_PATH);
 
     fs.writeFileSync(METADATA_JSON_PATH, JSON.stringify(metadata, null, 2), 'utf8');
     console.log('✅ Metadata generated:');
