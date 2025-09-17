@@ -1171,6 +1171,11 @@ export interface FeatureToggles {
   */
   pluginContainers?: boolean;
   /**
+  * Run search queries through the tempo backend
+  * @default false
+  */
+  tempoSearchBackendMigration?: boolean;
+  /**
   * Filter out bots from collecting data for Frontend Observability
   * @default false
   */

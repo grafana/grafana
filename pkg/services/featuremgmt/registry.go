@@ -2029,6 +2029,14 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "tempoSearchBackendMigration",
+			Description:     "Run search queries through the tempo backend",
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaOSSBigTent,
+			Expression:      "false",
+			RequiresRestart: true,
+		},
+		{
 			Name:         "filterOutBotsFromFrontendLogs",
 			Description:  "Filter out bots from collecting data for Frontend Observability",
 			Stage:        FeatureStageExperimental,

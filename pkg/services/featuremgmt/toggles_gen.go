@@ -1051,6 +1051,10 @@ const (
 	// Enables running plugins in containers
 	FlagPluginContainers = "pluginContainers"
 
+	// FlagTempoSearchBackendMigration
+	// Run search queries through the tempo backend
+	FlagTempoSearchBackendMigration = "tempoSearchBackendMigration"
+
 	// FlagFilterOutBotsFromFrontendLogs
 	// Filter out bots from collecting data for Frontend Observability
 	FlagFilterOutBotsFromFrontendLogs = "filterOutBotsFromFrontendLogs"
