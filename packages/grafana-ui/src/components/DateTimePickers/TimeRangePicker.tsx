@@ -151,8 +151,6 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
 
   const currentTimeRange = formattedRange(value, timeZone, quickRanges);
 
-  console.log('FMM', moveBackwardDuration, moveForwardDuration);
-
   return (
     <ButtonGroup className={styles.container}>
       <ToolbarButton
