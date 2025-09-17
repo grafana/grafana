@@ -11,26 +11,124 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/xlab/treeprint"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-type TestingFolder struct {
+func TestIntegrationFolderTree(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	modes := []grafanarest.DualWriterMode{
+		grafanarest.Mode1,
+		// grafanarest.Mode2,
+		// grafanarest.Mode3,
+		// grafanarest.Mode4,
+		// grafanarest.Mode5,
+	}
+	for _, mode := range modes {
+		t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: mode,
+					},
+				},
+				// We set it to 1 here, so we always get forced pagination based on the response size.
+				UnifiedStorageMaxPageSizeBytes: 1,
+			})
+
+			tests := []struct {
+				Name       string
+				Definition FolderDefinition
+				Expected   []ExpectedTree
+			}{
+				{
+					Name: "admin-only-tree",
+					Definition: FolderDefinition{
+						Children: []FolderDefinition{
+							{Name: "top",
+								Creator: helper.Org1.Admin,
+								Children: []FolderDefinition{
+									{Name: "middle",
+										Creator: helper.Org1.Admin,
+										Children: []FolderDefinition{
+											{Name: "child",
+												Creator: helper.Org1.Admin,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					Expected: []ExpectedTree{
+						{User: helper.Org1.Admin, Listing: `
+						└── top
+						....└── middle
+						........└── child`},
+						{User: helper.Org1.None, Listing: ``},
+					},
+				},
+			}
+
+			for _, tt := range tests {
+				t.Run(tt.Name, func(t *testing.T) {
+					tt.Definition.RequireUniqueName(t, make(map[string]bool))
+					tt.Definition.CreateUsingLegacyAPI(t, helper, "")
+
+					for _, expect := range tt.Expected {
+						t.Run(fmt.Sprintf("query as %s", expect.User.Identity.GetLogin()), func(t *testing.T) {
+							legacy := getFoldersFromLegacyAPISearch(t, expect.User)
+							legacy.requireEqual(t, expect.Listing, "legacy")
+
+							listed := getFoldersFromAPIServerList(t, expect.User)
+							listed.requireEqual(t, expect.Listing, "listed")
+
+							search := getFoldersFromDashboardV0Search(t, expect.User)
+							search.requireEqual(t, expect.Listing, "search")
+						})
+					}
+				})
+			}
+		})
+	}
+}
+
+type ExpectedTree struct {
+	User    apis.User
+	Listing string
+}
+
+type FolderDefinition struct {
 	Name        string
 	Creator     apis.User // The user who will create the folder
 	Permissions []FolderPermission
-	Children    []TestingFolder
+	Children    []FolderDefinition
 }
 
 type FolderPermission struct {
@@ -40,7 +138,7 @@ type FolderPermission struct {
 	Access dashboardaccess.PermissionType
 }
 
-func (f *TestingFolder) CreateUsingLegacyAPI(t *testing.T, h *apis.K8sTestHelper, parent string) {
+func (f *FolderDefinition) CreateUsingLegacyAPI(t *testing.T, h *apis.K8sTestHelper, parent string) {
 	if f.Name == "" {
 		require.Empty(t, parent, "only the root should be empty")
 	} else {
@@ -100,7 +198,7 @@ func (f *TestingFolder) CreateUsingLegacyAPI(t *testing.T, h *apis.K8sTestHelper
 	}
 }
 
-func (f *TestingFolder) RequireUniqueName(t *testing.T, names map[string]bool) {
+func (f *FolderDefinition) RequireUniqueName(t *testing.T, names map[string]bool) {
 	if f.Name != "" && names[f.Name] {
 		t.Fatalf("duplicate name: %s", f.Name)
 	}
@@ -117,13 +215,7 @@ type FolderView struct {
 	Children []*FolderView
 }
 
-func (n *FolderView) requireEqual(t *testing.T, tree *FolderView) {
-	expect := dotify(tree.build(treeprint.New()))
-	found := dotify(n.build(treeprint.New()))
-	require.Equal(t, expect, found, fmt.Sprintf("EXPECT:\n%s\n\nFOUND:\n%s", expect, found))
-}
-
-func (n *FolderView) requireEqualTree(t *testing.T, expect string) {
+func (n *FolderView) requireEqual(t *testing.T, expect string, msg string) {
 	input := strings.Split(expect, "\n")
 	output := make([]string, 0, len(input))
 	for _, v := range input {
@@ -134,7 +226,7 @@ func (n *FolderView) requireEqualTree(t *testing.T, expect string) {
 	}
 	expect = strings.Join(output, "\n")
 	found := dotify(n.build(treeprint.New()))
-	require.Equal(t, expect, found, fmt.Sprintf("EXPECT:\n%s\n\nFOUND:\n%s", expect, found))
+	require.Equal(t, expect, found, fmt.Sprintf("%s // EXPECT:\n%s\n\nFOUND:\n%s", msg, expect, found))
 }
 
 func (n *FolderView) build(tree treeprint.Tree) treeprint.Tree {
@@ -178,7 +270,7 @@ var (
 	EdgeTypeEnd  EdgeType = "└──"
 )
 
-func GetFoldersFromLegacyAPISearch(t *testing.T, who apis.User) *FolderView {
+func getFoldersFromLegacyAPISearch(t *testing.T, who apis.User) *FolderView {
 	cfg := dynamic.ConfigFor(who.NewRestConfig())
 	cfg.GroupVersion = &schema.GroupVersion{Group: "folder.grafana.app", Version: "v1beta1"} // group does not matter
 	client, err := rest.RESTClientFor(cfg)
@@ -221,19 +313,67 @@ func GetFoldersFromLegacyAPISearch(t *testing.T, who apis.User) *FolderView {
 	return root
 }
 
-func GetFoldersFromAPIServerList(t *testing.T, who apis.User) *FolderView {
+func getFoldersFromDashboardV0Search(t *testing.T, who apis.User) *FolderView {
+	cfg := dynamic.ConfigFor(who.NewRestConfig())
+	cfg.GroupVersion = &schema.GroupVersion{Group: "dashboard.grafana.app", Version: "v0alpha1"} // group does not matter
+	client, err := rest.RESTClientFor(cfg)
+	require.NoError(t, err)
+
+	var statusCode int
+	result := client.Get().AbsPath("api", "search").
+		Param("type", "dash-folder"). // &limit=1000"
+		Param("limit", "1000").
+		Do(context.Background()).
+		StatusCode(&statusCode)
+	require.NoError(t, result.Error(), "getting folders")
+	require.Equal(t, int(http.StatusOK), statusCode)
+
+	body, err := result.Raw()
+	require.NoError(t, err)
+	hits := model.HitList{}
+	err = json.Unmarshal(body, &hits)
+	require.NoError(t, err)
+
+	lookup := make(map[string]*FolderView, len(hits))
+	for _, hit := range hits {
+		lookup[hit.UID] = &FolderView{
+			Name:   hit.UID,
+			Title:  hit.Title,
+			Parent: hit.FolderUID,
+		}
+	}
+
+	root := &FolderView{}
+	for _, v := range lookup {
+		if v.Parent == "" {
+			root.Children = append(root.Children, v)
+		} else {
+			p, ok := lookup[v.Parent]
+			require.True(t, ok, "parent not found for", v)
+			p.Children = append(p.Children, v)
+		}
+	}
+	return root
+}
+
+func getFoldersFromAPIServerList(t *testing.T, who apis.User) *FolderView {
 	gvr := schema.GroupVersionResource{Group: "folder.grafana.app", Version: "v1beta1", Resource: "folders"}
+
+	ns := who.Identity.GetNamespace()
 	cfg := dynamic.ConfigFor(who.NewRestConfig())
 	dyn, err := dynamic.NewForConfig(cfg)
 	require.NoError(t, err)
-	client := dyn.Resource(gvr).Namespace(who.Identity.GetNamespace())
+	client := dyn.Resource(gvr).Namespace(ns)
 
 	result, err := client.List(context.Background(), v1.ListOptions{Limit: 1000})
+	if apierrors.IsForbidden(err) {
+		return &FolderView{} // empty list
+	}
 	require.NoError(t, err)
 
 	lookup := make(map[string]*FolderView, len(result.Items))
 	for _, hit := range result.Items {
-		obj, err := utils.MetaAccessor(hit)
+		obj, err := utils.MetaAccessor(&hit)
 		require.NoError(t, err)
 
 		title, _, err := unstructured.NestedString(hit.Object, "spec", "title")

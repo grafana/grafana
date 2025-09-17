@@ -220,37 +220,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			})
 		}
 	})
-
-	t.Run("tree", func(t *testing.T) {
-		root := TestingFolder{
-			Children: []TestingFolder{
-				{Name: "top",
-					Creator: helper.Org1.Admin,
-					Children: []TestingFolder{
-						{Name: "middle",
-							Creator: helper.Org1.Admin,
-							Children: []TestingFolder{
-								{Name: "child",
-									Creator: helper.Org1.Admin,
-								},
-							},
-						},
-					},
-				},
-			},
-		}
-		root.RequireUniqueName(t, make(map[string]bool))
-		root.CreateUsingLegacyAPI(t, helper, "")
-
-		legacy := GetFoldersFromLegacyAPISearch(t, helper.Org1.Admin)
-		legacy.requireEqualTree(t, `
-      └── top
-      ....└── middle
-      ........└── child`)
-
-		lister := GetFoldersFromAPIServerList(t, helper.Org1.Admin)
-		legacy.requireEqual(t, lister)
-	})
 }
 
 func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper {
