@@ -34,6 +34,7 @@
 # START Technical documentation
 /.vale.ini                        @grafana/docs-tooling
 /AGENT.md                         @grafana/docs-tooling
+/CLAUDE.md                        @grafana/docs-tooling
 
 /.docs/agent/grafana.md           @grafana/docs-tooling
 /.docs/agent/role.md              @grafana/docs-tooling
