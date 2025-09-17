@@ -299,7 +299,7 @@ function addTransform(transitions: string[]) {
   return transitions;
 }
 
-function getActiveButtonStyles(color: ThemeRichColor, theme: GrafanaTheme2, fill: ButtonFill) {
+export function getActiveButtonStyles(color: ThemeRichColor, fill: ButtonFill) {
   return {
     background: fill === 'solid' ? color.main : color.transparent,
     transform: 'scale(0.95)',
@@ -334,8 +334,8 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
         color: color.text,
       },
 
-      '&:active, &:active:hover': {
-        ...getActiveButtonStyles(color, theme, fill),
+      '&:active': {
+        ...getActiveButtonStyles(color, fill),
       },
     };
   }
@@ -355,8 +355,8 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
         outline: 'none',
       },
 
-      '&:active, &:active:hover': {
-        ...getActiveButtonStyles(color, theme, fill),
+      '&:active': {
+        ...getActiveButtonStyles(color, fill),
       },
     };
   }
@@ -381,8 +381,8 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       color: color.contrastText,
     },
 
-    '&:active, &:active:hover': {
-      ...getActiveButtonStyles(color, theme, fill),
+    '&:active': {
+      ...getActiveButtonStyles(color, fill),
     },
   };
 }
@@ -393,6 +393,8 @@ function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, 
     boxShadow: 'none',
     color: theme.colors.text.disabled,
     transition: 'none',
+    transform: 'none !important',
+    background: theme.colors.action.disabledBackground,
   };
 
   if (fill === 'text') {

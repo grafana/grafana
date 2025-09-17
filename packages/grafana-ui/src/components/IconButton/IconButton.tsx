@@ -7,7 +7,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { IconName, IconSize, IconType } from '../../types/icon';
 import { ComponentSize } from '../../types/size';
-import { IconRenderer } from '../Button/Button';
+import { getActiveButtonStyles, IconRenderer } from '../Button/Button';
 import { getSvgSize } from '../Icon/utils';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { PopoverContent, TooltipPlacement } from '../Tooltip/types';
@@ -107,6 +107,7 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
   // overall size of the IconButton on hover
   // theme.spacing.gridSize originates from 2*4px for padding and letting the IconSize generally decide on the hoverSize
   const hoverSize = getSvgSize(size) + theme.spacing.gridSize;
+  const activeButtonStyle = getActiveButtonStyles(theme.colors.secondary, 'solid');
 
   let iconColor = theme.colors.text.primary;
 
@@ -129,11 +130,13 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
       alignItems: 'center',
       padding: 0,
       color: iconColor,
+      borderRadius: theme.shape.radius.default,
 
       '&[disabled], &:disabled': {
         cursor: 'not-allowed',
         color: theme.colors.action.disabledText,
         opacity: 0.65,
+        transform: 'none !important',
       },
 
       '&:before': {
@@ -161,6 +164,10 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
             variant === 'secondary' ? theme.colors.action.hover : colorManipulator.alpha(iconColor, 0.12),
           opacity: 1,
         },
+      },
+
+      '&:active': {
+        transform: activeButtonStyle.transform,
       },
     }),
     icon: css({
