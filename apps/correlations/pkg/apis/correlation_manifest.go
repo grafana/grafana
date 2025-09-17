@@ -10,6 +10,9 @@ import (
 	"fmt"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/kube-openapi/pkg/spec3"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 
@@ -17,7 +20,7 @@ import (
 )
 
 var (
-	rawSchemaCorrelationv0alpha1     = []byte(`{"spec":{"properties":{"config":{"properties":{"field":{"type":"string"},"target":{"type":"object","x-kubernetes-preserve-unknown-fields":true},"transformations":{"items":{"properties":{"expression":{"type":"string"},"field":{"type":"string"},"mapValue":{"type":"string"},"type":{"type":"string"}},"required":["type","expression","field","mapValue"],"type":"object"},"type":"array"}},"required":["field","target"],"type":"object"},"description":{"type":"string"},"label":{"type":"string"},"provisioned":{"type":"boolean"},"source_ds_ref":{"properties":{"group":{"type":"string"},"name":{"type":"string"}},"required":["group","name"],"type":"object"},"target_ds_ref":{"properties":{"group":{"type":"string"},"name":{"type":"string"}},"required":["group","name"],"type":"object"},"type":{"enum":["query","external"],"type":"string"}},"required":["source_ds_ref","label","config","provisioned","type"],"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	rawSchemaCorrelationv0alpha1     = []byte(`{"ConfigSpec":{"additionalProperties":false,"description":"there was a deprecated field here called type, we will need to move that for conversion and provisioning","properties":{"field":{"type":"string"},"target":{"$ref":"#/components/schemas/TargetSpec"},"transformations":{"items":{"$ref":"#/components/schemas/TransformationSpec"},"type":"array"}},"required":["field","target"],"type":"object"},"Correlation":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"CorrelationType":{"enum":["query","external"],"type":"string"},"DataSourceRef":{"additionalProperties":false,"properties":{"group":{"description":"same as pluginId","type":"string"},"name":{"description":"same as grafana uid","type":"string"}},"required":["group","name"],"type":"object"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"TargetSpec":{"additionalProperties":{"additionalProperties":{},"type":"object"},"type":"object"},"TransformationSpec":{"additionalProperties":false,"properties":{"expression":{"type":"string"},"field":{"type":"string"},"mapValue":{"type":"string"},"type":{"type":"string"}},"required":["type","expression","field","mapValue"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"config":{"$ref":"#/components/schemas/ConfigSpec"},"description":{"type":"string"},"label":{"type":"string"},"provisioned":{"type":"boolean"},"source_ds_ref":{"$ref":"#/components/schemas/DataSourceRef"},"target_ds_ref":{"$ref":"#/components/schemas/DataSourceRef"},"type":{"$ref":"#/components/schemas/CorrelationType"}},"required":["source_ds_ref","label","config","provisioned","type"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
 	versionSchemaCorrelationv0alpha1 app.VersionSchema
 	_                                = json.Unmarshal(rawSchemaCorrelationv0alpha1, &versionSchemaCorrelationv0alpha1)
 )
@@ -37,6 +40,10 @@ var appManifestData = app.ManifestData{
 					Conversion: false,
 					Schema:     &versionSchemaCorrelationv0alpha1,
 				},
+			},
+			Routes: app.ManifestVersionRoutes{
+				Namespaced: map[string]spec3.PathProps{},
+				Cluster:    map[string]spec3.PathProps{},
 			},
 		},
 	},
@@ -66,10 +73,50 @@ var customRouteToGoResponseType = map[string]any{}
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
 // kind may be empty for custom routes which are not kind subroutes. Leading slashes are removed from subroute paths.
 // If there is no association for the provided kind, version, custom route path, and method, exists will return false.
+// Resource routes (those without a kind) should prefix their route with "<namespace>/" if the route is namespaced (otherwise the route is assumed to be cluster-scope)
 func ManifestCustomRouteResponsesAssociator(kind, version, path, verb string) (goType any, exists bool) {
 	if len(path) > 0 && path[0] == '/' {
 		path = path[1:]
 	}
 	goType, exists = customRouteToGoResponseType[fmt.Sprintf("%s|%s|%s|%s", version, kind, path, strings.ToUpper(verb))]
 	return goType, exists
+}
+
+var customRouteToGoParamsType = map[string]runtime.Object{}
+
+func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goType runtime.Object, exists bool) {
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+	goType, exists = customRouteToGoParamsType[fmt.Sprintf("%s|%s|%s|%s", version, kind, path, strings.ToUpper(verb))]
+	return goType, exists
+}
+
+var customRouteToGoRequestBodyType = map[string]any{}
+
+func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+	goType, exists = customRouteToGoRequestBodyType[fmt.Sprintf("%s|%s|%s|%s", version, kind, path, strings.ToUpper(verb))]
+	return goType, exists
+}
+
+type GoTypeAssociator struct{}
+
+func NewGoTypeAssociator() *GoTypeAssociator {
+	return &GoTypeAssociator{}
+}
+
+func (g *GoTypeAssociator) KindToGoType(kind, version string) (goType resource.Kind, exists bool) {
+	return ManifestGoTypeAssociator(kind, version)
+}
+func (g *GoTypeAssociator) CustomRouteReturnGoType(kind, version, path, verb string) (goType any, exists bool) {
+	return ManifestCustomRouteResponsesAssociator(kind, version, path, verb)
+}
+func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb string) (goType runtime.Object, exists bool) {
+	return ManifestCustomRouteQueryAssociator(kind, version, path, verb)
+}
+func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
+	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
 }

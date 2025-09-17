@@ -34,7 +34,7 @@ func RegisterAppInstaller(
 		KubeConfig:   restclient.Config{}, // this will be overridden by the installer's InitializeApp method
 		ManifestData: *apis.LocalManifest().ManifestData,
 	}
-	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.ManifestGoTypeAssociator, apis.ManifestCustomRouteResponsesAssociator)
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, &apis.GoTypeAssociator{})
 	if err != nil {
 		return nil, err
 	}
