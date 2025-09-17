@@ -9,30 +9,29 @@ import { LogsPanelSuggestionsSupplier } from './suggestions';
 export const plugin = new PanelPlugin<Options>(LogsPanel)
   .setPanelOptions((builder, context) => {
     const category = [t('logs.category-logs', 'Logs')];
-    builder.addBooleanSwitch({
-      path: 'showTime',
-      name: t('logs.name-time', 'Show timestamps'),
-      category,
-      description: '',
-      defaultValue: false,
-    });
+    builder
+      .addBooleanSwitch({
+        path: 'showTime',
+        name: t('logs.name-time', 'Show timestamps'),
+        category,
+        description: '',
+        defaultValue: false,
+      })
+      .addBooleanSwitch({
+        path: 'showLabels',
+        name: t('logs.name-unique-labels', 'Unique labels'),
+        category,
+        description: '',
+      });
 
     if (!config.featureToggles.newLogsPanel) {
-      builder
-        .addBooleanSwitch({
-          path: 'showLabels',
-          name: t('logs.name-unique-labels', 'Unique labels'),
-          category,
-          description: '',
-          defaultValue: false,
-        })
-        .addBooleanSwitch({
-          path: 'showCommonLabels',
-          name: t('logs.name-common-labels', 'Common labels'),
-          category,
-          description: '',
-          defaultValue: false,
-        });
+      builder.addBooleanSwitch({
+        path: 'showCommonLabels',
+        name: t('logs.name-common-labels', 'Common labels'),
+        category,
+        description: '',
+        defaultValue: false,
+      });
     } else if (context.options?.showTime) {
       builder.addRadio({
         path: 'timestampResolution',

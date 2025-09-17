@@ -64,7 +64,6 @@ const setup = (
     containerElement: document.createElement('div'),
     focusLogLine: jest.fn(),
     logs,
-    onResize: jest.fn(),
     timeRange: getDefaultTimeRange(),
     timeZone: 'browser',
     showControls: true,
@@ -613,7 +612,6 @@ describe('LogLineDetails', () => {
         timeRange: getDefaultTimeRange(),
         timeZone: 'browser',
         showControls: true,
-        onResize: jest.fn(),
       };
 
       const contextData: LogListContextData = {

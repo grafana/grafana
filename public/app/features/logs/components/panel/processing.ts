@@ -53,6 +53,7 @@ export class LogListModel implements LogRowModel {
   timeUtc: string;
   uid: string;
   uniqueLabels: Labels | undefined;
+  uniqueLabelsExpanded = false;
 
   private _body: string | undefined = undefined;
   private _currentSearch: string | undefined = undefined;
