@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/authlib/types"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -34,8 +35,6 @@ type DualReadWriter struct {
 	parser  Parser
 	folders *FolderManager
 	access  authlib.AccessChecker
-
-	onlyApiServer bool // Used to determine authz rules for standalone vs embedded apiserver
 }
 
 type DualWriteOptions struct {
@@ -51,8 +50,8 @@ type DualWriteOptions struct {
 	Branch       string // Configured default branch
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access authlib.AccessChecker, onlyApiServer bool) *DualReadWriter {
-	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access, onlyApiServer: onlyApiServer}
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access authlib.AccessChecker) *DualReadWriter {
+	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access}
 }
 
 func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*ParsedResource, error) {
@@ -507,58 +506,37 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 		return apierrors.NewUnauthorized(err.Error())
 	}
 
-	// apply authz rules for the standalone API server
-	if r.onlyApiServer {
-		if identity.IsServiceIdentity(ctx) {
-			// A Grafana sub-system should have full access. We trust them to make wise decisions.
-			return nil
-		}
-
-		var name string
-		if parsed.Existing != nil {
-			name = parsed.Existing.GetName()
-		} else {
-			name = parsed.DryRunResponse.GetName()
-		}
-
-		rsp, err := r.access.Check(ctx, id, authlib.CheckRequest{
-			Group:     parsed.GVR.Group,
-			Resource:  parsed.GVR.Resource,
-			Namespace: id.GetNamespace(),
-			Name:      name,
-			Folder:    parsed.Meta.GetFolder(),
-			Verb:      verb,
-		})
-		if err != nil || !rsp.Allowed {
-			return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
-				fmt.Errorf("no access to read the embedded file"))
-		}
-
+	if identity.IsServiceIdentity(ctx) {
+		// A Grafana sub-system should have full access. We trust them to make wise decisions.
 		return nil
 	}
 
-	// apply authz rules for the embedded apiserver
-
-	// Use configured permissions for get+delete
-	// NOTE: we historically provide VerbGet even when request is to delete in the embedded apiserver
-	// is that what we want?
-	if parsed.Existing != nil && (verb == utils.VerbGet || verb == utils.VerbDelete) {
-		rsp, err := r.access.Check(ctx, id, authlib.CheckRequest{
-			Group:     parsed.GVR.Group,
-			Resource:  parsed.GVR.Resource,
-			Namespace: parsed.Existing.GetNamespace(),
-			Name:      parsed.Existing.GetName(),
-			Folder:    parsed.Meta.GetFolder(),
-			Verb:      utils.VerbGet,
-		})
-		if err != nil || !rsp.Allowed {
-			return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
-				fmt.Errorf("no access to read the embedded file"))
-		}
+	var name string
+	if parsed.Existing != nil {
+		name = parsed.Existing.GetName()
+	} else {
+		name = parsed.DryRunResponse.GetName()
 	}
 
-	// Simple role based access for now
-	if id.GetOrgRole().Includes(identity.RoleEditor) {
+	rsp, err := r.access.Check(ctx, id, authlib.CheckRequest{
+		Group:     parsed.GVR.Group,
+		Resource:  parsed.GVR.Resource,
+		Namespace: id.GetNamespace(),
+		Name:      name,
+		Folder:    parsed.Meta.GetFolder(),
+		Verb:      verb,
+	})
+	if err != nil || !rsp.Allowed {
+		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
+			fmt.Errorf("no access to read the embedded file"))
+	}
+
+	idType, _, err := types.ParseTypeID(id.GetID())
+	if err != nil {
+		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(), fmt.Errorf("could not determine identity type to check access"))
+	}
+	// only apply role based access if identity is not of type access policy
+	if idType == types.TypeAccessPolicy || id.GetOrgRole().Includes(identity.RoleEditor) {
 		return nil
 	}
 
