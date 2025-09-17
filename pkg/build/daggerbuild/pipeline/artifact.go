@@ -39,7 +39,7 @@ type ArtifactPublishDirOpts struct{}
 
 type ArtifactInitializer func(context.Context, *slog.Logger, string, StateHandler) (*Artifact, error)
 
-// An Artifact is a file or a directory that is created when using the `-a / --artifact` flag.
+// ArtifactHandler is a file or a directory that is created when using the `-a / --artifact` flag.
 // Each artifact can depend on other artifacts, and can be affected by 'flags' from the artifact string that describes this artifact.
 // For example, the flags in the artifact string, 'targz:linux/amd64:grafana'
 type ArtifactHandler interface {

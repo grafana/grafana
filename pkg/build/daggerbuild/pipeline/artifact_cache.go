@@ -8,6 +8,7 @@ import (
 	"log"
 	"os/exec"
 	"sync"
+	"time"
 
 	"dagger.io/dagger"
 )
@@ -32,6 +33,7 @@ func ContainerSHA(c *dagger.Container) (string, error) {
 	return sha256sum(b), nil
 }
 
+// BuilderImage returns the image tag, using the sha256sum of the container (c).
 func BuilderImage(registry string, f string, c *dagger.Container) (string, error) {
 	sha256, err := ContainerSHA(c)
 	if err != nil {
@@ -49,6 +51,31 @@ func (a *ArtifactHandlerCache) Dependencies(ctx context.Context) ([]*Artifact, e
 	return a.Handler.Dependencies(ctx)
 }
 
+// NextInterval returns a timestamp that is the next multiple of duration `d`.
+// So if `ts` is 1:31:05, and `d` is `5 * time.Minute`, then this function will return `1:35:00`.
+func NextInterval(ts time.Time, d time.Duration) time.Time {
+	// 113 -> 120
+
+	// 113 / 10 = 11
+	unix := ts.UTC().Unix() / int64(d.Seconds())
+	log.Println(time.Unix(unix, 0))
+	// 11 * 10 = 110
+	unix = unix * int64(d.Seconds())
+	log.Println(time.Unix(unix, 0))
+
+	// 110 + 10 = 120
+	unix = unix + int64(d.Seconds())
+	log.Println(time.Unix(unix, 0))
+	return time.Unix(unix, 0).UTC()
+}
+
+// Builder will call the wrapped Artifact's `Builer` func, **which should only include dependency downloads**, hash the
+// dagger DAG, and store it as a Docker image. If an image with the same hash is available, then it is downloaded, and
+// the builder DAG is not evaluated.
+//
+// This is effectively the same as defining a `Dockerfile` for a `backend builder`, and pushing it any time it changes.
+// Every Builder is appended with an env variable that updates on a regular interval (2 weeks), forcing the builder to
+// be re-evaluated and preventing it from becoming too stale.
 func (a *ArtifactHandlerCache) Builder(ctx context.Context, opts *ArtifactContainerOpts) (*dagger.Container, error) {
 	cache := opts.CLIContext.Bool("cache-builders")
 	cacheRegistry := opts.CLIContext.String("cache-builders-registry")
@@ -61,6 +88,11 @@ func (a *ArtifactHandlerCache) Builder(ctx context.Context, opts *ArtifactContai
 	if !cache {
 		return builder, err
 	}
+
+	// Ensure that a new builder is evaluated at least once per interval.
+	// This will prevent builder images from getting excessively stale.
+	twoWeekDuration := time.Hour * 24 * 7 * 2
+	builder = builder.WithEnvVariable("GRAFANA_NEXT_TS", NextInterval(time.Now(), twoWeekDuration).Format(time.RFC3339))
 
 	n := a.String()
 	m, _ := mtxMap.LoadOrStore(n, &sync.Mutex{})
