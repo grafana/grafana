@@ -545,7 +545,21 @@ func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, name st
 
 // AccessControlMetadata returns access control metadata for the given Receivers.
 func (rs *ReceiverService) AccessControlMetadata(ctx context.Context, user identity.Requester, receivers ...*models.Receiver) (map[string]models.ReceiverPermissionSet, error) {
-	return rs.authz.Access(ctx, user, receivers...)
+	permissions, err := rs.authz.Access(ctx, user, receivers...)
+	if err != nil {
+		return nil, err
+	}
+	for _, m := range receivers {
+		if m.Origin == models.ResourceOriginGrafana {
+			continue
+		}
+		perms := permissions[m.GetUID()]
+		perms.Set(models.ReceiverPermissionAdmin, false)
+		perms.Set(models.ReceiverPermissionWrite, false)
+		perms.Set(models.ReceiverPermissionDelete, false)
+		permissions[m.GetUID()] = perms
+	}
+	return permissions, nil
 }
 
 // InUseMetadata returns metadata for the given Receivers about their usage in routes and rules.
@@ -554,31 +568,63 @@ func (rs *ReceiverService) InUseMetadata(ctx context.Context, orgID int64, recei
 	if err != nil {
 		return nil, err
 	}
-	receiverUses := revision.ReceiverUseByName()
 
-	q := models.ListNotificationSettingsQuery{OrgID: orgID}
-	if len(receivers) == 1 {
-		q.ReceiverName = receivers[0].Name
-	}
-	keys, err := rs.ruleNotificationsStore.ListNotificationSettings(ctx, q)
-	if err != nil {
-		return nil, err
+	var hasGrafanaOrigin, hasImportedOrigin bool
+	for i := range receivers {
+		if receivers[i].Origin == models.ResourceOriginGrafana {
+			hasGrafanaOrigin = true
+		} else if receivers[i].Origin == models.ResourceOriginImported {
+			hasImportedOrigin = true
+		}
+		if hasGrafanaOrigin && hasImportedOrigin {
+			break
+		}
 	}
 
-	byReceiver := map[string][]models.AlertRuleKey{}
-	for key, settings := range keys {
-		for _, s := range settings {
-			if s.Receiver != "" {
-				byReceiver[s.Receiver] = append(byReceiver[s.Receiver], key)
+	var receiverUsesInRoutes map[string]int
+	var importedUsesInRoutes map[string]int
+	receiverUsesInRules := map[string][]models.AlertRuleKey{}
+	if hasGrafanaOrigin {
+		receiverUsesInRoutes = revision.ReceiverUseByName()
+		q := models.ListNotificationSettingsQuery{OrgID: orgID}
+		if len(receivers) == 1 {
+			q.ReceiverName = receivers[0].Name
+		}
+		keys, err := rs.ruleNotificationsStore.ListNotificationSettings(ctx, q)
+		if err != nil {
+			return nil, err
+		}
+
+		for key, settings := range keys {
+			for _, s := range settings {
+				if s.Receiver != "" {
+					receiverUsesInRules[s.Receiver] = append(receiverUsesInRules[s.Receiver], key)
+				}
 			}
+		}
+	}
+	if hasImportedOrigin {
+		s, err := revision.Imported()
+		if err == nil {
+			importedUsesInRoutes = s.ReceiverUseByName()
+		} else {
+			rs.log.FromContext(ctx).Warn("Unable to include imported receivers. Skipping", "err", err)
 		}
 	}
 
 	results := make(map[string]models.ReceiverMetadata, len(receivers))
 	for _, rcv := range receivers {
+		if rcv.Origin == models.ResourceOriginImported {
+			results[rcv.GetUID()] = models.ReceiverMetadata{
+				InUseByRoutes: importedUsesInRoutes[rcv.Name],
+				InUseByRules:  nil,
+				CanUse:        false,
+			}
+			continue
+		}
 		results[rcv.GetUID()] = models.ReceiverMetadata{
-			InUseByRoutes: receiverUses[rcv.Name],
-			InUseByRules:  byReceiver[rcv.Name],
+			InUseByRoutes: receiverUsesInRoutes[rcv.Name],
+			InUseByRules:  receiverUsesInRules[rcv.Name],
 			CanUse:        rcv.Origin == models.ResourceOriginGrafana, // Only receivers from the Grafana configuration can be used.
 		}
 	}
