@@ -3541,7 +3541,8 @@
           "grafanaAdmin",
           "login",
           "name",
-          "provisioned"
+          "provisioned",
+          "role"
         ],
         "properties": {
           "disabled": {
@@ -3569,9 +3570,12 @@
             "default": ""
           },
           "provisioned": {
-            "description": "What to do with salt, rands and password?",
             "type": "boolean",
             "default": false
+          },
+          "role": {
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -5515,7 +5519,8 @@
           "grafanaAdmin",
           "login",
           "name",
-          "provisioned"
+          "provisioned",
+          "role"
         ],
         "properties": {
           "disabled": {
@@ -5543,9 +5548,12 @@
             "default": ""
           },
           "provisioned": {
-            "description": "What to do with salt, rands and password?",
             "type": "boolean",
             "default": false
+          },
+          "role": {
+            "type": "string",
+            "default": ""
           }
         }
       },
