@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -82,7 +82,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 			}
 
 			// TODO: should we use the clients or the resource manager instead?
-			client, _, err := clients.ForResource(versionlessGVR)
+			client, _, err := clients.ForResource(ctx, versionlessGVR)
 			if err != nil {
 				result.Error = fmt.Errorf("get client for deleted object: %w", err)
 				progress.Record(ctx, result)

@@ -1,6 +1,6 @@
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Checkbox, HorizontalGroup, RadioButtonGroup, Tooltip } from '@grafana/ui';
+import { Checkbox, Stack, RadioButtonGroup, Tooltip } from '@grafana/ui';
 
 export const TickSpacingEditor = (props: StandardEditorProps<number>) => {
   const GAPS_OPTIONS: Array<SelectableValue<number>> = [
@@ -53,7 +53,7 @@ export const TickSpacingEditor = (props: StandardEditorProps<number>) => {
   };
 
   return (
-    <HorizontalGroup>
+    <Stack>
       <RadioButtonGroup value={gap.value} options={GAPS_OPTIONS} onChange={onSpacingChange} />
       {value !== 0 && (
         <Tooltip
@@ -68,6 +68,6 @@ export const TickSpacingEditor = (props: StandardEditorProps<number>) => {
           </div>
         </Tooltip>
       )}
-    </HorizontalGroup>
+    </Stack>
   );
 };

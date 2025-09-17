@@ -15,12 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationDecrypt(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Parallel()
 
@@ -292,13 +291,14 @@ func TestIntegrationDecrypt(t *testing.T) {
 		require.NotEmpty(t, exposed)
 		require.Equal(t, "value", exposed.DangerouslyExposeAndConsumeValue())
 
-		require.Len(t, fakeLogger.InfoMsgs, 2)
+		require.Len(t, fakeLogger.InfoMsgs, 3)
 		require.Equal(t, fakeLogger.InfoMsgs[0], "SecureValueMetadataStorage.Read")
-		require.Equal(t, fakeLogger.InfoMsgs[1], "Secrets Audit Log")
+		require.Equal(t, fakeLogger.InfoMsgs[1], "KeeperMetadataStorage.GetKeeperConfig")
+		require.Equal(t, fakeLogger.InfoMsgs[2], "Secrets Audit Log")
 
-		require.Len(t, fakeLogger.InfoArgs, 2)
+		require.Len(t, fakeLogger.InfoArgs, 3)
 		// we only want to check the audit log args
-		args := fakeLogger.InfoArgs[1]
+		args := fakeLogger.InfoArgs[2]
 		require.Contains(t, args, "grafana_decrypter_identity")
 		require.Contains(t, args, "decrypter_identity")
 		for i, arg := range args {

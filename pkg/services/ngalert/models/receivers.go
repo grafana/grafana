@@ -33,19 +33,23 @@ type GetReceiversQuery struct {
 	Decrypt bool
 }
 
-// ListReceiversQuery represents a query for listing receiver groups.
-type ListReceiversQuery struct {
-	OrgID  int64
-	Names  []string
-	Limit  int
-	Offset int
-}
-
 // ReceiverMetadata contains metadata about a receiver's usage in routes and rules.
 type ReceiverMetadata struct {
 	InUseByRules  []AlertRuleKey
 	InUseByRoutes int
+	// CanUse is true if the receiver can be used in routes and rules.
+	CanUse bool
 }
+
+// ResourceOrigin represents the origin or source of the resource.
+type ResourceOrigin string
+
+const (
+	// ResourceOriginGrafana indicates that the resource is in the Grafana configuration
+	ResourceOriginGrafana ResourceOrigin = "grafana"
+	// ResourceOriginImported indicates that the resource is from the imported configuration
+	ResourceOriginImported ResourceOrigin = "imported"
+)
 
 // Receiver is the domain model representation of a receiver / contact point.
 type Receiver struct {
@@ -54,6 +58,7 @@ type Receiver struct {
 	Integrations []*Integration
 	Provenance   Provenance
 	Version      string
+	Origin       ResourceOrigin
 }
 
 func (r *Receiver) Clone() Receiver {
@@ -62,6 +67,7 @@ func (r *Receiver) Clone() Receiver {
 		Name:       r.Name,
 		Provenance: r.Provenance,
 		Version:    r.Version,
+		Origin:     r.Origin,
 	}
 
 	if r.Integrations != nil {
@@ -153,10 +159,19 @@ type Integration struct {
 	SecureSettings map[string]string
 }
 
+func (integration *Integration) ResourceType() string {
+	return "contactPoint"
+}
+
+func (integration *Integration) ResourceID() string {
+	return integration.UID
+}
+
 // IntegrationConfig represents the configuration of an integration. It contains the type and information about the fields.
 type IntegrationConfig struct {
-	Type   string
-	Fields map[string]IntegrationField
+	Type    string
+	Version string
+	Fields  map[string]IntegrationField
 }
 
 // IntegrationField represents a field in an integration configuration.
@@ -199,17 +214,38 @@ func (f IntegrationFieldPath) With(segment string) IntegrationFieldPath {
 	return newPath
 }
 
-// IntegrationConfigFromType returns an integration configuration for a given integration type. If the integration type is
-// not found an error is returned.
-func IntegrationConfigFromType(integrationType string) (IntegrationConfig, error) {
-	config, err := channels_config.ConfigForIntegrationType(integrationType)
+// IntegrationConfigFromType returns an integration configuration for a given integration type of a given version.
+// If version is nil, the current version of the integration is used.
+// Returns an error if the integration type is not found or if the specified version does not exist.
+//
+// Parameters:
+//
+//	integrationType - The type of integration to get configuration for
+//	version - Optional specific version to get configuration for, uses latest if nil
+//
+// Returns:
+//
+//	IntegrationConfig - The integration configuration
+//	error - Error if integration type not found or invalid version specified
+func IntegrationConfigFromType(integrationType string, version *string) (IntegrationConfig, error) {
+	versionConfig, err := channels_config.ConfigForIntegrationType(integrationType)
 	if err != nil {
 		return IntegrationConfig{}, err
 	}
-
-	integrationConfig := IntegrationConfig{Type: config.Type, Fields: make(map[string]IntegrationField, len(config.Options))}
-
-	for _, option := range config.Options {
+	// if particular version is requested and the version returned does not match, try to get the correct version
+	if version != nil && *version != string(versionConfig.Version) {
+		exists := false
+		versionConfig, exists = versionConfig.Plugin.GetVersion(channels_config.NotifierVersion(*version))
+		if !exists {
+			return IntegrationConfig{}, fmt.Errorf("version %s not found in config", *version)
+		}
+	}
+	integrationConfig := IntegrationConfig{
+		Type:    versionConfig.Plugin.Type,
+		Version: string(versionConfig.Version),
+		Fields:  make(map[string]IntegrationField, len(versionConfig.Options)),
+	}
+	for _, option := range versionConfig.Options {
 		integrationConfig.Fields[option.PropertyName] = notifierOptionToIntegrationField(option)
 	}
 	return integrationConfig, nil
@@ -267,7 +303,8 @@ func traverseFields(flds map[string]IntegrationField, parentPath IntegrationFiel
 
 func (config *IntegrationConfig) Clone() IntegrationConfig {
 	clone := IntegrationConfig{
-		Type: config.Type,
+		Type:    config.Type,
+		Version: config.Version,
 	}
 
 	if len(config.Fields) > 0 {

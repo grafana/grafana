@@ -18,12 +18,12 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { PANEL_EDIT_LAST_USED_DATASOURCE } from 'app/features/dashboard/utils/dashboard';
-import { InspectTab } from 'app/features/inspector/types';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 import { DashboardDataDTO } from 'app/types/dashboard';
 
+import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
 import { PanelTimeRange, PanelTimeRangeState } from '../../scene/PanelTimeRange';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { findVizPanelByKey } from '../../utils/utils';
@@ -174,6 +174,9 @@ const MixedDs = {
   meta: {
     id: 'grafana',
     mixed: true,
+  },
+  getRef: () => {
+    return { type: 'datasource', uid: '-- Mixed --' };
   },
 };
 
@@ -604,12 +607,10 @@ describe('PanelDataQueriesTab', () => {
 
     describe('query inspection', () => {
       it('allows query inspection from the tab', async () => {
-        const { queriesTab } = await setupScene('panel-1');
+        const { queriesTab, scene } = await setupScene('panel-1');
         queriesTab.onOpenInspector();
 
-        const params = locationService.getSearchObject();
-        expect(params.inspect).toBe('1');
-        expect(params.inspectTab).toBe(InspectTab.Query);
+        expect(scene.state.overlay).toBeInstanceOf(PanelInspectDrawer);
       });
     });
 
@@ -760,6 +761,67 @@ describe('PanelDataQueriesTab', () => {
           expect(queriesTab.state.datasource).toBe(ds1Mock);
           expect(queriesTab.state.dsSettings).toBe(instance1SettingsMock);
         });
+      });
+    });
+
+    describe('updateDatasourceIfNeeded', () => {
+      it('should update datasource when different datasource reference is provided', async () => {
+        const { queriesTab } = await setupScene('panel-1');
+
+        // Initially should have testdata datasource
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-testdata');
+
+        // Call updateDatasourceIfNeeded with prometheus datasource
+        await queriesTab.updateDatasourceIfNeeded({ uid: 'gdev-prometheus' });
+
+        // Should update to prometheus datasource
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-prometheus');
+        expect(queriesTab.state.dsSettings?.uid).toBe('gdev-prometheus');
+      });
+
+      it('should not update datasource when same datasource reference is provided', async () => {
+        const { queriesTab } = await setupScene('panel-1');
+
+        // Initially should have testdata datasource
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-testdata');
+
+        const originalDatasource = queriesTab.state.datasource;
+        const originalDsSettings = queriesTab.state.dsSettings;
+
+        // Call updateDatasourceIfNeeded with same datasource
+        await queriesTab.updateDatasourceIfNeeded({ uid: 'gdev-testdata' });
+
+        // Should not change the datasource
+        expect(queriesTab.state.datasource).toBe(originalDatasource);
+        expect(queriesTab.state.dsSettings).toBe(originalDsSettings);
+      });
+
+      it('should update datasource to mixed when mixed datasource reference is provided', async () => {
+        const { queriesTab } = await setupScene('panel-1');
+
+        // Initially should have testdata datasource
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-testdata');
+
+        // Call updateDatasourceIfNeeded with mixed datasource
+        await queriesTab.updateDatasourceIfNeeded({ uid: '-- Mixed --' });
+
+        // Should update to mixed datasource
+        expect(queriesTab.state.datasource?.uid).toBe('-- Mixed --');
+        expect(queriesTab.state.dsSettings?.uid).toBe('-- Mixed --');
+      });
+
+      it('should handle case when datasource instance settings are not found', async () => {
+        const { queriesTab } = await setupScene('panel-1');
+
+        // Initially should have testdata datasource
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-testdata');
+
+        // Call updateDatasourceIfNeeded with non-existent datasource
+        await queriesTab.updateDatasourceIfNeeded({ uid: 'non-existent-ds' });
+
+        // Should fall back to default datasource (since mock returns default when not found)
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-testdata');
+        expect(queriesTab.state.dsSettings?.uid).toBe('gdev-testdata');
       });
     });
   });

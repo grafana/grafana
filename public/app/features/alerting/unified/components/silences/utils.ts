@@ -1,10 +1,11 @@
 import { DefaultTimeZone, addDurationToDate, dateTime, intervalToAbbreviatedDurationString } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { SilenceFormFields } from 'app/features/alerting/unified/types/silence-form';
 import { matcherToMatcherField } from 'app/features/alerting/unified/utils/alertmanager';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
 import { parseQueryParamMatchers } from 'app/features/alerting/unified/utils/matchers';
 import { MatcherOperator, Silence } from 'app/plugins/datasource/alertmanager/types';
+
+import { contextSrv } from '../../../../../core/services/context_srv';
 
 /**
  * Parse query params and return default silence form values
@@ -68,7 +69,7 @@ export const getDefaultSilenceFormValues = (partial?: Partial<SilenceFormFields>
     startsAt: now.toISOString(),
     endsAt: endsAt.toISOString(),
     comment: `created ${dateTime().format('YYYY-MM-DD HH:mm')}`,
-    createdBy: config.bootData.user.name,
+    createdBy: contextSrv.user.name,
     duration: '2h',
     isRegex: false,
     matcherName: '',

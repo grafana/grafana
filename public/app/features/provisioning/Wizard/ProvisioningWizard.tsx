@@ -170,6 +170,14 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     }
   };
 
+  const onDiscard = async () => {
+    if (repoName) {
+      await handleRepositoryDeletion(repoName);
+    }
+
+    await handlePrevious();
+  };
+
   const handlePrevious = async () => {
     // For cancel actions, show confirmation modal
     if (shouldUseCancelBehavior) {
@@ -273,7 +281,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       try {
         const formData = getValues();
         const spec = dataToSpec(formData.repository);
-        const rsp = await submitData(spec);
+        const rsp = await submitData(spec, formData.repository.token);
         if (rsp.error) {
           setStepStatusInfo({
             status: 'error',
@@ -333,7 +341,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         <div className={styles.divider} />
         <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
           <FormPrompt
-            onDiscard={handlePrevious}
+            onDiscard={onDiscard}
             confirmRedirect={isDirty && !['connection', 'finish'].includes(activeStep) && !isCancelling}
           />
           <Stack direction="column">
@@ -350,7 +358,13 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
             <div className={styles.content}>
               {activeStep === 'connection' && <ConnectStep />}
               {activeStep === 'bootstrap' && <BootstrapStep settingsData={data} repoName={repoName} />}
-              {activeStep === 'synchronize' && <SynchronizeStep isLegacyStorage={isLegacyStorage} />}
+              {activeStep === 'synchronize' && (
+                <SynchronizeStep
+                  isLegacyStorage={isLegacyStorage}
+                  onCancel={handleRepositoryDeletion}
+                  isCancelling={isCancelling}
+                />
+              )}
               {activeStep === 'finish' && <FinishStep />}
             </div>
 

@@ -1,12 +1,6 @@
-import { BootData } from '../../types/config';
 import { DataFrame } from '../../types/dataFrame';
 import { SpecialValue } from '../../types/transformations';
 
-declare global {
-  interface Window {
-    grafanaBootData?: BootData;
-  }
-}
 /**
  * Retrieve the maximum number of fields in a series of a dataframe.
  */

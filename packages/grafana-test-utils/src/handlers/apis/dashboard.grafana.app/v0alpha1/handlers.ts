@@ -7,23 +7,33 @@ const [mockTree] = wellFormedTree();
 
 type FilterArray = Array<(v: (typeof mockTree)[number]) => boolean>;
 
+const typeMap: Record<string, string> = {
+  folder: 'folders',
+  dashboard: 'dashboards',
+};
+
 const getSearchHandler = () =>
-  http.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/search', ({ request }) => {
+  http.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search', ({ request }) => {
     const folderFilter = new URL(request.url).searchParams.get('folder') || null;
     const typeFilter = new URL(request.url).searchParams.get('type') || null;
     const response = mockTree
       .filter((filterItem) => {
         const filters: FilterArray = [];
-        if (folderFilter && folderFilter !== 'general') {
-          filters.push(({ item }) => item.kind === 'folder' && item.parentUID === folderFilter);
-        }
-
-        if (folderFilter === 'general') {
-          filters.push(({ item }) => item.kind === 'folder' && item.parentUID === undefined);
-        }
 
         if (typeFilter) {
           filters.push(({ item }) => item.kind === typeFilter);
+        }
+
+        if (folderFilter && folderFilter !== 'general') {
+          filters.push(
+            ({ item }) => (item.kind === 'folder' || item.kind === 'dashboard') && item.parentUID === folderFilter
+          );
+        }
+
+        if (folderFilter === 'general') {
+          filters.push(
+            ({ item }) => (item.kind === 'folder' || item.kind === 'dashboard') && item.parentUID === undefined
+          );
         }
 
         return filters.every((filterPredicate) => filterPredicate(filterItem));
@@ -32,7 +42,7 @@ const getSearchHandler = () =>
       .map(({ item }) => {
         const random = Chance(item.uid);
         return {
-          resource: 'folders',
+          resource: typeMap[item.kind],
           name: item.uid,
           title: item.title,
           field: {

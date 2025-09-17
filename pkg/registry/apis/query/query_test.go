@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	dataapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	queryapi "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -43,6 +44,14 @@ func loadTestdataFrames(t *testing.T, filename string) *backend.QueryDataRespons
 	require.NoError(t, err, "Failed to unmarshal testdata file: %s", filename)
 
 	return result
+}
+
+type mockUser struct {
+	identity.Requester
+}
+
+func (mu mockUser) GetOrgID() int64 {
+	return -1
 }
 
 func TestQueryAPI(t *testing.T) {
@@ -167,7 +176,9 @@ func TestQueryAPI(t *testing.T) {
 				legacyDatasourceLookup: &mockLegacyDataSourceLookup{},
 			}
 
-			req := httptest.NewRequest(http.MethodPost, "/some-path", bytes.NewReader([]byte(tc.queryJSON)))
+			reqCtx := identity.WithRequester(context.Background(), mockUser{})
+
+			req := httptest.NewRequestWithContext(reqCtx, http.MethodPost, "/some-path", bytes.NewReader([]byte(tc.queryJSON)))
 			req.Header.Set("Content-Type", "application/json")
 
 			// Set optional headers
@@ -250,18 +261,21 @@ type mockClient struct {
 	stubbedFrame *data.Frame
 }
 
-func (m mockClient) GetInstance(ctx context.Context) (clientapi.Instance, error) {
+func (m mockClient) GetInstance(ctx context.Context, headers map[string]string) (clientapi.Instance, error) {
 	mclient := mockClient{
 		stubbedFrame: m.stubbedFrame,
 	}
 	return mclient, nil
 }
 
+func (m mockClient) ReportMetrics() {
+}
+
 func (m mockClient) GetLogger(parent log.Logger) log.Logger {
 	return parent.New()
 }
 
-func (m mockClient) GetDataSourceClient(ctx context.Context, ref dataapi.DataSourceRef, headers map[string]string) (clientapi.QueryDataClient, error) {
+func (m mockClient) GetDataSourceClient(ctx context.Context, ref dataapi.DataSourceRef) (clientapi.QueryDataClient, error) {
 	mclient := mockClient{
 		stubbedFrame: m.stubbedFrame,
 	}

@@ -1,14 +1,14 @@
 import { ReactNode } from 'react';
 
-import { Trans } from '@grafana/i18n';
-import { Stack, Text, TextLink, Icon, Card, LinkButton } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { Stack, Text, TextLink, Icon, Card, LinkButton, Badge } from '@grafana/ui';
 import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
 import { PROVISIONING_URL } from '../constants';
+import { getIsReadOnlyWorkflows } from '../utils/repository';
 
-import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import { SyncRepository } from './SyncRepository';
 
 interface Props {
@@ -16,6 +16,7 @@ interface Props {
 }
 
 export function RepositoryCard({ repository }: Props) {
+  const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
   const { metadata, spec, status } = repository;
   const name = metadata?.name ?? '';
 
@@ -63,6 +64,9 @@ export function RepositoryCard({ repository }: Props) {
         <Stack gap={2} direction="row" alignItems="center">
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
+          {isReadOnlyRepo && (
+            <Badge color="darkgrey" text={t('provisioning.repository-card.read-only-badge', 'Read only')} />
+          )}
         </Stack>
       </Card.Heading>
 
@@ -104,9 +108,6 @@ export function RepositoryCard({ repository }: Props) {
           </LinkButton>
         </Stack>
       </Card.Actions>
-      <Card.SecondaryActions>
-        <DeleteRepositoryButton name={name} />
-      </Card.SecondaryActions>
     </Card>
   );
 }

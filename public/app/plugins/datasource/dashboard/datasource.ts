@@ -17,14 +17,14 @@ import {
   MetricFindValue,
   getValueMatcher,
   ValueMatcherID,
-  FiltersApplicability,
-  DataSourceGetTagKeysOptions,
+  DataSourceGetDrilldownsApplicabilityOptions,
+  DrilldownsApplicability,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
+import { isSceneObject, SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
   activateSceneObjectAndParentTree,
-  findOriginalVizPanelByKey,
+  findVizPanelByKey,
   getVizPanelKeyForPanelId,
 } from 'app/features/dashboard-scene/utils/utils';
 
@@ -46,7 +46,9 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
   query(options: DataQueryRequest<DashboardQuery>): Observable<DataQueryResponse> {
     const sceneScopedVar: ScopedVar | undefined = options.scopedVars?.__sceneObject;
-    let scene: SceneObject | undefined = sceneScopedVar ? (sceneScopedVar.value.valueOf() as SceneObject) : undefined;
+    const sceneScopedVarValue: unknown | undefined = sceneScopedVar?.value.valueOf();
+    const scene: SceneObject | undefined =
+      sceneScopedVarValue && isSceneObject(sceneScopedVarValue) ? sceneScopedVarValue : undefined;
 
     if (!scene) {
       throw new Error('Can only be called from a scene');
@@ -63,7 +65,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       return of({ data: [] });
     }
 
-    let sourcePanel = this.findSourcePanel(scene, panelId);
+    let sourcePanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
 
     if (!sourcePanel) {
       return of({ data: [], error: { message: 'Could not find source panel' } });
@@ -87,7 +89,13 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         sourceDataProvider?.setContainerWidth(500);
       }
 
-      const cleanUp = activateSceneObjectAndParentTree(sourceDataProvider!);
+      /**
+       * Ignore the isInView flag on the original data provider
+       * This allows queries to be run even if the original datasource is outside the viewport
+       */
+      sourceDataProvider?.bypassIsInViewChanged?.(true);
+
+      const activateCleanUp = activateSceneObjectAndParentTree(sourceDataProvider!);
 
       return sourceDataProvider!.getResultsStream!().pipe(
         debounceTime(50),
@@ -101,7 +109,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
           };
         }),
         this.emitFirstLoadedDataIfMixedDS(options.requestId),
-        finalize(() => cleanUp?.())
+        finalize(() => {
+          sourceDataProvider?.bypassIsInViewChanged?.(false);
+
+          activateCleanUp?.();
+        })
       );
     });
   }
@@ -128,10 +140,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
             ...field,
             config: {
               ...field.config,
-              // Enable AdHoc filtering for string and numeric fields only when feature toggle is enabled
-              filterable: config.featureToggles.dashboardDsAdHocFiltering
-                ? field.type === FieldType.string || field.type === FieldType.number
-                : field.config.filterable,
+              // Enable AdHoc filtering for string and numeric fields only when feature toggle and per-panel setting are enabled
+              filterable:
+                config.featureToggles.dashboardDsAdHocFiltering && query.adHocFiltersEnabled
+                  ? field.type === FieldType.string || field.type === FieldType.number
+                  : field.config.filterable,
             },
             state: {
               ...field.state,
@@ -140,7 +153,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         };
       });
 
-      if (!config.featureToggles.dashboardDsAdHocFiltering || filters.length === 0) {
+      if (!config.featureToggles.dashboardDsAdHocFiltering || !query.adHocFiltersEnabled || filters.length === 0) {
         return [...series, ...annotations];
       }
 
@@ -295,11 +308,6 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     };
   }
 
-  private findSourcePanel(scene: SceneObject, panelId: number) {
-    // We're trying to find the original panel, not a cloned one, since `panelId` alone cannot resolve clones
-    return findOriginalVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
-  }
-
   private emitFirstLoadedDataIfMixedDS(
     requestId: string
   ): (source: Observable<DataQueryResponse>) => Observable<DataQueryResponse> {
@@ -346,16 +354,23 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   /**
    * Check which AdHoc filters are applicable based on operator and field type support
    */
-  async getFiltersApplicability(
-    options?: DataSourceGetTagKeysOptions<DashboardQuery>
-  ): Promise<FiltersApplicability[]> {
+  async getDrilldownsApplicability(
+    options?: DataSourceGetDrilldownsApplicabilityOptions<DashboardQuery>
+  ): Promise<DrilldownsApplicability[]> {
     if (!config.featureToggles.dashboardDsAdHocFiltering) {
+      return [];
+    }
+
+    // Check if any query has adhoc filters enabled
+    const hasAdHocFiltersEnabled = options?.queries?.some((query) => query.adHocFiltersEnabled);
+
+    if (!hasAdHocFiltersEnabled) {
       return [];
     }
 
     const filters = options?.filters || [];
 
-    return filters.map((filter): FiltersApplicability => {
+    return filters.map((filter): DrilldownsApplicability => {
       // Check operator support
       if (filter.operator !== '=' && filter.operator !== '!=') {
         return {

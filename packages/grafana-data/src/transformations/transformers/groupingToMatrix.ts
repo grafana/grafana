@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, Field } from '../../types/dataFrame';
+import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import {
   SpecialValue,
   DataTransformerInfo,
@@ -28,8 +28,7 @@ const DEFAULT_EMPTY_VALUE = SpecialValue.Empty;
 
 // grafana-data does not have access to runtime so we are accessing the window object
 // to get access to the feature toggle
-// eslint-disable-next-line
-const supportDataplaneFallback = (window as any)?.grafanaBootData?.settings?.featureToggles?.dataplaneFrontendFallback;
+const supportDataplaneFallback = window.grafanaBootData?.settings?.featureToggles?.dataplaneFrontendFallback;
 
 export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTransformerOptions> = {
   id: DataTransformerID.groupingToMatrix,
@@ -115,7 +114,10 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
         for (const columnName of columnValues) {
           let values = [];
           for (const rowName of rowValues) {
-            const value = matrixValues[columnName][rowName] ?? getSpecialValue(emptyValue);
+            // nested dataframes need to be undefined when empty
+            const value =
+              matrixValues[columnName][rowName] ??
+              (valueField.type === FieldType.frame ? undefined : getSpecialValue(emptyValue));
             values.push(value);
           }
 

@@ -13,11 +13,13 @@ export function QueryLibraryContextProviderMock(props: PropsWithChildren<Props>)
         openDrawer: jest.fn(),
         closeDrawer: jest.fn(),
         isDrawerOpen: false,
-        openAddQueryModal: jest.fn(),
-        closeAddQueryModal: jest.fn(),
-        renderSaveQueryButton: jest.fn(),
+        renderSavedQueryButtons: jest.fn(),
+        renderQueryLibraryEditingHeader: jest.fn(),
         queryLibraryEnabled: Boolean(props.queryLibraryEnabled),
         context: 'explore',
+        triggerAnalyticsEvent: jest.fn(),
+        setNewQuery: jest.fn(),
+        onSelectQuery: jest.fn(),
       }}
     >
       {props.children}

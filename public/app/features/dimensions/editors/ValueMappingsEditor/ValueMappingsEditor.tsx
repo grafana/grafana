@@ -3,7 +3,7 @@ import { memo, useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, MappingType, StandardEditorProps, ValueMapping } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { useStyles2, VerticalGroup, Icon, ColorPicker, Button, Modal } from '@grafana/ui';
+import { useStyles2, Stack, Icon, ColorPicker, Button, Modal } from '@grafana/ui';
 
 import { MediaType, ResourceFolderName, ResourcePickerSize } from '../../types';
 import { ResourcePicker } from '../ResourcePicker';
@@ -43,7 +43,7 @@ export const ValueMappingsEditor = memo((props: Props) => {
   );
 
   return (
-    <VerticalGroup>
+    <Stack direction="column">
       <table className={styles.compactTable}>
         <tbody>
           {rows.map((row, rowIndex) => (
@@ -114,7 +114,7 @@ export const ValueMappingsEditor = memo((props: Props) => {
           showIconPicker={showIconPicker}
         />
       </Modal>
-    </VerticalGroup>
+    </Stack>
   );
 });
 

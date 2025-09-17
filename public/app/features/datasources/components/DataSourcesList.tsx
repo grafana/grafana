@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, useFavoriteDatasources, FavoriteDatasources } from '@grafana/runtime';
 import { EmptyState, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { AccessControlAction } from 'app/types/accessControl';
 import { StoreState, useSelector } from 'app/types/store';
 
@@ -20,6 +21,12 @@ import { DataSourcesListHeader } from './DataSourcesListHeader';
 
 export function DataSourcesList() {
   const { isLoading } = useLoadDataSources();
+  const favoriteDataSources = useFavoriteDatasources();
+  const [queryParams, updateQueryParams] = useQueryParams();
+  const showFavoritesOnly = !!queryParams.starred;
+  const handleFavoritesCheckboxChange = (value: boolean) => {
+    updateQueryParams({ starred: value ? 'true' : undefined });
+  };
 
   const dataSources = useSelector((state) => getDataSources(state.dataSources));
   const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));
@@ -35,6 +42,9 @@ export function DataSourcesList() {
       hasCreateRights={hasCreateRights}
       hasWriteRights={hasWriteRights}
       hasExploreRights={hasExploreRights}
+      showFavoritesOnly={showFavoritesOnly}
+      handleFavoritesCheckboxChange={handleFavoritesCheckboxChange}
+      favoriteDataSources={favoriteDataSources}
     />
   );
 }
@@ -46,18 +56,40 @@ export type ViewProps = {
   hasCreateRights: boolean;
   hasWriteRights: boolean;
   hasExploreRights: boolean;
+  showFavoritesOnly?: boolean;
+  handleFavoritesCheckboxChange?: (value: boolean) => void;
+  favoriteDataSources?: FavoriteDatasources;
 };
 
 export function DataSourcesListView({
-  dataSources,
+  dataSources: allDataSources,
   dataSourcesCount,
   isLoading,
   hasCreateRights,
   hasWriteRights,
   hasExploreRights,
+  showFavoritesOnly,
+  handleFavoritesCheckboxChange,
+  favoriteDataSources,
 }: ViewProps) {
   const styles = useStyles2(getStyles);
   const location = useLocation();
+  const favoritesCheckbox =
+    favoriteDataSources?.enabled && handleFavoritesCheckboxChange && showFavoritesOnly !== undefined
+      ? {
+          onChange: handleFavoritesCheckboxChange,
+          value: showFavoritesOnly,
+          label: t('datasources.list.starred', 'Starred'),
+        }
+      : undefined;
+
+  // Filter data sources based on favorites when enabled
+  const dataSources = useMemo(() => {
+    if (!showFavoritesOnly || !favoriteDataSources?.enabled) {
+      return allDataSources;
+    }
+    return allDataSources.filter((dataSource) => favoriteDataSources?.isFavoriteDatasource(dataSource.uid));
+  }, [allDataSources, showFavoritesOnly, favoriteDataSources]);
 
   useEffect(() => {
     trackDataSourcesListViewed({
@@ -111,7 +143,7 @@ export function DataSourcesListView({
   return (
     <>
       {/* List Header */}
-      <DataSourcesListHeader />
+      <DataSourcesListHeader filterCheckbox={favoritesCheckbox} />
 
       {/* List */}
       {dataSources.length === 0 && !isLoading ? (

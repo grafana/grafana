@@ -139,7 +139,9 @@ func (r *Runner) Run(ctx context.Context) error {
 }
 
 func (r *Runner) listChecks(ctx context.Context, logger logging.Logger) ([]resource.Object, error) {
-	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{})
+	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{
+		Limit: 1000, // Avoid pagination for normal uses cases, which is a costly operation
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +149,7 @@ func (r *Runner) listChecks(ctx context.Context, logger logging.Logger) ([]resou
 	checks := list.GetItems()
 	for list.GetContinue() != "" {
 		logger.Debug("List has continue token, listing next page", "continue", list.GetContinue())
-		list, err = r.client.List(ctx, r.namespace, resource.ListOptions{Continue: list.GetContinue()})
+		list, err = r.client.List(ctx, r.namespace, resource.ListOptions{Continue: list.GetContinue(), Limit: 1000})
 		if err != nil {
 			return nil, err
 		}

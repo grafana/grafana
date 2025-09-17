@@ -7,10 +7,10 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
+import { getProvisionedMeta } from 'app/features/provisioning/components/utils/getProvisionedMeta';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
-import { getProvisionedMeta } from './provisioned/utils/getProvisionedMeta';
 import { DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
 

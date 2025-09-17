@@ -11,6 +11,7 @@ import (
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
 // decryptAuthorizer is the authorizer implementation for decrypt operations.
@@ -25,7 +26,7 @@ func ProvideDecryptAuthorizer(tracer trace.Tracer) contracts.DecryptAuthorizer {
 }
 
 // authorize checks whether the auth info token has the right permissions to decrypt the secure value.
-func (a *decryptAuthorizer) Authorize(ctx context.Context, secureValueName string, secureValueDecrypters []string) (id string, isAllowed bool) {
+func (a *decryptAuthorizer) Authorize(ctx context.Context, ns xkube.Namespace, secureValueName string, secureValueDecrypters []string) (id string, isAllowed bool) {
 	ctx, span := a.tracer.Start(ctx, "DecryptAuthorizer.Authorize", trace.WithAttributes(
 		attribute.String("name", secureValueName),
 		attribute.StringSlice("decrypters", secureValueDecrypters),
@@ -41,6 +42,10 @@ func (a *decryptAuthorizer) Authorize(ctx context.Context, secureValueName strin
 
 	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
+		return "", false
+	}
+
+	if !claims.NamespaceMatches(authInfo.GetNamespace(), ns.String()) {
 		return "", false
 	}
 

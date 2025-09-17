@@ -67,7 +67,7 @@ export const ComboboxList = <T extends string | number>({
     [selectedItems]
   );
 
-  const allItemsSelected = enableAllOption && selectedItems.length === options.length - 1;
+  const allItemsSelected = enableAllOption && options.length > 1 && selectedItems.length === options.length - 1;
 
   return (
     <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef} padding={0.5}>
@@ -120,26 +120,31 @@ export const ComboboxList = <T extends string | number>({
                 className={cx(
                   styles.option,
                   !isMultiSelect && isOptionSelected(item) && styles.optionSelected,
-                  highlightedIndex === virtualRow.index && styles.optionFocused
+                  highlightedIndex === virtualRow.index && !item.infoOption && styles.optionFocused,
+                  item.infoOption && styles.optionInfo
                 )}
                 {...getItemProps({
                   item: item,
                   index: virtualRow.index,
                   id: itemId,
                   'aria-describedby': groupHeaderId,
+                  disabled: item.infoOption,
                 })}
               >
                 {isMultiSelect && (
                   <div className={styles.optionAccessory}>
-                    <Checkbox
-                      key={itemId}
-                      value={allItemsSelected || isOptionSelected(item)}
-                      indeterminate={item.value === ALL_OPTION_VALUE && selectedItems.length > 0 && !allItemsSelected}
-                      aria-labelledby={itemId}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                    />
+                    {!item.infoOption && (
+                      <Checkbox
+                        key={itemId}
+                        value={allItemsSelected || isOptionSelected(item)}
+                        indeterminate={item.value === ALL_OPTION_VALUE && selectedItems.length > 0 && !allItemsSelected}
+                        aria-labelledby={itemId}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        data-testid={`${itemId}-checkbox`}
+                      />
+                    )}
                   </div>
                 )}
 

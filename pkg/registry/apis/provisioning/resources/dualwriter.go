@@ -11,11 +11,11 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 // DualReadWriter is a wrapper around a repository that can read and write resources
@@ -28,12 +28,16 @@ type DualReadWriter struct {
 }
 
 type DualWriteOptions struct {
-	Path         string
+	Path string
+	// Ref is the target branch
+	// Local repositories do not use this, all other repository types do.
+	// Empty ref means to target the configured default branch
 	Ref          string
 	Message      string
 	Data         []byte
 	SkipDryRun   bool
 	OriginalPath string // Used for move operations
+	Branch       string // Configured default branch
 }
 
 func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access authlib.AccessChecker) *DualReadWriter {
@@ -62,7 +66,7 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 
 	// Fail as we use the dry run for this response and it's not about updating the resource
 	if err := parsed.DryRun(ctx); err != nil {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("Dry run failed: %v", err))
+		return nil, fmt.Errorf("error running dryRun: %w", err)
 	}
 
 	// Authorize based on the existing resource
@@ -89,7 +93,7 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 	}
 
 	// HACK: manual set to the provided branch so that the parser can possible read the file
-	if opts.Ref != "" {
+	if r.shouldUpdateGrafanaDB(opts, nil) {
 		file.Ref = opts.Ref
 	}
 
@@ -105,25 +109,22 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 	}
 
 	parsed.Action = provisioning.ResourceActionDelete
+
+	// Use the parser's DryRun method like create/update operations
+	if !opts.SkipDryRun {
+		if err := parsed.DryRun(ctx); err != nil {
+			return nil, fmt.Errorf("error running dryRun for delete: %w", err)
+		}
+	}
+
 	err = r.repo.Delete(ctx, opts.Path, opts.Ref, opts.Message)
 	if err != nil {
 		return nil, fmt.Errorf("delete file from repository: %w", err)
 	}
 
-	// Delete the file in the grafana database
-	if opts.Ref == "" {
-		ctx, _, err := identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
-		if err != nil {
-			return parsed, err
-		}
-
-		// FIXME: empty folders with no repository files will remain in the system
-		// until the next reconciliation.
-		err = parsed.Client.Delete(ctx, parsed.Obj.GetName(), metav1.DeleteOptions{})
-		if apierrors.IsNotFound(err) {
-			err = nil // ignorable
-		}
-
+	// Delete the file in the grafana database using the parser's Run method
+	if r.shouldUpdateGrafanaDB(opts, nil) {
+		err = parsed.Run(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("delete resource from storage: %w", err)
 		}
@@ -173,7 +174,7 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 	}
 	wrap.URLs = urls
 
-	if opts.Ref == "" {
+	if r.shouldUpdateGrafanaDB(opts, nil) {
 		folderName, err := r.folders.EnsureFolderPathExist(ctx, opts.Path)
 		if err != nil {
 			return nil, err
@@ -224,13 +225,12 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 			logger := logging.FromContext(ctx).With("path", opts.Path, "name", parsed.Obj.GetName(), "ref", opts.Ref)
 			logger.Warn("failed to dry run resource on create", "error", err)
 
-			// TODO: return this as a 400 rather than 500
-			return nil, fmt.Errorf("error running dryRun %w", err)
+			return nil, fmt.Errorf("error running dryRun: %w", err)
 		}
 	}
 
 	if len(parsed.Errors) > 0 {
-		// TODO: return this as a 400 rather than 500
+		// Now returns BadRequest (400) for validation errors
 		return nil, fmt.Errorf("errors while parsing file [%v]", parsed.Errors)
 	}
 
@@ -268,7 +268,7 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 	// Behaves the same running sync after writing
 	// FIXME: to make sure if behaves in the same way as in sync, we should
 	// we should refactor the code to use the same function.
-	if opts.Ref == "" && parsed.Client != nil {
+	if r.shouldUpdateGrafanaDB(opts, parsed) {
 		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path); err != nil {
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
@@ -343,7 +343,7 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 	}
 
 	// Handle folder management for main branch
-	if opts.Ref == "" {
+	if r.shouldUpdateGrafanaDB(opts, nil) {
 		// Ensure destination folder path exists
 		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path); err != nil {
 			return nil, fmt.Errorf("ensure destination folder path exists: %w", err)
@@ -449,6 +449,7 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	// Perform the move operation in the repository
 	// If we have new content, we need to update the file content as part of the move
 	if len(opts.Data) > 0 {
+		// FIXME: I think we should MOVE + UPDATE instead of Delete / Create
 		// For moves with content updates, we need to delete the old file and create the new one
 		if err = r.repo.Delete(ctx, opts.OriginalPath, opts.Ref, opts.Message); err != nil {
 			return nil, fmt.Errorf("delete original file in repository: %w", err)
@@ -464,7 +465,7 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	}
 
 	// Update the grafana database if this is the main branch
-	if opts.Ref == "" && newParsed.Client != nil {
+	if r.shouldUpdateGrafanaDB(opts, newParsed) {
 		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path); err != nil {
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
@@ -538,7 +539,7 @@ func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, _ string) er
 func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
 	// if the ref is set, it is not the active branch, so just delete the files from the branch
 	// and do not delete the items from grafana itself
-	if opts.Ref != "" {
+	if r.shouldUpdateGrafanaDB(opts, nil) {
 		err := r.repo.Delete(ctx, opts.Path, opts.Ref, opts.Message)
 		if err != nil {
 			return nil, fmt.Errorf("error deleting folder from repository: %w", err)
@@ -679,4 +680,18 @@ func (r *DualReadWriter) deleteChildren(ctx context.Context, childrenResources [
 	}
 
 	return nil
+}
+
+// shouldUpdateGrafanaDB returns true if we have an empty ref (targeting the configured branch)
+// or if the ref matches the configured branch
+func (r *DualReadWriter) shouldUpdateGrafanaDB(opts DualWriteOptions, parsed *ParsedResource) bool {
+	if parsed != nil && parsed.Client == nil {
+		return false
+	}
+
+	if opts.Ref != "" && opts.Ref != opts.Branch {
+		return false
+	}
+
+	return true
 }

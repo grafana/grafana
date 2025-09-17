@@ -135,7 +135,7 @@ type ConvertPrometheusSrv struct {
 type Alertmanager interface {
 	DeleteExtraConfiguration(ctx context.Context, org int64, identifier string) error
 	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig apimodels.ExtraConfiguration) error
-	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool) (apimodels.GettableUserConfig, error)
+	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool, withMergedExtraConfig bool) (apimodels.GettableUserConfig, error)
 }
 
 func NewConvertPrometheusSrv(
@@ -461,7 +461,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext, title string, logger log.Logger, workingFolderUID string) (*folder.FolderReference, response.Response) {
 	logger.Debug("Getting or creating a new folder")
 
-	ns, err := srv.ruleStore.GetOrCreateNamespaceByTitle(
+	ns, created, err := srv.ruleStore.GetOrCreateNamespaceByTitle(
 		c.Req.Context(),
 		title,
 		c.GetOrgID(),
@@ -471,6 +471,26 @@ func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext
 	if err != nil {
 		logger.Error("Failed to get or create a new folder", "error", err)
 		return nil, namespaceErrorResponse(err)
+	}
+
+	// Not all users have global-scoped permissions, even if they can create folders.
+	// For example, Editor users can create folders, but they have UID-scoped folder permissions.
+	// Permissions are populated in a middleware before this handler, and the folder we just created
+	// is not included in the permissions yet. We add it manually.
+	if created {
+		orgID := c.GetOrgID()
+		if c.Permissions == nil {
+			c.Permissions = make(map[int64]map[string][]string)
+		}
+		if c.Permissions[orgID] == nil {
+			c.Permissions[orgID] = make(map[string][]string)
+		}
+
+		folderScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ns.UID)
+		if c.Permissions[orgID][dashboards.ActionFoldersRead] == nil {
+			c.Permissions[orgID][dashboards.ActionFoldersRead] = []string{}
+		}
+		c.Permissions[orgID][dashboards.ActionFoldersRead] = append(c.Permissions[orgID][dashboards.ActionFoldersRead], folderScope)
 	}
 
 	logger.Debug("Using folder for the converted rules", "folder_uid", ns.UID)
@@ -594,7 +614,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 
 	identifier := parseConfigIdentifierHeader(c)
 
-	cfg, err := srv.am.GetAlertmanagerConfiguration(ctx, c.GetOrgID(), false)
+	cfg, err := srv.am.GetAlertmanagerConfiguration(ctx, c.GetOrgID(), false, false)
 	if err != nil {
 		logger.Error("failed to get alertmanager configuration", "err", err)
 		return errorToResponse(err)

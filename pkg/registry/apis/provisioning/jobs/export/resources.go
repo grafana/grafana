@@ -11,9 +11,9 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -31,7 +31,7 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 		}
 
 		progress.SetMessage(ctx, fmt.Sprintf("export %s", kind.Resource))
-		client, _, err := clients.ForResource(kind)
+		client, _, err := clients.ForResource(ctx, kind)
 		if err != nil {
 			return fmt.Errorf("get client for %s: %w", kind.Resource, err)
 		}
@@ -47,7 +47,7 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 					// For v2 we need to request the original version
 					if strings.HasPrefix(storedVersion, "v2alpha1") {
 						if v2clientAlphaV1 == nil {
-							v2clientAlphaV1, _, err = clients.ForResource(resources.DashboardResourceV2alpha1)
+							v2clientAlphaV1, _, err = clients.ForResource(ctx, resources.DashboardResourceV2alpha1)
 							if err != nil {
 								return nil, err
 							}
@@ -57,7 +57,7 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 
 					if strings.HasPrefix(storedVersion, "v2beta1") {
 						if v2clientAlphaV2 == nil {
-							v2clientAlphaV2, _, err = clients.ForResource(resources.DashboardResourceV2beta1)
+							v2clientAlphaV2, _, err = clients.ForResource(ctx, resources.DashboardResourceV2beta1)
 							if err != nil {
 								return nil, err
 							}

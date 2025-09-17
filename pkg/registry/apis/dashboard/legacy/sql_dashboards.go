@@ -15,6 +15,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	claims "github.com/grafana/authlib/types"
+
 	dashboardOG "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -66,8 +67,9 @@ type dashboardSqlAccess struct {
 	invalidDashboardParseFallbackEnabled bool
 
 	// Use for writing (not reading)
-	dashStore             dashboards.Store
-	dashboardSearchClient legacysearcher.DashboardSearchClient
+	dashStore              dashboards.Store
+	dashboardSearchClient  legacysearcher.DashboardSearchClient
+	dashboardPermissionSvc accesscontrol.DashboardPermissionsService
 
 	accessControl   accesscontrol.AccessControl
 	libraryPanelSvc librarypanels.Service
@@ -84,6 +86,7 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	provisioning provisioning.ProvisioningService,
 	libraryPanelSvc librarypanels.Service,
 	sorter sort.Service,
+	dashboardPermissionSvc accesscontrol.DashboardPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	features featuremgmt.FeatureToggles,
 ) DashboardAccess {
@@ -94,6 +97,7 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 		dashStore:                            dashStore,
 		provisioning:                         provisioning,
 		dashboardSearchClient:                *dashboardSearchClient,
+		dashboardPermissionSvc:               dashboardPermissionSvc,
 		libraryPanelSvc:                      libraryPanelSvc,
 		accessControl:                        accessControl,
 		log:                                  log.New("dashboard.legacysql"),

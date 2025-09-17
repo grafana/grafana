@@ -19,10 +19,14 @@ weight: 200
 
 You can configure Grafana CLI in two ways: using environment variables or through a configuration file.
 
-- **Environment variables** are ideal for CI environments and support a single context.
+- **Environment variables** are ideal for CI environments and support a single context. A full list of supported environment variables is available in the [reference documentation](https://github.com/grafana/grafanactl/blob/main/docs/reference/environment-variables/index.md#environment-variables-reference).
 - **Configuration files** can manage multiple contexts, making it easier to switch between different Grafana instances.
 
-## Use environment variables
+{{< admonition type="note" >}}
+Configuration items may change depending on your set-up. For example, use `org-id` for Grafana on-prem, but use `stack-id` for Grafana Cloud.
+{{< /admonition >}}
+
+## Configure Grafana CLI with environment variables
 
 Grafana CLI communicates with Grafana via its REST API, which requires authentication credentials.
 
@@ -37,15 +41,13 @@ Depending on your authentication method, you may also need to set:
 - A [token](https://github.com/grafana/grafanactl/blob/main/docs/reference/environment-variables/index.md#grafana_token) for a [Grafana service account](https://grafana.com/docs/grafana/latest/administration/service-accounts/) (recommended)
 - A [username](https://github.com/grafana/grafanactl/blob/main/docs/reference/environment-variables/index.md#grafana_user) and [password](https://github.com/grafana/grafanactl/blob/main/docs/reference/environment-variables/index.md#grafana_password) for basic authentication
 
-To persist your configuration, consider [creating a context](#defining-contexts).
+To persist your configuration, consider [creating a context](#use-configuration-contexts).
 
-A full list of supported environment variables is available in the [reference documentation](https://github.com/grafana/grafanactl/blob/main/docs/reference/environment-variables/index.md#environment-variables-reference).
+### Use configuration contexts
 
-## Define contexts
+Contexts allow you to easily switch between multiple Grafana instances.
 
-Contexts allow you to easily switch between multiple Grafana instances. By default, the CLI uses a context named `default`.
-
-To configure the `default` context:
+By default, the CLI uses a context named `default`. To configure it use:
 
 ```bash
 grafanactl config set contexts.default.grafana.server http://localhost:3000
@@ -70,7 +72,7 @@ grafanactl config set contexts.staging.grafana.org-id 1
 In these examples, `default` and `staging` are the names of the contexts.
 {{< /admonition >}}
 
-## Configuration file
+## Configure Grafana CLI with configuration files
 
 Grafana CLI stores its configuration in a YAML file. The CLI determines the configuration file location in the following order:
 

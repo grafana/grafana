@@ -14,6 +14,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	shorturl "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -60,7 +61,25 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("List for shorturl not implemented")
+	orgID, err := request.OrgIDForList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	shortURLs, err := s.service.List(ctx, orgID)
+	if err != nil {
+		if errors.Is(err, shorturls.ErrShortURLNotFound) {
+			return shorturl.ShortURLKind().ZeroListValue(), nil // return empty list if no short URLs found
+		}
+		return nil, err
+	}
+
+	list := &shorturl.ShortURLList{}
+	for idx := range shortURLs {
+		list.Items = append(list.Items, *convertToK8sResource(shortURLs[idx], s.namespacer))
+	}
+
+	return list, nil
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
@@ -69,14 +88,10 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 
-	// Convert identity.Requester to *user.SignedInUser
-	var signedInUser *user.SignedInUser
-	if authnIdentity, ok := requester.(*authn.Identity); ok {
-		signedInUser = authnIdentity.SignedInUser()
-	} else if userIdentity, ok := requester.(*user.SignedInUser); ok {
-		signedInUser = userIdentity
-	} else {
-		return nil, fmt.Errorf("unsupported identity type")
+	// Convert any identity.Requester to *user.SignedInUser
+	signedInUser, err := convertRequesterToSignedInUser(requester)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert requester: %w", err)
 	}
 
 	dto, err := s.service.GetShortURLByUID(ctx, signedInUser, name)
@@ -102,21 +117,27 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	// Convert identity.Requester to *user.SignedInUser
-	var signedInUser *user.SignedInUser
-	if authnIdentity, ok := requester.(*authn.Identity); ok {
-		signedInUser = authnIdentity.SignedInUser()
-	} else if userIdentity, ok := requester.(*user.SignedInUser); ok {
-		signedInUser = userIdentity
-	} else {
-		return nil, fmt.Errorf("unsupported identity type")
+
+	// Convert any identity.Requester to *user.SignedInUser
+	signedInUser, err := convertRequesterToSignedInUser(requester)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert requester: %w", err)
 	}
 
+	if createValidation != nil {
+		if err := createValidation(ctx, obj.DeepCopyObject()); err != nil {
+			return nil, err
+		}
+	}
 	p, ok := obj.(*shorturl.ShortURL)
 	if !ok {
 		return nil, fmt.Errorf("expected shorturl?")
 	}
-	out, err := s.service.CreateShortURL(ctx, signedInUser, p.Spec.Path)
+	cmd := &dtos.CreateShortURLCmd{
+		Path: p.Spec.Path,
+		UID:  p.Name,
+	}
+	out, err := s.service.CreateShortURL(ctx, signedInUser, cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -131,15 +152,81 @@ func (s *legacyStorage) Update(ctx context.Context,
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
-	return nil, false, fmt.Errorf("Update for shorturl not implemented")
+	// For other updates, use the original logic
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Convert any identity.Requester to *user.SignedInUser
+	signedInUser, err := convertRequesterToSignedInUser(requester)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to convert requester: %w", err)
+	}
+
+	shortURL, err := s.service.GetShortURLByUID(ctx, signedInUser, name)
+	if err != nil || shortURL == nil {
+		if errors.Is(err, shorturls.ErrShortURLNotFound) || err == nil {
+			err = k8serrors.NewNotFound(schema.GroupResource{
+				Group:    shorturl.ShortURLKind().Group(),
+				Resource: shorturl.ShortURLKind().Plural(),
+			}, name)
+		}
+		return nil, false, err
+	}
+
+	err = s.service.UpdateLastSeenAt(ctx, shortURL)
+	if err != nil {
+		return nil, false, err
+	}
+	// Fetch the updated short URL to return
+	updatedLegacyShortURL, err := s.service.GetShortURLByUID(ctx, signedInUser, name)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return convertToK8sResource(updatedLegacyShortURL, s.namespacer), true, nil
 }
 
 // GracefulDeleter
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return nil, false, fmt.Errorf("Delete for shorturl not implemented")
+	v, err := s.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return v, false, err // includes the not-found error
+	}
+	p, ok := v.(*shorturl.ShortURL)
+	if !ok {
+		return v, false, fmt.Errorf("expected a shorturl response from Get")
+	}
+	err = s.service.DeleteStaleShortURLs(ctx, &shorturls.DeleteShortUrlCommand{Uid: name})
+	return p, true, err // true is instant delete
 }
 
 // CollectionDeleter
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
 	return nil, fmt.Errorf("DeleteCollection for shorturl not implemented")
+}
+
+// convertRequesterToSignedInUser converts any identity.Requester to *user.SignedInUser
+// This is needed because some legacy shorturls service methods still expect SignedInUser
+func convertRequesterToSignedInUser(requester identity.Requester) (*user.SignedInUser, error) {
+	// If it's already a SignedInUser, return it directly
+	if signedInUser, ok := requester.(*user.SignedInUser); ok {
+		return signedInUser, nil
+	}
+
+	// If it's a StaticRequester (service identity), convert it
+	if staticRequester, ok := requester.(*identity.StaticRequester); ok {
+		return &user.SignedInUser{
+			UserID: staticRequester.UserID, // Used for CreatedBy field
+			OrgID:  staticRequester.OrgID,  // Used in SQL queries
+		}, nil
+	}
+
+	// If it's an authn.Identity, use its SignedInUser method
+	if authnIdentity, ok := requester.(*authn.Identity); ok {
+		return authnIdentity.SignedInUser(), nil
+	}
+
+	return nil, fmt.Errorf("unsupported identity type")
 }

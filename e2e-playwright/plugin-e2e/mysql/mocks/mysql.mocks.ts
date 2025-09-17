@@ -64,7 +64,7 @@ export const datasetResponse = {
             },
             fields: [{ name: 'TABLE_SCHEMA', type: 'string', typeInfo: { frame: 'string', nullable: true } }],
           },
-          data: { values: [['DataMaker', 'mysql', 'performance_schema', 'sys']] },
+          data: { values: [['grafana', 'mysql', 'performance_schema', 'sys']] },
         },
       ],
     },

@@ -6,13 +6,14 @@ import { Observable } from 'rxjs';
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { DataSourceCard } from './DataSourceCard';
+import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './DataSourcePicker';
 import { getDataSourceCompareFn, isDataSourceMatch } from './utils';
 
 /**
@@ -58,9 +59,8 @@ export function DataSourceList(props: DataSourceListProps) {
   const styles = getStyles(theme, selectedItemCssSelector);
 
   const { className, current, onChange, enableKeyboardNavigation, onClickEmptyStateCTA } = props;
-  const dataSources =
-    props.dataSources ||
-    useDatasources({
+  const dataSources = useDatasources(
+    {
       alerting: props.alerting,
       annotations: props.annotations,
       dashboard: props.dashboard,
@@ -71,9 +71,13 @@ export function DataSourceList(props: DataSourceListProps) {
       tracing: props.tracing,
       type: props.type,
       variables: props.variables,
-    });
+    },
+    props.dataSources
+  );
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
+  const favoriteDataSources = useFavoriteDatasources();
+
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
 
   return (
@@ -86,7 +90,14 @@ export function DataSourceList(props: DataSourceListProps) {
         <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />
       )}
       {filteredDataSources
-        .sort(getDataSourceCompareFn(current, recentlyUsedDataSources, getDataSourceVariableIDs()))
+        .sort(
+          getDataSourceCompareFn(
+            current,
+            recentlyUsedDataSources,
+            getDataSourceVariableIDs(),
+            favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined
+          )
+        )
         .map((ds) => (
           <DataSourceCard
             data-testid="data-source-card"
@@ -97,6 +108,21 @@ export function DataSourceList(props: DataSourceListProps) {
               onChange(ds);
             }}
             selected={isDataSourceMatch(ds, current)}
+            isFavorite={favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined}
+            onToggleFavorite={
+              favoriteDataSources.enabled
+                ? () => {
+                    reportInteraction(INTERACTION_EVENT_NAME, {
+                      item: INTERACTION_ITEM.TOGGLE_FAVORITE,
+                      ds_type: ds.type,
+                      is_favorite: !favoriteDataSources.isFavoriteDatasource(ds.uid),
+                    });
+                    favoriteDataSources.isFavoriteDatasource(ds.uid)
+                      ? favoriteDataSources.removeFavoriteDatasource(ds)
+                      : favoriteDataSources.addFavoriteDatasource(ds);
+                  }
+                : undefined
+            }
             {...(enableKeyboardNavigation ? navigatableProps : {})}
           />
         ))}
