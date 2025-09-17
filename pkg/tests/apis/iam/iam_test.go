@@ -100,29 +100,38 @@ func TestIntegrationIdentity(t *testing.T) {
 			},
 			{
 				"disabled": false,
-				"email": "admin2-1",
+				"email": "grafana-admin",
 				"emailVerified": false,
 				"grafanaAdmin": true,
-				"login": "admin2-1",
-				"name": "",
+				"login": "grafana-admin",
+				"name": "admin2",
 				"provisioned": false
 			},
 			{
 				"disabled": false,
-				"email": "editor-1",
+				"email": "editor",
 				"emailVerified": false,
 				"grafanaAdmin": false,
-				"login": "editor-1",
-				"name": "",
+				"login": "editor",
+				"name": "editor",
 				"provisioned": false
 			},
 			{
 				"disabled": false,
-				"email": "viewer-1",
+				"email": "viewer",
 				"emailVerified": false,
 				"grafanaAdmin": false,
-				"login": "viewer-1",
-				"name": "",
+				"login": "viewer",
+				"name": "viewer",
+				"provisioned": false
+			},
+			{
+				"disabled": false,
+				"email": "none",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "none",
+				"name": "none",
 				"provisioned": false
 			}
 		]`, found)
@@ -141,41 +150,50 @@ func TestIntegrationIdentity(t *testing.T) {
 		require.JSONEq(t, `[
 			{
 				"disabled": false,
-				"email": "admin2-1",
+				"email": "grafana-admin",
 				"emailVerified": false,
 				"grafanaAdmin": true,
-				"login": "admin2-1",
-				"name": "",
+				"login": "grafana-admin",
+				"name": "admin2",
 				"provisioned": false
 			},
 			{
 				"disabled": false,
-				"email": "admin2-2",
+				"email": "admin2-org-2",
 				"emailVerified": false,
 				"grafanaAdmin": false,
-				"login": "admin2-2",
-				"name": "",
+				"login": "admin2-org-2",
+				"name": "admin2",
 				"provisioned": false
 			},
 			{
 				"disabled": false,
-				"email": "editor-2",
+				"email": "editor-org-2",
 				"emailVerified": false,
 				"grafanaAdmin": false,
-				"login": "editor-2",
-				"name": "",
+				"login": "editor-org-2",
+				"name": "editor",
 				"provisioned": false
 			},
 			{
 				"disabled": false,
-				"email": "viewer-2",
+				"email": "viewer-org-2",
 				"emailVerified": false,
 				"grafanaAdmin": false,
-				"login": "viewer-2",
-				"name": "",
+				"login": "viewer-org-2",
+				"name": "viewer",
+				"provisioned": false
+			},
+			{
+				"disabled": false,
+				"email": "none-org-2",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "none-org-2",
+				"name": "none",
 				"provisioned": false
 			}
-		]`, found)
+		] `, found)
 	})
 }
 

@@ -21813,9 +21813,9 @@ __metadata:
   linkType: hard
 
 "leven@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "leven@npm:4.0.0"
-  checksum: 10/d70b9fef4cca487a38021bb173a5cae98d39b1c7f4a5b2439763bd89df8e389f178a3c941b6fc3fab1582f5052b5e8c91353d9607799a2ad3841e7ea22f9720f
+  version: 4.1.0
+  resolution: "leven@npm:4.1.0"
+  checksum: 10/ab6c1af4a44e9cd83d3fba79a36ed405afce146e7f12c6653d3ac02f17d3d6de0ace0e0d2728b38446e7f40c1df7692352d8b1278cb3ff0dfb868324219636e5
   languageName: node
   linkType: hard
 
@@ -32162,12 +32162,12 @@ __metadata:
   linkType: hard
 
 "vis-data@npm:^8.0.0":
-  version: 8.0.1
-  resolution: "vis-data@npm:8.0.1"
+  version: 8.0.3
+  resolution: "vis-data@npm:8.0.3"
   peerDependencies:
-    uuid: ^3.4.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0
+    uuid: ^3.4.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0 || ^13.0.0
     vis-util: ">=6.0.0"
-  checksum: 10/d69045c555a79fde292270d42f111b0d1ba644989481eec08393f73cf64573563e6533718eff0534f4255f44d363b078d0520704190328b97f8e244d4b4c8b73
+  checksum: 10/5b011fe0d8e2b95f4826a685a0c5a8e1b532177fe7a3a2e07b66f25f87c7c0943b30b95564e3994038f2ef91d4bf835becd75fca6b31ac0813f33d245621f5da
   languageName: node
   linkType: hard
 

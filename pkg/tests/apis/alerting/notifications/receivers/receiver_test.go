@@ -13,7 +13,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/alerting/notify"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -21,15 +20,12 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/grafana/alerting/notify"
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
-
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
-
-	test_common "github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -45,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	test_common "github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
@@ -131,8 +128,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 	helper := getTestHelper(t)
 
 	org1 := helper.Org1
-
-	noneUser := helper.CreateUser("none", apis.Org1, org.RoleNone, nil)
+	noneUser := org1.None
 
 	creator := helper.CreateUser("creator", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 		createWildcardPermission(
