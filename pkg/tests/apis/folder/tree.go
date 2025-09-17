@@ -11,12 +11,15 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/xlab/treeprint"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -114,7 +117,13 @@ type FolderView struct {
 	Children []*FolderView
 }
 
-func (n *FolderView) requireEqual(t *testing.T, expect string) {
+func (n *FolderView) requireEqual(t *testing.T, tree *FolderView) {
+	expect := dotify(tree.build(treeprint.New()))
+	found := dotify(n.build(treeprint.New()))
+	require.Equal(t, expect, found, fmt.Sprintf("EXPECT:\n%s\n\nFOUND:\n%s", expect, found))
+}
+
+func (n *FolderView) requireEqualTree(t *testing.T, expect string) {
 	input := strings.Split(expect, "\n")
 	output := make([]string, 0, len(input))
 	for _, v := range input {
@@ -169,7 +178,7 @@ var (
 	EdgeTypeEnd  EdgeType = "└──"
 )
 
-func GetFoldersFromSearch(t *testing.T, who apis.User) *FolderView {
+func GetFoldersFromLegacyAPISearch(t *testing.T, who apis.User) *FolderView {
 	cfg := dynamic.ConfigFor(who.NewRestConfig())
 	cfg.GroupVersion = &schema.GroupVersion{Group: "folder.grafana.app", Version: "v1beta1"} // group does not matter
 	client, err := rest.RESTClientFor(cfg)
@@ -196,6 +205,44 @@ func GetFoldersFromSearch(t *testing.T, who apis.User) *FolderView {
 			Name:   hit.UID,
 			Title:  hit.Title,
 			Parent: hit.FolderUID,
+		}
+	}
+
+	root := &FolderView{}
+	for _, v := range lookup {
+		if v.Parent == "" {
+			root.Children = append(root.Children, v)
+		} else {
+			p, ok := lookup[v.Parent]
+			require.True(t, ok, "parent not found for", v)
+			p.Children = append(p.Children, v)
+		}
+	}
+	return root
+}
+
+func GetFoldersFromAPIServerList(t *testing.T, who apis.User) *FolderView {
+	gvr := schema.GroupVersionResource{Group: "folder.grafana.app", Version: "v1beta1", Resource: "folders"}
+	cfg := dynamic.ConfigFor(who.NewRestConfig())
+	dyn, err := dynamic.NewForConfig(cfg)
+	require.NoError(t, err)
+	client := dyn.Resource(gvr).Namespace(who.Identity.GetNamespace())
+
+	result, err := client.List(context.Background(), v1.ListOptions{Limit: 1000})
+	require.NoError(t, err)
+
+	lookup := make(map[string]*FolderView, len(result.Items))
+	for _, hit := range result.Items {
+		obj, err := utils.MetaAccessor(hit)
+		require.NoError(t, err)
+
+		title, _, err := unstructured.NestedString(hit.Object, "spec", "title")
+		require.NoError(t, err)
+
+		lookup[hit.GetName()] = &FolderView{
+			Name:   hit.GetName(),
+			Title:  title,
+			Parent: obj.GetFolder(),
 		}
 	}
 

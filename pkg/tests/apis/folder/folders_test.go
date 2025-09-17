@@ -242,11 +242,14 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		root.RequireUniqueName(t, make(map[string]bool))
 		root.CreateUsingLegacyAPI(t, helper, "")
 
-		legacy := GetFoldersFromSearch(t, helper.Org1.Admin)
-		legacy.requireEqual(t, `
+		legacy := GetFoldersFromLegacyAPISearch(t, helper.Org1.Admin)
+		legacy.requireEqualTree(t, `
       └── top
       ....└── middle
       ........└── child`)
+
+		lister := GetFoldersFromAPIServerList(t, helper.Org1.Admin)
+		legacy.requireEqual(t, lister)
 	})
 }
 
