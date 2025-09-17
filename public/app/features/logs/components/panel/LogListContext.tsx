@@ -203,7 +203,7 @@ export const LogListContextProvider = ({
   enableLogDetails,
   logOptionsStorageKey,
   detailsMode: detailsModeProp = logOptionsStorageKey
-    ? store.get(`${logOptionsStorageKey}.detailsMode`)
+    ? store.get(`${logOptionsStorageKey}.detailsMode`) || getDefaultDetailsMode(containerElement)
     : getDefaultDetailsMode(containerElement),
   dedupStrategy,
   displayedFields,
