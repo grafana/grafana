@@ -9,7 +9,7 @@ include .citools/Variables.mk
 
 GO = go
 GO_VERSION = 1.24.6
-GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
+GO_LINT_FILES ?= $(shell go list -m -f '{{.Dir}}' | xargs -I{} sh -c 'test ! -f {}/.nolint && echo {}/...')
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
@@ -384,7 +384,7 @@ golangci-lint:
 	$(golangci-lint) run \
 		--config .golangci.yml \
 		$(if $(GO_BUILD_TAGS),--build-tags $(GO_BUILD_TAGS)) \
-		$(GO_LINT_FILES)
+		$(GO_LINT_FILES) $(GO_LINT_FLAGS)
 
 .PHONY: lint-go
 lint-go: golangci-lint ## Run all code checks for backend. You can use GO_LINT_FILES to specify exact files to check
