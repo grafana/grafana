@@ -182,7 +182,7 @@ const AlertInstanceValues = memo(({ record }: { record: Record<string, number> }
   return (
     <>
       {values.map(([key, value]) => (
-        <AlertLabel key={key} label={key} value={value} />
+        <AlertLabel key={key} labelKey={key} value={String(value)} />
       ))}
     </>
   );
