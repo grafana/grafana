@@ -2,25 +2,49 @@
 
 package v0alpha1
 
+// +k8s:openapi-gen=true
+type AlertRuleIntervalTrigger struct {
+	Interval AlertRulePromDuration `json:"interval"`
+}
+
+// NewAlertRuleIntervalTrigger creates a new AlertRuleIntervalTrigger object.
+func NewAlertRuleIntervalTrigger() *AlertRuleIntervalTrigger {
+	return &AlertRuleIntervalTrigger{}
+}
+
+// +k8s:openapi-gen=true
+type AlertRulePromDuration string
+
+// +k8s:openapi-gen=true
+type AlertRuleTemplateString string
+
+// TODO(@moustafab): validate regex for time interval ref
+// +k8s:openapi-gen=true
+type AlertRuleTimeIntervalRef string
+
 // TODO: validate that only one can specify source=true
 // & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
 // +k8s:openapi-gen=true
-type AlertRuleQueryMap map[string]AlertRuleQuery
+type AlertRuleExpressionMap map[string]AlertRuleExpression
 
-// TODO: come up with a better name for this. We have expression type things and data source queries
 // +k8s:openapi-gen=true
-type AlertRuleQuery struct {
-	// TODO: consider making this optional, with the nil value meaning "__expr__" (i.e. expression query)
-	QueryType         string                      `json:"queryType"`
+type AlertRuleExpression struct {
+	// The type of query if this is a query expression
+	QueryType         *string                     `json:"queryType,omitempty"`
 	RelativeTimeRange *AlertRuleRelativeTimeRange `json:"relativeTimeRange,omitempty"`
-	DatasourceUID     AlertRuleDatasourceUID      `json:"datasourceUID"`
-	Model             interface{}                 `json:"model"`
-	Source            *bool                       `json:"source,omitempty"`
+	// The UID of the datasource to run this expression against. If omitted, the expression will be run against the `__expr__` datasource
+	DatasourceUID *AlertRuleDatasourceUID `json:"datasourceUID,omitempty"`
+	Model         interface{}             `json:"model"`
+	// Used to mark the expression to be used as the final source for the rule evaluation
+	// Only one expression in a rule can be marked as the source
+	// For AlertRules, this is the expression that will be evaluated against the alerting condition
+	// For RecordingRules, this is the expression that will be recorded
+	Source *bool `json:"source,omitempty"`
 }
 
-// NewAlertRuleQuery creates a new AlertRuleQuery object.
-func NewAlertRuleQuery() *AlertRuleQuery {
-	return &AlertRuleQuery{}
+// NewAlertRuleExpression creates a new AlertRuleExpression object.
+func NewAlertRuleExpression() *AlertRuleExpression {
+	return &AlertRuleExpression{}
 }
 
 // +k8s:openapi-gen=true
@@ -41,39 +65,19 @@ type AlertRulePromDurationWMillis string
 type AlertRuleDatasourceUID string
 
 // +k8s:openapi-gen=true
-type AlertRuleIntervalTrigger struct {
-	Interval AlertRulePromDuration `json:"interval"`
-}
-
-// NewAlertRuleIntervalTrigger creates a new AlertRuleIntervalTrigger object.
-func NewAlertRuleIntervalTrigger() *AlertRuleIntervalTrigger {
-	return &AlertRuleIntervalTrigger{}
-}
-
-// +k8s:openapi-gen=true
-type AlertRulePromDuration string
-
-// TODO(@moustafab): validate regex for time interval ref
-// +k8s:openapi-gen=true
-type AlertRuleTimeIntervalRef string
-
-// +k8s:openapi-gen=true
-type AlertRuleTemplateString string
-
-// +k8s:openapi-gen=true
 type AlertRuleSpec struct {
 	Title                       string                                     `json:"title"`
-	Data                        AlertRuleQueryMap                          `json:"data"`
 	Paused                      *bool                                      `json:"paused,omitempty"`
 	Trigger                     AlertRuleIntervalTrigger                   `json:"trigger"`
-	NoDataState                 string                                     `json:"noDataState"`
-	ExecErrState                string                                     `json:"execErrState"`
+	Labels                      map[string]AlertRuleTemplateString         `json:"labels,omitempty"`
+	Annotations                 map[string]AlertRuleTemplateString         `json:"annotations,omitempty"`
 	For                         *string                                    `json:"for,omitempty"`
 	KeepFiringFor               *string                                    `json:"keepFiringFor,omitempty"`
 	MissingSeriesEvalsToResolve *int64                                     `json:"missingSeriesEvalsToResolve,omitempty"`
+	NoDataState                 string                                     `json:"noDataState"`
+	ExecErrState                string                                     `json:"execErrState"`
 	NotificationSettings        *AlertRuleV0alpha1SpecNotificationSettings `json:"notificationSettings,omitempty"`
-	Annotations                 map[string]AlertRuleTemplateString         `json:"annotations,omitempty"`
-	Labels                      map[string]AlertRuleTemplateString         `json:"labels,omitempty"`
+	Expressions                 AlertRuleExpressionMap                     `json:"expressions"`
 	PanelRef                    *AlertRuleV0alpha1SpecPanelRef             `json:"panelRef,omitempty"`
 }
 

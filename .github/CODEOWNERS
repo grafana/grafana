@@ -90,6 +90,7 @@
 /apps/advisor/ @grafana/plugins-platform-backend
 /apps/iam/ @grafana/access-squad
 /apps/sdk.mk @grafana/grafana-app-platform-squad
+/apps/correlations @grafana/datapro
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/apis/query @grafana/grafana-datasources-core-services
@@ -187,7 +188,7 @@
 /pkg/setting/ @grafana/grafana-backend-services-squad
 /pkg/tests/ @grafana/grafana-backend-services-squad
 /pkg/tests/apis/ @grafana/grafana-app-platform-squad
-/pkg/tests/apis/alerting @grafana/grafana-app-platform-squad @grafana/alerting-backend
+/pkg/tests/apis/alerting @grafana/alerting-backend
 /pkg/tests/apis/features @grafana/grafana-backend-services-squad
 /pkg/tests/apis/folder @grafana/grafana-search-and-storage
 /pkg/tests/apis/iam @grafana/identity-access-team

@@ -608,6 +608,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 				// Set expected metadata.
 				expectedWithMetadata := expected.Copy().(*v0alpha1.Receiver)
 				expectedWithMetadata.SetInUse(0, nil)
+				expectedWithMetadata.SetCanUse(true)
 				if tc.canUpdate {
 					expectedWithMetadata.SetAccessControl("canWrite")
 				}
@@ -1294,6 +1295,7 @@ func TestIntegrationCRUD(t *testing.T) {
 		receiver.SetAccessControl("canReadSecrets")
 		receiver.SetAccessControl("canAdmin")
 		receiver.SetInUse(0, nil)
+		receiver.SetCanUse(true)
 
 		// Use export endpoint because it's the only way to get decrypted secrets fast.
 		cliCfg := helper.Org1.Admin.NewRestConfig()
@@ -1316,7 +1318,7 @@ func TestIntegrationCRUD(t *testing.T) {
 					expected := notify.AllKnownConfigsForTesting[strings.ToLower(integration.Type)]
 					var fields map[string]any
 					require.NoError(t, json.Unmarshal([]byte(expected.Config), &fields))
-					secretFields, err := channels_config.GetSecretKeysForContactPointType(integration.Type)
+					secretFields, err := channels_config.GetSecretKeysForContactPointType(integration.Type, channels_config.V1)
 					require.NoError(t, err)
 					for _, field := range secretFields {
 						if _, ok := fields[field]; !ok { // skip field that is not in the original setting
