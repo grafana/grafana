@@ -59,7 +59,7 @@ func TestCanSearchByTitle(t *testing.T) {
 	}
 
 	t.Run("when query is empty, sort documents by title instead of search score", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
+		index := newTestDashboardsIndex(t, threshold, 2, 2, noop, false)
 		indexDocumentsWithTitles(t, index, key, map[string]string{
 			"name1": "bbb",
 			"name2": "aaa",
@@ -69,7 +69,7 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 
 	t.Run("will boost phrase match query over match query results", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
+		index := newTestDashboardsIndex(t, threshold, 2, 2, noop, false)
 		indexDocumentsWithTitles(t, index, key, map[string]string{
 			"name1": "I want to say a hello",
 			"name2": "we want hello",
@@ -79,7 +79,7 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 
 	t.Run("will prioritize matches", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
+		index := newTestDashboardsIndex(t, threshold, 2, 2, noop, false)
 		indexDocumentsWithTitles(t, index, key, map[string]string{
 			"name1": "Asserts Dashboards",
 			"name2": "New dashboard 10",
@@ -89,7 +89,7 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 
 	t.Run("all terms must match", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
+		index := newTestDashboardsIndex(t, threshold, 2, 2, noop, false)
 		indexDocumentsWithTitles(t, index, key, map[string]string{
 			"name1": "Dashboard",
 			"name2": "New dashboard 10",
@@ -99,7 +99,7 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 
 	t.Run("will boost exact match query over match phrase query results", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
+		index := newTestDashboardsIndex(t, threshold, 2, 2, noop, false)
 		indexDocumentsWithTitles(t, index, key, map[string]string{
 			"name1": "we want hello pls",
 			"name2": "we want hello",
@@ -109,7 +109,7 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 
 	t.Run("title with numbers will match document", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
+		index := newTestDashboardsIndex(t, threshold, 2, 2, noop, false)
 		indexDocumentsWithTitles(t, index, key, map[string]string{
 			"name1": "A123456",
 		})
@@ -123,7 +123,7 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 
 	t.Run("title will match escaped characters", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
+		index := newTestDashboardsIndex(t, threshold, 2, 2, noop, false)
 		indexDocumentsWithTitles(t, index, key, map[string]string{
 			"name1": "what\"s up",
 			"name2": "what\"s that",
@@ -134,7 +134,7 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 
 	t.Run("title search will match document", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
+		index := newTestDashboardsIndex(t, threshold, 2, 2, noop, false)
 		indexDocumentsWithTitles(t, index, key, map[string]string{
 			"name1": "I want to say a wonderfully Hello to the WORLD! Hello-world",
 		})
@@ -157,7 +157,7 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 
 	t.Run("title search will NOT match documents", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
+		index := newTestDashboardsIndex(t, threshold, 2, 2, noop, false)
 		indexDocumentsWithTitles(t, index, key, map[string]string{
 			"name1": "I want to say a wonderfully Hello to the WORLD! Hello-world",
 			"name2": "A0456",
@@ -173,7 +173,7 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 
 	t.Run("title search with character will match one document", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
+		index := newTestDashboardsIndex(t, threshold, 2, 2, noop, false)
 		indexDocumentsWithTitles(t, index, key, map[string]string{
 			"name1": "foo",
 		})
@@ -207,6 +207,18 @@ func TestCanSearchByTitle(t *testing.T) {
 		// include terms shorter that are exactly 3 chars
 		checkSearchQuery(t, index, newTestQuery("new das"), []string{"name2", "name1"})
 	})
+
+	t.Run("title search will match term in the middle/end if useFullNgram feature toggle is enabled", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, 2, noop, true)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "new dashboard",
+			"name2": "new dash",
+			"name3": "somedash",
+		})
+
+		checkSearchQuery(t, index, newTestQuery("ash"), []string{"name2", "name3", "name1"})
+		checkSearchQuery(t, index, newTestQuery("ome"), []string{"name3"})
+	})
 }
 
 func newTestQuery(query string) *resourcepb.ResourceSearchRequest {
@@ -237,7 +249,7 @@ func newQueryByTitle(query string) *resourcepb.ResourceSearchRequest {
 	}
 }
 
-func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, batchSize int64, writer resource.BuildFn) resource.ResourceIndex {
+func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, batchSize int64, writer resource.BuildFn, useFullNgram bool) resource.ResourceIndex {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
@@ -247,7 +259,7 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, batchSize
 		Root:          t.TempDir(),
 		FileThreshold: threshold, // use in-memory for tests
 		BatchSize:     int(batchSize),
-	}, tracing.NewNoopTracerService(), nil)
+	}, tracing.NewNoopTracerService(), nil, useFullNgram)
 	require.NoError(t, err)
 
 	t.Cleanup(backend.CloseAllIndexes)

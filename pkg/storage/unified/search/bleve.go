@@ -93,7 +93,7 @@ type bleveBackend struct {
 	useFullNgram bool
 }
 
-func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resource.BleveIndexMetrics, useFullNgram bool) (*bleveBackend, error) {
 	if opts.Root == "" {
 		return nil, fmt.Errorf("bleve backend missing root folder configuration")
 	}
@@ -130,7 +130,7 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 		cache:        map[resource.NamespacedResource]*bleveIndex{},
 		opts:         opts,
 		indexMetrics: indexMetrics,
-		useFullNgram: features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageUseFullNgram),
+		useFullNgram: useFullNgram,
 	}
 
 	go be.updateIndexSizeMetric(opts.Root)
