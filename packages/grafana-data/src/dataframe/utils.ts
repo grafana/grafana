@@ -1,4 +1,3 @@
-import { getFieldSeriesColor } from '../field/fieldColor';
 import { GrafanaTheme2 } from '../themes/types';
 import { DataFrame, Field, FieldType } from '../types/dataFrame';
 import { TimeRange } from '../types/time';
@@ -155,26 +154,13 @@ export function alignTimeRangeCompareData(series: DataFrame, diff: number, theme
 
     // Apply visual styling for comparison series
     if (field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum) {
-      const seriesColor = getFieldSeriesColor(field, theme).color;
-      const lineStyle = field.config.custom?.lineStyle;
-      const isSolid = !lineStyle?.fill || lineStyle.fill === 'solid';
-
-      if (isSolid) {
-        field.config.custom = {
-          ...(field.config.custom ?? {}),
-          lineStyle: {
-            fill: 'dash',
-            dash: [5, 5],
-          },
-        };
-      } else {
-        // For already dashed/dotted lines, reduce opacity
-        const tinycolor = require('tinycolor2');
-        field.config.color = {
-          mode: 'fixed',
-          fixedColor: tinycolor(seriesColor).setAlpha(0.5).toString(),
-        };
-      }
+      field.config.custom = {
+        ...(field.config.custom ?? {}),
+        lineStyle: {
+          fill: 'dash',
+          dash: [1, 5, 4, 5],
+        },
+      };
     }
   });
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	idStore "github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -98,7 +99,8 @@ func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resource
 		Continue: token.offset,
 	}
 
-	dbHelper, err := s.dbProvider(request.WithNamespace(ctx, ns.Value))
+	ctx = request.WithNamespace(ctx, ns.Value)
+	dbHelper, err := s.dbProvider(ctx)
 	if err != nil {
 		logger := s.logger.FromContext(ctx)
 		logger.Error("Failed to get database helper", "error", err)
@@ -147,7 +149,8 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 		return rsp
 	}
 
-	dbHelper, err := s.dbProvider(request.WithNamespace(ctx, ns.Value))
+	ctx = request.WithNamespace(ctx, ns.Value)
+	dbHelper, err := s.dbProvider(ctx)
 	if err != nil {
 		// Hide the error from the user, but log it
 		logger := s.logger.FromContext(ctx)
@@ -156,7 +159,12 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 		return rsp
 	}
 
-	resourcePermission, err := s.getResourcePermission(ctx, dbHelper, ns, req.Key.Name)
+	var resourcePermission *v0alpha1.ResourcePermission
+	err = dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+		resourcePermission, err = s.getResourcePermission(ctx, dbHelper, tx, ns, req.Key.Name)
+		return err
+	})
+
 	if err != nil {
 		if errors.Is(err, errNotFound) {
 			rsp.Error = resource.AsErrorResult(
@@ -171,6 +179,7 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 	}
 
 	rsp.ResourceVersion = resourcePermission.GetUpdateTimestamp().UnixMilli()
+	resourcePermission.Namespace = ns.Value // ensure namespace is set, this is required when existing and new resources are compared for updates
 	rsp.Value, err = json.Marshal(resourcePermission)
 	if err != nil {
 		rsp.Error = resource.AsErrorResult(err)
@@ -225,7 +234,8 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 		return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid key %q: %v", event.Key, err.Error()))
 	}
 
-	dbHelper, err := s.dbProvider(request.WithNamespace(ctx, ns.Value))
+	ctx = request.WithNamespace(ctx, ns.Value)
+	dbHelper, err := s.dbProvider(ctx)
 	if err != nil {
 		// Hide the error from the user, but log it
 		logger := s.logger.FromContext(ctx)
@@ -245,7 +255,7 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 	switch event.Type {
 	case resourcepb.WatchEvent_DELETED:
 		err = s.deleteResourcePermission(ctx, dbHelper, ns, event.Key.Name)
-	case resourcepb.WatchEvent_ADDED:
+	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
 		{
 			var v0resourceperm *v0alpha1.ResourcePermission
 			v0resourceperm, err = getResourcePermissionFromEvent(event)
@@ -264,13 +274,21 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 				)
 			}
 
-			rv, err = s.createResourcePermission(ctx, dbHelper, ns, mapper, grn, v0resourceperm)
+			if event.Type == resourcepb.WatchEvent_ADDED {
+				rv, err = s.createResourcePermission(ctx, dbHelper, ns, mapper, grn, v0resourceperm)
+				if err != nil && errors.Is(err, errConflict) {
+					return 0, apierrors.NewConflict(v0alpha1.ResourcePermissionInfo.GroupResource(), event.Key.Name, err)
+				}
+			} else {
+				rv, err = s.updateResourcePermission(ctx, dbHelper, ns, mapper, grn, v0resourceperm)
+				if errors.Is(err, errNotFound) {
+					return 0, apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), event.Key.Name)
+				}
+			}
+
 			if err != nil {
 				if errors.Is(err, errInvalidSpec) || errors.Is(err, errInvalidName) {
 					return 0, apierrors.NewBadRequest(err.Error())
-				}
-				if errors.Is(err, errConflict) {
-					return 0, apierrors.NewConflict(v0alpha1.ResourcePermissionInfo.GroupResource(), event.Key.Name, err)
 				}
 				return 0, err
 			}
