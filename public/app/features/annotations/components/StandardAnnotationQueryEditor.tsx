@@ -35,7 +35,6 @@ export interface Props {
 interface State {
   running?: boolean;
   response?: AnnotationQueryResponse;
-  isReplacingQuery?: boolean;
 }
 
 export default class StandardAnnotationQueryEditor extends PureComponent<Props, State> {
@@ -51,18 +50,24 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     }
   }
 
+  /**
+   * verifyDataSource() prepares the annotation and provides immediate query feedback:
+   * 1. Applies datasource-specific preparation (e.g., Prometheus moves expr to target field)
+   * 2. Updates annotation if preparation made changes
+   * 3. Runs query to show immediate results in the UI
+   */
   verifyDataSource() {
     const { datasource, annotation } = this.props;
 
-    // Always skip verification during active replacement to prevent race conditions
-    // The new updateAnnotationFromSavedQuery handles preparation internally
-    if (this.state.isReplacingQuery) {
-      return;
-    }
-
-    // Skip verification if datasources don't match - wait for parent to load correct datasource
+    // Handle datasource mismatch scenarios
     if (annotation.datasource?.uid !== datasource?.uid || annotation.datasource?.type !== datasource?.type) {
-      return;
+      // Only skip if this looks like a prepared annotation (has target or query.spec)
+      // This indicates a saved query replacement with cross-datasource operation (see updateAnnotationFromSavedQuery)
+      // Manual datasource changes create clean annotations without target, so they fall through
+      if (annotation.target || annotation.query?.spec) {
+        return; // Skip for prepared annotations (saved query case)
+      }
+      // Fall through for clean annotations (manual datasource change case)
     }
 
     // Normal case: datasources match, verify with props.datasource
@@ -72,6 +77,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     };
 
     const fixed = processor.prepareAnnotation!(annotation);
+    // if datasource prepared annotation returns a different annotation(e.g., prometheus before had expr in the root level now it's saved in 'target'), update the annotation with that one
     if (fixed !== annotation) {
       this.props.onChange(fixed);
     } else {
@@ -250,15 +256,12 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     const { annotation, onChange } = this.props;
 
     try {
-      this.setState({ isReplacingQuery: true });
       // Use new async updateAnnotationFromSavedQuery that returns properly prepared annotation
       const preparedAnnotation = await updateAnnotationFromSavedQuery(annotation, replacedQuery);
       onChange(preparedAnnotation);
     } catch (error) {
       console.error('Failed to replace annotation query:', error);
       // On error, reset the replacing state but don't change the annotation
-    } finally {
-      this.setState({ isReplacingQuery: false });
     }
   };
 
