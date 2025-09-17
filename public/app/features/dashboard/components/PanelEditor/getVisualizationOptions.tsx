@@ -88,14 +88,6 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
   const access: NestedValueAccess = {
     getValue: (path) => lodashGet(currentOptions, path),
     onChange: (path, value) => {
-      if (path === 'timeCompare') {
-        reportInteraction('panel_setting_interaction', {
-          viz_type: plugin.meta.id,
-          feature_type: 'time_comparison',
-          option_type: value ? 'toggle_enabled' : 'toggle_disabled',
-        });
-      }
-
       const newOptions = setOptionImmutably(currentOptions, path, value);
       onPanelOptionsChanged(newOptions);
     },
