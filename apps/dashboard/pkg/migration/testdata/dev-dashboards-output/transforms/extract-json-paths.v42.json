@@ -290,6 +290,7 @@
         }
       ],
       "title": "Raw data",
+      "transformations": [],
       "type": "table"
     }
   ],

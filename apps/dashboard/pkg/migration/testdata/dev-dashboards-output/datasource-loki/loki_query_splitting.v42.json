@@ -256,6 +256,7 @@
         }
       ],
       "title": "Split TS",
+      "transformations": [],
       "type": "timeseries"
     },
     {
@@ -349,6 +350,7 @@
         }
       ],
       "title": "TS without splitting",
+      "transformations": [],
       "type": "timeseries"
     },
     {

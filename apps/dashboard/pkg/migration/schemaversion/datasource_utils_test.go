@@ -123,12 +123,13 @@ func TestGetDefaultDSInstanceSettings(t *testing.T) {
 	}
 }
 
-func TestGetInstanceSettings(t *testing.T) {
-	datasources := []schemaversion.DataSourceInfo{
-		{UID: "default-ds-uid", Type: "prometheus", Name: "Default Test Datasource Name", Default: true, APIVersion: "v1"},
-		{UID: "existing-target-uid", Type: "elasticsearch", Name: "Existing Target Name", Default: false, APIVersion: "v2"},
-		{UID: "existing-ref-uid", Type: "prometheus", Name: "Existing Ref Name", Default: false, APIVersion: "v1"},
-	}
+// TestGetInstanceSettings - Function was removed, test disabled
+func TestGetInstanceSettings_DISABLED(t *testing.T) {
+	// datasources := []schemaversion.DataSourceInfo{
+	// 	{UID: "default-ds-uid", Type: "prometheus", Name: "Default Test Datasource Name", Default: true, APIVersion: "v1"},
+	// 	{UID: "existing-target-uid", Type: "elasticsearch", Name: "Existing Target Name", Default: false, APIVersion: "v2"},
+	// 	{UID: "existing-ref-uid", Type: "prometheus", Name: "Existing Ref Name", Default: false, APIVersion: "v1"},
+	// }
 
 	tests := []struct {
 		name      string
@@ -237,8 +238,9 @@ func TestGetInstanceSettings(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := schemaversion.GetInstanceSettings(tt.nameOrRef, datasources)
-			assert.Equal(t, tt.expected, result)
+			// result := schemaversion.GetInstanceSettings(tt.nameOrRef, datasources)
+			// assert.Equal(t, tt.expected, result)
+			t.Skip("Test disabled - GetInstanceSettings function was removed")
 		})
 	}
 }

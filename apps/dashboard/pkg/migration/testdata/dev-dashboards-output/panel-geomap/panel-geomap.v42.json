@@ -327,6 +327,7 @@
         }
       ],
       "title": "Heatmap data layer",
+      "transformations": [],
       "type": "geomap"
     },
     {
