@@ -19,7 +19,7 @@ describe('Label', () => {
     render(<AlertLabel labelKey="env" value="prod" onClick={onClick} />);
 
     await userEvent.click(screen.getByRole('button'));
-    expect(onClick).toHaveBeenCalledWith('env', 'prod');
+    expect(onClick).toHaveBeenCalledWith(['prod', 'env']);
   });
 
   it('calls onClick when Enter is pressed', async () => {
@@ -28,6 +28,6 @@ describe('Label', () => {
 
     const button = screen.getByRole('button');
     await userEvent.type(button, '{enter}');
-    expect(onClick).toHaveBeenCalledWith('region', 'eu-west-1');
+    expect(onClick).toHaveBeenCalledWith(['eu-west-1', 'region']);
   });
 });
