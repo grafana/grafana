@@ -100,18 +100,16 @@ export function ImportDashboardOverviewV2() {
         } else if (variable.kind === 'DatasourceVariable') {
           const dsType = variable.spec.pluginId;
           if (dsType) {
-            if (form[`datasource-${dsType}` as keyof typeof form]) {
-              const ds = form[`datasource-${dsType}` as keyof typeof form] as {
-                uid: string;
-                type: string;
-                name: string;
-              };
+            if (form[`datasource-${dsType}`]) {
+              const ds = form[`datasource-${dsType}`];
               return {
                 ...variable,
                 spec: {
                   ...variable.spec,
                   current: {
+                    // @ts-ignore
                     text: ds.name,
+                    // @ts-ignore
                     value: ds.uid,
                   },
                 },
