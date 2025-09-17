@@ -18,8 +18,8 @@ export function getTempoTraceFromLinks(fields: FieldDef[]) {
 }
 
 function getTempoTraceFromLink(link: LinkModel) {
-  if (link.interpolation?.query && isTempoQuery(link.interpolation.query)) {
-    const query = link.interpolation.query;
+  if (link.interpolatedParams?.query && isTempoQuery(link.interpolatedParams.query)) {
+    const query = link.interpolatedParams.query;
     return {
       dsUID: query.datasource?.uid || '',
       query: query.query,

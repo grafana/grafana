@@ -103,7 +103,10 @@ export interface LinkModel<T = any> {
   onClick?: (e: any, origin?: any) => void;
   oneClick?: boolean;
 
-  interpolation?: {
+  /**
+   * @alpha
+   */
+  interpolatedParams?: {
     query?: DataQuery;
     timeRange?: TimeRange;
   };

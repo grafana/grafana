@@ -689,7 +689,7 @@ describe('LogLineDetails', () => {
             return field.config.links.map((link) => {
               return {
                 href: '/explore',
-                interpolation: {
+                interpolatedParams: {
                   query: {
                     refId: 'A',
                     query: 'abcd1234',
@@ -758,7 +758,7 @@ describe('LogLineDetails', () => {
             return field.config.links.map((link) => {
               return {
                 href: '/explore',
-                interpolation: {
+                interpolatedParams: {
                   query: {
                     refId: 'A',
                     query: 'abcd1234',
