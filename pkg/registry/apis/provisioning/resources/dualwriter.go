@@ -539,7 +539,7 @@ func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, _ string) er
 func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
 	// if the ref is set, it is not the active branch, so just delete the files from the branch
 	// and do not delete the items from grafana itself
-	if r.shouldUpdateGrafanaDB(opts, nil) {
+	if !r.shouldUpdateGrafanaDB(opts, nil) {
 		err := r.repo.Delete(ctx, opts.Path, opts.Ref, opts.Message)
 		if err != nil {
 			return nil, fmt.Errorf("error deleting folder from repository: %w", err)
