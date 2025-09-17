@@ -220,7 +220,7 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
         ))}
       </Menu>
     ),
-    [filterLevels, onFilterLevelClick, styles.menuItemActive]
+    [filterLevels, logLevels, onFilterLevelClick, styles.menuItemActive]
   );
 
   const downloadMenu = useMemo(

@@ -326,3 +326,11 @@ function countNewLines(log: string, limit = Infinity) {
   }
   return count;
 }
+
+export function getLevelsFromLogs(logs: LogListModel[]) {
+  const levels = new Set<LogLevel>();
+  for (const log of logs) {
+    levels.add(log.logLevel);
+  }
+  return Array.from(levels).filter(level => level != null);
+}

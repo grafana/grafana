@@ -31,7 +31,7 @@ import { LogListContextProvider, LogListState, useLogListContext } from './LogLi
 import { LogListControls } from './LogListControls';
 import { LOG_LIST_SEARCH_HEIGHT, LogListSearch } from './LogListSearch';
 import { LogListSearchContextProvider, useLogListSearchContext } from './LogListSearchContext';
-import { preProcessLogs, LogListModel } from './processing';
+import { preProcessLogs, LogListModel, getLevelsFromLogs } from './processing';
 import { useKeyBindings } from './useKeyBindings';
 import { usePopoverMenu } from './usePopoverMenu';
 import { LogLineVirtualization, getLogLineSize, LogFieldDimension, ScrollToLogsEvent } from './virtualization';
@@ -410,6 +410,8 @@ const LogListComponent = ({
     [debouncedScrollToItem, filteredLogs]
   );
 
+  const logLevels = useMemo(() => getLevelsFromLogs(processedLogs), [processedLogs]);
+
   if (!containerElement || listHeight == null) {
     // Wait for container to be rendered
     return null;
@@ -417,7 +419,7 @@ const LogListComponent = ({
 
   return (
     <div className={styles.logListContainer}>
-      {showControls && <LogListControls eventBus={eventBus} />}
+      {showControls && <LogListControls logLevels={logLevels} eventBus={eventBus} />}
       {detailsMode === 'sidebar' && showDetails.length > 0 && (
         <LogLineDetails
           containerElement={containerElement}
