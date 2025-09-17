@@ -156,8 +156,11 @@
       "title": "Grafana Enterpriseを入手する"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "テストユーザーマッピング",
-      "test-mapping-run-button": "Run"
+      "test-mapping-run-button": "Run",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -9213,7 +9216,8 @@
       "disable-button": "無効にする",
       "discard-button": "破棄",
       "save-and-enable-button": "保存して有効にする",
-      "save-button": "保存"
+      "save-button": "保存",
+      "test-button": ""
     },
     "documentation": "文書",
     "host": {
@@ -12768,6 +12772,7 @@
     "description-column-filter": "テーブルのフィールドフィルターを有効/無効化",
     "description-frozen-columns": "",
     "description-min-column-width": "列の自動サイズ変更の最小幅",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "画像が表示できない場合やスクリーンリーダーを使用するユーザーのために表示される代替テキスト",
@@ -12798,6 +12803,7 @@
     "name-max-height": "",
     "name-min-column-width": "最小列幅",
     "name-show-table-header": "テーブルヘッダーを表示",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "ヘッダーテキストの折り返し",

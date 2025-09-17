@@ -18,6 +18,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/cache"
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -209,10 +210,17 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 		attribute.String("action", listReq.Action),
 	)
 
-	permissions, err := s.getCachedIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
-	if err == nil {
-		s.metrics.permissionCacheUsage.WithLabelValues("true", listReq.Action).Inc()
-	} else {
+	var permissions map[string]bool
+	cacheHit := false
+
+	if !listReq.Options.SkipCache {
+		permissions, err = s.getCachedIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
+		if err == nil {
+			s.metrics.permissionCacheUsage.WithLabelValues("true", listReq.Action).Inc()
+			cacheHit = true
+		}
+	}
+	if err != nil || listReq.Options.SkipCache {
 		s.metrics.permissionCacheUsage.WithLabelValues("false", listReq.Action).Inc()
 
 		permissions, err = s.getIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
@@ -224,6 +232,10 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 	}
 
 	resp, err := s.listPermission(ctx, permissions, listReq)
+	if cacheHit && time.Duration(time.Now().Unix()-resp.Zookie.Timestamp) < s.settings.CacheTTL {
+		resp.Zookie = &authzv1.Zookie{Timestamp: time.Now().Add(-s.settings.CacheTTL).Unix()}
+	}
+
 	s.metrics.requestCount.WithLabelValues(strconv.FormatBool(err != nil), "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
 	return resp, err
 }
@@ -280,6 +292,14 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 		return nil, err
 	}
 
+	authzOptions := req.GetOptions()
+	if authzOptions == nil {
+		authzOptions = &authzv1.ListRequestOptions{}
+	}
+	options := &ListRequestOptions{
+		SkipCache: authzOptions.Skipcache,
+	}
+
 	listReq := &ListRequest{
 		Namespace:    ns,
 		UserUID:      userUID,
@@ -288,6 +308,7 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 		Group:        req.GetGroup(),
 		Resource:     req.GetResource(),
 		Verb:         req.GetVerb(),
+		Options:      options,
 	}
 	return listReq, nil
 }
@@ -706,7 +727,10 @@ func (s *Service) buildFolderTree(ctx context.Context, ns types.NamespaceInfo) (
 
 func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, req *ListRequest) (*authzv1.ListResponse, error) {
 	if scopeMap["*"] {
-		return &authzv1.ListResponse{All: true}, nil
+		return &authzv1.ListResponse{
+			All:    true,
+			Zookie: &authzv1.Zookie{Timestamp: time.Now().Unix()},
+		}, nil
 	}
 
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.listPermission")
@@ -720,9 +744,14 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	}
 
 	var tree folderTree
+	cacheHit := false
 	if t.HasFolderSupport() {
 		var err error
-		tree, ok = s.getCachedFolderTree(ctx, req.Namespace)
+		ok = false
+		if !req.Options.SkipCache {
+			tree, ok = s.getCachedFolderTree(ctx, req.Namespace)
+			cacheHit = true
+		}
 		if !ok {
 			tree, err = s.buildFolderTree(ctx, req.Namespace)
 			if err != nil {
@@ -737,6 +766,12 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 		res = buildFolderList(scopeMap, tree)
 	} else {
 		res = buildItemList(scopeMap, tree, t.Prefix())
+	}
+
+	if cacheHit {
+		res.Zookie = &authzv1.Zookie{Timestamp: time.Now().Add(-s.settings.CacheTTL).Unix()}
+	} else {
+		res.Zookie = &authzv1.Zookie{Timestamp: time.Now().Unix()}
 	}
 
 	span.SetAttributes(attribute.Int("num_folders", len(res.Folders)), attribute.Int("num_items", len(res.Items)))

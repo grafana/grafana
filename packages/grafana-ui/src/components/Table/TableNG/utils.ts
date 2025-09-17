@@ -1009,3 +1009,23 @@ export function getSummaryCellTextAlign(textAlign: TextAlign, cellType: TableCel
 
   return textAlign;
 }
+
+// we keep this set to avoid spamming the heck out of the console, since it's quite likely that if we fail to parse
+// a value once, it'll happen again and again for many rows in a table, and spamming the console is slow.
+let warnedAboutStyleJsonSet = new Set<string>();
+export function parseStyleJson(rawValue: unknown): CSSProperties | void {
+  // confirms existence of value and serves as a type guard
+  if (typeof rawValue === 'string') {
+    try {
+      const parsedJsonValue = JSON.parse(rawValue);
+      if (parsedJsonValue != null && typeof parsedJsonValue === 'object' && !Array.isArray(parsedJsonValue)) {
+        return parsedJsonValue;
+      }
+    } catch (e) {
+      if (!warnedAboutStyleJsonSet.has(rawValue)) {
+        console.error(`encountered invalid cell style JSON: ${rawValue}`, e);
+        warnedAboutStyleJsonSet.add(rawValue);
+      }
+    }
+  }
+}

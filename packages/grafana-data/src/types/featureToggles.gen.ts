@@ -210,6 +210,11 @@ export interface FeatureToggles {
   */
   awsAsyncQueryCaching?: boolean;
   /**
+  * Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
+  * @default false
+  */
+  queryCacheRequestDeduplication?: boolean;
+  /**
   * Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
   */
   permissionsFilterRemoveSubquery?: boolean;
@@ -374,6 +379,10 @@ export interface FeatureToggles {
   * Enables experimental new dashboard layouts
   */
   dashboardNewLayouts?: boolean;
+  /**
+  * Enables undo/redo in dynamic dashboards
+  */
+  dashboardUndoRedo?: boolean;
   /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
@@ -543,11 +552,6 @@ export interface FeatureToggles {
   * Sets the logs table as default visualisation in logs explore
   */
   logsExploreTableDefaultVisualization?: boolean;
-  /**
-  * Enables the new sharing drawer design
-  * @default true
-  */
-  newDashboardSharingComponent?: boolean;
   /**
   * Enables the new alert list view design
   */
@@ -1162,4 +1166,14 @@ export interface FeatureToggles {
   * @default false
   */
   pluginContainers?: boolean;
+  /**
+  * Run search queries through the tempo backend
+  * @default false
+  */
+  tempoSearchBackendMigration?: boolean;
+  /**
+  * Filter out bots from collecting data for Frontend Observability
+  * @default false
+  */
+  filterOutBotsFromFrontendLogs?: boolean;
 }
