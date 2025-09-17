@@ -571,6 +571,9 @@ const (
 	// Use a POST request to list rules by passing down the namespaces user has access to
 	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
 
+	// FlagAlertingFetchRuleStatuses
+	FlagAlertingFetchRuleStatuses = "alertingFetchRuleStatuses"
+
 	// FlagGrafanaconThemes
 	// Enables the temporary themes for GrafanaCon
 	FlagGrafanaconThemes = "grafanaconThemes"
