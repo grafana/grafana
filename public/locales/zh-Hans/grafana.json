@@ -156,8 +156,11 @@
       "title": "获取 Grafana 企业版"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "测试用户映射",
-      "test-mapping-run-button": "运行"
+      "test-mapping-run-button": "运行",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -3579,6 +3582,7 @@
       "button-cancel": "取消",
       "button-delete": "删除",
       "button-deleting": "正在删除...",
+      "commit": "",
       "delete-warning": "这将删除此文件夹及其所有子文件夹。总体而言，这将影响：",
       "success-message": "文件夹已成功删除"
     },
@@ -5382,10 +5386,6 @@
       "save-dashboard-short": "保存",
       "save-library-panel": "保存库面板",
       "settings": "仪表板设置",
-      "share": {
-        "label": "分享",
-        "tooltip": "分享仪表板或面板"
-      },
       "share-button": "分享",
       "unlink-library-panel": "取消链接库面板",
       "unmark-favorite": "取消标记为收藏"
@@ -5636,14 +5636,6 @@
         "title": {
           "new-dashboard": "新建仪表板"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "撤销公共 URL"
-      },
-      "title": {
-        "revoke-public-url": "撤销公共网址"
       }
     },
     "constant-variable-form": {
@@ -5899,13 +5891,12 @@
       "usage-count_other": "用于 {{count}} 个数据面板"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "移动数据面板时出错",
       "api-error": "移动数据面板失败",
       "cancel-action": "取消",
       "current-file-not-found": "找不到当前数据面板文件",
       "drawer-title": "移动已预置的数据面板",
       "file-load-error": "加载数据面板时出错",
-      "loading-file-data": "正在加载数据面板",
+      "loading-dashboard-data": "",
       "move-action": "移动数据面板",
       "move-read-only-message": "此数据面板无法直接从 Grafana 移动，因为存储库为只读。要移动此数据面板，请移动 Git 存储库中的文件。",
       "moving": "正在移动…",
@@ -9213,7 +9204,8 @@
       "disable-button": "禁用",
       "discard-button": "丢弃",
       "save-and-enable-button": "保存并启用",
-      "save-button": "保存"
+      "save-button": "保存",
+      "test-button": ""
     },
     "documentation": "文档",
     "host": {
@@ -9243,8 +9235,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "取消",
-      "create": "创建库面板",
       "error": "库面板名称已存在",
       "folder": "保存在文件夹中",
       "folder-description": "库面板权限沿用自文件夹权限",
@@ -10306,9 +10296,6 @@
     },
     "profiles": {
       "title": "个人资料"
-    },
-    "public": {
-      "title": "公共仪表板"
     },
     "recently-deleted": {
       "subtitle": "此处列出的任何项目超过 30 天都将被自动删除。",
@@ -11720,7 +11707,6 @@
       "email-share-type-option-label": "仅指定人员",
       "pause-sharing-dashboard-label": "暂停共享仪表板",
       "public-share-type-option-label": "任何有链接的人",
-      "revoke-body": "您确定要注销此网址吗？仪表板将不再公开。",
       "revoke-public-URL-button": "撤销公共网址",
       "revoke-public-URL-button-title": "注销公共网址",
       "settings-title": "设置"
@@ -11734,7 +11720,6 @@
       "success-pause": "您的数据面板访问已暂停",
       "success-resume": "您的数据面板访问已恢复",
       "success-update": "设置已成功更新",
-      "success-update-old": "公共数据面板已更新！",
       "time-range-label": "时间范围",
       "time-range-tooltip": "共享数据面板使用数据面板的默认时间范围设置"
     },
@@ -11742,10 +11727,6 @@
       "generate-public-url-button": "生成公共网址",
       "unsupported-features-desc": "目前，我们不支持模板变量或前端数据源",
       "welcome-title": "欢迎使用公共仪表板 ！"
-    },
-    "delete-modal": {
-      "revoke-body-text": "您确定要注销此网址吗？仪表板将不再公开。",
-      "revoke-title": "注销公共网址"
     },
     "email-sharing": {
       "accept-button": "接受",
@@ -11776,11 +11757,8 @@
       "success-share-type-change": "数据面板访问权限已更新：现在只有特定人员才能通过链接访问"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "请与您的管理员联系，以获取{{action}}公共数据面板的权限",
-      "no-upsert-perm-alert-title": "您没有{{ action }}公共数据面板的权限",
       "save-dashboard-changes-alert-title": "请在更新公共配置之前保存您的仪表板更改",
       "unsupport-data-source-alert-readmore-link": "阅读更多关于支持的数据源的信息",
-      "unsupported-data-source-alert-desc": "此仪表板中有公共仪表板不支持的数据源。使用这些数据源的面板可能无法正常运行：{{unsupportedDataSources}}。",
       "unsupported-data-source-alert-title": "不受支持的数据源",
       "unsupported-template-variable-alert-desc": "此公共仪表板可能无法工作，因为其使用了模板变量",
       "unsupported-template-variable-alert-title": "模板变量不受支持"
@@ -11814,8 +11792,7 @@
       "time-range-text": "时间范围 = "
     },
     "share": {
-      "success-delete": "您的数据面板不再可共享",
-      "success-delete-old": "公开的数据面板已删除！"
+      "success-delete": "您的数据面板不再可共享"
     },
     "share-configuration": {
       "share-type-label": "链接访问"
@@ -11834,24 +11811,6 @@
       "revoke-access-button": "注销访问权限",
       "revoke-access-description": "您确定要撤销此访问权限吗？数据面板不再可共享。",
       "unsupported-data-source-alert-desc": "此数据面板中有不支持共享数据面板的数据源。使用这些数据源的面板可能无法正常工作：{{unsupportedDataSources}}。"
-    },
-    "sharing": {
-      "success-creation": "数据面板已公开！"
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "配置公共仪表板",
-      "revoke-button-text": "注销公共网址",
-      "revoke-button-tooltip": "撤销公共仪表板网址",
-      "view-button-tooltip": "查看公共仪表板"
-    },
-    "empty-state": {
-      "message": "您还没有创建任何公开的数据面板",
-      "more-info": "通过<1>共享</1>模式，从任何现有的数据面板创建一个公开数据面板。<4>了解更多</4>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "暂停共享"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11859,8 +11818,6 @@
       "external-link": "外部链接",
       "loading-text": "加载中...",
       "open-dashboard-list-text": "打开仪表板列表",
-      "public-dashboard-link": "公共仪表板网址",
-      "public-dashboard-setting": "公共仪表板设置",
       "sharing-setting": "共享设置"
     },
     "delete-user-modal": {
@@ -11868,14 +11825,12 @@
       "delete-user-cancel-button": "取消",
       "delete-user-revoke-access-button": "注销访问权限",
       "revoke-access-title": "注销访问权限",
-      "revoke-user-access-modal-desc-line1": "您确定要注销对 {{email}} 的访问权限吗？",
-      "revoke-user-access-modal-desc-line2": "此操作将立即注销 {{email}} 对所有公共仪表板的访问权限。"
+      "revoke-user-access-modal-desc-line1": "您确定要注销对 {{email}} 的访问权限吗？"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "此操作将立即撤销 {{email}} 对所有共享数据面板的访问权限。"
     },
     "modal": {
-      "dashboard-modal-title": "公共仪表板",
       "shared-dashboard-modal-title": "共享的数据面板"
     },
     "table-body": {
@@ -12373,8 +12328,6 @@
       "export": "导出",
       "library-panel": "库面板",
       "link": "链接",
-      "panel-embed": "嵌入",
-      "public-dashboard": "公共仪表板",
       "public-dashboard-title": "公共仪表板",
       "snapshot": "快照"
     },
@@ -12768,6 +12721,7 @@
     "description-column-filter": "启用/禁用表格中的字段筛选条件",
     "description-frozen-columns": "",
     "description-min-column-width": "列自动调整大小的最小宽度",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "在图片无法显示或用户使用屏幕阅读器时，将显示的替代文本",
@@ -12798,6 +12752,7 @@
     "name-max-height": "",
     "name-min-column-width": "最小列宽",
     "name-show-table-header": "显示表格表头",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "表头文字换行",
@@ -13967,7 +13922,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "公共仪表板用户",
       "shared-dashboard-users-tab-title": "共享数据面板的用户"
     }
   },

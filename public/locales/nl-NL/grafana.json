@@ -156,8 +156,11 @@
       "title": "Ontvang Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Test gebruikerstoewijzing",
-      "test-mapping-run-button": "Uitvoeren"
+      "test-mapping-run-button": "Uitvoeren",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -3597,6 +3600,7 @@
       "button-cancel": "Annuleren",
       "button-delete": "Verwijderen",
       "button-deleting": "Bezig met verwijderen...",
+      "commit": "",
       "delete-warning": "Hiermee worden deze map en alle onderliggende mappen verwijderd. In totaal heeft dit invloed op:",
       "success-message": "Map is verwijderd"
     },
@@ -5404,10 +5408,6 @@
       "save-dashboard-short": "Opslaan",
       "save-library-panel": "Bibliotheekpaneel",
       "settings": "Dashboardinstellingen",
-      "share": {
-        "label": "Delen",
-        "tooltip": "Dashboard delen"
-      },
       "share-button": "Delen",
       "unlink-library-panel": "Bibliotheekpaneel ontkoppelen",
       "unmark-favorite": "Markering als favoriet ongedaan maken"
@@ -5658,14 +5658,6 @@
         "title": {
           "new-dashboard": "Nieuw dashboard"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "Openbare URL intrekken"
-      },
-      "title": {
-        "revoke-public-url": "Openbare URL intrekken"
       }
     },
     "constant-variable-form": {
@@ -5922,13 +5914,12 @@
       "usage-count_other": "Gebruikt op {{count}} dashboards"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "Fout bij verplaatsen van dashboard",
       "api-error": "Kan dashboard niet verplaatsen",
       "cancel-action": "Annuleren",
       "current-file-not-found": "Huidig dashboardbestand kon niet worden gevonden",
       "drawer-title": "Geprovisioneerd dashboard",
       "file-load-error": "Er is een fout opgetreden bij het laden van het dashboard",
-      "loading-file-data": "Dashboarddata laden...",
+      "loading-dashboard-data": "",
       "move-action": "Dashboard verplaatsen",
       "move-read-only-message": "Dit dashboard kan niet rechtstreeks uit Grafana worden verplaatst omdat de repository alleen-lezen is. Verplaats het bestand in je Git-repository om dit dashboard te verplaatsen.",
       "moving": "Bezig met verplaatsen...",
@@ -9239,7 +9230,8 @@
       "disable-button": "Uitschakelen",
       "discard-button": "Negeren",
       "save-and-enable-button": "Opslaan en inschakelen",
-      "save-button": "Opslaan"
+      "save-button": "Opslaan",
+      "test-button": ""
     },
     "documentation": "documentatie",
     "host": {
@@ -9269,8 +9261,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "Annuleren",
-      "create": "Bibliotheekpaneel aanmaken",
       "error": "Een bibliotheekpaneel met deze naam bestaat al",
       "folder": "Opslaan in map",
       "folder-description": "Bibliotheekpaneeltoestemmingen worden afgeleid van de maptoestemmingen",
@@ -10338,9 +10328,6 @@
     },
     "profiles": {
       "title": "Profielen"
-    },
-    "public": {
-      "title": "Openbare dashboards"
     },
     "recently-deleted": {
       "subtitle": "Alle items die hier langer dan 30 dagen worden vermeld, worden automatisch verwijderd.",
@@ -11761,7 +11748,6 @@
       "email-share-type-option-label": "Alleen gespecificeerde personen",
       "pause-sharing-dashboard-label": "Delen van het dashboard pauzeren",
       "public-share-type-option-label": "Iedereen met een link",
-      "revoke-body": "Weet je zeker dat je deze URL wilt intrekken? Het dashboard is niet meer openbaar.",
       "revoke-public-URL-button": "Openbare URL intrekken",
       "revoke-public-URL-button-title": "Openbare URL intrekken",
       "settings-title": "Instellingen"
@@ -11775,7 +11761,6 @@
       "success-pause": "De toegang tot je dashboard is gepauzeerd",
       "success-resume": "De toegang tot je dashboard is hervat",
       "success-update": "De instellingen zijn bijgewerkt",
-      "success-update-old": "Openbaar dashboard is bijgewerkt.",
       "time-range-label": "Tijdsbereik",
       "time-range-tooltip": "Het openbare dashboard gebruikt de standaard tijdsbereikinstellingen van het dashboard"
     },
@@ -11783,10 +11768,6 @@
       "generate-public-url-button": "Openbare URL genereren",
       "unsupported-features-desc": "Momenteel ondersteunen we geen sjabloonvariabelen of frontend-gegevensbronnen",
       "welcome-title": "Welkom bij openbare dashboards!"
-    },
-    "delete-modal": {
-      "revoke-body-text": "Weet je zeker dat je deze URL wilt intrekken? Het dashboard is niet meer openbaar.",
-      "revoke-title": "Openbare URL intrekken"
     },
     "email-sharing": {
       "accept-button": "Accepteren",
@@ -11817,11 +11798,8 @@
       "success-share-type-change": "Dashboardtoegang bijgewerkt: alleen specifieke mensen hebben nu toegang via de link"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Neem contact op met je beheerder voor toestemming om openbare dashboards te {{action}}",
-      "no-upsert-perm-alert-title": "Je hebt geen toestemming om een openbaar dashboard te {{ action }}",
       "save-dashboard-changes-alert-title": "Sla je dashboardwijzigingen op voordat je de openbare configuratie bijwerkt",
       "unsupport-data-source-alert-readmore-link": "Meer informatie over ondersteunde gegevensbronnen",
-      "unsupported-data-source-alert-desc": "Er zijn gegevensbronnen in dit dashboard die niet worden ondersteund voor openbare dashboards. Panelen die deze gegevensbronnen gebruiken, werken mogelijk niet goed: {{unsupportedDataSources}}.",
       "unsupported-data-source-alert-title": "Niet-ondersteunde gegevensbronnen",
       "unsupported-template-variable-alert-desc": "Dit openbare dashboard werkt mogelijk niet omdat het sjabloonvariabelen gebruikt",
       "unsupported-template-variable-alert-title": "Sjabloonvariabelen worden niet ondersteund"
@@ -11855,8 +11833,7 @@
       "time-range-text": "Tijdsbereik = "
     },
     "share": {
-      "success-delete": "Je dashboard kan niet meer worden gedeeld",
-      "success-delete-old": "Openbaar dashboard is verwijderd."
+      "success-delete": "Je dashboard kan niet meer worden gedeeld"
     },
     "share-configuration": {
       "share-type-label": "Toegang met link"
@@ -11875,24 +11852,6 @@
       "revoke-access-button": "Toegang intrekken",
       "revoke-access-description": "Weet je zeker dat je deze toegang wilt intrekken? Het dashboard kan niet meer worden gedeeld.",
       "unsupported-data-source-alert-desc": "Er zijn gegevensbronnen in dit dashboard die niet worden ondersteund voor openbare dashboards. Panelen die deze gegevensbronnen gebruiken, werken mogelijk niet goed: {{unsupportedDataSources}}."
-    },
-    "sharing": {
-      "success-creation": "Dashboard is openbaar."
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "Openbaar dashboard configureren",
-      "revoke-button-text": "Openbare URL intrekken",
-      "revoke-button-tooltip": "URL van openbaar dashboard intrekken",
-      "view-button-tooltip": "Openbaar dashboard weergeven"
-    },
-    "empty-state": {
-      "message": "Je hebt nog geen dashboards gemaakt",
-      "more-info": "Maak een openbaar dashboard aan vanuit een bestaand dashboard via het <1>Delen</1>-venster. <2>Meer informatie</2>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "Delen pauzeren"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11900,8 +11859,6 @@
       "external-link": "Externe link",
       "loading-text": "Bezig met laden ...",
       "open-dashboard-list-text": "Dashboardslijst openen",
-      "public-dashboard-link": "URL van openbaar dashboard",
-      "public-dashboard-setting": "Instellingen voor openbaar dashboard",
       "sharing-setting": "Instellingen voor delen"
     },
     "delete-user-modal": {
@@ -11909,14 +11866,12 @@
       "delete-user-cancel-button": "Annuleren",
       "delete-user-revoke-access-button": "Toegang intrekken",
       "revoke-access-title": "Toegang intrekken",
-      "revoke-user-access-modal-desc-line1": "Weet je zeker dat je de toegang van {{email}} wilt intrekken?",
-      "revoke-user-access-modal-desc-line2": "Met deze actie wordt de toegang van {{email}} tot alle openbare dashboards onmiddellijk ingetrokken."
+      "revoke-user-access-modal-desc-line1": "Weet je zeker dat je de toegang van {{email}} wilt intrekken?"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "Met deze actie wordt de toegang van {{email}} tot alle openbare dashboards onmiddellijk ingetrokken."
     },
     "modal": {
-      "dashboard-modal-title": "Openbare dashboards",
       "shared-dashboard-modal-title": "Gedeelde dashboards"
     },
     "table-body": {
@@ -12418,8 +12373,6 @@
       "export": "Exporteren",
       "library-panel": "Bibliotheekpaneel",
       "link": "Koppelen",
-      "panel-embed": "Insluiten",
-      "public-dashboard": "Openbaar dashboard",
       "public-dashboard-title": "Openbaar dashboard",
       "snapshot": "Snapshot"
     },
@@ -12814,6 +12767,7 @@
     "description-column-filter": "Schakelt veldfilters in tabel in/uit",
     "description-frozen-columns": "",
     "description-min-column-width": "De minimale breedte voor het automatisch aanpassen van de kolomgrootte",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Alternatieve tekst die wordt weergegeven als een afbeelding niet kan worden weergegeven of voor gebruikers die een schermlezer gebruiken",
@@ -12844,6 +12798,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minimale kolombreedte",
     "name-show-table-header": "Header tabel tonen",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Koptekst laten teruglopen",
@@ -14013,7 +13968,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Gebruikers van openbaar dashboard",
       "shared-dashboard-users-tab-title": "Gebruikers van gedeeld dashboard"
     }
   },

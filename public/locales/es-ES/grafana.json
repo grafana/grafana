@@ -156,8 +156,11 @@
       "title": "Consigue Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Prueba de asignación de usuarios",
-      "test-mapping-run-button": "Ejecutar"
+      "test-mapping-run-button": "Ejecutar",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -3597,6 +3600,7 @@
       "button-cancel": "Cancelar",
       "button-delete": "Eliminar",
       "button-deleting": "Eliminando...",
+      "commit": "",
       "delete-warning": "Esto eliminará esta carpeta y todas sus derivadas. En total, esto afectará a:",
       "success-message": "Carpeta eliminada correctamente"
     },
@@ -5404,10 +5408,6 @@
       "save-dashboard-short": "Guardar",
       "save-library-panel": "Guardar panel de biblioteca",
       "settings": "Ajustes del panel de control",
-      "share": {
-        "label": "Compartir",
-        "tooltip": "Compartir panel o panel de control"
-      },
       "share-button": "Compartir",
       "unlink-library-panel": "Desvincular panel de librería",
       "unmark-favorite": "Deshacer marca como favorito"
@@ -5658,14 +5658,6 @@
         "title": {
           "new-dashboard": "Nuevo panel de control"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "Revocar URL pública"
-      },
-      "title": {
-        "revoke-public-url": "Revocar URL pública"
       }
     },
     "constant-variable-form": {
@@ -5922,13 +5914,12 @@
       "usage-count_other": "Utilizado en {{count}} dashboards"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "Error al mover el dashboard",
       "api-error": "No se ha podido mover el dashboard",
       "cancel-action": "Cancelar",
       "current-file-not-found": "No se ha podido encontrar el archivo del dashboard actual",
       "drawer-title": "Mover dashboard aprovisionado",
       "file-load-error": "Error al cargar el dashboard",
-      "loading-file-data": "Cargando datos del dashboard",
+      "loading-dashboard-data": "",
       "move-action": "Mover dashboard",
       "move-read-only-message": "Este dashboard no se puede mover directamente desde Grafana porque el repositorio es de solo lectura. Para mover este dashboard, mueve el archivo en tu repositorio Git.",
       "moving": "Moviendo...",
@@ -9239,7 +9230,8 @@
       "disable-button": "Deshabilitar",
       "discard-button": "Descartar",
       "save-and-enable-button": "Guardar y habilitar",
-      "save-button": "Guardar"
+      "save-button": "Guardar",
+      "test-button": ""
     },
     "documentation": "documentación",
     "host": {
@@ -9269,8 +9261,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "Cancelar",
-      "create": "Crear panel de librería",
       "error": "Ya existe un panel de librería con este nombre",
       "folder": "Guardar en carpeta",
       "folder-description": "Los permisos del panel de librería se derivan de los permisos de la carpeta",
@@ -10338,9 +10328,6 @@
     },
     "profiles": {
       "title": "Perfiles"
-    },
-    "public": {
-      "title": "Paneles de control públicos"
     },
     "recently-deleted": {
       "subtitle": "Cualquier elemento que aparezca aquí durante más de 30 días se eliminará automáticamente.",
@@ -11761,7 +11748,6 @@
       "email-share-type-option-label": "Solo personas especificadas",
       "pause-sharing-dashboard-label": "Pausar el panel compartido",
       "public-share-type-option-label": "Cualquiera con un enlace",
-      "revoke-body": "¿Seguro que quieres revocar esta URL? El tablero dejará de ser público.",
       "revoke-public-URL-button": "Revocar la URL pública",
       "revoke-public-URL-button-title": "Revocar URL pública",
       "settings-title": "Configuración"
@@ -11775,7 +11761,6 @@
       "success-pause": "Se ha pausado el acceso a tu panel de control",
       "success-resume": "Se ha reanudado el acceso a tu panel de control",
       "success-update": "Los ajustes se han actualizado correctamente",
-      "success-update-old": "¡Panel de control público actualizado!",
       "time-range-label": "Intervalo de tiempo",
       "time-range-tooltip": "El panel de control compartido utiliza la configuración predeterminada del intervalo de tiempo del panel de control"
     },
@@ -11783,10 +11768,6 @@
       "generate-public-url-button": "Generar URL pública",
       "unsupported-features-desc": "Actualmente, no son compatibles las variables de plantillas o las fuentes de datos de la interfaz",
       "welcome-title": "¡Bienvenidos al tablero público!"
-    },
-    "delete-modal": {
-      "revoke-body-text": "¿Seguro que quieres revocar esta URL? El tablero dejará de ser público.",
-      "revoke-title": "Revocar URL pública"
     },
     "email-sharing": {
       "accept-button": "Aceptar",
@@ -11817,11 +11798,8 @@
       "success-share-type-change": "Acceso al panel de control actualizado: ahora solo ciertas personas pueden acceder con el enlace"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Ponte en contacto con tu administrador para obtener permiso para {{action}} dashboards públicos",
-      "no-upsert-perm-alert-title": "No tienes permiso para {{ action }} un dashboard público",
       "save-dashboard-changes-alert-title": "Guarda los cambios realizados en el tablero antes de actualizar la configuración pública",
       "unsupport-data-source-alert-readmore-link": "Leer más sobre las fuentes de datos compatibles",
-      "unsupported-data-source-alert-desc": "Hay fuentes de datos en este tablero que no son compatibles con los tableros públicos. Los paneles que utilizan estas fuentes de datos puede que no funcionen correctamente: {{unsupportedDataSources}}.",
       "unsupported-data-source-alert-title": "Fuentes de datos no compatibles",
       "unsupported-template-variable-alert-desc": "Este tablero público puede que no funcione, ya que utiliza variables de plantillas",
       "unsupported-template-variable-alert-title": "Las variables de plantillas no son compatibles"
@@ -11855,8 +11833,7 @@
       "time-range-text": "Rango de tiempo = "
     },
     "share": {
-      "success-delete": "Tu panel de control ya no se puede compartir",
-      "success-delete-old": "¡Panel de control público eliminado!"
+      "success-delete": "Tu panel de control ya no se puede compartir"
     },
     "share-configuration": {
       "share-type-label": "Acceso mediante enlace"
@@ -11875,24 +11852,6 @@
       "revoke-access-button": "Revocar acceso",
       "revoke-access-description": "¿Seguro que quieres revocar este acceso? El panel de control ya no se puede compartir.",
       "unsupported-data-source-alert-desc": "Hay fuentes de datos en este panel de control que no son compatibles con los paneles de control compartidos. Es posible que los paneles que utilizan estas fuentes de datos no funcionen correctamente: {{unsupportedDataSources}}."
-    },
-    "sharing": {
-      "success-creation": "¡El panel de control es público!"
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "Configurar tablero público",
-      "revoke-button-text": "Revocar URL pública",
-      "revoke-button-tooltip": "Revocar URL del tablero público",
-      "view-button-tooltip": "Ver tablero público"
-    },
-    "empty-state": {
-      "message": "Aún no has creado ningún panel de control público",
-      "more-info": "Crea un panel de control público a partir de cualquier panel de control existente mediante la función <1>Compartir</1>. <4>Más información</4>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "Pausar el uso compartido"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11900,8 +11859,6 @@
       "external-link": "Enlace externo",
       "loading-text": "Cargando...",
       "open-dashboard-list-text": "Abrir lista de tableros",
-      "public-dashboard-link": "URL del tablero público",
-      "public-dashboard-setting": "Ajustes del tablero público",
       "sharing-setting": "Compartiendo ajustes"
     },
     "delete-user-modal": {
@@ -11909,14 +11866,12 @@
       "delete-user-cancel-button": "Cancelar",
       "delete-user-revoke-access-button": "Revocar acceso",
       "revoke-access-title": "Revocar acceso",
-      "revoke-user-access-modal-desc-line1": "¿Seguro que quieres revocar el acceso para {{email}}?",
-      "revoke-user-access-modal-desc-line2": "Esta acción revocará inmediatamente el acceso de {{email}} a todos los tableros públicos."
+      "revoke-user-access-modal-desc-line1": "¿Seguro que quieres revocar el acceso para {{email}}?"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "Esta acción revocará inmediatamente el acceso de {{email}} a todos los paneles de control compartidos."
     },
     "modal": {
-      "dashboard-modal-title": "Paneles de control públicos",
       "shared-dashboard-modal-title": "Paneles de control compartidos"
     },
     "table-body": {
@@ -12418,8 +12373,6 @@
       "export": "Exportar",
       "library-panel": "Panel de librería",
       "link": "Enlace",
-      "panel-embed": "Incrustar",
-      "public-dashboard": "Tablero público",
       "public-dashboard-title": "Tablero público",
       "snapshot": "Instantánea"
     },
@@ -12814,6 +12767,7 @@
     "description-column-filter": "Habilita/deshabilita los filtros de campo en la tabla",
     "description-frozen-columns": "",
     "description-min-column-width": "El ancho mínimo para el cambio de tamaño automático de las columnas",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Texto alternativo que se mostrará si no se puede visualizar una imagen o para los usuarios que utilizan un lector de pantalla",
@@ -12844,6 +12798,7 @@
     "name-max-height": "",
     "name-min-column-width": "Ancho mínimo de columna",
     "name-show-table-header": "Mostrar encabezado de tabla",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Ajustar texto del encabezado",
@@ -14013,7 +13968,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Usuarios del tablero público",
       "shared-dashboard-users-tab-title": "Usuarios del panel de control compartido"
     }
   },

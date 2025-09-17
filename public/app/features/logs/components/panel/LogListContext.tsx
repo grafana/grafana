@@ -151,8 +151,6 @@ export type LogListState = Pick<
   | 'timestampResolution'
 >;
 
-export type LogListOption = keyof LogListState | 'wrapLogMessage' | 'prettifyJSON';
-
 export interface Props {
   app: CoreApp;
   children?: ReactNode;
@@ -233,9 +231,7 @@ export const LogListContextProvider = ({
   permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
-  prettifyJSON: prettifyJSONProp = logOptionsStorageKey
-    ? store.getBool(`${logOptionsStorageKey}.prettifyLogMessage`, true)
-    : true,
+  prettifyJSON: prettifyJSONProp,
   setDisplayedFields,
   showControls,
   showTime,
@@ -280,8 +276,10 @@ export const LogListContextProvider = ({
       fontSize,
       forceEscape: logListState.forceEscape,
       showTime,
+      showUniqueLabels,
       syntaxHighlighting,
       wrapLogMessage,
+      prettifyJSON,
       detailsWidth,
       detailsMode,
       withDisplayedFields: displayedFields.length > 0,
@@ -312,24 +310,14 @@ export const LogListContextProvider = ({
       ...logListState,
       dedupStrategy,
       showTime,
+      showUniqueLabels,
       sortOrder,
       syntaxHighlighting,
-      wrapLogMessage,
     };
     if (!shallowCompare(logListState, newState)) {
       setLogListState(newState);
     }
-  }, [
-    app,
-    dedupStrategy,
-    logListState,
-    pinnedLogs,
-    showControls,
-    showTime,
-    sortOrder,
-    syntaxHighlighting,
-    wrapLogMessage,
-  ]);
+  }, [app, dedupStrategy, logListState, showControls, showTime, showUniqueLabels, sortOrder, syntaxHighlighting]);
 
   // Sync filter levels
   useEffect(() => {
@@ -343,6 +331,11 @@ export const LogListContextProvider = ({
       return logListState;
     });
   }, [filterLevels]);
+
+  // Sync details mode
+  useEffect(() => {
+    setDetailsMode(detailsModeProp);
+  }, [detailsModeProp]);
 
   // Sync font size
   useEffect(() => {
@@ -388,6 +381,18 @@ export const LogListContextProvider = ({
     observer.observe(containerElement);
     return () => observer.disconnect();
   }, [containerElement, detailsMode, logOptionsStorageKey, showControls]);
+
+  // Sync prettifyJSON
+  useEffect(() => {
+    if (prettifyJSONProp !== undefined) {
+      setPrettifyJSONState(prettifyJSONProp);
+    }
+  }, [prettifyJSONProp]);
+
+  // Sync wrapLogMessage
+  useEffect(() => {
+    setWrapLogMessageState(wrapLogMessageProp);
+  }, [wrapLogMessageProp]);
 
   // Sync timestamp resolution
   useEffect(() => {
@@ -485,7 +490,7 @@ export const LogListContextProvider = ({
       if (logOptionsStorageKey) {
         store.set(`${logOptionsStorageKey}.prettifyLogMessage`, prettifyJSON);
       }
-      onLogOptionsChange?.('prettifyJSON', prettifyJSON);
+      onLogOptionsChange?.('prettifyLogMessage', prettifyJSON);
     },
     [logOptionsStorageKey, onLogOptionsChange]
   );

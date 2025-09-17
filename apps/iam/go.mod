@@ -23,9 +23,9 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 require (
 	github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43
 	github.com/grafana/grafana v6.1.6+incompatible
-	github.com/grafana/grafana-app-sdk v0.40.3
-	github.com/grafana/grafana-app-sdk/logging v0.40.3
-	github.com/grafana/grafana-app-sdk/plugin v0.40.3
+	github.com/grafana/grafana-app-sdk v0.45.0
+	github.com/grafana/grafana-app-sdk/logging v0.45.0
+	github.com/grafana/grafana-app-sdk/plugin v0.45.0
 	github.com/grafana/grafana/apps/folder v0.0.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	go.opentelemetry.io/otel v1.38.0
@@ -449,7 +449,6 @@ require (
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.31.2 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.7.0 // indirect
 	sigs.k8s.io/yaml v1.5.0 // indirect
 	xorm.io/builder v0.3.6 // indirect
 )

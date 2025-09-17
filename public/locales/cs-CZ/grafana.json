@@ -156,8 +156,11 @@
       "title": "Získejte Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Testovat mapování uživatele",
-      "test-mapping-run-button": "Spustit"
+      "test-mapping-run-button": "Spustit",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -3633,6 +3636,7 @@
       "button-cancel": "Zrušit",
       "button-delete": "Odstranit",
       "button-deleting": "Probíhá odstraňování…",
+      "commit": "",
       "delete-warning": "Tímto odstraníte tuto složku a všechny následné složky. Celkově to ovlivní:",
       "success-message": "Složka byla úspěšně odstraněna"
     },
@@ -5448,10 +5452,6 @@
       "save-dashboard-short": "Uložit",
       "save-library-panel": "Uložit panel knihovny",
       "settings": "Nastavení nástěnky",
-      "share": {
-        "label": "Sdílet",
-        "tooltip": "Sdílet nástěnku"
-      },
       "share-button": "Sdílet",
       "unlink-library-panel": "Odpojit panel knihovny",
       "unmark-favorite": "Odznačit z oblíbených"
@@ -5702,14 +5702,6 @@
         "title": {
           "new-dashboard": "Nová nástěnka"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "Odvolat veřejnou adresu URL"
-      },
-      "title": {
-        "revoke-public-url": "Odvolat veřejnou adresu URL"
       }
     },
     "constant-variable-form": {
@@ -5968,13 +5960,12 @@
       "usage-count_other": "Použito na {{count}} nástěnkách"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "Chyba při přesouvání nástěnky",
       "api-error": "Nástěnku se nepodařilo přesunout",
       "cancel-action": "Zrušit",
       "current-file-not-found": "Aktuální soubor nástěnky se nepodařilo najít",
       "drawer-title": "Přesunout zajištěnou nástěnku",
       "file-load-error": "Chyba při načítání nástěnky",
-      "loading-file-data": "Načítání dat nástěnky",
+      "loading-dashboard-data": "",
       "move-action": "Přesunout nástěnku",
       "move-read-only-message": "Tuto nástěnku nelze přesunout přímo z Grafany, protože úložiště je jen pro čtení. Chcete-li tuto nástěnku přesunout, přesuňte soubor v úložišti Git.",
       "moving": "Probíhá přesouvání…",
@@ -9291,7 +9282,8 @@
       "disable-button": "Deaktivovat",
       "discard-button": "Zahodit",
       "save-and-enable-button": "Uložit a povolit",
-      "save-button": "Uložit"
+      "save-button": "Uložit",
+      "test-button": ""
     },
     "documentation": "dokumentace",
     "host": {
@@ -9321,8 +9313,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "Zrušit",
-      "create": "Vytvořit panel knihovny",
       "error": "Panel knihovny s tímto názvem už existuje",
       "folder": "Uložit do složky",
       "folder-description": "Oprávnění panelu knihovny jsou odvozena od oprávnění ke složkám",
@@ -10402,9 +10392,6 @@
     },
     "profiles": {
       "title": "Profily"
-    },
-    "public": {
-      "title": "Veřejné nástěnky"
     },
     "recently-deleted": {
       "subtitle": "Všechny tady uvedené položky po dobu delší než 30 dnů budou automaticky odstraněny.",
@@ -11843,7 +11830,6 @@
       "email-share-type-option-label": "Pouze specifikovaní lidé",
       "pause-sharing-dashboard-label": "Pozastavit sdílení nástěnky",
       "public-share-type-option-label": "Kdokoli s odkazem",
-      "revoke-body": "Opravdu chcete odvolat tuto adresu URL? Nástěnka už nebude veřejná.",
       "revoke-public-URL-button": "Odvolat veřejnou adresu URL",
       "revoke-public-URL-button-title": "Odvolat veřejnou adresu URL",
       "settings-title": "Nastavení"
@@ -11857,7 +11843,6 @@
       "success-pause": "Přístup k nástěnce byl pozastaven",
       "success-resume": "Přístup k nástěnce byl obnoven",
       "success-update": "Nastavení byla úspěšně aktualizována",
-      "success-update-old": "Veřejná nástěnka aktualizována!",
       "time-range-label": "Časový rozsah",
       "time-range-tooltip": "Sdílená nástěnka používá výchozí nastavení časového rozsahu nástěnky"
     },
@@ -11865,10 +11850,6 @@
       "generate-public-url-button": "Generovat veřejnou adresu URL",
       "unsupported-features-desc": "V současné době nepodporujeme proměnné hodnoty pro šablony nebo frontendové zdroje dat",
       "welcome-title": "Vítejte na veřejných nástěnkách!"
-    },
-    "delete-modal": {
-      "revoke-body-text": "Opravdu chcete odvolat tuto adresu URL? Nástěnka už nebude veřejná.",
-      "revoke-title": "Odvolat veřejnou adresu URL"
     },
     "email-sharing": {
       "accept-button": "Přijmout",
@@ -11899,11 +11880,8 @@
       "success-share-type-change": "Přístup k řídicímu panelu byl aktualizován: Přístup mají pouze lidé s odkazem"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Pokud chcete {{action}} veřejné nástěnky, kontaktujte správce a požádejte o oprávnění",
-      "no-upsert-perm-alert-title": "Nemůžete {{ action }} veřejnou nástěnku",
       "save-dashboard-changes-alert-title": "Před aktualizací veřejné konfigurace uložte změny nástěnky",
       "unsupport-data-source-alert-readmore-link": "Zjistěte víc o podporovaných zdrojích dat",
-      "unsupported-data-source-alert-desc": "Na této nástěnce jsou zdroje dat, které nejsou pro veřejné nástěnky podporovány. Panely, které používají tyto zdroje dat, nemusí fungovat správně: {{unsupportedDataSources}}.",
       "unsupported-data-source-alert-title": "Nepodporované zdroje dat",
       "unsupported-template-variable-alert-desc": "Tato veřejná nástěnka nemusí fungovat, protože používá proměnné hodnoty pro šablony",
       "unsupported-template-variable-alert-title": "Proměnné hodnoty pro šablony nejsou podporovány"
@@ -11937,8 +11915,7 @@
       "time-range-text": "Časový rozsah = "
     },
     "share": {
-      "success-delete": "Vaši nástěnka už nejde sdílet",
-      "success-delete-old": "Veřejná nástěnka odstraněna."
+      "success-delete": "Vaši nástěnka už nejde sdílet"
     },
     "share-configuration": {
       "share-type-label": "Odkaz pro přístup"
@@ -11957,24 +11934,6 @@
       "revoke-access-button": "Odvolat přístup",
       "revoke-access-description": "Opravdu chcete odvolat tento přístup? Nástěnku už nelze sdílet.",
       "unsupported-data-source-alert-desc": "Na této nástěnce jsou zdroje dat, které nejsou pro sdílené nástěnky podporovány. Panely, které používají tyto zdroje dat, nemusí fungovat správně: {{unsupportedDataSources}}."
-    },
-    "sharing": {
-      "success-creation": "Nástěnka je veřejná."
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "Konfigurovat veřejnou nástěnku",
-      "revoke-button-text": "Odvolat veřejnou adresu URL",
-      "revoke-button-tooltip": "Odvolat adresu URL veřejné nástěnky",
-      "view-button-tooltip": "Zobrazit veřejnou nástěnku"
-    },
-    "empty-state": {
-      "message": "Dosud jste nevytvořili žádné veřejné nástěnky",
-      "more-info": "Vytvořte veřejnou nástěnku z libovolné existující nástěnky prostřednictvím modálu <1>Sdílet</1>. <4>Zjistěte víc</4>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "Pozastavit sdílení"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11982,8 +11941,6 @@
       "external-link": "Externí odkaz",
       "loading-text": "Načítání…",
       "open-dashboard-list-text": "Otevřít seznam nástěnek",
-      "public-dashboard-link": "Adresa URL veřejné nástěnky",
-      "public-dashboard-setting": "Nastavení veřejné nástěnky",
       "sharing-setting": "Nastavení sdílení"
     },
     "delete-user-modal": {
@@ -11991,14 +11948,12 @@
       "delete-user-cancel-button": "Zrušit",
       "delete-user-revoke-access-button": "Odvolat přístup",
       "revoke-access-title": "Odvolat přístup",
-      "revoke-user-access-modal-desc-line1": "Opravdu chcete odvolat přístup pro {{email}}?",
-      "revoke-user-access-modal-desc-line2": "Tato akce okamžitě odvolá přístup pro {{email}} ke všem veřejným nástěnkám."
+      "revoke-user-access-modal-desc-line1": "Opravdu chcete odvolat přístup pro {{email}}?"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "Tato akce okamžitě odvolá přístup pro {{email}} ke všem sdíleným nástěnkám."
     },
     "modal": {
-      "dashboard-modal-title": "Veřejné nástěnky",
       "shared-dashboard-modal-title": "Sdílené nástěnky"
     },
     "table-body": {
@@ -12508,8 +12463,6 @@
       "export": "Exportovat",
       "library-panel": "Panel knihovny",
       "link": "Odkaz",
-      "panel-embed": "Vložené",
-      "public-dashboard": "Veřejná nástěnka",
       "public-dashboard-title": "Veřejná nástěnka",
       "snapshot": "Snímek"
     },
@@ -12906,6 +12859,7 @@
     "description-column-filter": "Povolit/zakázat filtry polí v tabulce",
     "description-frozen-columns": "",
     "description-min-column-width": "Minimální šířka pro automatickou změnu velikosti sloupce",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Alternativní text, který se zobrazí, pokud nelze zobrazit obrázek, nebo pro uživatele, kteří používají čtečku obrazovky",
@@ -12936,6 +12890,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minimální šířka sloupce",
     "name-show-table-header": "Zobrazit záhlaví tabulky",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Zalomit text záhlaví",
@@ -14105,7 +14060,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Uživatelé veřejné nástěnky",
       "shared-dashboard-users-tab-title": "Uživatelé sdílené nástěnky"
     }
   },

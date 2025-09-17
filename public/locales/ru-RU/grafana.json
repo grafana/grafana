@@ -156,8 +156,11 @@
       "title": "Получение Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Тестирование сопоставления пользователей",
-      "test-mapping-run-button": "Выполнить"
+      "test-mapping-run-button": "Выполнить",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -3633,6 +3636,7 @@
       "button-cancel": "Отмена",
       "button-delete": "Удалить",
       "button-deleting": "Удаление...",
+      "commit": "",
       "delete-warning": "Эта папка и все дочерние папки будут удалены. Действие окажет влияние на следующие элементы:",
       "success-message": "Папка удалена"
     },
@@ -5448,10 +5452,6 @@
       "save-dashboard-short": "Сохранить",
       "save-library-panel": "Сохранить панель библиотеки",
       "settings": "Параметры дашборда",
-      "share": {
-        "label": "Общий доступ",
-        "tooltip": "Общий доступ к дашборду"
-      },
       "share-button": "Общий доступ",
       "unlink-library-panel": "Отсоединить панель библиотеки",
       "unmark-favorite": "Убрать из избранного"
@@ -5702,14 +5702,6 @@
         "title": {
           "new-dashboard": "Новый дашборд"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "Отозвать общедоступный URL-адрес"
-      },
-      "title": {
-        "revoke-public-url": "Отозвать общедоступный URL-адрес"
       }
     },
     "constant-variable-form": {
@@ -5968,13 +5960,12 @@
       "usage-count_other": "Используется на {{count}} дашбордах"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "Ошибка при перемещении дашборда",
       "api-error": "Не удалось переместить дашборд",
       "cancel-action": "Отмена",
       "current-file-not-found": "Текущий файл дашборда не найден",
       "drawer-title": "Переместить подготовленный дашборд",
       "file-load-error": "Ошибка при загрузке дашборда",
-      "loading-file-data": "Загрузка данных дашборда",
+      "loading-dashboard-data": "",
       "move-action": "Переместить дашборд",
       "move-read-only-message": "Дашборд невозможно переместить непосредственно из Grafana, поскольку репозиторий доступен только для чтения. Чтобы переместить этот дашборд, переместите файл в репозиторий Git.",
       "moving": "Перемещение...",
@@ -9291,7 +9282,8 @@
       "disable-button": "Отключить",
       "discard-button": "Отменить",
       "save-and-enable-button": "Сохранить и включить",
-      "save-button": "Сохранить"
+      "save-button": "Сохранить",
+      "test-button": ""
     },
     "documentation": "документация",
     "host": {
@@ -9321,8 +9313,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "Отмена",
-      "create": "Создать панель библиотеки",
       "error": "Панель библиотеки с таким именем уже существует",
       "folder": "Сохранить в папке",
       "folder-description": "Разрешения панели библиотеки наследуются от разрешений папки.",
@@ -10402,9 +10392,6 @@
     },
     "profiles": {
       "title": "Профили"
-    },
-    "public": {
-      "title": "Общедоступные дашборды"
     },
     "recently-deleted": {
       "subtitle": "Все перечисленные элементы по истечении 30 дней будут автоматически удалены",
@@ -11843,7 +11830,6 @@
       "email-share-type-option-label": "Только указанные пользователи",
       "pause-sharing-dashboard-label": "Приостановить общий доступ к дашборду",
       "public-share-type-option-label": "Любой, у кого есть ссылка",
-      "revoke-body": "Действительно отозвать URL-адрес? Дашборд больше не будет общедоступным.",
       "revoke-public-URL-button": "Отозвать общедоступный URL-адрес",
       "revoke-public-URL-button-title": "Отозвать общедоступный URL-адрес",
       "settings-title": "Параметры"
@@ -11857,7 +11843,6 @@
       "success-pause": "Доступ к вашему дашборду приостановлен",
       "success-resume": "Доступ к вашему дашборду восстановлен",
       "success-update": "Параметры обновлены",
-      "success-update-old": "Общедоступный дашборд обновлен",
       "time-range-label": "Временной диапазон",
       "time-range-tooltip": "Совместно используемый дашборд использует параметры временного диапазона по умолчанию"
     },
@@ -11865,10 +11850,6 @@
       "generate-public-url-button": "Создать общедоступный URL-адрес",
       "unsupported-features-desc": "В настоящее время мы не поддерживаем переменные шаблонов или клиентские источники данных",
       "welcome-title": "Добро пожаловать в общедоступные дашборды!"
-    },
-    "delete-modal": {
-      "revoke-body-text": "Действительно отозвать URL-адрес? Дашборд больше не будет общедоступным.",
-      "revoke-title": "Отозвать общедоступный URL-адрес"
     },
     "email-sharing": {
       "accept-button": "Принять",
@@ -11899,11 +11880,8 @@
       "success-share-type-change": "Доступ к дашборду обновлен: теперь доступ по ссылке могут получить только определенные пользователи"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Чтобы получить разрешение на {{action}} общедоступных дашбордов, обратитесь к администратору",
-      "no-upsert-perm-alert-title": "У вас нет разрешения на {{ action }} общедоступного дашборда",
       "save-dashboard-changes-alert-title": "Сохраните изменения в дашборде перед обновлением общедоступной конфигурации",
       "unsupport-data-source-alert-readmore-link": "Подробнее о поддерживаемых источниках данных",
-      "unsupported-data-source-alert-desc": "Дашборд использует источники данных, которые не поддерживаются для общедоступных дашбордов. Панели, которые используют следующие источники данных, могут работать неправильно: {{unsupportedDataSources}}.",
       "unsupported-data-source-alert-title": "Неподдерживаемые источники данных",
       "unsupported-template-variable-alert-desc": "Общедоступный дашборд может не работать, поскольку использует переменные шаблона",
       "unsupported-template-variable-alert-title": "Переменные шаблона не поддерживаются"
@@ -11937,8 +11915,7 @@
       "time-range-text": "Временной диапазон = "
     },
     "share": {
-      "success-delete": "Ваш дашборд больше не допускает совместного использования",
-      "success-delete-old": "Общедоступный дашборд удален"
+      "success-delete": "Ваш дашборд больше не допускает совместного использования"
     },
     "share-configuration": {
       "share-type-label": "Доступ по ссылке"
@@ -11957,24 +11934,6 @@
       "revoke-access-button": "Отозвать доступ",
       "revoke-access-description": "Действительно отозвать доступ? Дашборд больше не допускает совместного использования.",
       "unsupported-data-source-alert-desc": "Дашборд использует источники данных, которые не поддерживаются для совместно используемых дашбордов. Панели, которые используют следующие источники данных, могут работать неправильно: {{unsupportedDataSources}}."
-    },
-    "sharing": {
-      "success-creation": "Дашборд является общедоступным"
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "Настроить общедоступный дашборд",
-      "revoke-button-text": "Отозвать общедоступный URL-адрес",
-      "revoke-button-tooltip": "Отозвать URL-адрес общедоступного дашборда",
-      "view-button-tooltip": "Просмотр общедоступного дашборда"
-    },
-    "empty-state": {
-      "message": "Вы еще не создали ни одного общедоступного дашборда",
-      "more-info": "Создайте общедоступный дашборд из любого существующего с помощью модального окна <1>Общий доступ</1>. <4>Подробнее</4>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "Приостановить общий доступ"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11982,8 +11941,6 @@
       "external-link": "Внешняя ссылка",
       "loading-text": "Загрузка…",
       "open-dashboard-list-text": "Открыть список дашбордов",
-      "public-dashboard-link": "URL-адрес общедоступного дашборда",
-      "public-dashboard-setting": "Параметры общедоступного дашборда",
       "sharing-setting": "Параметры общего доступа"
     },
     "delete-user-modal": {
@@ -11991,14 +11948,12 @@
       "delete-user-cancel-button": "Отмена",
       "delete-user-revoke-access-button": "Отозвать доступ",
       "revoke-access-title": "Отзыв доступа",
-      "revoke-user-access-modal-desc-line1": "Действительно отозвать доступ для {{email}}?",
-      "revoke-user-access-modal-desc-line2": "Это действие приведет к немедленному отзыву доступа {{email}} ко всем общедоступным дашбордам."
+      "revoke-user-access-modal-desc-line1": "Действительно отозвать доступ для {{email}}?"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "Это действие приведет к немедленному отзыву доступа {{email}} ко всем совместно используемым дашбордам."
     },
     "modal": {
-      "dashboard-modal-title": "Общедоступные дашборды",
       "shared-dashboard-modal-title": "Совместно используемые дашборды"
     },
     "table-body": {
@@ -12508,8 +12463,6 @@
       "export": "Экспорт",
       "library-panel": "Панель библиотеки",
       "link": "Ссылка",
-      "panel-embed": "Встраивание",
-      "public-dashboard": "Общедоступный дашборд",
       "public-dashboard-title": "Общедоступный дашборд",
       "snapshot": "Снимок"
     },
@@ -12906,6 +12859,7 @@
     "description-column-filter": "Включает/отключает фильтры полей в таблице",
     "description-frozen-columns": "",
     "description-min-column-width": "Минимальная ширина для автоматического изменения размера столбцов",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Альтернативный текст, который будет отображаться, если невозможно показать изображение, или для пользователей, которые используют программу чтения с экрана",
@@ -12936,6 +12890,7 @@
     "name-max-height": "",
     "name-min-column-width": "Минимальная ширина столбца",
     "name-show-table-header": "Показать заголовок таблицы",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Перенос текста заголовка",
@@ -14105,7 +14060,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Пользователи общедоступного дашборда",
       "shared-dashboard-users-tab-title": "Пользователи совместно используемого дашборда"
     }
   },

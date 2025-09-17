@@ -156,8 +156,11 @@
       "title": "A Grafana Enterprise beszerzése"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Felhasználói hozzárendelés tesztelése",
-      "test-mapping-run-button": "Futtatás"
+      "test-mapping-run-button": "Futtatás",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -3597,6 +3600,7 @@
       "button-cancel": "Mégse",
       "button-delete": "Törlés",
       "button-deleting": "Törlés...",
+      "commit": "",
       "delete-warning": "Ez törli ezt a mappát és minden almappáját. Összességében ez a következőket érinti:",
       "success-message": "A mappa törlése sikeres"
     },
@@ -5404,10 +5408,6 @@
       "save-dashboard-short": "Mentés",
       "save-library-panel": "Könyvtárpanel mentése",
       "settings": "Irányítópult beállításai",
-      "share": {
-        "label": "Megosztás",
-        "tooltip": "Irányítópult megosztása"
-      },
       "share-button": "Megosztás",
       "unlink-library-panel": "Könyvtárpanel leválasztása",
       "unmark-favorite": "Kedvencnek jelölés visszavonása"
@@ -5658,14 +5658,6 @@
         "title": {
           "new-dashboard": "Új irányítópult"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "Nyilvános URL-cím visszavonása"
-      },
-      "title": {
-        "revoke-public-url": "Nyilvános URL-cím visszavonása"
       }
     },
     "constant-variable-form": {
@@ -5922,13 +5914,12 @@
       "usage-count_other": "{{count}} irányítópulton használatos"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "Hiba történt az irányítópult áthelyezésekor",
       "api-error": "Nem sikerült áthelyezni az irányítópultot",
       "cancel-action": "Mégse",
       "current-file-not-found": "A jelenlegi irányítópultfájl nem található",
       "drawer-title": "Kiépített irányítópult áthelyezése",
       "file-load-error": "Hiba történt az irányítópult betöltésekor",
-      "loading-file-data": "Irányítópult adatainak betöltése",
+      "loading-dashboard-data": "",
       "move-action": "Irányítópult áthelyezése",
       "move-read-only-message": "Ez az irányítópult nem helyezhető át közvetlenül a Grafanából, mert az adattár csak olvasható. Az irányítópult áthelyezéséhez helyezze át a fájlt a Git-tárba.",
       "moving": "Áthelyezés...",
@@ -9239,7 +9230,8 @@
       "disable-button": "Letiltás",
       "discard-button": "Elvetés",
       "save-and-enable-button": "Mentés és engedélyezés",
-      "save-button": "Mentés"
+      "save-button": "Mentés",
+      "test-button": ""
     },
     "documentation": "dokumentáció",
     "host": {
@@ -9269,8 +9261,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "Mégse",
-      "create": "Könyvtárpanel létrehozása",
       "error": "Ilyen nevű könyvtárpanel már létezik",
       "folder": "Mentés mappába",
       "folder-description": "A könyvtárpanel engedélyei a mappa engedélyeiből származnak",
@@ -10338,9 +10328,6 @@
     },
     "profiles": {
       "title": "Profilok"
-    },
-    "public": {
-      "title": "Nyilvános irányítópultok"
     },
     "recently-deleted": {
       "subtitle": "Az itt 30 napnál hosszabb ideig felsorolt elemek automatikusan törlődnek.",
@@ -11761,7 +11748,6 @@
       "email-share-type-option-label": "Csak meghatározott személyek",
       "pause-sharing-dashboard-label": "Irányítópult megosztásának szüneteltetése",
       "public-share-type-option-label": "Bárki, aki rendelkezik a hivatkozással",
-      "revoke-body": "Biztosan visszavonja ezt az URL-címet? Az irányítópult már nem lesz nyilvános.",
       "revoke-public-URL-button": "Nyilvános URL-cím visszavonása",
       "revoke-public-URL-button-title": "Nyilvános URL-cím visszavonása",
       "settings-title": "Beállítások"
@@ -11775,7 +11761,6 @@
       "success-pause": "Az irányítópulthoz való hozzáférését felfüggesztettük",
       "success-resume": "Az irányítópulthoz való hozzáférését újraindítottuk",
       "success-update": "A beállítások frissítése sikeres",
-      "success-update-old": "Nyilvános irányítópult frissítve!",
       "time-range-label": "Időtartomány",
       "time-range-tooltip": "A megosztott irányítópult az irányítópult alapértelmezett időtartomány-beállításait használja"
     },
@@ -11783,10 +11768,6 @@
       "generate-public-url-button": "Nyilvános URL-cím generálása",
       "unsupported-features-desc": "Jelenleg nem támogatjuk a sablonváltozókat vagy a frontend-adatforrásokat",
       "welcome-title": "Üdvözöljük a nyilvános irányítópultoknál!"
-    },
-    "delete-modal": {
-      "revoke-body-text": "Biztosan visszavonja ezt az URL-címet? Az irányítópult már nem lesz nyilvános.",
-      "revoke-title": "Nyilvános URL-cím visszavonása"
     },
     "email-sharing": {
       "accept-button": "Elfogadás",
@@ -11817,11 +11798,8 @@
       "success-share-type-change": "Irányítópult-hozzáférés frissítve: mostantól csak bizonyos személyek férhetnek hozzá a hivatkozás birtokában"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Vegye fel a kapcsolatot a rendszergazdájával, és kérjen engedélyt a nyilvános irányítópultokra vonatkozóan a következőhöz: {{action}}",
-      "no-upsert-perm-alert-title": "Nincs engedélye a nyilvános irányítópultoknál a következőhöz: {{ action }}",
       "save-dashboard-changes-alert-title": "Kérjük, mentse az irányítópult módosításait a nyilvános konfiguráció frissítése előtt",
       "unsupport-data-source-alert-readmore-link": "További információ a támogatott adatforrásokról",
-      "unsupported-data-source-alert-desc": "Ezen az irányítópulton olyan adatforrások találhatók, amelyeket a nyilvános irányítópultok nem támogatnak. Előfordulhat, hogy a következő adatforrásokat használó panelek nem működnek megfelelően: {{unsupportedDataSources}}.",
       "unsupported-data-source-alert-title": "Nem támogatott adatforrások",
       "unsupported-template-variable-alert-desc": "Előfordulhat, hogy ez a nyilvános irányítópult nem működik, mivel sablonváltozókat használ",
       "unsupported-template-variable-alert-title": "A sablonváltozók nem támogatottak"
@@ -11855,8 +11833,7 @@
       "time-range-text": "Időtartomány = "
     },
     "share": {
-      "success-delete": "Az irányítópult már nem osztható meg",
-      "success-delete-old": "Nyilvános irányítópult törölve!"
+      "success-delete": "Az irányítópult már nem osztható meg"
     },
     "share-configuration": {
       "share-type-label": "Hozzáférés hivatkozással"
@@ -11875,24 +11852,6 @@
       "revoke-access-button": "Hozzáférés visszavonása",
       "revoke-access-description": "Biztosan visszavonja ezt a hozzáférést? Az irányítópult már nem osztható meg.",
       "unsupported-data-source-alert-desc": "Ezen az irányítópulton olyan adatforrások találhatók, amelyeket a megosztott irányítópultok nem támogatnak. Előfordulhat, hogy a következő adatforrásokat használó panelek nem működnek megfelelően: {{unsupportedDataSources}}."
-    },
-    "sharing": {
-      "success-creation": "Az irányítópult nyilvános!"
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "Nyilvános irányítópult konfigurálása",
-      "revoke-button-text": "Nyilvános URL-cím visszavonása",
-      "revoke-button-tooltip": "Nyilvános irányítópult URL-címének visszavonása",
-      "view-button-tooltip": "Nyilvános irányítópult megtekintése"
-    },
-    "empty-state": {
-      "message": "Még nem hozott létre nyilvános irányítópultokat",
-      "more-info": "Létrehozhat nyilvános irányítópultot bármely meglévő irányítópultból a <1>Megosztás</1> ablakon keresztül. <4>További információk</4>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "Megosztás szüneteltetése"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11900,8 +11859,6 @@
       "external-link": "Külső hivatkozás",
       "loading-text": "Betöltés...",
       "open-dashboard-list-text": "Irányítópultok listájának megnyitása",
-      "public-dashboard-link": "Nyilvános irányítópult URL-címe",
-      "public-dashboard-setting": "Nyilvános irányítópult beállításai",
       "sharing-setting": "Megosztási beállítások"
     },
     "delete-user-modal": {
@@ -11909,14 +11866,12 @@
       "delete-user-cancel-button": "Mégse",
       "delete-user-revoke-access-button": "Hozzáférés visszavonása",
       "revoke-access-title": "Hozzáférés visszavonása",
-      "revoke-user-access-modal-desc-line1": "Biztosan visszavonja {{email}} hozzáférését?",
-      "revoke-user-access-modal-desc-line2": "Ez a művelet azonnal visszavonja {{email}} hozzáférését az összes nyilvános irányítópulthoz."
+      "revoke-user-access-modal-desc-line1": "Biztosan visszavonja {{email}} hozzáférését?"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "Ez a művelet azonnal visszavonja {{email}} hozzáférését az összes megosztott irányítópulthoz."
     },
     "modal": {
-      "dashboard-modal-title": "Nyilvános irányítópultok",
       "shared-dashboard-modal-title": "Megosztott irányítópultok"
     },
     "table-body": {
@@ -12418,8 +12373,6 @@
       "export": "Exportálás",
       "library-panel": "Könyvtárpanel",
       "link": "Hivatkozás",
-      "panel-embed": "Beágyazás",
-      "public-dashboard": "Nyilvános irányítópult",
       "public-dashboard-title": "Nyilvános irányítópult",
       "snapshot": "Pillanatkép"
     },
@@ -12814,6 +12767,7 @@
     "description-column-filter": "Engedélyezi/letiltja a mezőszűrőket a táblázatban",
     "description-frozen-columns": "",
     "description-min-column-width": "Az oszlop automatikus átméretezésének minimális szélessége",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Helyettesítő szöveg, amely akkor jelenik meg, ha egy kép nem jeleníthető meg, és amely a képernyőolvasót használó felhasználóknak hasznos",
@@ -12844,6 +12798,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minimális oszlopszélesség",
     "name-show-table-header": "Táblázatfejléc megjelenítése",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Fejléc szövegének tördelése",
@@ -14013,7 +13968,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Nyilvános irányítópult felhasználói",
       "shared-dashboard-users-tab-title": "Megosztott irányítópult felhasználói"
     }
   },

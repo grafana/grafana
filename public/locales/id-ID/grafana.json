@@ -156,8 +156,11 @@
       "title": "Dapatkan Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Uji pemetaan pengguna",
-      "test-mapping-run-button": "Jalankan"
+      "test-mapping-run-button": "Jalankan",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -3579,6 +3582,7 @@
       "button-cancel": "Batalkan",
       "button-delete": "Hapus",
       "button-deleting": "Menghapus...",
+      "commit": "",
       "delete-warning": "Ini akan menghapus folder ini dan semua subfoldernya. Secara keseluruhan, ini akan memengaruhi:",
       "success-message": "Folder berhasil dihapus"
     },
@@ -5382,10 +5386,6 @@
       "save-dashboard-short": "Simpan",
       "save-library-panel": "Simpan panel pustaka",
       "settings": "Pengaturan dasbor",
-      "share": {
-        "label": "Bagikan",
-        "tooltip": "Bagikan dasbor"
-      },
       "share-button": "Bagikan",
       "unlink-library-panel": "Putuskan tautan panel pustaka",
       "unmark-favorite": "Batal tanda sebagai favorit"
@@ -5636,14 +5636,6 @@
         "title": {
           "new-dashboard": "Dasbor baru"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "Cabut URL publik"
-      },
-      "title": {
-        "revoke-public-url": "Cabut URL publik"
       }
     },
     "constant-variable-form": {
@@ -5899,13 +5891,12 @@
       "usage-count_other": "Digunakan pada {{count}} dasbor"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "Kesalahan saat memindahkan dasbor",
       "api-error": "Gagal memindahkan dasbor",
       "cancel-action": "Batal",
       "current-file-not-found": "File dasbor saat ini tidak dapat ditemukan",
       "drawer-title": "Pindahkan Dasbor yang Disediakan",
       "file-load-error": "Kesalahan saat memuat dasbor",
-      "loading-file-data": "Memuat data dasbor",
+      "loading-dashboard-data": "",
       "move-action": "Pindahkan dasbor",
       "move-read-only-message": "Dasbor ini tidak dapat dipindahkan langsung dari Grafana karena repositori bersifat baca-saja. Untuk memindahkan dasbor ini, pindahkan file di repositori Git Anda.",
       "moving": "Memindahkan...",
@@ -9213,7 +9204,8 @@
       "disable-button": "Nonaktifkan",
       "discard-button": "Buang",
       "save-and-enable-button": "Simpan dan aktifkan",
-      "save-button": "Simpan"
+      "save-button": "Simpan",
+      "test-button": ""
     },
     "documentation": "dokumentasi",
     "host": {
@@ -9243,8 +9235,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "Batalkan",
-      "create": "Buat panel pustaka",
       "error": "Panel pustaka dengan nama ini sudah ada",
       "folder": "Simpan di folder",
       "folder-description": "Izin panel pustaka berasal dari izin folder",
@@ -10306,9 +10296,6 @@
     },
     "profiles": {
       "title": "Profil"
-    },
-    "public": {
-      "title": "Dasbor publik"
     },
     "recently-deleted": {
       "subtitle": "Setiap item yang tercantum di sini selama lebih dari 30 hari akan dihapus secara otomatis.",
@@ -11720,7 +11707,6 @@
       "email-share-type-option-label": "Hanya orang yang disebutkan",
       "pause-sharing-dashboard-label": "Jeda berbagi dasbor",
       "public-share-type-option-label": "Siapa saja yang memiliki tautan",
-      "revoke-body": "Apa Anda yakin ingin mencabut URL ini? Dasbor tidak akan menjadi publik lagi.",
       "revoke-public-URL-button": "Cabut URL publik",
       "revoke-public-URL-button-title": "Cabut URL publik",
       "settings-title": "Pengaturan"
@@ -11734,7 +11720,6 @@
       "success-pause": "Akses dasbor Anda telah dijeda",
       "success-resume": "Akses dasbor Anda telah dilanjutkan",
       "success-update": "Pengaturan telah berhasil diperbarui",
-      "success-update-old": "Dasbor publik diperbarui!",
       "time-range-label": "Rentang waktu",
       "time-range-tooltip": "Dasbor bersama menggunakan pengaturan rentang waktu default dasbor"
     },
@@ -11742,10 +11727,6 @@
       "generate-public-url-button": "Buat URL publik",
       "unsupported-features-desc": "Saat ini, kami tidak mendukung variabel templat atau sumber data frontend",
       "welcome-title": "Selamat datang di dasbor publik!"
-    },
-    "delete-modal": {
-      "revoke-body-text": "Apa Anda yakin ingin mencabut URL ini? Dasbor tidak akan menjadi publik lagi.",
-      "revoke-title": "Cabut URL publik"
     },
     "email-sharing": {
       "accept-button": "Setuju",
@@ -11776,11 +11757,8 @@
       "success-share-type-change": "Akses dasbor diperbarui: Hanya orang tertentu yang sekarang dapat mengakses dengan tautan"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Hubungi admin Anda untuk mendapatkan izin untuk {{action}} dasbor publik",
-      "no-upsert-perm-alert-title": "Anda tidak memiliki izin untuk {{ action }} dasbor publik",
       "save-dashboard-changes-alert-title": "Simpan perubahan dasbor Anda sebelum memperbarui konfigurasi publik",
       "unsupport-data-source-alert-readmore-link": "Baca selengkapnya tentang sumber data yang didukung",
-      "unsupported-data-source-alert-desc": "Ada sumber data di dasbor ini yang tidak didukung untuk dasbor publik. Panel yang menggunakan sumber data ini mungkin tidak berfungsi dengan baik: {{unsupportedDataSources}}.",
       "unsupported-data-source-alert-title": "Sumber data yang tidak didukung",
       "unsupported-template-variable-alert-desc": "Dasbor publik ini mungkin tidak berfungsi karena menggunakan variabel templat",
       "unsupported-template-variable-alert-title": "Variabel templat tidak didukung"
@@ -11814,8 +11792,7 @@
       "time-range-text": "Rentang waktu = "
     },
     "share": {
-      "success-delete": "Dasbor Anda tidak lagi dapat dibagikan",
-      "success-delete-old": "Dasbor publik dihapus!"
+      "success-delete": "Dasbor Anda tidak lagi dapat dibagikan"
     },
     "share-configuration": {
       "share-type-label": "Akses tautan"
@@ -11834,24 +11811,6 @@
       "revoke-access-button": "Cabut akses",
       "revoke-access-description": "Apa Anda yakin ingin mencabut akses ini? Dasbor tidak dapat dibagikan lagi.",
       "unsupported-data-source-alert-desc": "Ada sumber data di dasbor ini yang tidak didukung untuk dasbor bersama. Panel yang menggunakan sumber data ini mungkin tidak berfungsi dengan baik: {{unsupportedDataSources}}."
-    },
-    "sharing": {
-      "success-creation": "Dasbor bersifat publik!"
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "Konfigurasikan dasbor publik",
-      "revoke-button-text": "Cabut URL publik",
-      "revoke-button-tooltip": "Cabut URL dasbor publik",
-      "view-button-tooltip": "Lihat dasbor publik"
-    },
-    "empty-state": {
-      "message": "Anda belum membuat dasbor",
-      "more-info": "Buat dasbor publik dari dasbor yang ada melalui modal <1>Bagikan</1>. <4>Pelajari selengkapnya</4>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "Jeda berbagi"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11859,8 +11818,6 @@
       "external-link": "Tautan eksternal",
       "loading-text": "Memuat...",
       "open-dashboard-list-text": "Buka daftar dasbor",
-      "public-dashboard-link": "URL dasbor publik",
-      "public-dashboard-setting": "Pengaturan dasbor publik",
       "sharing-setting": "Pengaturan untuk berbagi"
     },
     "delete-user-modal": {
@@ -11868,14 +11825,12 @@
       "delete-user-cancel-button": "Batalkan",
       "delete-user-revoke-access-button": "Cabut akses",
       "revoke-access-title": "Cabut akses",
-      "revoke-user-access-modal-desc-line1": "Apa Anda yakin ingin mencabut akses untuk {{email}}?",
-      "revoke-user-access-modal-desc-line2": "Tindakan ini akan langsung mencabut akses {{email}}&apos;s ke semua dasbor publik."
+      "revoke-user-access-modal-desc-line1": "Apa Anda yakin ingin mencabut akses untuk {{email}}?"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "Tindakan ini akan segera mencabut akses {{email}}&apos;s ke semua dasbor bersama."
     },
     "modal": {
-      "dashboard-modal-title": "Dasbor publik",
       "shared-dashboard-modal-title": "Dasbor bersama"
     },
     "table-body": {
@@ -12373,8 +12328,6 @@
       "export": "Ekspor",
       "library-panel": "Panel pustaka",
       "link": "Tautan",
-      "panel-embed": "Sematkan",
-      "public-dashboard": "Dasbor Publik",
       "public-dashboard-title": "Dasbor publik",
       "snapshot": "Snapshot"
     },
@@ -12768,6 +12721,7 @@
     "description-column-filter": "Mengaktifkan/menonaktifkan filter bidang di tabel",
     "description-frozen-columns": "",
     "description-min-column-width": "Lebar minimum untuk perubahan ukuran kolom otomatis",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Teks alternatif yang akan ditampilkan jika gambar tidak dapat ditampilkan atau untuk pengguna yang menggunakan pembaca layar",
@@ -12798,6 +12752,7 @@
     "name-max-height": "",
     "name-min-column-width": "Lebar kolom minimum",
     "name-show-table-header": "Tampilkan header tabel",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Bungkus teks header",
@@ -13967,7 +13922,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Pengguna dasbor publik",
       "shared-dashboard-users-tab-title": "Pengguna dasbor bersama"
     }
   },

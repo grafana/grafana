@@ -156,8 +156,11 @@
       "title": "Holen Sie sich Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Testbenutzer-Mapping",
-      "test-mapping-run-button": "Ausführen"
+      "test-mapping-run-button": "Ausführen",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -3597,6 +3600,7 @@
       "button-cancel": "Abbrechen",
       "button-delete": "Löschen",
       "button-deleting": "Wird gelöscht …",
+      "commit": "",
       "delete-warning": "Dadurch werden dieser und alle untergeordneten Ordner gelöscht. Insgesamt betrifft dies:",
       "success-message": "Ordner erfolgreich gelöscht"
     },
@@ -5404,10 +5408,6 @@
       "save-dashboard-short": "Speichern",
       "save-library-panel": "Bibliotheks-Panel speichern",
       "settings": "Dashboard-Einstellungen",
-      "share": {
-        "label": "Teilen",
-        "tooltip": "Dashboard oder Panel teilen"
-      },
       "share-button": "Teilen",
       "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben",
       "unmark-favorite": "Markierung als Favorit entfernen"
@@ -5658,14 +5658,6 @@
         "title": {
           "new-dashboard": "Neues Dashboard"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "Öffentliche URL widerrufen"
-      },
-      "title": {
-        "revoke-public-url": "Öffentliche URL widerrufen"
       }
     },
     "constant-variable-form": {
@@ -5922,13 +5914,12 @@
       "usage-count_other": "Verwendet bei {{count}} Dashboards"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "Fehler beim Verschieben des Dashboards",
       "api-error": "Dashboard konnte nicht verschoben werden",
       "cancel-action": "Abbrechen",
       "current-file-not-found": "Die aktuelle Dashboard-Datei konnte nicht gefunden werden",
       "drawer-title": "Bereitgestelltes Dashboard verschieben",
       "file-load-error": "Fehler beim Laden des Dashboards",
-      "loading-file-data": "Daten des Dashboards werden geladen",
+      "loading-dashboard-data": "",
       "move-action": "Dashboard verschieben",
       "move-read-only-message": "Dieses Dashboard kann nicht direkt von Grafana aus verschoben werden, da das Repository schreibgeschützt ist. Um dieses Dashboard zu verschieben, verschieben Sie die Datei bitte in Ihrem Git-Repository.",
       "moving": "Wird verschoben ...",
@@ -9239,7 +9230,8 @@
       "disable-button": "Deaktivieren",
       "discard-button": "Verwerfen",
       "save-and-enable-button": "Speichern und aktivieren",
-      "save-button": "Speichern"
+      "save-button": "Speichern",
+      "test-button": ""
     },
     "documentation": "Dokumentation",
     "host": {
@@ -9269,8 +9261,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "Abbrechen",
-      "create": "Bibliotheks-Panel erstellen",
       "error": "Ein Bibliotheks-Panel mit diesem Namen existiert bereits",
       "folder": "In Ordner speichern",
       "folder-description": "Berechtigungen des Bibliotheks-Panels werden von den Ordnerberechtigungen übernommen",
@@ -10338,9 +10328,6 @@
     },
     "profiles": {
       "title": "Profile"
-    },
-    "public": {
-      "title": "Öffentliche Dashboards"
     },
     "recently-deleted": {
       "subtitle": "Alle hier länger als 30 Tage aufgeführten Elemente werden automatisch gelöscht.",
@@ -11761,7 +11748,6 @@
       "email-share-type-option-label": "Nur bestimmte Personen",
       "pause-sharing-dashboard-label": "Teilen des Dashboards pausieren",
       "public-share-type-option-label": "Jeder mit einem Link",
-      "revoke-body": "Sind Sie sicher, dass Sie diese URL widerrufen möchten? Das Dashboard wird nicht mehr öffentlich sein.",
       "revoke-public-URL-button": "Öffentliche URL widerrufen",
       "revoke-public-URL-button-title": "Öffentliche URL widerrufen",
       "settings-title": "Einstellungen"
@@ -11775,7 +11761,6 @@
       "success-pause": "Ihr Dashboard-Zugriff wurde pausiert",
       "success-resume": "Ihr Dashboard-Zugriff wurde fortgesetzt",
       "success-update": "Die Einstellungen wurden erfolgreich aktualisiert",
-      "success-update-old": "Öffentliches Dashboard aktualisiert!",
       "time-range-label": "Zeitbereich",
       "time-range-tooltip": "Das freigegebene Dashboard verwendet die Standardeinstellungen für den Zeitbereich des Dashboards"
     },
@@ -11783,10 +11768,6 @@
       "generate-public-url-button": "Öffentliche URL generieren",
       "unsupported-features-desc": "Momentan unterstützen wir keine Template-Variablen oder Frontend-Datenquellen",
       "welcome-title": "Willkommen zu öffentlichen Dashboards!"
-    },
-    "delete-modal": {
-      "revoke-body-text": "Sind Sie sicher, dass Sie diese URL widerrufen möchten? Das Dashboard wird nicht mehr öffentlich sein.",
-      "revoke-title": "Öffentliche URL widerrufen"
     },
     "email-sharing": {
       "accept-button": "Annehmen",
@@ -11817,11 +11798,8 @@
       "success-share-type-change": "Dashboard-Zugriff aktualisiert: Nur bestimmte Personen können jetzt mit dem Link zugreifen"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Kontaktieren Sie Ihren Administrator, um die Berechtigung für {{action}} von öffentlichen Dashboards zu erhalten",
-      "no-upsert-perm-alert-title": "Sie haben keine Berechtigung zum {{ action }} eines öffentlichen Dashboards",
       "save-dashboard-changes-alert-title": "Bitte speichern Sie Ihre Dashboard-Änderungen bevor Sie die öffentliche Konfiguration aktualisieren",
       "unsupport-data-source-alert-readmore-link": "Erfahren Sie mehr über unterstützte Datenquellen",
-      "unsupported-data-source-alert-desc": "In diesem Dashboard gibt es Datenquellen, die für öffentliche Dashboards nicht unterstützt werden. Panels, die diese Datenquellen nutzen, funktionieren möglicherweise nicht ordnungsgemäß: {{unsupportedDataSources}}.",
       "unsupported-data-source-alert-title": "Nicht unterstützte Datenquellen",
       "unsupported-template-variable-alert-desc": "Dieses öffentliche Dashboard funktioniert möglicherweise nicht, da es Template-Variablen verwendet",
       "unsupported-template-variable-alert-title": "Template-Variablen werden nicht unterstützt"
@@ -11855,8 +11833,7 @@
       "time-range-text": "Zeitraum = "
     },
     "share": {
-      "success-delete": "Ihr Dashboard kann nicht mehr geteilt werden",
-      "success-delete-old": "Öffentliches Dashboard gelöscht!"
+      "success-delete": "Ihr Dashboard kann nicht mehr geteilt werden"
     },
     "share-configuration": {
       "share-type-label": "Link-Zugriff"
@@ -11875,24 +11852,6 @@
       "revoke-access-button": "Zugriff widerrufen",
       "revoke-access-description": "Möchten Sie diesen Zugang wirklich widerrufen? Das Dashboard kann nicht mehr geteilt werden.",
       "unsupported-data-source-alert-desc": "Es gibt Datenquellen in diesem Dashboard, die für freigegebene Dashboards nicht unterstützt werden. Panels, die diese Datenquellen verwenden, funktionieren möglicherweise nicht ordnungsgemäß: {{unsupportedDataSources}}."
-    },
-    "sharing": {
-      "success-creation": "Das Dashboard ist nun öffentlich!"
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "Öffentliches Dashboard konfigurieren",
-      "revoke-button-text": "Öffentliche URL widerrufen",
-      "revoke-button-tooltip": "Öffentliche Dashboard-URL widerrufen",
-      "view-button-tooltip": "Öffentliches Dashboard anzeigen"
-    },
-    "empty-state": {
-      "message": "Sie haben noch keine öffentlichen Dashboards erstellt",
-      "more-info": "Erstellen Sie ein öffentliches Dashboard aus einem beliebigen vorhandenen Dashboard über das Fenster <1>Teilen</1>. <4>Mehr erfahren</4>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "Teilen pausieren"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11900,8 +11859,6 @@
       "external-link": "Externer Link",
       "loading-text": "Wird geladen ...",
       "open-dashboard-list-text": "Dashboard-Liste öffnen",
-      "public-dashboard-link": "Öffentliches Dashboard-URL",
-      "public-dashboard-setting": "Einstellungen des öffentlichen Dashboards",
       "sharing-setting": "Einstellungen zum Teilen"
     },
     "delete-user-modal": {
@@ -11909,14 +11866,12 @@
       "delete-user-cancel-button": "Abbrechen",
       "delete-user-revoke-access-button": "Zugriff widerrufen",
       "revoke-access-title": "Zugriff widerrufen",
-      "revoke-user-access-modal-desc-line1": "Sind Sie sicher, dass Sie den Zugriff für {{email}} widerrufen möchten?",
-      "revoke-user-access-modal-desc-line2": "Durch diese Aktion wird {{email}}&apos; sofort der Zugriff auf alle öffentlichen Dashboards entzogen."
+      "revoke-user-access-modal-desc-line1": "Sind Sie sicher, dass Sie den Zugriff für {{email}} widerrufen möchten?"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "Diese Aktion widerruft sofort den Zugang von {{email}} zu allen freigegebenen Dashboards."
     },
     "modal": {
-      "dashboard-modal-title": "Öffentliche Dashboards",
       "shared-dashboard-modal-title": "Freigegebene Dashboards"
     },
     "table-body": {
@@ -12418,8 +12373,6 @@
       "export": "Exportieren",
       "library-panel": "Bibliotheks-Panel",
       "link": "Link",
-      "panel-embed": "Einbetten",
-      "public-dashboard": "Öffentliches Dashboard",
       "public-dashboard-title": "Öffentliches Dashboard",
       "snapshot": "Schnappschuss"
     },
@@ -12814,6 +12767,7 @@
     "description-column-filter": "Aktiviert/deaktiviert Feldfilter in der Tabelle",
     "description-frozen-columns": "",
     "description-min-column-width": "Die Mindestbreite für die automatische Größenänderung der Spalte",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Alternativer Text, der angezeigt wird, wenn ein Bild nicht angezeigt werden kann, oder für Nutzer, die einen Screenreader verwenden",
@@ -12844,6 +12798,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minimale Spaltenbreite",
     "name-show-table-header": "Tabellenüberschirft anzeigen",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Kopfzeilentext umbrechen",
@@ -14013,7 +13968,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Nutzer des öffentlichen Dashboards",
       "shared-dashboard-users-tab-title": "Freigegebene Dashboard-Benutzer"
     }
   },
