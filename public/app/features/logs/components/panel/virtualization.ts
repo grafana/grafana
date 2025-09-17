@@ -182,7 +182,8 @@ export class LogLineVirtualization {
   calculateFieldDimensions = (
     logs: LogListModel[],
     displayedFields: string[] = [],
-    timestampResolution: LogLineTimestampResolution
+    timestampResolution: LogLineTimestampResolution,
+    showUniqueLabels?: boolean
   ) => {
     if (!logs.length) {
       return [];
@@ -214,6 +215,12 @@ export class LogLineVirtualization {
         width: levelWidth,
       },
     ];
+    if (showUniqueLabels) {
+      dimensions.push({
+        field: 'unique-labels',
+        width: 0,
+      });
+    }
     for (const field in fieldWidths) {
       dimensions.push({
         field,
@@ -319,7 +326,7 @@ export interface LogFieldDimension {
   width: number;
 }
 
-export function hasUnderOrOverflow(
+export function getLogLineDOMHeight(
   virtualization: LogLineVirtualization,
   element: HTMLDivElement,
   calculatedHeight?: number,

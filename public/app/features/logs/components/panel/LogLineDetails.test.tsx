@@ -64,7 +64,6 @@ const setup = (
     containerElement: document.createElement('div'),
     focusLogLine: jest.fn(),
     logs,
-    onResize: jest.fn(),
     timeRange: getDefaultTimeRange(),
     timeZone: 'browser',
     showControls: true,
@@ -613,7 +612,6 @@ describe('LogLineDetails', () => {
         timeRange: getDefaultTimeRange(),
         timeZone: 'browser',
         showControls: true,
-        onResize: jest.fn(),
       };
 
       const contextData: LogListContextData = {
@@ -688,7 +686,14 @@ describe('LogLineDetails', () => {
           if (field.config && field.config.links) {
             return field.config.links.map((link) => {
               return {
-                href: '/explore?left=%7B%22range%22%3A%7B%22from%22%3A%22now-15m%22%2C%22to%22%3A%22now%22%7D%2C%22datasource%22%3A%22fetpfiwe8asqoe%22%2C%22queries%22%3A%5B%7B%22query%22%3A%22abcd1234%22%2C%22queryType%22%3A%22traceql%22%7D%5D%7D',
+                href: '/explore',
+                interpolatedParams: {
+                  query: {
+                    refId: 'A',
+                    query: 'abcd1234',
+                    queryType: 'traceql',
+                  },
+                },
                 title: 'tempo',
                 target: '_blank',
                 origin: field,
@@ -750,7 +755,14 @@ describe('LogLineDetails', () => {
           if (field.config && field.config.links) {
             return field.config.links.map((link) => {
               return {
-                href: '/explore?left=%7B%22range%22%3A%7B%22from%22%3A%22now-15m%22%2C%22to%22%3A%22now%22%7D%2C%22datasource%22%3A%22fetpfiwe8asqoe%22%2C%22queries%22%3A%5B%7B%22query%22%3A%22abcd1234%22%2C%22queryType%22%3A%22traceql%22%7D%5D%7D',
+                href: '/explore',
+                interpolatedParams: {
+                  query: {
+                    refId: 'A',
+                    query: 'abcd1234',
+                    queryType: 'traceql',
+                  },
+                },
                 title: 'tempo',
                 target: '_blank',
                 origin: field,

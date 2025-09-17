@@ -6,7 +6,7 @@ require (
 	github.com/google/go-github/v70 v70.0.0
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib v0.0.0-20250910124502-5d080d6bb9ea
-	github.com/grafana/grafana-app-sdk/logging v0.44.0
+	github.com/grafana/grafana-app-sdk/logging v0.45.0
 	github.com/grafana/grafana/apps/secret v0.0.0-20250902093454-b56b7add012f
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250804150913-990f1c69ecc2
 	github.com/grafana/nanogit v0.0.0-20250723104447-68f58f5ecec0
@@ -42,7 +42,7 @@ require (
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/grafana/authlib/types v0.0.0-20250721184729-1593a38e4933 // indirect
 	github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4 // indirect
-	github.com/grafana/grafana-app-sdk v0.44.0 // indirect
+	github.com/grafana/grafana-app-sdk v0.45.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect

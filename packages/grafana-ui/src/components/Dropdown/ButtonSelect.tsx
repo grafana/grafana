@@ -1,20 +1,12 @@
 import { css } from '@emotion/css';
-import {
-  autoUpdate,
-  flip,
-  offset,
-  shift,
-  useClick,
-  useDismiss,
-  useFloating,
-  useInteractions,
-} from '@floating-ui/react';
+import { autoUpdate, offset, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { FocusScope } from '@react-aria/focus';
 import { memo, HTMLAttributes, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { getPositioningMiddleware } from '../../utils/floating';
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
 import { ToolbarButton, ToolbarButtonVariant } from '../ToolbarButton/ToolbarButton';
@@ -39,22 +31,14 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
   const { className, options, value, onChange, narrow, variant, ...restProps } = props;
   const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(false);
+  const placement = 'bottom-end';
 
   // the order of middleware is important!
-  const middleware = [
-    offset(0),
-    flip({
-      fallbackAxisSideDirection: 'end',
-      // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: false,
-      boundary: document.body,
-    }),
-    shift(),
-  ];
+  const middleware = [offset(0), ...getPositioningMiddleware(placement)];
 
   const { context, refs, floatingStyles } = useFloating({
     open: isOpen,
-    placement: 'bottom-end',
+    placement,
     onOpenChange: setIsOpen,
     middleware,
     whileElementsMounted: autoUpdate,

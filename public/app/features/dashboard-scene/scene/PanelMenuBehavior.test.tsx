@@ -534,7 +534,7 @@ describe('panelMenuBehavior', () => {
       expect(menu.state.items?.find((i) => i.text === 'Remove')).toBeDefined();
       const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
       expect(moreMenu?.find((i) => i.text === 'Duplicate')).toBeDefined();
-      expect(moreMenu?.find((i) => i.text === 'Create library panel')).toBeDefined();
+      expect(moreMenu?.find((i) => i.text === 'New library panel')).toBeDefined();
     });
 
     it('should only contain explore when embedded', async () => {

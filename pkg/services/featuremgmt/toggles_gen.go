@@ -259,6 +259,10 @@ const (
 	// Adds support for Kubernetes alerting and recording rules
 	FlagKubernetesAlertingRules = "kubernetesAlertingRules"
 
+	// FlagKubernetesCorrelations
+	// Adds support for Kubernetes correlations
+	FlagKubernetesCorrelations = "kubernetesCorrelations"
+
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
 	FlagDashboardDisableSchemaValidationV1 = "dashboardDisableSchemaValidationV1"
@@ -502,10 +506,6 @@ const (
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
 	FlagLogsExploreTableDefaultVisualization = "logsExploreTableDefaultVisualization"
-
-	// FlagNewDashboardSharingComponent
-	// Enables the new sharing drawer design
-	FlagNewDashboardSharingComponent = "newDashboardSharingComponent"
 
 	// FlagAlertingListViewV2
 	// Enables the new alert list view design
@@ -1050,6 +1050,10 @@ const (
 	// FlagPluginContainers
 	// Enables running plugins in containers
 	FlagPluginContainers = "pluginContainers"
+
+	// FlagTempoSearchBackendMigration
+	// Run search queries through the tempo backend
+	FlagTempoSearchBackendMigration = "tempoSearchBackendMigration"
 
 	// FlagFilterOutBotsFromFrontendLogs
 	// Filter out bots from collecting data for Frontend Observability

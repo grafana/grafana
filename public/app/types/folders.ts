@@ -47,6 +47,11 @@ export interface FolderState {
   version: number;
 }
 
+/**
+ * API response from `/api/folders/${folderUID}/counts`
+ * @deprecated The properties here are inconsistently named with App Platform API responses.
+ * Avoid using this type as it will be removed after app platform folder migration is complete
+ */
 export interface DescendantCountDTO {
   folder: number;
   dashboard: number;
@@ -54,12 +59,9 @@ export interface DescendantCountDTO {
   alertrule: number;
 }
 
-export interface DescendantCount {
-  folder: number;
-  dashboard: number;
-  libraryPanel: number;
-  alertRule: number;
-}
+type DescendantResource = 'folders' | 'dashboards' | 'library_elements' | 'alertrules';
+/** Summary of descendant counts by resource type, with keys matching the App Platform API response */
+export interface DescendantCount extends Record<DescendantResource, number> {}
 
 export interface FolderInfo {
   /**

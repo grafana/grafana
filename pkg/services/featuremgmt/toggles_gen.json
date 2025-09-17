@@ -2033,6 +2033,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesCorrelations",
+        "resourceVersion": "1757513374180",
+        "creationTimestamp": "2025-09-10T14:09:34Z"
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes correlations",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesDashboards",
         "resourceVersion": "1755157224830",
         "creationTimestamp": "2024-06-05T14:34:23Z",
@@ -2410,7 +2423,8 @@
       "metadata": {
         "name": "newDashboardSharingComponent",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-05-03T15:02:18Z"
+        "creationTimestamp": "2024-05-03T15:02:18Z",
+        "deletionTimestamp": "2025-09-12T17:27:39Z"
       },
       "spec": {
         "description": "Enables the new sharing drawer design",
@@ -3458,6 +3472,23 @@
         "stage": "experimental",
         "codeowner": "@grafana/observability-traces-and-profiling",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "tempoSearchBackendMigration",
+        "resourceVersion": "1758029567165",
+        "creationTimestamp": "2025-09-16T11:18:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-16 13:32:47.165146 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Run search queries through the tempo backend",
+        "stage": "GA",
+        "codeowner": "@grafana/oss-big-tent",
+        "requiresRestart": true,
+        "expression": "false"
       }
     },
     {

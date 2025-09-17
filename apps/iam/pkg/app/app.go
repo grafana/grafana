@@ -79,7 +79,7 @@ func New(cfg app.Config) (app.App, error) {
 
 	logging.DefaultLogger.Info("FolderReconciler created")
 
-	reconcilerOptions := simple.BasicReconcileOptions{}
+	reconcilerOptions := simple.UnmanagedKindReconcileOptions{}
 
 	if cfg.SpecificConfig.(AppConfig).FolderReconcilerNamespace != "" {
 		reconcilerOptions.Namespace = cfg.SpecificConfig.(AppConfig).FolderReconcilerNamespace

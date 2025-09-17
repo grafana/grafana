@@ -1,38 +1,13 @@
 package test
 
 import (
-	"context"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/sql"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	test "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-func newTestBackend(b testing.TB) resource.StorageBackend {
-	dbstore := db.InitTestDB(b)
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-	require.NoError(b, err)
-	require.NotNil(b, eDB)
-
-	backend, err := sql.NewBackend(sql.BackendOptions{
-		DBProvider:              eDB,
-		IsHA:                    true,
-		SimulatedNetworkLatency: 2 * time.Millisecond, // to simulate some network latency
-	})
-	require.NoError(b, err)
-	require.NotNil(b, backend)
-	err = backend.Init(context.Background())
-	require.NoError(b, err)
-	return backend
-}
 
 func TestIntegrationBenchmarkSQLStorageBackend(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
@@ -40,5 +15,5 @@ func TestIntegrationBenchmarkSQLStorageBackend(t *testing.T) {
 	if db.IsTestDbSQLite() {
 		opts.Concurrency = 1 // to avoid SQLite database is locked error
 	}
-	test.BenchmarkStorageBackend(t, newTestBackend(t), opts)
+	test.BenchmarkStorageBackend(t, newTestBackend(t, true, 2*time.Millisecond), opts)
 }

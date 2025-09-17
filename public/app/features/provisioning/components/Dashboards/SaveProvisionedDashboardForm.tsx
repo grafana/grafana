@@ -115,7 +115,7 @@ export function SaveProvisionedDashboardForm({
     panelEditor?.onDiscard();
 
     const model = dashboard.getSaveModel();
-    const resourceData = request?.data?.resource.dryRun;
+    const resourceData = request?.data?.resource.upsert || request?.data?.resource.dryRun;
     const saveResponse = createSaveResponseFromResource(resourceData);
     dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
 
@@ -158,7 +158,8 @@ export function SaveProvisionedDashboardForm({
     });
 
     createOrUpdateFile({
-      ref,
+      // Skip adding ref to the default branch request
+      ref: ref === repository?.branch ? undefined : ref,
       name: repo,
       path,
       message,

@@ -118,7 +118,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
             <div {...secondaryProps} className={cx(secondaryProps.className, styles.editPane)}>
               <DashboardEditPaneRenderer
                 editPane={editPane}
-                isCollapsed={isCollapsed}
+                isEditPaneCollapsed={isCollapsed}
                 onToggleCollapse={onToggleCollapse}
                 openOverlay={selectionContext.selected.length > 0}
               />

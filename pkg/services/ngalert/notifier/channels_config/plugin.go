@@ -3,6 +3,7 @@ package channels_config
 // NotifierPlugin holds meta information about a notifier.
 type NotifierPlugin struct {
 	Type        string           `json:"type"`
+	TypeAlias   string           `json:"typeAlias,omitempty"`
 	Name        string           `json:"name"`
 	Heading     string           `json:"heading"`
 	Description string           `json:"description"`
@@ -14,16 +15,16 @@ type NotifierPlugin struct {
 // It includes metadata such as type, name, description, and version-specific details.
 type VersionedNotifierPlugin struct {
 	Type           string                  `json:"type"`
-	CurrentVersion string                  `json:"currentVersion"`
+	CurrentVersion NotifierVersion         `json:"currentVersion"`
 	Name           string                  `json:"name"`
-	Heading        string                  `json:"heading"`
-	Description    string                  `json:"description"`
-	Info           string                  `json:"info"`
+	Heading        string                  `json:"heading,omitempty"`
+	Description    string                  `json:"description,omitempty"`
+	Info           string                  `json:"info,omitempty"`
 	Versions       []NotifierPluginVersion `json:"versions"`
 }
 
 // GetVersion retrieves a specific version of the notifier plugin by its version string. Returns the version and a boolean indicating success.
-func (p VersionedNotifierPlugin) GetVersion(v string) (NotifierPluginVersion, bool) {
+func (p VersionedNotifierPlugin) GetVersion(v NotifierVersion) (NotifierPluginVersion, bool) {
 	for _, version := range p.Versions {
 		if version.Version == v {
 			return version, true
@@ -44,10 +45,17 @@ func (p VersionedNotifierPlugin) GetCurrentVersion() NotifierPluginVersion {
 
 // NotifierPluginVersion represents a version of a notifier plugin, including configuration options and metadata.
 type NotifierPluginVersion struct {
-	Version   string           `json:"version"`
-	CanCreate bool             `json:"canCreate"`
-	Options   []NotifierOption `json:"options"`
-	Info      string           `json:"info"`
+	TypeAlias string                   `json:"typeAlias,omitempty"`
+	Version   NotifierVersion          `json:"version"`
+	CanCreate bool                     `json:"canCreate"`
+	Options   []NotifierOption         `json:"options"`
+	Info      string                   `json:"info,omitempty"`
+	Plugin    *VersionedNotifierPlugin `json:"-"`
+}
+
+// GetSecretFieldsPaths returns a list of paths for fields marked as secure within the NotifierPluginVersion's options.
+func (v NotifierPluginVersion) GetSecretFieldsPaths() []string {
+	return getSecretFields("", v.Options)
 }
 
 // NotifierOption holds information about options specific for the NotifierPlugin.

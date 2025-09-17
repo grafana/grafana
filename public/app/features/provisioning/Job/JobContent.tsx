@@ -95,13 +95,11 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
           </Stack>
         )}
         {state === 'success' ? (
-          <Stack direction="row" gap={1}>
-            {pullRequestURL ? (
-              <PullRequestButtons urls={job.status?.url} jobType={jobType} />
-            ) : (
-              <RepositoryLink name={repoName} jobType={jobType} />
-            )}
-          </Stack>
+          pullRequestURL ? (
+            <PullRequestButtons urls={job.status?.url} jobType={jobType} />
+          ) : (
+            <RepositoryLink name={repoName} jobType={jobType} />
+          )
         ) : (
           <ControlledCollapse label={t('provisioning.job-status.label-view-details', 'View details')} isOpen={false}>
             <pre>{JSON.stringify(job, null, 2)}</pre>

@@ -69,7 +69,7 @@ export const LogListControlsSelectOption = React.forwardRef<SVGElement, SelectPr
       className: iconButtonClassName,
       name: iconButtonName,
       dropdown,
-      isActive: isActive,
+      isActive,
       customTagText,
       buttonAriaLabel,
       ...iconButtonProps

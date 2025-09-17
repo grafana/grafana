@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -30,6 +31,39 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+// initMutex is a global lock to ensure that database initialization and migration
+// only happens once at a time across all concurrent integration tests in this package.
+// This prevents race conditions where multiple tests try to alter the same table simultaneously.
+var initMutex = &sync.Mutex{}
+
+// newTestBackend creates a fresh database and backend for a test.
+// It uses a mutex to ensure the entire initialization and migration
+// process is atomic and does not race with other parallel tests.
+func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Duration) resource.StorageBackend {
+	// Lock to ensure the entire init block is atomic.
+	initMutex.Lock()
+	// Unlock once the function returns the initialized backend.
+	defer initMutex.Unlock()
+
+	dbstore := db.InitTestDB(t)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+	require.NoError(t, err)
+	require.NotNil(t, eDB)
+
+	backend, err := sql.NewBackend(sql.BackendOptions{
+		DBProvider:              eDB,
+		IsHA:                    isHA,
+		SimulatedNetworkLatency: simulatedNetworkLatency,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, backend)
+
+	// Use a context with a reasonable timeout for migrations.
+	err = backend.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
+	require.NoError(t, err)
+	return backend
+}
+
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
@@ -38,20 +72,7 @@ func TestIntegrationStorageServer(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	unitest.RunStorageServerTest(t, func(ctx context.Context) resource.StorageBackend {
-		dbstore := db.InitTestDB(t)
-		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-		require.NoError(t, err)
-		require.NotNil(t, eDB)
-
-		backend, err := sql.NewBackend(sql.BackendOptions{
-			DBProvider: eDB,
-			IsHA:       true,
-		})
-		require.NoError(t, err)
-		require.NotNil(t, backend)
-		err = backend.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
-		require.NoError(t, err)
-		return backend
+		return newTestBackend(t, true, 0)
 	})
 }
 
@@ -61,39 +82,13 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			dbstore := db.InitTestDB(t)
-			eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-			require.NoError(t, err)
-			require.NotNil(t, eDB)
-
-			backend, err := sql.NewBackend(sql.BackendOptions{
-				DBProvider: eDB,
-				IsHA:       true,
-			})
-			require.NoError(t, err)
-			require.NotNil(t, backend)
-			err = backend.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
-			require.NoError(t, err)
-			return backend
+			return newTestBackend(t, true, 0)
 		}, nil)
 	})
 
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			dbstore := db.InitTestDB(t)
-			eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-			require.NoError(t, err)
-			require.NotNil(t, eDB)
-
-			backend, err := sql.NewBackend(sql.BackendOptions{
-				DBProvider: eDB,
-				IsHA:       false,
-			})
-			require.NoError(t, err)
-			require.NotNil(t, backend)
-			err = backend.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
-			require.NoError(t, err)
-			return backend
+			return newTestBackend(t, false, 0)
 		}, nil)
 	})
 }
@@ -118,20 +113,10 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 	t.Cleanup(search.CloseAllIndexes)
 
 	// Create a new resource backend
-	dbstore := db.InitTestDB(t)
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-	require.NoError(t, err)
-	require.NotNil(t, eDB)
-
-	storage, err := sql.NewBackend(sql.BackendOptions{
-		DBProvider: eDB,
-		IsHA:       false,
-	})
-	require.NoError(t, err)
+	storage := newTestBackend(t, false, 0)
 	require.NotNil(t, storage)
 
-	err = storage.Init(ctx)
-	require.NoError(t, err)
+	// Run the shared storage and search tests
 	unitest.RunTestSearchAndStorage(t, ctx, storage, search)
 }
 

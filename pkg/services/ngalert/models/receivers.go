@@ -228,23 +228,21 @@ func (f IntegrationFieldPath) With(segment string) IntegrationFieldPath {
 //	IntegrationConfig - The integration configuration
 //	error - Error if integration type not found or invalid version specified
 func IntegrationConfigFromType(integrationType string, version *string) (IntegrationConfig, error) {
-	config, err := channels_config.ConfigForIntegrationType(integrationType)
+	versionConfig, err := channels_config.ConfigForIntegrationType(integrationType)
 	if err != nil {
 		return IntegrationConfig{}, err
 	}
-	var versionConfig channels_config.NotifierPluginVersion
-	if version == nil {
-		versionConfig = config.GetCurrentVersion()
-	} else {
-		var ok bool
-		versionConfig, ok = config.GetVersion(*version)
-		if !ok {
+	// if particular version is requested and the version returned does not match, try to get the correct version
+	if version != nil && *version != string(versionConfig.Version) {
+		exists := false
+		versionConfig, exists = versionConfig.Plugin.GetVersion(channels_config.NotifierVersion(*version))
+		if !exists {
 			return IntegrationConfig{}, fmt.Errorf("version %s not found in config", *version)
 		}
 	}
 	integrationConfig := IntegrationConfig{
-		Type:    config.Type,
-		Version: versionConfig.Version,
+		Type:    versionConfig.Plugin.Type,
+		Version: string(versionConfig.Version),
 		Fields:  make(map[string]IntegrationField, len(versionConfig.Options)),
 	}
 	for _, option := range versionConfig.Options {

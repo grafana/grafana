@@ -8,6 +8,36 @@ export const DashboardInteractions = {
     reportDashboardInteraction('init_dashboard_completed', { ...properties });
   },
 
+  // grafana_dashboards_edit_button_clicked
+  // when a user clicks the ‘edit’ or ‘make editable’ button in a dashboard view mode
+  editButtonClicked: (properties: { outlineExpanded: boolean }) => {
+    reportDashboardInteraction('edit_button_clicked', properties);
+  },
+
+  // grafana_dashboards_exit_edit_button_clicked
+  // when a user clicks the ‘Exit edit’ or ‘Exit Edit mode’ button in a dashboard edit mode
+  exitEditButtonClicked: () => {
+    reportDashboardInteraction('exit_edit_button_clicked');
+  },
+
+  // grafana_dashboards_outline_clicked
+  // when a user opens the outline view
+  dashboardOutlineClicked: () => {
+    reportDashboardInteraction('outline_clicked');
+  },
+
+  // grafana_dashboards_outline_item_clicked
+  // when a user clicks on an element of the outline
+  outlineItemClicked: (properties: { index: number; depth: number }) => {
+    reportDashboardInteraction('outline_item_clicked', properties);
+  },
+
+  // dashboards_add_variable_button_clicked
+  // when a user clicks on ‘Add Variable’ or ‘New Variable’
+  addVariableButtonClicked: (properties: { source: 'edit_pane' | 'settings_pane' }) => {
+    reportDashboardInteraction('add_variable_button_clicked', properties);
+  },
+
   // Dashboard edit item actions
   // dashboards_edit_action_clicked: when user adds or removes an item in edit mode
   // props: { item: string } - item is one of: add_panel, group_row, group_tab, ungroup, paste_panel, remove_row, remove_tab
