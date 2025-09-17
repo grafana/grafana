@@ -262,6 +262,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		SharedWithMeFolderUID:            folder.SharedWithMeFolderUID,
 		RootFolderUID:                    accesscontrol.GeneralFolderUID,
 		LocalFileSystemAvailable:         hs.Cfg.LocalFileSystemAvailable,
+		ProvisioningAllowedTargets:       hs.Cfg.ProvisioningAllowedTargets,
 		ReportingStaticContext:           hs.Cfg.ReportingStaticContext,
 		ExploreDefaultTimeOffset:         hs.Cfg.ExploreDefaultTimeOffset,
 		ExploreHideLogsDownload:          hs.Cfg.ExploreHideLogsDownload,

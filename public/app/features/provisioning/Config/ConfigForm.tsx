@@ -4,6 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   Button,
   Checkbox,
@@ -33,10 +34,14 @@ import { getDefaultValues } from './defaults';
 
 // This needs to be a function for translations to work
 const getTargetOptions = () => {
-  return [
+  const allOptions = [
     { value: 'instance', label: t('provisioning.config-form.option-entire-instance', 'Entire instance') },
     { value: 'folder', label: t('provisioning.config-form.option-managed-folder', 'Managed folder') },
   ];
+  
+  const allowedTargets = (config as any).provisioningAllowedTargets || ['instance', 'folder'];
+  
+  return allOptions.filter(option => allowedTargets.includes(option.value));
 };
 
 export interface ConfigFormProps {
