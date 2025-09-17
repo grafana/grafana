@@ -1,14 +1,19 @@
 import { useMemo, useState } from 'react';
 
-import { t } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Drawer, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { Alert, Drawer, LinkButton, Stack, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
 import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 
+import { Spacer } from '../../components/Spacer';
+import { WithReturnButton } from '../../components/WithReturnButton';
+import { Title } from '../../components/rule-viewer/RuleViewer';
 import { Details } from '../../components/rule-viewer/tabs/Details';
 import { QueryResults } from '../../components/rule-viewer/tabs/Query';
 import { useCombinedRule } from '../../hooks/useCombinedRule';
 import { stringifyErrorLike } from '../../utils/misc';
+import { rulesNav } from '../../utils/navigation';
+import { getRulePluginOrigin, isPausedRule, prometheusRuleType, rulerRuleType } from '../../utils/rules';
 
 interface RuleDetailsDrawerProps {
   ruleUID: string;
@@ -57,11 +62,44 @@ export function RuleDetailsDrawer({ ruleUID, onClose }: RuleDetailsDrawerProps) 
     );
   }
 
+  const { rulerRule, promRule } = rule;
+  const isPaused = rulerRuleType.grafana.rule(rulerRule) && isPausedRule(rulerRule);
+  const ruleOrigin = rulerRule ? getRulePluginOrigin(rulerRule) : getRulePluginOrigin(promRule);
+
   return (
     <Drawer
-      title={rule.name}
-      subtitle={t('alerting.triage.rule-details.subtitle', 'Rule details and conditions')}
       onClose={onClose}
+      title={
+        <Stack direction="column">
+          <Stack direction="row">
+            <Title
+              name={rule.name}
+              paused={isPaused}
+              state={prometheusRuleType.alertingRule(promRule) ? promRule.state : undefined}
+              health={promRule?.health}
+              ruleType={promRule?.type}
+              ruleOrigin={ruleOrigin}
+            />
+            <Spacer />
+            <WithReturnButton
+              component={
+                <LinkButton
+                  icon="external-link-alt"
+                  variant="secondary"
+                  href={rulesNav.detailsPageLink('grafana', {
+                    ruleSourceName: 'grafana',
+                    uid: rule.uid ?? '',
+                  })}
+                  target="_blank"
+                >
+                  <Trans i18nKey="alerting.rule-details-drawer.go-to-detail-view">Open in new tab</Trans>
+                </LinkButton>
+              }
+            />
+          </Stack>
+          <Text color="secondary">{t('alerting.triage.rule-details.subtitle', 'Rule details and conditions')}</Text>
+        </Stack>
+      }
       size="md"
       tabs={
         <TabsBar>
