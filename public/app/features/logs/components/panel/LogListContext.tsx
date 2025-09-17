@@ -334,9 +334,7 @@ export const LogListContextProvider = ({
 
   // Sync details mode
   useEffect(() => {
-    if (detailsModeProp) {
-      setDetailsMode(detailsModeProp);
-    }
+    setDetailsMode(detailsModeProp);
   }, [detailsModeProp]);
 
   // Sync font size
