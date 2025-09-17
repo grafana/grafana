@@ -156,8 +156,11 @@
       "title": "Skaffa Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Testa användarmappning",
-      "test-mapping-run-button": "Kör"
+      "test-mapping-run-button": "Kör",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -504,6 +507,7 @@
       "copy-link": "Kopiera länk",
       "duplicate": "Dubblett",
       "export": "Exportera",
+      "manage-enrichments": "",
       "silence-notifications": "Tysta aviseringar",
       "with-modifications": "Med ändringar"
     },
@@ -1121,7 +1125,7 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "",
+        "enrichment-drawer-extension": "",
         "rule-viewer-section-extension": ""
       }
     },
@@ -2057,9 +2061,6 @@
       "text-loading-rules": "Laddar regler …",
       "title-dashboard-not-saved": "Instrumentpanelen sparades inte"
     },
-    "paused-badge": {
-      "paused": "Pausad"
-    },
     "payload-editor": {
       "edit-payload": "Redigera nyttolast",
       "label-add-custom-alert-instance": "Lägg till anpassad larminstans",
@@ -2211,9 +2212,6 @@
       "label-time-range": "Tidsintervall",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Intervall = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> till nu"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2559,6 +2557,10 @@
       "recovering": "{{recoveringStats}} återhämtas",
       "error_one": "{{count}} fel",
       "error_other": "{{count}} fel"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Välj ”Grafana-hanterad” om du inte har en Mimir-, Loki- eller Cortex-datakälla med Ruler API aktiverat."
@@ -3662,7 +3664,13 @@
       "text": "Inga resultat hittades för din fråga"
     },
     "restore": {
-      "success": "Instrumentpanelen {{name}} har återställts"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Om du har direkt åtkomst till målet kopierar du JSON och klistrar in den där.",
     "trash-state-manager": {
@@ -9234,7 +9242,8 @@
       "disable-button": "Inaktivera",
       "discard-button": "Kassera",
       "save-and-enable-button": "Spara och aktivera",
-      "save-button": "Spara"
+      "save-button": "Spara",
+      "test-button": ""
     },
     "documentation": "dokumentation",
     "host": {
@@ -9628,10 +9637,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "Avduplicering",
-      "disable-highlighting": "Inaktivera markering",
       "disable-prettify-json": "Dölj JSON-loggar",
-      "display-level": "Visa nivåer",
       "display-level-all": "Alla nivåer",
       "download": "Ladda ner loggar",
       "download-logs": {
@@ -9639,18 +9647,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Aktivera markering",
       "escape-newlines": "Åtgärda felaktiga undantagstecken för radbrytningar och tabbar i loggrader",
-      "font-size-default": "Använd liten teckenstorlek",
-      "font-size-small": "Använd standardteckenstorlek",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "Stäng sökning",
       "hide-timestamps": "Dölj tidsstämplar",
       "hide-unique-labels": "Dölj unika etiketter",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "Sorterat efter nyaste loggar först – klicka om du vill visa äldsta först",
       "oldest-first": "Sorterat efter äldsta loggar först – klicka om du vill visa nyaste först",
@@ -9666,8 +9695,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "Ta bort radbrytningar",
       "wrap-lines": "Radbryt linjer"
@@ -11350,7 +11389,11 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Inga resultat som matchar din fråga",
-      "placeholder-search": "Sök"
+      "placeholder-search": "Sök",
+      "all-resources-managed_one": "",
+      "all-resources-managed_other": "",
+      "partial-managed_one": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11648,6 +11691,7 @@
       "tooltip-unhealthy-repository": "Det gick inte att hämta en ohälsosam lagringsplats"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Inkludera åtaganden för varje historiskt värde",
       "synchronization-options": "Synkroniseringsalternativ"
     },
@@ -11671,6 +11715,8 @@
       "alert-point-3": "Hur lång den här processen är beror på hur många resurser som är inblandade.",
       "alert-point-4": "Enterprise-instansadministratörer kan visa en meddelandebanner för användare. Se <2>denna guide</2> för steg för steg-anvisningar.",
       "alert-title": "Viktigt: Inga data eller konfigurationer kommer att förloras, men instrumentpaneler kommer att vara tillfälligt otillgängliga under några minuter.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Slutför",
       "button-start": "Påbörja synkronisering",
       "discard-modal": {
@@ -12772,6 +12818,7 @@
     "description-column-filter": "Aktiverar/inaktiverar fältfilter i tabellen",
     "description-frozen-columns": "",
     "description-min-column-width": "Minsta bredd för automatisk storleksändring av kolumn",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Alternativ text som kommer att visas om en bild inte kan visas eller för användare som använder en skärmläsare",
@@ -12802,6 +12849,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minsta kolumnbredd",
     "name-show-table-header": "Visa tabellsidhuvud",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Radbryt rubriktext",

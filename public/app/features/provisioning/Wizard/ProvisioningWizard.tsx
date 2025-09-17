@@ -358,7 +358,13 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
             <div className={styles.content}>
               {activeStep === 'connection' && <ConnectStep />}
               {activeStep === 'bootstrap' && <BootstrapStep settingsData={data} repoName={repoName} />}
-              {activeStep === 'synchronize' && <SynchronizeStep isLegacyStorage={isLegacyStorage} />}
+              {activeStep === 'synchronize' && (
+                <SynchronizeStep
+                  isLegacyStorage={isLegacyStorage}
+                  onCancel={handleRepositoryDeletion}
+                  isCancelling={isCancelling}
+                />
+              )}
               {activeStep === 'finish' && <FinishStep />}
             </div>
 

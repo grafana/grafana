@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	jose "github.com/go-jose/go-jose/v3"
-	"github.com/go-jose/go-jose/v3/jwt"
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/madflojo/testcerts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -454,10 +454,10 @@ func TestIntegrationClaimValidation(t *testing.T) {
 		require.NoError(t, err)
 
 		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Audience: []string{"foo"}}, nil))
-		require.Error(t, err)
+		require.NoError(t, err)
 
 		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Audience: []string{"bar", "baz"}}, nil))
-		require.Error(t, err)
+		require.NoError(t, err)
 
 		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Audience: []string{"baz"}}, nil))
 		require.Error(t, err)

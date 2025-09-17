@@ -92,7 +92,7 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 		UID: name,
 	}
 
-	_, err = s.store.DeleteUser(ctx, ns, deleteCmd)
+	err = s.store.DeleteUser(ctx, ns, deleteCmd)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to delete user: %w", err)
 	}

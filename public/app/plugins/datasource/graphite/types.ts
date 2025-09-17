@@ -1,6 +1,6 @@
-import { DataQuery, DataQueryRequest, DataSourceJsonData, TimeRange } from '@grafana/data';
-
-import { TemplateSrv } from '../../../features/templating/template_srv';
+import { DataQueryRequest, DataSourceJsonData, TimeRange } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 
 import { GraphiteDatasource } from './datasource';
 
@@ -101,4 +101,17 @@ export type GraphiteQueryEditorDependencies = {
 
 export interface GraphiteQueryRequest extends DataQueryRequest {
   format: string;
+}
+
+export interface GraphiteEventsRequest {
+  from: number;
+  until: number;
+  tags: string;
+}
+
+export interface GraphiteEvents {
+  when: number;
+  what: string;
+  tags: string[];
+  data: string;
 }
