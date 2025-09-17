@@ -9,9 +9,9 @@ const {
   CODEOWNERS_BY_FILENAME_JSON_PATH,
   FILENAMES_BY_CODEOWNER_JSON_PATH,
   CODEOWNERS_JSON_PATH,
-  METADATA_JSON_PATH
+  METADATA_JSON_PATH,
 } = require('./constants.js');
-const { generateCodeownersManifest } = require('./manifest.js');
+const { generateCodeownersManifest } = require('./generate.js');
 const { generateCodeownersMetadata } = require('./metadata.js');
 const { generateCodeownersRawAudit } = require('./raw.js');
 
@@ -59,7 +59,12 @@ async function generateCodeownersManifestComplete(
 
   if (!isCacheUpToDate) {
     await generateCodeownersRawAudit(codeownersFilePath, rawAuditPath);
-    await generateCodeownersManifest(rawAuditPath, codeownersJsonPath, codeownersByFilenamePath, filenamesByCodeownerPath);
+    await generateCodeownersManifest(
+      rawAuditPath,
+      codeownersJsonPath,
+      codeownersByFilenamePath,
+      filenamesByCodeownerPath
+    );
     fs.writeFileSync(metadataPath, JSON.stringify(newMetadata, null, 2), 'utf8');
     return true;
   }

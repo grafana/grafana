@@ -12,6 +12,7 @@
     "build:stats": "NODE_ENV=production webpack --progress --config scripts/webpack/webpack.stats.js",
     "codeowners-manifest": "node ./scripts/codeowners-manifest/index.js",
     "codeowners-manifest:clean": "rm -rf codeowners-manifest && mkdir -p codeowners-manifest",
+    "codeowners-manifest:generate": "node ./scripts/codeowners-manifest/generate.js",
     "codeowners-manifest:metadata": "node ./scripts/codeowners-manifest/metadata.js",
     "codeowners-manifest:raw": "node ./scripts/codeowners-manifest/raw.js",
     "dev": "NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.js",

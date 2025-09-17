@@ -8,7 +8,7 @@ const {
   RAW_AUDIT_JSONL_PATH,
   CODEOWNERS_BY_FILENAME_JSON_PATH,
   FILENAMES_BY_CODEOWNER_JSON_PATH,
-  CODEOWNERS_JSON_PATH
+  CODEOWNERS_JSON_PATH,
 } = require('./constants.js');
 
 /**
@@ -18,7 +18,12 @@ const {
  * @param {string} codeownersByFilenamePath - Path to write teams-by-filename.json
  * @param {string} filenamesByCodeownerPath - Path to write filenames-by-team.json
  */
-async function generateCodeownersManifest(rawAuditPath, codeownersJsonPath, codeownersByFilenamePath, filenamesByCodeownerPath) {
+async function generateCodeownersManifest(
+  rawAuditPath,
+  codeownersJsonPath,
+  codeownersByFilenamePath,
+  filenamesByCodeownerPath
+) {
   const hasRawAuditJsonl = await stat(rawAuditPath);
   if (!hasRawAuditJsonl) {
     throw new Error(
