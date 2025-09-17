@@ -18,7 +18,8 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -42,16 +43,16 @@ func TestIntegrationFolderTree(t *testing.T) {
 	}
 
 	modes := []grafanarest.DualWriterMode{
-		// grafanarest.Mode1,
-		grafanarest.Mode2,
-		// grafanarest.Mode3,
+		// grafanarest.Mode1, (nothing new tested)
+		grafanarest.Mode2, // write both, read legacy
+		// grafanarest.Mode3, // write both, read unified
 		// grafanarest.Mode4,
 		// grafanarest.Mode5,
 	}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
 			flags := []string{}
-			if mode >= grafanarest.Mode4 { // make sure modes 0-3 work without it
+			if mode >= grafanarest.Mode3 { // make sure modes 0-3 work without it
 				flags = append(flags, featuremgmt.FlagUnifiedStorageSearch)
 			}
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -60,7 +61,7 @@ func TestIntegrationFolderTree(t *testing.T) {
 				APIServerStorageType: "unified",
 				EnableFeatureToggles: flags,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					folders.RESOURCEGROUP: {
+					foldersV1.RESOURCEGROUP: {
 						DualWriterMode: mode,
 					},
 				},
@@ -301,7 +302,7 @@ func getFoldersFromLegacyAPISearch(t *testing.T, who apis.User) *FolderView {
 
 	var statusCode int
 	result := client.Get().AbsPath("api", "search").
-		Param("type", "dash-folder"). // &limit=1000"
+		Param("type", "dash-folder").
 		Param("limit", "1000").
 		Do(context.Background()).
 		StatusCode(&statusCode)
@@ -322,14 +323,17 @@ func getFoldersFromLegacyAPISearch(t *testing.T, who apis.User) *FolderView {
 			Parent: hit.FolderUID,
 		}
 	}
+	return makeRoot(t, lookup, "/api/search")
+}
 
+func makeRoot(t *testing.T, lookup map[string]*FolderView, name string) *FolderView {
 	root := &FolderView{}
 	for _, v := range lookup {
 		if v.Parent == "" {
 			root.Children = append(root.Children, v)
 		} else {
 			p, ok := lookup[v.Parent]
-			require.True(t, ok, "parent not found for", v)
+			require.Truef(t, ok, "[%s] parent not found for: %s (parent:%s)", name, v.Name, v.Parent)
 			p.Children = append(p.Children, v)
 		}
 	}
@@ -343,40 +347,35 @@ func getFoldersFromDashboardV0Search(t *testing.T, who apis.User) *FolderView {
 	require.NoError(t, err)
 
 	var statusCode int
-	result := client.Get().AbsPath("api", "search").
-		Param("type", "dash-folder"). // &limit=1000"
+	result := client.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", who.Identity.GetNamespace(), "search").
 		Param("limit", "1000").
 		Do(context.Background()).
 		StatusCode(&statusCode)
-	require.NoError(t, result.Error(), "getting folders with /apis/dashboard.grafana.app/.../search")
+	err = result.Error()
+	if err != nil {
+		if apierrors.IsForbidden(err) {
+			return &FolderView{} // empty list
+		}
+		require.NoError(t, err, "getting folders with /apis/dashboard.grafana.app/v0alpha1/.../search")
+	}
 	require.Equal(t, int(http.StatusOK), statusCode)
 
 	body, err := result.Raw()
 	require.NoError(t, err)
-	hits := model.HitList{}
-	err = json.Unmarshal(body, &hits)
+	results := &dashboardV0.SearchResults{}
+	err = json.Unmarshal(body, &results)
 	require.NoError(t, err)
 
-	lookup := make(map[string]*FolderView, len(hits))
-	for _, hit := range hits {
-		lookup[hit.UID] = &FolderView{
-			Name:   hit.UID,
+	lookup := make(map[string]*FolderView, len(results.Hits))
+	for _, hit := range results.Hits {
+		lookup[hit.Name] = &FolderView{
+			Name:   hit.Name,
 			Title:  hit.Title,
-			Parent: hit.FolderUID,
+			Parent: hit.Folder,
 		}
 	}
 
-	root := &FolderView{}
-	for _, v := range lookup {
-		if v.Parent == "" {
-			root.Children = append(root.Children, v)
-		} else {
-			p, ok := lookup[v.Parent]
-			require.True(t, ok, "parent not found for", v)
-			p.Children = append(p.Children, v)
-		}
-	}
-	return root
+	return makeRoot(t, lookup, "dashboards/search")
 }
 
 func getFoldersFromAPIServerList(t *testing.T, who apis.User) *FolderView {
@@ -409,17 +408,7 @@ func getFoldersFromAPIServerList(t *testing.T, who apis.User) *FolderView {
 		}
 	}
 
-	root := &FolderView{}
-	for _, v := range lookup {
-		if v.Parent == "" {
-			root.Children = append(root.Children, v)
-		} else {
-			p, ok := lookup[v.Parent]
-			require.True(t, ok, "parent not found for", v)
-			p.Children = append(p.Children, v)
-		}
-	}
-	return root
+	return makeRoot(t, lookup, "folders/list")
 }
 
 func requireGettable(t *testing.T, who apis.User, root *FolderView) {
