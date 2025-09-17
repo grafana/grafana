@@ -516,7 +516,21 @@ func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, name st
 
 // AccessControlMetadata returns access control metadata for the given Receivers.
 func (rs *ReceiverService) AccessControlMetadata(ctx context.Context, user identity.Requester, receivers ...*models.Receiver) (map[string]models.ReceiverPermissionSet, error) {
-	return rs.authz.Access(ctx, user, receivers...)
+	permissions, err := rs.authz.Access(ctx, user, receivers...)
+	if err != nil {
+		return nil, err
+	}
+	for _, m := range receivers {
+		if m.Origin == models.ResourceOriginGrafana {
+			continue
+		}
+		perms := permissions[m.GetUID()]
+		perms.Set(models.ReceiverPermissionAdmin, false)
+		perms.Set(models.ReceiverPermissionWrite, false)
+		perms.Set(models.ReceiverPermissionDelete, false)
+		permissions[m.GetUID()] = perms
+	}
+	return permissions, nil
 }
 
 // InUseMetadata returns metadata for the given Receivers about their usage in routes and rules.
