@@ -5,11 +5,10 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack, TextLink, Divider } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
   onAddLibraryPanel as onAddLibraryPanelImpl,
@@ -21,7 +20,7 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { dispatch } from 'app/store/store';
 import { PluginDashboard } from 'app/types/plugins';
-import { StoreState, useDispatch, useSelector } from 'app/types/store';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { setInitialDatasource } from '../state/reducers';
 
@@ -31,29 +30,9 @@ export interface Props {
 }
 
 const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
-  const [queryParams] = useQueryParams();
-  console.log('queryParams', queryParams);
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
-
-  console.log('initialDatasource', initialDatasource);
-
-  const [provisionedDashboards, setProvisionedDashboards] = useState<PluginDashboard[]>([]);
-
-  useEffect(() => {
-    if (queryParams.provisionedDatasource) {
-      const url = `api/plugins/${queryParams.provisionedDatasource}/dashboards`;
-
-      getBackendSrv()
-        .get(url)
-        .then((res: PluginDashboard[]) => {
-          setProvisionedDashboards(res);
-        });
-    }
-  }, [queryParams.provisionedDatasource]);
-
-  console.log('provisionedDashboards', provisionedDashboards);
 
   const onAddVisualization = () => {
     let id;
@@ -175,20 +154,25 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
 export default DashboardEmpty;
 
 const ProvisionedDashboardsSection = () => {
-  const [queryParams] = useQueryParams();
-  console.log('queryParams', queryParams);
   const navigate = useNavigate();
 
+  const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
   const [provisionedDashboards, setProvisionedDashboards] = useState<PluginDashboard[]>([]);
 
   useEffect(() => {
-    if (queryParams.provisionedDatasource) {
-      getProvisionedDashboards(queryParams.provisionedDatasource as string);
+    if (initialDatasource) {
+      getProvisionedDashboards(initialDatasource);
     }
-  }, [queryParams.provisionedDatasource]);
+  }, [initialDatasource]);
 
-  const getProvisionedDashboards = (type: string) => {
-    const url = `api/plugins/${type}/dashboards`;
+  const getProvisionedDashboards = (datasourceUid: string) => {
+    const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
+
+    if (!ds) {
+      return;
+    }
+
+    const url = `api/plugins/${ds.type}/dashboards`;
 
     getBackendSrv()
       .get(url)
@@ -201,13 +185,13 @@ const ProvisionedDashboardsSection = () => {
     const data = {
       pluginId: dashboard.pluginId,
       path: dashboard.path,
-      overwrite: false,
+      overwrite: true,
       inputs: [
         {
           name: '*',
           type: 'datasource',
-          pluginId: queryParams.provisionedDatasource,
-          value: queryParams.provisionedDatasourceName,
+          pluginId: dashboard.pluginId,
+          value: initialDatasource,
         },
       ],
     };
@@ -216,6 +200,10 @@ const ProvisionedDashboardsSection = () => {
     navigate(rs.importedUrl);
   };
 
+  if (!provisionedDashboards.length) {
+    return null;
+  }
+
   return (
     <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
       <Stack direction="column" alignItems="center" gap={2}>
@@ -223,8 +211,13 @@ const ProvisionedDashboardsSection = () => {
           <Trans i18nKey="dashboard.empty.import-a-dashboard-heasfaader">Start from template dashboards</Trans>
         </Text>
         <Stack gap={2} justifyContent="space-between">
-          {provisionedDashboards.map((dashboard) => (
-            <ProvisionedDashboardBox key={dashboard.uid} dashboard={dashboard} onImportClick={onImportDashboardClick} />
+          {provisionedDashboards.map((dashboard, index) => (
+            <ProvisionedDashboardBox
+              key={dashboard.uid}
+              index={index}
+              dashboard={dashboard}
+              onImportClick={onImportDashboardClick}
+            />
           ))}
         </Stack>
       </Stack>
@@ -235,29 +228,31 @@ const ProvisionedDashboardsSection = () => {
 const ProvisionedDashboardBox = ({
   dashboard,
   onImportClick,
+  index,
 }: {
   dashboard: PluginDashboard;
   onImportClick: (d: PluginDashboard) => void;
+  index: number;
 }) => {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.provisionedDashboardBox}>
-      <img src="https://grafana.com/api/dashboards/1860/images/7994/thumbnail" width={190} alt={dashboard.title} />
+      <img
+        src={
+          index % 2 === 0
+            ? 'https://grafana.com/api/dashboards/11350/images/7248/image'
+            : 'https://grafana.com/api/dashboards/10991/images/7003/image'
+        }
+        width={190}
+        height={160}
+        alt={dashboard.title}
+      />
       <Divider spacing={0} />
       <div className={styles.privisionedDashboardSection}>
         <Text element="p" textAlignment="center" color="secondary">
           {dashboard.title}
         </Text>
-        <Button
-          fill="outline"
-          data-testid={selectors.pages.AddDashboard.itemButton('Import dashboard button')}
-          // onClick={() => {
-          //   DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_dashboard' });
-          //   onImportDashboard();
-          // }}
-          onClick={() => onImportClick(dashboard)}
-          // disabled={!canCreate}
-        >
+        <Button fill="outline" onClick={() => onImportClick(dashboard)}>
           <Trans i18nKey="dashboard.empty.import-dashboaasard-button">Use template</Trans>
         </Button>
       </div>
