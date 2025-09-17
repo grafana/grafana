@@ -337,6 +337,7 @@ type OrgUsers struct {
 	Admin  User
 	Editor User
 	Viewer User
+	None   User
 
 	OrgID int64
 
@@ -566,6 +567,7 @@ func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 		Admin:  c.CreateUser("admin2", orgName, org.RoleAdmin, nil),
 		Editor: c.CreateUser("editor", orgName, org.RoleEditor, nil),
 		Viewer: c.CreateUser("viewer", orgName, org.RoleViewer, nil),
+		None:   c.CreateUser("none", orgName, org.RoleNone, nil),
 	}
 	users.OrgID = users.Admin.Identity.GetOrgID()
 
@@ -662,6 +664,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	require.NoError(c.t, err)
 	s.IDToken = idToken
 	s.IDTokenClaims = idClaims
+	s.Namespace = c.Namespacer(orgId)
 
 	usr := User{
 		Identity: s,
