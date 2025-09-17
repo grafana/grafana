@@ -41,11 +41,11 @@ func TestIntegrationFolderTree(t *testing.T) {
 	}
 
 	modes := []grafanarest.DualWriterMode{
-		grafanarest.Mode1,
-		// grafanarest.Mode2,
+		// grafanarest.Mode1,
+		grafanarest.Mode2,
 		// grafanarest.Mode3,
 		// grafanarest.Mode4,
-		// grafanarest.Mode5,
+		grafanarest.Mode5,
 	}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
@@ -87,11 +87,14 @@ func TestIntegrationFolderTree(t *testing.T) {
 						},
 					},
 					Expected: []ExpectedTree{
-						{User: helper.Org1.Admin, Listing: `
+						{Users: []apis.User{
+							helper.Org1.Admin,
+							helper.Org1.Viewer, // By default, viewer can view all dashboards
+						}, Listing: `
 						└── top
 						....└── middle
 						........└── child`},
-						{User: helper.Org1.None, Listing: ``},
+						{Users: []apis.User{helper.Org1.None}, Listing: ``},
 					},
 				},
 			}
@@ -99,19 +102,26 @@ func TestIntegrationFolderTree(t *testing.T) {
 			for _, tt := range tests {
 				t.Run(tt.Name, func(t *testing.T) {
 					tt.Definition.RequireUniqueName(t, make(map[string]bool))
-					tt.Definition.CreateUsingLegacyAPI(t, helper, "")
+
+					tt.Definition.CreateWithLegacyAPI(t, helper, "")
+					// CreateWithLegacyAPI
 
 					for _, expect := range tt.Expected {
-						t.Run(fmt.Sprintf("query as %s", expect.User.Identity.GetLogin()), func(t *testing.T) {
-							legacy := getFoldersFromLegacyAPISearch(t, expect.User)
-							legacy.requireEqual(t, expect.Listing, "legacy")
+						for _, user := range expect.Users {
+							t.Run(fmt.Sprintf("query as %s", user.Identity.GetLogin()), func(t *testing.T) {
+								legacy := getFoldersFromLegacyAPISearch(t, user)
+								legacy.requireEqual(t, expect.Listing, "legacy")
 
-							listed := getFoldersFromAPIServerList(t, expect.User)
-							listed.requireEqual(t, expect.Listing, "listed")
+								listed := getFoldersFromAPIServerList(t, user)
+								listed.requireEqual(t, expect.Listing, "listed")
 
-							search := getFoldersFromDashboardV0Search(t, expect.User)
-							search.requireEqual(t, expect.Listing, "search")
-						})
+								search := getFoldersFromDashboardV0Search(t, user)
+								search.requireEqual(t, expect.Listing, "search")
+
+								// ensure sure GET also works on each folder we can list
+								requireGettable(t, user, listed)
+							})
+						}
 					}
 				})
 			}
@@ -120,7 +130,7 @@ func TestIntegrationFolderTree(t *testing.T) {
 }
 
 type ExpectedTree struct {
-	User    apis.User
+	Users   []apis.User
 	Listing string
 }
 
@@ -138,7 +148,7 @@ type FolderPermission struct {
 	Access dashboardaccess.PermissionType
 }
 
-func (f *FolderDefinition) CreateUsingLegacyAPI(t *testing.T, h *apis.K8sTestHelper, parent string) {
+func (f *FolderDefinition) CreateWithLegacyAPI(t *testing.T, h *apis.K8sTestHelper, parent string) {
 	if f.Name == "" {
 		require.Empty(t, parent, "only the root should be empty")
 	} else {
@@ -194,7 +204,41 @@ func (f *FolderDefinition) CreateUsingLegacyAPI(t *testing.T, h *apis.K8sTestHel
 	}
 
 	for _, child := range f.Children {
-		child.CreateUsingLegacyAPI(t, h, parent)
+		child.CreateWithLegacyAPI(t, h, parent)
+	}
+}
+
+func (f *FolderDefinition) CreateWithAPIServer(t *testing.T, h *apis.K8sTestHelper, parent string) {
+	if f.Name == "" {
+		require.Empty(t, parent, "only the root should be empty")
+	} else {
+		gvr := schema.GroupVersionResource{Group: "folder.grafana.app", Version: "v1beta1", Resource: "folders"}
+
+		ns := f.Creator.Identity.GetNamespace()
+		cfg := dynamic.ConfigFor(f.Creator.NewRestConfig())
+		dyn, err := dynamic.NewForConfig(cfg)
+		require.NoError(t, err)
+		client := dyn.Resource(gvr).Namespace(ns)
+		obj, err := client.Create(context.Background(), &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name":      f.Name,
+					"namespace": ns,
+					"annotations": map[string]string{
+						utils.AnnoKeyFolder: parent,
+					},
+				},
+				"spec": map[string]interface{}{
+					"title": f.Name,
+				},
+			},
+		}, v1.CreateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, f.Name, obj.GetName())
+	}
+
+	for _, child := range f.Children {
+		child.CreateWithAPIServer(t, h, parent)
 	}
 }
 
@@ -213,6 +257,12 @@ type FolderView struct {
 	Parent   string
 	Title    string
 	Children []*FolderView
+}
+
+func (n *FolderView) forEach(cb func(*FolderView)) {
+	for _, child := range n.Children {
+		cb(child)
+	}
 }
 
 func (n *FolderView) requireEqual(t *testing.T, expect string, msg string) {
@@ -282,7 +332,7 @@ func getFoldersFromLegacyAPISearch(t *testing.T, who apis.User) *FolderView {
 		Param("limit", "1000").
 		Do(context.Background()).
 		StatusCode(&statusCode)
-	require.NoError(t, result.Error(), "getting folders")
+	require.NoError(t, result.Error(), "getting folders with /api/search")
 	require.Equal(t, int(http.StatusOK), statusCode)
 
 	body, err := result.Raw()
@@ -325,7 +375,7 @@ func getFoldersFromDashboardV0Search(t *testing.T, who apis.User) *FolderView {
 		Param("limit", "1000").
 		Do(context.Background()).
 		StatusCode(&statusCode)
-	require.NoError(t, result.Error(), "getting folders")
+	require.NoError(t, result.Error(), "getting folders with /apis/dashboard.grafana.app/.../search")
 	require.Equal(t, int(http.StatusOK), statusCode)
 
 	body, err := result.Raw()
@@ -397,6 +447,22 @@ func getFoldersFromAPIServerList(t *testing.T, who apis.User) *FolderView {
 		}
 	}
 	return root
+}
+
+func requireGettable(t *testing.T, who apis.User, root *FolderView) {
+	gvr := schema.GroupVersionResource{Group: "folder.grafana.app", Version: "v1beta1", Resource: "folders"}
+
+	ns := who.Identity.GetNamespace()
+	cfg := dynamic.ConfigFor(who.NewRestConfig())
+	dyn, err := dynamic.NewForConfig(cfg)
+	require.NoError(t, err)
+	client := dyn.Resource(gvr).Namespace(ns)
+
+	root.forEach(func(fv *FolderView) {
+		found, err := client.Get(context.Background(), fv.Name, v1.GetOptions{})
+		require.NoErrorf(t, err, "getting folder: %s", fv.Name)
+		require.Equal(t, found.GetName(), fv.Name)
+	})
 }
 
 func dotify(t treeprint.Tree) string {
