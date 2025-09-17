@@ -138,6 +138,7 @@ export function LogsSamplePanel(props: Props) {
           timeZone={timeZone}
           enableLogDetails
           scrollElement={null}
+          timeRange={props.timeRange}
         />
       );
   }

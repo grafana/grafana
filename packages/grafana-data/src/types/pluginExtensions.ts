@@ -6,7 +6,7 @@ import { ScopedVars } from './ScopedVars';
 import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
 import { IconName } from './icon';
 import { PanelData } from './panel';
-import { RawTimeRange, TimeZone } from './time';
+import { AbsoluteTimeRange, RawTimeRange, TimeZone } from './time';
 
 // Plugin Extensions types
 // ---------------------------------------
@@ -273,6 +273,7 @@ export type PluginExtensionResourceAttributesContext = {
   // Key-value pairs of resource attributes, attribute name is the key
   attributes: Record<string, string[]>;
   spanAttributes?: Record<string, string[]>;
+  timeRange: AbsoluteTimeRange;
   datasource: {
     type: string;
     uid: string;

@@ -1056,6 +1056,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   logOptionsStorageKey={SETTING_KEY_ROOT}
                   onLogOptionsChange={onLogOptionsChange}
                   filterLevels={filterLevels}
+                  timeRange={props.range}
                 />
               </div>
             )}
@@ -1113,6 +1114,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                       onPinLine={onPinToContentOutlineClick}
                       pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                       renderPreview
+                      timeRange={props.range}
                     />
                   </InfiniteScroll>
                 </div>

@@ -37,7 +37,7 @@ export const LogLineDetailsComponent = memo(
     const inputRef = useRef('');
     const styles = useStyles2(getStyles);
 
-    const extensionLinks = useAttributesExtensionLinks(log);
+    const extensionLinks = useAttributesExtensionLinks(log, timeRange);
 
     const fieldsWithLinks = useMemo(() => {
       const fieldsWithLinks = log.fields.filter((f) => f.links?.length);
