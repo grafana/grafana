@@ -9439,7 +9439,7 @@
       "label-signature": "Signature"
     },
     "description-enable-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
-    "description-enable-syntax-highlighting": "Use a predefined syntax coloring grammar to highlight relevant parts of the log lines",
+    "description-enable-logs-highlighting": "Use a predefined coloring scheme to highlight relevant parts of the log lines",
     "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
     "fields": {
       "type": {
@@ -9711,14 +9711,14 @@
     },
     "name-common-labels": "Common labels",
     "name-deduplication": "Deduplication",
-    "name-details-mode": "Log Details panel mode",
+    "name-details-mode": "Log details panel mode",
     "name-details-options": {
       "label-inline": "Inline",
       "label-sidebar": "Sidebar"
     },
     "name-enable-infinite-scrolling": "Enable infinite scrolling",
     "name-enable-log-details": "Enable log details",
-    "name-enable-syntax-highlighting": "Enable syntax highlighting",
+    "name-enable-logs-highlighting": "Enable logs highlighting",
     "name-font-size": "Font size",
     "name-order": "Order",
     "name-prettify-json": "Prettify JSON",
