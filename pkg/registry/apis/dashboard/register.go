@@ -22,7 +22,6 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/logging"
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -173,7 +172,15 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceInfoProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface) *DashboardsAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceInfoProvider, pluginStore *pluginstore.Service) *DashboardsAPIBuilder {
+	// TODO: Plugin store will soon be removed,
+	// as the cases for plugin fetching is not needed. Keeping it now to not break implementation
+	if pluginStore == nil {
+		panic("pluginStore is nil")
+	}
+
+	logger := log.New("grafana-apiserver.dashboards")
+
 	migration.Initialize(datasourceProvider)
 	return &DashboardsAPIBuilder{
 		minRefreshInterval:     "10s",
