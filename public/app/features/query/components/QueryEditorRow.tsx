@@ -395,6 +395,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             onUpdateSuccess={this.onExitQueryLibraryEditingMode}
             onSelectQuery={this.onSelectQueryFromLibrary}
             datasourceFilters={datasource?.name ? [datasource.name] : []}
+            onlyIcons={app === CoreApp.UnifiedAlerting}
           />
         )}
 
@@ -587,6 +588,7 @@ function SavedQueryButtons(props: {
   onUpdateSuccess?: () => void;
   onSelectQuery: (query: DataQuery) => void;
   datasourceFilters: string[];
+  onlyIcons?: boolean;
 }) {
   const { renderSavedQueryButtons } = useQueryLibraryContext();
   return renderSavedQueryButtons(
@@ -594,7 +596,8 @@ function SavedQueryButtons(props: {
     props.app,
     props.onUpdateSuccess,
     props.onSelectQuery,
-    props.datasourceFilters
+    props.datasourceFilters,
+    props.onlyIcons
   );
 }
 

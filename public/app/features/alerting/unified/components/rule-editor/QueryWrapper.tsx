@@ -101,26 +101,22 @@ export const QueryWrapper = ({
     const replacementDatasource = replacedQuery.datasource;
 
     if (replacementDatasource?.uid && replacementDatasource.uid !== query.datasourceUid) {
-      // Cross-datasource replacement: use the established pattern from QueryRows
       const newDsSettings = getDatasourceSrv().getInstanceSettings(replacementDatasource.uid);
 
       if (newDsSettings) {
         const previousSettings = getDataSourceSettings(query);
 
-        // Use the same logic as QueryRows: copy model if same type, otherwise create new
         const updatedQuery =
           previousSettings?.type === newDsSettings.type
             ? copyAlertModel(query, newDsSettings)
             : newAlertModel(query, newDsSettings);
 
-        // Replace the model with the saved query content while preserving AlertQuery structure
         updatedQuery.model = {
           ...updatedQuery.model,
           ...replacedQuery,
           datasource: getDataSourceRef(newDsSettings),
         };
 
-        // Trigger datasource change to update UI, then update query content
         onChangeDataSource(newDsSettings, index);
         setTimeout(() => {
           onChangeQuery(updatedQuery.model, index);
@@ -130,7 +126,6 @@ export const QueryWrapper = ({
       }
     }
 
-    // Same datasource or no datasource info - just replace query content
     onChangeQuery(replacedQuery, index);
   };
 
@@ -363,8 +358,6 @@ export function MinIntervalOption({
   );
 }
 
-// Helper functions for handling datasource changes during query replacement
-// These follow the same pattern as QueryRows.tsx for consistency
 function copyAlertModel(item: AlertQuery, settings: DataSourceInstanceSettings): AlertQuery {
   return {
     ...item,
@@ -386,7 +379,6 @@ function newAlertModel(item: AlertQuery, settings: DataSourceInstanceSettings): 
     datasource: getDataSourceRef(settings),
   };
 
-  // Add instant property if needed for non-expression queries
   const model = isInstant && !isExpressionQuery(item) ? { ...baseModel, instant: isInstant } : baseModel;
 
   const newQuery: AlertQuery = {

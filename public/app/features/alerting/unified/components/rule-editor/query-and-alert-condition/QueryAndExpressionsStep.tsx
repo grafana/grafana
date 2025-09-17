@@ -8,6 +8,7 @@ import { GrafanaTheme2, getDefaultRelativeTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import {
   Alert,
   Button,
@@ -46,6 +47,7 @@ import {
   isGrafanaAlertingRuleByType,
   isGrafanaManagedRuleByType,
 } from '../../../utils/rules';
+import { AlertingQueryEditorActionsWrapper } from '../AlertingQueryEditorActionsWrapper';
 import { ExpressionEditor } from '../ExpressionEditor';
 import { ExpressionsEditor } from '../ExpressionsEditor';
 import { NeedHelpInfo } from '../NeedHelpInfo';
@@ -454,11 +456,47 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     condition,
   ]);
 
+  const simpleModeActions = useMemo(() => {
+    if (!type || !simplifiedQueryStep || !isGrafanaAlertingType) {
+      return undefined;
+    }
+
+    const singleQuery = dataQueries[0];
+    const dsSettings = getDataSourceSrv().getInstanceSettings(singleQuery?.datasourceUid);
+
+    if (!singleQuery || !dsSettings) {
+      return undefined;
+    }
+
+    const handleQueryReplace = (replacedQuery: DataQuery) => {
+      const updatedQuery: AlertQuery = {
+        ...singleQuery,
+        model: {
+          ...replacedQuery,
+          datasource: replacedQuery.datasource,
+        },
+        datasourceUid: replacedQuery.datasource?.uid || singleQuery.datasourceUid,
+      };
+
+      onChangeQueries([updatedQuery]);
+    };
+
+    return (
+      <AlertingQueryEditorActionsWrapper
+        query={singleQuery}
+        datasourceInstanceSettings={dsSettings}
+        onQueryReplace={handleQueryReplace}
+        showButtons={true}
+      />
+    );
+  }, [type, simplifiedQueryStep, isGrafanaAlertingType, dataQueries, onChangeQueries]);
+
   const { sectionTitle, helpLabel, helpContent, helpLink } = DESCRIPTIONS[type ?? RuleFormType.grafana];
 
   if (!type) {
     return null;
   }
+
   const switchMode =
     isGrafanaAlertingType && isSwitchModeEnabled
       ? {
@@ -500,6 +538,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
           </Stack>
         }
         switchMode={switchMode}
+        simpleModeActions={simpleModeActions}
       >
         {/* This is the cloud data source selector */}
         {isDataSourceManagedRuleByType(type) && (
