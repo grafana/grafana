@@ -92,8 +92,8 @@ func TestTransformSpanSearchResponse(t *testing.T) {
 	assert.Equal(t, "test-span-id", frames[0].Fields[3].At(0))
 	assert.Equal(t, time.Unix(0, 2000), frames[0].Fields[4].At(0))
 	assert.Equal(t, "test-span-name", frames[0].Fields[5].At(0))
-	assert.Equal(t, "GET", frames[0].Fields[6].At(0))
-	assert.Equal(t, "test-service-name", frames[0].Fields[7].At(0))
+	assert.Equal(t, "GET", *(frames[0].Fields[6].At(0).(*string)))
+	assert.Equal(t, "test-service-name", *(frames[0].Fields[7].At(0).(*string)))
 	assert.Equal(t, 3000.0, frames[0].Fields[8].At(0))
 }
 
