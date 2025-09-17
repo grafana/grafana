@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
 
 import { AnnotationQuery, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
+import { PromQuery } from '@grafana/prometheus';
 
 import StandardAnnotationQueryEditor, { Props as EditorProps } from './StandardAnnotationQueryEditor';
 
@@ -345,5 +346,110 @@ describe('StandardAnnotationQueryEditor', () => {
         enable: false,
       })
     );
+  });
+
+  describe('verifyDataSource datasource mismatch scenarios', () => {
+    it('should skip verification for prepared annotations with target field (saved query case)', () => {
+      const mockPrepareAnnotation = jest.fn((annotation: AnnotationQuery) => annotation);
+
+      setup({
+        annotation: {
+          name: 'test annotation',
+          datasource: { uid: 'prometheus-uid', type: 'prometheus' },
+          target: { refId: 'A', expr: 'up' } as PromQuery, // Has target = prepared annotation
+          enable: true,
+          iconColor: 'green',
+        } as AnnotationQuery,
+        datasource: {
+          uid: 'testdata-uid',
+          type: 'testdata', // Different datasource to trigger mismatch
+          annotations: {
+            QueryEditor: jest.fn(() => <div>Editor</div>),
+            prepareAnnotation: mockPrepareAnnotation,
+          },
+        } as unknown as DataSourceApi,
+      });
+
+      // The component should not call prepareAnnotation due to skip logic
+      expect(mockPrepareAnnotation).not.toHaveBeenCalled();
+    });
+
+    it('should skip verification for v2 annotations with query.spec (saved query case)', () => {
+      const mockPrepareAnnotation = jest.fn((annotation: AnnotationQuery) => annotation);
+
+      setup({
+        annotation: {
+          name: 'v2 test annotation',
+          datasource: { uid: 'prometheus-uid', type: 'prometheus' },
+          query: {
+            kind: 'prometheus',
+            spec: { refId: 'A', expr: 'up' } as PromQuery,
+          },
+          enable: true,
+          iconColor: 'green',
+        } as AnnotationQuery,
+        datasource: {
+          uid: 'testdata-uid',
+          type: 'testdata', // Different datasource to trigger mismatch
+          annotations: {
+            QueryEditor: jest.fn(() => <div>Editor</div>),
+            prepareAnnotation: mockPrepareAnnotation,
+          },
+        } as unknown as DataSourceApi,
+      });
+
+      // The component should not call prepareAnnotation due to skip logic
+      expect(mockPrepareAnnotation).not.toHaveBeenCalled();
+    });
+
+    it('should proceed with verification for clean annotations (manual datasource change case)', () => {
+      const mockPrepareAnnotation = jest.fn((annotation: AnnotationQuery) => annotation);
+
+      setup({
+        annotation: {
+          name: 'clean annotation',
+          datasource: { uid: 'prometheus-uid', type: 'prometheus' },
+          // No target field = clean annotation from manual datasource change
+          enable: true,
+          iconColor: 'green',
+        } as AnnotationQuery,
+        datasource: {
+          uid: 'testdata-uid',
+          type: 'testdata', // Different datasource to trigger mismatch
+          annotations: {
+            QueryEditor: jest.fn(() => <div>Editor</div>),
+            prepareAnnotation: mockPrepareAnnotation,
+          },
+        } as unknown as DataSourceApi,
+      });
+
+      // The component should call prepareAnnotation because it's a clean annotation
+      expect(mockPrepareAnnotation).toHaveBeenCalledTimes(1);
+    });
+
+    it('should always proceed when datasources match', () => {
+      const mockPrepareAnnotation = jest.fn((annotation: AnnotationQuery) => annotation);
+
+      setup({
+        annotation: {
+          name: 'matching datasource annotation',
+          datasource: { uid: 'prometheus-uid', type: 'prometheus' },
+          target: { refId: 'A', expr: 'up' } as PromQuery, // Even with target
+          enable: true,
+          iconColor: 'green',
+        } as AnnotationQuery,
+        datasource: {
+          uid: 'prometheus-uid',
+          type: 'prometheus', // Matches annotation datasource
+          annotations: {
+            QueryEditor: jest.fn(() => <div>Editor</div>),
+            prepareAnnotation: mockPrepareAnnotation,
+          },
+        } as unknown as DataSourceApi,
+      });
+
+      // Should proceed with verification when datasources match
+      expect(mockPrepareAnnotation).toHaveBeenCalledTimes(1);
+    });
   });
 });
