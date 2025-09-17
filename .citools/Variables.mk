@@ -25,7 +25,7 @@ cog = "$(call compile_tool,cog,github.com/grafana/cog/cmd/cli)"
 cue = "$(call compile_tool,cue,cuelang.org/go/cmd/cue)"
 
 # Tool: "golangci-lint"
-golangci-lint = "$(call compile_tool,golangci-lint,github.com/golangci/golangci-lint/v2/cmd/golangci-lint)"
+golangci-lint = "$(call compile_tool,golangci-lint,github.com/grafana/grafana/scripts/go/golangci-lint/cmd/golangci-lint)"
 
 # Tool: "jb"
 jb = "$(call compile_tool,jb,github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb)"
