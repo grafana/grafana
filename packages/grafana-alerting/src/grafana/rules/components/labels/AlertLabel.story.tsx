@@ -40,7 +40,6 @@ export const Clickable: StoryObj<typeof AlertLabel> = {
   render: (args: ComponentProps<typeof AlertLabel>) => (
     <AlertLabel
       {...args}
-      role={'listitem'}
       labelKey="region"
       value="eu-central-1"
       onClick={([value, key]) => console.log('clicked', key, value)}
@@ -51,12 +50,11 @@ export const Clickable: StoryObj<typeof AlertLabel> = {
 export const WithIconAndColor: StoryObj<typeof AlertLabel> = {
   render: (args: ComponentProps<typeof AlertLabel>) => (
     <Stack direction="column" alignItems="flex-start" gap={1} role="list">
-      <AlertLabel role="listitem" icon="tag-alt" labelKey="owner" value="team-a" color="#268bd2" />
-      <AlertLabel role="listitem" icon="tag-alt" labelKey="env" value="prod" color="#2aa198" />
-      <hr />
-      <AlertLabel role="listitem" icon="tag-alt" labelKey="env" value="prod" colorBy="key" />
-      <AlertLabel role="listitem" icon="tag-alt" labelKey="env" value="prod" colorBy="value" />
-      <AlertLabel role="listitem" icon="tag-alt" labelKey="env" value="prod" colorBy="both" />
+      <AlertLabel role="listitem" icon="tag-alt" labelKey="setColor" value="#268bd2" color="#268bd2" />
+      <AlertLabel role="listitem" icon="tag-alt" labelKey="setColor" value="#2aa198" color="#2aa198" />
+      <AlertLabel role="listitem" icon="tag-alt" labelKey="colorBy" value="key" colorBy="key" />
+      <AlertLabel role="listitem" icon="tag-alt" labelKey="colorBy" value="value" colorBy="value" />
+      <AlertLabel role="listitem" icon="tag-alt" labelKey="colorBy" value="both" colorBy="both" />
     </Stack>
   ),
 };
