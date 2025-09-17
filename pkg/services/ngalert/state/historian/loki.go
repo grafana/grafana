@@ -298,16 +298,12 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		if !shouldRecord(state) && !logAll {
 			continue
 		}
-		// Create a copy of labels to avoid modifying the original state
-		// If labels are nil, initialize an empty map
-		var labelsCopy data.Labels
-		if state.Labels != nil {
-			labelsCopy = state.Labels.Copy()
-		} else {
-			labelsCopy = data.Labels{}
+		// Add monitor name label directly to the state labels
+		if state.Labels == nil {
+			state.Labels = data.Labels{}
 		}
-		labelsCopy[MonitorNameLabel] = rule.Title
-		sanitizedLabels := removePrivateLabels(labelsCopy)
+		state.Labels[MonitorNameLabel] = rule.Title
+		sanitizedLabels := removePrivateLabels(state.Labels)
 		var errMsg string
 		if state.State.State == eval.Error {
 			errMsg = state.Error.Error()
@@ -329,9 +325,9 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		var silenceIds []string
 		var err error
 		if muteChecker != nil {
-			silenceIds, err = muteChecker.GetSilenceIds(rule.OrgID, labelsCopy)
+			silenceIds, err = muteChecker.GetSilenceIds(rule.OrgID, state.Labels)
 			if err != nil {
-				logger.Error("Failed to check if alert is muted", "error", err, "labels", labelsCopy)
+				logger.Error("Failed to check if alert is muted", "error", err, "labels", state.Labels)
 			}
 		}
 
@@ -343,7 +339,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			Condition:                 rule.Condition,
 			DashboardUID:              rule.DashboardUID,
 			PanelID:                   rule.PanelID,
-			Fingerprint:               calculateFingerprint(labelsCopy),
+			Fingerprint:               calculateFingerprint(state.Labels),
 			RuleTitle:                 rule.Title,
 			RuleID:                    rule.ID,
 			RuleUID:                   rule.UID,

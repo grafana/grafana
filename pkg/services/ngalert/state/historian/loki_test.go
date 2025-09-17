@@ -130,6 +130,8 @@ func TestRemoteLokiBackend(t *testing.T) {
 
 			entry := requireSingleEntry(t, res)
 			require.Contains(t, entry.InstanceLabels, "statelabel")
+			require.Contains(t, entry.InstanceLabels, "monitor_name")
+			require.Equal(t, rule.Title, entry.InstanceLabels["monitor_name"])
 		})
 
 		t.Run("does not include labels other than instance labels in log line", func(t *testing.T) {
@@ -247,6 +249,32 @@ func TestRemoteLokiBackend(t *testing.T) {
 
 			entry := requireSingleEntry(t, res)
 			require.False(t, len(entry.SilenceIds) > 0, "Alert should not be marked as muted")
+		})
+
+		t.Run("modifies original state labels with monitor_name", func(t *testing.T) {
+			rule := createTestRule()
+			l := log.NewNopLogger()
+			originalLabels := data.Labels{
+				"alertname": "test",
+				"instance":  "localhost",
+			}
+			states := singleFromNormal(&state.State{
+				State:  eval.Alerting,
+				Labels: originalLabels,
+			})
+
+			// Keep a reference to the original state to check after StatesToStream
+			originalState := states[0].State
+
+			_ = StatesToStream(rule, states, nil, l, false, nil)
+
+			// Verify that the original state.Labels now contains monitor_name
+			require.Contains(t, originalState.Labels, MonitorNameLabel, "Original state.Labels should be modified to include monitor_name")
+			require.Equal(t, rule.Title, originalState.Labels[MonitorNameLabel], "monitor_name should have the rule title")
+
+			// Also verify the original labels we had are still there
+			require.Equal(t, "test", originalState.Labels["alertname"])
+			require.Equal(t, "localhost", originalState.Labels["instance"])
 		})
 	})
 }
