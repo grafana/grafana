@@ -303,19 +303,19 @@ describe('LogListControls', () => {
 
     expect(onLogOptionsChange).toHaveBeenCalledTimes(2);
     expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', true);
-    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', false);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyLogMessage', false);
 
     await userEvent.click(screen.getByLabelText(WRAP_LINES_LABEL_COPY));
     await userEvent.click(screen.getByText(WRAP_JSON_TOOLTIP_COPY));
 
     expect(onLogOptionsChange).toHaveBeenCalledTimes(4);
-    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', true);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyLogMessage', true);
 
     await userEvent.click(screen.getByLabelText(WRAP_JSON_LABEL_COPY));
     await userEvent.click(screen.getByText(WRAP_DISABLE_LABEL_COPY));
 
     expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', false);
-    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', false);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyLogMessage', false);
 
     expect(onLogOptionsChange).toHaveBeenCalledTimes(6);
 

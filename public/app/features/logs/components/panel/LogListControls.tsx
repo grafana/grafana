@@ -735,7 +735,7 @@ const WrapLogMessageButton = ({ expanded }: LogSelectOptionProps) => {
       tooltip={tooltip}
       label={wrapStateText}
       buttonAriaLabel={tooltip}
-      customTagText={'+'}
+      customTagText={prettifyJSON ? '+' : ''}
     />
   );
 };
