@@ -195,7 +195,7 @@ func TestSimpleServer(t *testing.T) {
 		require.Len(t, all.Items, 0) // empty
 	})
 
-	t.Run("playlist FAIL CRUD paths", func(t *testing.T) {
+	t.Run("playlist FAIL CRUD paths due to invalid key", func(t *testing.T) {
 		raw := []byte(`{
     		"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
@@ -221,14 +221,60 @@ func TestSimpleServer(t *testing.T) {
 			}
 		}`)
 
+		// invalid group
 		key := &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app###",
+			Resource:  "rrrr###", // can be anything :(
+			Namespace: "default",
+			Name:      "fdgsv37qslr0ga",
+		}
+
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{
+			Value: raw,
+			Key:   key,
+		})
+		require.Error(t, err)
+		require.Nil(t, created)
+
+		// invalid resource
+		key = &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "rrrr###", // can be anything :(
+			Namespace: "default",
+			Name:      "fdgsv37qslr0ga",
+		}
+
+		created, err = server.Create(ctx, &resourcepb.CreateRequest{
+			Value: raw,
+			Key:   key,
+		})
+		require.Error(t, err)
+		require.Nil(t, created)
+
+		// invalid namespace
+		key = &resourcepb.ResourceKey{
 			Group:     "playlist.grafana.app",
 			Resource:  "rrrr", // can be anything :(
 			Namespace: "default###",
 			Name:      "fdgsv37qslr0ga",
 		}
 
-		created, err := server.Create(ctx, &resourcepb.CreateRequest{
+		created, err = server.Create(ctx, &resourcepb.CreateRequest{
+			Value: raw,
+			Key:   key,
+		})
+		require.Error(t, err)
+		require.Nil(t, created)
+
+		// invalid name
+		key = &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "rrrr", // can be anything :(
+			Namespace: "default",
+			Name:      "fdgsv37qslr0g###",
+		}
+
+		created, err = server.Create(ctx, &resourcepb.CreateRequest{
 			Value: raw,
 			Key:   key,
 		})

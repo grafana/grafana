@@ -18,17 +18,17 @@ func verifyRequestKey(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
 	if key.Resource == "" {
 		return NewBadRequestError("request key is missing resource")
 	}
-	if !util.IsValidShortUID(key.Name) {
-		return NewBadRequestError(fmt.Sprintf("name '%s' is invalid", key.Name))
+	if err := util.ValidateUID(key.Name); err != nil {
+		return NewBadRequestError(fmt.Sprintf("name '%s' is invalid: '%s'", key.Name, err))
 	}
-	if !validNameRegex.MatchString(key.Namespace) {
-		return NewBadRequestError(fmt.Sprintf("namespace '%s' is invalid", key.Namespace))
+	if err := validateName(key.Namespace); err != nil {
+		return NewBadRequestError(fmt.Sprintf("namespace '%s' is invalid: '%s'", key.Namespace, err))
 	}
-	if !validNameRegex.MatchString(key.Group) {
-		return NewBadRequestError(fmt.Sprintf("group '%s' is invalid", key.Group))
+	if err := validateName(key.Group); err != nil {
+		return NewBadRequestError(fmt.Sprintf("group '%s' is invalid: '%s'", key.Group, err))
 	}
-	if !validNameRegex.MatchString(key.Resource) {
-		return NewBadRequestError(fmt.Sprintf("resource '%s' is invalid", key.Resource))
+	if err := validateName(key.Resource); err != nil {
+		return NewBadRequestError(fmt.Sprintf("resource '%s' is invalid: '%s'", key.Resource, err))
 	}
 	return nil
 }
