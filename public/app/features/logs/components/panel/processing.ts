@@ -332,5 +332,5 @@ export function getLevelsFromLogs(logs: LogListModel[]) {
   for (const log of logs) {
     levels.add(log.logLevel);
   }
-  return Array.from(levels).filter(level => level != null);
+  return Array.from(levels).filter((level) => level != null);
 }
