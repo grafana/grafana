@@ -10,10 +10,11 @@ import (
 	notificationHistorian "github.com/grafana/alerting/notify/historian"
 	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/alerting/notify/nfstatus"
-	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/matchers/compat"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -406,6 +407,7 @@ func (ng *AlertNG) init() error {
 		ng.Log,
 		ng.ResourcePermissions,
 		ng.tracer,
+		ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 	)
 	provisioningReceiverService := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true),
@@ -417,6 +419,7 @@ func (ng *AlertNG) init() error {
 		ng.Log,
 		ng.ResourcePermissions,
 		ng.tracer,
+		false, // imported resources are not exposed via provisioning APIs
 	)
 
 	// Provisioning

@@ -109,6 +109,7 @@ func NewReceiverService(
 	log log.Logger,
 	resourcePermissions ac.ReceiverPermissionsService,
 	tracer tracing.Tracer,
+	includeImported bool,
 ) *ReceiverService {
 	return &ReceiverService{
 		authz:                  authz,
@@ -121,6 +122,7 @@ func NewReceiverService(
 		provenanceValidator:    validation.ValidateProvenanceRelaxed,
 		resourcePermissions:    resourcePermissions,
 		tracer:                 tracer,
+		includeImported:        includeImported,
 	}
 }
 
