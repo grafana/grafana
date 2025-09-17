@@ -75,8 +75,8 @@ function getAccessibleTagColor(name?: string): string | undefined {
   const readableAttempt = attempts.find((attempt) => {
     const candidate = getTagColorsFromName(attempt).color;
     return (
-      tinycolor2.isReadable(candidate, '#000', { level: 'AA' }) ||
-      tinycolor2.isReadable(candidate, '#fff', { level: 'AA' })
+      tinycolor2.isReadable(candidate, '#000', { level: 'AA', size: 'small' }) ||
+      tinycolor2.isReadable(candidate, '#fff', { level: 'AA', size: 'small' })
     );
   });
   const chosen = readableAttempt ?? name;
@@ -108,6 +108,30 @@ function getColorFromProps({
   return;
 }
 
+function getReadableFontColor(bg: string, fallback: string): string {
+  // First: explicitly check black
+  if (tinycolor2.isReadable(bg, '#000', { level: 'AA', size: 'small' })) {
+    return '#000';
+  }
+
+  // Then: explicitly check white
+  if (tinycolor2.isReadable(bg, '#fff', { level: 'AA', size: 'small' })) {
+    return '#fff';
+  }
+
+  // Then: try fallback if it’s readable
+  if (tinycolor2.isReadable(bg, fallback, { level: 'AA', size: 'small' })) {
+    return tinycolor2(fallback).toHexString();
+  }
+
+  // Last resort: pick the "most readable", even if not AA-compliant
+  return tinycolor2
+    .mostReadable(bg, ['#000', '#fff', fallback], {
+      includeFallbackColors: true,
+    })
+    .toHexString();
+}
+
 const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
   const backgroundColor = color ?? theme.colors.secondary.main;
 
@@ -120,7 +144,7 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
     : tinycolor2(backgroundColor).lighten(5).toString();
 
   const fontColor = color
-    ? tinycolor2.mostReadable(backgroundColor, ['#000', '#fff']).toString()
+    ? getReadableFontColor(backgroundColor, theme.colors.text.primary)
     : theme.colors.text.primary;
 
   let padding: CSSProperties['padding'] = theme.spacing(0.33, 1);
