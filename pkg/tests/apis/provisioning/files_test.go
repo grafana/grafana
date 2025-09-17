@@ -20,8 +20,6 @@ import (
 )
 
 func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
-	// TODO: fix
-	t.Skip("Skipping this test while being worked on")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
