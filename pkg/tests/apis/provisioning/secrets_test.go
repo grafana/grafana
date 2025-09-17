@@ -39,6 +39,7 @@ func TestIntegrationProvisioning_InlineSecrets(t *testing.T) {
 			values: map[string]any{
 				"SecureTokenCreate":         "some-token",
 				"SecureWebhookSecretCreate": "some-secret",
+				"Target":                    "folder",
 			},
 			inputFile: "testdata/github-with-inline-secrets.json.tmpl",
 			expectedFields: []expectedField{
