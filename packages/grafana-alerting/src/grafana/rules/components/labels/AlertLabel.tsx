@@ -11,9 +11,9 @@ export type LabelSize = 'md' | 'sm' | 'xs';
 interface BaseProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick' | 'className'> {
   icon?: IconName;
   labelKey?: string;
-  value: string;
+  value?: string;
   size?: LabelSize;
-  onClick?: ([value, key]: [string, string | undefined]) => void;
+  onClick?: ([value, key]: [string | undefined, string | undefined]) => void;
 }
 
 type Props = BaseProps & MergeExclusive<{ color?: string }, { colorBy?: 'key' | 'value' | 'both' }>;
@@ -51,12 +51,12 @@ const AlertLabel = (props: Props) => {
 
   return (
     <div className={styles.wrapper} aria-label={ariaLabel} data-testid="label-value" {...rest}>
-      {onClick ? (
+      {onClick && (labelKey || value) ? (
         <button
           type="button"
           className={styles.clickable}
-          key={labelKey + value}
-          onClick={() => onClick([value, labelKey])}
+          key={`${labelKey ?? ''}${value ?? ''}`}
+          onClick={() => onClick?.([value ?? '', labelKey ?? ''])}
         >
           {innerLabel}
         </button>
@@ -85,7 +85,7 @@ function getColorFromProps({
     return getTagColorsFromName(value).color;
   }
 
-  if (colorBy === 'both') {
+  if (colorBy === 'both' && labelKey && value) {
     return getTagColorsFromName(labelKey + value).color;
   }
 

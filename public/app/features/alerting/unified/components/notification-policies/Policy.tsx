@@ -720,7 +720,13 @@ const InheritedProperties: FC<{ properties: InheritableProperties }> = ({ proper
             return null;
           }
 
-          return <AlertLabel key={key} label={routePropertyToLabel(key)} value={routePropertyToValue(key, value)} />;
+          return (
+            <AlertLabel
+              key={key}
+              labelKey={routePropertyToLabel(key)}
+              value={String(routePropertyToValue(key, value))}
+            />
+          );
         })}
       </Stack>
     }
@@ -920,10 +926,10 @@ function getContactPointErrors(contactPoint: string, contactPointsState: Receive
         <AlertLabel
           icon="at"
           key={uniqueId()}
-          label={t('alerting.contact-point-errors.label-contact-point', 'Contact Point › {{name}}', {
+          value={String(status.lastNotifyAttemptError)}
+          labelKey={t('alerting.contact-point-errors.label-contact-point', 'Contact Point › {{name}}', {
             name: status.name,
           })}
-          value={status.lastNotifyAttemptError}
         />
       ));
 

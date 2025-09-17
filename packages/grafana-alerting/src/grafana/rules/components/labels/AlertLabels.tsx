@@ -14,7 +14,7 @@ export interface AlertLabelsProps {
   labels: Record<string, string>;
   commonLabels?: Record<string, string>;
   size?: LabelSize;
-  onClick?: ([value, key]: [string, string | undefined]) => void;
+  onClick?: ([value, key]: [string | undefined, string | undefined]) => void;
 }
 
 export const AlertLabels = ({ labels, commonLabels = {}, size, onClick }: AlertLabelsProps) => {

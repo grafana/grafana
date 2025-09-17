@@ -210,8 +210,8 @@ interface EventRowProps {
 function EventRow({ record, addFilter, timeRange, hideAlertRuleColumn }: EventRowProps) {
   const styles = useStyles2(getStyles);
   const [isCollapsed, setIsCollapsed] = useState(true);
-  function onLabelClick([value, label]: [string, string | undefined]) {
-    if (label) {
+  function onLabelClick([value, label]: [string | undefined, string | undefined]) {
+    if (label && value) {
       addFilter(label, value, 'label');
     }
   }
