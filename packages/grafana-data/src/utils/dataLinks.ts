@@ -47,7 +47,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
   const interpolatedCorrelationData = interpolateObject(link.meta?.correlationData, scopedVars, replaceVariables);
   const title = link.title ? link.title : internalLink.datasourceName;
 
-  const interpolationParams = interpolatedQuery
+  const interpolatedParams = interpolatedQuery
     ? {
         query: {
           ...interpolatedQuery,
@@ -86,7 +86,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
       : undefined,
     target: link?.targetBlank ? '_blank' : '_self',
     origin: field,
-    ...(interpolationParams && { interpolationParams }),
+    ...(interpolatedParams && { interpolatedParams }),
   };
 }
 
