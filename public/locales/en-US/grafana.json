@@ -3681,10 +3681,6 @@
       }
     }
   },
-  "bulk-action-error": {
-    "title": "{{title}}",
-    "title-default": "Error"
-  },
   "candlestick": {
     "additional-fields-options": {
       "label-ignore": "Ignore",
