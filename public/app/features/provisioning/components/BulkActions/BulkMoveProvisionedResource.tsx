@@ -16,6 +16,7 @@ import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/provisionin
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
+import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { StepStatusInfo } from '../../Wizard/types';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 import { StatusInfo } from '../../types';
@@ -25,7 +26,6 @@ import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { generateTimestamp } from '../utils/timestamp';
 
-import { BulkActionError } from './BulkActionError';
 import { MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
 import { BulkActionFormData, BulkActionProvisionResourceProps, getTargetFolderPathInRepo } from './utils';
 
@@ -125,7 +125,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
         <Stack direction="column" gap={2}>
           {hasSubmitted && job ? (
             <>
-              <BulkActionError error={jobError} />
+              <ProvisioningAlert error={jobError} />
               <JobStatus watch={job} jobType="move" onStatusChange={onStatusChange} />
             </>
           ) : (

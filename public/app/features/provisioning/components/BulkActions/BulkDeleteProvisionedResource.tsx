@@ -12,6 +12,7 @@ import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
+import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { StepStatusInfo } from '../../Wizard/types';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 import { StatusInfo } from '../../types';
@@ -20,7 +21,6 @@ import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFi
 import { getDefaultWorkflow, getWorkflowOptions } from '../defaults';
 import { generateTimestamp } from '../utils/timestamp';
 
-import { BulkActionError } from './BulkActionError';
 import { DeleteJobSpec, useBulkActionJob } from './useBulkActionJob';
 import { BulkActionFormData, BulkActionProvisionResourceProps } from './utils';
 
@@ -88,7 +88,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
         <Stack direction="column" gap={2}>
           {hasSubmitted && job ? (
             <>
-              <BulkActionError error={jobError} />
+              <ProvisioningAlert error={jobError} />
               <JobStatus watch={job} jobType="delete" onStatusChange={onStatusChange} />
             </>
           ) : (
