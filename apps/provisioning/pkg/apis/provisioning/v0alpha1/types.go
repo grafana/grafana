@@ -152,7 +152,10 @@ func (r *Repository) Branch() string {
 		if r.Spec.GitLab != nil {
 			return r.Spec.GitLab.Branch
 		}
+	default:
+		return ""
 	}
+
 	return ""
 }
 
