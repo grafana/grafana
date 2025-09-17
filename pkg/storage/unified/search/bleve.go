@@ -88,6 +88,9 @@ type bleveBackend struct {
 	cache   map[resource.NamespacedResource]*bleveIndex
 
 	indexMetrics *resource.BleveIndexMetrics
+
+	// if true will use ngram instead of edge_ngram for title indexes. See custom_analyzers.go
+	useFullNgram bool
 }
 
 func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
@@ -127,6 +130,7 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 		cache:        map[resource.NamespacedResource]*bleveIndex{},
 		opts:         opts,
 		indexMetrics: indexMetrics,
+		useFullNgram: features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageUseFullNgram),
 	}
 
 	go be.updateIndexSizeMetric(opts.Root)
@@ -298,7 +302,7 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("reason", indexBuildReason),
 	)
 
-	mapper, err := GetBleveMappings(fields)
+	mapper, err := GetBleveMappings(fields, b.useFullNgram)
 	if err != nil {
 		return nil, err
 	}
