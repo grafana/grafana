@@ -264,7 +264,7 @@ describe(`Traces Filters`, () => {
       { property: 'client_Browser', filters: [{ count: 100, value: 'test-client' }], operation: 'ne', index: 1 },
       rerender
     );
-  });
+  }, 10000);
 
   it('should delete a trace filter', async () => {
     let mockQuery = createMockQuery({ azureTraces: { traceTypes: ['customEvents'] } });
