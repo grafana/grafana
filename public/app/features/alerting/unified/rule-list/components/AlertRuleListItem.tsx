@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import pluralize from 'pluralize';
 import { ReactNode, forwardRef, memo, useEffect, useId } from 'react';
 
-import { StateIcon } from '@grafana/alerting/unstable';
+import { AlertLabels, StateIcon } from '@grafana/alerting/unstable';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
@@ -10,7 +10,6 @@ import { Rule, RuleGroupIdentifierV2, RuleHealth, RulesSourceIdentifier } from '
 import { Labels, PromAlertingRuleState, RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
-import { AlertLabels } from '../../components/AlertLabels';
 import ConditionalWrap from '../../components/ConditionalWrap';
 import { MetaText } from '../../components/MetaText';
 import { ProvisioningBadge } from '../../components/Provisioning';

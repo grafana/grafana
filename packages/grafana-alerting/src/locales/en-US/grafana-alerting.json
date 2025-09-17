@@ -1,5 +1,18 @@
 {
+  "alert-labels": {
+    "button": {
+      "hide": "Hide common labels",
+      "show": {
+        "tooltip": "Show common labels"
+      }
+    }
+  },
   "alerting": {
+    "alert-labels": {
+      "aria-label-labels": "Labels",
+      "common-labels-count_one": "+{{count}} common labels",
+      "common-labels-count_other": "+{{count}} common labels"
+    },
     "paused-badge": {
       "paused": "Paused"
     }
