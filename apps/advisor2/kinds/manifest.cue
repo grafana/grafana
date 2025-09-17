@@ -1,8 +1,8 @@
 package advisor2
 
 manifest: {
-	appName:       "advisor2"
-	groupOverride: "advisor2.grafana.com"
+	appName:       "advisor"
+	groupOverride: "advisor.grafana.app"
 	versions: {
 		"v0alpha1": {
 			codegen: {

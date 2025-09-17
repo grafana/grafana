@@ -98,33 +98,25 @@ func DeleteAnnotations(ctx context.Context, obj resource.Object, annotations []s
 
 func SetStatusAnnotation(ctx context.Context, client resource.Client, obj resource.Object, status string) error {
 	annotations := AddAnnotations(ctx, obj, map[string]string{StatusAnnotation: status})
-	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
-		Operations: []resource.PatchOperation{{
-			Operation: resource.PatchOpAdd,
-			Path:      "/metadata/annotations",
-			Value:     annotations,
-		}},
-	}, resource.PatchOptions{}, obj)
+	obj.SetAnnotations(annotations)
+	_, err := client.Update(ctx, obj.GetStaticMetadata().Identifier(), obj, resource.UpdateOptions{})
+	return err
 }
 
 func SetAnnotations(ctx context.Context, client resource.Client, obj resource.Object, annotations map[string]string) error {
-	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
-		Operations: []resource.PatchOperation{{
-			Operation: resource.PatchOpAdd,
-			Path:      "/metadata/annotations",
-			Value:     annotations,
-		}},
-	}, resource.PatchOptions{}, obj)
+	obj.SetAnnotations(annotations)
+	_, err := client.Update(ctx, obj.GetStaticMetadata().Identifier(), obj, resource.UpdateOptions{})
+	return err
 }
 
 func SetStatus(ctx context.Context, client resource.Client, obj resource.Object, status any) error {
-	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
-		Operations: []resource.PatchOperation{{
-			Operation: resource.PatchOpAdd,
-			Path:      "/status",
-			Value:     status,
-		}},
-	}, resource.PatchOptions{
+	// For status updates, we need to use UpdateStatus method if available
+	// or set the status field directly on the object
+	if statusObj, ok := obj.(interface{ SetStatus(any) }); ok {
+		statusObj.SetStatus(status)
+	}
+	_, err := client.Update(ctx, obj.GetStaticMetadata().Identifier(), obj, resource.UpdateOptions{
 		Subresource: "status",
-	}, obj)
+	})
+	return err
 }

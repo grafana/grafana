@@ -648,6 +648,8 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
+require github.com/go-jose/go-jose/v3 v3.0.4
+
 require github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream

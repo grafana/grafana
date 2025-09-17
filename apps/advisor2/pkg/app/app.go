@@ -9,12 +9,14 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	advisor2v0alpha1 "github.com/grafana/grafana/apps/advisor2/pkg/apis/advisor2/v0alpha1"
+	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor2/pkg/apis/advisor/v0alpha1"
 )
 
 func New(cfg app.Config) (app.App, error) {
+	log := logging.DefaultLogger.With("app", "advisor.app")
+
 	simpleConfig := simple.AppConfig{
-		Name:       "advisor2",
+		Name:       "advisor",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
 			ErrorHandler: func(ctx context.Context, err error) {
@@ -23,16 +25,22 @@ func New(cfg app.Config) (app.App, error) {
 		},
 		ManagedKinds: []simple.AppManagedKind{
 			{
-				Kind: advisor2v0alpha1.CheckKind(),
+				Kind: advisorv0alpha1.CheckKind(),
 				Validator: &simple.Validator{
 					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
 						// do something here if needed
 						return nil
 					},
 				},
+				Watcher: &simple.Watcher{
+					AddFunc: func(ctx context.Context, obj resource.Object) error {
+						log.Info("Adding check", "namespace", obj.GetNamespace())
+						return nil
+					},
+				},
 			},
 			{
-				Kind: advisor2v0alpha1.CheckTypeKind(),
+				Kind: advisorv0alpha1.CheckTypeKind(),
 				Validator: &simple.Validator{
 					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
 						// do something here if needed
@@ -58,10 +66,10 @@ func New(cfg app.Config) (app.App, error) {
 
 func GetKinds() map[schema.GroupVersion][]resource.Kind {
 	gv := schema.GroupVersion{
-		Group:   advisor2v0alpha1.CheckKind().Group(),
-		Version: advisor2v0alpha1.CheckKind().Version(),
+		Group:   advisorv0alpha1.CheckKind().Group(),
+		Version: advisorv0alpha1.CheckKind().Version(),
 	}
 	return map[schema.GroupVersion][]resource.Kind{
-		gv: {advisor2v0alpha1.CheckKind()},
+		gv: {advisorv0alpha1.CheckKind()},
 	}
 }

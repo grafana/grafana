@@ -87,7 +87,7 @@ func processCheck(ctx context.Context, log logging.Logger, client resource.Clien
 		Count:    int64(len(items)),
 	}
 	c.Status.Report = *report
-	err = checks.SetStatus(ctx, client, obj, c.Status)
+	err = checks.SetStatus(ctx, client, c, c.Status)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func processCheck(ctx context.Context, log logging.Logger, client resource.Clien
 		checks.StatusAnnotation:          checks.StatusAnnotationProcessed,
 		checks.IgnoreStepsAnnotationList: checkType.GetAnnotations()[checks.IgnoreStepsAnnotationList],
 	})
-	return checks.SetAnnotations(ctx, client, obj, annotations)
+	return checks.SetAnnotations(ctx, client, c, annotations)
 }
 
 func processCheckRetry(ctx context.Context, log logging.Logger, client resource.Client, typesClient resource.Client, obj resource.Object, check checks.Check) error {
