@@ -718,8 +718,10 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 	if ds.JsonData != nil {
 		opts.CustomOptions = ds.JsonData.MustMap()
 		// allow the plugin sdk to get the json data in JSONDataFromHTTPClientOptions
-		deepJsonDataCopy := make(map[string]any, len(opts.CustomOptions))
-		for k, v := range opts.CustomOptions {
+		// Create a separate copy for grafanaData to ensure middleware can access customQueryParameters
+		jsonDataMap := ds.JsonData.MustMap()
+		deepJsonDataCopy := make(map[string]any, len(jsonDataMap))
+		for k, v := range jsonDataMap {
 			deepJsonDataCopy[k] = v
 		}
 		opts.CustomOptions["grafanaData"] = deepJsonDataCopy
