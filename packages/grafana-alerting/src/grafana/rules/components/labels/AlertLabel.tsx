@@ -143,8 +143,12 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
     ? tinycolor2(backgroundColor).darken(5).toString()
     : tinycolor2(backgroundColor).lighten(5).toString();
 
-  const fontColor = color
+  const labelFontColor = color
     ? getReadableFontColor(backgroundColor, theme.colors.text.primary)
+    : theme.colors.text.primary;
+
+  const valueFontColor = color
+    ? getReadableFontColor(valueBackgroundColor, theme.colors.text.primary)
     : theme.colors.text.primary;
 
   let padding: CSSProperties['padding'] = theme.spacing(0.33, 1);
@@ -162,9 +166,7 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
 
   return {
     wrapper: css({
-      color: fontColor,
       fontSize: theme.typography.bodySmall.fontSize,
-
       borderRadius: theme.shape.borderRadius(2),
     }),
     labelText: css({
@@ -176,7 +178,7 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
     label: css({
       display: 'flex',
       alignItems: 'center',
-      color: 'inherit',
+      color: labelFontColor,
 
       padding: padding,
       background: backgroundColor,
@@ -200,7 +202,7 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
       },
     }),
     value: css({
-      color: 'inherit',
+      color: valueFontColor,
       padding: padding,
       background: valueBackgroundColor,
       border: `solid 1px ${borderColor}`,
