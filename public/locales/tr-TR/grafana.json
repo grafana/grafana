@@ -156,8 +156,11 @@
       "title": "Grafana Enterprise'ı edinin"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Kullanıcı eşleme testi",
-      "test-mapping-run-button": "Çalıştır"
+      "test-mapping-run-button": "Çalıştır",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -504,6 +507,7 @@
       "copy-link": "Bağlantıyı kopyala",
       "duplicate": "Çoğalt",
       "export": "Dışa aktar",
+      "manage-enrichments": "",
       "silence-notifications": "Bildirimleri sessize al",
       "with-modifications": "Değişikliklerle birlikte"
     },
@@ -1121,7 +1125,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -1703,9 +1708,6 @@
       "notes": "Notlar",
       "returns": "İadeler"
     },
-    "label-picker": {
-      "no-options-message": "Etiket bulunamadı"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Etiketleri düzenle"
     },
@@ -1723,9 +1725,6 @@
     "labels-sub-form": {
       "description": "Aşağıdaki seçeneklerden bir etiket anahtar/değeri seçin veya yeni bir tane yazıp Enter tuşuna a basın.",
       "save": "Kaydet"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Mevcut etiketler yükleniyor"
     },
     "labels-without-suggestions": {
       "message": {
@@ -2062,9 +2061,6 @@
       "text-loading-rules": "Kurallar yükleniyor...",
       "title-dashboard-not-saved": "Pano kaydedilmedi"
     },
-    "paused-badge": {
-      "paused": "Duraklatıldı"
-    },
     "payload-editor": {
       "edit-payload": "Yükü düzenle",
       "label-add-custom-alert-instance": "Özel uyarı örneği ekle",
@@ -2216,9 +2212,6 @@
       "label-time-range": "Zaman Aralığı",
       "max-data-points": "MD (Maks. Veri Noktası) = {{maxDataPoints}}",
       "min-interval": "Min. Aralık = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> itibarıyla şimdiye kadar"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2564,6 +2557,10 @@
       "recovering": "{{recoveringStats}} eski durumuna döndürülüyor",
       "error_one": "{{count}} hata",
       "error_other": "{{count}} hata"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Ruler API etkin olan bir Mimir, Loki veya Cortex veri kaynağınız yoksa \"Grafana tarafından yönetilen\" seçeneğini belirleyin."
@@ -3048,6 +3045,7 @@
       "page-nav": {
         "text": {
           "details": "Ayrıntılar",
+          "enrichment": "",
           "history": "Geçmiş",
           "instances": "Örnekler",
           "query-and-conditions": "Sorgu ve koşullar",
@@ -3602,6 +3600,7 @@
       "button-cancel": "İptal et",
       "button-delete": "Sil",
       "button-deleting": "Siliniyor...",
+      "commit": "",
       "delete-warning": "Bu işlem, bu klasörü ve tüm alt klasörlerini silecektir. Bu işlem toplamda şunları etkileyecektir:",
       "success-message": "Klasör başarıyla silindi"
     },
@@ -3666,7 +3665,13 @@
       "text": "Sorgunuz için sonuç bulunamadı"
     },
     "restore": {
-      "success": "{{name}} panosu geri yüklendi"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Hedefe doğrudan erişiminiz varsa JSON'u kopyalayıp oraya yapıştırın.",
     "trash-state-manager": {
@@ -4687,6 +4692,7 @@
       "move": "{{typeName}} ögesini taşı",
       "panel-background": "Panel arka planını değiştir",
       "panel-description": "Panel açıklamasını değiştir",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Satır başına maksimum tekrar sayısı",
       "panel-repeat-direction": "Tekrar yönü",
       "panel-repeat-variable": "Panel yineleme ölçütü",
@@ -4941,12 +4947,11 @@
       "dataframe-aria-label": "Veri çerçevesi seçin",
       "dataframe-label": "Veri çerçevesini göster",
       "download-csv": "CSV olarak indir",
-      "download-excel-description": "Excel'de kullanmak için CSV'ye başlık ekler",
-      "download-excel-label": "Excel olarak indir",
       "download-logs": "Günlükleri indir",
       "download-service": "Servis grafiğini indir",
       "download-traces": "İzleme verilerini indir",
-      "excel-header": "Excel başlığı",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Biçimlendirilmiş veriler",
       "formatted-data-description": "Tablo verileri, Alan ve Geçersiz Kılma sekmelerinde tanımlanan seçeneklerle biçimlendirilir.",
       "formatted-data-label": "Biçimlendirilmiş veriler",
@@ -5403,10 +5408,6 @@
       "save-dashboard-short": "Kaydet",
       "save-library-panel": "Kütüphane panelini kaydet",
       "settings": "Pano ayarları",
-      "share": {
-        "label": "Paylaş",
-        "tooltip": "Panoyu paylaşın"
-      },
       "share-button": "Paylaş",
       "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır",
       "unmark-favorite": "Favorilerden kaldır"
@@ -5657,14 +5658,6 @@
         "title": {
           "new-dashboard": "Yeni pano"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "Herkese açık URL'yi iptal et"
-      },
-      "title": {
-        "revoke-public-url": "Herkese açık URL'yi iptal et"
       }
     },
     "constant-variable-form": {
@@ -5921,13 +5914,12 @@
       "usage-count_other": "{{count}} panoda kullanılıyor"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "Pano taşınırken hata oluştu",
       "api-error": "Pano taşınamadı",
       "cancel-action": "İptal et",
       "current-file-not-found": "Geçerli pano dosyası bulunamadı",
       "drawer-title": "Sağlanan Gösterge Tablosunu Taşı",
       "file-load-error": "Pano yüklenirken hata oluştu",
-      "loading-file-data": "Pano verisi yükleniyor",
+      "loading-dashboard-data": "",
       "move-action": "Panoyu taşı",
       "move-read-only-message": "Depo salt okunur olduğundan bu pano doğrudan Grafana'dan taşınamaz. Bu panoyu taşımak için lütfen dosyayı Git deponuza taşıyın.",
       "moving": "Taşınıyor...",
@@ -9238,7 +9230,8 @@
       "disable-button": "Devre dışı bırak",
       "discard-button": "Temizle",
       "save-and-enable-button": "Kaydet ve etkinleştir",
-      "save-button": "Kaydet"
+      "save-button": "Kaydet",
+      "test-button": ""
     },
     "documentation": "belgeler",
     "host": {
@@ -9268,8 +9261,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "İptal",
-      "create": "Kütüphane paneli oluştur",
       "error": "Bu ada sahip kütüphane paneli zaten var",
       "folder": "Klasöre kaydet",
       "folder-description": "Kütüphane paneli izinleri klasör izinlerinden türetilir",
@@ -9632,10 +9623,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "Yinelenenleri kaldırma",
-      "disable-highlighting": "Vurgulamayı devre dışı bırak",
       "disable-prettify-json": "JSON günlük kayıtlarını daralt",
-      "display-level": "Seviyeleri göster",
       "display-level-all": "Tüm seviyeler",
       "download": "Günlükleri indir",
       "download-logs": {
@@ -9643,13 +9633,40 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Vurgulamayı etkinleştir",
       "escape-newlines": "Günlük kaydı satırlarındaki kaçış karakterli satır sonu ve sekme dizilerini düzelt",
-      "font-size-default": "Küçük yazı tipi boyutu kullan",
-      "font-size-small": "Varsayılan yazı tipi boyutunu kullan",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "Aramayı kapat",
       "hide-timestamps": "Zaman damgalarını gizle",
       "hide-unique-labels": "Benzersiz etiketleri gizle",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
+      },
       "newest-first": "Günlükler yeniden eskiye sıralandı: En eskileri göstermek için tıklayın",
       "oldest-first": "Günlükler eskiden yeniye sıralandı: En yenileri göstermek için tıklayın",
       "prettify-json": "JSON günlük kayıtlarını genişlet",
@@ -9658,13 +9675,26 @@
       "resolution-ns": "",
       "scroll-bottom": "En alta kaydır",
       "scroll-top": "En üste kaydır",
-      "show-ms-timestamps": "",
-      "show-ns-timestamps": "",
       "show-search": "Günlük sonuçlarında ara",
       "show-timestamps": "Zaman damgalarını göster",
       "show-unique-labels": "Benzersiz etiketleri göster",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
+        "milliseconds": "",
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
+      },
       "unwrap-lines": "Satırları çöz",
-      "wrap-json-lines": "",
       "wrap-lines": "Satırları kaydır"
     },
     "logs-navigation": {
@@ -10298,9 +10328,6 @@
     },
     "profiles": {
       "title": "Profiller"
-    },
-    "public": {
-      "title": "Herkese açık panolar"
     },
     "recently-deleted": {
       "subtitle": "Burada 30 günden fazla listelenen ögeler otomatik olarak silinecektir.",
@@ -11208,11 +11235,11 @@
       "description-clear-repository-connection": "Bu depo bağlantısı için net bir ad ekleyin",
       "empty": "Boş",
       "error-field-required": "Bu alan gereklidir.",
-      "ext-storage": "Harici depolama",
-      "grafana": "Grafana örneği",
+      "external-storage-label": "",
       "label-display-name": "Görünen ad",
       "placeholder-my-repository-connection": "Depo bağlantım",
       "text-loading-resource-information": "Kaynak bilgileri yükleniyor...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} pano",
       "dashboards-count_other": "{{count}} pano",
       "files-count_one": "{{count}} dosya",
@@ -11260,7 +11287,9 @@
     },
     "connect-repository-button": {
       "configure": "Yapılandır",
-      "repository-limit-info-alert": "Depo sınırına ulaşıldı ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Sil",
@@ -11343,7 +11372,11 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Sorgunuzla eşleşen sonuç yok",
-      "placeholder-search": "Ara"
+      "placeholder-search": "Ara",
+      "all-resources-managed_one": "",
+      "all-resources-managed_other": "",
+      "partial-managed_one": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11641,6 +11674,7 @@
       "tooltip-unhealthy-repository": "İyi durumda olmayan bir depo çekilemedi"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Her geçmiş değer için yürütmeyi dahil et",
       "synchronization-options": "Senkronizasyon seçenekleri"
     },
@@ -11664,6 +11698,8 @@
       "alert-point-3": "Bu işlemin süresi dâhil olan kaynakların sayısına bağlıdır.",
       "alert-point-4": "Enterprise örnek yöneticileri, kullanıcılara bir duyuru afişi gösterebilir. Adım adım talimatlar için <2>bu kılavuza</2> bakın.",
       "alert-title": "Önemli: Veri veya yapılandırma kaybı yaşanmayacak ancak panolar birkaç dakika boyunca geçici olarak kullanılamayacaktır.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Sonlandır",
       "button-start": "Senkronizasyonu başlat",
       "discard-modal": {
@@ -11712,7 +11748,6 @@
       "email-share-type-option-label": "Sadece belirtilen kişiler",
       "pause-sharing-dashboard-label": "Pano paylaşımı duraklat",
       "public-share-type-option-label": "Bağlantıya sahip olan herkes",
-      "revoke-body": "Bu URL'yi iptal etmek istediğinizden emin misiniz? Pano artık herkese açık olmayacak.",
       "revoke-public-URL-button": "Herkese açık URL'yi iptal et",
       "revoke-public-URL-button-title": "Herkese açık URL'yi iptal et",
       "settings-title": "Ayarlar"
@@ -11726,7 +11761,6 @@
       "success-pause": "Pano erişiminiz duraklatıldı",
       "success-resume": "Pano erişiminiz devam ettirildi",
       "success-update": "Ayarlar başarıyla güncellendi",
-      "success-update-old": "Herkese açık pano güncellendi!",
       "time-range-label": "Zaman aralığı",
       "time-range-tooltip": "Paylaşılan pano, panonun varsayılan zaman aralığı ayarlarını kullanır"
     },
@@ -11734,10 +11768,6 @@
       "generate-public-url-button": "Herkese açık URL oluştur",
       "unsupported-features-desc": "Şu anda şablon değişkenlerini veya ön uç veri kaynaklarını desteklemiyoruz",
       "welcome-title": "Herkese açık panolara hoş geldiniz!"
-    },
-    "delete-modal": {
-      "revoke-body-text": "Bu URL'yi iptal etmek istediğinizden emin misiniz? Pano artık herkese açık olmayacak.",
-      "revoke-title": "Herkese açık URL'yi iptal et"
     },
     "email-sharing": {
       "accept-button": "Kabul et",
@@ -11768,11 +11798,8 @@
       "success-share-type-change": "Pano erişimi güncellendi: Artık yalnızca belirli kişiler bağlantı ile erişebilir."
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Genel panoları {{action}} izni almak için yöneticinizle iletişime geçin",
-      "no-upsert-perm-alert-title": "Herkese açık bir pano için {{ action }} izniniz yok",
       "save-dashboard-changes-alert-title": "Genel yapılandırmayı güncellemeden önce lütfen pano değişikliklerinizi kaydedin",
       "unsupport-data-source-alert-readmore-link": "Desteklenen veri kaynakları hakkında daha fazla bilgi edinin",
-      "unsupported-data-source-alert-desc": "Bu panoda herkese açık panolar için desteklenmeyen veri kaynakları var. Bu veri kaynaklarını kullanan paneller düzgün çalışmayabilir: {{unsupportedDataSources}}",
       "unsupported-data-source-alert-title": "Desteklenmeyen veri kaynakları",
       "unsupported-template-variable-alert-desc": "Bu herkese açık pano şablon değişkenleri kullandığından çalışmayabilir",
       "unsupported-template-variable-alert-title": "Şablon değişkenleri desteklenmiyor"
@@ -11806,8 +11833,7 @@
       "time-range-text": "Zaman aralığı = "
     },
     "share": {
-      "success-delete": "Panonuz artık paylaşılabilir değil",
-      "success-delete-old": "Herkese açık pano silindi!"
+      "success-delete": "Panonuz artık paylaşılabilir değil"
     },
     "share-configuration": {
       "share-type-label": "Bağlantı erişimi"
@@ -11826,24 +11852,6 @@
       "revoke-access-button": "Erişimi iptal et",
       "revoke-access-description": "Bu erişimi iptal etmek istediğinizden emin misiniz? Pano artık paylaşılamayacak.",
       "unsupported-data-source-alert-desc": "Bu panoda paylaşılan panolar için desteklenmeyen veri kaynakları var. Bu veri kaynaklarını kullanan paneller düzgün çalışmayabilir: {{unsupportedDataSources}}"
-    },
-    "sharing": {
-      "success-creation": "Pano herkese açık!"
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "Herkese açık panoyu yapılandırın",
-      "revoke-button-text": "Herkese açık URL'yi iptal et",
-      "revoke-button-tooltip": "Herkese açık pano URL'sini iptal et",
-      "view-button-tooltip": "Herkese açık panoyu görüntüle"
-    },
-    "empty-state": {
-      "message": "Henüz herkese açık bir pano oluşturmadınız",
-      "more-info": "Mevcut bir panodaki <1>Paylaş</1> modülü aracılığıyla genel bir pano oluşturun. <4>Daha fazla bilgi edinin</4>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "Paylaşımı duraklat"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11851,8 +11859,6 @@
       "external-link": "Haricî Bağlantı",
       "loading-text": "Yükleniyor...",
       "open-dashboard-list-text": "Pano listesini aç",
-      "public-dashboard-link": "Herkese açık pano URL'si",
-      "public-dashboard-setting": "Herkese açık pano ayarları",
       "sharing-setting": "Paylaşma ayarları"
     },
     "delete-user-modal": {
@@ -11860,14 +11866,12 @@
       "delete-user-cancel-button": "İptal",
       "delete-user-revoke-access-button": "Erişimi iptal et",
       "revoke-access-title": "Erişimi iptal et",
-      "revoke-user-access-modal-desc-line1": "{{email}} adresi ile ilişkilendirilmiş kullanıcının erişimini iptal etmek istediğinizden emin misiniz?",
-      "revoke-user-access-modal-desc-line2": "Bu işlem, {{email}} ile ilişkilendirilmiş kullanıcının herkese açık tüm panolara erişimini derhal iptal edecektir."
+      "revoke-user-access-modal-desc-line1": "{{email}} adresi ile ilişkilendirilmiş kullanıcının erişimini iptal etmek istediğinizden emin misiniz?"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "Bu işlem, {{email}} e-posta adresinin paylaşılan tüm panolara erişimini derhal iptal edecektir."
     },
     "modal": {
-      "dashboard-modal-title": "Herkese açık panolar",
       "shared-dashboard-modal-title": "Paylaşılan panolar"
     },
     "table-body": {
@@ -11940,7 +11944,6 @@
       "expand-row": "Sorgu satırını genişlet",
       "hide-response": "Yanıtı gizle",
       "remove-query": "Sorguyu kaldır",
-      "replace-query-from-library": "",
       "show-response": "Yanıtı göster"
     },
     "query-editor-not-exported": "Veri kaynağı eklentisi herhangi bir Sorgu Düzenleyici bileşeni sunmuyor/içermiyor."
@@ -11953,14 +11956,6 @@
       "no-deleted-dashboards": "Yakın zamanda bir pano silmediniz.",
       "no-deleted-dashboards-text": "Bir panoyu sildiğinizde, kalıcı olarak silinmeden önce 30 gün boyunca burada görünecektir. Kuruluş yöneticiniz, yakın zamanda silinen panoları geri yükleyebilir.",
       "no-search-result": "Sorgunuz için sonuç bulunamadı"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Sil",
-      "delete-button": "Sil",
-      "delete-loading": "Siliniyor...",
-      "title": "Panoları Kalıcı Olarak Silme",
-      "text_one": "Bu işlem {{numberOfDashboards}} panoyu silecektir.",
-      "text_other": "Bu işlem {{numberOfDashboards}} panoyu silecektir."
     },
     "restore-modal": {
       "restore-button": "Geri yükle",
@@ -12378,8 +12373,6 @@
       "export": "Dışa aktar",
       "library-panel": "Kütüphane paneli",
       "link": "Bağlantı",
-      "panel-embed": "Ekle",
-      "public-dashboard": "Herkese Açık Pano",
       "public-dashboard-title": "Herkese açık pano",
       "snapshot": "Anlık görüntü"
     },
@@ -12774,6 +12767,7 @@
     "description-column-filter": "Tablo içindeki alan filtrelerini etkinleştir/devre dışı bırak",
     "description-frozen-columns": "",
     "description-min-column-width": "Sütunların otomatik olarak yeniden boyutlandırılması için minimum genişlik",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Görsel görüntülenemediğinde veya ekran okuyucu kullanan kullanıcılar için gösterilecek alternatif metin",
@@ -12804,6 +12798,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minimum sütun genişliği",
     "name-show-table-header": "Tablo başlığını göster",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Başlık metnini kaydır",
@@ -13973,7 +13968,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Herkese açık pano kullanıcıları",
       "shared-dashboard-users-tab-title": "Paylaşılan pano kullanıcıları"
     }
   },

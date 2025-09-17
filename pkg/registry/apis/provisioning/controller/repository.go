@@ -215,7 +215,7 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 		} else {
 			err := rc.finalizer.process(ctx, repo, obj.Finalizers)
 			if err != nil {
-				logger.Warn("error running finalizer", "err")
+				logger.Warn("error running finalizer", "err", err)
 			}
 		}
 
@@ -458,8 +458,11 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Apply all patch operations
-	if err := rc.statusPatcher.Patch(ctx, obj, patchOperations...); err != nil {
-		return err
+	if len(patchOperations) > 0 {
+		err := rc.statusPatcher.Patch(ctx, obj, patchOperations...)
+		if err != nil {
+			return fmt.Errorf("status patch operations failed: %w", err)
+		}
 	}
 
 	// Trigger sync job after we have applied all patch operations

@@ -278,15 +278,15 @@ func TestConversionMetrics(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{UID: "test-uid-2"},
 				Spec: common.Unstructured{Object: map[string]any{
 					"title":         "test dashboard",
-					"schemaVersion": 41,
+					"schemaVersion": 42,
 				}},
 			},
 			target:               &dashv0.Dashboard{},
 			expectSuccess:        true,
 			expectedSourceAPI:    dashv1.APIVERSION,
 			expectedTargetAPI:    dashv0.APIVERSION,
-			expectedSourceSchema: "41",
-			expectedTargetSchema: "41", // V1→V0 keeps same schema version
+			expectedSourceSchema: "42",
+			expectedTargetSchema: "42", // V1→V0 keeps same schema version
 		},
 		{
 			name: "successful v2alpha1 to v2beta1 conversion",
@@ -600,7 +600,7 @@ func TestConversionLogging(t *testing.T) {
 				"targetVersionAPI":    dashv1.APIVERSION,
 				"dashboardUID":        "test-uid-log-1",
 				"sourceSchemaVersion": "20",
-				"targetSchemaVersion": fmt.Sprintf("%d", 41), // LATEST_VERSION
+				"targetSchemaVersion": fmt.Sprintf("%d", 42), // LATEST_VERSION
 			},
 		},
 		{
@@ -620,7 +620,7 @@ func TestConversionLogging(t *testing.T) {
 				"targetVersionAPI":    dashv1.APIVERSION,
 				"dashboardUID":        "test-uid-log-2",
 				"sourceSchemaVersion": "5",
-				"targetSchemaVersion": fmt.Sprintf("%d", 41), // LATEST_VERSION
+				"targetSchemaVersion": fmt.Sprintf("%d", 42), // LATEST_VERSION
 			},
 		},
 	}

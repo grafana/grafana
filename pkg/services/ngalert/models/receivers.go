@@ -37,7 +37,19 @@ type GetReceiversQuery struct {
 type ReceiverMetadata struct {
 	InUseByRules  []AlertRuleKey
 	InUseByRoutes int
+	// CanUse is true if the receiver can be used in routes and rules.
+	CanUse bool
 }
+
+// ResourceOrigin represents the origin or source of the resource.
+type ResourceOrigin string
+
+const (
+	// ResourceOriginGrafana indicates that the resource is in the Grafana configuration
+	ResourceOriginGrafana ResourceOrigin = "grafana"
+	// ResourceOriginImported indicates that the resource is from the imported configuration
+	ResourceOriginImported ResourceOrigin = "imported"
+)
 
 // Receiver is the domain model representation of a receiver / contact point.
 type Receiver struct {
@@ -46,6 +58,7 @@ type Receiver struct {
 	Integrations []*Integration
 	Provenance   Provenance
 	Version      string
+	Origin       ResourceOrigin
 }
 
 func (r *Receiver) Clone() Receiver {
@@ -54,6 +67,7 @@ func (r *Receiver) Clone() Receiver {
 		Name:       r.Name,
 		Provenance: r.Provenance,
 		Version:    r.Version,
+		Origin:     r.Origin,
 	}
 
 	if r.Integrations != nil {
@@ -143,6 +157,14 @@ type Integration struct {
 	Settings map[string]any
 	// SecureSettings can contain only secure settings either encrypted or redacted.
 	SecureSettings map[string]string
+}
+
+func (integration *Integration) ResourceType() string {
+	return "contactPoint"
+}
+
+func (integration *Integration) ResourceID() string {
+	return integration.UID
 }
 
 // IntegrationConfig represents the configuration of an integration. It contains the type and information about the fields.

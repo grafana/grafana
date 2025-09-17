@@ -2,12 +2,12 @@ import { compact, each, findIndex, flatten, get, join, keyBy, last, map, reduce,
 
 import { ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
-import { arrayMove } from 'app/core/utils/arrayMove';
 
 import { GraphiteDatasource } from './datasource';
 import { FuncInstance } from './gfunc';
 import { AstNode, Parser } from './parser';
 import { GraphiteSegment } from './types';
+import { arrayMove } from './utils';
 
 export type GraphiteTagOperator = '=' | '=~' | '!=' | '!=~';
 
@@ -224,7 +224,7 @@ export default class GraphiteQuery {
     this.functions.forEach((func) => (func.added = false));
   }
 
-  updateRenderedTarget(target: { refId: string | number; target: any; targetFull: any }, targets: any) {
+  updateRenderedTarget(target: { refId: string | number; target: string; targetFull: any }, targets: any) {
     // render nested query
     const targetsByRefId = keyBy(targets, 'refId');
 

@@ -11,17 +11,22 @@ import (
 	"strconv"
 	"sync"
 
-	"golang.org/x/sync/errgroup"
-
+	"github.com/grafana/dskit/modules"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api"
 	_ "github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/registry/backgroundsvcs/adapter"
+	"github.com/grafana/grafana/pkg/semconv"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -40,10 +45,11 @@ type Options struct {
 func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
+	tracerProvider *tracing.TracingService,
 	promReg prometheus.Registerer,
 ) (*Server, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
-	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, promReg)
+	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, tracerProvider, promReg)
 	if err != nil {
 		return nil, err
 	}
@@ -57,27 +63,29 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 
 func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
+	tracerProvider *tracing.TracingService,
 	promReg prometheus.Registerer,
 ) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
 	s := &Server{
-		promReg:             promReg,
-		context:             childCtx,
-		childRoutines:       childRoutines,
-		HTTPServer:          httpServer,
-		provisioningService: provisioningService,
-		roleRegistry:        roleRegistry,
-		shutdownFn:          shutdownFn,
-		shutdownFinished:    make(chan struct{}),
-		log:                 log.New("server"),
-		cfg:                 cfg,
-		pidFile:             opts.PidFile,
-		version:             opts.Version,
-		commit:              opts.Commit,
-		buildBranch:         opts.BuildBranch,
-		backgroundServices:  backgroundServiceProvider.GetServices(),
+		promReg:                   promReg,
+		context:                   childCtx,
+		childRoutines:             childRoutines,
+		HTTPServer:                httpServer,
+		provisioningService:       provisioningService,
+		roleRegistry:              roleRegistry,
+		shutdownFn:                shutdownFn,
+		shutdownFinished:          make(chan struct{}),
+		log:                       log.New("server"),
+		cfg:                       cfg,
+		pidFile:                   opts.PidFile,
+		version:                   opts.Version,
+		commit:                    opts.Commit,
+		buildBranch:               opts.BuildBranch,
+		backgroundServiceRegistry: backgroundServiceProvider,
+		tracerProvider:            tracerProvider,
 	}
 
 	return s, nil
@@ -88,7 +96,7 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleR
 // ModuleServer to launch specific modules.
 type Server struct {
 	context          context.Context
-	shutdownFn       context.CancelFunc
+	shutdownFn       func()
 	childRoutines    *errgroup.Group
 	log              log.Logger
 	cfg              *setting.Cfg
@@ -97,11 +105,13 @@ type Server struct {
 	isInitialized    bool
 	mtx              sync.Mutex
 
-	pidFile            string
-	version            string
-	commit             string
-	buildBranch        string
-	backgroundServices []registry.BackgroundService
+	pidFile     string
+	version     string
+	commit      string
+	buildBranch string
+
+	backgroundServiceRegistry registry.BackgroundServiceRegistry
+	tracerProvider            *tracing.TracingService
 
 	HTTPServer          *api.HTTPServer
 	roleRegistry        accesscontrol.RoleRegistry
@@ -134,16 +144,50 @@ func (s *Server) Init() error {
 	return s.provisioningService.RunInitProvisioners(s.context)
 }
 
-// Run initializes and starts services. This will block until all services have
-// exited. To initiate shutdown, call the Shutdown method in another goroutine.
 func (s *Server) Run() error {
+	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagDskitBackgroundServices) {
+		s.log.Debug("Running background services with dskit wrapper")
+		return s.dskitRun()
+	}
+	s.log.Debug("Running standard background services")
+	return s.backgroundServicesRun()
+}
+
+func (s *Server) dskitRun() error {
+	if err := s.Init(); err != nil {
+		return err
+	}
+	managerAdapter := adapter.NewManagerAdapter(s.backgroundServiceRegistry)
+	s.notifySystemd("READY=1")
+
+	ctx, span := s.tracerProvider.Start(s.context, "server.dskitRun")
+	defer span.End()
+
+	// override the shutdownFn (context cancel func) for now until the feature flag is removed.
+	// this is a temporary solution to ensure that the services are shutdown properly.
+	cancelFn := s.shutdownFn
+	s.shutdownFn = func() {
+		defer close(s.shutdownFinished)
+		s.log.Debug("Shutting down background services")
+		if err := managerAdapter.Shutdown(s.context, modules.ErrStopProcess.Error()); err != nil {
+			s.log.Error("Failed to shutdown background services", "error", err)
+		}
+		cancelFn()
+	}
+
+	return managerAdapter.Run(ctx)
+}
+
+func (s *Server) backgroundServicesRun() error {
+	ctx, span := s.tracerProvider.Start(s.context, "server.backgroundServicesRun")
+	defer span.End()
 	defer close(s.shutdownFinished)
 
 	if err := s.Init(); err != nil {
 		return err
 	}
 
-	services := s.backgroundServices
+	services := s.backgroundServiceRegistry.GetServices()
 
 	// Start background services.
 	for _, svc := range services {
@@ -160,7 +204,8 @@ func (s *Server) Run() error {
 			default:
 			}
 			s.log.Debug("Starting background service", "service", serviceName)
-			err := service.Run(s.context)
+			span.AddEvent(fmt.Sprintf("%s start", serviceName), trace.WithAttributes(semconv.GrafanaServiceName(serviceName)))
+			err := service.Run(ctx)
 			// Do not return context.Canceled error since errgroup.Group only
 			// returns the first error to the caller - thus we can miss a more
 			// interesting error.
