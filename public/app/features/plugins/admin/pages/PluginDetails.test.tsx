@@ -303,12 +303,14 @@ describe('Plugin details page', () => {
       config.licenseInfo.enabledFeatures = {};
       config.buildInfo.edition = GrafanaEdition.Enterprise;
 
+      const bannerText = 'This plugin is only available in Grafana Cloud and Grafana Enterprise.';
+
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: true, isEnterprise: true });
 
       expect(await queryByRole('button', { name: /Install/ })).not.toBeInTheDocument();
       expect(await queryByRole('button', { name: /Uninstall/ })).toBeInTheDocument();
       expect(
-        queryByText(/This plugin is only available in Grafana Cloud and Grafana Enterprise./i)
+        queryByText(bannerText)
       ).toBeInTheDocument();
       expect(queryByRole('link', { name: /learn more/i })).toBeInTheDocument();
     });
