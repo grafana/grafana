@@ -293,40 +293,6 @@ func (n *FolderView) build(tree treeprint.Tree) treeprint.Tree {
 	return tree
 }
 
-func (n *FolderView) String() string {
-	buf := new(bytes.Buffer)
-	if n.Name != "" {
-		return "only valid at the root"
-	}
-	n.write(buf, 0)
-	return buf.String()
-}
-
-func (n *FolderView) write(out *bytes.Buffer, level int) {
-	if n.Name != "" {
-		fmt.Fprintf(out, "%s (%s)\n", n.Name, n.Title)
-	}
-	for i, child := range n.Children {
-		for range level {
-			out.WriteString("   ")
-		}
-		if i+1 == len(n.Children) {
-			out.Write([]byte(EdgeTypeEnd))
-		} else {
-			out.Write([]byte(EdgeTypeMid))
-		}
-		child.write(out, level+1)
-	}
-}
-
-type EdgeType string
-
-var (
-	EdgeTypeLink EdgeType = "│"
-	EdgeTypeMid  EdgeType = "├─-"
-	EdgeTypeEnd  EdgeType = "└──"
-)
-
 func getFoldersFromLegacyAPISearch(t *testing.T, who apis.User) *FolderView {
 	cfg := dynamic.ConfigFor(who.NewRestConfig())
 	cfg.GroupVersion = &schema.GroupVersion{Group: "folder.grafana.app", Version: "v1beta1"} // group does not matter
