@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -34,13 +35,14 @@ var (
 
 var resource = iamv0alpha1.TeamResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient) *LegacyStore {
-	return &LegacyStore{store, ac}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool) *LegacyStore {
+	return &LegacyStore{store, ac, enableAuthnMutation}
 }
 
 type LegacyStore struct {
-	store legacy.LegacyIdentityStore
-	ac    claims.AccessClient
+	store               legacy.LegacyIdentityStore
+	ac                  claims.AccessClient
+	enableAuthnMutation bool
 }
 
 func (s *LegacyStore) New() runtime.Object {
@@ -139,6 +141,10 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 }
 
 func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	if !s.enableAuthnMutation {
+		return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "create")
+	}
+
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -147,6 +153,11 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	teamObj, ok := obj.(*iamv0alpha1.Team)
 	if !ok {
 		return nil, fmt.Errorf("expected Team object, got %T", obj)
+	}
+
+	if teamObj.GenerateName != "" {
+		teamObj.Name = teamObj.GenerateName + util.GenerateShortUID()
+		teamObj.GenerateName = ""
 	}
 
 	if createValidation != nil {
