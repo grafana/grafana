@@ -44,6 +44,7 @@ Select a group to expand it and view the list of alert rules within that group.
 The view includes filters to simplify managing large volumes of alerts.
 
 You can filter by data sources, dashboards, and alert rule properties such as state, type, health, and contact points. The **Search** input allows you to filter by additional parameters like folders, evaluation groups, labels, and more.
+The new filter has a cleaner UI with more filtering options, all contained in a popup while still keeping the search field for manual filtering. The new dropdowns allow you to filter by additional parameters like Namespace, Labels, Evaluation group, and Rule Source, giving you even more granularity over your search.
 
 ## Change alert rules list view
 
