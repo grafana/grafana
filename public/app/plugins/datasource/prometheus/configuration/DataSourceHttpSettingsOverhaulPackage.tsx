@@ -161,17 +161,29 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
             setAzureAuthSelected(method === azureAuthId);
             azureAuthSettings.setAzureAuthEnabled(options, method === azureAuthId);
           }
+          // Build new jsonData, removing sigV4 fields if switching away
+          const incomingJsonData = {
+            ...options.jsonData,
+            azureCredentials: method === azureAuthId ? options.jsonData.azureCredentials : undefined,
+            oauthPassThru: method === AuthMethod.OAuthForward,
+          } as Record<string, any>;
+
+          if (method === sigV4Id) {
+            incomingJsonData.sigV4Auth = true;
+          } else {
+            // Remove any sigV4 related keys (defensive: keys that start with 'sigV4')
+            Object.keys(incomingJsonData).forEach((k) => {
+              if (k === 'sigV4Auth' || k.startsWith('sigV4')) {
+                delete incomingJsonData[k];
+              }
+            });
+          }
 
           onOptionsChange({
             ...options,
             basicAuth: method === AuthMethod.BasicAuth,
             withCredentials: method === AuthMethod.CrossSiteCredentials,
-            jsonData: {
-              ...options.jsonData,
-              azureCredentials: method === azureAuthId ? options.jsonData.azureCredentials : undefined,
-              sigV4Auth: method === sigV4Id,
-              oauthPassThru: method === AuthMethod.OAuthForward,
-            },
+            jsonData: incomingJsonData,
           });
         }}
         // If your method is selected pass its id to `selectedMethod`,
