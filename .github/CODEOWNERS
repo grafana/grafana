@@ -90,6 +90,7 @@
 /apps/advisor/ @grafana/plugins-platform-backend
 /apps/iam/ @grafana/access-squad
 /apps/sdk.mk @grafana/grafana-app-platform-squad
+/apps/correlations @grafana/datapro
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/apis/query @grafana/grafana-datasources-core-services

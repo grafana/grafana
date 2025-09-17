@@ -484,6 +484,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesCorrelations",
+			Description:     "Adds support for Kubernetes correlations",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDataProSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,
@@ -2018,6 +2025,14 @@ var (
 			Description:     "Enables running plugins in containers",
 			Stage:           FeatureStagePrivatePreview,
 			Owner:           grafanaPluginsPlatformSquad,
+			Expression:      "false",
+			RequiresRestart: true,
+		},
+		{
+			Name:            "tempoSearchBackendMigration",
+			Description:     "Run search queries through the tempo backend",
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaOSSBigTent,
 			Expression:      "false",
 			RequiresRestart: true,
 		},

@@ -291,6 +291,10 @@ export interface FeatureToggles {
   */
   kubernetesAlertingRules?: boolean;
   /**
+  * Adds support for Kubernetes correlations
+  */
+  kubernetesCorrelations?: boolean;
+  /**
   * Disable schema validation for dashboards/v1
   */
   dashboardDisableSchemaValidationV1?: boolean;
@@ -1166,6 +1170,11 @@ export interface FeatureToggles {
   * @default false
   */
   pluginContainers?: boolean;
+  /**
+  * Run search queries through the tempo backend
+  * @default false
+  */
+  tempoSearchBackendMigration?: boolean;
   /**
   * Filter out bots from collecting data for Frontend Observability
   * @default false
