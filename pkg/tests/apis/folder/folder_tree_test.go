@@ -46,12 +46,12 @@ func TestIntegrationFolderTree(t *testing.T) {
 		// grafanarest.Mode1, (nothing new tested)
 		grafanarest.Mode2, // write both, read legacy
 		grafanarest.Mode3, // write both, read unified
-		// grafanarest.Mode4,
-		// grafanarest.Mode5,
+		grafanarest.Mode4,
+		grafanarest.Mode5,
 	}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
-			flags := []string{}
+			flags := []string{featuremgmt.FlagManagedDualWriter}
 			if mode >= grafanarest.Mode3 { // make sure modes 0-3 work without it
 				flags = append(flags, featuremgmt.FlagUnifiedStorageSearch)
 			}
