@@ -31,10 +31,10 @@ export function mergeLocalsAndRemotes({
   const catalogPlugins: CatalogPlugin[] = [];
   const errorByPluginId = groupErrorsByPluginId(errors);
 
-  const remoteSet = new Set<string>(remote?.map((r) => r.slug));
-  const localMap = new Map<string, LocalPlugin>(local.map((l) => [l.id, l]));
-  const instancesMap = new Map<string, InstancePlugin>(instance?.map((i) => [i.pluginSlug, i]));
-  const provisionedSet = new Set<string>(provisioned?.map((p) => p.slug));
+  const remoteSet = new Set<string>(remote?.map((plugin) => plugin.slug));
+  const localMap = new Map<string, LocalPlugin>(local.map((plugin) => [plugin.id, plugin]));
+  const instancesMap = new Map<string, InstancePlugin>(instance?.map((plugin) => [plugin.pluginSlug, plugin]));
+  const provisionedSet = new Set<string>(provisioned?.map((plugin) => plugin.slug));
 
   // add locals
   local.forEach((localPlugin) => {
