@@ -337,7 +337,31 @@ func TestGetReceiver(t *testing.T) {
 	})
 
 	t.Run("should return receiver from extra config if included imported", func(t *testing.T) {
+		importedReceiverUID := NameToUid("email-receiver")
+		rev := getConfigRevisionForTest()
+		_, err = rev.GetReceiver(importedReceiverUID, nil, false)
+		require.ErrorIs(t, err, ErrReceiverNotFound)
 
+		receiver, err := rev.GetReceiver(importedReceiverUID, nil, true)
+		require.NoError(t, err)
+		assert.NotEmpty(t, receiver.Integrations)
+		receiver.Integrations = nil
+
+		expected := &models.Receiver{
+			UID:        NameToUid("email-receiver"),
+			Name:       "email-receiver",
+			Provenance: models.ProvenanceConvertedPrometheus,
+			Origin:     models.ResourceOriginImported,
+			Version:    "70faef381e8f88f4",
+			// Integrations: do not assert it here
+		}
+		assert.Equal(t, expected, receiver)
+	})
+
+	t.Run("should return ErrIncludeImported if cannot merge", func(t *testing.T) {
+		rev := getConfigRevisionForTest(brakeIncludeImported)
+		_, err := rev.GetReceiver(NameToUid("email-receiver"), nil, true)
+		require.ErrorIs(t, err, ErrIncludeImported)
 	})
 }
 
@@ -391,7 +415,7 @@ func TestGetReceivers(t *testing.T) {
 		})
 	})
 	t.Run("should filter by uids", func(t *testing.T) {
-		receivers, err := rev.GetReceivers([]string{"not-found-1", "not-found-2"}, nil, false)
+		receivers, err := rev.GetReceivers([]string{"not-found-1", "not-found-2", NameToUid("email-receiver")}, nil, false)
 		require.NoError(t, err)
 		require.Empty(t, receivers)
 		receivers, err = rev.GetReceivers([]string{NameToUid("receiver1")}, nil, false)
@@ -400,6 +424,27 @@ func TestGetReceivers(t *testing.T) {
 		expected, err := rev.GetReceiver(NameToUid("receiver1"), nil, false)
 		require.NoError(t, err)
 		require.Equal(t, expected, receivers[0])
+
+		t.Run("should not find imported if includeImported is false", func(t *testing.T) {
+			receivers, err = rev.GetReceivers([]string{NameToUid("email-receiver")}, nil, false)
+			require.NoError(t, err)
+			require.Empty(t, receivers)
+		})
+		t.Run("should find imported if includeImported is true", func(t *testing.T) {
+			receivers, err := rev.GetReceivers([]string{NameToUid("email-receiver")}, nil, true)
+			require.NoError(t, err)
+			require.Len(t, receivers, 1)
+		})
+	})
+
+	t.Run("should return ErrIncludeImported if cannot merge", func(t *testing.T) {
+		rev := getConfigRevisionForTest(brakeIncludeImported)
+		_, err := rev.GetReceivers(nil, nil, true)
+		require.ErrorIs(t, err, ErrIncludeImported)
+
+		recv, err := rev.GetReceivers(nil, nil, false)
+		require.NoError(t, err)
+		require.Len(t, recv, len(rev.Config.AlertmanagerConfig.Receivers))
 	})
 }
 
@@ -433,6 +478,7 @@ func TestReceiverUseByName(t *testing.T) {
 	rev := getConfigRevisionForTest()
 	rev.Config.AlertmanagerConfig.Route.Routes = append(rev.Config.AlertmanagerConfig.Route.Routes,
 		&definitions.Route{
+			Matchers: []*labels.Matcher{{Type: labels.MatchEqual, Name: "cluster", Value: "dev"}},
 			Routes: []*definitions.Route{
 				{
 					Receiver: "receiver1",
@@ -445,6 +491,7 @@ func TestReceiverUseByName(t *testing.T) {
 				},
 			},
 		})
+
 	expected := map[string]int{
 		"":                      1, // some routes do not have receiver set
 		"receiver1":             2,
@@ -454,6 +501,29 @@ func TestReceiverUseByName(t *testing.T) {
 	actual, err := rev.ReceiverUseByName(false)
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
+
+	t.Run("should include imported receivers if includedImported is true", func(t *testing.T) {
+		expected := map[string]int{
+			"":                      1, // some routes do not have receiver set
+			"receiver1":             2,
+			"dupe-receiver":         1,
+			"some-missing-receiver": 1,
+			"receiver1test":         1,
+			"email-receiver":        1,
+		}
+		actual, err := rev.ReceiverUseByName(true)
+		require.NoError(t, err)
+		require.Equal(t, expected, actual)
+	})
+
+	t.Run("should return ErrIncludeImported if cannot merge", func(t *testing.T) {
+		rev := getConfigRevisionForTest(brakeIncludeImported)
+		_, err := rev.ReceiverUseByName(true)
+		require.ErrorIs(t, err, ErrIncludeImported)
+
+		_, err = rev.ReceiverUseByName(false)
+		require.NoError(t, err)
+	})
 }
 
 func TestRenameReceiverInRoutes(t *testing.T) {
@@ -507,8 +577,15 @@ func TestRenameReceiverInRoutes(t *testing.T) {
 	})
 }
 
-func getConfigRevisionForTest() *ConfigRevision {
-	return &ConfigRevision{
+func brakeIncludeImported(rev *ConfigRevision) {
+	// adding a route without matcher effectively breaks the merge
+	rev.Config.AlertmanagerConfig.Route.Routes = append(rev.Config.AlertmanagerConfig.Route.Routes, &definitions.Route{})
+}
+
+type opt func(*ConfigRevision)
+
+func getConfigRevisionForTest(opts ...opt) *ConfigRevision {
+	rev := &ConfigRevision{
 		Config: &definitions.PostableUserConfig{
 			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -586,4 +663,8 @@ receivers:
 			},
 		},
 	}
+	for _, o := range opts {
+		o(rev)
+	}
+	return rev
 }
