@@ -14,7 +14,7 @@ export default meta;
 
 export const Basic: StoryObj<typeof AlertLabel> = {
   render: (args: ComponentProps<typeof AlertLabel>) => (
-    <Stack direction="column" alignItems="flex-start" gap={1}>
+    <Stack direction="column" alignItems="flex-start" gap={1} role="list">
       <AlertLabel role="listitem" labelKey="alertname" value="HighErrorRate" />
       <AlertLabel role="listitem" labelKey="instance" value="web-01" />
       <AlertLabel role="listitem" labelKey="job" value="nginx" />
@@ -25,7 +25,7 @@ export const Basic: StoryObj<typeof AlertLabel> = {
 
 export const Sizes: StoryObj<typeof AlertLabel> = {
   render: (args: ComponentProps<typeof AlertLabel>) => (
-    <Stack direction="column" alignItems="flex-start" gap={1}>
+    <Stack direction="column" alignItems="flex-start" gap={1} role="list">
       <Text>md</Text>
       <AlertLabel role="listitem" labelKey="zone" value="us-east-1" size="md" />
       <Text>sm</Text>
@@ -50,7 +50,7 @@ export const Clickable: StoryObj<typeof AlertLabel> = {
 
 export const WithIconAndColor: StoryObj<typeof AlertLabel> = {
   render: (args: ComponentProps<typeof AlertLabel>) => (
-    <Stack direction="column" alignItems="flex-start" gap={1}>
+    <Stack direction="column" alignItems="flex-start" gap={1} role="list">
       <AlertLabel role="listitem" icon="tag-alt" labelKey="owner" value="team-a" color="#268bd2" />
       <AlertLabel role="listitem" icon="tag-alt" labelKey="env" value="prod" color="#2aa198" />
       <hr />
