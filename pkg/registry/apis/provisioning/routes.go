@@ -169,10 +169,8 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i, val := range all {
-		branch := ""
-		if val.Spec.GitHub != nil {
-			branch = val.Spec.GitHub.Branch
-		}
+		branch := val.Branch()
+
 		settings.Items[i] = provisioning.RepositoryView{
 			Name:      val.Name,
 			Title:     val.Spec.Title,
