@@ -94,7 +94,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
     if (config.featureToggles.newLogsPanel && context.options?.enableLogDetails) {
       builder.addRadio({
         path: 'detailsMode',
-        name: t('logs.name-details-mode', 'Log Details panel mode'),
+        name: t('logs.name-details-mode', 'Log details panel mode'),
         category,
         description: '',
         settings: {
