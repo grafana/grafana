@@ -16,7 +16,6 @@ import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { logger } from 'app/percona/shared/helpers/logger';
 
 import { Messages as mainChecksMessages } from '../../CheckPanel.messages';
-import { ChecksInfoAlert } from '../CheckInfoAlert/CheckInfoAlert';
 
 import { GET_ACTIVE_ALERTS_CANCEL_TOKEN } from './FailedChecksTab.constants';
 import { Messages } from './FailedChecksTab.messages';
@@ -89,7 +88,6 @@ export const FailedChecksTab: FC = () => {
           featureSelector={featureSelector}
           allowedRoles={[OrgRole.Admin, OrgRole.Editor]}
         >
-          <ChecksInfoAlert />
           <AlertsReloadContext.Provider value={{ fetchAlerts }}>
             <Table
               totalItems={data.length}
