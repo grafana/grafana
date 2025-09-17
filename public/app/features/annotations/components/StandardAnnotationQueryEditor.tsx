@@ -35,6 +35,7 @@ export interface Props {
 interface State {
   running?: boolean;
   response?: AnnotationQueryResponse;
+  skipNextVerification?: boolean;
 }
 
 export default class StandardAnnotationQueryEditor extends PureComponent<Props, State> {
@@ -59,18 +60,15 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   verifyDataSource() {
     const { datasource, annotation } = this.props;
 
-    // Handle datasource mismatch scenarios
-    if (annotation.datasource?.uid !== datasource?.uid || annotation.datasource?.type !== datasource?.type) {
-      // Only skip if this looks like a prepared annotation (has target or query.spec)
-      // This indicates a saved query replacement with cross-datasource operation (see updateAnnotationFromSavedQuery)
-      // Manual datasource changes create clean annotations without target, so they fall through
-      if (annotation.target || annotation.query?.spec) {
-        return; // Skip for prepared annotations (saved query case)
-      }
-      // Fall through for clean annotations (manual datasource change case)
+    // Skip verification if we just did a saved query replacement to avoid double preparation
+    if (this.state.skipNextVerification) {
+      this.setState({ skipNextVerification: false });
+      this.onRunQuery();
+      return;
     }
 
-    // Normal case: datasources match, verify with props.datasource
+    // Always run prepareAnnotation to ensure proper query structure
+    // This is essential for datasources like Prometheus that need to format queries correctly
     const processor = {
       ...standardAnnotationSupport,
       ...datasource.annotations,
@@ -258,6 +256,8 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     try {
       // Use new async updateAnnotationFromSavedQuery that returns properly prepared annotation
       const preparedAnnotation = await updateAnnotationFromSavedQuery(annotation, replacedQuery);
+      // Set flag to skip next verification since updateAnnotationFromSavedQuery already prepared the annotation
+      this.setState({ skipNextVerification: true });
       onChange(preparedAnnotation);
     } catch (error) {
       console.error('Failed to replace annotation query:', error);
