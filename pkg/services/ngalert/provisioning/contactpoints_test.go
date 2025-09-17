@@ -448,7 +448,7 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 		settingsRaw, err := json.Marshal(integration.Settings)
 		require.NoError(t, err)
 
-		expectedFields, err := channels_config.GetSecretKeysForContactPointType(integrationType)
+		expectedFields, err := channels_config.GetSecretKeysForContactPointType(integrationType, channels_config.V1)
 		require.NoError(t, err)
 
 		t.Run(integrationType, func(t *testing.T) {
