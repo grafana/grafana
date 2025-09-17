@@ -2,12 +2,10 @@ package expr
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
@@ -108,10 +106,6 @@ func (s *Service) isDisabled() bool {
 
 // BuildPipeline builds a pipeline from a request.
 func (s *Service) BuildPipeline(ctx context.Context, req *Request) (DataPipeline, error) {
-	// TODO: REMOVE
-	if req != nil {
-		_, _ = s.GetSQLSchemas(ctx, *req) // temp hack until endpoint for local dev
-	}
 	return s.buildPipeline(ctx, req)
 }
 
@@ -128,7 +122,6 @@ type SQLSchemaResponse = map[string][]BasicColumn
 
 // GetSQLSchemas returns what the schemas are for SQL expressions for all DS queries
 // in the request. It executes the queries to get the schemas.
-// TODO: DTO for mysql.Schema?
 // Intended use is for autocomplete and AI, so used during the authoring/editing experience only.
 func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (map[string][]BasicColumn, error) {
 	// Extract DS Nodes and Execute Them
@@ -175,10 +168,6 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (map[string][]
 		}
 		schemas[dsNode.RefID()] = columns
 	}
-
-	// TODO: REMOVE
-	b, _ := json.Marshal(schemas) // temp hack until endpoint for local dev
-	spew.Dump(string(b))
 
 	return schemas, nil
 }
