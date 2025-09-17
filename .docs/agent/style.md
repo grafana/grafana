@@ -149,7 +149,7 @@ Use single code backticks for:
 Use triple code backticks followed by the syntax for code blocks, for example:
 
 ```javascript
-console.log("Hello World!");
+console.log('Hello World!');
 ```
 
 Introduce each code block with a short description.
