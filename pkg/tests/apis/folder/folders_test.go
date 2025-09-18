@@ -63,63 +63,63 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		require.NoError(t, err)
 
 		require.JSONEq(t, `{
-      "kind": "APIResourceList",
-      "apiVersion": "v1",
-      "groupVersion": "folder.grafana.app/v1beta1",
-      "resources": [
-        {
-          "name": "folders",
-          "singularName": "folder",
-          "namespaced": true,
-          "kind": "Folder",
-          "verbs": [
-            "create",
-            "delete",
-            "deletecollection",
-            "get",
-            "list",
-            "patch",
-            "update"
-          ]
-        },
-        {
-          "name": "folders/access",
-          "singularName": "",
-          "namespaced": true,
-          "kind": "FolderAccessInfo",
-          "verbs": [
-            "get"
-          ]
-        },
-        {
-          "name": "folders/children",
-          "singularName": "",
-          "namespaced": true,
-          "kind": "FolderList",
-          "verbs": [
-            "get"
-          ]
-        },
-        {
-          "name": "folders/counts",
-          "singularName": "",
-          "namespaced": true,
-          "kind": "DescendantCounts",
-          "verbs": [
-            "get"
-          ]
-        },
-        {
-          "name": "folders/parents",
-          "singularName": "",
-          "namespaced": true,
-          "kind": "FolderInfoList",
-          "verbs": [
-            "get"
-          ]
-        }
-      ]
-    }`, string(v1Disco))
+			"kind": "APIResourceList",
+			"apiVersion": "v1",
+			"groupVersion": "folder.grafana.app/v1beta1",
+			"resources": [
+				{
+					"name": "folders",
+					"singularName": "folder",
+					"namespaced": true,
+					"kind": "Folder",
+					"verbs": [
+						"create",
+						"delete",
+						"deletecollection",
+						"get",
+						"list",
+						"patch",
+						"update"
+					]
+				},
+				{
+					"name": "folders/access",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "FolderAccessInfo",
+					"verbs": [
+						"get"
+					]
+				},
+				{
+					"name": "folders/children",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "FolderList",
+					"verbs": [
+						"get"
+					]
+				},
+				{
+					"name": "folders/counts",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "DescendantCounts",
+					"verbs": [
+						"get"
+					]
+				},
+				{
+					"name": "folders/parents",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "FolderInfoList",
+					"verbs": [
+						"get"
+					]
+				}
+			]
+		}`, string(v1Disco))
 	})
 
 	// test on all dualwriter modes
@@ -233,9 +233,9 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		// #TODO fill out the payload: parentUID, description
 		// and check about uid orgid and siU
 		legacyPayload := `{
-      "title": "Test",
-      "uid": ""
-      }`
+			"title": "Test",
+			"uid": ""
+			}`
 		legacyCreate := apis.DoRequest(helper, apis.RequestParams{
 			User:   client.Args.User,
 			Method: http.MethodPost,
@@ -251,22 +251,22 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		idStr := fmt.Sprintf("%d", id)
 
 		expectedResult := `{
-      "apiVersion": "folder.grafana.app/v1beta1",
-      "kind": "Folder",
-      "metadata": {
-        "creationTimestamp": "${creationTimestamp}",
-        "labels": {"grafana.app/deprecatedInternalID":"` + idStr + `"},
-        "name": "` + uid + `",
-        "namespace": "default",
-        "resourceVersion": "${resourceVersion}",
-        "uid": "${uid}"
-      },
-      "spec": {
-        "title": "Test",
-        "description": ""
-      },
-      "status": {}
-      }`
+			"apiVersion": "folder.grafana.app/v1beta1",
+			"kind": "Folder",
+			"metadata": {
+			  "creationTimestamp": "${creationTimestamp}",
+			  "labels": {"grafana.app/deprecatedInternalID":"` + idStr + `"},
+			  "name": "` + uid + `",
+			  "namespace": "default",
+			  "resourceVersion": "${resourceVersion}",
+			  "uid": "${uid}"
+			},
+			"spec": {
+			  "title": "Test",
+			  "description": ""
+			},
+			"status": {}
+		  }`
 
 		// Get should return the same result
 		found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
@@ -389,9 +389,9 @@ func doNestedCreateTest(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 
 	parentPayload := `{
-    "title": "Test/parent",
-    "uid": ""
-    }`
+		"title": "Test/parent",
+		"uid": ""
+		}`
 	parentCreate := apis.DoRequest(helper, apis.RequestParams{
 		User:   client.Args.User,
 		Method: http.MethodPost,
@@ -406,10 +406,10 @@ func doNestedCreateTest(t *testing.T, helper *apis.K8sTestHelper) {
 	require.NotEmpty(t, parentUID)
 
 	childPayload := fmt.Sprintf(`{
-      "title": "Test/child",
-      "uid": "",
-      "parentUid": "%s"
-      }`, parentUID)
+			"title": "Test/child",
+			"uid": "",
+			"parentUid": "%s"
+			}`, parentUID)
 	childCreate := apis.DoRequest(helper, apis.RequestParams{
 		User:   client.Args.User,
 		Method: http.MethodPost,
@@ -437,9 +437,9 @@ func doCreateDuplicateFolderTest(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 
 	payload := `{
-    "title": "Test",
-    "uid": ""
-    }`
+		"title": "Test",
+		"uid": ""
+		}`
 	create := apis.DoRequest(helper, apis.RequestParams{
 		User:   client.Args.User,
 		Method: http.MethodPost,
@@ -467,9 +467,9 @@ func doCreateEnsureTitleIsTrimmedTest(t *testing.T, helper *apis.K8sTestHelper) 
 	})
 
 	payload := `{
-    "title": "  my folder  ",
-    "uid": ""
-    }`
+		"title": "  my folder  ",
+		"uid": ""
+		}`
 
 	// When creating a folder it should trim leading and trailing spaces in both dashboard and folder tables
 	create := apis.DoRequest(helper, apis.RequestParams{
@@ -489,10 +489,10 @@ func doCreateCircularReferenceFolderTest(t *testing.T, helper *apis.K8sTestHelpe
 	})
 
 	payload := `{
-    "title": "Test",
-    "uid": "newFolder",
-    "parentUid: "newFolder",
-    }`
+		"title": "Test",
+		"uid": "newFolder",
+		"parentUid: "newFolder",
+		}`
 	create := apis.DoRequest(helper, apis.RequestParams{
 		User:   client.Args.User,
 		Method: http.MethodPost,
@@ -658,9 +658,9 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 				user := helper.CreateUser("user", apis.Org1, org.RoleViewer, tc.permissions)
 
 				parentPayload := `{
-        "title": "Test/parent",
-        "uid": "parentuid"
-        }`
+				"title": "Test/parent",
+				"uid": "parentuid"
+				}`
 				parentCreate := apis.DoRequest(helper, apis.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: http.MethodPost,
@@ -760,9 +760,9 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 
 				// Create parent folder
 				parentPayload := `{
-        "title": "testparent",
-        "uid": "parentuid"
-        }`
+				"title": "testparent",
+				"uid": "parentuid"
+				}`
 				parentCreate := apis.DoRequest(helper, apis.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: http.MethodPost,
@@ -1278,9 +1278,9 @@ func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *tes
 
 			parentUID := fmt.Sprintf("libpanel-parent-%d", mode)
 			parentPayload := fmt.Sprintf(`{
-        "title": "Parent Folder %d",
-        "uid": "%s"
-      }`, mode, parentUID)
+				"title": "Parent Folder %d",
+				"uid": "%s"
+			}`, mode, parentUID)
 			parentCreate := apis.DoRequest(helper, apis.RequestParams{
 				User:   client.Args.User,
 				Method: http.MethodPost,
@@ -1292,10 +1292,10 @@ func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *tes
 
 			childUID := fmt.Sprintf("libpanel-child-%d", mode)
 			childPayload := fmt.Sprintf(`{
-        "title": "Child Folder %d",
-        "uid": "%s",
-        "parentUid": "%s"
-      }`, mode, childUID, parentUID)
+				"title": "Child Folder %d",
+				"uid": "%s",
+				"parentUid": "%s"
+			}`, mode, childUID, parentUID)
 			childCreate := apis.DoRequest(helper, apis.RequestParams{
 				User:   client.Args.User,
 				Method: http.MethodPost,
@@ -1307,14 +1307,14 @@ func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *tes
 			require.Equal(t, parentUID, childCreate.Result.ParentUID)
 
 			libElementPayload := fmt.Sprintf(`{
-        "kind": 1,
-        "name": "LP in %s",
-        "folderUid": "%s",
-        "model": {
-          "type": "text",
-          "title": "LP in %s"
-        }
-      }`, childUID, childUID, childUID)
+				"kind": 1,
+				"name": "LP in %s",
+				"folderUid": "%s",
+				"model": {
+					"type": "text",
+					"title": "LP in %s"
+				}
+			}`, childUID, childUID, childUID)
 
 			libCreate := apis.DoRequest(helper, apis.RequestParams{
 				User:   client.Args.User,

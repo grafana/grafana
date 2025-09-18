@@ -364,14 +364,6 @@
       "tooltip-assigned-role": "Un rôle sous licence sera attribué lorsque cet utilisateur se connectera"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "Masquer les étiquettes courantes",
-      "show": {
-        "tooltip": "Afficher les étiquettes courantes"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Horaires actifs"
@@ -480,16 +472,16 @@
     "alert-instance-state-filter": {
       "state": "État"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "Supprimer l’étiquette"
     },
     "alert-label-dropdown": {
       "placeholder-select": "Choisir {{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "Étiquettes",
-      "common-labels-count_one": "+ {{count}} étiquettes communes",
-      "common-labels-count_other": "+ {{count}} étiquettes communes"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "Mise en sourdine, regroupement et horaires (facultatif)",
@@ -9439,7 +9431,7 @@
       "label-signature": "Signature"
     },
     "description-enable-infinite-scrolling": "Expérimental. Obtenez plus de résultats en faisant défiler jusqu’en bas de la liste des logs.",
-    "description-enable-syntax-highlighting": "Utiliser une grammaire de coloration syntaxique prédéfinie pour mettre en évidence les parties pertinentes des lignes de log",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "Afficher les contrôles pour accéder à la première ou à la dernière ligne du log et filtrer par niveau de log",
     "fields": {
       "type": {
@@ -9711,14 +9703,14 @@
     },
     "name-common-labels": "Étiquettes communes",
     "name-deduplication": "Déduplication",
-    "name-details-mode": "Mode du panneau Détails du journal",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "En ligne",
       "label-sidebar": "Barre latérale"
     },
     "name-enable-infinite-scrolling": "Activer le défilement infini",
     "name-enable-log-details": "Activer les détails du log",
-    "name-enable-syntax-highlighting": "Activer la coloration syntaxique",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "Taille de la police",
     "name-order": "Ordre",
     "name-prettify-json": "Embellir le JSON",
@@ -11012,7 +11004,6 @@
       "body-not-published": "Ce plugin n’est pas publié sur <2>grafana.com/plugins</2> et ne peut pas être géré via le catalogue.",
       "enterprise-plugin-info": "Ce plugin est uniquement accessible dans Grafana Cloud et Grafana Enterprise.",
       "learn-more": "En savoir plus",
-      "no-valid-grafana-enterprise-license-detected": "Aucune licence Grafana Enterprise valide détectée.",
       "title-dev-alert": "Il s’agit d’une version de développement du plugin qui ne peut pas être désinstallée.",
       "title-plugin-doesnt-support-version-grafana": "Ce plugin ne prend pas en charge votre version de Grafana.",
       "title-remote-plugins-unavailable": "Les commandes d’installation ont été désactivées, car le serveur Grafana ne peut pas accéder à grafana.com.",
@@ -11372,11 +11363,12 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Aucun résultat ne correspond à votre requête",
+      "partial-managed": "",
       "placeholder-search": "Rechercher",
       "all-resources-managed_one": "",
       "all-resources-managed_other": "",
-      "partial-managed_one": "",
-      "partial-managed_other": ""
+      "unmanaged-resources_one": "",
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {
