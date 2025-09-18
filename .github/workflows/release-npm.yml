@@ -51,6 +51,7 @@ jobs:
       - name: Info
         env:
           GITHUB_REF: ${{ github.ref }}
+          GRAFANA_COMMIT: ${{ inputs.grafana_commit }}
         run: |
           echo "GRAFANA_COMMIT: $GRAFANA_COMMIT"
           echo "github.ref: $GITHUB_REF"
@@ -66,15 +67,15 @@ jobs:
       # not in the last 100 commits.
       - name: Verify commit is in workflow HEAD
         env:
-          GIT_COMMIT: ${{ github.event.inputs.grafana_commit }}
+          GIT_COMMIT: ${{ inputs.grafana_commit }}
         run: ./.github/workflows/scripts/validate-commit-in-head.sh
         shell: bash
 
       - name: Map version type to NPM tag
         id: npm-tag
         env:
-          VERSION: ${{ github.event.inputs.version }}
-          VERSION_TYPE: ${{ github.event.inputs.version_type }}
+          VERSION: ${{ inputs.version }}
+          VERSION_TYPE: ${{ inputs.version_type }}
           REFERENCE_PKG: "@grafana/runtime"
         run: |
           TAG=$(./.github/workflows/scripts/determine-npm-tag.sh)
@@ -85,7 +86,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-          ref: ${{ github.event.inputs.grafana_commit }}
+          ref: ${{ inputs.grafana_commit }}
 
       - name: Setup Node
         uses: ./.github/actions/setup-node
@@ -102,7 +103,7 @@ jobs:
 
       - name: Version, build, and pack packages
         env:
-          VERSION: ${{ github.event.inputs.version }}
+          VERSION: ${{ inputs.version }}
         run: |
           yarn run packages:build
           yarn lerna version "$VERSION" \
