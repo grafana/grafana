@@ -1,5 +1,6 @@
+import { testWithFeatureToggles } from 'test/test-utils';
+
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { testWithFeatureToggles } from '@grafana/test-utils';
 
 import { mockAlertQuery, mockDataSource, mockReduceExpression, mockThresholdExpression } from '../mocks';
 import { RuleFormType } from '../types/rule-form';
