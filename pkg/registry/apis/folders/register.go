@@ -93,13 +93,13 @@ func RegisterAPIService(cfg *setting.Cfg,
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface) *FolderAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
-		features:               features,
-		accessClient:           ac,
-		searcher:               searcher,
-		permissionStore:        reconcilers.NewZanzanaPermissionStore(zanzanaClient),
-		resourcePermissionsSvc: resourcePermissionsSvc,
+		features:        features,
+		authorizer:      newMultiTenantAuthorizer(ac),
+		searcher:        searcher,
+		ignoreLegacy:    true,
+		permissionStore: reconcilers.NewZanzanaPermissionStore(zanzanaClient),
 	}
 }
 
@@ -142,6 +142,34 @@ func (b *FolderAPIBuilder) AllowedV0Alpha1Resources() []string {
 }
 
 func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	scheme := opts.Scheme
+	optsGetter := opts.OptsGetter
+	dualWriteBuilder := opts.DualWriteBuilder
+	storage := map[string]rest.Storage{}
+
+	if b.ignoreLegacy {
+		opts.StorageOptsRegister(resourceInfo.GroupResource(), apistore.StorageOptions{
+			EnableFolderSupport:         true,
+			RequireDeprecatedInternalID: true})
+
+		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+		b.registerPermissionHooks(store)
+		storage[resourceInfo.StoragePath()] = store
+		apiGroupInfo.VersionedResourcesStorageMap[folders.VERSION] = storage
+		b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
+		b.parents = newParentsGetter(store, folder.MaxNestedFolderDepth)
+		return nil
+	}
+
+	legacyStore := &legacyStorage{
+		service:        b.folderSvc,
+		namespacer:     b.namespacer,
+		tableConverter: resourceInfo.TableConverter(),
+	}
+
 	opts.StorageOptsRegister(resourceInfo.GroupResource(), apistore.StorageOptions{
 		EnableFolderSupport:         true,
 		RequireDeprecatedInternalID: true,
@@ -165,13 +193,15 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		if err != nil {
 			return err
 		}
-		b.storage = &folderStorage{
-			tableConverter:       resourceInfo.TableConverter(),
-			folderPermissionsSvc: b.folderPermissionsSvc,
-			acService:            b.acService,
-			permissionsOnCreate:  b.permissionsOnCreate,
-			store:                dw,
+
+		b.registerPermissionHooks(store)
+
+		dw, err := dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
+		if err != nil {
+			return err
 		}
+
+		folderStore.store = dw
 	}
 
 	storage := map[string]rest.Storage{}
@@ -201,92 +231,9 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	return nil
 }
 
-var defaultPermissions = []map[string]any{
-	{
-		"kind": "BasicRole",
-		"name": "Admin",
-		"verb": "admin",
-	},
-	{
-		"kind": "BasicRole",
-		"name": "Editor",
-		"verb": "edit",
-	},
-	{
-		"kind": "BasicRole",
-		"name": "Viewer",
-		"verb": "view",
-	},
-}
-
-func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key *resourcepb.ResourceKey, id authlib.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	if b.resourcePermissionsSvc == nil {
-		return nil
-	}
-
-	// only set default permissions for root folders
-	if obj.GetFolder() != "" {
-		return nil
-	}
-
-	log := logging.FromContext(ctx)
-	log.Debug("setting default folder permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
-
-	client := (*b.resourcePermissionsSvc).Namespace(obj.GetNamespace())
-	name := fmt.Sprintf("%s-%s-%s", folders.FolderResourceInfo.GroupVersionResource().Group, folders.FolderResourceInfo.GroupVersionResource().Resource, obj.GetName())
-
-	// the resource permission will likely already exist with admin can admin, so we will need to update it
-	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
-		_, err := client.Update(ctx, &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]any{
-					"name":      name,
-					"namespace": obj.GetNamespace(),
-				},
-				"spec": map[string]any{
-					"resource": map[string]any{
-						"apiGroup": folders.FolderResourceInfo.GroupVersionResource().Group,
-						"resource": folders.FolderResourceInfo.GroupVersionResource().Resource,
-						"name":     obj.GetName(),
-					},
-					"permissions": defaultPermissions,
-				},
-			},
-		}, metav1.UpdateOptions{})
-		if err != nil {
-			logger.Error("failed to update root permissions", "error", err)
-			return fmt.Errorf("update root permissions: %w", err)
-		}
-
-		return nil
-	}
-
-	_, err := client.Create(ctx, &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]any{
-				"name":      name,
-				"namespace": obj.GetNamespace(),
-			},
-			"spec": map[string]any{
-				"resource": map[string]any{
-					"apiGroup": folders.FolderResourceInfo.GroupVersionResource().Group,
-					"resource": folders.FolderResourceInfo.GroupVersionResource().Resource,
-					"name":     obj.GetName(),
-				},
-				"permissions": defaultPermissions,
-			},
-		},
-	}, metav1.CreateOptions{})
-	if err != nil {
-		logger.Error("failed to create root permissions", "error", err)
-		return fmt.Errorf("create root permissions: %w", err)
-	}
-
-	return nil
-}
-
 func (b *FolderAPIBuilder) registerPermissionHooks(store *genericregistry.Store) {
 	log := logging.FromContext(context.Background())
+
 	if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		log.Info("Enabling Zanzana folder propagation hooks")
 		store.BeginCreate = b.beginCreate
@@ -294,8 +241,6 @@ func (b *FolderAPIBuilder) registerPermissionHooks(store *genericregistry.Store)
 	} else {
 		log.Info("Zanzana is not enabled; skipping folder propagation hooks")
 	}
-
-	store.AfterDelete = b.afterDelete
 }
 
 func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
