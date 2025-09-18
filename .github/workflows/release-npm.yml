@@ -63,7 +63,7 @@ jobs:
       - name: Verify commit is in workflow HEAD
         env:
           GIT_COMMIT: ${{ github.event.inputs.grafana_commit }}
-        run: ./github/workflows/scripts/validate-commit-in-head.sh
+        run: ./.github/workflows/scripts/validate-commit-in-head.sh
         shell: bash
 
       - name: Map version type to NPM tag
@@ -71,7 +71,7 @@ jobs:
         env:
           VERSION_TYPE: ${{ github.event.inputs.version_type }}
         run: |
-          TAG=$(./github/workflows/scripts/determine-npm-tag.sh)
+          TAG=$(./.github/workflows/scripts/determine-npm-tag.sh)
           echo "NPM_TAG=$TAG" >> "$GITHUB_OUTPUT"
         shell: bash
 
