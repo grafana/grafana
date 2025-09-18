@@ -405,7 +405,6 @@ func applyCompleteStatPanelDefaults(panel map[string]interface{}) {
 		panel["options"] = options
 	}
 
-	// Apply complete stat panel defaults (matches frontend stat panel defaultOptions)
 	defaultOptions := getDefaultStatOptions()
 
 	// Merge defaults with existing options, but don't override existing values
