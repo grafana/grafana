@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 
 import { ModeOption } from '../types';
@@ -11,7 +10,7 @@ import { ModeOption } from '../types';
  */
 function filterModeOptions(modeOptions: ModeOption[], repoName: string, settings?: RepositoryViewList): ModeOption[] {
   const folderConnected = settings?.items?.some((item) => item.target === 'folder' && item.name !== repoName);
-  const allowedTargets = config.provisioningAllowedTargets || ['instance', 'folder'];
+  const allowedTargets = settings?.allowedTargets || ['instance', 'folder'];
 
   return modeOptions.filter((option) => {
     if (!allowedTargets.includes(option.target)) {

@@ -304,10 +304,6 @@ type FrontendSettingsDTO struct {
 	Whitelabeling *FrontendSettingsWhitelabelingDTO `json:"whitelabeling,omitempty"`
 
 	LocalFileSystemAvailable bool `json:"localFileSystemAvailable"`
-
-	// Provisioning settings
-	ProvisioningAllowedTargets []string `json:"provisioningAllowedTargets"`
-
 	// Experimental Scope settings
 	ListScopesEndpoint          string `json:"listScopesEndpoint"`
 	ListDashboardScopesEndpoint string `json:"listDashboardScopesEndpoint"`
