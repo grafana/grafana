@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -30,7 +29,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	})).With("logger", "provisioning-repo-controller")
 	logger.Info("Starting provisioning repo controller")
 
-	controllerCfg, err := getRepoControllerConfig(deps.Config, deps.Registerer)
+	controllerCfg, err := getRepoControllerConfig(deps.Config)
 	if err != nil {
 		return fmt.Errorf("failed to setup operator: %w", err)
 	}
