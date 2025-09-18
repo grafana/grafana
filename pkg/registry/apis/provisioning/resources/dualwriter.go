@@ -8,7 +8,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/authlib/types"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -524,12 +523,12 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 			fmt.Errorf("no access to read the embedded file"))
 	}
 
-	idType, _, err := types.ParseTypeID(id.GetID())
+	idType, _, err := authlib.ParseTypeID(id.GetID())
 	if err != nil {
 		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(), fmt.Errorf("could not determine identity type to check access"))
 	}
 	// only apply role based access if identity is not of type access policy
-	if idType == types.TypeAccessPolicy || id.GetOrgRole().Includes(identity.RoleEditor) {
+	if idType == authlib.TypeAccessPolicy || id.GetOrgRole().Includes(identity.RoleEditor) {
 		return nil
 	}
 
