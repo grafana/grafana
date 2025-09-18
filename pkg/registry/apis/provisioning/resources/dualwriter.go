@@ -504,7 +504,6 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 		return apierrors.NewUnauthorized(err.Error())
 	}
 
-
 	var name string
 	if parsed.Existing != nil {
 		name = parsed.Existing.GetName()
