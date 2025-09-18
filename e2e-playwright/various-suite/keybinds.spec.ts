@@ -93,8 +93,12 @@ test.describe(
       // Wait for dashboard to load
       await page.waitForLoadState('networkidle');
 
-      // Wait for dashboard to be fully initialized
-      await page.waitForTimeout(1000);
+      // Wait for dashboard to be fully initialized by checking for dashboard content
+      await page
+        .locator('[data-testid*="dashboard"]')
+        .or(page.locator('text=Start your new dashboard'))
+        .first()
+        .waitFor({ state: 'visible' });
 
       // Test the keyboard shortcut first in the main dashboard view
       const currentUrl = page.url();
@@ -103,20 +107,22 @@ test.describe(
       // Test that mod+o works in the main dashboard (should not trigger file dialog)
       console.log('Testing mod+o in main dashboard view...');
       await page.keyboard.press(`${modKey}+o`);
-      await page.waitForTimeout(300);
       expect(page.url()).toBe(currentUrl); // Should not navigate away
 
       // Now open settings to check if the state actually changed
       await page.keyboard.press('d');
       await page.keyboard.press('s');
-      await page.waitForTimeout(500);
 
-      // Wait for settings to load and scroll to Panel options section
+      // Wait for settings page to load by checking for the General tab or settings content
+      await page
+        .locator('text=General')
+        .or(page.locator('[data-testid*="dashboard-settings"]'))
+        .waitFor({ state: 'visible' });
+
+      // Wait for Panel options section to be visible and scroll to it
       const panelOptionsSection = page.locator('text=Panel options');
-      if (await panelOptionsSection.isVisible()) {
-        await panelOptionsSection.scrollIntoViewIfNeeded();
-        await page.waitForTimeout(300);
-      }
+      await panelOptionsSection.waitFor({ state: 'visible' });
+      await panelOptionsSection.scrollIntoViewIfNeeded();
 
       // Look for radio buttons to verify the current state
       const graphTooltipSection = page.locator('text=Graph tooltip').locator('..').locator('..');
@@ -129,7 +135,7 @@ test.describe(
           activeRadioButtons = fallbackRadioButtons;
         }
 
-        await activeRadioButtons.first().waitFor({ state: 'visible', timeout: 3000 });
+        await activeRadioButtons.first().waitFor({ state: 'visible' });
 
         const defaultRadio = activeRadioButtons.nth(0); // Default (0)
         const crosshairRadio = activeRadioButtons.nth(1); // Shared crosshair (1)
@@ -144,29 +150,34 @@ test.describe(
 
         // Close settings and test more shortcuts
         await page.keyboard.press('Escape');
-        await page.waitForTimeout(300);
+
+        // Wait for settings to close by checking we're back to main dashboard
+        await page
+          .locator('[data-testid*="dashboard"]')
+          .or(page.locator('text=Start your new dashboard'))
+          .first()
+          .waitFor({ state: 'visible' });
 
         // Test second press in the main dashboard view (should go to tooltip)
         console.log('Testing second mod+o press (should go to Shared tooltip)...');
         await page.keyboard.press(`${modKey}+o`);
-        await page.waitForTimeout(300);
         expect(page.url()).toBe(currentUrl);
 
         // Test third press in the main dashboard view (should go back to default)
         console.log('Testing third mod+o press (should go back to Default)...');
         await page.keyboard.press(`${modKey}+o`);
-        await page.waitForTimeout(300);
         expect(page.url()).toBe(currentUrl);
 
         // Open settings again to verify final state
         await page.keyboard.press('d');
         await page.keyboard.press('s');
-        await page.waitForTimeout(500);
 
-        if (await panelOptionsSection.isVisible()) {
-          await panelOptionsSection.scrollIntoViewIfNeeded();
-          await page.waitForTimeout(300);
-        }
+        // Wait for settings to open again
+        await page.locator('text=General').waitFor({ state: 'visible' });
+
+        // Wait for Panel options section and scroll to it
+        await panelOptionsSection.waitFor({ state: 'visible' });
+        await panelOptionsSection.scrollIntoViewIfNeeded();
 
         // Check final state - should be back to default (0) after full cycle
         console.log('Verifying final state after complete cycle...');
@@ -181,8 +192,6 @@ test.describe(
         console.log('Radio button testing failed:', error.message);
         // Fallback: just verify the shortcut doesn't cause navigation issues
       }
-
-      // Close settings
 
       // Verify we're still on the dashboard (shortcut didn't trigger browser file dialog)
       await expect(page).toHaveURL(/\/dashboard/);
