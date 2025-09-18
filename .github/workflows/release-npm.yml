@@ -59,6 +59,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: false
 
       - name: Verify commit is in workflow HEAD
         env:
