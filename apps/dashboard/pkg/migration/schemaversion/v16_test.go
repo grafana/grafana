@@ -1458,6 +1458,89 @@ func TestV16(t *testing.T) {
 				// rows field should be removed
 			},
 		},
+		{
+			name: "should migrate mimir dashboard with string height parsing",
+			input: map[string]interface{}{
+				"schemaVersion": 15,
+				"rows": []interface{}{
+					map[string]interface{}{
+						"collapse":  false,
+						"height":    "700px", // String height with px suffix
+						"showTitle": true,
+						"title":     "Rollout progress",
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":    1,
+								"type":  "barchart",
+								"span":  4,
+								"title": "Versions running",
+								"targets": []interface{}{
+									map[string]interface{}{
+										"expr": "up",
+									},
+								},
+							},
+							map[string]interface{}{
+								"id":    2,
+								"type":  "barchart",
+								"span":  4,
+								"title": "Deployment progress",
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					// First panel
+					map[string]interface{}{
+						"id":    1,
+						"type":  "barchart",
+						"title": "Versions running",
+						"targets": []interface{}{
+							map[string]interface{}{
+								"expr": "up",
+							},
+						},
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 1,  // After row panel
+							"w": 8,  // 4 span * 2 = 8 width
+							"h": 19, // 700px parsed correctly: ceil(700/38) = 19
+						},
+					},
+					// Second panel
+					map[string]interface{}{
+						"id":    2,
+						"type":  "barchart",
+						"title": "Deployment progress",
+						"gridPos": map[string]interface{}{
+							"x": 8, // Next to first panel
+							"y": 1,
+							"w": 8,
+							"h": 19,
+						},
+					},
+					// Row panel (created because showTitle is true)
+					map[string]interface{}{
+						"id":        3, // Next available ID
+						"type":      "row",
+						"title":     "Rollout progress",
+						"collapsed": false, // Backend always sets this
+						"repeat":    "",    // Backend always sets this
+						"panels":    []interface{}{},
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 0,
+							"w": 24,
+							"h": 19, // Same height as calculated from "700px"
+						},
+					},
+				},
+				// rows field should be removed
+			},
+		},
 	}
 
 	runMigrationTests(t, tests, schemaversion.V16)
