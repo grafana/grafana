@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
 import { useMemo } from 'react';
 
+import { AlertLabels } from '@grafana/alerting/unstable';
 import { DataFrame, GrafanaTheme2, Labels, LoadingState, TimeRange } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
@@ -17,7 +18,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { AlertLabels } from '@grafana/alerting/unstable';
 import { overrideToFixedColor } from '../../home/Insights';
 
 import { GenericRow } from './GenericRow';
