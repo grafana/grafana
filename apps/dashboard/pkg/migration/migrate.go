@@ -70,12 +70,27 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 	// This replicates the behavior of the frontend DashboardModel and PanelModel constructors
 	applyFrontendDefaults(dash)
 
-	// 2. Apply panel defaults to top-level panels only (not nested panels)
-	// This matches the frontend behavior where PanelModel constructor is only called on top-level panels
+	// 2. Apply panel defaults to ALL panels (both top-level and nested in rows)
+	// The frontend creates PanelModel instances for all panels, including those in rows
 	if dashboardPanels, ok := dash["panels"].([]interface{}); ok {
 		for _, panelInterface := range dashboardPanels {
 			if panel, ok := panelInterface.(map[string]interface{}); ok {
 				applyPanelDefaults(panel)
+			}
+		}
+	}
+
+	// Also apply defaults to panels inside rows (for pre-v16 dashboards)
+	if rows, ok := dash["rows"].([]interface{}); ok {
+		for _, rowInterface := range rows {
+			if row, ok := rowInterface.(map[string]interface{}); ok {
+				if rowPanels, ok := row["panels"].([]interface{}); ok {
+					for _, panelInterface := range rowPanels {
+						if panel, ok := panelInterface.(map[string]interface{}); ok {
+							applyPanelDefaults(panel)
+						}
+					}
+				}
 			}
 		}
 	}
