@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	authlib "github.com/grafana/authlib/types"
+
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -74,7 +75,7 @@ func List[T Resource](
 	check := func(_, _ string) bool { return true }
 	if ac != nil {
 		var err error
-		check, err = ac.Compile(ctx, ident, authlib.ListRequest{
+		check, _, err = ac.Compile(ctx, ident, authlib.ListRequest{
 			Resource:  resource.GroupResource().Resource,
 			Group:     resource.GroupResource().Group,
 			Verb:      "list",

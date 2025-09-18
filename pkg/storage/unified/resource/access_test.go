@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -60,7 +61,7 @@ func TestAuthzLimitedClient_Compile(t *testing.T) {
 			Verb:      utils.VerbGet,
 			Namespace: "stacks-1",
 		}
-		checker, err := client.Compile(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
+		checker, _, err := client.Compile(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
 		assert.NoError(t, err)
 		assert.NotNil(t, checker)
 
@@ -143,7 +144,7 @@ func TestNamespaceMatching(t *testing.T) {
 				Verb:      utils.VerbGet,
 				Namespace: tt.reqNamespace,
 			}
-			_, compileErr := client.Compile(ctx, user, compileReq)
+			_, _, compileErr := client.Compile(ctx, user, compileReq)
 
 			if tt.expectError {
 				require.Error(t, checkErr, "Check should return error")
@@ -207,7 +208,7 @@ func TestNamespaceMatchingFallback(t *testing.T) {
 				Verb:      utils.VerbGet,
 				Namespace: tt.reqNamespace,
 			}
-			_, compileErr := client.Compile(ctx, user, compileReq)
+			_, _, compileErr := client.Compile(ctx, user, compileReq)
 
 			if tt.expectError {
 				require.Error(t, checkErr, "Check should return error")

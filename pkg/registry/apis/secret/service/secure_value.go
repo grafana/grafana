@@ -11,14 +11,15 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apiserver/pkg/admission"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/codes"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service/metrics"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/codes"
 )
 
 var _ contracts.SecureValueService = (*SecureValueService)(nil)
@@ -285,7 +286,7 @@ func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	hasPermissionFor, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
+	hasPermissionFor, _, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
 		Group:     secretv1beta1.APIGroup,
 		Resource:  secretv1beta1.SecureValuesResourceInfo.GetName(),
 		Namespace: namespace.String(),

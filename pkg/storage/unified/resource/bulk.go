@@ -189,7 +189,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 			}
 
 			// This will be called for each request -- with the folder ID
-			runner.checker[NSGR(k)], err = s.access.Compile(ctx, user, authlib.ListRequest{
+			runner.checker[NSGR(k)], _, err = s.access.Compile(ctx, user, authlib.ListRequest{
 				Namespace: k.Namespace,
 				Group:     k.Group,
 				Resource:  k.Resource,

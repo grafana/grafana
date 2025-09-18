@@ -514,9 +514,9 @@ func (m *mockAccessClient) Check(ctx context.Context, user types.AuthInfo, req t
 	return types.CheckResponse{Allowed: m.allowed}, nil
 }
 
-func (m *mockAccessClient) Compile(ctx context.Context, user types.AuthInfo, req types.ListRequest) (types.ItemChecker, error) {
+func (m *mockAccessClient) Compile(ctx context.Context, user types.AuthInfo, req types.ListRequest) (types.ItemChecker, types.Zookie, error) {
 	if m.compileFn != nil {
-		return m.compileFn(user, req), nil
+		return m.compileFn(user, req), types.NoopZookie{}, nil
 	}
 	return func(name, folder string) bool {
 		key := fmt.Sprintf("%s:%s", folder, req.Verb)
@@ -524,5 +524,5 @@ func (m *mockAccessClient) Compile(ctx context.Context, user types.AuthInfo, req
 			return allowed
 		}
 		return m.allowed
-	}, nil
+	}, types.NoopZookie{}, nil
 }

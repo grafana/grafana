@@ -638,10 +638,10 @@ func (nc *StubAccessClient) Check(ctx context.Context, id authlib.AuthInfo, req 
 	return authlib.CheckResponse{Allowed: nc.resourceResponses[req.Resource]}, nil
 }
 
-func (nc *StubAccessClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, error) {
+func (nc *StubAccessClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
 	return func(name, folder string) bool {
 		return nc.resourceResponses[req.Resource]
-	}, nil
+	}, authlib.NoopZookie{}, nil
 }
 
 func (nc StubAccessClient) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
