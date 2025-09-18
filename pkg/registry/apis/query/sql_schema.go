@@ -131,71 +131,15 @@ func (r *sqlSchemaREST) Connect(connectCtx context.Context, name string, _ runti
 		if err != nil {
 			connectLogger.Error("Hit unexpected error when reading query", "err", err)
 			err = errorsK8s.NewBadRequest("error reading query")
-			// TODO: can we wrap the error so details are not lost?!
-			// errutil.BadRequest(
-			// 	"query.bind",
-			// 	errutil.WithPublicMessage("Error reading query")).
-			// 	Errorf("error reading: %w", err)
 			responder.Error(err)
 			return
 		}
 
 		qdr, err := handleSQLSchemaQuery(ctx, *raw, *b, httpreq, *responder, connectLogger)
-
-		// if err != nil {
-		// 	connectLogger.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
-		// 	logEmptyRefids(raw.Queries, connectLogger)
-		// 	if qdr != nil { // if we have a response, we assume the err is set in the response
-		// 		responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
-		// 			QueryDataResponse: *qdr,
-		// 		})
-		// 		return
-		// 	} else {
-		// 		var errorDataResponse backend.DataResponse
-
-		// 		badRequestErrors := []error{
-		// 			service.ErrInvalidDatasourceID,
-		// 			service.ErrNoQueriesFound,
-		// 			service.ErrMissingDataSourceInfo,
-		// 			service.ErrQueryParamMismatch,
-		// 			service.ErrDuplicateRefId,
-		// 			datasources.ErrDataSourceNotFound,
-		// 		}
-		// 		isTypedBadRequestError := false
-		// 		for _, badRequestError := range badRequestErrors {
-		// 			if errors.Is(err, badRequestError) {
-		// 				isTypedBadRequestError = true
-		// 			}
-		// 		}
-		// 		if isTypedBadRequestError {
-		// 			errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
-		// 		} else if strings.Contains(err.Error(), "expression request error") {
-		// 			connectLogger.Error("Error calling TransformData in an expression", "err", err)
-		// 			errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
-		// 		} else {
-		// 			connectLogger.Error("unknown error, treated as a 500", "err", err)
-		// 			responder.Error(err)
-		// 			return
-		// 		}
-		// 		// TODO ensure errors also return the refId wherever possible
-		// 		errorRefId := raw.Queries[0].RefID
-		// 		if errorRefId == "" {
-		// 			errorRefId = "A"
-		// 		}
-
-		// 		qdr = &backend.QueryDataResponse{
-		// 			Responses: map[string]backend.DataResponse{
-		// 				errorRefId: errorDataResponse,
-		// 			},
-		// 		}
-		// 		responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
-		// 			QueryDataResponse: *qdr,
-		// 		})
-		// 		return
-		// 	}
-		// }
-
-		// TODO error handling
+		if err != nil {
+			responder.Error(err)
+			return
+		}
 
 		responder.Object(200, &query.SQLSchemaResponse{
 			SQLSchema: qdr,
