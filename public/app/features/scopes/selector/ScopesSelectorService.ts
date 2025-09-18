@@ -1,5 +1,4 @@
 import { Scope, ScopeNode, store as storeImpl } from '@grafana/data';
-import { getDashboardSceneInteractionProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
@@ -15,6 +14,8 @@ import {
   treeNodeAtPath,
 } from './scopesTreeUtils';
 import { NodesMap, RecentScope, RecentScopeSchema, ScopeSchema, ScopesMap, SelectedScope, TreeNode } from './types';
+import { SceneRenderProfiler } from '@grafana/scenes';
+import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 
 export const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
 
@@ -51,7 +52,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     private apiClient: ScopesApiClient,
     private dashboardsService: ScopesDashboardsService,
     private store = storeImpl,
-    private interactionProfiler: SceneInteractionProfiler = getDashboardSceneInteractionProfiler()
+    private interactionProfiler: SceneRenderProfiler = getDashboardSceneProfiler()
   ) {
     super({
       loading: false,
@@ -96,7 +97,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   };
 
   private expandOrFilterNode = async (scopeNodeId: string, query?: string) => {
-    this.interactionProfiler.startProfile('scopeNodeDiscovery');
+    this.interactionProfiler.startInteraction('scopeNodeDiscovery');
 
     const path = getPathOfNode(scopeNodeId, this.state.nodes);
 
@@ -122,7 +123,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     } catch (error) {
       throw error;
     } finally {
-      this.interactionProfiler.stopProfile();
+      this.interactionProfiler?.stopInteraction();
     }
   };
 
