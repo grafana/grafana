@@ -95,7 +95,7 @@ func TestService(t *testing.T) {
 			cfg: setting.Cfg{
 				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: rest.Mode5,
+						DualWriterMode: rest.Mode3,
 					},
 				},
 			}}, {
