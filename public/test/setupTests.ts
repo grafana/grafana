@@ -7,7 +7,7 @@ import i18next from 'i18next';
 import failOnConsole from 'jest-fail-on-console';
 import { initReactI18next } from 'react-i18next';
 
-import { matchers } from '@grafana/test-utils/matchers';
+import { matchers } from '@grafana/test-utils';
 
 import getEnvConfig from '../../scripts/webpack/env-util';
 
