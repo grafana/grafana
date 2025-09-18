@@ -397,6 +397,10 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		attribute.StringSlice("integrations", r.GetIntegrationTypes()),
 	))
 	defer span.End()
+	// check origin of the provided receiver
+	if r.Origin != models.ResourceOriginGrafana {
+		return nil, makeErrReceiverOrigin(r, "update")
+	}
 
 	if err := rs.authz.AuthorizeUpdate(ctx, user, r); err != nil {
 		return nil, err
