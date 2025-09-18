@@ -108,7 +108,7 @@ jobs:
         run: ./scripts/validate-npm-packages.sh
 
       - name: Debug OIDC Claims
-        uses: github/actions-oidc-debugger@018a1dc4f8e47adca924d55e4bb0ddce917af32d
+        uses: github/actions-oidc-debugger@2e9ba5d3f4bebaad1f91a2cede055115738b7ae8
         with:
           audience: '${{ github.server_url }}/${{ github.repository_owner }}'
 
