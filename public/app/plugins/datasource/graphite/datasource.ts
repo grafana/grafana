@@ -285,7 +285,7 @@ export class GraphiteDatasource
 
     const seriesReferenceRegex = /\#([A-Z])/g;
 
-    function nestedSeriesRegexReplacer(match: string, g1: string | number) {
+    function nestedSeriesRegexReplacer(match: string, g1: string) {
       // Handle the case where a query references itself to prevent infinite recursion
       if (target.refId === g1) {
         return referenceTargets[g1] || match;
@@ -1141,7 +1141,7 @@ export class GraphiteDatasource
 
     const regex = /\#([A-Z])/g;
 
-    function nestedSeriesRegexReplacer(match: string, g1: string | number) {
+    function nestedSeriesRegexReplacer(match: string, g1: string) {
       // Handle the case where a query references itself to prevent infinite recursion
       if (target.refId === g1) {
         return targets[g1] || match;
