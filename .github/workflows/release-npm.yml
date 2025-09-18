@@ -97,9 +97,11 @@ jobs:
         run: yarn run packages:typecheck
 
       - name: Version, build, and pack packages
+        env:
+          VERSION: ${{ github.event.inputs.version }}
         run: |
           yarn run packages:build
-          yarn lerna version "$PACKAGES_VERSION" \
+          yarn lerna version "$VERSION" \
             --exact \
             --no-git-tag-version \
             --no-push \
