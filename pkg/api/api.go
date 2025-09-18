@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ssoutils"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -127,6 +128,14 @@ func (hs *HTTPServer) registerRoutes() {
 	// feature toggle admin page
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagFeatureToggleAdminPage) {
 		r.Get("/admin/featuretoggles", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.Index)
+	}
+
+	// secrets management page
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) && hs.Features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatformUI) {
+		r.Get("/admin/secrets", authorize(ac.EvalAny(
+			ac.EvalPermission(secret.ActionSecretSecureValuesCreate),
+			ac.EvalPermission(secret.ActionSecretSecureValuesRead),
+		)), hs.Index)
 	}
 
 	r.Get("/styleguide", reqSignedIn, hs.Index)

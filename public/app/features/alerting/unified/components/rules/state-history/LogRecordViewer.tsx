@@ -3,12 +3,12 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import { groupBy, uniqueId } from 'lodash';
 import { Fragment, memo, useEffect, useRef } from 'react';
 
+import { AlertLabel } from '@grafana/alerting/unstable';
 import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';
 import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
-import { Label } from '../../Label';
 import { AlertStateTag } from '../AlertStateTag';
 
 import { ErrorMessageRow } from './ErrorMessageRow';
@@ -182,7 +182,7 @@ const AlertInstanceValues = memo(({ record }: { record: Record<string, number> }
   return (
     <>
       {values.map(([key, value]) => (
-        <Label key={key} label={key} value={value} />
+        <AlertLabel key={key} labelKey={key} value={String(value)} />
       ))}
     </>
   );

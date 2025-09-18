@@ -8,6 +8,7 @@ test.use({
   featureToggles: {
     kubernetesDashboards: true,
     dashboardNewLayouts: true,
+    dashboardUndoRedo: true,
     groupByVariable: true,
   },
   viewport: { width: 1920, height: 1080 },
