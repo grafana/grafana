@@ -205,11 +205,12 @@ export class AutoGridLayoutManager
       throw new Error('Cannot merge non-auto grid layout');
     }
 
-    const otherLayout = other;
+    const sourceLayout = other.state.layout;
+    const movedChildren = [...sourceLayout.state.children];
 
-    this.state.layout.setState({
-      children: [...this.state.layout.state.children, ...otherLayout.state.layout.state.children],
-    });
+    // Remove from source and append to destination
+    sourceLayout.setState({ children: [] });
+    this.state.layout.setState({ children: [...this.state.layout.state.children, ...movedChildren] });
   }
 
   public duplicatePanel(panel: VizPanel) {

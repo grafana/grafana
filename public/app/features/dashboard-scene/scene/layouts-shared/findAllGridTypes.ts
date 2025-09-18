@@ -4,7 +4,7 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 export function findAllGridTypes(layout: DashboardLayoutManager): string[] {
   if (layout.descriptor.isGridLayout) {
-    return [layout.descriptor.name];
+    return [layout.descriptor.id];
   }
 
   if (layout instanceof TabsLayoutManager) {

@@ -54,7 +54,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
             {isEditing && !isClone && (
               <div className="dashboard-canvas-add-button">
                 <Button
-                  icon="square-shape"
+                  icon="layers-slash"
                   variant="primary"
                   fill="text"
                   onClick={() => model.ungroupRows('custom-grid')}

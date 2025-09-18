@@ -106,16 +106,17 @@ export class DefaultGridLayoutManager
       }
     }
 
-    this.state.grid.setState({
-      children: [
-        ...this.state.grid.state.children,
-        ...otherLayout.state.grid.state.children.map((child) => {
-          return child.clone({
-            y: (child.state.y ?? 0) + offset,
-          });
-        }),
-      ],
-    });
+    const sourceGrid = other.state.grid;
+    const movedChildren = [...sourceGrid.state.children];
+
+    for (const child of movedChildren) {
+      const currentY = child.state.y ?? 0;
+      child.setState({ y: currentY + offset });
+    }
+
+    // Remove from source and append to destination
+    sourceGrid.setState({ children: [] });
+    this.state.grid.setState({ children: [...this.state.grid.state.children, ...movedChildren] });
   }
 
   private _activationHandler() {

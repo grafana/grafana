@@ -9,6 +9,8 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import appEvents from 'app/core/app_events';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
@@ -22,6 +24,7 @@ import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
 import { getRowFromClipboard } from '../layouts-shared/paste';
 import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { isLayoutParent } from '../types/LayoutParent';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { RowItem } from './RowItem';
@@ -157,26 +160,79 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
     if (!hasConfirmed) {
       if (hasNonGridLayout) {
-        const confirm = window.confirm('Need to ungroup all nested groups, continue?');
-        if (!confirm) {
-          return;
-        }
+        appEvents.publish(
+          new ShowConfirmModalEvent({
+            title: t('dashboard.rows-layout.ungroup-nested-title', 'Ungroup nested groups?'),
+            text: t('dashboard.rows-layout.ungroup-nested-text', 'This will ungroup all nested groups.'),
+            yesText: t('dashboard.rows-layout.continue', 'Continue'),
+            noText: t('dashboard.rows-layout.cancel', 'Cancel'),
+            onConfirm: () => {
+              const types = findAllGridTypes(this);
+              if (new Set(types).size > 1) {
+                this._confirmConvertMixedGrids(gridLayoutType);
+              } else {
+                this.wrapUngroupRowsInEdit(gridLayoutType);
+              }
+            },
+          })
+        );
+        return;
       }
 
       if (new Set(gridTypes).size > 1) {
-        const confirm = window.confirm('All grids must be converted to the same type, continue?');
-        if (!confirm) {
-          return;
-        }
+        this._confirmConvertMixedGrids(gridLayoutType);
+        return;
       }
     }
+
+    this.wrapUngroupRowsInEdit(gridLayoutType);
+  }
+
+  private _confirmConvertMixedGrids(gridLayoutType: 'auto-grid' | 'custom-grid') {
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard.rows-layout.ungroup-convert-title', 'Convert mixed grids?'),
+        text: t(
+          'dashboard.rows-layout.ungroup-convert-text',
+          'All grids must be converted to the same type and positions will be lost.'
+        ),
+        yesText: t('dashboard.rows-layout.continue', 'Continue'),
+        noText: t('dashboard.rows-layout.cancel', 'Cancel'),
+        onConfirm: () => this.wrapUngroupRowsInEdit(gridLayoutType),
+      })
+    );
+  }
+
+  private wrapUngroupRowsInEdit(gridLayoutType: 'auto-grid' | 'custom-grid') {
+    const parent = this.parent;
+    if (!parent || !isLayoutParent(parent)) {
+      throw new Error('Ungroup rows failed: parent is not a layout container');
+    }
+
+    const previousLayout = this.clone({});
+    const scene = getDashboardSceneFor(this);
+
+    dashboardEditActions.edit({
+      description: t('dashboard.rows-layout.edit.ungroup-rows', 'Ungroup rows'),
+      source: scene,
+      perform: () => {
+        this._ungroupRows(gridLayoutType);
+      },
+      undo: () => {
+        parent.switchLayout(previousLayout);
+      },
+    });
+  }
+
+  private _ungroupRows(gridLayoutType: 'auto-grid' | 'custom-grid') {
+    const hasNonGridLayout = this.state.rows.some((row) => !row.getLayout().descriptor.isGridLayout);
 
     if (hasNonGridLayout) {
       for (const row of this.state.rows) {
         const layout = row.getLayout();
         if (!layout.descriptor.isGridLayout) {
           if (layout instanceof RowsLayoutManager) {
-            layout.ungroupRows(gridLayoutType, true);
+            layout._ungroupRows(gridLayoutType);
           } else {
             throw new Error('Not implemented');
           }
@@ -194,10 +250,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       firstRowLayout.merge(row.getLayout());
     }
 
-    this.setState({
-      rows: [firstRow],
-    });
-
+    this.setState({ rows: [firstRow] });
     this.removeRow(firstRow);
   }
 
