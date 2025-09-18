@@ -34,52 +34,29 @@ func GetDefaultDSInstanceSettings(datasources []DataSourceInfo) *DataSourceInfo 
 	return nil
 }
 
-// GetInstanceSettings looks up a datasource by name or uid reference
-func GetInstanceSettings(nameOrRef interface{}, datasources []DataSourceInfo) *DataSourceInfo {
-	if nameOrRef == nil || nameOrRef == "default" {
-		return GetDefaultDSInstanceSettings(datasources)
-	}
-
-	// Check if it's a reference object
-	if ref, ok := nameOrRef.(map[string]interface{}); ok {
-		if _, hasUID := ref["uid"]; !hasUID {
-			// Reference object without UID should return nil to preserve as-is (frontend behavior)
-			// Frontend doesn't do type-based lookup for {type: "prometheus"} - it preserves the original
-			return nil
-		}
-		// It's a reference object with UID, search for matching UID
-		for _, ds := range datasources {
-			if uid, hasUID := ref["uid"]; hasUID && uid == ds.UID {
-				return &DataSourceInfo{
-					UID:        ds.UID,
-					Type:       ds.Type,
-					Name:       ds.Name,
-					APIVersion: ds.APIVersion,
-				}
-			}
-		}
-		// Unknown UID-only reference should return nil (preserve it)
-		return nil
-	}
-
-	// Check if it's a string
-	str, ok := nameOrRef.(string)
+// isDataSourceRef checks if the object is a valid DataSourceRef (has uid or type)
+// Matches the frontend isDataSourceRef function in datasource.ts
+func isDataSourceRef(ref interface{}) bool {
+	dsRef, ok := ref.(map[string]interface{})
 	if !ok {
-		return GetDefaultDSInstanceSettings(datasources)
+		return false
 	}
 
-	// Search for matching name or UID
-	for _, ds := range datasources {
-		if str == ds.Name || str == ds.UID {
-			return &DataSourceInfo{
-				UID:        ds.UID,
-				Type:       ds.Type,
-				Name:       ds.Name,
-				APIVersion: ds.APIVersion,
-			}
+	hasUID := false
+	if uid, exists := dsRef["uid"]; exists {
+		if uidStr, ok := uid.(string); ok && uidStr != "" {
+			hasUID = true
 		}
 	}
-	return nil
+
+	hasType := false
+	if typ, exists := dsRef["type"]; exists {
+		if typStr, ok := typ.(string); ok && typStr != "" {
+			hasType = true
+		}
+	}
+
+	return hasUID || hasType
 }
 
 // MigrateDatasourceNameToRef converts a datasource name/uid string to a reference object
@@ -92,35 +69,42 @@ func MigrateDatasourceNameToRef(nameOrRef interface{}, options map[string]bool, 
 		return nil
 	}
 
-	if dsRef, ok := nameOrRef.(map[string]interface{}); ok {
-		if _, hasUID := dsRef["uid"]; hasUID {
-			return dsRef
+	// Frontend: if (isDataSourceRef(nameOrRef)) { return nameOrRef; }
+	if isDataSourceRef(nameOrRef) {
+		return nameOrRef.(map[string]interface{})
+	}
+
+	// Look up datasource by name/UID
+	if nameOrRef == nil || nameOrRef == "default" {
+		ds := GetDefaultDSInstanceSettings(datasources)
+		if ds != nil {
+			return GetDataSourceRef(ds)
 		}
-		// Empty object {} should be preserved as-is (frontend behavior)
-		if len(dsRef) == 0 {
-			return dsRef
-		}
 	}
 
-	ds := GetInstanceSettings(nameOrRef, datasources)
-	if ds != nil {
-		return GetDataSourceRef(ds)
-	}
-
-	// If GetInstanceSettings returned nil for a reference object, preserve it as-is
-	if dsRef, ok := nameOrRef.(map[string]interface{}); ok {
-		return dsRef
-	}
-
-	// Handle string cases (including empty strings)
-	if dsName, ok := nameOrRef.(string); ok {
-		if dsName == "" {
+	// Check if it's a string name/UID
+	if str, ok := nameOrRef.(string); ok {
+		// Handle empty string case
+		if str == "" {
 			// Empty string should return {} (frontend behavior)
 			return map[string]interface{}{}
 		}
+
+		// Search for matching datasource
+		for _, ds := range datasources {
+			if str == ds.Name || str == ds.UID {
+				return GetDataSourceRef(&DataSourceInfo{
+					UID:        ds.UID,
+					Type:       ds.Type,
+					Name:       ds.Name,
+					APIVersion: ds.APIVersion,
+				})
+			}
+		}
+
 		// Unknown datasource name should be preserved as UID-only reference
 		return map[string]interface{}{
-			"uid": dsName,
+			"uid": str,
 		}
 	}
 

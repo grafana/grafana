@@ -1,680 +1,1953 @@
 package migration
 
-// TestFrontendDefaultsSuite tests all the logic of mimicking DashboardModel and PanelModel behavior
-// including the new cleanup logic that mimics getSaveModel()
-// func TestFrontendDefaultsSuite(t *testing.T) {
-// 	t.Run("DashboardModel Defaults", func(t *testing.T) {
-// 		t.Run("should apply all dashboard-level defaults", func(t *testing.T) {
-// 			dashboard := map[string]interface{}{
-// 				"title": "Test Dashboard",
-// 			}
-
-// 			applyFrontendDefaults(dashboard)
-
-// 			// Check that all DashboardModel defaults are applied
-// 			assertMapHasKey(t, dashboard, "editable")
-// 			assertMapHasKey(t, dashboard, "graphTooltip")
-// 			assertMapHasKey(t, dashboard, "timezone")
-// 			assertMapHasKey(t, dashboard, "weekStart")
-// 			assertMapHasKey(t, dashboard, "fiscalYearStartMonth")
-// 			assertMapHasKey(t, dashboard, "version")
-// 			assertMapHasKey(t, dashboard, "links")
-// 			assertMapHasKey(t, dashboard, "gnetId")
-
-// 			// Check specific default values
-// 			assertEqual(t, true, dashboard["editable"])
-// 			assertEqual(t, float64(0), dashboard["graphTooltip"])
-// 			assertEqual(t, "", dashboard["timezone"])
-// 			assertEqual(t, "", dashboard["weekStart"])
-// 			assertEqual(t, float64(0), dashboard["fiscalYearStartMonth"])
-// 			assertEqual(t, float64(0), dashboard["version"])
-// 			assertEqual(t, []interface{}{}, dashboard["links"])
-// 			assertEqual(t, nil, dashboard["gnetId"])
-
-// 			// Note: The frontend does NOT set defaults for these properties:
-// 			// - liveNow: copied as-is from input data
-// 			// - refresh: copied as-is from input data
-// 			// - snapshot: copied as-is from input data
-// 			// - scopeMeta: copied as-is from input data
-// 		})
-
-// 		t.Run("should preserve existing values", func(t *testing.T) {
-// 			dashboard := map[string]interface{}{
-// 				"title":    "Test Dashboard",
-// 				"editable": false,
-// 				"timezone": "UTC",
-// 				"refresh":  "5s",
-// 			}
-
-// 			applyFrontendDefaults(dashboard)
-
-// 			// Check that existing values are preserved
-// 			assertEqual(t, "Test Dashboard", dashboard["title"])
-// 			assertEqual(t, false, dashboard["editable"])
-// 			assertEqual(t, "UTC", dashboard["timezone"])
-// 			assertEqual(t, "5s", dashboard["refresh"])
-// 		})
-
-// 		t.Run("should add built-in annotation query", func(t *testing.T) {
-// 			dashboard := map[string]interface{}{
-// 				"title": "Test Dashboard",
-// 			}
-
-// 			applyFrontendDefaults(dashboard)
-
-// 			annotations, ok := dashboard["annotations"].(map[string]interface{})
-// 			assertTrue(t, ok, "annotations should exist")
-
-// 			list, ok := annotations["list"].([]interface{})
-// 			assertTrue(t, ok, "annotations.list should exist")
-// 			assertTrue(t, len(list) > 0, "should have at least one annotation")
-
-// 			builtInAnnotation := list[0].(map[string]interface{})
-// 			assertEqual(t, float64(1), builtInAnnotation["builtIn"])
-// 			assertEqual(t, "Annotations & Alerts", builtInAnnotation["name"])
-// 			assertEqual(t, "dashboard", builtInAnnotation["type"])
-// 			assertEqual(t, "rgba(0, 211, 255, 1)", builtInAnnotation["iconColor"])
-// 			assertEqual(t, true, builtInAnnotation["enable"])
-// 			assertEqual(t, true, builtInAnnotation["hide"])
-
-// 			datasource, ok := builtInAnnotation["datasource"].(map[string]interface{})
-// 			assertTrue(t, ok, "datasource should exist")
-// 			assertEqual(t, "-- Grafana --", datasource["uid"])
-// 			assertEqual(t, "grafana", datasource["type"])
-// 		})
-
-// 		t.Run("should ensure templating and annotations exist", func(t *testing.T) {
-// 			dashboard := map[string]interface{}{
-// 				"title": "Test Dashboard",
-// 			}
-
-// 			applyFrontendDefaults(dashboard)
-
-// 			// Check templating
-// 			templating, ok := dashboard["templating"].(map[string]interface{})
-// 			assertTrue(t, ok, "templating should exist")
-// 			list, ok := templating["list"].([]interface{})
-// 			assertTrue(t, ok, "templating.list should exist")
-// 			assertEqual(t, 0, len(list))
-
-// 			// Check annotations
-// 			annotations, ok := dashboard["annotations"].(map[string]interface{})
-// 			assertTrue(t, ok, "annotations should exist")
-// 			list, ok = annotations["list"].([]interface{})
-// 			assertTrue(t, ok, "annotations.list should exist")
-// 			assertTrue(t, len(list) > 0, "should have built-in annotation")
-// 		})
-
-// 		t.Run("should add meta defaults", func(t *testing.T) {
-// 			dashboard := map[string]interface{}{
-// 				"title": "Test Dashboard",
-// 			}
-
-// 			applyFrontendDefaults(dashboard)
-
-// 			meta, ok := dashboard["meta"].(map[string]interface{})
-// 			assertTrue(t, ok, "meta should exist")
-
-// 			// Check meta defaults
-// 			assertEqual(t, true, meta["canShare"])
-// 			assertEqual(t, true, meta["canSave"])
-// 			assertEqual(t, true, meta["canStar"])
-// 			assertEqual(t, true, meta["canEdit"])
-// 			assertEqual(t, true, meta["canDelete"])
-// 			assertEqual(t, true, meta["showSettings"])
-// 			assertEqual(t, false, meta["canMakeEditable"])
-// 			assertEqual(t, false, meta["hasUnsavedFolderChange"])
-// 		})
-// 	})
-
-// 	t.Run("PanelModel Defaults", func(t *testing.T) {
-// 		t.Run("should apply all panel-level defaults", func(t *testing.T) {
-// 			panel := map[string]interface{}{
-// 				"title": "Test Panel",
-// 			}
-
-// 			applyPanelDefaults(panel)
-
-// 			// Check that all PanelModel defaults are applied
-// 			assertMapHasKey(t, panel, "gridPos")
-// 			assertMapHasKey(t, panel, "targets")
-// 			assertMapHasKey(t, panel, "cachedPluginOptions")
-// 			assertMapHasKey(t, panel, "transparent")
-// 			assertMapHasKey(t, panel, "options")
-// 			assertMapHasKey(t, panel, "links")
-// 			assertMapHasKey(t, panel, "transformations")
-// 			assertMapHasKey(t, panel, "fieldConfig")
-
-// 			// Check specific default values
-// 			gridPos, ok := panel["gridPos"].(map[string]interface{})
-// 			assertTrue(t, ok, "gridPos should exist")
-// 			assertEqual(t, float64(0), gridPos["x"])
-// 			assertEqual(t, float64(0), gridPos["y"])
-// 			assertEqual(t, float64(3), gridPos["h"])
-// 			assertEqual(t, float64(6), gridPos["w"])
-
-// 			targets, ok := panel["targets"].([]interface{})
-// 			assertTrue(t, ok, "targets should exist")
-// 			assertEqual(t, 1, len(targets))
-// 			target := targets[0].(map[string]interface{})
-// 			assertEqual(t, "A", target["refId"])
-
-// 			assertEqual(t, map[string]interface{}{}, panel["cachedPluginOptions"])
-// 			assertEqual(t, false, panel["transparent"])
-// 			assertEqual(t, map[string]interface{}{}, panel["options"])
-// 			assertEqual(t, []interface{}{}, panel["links"])
-// 			assertEqual(t, []interface{}{}, panel["transformations"])
-
-// 			fieldConfig, ok := panel["fieldConfig"].(map[string]interface{})
-// 			assertTrue(t, ok, "fieldConfig should exist")
-// 			assertEqual(t, map[string]interface{}{}, fieldConfig["defaults"])
-// 			assertEqual(t, []interface{}{}, fieldConfig["overrides"])
-// 		})
-
-// 		t.Run("should preserve existing values", func(t *testing.T) {
-// 			panel := map[string]interface{}{
-// 				"title": "Test Panel",
-// 				"gridPos": map[string]interface{}{
-// 					"x": float64(10),
-// 					"y": float64(20),
-// 					"h": float64(5),
-// 					"w": float64(8),
-// 				},
-// 				"transparent": true,
-// 				"options": map[string]interface{}{
-// 					"custom": "value",
-// 				},
-// 			}
-
-// 			applyPanelDefaults(panel)
-
-// 			// Check that existing values are preserved
-// 			assertEqual(t, "Test Panel", panel["title"])
-// 			assertEqual(t, true, panel["transparent"])
-
-// 			gridPos, ok := panel["gridPos"].(map[string]interface{})
-// 			assertTrue(t, ok, "gridPos should exist")
-// 			assertEqual(t, float64(10), gridPos["x"])
-// 			assertEqual(t, float64(20), gridPos["y"])
-// 			assertEqual(t, float64(5), gridPos["h"])
-// 			assertEqual(t, float64(8), gridPos["w"])
-
-// 			options, ok := panel["options"].(map[string]interface{})
-// 			assertTrue(t, ok, "options should exist")
-// 			assertEqual(t, "value", options["custom"])
-// 		})
-
-// 		t.Run("should ensure query IDs", func(t *testing.T) {
-// 			panel := map[string]interface{}{
-// 				"title": "Test Panel",
-// 				"targets": []interface{}{
-// 					map[string]interface{}{
-// 						"expr": "up",
-// 					},
-// 					map[string]interface{}{
-// 						"expr": "down",
-// 					},
-// 				},
-// 			}
-
-// 			applyPanelDefaults(panel)
-
-// 			targets, ok := panel["targets"].([]interface{})
-// 			assertTrue(t, ok, "targets should exist")
-// 			assertEqual(t, 2, len(targets))
-
-// 			// Check that refIds are assigned
-// 			target1 := targets[0].(map[string]interface{})
-// 			target2 := targets[1].(map[string]interface{})
-// 			assertEqual(t, "A", target1["refId"])
-// 			assertEqual(t, "B", target2["refId"])
-// 		})
-// 	})
-
-// 	t.Run("Panel Cleanup Logic (getSaveModel mimic)", func(t *testing.T) {
-// 		t.Run("should remove notPersistedProperties", func(t *testing.T) {
-// 			panel := map[string]interface{}{
-// 				"id":    float64(1),
-// 				"title": "Test Panel",
-// 				"type":  "timeseries",
-// 				// These properties should be removed
-// 				"events":                  "some events",
-// 				"isViewing":               true,
-// 				"isEditing":               false,
-// 				"hasRefreshed":            true,
-// 				"cachedPluginOptions":     map[string]interface{}{"key": "value"},
-// 				"plugin":                  "some plugin",
-// 				"queryRunner":             "some runner",
-// 				"replaceVariables":        "some func",
-// 				"configRev":               float64(1),
-// 				"hasSavedPanelEditChange": true,
-// 				"getDisplayTitle":         "some func",
-// 				"dataSupport":             "some support",
-// 				"key":                     "some key",
-// 				"isNew":                   true,
-// 				"refreshWhenInView":       true,
-// 			}
-
-// 			cleanupPanelForSave(panel)
-
-// 			// Check that notPersistedProperties are removed
-// 			assertMapDoesNotHaveKey(t, panel, "events")
-// 			assertMapDoesNotHaveKey(t, panel, "isViewing")
-// 			assertMapDoesNotHaveKey(t, panel, "isEditing")
-// 			assertMapDoesNotHaveKey(t, panel, "hasRefreshed")
-// 			assertMapDoesNotHaveKey(t, panel, "cachedPluginOptions")
-// 			assertMapDoesNotHaveKey(t, panel, "plugin")
-// 			assertMapDoesNotHaveKey(t, panel, "queryRunner")
-// 			assertMapDoesNotHaveKey(t, panel, "replaceVariables")
-// 			assertMapDoesNotHaveKey(t, panel, "configRev")
-// 			assertMapDoesNotHaveKey(t, panel, "hasSavedPanelEditChange")
-// 			assertMapDoesNotHaveKey(t, panel, "getDisplayTitle")
-// 			assertMapDoesNotHaveKey(t, panel, "dataSupport")
-// 			assertMapDoesNotHaveKey(t, panel, "key")
-// 			assertMapDoesNotHaveKey(t, panel, "isNew")
-// 			assertMapDoesNotHaveKey(t, panel, "refreshWhenInView")
-
-// 			// Check that essential properties are preserved
-// 			assertMapHasKey(t, panel, "id")
-// 			assertMapHasKey(t, panel, "title")
-// 			assertMapHasKey(t, panel, "type")
-// 		})
-
-// 		t.Run("should remove properties that match defaults", func(t *testing.T) {
-// 			panel := map[string]interface{}{
-// 				"id":    float64(1),
-// 				"title": "Test Panel",
-// 				"type":  "timeseries",
-// 				// These properties match defaults and should be removed
-// 				"gridPos": map[string]interface{}{
-// 					"x": float64(0), "y": float64(0), "h": float64(3), "w": float64(6),
-// 				},
-// 				"targets": []interface{}{
-// 					map[string]interface{}{"refId": "A"},
-// 				},
-// 				"cachedPluginOptions": map[string]interface{}{},
-// 				"transparent":         false,
-// 				"options":             map[string]interface{}{},
-// 				"links":               []interface{}{},
-// 				"transformations":     []interface{}{},
-// 				"fieldConfig": map[string]interface{}{
-// 					"defaults":  map[string]interface{}{},
-// 					"overrides": []interface{}{},
-// 				},
-// 			}
-
-// 			cleanupPanelForSave(panel)
-
-// 			// Check that default properties are removed
-// 			assertMapDoesNotHaveKey(t, panel, "gridPos")
-// 			assertMapDoesNotHaveKey(t, panel, "targets")
-// 			assertMapDoesNotHaveKey(t, panel, "cachedPluginOptions")
-// 			assertMapDoesNotHaveKey(t, panel, "transparent")
-// 			assertMapDoesNotHaveKey(t, panel, "options")
-// 			assertMapDoesNotHaveKey(t, panel, "links")
-// 			assertMapDoesNotHaveKey(t, panel, "transformations")
-// 			assertMapDoesNotHaveKey(t, panel, "fieldConfig")
-
-// 			// Check that essential properties are preserved
-// 			assertMapHasKey(t, panel, "id")
-// 			assertMapHasKey(t, panel, "type")
-// 		})
-
-// 		t.Run("should preserve properties that differ from defaults", func(t *testing.T) {
-// 			panel := map[string]interface{}{
-// 				"id":    float64(1),
-// 				"title": "Test Panel",
-// 				"type":  "timeseries",
-// 				// These properties differ from defaults and should be preserved
-// 				"gridPos": map[string]interface{}{
-// 					"x": float64(10), "y": float64(20), "h": float64(5), "w": float64(8),
-// 				},
-// 				"transparent": true,
-// 				"options": map[string]interface{}{
-// 					"custom": "value",
-// 				},
-// 				"fieldConfig": map[string]interface{}{
-// 					"defaults": map[string]interface{}{
-// 						"unit": "bytes",
-// 					},
-// 					"overrides": []interface{}{},
-// 				},
-// 			}
-
-// 			cleanupPanelForSave(panel)
-
-// 			// Check that non-default properties are preserved
-// 			assertMapHasKey(t, panel, "gridPos")
-// 			assertMapHasKey(t, panel, "transparent")
-// 			assertMapHasKey(t, panel, "options")
-// 			assertMapHasKey(t, panel, "fieldConfig")
-
-// 			// Check that essential properties are preserved
-// 			assertMapHasKey(t, panel, "id")
-// 			assertMapHasKey(t, panel, "title")
-// 			assertMapHasKey(t, panel, "type")
-// 		})
-
-// 		t.Run("should handle nested panels cleanup", func(t *testing.T) {
-// 			dashboard := map[string]interface{}{
-// 				"panels": []interface{}{
-// 					map[string]interface{}{
-// 						"id":    float64(1),
-// 						"title": "Row Panel",
-// 						"type":  "row",
-// 						"panels": []interface{}{
-// 							map[string]interface{}{
-// 								"id":    float64(2),
-// 								"title": "Nested Panel",
-// 								"type":  "timeseries",
-// 								// These should be removed
-// 								"cachedPluginOptions": map[string]interface{}{},
-// 								"transparent":         false,
-// 								"options":             map[string]interface{}{},
-// 							},
-// 						},
-// 					},
-// 				},
-// 			}
-
-// 			cleanupDashboardForSave(dashboard)
-
-// 			// Check that nested panel cleanup was applied
-// 			panels := dashboard["panels"].([]interface{})
-// 			rowPanel := panels[0].(map[string]interface{})
-// 			nestedPanels := rowPanel["panels"].([]interface{})
-// 			nestedPanel := nestedPanels[0].(map[string]interface{})
-
-// 			// Check that default properties are removed from nested panel
-// 			assertMapDoesNotHaveKey(t, nestedPanel, "cachedPluginOptions")
-// 			assertMapDoesNotHaveKey(t, nestedPanel, "transparent")
-// 			assertMapDoesNotHaveKey(t, nestedPanel, "options")
-
-// 			// Check that essential properties are preserved
-// 			assertMapHasKey(t, nestedPanel, "id")
-// 			assertMapHasKey(t, nestedPanel, "title")
-// 			assertMapHasKey(t, nestedPanel, "type")
-// 		})
-// 	})
-
-// 	t.Run("Panel ID Management", func(t *testing.T) {
-// 		t.Run("should preserve unique existing IDs", func(t *testing.T) {
-// 			dashboard := map[string]interface{}{
-// 				"panels": []interface{}{
-// 					map[string]interface{}{
-// 						"id":    float64(1),
-// 						"title": "Panel 1",
-// 					},
-// 					map[string]interface{}{
-// 						"id":    float64(2),
-// 						"title": "Panel 2",
-// 					},
-// 					map[string]interface{}{
-// 						"id":    float64(3),
-// 						"title": "Panel 3",
-// 					},
-// 				},
-// 			}
-
-// 			ensurePanelsHaveUniqueIds(dashboard)
-
-// 			panels := getPanels(dashboard)
-// 			assertEqual(t, 3, len(panels))
-
-// 			// Check that IDs are preserved
-// 			assertEqual(t, float64(1), panels[0]["id"])
-// 			assertEqual(t, float64(2), panels[1]["id"])
-// 			assertEqual(t, float64(3), panels[2]["id"])
-// 		})
-
-// 		t.Run("should assign new IDs for missing IDs", func(t *testing.T) {
-// 			dashboard := map[string]interface{}{
-// 				"panels": []interface{}{
-// 					map[string]interface{}{
-// 						"id":    float64(1),
-// 						"title": "Panel 1",
-// 					},
-// 					map[string]interface{}{
-// 						"title": "Panel 2", // No ID
-// 					},
-// 					map[string]interface{}{
-// 						"id":    float64(3),
-// 						"title": "Panel 3",
-// 					},
-// 				},
-// 			}
-
-// 			ensurePanelsHaveUniqueIds(dashboard)
-
-// 			panels := getPanels(dashboard)
-// 			assertEqual(t, 3, len(panels))
-
-// 			// Check that existing IDs are preserved
-// 			assertEqual(t, float64(1), panels[0]["id"])
-// 			assertEqual(t, float64(3), panels[2]["id"])
-
-// 			// Check that missing ID gets assigned
-// 			panel2ID := panels[1]["id"]
-// 			assertTrue(t, panel2ID != nil, "Panel 2 should have an ID assigned")
-// 			assertTrue(t, panel2ID != float64(1) && panel2ID != float64(3), "Panel 2 should have a unique ID")
-// 		})
-
-// 		t.Run("should resolve duplicate IDs", func(t *testing.T) {
-// 			dashboard := map[string]interface{}{
-// 				"panels": []interface{}{
-// 					map[string]interface{}{
-// 						"id":    float64(1),
-// 						"title": "Panel 1",
-// 					},
-// 					map[string]interface{}{
-// 						"id":    float64(1), // Duplicate ID
-// 						"title": "Panel 2",
-// 					},
-// 					map[string]interface{}{
-// 						"id":    float64(3),
-// 						"title": "Panel 3",
-// 					},
-// 				},
-// 			}
-
-// 			ensurePanelsHaveUniqueIds(dashboard)
-
-// 			panels := getPanels(dashboard)
-// 			assertEqual(t, 3, len(panels))
-
-// 			// Check that first panel keeps its ID
-// 			assertEqual(t, float64(1), panels[0]["id"])
-
-// 			// Check that duplicate ID gets resolved
-// 			panel2ID := panels[1]["id"]
-// 			assertTrue(t, panel2ID != nil, "Panel 2 should have an ID assigned")
-// 			assertTrue(t, panel2ID != float64(1) && panel2ID != float64(3), "Panel 2 should have a unique ID")
-
-// 			// Check that third panel keeps its ID
-// 			assertEqual(t, float64(3), panels[2]["id"])
-// 		})
-
-// 		t.Run("should handle nested panels", func(t *testing.T) {
-// 			dashboard := map[string]interface{}{
-// 				"panels": []interface{}{
-// 					map[string]interface{}{
-// 						"id":    float64(1),
-// 						"title": "Row Panel",
-// 						"type":  "row",
-// 						"panels": []interface{}{
-// 							map[string]interface{}{
-// 								"id":    float64(2),
-// 								"title": "Nested Panel 1",
-// 							},
-// 							map[string]interface{}{
-// 								"title": "Nested Panel 2", // No ID
-// 							},
-// 						},
-// 					},
-// 					map[string]interface{}{
-// 						"id":    float64(3),
-// 						"title": "Regular Panel",
-// 					},
-// 				},
-// 			}
-
-// 			ensurePanelsHaveUniqueIds(dashboard)
-
-// 			panels := getPanels(dashboard)
-// 			assertEqual(t, 4, len(panels)) // 1 row + 2 nested + 1 regular
-
-// 			// Check that all panels have unique IDs
-// 			ids := make(map[float64]bool)
-// 			for _, panel := range panels {
-// 				id, ok := panel["id"].(float64)
-// 				assertTrue(t, ok, "Panel should have an ID")
-// 				assertFalse(t, ids[id], "Panel ID should be unique")
-// 				ids[id] = true
-// 			}
-// 		})
-// 	})
-
-// 	t.Run("Nested Panel Processing", func(t *testing.T) {
-// 		t.Run("should process all nested panels", func(t *testing.T) {
-// 			dashboard := map[string]interface{}{
-// 				"panels": []interface{}{
-// 					map[string]interface{}{
-// 						"id":    float64(1),
-// 						"title": "Row Panel",
-// 						"type":  "row",
-// 						"panels": []interface{}{
-// 							map[string]interface{}{
-// 								"id":    float64(2),
-// 								"title": "Nested Panel 1",
-// 							},
-// 							map[string]interface{}{
-// 								"id":    float64(3),
-// 								"title": "Nested Panel 2",
-// 							},
-// 						},
-// 					},
-// 				},
-// 			}
-
-// 			panels := getPanels(dashboard)
-// 			assertEqual(t, 3, len(panels)) // 1 row + 2 nested
-
-// 			// Check that all panels are included
-// 			titles := []string{}
-// 			for _, panel := range panels {
-// 				if title, ok := panel["title"].(string); ok {
-// 					titles = append(titles, title)
-// 				}
-// 			}
-// 			assertContains(t, titles, "Row Panel")
-// 			assertContains(t, titles, "Nested Panel 1")
-// 			assertContains(t, titles, "Nested Panel 2")
-// 		})
-
-// 		t.Run("should apply defaults to nested panels", func(t *testing.T) {
-// 			dashboard := map[string]interface{}{
-// 				"panels": []interface{}{
-// 					map[string]interface{}{
-// 						"id":    float64(1),
-// 						"title": "Row Panel",
-// 						"type":  "row",
-// 						"panels": []interface{}{
-// 							map[string]interface{}{
-// 								"id":    float64(2),
-// 								"title": "Nested Panel",
-// 							},
-// 						},
-// 					},
-// 				},
-// 			}
-
-// 			// Apply defaults to all panels
-// 			panels := getPanels(dashboard)
-// 			for _, panel := range panels {
-// 				applyPanelDefaults(panel)
-// 			}
-
-// 			// Get panels again to check the result
-// 			panels = getPanels(dashboard)
-// 			nestedPanel := panels[1] // Second panel should be the nested one
-
-// 			// Check that nested panel has all defaults applied
-// 			assertMapHasKey(t, nestedPanel, "gridPos")
-// 			assertMapHasKey(t, nestedPanel, "targets")
-// 			assertMapHasKey(t, nestedPanel, "cachedPluginOptions")
-// 			assertMapHasKey(t, nestedPanel, "transparent")
-// 			assertMapHasKey(t, nestedPanel, "options")
-// 			assertMapHasKey(t, nestedPanel, "links")
-// 			assertMapHasKey(t, nestedPanel, "fieldConfig")
-// 		})
-// 	})
-
-// 	t.Run("Integration Tests", func(t *testing.T) {
-// 		t.Run("should mimic complete DashboardModel constructor flow with cleanup", func(t *testing.T) {
-// 			dashboard := map[string]interface{}{
-// 				"title": "Test Dashboard",
-// 				"panels": []interface{}{
-// 					map[string]interface{}{
-// 						"id":    float64(1),
-// 						"title": "Test Panel",
-// 					},
-// 					map[string]interface{}{
-// 						"id":    float64(2),
-// 						"title": "Row Panel",
-// 						"type":  "row",
-// 						"panels": []interface{}{
-// 							map[string]interface{}{
-// 								"title": "Nested Panel", // No ID
-// 								"type":  "timeseries",
-// 							},
-// 						},
-// 					},
-// 				},
-// 			}
-
-// 			// Simulate the complete DashboardModel constructor flow
-// 			// 1. Apply frontend defaults
-// 			applyFrontendDefaults(dashboard)
-
-// 			// 2. Apply panel defaults to all panels
-// 			panels := getPanels(dashboard)
-// 			for _, panel := range panels {
-// 				applyPanelDefaults(panel)
-// 			}
-
-// 			// 3. Ensure unique panel IDs
-// 			ensurePanelsHaveUniqueIds(dashboard)
-
-// 			// 4. Clean up dashboard to match getSaveModel behavior
-// 			cleanupDashboardForSave(dashboard)
-
-// 			// Verify the result
-// 			assertMapHasKey(t, dashboard, "editable")
-// 			assertMapHasKey(t, dashboard, "annotations")
-// 			assertMapHasKey(t, dashboard, "meta")
-
-// 			panels = getPanels(dashboard)
-// 			assertEqual(t, 3, len(panels)) // 1 regular + 1 row + 1 nested
-
-// 			// Check that all panels have unique IDs
-// 			ids := make(map[float64]bool)
-// 			for _, panel := range panels {
-// 				id, ok := panel["id"].(float64)
-// 				assertTrue(t, ok, "Panel should have an ID")
-// 				assertFalse(t, ids[id], "Panel ID should be unique")
-// 				ids[id] = true
-// 			}
-
-// 			// Check that nested panel has defaults applied but cleanup removes unnecessary properties
-// 			nestedPanel := panels[2] // Third panel should be the nested one
-// 			assertMapHasKey(t, nestedPanel, "id")
-// 			assertMapHasKey(t, nestedPanel, "title")
-// 			assertMapHasKey(t, nestedPanel, "type")
-
-// 			// Check that default properties that match defaults are removed
-// 			assertMapDoesNotHaveKey(t, nestedPanel, "cachedPluginOptions")
-// 			assertMapDoesNotHaveKey(t, nestedPanel, "transparent")
-// 			assertMapDoesNotHaveKey(t, nestedPanel, "options")
-// 		})
-// 	})
-// }
+import (
+	"testing"
+)
+
+func TestFrontendDefaultsCleanup(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "remove_dashboard_id_null",
+			input: map[string]interface{}{
+				"id":    nil,
+				"title": "Test Dashboard",
+			},
+			expected: map[string]interface{}{
+				"title": "Test Dashboard",
+			},
+			description: "Dashboard ID should be removed when it's null to match frontend getSaveModelClone() behavior",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dashboard := make(map[string]interface{})
+			for k, v := range tt.input {
+				dashboard[k] = v
+			}
+
+			cleanupDashboardDefaults(dashboard)
+
+			if _, exists := dashboard["id"]; exists {
+				t.Errorf("Property id should have been removed but still exists")
+			}
+
+			if dashboard["title"] != "Test Dashboard" {
+				t.Errorf("Property title should be preserved")
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+func TestCleanupDashboardForSave(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "remove_non_persisted_properties",
+			input: map[string]interface{}{
+				"title":        "Test Dashboard",
+				"meta":         map[string]interface{}{"canEdit": true},
+				"events":       map[string]interface{}{},
+				"originalTime": "2023-01-01",
+				"variables":    map[string]interface{}{"list": []interface{}{}},
+			},
+			expected: map[string]interface{}{
+				"title": "Test Dashboard",
+				// meta, events, originalTime, variables should be removed
+			},
+			description: "Non-persisted dashboard properties should be removed",
+		},
+		{
+			name: "remove_null_values",
+			input: map[string]interface{}{
+				"title":  "Test Dashboard",
+				"gnetId": nil,
+			},
+			expected: map[string]interface{}{
+				"title": "Test Dashboard",
+				// gnetId should be removed
+			},
+			description: "Null values should be removed from dashboard",
+		},
+		{
+			name: "cleanup_templating_and_panels",
+			input: map[string]interface{}{
+				"title": "Test Dashboard",
+				"templating": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name":  "var1",
+							"index": -1, // Should be removed
+						},
+					},
+				},
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":   "timeseries",
+						"title":  "",                       // Default value, should be removed
+						"events": map[string]interface{}{}, // Not persisted, should be removed
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"title": "Test Dashboard",
+				"templating": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name": "var1",
+							// index should be removed
+						},
+					},
+				},
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type": "timeseries",
+						// title and events should be removed
+					},
+				},
+			},
+			description: "Templating and panels should be cleaned up",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dashboard := make(map[string]interface{})
+			for k, v := range tt.input {
+				dashboard[k] = v
+			}
+
+			cleanupDashboardForSave(dashboard)
+
+			// Verify expected properties exist
+			for key, expectedValue := range tt.expected {
+				if actualValue, exists := dashboard[key]; !exists {
+					t.Errorf("Property %s should exist but is missing", key)
+				} else if !compareValues(actualValue, expectedValue) {
+					t.Errorf("Property %s has wrong value. Expected: %v, Got: %v", key, expectedValue, actualValue)
+				}
+			}
+
+			// Verify unwanted properties are removed
+			unwantedProps := []string{"meta", "events", "originalTime", "variables", "gnetId"}
+			for _, prop := range unwantedProps {
+				if _, exists := dashboard[prop]; exists {
+					t.Errorf("Property %s should have been removed but still exists", prop)
+				}
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+func TestCleanupVariable(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "cleanup_query_variable",
+			input: map[string]interface{}{
+				"type":       "query",
+				"name":       "var1",
+				"datasource": nil,
+				"index":      -1,
+			},
+			expected: map[string]interface{}{
+				"type":    "query",
+				"name":    "var1",
+				"options": []interface{}{},
+				// datasource and index should be removed
+			},
+			description: "Query variables should have options array and remove null datasource and index",
+		},
+		{
+			name: "cleanup_constant_variable",
+			input: map[string]interface{}{
+				"type":    "constant",
+				"name":    "var2",
+				"value":   "constant_value",
+				"options": []interface{}{"option1"},
+				"index":   -1,
+			},
+			expected: map[string]interface{}{
+				"type":  "constant",
+				"name":  "var2",
+				"value": "constant_value",
+				// options and index should be removed
+			},
+			description: "Constant variables should remove options and index",
+		},
+		{
+			name: "cleanup_datasource_variable",
+			input: map[string]interface{}{
+				"type":  "datasource",
+				"name":  "var3",
+				"index": -1,
+			},
+			expected: map[string]interface{}{
+				"type":    "datasource",
+				"name":    "var3",
+				"options": []interface{}{},
+				// index should be removed
+			},
+			description: "Datasource variables should have empty options array and remove index",
+		},
+		{
+			name: "cleanup_custom_variable",
+			input: map[string]interface{}{
+				"type":    "custom",
+				"name":    "var4",
+				"options": []interface{}{"option1", "option2"},
+				"index":   -1,
+			},
+			expected: map[string]interface{}{
+				"type":    "custom",
+				"name":    "var4",
+				"options": []interface{}{"option1", "option2"},
+				// index should be removed
+			},
+			description: "Custom variables should preserve options and remove index",
+		},
+		{
+			name: "cleanup_textbox_variable",
+			input: map[string]interface{}{
+				"type":  "textbox",
+				"name":  "var5",
+				"value": "text_value",
+				"index": -1,
+			},
+			expected: map[string]interface{}{
+				"type":  "textbox",
+				"name":  "var5",
+				"value": "text_value",
+				// index should be removed
+			},
+			description: "Textbox variables should preserve value and remove index",
+		},
+		{
+			name: "cleanup_adhoc_variable",
+			input: map[string]interface{}{
+				"type":    "adhoc",
+				"name":    "var6",
+				"filters": []interface{}{},
+				"index":   -1,
+			},
+			expected: map[string]interface{}{
+				"type":    "adhoc",
+				"name":    "var6",
+				"filters": []interface{}{},
+				// index should be removed
+			},
+			description: "Adhoc variables should preserve filters and remove index",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			variable := make(map[string]interface{})
+			for k, v := range tt.input {
+				variable[k] = v
+			}
+
+			cleanupVariable(variable)
+
+			// Verify expected properties exist
+			for key, expectedValue := range tt.expected {
+				if actualValue, exists := variable[key]; !exists {
+					t.Errorf("Property %s should exist but is missing", key)
+				} else if !compareValues(actualValue, expectedValue) {
+					t.Errorf("Property %s has wrong value. Expected: %v, Got: %v", key, expectedValue, actualValue)
+				}
+			}
+
+			// Verify unwanted properties are removed
+			if _, exists := variable["index"]; exists {
+				t.Errorf("Property index should have been removed but still exists")
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+func TestCleanupPanels(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "filter_repeated_panels",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":  "timeseries",
+						"title": "Panel 1",
+					},
+					map[string]interface{}{
+						"type":          "table",
+						"title":         "Panel 2",
+						"repeatPanelId": 1, // Should be filtered out
+					},
+					map[string]interface{}{
+						"type":          "graph",
+						"title":         "Panel 3",
+						"repeatedByRow": "row1", // Should be filtered out
+					},
+					map[string]interface{}{
+						"type":  "stat",
+						"title": "Panel 4",
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":  "timeseries",
+						"title": "Panel 1",
+					},
+					map[string]interface{}{
+						"type":  "stat",
+						"title": "Panel 4",
+					},
+				},
+			},
+			description: "Panels with repeatPanelId or repeatedByRow should be filtered out",
+		},
+		{
+			name: "cleanup_panel_properties",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":       "timeseries",
+						"title":      "",                                       // Default value, should be removed
+						"events":     map[string]interface{}{},                 // Not persisted, should be removed
+						"scopedVars": map[string]interface{}{"var1": "value1"}, // Should be removed
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type": "timeseries",
+						// title, events, scopedVars should be removed
+					},
+				},
+			},
+			description: "Panel properties should be cleaned up according to save model rules",
+		},
+		{
+			name: "ensure_panels_property_exists",
+			input: map[string]interface{}{
+				"title": "Test Dashboard",
+			},
+			expected: map[string]interface{}{
+				"title":  "Test Dashboard",
+				"panels": []interface{}{},
+			},
+			description: "Panels property should be created even if missing",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dashboard := make(map[string]interface{})
+			for k, v := range tt.input {
+				dashboard[k] = v
+			}
+
+			cleanupPanels(dashboard)
+
+			// Verify expected properties exist
+			for key, expectedValue := range tt.expected {
+				if actualValue, exists := dashboard[key]; !exists {
+					t.Errorf("Property %s should exist but is missing", key)
+				} else if !compareValues(actualValue, expectedValue) {
+					t.Errorf("Property %s has wrong value. Expected: %v, Got: %v", key, expectedValue, actualValue)
+				}
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+func TestCleanupRowPanelProperties(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "remove_empty_repeat_from_row_panel",
+			input: map[string]interface{}{
+				"type":      "row",
+				"title":     "Row Panel",
+				"repeat":    "", // Empty string, should be removed
+				"collapsed": false,
+			},
+			expected: map[string]interface{}{
+				"type":      "row",
+				"title":     "Row Panel",
+				"collapsed": false, // Should be preserved
+				// repeat should be removed
+			},
+			description: "Empty repeat string should be removed from row panels",
+		},
+		{
+			name: "preserve_non_empty_repeat_in_row_panel",
+			input: map[string]interface{}{
+				"type":      "row",
+				"title":     "Row Panel",
+				"repeat":    "server", // Non-empty, should be preserved
+				"collapsed": false,
+			},
+			expected: map[string]interface{}{
+				"type":      "row",
+				"title":     "Row Panel",
+				"repeat":    "server",
+				"collapsed": false,
+			},
+			description: "Non-empty repeat should be preserved in row panels",
+		},
+		{
+			name: "no_changes_for_non_row_panel",
+			input: map[string]interface{}{
+				"type":   "timeseries",
+				"title":  "Timeseries Panel",
+				"repeat": "", // Should not be removed for non-row panels
+			},
+			expected: map[string]interface{}{
+				"type":   "timeseries",
+				"title":  "Timeseries Panel",
+				"repeat": "", // Should be preserved
+			},
+			description: "Non-row panels should not be affected by row panel cleanup",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			panel := make(map[string]interface{})
+			for k, v := range tt.input {
+				panel[k] = v
+			}
+
+			cleanupRowPanelProperties(panel)
+
+			// Verify expected properties exist
+			for key, expectedValue := range tt.expected {
+				if actualValue, exists := panel[key]; !exists {
+					t.Errorf("Property %s should exist but is missing", key)
+				} else if actualValue != expectedValue {
+					t.Errorf("Property %s has wrong value. Expected: %v, Got: %v", key, expectedValue, actualValue)
+				}
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+func TestCleanupFieldConfigDefaults(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		panel       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "remove_empty_custom_from_migrated_singlestat",
+			input: map[string]interface{}{
+				"custom": map[string]interface{}{},
+				"color": map[string]interface{}{
+					"mode":       "fixed",
+					"fixedColor": "red",
+				},
+				"mappings": []interface{}{},
+			},
+			panel: map[string]interface{}{
+				"autoMigrateFrom": "singlestat",
+			},
+			expected: map[string]interface{}{
+				"color": map[string]interface{}{
+					"mode":       "fixed",
+					"fixedColor": "red",
+				},
+				"mappings": []interface{}{},
+				// custom should be removed
+			},
+			description: "Empty custom objects should be removed from migrated singlestat panels",
+		},
+		{
+			name: "preserve_empty_custom_from_non_migrated_panel",
+			input: map[string]interface{}{
+				"custom": map[string]interface{}{},
+				"color": map[string]interface{}{
+					"mode":       "fixed",
+					"fixedColor": "red",
+				},
+			},
+			panel: map[string]interface{}{
+				"type": "timeseries",
+			},
+			expected: map[string]interface{}{
+				"custom": map[string]interface{}{}, // Should be preserved
+				"color": map[string]interface{}{
+					"mode":       "fixed",
+					"fixedColor": "red",
+				},
+			},
+			description: "Empty custom objects should be preserved for non-migrated panels",
+		},
+		{
+			name: "preserve_non_empty_custom",
+			input: map[string]interface{}{
+				"custom": map[string]interface{}{
+					"displayMode": "list",
+				},
+				"color": map[string]interface{}{
+					"mode":       "fixed",
+					"fixedColor": "red",
+				},
+			},
+			panel: map[string]interface{}{
+				"autoMigrateFrom": "singlestat",
+			},
+			expected: map[string]interface{}{
+				"custom": map[string]interface{}{
+					"displayMode": "list",
+				},
+				"color": map[string]interface{}{
+					"mode":       "fixed",
+					"fixedColor": "red",
+				},
+			},
+			description: "Non-empty custom objects should be preserved",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defaults := make(map[string]interface{})
+			for k, v := range tt.input {
+				defaults[k] = v
+			}
+
+			panel := make(map[string]interface{})
+			for k, v := range tt.panel {
+				panel[k] = v
+			}
+
+			cleanupFieldConfigDefaults(defaults, panel)
+
+			// Verify expected properties exist
+			for key, expectedValue := range tt.expected {
+				if actualValue, exists := defaults[key]; !exists {
+					t.Errorf("Property %s should exist but is missing", key)
+				} else if !compareValues(actualValue, expectedValue) {
+					t.Errorf("Property %s has wrong value. Expected: %v, Got: %v", key, expectedValue, actualValue)
+				}
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+// TestApplyFrontendDefaults tests the core dashboard defaults application logic
+func TestApplyFrontendDefaults(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "apply_dashboard_defaults",
+			input: map[string]interface{}{
+				"schemaVersion": float64(42),
+			},
+			expected: map[string]interface{}{
+				"title":                "No Title",
+				"tags":                 []interface{}{},
+				"timezone":             "",
+				"weekStart":            "",
+				"editable":             true,
+				"graphTooltip":         float64(0),
+				"time":                 map[string]interface{}{"from": "now-6h", "to": "now"},
+				"timepicker":           map[string]interface{}{},
+				"schemaVersion":        float64(42), // Preserved from input
+				"fiscalYearStartMonth": float64(0),
+				"version":              float64(0),
+				"links":                []interface{}{},
+			},
+			description: "Dashboard defaults should be applied when properties are missing",
+		},
+		{
+			name: "preserve_existing_values",
+			input: map[string]interface{}{
+				"title":    "Custom Title",
+				"editable": false,
+				"tags":     []interface{}{"tag1", "tag2"},
+			},
+			expected: map[string]interface{}{
+				"title":                "Custom Title",                // Preserved
+				"editable":             false,                         // Preserved
+				"tags":                 []interface{}{"tag1", "tag2"}, // Preserved
+				"timezone":             "",
+				"weekStart":            "",
+				"graphTooltip":         float64(0),
+				"time":                 map[string]interface{}{"from": "now-6h", "to": "now"},
+				"timepicker":           map[string]interface{}{},
+				"schemaVersion":        float64(0),
+				"fiscalYearStartMonth": float64(0),
+				"version":              float64(0),
+				"links":                []interface{}{},
+			},
+			description: "Existing values should be preserved and not overridden by defaults",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dashboard := make(map[string]interface{})
+			for k, v := range tt.input {
+				dashboard[k] = v
+			}
+
+			applyFrontendDefaults(dashboard)
+
+			// Verify expected properties exist
+			for key, expectedValue := range tt.expected {
+				if actualValue, exists := dashboard[key]; !exists {
+					t.Errorf("Property %s should exist but is missing", key)
+				} else if !compareValues(actualValue, expectedValue) {
+					t.Errorf("Property %s has wrong value. Expected: %v (type: %T), Got: %v (type: %T)", key, expectedValue, expectedValue, actualValue, actualValue)
+				}
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+// TestApplyPanelDefaults tests the core panel defaults application logic
+func TestApplyPanelDefaults(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "apply_panel_defaults",
+			input: map[string]interface{}{
+				"type": "timeseries",
+			},
+			expected: map[string]interface{}{
+				"type": "timeseries",
+				"gridPos": map[string]interface{}{
+					"x": float64(0), "y": float64(0), "h": float64(3), "w": float64(6),
+				},
+				"targets": []interface{}{
+					map[string]interface{}{"refId": "A"},
+				},
+				"cachedPluginOptions": map[string]interface{}{},
+				"transparent":         false,
+				"options":             map[string]interface{}{},
+				"links":               []interface{}{},
+				"fieldConfig": map[string]interface{}{
+					"defaults":  map[string]interface{}{},
+					"overrides": []interface{}{},
+				},
+				"title": "",
+			},
+			description: "Panel defaults should be applied when properties are missing",
+		},
+		{
+			name: "preserve_existing_panel_values",
+			input: map[string]interface{}{
+				"type":        "table",
+				"title":       "Custom Panel",
+				"transparent": true,
+				"gridPos": map[string]interface{}{
+					"x": float64(12), "y": float64(0), "h": float64(8), "w": float64(12),
+				},
+			},
+			expected: map[string]interface{}{
+				"type":        "table",
+				"title":       "Custom Panel", // Preserved
+				"transparent": true,           // Preserved
+				"gridPos": map[string]interface{}{ // Preserved
+					"x": float64(12), "y": float64(0), "h": float64(8), "w": float64(12),
+				},
+				"targets": []interface{}{
+					map[string]interface{}{"refId": "A"},
+				},
+				"cachedPluginOptions": map[string]interface{}{},
+				"options":             map[string]interface{}{},
+				"links":               []interface{}{},
+				"fieldConfig": map[string]interface{}{
+					"defaults":  map[string]interface{}{},
+					"overrides": []interface{}{},
+				},
+			},
+			description: "Existing panel values should be preserved and not overridden by defaults",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			panel := make(map[string]interface{})
+			for k, v := range tt.input {
+				panel[k] = v
+			}
+
+			applyPanelDefaults(panel)
+
+			// Verify expected properties exist
+			for key, expectedValue := range tt.expected {
+				if actualValue, exists := panel[key]; !exists {
+					t.Errorf("Property %s should exist but is missing", key)
+				} else if !compareValues(actualValue, expectedValue) {
+					t.Errorf("Property %s has wrong value. Expected: %v, Got: %v", key, expectedValue, actualValue)
+				}
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+// TestCleanupPanelForSave tests the core panel cleanup logic for save model
+func TestTransformationsArrayContextAwareLogic(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		isNested    bool
+		hasOriginal bool
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "top_level_panel_removes_empty_transformations",
+			input: map[string]interface{}{
+				"type":            "timeseries",
+				"title":           "Top-level Panel",
+				"transformations": []interface{}{},
+			},
+			isNested:    false,
+			hasOriginal: true, // Had transformations in original input
+			expected: map[string]interface{}{
+				"type":  "timeseries",
+				"title": "Top-level Panel",
+				// transformations removed for top-level panels
+			},
+			description: "Top-level panels should remove empty transformations arrays even if originally present",
+		},
+		{
+			name: "nested_panel_preserves_empty_transformations",
+			input: map[string]interface{}{
+				"type":            "timeseries",
+				"title":           "Nested Panel",
+				"transformations": []interface{}{},
+			},
+			isNested:    true,
+			hasOriginal: true, // Had transformations in original input
+			expected: map[string]interface{}{
+				"type":            "timeseries",
+				"title":           "Nested Panel",
+				"transformations": []interface{}{}, // preserved for nested panels
+			},
+			description: "Nested panels should preserve empty transformations arrays that were originally present",
+		},
+		{
+			name: "nested_panel_removes_added_transformations",
+			input: map[string]interface{}{
+				"type":            "table",
+				"title":           "Nested Panel Without Original",
+				"transformations": []interface{}{},
+			},
+			isNested:    true,
+			hasOriginal: false, // Did NOT have transformations in original input
+			expected: map[string]interface{}{
+				"type":  "table",
+				"title": "Nested Panel Without Original",
+				// transformations removed - wasn't in original input
+			},
+			description: "Nested panels should remove empty transformations arrays that were added during migration",
+		},
+		{
+			name: "preserve_non_empty_transformations",
+			input: map[string]interface{}{
+				"type":  "timeseries",
+				"title": "Panel with actual transformations",
+				"transformations": []interface{}{
+					map[string]interface{}{
+						"id": "reduce",
+						"options": map[string]interface{}{
+							"reducers": []interface{}{"mean"},
+						},
+					},
+				},
+			},
+			isNested:    false,
+			hasOriginal: true,
+			expected: map[string]interface{}{
+				"type":  "timeseries",
+				"title": "Panel with actual transformations",
+				"transformations": []interface{}{
+					map[string]interface{}{
+						"id": "reduce",
+						"options": map[string]interface{}{
+							"reducers": []interface{}{"mean"},
+						},
+					},
+				},
+			},
+			description: "Non-empty transformations arrays should always be preserved",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a copy of input for testing
+			panel := make(map[string]interface{})
+			for k, v := range tt.input {
+				panel[k] = v
+			}
+
+			// Set the original transformations marker if needed
+			if tt.hasOriginal {
+				panel["_originallyHadTransformations"] = true
+			}
+
+			// Apply the cleanup logic
+			cleanupPanelForSaveWithContext(panel, tt.isNested)
+
+			// Verify the result
+			if !compareValues(panel, tt.expected) {
+				t.Errorf("Test %s failed.\nExpected: %+v\nGot: %+v", tt.name, tt.expected, panel)
+			}
+		})
+	}
+}
+
+func TestTrackOriginalTransformations(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "track_top_level_panel_with_transformations",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":              1,
+						"type":            "timeseries",
+						"title":           "Panel with transformations",
+						"transformations": []interface{}{},
+					},
+					map[string]interface{}{
+						"id":    2,
+						"type":  "table",
+						"title": "Panel without transformations",
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":                            1,
+						"type":                          "timeseries",
+						"title":                         "Panel with transformations",
+						"transformations":               []interface{}{},
+						"_originallyHadTransformations": true, // marker added
+					},
+					map[string]interface{}{
+						"id":    2,
+						"type":  "table",
+						"title": "Panel without transformations",
+						// no marker added
+					},
+				},
+			},
+			description: "Should mark panels that had transformations in original input",
+		},
+		{
+			name: "track_nested_panels_in_row",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":    1,
+						"type":  "row",
+						"title": "Row Panel",
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":              10,
+								"type":            "timeseries",
+								"title":           "Nested Panel with transformations",
+								"transformations": []interface{}{},
+							},
+							map[string]interface{}{
+								"id":    11,
+								"type":  "table",
+								"title": "Nested Panel without transformations",
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":    1,
+						"type":  "row",
+						"title": "Row Panel",
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":                            10,
+								"type":                          "timeseries",
+								"title":                         "Nested Panel with transformations",
+								"transformations":               []interface{}{},
+								"_originallyHadTransformations": true, // marker added to nested panel
+							},
+							map[string]interface{}{
+								"id":    11,
+								"type":  "table",
+								"title": "Nested Panel without transformations",
+								// no marker added
+							},
+						},
+					},
+				},
+			},
+			description: "Should recursively mark nested panels that had transformations in original input",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a deep copy of input for testing
+			dashboard := deepCopy(tt.input).(map[string]interface{})
+
+			// Apply the tracking logic
+			trackOriginalTransformations(dashboard)
+
+			// Verify the result
+			if !compareValues(dashboard, tt.expected) {
+				t.Errorf("Test %s failed.\nExpected: %+v\nGot: %+v", tt.name, tt.expected, dashboard)
+			}
+		})
+	}
+}
+
+func TestCleanupPanelForSave(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "remove_not_persisted_properties",
+			input: map[string]interface{}{
+				"type":                "timeseries",
+				"title":               "Test Panel",
+				"events":              map[string]interface{}{},
+				"isViewing":           true,
+				"cachedPluginOptions": map[string]interface{}{"test": "value"},
+				"scopedVars":          map[string]interface{}{"var1": "value1"},
+			},
+			expected: map[string]interface{}{
+				"type":  "timeseries",
+				"title": "Test Panel",
+				// events, isViewing, cachedPluginOptions, scopedVars should be removed
+			},
+			description: "Not persisted properties should be removed from panel save model",
+		},
+		{
+			name: "remove_default_values",
+			input: map[string]interface{}{
+				"type":        "table",
+				"title":       "",                       // Default value
+				"transparent": false,                    // Default value
+				"options":     map[string]interface{}{}, // Default value
+				"links":       []interface{}{},          // Default value
+			},
+			expected: map[string]interface{}{
+				"type": "table",
+				// title, transparent, options, links should be removed as they match defaults
+			},
+			description: "Default values should be removed from panel save model",
+		},
+		{
+			name: "preserve_non_default_values",
+			input: map[string]interface{}{
+				"type":        "timeseries",                              // Use timeseries to avoid auto-migration
+				"title":       "Custom Title",                            // Non-default
+				"transparent": true,                                      // Non-default
+				"options":     map[string]interface{}{"custom": "value"}, // Non-default
+			},
+			expected: map[string]interface{}{
+				"type":        "timeseries",
+				"title":       "Custom Title",
+				"transparent": true,
+				"options":     map[string]interface{}{"custom": "value"},
+			},
+			description: "Non-default values should be preserved in panel save model",
+		},
+		{
+			name: "remove_empty_transformations_array_top_level",
+			input: map[string]interface{}{
+				"type":            "timeseries",
+				"title":           "Test Panel",
+				"transformations": []interface{}{}, // Empty array should be removed for top-level panels
+			},
+			expected: map[string]interface{}{
+				"type":  "timeseries",
+				"title": "Test Panel",
+				// transformations should be removed for top-level panels
+			},
+			description: "Empty transformations arrays should be removed from top-level panels to match frontend behavior",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			panel := make(map[string]interface{})
+			for k, v := range tt.input {
+				panel[k] = v
+			}
+
+			cleanupPanelForSave(panel)
+
+			// Verify expected properties exist
+			for key, expectedValue := range tt.expected {
+				if actualValue, exists := panel[key]; !exists {
+					t.Errorf("Property %s should exist but is missing", key)
+				} else if !compareValues(actualValue, expectedValue) {
+					t.Errorf("Property %s has wrong value. Expected: %v, Got: %v", key, expectedValue, actualValue)
+				}
+			}
+
+			// Verify unwanted properties are removed
+			unwantedProps := []string{"events", "isViewing", "cachedPluginOptions", "scopedVars"}
+			for _, prop := range unwantedProps {
+				if _, exists := panel[prop]; exists {
+					t.Errorf("Property %s should have been removed but still exists", prop)
+				}
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+// TestApplyPanelAutoMigration tests the core panel auto-migration logic
+func TestApplyPanelAutoMigration(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "migrate_graph_to_timeseries",
+			input: map[string]interface{}{
+				"type": "graph",
+			},
+			expected: map[string]interface{}{
+				"type":            "timeseries",
+				"autoMigrateFrom": "graph",
+			},
+			description: "Graph panels should be migrated to timeseries by default",
+		},
+		{
+			name: "migrate_graph_to_barchart",
+			input: map[string]interface{}{
+				"type": "graph",
+				"xaxis": map[string]interface{}{
+					"mode": "series",
+				},
+			},
+			expected: map[string]interface{}{
+				"type":            "barchart",
+				"autoMigrateFrom": "graph",
+			},
+			description: "Graph panels with xaxis mode 'series' should be migrated to barchart",
+		},
+		{
+			name: "migrate_graph_to_bargauge",
+			input: map[string]interface{}{
+				"type": "graph",
+				"xaxis": map[string]interface{}{
+					"mode": "series",
+				},
+				"legend": map[string]interface{}{
+					"values": true,
+				},
+			},
+			expected: map[string]interface{}{
+				"type":            "bargauge",
+				"autoMigrateFrom": "graph",
+			},
+			description: "Graph panels with xaxis mode 'series' and legend values true should be migrated to bargauge",
+		},
+		{
+			name: "migrate_singlestat_to_stat",
+			input: map[string]interface{}{
+				"type": "singlestat",
+			},
+			expected: map[string]interface{}{
+				"type":            "stat",
+				"autoMigrateFrom": "singlestat",
+			},
+			description: "Singlestat panels should be migrated to stat",
+		},
+		{
+			name: "migrate_table_old_to_table",
+			input: map[string]interface{}{
+				"type": "table-old",
+			},
+			expected: map[string]interface{}{
+				"type":            "table",
+				"autoMigrateFrom": "table-old",
+			},
+			description: "Table-old panels should be migrated to table",
+		},
+		{
+			name: "no_migration_for_modern_panels",
+			input: map[string]interface{}{
+				"type": "timeseries",
+			},
+			expected: map[string]interface{}{
+				"type": "timeseries",
+				// No autoMigrateFrom should be added
+			},
+			description: "Modern panel types should not be migrated",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			panel := make(map[string]interface{})
+			for k, v := range tt.input {
+				panel[k] = v
+			}
+
+			applyPanelAutoMigration(panel)
+
+			// Verify expected properties exist
+			for key, expectedValue := range tt.expected {
+				if actualValue, exists := panel[key]; !exists {
+					t.Errorf("Property %s should exist but is missing", key)
+				} else if actualValue != expectedValue {
+					t.Errorf("Property %s has wrong value. Expected: %v, Got: %v", key, expectedValue, actualValue)
+				}
+			}
+
+			// Verify no unexpected autoMigrateFrom is added
+			if _, hasAutoMigrate := tt.expected["autoMigrateFrom"]; !hasAutoMigrate {
+				if _, exists := panel["autoMigrateFrom"]; exists {
+					t.Errorf("autoMigrateFrom should not be added for this panel type")
+				}
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+// TestRemoveNullValuesRecursively tests the core null value removal logic
+func TestRemoveNullValuesRecursively(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       interface{}
+		expected    interface{}
+		description string
+	}{
+		{
+			name: "remove_null_values_from_map",
+			input: map[string]interface{}{
+				"title": "Test",
+				"id":    nil,
+				"config": map[string]interface{}{
+					"enabled": true,
+					"value":   nil,
+				},
+			},
+			expected: map[string]interface{}{
+				"title": "Test",
+				"config": map[string]interface{}{
+					"enabled": true,
+				},
+			},
+			description: "Null values should be removed from nested maps",
+		},
+		{
+			name: "process_array_elements",
+			input: []interface{}{
+				"item1",
+				nil,
+				"item2",
+				map[string]interface{}{
+					"key":  "value",
+					"null": nil,
+				},
+			},
+			expected: []interface{}{
+				"item1",
+				nil, // Null values in arrays are NOT removed by the current implementation
+				"item2",
+				map[string]interface{}{
+					"key": "value",
+					// null key should be removed from nested map
+				},
+			},
+			description: "Array elements are processed but nulls in arrays are not removed (current implementation behavior)",
+		},
+		{
+			name: "preserve_non_null_values",
+			input: map[string]interface{}{
+				"string": "value",
+				"number": 42,
+				"bool":   true,
+				"array":  []interface{}{1, 2, 3},
+			},
+			expected: map[string]interface{}{
+				"string": "value",
+				"number": 42,
+				"bool":   true,
+				"array":  []interface{}{1, 2, 3},
+			},
+			description: "Non-null values should be preserved",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a copy of the input to avoid modifying the original
+			data := deepCopy(tt.input)
+
+			removeNullValuesRecursively(data)
+
+			if !compareValues(data, tt.expected) {
+				t.Errorf("Null value removal failed. Expected: %v, Got: %v", tt.expected, data)
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+// TestIsEqual tests the core value equality comparison logic
+func TestIsEqual(t *testing.T) {
+	tests := []struct {
+		name        string
+		a           interface{}
+		b           interface{}
+		expected    bool
+		description string
+	}{
+		{
+			name:        "equal_strings",
+			a:           "test",
+			b:           "test",
+			expected:    true,
+			description: "Equal strings should return true",
+		},
+		{
+			name:        "different_strings",
+			a:           "test1",
+			b:           "test2",
+			expected:    false,
+			description: "Different strings should return false",
+		},
+		{
+			name:        "equal_numbers",
+			a:           float64(42),
+			b:           float64(42),
+			expected:    true,
+			description: "Equal numbers should return true",
+		},
+		{
+			name:        "equal_booleans",
+			a:           true,
+			b:           true,
+			expected:    true,
+			description: "Equal booleans should return true",
+		},
+		{
+			name:        "equal_arrays",
+			a:           []interface{}{float64(1), float64(2), float64(3)},
+			b:           []interface{}{float64(1), float64(2), float64(3)},
+			expected:    true,
+			description: "Equal arrays should return true",
+		},
+		{
+			name:        "different_arrays",
+			a:           []interface{}{float64(1), float64(2), float64(3)},
+			b:           []interface{}{float64(1), float64(2), float64(4)},
+			expected:    false,
+			description: "Different arrays should return false",
+		},
+		{
+			name:        "equal_maps",
+			a:           map[string]interface{}{"key": "value"},
+			b:           map[string]interface{}{"key": "value"},
+			expected:    true,
+			description: "Equal maps should return true",
+		},
+		{
+			name:        "different_maps",
+			a:           map[string]interface{}{"key": "value1"},
+			b:           map[string]interface{}{"key": "value2"},
+			expected:    false,
+			description: "Different maps should return false",
+		},
+		{
+			name:        "nil_values",
+			a:           nil,
+			b:           nil,
+			expected:    true,
+			description: "Nil values should be equal",
+		},
+		{
+			name:        "nil_and_value",
+			a:           nil,
+			b:           "test",
+			expected:    false,
+			description: "Nil and non-nil values should not be equal",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isEqual(tt.a, tt.b)
+			if result != tt.expected {
+				t.Errorf("isEqual(%v, %v) = %v, expected %v", tt.a, tt.b, result, tt.expected)
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+// Helper function to compare values recursively
+func compareValues(actual, expected interface{}) bool {
+	if actual == nil && expected == nil {
+		return true
+	}
+	if actual == nil || expected == nil {
+		return false
+	}
+
+	actualMap, actualOk := actual.(map[string]interface{})
+	expectedMap, expectedOk := expected.(map[string]interface{})
+
+	if actualOk && expectedOk {
+		if len(actualMap) != len(expectedMap) {
+			return false
+		}
+		for key, expectedValue := range expectedMap {
+			actualValue, exists := actualMap[key]
+			if !exists || !compareValues(actualValue, expectedValue) {
+				return false
+			}
+		}
+		return true
+	}
+
+	actualSlice, actualSliceOk := actual.([]interface{})
+	expectedSlice, expectedSliceOk := expected.([]interface{})
+
+	if actualSliceOk && expectedSliceOk {
+		if len(actualSlice) != len(expectedSlice) {
+			return false
+		}
+		for i, expectedValue := range expectedSlice {
+			if !compareValues(actualSlice[i], expectedValue) {
+				return false
+			}
+		}
+		return true
+	}
+
+	return actual == expected
+}
+
+// Helper function to deep copy interface{}
+func deepCopy(src interface{}) interface{} {
+	switch v := src.(type) {
+	case map[string]interface{}:
+		dst := make(map[string]interface{})
+		for k, val := range v {
+			dst[k] = deepCopy(val)
+		}
+		return dst
+	case []interface{}:
+		dst := make([]interface{}, len(v))
+		for i, val := range v {
+			dst[i] = deepCopy(val)
+		}
+		return dst
+	default:
+		return src
+	}
+}
+
+func TestEnsureTemplatingExists(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "create_templating_when_missing",
+			input: map[string]interface{}{
+				"title": "Test Dashboard",
+			},
+			expected: map[string]interface{}{
+				"title": "Test Dashboard",
+				"templating": map[string]interface{}{
+					"list": []interface{}{},
+				},
+			},
+			description: "Templating structure should be created when missing",
+		},
+		{
+			name: "add_list_to_existing_templating",
+			input: map[string]interface{}{
+				"templating": map[string]interface{}{
+					"enable": true,
+				},
+			},
+			expected: map[string]interface{}{
+				"templating": map[string]interface{}{
+					"enable": true,
+					"list":   []interface{}{},
+				},
+			},
+			description: "List should be added to existing templating structure",
+		},
+		{
+			name: "preserve_existing_templating",
+			input: map[string]interface{}{
+				"templating": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{"name": "var1"},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"templating": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{"name": "var1"},
+					},
+				},
+			},
+			description: "Existing templating list should be preserved",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dashboard := make(map[string]interface{})
+			for k, v := range tt.input {
+				dashboard[k] = v
+			}
+
+			ensureTemplatingExists(dashboard)
+
+			// Verify expected properties exist
+			for key, expectedValue := range tt.expected {
+				if actualValue, exists := dashboard[key]; !exists {
+					t.Errorf("Property %s should exist but is missing", key)
+				} else if !compareValues(actualValue, expectedValue) {
+					t.Errorf("Property %s has wrong value. Expected: %v, Got: %v", key, expectedValue, actualValue)
+				}
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+func TestEnsureAnnotationsExist(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "create_annotations_when_missing",
+			input: map[string]interface{}{
+				"title": "Test Dashboard",
+			},
+			expected: map[string]interface{}{
+				"title": "Test Dashboard",
+				"annotations": map[string]interface{}{
+					"list": []interface{}{},
+				},
+			},
+			description: "Annotations structure should be created when missing",
+		},
+		{
+			name: "add_list_to_existing_annotations",
+			input: map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"enable": true,
+				},
+			},
+			expected: map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"enable": true,
+					"list":   []interface{}{},
+				},
+			},
+			description: "List should be added to existing annotations structure",
+		},
+		{
+			name: "preserve_existing_annotations",
+			input: map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{"name": "annotation1"},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{"name": "annotation1"},
+					},
+				},
+			},
+			description: "Existing annotations list should be preserved",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dashboard := make(map[string]interface{})
+			for k, v := range tt.input {
+				dashboard[k] = v
+			}
+
+			ensureAnnotationsExist(dashboard)
+
+			// Verify expected properties exist
+			for key, expectedValue := range tt.expected {
+				if actualValue, exists := dashboard[key]; !exists {
+					t.Errorf("Property %s should exist but is missing", key)
+				} else if !compareValues(actualValue, expectedValue) {
+					t.Errorf("Property %s has wrong value. Expected: %v, Got: %v", key, expectedValue, actualValue)
+				}
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+func TestEnsurePanelsHaveUniqueIds(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "assign_ids_to_panels_without_ids",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{"type": "timeseries"},
+					map[string]interface{}{"type": "table"},
+				},
+			},
+			expected: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{"type": "timeseries", "id": float64(1)},
+					map[string]interface{}{"type": "table", "id": float64(2)},
+				},
+			},
+			description: "Panels without IDs should be assigned sequential IDs starting from 1",
+		},
+		{
+			name: "fix_duplicate_ids",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{"type": "timeseries", "id": float64(1)},
+					map[string]interface{}{"type": "table", "id": float64(1)}, // Duplicate
+					map[string]interface{}{"type": "graph", "id": float64(2)},
+				},
+			},
+			expected: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{"type": "timeseries", "id": float64(1)},
+					map[string]interface{}{"type": "table", "id": float64(3)}, // Fixed duplicate
+					map[string]interface{}{"type": "graph", "id": float64(2)},
+				},
+			},
+			description: "Duplicate panel IDs should be fixed by assigning new unique IDs",
+		},
+		{
+			name: "preserve_valid_ids",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{"type": "timeseries", "id": float64(5)},
+					map[string]interface{}{"type": "table", "id": float64(10)},
+				},
+			},
+			expected: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{"type": "timeseries", "id": float64(5)},
+					map[string]interface{}{"type": "table", "id": float64(10)},
+				},
+			},
+			description: "Valid unique panel IDs should be preserved",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dashboard := make(map[string]interface{})
+			for k, v := range tt.input {
+				dashboard[k] = v
+			}
+
+			ensurePanelsHaveUniqueIds(dashboard)
+
+			// Verify expected properties exist
+			for key, expectedValue := range tt.expected {
+				if actualValue, exists := dashboard[key]; !exists {
+					t.Errorf("Property %s should exist but is missing", key)
+				} else if !compareValues(actualValue, expectedValue) {
+					t.Errorf("Property %s has wrong value. Expected: %v, Got: %v", key, expectedValue, actualValue)
+				}
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+func TestEnsureQueryIds(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "assign_refIds_to_targets_without_refIds",
+			input: map[string]interface{}{
+				"targets": []interface{}{
+					map[string]interface{}{"expr": "up"},
+					map[string]interface{}{"expr": "rate(up[5m])"},
+				},
+			},
+			expected: map[string]interface{}{
+				"targets": []interface{}{
+					map[string]interface{}{"expr": "up", "refId": "A"},
+					map[string]interface{}{"expr": "rate(up[5m])", "refId": "B"},
+				},
+			},
+			description: "Targets without refId should be assigned sequential refIds starting from A",
+		},
+		{
+			name: "preserve_existing_refIds",
+			input: map[string]interface{}{
+				"targets": []interface{}{
+					map[string]interface{}{"expr": "up", "refId": "A"},
+					map[string]interface{}{"expr": "rate(up[5m])", "refId": "B"},
+				},
+			},
+			expected: map[string]interface{}{
+				"targets": []interface{}{
+					map[string]interface{}{"expr": "up", "refId": "A"},
+					map[string]interface{}{"expr": "rate(up[5m])", "refId": "B"},
+				},
+			},
+			description: "Existing refIds should be preserved",
+		},
+		{
+			name: "assign_refIds_to_mixed_targets",
+			input: map[string]interface{}{
+				"targets": []interface{}{
+					map[string]interface{}{"expr": "up", "refId": "A"},
+					map[string]interface{}{"expr": "rate(up[5m])"}, // Missing refId
+					map[string]interface{}{"expr": "sum(up)", "refId": "C"},
+				},
+			},
+			expected: map[string]interface{}{
+				"targets": []interface{}{
+					map[string]interface{}{"expr": "up", "refId": "A"},
+					map[string]interface{}{"expr": "rate(up[5m])", "refId": "B"}, // Assigned
+					map[string]interface{}{"expr": "sum(up)", "refId": "C"},
+				},
+			},
+			description: "Only targets without refId should be assigned new refIds",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			panel := make(map[string]interface{})
+			for k, v := range tt.input {
+				panel[k] = v
+			}
+
+			ensureQueryIds(panel)
+
+			// Verify expected properties exist
+			for key, expectedValue := range tt.expected {
+				if actualValue, exists := panel[key]; !exists {
+					t.Errorf("Property %s should exist but is missing", key)
+				} else if !compareValues(actualValue, expectedValue) {
+					t.Errorf("Property %s has wrong value. Expected: %v, Got: %v", key, expectedValue, actualValue)
+				}
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+func TestAddBuiltInAnnotationQuery(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "add_built_in_annotation_when_none_exists",
+			input: map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"list": []interface{}{},
+				},
+			},
+			expected: map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"datasource": map[string]interface{}{
+								"uid":  "-- Grafana --",
+								"type": "grafana",
+							},
+							"name":      "Annotations & Alerts",
+							"type":      "dashboard",
+							"iconColor": "rgba(0, 211, 255, 1)",
+							"enable":    true,
+							"hide":      true,
+							"builtIn":   float64(1),
+						},
+					},
+				},
+			},
+			description: "Built-in annotation should be added when none exists",
+		},
+		{
+			name: "preserve_existing_built_in_annotation",
+			input: map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name":    "Annotations & Alerts",
+							"builtIn": float64(1),
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name":    "Annotations & Alerts",
+							"builtIn": float64(1),
+						},
+					},
+				},
+			},
+			description: "Existing built-in annotation should be preserved",
+		},
+		{
+			name: "add_built_in_annotation_with_existing_custom_annotations",
+			input: map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name": "Custom Annotation",
+							"type": "tags",
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"datasource": map[string]interface{}{
+								"uid":  "-- Grafana --",
+								"type": "grafana",
+							},
+							"name":      "Annotations & Alerts",
+							"type":      "dashboard",
+							"iconColor": "rgba(0, 211, 255, 1)",
+							"enable":    true,
+							"hide":      true,
+							"builtIn":   float64(1),
+						},
+						map[string]interface{}{
+							"name": "Custom Annotation",
+							"type": "tags",
+						},
+					},
+				},
+			},
+			description: "Built-in annotation should be added at the beginning of existing annotations",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dashboard := make(map[string]interface{})
+			for k, v := range tt.input {
+				dashboard[k] = v
+			}
+
+			addBuiltInAnnotationQuery(dashboard)
+
+			// Verify expected properties exist
+			for key, expectedValue := range tt.expected {
+				if actualValue, exists := dashboard[key]; !exists {
+					t.Errorf("Property %s should exist but is missing", key)
+				} else if !compareValues(actualValue, expectedValue) {
+					t.Errorf("Property %s has wrong value. Expected: %v, Got: %v", key, expectedValue, actualValue)
+				}
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+func TestInitMeta(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "init_meta_with_defaults",
+			input: map[string]interface{}{
+				"editable": true,
+			},
+			expected: map[string]interface{}{
+				"editable": true,
+				"meta": map[string]interface{}{
+					"canShare":               true,
+					"canSave":                true,
+					"canStar":                true,
+					"canEdit":                true,
+					"canDelete":              true,
+					"showSettings":           true,
+					"canMakeEditable":        false,
+					"hasUnsavedFolderChange": false,
+				},
+			},
+			description: "Meta properties should be initialized with default values",
+		},
+		{
+			name: "init_meta_for_non_editable_dashboard",
+			input: map[string]interface{}{
+				"editable": false,
+			},
+			expected: map[string]interface{}{
+				"editable": false,
+				"meta": map[string]interface{}{
+					"canShare":               true,
+					"canSave":                false, // Restricted for non-editable
+					"canStar":                true,
+					"canEdit":                false, // Restricted for non-editable
+					"canDelete":              false, // Restricted for non-editable
+					"showSettings":           true,  // Set before canEdit is restricted (current implementation behavior)
+					"canMakeEditable":        true,  // Can make editable
+					"hasUnsavedFolderChange": false,
+				},
+			},
+			description: "Meta properties should be restricted for non-editable dashboards",
+		},
+		{
+			name: "preserve_existing_meta",
+			input: map[string]interface{}{
+				"editable": true,
+				"meta": map[string]interface{}{
+					"canShare": false, // Custom value
+				},
+			},
+			expected: map[string]interface{}{
+				"editable": true,
+				"meta": map[string]interface{}{
+					"canShare":               false, // Preserved
+					"canSave":                true,
+					"canStar":                true,
+					"canEdit":                true,
+					"canDelete":              true,
+					"showSettings":           true,
+					"canMakeEditable":        false,
+					"hasUnsavedFolderChange": false,
+				},
+			},
+			description: "Existing meta properties should be preserved",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dashboard := make(map[string]interface{})
+			for k, v := range tt.input {
+				dashboard[k] = v
+			}
+
+			initMeta(dashboard)
+
+			// Verify expected properties exist
+			for key, expectedValue := range tt.expected {
+				if actualValue, exists := dashboard[key]; !exists {
+					t.Errorf("Property %s should exist but is missing", key)
+				} else if !compareValues(actualValue, expectedValue) {
+					t.Errorf("Property %s has wrong value. Expected: %v, Got: %v", key, expectedValue, actualValue)
+				}
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}

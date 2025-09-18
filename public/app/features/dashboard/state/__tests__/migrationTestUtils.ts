@@ -56,8 +56,72 @@ export const dataSources = {
   }),
 };
 
+// Separate datasource setup for dev-dashboards which primarily use testdata datasource
+export const devDashboardDataSources = {
+  // Add datasource that can be found by type name for migration resolution
+  testdataByType: mockDataSource(
+    {
+      name: 'grafana-testdata-datasource',
+      uid: 'testdata-type-uid',
+      type: 'grafana-testdata-datasource',
+      apiVersion: 'v1',
+      isDefault: true,
+    },
+    {
+      metrics: true,
+      annotations: true,
+      logs: true,
+    }
+  ),
+  testdata: mockDataSource(
+    {
+      name: 'TestData',
+      uid: 'testdata',
+      type: 'grafana-testdata-datasource',
+      isDefault: false,
+    },
+    {
+      metrics: true,
+      annotations: true,
+      logs: true,
+    }
+  ),
+  prometheus: mockDataSource({
+    name: 'Prometheus',
+    uid: 'prometheus-uid',
+    type: 'prometheus',
+    apiVersion: 'v1',
+    isDefault: false,
+  }),
+  loki: mockDataSource({
+    name: 'Loki',
+    uid: 'loki-uid',
+    type: 'loki',
+    apiVersion: 'v1',
+    isDefault: false,
+  }),
+  elasticsearch: mockDataSource({
+    name: 'Elasticsearch',
+    uid: 'elasticsearch-uid',
+    type: 'elasticsearch',
+    apiVersion: 'v1',
+    isDefault: false,
+  }),
+  mixed: mockDataSource({
+    name: MIXED_DATASOURCE_NAME,
+    type: 'mixed',
+    uid: MIXED_DATASOURCE_NAME,
+    apiVersion: 'v1',
+    isDefault: false,
+  }),
+};
+
 export function setupTestDataSources() {
   setupDataSources(...Object.values(dataSources));
+}
+
+export function setupDevDashboardDataSources() {
+  setupDataSources(...Object.values(devDashboardDataSources));
 }
 
 export function getTestDirectories() {
@@ -151,7 +215,11 @@ function getPanelPlugin(pluginId: 'stat' | 'table'): PanelPlugin {
   return pluginCopy;
 }
 
-export async function handleAngularPanelMigration(frontendModel: DashboardModel, targetVersion: number): Promise<void> {
+export async function handleAngularPanelMigration(
+  frontendModel: DashboardModel,
+  sourceVersion: number,
+  targetVersion: number
+): Promise<void> {
   /* 
     Migration from schema V27 involves migrating angular singlestat panels to stat panels
     These panels are auto migrated where PanelModel.restoreModel() is called in the constructor,
@@ -172,11 +240,11 @@ export async function handleAngularPanelMigration(frontendModel: DashboardModel,
     We need to manually run the pluginLoaded logic to ensure the panels are migrated correctly.
   */
   for (const panel of frontendModel.panels) {
-    if (panel.type === 'stat' && panel.autoMigrateFrom && targetVersion >= 28) {
+    if (panel.type === 'stat' && panel.autoMigrateFrom && targetVersion >= 28 && sourceVersion < 28) {
       const statPlugin = getPanelPlugin('stat');
       await panel.pluginLoaded(statPlugin);
     }
-    if (panel.type === 'table' && panel.autoMigrateFrom === 'table-old' && targetVersion >= 24) {
+    if (panel.type === 'table' && panel.autoMigrateFrom === 'table-old' && targetVersion >= 24 && sourceVersion < 24) {
       const tablePlugin = getPanelPlugin('table');
       await panel.pluginLoaded(tablePlugin);
     }

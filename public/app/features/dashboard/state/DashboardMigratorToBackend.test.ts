@@ -43,6 +43,7 @@ import {
  *    - Ensures both paths produce identical final dashboard states
  *    - Avoids test brittleness from comparing raw JSON with different default value representations
  */
+
 variableAdapters.register(createQueryVariableAdapter());
 variableAdapters.register(createDataSourceVariableAdapter());
 variableAdapters.register(createConstantVariableAdapter());
@@ -76,7 +77,7 @@ describe('Backend / Frontend result comparison', () => {
       });
 
       // Handle angular panel migration if needed
-      await handleAngularPanelMigration(frontendModel, DASHBOARD_SCHEMA_VERSION);
+      await handleAngularPanelMigration(frontendModel, jsonInput.schemaVersion, DASHBOARD_SCHEMA_VERSION);
 
       const frontendMigrationResult = frontendModel.getSaveModelClone();
 
