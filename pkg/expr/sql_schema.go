@@ -74,14 +74,15 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (queryv0alpha1
 		if n > maxRows {
 			n = maxRows
 		}
-		sampleRows := make([][]common.Unstructured, 0, n)
+		sampleRows := make([][]common., 0, n)
 		for i := 0; i < n; i++ {
 			rowCopy := frame.RowCopy(i)
 			u := make([]common.Unstructured, 0, len(rowCopy))
 			for _, v := range rowCopy {
-
+				// Create a map with field name as key and value as the row value
+				u = append(u, common.Unstructured{})
 			}
-			sampleRows = append(sampleRows, frame.RowCopy(i))
+			sampleRows = append(sampleRows, u)
 		}
 
 		schemas[dsNode.RefID()] = queryv0alpha1.SchemaInfo{Columns: columns, SampleRows: sampleRows}
