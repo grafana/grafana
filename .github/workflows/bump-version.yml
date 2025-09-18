@@ -31,7 +31,7 @@ jobs:
           app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
           private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
           repositories: '["grafana"]'
-          permissions: '{"contents": "write", "pull_requests": "write"}'
+          permissions: '{"contents": "write", "pull_requests": "write", "workflows": "write"}'
       - name: Checkout Grafana
         uses: actions/checkout@v5
         with:
