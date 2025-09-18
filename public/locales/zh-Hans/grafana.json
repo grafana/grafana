@@ -364,14 +364,6 @@
       "tooltip-assigned-role": "此用户登录时，系统将分配一个许可角色"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "隐藏通用标签",
-      "show": {
-        "tooltip": "显示通用标签"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "活跃时间设定"
@@ -477,15 +469,16 @@
     "alert-instance-state-filter": {
       "state": "状态"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "移除标签"
     },
     "alert-label-dropdown": {
       "placeholder-select": "选择{{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "标签",
-      "common-labels-count_other": "+{{count}} 个常用标签"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "静音、分组和时间设定（可选）",
@@ -9410,7 +9403,7 @@
       "label-signature": "签名"
     },
     "description-enable-infinite-scrolling": "实验性。通过滚动到日志列表底部来请求更多结果。",
-    "description-enable-syntax-highlighting": "使用预定义的语法着色规则来突出显示日志行的相关部分",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "显示控件以跳转到最后一行或第一行日志，并按日志级别筛选",
     "fields": {
       "type": {
@@ -9679,14 +9672,14 @@
     },
     "name-common-labels": "常用标签",
     "name-deduplication": "去重",
-    "name-details-mode": "日志详情面板模式",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "内联",
       "label-sidebar": "侧边栏"
     },
     "name-enable-infinite-scrolling": "启用无限滚动",
     "name-enable-log-details": "启用日志详情",
-    "name-enable-syntax-highlighting": "启用语法高亮",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "字体大小",
     "name-order": "顺序",
     "name-prettify-json": "美化 JSON",
@@ -10977,7 +10970,6 @@
       "body-not-published": "此插件未发布到 <2>grafana.com/plugins</2>，无法通过目录管理。",
       "enterprise-plugin-info": "此插件仅在 Grafana Cloud 和 Grafana Enterprise 中可用。",
       "learn-more": "了解更多",
-      "no-valid-grafana-enterprise-license-detected": "未检测到有效的 Grafana 企业版许可证。",
       "title-dev-alert": "这是插件的开发版本，无法卸载。",
       "title-plugin-doesnt-support-version-grafana": "此插件不支持您的 Grafana 版本。",
       "title-remote-plugins-unavailable": "安装控件已被禁用，因为 Grafana 服务器无法访问 grafana.com。",
@@ -11333,9 +11325,10 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "没有找到与您的查询匹配的结果",
+      "partial-managed": "",
       "placeholder-search": "搜索",
       "all-resources-managed_other": "",
-      "partial-managed_other": ""
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {

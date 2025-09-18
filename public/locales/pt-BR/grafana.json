@@ -364,14 +364,6 @@
       "tooltip-assigned-role": "Uma função licenciada será atribuída quando este usuário fizer login"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "Ocultar etiquetas comuns",
-      "show": {
-        "tooltip": "Mostrar etiquetas comuns"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Ativar cronogramas"
@@ -480,16 +472,16 @@
     "alert-instance-state-filter": {
       "state": "Estado"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "Remover rótulo"
     },
     "alert-label-dropdown": {
       "placeholder-select": "Escolher {{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "Etiquetas",
-      "common-labels-count_one": "+{{count}} rótulos comuns",
-      "common-labels-count_other": "+{{count}} rótulos comuns"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "Silenciamento, agrupamento e cronogramas (opcional)",
@@ -9439,7 +9431,7 @@
       "label-signature": "Assinatura"
     },
     "description-enable-infinite-scrolling": "Experimental. Solicite mais resultados ao descer até a parte inferior da lista de logs.",
-    "description-enable-syntax-highlighting": "Use um conjunto predefinido de regras de cores de sintaxe para destacar partes relevantes das linhas de log",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "Exibir controles para pular para a última ou primeira linha do log e filtros por nível de log",
     "fields": {
       "type": {
@@ -9711,14 +9703,14 @@
     },
     "name-common-labels": "Rótulos comuns",
     "name-deduplication": "Desduplicação",
-    "name-details-mode": "Modo de painel de detalhes do registro",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "Em linha",
       "label-sidebar": "Barra lateral"
     },
     "name-enable-infinite-scrolling": "Ativar rolagem infinita",
     "name-enable-log-details": "Ativar detalhes do log",
-    "name-enable-syntax-highlighting": "Ativar destaque de sintaxe",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "Tamanho da fonte",
     "name-order": "Ordem",
     "name-prettify-json": "Formatar JSON",
@@ -11012,7 +11004,6 @@
       "body-not-published": "Este plug-in não está publicado em <2>grafana.com/plugins</2> e não pode ser gerenciado por meio do catálogo.",
       "enterprise-plugin-info": "Este plug-in só está disponível na Grafana Cloud e na Grafana Enterprise.",
       "learn-more": "Saiba mais",
-      "no-valid-grafana-enterprise-license-detected": "Nenhuma licença válida da Grafana Enterprise foi identificada.",
       "title-dev-alert": "Esta é uma versão de desenvolvimento do plug-in e não pode ser desinstalada.",
       "title-plugin-doesnt-support-version-grafana": "Este plug-in não é compatível com sua versão da Grafana.",
       "title-remote-plugins-unavailable": "Os controles de instalação foram desativados porque o servidor da Grafana não consegue acessar o endereço grafana.com.",
@@ -11372,11 +11363,12 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Nenhum resultado corresponde à sua consulta",
+      "partial-managed": "",
       "placeholder-search": "Pesquisar",
       "all-resources-managed_one": "",
       "all-resources-managed_other": "",
-      "partial-managed_one": "",
-      "partial-managed_other": ""
+      "unmanaged-resources_one": "",
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {
