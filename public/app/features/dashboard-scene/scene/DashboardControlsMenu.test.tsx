@@ -1,6 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { VariableHide } from '@grafana/data';
 import { SceneVariableSet, TextBoxVariable, QueryVariable, CustomVariable, SceneVariable } from '@grafana/scenes';
 
 import {
@@ -9,7 +10,6 @@ import {
   DashboardControlsButton,
 } from './DashboardControlsMenu';
 import { DashboardScene } from './DashboardScene';
-import { VariableHide } from '@grafana/data';
 
 describe('DashboardControlsMenu', () => {
   it('should return null and not render anything when there are no variables', () => {
