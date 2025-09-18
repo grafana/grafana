@@ -62,6 +62,8 @@ jobs:
           fetch-depth: 100
           fetch-tags: false
 
+      # this will fail with "{commit} is not a valid commit" if the commit is valid but
+      # not in the last 100 commits.
       - name: Verify commit is in workflow HEAD
         env:
           GIT_COMMIT: ${{ github.event.inputs.grafana_commit }}
@@ -71,6 +73,7 @@ jobs:
       - name: Map version type to NPM tag
         id: npm-tag
         env:
+          VERSION: ${{ github.event.inputs.version }}
           VERSION_TYPE: ${{ github.event.inputs.version_type }}
           REFERENCE_PKG: "@grafana/runtime"
         run: |
