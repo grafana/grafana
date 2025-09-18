@@ -2,22 +2,14 @@
   "apiVersion": "dashboard.grafana.app/v2beta1",
   "kind": "Dashboard",
   "metadata": {
-    "name": "addfpww",
+    "name": "adbb8vn",
     "namespace": "default",
-    "uid": "AvXN09JdxuVNDqODs5IYU2iStlk5ntizuPGIfY1ywZgX",
-    "resourceVersion": "1",
+    "uid": "HfsxD1uoxnIHuobmUUQE0QdGf44ZRuXYcllg0DT3AaUX",
+    "resourceVersion": "2",
     "generation": 2,
-    "creationTimestamp": "2025-07-31T13:37:11Z",
-    "labels": {
-      "grafana.app/deprecatedInternalID": "6844"
-    },
-    "annotations": {
-      "grafana.app/createdBy": "user:cejvsh18uudxcf",
-      "grafana.app/updatedBy": "user:cejvsh18uudxcf",
-      "grafana.app/updatedTimestamp": "2025-07-31T13:37:11Z",
-      "grafana.app/folder": "",
-      "grafana.app/saved-from-ui": "Grafana v12.2.0-pre (69d1226c9a)"
-    }
+    "creationTimestamp": "2025-09-09T07:20:09Z",
+    "labels": {},
+    "annotations": {}
   },
   "spec": {
     "annotations": [],
@@ -56,7 +48,7 @@
           "description": "",
           "id": 1,
           "links": [],
-          "title": "New panel",
+          "title": "repeat - $c1",
           "vizConfig": {
             "group": "timeseries",
             "kind": "VizConfig",
@@ -90,6 +82,7 @@
                       "type": "linear"
                     },
                     "showPoints": "auto",
+                    "showValues": false,
                     "spanNulls": false,
                     "stacking": {
                       "group": "A",
@@ -201,6 +194,7 @@
                       "type": "linear"
                     },
                     "showPoints": "auto",
+                    "showValues": false,
                     "spanNulls": false,
                     "stacking": {
                       "group": "A",
@@ -309,6 +303,7 @@
                       "type": "linear"
                     },
                     "showPoints": "auto",
+                    "showValues": false,
                     "spanNulls": false,
                     "stacking": {
                       "group": "A",
@@ -365,21 +360,13 @@
                 "name": "panel-1"
               },
               "height": 8,
-              "width": 12,
-              "x": 0,
-              "y": 0
-            }
-          },
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-3"
+              "repeat": {
+                "direction": "h",
+                "mode": "variable",
+                "value": "c1"
               },
-              "height": 8,
-              "width": 12,
-              "x": 12,
+              "width": 24,
+              "x": 0,
               "y": 0
             }
           },
@@ -393,6 +380,19 @@
               "height": 8,
               "width": 12,
               "x": 0,
+              "y": 8
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              },
+              "height": 8,
+              "width": 12,
+              "x": 12,
               "y": 8
             }
           }
@@ -412,7 +412,7 @@
       "timezone": "browser",
       "to": "now"
     },
-    "title": "TEST!!!!",
+    "title": "TEST!!!!2",
     "variables": [
       {
         "kind": "CustomVariable",
