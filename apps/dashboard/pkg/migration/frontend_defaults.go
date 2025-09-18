@@ -561,10 +561,6 @@ func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool)
 	if t, ok := panel["type"].(string); ok {
 		panelType = t
 	}
-	// Debug: log panel type for troubleshooting
-	if panelType != "" {
-		// fmt.Printf("Panel type: %s\n", panelType)
-	}
 	removeNullValuesRecursivelyWithContext(panel, panelType)
 
 	// Filter out properties that match defaults (matches frontend's isEqual logic)
@@ -634,10 +630,6 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 			if isEqual(panelValue, defaultValue) {
 				// Special case: fieldConfig is always removed if it matches defaults (frontend getSaveModel behavior)
 				if prop == "fieldConfig" {
-					// Debug: log what we're comparing
-					// fmt.Printf("DEBUG: Removing fieldConfig that matches default\n")
-					// fmt.Printf("  Panel fieldConfig: %+v\n", panelValue)
-					// fmt.Printf("  Default fieldConfig: %+v\n", defaultValue)
 					delete(panel, prop)
 				} else {
 					// Only remove if it wasn't originally present in the input
@@ -1051,22 +1043,6 @@ func removeNullValuesRecursivelyWithContext(data interface{}, panelType string) 
 	}
 }
 
-// isFirstThresholdStep checks if a map represents the first threshold step (base step)
-// The first threshold step has "color" and "value": null (represents -Infinity)
-// Only preserve null values for v24 table panels where the frontend expects them
-func isFirstThresholdStep(obj map[string]interface{}) bool {
-	return isFirstThresholdStepForPanel(obj, "")
-}
-
-// isFirstThresholdStepForPanel checks if a map represents the first threshold step for a specific panel type
-// The first threshold step has "color" and may have "value": null (represents -Infinity)
-// Frontend removes "value": null via JSON.stringify/parse in getSaveModelClone()
-func isFirstThresholdStepForPanel(obj map[string]interface{}, panelType string) bool {
-	// Frontend removes null values from threshold steps via JSON serialization
-	// So we should also remove them to match frontend behavior
-	return false
-}
-
 // cleanupDashboardDefaults removes dashboard-level default values that frontend filters out
 func cleanupDashboardDefaults(dashboard map[string]interface{}) {
 	// Remove style if it's the default "dark" value
@@ -1160,12 +1136,6 @@ func cleanupFieldConfigOverrides(overrides []interface{}) {
 			}
 		}
 	}
-}
-
-// isArray checks if a value is an array
-func isArray(value interface{}) bool {
-	_, ok := value.([]interface{})
-	return ok
 }
 
 // trackOriginalTransformations marks panels that had transformations in the original input

@@ -274,15 +274,9 @@ func migratetSinglestat(panel map[string]interface{}, defaults map[string]interf
 }
 
 // migrateGrafanaSinglestatPanel handles auto-migration from 'grafana-singlestat-panel'
-// Based on frontend autoMigrateAngular map: both singlestat and grafana-singlestat-panel migrate to stat
-// The frontend applies the same migration logic for both panel types via migrateFromAngularSinglestat
-// Therefore, we apply the same migration logic as for 'singlestat' panels.
+// Uses the same migration logic as singlestat panels since the frontend applies
+// migrateFromAngularSinglestat to both panel types.
 func migrateGrafanaSinglestatPanel(panel map[string]interface{}, defaults map[string]interface{}) {
-	// For grafana-singlestat-panel, the frontend applies the same migration logic as singlestat
-	// This means it uses the valueName mapping and applies full field config migration
-	// The frontend calls migrateFromAngularSinglestat for both panel types
-
-	// Use the same migration logic as singlestat panels
 	migratetSinglestat(panel, defaults)
 }
 
