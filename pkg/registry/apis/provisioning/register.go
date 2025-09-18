@@ -90,8 +90,7 @@ type APIBuilder struct {
 	// TODO: Set this up in the standalone API server
 	onlyApiServer bool
 
-	allowedTargets      []provisioning.SyncTargetType
-	allowImageRendering bool
+	allowedTargets []provisioning.SyncTargetType
 
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
@@ -142,10 +141,6 @@ func NewAPIBuilder(
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
-	restConfigGetter func(context.Context) (*clientrest.Config, error),
-	allowImageRendering bool,
-	registry prometheus.Registerer,
-	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 ) *APIBuilder {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -173,9 +168,6 @@ func NewAPIBuilder(
 		jobHistoryConfig:    jobHistoryConfig,
 		extraWorkers:        extraWorkers,
 		allowedTargets:      allowedTargets,
-		restConfigGetter:    restConfigGetter,
-		allowImageRendering: allowImageRendering,
-		registry:            registry,
 	}
 
 	for _, builder := range extraBuilders {
@@ -259,10 +251,6 @@ func RegisterAPIService(
 		extraWorkers,
 		createJobHistoryConfigFromSettings(cfg),
 		allowedTargets,
-		nil, // will use loopback instead
-		cfg.ProvisioningAllowImageRendering,
-		reg,
-		nil,
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
@@ -580,18 +568,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	cfg := repo.Config()
 
 	if !slices.Contains(b.allowedTargets, cfg.Spec.Sync.Target) {
-		list = append(list,
-			field.Invalid(
-				field.NewPath("spec", "target"),
-				cfg.Spec.Sync.Target,
-				"sync target is not supported"))
-	}
-
-	if !b.allowImageRendering && cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews {
-		list = append(list,
-			field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
-				cfg.Spec.GitHub.GenerateDashboardPreviews,
-				"image rendering is not enabled"))
+		return fmt.Errorf("sync target %s is not supported", cfg.Spec.Sync.Target)
 	}
 
 	if a.GetOperation() == admission.Update {

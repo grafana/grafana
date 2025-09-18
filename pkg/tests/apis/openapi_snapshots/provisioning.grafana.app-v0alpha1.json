@@ -4357,11 +4357,6 @@
           "items"
         ],
         "properties": {
-          "allowImageRendering": {
-            "description": "Whether image rendering is allowed for dashboard previews",
-            "type": "boolean",
-            "default": false
-          },
           "allowedTargets": {
             "description": "The valid targets (can disable instance or folder types)",
             "type": "array",
