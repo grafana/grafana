@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
+import { AlertLabel } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
 import { getTagColorsFromName, useStyles2 } from '@grafana/ui';
-import { AlertLabel } from '@grafana/alerting/unstable';
+
 import { GenericGroupedRow } from '../types';
 
 import { GenericRow } from './GenericRow';
