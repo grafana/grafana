@@ -1,8 +1,7 @@
-import { render } from 'test/test-utils';
+import { render, testWithFeatureToggles } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { reportInteraction } from '@grafana/runtime';
-import { testWithFeatureToggles } from '@grafana/test-utils';
 
 import { mockLocalStorage } from '../mocks';
 import { getPreviewToggle, setPreviewToggle } from '../previewToggles';

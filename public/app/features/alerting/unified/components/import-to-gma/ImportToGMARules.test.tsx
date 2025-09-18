@@ -1,8 +1,7 @@
-import { render, waitFor } from 'test/test-utils';
+import { render, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
-import { testWithFeatureToggles } from '@grafana/test-utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';

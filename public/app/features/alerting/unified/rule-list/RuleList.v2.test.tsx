@@ -1,10 +1,9 @@
 import { HttpResponse } from 'msw';
-import { render } from 'test/test-utils';
+import { render, testWithFeatureToggles } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { OrgRole } from '@grafana/data';
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
-import { testWithFeatureToggles } from '@grafana/test-utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
