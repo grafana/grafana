@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -328,6 +329,67 @@ func TestSimpleServer(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, created)
+
+		invalidQualifiedNames := []string{
+			"", // empty
+			strings.Repeat("1", MaxQualifiedNameLength+1), // too long
+			"    ",                                 // only spaces
+			"f8cc010c.ee72.4681;89d2+d46e1bd47d33", // invalid chars
+		}
+
+		// group
+		for _, invalidGroup := range invalidQualifiedNames {
+			key = &resourcepb.ResourceKey{
+				Group:     invalidGroup,
+				Resource:  "rrrr", // can be anything :(
+				Namespace: "default",
+				Name:      "_IvIsOYGz",
+			}
+
+			created, err = server.Create(ctx, &resourcepb.CreateRequest{
+				Value: raw,
+				Key:   key,
+			})
+
+			require.Error(t, err)
+			require.Nil(t, created)
+		}
+
+		// resource
+		for _, invalidResource := range invalidQualifiedNames {
+			key = &resourcepb.ResourceKey{
+				Group:     "playlist.grafana.app",
+				Resource:  invalidResource,
+				Namespace: "default",
+				Name:      "_IvIsOYGz",
+			}
+
+			created, err = server.Create(ctx, &resourcepb.CreateRequest{
+				Value: raw,
+				Key:   key,
+			})
+
+			require.Error(t, err)
+			require.Nil(t, created)
+		}
+
+		// namespace
+		for _, invalidNamespace := range invalidQualifiedNames {
+			key = &resourcepb.ResourceKey{
+				Group:     "playlist.grafana.app",
+				Resource:  "rrrr", // can be anything :(
+				Namespace: invalidNamespace,
+				Name:      "_IvIsOYGz",
+			}
+
+			created, err = server.Create(ctx, &resourcepb.CreateRequest{
+				Value: raw,
+				Key:   key,
+			})
+
+			require.Error(t, err)
+			require.Nil(t, created)
+		}
 	})
 
 	t.Run("playlist update optimistic concurrency check", func(t *testing.T) {
