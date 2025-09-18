@@ -1,6 +1,6 @@
 import { render, waitFor, fireEvent, act } from 'test/test-utils';
 
-import { ExpressionQuery, ExpressionQueryType } from '../types';
+import { ExpressionQuery, ExpressionQueryType } from '../../types';
 
 import { SqlExpr, SqlExprProps } from './SqlExpr';
 

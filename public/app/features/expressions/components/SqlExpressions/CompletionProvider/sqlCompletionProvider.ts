@@ -2,7 +2,7 @@ import { SelectableValue } from '@grafana/data';
 import { ColumnDefinition, LanguageCompletionProvider, TableDefinition, TableIdentifier } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 
-import { ALLOWED_FUNCTIONS } from '../utils/metaSqlExpr';
+import { ALLOWED_FUNCTIONS } from '../../../utils/metaSqlExpr';
 
 interface CompletionProviderGetterArgs {
   getFields: (t: TableIdentifier) => Promise<ColumnDefinition[]>;

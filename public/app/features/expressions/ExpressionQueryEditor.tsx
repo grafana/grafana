@@ -10,7 +10,7 @@ import { ExpressionTypeDropdown } from './components/ExpressionTypeDropdown';
 import { Math } from './components/Math';
 import { Reduce } from './components/Reduce';
 import { Resample } from './components/Resample';
-import { SqlExpr } from './components/SqlExpr';
+import { SqlExpr } from './components/SqlExpressions/SqlExpr';
 import { Threshold } from './components/Threshold';
 import { ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
 import { getDefaults } from './utils/expressionTypes';
@@ -30,9 +30,9 @@ const getExpressionHelpText = (type: ExpressionQueryType): PopoverContent | stri
     case ExpressionQueryType.sql:
       return (
         <Trans i18nKey="expressions.expression-query-editor.helper-text-sql">
-          Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie "A", "B")
-          are available as tables and referenced by query-name. Fields are available as columns, as returned from the
-          data source.
+          Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie
+          &quot;A&quot;, &quot;B&quot;) are available as tables and referenced by query-name. Fields are available as
+          columns, as returned from the data source.
         </Trans>
       );
     default:
