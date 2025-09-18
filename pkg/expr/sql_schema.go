@@ -89,7 +89,7 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (SQLSchema, er
 		if n > maxRows {
 			n = maxRows
 		}
-		sampleRows := make([][]any, n)
+		sampleRows := make([][]any, 0, n)
 		for i := 0; i < n; i++ {
 			sampleRows = append(sampleRows, frame.RowCopy(i))
 		}
