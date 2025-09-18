@@ -438,9 +438,6 @@ describe('RuleViewer', () => {
     const mockRuleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
 
     beforeEach(() => {
-      // Clear any existing permissions first
-      grantUserPermissions([]);
-      // Set up permissions for editable rule
       grantPermissionsHelper([
         AccessControlAction.AlertingRuleCreate,
         AccessControlAction.AlertingRuleRead,
@@ -451,11 +448,6 @@ describe('RuleViewer', () => {
         AccessControlAction.AlertingInstancesExternalRead,
         AccessControlAction.AlertingInstancesExternalWrite,
       ]);
-      // Also set folder-level permissions
-      setFolderAccessControl({
-        [AccessControlAction.AlertingRuleUpdate]: true,
-        [AccessControlAction.AlertingRuleDelete]: true,
-      });
     });
 
     it('should pass correct props to enrichment section extension for editable rule', async () => {
@@ -474,23 +466,11 @@ describe('RuleViewer', () => {
     });
 
     it('should pass correct props to enrichment section extension for read-only rule', async () => {
-      // Clear permissions and set only read permissions to make rule read-only
-      grantUserPermissions([]);
       grantPermissionsHelper([
-        AccessControlAction.AlertingRuleCreate,
         AccessControlAction.AlertingRuleRead,
-        AccessControlAction.AlertingRuleDelete,
         AccessControlAction.AlertingInstanceRead,
-        AccessControlAction.AlertingInstanceCreate,
         AccessControlAction.AlertingInstancesExternalRead,
-        AccessControlAction.AlertingInstancesExternalWrite,
-        // Note: No AlertingRuleUpdate permission
       ]);
-      // Set folder-level permissions to deny update
-      setFolderAccessControl({
-        [AccessControlAction.AlertingRuleUpdate]: false,
-        [AccessControlAction.AlertingRuleDelete]: true,
-      });
 
       const mockEnrichmentExtension = jest.fn(() => <div data-testid="enrichment-section">Enrichment Section</div>);
       addRulePageEnrichmentSection(mockEnrichmentExtension);
