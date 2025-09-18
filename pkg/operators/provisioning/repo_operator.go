@@ -11,25 +11,24 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	"github.com/urfave/cli/v2"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
+	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
 
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 )
 
-func RunRepoController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cfg) error {
+func RunRepoController(deps server.OperatorDependencies) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "provisioning-repo-controller")
 	logger.Info("Starting provisioning repo controller")
 
-	controllerCfg, err := getRepoControllerConfig(cfg)
+	controllerCfg, err := getRepoControllerConfig(deps.Config)
 	if err != nil {
 		return fmt.Errorf("failed to setup operator: %w", err)
 	}

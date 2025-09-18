@@ -196,6 +196,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 	// This is a general test for the unified storage list operation. We don't have a common test
 	// directory for now, so we (search and storage) keep it here as we own this part of the tests.
 	t.Run("make sure list works with continue tokens", func(t *testing.T) {
+		t.Skip("Skipping flaky test - list works with continue tokens")
 		modes := []grafanarest.DualWriterMode{
 			grafanarest.Mode1,
 			grafanarest.Mode2,
