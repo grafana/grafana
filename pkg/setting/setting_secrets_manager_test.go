@@ -170,23 +170,4 @@ domain = example.com
 		assert.Equal(t, MisconfiguredProvider, cfg.SecretsManagement.CurrentEncryptionProvider)
 		assert.Empty(t, cfg.SecretsManagement.ConfiguredKMSProviders)
 	})
-
-	t.Run("should parse extra owner decrypters", func(t *testing.T) {
-		iniContent := `
-[secrets_manager.extra_owner_decrypters]
-example.app.com = something, some_other_thing
-another.app.com = something
-`
-		cfg, err := NewCfgFromBytes([]byte(iniContent))
-		require.NoError(t, err)
-
-		assert.Len(t, cfg.SecretsManagement.ExtraOwnerDecrypters, 2)
-		assert.Contains(t, cfg.SecretsManagement.ExtraOwnerDecrypters, "example.app.com")
-		assert.Contains(t, cfg.SecretsManagement.ExtraOwnerDecrypters, "another.app.com")
-		assert.Len(t, cfg.SecretsManagement.ExtraOwnerDecrypters["example.app.com"], 2)
-		assert.Contains(t, cfg.SecretsManagement.ExtraOwnerDecrypters["example.app.com"], "something")
-		assert.Contains(t, cfg.SecretsManagement.ExtraOwnerDecrypters["example.app.com"], "some_other_thing")
-		assert.Len(t, cfg.SecretsManagement.ExtraOwnerDecrypters["another.app.com"], 1)
-		assert.Contains(t, cfg.SecretsManagement.ExtraOwnerDecrypters["another.app.com"], "something")
-	})
 }
