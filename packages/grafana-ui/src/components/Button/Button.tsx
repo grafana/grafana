@@ -298,12 +298,11 @@ export const getButtonStyles = (props: StyleProps) => {
 
 export function getActiveButtonStyles(color: ThemeRichColor, fill: ButtonFill) {
   return {
-    background: fill === 'solid' ? color.main : color.transparent,
-    transform: 'scale(0.95)',
+    background: fill === 'solid' ? color.main : 'transparent',
   };
 }
 
-function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill) {
+export function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill) {
   let outlineBorderColor = color.border;
   let borderColor = 'transparent';
   let hoverBorderColor = 'transparent';

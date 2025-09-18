@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2, colorManipulator, deprecationWarning } from '@grafana/data';
+import { GrafanaTheme2, deprecationWarning } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
@@ -107,14 +107,17 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
   // overall size of the IconButton on hover
   // theme.spacing.gridSize originates from 2*4px for padding and letting the IconSize generally decide on the hoverSize
   const hoverSize = getSvgSize(size) + theme.spacing.gridSize;
-  const activeButtonStyle = getActiveButtonStyles(theme.colors.secondary, 'solid');
+  const activeButtonStyle = getActiveButtonStyles(theme.colors.secondary, 'text');
 
-  let iconColor = theme.colors.text.primary;
+  let iconColor = theme.colors.primary.text;
+  let hoverColor = theme.colors.primary.transparent;
 
-  if (variant === 'primary') {
-    iconColor = theme.colors.primary.text;
+  if (variant === 'secondary') {
+    iconColor = theme.colors.secondary.text;
+    hoverColor = theme.colors.secondary.transparent;
   } else if (variant === 'destructive') {
     iconColor = theme.colors.error.text;
+    hoverColor = theme.colors.error.transparent;
   }
 
   return {
@@ -133,7 +136,9 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
       borderRadius: theme.shape.radius.default,
 
       '&:active': {
-        transform: activeButtonStyle.transform,
+        '&:before, &:hover:before': {
+          backgroundColor: activeButtonStyle.background,
+        },
       },
 
       '&[disabled], &:disabled': {
@@ -141,6 +146,9 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
         color: theme.colors.action.disabledText,
         opacity: 0.65,
         transform: 'none',
+        '&:hover:before': {
+          backgroundColor: 'transparent',
+        },
       },
 
       '&:before': {
@@ -162,12 +170,9 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
 
       '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
 
-      '&:hover': {
-        '&:before': {
-          backgroundColor:
-            variant === 'secondary' ? theme.colors.action.hover : colorManipulator.alpha(iconColor, 0.12),
-          opacity: 1,
-        },
+      '&:hover:before': {
+        backgroundColor: hoverColor,
+        opacity: 1,
       },
     }),
     icon: css({
