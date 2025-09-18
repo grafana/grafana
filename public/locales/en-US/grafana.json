@@ -9541,6 +9541,7 @@
       "search-placeholder": "Search field names and values",
       "show-context": "Show context",
       "show-log-line": "Show log line",
+      "show-unique": "Show only unique fields",
       "sidebar-mode": "Anchor to the right",
       "trace": {
         "error-message": "Could not retrieve trace.",
