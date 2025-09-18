@@ -278,6 +278,8 @@ func TestSimpleServer(t *testing.T) {
 			Value: raw,
 			Key:   key,
 		})
+		require.Error(t, err)
+		require.Nil(t, created)
 
 		// legacy name - valid
 		key = &resourcepb.ResourceKey{
