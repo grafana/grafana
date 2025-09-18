@@ -1,3 +1,4 @@
+import { reportInteraction } from '@grafana/runtime';
 import { SceneTimeRangeCompare, SceneComponentProps, VizPanel, sceneGraph } from '@grafana/scenes';
 import { TimeCompareOptions } from '@grafana/schema';
 
@@ -6,6 +7,8 @@ function hasTimeCompare(options: unknown): options is TimeCompareOptions {
 }
 
 export class CustomTimeRangeCompare extends SceneTimeRangeCompare {
+  private readonly parentOnCompareWithChanged: (compareWith: string) => void;
+
   constructor(state: Partial<SceneTimeRangeCompare['state']> = {}) {
     super({
       ...state,
@@ -13,6 +16,20 @@ export class CustomTimeRangeCompare extends SceneTimeRangeCompare {
       compareOptions: [],
       hideCheckbox: true,
     });
+
+    this.parentOnCompareWithChanged = this.onCompareWithChanged.bind(this);
+
+    this.onCompareWithChanged = (compareWith: string) => {
+      const vizPanel = sceneGraph.getAncestor(this, VizPanel);
+
+      reportInteraction('panel_time_comparison', {
+        viz_type: vizPanel?.getPlugin()?.meta.id || 'unknown',
+        select_type: 'option_selected',
+        option_type: compareWith,
+      });
+
+      this.parentOnCompareWithChanged(compareWith);
+    };
 
     this.addActivationHandler(() => this._activationHandler());
   }
