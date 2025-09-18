@@ -36,7 +36,7 @@ func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope convers
 	if err != nil {
 		out.Status.Conversion.Failed = true
 		out.Status.Conversion.Error = ptr.To(err.Error())
-		return nil
+		return schemaversion.NewMigrationError(err.Error(), schemaversion.GetSchemaVersion(in.Spec.Object), schemaversion.LATEST_VERSION, "Convert_V0_to_V1")
 	}
 
 	// a background service identity is used here because the user who is reading the specific dashboard
@@ -47,7 +47,7 @@ func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope convers
 	if err := migration.Migrate(ctx, out.Spec.Object, schemaversion.LATEST_VERSION); err != nil {
 		out.Status.Conversion.Failed = true
 		out.Status.Conversion.Error = ptr.To(err.Error())
-		return nil
+		return schemaversion.NewMigrationError(err.Error(), schemaversion.GetSchemaVersion(in.Spec.Object), schemaversion.LATEST_VERSION, "Convert_V0_to_V1")
 	}
 
 	return nil
