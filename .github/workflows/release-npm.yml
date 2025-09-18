@@ -1,5 +1,4 @@
-name: Release NPM packages
-run-name: Publish NPM ${{ inputs.version_type }} ${{ inputs.version }}
+name: Publish NPM packages
 on:
   workflow_call:
     inputs:
@@ -52,7 +51,6 @@ jobs:
       - name: Info
         env:
           GITHUB_REF: ${{ github.ref }}
-          GRAFANA_COMMIT: ${{ inputs.grafana_commit }}
         run: |
           echo "GRAFANA_COMMIT: $GRAFANA_COMMIT"
           echo "github.ref: $GITHUB_REF"
@@ -61,25 +59,19 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-          fetch-depth: 100
-          fetch-tags: false
 
-      # this will fail with "{commit} is not a valid commit" if the commit is valid but
-      # not in the last 100 commits.
       - name: Verify commit is in workflow HEAD
         env:
-          GIT_COMMIT: ${{ inputs.grafana_commit }}
-        run: ./.github/workflows/scripts/validate-commit-in-head.sh
+          GIT_COMMIT: ${{ github.event.inputs.grafana_commit }}
+        run: ./github/workflows/scripts/validate-commit-in-head.sh
         shell: bash
 
       - name: Map version type to NPM tag
         id: npm-tag
         env:
-          VERSION: ${{ inputs.version }}
-          VERSION_TYPE: ${{ inputs.version_type }}
-          REFERENCE_PKG: "@grafana/runtime"
+          VERSION_TYPE: ${{ github.event.inputs.version_type }}
         run: |
-          TAG=$(./.github/workflows/scripts/determine-npm-tag.sh)
+          TAG=$(./github/workflows/scripts/determine-npm-tag.sh)
           echo "NPM_TAG=$TAG" >> "$GITHUB_OUTPUT"
         shell: bash
 
@@ -87,14 +79,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-          ref: ${{ inputs.grafana_commit }}
+          ref: ${{ github.event.inputs.grafana_commit }}
 
       - name: Setup Node
-        uses: ./.github/actions/setup-node
-
-      # Trusted Publishing is only available in npm v11.5.1 and later
-      - name: Update npm
-        run: npm install -g npm@^11.5.1
+        uses: ./github/actions/setup-node
 
       - name: Install dependencies
         run: yarn install --immutable
@@ -103,11 +91,9 @@ jobs:
         run: yarn run packages:typecheck
 
       - name: Version, build, and pack packages
-        env:
-          VERSION: ${{ inputs.version }}
         run: |
           yarn run packages:build
-          yarn lerna version "$VERSION" \
+          yarn lerna version "$PACKAGES_VERSION" \
             --exact \
             --no-git-tag-version \
             --no-push \
@@ -122,7 +108,7 @@ jobs:
         run: ./scripts/validate-npm-packages.sh
 
       - name: Debug OIDC Claims
-        uses: github/actions-oidc-debugger@2e9ba5d3f4bebaad1f91a2cede055115738b7ae8
+        uses: github/actions-oidc-debugger@018a1dc4f8e47adca924d55e4bb0ddce917af32d
         with:
           audience: '${{ github.server_url }}/${{ github.repository_owner }}'
 
@@ -135,6 +121,7 @@ jobs:
   tag-nightly:
     name: Tag nightly release
     runs-on: github-hosted-ubuntu-x64-small
+    needs: publish
     if: inputs.version_type == 'nightly'
 
     steps:
@@ -144,4 +131,5 @@ jobs:
           persist-credentials: false
 
       # TODO: tag the given release with nightly
+
 
