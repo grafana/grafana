@@ -507,7 +507,10 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	dualwriteService := dualwrite.ProvideService(featureToggles, registerer, kvStore, cfg)
+	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg)
+	if err != nil {
+		return nil, err
+	}
 	sortService := sort.ProvideService()
 	folderimplService := folderimpl.ProvideService(folderStoreImpl, accessControl, inProcBus, dashboardsStore, userService, sqlStore, featureToggles, bundleregistryService, publicDashboardServiceWrapperImpl, cfg, registerer, tracer, resourceClient, dualwriteService, sortService, eventualRestConfigProvider)
 	searchService := searchV2.ProvideService(cfg, sqlStore, entityEventsService, acimplService, tracingService, featureToggles, orgService, userService, folderimplService)
@@ -1102,7 +1105,10 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	dualwriteService := dualwrite.ProvideService(featureToggles, registerer, kvStore, cfg)
+	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg)
+	if err != nil {
+		return nil, err
+	}
 	sortService := sort.ProvideService()
 	folderimplService := folderimpl.ProvideService(folderStoreImpl, accessControl, inProcBus, dashboardsStore, userService, sqlStore, featureToggles, bundleregistryService, publicDashboardServiceWrapperImpl, cfg, registerer, tracer, resourceClient, dualwriteService, sortService, eventualRestConfigProvider)
 	searchService := searchV2.ProvideService(cfg, sqlStore, entityEventsService, acimplService, tracingService, featureToggles, orgService, userService, folderimplService)

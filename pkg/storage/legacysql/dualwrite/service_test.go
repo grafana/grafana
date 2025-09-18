@@ -17,7 +17,8 @@ import (
 func TestService(t *testing.T) {
 	t.Run("dynamic", func(t *testing.T) {
 		ctx := context.Background()
-		mode := ProvideService(featuremgmt.WithFeatures(), nil, kvstore.NewFakeKVStore(), nil)
+		mode, err := ProvideService(featuremgmt.WithFeatures(), kvstore.NewFakeKVStore(), nil)
+		require.NoError(t, err)
 
 		gr := schema.GroupResource{Group: "ggg", Resource: "rrr"}
 		status, err := mode.Status(ctx, gr)
@@ -69,6 +70,7 @@ func TestService(t *testing.T) {
 			isStatic              bool
 			foldersFromUnified    bool
 			dashboardsFromUnified bool
+			error                 string
 		}
 
 		for _, tc := range []testCase{{
@@ -93,14 +95,40 @@ func TestService(t *testing.T) {
 			cfg: setting.Cfg{
 				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: rest.Mode5,
+						DualWriterMode: rest.Mode3,
+					},
+				},
+			}}, {
+			name:  "invalid folder mode4",
+			flags: featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
+			error: "must use the same mode",
+			cfg: setting.Cfg{
+				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+					"folders.folder.grafana.app": {
+						DualWriterMode: rest.Mode4,
+					},
+				},
+			}}, {
+			name:  "invalid dashboards mode4",
+			flags: featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
+			error: "must use the same mode",
+			cfg: setting.Cfg{
+				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: rest.Mode4,
 					},
 				},
 			}},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				ctx := context.Background()
-				svc := ProvideService(tc.flags, nil, kvstore.NewFakeKVStore(), &tc.cfg)
+				svc, err := ProvideService(tc.flags, kvstore.NewFakeKVStore(), &tc.cfg)
+				if tc.error != "" {
+					require.ErrorContains(t, err, tc.error)
+					require.Nil(t, svc, "expect a nil service when an error exts")
+					return
+				}
+				require.NoError(t, err)
 
 				_, isStatic := svc.(*staticService)
 				require.Equal(t, tc.isStatic, isStatic)
