@@ -6,7 +6,7 @@ import { FieldType, toDataFrame } from '@grafana/data';
 import { GroupByTransformerEditorBase } from './editors/GroupByTransformerEditor';
 import {
   DataFieldsErrorWrapper,
-  detectMixedQueryResults,
+  detectPartialQueryFailures,
   getAllFieldNamesFromDataFrames,
   numberOrVariableValidator,
   TIMEOUT,
@@ -123,10 +123,10 @@ describe('useAllFieldNamesFromDataFrames', () => {
   });
 });
 
-describe('detectMixedQueryResults', () => {
+describe('detectPartialQueryFailures', () => {
   it('returns false when all queries are successful', () => {
     const frames = [toDataFrame({ fields: [{ name: 'test', type: FieldType.string, values: ['a'] }] })];
-    expect(detectMixedQueryResults(frames)).toBe(false);
+    expect(detectPartialQueryFailures(frames)).toBe(false);
   });
 
   it('returns true when some queries are successful and some are not', () => {
@@ -134,7 +134,7 @@ describe('detectMixedQueryResults', () => {
       toDataFrame({ fields: [] }),
       toDataFrame({ fields: [{ name: 'test', type: FieldType.string, values: ['a'] }] }),
     ];
-    expect(detectMixedQueryResults(frames)).toBe(true);
+    expect(detectPartialQueryFailures(frames)).toBe(true);
   });
 });
 

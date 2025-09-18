@@ -49,8 +49,11 @@ export const getAllFieldNamesFromDataFrames = (frames: DataFrame[], withBaseFiel
   return names;
 };
 
-export const detectMixedQueryResults = (frames: DataFrame[]) =>
-  frames.some(({ fields }) => fields?.length > 0) && frames.some(({ fields }) => !fields?.length);
+export const detectPartialQueryFailures = (frames: DataFrame[]) => {
+  const hasSuccessful = frames.some(({ fields }) => fields.length > 0);
+  const hasEmpty = frames.some(({ fields }) => !fields.length);
+  return hasSuccessful && hasEmpty;
+};
 
 export function useAllFieldNamesFromDataFrames(frames: DataFrame[], withBaseFieldNames = false): string[] {
   return useMemo(() => getAllFieldNamesFromDataFrames(frames, withBaseFieldNames), [frames, withBaseFieldNames]);
@@ -62,7 +65,7 @@ export const TransformerMissingFieldsMessage = () => {
     null,
     t(
       'transformers.query-validation-message',
-      'One or more queries failed. The transformation will only use fields from successful queries.'
+      'One or more queries failed to return fields. This transformation can only reference fields from queries with a successful and visible result.'
     )
   );
 };
@@ -80,8 +83,8 @@ export function DataFieldsErrorWrapper<T>(
     const [showError, setShowError] = useState(false);
 
     const fieldNames = useAllFieldNamesFromDataFrames(input, withBaseFieldNames);
-    const mixedResults = detectMixedQueryResults(input);
-    const hasErrorCondition = fieldNames.length === 0 || mixedResults;
+    const hasPartialQueryFailures = detectPartialQueryFailures(input);
+    const hasErrorCondition = fieldNames.length === 0 || hasPartialQueryFailures;
 
     useDebounce(() => setShowError(hasErrorCondition), TIMEOUT, [hasErrorCondition]);
 
