@@ -224,7 +224,7 @@ func TestSimpleServer(t *testing.T) {
 		// invalid group
 		key := &resourcepb.ResourceKey{
 			Group:     "playlist.grafana.app###",
-			Resource:  "rrrr###", // can be anything :(
+			Resource:  "rrrr", // can be anything :(
 			Namespace: "default",
 			Name:      "fdgsv37qslr0ga",
 		}
@@ -278,8 +278,22 @@ func TestSimpleServer(t *testing.T) {
 			Value: raw,
 			Key:   key,
 		})
-		require.Error(t, err)
-		require.Nil(t, created)
+
+		// legacy name - valid
+		key = &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "rrrr", // can be anything :(
+			Namespace: "default",
+			Name:      "2c7e5361-7360-4d2a-ae45-5e79bba458d6",
+		}
+
+		created, err = server.Create(ctx, &resourcepb.CreateRequest{
+			Value: raw,
+			Key:   key,
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, created)
 	})
 
 	t.Run("playlist update optimistic concurrency check", func(t *testing.T) {
