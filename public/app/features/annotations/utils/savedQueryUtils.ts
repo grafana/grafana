@@ -1,4 +1,4 @@
-import { AnnotationQuery, DataSourceApi } from '@grafana/data';
+import { AnnotationQuery, CoreApp, DataSourceApi, hasQueryExportSupport, hasQueryImportSupport } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
@@ -54,39 +54,77 @@ export async function updateAnnotationFromSavedQuery(
     datasource: replacedQuery.datasource,
   };
 
-  // Step 2: Extract query-specific fields (remove datasource from target to avoid duplication)
-  const { datasource, ...queryFields } = replacedQuery;
-
-  const tempAnnotation: AnnotationQuery = {
-    ...cleanAnnotation,
-  };
-
-  // Step 3: Handle v1 vs v2 dashboard format
-  if (annotation.query?.spec) {
-    // v2 dashboard - maintain both target and query.spec (StandardAnnotationQueryEditor keeps them in sync)
-    tempAnnotation.target = queryFields;
-    tempAnnotation.query = {
-      ...annotation.query,
-      spec: { ...queryFields },
-    };
-  } else {
-    // v1 dashboard - only update target field
-    tempAnnotation.target = queryFields;
-  }
-
-  // Step 4: Apply datasource-specific preparation immediately
+  // Step 2: Use datasource's export/import to normalize saved query
   try {
     const newDatasource = await getDataSourceSrv().get(replacedQuery.datasource);
-    const processor = { ...standardAnnotationSupport, ...newDatasource.annotations };
 
-    if (processor.prepareAnnotation) {
-      return processor.prepareAnnotation(tempAnnotation);
+    // Normalize saved query using export/import approach (strips context, keeps content)
+    // This follows the same pattern as updateQueries.ts for datasource transitions
+    let normalizedQuery = replacedQuery;
+
+    // When datasource supports abstract queries, use export/import to normalize context
+    if (hasQueryExportSupport(newDatasource) && hasQueryImportSupport(newDatasource)) {
+      const abstractQueries = await newDatasource.exportToAbstractQueries([replacedQuery]);
+      const importedQueries = await newDatasource.importFromAbstractQueries(abstractQueries);
+
+      if (importedQueries.length > 0) {
+        // Apply annotation-specific defaults to the normalized query
+        const annotationDefaults = {
+          ...newDatasource.getDefaultQuery?.(CoreApp.Dashboard),
+          datasource: replacedQuery.datasource,
+          refId: 'Anno',
+        };
+
+        normalizedQuery = {
+          ...replacedQuery, // Start with all original properties
+          ...annotationDefaults, // Apply annotation defaults for context
+          ...importedQueries[0], // Apply normalized core query content
+          refId: 'Anno', // Always use Anno refId for annotations
+        };
+      }
+    }
+    // For datasources without export/import support, keep the query unchanged
+    // except for refId which should always be 'Anno' for annotations
+    else {
+      normalizedQuery = {
+        ...replacedQuery,
+        refId: 'Anno',
+      };
     }
 
-    return tempAnnotation;
+    // Remove datasource property to avoid duplication in target
+    const { datasource, ...queryFields } = normalizedQuery;
+
+    // Step 3: Create annotation and apply datasource-specific preparation
+    const tempAnnotation: AnnotationQuery = {
+      ...cleanAnnotation,
+      target: queryFields,
+    };
+
+    const processor = { ...standardAnnotationSupport, ...newDatasource.annotations };
+    let preparedAnnotation: AnnotationQuery;
+
+    if (processor.prepareAnnotation) {
+      // Let the datasource do final preparation/restructuring
+      preparedAnnotation = processor.prepareAnnotation(tempAnnotation);
+    } else {
+      preparedAnnotation = tempAnnotation;
+    }
+
+    // Step 4: Handle v1 vs v2 dashboard format after preparation
+    if (annotation.query?.spec) {
+      // v2 dashboard - sync prepared target to query.spec
+      preparedAnnotation.query = {
+        ...annotation.query,
+        spec: { ...preparedAnnotation.target },
+      };
+    }
+
+    return preparedAnnotation;
   } catch (error) {
     console.warn('Could not prepare annotation with new datasource:', error);
     // Return structurally correct annotation even if preparation fails
-    return tempAnnotation;
+    const { datasource, ...queryFields } = replacedQuery;
+    return { ...cleanAnnotation, target: queryFields };
   }
 }

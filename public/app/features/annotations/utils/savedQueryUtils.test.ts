@@ -1,5 +1,5 @@
 // unit test for savedQuery utils
-import { AnnotationQuery, DataSourceApi } from '@grafana/data';
+import { AnnotationQuery, DataSourceApi, CoreApp, AbstractQuery, AbstractLabelOperator } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { DataQuery } from '@grafana/schema';
 
@@ -10,6 +10,37 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
     get: jest.fn().mockResolvedValue({
+      // Mock getDefaultQuery method for context-aware defaults
+      getDefaultQuery: jest.fn(
+        (app: CoreApp): Partial<PromQuery> => ({
+          refId: 'A',
+          expr: '',
+          range: true,
+          instant: false,
+        })
+      ),
+      // Mock export/import methods for query normalization
+      exportToAbstractQueries: jest.fn(async (queries: DataQuery[]): Promise<AbstractQuery[]> => {
+        // Mock export: strip context properties, keep core content
+        return queries.map(
+          (query): AbstractQuery => ({
+            refId: query.refId,
+            labelMatchers: [
+              { name: '__name__', operator: AbstractLabelOperator.Equal, value: (query as PromQuery).expr || 'up' },
+            ],
+          })
+        );
+      }),
+      importFromAbstractQueries: jest.fn(async (abstractQueries: AbstractQuery[]): Promise<PromQuery[]> => {
+        // Mock import: rebuild with appropriate defaults
+        return abstractQueries.map(
+          (abstractQuery): PromQuery => ({
+            refId: abstractQuery.refId,
+            expr: abstractQuery.labelMatchers?.[0]?.value || 'up',
+            range: true, // Dashboard default
+          })
+        );
+      }),
       annotations: {
         prepareAnnotation: (annotation: AnnotationQuery) => {
           // Mock realistic Prometheus preparation logic based on actual implementation
@@ -222,15 +253,21 @@ describe('savedQueryUtils', () => {
         enable: true,
         iconColor: 'red',
         hide: false,
+        builtIn: undefined,
+        filter: undefined,
+        mappings: undefined,
+        type: undefined,
         datasource: {
           type: 'prometheus',
           uid: 'new-prometheus',
         },
         target: {
-          refId: 'A',
+          refId: 'Anno', // refId should always be 'Anno' for annotations
           expr: 'up',
           legendFormat: '__auto',
           interval: '60s',
+          instant: false, // Normalized for annotation context
+          range: true, // Normalized for annotation context
         },
       });
     });
@@ -281,17 +318,22 @@ describe('savedQueryUtils', () => {
         },
         // v2 annotations maintain both target and query.spec with the new query data
         target: {
-          refId: 'B',
+          refId: 'Anno', // refId should always be 'Anno' for annotations
           expr: 'rate(http_requests_total[5m])',
           legendFormat: '{{method}}',
           interval: '',
+          instant: false, // Normalized for annotation context
+          range: true, // Normalized for annotation context
         },
         query: {
           kind: 'prometheus',
           spec: {
-            refId: 'B',
+            refId: 'Anno', // refId should always be 'Anno' for annotations
             expr: 'rate(http_requests_total[5m])',
             legendFormat: '{{method}}',
+            interval: '',
+            instant: false, // Normalized for annotation context
+            range: true, // Normalized for annotation context
           },
         },
       });
@@ -333,9 +375,11 @@ describe('savedQueryUtils', () => {
         builtIn: 1,
         datasource: { type: 'loki', uid: 'new-loki-uid' },
         target: {
-          refId: 'NewRef',
+          refId: 'Anno', // refId should always be 'Anno' for annotations
           expr: 'new_expr',
           interval: '',
+          instant: false, // Normalized for annotation context
+          range: true, // Normalized for annotation context
         },
       });
 
@@ -375,9 +419,11 @@ describe('savedQueryUtils', () => {
         uid: 'loki-uid',
       });
       expect(result.target).toEqual({
-        refId: 'B',
+        refId: 'Anno', // refId should always be 'Anno' for annotations
         expr: '{job="test"}',
         interval: '',
+        instant: false, // Normalized for annotation context
+        range: true, // Normalized for annotation context
       });
       expect(result.name).toBe('prometheus annotation');
       expect(result.iconColor).toBe('red');
@@ -415,9 +461,11 @@ describe('savedQueryUtils', () => {
           uid: 'prometheus-uid',
         },
         target: {
-          refId: 'A',
+          refId: 'Anno', // refId should always be 'Anno' for annotations
           expr: 'up',
           interval: '',
+          instant: false, // Normalized for annotation context
+          range: true, // Normalized for annotation context
         },
       });
     });
