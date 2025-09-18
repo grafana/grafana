@@ -6,9 +6,39 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
-type TestDataSourceProvider struct{}
+// DataSourceConfig defines different test configurations
+type DataSourceConfig string
 
-func (m *TestDataSourceProvider) GetDataSourceInfo(_ context.Context) []schemaversion.DataSourceInfo {
+const (
+	// StandardTestConfig provides datasources for standard migration tests
+	StandardTestConfig DataSourceConfig = "standard"
+	// DevDashboardConfig provides datasources matching dev dashboard requirements
+	DevDashboardConfig DataSourceConfig = "dev-dashboard"
+)
+
+// ConfigurableDataSourceProvider provides flexible datasource configurations for different test scenarios
+type ConfigurableDataSourceProvider struct {
+	config DataSourceConfig
+}
+
+// NewDataSourceProvider creates a provider with the specified configuration
+func NewDataSourceProvider(config DataSourceConfig) *ConfigurableDataSourceProvider {
+	return &ConfigurableDataSourceProvider{config: config}
+}
+
+func (p *ConfigurableDataSourceProvider) GetDataSourceInfo(_ context.Context) []schemaversion.DataSourceInfo {
+	switch p.config {
+	case StandardTestConfig:
+		return p.getStandardTestDataSources()
+	case DevDashboardConfig:
+		return p.getDevDashboardDataSources()
+	default:
+		return p.getStandardTestDataSources()
+	}
+}
+
+// getStandardTestDataSources returns datasources for standard migration tests
+func (p *ConfigurableDataSourceProvider) getStandardTestDataSources() []schemaversion.DataSourceInfo {
 	return []schemaversion.DataSourceInfo{
 		{
 			Default:    true,
@@ -61,14 +91,8 @@ func (m *TestDataSourceProvider) GetDataSourceInfo(_ context.Context) []schemave
 	}
 }
 
-// GetTestDataSourceProvider returns a singleton instance of the test provider
-func GetTestDataSourceProvider() *TestDataSourceProvider {
-	return &TestDataSourceProvider{}
-}
-
-type DevDashboardDataSourceProvider struct{}
-
-func (m *DevDashboardDataSourceProvider) GetDataSourceInfo(_ context.Context) []schemaversion.DataSourceInfo {
+// getDevDashboardDataSources returns datasources for dev dashboard tests
+func (p *ConfigurableDataSourceProvider) getDevDashboardDataSources() []schemaversion.DataSourceInfo {
 	return []schemaversion.DataSourceInfo{
 		{
 			Default:    true,
@@ -119,9 +143,4 @@ func (m *DevDashboardDataSourceProvider) GetDataSourceInfo(_ context.Context) []
 			ID:         6,
 		},
 	}
-}
-
-// GetDevDashboardDataSourceProvider returns a singleton instance of the dev dashboard provider
-func GetDevDashboardDataSourceProvider() *DevDashboardDataSourceProvider {
-	return &DevDashboardDataSourceProvider{}
 }

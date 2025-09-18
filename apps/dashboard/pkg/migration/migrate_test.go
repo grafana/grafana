@@ -29,7 +29,7 @@ const DEV_DASHBOARDS_OUTPUT_DIR = "testdata/dev-dashboards-output"
 func TestMigrate(t *testing.T) {
 	// Reset the migration singleton and use the same datasource provider as the frontend test to ensure consistency
 	ResetForTesting()
-	Initialize(migrationtestutil.GetTestDataSourceProvider())
+	Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
 
 	t.Run("minimum version check", func(t *testing.T) {
 		err := Migrate(context.Background(), map[string]interface{}{
@@ -45,7 +45,7 @@ func TestMigrate(t *testing.T) {
 
 func TestMigrateSingleVersion(t *testing.T) {
 	// Use the same datasource provider as the frontend test to ensure consistency
-	Initialize(migrationtestutil.GetTestDataSourceProvider())
+	Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
 
 	runSingleVersionMigrationTests(t, SINGLE_VERSION_OUTPUT_DIR)
 }
@@ -212,7 +212,7 @@ func loadDashboard(t *testing.T, path string) map[string]interface{} {
 // TestSchemaMigrationMetrics tests that schema migration metrics are recorded correctly
 func TestSchemaMigrationMetrics(t *testing.T) {
 	// Initialize migration with test providers
-	Initialize(migrationtestutil.GetTestDataSourceProvider())
+	Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -296,7 +296,7 @@ func TestSchemaMigrationMetrics(t *testing.T) {
 
 // TestSchemaMigrationLogging tests that schema migration logging works correctly
 func TestSchemaMigrationLogging(t *testing.T) {
-	Initialize(migrationtestutil.GetTestDataSourceProvider())
+	Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
 
 	tests := []struct {
 		name           string
@@ -442,7 +442,7 @@ func TestMigrateDevDashboards(t *testing.T) {
 	// Reset the migration singleton and use the dev dashboard datasource provider
 	// to match the frontend devDashboardDataSources configuration
 	ResetForTesting()
-	Initialize(migrationtestutil.GetDevDashboardDataSourceProvider())
+	Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.DevDashboardConfig))
 
 	runDevDashboardMigrationTests(t, schemaversion.LATEST_VERSION, DEV_DASHBOARDS_OUTPUT_DIR)
 }
