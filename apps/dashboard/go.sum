@@ -95,10 +95,10 @@ github.com/gopherjs/gopherjs v1.17.2 h1:fQnZVsXk8uxXIStYb0N4bGk7jeyTalG/wsZjQ25d
 github.com/gopherjs/gopherjs v1.17.2/go.mod h1:pRRIvn/QzFLrKfvEz3qUuEhtE/zLCWfreZ6J5gM2i+k=
 github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
 github.com/gorilla/mux v1.8.1/go.mod h1:AKf9I4AEqPTmMytcMc0KkNouC66V3BtZ4qD5fmWSiMQ=
-github.com/grafana/authlib v0.0.0-20250910124502-5d080d6bb9ea h1:F9xbdvqLgeVyW+yZviJ06mH9dnFiKmkWF3wJ7AGyzc4=
-github.com/grafana/authlib v0.0.0-20250910124502-5d080d6bb9ea/go.mod h1:C6CmTG6vfiqebjJswKsc6zes+1F/OtTCi6aAtL5Um6A=
-github.com/grafana/authlib/types v0.0.0-20250721184729-1593a38e4933 h1:GjiMR5NIO1/bYSCnt8x7VUeOMaupv2qXJkeLDVAddxQ=
-github.com/grafana/authlib/types v0.0.0-20250721184729-1593a38e4933/go.mod h1:qeWYbnWzaYGl88JlL9+DsP1GT2Cudm58rLtx13fKZdw=
+github.com/grafana/authlib v0.0.0-20250917093142-83a502239781 h1:sdI2P18j78expDtLB6YbVI5dV+HguV719iiQNqx3wqw=
+github.com/grafana/authlib v0.0.0-20250917093142-83a502239781/go.mod h1:C6CmTG6vfiqebjJswKsc6zes+1F/OtTCi6aAtL5Um6A=
+github.com/grafana/authlib/types v0.0.0-20250917093142-83a502239781 h1:jymmOFIWnW26DeUjFgYEoltI170KeT5r1rI8a/dUf0E=
+github.com/grafana/authlib/types v0.0.0-20250917093142-83a502239781/go.mod h1:qeWYbnWzaYGl88JlL9+DsP1GT2Cudm58rLtx13fKZdw=
 github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4 h1:jSojuc7njleS3UOz223WDlXOinmuLAIPI0z2vtq8EgI=
 github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4/go.mod h1:VahT+GtfQIM+o8ht2StR6J9g+Ef+C2Vokh5uuSmOD/4=
 github.com/grafana/grafana-app-sdk v0.45.0 h1:niFqYovxuw9vnUB9qoxEgmupqriG7Gns9ZGwB2uuOyE=
