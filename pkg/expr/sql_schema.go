@@ -83,8 +83,14 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (SQLSchema, er
 			})
 		}
 
-		sampleRows := make([][]any, 0)
-		for i := 0; i < 0 || i < frame.Rows(); i++ {
+		// Cap at 3 rows.
+		const maxRows = 3
+		n := frame.Rows()
+		if n > maxRows {
+			n = maxRows
+		}
+		sampleRows := make([][]any, n)
+		for i := 0; i < n; i++ {
 			sampleRows = append(sampleRows, frame.RowCopy(i))
 		}
 
