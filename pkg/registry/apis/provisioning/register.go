@@ -141,6 +141,7 @@ func NewAPIBuilder(
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
+	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 ) *APIBuilder {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -251,6 +252,7 @@ func RegisterAPIService(
 		extraWorkers,
 		createJobHistoryConfigFromSettings(cfg),
 		allowedTargets,
+		nil,
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
