@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -121,7 +123,6 @@ func (s *ResourcePermSqlBackend) latestUpdate(ctx context.Context, dbHelper *leg
 	return maxUpdated.UnixMilli()
 }
 
-// Get
 // getRbacAssignmentsWithTx queries resource permissions based on the provided ListResourcePermissionsQuery and groups them by resource (e.g. {folder.grafana.app, folders, fold1})
 func (s *ResourcePermSqlBackend) getRbacAssignmentsWithTx(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, tx *session.SessionTx, query *ListResourcePermissionsQuery) ([]rbacAssignment, error) {
 	rawQuery, args, err := buildListResourcePermissionsQueryFromTemplate(sql, query)
@@ -159,7 +160,7 @@ func (s *ResourcePermSqlBackend) getRbacAssignmentsWithTx(ctx context.Context, s
 func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, tx *session.SessionTx, ns types.NamespaceInfo, name string) (*v0alpha1.ResourcePermission, error) {
 	mapper, grn, err := s.splitResourceName(name)
 	if err != nil {
-		return nil, err
+		return nil, apierrors.NewInternalError(err)
 	}
 
 	resourceQuery := &ListResourcePermissionsQuery{
@@ -170,19 +171,19 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 
 	assignments, err := s.getRbacAssignmentsWithTx(ctx, sql, tx, resourceQuery)
 	if err != nil {
-		return nil, err
+		return nil, apierrors.NewInternalError(err)
 	}
 
 	if len(assignments) == 0 {
-		return nil, fmt.Errorf("resource permission %q: %w", resourceQuery.Scopes, errNotFound)
+		return nil, apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), name)
 	}
 
 	resourcePermission, err := s.toV0ResourcePermissions(assignments, ns.Value)
 	if err != nil {
-		return nil, err
+		return nil, apierrors.NewInternalError(err)
 	}
 	if resourcePermission == nil {
-		return nil, fmt.Errorf("resource permission %q: %w", resourceQuery.Scopes, errNotFound)
+		return nil, apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), name)
 	}
 
 	return &resourcePermission[0], nil
@@ -402,8 +403,6 @@ func (s *ResourcePermSqlBackend) createResourcePermission(
 	return timeNow().UnixMilli(), nil
 }
 
-// Update
-
 func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, mapper Mapper, grn *groupResourceName, v0ResourcePerm *v0alpha1.ResourcePermission) (int64, error) {
 	if err := validateCreateAndUpdateInput(v0ResourcePerm, grn); err != nil {
 		return 0, err
@@ -412,8 +411,8 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 	err := dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
 		currentPerms, err := s.getResourcePermission(ctx, dbHelper, tx, ns, grn.string())
 		if err != nil {
-			if errors.Is(err, errNotFound) {
-				return fmt.Errorf("resource permissions not found: %w", errNotFound)
+			if apierrors.IsNotFound(err) {
+				return apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), grn.string())
 			}
 			s.logger.Error("could not get resource permissions", "orgID", ns.OrgID, "scope", grn.Name, "error", err.Error())
 			return fmt.Errorf("could not get the existing resource permissions for resource %s", grn.Name)
@@ -514,8 +513,6 @@ func validateCreateAndUpdateInput(v0ResourcePerm *v0alpha1.ResourcePermission, g
 	return nil
 }
 
-// Delete
-
 // deleteResourcePermission deletes resource permissions for a single ResourcePermission resource referenced by its name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs)
 func (s *ResourcePermSqlBackend) deleteResourcePermission(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, name string) error {
 	mapper, grn, err := s.splitResourceName(name)
@@ -534,7 +531,6 @@ func (s *ResourcePermSqlBackend) deleteResourcePermission(ctx context.Context, s
 		return err
 	}
 
-	// run delete query
 	_, err = sql.DB.GetSqlxSession().Exec(ctx, rawQuery, args...)
 	if err != nil {
 		s.logger.Error("could not delete resource permissions", "scope", scope, "orgID", ns.OrgID, err.Error())

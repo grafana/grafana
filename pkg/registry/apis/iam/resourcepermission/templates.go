@@ -35,8 +35,6 @@ func mustTemplate(filename string) *template.Template {
 	panic(fmt.Sprintf("template file not found: %s", filename))
 }
 
-// List
-
 type pageQueryTemplate struct {
 	sqltemplate.SQLTemplate
 	Query              *PageQuery
@@ -140,8 +138,6 @@ func buildListResourcePermissionsQueryFromTemplate(dbHelper *legacysql.LegacyDat
 	return rawQuery, req.GetArgs(), nil
 }
 
-// Create
-
 type insertRoleTemplate struct {
 	sqltemplate.SQLTemplate
 	RoleTable string
@@ -235,8 +231,6 @@ func buildInsertPermissionQuery(dbHelper *legacysql.LegacyDatabaseHelper, roleID
 	return rawQuery, req.GetArgs(), nil
 }
 
-// Update
-
 type removePermissionTemplate struct {
 	sqltemplate.SQLTemplate
 	PermissionTable string
@@ -267,8 +261,6 @@ func buildRemovePermissionQuery(dbHelper *legacysql.LegacyDatabaseHelper, scope,
 	}
 	return rawQuery, req.GetArgs(), nil
 }
-
-// Delete
 
 type deleteResourcePermissionsQueryTemplate struct {
 	sqltemplate.SQLTemplate
