@@ -38,10 +38,10 @@ const getTargetOptions = () => {
     { value: 'instance', label: t('provisioning.config-form.option-entire-instance', 'Entire instance') },
     { value: 'folder', label: t('provisioning.config-form.option-managed-folder', 'Managed folder') },
   ];
-  
+
   const allowedTargets = config.provisioningAllowedTargets || ['instance', 'folder'];
-  
-  return allOptions.filter(option => allowedTargets.includes(option.value));
+
+  return allOptions.filter((option) => allowedTargets.includes(option.value));
 };
 
 export interface ConfigFormProps {
