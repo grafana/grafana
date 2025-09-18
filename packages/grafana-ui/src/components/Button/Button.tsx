@@ -265,7 +265,7 @@ export const getButtonStyles = (props: StyleProps) => {
       '&[disabled]': disabledStyles,
 
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background-color', 'border-color', 'color', 'transform'], {
+        transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
           duration: theme.transitions.duration.short,
         }),
       },
@@ -380,7 +380,6 @@ function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, 
     boxShadow: 'none',
     color: theme.colors.text.disabled,
     transition: 'none',
-    transform: 'none',
     background: theme.colors.action.disabledBackground,
   };
 

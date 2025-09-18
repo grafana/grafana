@@ -145,7 +145,6 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
         cursor: 'not-allowed',
         color: theme.colors.action.disabledText,
         opacity: 0.65,
-        transform: 'none',
         '&:hover:before': {
           backgroundColor: 'transparent',
         },
