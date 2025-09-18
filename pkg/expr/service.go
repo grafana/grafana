@@ -7,14 +7,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/metrics"
-	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -107,69 +104,6 @@ func (s *Service) isDisabled() bool {
 // BuildPipeline builds a pipeline from a request.
 func (s *Service) BuildPipeline(ctx context.Context, req *Request) (DataPipeline, error) {
 	return s.buildPipeline(ctx, req)
-}
-
-// BasicColumn is a simplified version of mysql.Column used for SQL expression schemas.
-type BasicColumn struct {
-	Name      string
-	MySQLType string
-	Nullable  bool
-
-	DataFrameFieldType data.FieldType
-}
-
-type SQLSchemaResponse = map[string][]BasicColumn
-
-// GetSQLSchemas returns what the schemas are for SQL expressions for all DS queries
-// in the request. It executes the queries to get the schemas.
-// Intended use is for autocomplete and AI, so used during the authoring/editing experience only.
-func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (map[string][]BasicColumn, error) {
-	// Extract DS Nodes and Execute Them
-	// Building the pipeline is maybe not best, as it can have more errors.
-	filtered := make([]Query, 0, len(req.Queries))
-	for _, q := range req.Queries {
-		if NodeTypeFromDatasourceUID(q.DataSource.UID) == TypeDatasourceNode {
-			filtered = append(filtered, q)
-		}
-	}
-	req.Queries = filtered
-	pipeline, err := s.buildPipeline(ctx, &req)
-	if err != nil {
-		return nil, err
-	}
-
-	var schemas = make(map[string][]BasicColumn)
-
-	for _, node := range pipeline {
-		// For now, execute calls convert at the end, so we are being lazy and running the full conversion. Longer run we want to run without
-		// full conversion and just get the schema. Maybe conversion should be
-		dsNode := node.(*DSNode)
-		// Make all input to SQL
-		dsNode.isInputToSQLExpr = true
-
-		// TODO: check where time is coming from, don't recall
-		res, err := dsNode.Execute(ctx, time.Now(), mathexp.Vars{}, s)
-		if err != nil || res.Error != nil {
-			continue
-			// we want to continue and get the schemas we can
-		}
-
-		frames := res.Values.AsDataFrames(dsNode.RefID())
-		schema := sql.SchemaFromFrame(frames[0])
-		columns := make([]BasicColumn, 0, len(schema))
-		for _, col := range schema {
-			fT, _ := sql.MySQLColToFieldType(col)
-			columns = append(columns, BasicColumn{
-				Name:               col.Name,
-				MySQLType:          col.Type.String(),
-				Nullable:           col.Nullable,
-				DataFrameFieldType: fT,
-			})
-		}
-		schemas[dsNode.RefID()] = columns
-	}
-
-	return schemas, nil
 }
 
 // ExecutePipeline executes an expression pipeline and returns all the results.

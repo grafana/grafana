@@ -351,8 +351,7 @@ func schema_pkg_apis_query_v0alpha1_SQLSchemaResponse(ref common.ReferenceCallba
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Wraps backend.QueryDataResponse, however it includes TypeMeta and implements runtime.Object",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{

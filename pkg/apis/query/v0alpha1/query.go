@@ -34,7 +34,7 @@ type SQLSchemaResponse struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// Backend wrapper (external dependency)
-	expr.SQLSchemaResponse `json:",inline"`
+	expr.SQLSchema `json:",inline"`
 }
 
 // GetResponseCode return the right status code for the response by checking the responses.

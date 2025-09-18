@@ -8,7 +8,6 @@
 package v0alpha1
 
 import (
-	expr "github.com/grafana/grafana/pkg/expr"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -192,21 +191,7 @@ func (in *QueryTypeDefinitionList) DeepCopyObject() runtime.Object {
 func (in *SQLSchemaResponse) DeepCopyInto(out *SQLSchemaResponse) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	if in.SQLSchemaResponse != nil {
-		in, out := &in.SQLSchemaResponse, &out.SQLSchemaResponse
-		*out = make(map[string][]expr.BasicColumn, len(*in))
-		for key, val := range *in {
-			var outVal []expr.BasicColumn
-			if val == nil {
-				(*out)[key] = nil
-			} else {
-				in, out := &val, &outVal
-				*out = make([]expr.BasicColumn, len(*in))
-				copy(*out, *in)
-			}
-			(*out)[key] = outVal
-		}
-	}
+	out.SQLSchema = in.SQLSchema.DeepCopy()
 	return
 }
 

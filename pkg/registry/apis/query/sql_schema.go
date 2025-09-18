@@ -198,12 +198,12 @@ func (r *sqlSchemaREST) Connect(connectCtx context.Context, name string, _ runti
 		// TODO error handling
 
 		responder.Object(200, &query.SQLSchemaResponse{
-			SQLSchemaResponse: qdr,
+			SQLSchema: qdr,
 		})
 	}), nil
 }
 
-func handlePreparedSQLSchema(ctx context.Context, pq *preparedQuery) (expr.SQLSchemaResponse, error) {
+func handlePreparedSQLSchema(ctx context.Context, pq *preparedQuery) (expr.SQLSchema, error) {
 	resp, err := service.GetSQLSchemas(ctx, pq.logger, pq.cache, pq.exprSvc, pq.mReq, pq.builder, pq.headers)
 	pq.reportMetrics()
 	return resp, err
@@ -216,7 +216,7 @@ func handleSQLSchemaQuery(
 	httpreq *http.Request,
 	responder responderWrapper,
 	connectLogger log.Logger,
-) (expr.SQLSchemaResponse, error) {
+) (expr.SQLSchema, error) {
 	pq, err := prepareQuery(ctx, raw, b, httpreq, connectLogger)
 	if err != nil {
 		responder.Error(err)
