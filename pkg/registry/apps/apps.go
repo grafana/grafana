@@ -4,15 +4,17 @@ import (
 	"context"
 	"slices"
 
+	"k8s.io/client-go/rest"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apps/advisor"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
+	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
@@ -32,13 +34,20 @@ func ProvideAppInstallers(
 	pluginsApplInstaller *plugins.PluginsAppInstaller,
 	shorturlAppInstaller *shorturl.ShortURLAppInstaller,
 	rulesAppInstaller *rules.AlertingRulesAppInstaller,
+	correlationsAppInstaller *correlations.CorrelationsAppInstaller,
 ) []appsdkapiserver.AppInstaller {
-	installers := []appsdkapiserver.AppInstaller{playlistAppInstaller, pluginsApplInstaller}
+	installers := []appsdkapiserver.AppInstaller{
+		playlistAppInstaller,
+		pluginsApplInstaller,
+	}
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
 		installers = append(installers, shorturlAppInstaller)
 	}
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAlertingRules) {
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAlertingRules) && rulesAppInstaller != nil {
 		installers = append(installers, rulesAppInstaller)
+	}
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesCorrelations) {
+		installers = append(installers, correlationsAppInstaller)
 	}
 	return installers
 }

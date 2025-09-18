@@ -5,6 +5,7 @@ import * as React from 'react';
 import { FC, Fragment, ReactNode, useState } from 'react';
 import { useToggle } from 'react-use';
 
+import { AlertLabel } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -42,7 +43,6 @@ import { InheritableProperties, getInheritedProperties } from '../../utils/notif
 import { InsertPosition } from '../../utils/routeTree';
 import { Authorize } from '../Authorize';
 import { PopupCard } from '../HoverCard';
-import { Label } from '../Label';
 import { MetaText } from '../MetaText';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
@@ -720,7 +720,13 @@ const InheritedProperties: FC<{ properties: InheritableProperties }> = ({ proper
             return null;
           }
 
-          return <Label key={key} label={routePropertyToLabel(key)} value={routePropertyToValue(key, value)} />;
+          return (
+            <AlertLabel
+              key={key}
+              labelKey={routePropertyToLabel(key)}
+              value={String(routePropertyToValue(key, value))}
+            />
+          );
         })}
       </Stack>
     }
@@ -917,13 +923,13 @@ function getContactPointErrors(contactPoint: string, contactPointsState: Receive
     const notifierErrors = notifierStatuses
       .filter((status) => status.lastNotifyAttemptError)
       .map((status) => (
-        <Label
+        <AlertLabel
           icon="at"
           key={uniqueId()}
-          label={t('alerting.contact-point-errors.label-contact-point', 'Contact Point › {{name}}', {
+          value={String(status.lastNotifyAttemptError)}
+          labelKey={t('alerting.contact-point-errors.label-contact-point', 'Contact Point › {{name}}', {
             name: status.name,
           })}
-          value={status.lastNotifyAttemptError}
         />
       ));
 

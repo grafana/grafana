@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/Masterminds/semver"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -23,11 +24,25 @@ func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tra
 		if err != nil {
 			return resource.SearchOptions{}, err
 		}
+
+		var minVersion *semver.Version
+		if cfg.MinFileIndexBuildVersion != "" {
+			v, err := semver.NewVersion(cfg.MinFileIndexBuildVersion)
+			if err != nil {
+				cfg.Logger.Error("Failed to parse min_file_index_build_version, ignoring it.", "version", cfg.MinFileIndexBuildVersion, "err", err)
+			} else {
+				minVersion = v
+			}
+		}
+
 		bleve, err := NewBleveBackend(BleveOptions{
-			Root:          root,
-			FileThreshold: int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
-			BatchSize:     cfg.IndexMaxBatchSize,         // This is the batch size for how many objects to add to the index at once
-			IndexCacheTTL: cfg.IndexCacheTTL,             // How long to keep the index cache in memory
+			Root:            root,
+			FileThreshold:   int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
+			BatchSize:       cfg.IndexMaxBatchSize,         // This is the batch size for how many objects to add to the index at once
+			IndexCacheTTL:   cfg.IndexCacheTTL,             // How long to keep the index cache in memory
+			BuildVersion:    cfg.BuildVersion,
+			MaxFileIndexAge: cfg.MaxFileIndexAge,
+			MinBuildVersion: minVersion,
 		}, tracer, indexMetrics)
 
 		if err != nil {
