@@ -82,11 +82,13 @@ export function ScopesTreeItem({
               name={treeNode.scopeNodeId}
               checked={selected}
               label={
-                isExpandable
-                  ? ''
-                  : hasHighlighting
-                  ? <span dangerouslySetInnerHTML={{ __html: textUtil.sanitizeSimpleText(highlightedTitle) }} />
-                  : titleText
+                isExpandable ? (
+                  ''
+                ) : hasHighlighting ? (
+                  <span dangerouslySetInnerHTML={{ __html: textUtil.sanitizeSimpleText(highlightedTitle) }} />
+                ) : (
+                  titleText
+                )
               }
               data-testid={`scopes-tree-${treeNode.scopeNodeId}-radio`}
               onClick={() => {
@@ -128,11 +130,7 @@ export function ScopesTreeItem({
           >
             <Icon name={!treeNode.expanded ? 'angle-right' : 'angle-down'} />
 
-            {hasHighlighting ? (
-              <span dangerouslySetInnerHTML={{ __html: highlightedTitle }} />
-            ) : (
-              titleText
-            )}
+            {hasHighlighting ? <span dangerouslySetInnerHTML={{ __html: highlightedTitle }} /> : titleText}
           </button>
         )}
       </div>
@@ -161,13 +159,13 @@ export function stringToHighlighted(string: string, match: string) {
   }
   let result = string;
   // Split match string on wildcard.
-  const matchParts = match.split('*').filter(part => part.length > 0);
+  const matchParts = match.split('*').filter((part) => part.length > 0);
 
-  matchParts.forEach(part => {
+  matchParts.forEach((part) => {
     const regex = new RegExp(`${part}`, 'gi');
     result = result.replace(regex, `<mark>${part}</mark>`);
   });
-  
+
   return result;
 }
 
