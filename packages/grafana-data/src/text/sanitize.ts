@@ -109,6 +109,14 @@ export function sanitizeSVGContent(unsanitizedString: string): string {
   return DOMPurify.sanitize(unsanitizedString, { USE_PROFILES: { svg: true, svgFilters: true } });
 }
 
+// Only allow elements that modify text, such as <mark>, bold, italic, underline, strike, superscript, subscript.
+export function sanitizeSimpleText(unsanitizedString: string): string {
+  return DOMPurify.sanitize(unsanitizedString, {
+    USE_PROFILES: { html: true },
+    ALLOWED_TAGS: ['mark', 'b', 'i', 'u', 's', 'sup', 'sub'],
+  });
+}
+
 // Return a sanitized URL, free from XSS attacks, such as javascript:alert(1)
 export function sanitizeUrl(url: string): string {
   return braintreeSanitizeUrl(url);
@@ -186,4 +194,5 @@ export const textUtil = {
   sanitizeSVGContent,
   sanitizeTrustedTypes,
   sanitizeTrustedTypesRSS,
+  sanitizeSimpleText,
 };

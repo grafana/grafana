@@ -149,7 +149,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         treeNode.children[node.metadata.name] = {
           expanded: false,
           scopeNodeId: node.metadata.name,
-          query: '',
+          // If the parent has a query, we keep it
+          query: query || '',
           children: undefined,
         };
       }
