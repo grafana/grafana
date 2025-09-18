@@ -33,8 +33,9 @@ function useEditPaneOptions(
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.options.description', 'Description'),
+          title: '',
           id: dashboardDescriptionInputId,
+          skipField: true,
           render: () => <DashboardDescriptionInput id={dashboardDescriptionInputId} dashboard={dashboard} />,
         })
       );

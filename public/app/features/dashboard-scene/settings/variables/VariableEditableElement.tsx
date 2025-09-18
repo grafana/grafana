@@ -1,11 +1,13 @@
+import { css } from '@emotion/css';
 import { FormEvent, useId, useMemo, useRef, useState } from 'react';
+import { useToggle } from 'react-use';
 
-import { VariableHide } from '@grafana/data';
+import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { LocalValueVariable, MultiValueVariable, SceneVariable, SceneVariableSet } from '@grafana/scenes';
-import { Input, TextArea, Button, Field, Box, Stack } from '@grafana/ui';
+import { Input, TextArea, Button, Field, Box, Stack, LinkButton, TextLink, Label, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -43,16 +45,17 @@ function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.edit-pane.variable.label', 'Label'),
+          title: '',
           id: labelId,
-          description: t('dashboard.edit-pane.variable.label-description', 'Optional display name'),
+          skipField: true,
           render: () => <VariableLabelInput variable={variable} />,
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.edit-pane.variable.description', 'Description'),
+          title: '',
           id: descriptionId,
+          skipField: true,
           render: () => <VariableDescriptionTextArea variable={variable} />,
         })
       )
@@ -191,29 +194,36 @@ function VariableLabelInput({ variable, id }: VariableInputProps) {
   const oldLabel = useRef(label ?? '');
 
   return (
-    <Input
-      id={id}
-      value={label}
-      onFocus={() => {
-        oldLabel.current = label ?? '';
-      }}
-      onChange={(e) => variable.setState({ label: e.currentTarget.value })}
-      onBlur={(e) => {
-        const labelUnchanged = oldLabel.current === e.currentTarget.value;
-        const shouldSkip = labelUnchanged || undoRedoWasClicked(e);
+    <UnsetField value={label} label={t('dashboard.edit-pane.variable.label', 'Display name')}>
+      {(onValueChanged, autoFocus) => (
+        <Input
+          id={id}
+          value={label}
+          onFocus={() => {
+            oldLabel.current = label ?? '';
+          }}
+          autoFocus={autoFocus}
+          onChange={(e) => variable.setState({ label: e.currentTarget.value })}
+          onBlur={(e) => {
+            const labelUnchanged = oldLabel.current === e.currentTarget.value;
+            const shouldSkip = labelUnchanged || undoRedoWasClicked(e);
 
-        if (shouldSkip) {
-          return;
-        }
+            onValueChanged(e.currentTarget.value);
 
-        dashboardEditActions.changeVariableLabel({
-          source: variable,
-          oldValue: oldLabel.current,
-          newValue: e.currentTarget.value,
-        });
-      }}
-      data-testid={selectors.components.PanelEditor.ElementEditPane.variableLabelInput}
-    />
+            if (shouldSkip) {
+              return;
+            }
+
+            dashboardEditActions.changeVariableLabel({
+              source: variable,
+              oldValue: oldLabel.current,
+              newValue: e.currentTarget.value,
+            });
+          }}
+          data-testid={selectors.components.PanelEditor.ElementEditPane.variableLabelInput}
+        />
+      )}
+    </UnsetField>
   );
 }
 
@@ -222,36 +232,107 @@ function VariableDescriptionTextArea({ variable, id }: VariableInputProps) {
   const oldDescription = useRef(description ?? '');
 
   return (
-    <TextArea
-      id={id}
-      value={description ?? ''}
-      placeholder={t('dashboard.edit-pane.variable.description-placeholder', 'Descriptive text')}
-      onFocus={() => {
-        oldDescription.current = description ?? '';
-      }}
-      onChange={(e) => variable.setState({ description: e.currentTarget.value })}
-      onBlur={(e) => {
-        const labelUnchanged = oldDescription.current === e.currentTarget.value;
-        const shouldSkip = labelUnchanged || undoRedoWasClicked(e);
+    <UnsetField value={description} label={t('dashboard.edit-pane.variable.description', 'Description')}>
+      {(onValueChanged, autoFocus) => (
+        <TextArea
+          id={id}
+          value={description ?? ''}
+          placeholder={t('dashboard.edit-pane.variable.description-placeholder', 'Descriptive text')}
+          onFocus={() => {
+            oldDescription.current = description ?? '';
+          }}
+          autoFocus={autoFocus}
+          onChange={(e) => variable.setState({ description: e.currentTarget.value })}
+          onBlur={(e) => {
+            const labelUnchanged = oldDescription.current === e.currentTarget.value;
+            const shouldSkip = labelUnchanged || undoRedoWasClicked(e);
 
-        if (shouldSkip) {
-          return;
-        }
+            onValueChanged(e.currentTarget.value);
 
-        dashboardEditActions.changeVariableDescription({
-          source: variable,
-          oldValue: oldDescription.current,
-          newValue: e.currentTarget.value,
-        });
-      }}
-    />
+            if (shouldSkip) {
+              return;
+            }
+
+            dashboardEditActions.changeVariableDescription({
+              source: variable,
+              oldValue: oldDescription.current,
+              newValue: e.currentTarget.value,
+            });
+          }}
+        />
+      )}
+    </UnsetField>
   );
+}
+
+export interface UnsetFieldProps<T> {
+  value: T;
+  defaultValue?: T;
+  label: string;
+  description?: string;
+  children: (onValueChanged: (value: T) => void, autoFocus: boolean) => React.ReactElement;
+}
+
+function UnsetField<T>({ value, defaultValue, children, label }: UnsetFieldProps<T>) {
+  const styles = useStyles2(getUnsetFieldStyles);
+  const [isSetting, setIsSetting] = useToggle(false);
+
+  if (isDefault(value, defaultValue) && !isSetting) {
+    return (
+      <div className={styles.wrapper}>
+        <Label>{label}</Label>
+        <div className={styles.button}>
+          <Button size="sm" fill="text" icon="plus" onClick={setIsSetting}>
+            <Trans i18nKey="dashboard.edit-pane.set-option-button">Set</Trans>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const onValueChanged = (newValue: T | null | undefined) => {
+    if (isDefault(newValue, defaultValue)) {
+      setIsSetting();
+    }
+  };
+
+  return <Field label={label}>{children(onValueChanged, isDefault(value, defaultValue))}</Field>;
+}
+
+function isDefault<T>(value: T | null | undefined, defaultValue: T | null | undefined) {
+  if (defaultValue == null && (value == null || value === '')) {
+    return true;
+  }
+
+  return defaultValue === value;
+}
+
+export function getUnsetFieldStyles(theme: GrafanaTheme2) {
+  return {
+    wrapper: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: theme.spacing(2),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      label: {
+        color: theme.colors.text.secondary,
+        marginBottom: 0,
+      },
+      position: 'relative',
+    }),
+    button: css({
+      position: 'absolute',
+      right: theme.spacing(0),
+    }),
+  };
 }
 
 function VariableHideInput({ variable }: VariableInputProps) {
   const { hide = VariableHide.dontHide } = variable.useState();
 
-  const onChange = (option: VariableHide) => {
+  const onChange = (option: VariableHide, onValueChanged: (value: VariableHide) => void) => {
+    onValueChanged(option);
     dashboardEditActions.changeVariableHideValue({
       source: variable,
       oldValue: hide,
@@ -259,7 +340,22 @@ function VariableHideInput({ variable }: VariableInputProps) {
     });
   };
 
-  return <VariableHideSelect hide={hide} type={variable.state.type} onChange={onChange} />;
+  return (
+    <UnsetField
+      value={hide}
+      defaultValue={VariableHide.dontHide}
+      label={t('dashboard-scene.variable-show-select.label', 'Show in')}
+    >
+      {(onValueChanged) => (
+        <VariableHideSelect
+          hide={hide}
+          type={variable.state.type}
+          onChange={(v) => onChange(v, onValueChanged)}
+          autoFocus={true}
+        />
+      )}
+    </UnsetField>
+  );
 }
 
 function useVariableTypeCategory(variable: SceneVariable) {

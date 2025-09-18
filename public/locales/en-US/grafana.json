@@ -4728,6 +4728,7 @@
           "title": "Row header"
         }
       },
+      "set-option-button": "Set",
       "variable": {
         "custom-options": {
           "values": "Values separated by comma",
@@ -4742,8 +4743,7 @@
         },
         "description": "Description",
         "description-placeholder": "Descriptive text",
-        "label": "Label",
-        "label-description": "Optional display name",
+        "label": "Display name",
         "name": "Name",
         "open-editor": "Open variable editor",
         "open-editor-tooltip": "For more variable options open variable editor",
@@ -6258,14 +6258,13 @@
       "tooltip-remove-variable": "Remove variable"
     },
     "variable-hide-select": {
-      "hide_options": {
-        "label": {
-          "label": "Label",
-          "nothing": "Nothing",
-          "variable": "Variable"
-        }
-      },
-      "label": "Hide"
+      "hide_options-controls-menu": "Controls menu",
+      "hide_options-default": "Top controls (default)",
+      "hide_options-hidden": "Hidden",
+      "hide_options-label": "Top controls (hidden label)"
+    },
+    "variable-show-select": {
+      "label": "Show in"
     },
     "variable-type-select": {
       "name-variable-type": "Variable type"
