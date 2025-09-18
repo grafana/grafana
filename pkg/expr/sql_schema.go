@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/sql"
 )
 
+// BasicColumn represents the column type for data that is input to a SQL expression.
 type BasicColumn struct {
 	Name               string         `json:"name"`
 	MySQLType          string         `json:"mysqlType"`
@@ -17,12 +18,20 @@ type BasicColumn struct {
 	DataFrameFieldType data.FieldType `json:"dataFrameFieldType"`
 }
 
+// SchemaInfo provides information and some sample data for data that could be an input
+// to a SQL expression.
 type SchemaInfo struct {
 	Columns    []BasicColumn `json:"columns"`
 	SampleRows [][]any       `json:"sampleRows"`
 	Error      string        `json:"error,omitempty"`
 }
 
+// SQLSchema returns info about what the Schema for a DS query will be like if the
+// query were to be used an input to SQL expressions. So effectively post SQL expressions input
+// conversion.
+// There is a a manual DeepCopy at the end of this file that will need to be updated when this our the
+// underlying structs are change. The hack script will also need to be run to update the Query service API
+// generated types.
 type SQLSchema map[string]SchemaInfo
 
 // GetSQLSchemas returns what the schemas are for SQL expressions for all DS queries
@@ -101,6 +110,7 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (SQLSchema, er
 }
 
 // DeepCopy returns a deep copy of the schema.
+// Used AI to make it, the kubernetes one doesn't like any or interface{}
 func (s SQLSchema) DeepCopy() SQLSchema {
 	if s == nil {
 		return nil
