@@ -4491,11 +4491,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/panel/dashlist/DashList.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
   "public/app/plugins/panel/debug/CursorView.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
