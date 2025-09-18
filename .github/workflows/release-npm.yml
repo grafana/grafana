@@ -1,5 +1,24 @@
 name: Publish NPM packages
 on:
+  workflow_call:
+    inputs:
+      grafana_commit:
+        description: 'Grafana commit SHA to build against'
+        required: true
+        type: string
+      version:
+        description: 'Version to publish as'
+        required: true
+        type: string
+      build_id:
+        description: 'Run ID from the original release-build workflow'
+        required: true
+        type: string
+      version_type:
+        description: 'Version type (canary, nightly, stable)'
+        required: true
+        type: string
+
   workflow_dispatch:
     inputs:
       grafana_commit:
@@ -25,7 +44,9 @@ jobs:
     name: Publish NPM packages
     runs-on: github-hosted-ubuntu-x64-small
     if: inputs.version_type == 'canary' || inputs.version_type == 'stable'
-
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Info
         env:
@@ -82,6 +103,14 @@ jobs:
 
       - name: Debug packed files
         run: tree -a ./npm-artifacts
+
+      - name: Validate packages
+        run: ./scripts/validate-npm-packages.sh
+
+      - name: Debug OIDC Claims
+        uses: github/actions-oidc-debugger@018a1dc4f8e47adca924d55e4bb0ddce917af32d
+        with:
+          audience: '${{ github.server_url }}/${{ github.repository_owner }}'
 
       - name: Publish packages
         env:

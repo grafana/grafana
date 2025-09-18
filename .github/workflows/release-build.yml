@@ -271,26 +271,18 @@ jobs:
           docker manifest push "grafana/grafana-dev:${VERSION}"
           docker manifest push "grafana/grafana-dev:${VERSION}-ubuntu"
 
-  dispatch-publish-npm:
+  publish-npm-canaries:
     if: github.ref_name == 'main'
+    name: Publish NPM canaries
+    uses: ./.github/workflows/release-npm.yml
     permissions:
       contents: read
       id-token: write
-    # NPM Trusted Publishing does not yet support self-hosted runners
-    runs-on: github-hosted-ubuntu-x64-small
     needs:
       - setup
-      - build # Strictly speaking we don't need this, but we want to only publish to NPM when grafana built successfully
-    steps:
-      - name: Dispatch action
-        env:
-          GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
-          VERSION: ${{ needs.setup.outputs.version }}
-          BUILD_ID: ${{ github.run_id }}
-        run: |
-          gh workflow run npm-publish.yml \
-            --repo grafana/grafana \
-            --ref main \
-            --field grafana_commit="$GRAFANA_COMMIT" \
-            --field version="$VERSION" \
-            --field build_id="$BUILD_ID"
+      - build
+    with:
+      grafana_commit: ${{ needs.setup.outputs.grafana-commit }}
+      version: ${{ needs.setup.outputs.version }}
+      build_id: ${{ github.run_id }}
+      version_type: "canary"
