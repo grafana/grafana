@@ -316,7 +316,17 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
   builder.addScale({
     scaleKey: 'x',
     isTime: false,
+    // range: config.xAxisRange,
     range: config.xRange,
+    distribution: ScaleDistribution.Ordinal,
+    orientation: vizOrientation.xOri,
+    direction: vizOrientation.xDir,
+  });
+
+  builder.addScale({ // fake x scale for the x-axis
+    scaleKey: 'x-fake',
+    isTime: false,
+    range: config.xAxisRange,
     distribution: ScaleDistribution.Ordinal,
     orientation: vizOrientation.xOri,
     direction: vizOrientation.xDir,
@@ -331,7 +341,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
   const xFieldAxisShow = frame.fields[0]?.config.custom?.axisPlacement !== AxisPlacement.Hidden;
 
   builder.addAxis({
-    scaleKey: 'x',
+    scaleKey: 'x-fake',
     isTime: false,
     placement: xFieldAxisPlacement,
     label: frame.fields[0]?.config.custom?.axisLabel,
