@@ -14,6 +14,9 @@ type RepositoryViewList struct {
 	// The UI should force the onboarding workflow when this is true
 	LegacyStorage bool `json:"legacyStorage,omitempty"`
 
+	// The valid targets (can disable instance or folder types)
+	AllowedTargets []SyncTargetType `json:"allowedTargets,omitempty"`
+
 	// AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)
 	AvailableRepositoryTypes []RepositoryType `json:"availableRepositoryTypes,omitempty"`
 

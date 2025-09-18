@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -83,6 +84,8 @@ type APIBuilder struct {
 	// TODO: Set this up in the standalone API server
 	onlyApiServer bool
 
+	allowedTargets []provisioning.SyncTargetType
+
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
 
@@ -128,6 +131,7 @@ func NewAPIBuilder(
 	extraBuilders []ExtraBuilder,
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
+	allowedTargets []provisioning.SyncTargetType,
 ) *APIBuilder {
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
@@ -149,6 +153,7 @@ func NewAPIBuilder(
 		access:              access,
 		jobHistoryConfig:    jobHistoryConfig,
 		extraWorkers:        extraWorkers,
+		allowedTargets:      allowedTargets,
 	}
 
 	for _, builder := range extraBuilders {
@@ -213,6 +218,11 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
+	allowedTargets := []provisioning.SyncTargetType{}
+	for _, target := range cfg.ProvisioningAllowedTargets {
+		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
+	}
+
 	builder := NewAPIBuilder(
 		cfg.ProvisioningDisableControllers,
 		repoFactory,
@@ -226,6 +236,7 @@ func RegisterAPIService(
 		extraBuilders,
 		extraWorkers,
 		createJobHistoryConfigFromSettings(cfg),
+		allowedTargets,
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
@@ -537,6 +548,10 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 
 	list := repository.ValidateRepository(repo)
 	cfg := repo.Config()
+
+	if !slices.Contains(b.allowedTargets, cfg.Spec.Sync.Target) {
+		return fmt.Errorf("sync target %s is not supported", cfg.Spec.Sync.Target)
+	}
 
 	if a.GetOperation() == admission.Update {
 		oldRepo, err := b.asRepository(ctx, a.GetOldObject(), nil)
