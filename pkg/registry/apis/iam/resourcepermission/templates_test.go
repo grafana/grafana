@@ -106,6 +106,7 @@ func TestTemplates(t *testing.T) {
 			PermissionTable:    nodb.Table("permission"),
 			RoleTable:          nodb.Table("role"),
 			ManagedRolePattern: "managed:%",
+			RoleName:           q.RoleName,
 		}
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
