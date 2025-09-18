@@ -364,14 +364,6 @@
       "tooltip-assigned-role": "Amikor ez a felhasználó bejelentkezik, a rendszer egy licencelt szerepkört rendel hozzá"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "Általános címkék elrejtése",
-      "show": {
-        "tooltip": "Általános címkék megjelenítése"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Aktív időzítések"
@@ -480,16 +472,16 @@
     "alert-instance-state-filter": {
       "state": "Állapot"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "Címke eltávolítása"
     },
     "alert-label-dropdown": {
       "placeholder-select": "{{type}} kiválasztása"
-    },
-    "alert-labels": {
-      "aria-label-labels": "Címkék",
-      "common-labels-count_one": "több mint {{count}} közös címke",
-      "common-labels-count_other": "több mint {{count}} közös címke"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "Némítás, csoportosítás és időzítés (opcionális)",
@@ -9439,7 +9431,7 @@
       "label-signature": "Aláírás"
     },
     "description-enable-infinite-scrolling": "Kísérleti. További eredmények kéréséhez görgessen a naplók listájának aljára.",
-    "description-enable-syntax-highlighting": "Használjon előre definiált szintaxisszínező grammatikát a naplósorok releváns részeinek kiemeléséhez",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "Vezérlők megjelenítése az utolsó vagy az első naplósorra ugráshoz és szűrés naplószint szerint",
     "fields": {
       "type": {
@@ -9711,14 +9703,14 @@
     },
     "name-common-labels": "Közös címkék",
     "name-deduplication": "Duplikátumok törlése",
-    "name-details-mode": "Napló részletei panel módban",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "Beágyazott",
       "label-sidebar": "Oldalsáv"
     },
     "name-enable-infinite-scrolling": "Végtelen görgetés engedélyezése",
     "name-enable-log-details": "Napló részleteinek engedélyezése",
-    "name-enable-syntax-highlighting": "Szintaxiskiemelés engedélyezése",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "Betűméret",
     "name-order": "Sorrend",
     "name-prettify-json": "JSON szépítése",
@@ -11012,7 +11004,6 @@
       "body-not-published": "Ez a bővítmény nincs közzétéve a <2>grafana.com/plugins</2> weboldalon, és nem kezelhető a katalóguson keresztül.",
       "enterprise-plugin-info": "Ez a beépülő modul csak a Grafana Cloud és a Grafana Enterprise szolgáltatásban érhető el.",
       "learn-more": "További információk",
-      "no-valid-grafana-enterprise-license-detected": "Nem található érvényes Grafana Enterprise-licenc.",
       "title-dev-alert": "Ez a bővítmény fejlesztési változata, és nem távolítható el.",
       "title-plugin-doesnt-support-version-grafana": "Ez a bővítmény nem támogatja a Grafana ezen verzióját.",
       "title-remote-plugins-unavailable": "A telepítési vezérlők le vannak tiltva, mert a Grafana-kiszolgáló nem fér hozzá a grafana.com webhelyhez.",
@@ -11372,11 +11363,12 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Nincs találat a lekérdezésre",
+      "partial-managed": "",
       "placeholder-search": "Keresés",
       "all-resources-managed_one": "",
       "all-resources-managed_other": "",
-      "partial-managed_one": "",
-      "partial-managed_other": ""
+      "unmanaged-resources_one": "",
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {

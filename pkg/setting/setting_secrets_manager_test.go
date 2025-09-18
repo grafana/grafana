@@ -170,4 +170,26 @@ domain = example.com
 		assert.Equal(t, MisconfiguredProvider, cfg.SecretsManagement.CurrentEncryptionProvider)
 		assert.Empty(t, cfg.SecretsManagement.ConfiguredKMSProviders)
 	})
+
+	t.Run("should handle configuration with developer mode on", func(t *testing.T) {
+		iniContent := `
+[secrets_manager]
+developer_mode = true
+`
+		cfg, err := NewCfgFromBytes([]byte(iniContent))
+		require.NoError(t, err)
+
+		assert.True(t, cfg.SecretsManagement.IsDeveloperMode)
+	})
+
+	t.Run("should handle configuration without developer mode set", func(t *testing.T) {
+		iniContent := `
+[secrets_manager]
+encryption_provider = aws_kms
+`
+		cfg, err := NewCfgFromBytes([]byte(iniContent))
+		require.NoError(t, err)
+
+		assert.False(t, cfg.SecretsManagement.IsDeveloperMode)
+	})
 }
