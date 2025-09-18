@@ -13,6 +13,7 @@ import (
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // decryptAuthorizer is the authorizer implementation for decrypt operations.
@@ -22,21 +23,37 @@ type decryptAuthorizer struct {
 }
 
 type extraOwnerDecrypter struct {
-	identity string // hostedgrafana
-	group    string // provisioning.grafana.app
+	identity string
+	group    string
 }
 
-func ProvideDecryptAuthorizer(tracer trace.Tracer) contracts.DecryptAuthorizer {
+func ProvideExtraOwnerDecrypters(cfg *setting.Cfg) []extraOwnerDecrypter {
+	var extra []extraOwnerDecrypter
+	if cfg != nil && len(cfg.SecretsManagement.ExtraOwnerDecrypters) > 0 {
+		for group, identities := range cfg.SecretsManagement.ExtraOwnerDecrypters {
+			for _, identity := range identities {
+				extra = append(extra, extraOwnerDecrypter{
+					identity: identity,
+					group:    group,
+				})
+			}
+		}
+	}
+
+	return extra
+}
+
+func ProvideDecryptAuthorizer(
+	tracer trace.Tracer,
+	extra []extraOwnerDecrypter,
+) contracts.DecryptAuthorizer {
 	return &decryptAuthorizer{
 		tracer: tracer,
-		extra: []extraOwnerDecrypter{{ // TODO... from config??
-			identity: "hg???",
-			group:    "provisioning.grafana.app",
-		}},
+		extra:  extra,
 	}
 }
 
-// authorize checks whether the auth info token has the right permissions to decrypt the secure value.
+// Authorize checks whether the auth info token has the right permissions to decrypt the secure value.
 func (a *decryptAuthorizer) Authorize(ctx context.Context, ns xkube.Namespace, secureValueName string, secureValueDecrypters []string, owners []metav1.OwnerReference) (id string, isAllowed bool) {
 	ctx, span := a.tracer.Start(ctx, "DecryptAuthorizer.Authorize", trace.WithAttributes(
 		attribute.String("name", secureValueName),

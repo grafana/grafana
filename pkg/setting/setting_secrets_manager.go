@@ -34,6 +34,10 @@ type SecretsManagerSettings struct {
 	GCWorkerPollInterval time.Duration
 	// How long to wait for the process to clean up a secure value to complete.
 	GCWorkerPerSecureValueCleanupTimeout time.Duration
+
+	// ExtraOwnerDecrypters contains a set of identities allowed to decrypt secrets owned by some API group.
+	// e.g. some.example.app: []string{"id"} means that identity "id" can decrypt secrets owned by some.example.app.
+	ExtraOwnerDecrypters map[string][]string
 }
 
 func (cfg *Cfg) readSecretsManagerSettings() {
@@ -66,4 +70,12 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 		}
 	}
 	cfg.SecretsManagement.ConfiguredKMSProviders = providers
+
+	// Read extra owner decrypters from config
+	cfg.SecretsManagement.ExtraOwnerDecrypters = make(map[string][]string)
+	rawExtra := cfg.Raw.Section("secrets_manager.extra_owner_decrypters")
+	for _, key := range rawExtra.Keys() {
+		formattedValue := strings.ReplaceAll(key.Value(), " ", "")
+		cfg.SecretsManagement.ExtraOwnerDecrypters[key.Name()] = strings.Split(formattedValue, ",")
+	}
 }
