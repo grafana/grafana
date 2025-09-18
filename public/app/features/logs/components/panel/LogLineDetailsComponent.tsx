@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
-import { memo, startTransition, useCallback, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, memo, startTransition, useCallback, useMemo, useRef, useState } from 'react';
 
 import { DataFrameType, GrafanaTheme2, store, TimeRange } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ControlledCollapse, useStyles2 } from '@grafana/ui';
+import { Box, Checkbox, ControlledCollapse, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
 import { useAttributesExtensionLinks } from '../LogDetails';
@@ -33,6 +33,9 @@ export const LogLineDetailsComponent = memo(
   ({ focusLogLine, log, logs, timeRange, timeZone }: LogLineDetailsComponentProps) => {
     const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields, syntaxHighlighting } =
       useLogListContext();
+    const [showUnique, setShowUnique] = useState(
+      store.getBool(`${logOptionsStorageKey}.log-details.showUnique`, false)
+    );
     const [search, setSearch] = useState('');
     const inputRef = useRef('');
     const styles = useStyles2(getStyles);
@@ -65,8 +68,9 @@ export const LogLineDetailsComponent = memo(
             key: label,
             value: log.labels[label],
             links: extensionLinks?.[label],
-          })),
-      [extensionLinks, log.labels]
+          }))
+          .filter((label) => (showUnique ? log.uniqueLabels?.[label.key] !== undefined : true)),
+      [extensionLinks, log.labels, log.uniqueLabels, showUnique]
     );
 
     const trace = useMemo(() => getTempoTraceFromLinks(fieldsWithLinks.links), [fieldsWithLinks.links]);
@@ -112,6 +116,14 @@ export const LogLineDetailsComponent = memo(
         setSearch(inputRef.current);
       });
     }, []);
+
+    const handleUniqueChange = useCallback(
+      (e: ChangeEvent<HTMLInputElement>) => {
+        setShowUnique(e.target.checked);
+        store.set(`${logOptionsStorageKey}.log-details.showUnique`, e.target.checked);
+      },
+      [logOptionsStorageKey]
+    );
 
     const noDetails =
       !fieldsWithLinks.links.length &&
@@ -168,6 +180,13 @@ export const LogLineDetailsComponent = memo(
               <LogLineDetailsTrace timeRange={timeRange} timeZone={timeZone} traceRef={trace} />
             </ControlledCollapse>
           )}
+          <Box paddingBottom={1} paddingLeft={0.25} marginBottom={0.5}>
+            <Checkbox
+              defaultChecked={showUnique}
+              label={t('logs.log-line-details.show-unique', 'Show only unique fields')}
+              onChange={handleUniqueChange}
+            />
+          </Box>
           {labelGroups.map((group) =>
             group === '' ? (
               <ControlledCollapse
