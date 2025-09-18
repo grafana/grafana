@@ -195,16 +195,16 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 			return true
 		}, claims.NoopZookie{}, nil
 	}
-	checker, _, err := c.client.Compile(ctx, id, req)
+	checker, zookie, err := c.client.Compile(ctx, id, req)
 	if err != nil {
 		c.logger.Error("Compile", "group", req.Group, "resource", req.Resource, "error", err, "traceid", trace.SpanContextFromContext(ctx).TraceID().String())
 		c.metrics.errorsTotal.WithLabelValues(req.Group, req.Resource, req.Verb).Inc()
 		span.SetStatus(codes.Error, fmt.Sprintf("compile failed: %v", err))
 		span.RecordError(err)
-		return nil, claims.NoopZookie{}, err
+		return nil, zookie, err
 	}
 	c.metrics.compileDuration.WithLabelValues(req.Group, req.Resource, req.Verb).Observe(time.Since(t).Seconds())
-	return checker, claims.NoopZookie{}, nil
+	return checker, zookie, nil
 }
 
 func (c authzLimitedClient) IsCompatibleWithRBAC(group, resource string) bool {
