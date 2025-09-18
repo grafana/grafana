@@ -3,9 +3,13 @@ package adapter
 import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 const (
+	// PluginStore is the module name for the plugin store service.
+	PluginStore = pluginstore.ServiceName
+
 	// Tracing is the module name for the tracing service.
 	Tracing = tracing.ServiceName
 
@@ -29,7 +33,8 @@ func dependencyMap() map[string][]string {
 	return map[string][]string{
 		Tracing:            {},
 		GrafanaAPIServer:   {Tracing},
-		Core:               {GrafanaAPIServer},
+		PluginStore:        {},
+		Core:               {GrafanaAPIServer, PluginStore},
 		BackgroundServices: {Core},
 	}
 }
