@@ -659,10 +659,6 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 			cleanupFieldConfigOverrides(overrides)
 		}
 
-		// Check if fieldConfig should be removed entirely (matches PanelModel defaults)
-		// Don't remove fieldConfig - frontend keeps it even when it has empty custom objects
-		// The frontend's getSaveModel() logic is more complex and we should preserve fieldConfig
-		// unless we're absolutely certain it should be removed
 	}
 }
 
