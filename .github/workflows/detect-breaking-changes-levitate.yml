@@ -29,7 +29,7 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           path: './pr'
           persist-credentials: false
@@ -80,7 +80,7 @@ jobs:
         working-directory: './base'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           path: './base'
           ref: ${{ github.event.pull_request.base.ref }}
@@ -132,7 +132,7 @@ jobs:
       id-token: 'write'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -165,7 +165,7 @@ jobs:
           project_id: 'grafanalabs-global'
 
       - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@77e7a554d41e2ee56fc945c52dfd3f33d12def9a'
+        uses: 'google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db'
         if: github.event.pull_request.head.repo.full_name == github.repository
         with:
           version: '>= 363.0.0'
@@ -220,7 +220,7 @@ jobs:
           app-id: ${{ env.GITHUB_APP_ID }}
           private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 

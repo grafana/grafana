@@ -17,7 +17,7 @@ import { ShareExport } from './ShareExport';
 import { ShareLibraryPanel } from './ShareLibraryPanel';
 import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
-import { ShareModalTabModel } from './types';
+import { ShareModalTabModel, ShareModalTabProps } from './types';
 import { getTrackingSource, shareDashboardType } from './utils';
 
 const customDashboardTabs: ShareModalTabModel[] = [];
@@ -46,7 +46,7 @@ function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: stri
 
   if (panel) {
     const embedLabel = t('share-modal.tab-title.embed', 'Embed');
-    tabs.push({ label: embedLabel, value: shareDashboardType.embed, component: ShareEmbed });
+    tabs.push({ label: embedLabel, value: shareDashboardType.embed, component: ShareEmbedTab });
 
     if (!isPanelModelLibraryPanel(panel)) {
       const libraryPanelLabel = t('share-modal.tab-title.library-panel', 'Library panel');
@@ -77,6 +77,17 @@ function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: stri
     tabs,
     activeTab: at?.value ?? tabs[0].value,
   };
+}
+
+function ShareEmbedTab(props: ShareModalTabProps) {
+  return (
+    <ShareEmbed
+      dashboard={props.dashboard}
+      panelId={String(props.panel?.id)}
+      timeFrom={props.panel?.timeFrom}
+      onDismiss={props.onDismiss}
+    />
+  );
 }
 
 interface Props extends Themeable2 {

@@ -10,6 +10,7 @@ import { AnnoKeyManagerKind, ManagerKind } from '../../../features/apiserver/typ
 import { PAGE_SIZE } from '../../../features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from '../../../features/browse-dashboards/state/utils';
 
+import { UseFoldersQueryProps } from './useFoldersQuery';
 import { getRootFolderItem } from './utils';
 
 type GetFolderChildrenQuery = ReturnType<ReturnType<typeof dashboardAPIv0alpha1.endpoints.getSearch.select>>;
@@ -25,7 +26,15 @@ const collator = new Intl.Collator();
  * This version uses the getFolderChildren API from the folder v1beta1 API. Compared to legacy API, the v1beta1 API
  * does not have pagination at the moment.
  */
-export function useFoldersQueryAppPlatform(isBrowsing: boolean, openFolders: Record<string, boolean>) {
+
+type Props = Omit<UseFoldersQueryProps, 'permission'>;
+export function useFoldersQueryAppPlatform({
+  isBrowsing,
+  openFolders,
+  /* rootFolderUID: configure which folder to start browsing from */
+  rootFolderUID,
+  rootFolderItem,
+}: Props) {
   const dispatch = useDispatch();
 
   // Keep a list of all request subscriptions so we can unsubscribe from them when the component is unmounted
@@ -130,6 +139,7 @@ export function useFoldersQueryAppPlatform(isBrowsing: boolean, openFolders: Rec
             uid: name,
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             managedBy: item.metadata?.annotations?.[AnnoKeyManagerKind] as ManagerKind | undefined,
+            parentUID: item.parentUID,
           },
         };
 
@@ -150,11 +160,12 @@ export function useFoldersQueryAppPlatform(isBrowsing: boolean, openFolders: Rec
       return list;
     }
 
-    const rootFlatTree = createFlatList(rootFolderToken, state.responseByParent[rootFolderToken], 1);
-    rootFlatTree.unshift(getRootFolderItem());
+    const startingToken = rootFolderUID ?? rootFolderToken;
+    const rootFlatTree = createFlatList(startingToken, state.responseByParent[startingToken], 1);
+    rootFlatTree.unshift(rootFolderItem || getRootFolderItem());
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders]);
+  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
 
   return {
     items: treeList,

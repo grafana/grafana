@@ -3,7 +3,6 @@ package folders
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,10 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -35,11 +31,9 @@ var (
 )
 
 type legacyStorage struct {
-	service        folder.Service
+	service        folder.LegacyService
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
-	cfg            *setting.Cfg
-	features       featuremgmt.FeatureToggles
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -177,12 +171,6 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, fmt.Errorf("expected folder?")
 	}
 
-	// Simplify creating unique folder names with
-	if p.GenerateName != "" && strings.Contains(p.Spec.Title, "${RAND}") {
-		rand, _ := util.GetRandomString(10)
-		p.Spec.Title = strings.ReplaceAll(p.Spec.Title, "${RAND}", rand)
-	}
-
 	accessor, err := utils.MetaAccessor(p)
 	if err != nil {
 		return nil, err
@@ -255,6 +243,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, created, fmt.Errorf("expected old object to be a folder also")
 	}
 
+	changed := false
 	mOld, _ := utils.MetaAccessor(old)
 	mNew, _ := utils.MetaAccessor(f)
 	oldParent := mOld.GetFolder()
@@ -269,9 +258,9 @@ func (s *legacyStorage) Update(ctx context.Context,
 		if err != nil {
 			return nil, created, err
 		}
+		changed = true
 	}
 
-	changed := false
 	cmd := &folder.UpdateFolderCommand{
 		SignedInUser: user,
 		UID:          name,
@@ -315,13 +304,15 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if !ok {
 		return v, false, fmt.Errorf("expected a folder response from Get")
 	}
+
 	err = s.service.DeleteLegacy(ctx, &folder.DeleteFolderCommand{
 		UID:          name,
 		OrgID:        info.OrgID,
 		SignedInUser: user,
 
 		// This would cascade delete into alert rules
-		ForceDeleteRules: false,
+		ForceDeleteRules:  false,
+		RemovePermissions: utils.GetFolderRemovePermissions(ctx, true),
 	})
 	return p, true, err // true is instant delete
 }

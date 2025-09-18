@@ -51,7 +51,7 @@ describe('Connections', () => {
 
     // Add new connection card
     expect(await screen.findByText('Add new connection')).toBeVisible();
-    expect(await screen.findByText('Collector:')).toBeVisible();
+    expect(await screen.findByText('Collector')).toBeVisible();
     expect(await screen.findByText('Data sources')).toBeVisible();
     expect(await screen.findByText('Integrations')).toBeVisible();
     expect(await screen.findByText('Private data source connect')).toBeVisible();
@@ -95,8 +95,6 @@ describe('Connections', () => {
   test('renders the core "Add new connection" page in case there is no standalone plugin page override for it', async () => {
     renderPage(ROUTES.AddNewConnection);
 
-    // We expect to see no results and "Data sources" as a header (we only have data sources in OSS Grafana at this point)
-    expect(await screen.findByText('Data sources')).toBeVisible();
     expect(await screen.findByText('No results matching your query were found')).toBeVisible();
   });
 

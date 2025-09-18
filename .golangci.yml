@@ -32,6 +32,13 @@ linters:
     - unused
     - whitespace
   settings:
+    custom:
+      wirecheck:
+        type: module
+        description: Check for direct dependency method calls in wire provider functions
+        settings:
+          wire-gen: ./pkg/server/wire_gen.go
+          recursive: true
     depguard:
       rules:
         aggregator:
@@ -101,6 +108,8 @@ linters:
             - '**/pkg/tsdb/azuremonitor/**/*'
             - '**/pkg/tsdb/cloud-monitoring/*'
             - '**/pkg/tsdb/cloud-monitoring/**/*'
+            - '**/pkg/tsdb/graphite/*'
+            - '**/pkg/tsdb/graphite/**/*'
             - '**/pkg/tsdb/mysql/*'
             - '**/pkg/tsdb/mysql/**/*'
             - '**/pkg/tsdb/parca/*'

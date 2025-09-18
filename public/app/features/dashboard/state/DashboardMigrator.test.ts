@@ -14,8 +14,6 @@ import { PanelModel } from '../state/PanelModel';
 
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
 
-jest.mock('app/core/services/context_srv', () => ({}));
-
 const dataSources = {
   prom: mockDataSource({
     name: 'prom',

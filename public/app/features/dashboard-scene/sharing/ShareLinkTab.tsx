@@ -76,7 +76,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
     let imageQueryParams = urlParamsUpdate;
     if (panel) {
       delete imageQueryParams.viewPanel;
-      imageQueryParams.panelId = panel.state.key;
+      imageQueryParams.panelId = panel.getPathId();
       // force solo route to use scenes
       imageQueryParams['__feature.dashboardSceneSolo'] = true;
     }
@@ -84,7 +84,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
     const imageUrl = getDashboardUrl({
       uid: dashboard.state.uid,
       currentQueryParams: window.location.search,
-      updateQuery: { ...urlParamsUpdate, ...queryOptions, panelId: panel?.state.key },
+      updateQuery: { ...urlParamsUpdate, ...queryOptions, panelId: panel?.getPathId() },
       absolute: true,
       soloRoute: true,
       render: true,

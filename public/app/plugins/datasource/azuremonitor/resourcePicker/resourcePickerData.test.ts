@@ -44,6 +44,12 @@ const createResourcePickerData = (responses: AzureGraphResponse[], noNamespaces?
   return { resourcePickerData, postResource, mockDatasource };
 };
 
+const emptyFilters = {
+  subscriptions: [],
+  types: [],
+  locations: [],
+};
+
 describe('AzureMonitor resourcePickerData', () => {
   describe('getSubscriptions', () => {
     it('makes 1 call to ARG with the correct path and query arguments', async () => {
@@ -166,6 +172,52 @@ describe('AzureMonitor resourcePickerData', () => {
         }
       }
     });
+
+    it('applies subscription filters in the query', async () => {
+      const mockResponse = createMockARGSubscriptionResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const filters = { subscriptions: ['sub1', 'sub2'], types: [], locations: [] };
+      await resourcePickerData.getSubscriptions(filters);
+      const firstCall = postResource.mock.calls[0];
+      const postBody = firstCall[1];
+      expect(postBody.query).toContain('| where subscriptionId in ("sub1","sub2")');
+    });
+
+    it('applies type filters in the query', async () => {
+      const mockResponse = createMockARGSubscriptionResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const filters = { subscriptions: [], types: ['microsoft.compute/virtualmachines'], locations: [] };
+      await resourcePickerData.getSubscriptions(filters);
+      const firstCall = postResource.mock.calls[0];
+      const postBody = firstCall[1];
+      expect(postBody.query).toContain('| where type in ("microsoft.compute/virtualmachines")');
+    });
+
+    it('applies location filters in the query', async () => {
+      const mockResponse = createMockARGSubscriptionResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const filters = { subscriptions: [], types: [], locations: ['eastus', 'westeurope'] };
+      await resourcePickerData.getSubscriptions(filters);
+      const firstCall = postResource.mock.calls[0];
+      const postBody = firstCall[1];
+      expect(postBody.query).toContain('| where location in ("eastus","westeurope")');
+    });
+
+    it('applies all filters together in the query', async () => {
+      const mockResponse = createMockARGSubscriptionResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const filters = {
+        subscriptions: ['sub1'],
+        types: ['microsoft.compute/virtualmachines'],
+        locations: ['eastus'],
+      };
+      await resourcePickerData.getSubscriptions(filters);
+      const firstCall = postResource.mock.calls[0];
+      const postBody = firstCall[1];
+      expect(postBody.query).toContain('| where subscriptionId in ("sub1")');
+      expect(postBody.query).toContain('| where type in ("microsoft.compute/virtualmachines")');
+      expect(postBody.query).toContain('| where location in ("eastus")');
+    });
   });
 
   describe('getResourceGroupsBySubscriptionId', () => {
@@ -182,6 +234,36 @@ describe('AzureMonitor resourcePickerData', () => {
         'extend resourceGroupURI = strcat("/subscriptions/", subscriptionId, "/resourcegroups/", resourceGroup)'
       );
       expect(postBody.query).toContain("where subscriptionId == '123'");
+    });
+
+    it('does not apply subscription filters in the query - only the supplied subscription is used', async () => {
+      const mockResponse = createMockARGResourceGroupsResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const filters = { subscriptions: ['sub1', 'sub2'], types: [], locations: [] };
+      await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'logs', filters);
+      const firstCall = postResource.mock.calls[0];
+      const postBody = firstCall[1];
+      expect(postBody.query).toContain('| where subscriptionId in ("123")');
+    });
+
+    it('applies type filters in the query', async () => {
+      const mockResponse = createMockARGResourceGroupsResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const filters = { subscriptions: [], types: ['microsoft.compute/virtualmachines'], locations: [] };
+      await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'logs', filters);
+      const firstCall = postResource.mock.calls[0];
+      const postBody = firstCall[1];
+      expect(postBody.query).toContain('| where type in ("microsoft.compute/virtualmachines")');
+    });
+
+    it('applies location filters in the query', async () => {
+      const mockResponse = createMockARGResourceGroupsResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const filters = { subscriptions: [], types: [], locations: ['eastus', 'westeurope'] };
+      await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'logs', filters);
+      const firstCall = postResource.mock.calls[0];
+      const postBody = firstCall[1];
+      expect(postBody.query).toContain('| where location in ("eastus","westeurope")');
     });
 
     it('returns formatted resourceGroups', async () => {
@@ -289,6 +371,36 @@ describe('AzureMonitor resourcePickerData', () => {
       expect(postBody.query).toContain('where id hasprefix "/subscription/sub1/resourceGroups/dev/"');
     });
 
+    it('applies subscription filters in the query', async () => {
+      const mockResponse = createARGResourcesResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const filters = { subscriptions: ['sub1', 'sub2'], types: [], locations: [] };
+      await resourcePickerData.getResourcesForResourceGroup('/subscription/sub1/resourceGroups/dev', 'logs', filters);
+      const firstCall = postResource.mock.calls[0];
+      const postBody = firstCall[1];
+      expect(postBody.query).toContain('| where subscriptionId in ("sub1","sub2")');
+    });
+
+    it('applies type filters in the query', async () => {
+      const mockResponse = createARGResourcesResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const filters = { subscriptions: [], types: ['microsoft.compute/virtualmachines'], locations: [] };
+      await resourcePickerData.getResourcesForResourceGroup('/subscription/sub1/resourceGroups/dev', 'logs', filters);
+      const firstCall = postResource.mock.calls[0];
+      const postBody = firstCall[1];
+      expect(postBody.query).toContain('| where type in ("microsoft.compute/virtualmachines")');
+    });
+
+    it('applies location filters in the query', async () => {
+      const mockResponse = createARGResourcesResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const filters = { subscriptions: [], types: [], locations: ['eastus', 'westeurope'] };
+      await resourcePickerData.getResourcesForResourceGroup('/subscription/sub1/resourceGroups/dev', 'logs', filters);
+      const firstCall = postResource.mock.calls[0];
+      const postBody = firstCall[1];
+      expect(postBody.query).toContain('| where location in ("eastus","westeurope")');
+    });
+
     it('returns formatted resources', async () => {
       const mockResponse = createARGResourcesResponse();
       const { resourcePickerData } = createResourcePickerData([mockResponse]);
@@ -344,7 +456,7 @@ describe('AzureMonitor resourcePickerData', () => {
         mockSubscriptionsResponse,
         mockResponse,
       ]);
-      const formattedResults = await resourcePickerData.search('vmname', 'metrics');
+      const formattedResults = await resourcePickerData.search('vmname', 'metrics', emptyFilters);
       expect(postResource).toHaveBeenCalledTimes(2);
       expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
         {
@@ -382,6 +494,69 @@ describe('AzureMonitor resourcePickerData', () => {
         uri: '/subscriptions/subId/resourceGroups/rgName/providers/Microsoft.Compute/virtualMachines/vmname',
       });
     });
+
+    it('applies subscription filters in the query', async () => {
+      const mockResponse = {
+        data: [
+          {
+            id: '/subscriptions/subId/resourceGroups/rgName',
+            name: 'rgName',
+            type: 'microsoft.resources/subscriptions/resourcegroups',
+            resourceGroup: 'rgName',
+            subscriptionId: 'subId',
+            location: 'northeurope',
+          },
+        ],
+      };
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const filters = { subscriptions: ['sub1', 'sub2'], types: [], locations: [] };
+      await resourcePickerData.search('rgName', 'logs', filters);
+      const firstCall = postResource.mock.calls[0];
+      const postBody = firstCall[1];
+      expect(postBody.query).toContain('| where subscriptionId in ("sub1","sub2")');
+    });
+
+    it('applies type filters in the query', async () => {
+      const mockResponse = {
+        data: [
+          {
+            id: '/subscriptions/subId/resourceGroups/rgName',
+            name: 'rgName',
+            type: 'microsoft.resources/subscriptions/resourcegroups',
+            resourceGroup: 'rgName',
+            subscriptionId: 'subId',
+            location: 'northeurope',
+          },
+        ],
+      };
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const filters = { subscriptions: [], types: ['microsoft.compute/virtualmachines'], locations: [] };
+      await resourcePickerData.search('rgName', 'logs', filters);
+      const firstCall = postResource.mock.calls[0];
+      const postBody = firstCall[1];
+      expect(postBody.query).toContain('| where type in ("microsoft.compute/virtualmachines")');
+    });
+
+    it('applies location filters in the query', async () => {
+      const mockResponse = {
+        data: [
+          {
+            id: '/subscriptions/subId/resourceGroups/rgName',
+            name: 'rgName',
+            type: 'microsoft.resources/subscriptions/resourcegroups',
+            resourceGroup: 'rgName',
+            subscriptionId: 'subId',
+            location: 'northeurope',
+          },
+        ],
+      };
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const filters = { subscriptions: [], types: [], locations: ['eastus', 'westeurope'] };
+      await resourcePickerData.search('rgName', 'logs', filters);
+      const firstCall = postResource.mock.calls[0];
+      const postBody = firstCall[1];
+      expect(postBody.query).toContain('| where location in ("eastus","westeurope")');
+    });
     it('metrics searches - fallback namespaces', async () => {
       const mockSubscriptionsResponse = createMockARGSubscriptionResponse();
 
@@ -401,7 +576,7 @@ describe('AzureMonitor resourcePickerData', () => {
         [mockSubscriptionsResponse, mockResponse],
         true
       );
-      await resourcePickerData.search('vmname', 'metrics');
+      await resourcePickerData.search('vmname', 'metrics', emptyFilters);
       expect(postResource).toHaveBeenCalledTimes(2);
       expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
         {
@@ -443,7 +618,7 @@ describe('AzureMonitor resourcePickerData', () => {
         ],
       };
       const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
-      const formattedResults = await resourcePickerData.search('rgName', 'logs');
+      const formattedResults = await resourcePickerData.search('rgName', 'logs', emptyFilters);
       expect(postResource).toBeCalledTimes(1);
       const firstCall = postResource.mock.calls[0];
       const [_, postBody] = firstCall;
@@ -474,7 +649,7 @@ describe('AzureMonitor resourcePickerData', () => {
       };
       const { resourcePickerData } = createResourcePickerData([mockResponse]);
       try {
-        await resourcePickerData.search('dev', 'logs');
+        await resourcePickerData.search('dev', 'logs', emptyFilters);
         throw Error('expected search test to fail but it succeeded');
       } catch (err) {
         if (err instanceof Error) {
@@ -530,6 +705,47 @@ describe('AzureMonitor resourcePickerData', () => {
       expect(resourcePickerData.getResourceGroupsBySubscriptionId).toBeCalledTimes(1);
       // getResourcesForResourceGroup should only be called once because the resource group
       // of both resources is the same
+      expect(resourcePickerData.getResourcesForResourceGroup).toBeCalledTimes(1);
+    });
+
+    it('fetches filtered resource groups and resources', async () => {
+      const { resourcePickerData } = createResourcePickerData([createMockARGSubscriptionResponse()]);
+      resourcePickerData.getResourceGroupsBySubscriptionId = jest
+        .fn()
+        .mockResolvedValue([{ id: 'rg1', uri: '/subscriptions/1/resourceGroups/rg1' }]);
+      resourcePickerData.getResourcesForResourceGroup = jest.fn().mockResolvedValue([
+        { id: 'vm1', uri: '/subscriptions/1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm1' },
+        { id: 'vm2', uri: '/subscriptions/1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm2' },
+      ]);
+      const filters = { subscriptions: ['1'], types: [], locations: [] };
+      const rows = await resourcePickerData.fetchInitialRows(
+        'logs',
+        [
+          {
+            subscription: '1',
+            resourceGroup: 'rg1',
+            resourceName: 'vm1',
+            metricNamespace: 'Microsoft.Compute/virtualMachines',
+          },
+          {
+            subscription: '1',
+            resourceGroup: 'rg1',
+            resourceName: 'vm2',
+            metricNamespace: 'Microsoft.Compute/virtualMachines',
+          },
+        ],
+        filters
+      );
+      expect(rows[0]).toMatchObject({
+        id: '1',
+        children: [
+          {
+            id: 'rg1',
+            children: [{ id: 'vm1' }, { id: 'vm2' }],
+          },
+        ],
+      });
+      expect(resourcePickerData.getResourceGroupsBySubscriptionId).toBeCalledTimes(1);
       expect(resourcePickerData.getResourcesForResourceGroup).toBeCalledTimes(1);
     });
   });

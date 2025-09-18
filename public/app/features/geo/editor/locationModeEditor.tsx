@@ -120,11 +120,5 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginTop: '5px',
       padding: theme.spacing(0.25),
     }),
-    // TODO apply styling to horizontal group (currently not working)
-    hGroup: css({
-      '& div': {
-        width: '100%',
-      },
-    }),
   };
 };

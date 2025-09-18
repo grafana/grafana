@@ -1,5 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
-
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -22,8 +20,8 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     isOpenDefault: true,
   });
 
-  const panelFrameTitleId = uuidv4();
-  const descriptionId = uuidv4();
+  const panelFrameTitleId = 'panel-frame-title';
+  const descriptionId = 'panel-frame-description';
 
   const setPanelTitle = (title: string) => {
     const input = document.getElementById(panelFrameTitleId);
@@ -91,7 +89,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.get-panel-frame-category.title.transparent-background', 'Transparent background'),
-        id: uuidv4(),
+        id: 'panel-frame-transparent-bg',
         render: function renderTransparent(descriptor) {
           return (
             <Switch
@@ -107,13 +105,13 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     .addCategory(
       new OptionsPaneCategoryDescriptor({
         title: t('dashboard.get-panel-frame-category.title.panel-links', 'Panel links'),
-        id: 'Panel links',
+        id: 'panel-frame-links-category',
         isOpenDefault: false,
         itemsCount: panel.links?.length,
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.get-panel-frame-category.title.panel-links', 'Panel links'),
-          id: uuidv4(),
+          id: 'panel-frame-links-category',
           render: function renderLinks() {
             return (
               <DataLinksInlineEditor
@@ -130,13 +128,13 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     .addCategory(
       new OptionsPaneCategoryDescriptor({
         title: t('dashboard.get-panel-frame-category.title.repeat-options', 'Repeat options'),
-        id: 'Repeat options',
+        id: 'panel-frame-repeat',
         isOpenDefault: false,
       })
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.get-panel-frame-category.title.repeat-by-variable', 'Repeat by variable'),
-            id: uuidv4(),
+            id: 'panel-frame-repeat-by-variable',
             description:
               'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
             render: function renderRepeatOptions(descriptor) {
@@ -155,6 +153,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.get-panel-frame-category.title.repeat-direction', 'Repeat direction'),
+            id: 'panel-frame-repeat-direction',
             showIf: () => !!panel.repeat,
             render: function renderRepeatOptions() {
               const directionOptions = [
@@ -181,7 +180,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.get-panel-frame-category.title.max-per-row', 'Max per row'),
-            id: uuidv4(),
+            id: 'panel-frame-repeat-max-per-row',
             showIf: () => Boolean(panel.repeat && panel.repeatDirection === 'h'),
             render: function renderOption(descriptor) {
               const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));

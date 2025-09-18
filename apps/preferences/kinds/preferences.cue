@@ -1,10 +1,16 @@
 package preferences
 
-preferencesv1alpha1: {
+preferencesV1alpha1: {
 	kind:       "Preferences"
 	pluralName: "Preferences"
 	scope:      "Namespaced"
 
+	validation: {
+		operations: [
+			"CREATE",
+			"UPDATE",
+		]
+	}
 	schema: {
 		spec: {
 			// UID for the home dashboard

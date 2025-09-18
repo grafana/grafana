@@ -2,6 +2,7 @@ package conversion
 
 import (
 	"k8s.io/apimachinery/pkg/conversion"
+	"k8s.io/utils/ptr"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -16,9 +17,9 @@ func Convert_V2alpha1_to_V0(in *dashv2alpha1.Dashboard, out *dashv0.Dashboard, s
 
 	out.Status = dashv0.DashboardStatus{
 		Conversion: &dashv0.DashboardConversionStatus{
-			StoredVersion: dashv2alpha1.VERSION,
+			StoredVersion: ptr.To(dashv2alpha1.VERSION),
 			Failed:        true,
-			Error:         "backend conversion not yet implemented",
+			Error:         ptr.To("backend conversion not yet implemented"),
 		},
 	}
 
@@ -32,9 +33,9 @@ func Convert_V2alpha1_to_V1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboard, s
 
 	out.Status = dashv1.DashboardStatus{
 		Conversion: &dashv1.DashboardConversionStatus{
-			StoredVersion: dashv2alpha1.VERSION,
+			StoredVersion: ptr.To(dashv2alpha1.VERSION),
 			Failed:        true,
-			Error:         "backend conversion not yet implemented",
+			Error:         ptr.To("backend conversion not yet implemented"),
 		},
 	}
 
@@ -48,18 +49,19 @@ func Convert_V2alpha1_to_V2beta1(in *dashv2alpha1.Dashboard, out *dashv2beta1.Da
 	if err := ConvertDashboard_V2alpha1_to_V2beta1(in, out, scope); err != nil {
 		out.Status = dashv2beta1.DashboardStatus{
 			Conversion: &dashv2beta1.DashboardConversionStatus{
-				StoredVersion: dashv2alpha1.VERSION,
+				StoredVersion: ptr.To(dashv2alpha1.VERSION),
 				Failed:        true,
-				Error:         err.Error(),
+				Error:         ptr.To(err.Error()),
 			},
 		}
-		return err
+
+		return NewConversionError(err.Error(), "v2alpha1", "v2beta1", "ConvertDashboard_V2alpha1_to_V2beta1")
 	}
 
 	// Set successful conversion status
 	out.Status = dashv2beta1.DashboardStatus{
 		Conversion: &dashv2beta1.DashboardConversionStatus{
-			StoredVersion: dashv2alpha1.VERSION,
+			StoredVersion: ptr.To(dashv2alpha1.VERSION),
 			Failed:        false,
 		},
 	}
@@ -74,9 +76,9 @@ func Convert_V2beta1_to_V0(in *dashv2beta1.Dashboard, out *dashv0.Dashboard, sco
 
 	out.Status = dashv0.DashboardStatus{
 		Conversion: &dashv0.DashboardConversionStatus{
-			StoredVersion: dashv2beta1.VERSION,
+			StoredVersion: ptr.To(dashv2beta1.VERSION),
 			Failed:        true,
-			Error:         "backend conversion not yet implemented",
+			Error:         ptr.To("backend conversion not yet implemented"),
 		},
 	}
 
@@ -90,9 +92,9 @@ func Convert_V2beta1_to_V1(in *dashv2beta1.Dashboard, out *dashv1.Dashboard, sco
 
 	out.Status = dashv1.DashboardStatus{
 		Conversion: &dashv1.DashboardConversionStatus{
-			StoredVersion: dashv2beta1.VERSION,
+			StoredVersion: ptr.To(dashv2beta1.VERSION),
 			Failed:        true,
-			Error:         "backend conversion not yet implemented",
+			Error:         ptr.To("backend conversion not yet implemented"),
 		},
 	}
 
@@ -106,9 +108,9 @@ func Convert_V2beta1_to_V2alpha1(in *dashv2beta1.Dashboard, out *dashv2alpha1.Da
 
 	out.Status = dashv2alpha1.DashboardStatus{
 		Conversion: &dashv2alpha1.DashboardConversionStatus{
-			StoredVersion: dashv2beta1.VERSION,
+			StoredVersion: ptr.To(dashv2beta1.VERSION),
 			Failed:        true,
-			Error:         "backend conversion not yet implemented",
+			Error:         ptr.To("backend conversion not yet implemented"),
 		},
 	}
 

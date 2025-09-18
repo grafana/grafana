@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { autoUpdate, flip, offset, shift, size, useFloating } from '@floating-ui/react';
+import { autoUpdate, offset, size, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
@@ -11,9 +11,9 @@ import { Observable } from 'rxjs';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
-import { Button, Icon, Input, ModalsController, Portal, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { Button, floatingUtils, Icon, Input, ModalsController, Portal, ScrollContainer, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { defaultFileUploadQuery, GrafanaQuery } from 'app/plugins/datasource/grafana/types';
@@ -25,14 +25,15 @@ import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
 import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
 
-const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
-const INTERACTION_ITEM = {
+export const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
+export const INTERACTION_ITEM = {
   SEARCH: 'search',
   OPEN_DROPDOWN: 'open_dspicker',
   SELECT_DS: 'select_ds',
   ADD_FILE: 'add_file',
   OPEN_ADVANCED_DS_PICKER: 'open_advanced_ds_picker',
   CONFIG_NEW_DS_EMPTY_STATE: 'config_new_ds_empty_state',
+  TOGGLE_FAVORITE: 'toggle_favorite',
 };
 
 export interface DataSourcePickerProps {
@@ -114,6 +115,8 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     type: props.type,
     variables: props.variables,
   });
+  const favoriteDataSources = useFavoriteDatasources();
+  const placement = 'bottom-start';
 
   // the order of middleware is important!
   const middleware = [
@@ -126,18 +129,12 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
         elements.floating.style.minHeight = `${minSize}px`;
       },
     }),
-    flip({
-      fallbackStrategy: 'initialPlacement',
-      // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: false,
-      boundary: document.body,
-    }),
-    shift(),
+    ...floatingUtils.getPositioningMiddleware(placement),
   ];
 
   const { refs, floatingStyles } = useFloating({
     open: isOpen,
-    placement: 'bottom-start',
+    placement,
     onOpenChange: setOpen,
     middleware,
     whileElementsMounted: autoUpdate,
@@ -298,6 +295,9 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
                   reportInteraction(INTERACTION_EVENT_NAME, {
                     item: INTERACTION_ITEM.SELECT_DS,
                     ds_type: ds.type,
+                    is_favorite: favoriteDataSources.enabled
+                      ? favoriteDataSources.isFavoriteDatasource(ds.uid)
+                      : undefined,
                   });
                 }
               }}

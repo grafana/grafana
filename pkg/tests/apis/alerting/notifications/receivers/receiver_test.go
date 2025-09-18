@@ -13,7 +13,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/alerting/notify"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -21,15 +20,12 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/grafana/alerting/notify"
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
-
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
-
-	test_common "github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -45,9 +41,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	test_common "github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 //go:embed test-data/*.*
@@ -62,9 +60,7 @@ func getTestHelper(t *testing.T) *apis.K8sTestHelper {
 }
 
 func TestIntegrationResourceIdentifier(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -126,16 +122,13 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 // TestIntegrationResourcePermissions focuses on testing resource permissions for the alerting receiver resource. It
 // verifies that access is correctly set when creating resources and assigning permissions to users, teams, and roles.
 func TestIntegrationResourcePermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
 	org1 := helper.Org1
-
-	noneUser := helper.CreateUser("none", apis.Org1, org.RoleNone, nil)
+	noneUser := org1.None
 
 	creator := helper.CreateUser("creator", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 		createWildcardPermission(
@@ -402,9 +395,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 }
 
 func TestIntegrationAccessControl(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -613,6 +604,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 				// Set expected metadata.
 				expectedWithMetadata := expected.Copy().(*v0alpha1.Receiver)
 				expectedWithMetadata.SetInUse(0, nil)
+				expectedWithMetadata.SetCanUse(true)
 				if tc.canUpdate {
 					expectedWithMetadata.SetAccessControl("canWrite")
 				}
@@ -730,9 +722,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 }
 
 func TestIntegrationInUseMetadata(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -858,9 +848,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 }
 
 func TestIntegrationProvisioning(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -915,9 +903,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 }
 
 func TestIntegrationOptimisticConcurrency(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -998,9 +984,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 }
 
 func TestIntegrationPatch(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -1094,9 +1078,7 @@ func TestIntegrationPatch(t *testing.T) {
 }
 
 func TestIntegrationReferentialIntegrity(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -1214,9 +1196,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 }
 
 func TestIntegrationCRUD(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -1311,6 +1291,7 @@ func TestIntegrationCRUD(t *testing.T) {
 		receiver.SetAccessControl("canReadSecrets")
 		receiver.SetAccessControl("canAdmin")
 		receiver.SetInUse(0, nil)
+		receiver.SetCanUse(true)
 
 		// Use export endpoint because it's the only way to get decrypted secrets fast.
 		cliCfg := helper.Org1.Admin.NewRestConfig()
@@ -1333,7 +1314,7 @@ func TestIntegrationCRUD(t *testing.T) {
 					expected := notify.AllKnownConfigsForTesting[strings.ToLower(integration.Type)]
 					var fields map[string]any
 					require.NoError(t, json.Unmarshal([]byte(expected.Config), &fields))
-					secretFields, err := channels_config.GetSecretKeysForContactPointType(integration.Type)
+					secretFields, err := channels_config.GetSecretKeysForContactPointType(integration.Type, channels_config.V1)
 					require.NoError(t, err)
 					for _, field := range secretFields {
 						if _, ok := fields[field]; !ok { // skip field that is not in the original setting
@@ -1382,9 +1363,7 @@ func TestIntegrationCRUD(t *testing.T) {
 }
 
 func TestIntegrationReceiverListSelector(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -1522,14 +1501,15 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig)
 func createIntegration(t *testing.T, integrationType string) v0alpha1.ReceiverIntegration {
 	cfg, ok := notify.AllKnownConfigsForTesting[integrationType]
 	require.Truef(t, ok, "no known config for integration type %s", integrationType)
-	return createIntegrationWithSettings(t, integrationType, cfg.Config)
+	return createIntegrationWithSettings(t, integrationType, "v1", cfg.Config)
 }
-func createIntegrationWithSettings(t *testing.T, integrationType string, settingsJson string) v0alpha1.ReceiverIntegration {
+func createIntegrationWithSettings(t *testing.T, integrationType string, integrationVersion string, settingsJson string) v0alpha1.ReceiverIntegration {
 	settings := common.Unstructured{}
 	require.NoError(t, settings.UnmarshalJSON([]byte(settingsJson)))
 	return v0alpha1.ReceiverIntegration{
 		Settings:              settings.Object,
 		Type:                  integrationType,
+		Version:               integrationVersion,
 		DisableResolveMessage: util.Pointer(false),
 	}
 }

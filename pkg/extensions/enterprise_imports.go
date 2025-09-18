@@ -15,7 +15,7 @@ import (
 	_ "github.com/blugelabs/bluge"
 	_ "github.com/blugelabs/bluge_segment_api"
 	_ "github.com/crewjam/saml"
-	_ "github.com/go-jose/go-jose/v3"
+	_ "github.com/go-jose/go-jose/v4"
 	_ "github.com/gobwas/glob"
 	_ "github.com/googleapis/gax-go/v2"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
@@ -27,6 +27,7 @@ import (
 	_ "github.com/robfig/cron/v3"
 	_ "github.com/russellhaering/goxmldsig"
 	_ "github.com/spf13/cobra" // used by the standalone apiserver cli
+	_ "github.com/spyzhov/ajson"
 	_ "github.com/stretchr/testify/require"
 	_ "gocloud.dev/secrets/awskms"
 	_ "gocloud.dev/secrets/azurekeyvault"
@@ -52,5 +53,7 @@ import (
 	_ "github.com/grafana/e2e"
 	_ "github.com/grafana/gofpdf"
 	_ "github.com/grafana/gomemcache/memcache"
-	_ "github.com/spyzhov/ajson"
+	_ "github.com/grafana/tempo/pkg/traceql"
+
+	_ "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1"
 )

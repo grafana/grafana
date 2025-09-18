@@ -95,24 +95,25 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, title string, orgID i
 //
 // To avoid race conditions when two concurrent requests try to create the same folder,
 // we create folders with a deterministic UID based on the parent UID, title, and organization ID.
-func (st DBstore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, error) {
+func (st DBstore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error) {
 	if len(title) == 0 {
-		return nil, fmt.Errorf("title is empty")
+		return nil, false, fmt.Errorf("title is empty")
 	}
 
 	var f *folder.FolderReference
 	var err error
+	var created bool
 
 	f, err = st.GetNamespaceByTitle(ctx, title, orgID, user, parentUID)
 	if err != nil && !errors.Is(err, dashboards.ErrFolderNotFound) {
-		return nil, err
+		return nil, false, err
 	}
 
 	if f == nil {
 		// Generate a deterministic UID with an alerting prefix
 		uid, err := generateAlertingFolderUID(title, parentUID, orgID)
 		if err != nil {
-			return nil, fmt.Errorf("error creating a new folder: %w", err)
+			return nil, false, fmt.Errorf("error creating a new folder: %w", err)
 		}
 
 		cmd := &folder.CreateFolderCommand{
@@ -129,20 +130,21 @@ func (st DBstore) GetOrCreateNamespaceByTitle(ctx context.Context, title string,
 			// the folder between our check and creation attempt
 			existingFolder, lookupErr := st.GetNamespaceByTitle(ctx, title, orgID, user, parentUID)
 			if lookupErr == nil {
-				return existingFolder, nil
+				return existingFolder, false, nil
 			}
 
 			// If we couldn't find it, return errors
-			return nil, fmt.Errorf("failed to get or create folder: %w", errors.Join(
+			return nil, false, fmt.Errorf("failed to get or create folder: %w", errors.Join(
 				fmt.Errorf("create folder: %w", err),
 				fmt.Errorf("lookup folder: %w", lookupErr),
 			))
 		}
 
 		f = newFolder.ToFolderReference()
+		created = true
 	}
 
-	return f, nil
+	return f, created, nil
 }
 
 // generateAlertingFolderUID creates a deterministic UID for folders

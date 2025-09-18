@@ -13,13 +13,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
-	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/kinds/dataquery"
-	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 	"github.com/xlab/treeprint"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/annotation"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/kinds/dataquery"
 )
 
 type queryModel struct {
@@ -76,7 +77,6 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 					logger.Error("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep, "function", logEntrypoint())
 				}
 			}
-			logger.Debug("Sending SelectSeriesRequest", "queryModel", qm, "function", logEntrypoint())
 			seriesResp, err := d.client.GetSeries(
 				gCtx,
 				profileTypeId,
@@ -96,7 +96,8 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			// add the frames to the response.
 			responseMutex.Lock()
 			withAnnotations := qm.Annotations != nil && *qm.Annotations
-			frames, err := seriesToDataFrames(seriesResp, withAnnotations)
+			stepDuration := math.Max(query.Interval.Seconds(), parsedInterval.Seconds())
+			frames, err := seriesToDataFrames(seriesResp, withAnnotations, stepDuration, profileTypeId)
 			if err != nil {
 				span.RecordError(err)
 				span.SetStatus(codes.Error, err.Error())
@@ -136,7 +137,24 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 
 			var frame *data.Frame
 			if profileResp != nil {
-				frame = responseToDataFrames(profileResp)
+				var dsJson dsJsonModel
+				err := json.Unmarshal(pCtx.DataSourceInstanceSettings.JSONData, &dsJson)
+				if err != nil {
+					span.RecordError(err)
+					span.SetStatus(codes.Error, err.Error())
+					return fmt.Errorf("error unmarshaling datasource json model: %v", err)
+				}
+
+				parsedInterval := time.Second * 15
+				if dsJson.MinStep != "" {
+					parsedInterval, err = gtime.ParseDuration(dsJson.MinStep)
+					if err != nil {
+						parsedInterval = time.Second * 15
+						logger.Error("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep, "function", logEntrypoint())
+					}
+				}
+				stepDuration := math.Max(query.Interval.Seconds(), parsedInterval.Seconds())
+				frame = responseToDataFrames(profileResp, stepDuration, profileTypeId)
 
 				// If query called with streaming on then return a channel
 				// to subscribe on a client-side and consume updates from a plugin.
@@ -173,9 +191,9 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 // responseToDataFrames turns Pyroscope response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
-func responseToDataFrames(resp *ProfileResponse) *data.Frame {
+func responseToDataFrames(resp *ProfileResponse, stepDurationSec float64, profileTypeID string) *data.Frame {
 	tree := levelsToTree(resp.Flamebearer.Levels, resp.Flamebearer.Names)
-	return treeToNestedSetDataFrame(tree, resp.Units)
+	return treeToNestedSetDataFrame(tree, resp.Units, stepDurationSec, profileTypeID)
 }
 
 // START_OFFSET is offset of the bar relative to previous sibling
@@ -337,7 +355,7 @@ type CustomMeta struct {
 // where ordering the items in depth first order and knowing the level/depth of each item we can recreate the
 // parent - child relationship without explicitly needing parent/child column, and we can later just iterate over the
 // dataFrame to again basically walking depth first over the tree/profile.
-func treeToNestedSetDataFrame(tree *ProfileTree, unit string) *data.Frame {
+func treeToNestedSetDataFrame(tree *ProfileTree, unit string, stepDurationSec float64, profileTypeID string) *data.Frame {
 	frame := data.NewFrame("response")
 	frame.Meta = &data.FrameMeta{PreferredVisualization: "flamegraph"}
 
@@ -356,6 +374,7 @@ func treeToNestedSetDataFrame(tree *ProfileTree, unit string) *data.Frame {
 	if tree != nil {
 		walkTree(tree, func(tree *ProfileTree) {
 			levelField.Append(int64(tree.Level))
+			// Flamegraphs show cumulative values without rate calculation
 			valueField.Append(tree.Value)
 			selfField.Append(tree.Self)
 			labelField.Append(tree.Name)
@@ -420,27 +439,53 @@ func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
 	}
 }
 
-type TimedAnnotation struct {
-	Timestamp  int64                      `json:"timestamp"`
-	Annotation *typesv1.ProfileAnnotation `json:"annotation"`
+// isCumulativeProfile determines if a profile type requires rate calculation using the metadata registry
+func isCumulativeProfile(profileTypeID string) bool {
+	registry := GetProfileMetadataRegistry()
+	return registry.IsCumulativeProfile(profileTypeID)
 }
 
-func (ta *TimedAnnotation) getKey() string {
-	return ta.Annotation.Key
+// isCPUTimeProfile determines if a profile type represents CPU time in nanoseconds
+func isCPUTimeProfile(profileTypeID string) bool {
+	registry := GetProfileMetadataRegistry()
+	metadata := registry.GetProfileMetadata(profileTypeID)
+	if metadata != nil {
+		// Check if it's CPU time (unit is nanoseconds and type contains cpu)
+		return metadata.Unit == "ns" && (metadata.Type == "cpu" || metadata.Group == "process_cpu")
+	}
+	return false
 }
 
-func (ta *TimedAnnotation) getValue() string {
-	return ta.Annotation.Value
+// convertToRateUnit converts profile units to appropriate rate units when rate calculation is applied
+func convertToRateUnit(originalUnit string) string {
+	switch originalUnit {
+	case "bytes":
+		return "binBps"
+	case "short":
+		return "ops"
+	case "ns":
+		return "ns"
+	default:
+		return originalUnit
+	}
 }
 
-func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool) ([]*data.Frame, error) {
+func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool, stepDurationSec float64, profileTypeID string) ([]*data.Frame, error) {
 	frames := make([]*data.Frame, 0, len(resp.Series))
-	annotations := make([]*TimedAnnotation, 0)
+	annotations := make([]*annotation.TimedAnnotation, 0)
 
 	for _, series := range resp.Series {
 		// We create separate data frames as the series may not have the same length
 		frame := data.NewFrame("series")
-		frame.Meta = &data.FrameMeta{PreferredVisualization: "graph"}
+		frameMeta := &data.FrameMeta{PreferredVisualization: "graph"}
+
+		// Add metadata when rate calculation is applied
+		if isCumulativeProfile(profileTypeID) && stepDurationSec > 0 {
+			frameMeta.Custom = map[string]interface{}{
+				"rateCalculated": true,
+			}
+		}
+		frame.Meta = frameMeta
 
 		fields := make(data.Fields, 0, 2)
 		timeField := data.NewField("time", nil, []time.Time{})
@@ -451,16 +496,38 @@ func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool) ([]*data.Fra
 			labels[label.Name] = label.Value
 		}
 
+		// Determine display unit - convert units for rate-calculated cumulative profiles
+		displayUnit := resp.Units
+		if isCumulativeProfile(profileTypeID) && stepDurationSec > 0 {
+			if isCPUTimeProfile(profileTypeID) {
+				displayUnit = "cores"
+			} else {
+				// Convert other cumulative profile units to rate units
+				displayUnit = convertToRateUnit(resp.Units)
+			}
+		}
+
 		valueField := data.NewField(resp.Label, labels, []float64{})
-		valueField.Config = &data.FieldConfig{Unit: resp.Units}
+		valueField.Config = &data.FieldConfig{Unit: displayUnit}
 		fields = append(fields, valueField)
 
 		for _, point := range series.Points {
 			timeField.Append(time.UnixMilli(point.Timestamp))
-			valueField.Append(point.Value)
+
+			// Apply rate calculation for cumulative profiles
+			value := point.Value
+			if isCumulativeProfile(profileTypeID) && stepDurationSec > 0 {
+				value = value / stepDurationSec
+
+				// Convert CPU nanoseconds to cores
+				if isCPUTimeProfile(profileTypeID) {
+					value = value / 1e9
+				}
+			}
+			valueField.Append(value)
 			if withAnnotations {
 				for _, a := range point.Annotations {
-					annotations = append(annotations, &TimedAnnotation{
+					annotations = append(annotations, &annotation.TimedAnnotation{
 						Timestamp:  point.Timestamp,
 						Annotation: a,
 					})
@@ -473,7 +540,7 @@ func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool) ([]*data.Fra
 	}
 
 	if len(annotations) > 0 {
-		frame, err := createAnnotationFrame(annotations)
+		frame, err := annotation.CreateAnnotationFrame(annotations)
 		if err != nil {
 			return nil, err
 		}

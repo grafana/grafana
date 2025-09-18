@@ -13,13 +13,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	alertingInstrument "github.com/grafana/alerting/http/instrument"
+	"github.com/grafana/alerting/http/instrument/instrumenttest"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -27,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	rulesAuthz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
-	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -206,13 +207,13 @@ func TestRemoteLokiBackend(t *testing.T) {
 }
 
 func TestBuildLogQuery(t *testing.T) {
-	maxQuerySize := 110
 	cases := []struct {
-		name       string
-		query      models.HistoryQuery
-		folderUIDs []string
-		exp        []string
-		expErr     error
+		name         string
+		query        models.HistoryQuery
+		folderUIDs   []string
+		maxQuerySize int
+		exp          []string
+		expErr       error
 	}{
 		{
 			name:  "default includes state history label and orgID label",
@@ -328,11 +329,54 @@ func TestBuildLogQuery(t *testing.T) {
 			folderUIDs: []string{"folder-1", "folder-2", "folder-" + strings.Repeat("!", 14)},
 			expErr:     ErrLokiQueryTooLong,
 		},
+		{
+			name: "filters by previous state",
+			query: models.HistoryQuery{
+				OrgID:    123,
+				Previous: "Normal",
+			},
+			exp: []string{`{orgID="123",from="state-history"} | json | previous=~"^Normal.*"`},
+		},
+		{
+			name: "filters by current state",
+			query: models.HistoryQuery{
+				OrgID:   123,
+				Current: "Alerting",
+			},
+			exp: []string{`{orgID="123",from="state-history"} | json | current=~"^Alerting.*"`},
+		},
+		{
+			name: "filters by both previous and current state",
+			query: models.HistoryQuery{
+				OrgID:    123,
+				Previous: "Normal",
+				Current:  "Alerting",
+			},
+			exp: []string{`{orgID="123",from="state-history"} | json | previous=~"^Normal.*" | current=~"^Alerting.*"`},
+		},
+		{
+			name: "combines state filters with other filters",
+			query: models.HistoryQuery{
+				OrgID:    123,
+				RuleUID:  "rule-uid",
+				Previous: "Pending",
+				Current:  "Alerting",
+				Labels: map[string]string{
+					"instance": "localhost:9090",
+				},
+			},
+			maxQuerySize: 200,
+			exp:          []string{`{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | previous=~"^Pending.*" | current=~"^Alerting.*" | labels_instance="localhost:9090"`},
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			res, err := BuildLogQuery(tc.query, tc.folderUIDs, maxQuerySize)
+			querySize := tc.maxQuerySize
+			if querySize == 0 {
+				querySize = 110 // default size
+			}
+			res, err := BuildLogQuery(tc.query, tc.folderUIDs, querySize)
 			if tc.expErr != nil {
 				require.ErrorIs(t, err, tc.expErr)
 				return
@@ -340,7 +384,7 @@ func TestBuildLogQuery(t *testing.T) {
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.exp, res)
 			for i, q := range res {
-				assert.LessOrEqualf(t, len(q), maxQuerySize, "query at index %d exceeded max query size. Query: %s", i, q)
+				assert.LessOrEqualf(t, len(q), querySize, "query at index %d exceeded max query size. Query: %s", i, q)
 			}
 		})
 	}
@@ -625,7 +669,7 @@ func TestMerge(t *testing.T) {
 
 func TestRecordStates(t *testing.T) {
 	t.Run("writes state transitions to loki", func(t *testing.T) {
-		req := lokiclient.NewFakeRequester()
+		req := instrumenttest.NewFakeRequester()
 		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
@@ -642,8 +686,8 @@ func TestRecordStates(t *testing.T) {
 	t.Run("emits expected write metrics", func(t *testing.T) {
 		reg := prometheus.NewRegistry()
 		met := metrics.NewHistorianMetrics(reg, metrics.Subsystem)
-		loki := createTestLokiBackend(t, lokiclient.NewFakeRequester(), met)
-		errLoki := createTestLokiBackend(t, lokiclient.NewFakeRequester().WithResponse(lokiclient.BadResponse()), met) //nolint:bodyclose
+		loki := createTestLokiBackend(t, instrumenttest.NewFakeRequester(), met)
+		errLoki := createTestLokiBackend(t, instrumenttest.NewFakeRequester().WithResponse(instrumenttest.BadResponse()), met) //nolint:bodyclose
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State:  eval.Alerting,
@@ -677,7 +721,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 	})
 
 	t.Run("elides request if nothing to send", func(t *testing.T) {
-		req := lokiclient.NewFakeRequester()
+		req := instrumenttest.NewFakeRequester()
 		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := []state.StateTransition{}
@@ -689,7 +733,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 	})
 
 	t.Run("succeeds with special chars in labels", func(t *testing.T) {
-		req := lokiclient.NewFakeRequester()
+		req := instrumenttest.NewFakeRequester()
 		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
@@ -712,7 +756,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 	})
 
 	t.Run("adds external labels to log lines", func(t *testing.T) {
-		req := lokiclient.NewFakeRequester()
+		req := instrumenttest.NewFakeRequester()
 		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
@@ -740,7 +784,7 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 	usr := accesscontrol.BackgroundUser("test", 1, org.RoleNone, nil)
 
 	createLoki := func(ac AccessControl) *RemoteLokiBackend {
-		req := lokiclient.NewFakeRequester()
+		req := instrumenttest.NewFakeRequester()
 		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rules := fakes.NewRuleStore(t)
 		f := make([]*folder.Folder, 0, len(folders))
@@ -880,12 +924,12 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 	})
 }
 
-func createTestLokiBackend(t *testing.T, req client.Requester, met *metrics.Historian) *RemoteLokiBackend {
+func createTestLokiBackend(t *testing.T, req alertingInstrument.Requester, met *metrics.Historian) *RemoteLokiBackend {
 	url, _ := url.Parse("http://some.url")
 	cfg := lokiclient.LokiConfig{
 		WritePathURL:   url,
 		ReadPathURL:    url,
-		Encoder:        lokiclient.JsonEncoder{},
+		Encoder:        lokiclient.JSONEncoder{},
 		ExternalLabels: map[string]string{"externalLabelKey": "externalLabelValue"},
 	}
 	lokiBackendLogger := log.New("ngalert.state.historian", "backend", "loki")

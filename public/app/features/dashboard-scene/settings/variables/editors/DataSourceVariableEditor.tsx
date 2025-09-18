@@ -1,6 +1,5 @@
 import React, { FormEvent } from 'react';
 import { lastValueFrom } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -81,12 +80,12 @@ export function getDataSourceVariableOptions(variable: SceneVariable): OptionsPa
   return [
     new OptionsPaneItemDescriptor({
       title: t('dashboard.edit-pane.variable.datasource-options.type', 'Type'),
-      id: uuidv4(),
+      id: 'datasource-options-type',
       render: ({ props }) => <DataSourceTypeSelect id={props.id} variable={variable} />,
     }),
     new OptionsPaneItemDescriptor({
       title: t('dashboard.edit-pane.variable.datasource-options.name-filter', 'Name filter'),
-      id: uuidv4(),
+      id: 'datasource-options-name-filter',
       description: t(
         'dashboard.edit-pane.variable.datasource-options.name-filter-description',
         'Regex filter for which data source instances to include. Leave empty for all.'

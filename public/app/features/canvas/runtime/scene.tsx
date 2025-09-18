@@ -5,7 +5,7 @@ import { CSSProperties } from 'react';
 import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import Selecto from 'selecto';
 
-import { AppEvents, PanelData } from '@grafana/data';
+import { AppEvents, PanelData, OneClickMode, ActionType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   ColorDimensionConfig,
@@ -14,6 +14,7 @@ import {
   ScaleDimensionConfig,
   TextDimensionConfig,
   TooltipDisplayMode,
+  DirectionDimensionConfig,
 } from '@grafana/schema';
 import { Portal } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -24,6 +25,7 @@ import {
   getScalarDimensionFromData,
   getScaleDimensionFromData,
   getTextDimensionFromData,
+  getDirectionDimensionFromData,
 } from 'app/features/dimensions/utils';
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/components/CanvasContextMenu';
 import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip';
@@ -34,6 +36,7 @@ import { AnchorPoint, CanvasTooltipPayload } from 'app/plugins/panel/canvas/type
 
 import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
+import { isInfinityActionWithAuth } from '../../actions/utils';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 import { CanvasFrameOptions } from '../frame';
 import { DEFAULT_CANVAS_ELEMENT_CONFIG } from '../registry';
@@ -79,6 +82,7 @@ export class Scene {
   shouldPanZoom?: boolean;
   zoomToContent?: boolean;
   tooltipMode?: TooltipDisplayMode;
+  tooltipDisableForOneClick?: boolean;
   skipNextSelectionBroadcast = false;
   ignoreDataUpdate = false;
   panel: CanvasPanel;
@@ -150,6 +154,7 @@ export class Scene {
   load(options: Options, enableEditing: boolean) {
     const { root, showAdvancedTypes, panZoom, zoomToContent, tooltip } = options;
     const tooltipMode = tooltip?.mode ?? TooltipDisplayMode.Single;
+    const tooltipDisableForOneClick = tooltip?.disableForOneClick ?? false;
 
     this.root = new RootElement(
       root ?? {
@@ -165,6 +170,7 @@ export class Scene {
     this.shouldPanZoom = panZoom;
     this.zoomToContent = zoomToContent;
     this.tooltipMode = tooltipMode;
+    this.tooltipDisableForOneClick = tooltipDisableForOneClick;
 
     setTimeout(() => {
       if (config.featureToggles.canvasPanelPanZoom) {
@@ -207,6 +213,7 @@ export class Scene {
     getScalar: (scalar: ScalarDimensionConfig) => getScalarDimensionFromData(this.data, scalar),
     getText: (text: TextDimensionConfig) => getTextDimensionFromData(this.data, text),
     getResource: (res: ResourceDimensionConfig) => getResourceDimensionFromData(this.data, res),
+    getDirection: (direction: DirectionDimensionConfig) => getDirectionDimensionFromData(this.data, direction),
     getPanelData: () => this.data,
   };
 
@@ -219,10 +226,6 @@ export class Scene {
     this.width = width;
     this.height = height;
     this.style = { width, height };
-
-    if (this.selecto?.getSelectedTargets().length) {
-      this.clearCurrentSelection();
-    }
 
     if (config.featureToggles.canvasPanelPanZoom) {
       this.updateConnectionsSize();
@@ -370,11 +373,18 @@ export class Scene {
   render() {
     const hasDataLinks = this.tooltipPayload?.element?.getLinks && this.tooltipPayload.element.getLinks({}).length > 0;
     const hasActions =
-      this.tooltipPayload?.element?.options.actions && this.tooltipPayload.element.options.actions.length > 0;
+      this.tooltipPayload?.element?.options.actions &&
+      this.tooltipPayload.element.options.actions.filter(
+        (action) => action.type === ActionType.Fetch || isInfinityActionWithAuth(action)
+      ).length > 0;
 
     const isTooltipValid = hasDataLinks || hasActions || this.tooltipPayload?.element?.data?.field;
-    const isTooltipEnabled = this.tooltipMode !== TooltipDisplayMode.None;
-    const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid && isTooltipEnabled;
+    const isCanvasTooltipEnabled = this.tooltipMode !== TooltipDisplayMode.None;
+
+    const isTooltipDisabledForOneClick =
+      this.tooltipDisableForOneClick && this.tooltipPayload?.element?.oneClickMode !== OneClickMode.Off;
+    const shouldShowElementTooltip =
+      !this.isEditingEnabled && isTooltipValid && isCanvasTooltipEnabled && !isTooltipDisabledForOneClick;
 
     const sceneDiv = (
       <>
@@ -389,7 +399,7 @@ export class Scene {
             />
           </Portal>
         )}
-        {canShowElementTooltip && (
+        {shouldShowElementTooltip && (
           <Portal>
             <CanvasTooltip scene={this} />
           </Portal>

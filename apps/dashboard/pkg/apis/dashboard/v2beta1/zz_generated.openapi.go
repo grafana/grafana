@@ -18,6 +18,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.AnnotationPermission":                                                                                                                                                         schema_pkg_apis_dashboard_v2beta1_AnnotationPermission(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.Dashboard":                                                                                                                                                                    schema_pkg_apis_dashboard_v2beta1_Dashboard(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAccess":                                                                                                                                                              schema_pkg_apis_dashboard_v2beta1_DashboardAccess(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAction":                                                                                                                                                              schema_pkg_apis_dashboard_v2beta1_DashboardAction(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardActionVariable":                                                                                                                                                      schema_pkg_apis_dashboard_v2beta1_DashboardActionVariable(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAdHocFilterWithLabels":                                                                                                                                               schema_pkg_apis_dashboard_v2beta1_DashboardAdHocFilterWithLabels(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAdhocVariableKind":                                                                                                                                                   schema_pkg_apis_dashboard_v2beta1_DashboardAdhocVariableKind(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAdhocVariableSpec":                                                                                                                                                   schema_pkg_apis_dashboard_v2beta1_DashboardAdhocVariableSpec(ref),
@@ -29,6 +31,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAutoGridLayoutKind":                                                                                                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardAutoGridLayoutKind(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAutoGridLayoutSpec":                                                                                                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardAutoGridLayoutSpec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAutoGridRepeatOptions":                                                                                                                                               schema_pkg_apis_dashboard_v2beta1_DashboardAutoGridRepeatOptions(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardClient":                                                                                                                                                              schema_pkg_apis_dashboard_v2beta1_DashboardClient(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardConditionalRenderingDataKind":                                                                                                                                        schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingDataKind(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardConditionalRenderingDataSpec":                                                                                                                                        schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingDataSpec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardConditionalRenderingGroupKind":                                                                                                                                       schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingGroupKind(ref),
@@ -51,6 +54,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardDatasourceVariableSpec":                                                                                                                                              schema_pkg_apis_dashboard_v2beta1_DashboardDatasourceVariableSpec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardDynamicConfigValue":                                                                                                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardDynamicConfigValue(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardElementReference":                                                                                                                                                    schema_pkg_apis_dashboard_v2beta1_DashboardElementReference(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardFetchOptions":                                                                                                                                                        schema_pkg_apis_dashboard_v2beta1_DashboardFetchOptions(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardFieldColor":                                                                                                                                                          schema_pkg_apis_dashboard_v2beta1_DashboardFieldColor(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardFieldConfig":                                                                                                                                                         schema_pkg_apis_dashboard_v2beta1_DashboardFieldConfig(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardFieldConfigSource":                                                                                                                                                   schema_pkg_apis_dashboard_v2beta1_DashboardFieldConfigSource(ref),
@@ -62,6 +66,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardGridLayoutSpec":                                                                                                                                                      schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutSpec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardGroupByVariableKind":                                                                                                                                                 schema_pkg_apis_dashboard_v2beta1_DashboardGroupByVariableKind(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardGroupByVariableSpec":                                                                                                                                                 schema_pkg_apis_dashboard_v2beta1_DashboardGroupByVariableSpec(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardInfinityOptions":                                                                                                                                                     schema_pkg_apis_dashboard_v2beta1_DashboardInfinityOptions(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardIntervalVariableKind":                                                                                                                                                schema_pkg_apis_dashboard_v2beta1_DashboardIntervalVariableKind(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardIntervalVariableSpec":                                                                                                                                                schema_pkg_apis_dashboard_v2beta1_DashboardIntervalVariableSpec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardJSONCodec":                                                                                                                                                           schema_pkg_apis_dashboard_v2beta1_DashboardJSONCodec(ref),
@@ -108,6 +113,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardTimeRangeOption":                                                                                                                                                     schema_pkg_apis_dashboard_v2beta1_DashboardTimeRangeOption(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardTimeSettingsSpec":                                                                                                                                                    schema_pkg_apis_dashboard_v2beta1_DashboardTimeSettingsSpec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardTransformationKind":                                                                                                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardTransformationKind(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardV2beta1ActionStyle":                                                                                                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardV2beta1ActionStyle(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardV2beta1AdhocVariableKindDatasource":                                                                                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardV2beta1AdhocVariableKindDatasource(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardV2beta1DataQueryKindDatasource":                                                                                                                                      schema_pkg_apis_dashboard_v2beta1_DashboardV2beta1DataQueryKindDatasource(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardV2beta1FieldConfigSourceOverrides":                                                                                                                                   schema_pkg_apis_dashboard_v2beta1_DashboardV2beta1FieldConfigSourceOverrides(ref),
@@ -308,6 +314,109 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAccess(ref common.ReferenceCallb
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.AnnotationPermission"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardAction(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"fetch": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardFetchOptions"),
+						},
+					},
+					"infinity": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardInfinityOptions"),
+						},
+					},
+					"confirmation": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"oneClick": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"variables": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardActionVariable"),
+									},
+								},
+							},
+						},
+					},
+					"style": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardV2beta1ActionStyle"),
+						},
+					},
+				},
+				Required: []string{"type", "title"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardActionVariable", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardFetchOptions", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardInfinityOptions", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardV2beta1ActionStyle"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardActionVariable(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"key": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"key", "name", "type"},
+			},
+		},
 	}
 }
 
@@ -524,6 +633,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAdhocVariableSpec(ref common.Ref
 							Default: false,
 							Type:    []string{"boolean"},
 							Format:  "",
+						},
+					},
+					"showInControlsMenu": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
 						},
 					},
 				},
@@ -850,6 +965,26 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAutoGridRepeatOptions(ref common
 				Required: []string{"mode", "value"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardClient(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"client": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana-app-sdk/resource.TypedClient[T,L]"),
+						},
+					},
+				},
+				Required: []string{"client"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana-app-sdk/resource.TypedClient[T,L]"},
 	}
 }
 
@@ -1191,6 +1326,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardConstantVariableSpec(ref common.
 							Format: "",
 						},
 					},
+					"showInControlsMenu": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 				},
 				Required: []string{"name", "query", "current", "hide", "skipUrlSync"},
 			},
@@ -1215,24 +1356,22 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardConversionStatus(ref common.Refe
 							Format:      "",
 						},
 					},
-					"storedVersion": {
+					"error": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",
-							Default:     "",
+							Description: "The error message from the conversion. Empty if the conversion has not failed.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"error": {
+					"storedVersion": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The error message from the conversion. Empty if the conversion has not failed.",
-							Default:     "",
+							Description: "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 				},
-				Required: []string{"failed", "storedVersion", "error"},
+				Required: []string{"failed"},
 			},
 		},
 	}
@@ -1360,6 +1499,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardCustomVariableSpec(ref common.Re
 							Format:  "",
 						},
 					},
+					"showInControlsMenu": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 				},
 				Required: []string{"name", "query", "current", "options", "multi", "includeAll", "hide", "skipUrlSync", "allowCustomValue"},
 			},
@@ -1459,6 +1604,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardDashboardLink(ref common.Referen
 							Description: "If true, includes current time range in the link as query params",
 							Default:     false,
 							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"placement": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
@@ -1745,6 +1897,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardDatasourceVariableSpec(ref commo
 							Format:  "",
 						},
 					},
+					"showInControlsMenu": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 				},
 				Required: []string{"name", "pluginId", "refresh", "regex", "current", "options", "multi", "includeAll", "hide", "skipUrlSync", "allowCustomValue"},
 			},
@@ -1802,6 +1960,82 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardElementReference(ref common.Refe
 					},
 				},
 				Required: []string{"kind", "name"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardFetchOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"method": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"body": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"queryParams": {
+						SchemaProps: spec.SchemaProps{
+							Description: "These are 2D arrays of strings, each representing a key-value pair We are defining them this way because we can't generate a go struct that that would have exactly two strings in each sub-array",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Default: "",
+													Type:    []string{"string"},
+													Format:  "",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"headers": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Default: "",
+													Type:    []string{"string"},
+													Format:  "",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"method", "url"},
 			},
 		},
 	}
@@ -1959,6 +2193,20 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardFieldConfig(ref common.Reference
 							},
 						},
 					},
+					"actions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Define interactive HTTP requests that can be triggered from data visualizations.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAction"),
+									},
+								},
+							},
+						},
+					},
 					"noValue": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Alternative to empty string",
@@ -1985,7 +2233,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardFieldConfig(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardFieldColor", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardThresholdsConfig", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAction", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardFieldColor", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardThresholdsConfig", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap"},
 	}
 }
 
@@ -2345,12 +2593,101 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardGroupByVariableSpec(ref common.R
 							Format: "",
 						},
 					},
+					"showInControlsMenu": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 				},
 				Required: []string{"name", "current", "options", "multi", "hide", "skipUrlSync"},
 			},
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardVariableOption"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardInfinityOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"method": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"body": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"queryParams": {
+						SchemaProps: spec.SchemaProps{
+							Description: "These are 2D arrays of strings, each representing a key-value pair We are defining them this way because we can't generate a go struct that that would have exactly two strings in each sub-array",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Default: "",
+													Type:    []string{"string"},
+													Format:  "",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"datasourceUid": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"headers": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Default: "",
+													Type:    []string{"string"},
+													Format:  "",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"method", "url", "datasourceUid"},
+			},
+		},
 	}
 }
 
@@ -2474,6 +2811,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardIntervalVariableSpec(ref common.
 					"description": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"showInControlsMenu": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
 							Format: "",
 						},
 					},
@@ -3249,6 +3592,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardQueryVariableSpec(ref common.Ref
 					"description": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"showInControlsMenu": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
 							Format: "",
 						},
 					},
@@ -4096,6 +4445,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardTextVariableSpec(ref common.Refe
 							Format: "",
 						},
 					},
+					"showInControlsMenu": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 				},
 				Required: []string{"name", "current", "query", "hide", "skipUrlSync"},
 			},
@@ -4333,6 +4688,24 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardTransformationKind(ref common.Re
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardDataTransformerConfig"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardV2beta1ActionStyle(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"backgroundColor": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 

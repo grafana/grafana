@@ -68,6 +68,7 @@ func convertToK8sResource(
 			DisableResolveMessage: &integration.DisableResolveMessage,
 			Settings:              maps.Clone(integration.Settings),
 			SecureFields:          integration.SecureFields(),
+			Version:               integration.Config.Version,
 		})
 	}
 
@@ -100,6 +101,7 @@ func convertToK8sResource(
 			rules = append(rules, rule.UID)
 		}
 		r.SetInUse(metadata.InUseByRoutes, rules)
+		r.SetCanUse(metadata.CanUse)
 	}
 	r.UID = gapiutil.CalculateClusterWideUID(r)
 	return r, nil
@@ -119,11 +121,15 @@ func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[str
 		Integrations: make([]*ngmodels.Integration, 0, len(receiver.Spec.Integrations)),
 		Version:      receiver.ResourceVersion,
 		Provenance:   ngmodels.ProvenanceNone,
+		Origin:       ngmodels.ResourceOriginGrafana, // Set to Grafana by default.
 	}
-
 	storedSecureFields := make(map[string][]string, len(receiver.Spec.Integrations))
 	for _, integration := range receiver.Spec.Integrations {
-		config, err := ngmodels.IntegrationConfigFromType(integration.Type)
+		version := &integration.Version
+		if *version == "" {
+			version = nil
+		}
+		config, err := ngmodels.IntegrationConfigFromType(integration.Type, version)
 		if err != nil {
 			return nil, nil, err
 		}

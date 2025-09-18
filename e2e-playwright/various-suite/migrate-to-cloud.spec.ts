@@ -3,7 +3,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 test.describe(
   'Migrate to Cloud (On-prem)',
   {
-    tag: ['@various', '@wip'],
+    tag: ['@various'],
   },
   () => {
     test.describe('with mocked calls to the API backend', () => {
@@ -59,8 +59,7 @@ test.describe(
         total: SNAPSHOT_RESULTS.length,
       };
 
-      // TODO: fix the test. It makes it most of the way through. Probably a network mock issue.
-      test.skip('creates and uploads a snapshot successfully', async ({ page }) => {
+      test('creates and uploads a snapshot successfully', async ({ page }) => {
         // Visit the migrate to cloud onprem page
         await page.goto('/admin/migrate-to-cloud');
 
@@ -75,7 +74,7 @@ test.describe(
         await tokenInput.fill('test');
 
         // Mock API responses
-        await page.route(/api\/cloudmigration\/migration/, async (route) => {
+        await page.route(/api\/cloudmigration\/migration$/, async (route) => {
           if (route.request().method() === 'POST') {
             await route.fulfill({
               status: 200,
@@ -93,7 +92,7 @@ test.describe(
           }
         });
 
-        await page.route(/api\/cloudmigration\/migration\/${SESSION_UID}\/snapshots\?page=1&limit=1/, async (route) => {
+        await page.route(`api/cloudmigration/migration/${SESSION_UID}/snapshots?page=1&limit=1*`, async (route) => {
           await route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -141,14 +140,14 @@ test.describe(
           'migrate-to-cloud-configure-snapshot-checkbox-resource-mute_timing'
         );
         await muteTimingCheckbox.uncheck({ force: true });
-        await expect(muteTimingCheckbox).not.toBeChecked();
+        await expect(muteTimingCheckbox).toBeChecked({ checked: false });
 
         // Validate that those resources are now unchecked
         for (const resourceType of ['alert_rule', 'alert_rule_group', 'include-all']) {
           const checkbox = page.getByTestId(
             `migrate-to-cloud-configure-snapshot-checkbox-resource-${resourceType.toLowerCase()}`
           );
-          await expect(checkbox).not.toBeChecked();
+          await expect(checkbox).toBeChecked({ checked: false });
         }
 
         // Check everything again because we can
@@ -164,7 +163,7 @@ test.describe(
         }
 
         // Mock snapshot creation
-        await page.route(/api\/cloudmigration\/migration\/${SESSION_UID}\/snapshot/, async (route) => {
+        await page.route(new RegExp(`api\/cloudmigration\/migration\/${SESSION_UID}\/snapshot$`), async (route) => {
           await route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -174,7 +173,7 @@ test.describe(
           });
         });
 
-        await page.route(/api\/cloudmigration\/migration\/${SESSION_UID}\/snapshots\?page=1&limit=1/, async (route) => {
+        await page.route(`api/cloudmigration/migration/${SESSION_UID}/snapshots?page=1&limit=1*`, async (route) => {
           await route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -194,7 +193,7 @@ test.describe(
 
         let getSnapshotCalled = false;
         await page.route(
-          /api\/cloudmigration\/migration\/${SESSION_UID}\/snapshot\/${SNAPSHOT_UID1}\?resultPage=1&resultLimit=50/,
+          `api/cloudmigration/migration/${SESSION_UID}/snapshot/${SNAPSHOT_UID1}?resultPage=1&resultLimit=50*`,
           async (route) => {
             if (!getSnapshotCalled) {
               getSnapshotCalled = true;
@@ -238,9 +237,12 @@ test.describe(
         await expect(buildSnapshotButton).toBeVisible();
         await buildSnapshotButton.click();
 
+        const uploadButton = page.getByTestId('migrate-to-cloud-summary-upload-snapshot-button');
+        await expect(uploadButton).toBeVisible();
+
         // Mock upload
-        const uploadSnapshot = await page.route(
-          /api\/cloudmigration\/migration\/${SESSION_UID}\/snapshot\/${SNAPSHOT_UID1}\/upload/,
+        await page.route(
+          `api/cloudmigration/migration/${SESSION_UID}/snapshot/${SNAPSHOT_UID1}/upload`,
           async (route) => {
             await route.fulfill({
               status: 200,
@@ -250,39 +252,29 @@ test.describe(
           }
         );
 
-        // Upload the snapshot
-        const uploadButton = page.getByTestId('migrate-to-cloud-summary-upload-snapshot-button');
-        await expect(uploadButton).toBeVisible();
-
-        await uploadButton.focus();
-        await uploadButton.click({ force: true });
-
         // Mock uploading status
-        const getSnapshotListUploading = await page.route(
-          /api\/cloudmigration\/migration\/${SESSION_UID}\/snapshots\?page=1&limit=1/,
-          async (route) => {
-            await route.fulfill({
-              status: 200,
-              contentType: 'application/json',
-              body: JSON.stringify({
-                snapshots: [
-                  {
-                    uid: SNAPSHOT_UID1,
-                    sessionUid: SESSION_UID,
-                    status: 'UPLOADING',
-                    created: '2025-04-02T21:40:23+02:00',
-                    finished: '0001-01-01T00:00:00Z',
-                  },
-                ],
-              }),
-            });
-          }
-        );
+        await page.route(`api/cloudmigration/migration/${SESSION_UID}/snapshots?page=1&limit=1*`, async (route) => {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              snapshots: [
+                {
+                  uid: SNAPSHOT_UID1,
+                  sessionUid: SESSION_UID,
+                  status: 'UPLOADING',
+                  created: '2025-04-02T21:40:23+02:00',
+                  finished: '0001-01-01T00:00:00Z',
+                },
+              ],
+            }),
+          });
+        });
 
         // Simulate the snapshot being uploaded
         let getSnapshotUploadingCalls = 0;
-        const getSnapshotUploading = await page.route(
-          /api\/cloudmigration\/migration\/${SESSION_UID}\/snapshot\/${SNAPSHOT_UID1}\?resultPage=1&resultLimit=50/,
+        await page.route(
+          `api/cloudmigration/migration/${SESSION_UID}/snapshot/${SNAPSHOT_UID1}?resultPage=1&resultLimit=50*`,
           async (route) => {
             if (getSnapshotUploadingCalls <= 1) {
               await route.fulfill({
@@ -312,14 +304,11 @@ test.describe(
                   results: SNAPSHOT_RESULTS.map((r) => ({ ...r, status: 'OK' })),
                   stats: {
                     types: STATS.types,
-                    statuses: SNAPSHOT_RESULTS.reduce(
-                      (acc, r) => {
-                        const status = (r as { status?: string }).status || 'UNKNOWN';
-                        acc[status] = (acc[status] || 0) + 1;
-                        return acc;
-                      },
-                      {} as Record<string, number>
-                    ),
+                    statuses: SNAPSHOT_RESULTS.reduce<Record<string, number>>((acc, r) => {
+                      const status = (r as { status?: string }).status || 'UNKNOWN';
+                      acc[status] = (acc[status] || 0) + 1;
+                      return acc;
+                    }, {}),
                     total: SNAPSHOT_RESULTS.length,
                   },
                 }),
@@ -328,12 +317,12 @@ test.describe(
           }
         );
 
-        await uploadSnapshot;
-        await getSnapshotListUploading;
-        await getSnapshotUploading;
+        // Upload the snapshot
+        await uploadButton.focus();
+        await uploadButton.click({ force: true });
 
         // At least some of the items are marked with "Uploaded to cloud" status
-        await expect(page.getByText('Uploaded to cloud')).toBeVisible();
+        await expect(page.getByText('Uploaded to cloud')).toHaveCount(22);
 
         // We can now reconfigure the snapshot
         const reconfigureButton = page.getByTestId('migrate-to-cloud-summary-reconfigure-snapshot-button');

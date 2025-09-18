@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Wyłącz reguły rejestrowania (beta)",
         "label-http-method": "Metoda HTTP",
         "label-incremental-querying-beta": "Zapytania przyrostowe (beta)",
-        "label-metric-names-suggestion-limit": "Limit sugestii nazw wskaźników",
         "label-prom-type-version": "Wersja: {{promType}}",
         "label-prometheus-type": "Typ Prometheus",
         "label-query-overlap-window": "Okno nakładania się zapytań",
@@ -189,7 +188,6 @@
         "tooltip-disable-recording-rules-beta": "Ta funkcja wyłącza reguły rejestrowania. Włącz tę opcję, aby poprawić wydajność pulpitu",
         "tooltip-http-method": "Możesz użyć metody HTTP POST lub GET, aby wysłać zapytanie do źródła danych Prometheus. POST jest zalecaną metodą, ponieważ obsługuje większe zapytania. Wybierz metodę GET, jeśli wersja systemu Prometheus jest starsza niż 2.1 lub jeśli żądania POST są objęte ograniczeniami w Twojej sieci.",
         "tooltip-incremental-querying-beta": "Ta funkcja zmienia domyślny sposób działania zapytań względnych, aby zawsze żądały świeżych danych z instancji Prometheus. Zamiast tego wyniki zapytań będą buforowane, a wysyłane żądania będą uwzględniać tylko nowe rekordy. Włącz tę opcję, aby zmniejszyć obciążenie bazy danych i sieci.",
-        "tooltip-metric-names-suggestion-limit": "Maksymalna liczba nazw wskaźników, które mogą pojawiać się jako sugestie autouzupełniania w edytorze zapytań w trybie kodu.",
         "tooltip-prom-type-version": "Użyj tej opcji, aby ustawić wersję {{promType}} instancji, jeśli nie jest ona automatycznie skonfigurowana.",
         "tooltip-prometheus-type": "Ustaw w tym polu typ bazy danych systemu Prometheus, np. Prometheus, Cortex, Mimir lub Thanos. Zmiana tego pola spowoduje zapisanie bieżących ustawień. Obsługa interfejsów API zależy od konkretnego typu bazy danych Prometheus. Na przykład niektóre typy obsługują dopasowywanie wyrażeń regularnych do zapytań o etykiety w celu poprawy wydajności. Niektóre typy mają interfejs API metadanych. Jeśli ustawisz tę opcję nieprawidłowo, może to spowodować nietypowe działanie podczas wysyłania zapytań dotyczących wskaźników i etykiet. Sprawdź dokumentację systemu Prometheus, aby upewnić się, że wpisujesz prawidłowy typ.",
         "tooltip-query-overlap-window": "Ustaw czas trwania, np. {{example1}}, {{example2}} lub {{example3}}. Domyślnie {{default}}. Ten czas trwania zostanie dodany do czasu trwania każdego zapytania przyrostowego.",
@@ -430,10 +428,6 @@
         "placeholder-auto": "automatycznie",
         "title-options": "Opcje",
         "tooltip-min-step": "Dodatkowa dolna granica dla parametru kroku zapytania Prometheus oraz dla zmiennych <2>{{interval}}</2> i <4>{{rateInterval}}</4>."
-      },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Ograniczone sugestie autouzupełniania",
-        "tooltip-autocomplete-suggestions-limited": "Liczba nazw wskaźników przekracza limit autouzupełniania. Wyświetlane są tylko najbardziej odpowiednie wskaźniki ({{autocompleteLimit}}). Próg można dostosować w ustawieniach źródła danych."
       },
       "prom-query-editor-selector": {
         "body-syntax-error": "Wystąpił błąd składni lub struktura zapytania nie może zostać zwizualizowana podczas przełączania na tryb konstruktora. Części zapytania mogą zostać utracone.",

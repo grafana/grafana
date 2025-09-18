@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V29 migrates query variables to ensure their refresh property is set to 1 (on dashboard load)
 // if it is not 1 or 2, and clears their options array if present.
 //
@@ -22,7 +24,7 @@ package schemaversion
 //	    { "type": "query", "refresh": 1, "options": [] }
 //	  ]
 //	}
-func V29(dashboard map[string]interface{}) error {
+func V29(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 29
 
 	templating, ok := dashboard["templating"].(map[string]interface{})

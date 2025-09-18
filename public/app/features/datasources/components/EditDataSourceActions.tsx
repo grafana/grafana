@@ -1,7 +1,7 @@
 import { PluginExtensionPoints } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, usePluginLinks } from '@grafana/runtime';
-import { Button, Dropdown, LinkButton, Menu, Icon } from '@grafana/ui';
+import { config, usePluginLinks, useFavoriteDatasources, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { Button, Dropdown, LinkButton, Menu, Icon, IconButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 
 import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
@@ -9,9 +9,46 @@ import { useDataSource } from '../state/hooks';
 import { trackCreateDashboardClicked, trackDsConfigClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
+import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './picker/DataSourcePicker';
+
 interface Props {
   uid: string;
 }
+
+const FavoriteButton = ({ uid }: { uid: string }) => {
+  const favoriteDataSources = useFavoriteDatasources();
+  const dataSourceInstance = getDataSourceSrv().getInstanceSettings(uid);
+  const isFavorite = dataSourceInstance ? favoriteDataSources.isFavoriteDatasource(dataSourceInstance.uid) : false;
+
+  return (
+    favoriteDataSources.enabled &&
+    dataSourceInstance &&
+    !dataSourceInstance.meta.builtIn && (
+      <IconButton
+        key={`favorite-${isFavorite ? 'favorite-mono' : 'star-default'}`}
+        name={isFavorite ? 'favorite' : 'star'}
+        iconType={isFavorite ? 'mono' : 'default'}
+        onClick={() => {
+          reportInteraction(INTERACTION_EVENT_NAME, {
+            item: INTERACTION_ITEM.TOGGLE_FAVORITE,
+            ds_type: dataSourceInstance.type,
+            is_favorite: !isFavorite,
+          });
+          isFavorite
+            ? favoriteDataSources.removeFavoriteDatasource(dataSourceInstance)
+            : favoriteDataSources.addFavoriteDatasource(dataSourceInstance);
+        }}
+        disabled={favoriteDataSources.isLoading}
+        tooltip={
+          isFavorite
+            ? t('datasources.edit-data-source-actions.remove-favorite', 'Remove from favorites')
+            : t('datasources.edit-data-source-actions.add-favorite', 'Add to favorites')
+        }
+        data-testid="favorite-button"
+      />
+    )
+  );
+};
 
 export function EditDataSourceActions({ uid }: Props) {
   const dataSource = useDataSource(uid);
@@ -60,8 +97,13 @@ export function EditDataSourceActions({ uid }: Props) {
     </Menu>
   );
 
+  if (!dataSource.uid) {
+    return null;
+  }
+
   return (
     <>
+      <FavoriteButton uid={uid} />
       {hasExploreRights && (
         <>
           {!hasActions ? (

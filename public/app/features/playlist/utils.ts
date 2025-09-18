@@ -88,5 +88,5 @@ export function searchPlaylists(playlists: Playlist[], query?: string): Playlist
     return playlists;
   }
   query = query.toLowerCase();
-  return playlists.filter((v) => v.spec.title.toLowerCase().includes(query!));
+  return playlists.filter((v) => v.spec?.title.toLowerCase().includes(query!));
 }
