@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
@@ -216,6 +217,63 @@ func TestDecryptAuthorizer(t *testing.T) {
 		require.True(t, allowed)
 	})
 
+	t.Run("when one of extra owner decrypters matches the identity, it returns true", func(t *testing.T) {
+		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity1", []string{"secret.grafana.app/securevalues:decrypt"})
+		authorizer := ProvideDecryptAuthorizer(tracer, []ExtraOwnerDecrypter{
+			{
+				Identity: "identity1",
+				Group:    "test.grafana.app",
+			},
+		})
+
+		identity, allowed := authorizer.Authorize(ctx, defaultNs, "", []string{}, []metav1.OwnerReference{
+			{
+				APIVersion: "test.grafana.app/v1",
+				Kind:       "Test",
+				Name:       "test",
+			},
+		})
+		require.Equal(t, "identity1", identity)
+		require.True(t, allowed)
+	})
+
+	t.Run("when there are extra owner decrypters but it does not match the identity, it returns false", func(t *testing.T) {
+		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity1", []string{"secret.grafana.app/securevalues:decrypt"})
+		authorizer := ProvideDecryptAuthorizer(tracer, []ExtraOwnerDecrypter{
+			{
+				Identity: "identity2",
+				Group:    "test.grafana.app",
+			},
+		})
+
+		_, allowed := authorizer.Authorize(ctx, defaultNs, "", []string{}, []metav1.OwnerReference{
+			{
+				APIVersion: "test.grafana.app/v1",
+				Kind:       "Test",
+				Name:       "test",
+			},
+		})
+		require.False(t, allowed)
+	})
+
+	t.Run("when one of extra owner decrypters matches the identity but not the group, it returns false", func(t *testing.T) {
+		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity1", []string{"secret.grafana.app/securevalues:decrypt"})
+		authorizer := ProvideDecryptAuthorizer(tracer, []ExtraOwnerDecrypter{
+			{
+				Identity: "identity1",
+				Group:    "wrong.grafana.app",
+			},
+		})
+
+		_, allowed := authorizer.Authorize(ctx, defaultNs, "", []string{}, []metav1.OwnerReference{
+			{
+				APIVersion: "test.grafana.app/v1",
+				Kind:       "Test",
+				Name:       "test",
+			},
+		})
+		require.False(t, allowed)
+	})
 	t.Run("permissions must be case-sensitive and return false", func(t *testing.T) {
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 

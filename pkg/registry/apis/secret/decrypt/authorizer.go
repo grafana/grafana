@@ -22,8 +22,8 @@ type decryptAuthorizer struct {
 }
 
 type ExtraOwnerDecrypter struct {
-	identity string
-	group    string
+	Identity string
+	Group    string
 }
 
 func ProvideDecryptAuthorizer(
@@ -90,9 +90,9 @@ func (a *decryptAuthorizer) Authorize(ctx context.Context, ns xkube.Namespace, s
 	// finally check if the owner matches any hardcoded service identities
 	if owners != nil && a.extra != nil {
 		for _, extra := range a.extra {
-			if extra.identity == serviceIdentity {
+			if extra.Identity == serviceIdentity {
 				for _, owner := range owners {
-					if strings.HasPrefix(owner.APIVersion, extra.group) {
+					if strings.HasPrefix(owner.APIVersion, extra.Group) {
 						return serviceIdentity, true
 					}
 				}
