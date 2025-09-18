@@ -17,10 +17,6 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
   });
 }
 
-export function trackDashboardCreatedOrSaved(name: 'created' | 'saved', trackingProps: DashboardCreatedProps) {
-  DashboardInteractions.dashboardCreatedOrSaved(name, trackingProps);
-}
-
 export const trackDeleteDashboardElement = (element: EditableDashboardElementInfo) => {
   switch (element?.typeName) {
     case 'Row':
