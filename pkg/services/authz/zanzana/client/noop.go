@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 
-	"github.com/grafana/authlib/types"
 	authlib "github.com/grafana/authlib/types"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
@@ -21,7 +20,7 @@ func (nc *NoopClient) Check(ctx context.Context, id authlib.AuthInfo, req authli
 	return authlib.CheckResponse{}, nil
 }
 
-func (nc *NoopClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, types.Zookie, error) {
+func (nc *NoopClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
 	return nil, authlib.NoopZookie{}, nil
 }
 
