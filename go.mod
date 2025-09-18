@@ -276,7 +276,7 @@ require (
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/at-wat/mqtt-go v0.19.4 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.39.0
+	github.com/aws/aws-sdk-go-v2 v1.39.0 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.1 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.31.8 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.18.12 // indirect
@@ -294,7 +294,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.29.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.34.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.38.4 // indirect
-	github.com/aws/smithy-go v1.23.0
+	github.com/aws/smithy-go v1.23.0 // @grafana/aws-datasources
 	github.com/axiomhq/hyperloglog v0.0.0-20240507144631-af9851f82b27 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -582,11 +582,11 @@ require (
 require github.com/urfave/cli/v3 v3.3.8 // @grafana/grafana-backend-group
 
 require (
-	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.50.1
-	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.58.0
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.252.0
-	github.com/aws/aws-sdk-go-v2/service/oam v1.22.3
-	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.30.4
+	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.50.1 // @grafana/aws-datasources
+	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.58.0 // @grafana/aws-datasources
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.252.0 // @grafana/aws-datasources
+	github.com/aws/aws-sdk-go-v2/service/oam v1.22.3 // @grafana/aws-datasources
+	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.30.4 // @grafana/aws-datasources
 )
 
 require github.com/cenkalti/backoff/v5 v5.0.2 // indirect
