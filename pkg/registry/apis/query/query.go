@@ -316,12 +316,12 @@ func prepareQuery(
 			SQLExpressionTimeout:          instanceConfig.SQLExpressionTimeout,
 			SQLExpressionQueryLengthLimit: instanceConfig.SQLExpressionQueryLengthLimit,
 		},
-		nil, // plugins.Client
-		nil, // *plugincontext.Provider
+		nil,
+		nil,
 		instanceConfig.FeatureToggles,
-		nil,               // prometheus.Registerer
-		b.tracer,          // tracing.Tracer
-		qsDsClientBuilder, // dsquerierclient.QSDatasourceClientBuilder
+		nil,
+		b.tracer,
+		qsDsClientBuilder,
 	)
 
 	return &preparedQuery{
