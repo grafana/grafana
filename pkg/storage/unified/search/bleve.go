@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
@@ -47,6 +48,12 @@ const (
 	indexStorageFile   = "file"
 )
 
+// Keys used to store internal data in index.
+const (
+	internalRVKey        = "rv"         // Encoded as big-endian int64
+	internalBuildInfoKey = "build_info" // Encoded as JSON of IndexBuildInfo struct
+)
+
 var _ resource.SearchBackend = &bleveBackend{}
 var _ resource.ResourceIndex = &bleveIndex{}
 
@@ -63,6 +70,11 @@ type BleveOptions struct {
 
 	// Index cache TTL for bleve indices. 0 disables expiration for in-memory indexes.
 	IndexCacheTTL time.Duration
+
+	BuildVersion string
+
+	MaxFileIndexAge time.Duration   // Maximum age of file-based index that can be reused. Ignored if zero.
+	MinBuildVersion *semver.Version // Minimum build version for reusing file-based indexes. Ignored if nil.
 
 	Logger *slog.Logger
 }
@@ -94,6 +106,14 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 	}
 	if !root.IsDir() {
 		return nil, fmt.Errorf("bleve root is configured against a file (not folder)")
+	}
+
+	if opts.BuildVersion != "" {
+		// Don't allow storing invalid versions to the index.
+		_, err := semver.NewVersion(opts.BuildVersion)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse build version %s: %w", opts.BuildVersion, err)
+		}
 	}
 
 	log := opts.Logger
@@ -199,13 +219,56 @@ func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
 // newBleveIndex creates a new bleve index with consistent configuration.
 // If path is empty, creates an in-memory index.
 // If path is not empty, creates a file-based index at the specified path.
-func newBleveIndex(path string, mapper mapping.IndexMapping) (bleve.Index, error) {
+func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time, buildVersion string) (bleve.Index, error) {
 	kvstore := bleve.Config.DefaultKVStore
 	if path == "" {
 		// use in-memory kvstore
 		kvstore = bleve.Config.DefaultMemKVStore
 	}
-	return bleve.NewUsing(path, mapper, bleve.Config.DefaultIndexType, kvstore, nil)
+	ix, err := bleve.NewUsing(path, mapper, bleve.Config.DefaultIndexType, kvstore, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	bi := IndexBuildInfo{
+		BuildTime:    buildTime.Unix(),
+		BuildVersion: buildVersion,
+	}
+
+	biBytes, err := json.Marshal(bi)
+	if err != nil {
+		cErr := ix.Close()
+		return nil, errors.Join(fmt.Errorf("failed to store index build info: %w", err), cErr)
+	}
+
+	if err = ix.SetInternal([]byte(internalBuildInfoKey), biBytes); err != nil {
+		cErr := ix.Close()
+		return nil, errors.Join(fmt.Errorf("failed to store index build info: %w", err), cErr)
+	}
+	return ix, nil
+}
+
+type IndexBuildInfo struct {
+	BuildTime    int64  `json:"build_time"`    // Unix seconds timestamp of time when the index was built
+	BuildVersion string `json:"build_version"` // Grafana version used when building the index
+}
+
+func (bi IndexBuildInfo) GetBuildTime() time.Time {
+	if bi.BuildTime == 0 {
+		return time.Time{}
+	}
+	return time.Unix(bi.BuildTime, 0)
+}
+
+func (bi IndexBuildInfo) GetBuildVersion() *semver.Version {
+	if bi.BuildVersion == "" {
+		return nil
+	}
+	v, err := semver.NewVersion(bi.BuildVersion)
+	if err != nil {
+		return nil
+	}
+	return v
 }
 
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
@@ -284,7 +347,11 @@ func (b *bleveBackend) BuildIndex(
 		// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 		// If we do have an unexpired cached index already, we always build a new index from scratch.
 		if cachedIndex == nil && !rebuild {
-			index, fileIndexName, indexRV = b.findPreviousFileBasedIndex(resourceDir)
+			minBuildTime := time.Time{}
+			if b.opts.MaxFileIndexAge > 0 {
+				minBuildTime = time.Now().Add(-b.opts.MaxFileIndexAge)
+			}
+			index, fileIndexName, indexRV = b.findPreviousFileBasedIndex(resourceDir, minBuildTime, b.opts.MinBuildVersion)
 		}
 
 		if index != nil {
@@ -304,7 +371,7 @@ func (b *bleveBackend) BuildIndex(
 					return nil, fmt.Errorf("invalid path %s", indexDir)
 				}
 
-				index, err = newBleveIndex(indexDir, mapper)
+				index, err = newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion)
 				if errors.Is(err, bleve.ErrorIndexPathExists) {
 					now = now.Add(time.Second) // Bump time for next try
 					index = nil                // Bleve actually returns non-nil value with ErrorIndexPathExists
@@ -319,7 +386,7 @@ func (b *bleveBackend) BuildIndex(
 			defer closeIndexOnExit(index, indexDir) // Close index, and delete new index directory.
 		}
 	} else {
-		index, err = newBleveIndex("", mapper)
+		index, err = newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion)
 		if err != nil {
 			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
 		}
@@ -502,7 +569,7 @@ func formatIndexName(now time.Time) string {
 	return now.Format("20060102-150405")
 }
 
-func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Index, string, int64) {
+func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, minBuildTime time.Time, minBuildVersion *semver.Version) (bleve.Index, string, int64) {
 	entries, err := os.ReadDir(resourceDir)
 	if err != nil {
 		return nil, "", 0
@@ -524,10 +591,33 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 		indexRV, err := getRV(idx)
 		if err != nil {
 			b.log.Error("error getting rv from index", "indexDir", indexDir, "err", err)
-			if !errors.Is(err, bleve.ErrorIndexClosed) {
-				_ = idx.Close()
-			}
+			_ = idx.Close()
 			continue
+		}
+
+		buildInfo, err := getBuildInfo(idx)
+		if err != nil {
+			b.log.Error("error getting build info from index", "indexDir", indexDir, "err", err)
+			_ = idx.Close()
+			continue
+		}
+
+		if !minBuildTime.IsZero() {
+			bt := buildInfo.GetBuildTime()
+			if bt.IsZero() || bt.Before(minBuildTime) {
+				b.log.Debug("index build time is before minBuildTime, not reusing the index", "indexDir", indexDir, "indexBuildTime", bt, "minBuildTime", minBuildTime)
+				_ = idx.Close()
+				continue
+			}
+		}
+
+		if minBuildVersion != nil {
+			bv := buildInfo.GetBuildVersion()
+			if bv == nil || bv.Compare(minBuildVersion) < 0 {
+				b.log.Debug("index build version is before minBuildVersion, not reusing the index", "indexDir", indexDir, "indexBuildVersion", bv, "minBuildVersion", minBuildVersion)
+				_ = idx.Close()
+				continue
+			}
 		}
 
 		return idx, indexName, indexRV
@@ -652,8 +742,6 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	return b.index.Batch(batch)
 }
 
-var internalRVKey = []byte("rv")
-
 func (b *bleveIndex) updateResourceVersion(rv int64) error {
 	if rv == 0 {
 		return nil
@@ -672,13 +760,13 @@ func setRV(index bleve.Index, rv int64) error {
 	buf := make([]byte, 8)
 	binary.BigEndian.PutUint64(buf, uint64(rv))
 
-	return index.SetInternal(internalRVKey, buf)
+	return index.SetInternal([]byte(internalRVKey), buf)
 }
 
 // getRV will call index.GetInternal to retrieve the RV saved in the index. If index is closed, it will return a
 // bleve.ErrorIndexClosed error. If there's no RV saved in the index, or it's invalid format, it will return 0
 func getRV(index bleve.Index) (int64, error) {
-	raw, err := index.GetInternal(internalRVKey)
+	raw, err := index.GetInternal([]byte(internalRVKey))
 	if err != nil {
 		return 0, err
 	}
@@ -688,6 +776,21 @@ func getRV(index bleve.Index) (int64, error) {
 	}
 
 	return int64(binary.BigEndian.Uint64(raw)), nil
+}
+
+func getBuildInfo(index bleve.Index) (IndexBuildInfo, error) {
+	raw, err := index.GetInternal([]byte(internalBuildInfoKey))
+	if err != nil {
+		return IndexBuildInfo{}, err
+	}
+
+	if len(raw) == 0 {
+		return IndexBuildInfo{}, nil
+	}
+
+	res := IndexBuildInfo{}
+	err = json.Unmarshal(raw, &res)
+	return res, err
 }
 
 func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
@@ -1050,7 +1153,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		queryPhrase.Analyzer = standard.Name
 
 		// Query 3: Match query with standard analyzer
-		queryAnalyzed := bleve.NewMatchQuery(req.Query)
+		queryAnalyzed := bleve.NewMatchQuery(removeSmallTerms(req.Query))
 		queryAnalyzed.Analyzer = standard.Name
 		queryAnalyzed.Operator = query.MatchQueryOperatorAnd // Make sure all terms from the query are matched
 
@@ -1134,6 +1237,23 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	return searchrequest, nil
+}
+
+func removeSmallTerms(query string) string {
+	words := strings.Fields(query)
+	validWords := make([]string, 0, len(words))
+
+	for _, word := range words {
+		if len(word) >= EDGE_NGRAM_MIN_TOKEN {
+			validWords = append(validWords, word)
+		}
+	}
+
+	if len(validWords) == 0 {
+		return query
+	}
+
+	return strings.Join(validWords, " ")
 }
 
 func (b *bleveIndex) stopUpdaterAndCloseIndex() error {

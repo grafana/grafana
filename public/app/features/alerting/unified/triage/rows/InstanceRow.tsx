@@ -17,7 +17,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { AlertLabels } from '../../components/AlertLabels';
+import { AlertLabels } from '@grafana/alerting/unstable';
 import { overrideToFixedColor } from '../../home/Insights';
 
 import { GenericRow } from './GenericRow';
@@ -87,7 +87,12 @@ export function InstanceRow({ instance, commonLabels, leftColumnWidth, timeRange
             </Text>
           </div>
         ) : (
-          <AlertLabels labels={instance.labels} commonLabels={commonLabels} size="xs" wrap="nowrap" />
+          <AlertLabels
+            labels={instance.labels}
+            displayCommonLabels={true}
+            labelSets={[instance.labels, commonLabels]}
+            size="xs"
+          />
         )
       }
       content={

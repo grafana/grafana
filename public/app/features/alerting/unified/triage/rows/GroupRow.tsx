@@ -2,10 +2,8 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
-
-import { getLabelColor } from '../../components/AlertLabels';
-import { Label } from '../../components/Label';
+import { getTagColorsFromName, useStyles2 } from '@grafana/ui';
+import { AlertLabel } from '@grafana/alerting/unstable';
 import { GenericGroupedRow } from '../types';
 
 import { GenericRow } from './GenericRow';
@@ -26,11 +24,11 @@ export const GroupRow = ({ row, leftColumnWidth, rowKey, depth = 0, children }: 
       key={rowKey}
       width={leftColumnWidth}
       title={
-        <Label
+        <AlertLabel
           size="sm"
-          label={row.metadata.label}
+          labelKey={row.metadata.label}
           value={row.metadata.value}
-          color={getLabelColor(row.metadata.label)}
+          color={getTagColorsFromName(row.metadata.label).color}
         />
       }
       isOpenByDefault={true}

@@ -191,6 +191,22 @@ func TestCanSearchByTitle(t *testing.T) {
 			checkSearchQuery(t, index, newQueryByTitle(fmt.Sprintf(`foo%d%s`, i, v)), []string{name})
 		}
 	})
+
+	t.Run("title search will ignore terms < 3 characters", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "new dashboard",
+			"name2": "new dash",
+			"name3": "new",
+		})
+
+		// matches everything
+		checkSearchQuery(t, index, newTestQuery("new"), []string{"name3", "name2", "name1"})
+		// ignore terms shorter than 3 chars
+		checkSearchQuery(t, index, newTestQuery("new d"), []string{"name3", "name2", "name1"})
+		// include terms shorter that are exactly 3 chars
+		checkSearchQuery(t, index, newTestQuery("new das"), []string{"name2", "name1"})
+	})
 }
 
 func newTestQuery(query string) *resourcepb.ResourceSearchRequest {
