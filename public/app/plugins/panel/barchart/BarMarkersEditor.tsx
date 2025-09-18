@@ -1,38 +1,68 @@
-import { StandardEditorProps, SelectableValue } from '@grafana/data';
+import { StandardEditorProps, SelectableValue, StandardEditorContext } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Field, Input, Select } from '@grafana/ui';
-import { useState } from 'react';
+import { Button, Field, InlineField, Input, Label, Select, ValuePicker } from '@grafana/ui';
+import { useEffect, useState } from 'react';
+import { ColorPicker } from '../../../../../packages/grafana-ui/src/components/ColorPicker/ColorPicker';
+import {Marker, BarMarkerOpts} from './markerTypes';
 
-// Define the structure for marker settings
-interface MarkerSettings {
-  id: number;
-  xAxis: string;
-  yAxis: number;
-  color: string;
-  shape: string;
-}
 
-export const BarMarkersEditor = (props: StandardEditorProps<MarkerSettings[]>) => {
+
+
+
+export const BarMarkersEditor = (props: StandardEditorProps<Marker[]>) => {
   // State to manage the list of markers
-  const [markers, setMarkers] = useState<MarkerSettings[]>(props.value || []);
+  var [markers, setMarkers] = useState<Marker[]>(props.value || []);
+
+
 
   // Add a new marker to the list
   const handleAddMarker = () => {
-    const newMarker: MarkerSettings = {
+    const newMarker: Marker = {
       id: markers.length + 1,
-      xAxis: '',
-      yAxis: 0,
-      color: '',
-      shape: '',
+      xValue: '',
+      yField: '',
+      yValue: 0,
+      opts: {
+        label: `Marker ${markers.length + 1}`,
+        color: 'rgb(184, 119, 217)',
+        shape: 'line',
+        isRotated: false
+      },
     };
     const updatedMarkers = [...markers, newMarker];
+    markers = updatedMarkers;
+    setMarkers(markers);
+    props.onChange(markers); // Notify parent component of the change
+  };
+
+
+    const xVals = props.context?.data[0]?.fields[0]?.values?.toArray?.() ?? [];
+    var xFieldOptions: Array<SelectableValue<string | number>> = [];
+    for (let i = 0; i < xVals.length; i++) {
+      xFieldOptions.push({ label: String(xVals[i]), value: xVals[i] });
+    }
+
+    const fields =  props.context?.data[0]?.fields ?? [];
+    var yFieldOptions: Array<SelectableValue<string | number>> = [];
+    for (let i = 1; i < fields.length; i++) {
+      yFieldOptions.push({ label: fields[i].name ?? `Field ${i}`, value: fields[i].name ?? i });
+    }
+
+  
+  // Update a specific field of a marker
+  const handleOptsSettingChange = (id: number, field: keyof BarMarkerOpts, newValue: string | number | undefined) => {
+    const updatedMarkers = markers.map((marker: Marker) =>
+      marker.id === id ? { ...marker, opts: { ...marker.opts, [field]: newValue } } : marker
+    );
     setMarkers(updatedMarkers);
     props.onChange(updatedMarkers); // Notify parent component of the change
   };
 
+
+
   // Update a specific field of a marker
-  const handleSettingChange = (id: number, field: keyof MarkerSettings, newValue: string) => {
-    const updatedMarkers = markers.map((marker: MarkerSettings) =>
+  const handleSettingChange = (id: number, field: keyof Marker, newValue: string | number | undefined) => {
+    const updatedMarkers = markers.map((marker: Marker) =>
       marker.id === id ? { ...marker, [field]: newValue } : marker
     );
     setMarkers(updatedMarkers);
@@ -41,17 +71,10 @@ export const BarMarkersEditor = (props: StandardEditorProps<MarkerSettings[]>) =
 
   // Remove a marker from the list
   const handleRemoveMarker = (id: number) => {
-    const updatedMarkers = markers.filter((marker: MarkerSettings) => marker.id !== id);
+    const updatedMarkers = markers.filter((marker: Marker) => marker.id !== id);
     setMarkers(updatedMarkers);
     props.onChange(updatedMarkers); // Notify parent component of the change
   };
-
-  // Options for the color dropdown
-  const colorOptions: Array<SelectableValue<string>> = [
-    { label: 'Red', value: 'red' },
-    { label: 'Blue', value: 'blue' },
-    { label: 'Green', value: 'green' },
-  ];
 
   // Options for the shape dropdown
   const shapeOptions: Array<SelectableValue<string>> = [
@@ -64,85 +87,131 @@ export const BarMarkersEditor = (props: StandardEditorProps<MarkerSettings[]>) =
       <Button
         onClick={handleAddMarker}
         style={{
-          backgroundColor: '#111217', // grey background
-          border: '1px solid rgb(204, 204, 220)', // lighter grey border
+          backgroundColor: '#2e2e2e', // grey background
+          border: '1px solid rgba(116, 116, 116, 0.56)', // lighter grey border
           minWidth: '180px', // wider
           height: '32px', // shorter
         }}
         
       >
-        {t('barchart.barmarkers-editor.add-marker', 'Add Marker')}
+        {t('barchart.barmarkers-editor.add-marker', 'Add Marker +')}
       </Button>
 
       {/* Render each marker as a grouped UI element */}
-      {markers.map((marker: MarkerSettings) => (
-        <div
-          key={marker.id}
-          style={{
-            marginTop: '10px',
-            border: '1px solid #555555ff',
-            padding: '10px',
-            borderRadius: '4px',
-            position: 'relative',
-          }}
-        >
-          {/* Marker title */}
-          <h4>
-            {t('barchart.barmarkers-editor.marker-title', `Marker ${marker.id}`)}
-          </h4>
-          {/* Button to remove the marker */}
-          <Button
-            variant="destructive"
-            size="sm"
-            style={{ position: 'absolute', top: '10px', right: '10px' }}
-            onClick={() => handleRemoveMarker(marker.id)}
+      {markers.map((marker: Marker) => (
+        // Code generated by copilot
+          // Code generated by copilot
+          <div
+            key={marker.id}
+            style={{
+              marginTop: '16px',
+              border: '1px solid #555555ff',
+              padding: '16px',
+              borderRadius: '4px',
+              position: 'relative',
+              display: 'no-flex',
+              alignContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '16px',
+              alignItems: 'center',
+              minWidth: '0',
+              minHeight: '300px',
+              // Add extra right padding to prevent overlap with remove button
+              paddingRight: '10px',
+            }}
           >
-            {t('barchart.barmarkers-editor.remove-marker', 'X')}
-          </Button>
-          {/* Input field for X-Axis */}
-          <Field label={t('barchart.barmarkers-editor.x-axis', 'X-Axis')}>
-            <Input
-              value={marker.xAxis}
-              onChange={(e) =>
-                handleSettingChange(marker.id, 'xAxis', (e.target as HTMLInputElement).value)
-              }
-              placeholder={t('barchart.barmarkers-editor.x-axis-placeholder', 'Select X-Axis')}
-            />
-          </Field>
-          {/* Input field for Y-Axis */}
-          <Field label={t('barchart.barmarkers-editor.y-axis', 'Y-Axis')}>
-            <Input
-              type="number"
-              value={marker.yAxis}
-              onChange={(e) =>
-                handleSettingChange(marker.id, 'yAxis', (e.target as HTMLInputElement).value)
-              }
-              placeholder={t('barchart.barmarkers-editor.y-axis-placeholder', 'Enter Y-Axis value')}
-            />
-          </Field>
-          {/* Dropdown for Color */}
-          <Field label={t('barchart.barmarkers-editor.color', 'Color')}>
-            <Select
-              options={colorOptions}
-              value={marker.color}
-              onChange={(v) =>
-                handleSettingChange(marker.id, 'color', v.value!)
-              }
-              placeholder={t('barchart.barmarkers-editor.color-placeholder', 'Select Color')}
-            />
-          </Field>
-          {/* Dropdown for Shape */}
-          <Field label={t('barchart.barmarkers-editor.shape', 'Shape')}>
-            <Select
-              options={shapeOptions}
-              value={marker.shape}
-              onChange={(v) =>
-                handleSettingChange(marker.id, 'shape', v.value!)
-              }
-              placeholder={t('barchart.barmarkers-editor.shape-placeholder', 'Select Shape')}
-            />
-          </Field>
-        </div>
+            {/* Editable Marker title */}
+            <div style={{ minWidth: '120px', padding: '5px' }}>
+              <InlineField label={t('barchart.barmarkers-editor.marker-title', 'Title')}>
+                 <div style={{ maxWidth: '160px'}}>
+                <Input
+            value={marker.opts.label ?? `Marker ${marker.id}`}
+            onChange={(e) =>
+              handleSettingChange(marker.id, 'id', (e.target as HTMLInputElement).value)
+            }
+            placeholder={t('barchart.barmarkers-editor.marker-title-placeholder', `Marker ${marker.id}`)}
+                />
+                </div>
+              </InlineField>
+            </div>
+            {/* Button to remove the marker */}
+            <Button
+              variant="destructive"
+              size="sm"
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                padding: '8px',
+
+                zIndex: 2,
+              }}
+              onClick={() => handleRemoveMarker(marker.id)}
+            >
+              {t('barchart.barmarkers-editor.remove-marker', 'X')}
+            </Button>
+            {/* Input field for X-Axis */}
+            
+            {/* Input field for Y-Axis */}
+            <div style={{ minWidth: '120px', padding: '5px' }}>
+              <Field label={t('barchart.barmarkers-editor.y-axis', 'Y-Axis')}>
+                <Input
+                        type="number"
+                        value={marker.yValue ?? ''}
+                        onChange={(e) =>
+                          handleSettingChange(marker.id, 'yValue', (e.target as HTMLInputElement).value)
+                        }
+                        placeholder={t('barchart.barmarkers-editor.y-axis-placeholder', 'Enter Y-Axis value')}
+                />
+              </Field>
+            </div>            {/* Dropdown for X-Axis */}
+            <div style={{ minWidth: '120px', padding: '5px' }}>
+              <Field label={t('barchart.barmarkers-editor.x-axis', 'X-Axis')}>
+              <Select
+                options= {xFieldOptions}
+                value={marker.xValue}
+                onChange={(v) =>
+                handleSettingChange(marker.id, 'xValue', v.value?? '')
+                }
+                placeholder={t('barchart.barmarkers-editor.x-axis-placeholder', 'Select X-Axis value')}
+              />
+              </Field>
+            </div>
+            <div style={{ minWidth: '120px', padding: '5px' }}>
+              <Field label={t('barchart.barmarkers-editor.y-axis', 'Y-Axis')}>
+              <Select
+                options= {yFieldOptions}
+                value={marker.yField}
+                onChange={(v) =>
+                handleSettingChange(marker.id, 'yField', v.value?? '')
+                }
+                placeholder={t('barchart.barmarkers-editor.y-axis-placeholder', 'Select Y-Axis value')}
+              />
+              </Field>
+            </div>
+                  {/* Color Picker for Marker */}
+                  <div style={{ minWidth: '120px', padding: '5px', paddingBottom: '10px' }}>
+                    <Label>{t('barchart.barmarkers-editor.color', 'Color')}</Label>
+                    <ColorPicker
+                    color={marker.opts.color || 'rgb(184, 119, 217)'}
+                    onChange={(color: string) => handleOptsSettingChange(marker.id, 'color', color)}
+                    />
+                  </div>
+            {/* Dropdown for Shape */}
+            <div style={{ minWidth: '120px', padding: '5px' }}>
+              <Field label={t('barchart.barmarkers-editor.shape', 'Shape')}>
+                <Select
+            options={shapeOptions}
+            value={marker.opts.shape}
+            onChange={(v) =>
+              handleOptsSettingChange(marker.id, 'shape', v.value!)
+            }
+            placeholder={t('barchart.barmarkers-editor.shape-placeholder', 'Select Shape')}
+                />
+              </Field>
+            </div>
+          </div>
+
       ))}
     </div>
   );

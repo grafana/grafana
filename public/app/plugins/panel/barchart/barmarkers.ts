@@ -17,10 +17,6 @@ export type BarMarker = {
   x?: string | number | null; // canonical x value to resolve at draw time
 };
 
-export const demoMarkers: BarMarker[] = [
-  { opts: { label: 'M1', width: 80, color: '#d9534f', shape: "line", isRotated: false }, y: 40, x: 200 },
-  { opts: { label: 'M2', width: 80, color: '#5bc0de', shape: "line", isRotated: false }, y: 40, x: 420 },
-];
 
 /**
  * Return a `draw` hook that paints demo markers. The hook signature matches uPlot's

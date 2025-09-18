@@ -22,6 +22,7 @@ import { changeToBarChartPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
 import { BarMarkersEditor } from './BarMarkersEditor';
+import { markerList } from './utils';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
   .setPanelChangeHandler(changeToBarChartPanelMigrationHandler)
@@ -47,8 +48,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
     },
     useCustomConfig: (builder) => {
       const cfg = defaultFieldConfig;
-      const markersCategory = [t('barchart.config.category-markers', 'Markers')];
-
+    
      
       builder
         .addSliderInput({
@@ -79,23 +79,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
             options: getGraphFieldOptions().fillGradient,
           },
         });
-      
-      builder.addCustomEditor({
-        category: markersCategory,
-        id: 'Markers',
-        path: 'barchart.config.markers',
-        name: 'Markers',
-        editor: BarMarkersEditor,
-        override: BarMarkersEditor,
-        process: function (value: any, context: FieldOverrideContext, settings?: any) {
-          // Example implementation: Return the value as-is
-          return value;
-        },
-        shouldApply: function (field: Field): boolean {
-          // Example implementation: Apply to all fields
-          return true;
-        }
-      });
+    
       builder.addSelect({
         category: ['Graph styles'],
         name: t('barchart.config.name-transform', 'Transform'),
@@ -144,6 +128,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
     },
   })
   .setPanelOptions((builder) => {
+      const markersCategory = [t('barchart.config.category-markers', 'Markers')];
+
     builder
       .addFieldNamePicker({
         path: 'xField',
@@ -264,6 +250,15 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         defaultValue: defaultOptions.fullHighlight,
         showIf: (c) => c.stacking === StackingMode.None,
       });
+
+      builder.addCustomEditor({
+        category: markersCategory,
+        id: 'Markers',
+        path: 'markers',
+        name: 'markers',
+        editor: BarMarkersEditor,
+      
+      })
 
     builder.addFieldNamePicker({
       path: 'colorByField',

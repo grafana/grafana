@@ -282,7 +282,9 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     text,
     showValue,
     legend,
-    markers: markers,
+
+        markers: markers?.filter((m) => m.xValue !== undefined) as any,
+
     xSpacing: xTickLabelSpacing,
     xTimeAuto: frame.fields[0]?.type === FieldType.time && !frame.fields[0].config.unit?.startsWith('time:'),
     negY: frame.fields.map((f) => f.config.custom?.transform === GraphTransform.NegativeY),

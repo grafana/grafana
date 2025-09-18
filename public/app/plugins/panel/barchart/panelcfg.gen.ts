@@ -36,33 +36,19 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    * Custom markers persisted with the panel. Each marker targets an x-group or index.
    */
   markers?: Array<{
-    id?: string;
-    /**
-     * canonical x value to match against the x field (string or numeric)
-     */
+    id: number;
     xValue?: (string | number | number);
-    /**
-     * direct aligned index into the x values
-     */
-    xIndex: number;
-    /**
-     * optional series reference by field name
-     */
+    xIndex?: number;
+    yField?: string;
     yValue?: (number | number);
-    /**
-     * the y value a marker is set at.
-     */
     seriesField?: string;
-    /**
-     * optional series reference by index
-     */
     seriesIdx?: number;
     opts?: {
       label?: string;
       color?: string;
-      width?: number;
+      width?: (number | 20);
       shape?: string;
-      isRotated: boolean;
+      isRotated?: boolean;
     };
   }>;
   /**

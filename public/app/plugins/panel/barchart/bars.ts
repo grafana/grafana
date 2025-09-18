@@ -17,7 +17,6 @@ const intervals = systemDateFormats.interval;
 
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
-import { BarMarker, demoMarkers, singleBarMarker } from './barmarkers';
 import { Marker, ResolvedMarker } from './markerTypes';
 import { Builder } from '@react-awesome-query-builder/ui';
 import { markersLayer } from '../geomap/layers/data/markersLayer';

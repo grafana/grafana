@@ -17,7 +17,6 @@ import { AdHocFilterModel, FILTER_FOR_OPERATOR, TooltipHoverMode } from '@grafan
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
-// Import some sort of MarkerList here
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
 import { Options } from './panelcfg.gen';
 import { prepConfig, prepSeries } from './utils';

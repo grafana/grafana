@@ -10,17 +10,18 @@ export type BarMarkerOpts = {
  * Keep this file stable so it can be imported without touching generated files.
  */
 export interface Marker {
-  id?: string;
+  id: number;
   // canonical reference value for the x-axis group; can be the raw x value or timestamp
-  xValue?: string | number | null;
+  xValue: string | number 
   // optional direct index into aligned x (dataIdx)
   xIndex?: number | null;
   // optional reference to series by name or index
+  yField?: string | null;
   yValue? : number | null;
   // the y value a marker is set at.
   seriesField?: string | null;
   seriesIdx?: number | null;
-  opts?: BarMarkerOpts | null;
+  opts: BarMarkerOpts 
 }
 
 /**
@@ -28,10 +29,9 @@ export interface Marker {
  * and cached for the draw hook.
  */
 export interface ResolvedMarker {
-  id?: string;
+  id: number;
   x: number
   y:  number
-  label?: string | null;
   opts?: BarMarkerOpts | null;
 }
 

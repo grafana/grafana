@@ -54,24 +54,19 @@ composableKinds: PanelCfg: {
 					barWidth: float64 & >=0 & <=1 | *0.97
 				// Custom markers persisted with the panel. Each marker targets an x-group or index.
 				markers?: [...{
-					id?: string
-					// canonical x value to match against the x field (string or numeric)
+					id: number
 					xValue?: string | float | int
-					// direct aligned index into the x values
-					xIndex: int32
-					// optional series reference by field name
+					xIndex?: int
+					yField?: string
 					yValue?: float | int
-					// the y value a marker is set at.
 					seriesField?: string
-					// optional series reference by index
-					seriesIdx?: int32
-					
+					seriesIdx?: int
 					opts?: {
 						label?: string
 						color?: string
-						width?: float64
+						width?: float | *20
 						shape?: string
-						isRotated: bool |*false
+						isRotated?: bool | *false
 					}
 				}]
 					// Controls the width of groups. 1 = max with, 0 = min width.
