@@ -74,16 +74,13 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (queryv0alpha1
 		if n > maxRows {
 			n = maxRows
 		}
-		sampleRows := make([][]common.Unstructured, 0, n)
+		sampleRows := make([][]common., 0, n)
 		for i := 0; i < n; i++ {
 			rowCopy := frame.RowCopy(i)
 			u := make([]common.Unstructured, 0, len(rowCopy))
-			for j, v := range rowCopy {
+			for _, v := range rowCopy {
 				// Create a map with field name as key and value as the row value
-				fieldMap := map[string]any{
-					frame.Fields[j].Name: v,
-				}
-				u = append(u, common.Unstructured{Object: fieldMap})
+				u = append(u, common.Unstructured{})
 			}
 			sampleRows = append(sampleRows, u)
 		}
