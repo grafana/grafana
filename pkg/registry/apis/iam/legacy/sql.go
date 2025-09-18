@@ -79,6 +79,14 @@ func (t DBTime) Value() (driver.Value, error) {
 	return t.Format(time.DateTime), nil
 }
 
+func (t DBTime) String() string {
+	if t.IsZero() {
+		return ""
+	}
+
+	return t.Format(time.DateTime)
+}
+
 func (t *DBTime) Scan(value interface{}) error {
 	if value == nil {
 		t.Time = time.Time{}
