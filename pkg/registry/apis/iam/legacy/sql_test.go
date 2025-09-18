@@ -54,6 +54,12 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	createTeam := func(cmd *CreateTeamCommand) sqltemplate.SQLTemplate {
+		v := newCreateTeam(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	listTeams := func(q *ListTeamQuery) sqltemplate.SQLTemplate {
 		v := newListTeams(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -352,6 +358,33 @@ func TestIdentityQueries(t *testing.T) {
 				{
 					Name: "delete_org_user_different_id",
 					Data: deleteOrgUser(456),
+				},
+			},
+			sqlCreateTeamTemplate: {
+				{
+					Name: "create_team_non_provisioned",
+					Data: createTeam(&CreateTeamCommand{
+						UID:           "team-1",
+						Name:          "Team 1",
+						Email:         "team1@example.com",
+						IsProvisioned: false,
+						OrgID:         1,
+						Created:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+					}),
+				},
+				{
+					Name: "create_team_provisioned",
+					Data: createTeam(&CreateTeamCommand{
+						UID:           "team-2",
+						Name:          "Team 2",
+						Email:         "team2@example.com",
+						IsProvisioned: true,
+						ExternalUID:   "team-2-uid",
+						OrgID:         1,
+						Created:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+					}),
 				},
 			},
 			sqlCreateOrgUserTemplate: {

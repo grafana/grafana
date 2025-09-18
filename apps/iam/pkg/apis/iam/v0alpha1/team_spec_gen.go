@@ -4,8 +4,10 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type TeamSpec struct {
-	Title string `json:"title"`
-	Email string `json:"email"`
+	Title       string `json:"title"`
+	Email       string `json:"email"`
+	Provisioned bool   `json:"provisioned"`
+	ExternalUID string `json:"externalUID"`
 }
 
 // NewTeamSpec creates a new TeamSpec object.
