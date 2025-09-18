@@ -6,9 +6,9 @@ import { AlertLabels } from './AlertLabels';
 describe('AlertLabels', () => {
   it('should toggle show / hide common labels', async () => {
     const labels = { foo: 'bar', bar: 'baz', baz: 'qux' };
-    const commonLabels = { foo: 'bar', baz: 'qux' };
+    const another = { foo: 'bar', baz: 'qux', extra: 'z' };
 
-    render(<AlertLabels labels={labels} commonLabels={commonLabels} />);
+    render(<AlertLabels labels={labels} displayCommonLabels labelSets={[labels, another]} />);
     expect(screen.getByText('+2 common labels')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button'));

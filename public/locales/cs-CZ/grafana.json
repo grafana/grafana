@@ -364,14 +364,6 @@
       "tooltip-assigned-role": "Po přihlášení tohoto uživatele bude přiřazena licencovaná role"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "Skrýt běžné štítky",
-      "show": {
-        "tooltip": "Zobrazit běžné štítky"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Aktivní časování"
@@ -486,18 +478,16 @@
     "alert-instance-state-filter": {
       "state": "Stav"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "Odebrat štítek"
     },
     "alert-label-dropdown": {
       "placeholder-select": "Vybrat {{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "Štítky",
-      "common-labels-count_one": "+{{count}} běžného štítku",
-      "common-labels-count_few": "+{{count}} běžné štítky",
-      "common-labels-count_many": "+{{count}} běžných štítků",
-      "common-labels-count_other": "+{{count}} běžného štítku"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "Ztlumení, seskupení a časování (nepovinné)",
@@ -9497,7 +9487,7 @@
       "label-signature": "Podpis"
     },
     "description-enable-infinite-scrolling": "Experimentální. Požádejte o další výsledky posunutím do dolní části seznamu protokolů.",
-    "description-enable-syntax-highlighting": "Použijte předdefinovanou gramatiku barev syntaxe pro zvýraznění příslušných částí řádků protokolu",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "Zobrazit ovládací prvky pro přechod na poslední nebo první řádek protokolu a filtry podle úrovně protokolu",
     "fields": {
       "type": {
@@ -9775,14 +9765,14 @@
     },
     "name-common-labels": "Běžné štítky",
     "name-deduplication": "Deduplikace",
-    "name-details-mode": "Režim panelu Podrobnosti protokolu",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "Vedle sebe",
       "label-sidebar": "Postranní panel"
     },
     "name-enable-infinite-scrolling": "Povolit nekonečné posouvání",
     "name-enable-log-details": "Povolit podrobnosti protokolu",
-    "name-enable-syntax-highlighting": "Povolit zvýraznění syntaxe",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "Velikost písma",
     "name-order": "Objednávka",
     "name-prettify-json": "Zkrášlit JSON",
@@ -11082,7 +11072,6 @@
       "body-not-published": "Tento plugin není publikován na <2>grafana.com/plugins</2> a nelze ho spravovat prostřednictvím katalogu.",
       "enterprise-plugin-info": "Tento plugin je k dispozici pouze v Grafana Cloud a Grafana Enterprise.",
       "learn-more": "Zjistěte víc",
-      "no-valid-grafana-enterprise-license-detected": "Nebyla zjištěna žádná platná licence Grafana Enterprise.",
       "title-dev-alert": "Toto je vývojové sestavení pluginu a nelze jej odinstalovat.",
       "title-plugin-doesnt-support-version-grafana": "Tento plugin nepodporuje vaši verzi Grafany.",
       "title-remote-plugins-unavailable": "Ovládací prvky instalace byly zakázány, protože server Grafana nemá přístup ke grafana.com.",
@@ -11450,15 +11439,16 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Vašemu dotazu neodpovídají žádné výsledky",
+      "partial-managed": "",
       "placeholder-search": "Hledat",
       "all-resources-managed_one": "",
       "all-resources-managed_few": "",
       "all-resources-managed_many": "",
       "all-resources-managed_other": "",
-      "partial-managed_one": "",
-      "partial-managed_few": "",
-      "partial-managed_many": "",
-      "partial-managed_other": ""
+      "unmanaged-resources_one": "",
+      "unmanaged-resources_few": "",
+      "unmanaged-resources_many": "",
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {
