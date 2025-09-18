@@ -39,7 +39,7 @@ const getTargetOptions = () => {
     { value: 'folder', label: t('provisioning.config-form.option-managed-folder', 'Managed folder') },
   ];
   
-  const allowedTargets = (config as any).provisioningAllowedTargets || ['instance', 'folder'];
+  const allowedTargets = config.provisioningAllowedTargets || ['instance', 'folder'];
   
   return allOptions.filter(option => allowedTargets.includes(option.value));
 };

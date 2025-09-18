@@ -11,7 +11,7 @@ import { ModeOption } from '../types';
  */
 function filterModeOptions(modeOptions: ModeOption[], repoName: string, settings?: RepositoryViewList): ModeOption[] {
   const folderConnected = settings?.items?.some((item) => item.target === 'folder' && item.name !== repoName);
-  const allowedTargets = (config as any).provisioningAllowedTargets || ['instance', 'folder'];
+  const allowedTargets = config.provisioningAllowedTargets || ['instance', 'folder'];
 
   return modeOptions.filter((option) => {
     if (!allowedTargets.includes(option.target)) {

@@ -331,6 +331,7 @@ export interface GrafanaConfig {
   analytics: {
     enabled: boolean;
   };
+  provisioningAllowedTargets: string[];
 }
 
 export interface SqlConnectionLimits {
