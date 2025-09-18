@@ -93,11 +93,6 @@ export class QueryGroup extends PureComponent<Props, State> {
       this.querySubscription.unsubscribe();
       this.querySubscription = null;
     }
-    
-    // Clear scroll element reference to prevent detached DOM nodes
-    if (this.state.scrollElement) {
-      this.setState({ scrollElement: undefined });
-    }
   }
 
   async componentDidUpdate() {

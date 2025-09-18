@@ -22,7 +22,6 @@ import {
   TimeRange,
   toDataFrameDTO,
   toUtc,
-  EventBus,
 } from '@grafana/data';
 import { RefreshEvent } from '@grafana/runtime';
 import { VizLegendOptions } from '@grafana/schema';
@@ -105,14 +104,12 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   private subs = new Subscription();
   private eventFilter: EventFilterOptions = { onlyLocal: true };
   private panelOptionsLogger: PanelOptionsLogger | undefined = undefined;
-  private eventBus: EventBus | null = null;
-  private debouncedSetPanelAttention: (() => void) & { cancel?: () => void };
 
   constructor(props: Props) {
     super(props);
 
     // Can this eventBus be on PanelModel?  when we have more complex event filtering, that may be a better option
-    this.eventBus = props.dashboard.events.newScopedBus(`panel:${props.panel.id}`, this.eventFilter);
+    const eventBus = props.dashboard.events.newScopedBus(`panel:${props.panel.id}`, this.eventFilter);
     this.debouncedSetPanelAttention = debounce(this.setPanelAttention.bind(this), 100);
 
     this.state = {
@@ -120,7 +117,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       renderCounter: 0,
       context: {
         eventsScope: '__global_',
-        eventBus: this.eventBus,
+        eventBus,
         app: this.getPanelContextApp(),
         sync: this.getSync,
         onSeriesColorChange: this.onSeriesColorChange,
@@ -262,21 +259,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    // Unsubscribe from all RxJS subscriptions
     this.subs.unsubscribe();
-    
-    // Remove from live timer
     liveTimer.remove(this);
-    
-    // Clean up event bus to prevent memory leaks
-    this.eventBus?.removeAllListeners();
-    
-    // Cancel debounced function to clear any pending timers
-    this?.debouncedSetPanelAttention?.cancel?.();
-    
-    // Clear references to help garbage collection
-    this.eventBus = null;
-    this.panelOptionsLogger = undefined;
   }
 
   liveTimeChanged(liveTime: TimeRange) {
@@ -388,11 +372,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     if (this.wantsQueryExecution) {
       if (width < 0) {
         return;
-      }
-      
-      // Clear cached results if not the first refresh to free memory
-      if (panel.hasRefreshed) {
-        panel.getQueryRunner().clearLastResult();
       }
 
       panel.refreshWhenInView = false;
@@ -592,7 +571,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     appEvents.publish(new SetPanelAttentionEvent({ panelId: this.props.panel.id }));
   }
 
-  // debouncedSetPanelAttention() {}
+  debouncedSetPanelAttention() {}
 
   render() {
     const { dashboard, panel, width, height, plugin } = this.props;

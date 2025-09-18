@@ -75,13 +75,6 @@ export const Page: PageType = ({
   const navModel = usePageNav(navId, oldNavProp);
   const { chrome } = useGrafana();
 
-  // Cleanup toolbar state on unmount
-  useEffect(() => {
-    return () => {
-      setToolbar(undefined);
-    };
-  }, []);
-
   usePageTitle(navModel, pageNav);
 
   const pageHeaderNav = pageNav ?? navModel?.node;
@@ -100,7 +93,7 @@ export const Page: PageType = ({
 
   return (
     <PageContext.Provider value={{ setToolbar }}>
-      <div id={`page-${navId}`} className={cx(styles.wrapper, className)} {...otherProps}>
+      <div className={cx(styles.wrapper, className)} {...otherProps}>
         {isSingleTopNav && toolbar && <PageToolbarActions>{toolbar}</PageToolbarActions>}
         {layout === PageLayoutType.Standard && (
           <NativeScrollbar
@@ -175,7 +168,7 @@ const getStyles = (theme: GrafanaTheme2, hasToolbar: boolean) => {
       },
     }),
     canvasContent: css({
-      label: 'canvas-content-page',
+      label: 'canvas-content',
       display: 'flex',
       flexDirection: 'column',
       padding: theme.spacing(2),

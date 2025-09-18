@@ -125,7 +125,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   static contextType = GrafanaContext;
 
   private forceRouteReloadCounter = 0;
-  private liveTimerTimeout?: NodeJS.Timeout;
   state: State = this.getCleanState();
 
   getCleanState(): State {
@@ -136,11 +135,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       showLoadingState: false,
       panelNotFound: false,
       editPanelAccessDenied: false,
-      scrollElement: undefined,
-      updateScrollTop: undefined,
-      rememberScrollTop: undefined,
-      pageNav: undefined,
-      sectionNav: undefined,
     };
   }
 
@@ -150,20 +144,12 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    // Clear any pending live timer timeout to prevent memory leaks
-    clearTimeout(this.liveTimerTimeout);
-    this.liveTimerTimeout = undefined;
-    
-    // Clear scroll element reference to prevent detached DOM nodes
-    this.state.scrollElement?.cleanup?.();
-    
     this.closeDashboard();
   }
 
   closeDashboard() {
     this.props.cleanUpDashboardAndVariables();
     this.setState(this.getCleanState());
-    this.state = this.getCleanState();
   }
 
   initDashboard() {
@@ -186,7 +172,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     });
 
     // small delay to start live updates
-    this.liveTimerTimeout = setTimeout(this.updateLiveTimer, 250);
+    setTimeout(this.updateLiveTimer, 250);
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
