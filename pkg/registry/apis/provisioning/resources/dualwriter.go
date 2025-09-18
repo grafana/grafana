@@ -507,7 +507,7 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 	if parsed.Existing != nil {
 		name = parsed.Existing.GetName()
 	} else {
-		name = parsed.DryRunResponse.GetName()
+		name = parsed.Obj.GetName()
 	}
 
 	rsp, err := r.access.Check(ctx, id, authlib.CheckRequest{
