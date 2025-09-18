@@ -364,14 +364,6 @@
       "tooltip-assigned-role": "A licensed role will be assigned when this user signs in"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "Hide common labels",
-      "show": {
-        "tooltip": "Show common labels"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Active timings"
@@ -480,16 +472,16 @@
     "alert-instance-state-filter": {
       "state": "State"
     },
+    "alert-instances-table": {
+      "created": "Created",
+      "labels": "Labels",
+      "state": "State"
+    },
     "alert-label": {
       "tooltip-remove-label": "Remove label"
     },
     "alert-label-dropdown": {
       "placeholder-select": "Choose {{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "Labels",
-      "common-labels-count_one": "+{{count}} common labels",
-      "common-labels-count_other": "+{{count}} common labels"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "Muting, grouping and timings (optional)",
@@ -9439,7 +9431,7 @@
       "label-signature": "Signature"
     },
     "description-enable-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
-    "description-enable-syntax-highlighting": "Use a predefined syntax coloring grammar to highlight relevant parts of the log lines",
+    "description-enable-logs-highlighting": "Use a predefined coloring scheme to highlight relevant parts of the log lines",
     "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
     "fields": {
       "type": {
@@ -9711,14 +9703,14 @@
     },
     "name-common-labels": "Common labels",
     "name-deduplication": "Deduplication",
-    "name-details-mode": "Log Details panel mode",
+    "name-details-mode": "Log details panel mode",
     "name-details-options": {
       "label-inline": "Inline",
       "label-sidebar": "Sidebar"
     },
     "name-enable-infinite-scrolling": "Enable infinite scrolling",
     "name-enable-log-details": "Enable log details",
-    "name-enable-syntax-highlighting": "Enable syntax highlighting",
+    "name-enable-logs-highlighting": "Enable logs highlighting",
     "name-font-size": "Font size",
     "name-order": "Order",
     "name-prettify-json": "Prettify JSON",
@@ -11012,7 +11004,6 @@
       "body-not-published": "This plugin is not published to <2>grafana.com/plugins</2> and can't be managed via the catalog.",
       "enterprise-plugin-info": "This plugin is only available in Grafana Cloud and Grafana Enterprise.",
       "learn-more": "Learn more",
-      "no-valid-grafana-enterprise-license-detected": "No valid Grafana Enterprise license detected.",
       "title-dev-alert": "This is a development build of the plugin and can't be uninstalled.",
       "title-plugin-doesnt-support-version-grafana": "This plugin doesn't support your version of Grafana.",
       "title-remote-plugins-unavailable": "The install controls have been disabled because the Grafana server cannot access grafana.com.",
@@ -11374,9 +11365,10 @@
       "all-resources-managed_one": "All {{count}} resource is managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
       "no-results-matching-your-query": "No results matching your query",
-      "partial-managed_one": "{{managedCount}}/{{count}} resources managed. {{unmanagedCount}} resources aren't managed as code yet.",
-      "partial-managed_other": "{{managedCount}}/{{count}} resources managed. {{unmanagedCount}} resources aren't managed as code yet.",
-      "placeholder-search": "Search"
+      "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed.",
+      "placeholder-search": "Search",
+      "unmanaged-resources_one": "{{count}} resource isn't managed as code yet.",
+      "unmanaged-resources_other": "{{count}} resources aren't managed as code yet."
     },
     "get-default-values": {
       "title": {
