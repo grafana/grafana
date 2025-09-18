@@ -1,17 +1,9 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { Page } from 'playwright-core';
+
+import { test, expect, E2ESelectorGroups, DashboardPage } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
-
-import {
-  checkRepeatedPanelTitles,
-  verifyChanges,
-  movePanel,
-  getPanelPosition,
-  saveDashboard,
-  importTestDashboard,
-  goToEmbeddedPanel,
-} from './utils';
 
 const repeatTitleBase = 'repeat - ';
 const newTitleBase = 'edited rep - ';
@@ -57,7 +49,7 @@ test.describe(
 
       await checkRepeatedPanelTitles(dashboardPage, selectors, repeatTitleBase, repeatOptions);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboard(dashboardPage, selectors);
       await page.reload();
 
       await checkRepeatedPanelTitles(dashboardPage, selectors, repeatTitleBase, repeatOptions);
@@ -117,7 +109,7 @@ test.describe(
 
       await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboard(dashboardPage, selectors);
       await page.reload();
 
       await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
@@ -176,7 +168,7 @@ test.describe(
 
       await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboard(dashboardPage, selectors);
       await page.reload();
 
       await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
@@ -228,7 +220,7 @@ test.describe(
 
       await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboard(dashboardPage, selectors);
       await page.reload();
 
       await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
@@ -258,7 +250,7 @@ test.describe(
       let normalPanel = await getPanelPosition(dashboardPage, selectors, 'New panel');
       expect(normalPanel?.y).toBeLessThan(repeatedPanel?.y || 0);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboard(dashboardPage, selectors);
       await page.reload();
 
       const repeatedPanel2 = await getPanelPosition(
@@ -348,7 +340,20 @@ test.describe(
         .hover();
       await page.keyboard.press('p+e');
 
-      await goToEmbeddedPanel(page);
+      // extracting embedded panel url from UI
+      const textAreaValue = await page.getByTestId('share-embed-html').evaluate((el) => el.textContent);
+      const srcRegex = /src="([^"]*)"/;
+      let soloPanelUrl = textAreaValue.match(srcRegex)?.[1];
+
+      expect(soloPanelUrl).toBeDefined();
+
+      // adjust base url (different each time in CI)
+      const currentUrl = page.url();
+      const baseUrlRegex = /^http:\/\/[^/:]+:3001\//;
+      const baseUrl = currentUrl.match(baseUrlRegex)?.[0];
+      soloPanelUrl = soloPanelUrl!.replace(baseUrlRegex, baseUrl!);
+
+      page.goto(soloPanelUrl!);
 
       await expect(
         dashboardPage.getByGrafanaSelector(
@@ -395,7 +400,7 @@ test.describe(
         await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer).all()
       ).toHaveLength(3);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboard(dashboardPage, selectors);
       await page.reload();
 
       await expect(
@@ -410,3 +415,86 @@ test.describe(
     });
   }
 );
+
+async function importTestDashboard(page: Page, selectors: E2ESelectorGroups, title: string, dashInput?: string) {
+  await page.goto(selectors.pages.ImportDashboard.url);
+  await page
+    .getByTestId(selectors.components.DashboardImportPage.textarea)
+    .fill(dashInput || JSON.stringify(testV2Dashboard));
+  await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
+  await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
+  await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
+  await page.locator('div[data-testid="data-source-card"]').first().click();
+  await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
+  const undockMenuButton = page.locator('[aria-label="Undock menu"]');
+  const undockMenuVisible = await undockMenuButton.isVisible();
+  if (undockMenuVisible) {
+    undockMenuButton.click();
+  }
+
+  await expect(page.locator('[data-testid="uplot-main-div"]').first()).toBeVisible();
+}
+
+async function saveDashboard(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
+  await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
+  await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
+}
+
+async function checkRepeatedPanelTitles(
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  title: string,
+  options: Array<string | number>
+) {
+  for (const option of options) {
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(`${title}${option}`))
+    ).toBeVisible();
+  }
+}
+
+async function movePanel(
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  sourcePanel: string | RegExp,
+  targetPanel: string | RegExp
+) {
+  // Get target panel position
+  const targetPanelElement = dashboardPage
+    .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
+    .filter({ hasText: targetPanel })
+    .first();
+
+  // Get source panel element
+  const sourcePanelElement = dashboardPage
+    .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
+    .filter({ hasText: sourcePanel });
+
+  // Perform drag and drop
+  await sourcePanelElement.dragTo(targetPanelElement);
+}
+
+async function getPanelPosition(
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  panelTitle: string | RegExp
+) {
+  const panel = dashboardPage
+    .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
+    .filter({ hasText: panelTitle })
+    .first();
+  const boundingBox = await panel.boundingBox();
+  return boundingBox;
+}
+
+async function verifyChanges(
+  dashboardPage: DashboardPage,
+  page: Page,
+  selectors: E2ESelectorGroups,
+  changeText: string
+) {
+  await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
+  await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Changes')).click();
+  await expect(page.getByText('Full JSON diff').locator('..')).toContainText(changeText);
+  await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
+}
