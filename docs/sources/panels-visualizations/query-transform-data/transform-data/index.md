@@ -106,6 +106,9 @@ When there are multiple transformations, Grafana applies them in the order they 
 
 The order in which Grafana applies transformations directly impacts the results. For example, if you use a Reduce transformation to condense all the results of one column into a single value, then you can only apply transformations to that single value.
 
+The Reduce transformation applies a calculation (for example, Average, Max, Sum, Last, or Last non-null) to each field and returns one value per field. It’s commonly paired with Stat or Gauge panels to show a current value. For the full list of available calculations, see [Calculation types](/docs/grafana/latest/panels-visualizations/query-transform-data/calculation-types/).
+
+
 ## Dashboard variables in transformations
 
 All text input fields in transformations accept [variable syntax](ref:dashboard-variable):
