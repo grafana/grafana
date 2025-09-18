@@ -5,6 +5,7 @@ import (
 
 	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/types"
 	authlib "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
@@ -43,7 +44,7 @@ func (c *Client) Check(ctx context.Context, id authlib.AuthInfo, req authlib.Che
 	return c.authzlibclient.Check(ctx, id, req)
 }
 
-func (c *Client) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, error) {
+func (c *Client) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, types.Zookie, error) {
 	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Compile")
 	defer span.End()
 
