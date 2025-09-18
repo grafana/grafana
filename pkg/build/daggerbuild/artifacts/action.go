@@ -14,6 +14,8 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
+// BuildArtifacts builds each artifact in parallel that is defined using `-a / --artifacts`. `opts` can control the
+// level of parallelism as well as how CLI arguments are interpreted.
 func BuildArtifacts(ctx context.Context, parallel int64, log *slog.Logger, artifacts []*pipeline.Artifact, opts *pipeline.ArtifactContainerOpts) error {
 	wg := &errgroup.Group{}
 	sm := semaphore.NewWeighted(parallel)

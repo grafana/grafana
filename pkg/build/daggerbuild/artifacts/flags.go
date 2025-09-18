@@ -37,7 +37,7 @@ func ArtifactFlags(r Registerer) []cli.Flag {
 	}
 	cacheBuildersRegistryFlag := &cli.StringFlag{
 		Name:  "cache-builders-registry",
-		Value: "us-docker.pkg.dev/grafanalabs-dev/docker-grafana-prod",
+		Value: "us-docker.pkg.dev/grafanalabs-dev/docker-grafana-dev",
 	}
 
 	flags := flags.Join(
