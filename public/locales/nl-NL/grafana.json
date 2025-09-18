@@ -364,14 +364,6 @@
       "tooltip-assigned-role": "Er wordt een gelicentieerde rol toegewezen wanneer deze gebruiker zich aanmeldt"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "Algemene labels verbergen",
-      "show": {
-        "tooltip": "Algemene labels weergeven"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Actieve timings"
@@ -480,16 +472,16 @@
     "alert-instance-state-filter": {
       "state": "Status"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "Label verwijderen"
     },
     "alert-label-dropdown": {
       "placeholder-select": "Kies {{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "Labels",
-      "common-labels-count_one": "+{{count}} gemeenschappelijke labels",
-      "common-labels-count_other": "+{{count}} gemeenschappelijke labels"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "Dempen, groeperen en timings (optioneel)",
@@ -9439,7 +9431,7 @@
       "label-signature": "Handtekening"
     },
     "description-enable-infinite-scrolling": "Experimenteel. Vraag meer resultaten op door naar de onderkant van de loglijst te scrollen.",
-    "description-enable-syntax-highlighting": "Gebruik een vooraf gedefinieerde syntaxis om relevante delen van de logregels te markeren",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "Weergavebesturingselementen om naar de laatste of eerste logregel te gaan en filters op logniveau",
     "fields": {
       "type": {
@@ -9711,14 +9703,14 @@
     },
     "name-common-labels": "Gemeenschappelijke labels",
     "name-deduplication": "Dedupliceren",
-    "name-details-mode": "Paneelmodus logdetails",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "Inline",
       "label-sidebar": "Sidebar"
     },
     "name-enable-infinite-scrolling": "Oneindig scrollen mogelijk maken",
     "name-enable-log-details": "Logboekdetails inschakelen",
-    "name-enable-syntax-highlighting": "Syntaxismarkering inschakelen",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "Lettergrootte",
     "name-order": "Orde",
     "name-prettify-json": "JSON verfraaien",
@@ -11012,7 +11004,6 @@
       "body-not-published": "Deze plug-in is niet gepubliceerd op <2>grafana.com/plugins</2> en kan niet via de catalogus worden beheerd.",
       "enterprise-plugin-info": "Deze plug-in is alleen beschikbaar in Grafana Cloud en Grafana Enterprise.",
       "learn-more": "Meer informatie",
-      "no-valid-grafana-enterprise-license-detected": "Geen geldige Grafana Enterprise-licentie gedetecteerd.",
       "title-dev-alert": "Dit is een ontwikkelversie van de plug-in die niet kan worden verwijderd.",
       "title-plugin-doesnt-support-version-grafana": "Deze plug-in ondersteunt je versie van Grafana niet.",
       "title-remote-plugins-unavailable": "De installatiebesturingselementen zijn uitgeschakeld omdat de Grafana-server geen toegang heeft tot grafana.com.",
@@ -11372,11 +11363,12 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Geen resultaten die overeenkomen met je query",
+      "partial-managed": "",
       "placeholder-search": "Zoeken",
       "all-resources-managed_one": "",
       "all-resources-managed_other": "",
-      "partial-managed_one": "",
-      "partial-managed_other": ""
+      "unmanaged-resources_one": "",
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {

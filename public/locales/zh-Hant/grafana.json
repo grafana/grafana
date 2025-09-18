@@ -364,14 +364,6 @@
       "tooltip-assigned-role": "此使用者登入時，將指派授權角色"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "隱藏通用標籤",
-      "show": {
-        "tooltip": "顯示通用標籤"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "啟用時間"
@@ -477,15 +469,16 @@
     "alert-instance-state-filter": {
       "state": "狀態"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "刪除標籤"
     },
     "alert-label-dropdown": {
       "placeholder-select": "選擇{{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "標籤",
-      "common-labels-count_other": "+{{count}} 個通用標籤"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "靜音、分組和時間（選填）",
@@ -9410,7 +9403,7 @@
       "label-signature": "簽名"
     },
     "description-enable-infinite-scrolling": "實驗性。捲動至紀錄清單底部，以請求更多結果。",
-    "description-enable-syntax-highlighting": "運用預先定義的語法著色規則，來突顯紀錄行中的相關部分",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "顯示控制項以跳至最後或第一個紀錄行，並按紀錄層級篩選",
     "fields": {
       "type": {
@@ -9679,14 +9672,14 @@
     },
     "name-common-labels": "通用標籤",
     "name-deduplication": "重複",
-    "name-details-mode": "紀錄詳細資訊面板模式",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "內嵌",
       "label-sidebar": "側邊欄"
     },
     "name-enable-infinite-scrolling": "啟用無限捲動",
     "name-enable-log-details": "啟用紀錄詳細資訊",
-    "name-enable-syntax-highlighting": "啟用語法突顯",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "字型大小",
     "name-order": "順序",
     "name-prettify-json": "美化 JSON",
@@ -10977,7 +10970,6 @@
       "body-not-published": "此外掛程式未發佈到 <2>grafana.com/plugins</2>，無法透過目錄管理。",
       "enterprise-plugin-info": "此外掛程式僅適用於 Grafana Cloud 和 Grafana Enterprise。",
       "learn-more": "了解更多資訊",
-      "no-valid-grafana-enterprise-license-detected": "未偵測到有效的 Grafana 企業版授權。",
       "title-dev-alert": "這是外掛程式的開發版本，無法解除安裝。",
       "title-plugin-doesnt-support-version-grafana": "此外掛程式不支援您的 Grafana 版本。",
       "title-remote-plugins-unavailable": "由於 Grafana 伺服器無法存取 grafana.com，因此已停用安裝控制項。",
@@ -11333,9 +11325,10 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "沒有符合您查詢的結果",
+      "partial-managed": "",
       "placeholder-search": "搜尋",
       "all-resources-managed_other": "",
-      "partial-managed_other": ""
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {

@@ -364,14 +364,6 @@
       "tooltip-assigned-role": "Peran berlisensi akan ditetapkan saat pengguna ini masuk"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "Sembunyikan label umum",
-      "show": {
-        "tooltip": "Tampilkan label umum"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Pengaturan waktu aktif"
@@ -477,15 +469,16 @@
     "alert-instance-state-filter": {
       "state": "Status"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "Hapus label"
     },
     "alert-label-dropdown": {
       "placeholder-select": "Pilih {{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "Label",
-      "common-labels-count_other": "+{{count}} label umum"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "Pembisuan, pengelompokan, dan pengaturan waktu (opsional)",
@@ -9410,7 +9403,7 @@
       "label-signature": "Tanda Tangan"
     },
     "description-enable-infinite-scrolling": "Eksperimental. Minta lebih banyak hasil dengan menggulir ke bagian bawah daftar log.",
-    "description-enable-syntax-highlighting": "Gunakan tata bahasa pewarnaan sintaks yang telah ditentukan untuk menyoroti bagian yang relevan dari baris log",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "Tampilkan kontrol untuk melompat ke baris log terakhir atau pertama, dan filter berdasarkan level log",
     "fields": {
       "type": {
@@ -9679,14 +9672,14 @@
     },
     "name-common-labels": "Label umum",
     "name-deduplication": "Deduplikasi",
-    "name-details-mode": "Mode panel Detail Log",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "sebaris",
       "label-sidebar": "Bilah samping"
     },
     "name-enable-infinite-scrolling": "Aktifkan gulir tak terbatas",
     "name-enable-log-details": "Aktifkan detail log",
-    "name-enable-syntax-highlighting": "Aktifkan penyorotan sintaks",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "Ukuran font",
     "name-order": "Urutan",
     "name-prettify-json": "Rapikan JSON",
@@ -10977,7 +10970,6 @@
       "body-not-published": "Plugin ini tidak dipublikasikan ke <2>grafana.com/plugins</2> dan tidak dapat dikelola melalui katalog.",
       "enterprise-plugin-info": "Plugin ini hanya tersedia di Grafana Cloud dan Grafana Enterprise.",
       "learn-more": "Pelajari lebih lanjut",
-      "no-valid-grafana-enterprise-license-detected": "Tidak ada lisensi Grafana Enterprise yang valid terdeteksi.",
       "title-dev-alert": "Ini adalah pengembangan plugin dan instalasinya tidak dapat dihapus.",
       "title-plugin-doesnt-support-version-grafana": "Plugin ini tidak mendukung versi Grafana Anda.",
       "title-remote-plugins-unavailable": "Kontrol instalaasi telah dinonaktifkan karena server Grafana tidak dapat mengakses grafana.com.",
@@ -11333,9 +11325,10 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Tidak ada hasil yang cocok dengan kueri Anda",
+      "partial-managed": "",
       "placeholder-search": "Cari",
       "all-resources-managed_other": "",
-      "partial-managed_other": ""
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {

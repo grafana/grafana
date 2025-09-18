@@ -364,14 +364,6 @@
       "tooltip-assigned-role": "En licensierad roll kommer att tilldelas när den här användaren loggar in"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "Dölj vanliga etiketter",
-      "show": {
-        "tooltip": "Visa vanliga etiketter"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Aktiva tidsinställningar"
@@ -480,16 +472,16 @@
     "alert-instance-state-filter": {
       "state": "Tillstånd"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "Ta bort etikett"
     },
     "alert-label-dropdown": {
       "placeholder-select": "Välj {{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "Etiketter",
-      "common-labels-count_one": "+{{count}} vanliga etiketter",
-      "common-labels-count_other": "+{{count}} vanliga etiketter"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "Tystnad, gruppering och tidsinställningar (valfritt)",
@@ -9439,7 +9431,7 @@
       "label-signature": "Underskrift"
     },
     "description-enable-infinite-scrolling": "Experimentellt. Begär fler resultat genom att bläddra till längst ner i logglistan.",
-    "description-enable-syntax-highlighting": "Använd en fördefinierad syntaxfärgningsgrammatik för att markera relevanta delar av loggraderna",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "Visa kontroller för att hoppa till den sista eller första loggraden och filtrera efter loggnivå",
     "fields": {
       "type": {
@@ -9711,14 +9703,14 @@
     },
     "name-common-labels": "Vanliga etiketter",
     "name-deduplication": "Avduplicering",
-    "name-details-mode": "Panelläge för loggdetaljer",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "Inline",
       "label-sidebar": "Sidofält"
     },
     "name-enable-infinite-scrolling": "Aktivera oändlig rullning",
     "name-enable-log-details": "Aktivera loggdetaljer",
-    "name-enable-syntax-highlighting": "Aktivera syntaxfärgläggning",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "Teckenstorlek",
     "name-order": "Beställning",
     "name-prettify-json": "Gör JSON snyggare",
@@ -11012,7 +11004,6 @@
       "body-not-published": "Detta tillägg har inte publicerat på <2>grafana.com/plugins</2> och kan inte hanteras via katalogen.",
       "enterprise-plugin-info": "Detta tillägg är endast tillgängligt i Grafana Cloud och Grafana Enterprise.",
       "learn-more": "Läs mer",
-      "no-valid-grafana-enterprise-license-detected": "Ingen giltig Grafana Enterprise-licens upptäcktes.",
       "title-dev-alert": "Detta är en utvecklingsversion av tillägget och kan inte avinstalleras.",
       "title-plugin-doesnt-support-version-grafana": "Detta tillägg saknar stöd för din version av Grafana.",
       "title-remote-plugins-unavailable": "Installationskontrollerna har inaktiverats eftersom Grafanas server inte kan komma åt grafana.com.",
@@ -11372,11 +11363,12 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Inga resultat som matchar din fråga",
+      "partial-managed": "",
       "placeholder-search": "Sök",
       "all-resources-managed_one": "",
       "all-resources-managed_other": "",
-      "partial-managed_one": "",
-      "partial-managed_other": ""
+      "unmanaged-resources_one": "",
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {

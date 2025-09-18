@@ -364,14 +364,6 @@
       "tooltip-assigned-role": "Rola objęta licencją zostanie przypisana, gdy ten użytkownik się zaloguje"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "Ukryj zwykłe etykiety",
-      "show": {
-        "tooltip": "Pokaż zwykłe etykiety"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Aktywne harmonogramy"
@@ -486,18 +478,16 @@
     "alert-instance-state-filter": {
       "state": "Stan"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "Usuń etykietę"
     },
     "alert-label-dropdown": {
       "placeholder-select": "Wybierz: {{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "Etykiety",
-      "common-labels-count_one": "+{{count}} wspólnej etykiety",
-      "common-labels-count_few": "+{{count}} wspólne etykiety",
-      "common-labels-count_many": "+{{count}} wspólnych etykiet",
-      "common-labels-count_other": "+{{count}} wspólnej etykiety"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "Wyciszanie, grupowanie i harmonogramy (opcjonalnie)",
@@ -9497,7 +9487,7 @@
       "label-signature": "Podpis"
     },
     "description-enable-infinite-scrolling": "Eksperymentalne. Poproś o więcej wyników, przewijając do dołu listy logów.",
-    "description-enable-syntax-highlighting": "Użyj wstępnie zdefiniowanej gramatyki kolorowania składni, aby wyróżnić odpowiednie części wierszy logów",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "Wyświetlaj elementy sterujące, aby przejść do ostatniego lub pierwszego wiersza logu, i filtruj według poziomu logów",
     "fields": {
       "type": {
@@ -9775,14 +9765,14 @@
     },
     "name-common-labels": "Częste etykiety",
     "name-deduplication": "Deduplikacja",
-    "name-details-mode": "Tryb panelu szczegółów dziennika",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "Bezpośrednio",
       "label-sidebar": "Pasek boczny"
     },
     "name-enable-infinite-scrolling": "Włącz nieskończone przewijanie",
     "name-enable-log-details": "Włącz szczegóły logu",
-    "name-enable-syntax-highlighting": "Włącz podświetlanie składni",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "Rozmiar czcionki",
     "name-order": "Kolejność",
     "name-prettify-json": "Formatowanie JSON",
@@ -11082,7 +11072,6 @@
       "body-not-published": "Ta wtyczka nie została opublikowana na stronie <2>grafana.com/plugins</2> i nie można nią zarządzać za pośrednictwem katalogu.",
       "enterprise-plugin-info": "Ta wtyczka jest dostępna tylko w Grafana Cloud i Grafana Enterprise.",
       "learn-more": "Dowiedz się więcej",
-      "no-valid-grafana-enterprise-license-detected": "Nie wykryto ważnej licencji Grafana Enterprise.",
       "title-dev-alert": "Jest to wersja rozwojowa wtyczki i nie można jej odinstalować.",
       "title-plugin-doesnt-support-version-grafana": "Ta wtyczka nie obsługuje Twojej wersji usługi Grafana.",
       "title-remote-plugins-unavailable": "Elementy sterujące instalacją zostały wyłączone, ponieważ serwer Grafany nie może uzyskać dostępu do strony grafana.com.",
@@ -11450,15 +11439,16 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Brak wyników pasujących do zapytania",
+      "partial-managed": "",
       "placeholder-search": "Szukaj",
       "all-resources-managed_one": "",
       "all-resources-managed_few": "",
       "all-resources-managed_many": "",
       "all-resources-managed_other": "",
-      "partial-managed_one": "",
-      "partial-managed_few": "",
-      "partial-managed_many": "",
-      "partial-managed_other": ""
+      "unmanaged-resources_one": "",
+      "unmanaged-resources_few": "",
+      "unmanaged-resources_many": "",
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {

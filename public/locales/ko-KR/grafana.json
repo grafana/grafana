@@ -364,14 +364,6 @@
       "tooltip-assigned-role": "이 사용자가 로그인하면 라이선스가 부여된 역할이 할당됩니다"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "일반 라벨 숨기기",
-      "show": {
-        "tooltip": "일반 라벨 표시"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "활성 타이밍"
@@ -477,15 +469,16 @@
     "alert-instance-state-filter": {
       "state": "상태"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "라벨 제거"
     },
     "alert-label-dropdown": {
       "placeholder-select": "{{type}} 선택"
-    },
-    "alert-labels": {
-      "aria-label-labels": "라벨",
-      "common-labels-count_other": "일반 라벨 {{count}}개 추가"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "알림 비활성화, 그룹화 및 타이밍(선택 사항)",
@@ -9410,7 +9403,7 @@
       "label-signature": "서명"
     },
     "description-enable-infinite-scrolling": "실험적. 로그 목록 하단으로 스크롤하여 더 많은 결과를 요청합니다.",
-    "description-enable-syntax-highlighting": "사전 정의된 구문 색상 문법을 사용하여 로그 라인의 관련 부분을 강조 표시합니다",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "마지막 또는 첫 번째 로그 라인으로 이동하는 컨트롤과 로그 단계별 필터를 표시합니다",
     "fields": {
       "type": {
@@ -9679,14 +9672,14 @@
     },
     "name-common-labels": "일반 레이블",
     "name-deduplication": "중복 제거",
-    "name-details-mode": "로그 세부 정보 패널 모드",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "인라인",
       "label-sidebar": "사이드바"
     },
     "name-enable-infinite-scrolling": "무한 스크롤 활성화",
     "name-enable-log-details": "로그 세부 정보 활성화",
-    "name-enable-syntax-highlighting": "구문 강조 표시 활성화",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "글자 크기",
     "name-order": "순서",
     "name-prettify-json": "JSON을 보기 좋게 정리",
@@ -10977,7 +10970,6 @@
       "body-not-published": "이 플러그인은 <2>grafana.com/plugins</2>에 게시되어 있지 않으며 카탈로그를 통해 관리할 수 없습니다.",
       "enterprise-plugin-info": "이 플러그인은 Grafana Cloud 및 Grafana Enterprise에서만 사용할 수 있습니다.",
       "learn-more": "자세히 알아보기",
-      "no-valid-grafana-enterprise-license-detected": "유효한 Grafana Enterprise 라이선스가 감지되지 않았습니다.",
       "title-dev-alert": "이것은 플러그인의 개발용 빌드이며 제거할 수 없습니다.",
       "title-plugin-doesnt-support-version-grafana": "이 플러그인은 사용자의 Grafana 버전을 지원하지 않습니다.",
       "title-remote-plugins-unavailable": "Grafana 서버가 grafana.com에 액세스할 수 없으므로 설치 제어가 비활성화되었습니다.",
@@ -11333,9 +11325,10 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "쿼리와 일치하는 결과가 없습니다",
+      "partial-managed": "",
       "placeholder-search": "검색",
       "all-resources-managed_other": "",
-      "partial-managed_other": ""
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {
