@@ -199,6 +199,10 @@ func addAnnotationMig(mg *Migrator) {
 	}))
 
 	mg.AddMigration("Add missing dashboard_uid to annotation table", &SetDashboardUIDMigration{})
+
+	mg.AddMigration("Add an additional index (tag_id, annotation_id) to the annotation_tag table", NewAddIndexMigration(annotationTagTableV3, &Index{
+		Cols: []string{"tag_id", "annotation_id"}, Type: UniqueIndex,
+	}))
 }
 
 type AddMakeRegionSingleRowMigration struct {
