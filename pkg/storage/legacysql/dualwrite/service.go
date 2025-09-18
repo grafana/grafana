@@ -30,17 +30,22 @@ func ProvideService(
 		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) // required for git provisioning
 
 	if cfg != nil {
-		folders := cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode
-		dashboards := cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode
-		if (folders == rest.Mode5 && dashboards == folders) || !enabled {
-			return &staticService{cfg}, nil // fallback to using the dual write flags from cfg
+		if !enabled {
+			return &staticService{cfg}, nil
 		}
 
-		if folders >= rest.Mode4 && dashboards != folders {
-			return nil, fmt.Errorf("dashboards and folders must use the same mode when reading unified")
-		}
-		if dashboards >= rest.Mode4 && dashboards != folders {
-			return nil, fmt.Errorf("dashboards and folders must use the same mode when reading unified")
+		if cfg != nil {
+			foldersMode := cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode
+			dashboardsMode := cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode
+
+			// If both are fully on unified (Mode5), the dynamic service is not needed.
+			if foldersMode == rest.Mode5 && dashboardsMode == rest.Mode5 {
+				return &staticService{cfg}, nil
+			}
+
+			if (foldersMode >= rest.Mode4 || dashboardsMode >= rest.Mode4) && foldersMode != dashboardsMode {
+				return nil, fmt.Errorf("dashboards and folders must use the same mode when reading from unified storage")
+			}
 		}
 	}
 
