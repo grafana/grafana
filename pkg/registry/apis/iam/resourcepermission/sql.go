@@ -163,11 +163,6 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 		return nil, apierrors.NewInternalError(err)
 	}
 
-	mapper, err := s.getResourceMapper(grn.Group, grn.Resource)
-	if err != nil {
-		return nil, apierrors.NewInternalError(err)
-	}
-
 	resourceQuery := &ListResourcePermissionsQuery{
 		Scopes:     []string{mapper.Scope(grn.Name)},
 		OrgID:      ns.OrgID,
@@ -495,6 +490,25 @@ func diffPermissions(currentPermissions, desiredPermissions []v0alpha1.ResourceP
 	}
 
 	return permissionsToAdd, permissionsToRemove
+}
+
+func validateCreateAndUpdateInput(v0ResourcePerm *v0alpha1.ResourcePermission, grn *groupResourceName) error {
+	if v0ResourcePerm == nil {
+		return fmt.Errorf("resource permission cannot be nil")
+	}
+
+	if len(v0ResourcePerm.Spec.Permissions) == 0 {
+		return fmt.Errorf("resource permission must have at least one permission: %w", errInvalidSpec)
+	}
+
+	// Validate that the group/resource/name in the name matches the spec
+	if grn.Group != v0ResourcePerm.Spec.Resource.ApiGroup ||
+		grn.Resource != v0ResourcePerm.Spec.Resource.Resource ||
+		grn.Name != v0ResourcePerm.Spec.Resource.Name {
+		return fmt.Errorf("resource permission name does not match spec: %w", errInvalidSpec)
+	}
+
+	return nil
 }
 
 // deleteResourcePermission deletes resource permissions for a single ResourcePermission resource referenced by its name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs)
