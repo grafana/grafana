@@ -16,7 +16,11 @@ import {
   Stack,
   Switch,
 } from '@grafana/ui';
-import { Repository, useGetRepositoryRefsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  Repository,
+  useGetFrontendSettingsQuery,
+  useGetRepositoryRefsQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
@@ -32,11 +36,13 @@ import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
 import { getDefaultValues } from './defaults';
 
 // This needs to be a function for translations to work
-const getTargetOptions = () => {
-  return [
+const getTargetOptions = (allowedTargets: string[]) => {
+  const allOptions = [
     { value: 'instance', label: t('provisioning.config-form.option-entire-instance', 'Entire instance') },
     { value: 'folder', label: t('provisioning.config-form.option-managed-folder', 'Managed folder') },
   ];
+
+  return allOptions.filter((option) => allowedTargets.includes(option.value));
 };
 
 export interface ConfigFormProps {
@@ -44,6 +50,7 @@ export interface ConfigFormProps {
 }
 export function ConfigForm({ data }: ConfigFormProps) {
   const repositoryName = data?.metadata?.name;
+  const settings = useGetFrontendSettingsQuery();
   const [submitData, request] = useCreateOrUpdateRepository(repositoryName);
   const {
     register,
@@ -62,7 +69,10 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [type, readOnly] = watch(['type', 'readOnly']);
-  const targetOptions = useMemo(() => getTargetOptions(), []);
+  const targetOptions = useMemo(
+    () => getTargetOptions(settings.data?.allowedTargets || ['instance', 'folder']),
+    [settings.data]
+  );
   const isGitBased = isGitProvider(type);
 
   const {

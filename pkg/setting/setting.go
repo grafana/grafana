@@ -134,6 +134,7 @@ type Cfg struct {
 	PermittedProvisioningPaths []string
 	// Provisioning config
 	ProvisioningDisableControllers bool
+	ProvisioningAllowedTargets     []string
 	ProvisioningRepositoryTypes    []string
 	ProvisioningLokiURL            string
 	ProvisioningLokiUser           string
@@ -2119,6 +2120,10 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	}
 
 	cfg.ProvisioningDisableControllers = iniFile.Section("provisioning").Key("disable_controllers").MustBool(false)
+	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
+	if len(cfg.ProvisioningAllowedTargets) == 0 {
+		cfg.ProvisioningAllowedTargets = []string{"instance", "folder"}
+	}
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

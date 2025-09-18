@@ -1734,6 +1734,22 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 							Format:      "",
 						},
 					},
+					"allowedTargets": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The valid targets (can disable instance or folder types)",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+										Enum:    []interface{}{"folder", "instance"},
+									},
+								},
+							},
+						},
+					},
 					"availableRepositoryTypes": {
 						SchemaProps: spec.SchemaProps{
 							Description: "AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)",
