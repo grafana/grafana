@@ -129,7 +129,7 @@ func NewAPIBuilder(
 	extraBuilders []ExtraBuilder,
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
-	newStandaloneClientFactoryFunc func(apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
+	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 ) *APIBuilder {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
