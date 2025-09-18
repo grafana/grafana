@@ -198,22 +198,18 @@ func TestGetInstanceSettings_DISABLED(t *testing.T) {
 				APIVersion: "v2",
 			},
 		},
-		// FIXME: This test fails - GetInstanceSettings doesn't handle reference objects without UID properly
-		// Issue: When looking up datasource by type only, should return default datasource of that type
-		// Expected: Returns default prometheus datasource info
-		// Actual: Returns nil
-		// {
-		// 	name: "lookup by reference object without UID",
-		// 	nameOrRef: map[string]interface{}{
-		// 		"type": "prometheus",
-		// 	},
-		// 	expected: &schemaversion.DataSourceInfo{
-		// 		UID:        "default-ds-uid",
-		// 		Type:       "prometheus",
-		// 		Name:       "Default Test Datasource Name",
-		// 		APIVersion: "v1",
-		// 	},
-		// },
+		{
+			name: "lookup by reference object without UID",
+			nameOrRef: map[string]interface{}{
+				"type": "prometheus",
+			},
+			expected: &schemaversion.DataSourceInfo{
+				UID:        "default-ds-uid",
+				Type:       "prometheus",
+				Name:       "Default Test Datasource Name",
+				APIVersion: "v1",
+			},
+		},
 		{
 			name:      "unknown datasource should return nil",
 			nameOrRef: "unknown-ds",
