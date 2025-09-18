@@ -32,10 +32,11 @@ func TestProcessQuery(t *testing.T) {
 				}`),
 			},
 		}
-		target, jsonModel, err := service.processQuery(queries[0])
+		target, jsonModel, isMetricTank, err := service.processQuery(queries[0])
 		assert.NoError(t, err)
 		assert.Nil(t, jsonModel)
 		assert.Equal(t, "app.grafana.*.dashboards.views.1M.count", target)
+		assert.False(t, isMetricTank)
 	})
 
 	t.Run("Returns if target is empty", func(t *testing.T) {
@@ -48,10 +49,26 @@ func TestProcessQuery(t *testing.T) {
 			},
 		}
 		emptyQuery := GraphiteQuery{Target: ""}
-		target, jsonModel, err := service.processQuery(queries[0])
+		target, jsonModel, isMetricTank, err := service.processQuery(queries[0])
 		assert.NoError(t, err)
 		assert.Equal(t, &emptyQuery, jsonModel)
 		assert.Equal(t, "", target)
+		assert.False(t, isMetricTank)
+	})
+
+	t.Run("Returns isMetricTank value", func(t *testing.T) {
+		queries := []backend.DataQuery{
+			{
+				RefID: "A",
+				JSON: []byte(`{
+					"target": "app.grafana.*.dashboards.views.1M.count",
+					"isMetricTank": true
+				}`),
+			},
+		}
+		_, _, isMetricTank, err := service.processQuery(queries[0])
+		assert.NoError(t, err)
+		assert.True(t, isMetricTank)
 	})
 
 	t.Run("QueryData with no valid queries returns bad request response", func(t *testing.T) {

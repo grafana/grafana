@@ -123,11 +123,11 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 
 // processQuery converts a Graphite data source query to a Graphite query target. It returns the target,
 // and the model if the target is invalid
-func (s *Service) processQuery(query backend.DataQuery) (string, *GraphiteQuery, error) {
+func (s *Service) processQuery(query backend.DataQuery) (string, *GraphiteQuery, bool, error) {
 	queryJSON := GraphiteQuery{}
 	err := json.Unmarshal(query.JSON, &queryJSON)
 	if err != nil {
-		return "", &queryJSON, fmt.Errorf("failed to decode the Graphite query: %w", err)
+		return "", &queryJSON, false, fmt.Errorf("failed to decode the Graphite query: %w", err)
 	}
 	s.logger.Debug("Graphite", "query", queryJSON)
 	currTarget := queryJSON.TargetFull
@@ -137,11 +137,11 @@ func (s *Service) processQuery(query backend.DataQuery) (string, *GraphiteQuery,
 	}
 	if currTarget == "" {
 		s.logger.Debug("Graphite", "empty query target", queryJSON)
-		return "", &queryJSON, nil
+		return "", &queryJSON, false, nil
 	}
 	target := fixIntervalFormat(currTarget)
 
-	return target, nil, nil
+	return target, nil, queryJSON.IsMetricTank, nil
 }
 
 func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQuery, dsInfo *datasourceInfo) (*http.Request, url.Values, *GraphiteQuery, error) {
@@ -158,7 +158,7 @@ func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQ
 		"target":        []string{},
 	}
 
-	target, emptyQuery, err := s.processQuery(query)
+	target, emptyQuery, isMetricTank, err := s.processQuery(query)
 	if err != nil {
 		return nil, formData, nil, err
 	}
@@ -172,11 +172,17 @@ func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQ
 
 	s.logger.Debug("Graphite request", "params", formData)
 
+	params := map[string][]string{}
+	if isMetricTank {
+		params["meta"] = []string{"true"}
+	}
+
 	graphiteReq, err := s.createRequest(ctx, dsInfo, URLParams{
-		SubPath: "render",
-		Method:  http.MethodPost,
-		Body:    strings.NewReader(formData.Encode()),
-		Headers: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
+		SubPath:     "render",
+		Method:      http.MethodPost,
+		Body:        strings.NewReader(formData.Encode()),
+		Headers:     map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
+		QueryParams: params,
 	})
 	if err != nil {
 		return nil, formData, nil, err
