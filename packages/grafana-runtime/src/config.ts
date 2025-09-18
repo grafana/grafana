@@ -259,7 +259,7 @@ export class GrafanaBootConfig {
   listDashboardScopesEndpoint = '';
   listScopesEndpoint = '';
 
-  provisioningAllowedTargets: string[] = ['instance', 'folder'];
+  provisioningAllowedTargets = ['instance', 'folder'];
 
   constructor(
     options: BootData['settings'] & {
