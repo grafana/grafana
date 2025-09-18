@@ -504,10 +504,6 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 		return apierrors.NewUnauthorized(err.Error())
 	}
 
-	/* if identity.IsServiceIdentity(ctx) {
-		// A Grafana sub-system should have full access. We trust them to make wise decisions.
-		return nil
-	} */
 
 	var name string
 	if parsed.Existing != nil {
