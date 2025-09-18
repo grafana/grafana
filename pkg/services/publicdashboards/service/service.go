@@ -14,7 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	queryv0alpha1 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -513,7 +513,7 @@ func (pd *PublicDashboardServiceImpl) logIsEnabledChanged(existingPubdash *Publi
 	}
 }
 
-func (pd *PublicDashboardServiceImpl) GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (queryv0alpha1.SQLSchema, error) {
+func (pd *PublicDashboardServiceImpl) GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (expr.SQLSchema, error) {
 	return nil, fmt.Errorf("sql schema endpoint not supported with public dashboards")
 }
 

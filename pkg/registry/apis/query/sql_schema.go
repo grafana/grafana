@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/expr"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
@@ -15,7 +16,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	queryv0alpha1 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	service "github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/web"
@@ -147,7 +147,7 @@ func (r *sqlSchemaREST) Connect(connectCtx context.Context, name string, _ runti
 	}), nil
 }
 
-func handlePreparedSQLSchema(ctx context.Context, pq *preparedQuery) (queryv0alpha1.SQLSchema, error) {
+func handlePreparedSQLSchema(ctx context.Context, pq *preparedQuery) (expr.SQLSchema, error) {
 	resp, err := service.GetSQLSchemas(ctx, pq.logger, pq.cache, pq.exprSvc, pq.mReq, pq.builder, pq.headers)
 	pq.reportMetrics()
 	return resp, err
@@ -160,7 +160,7 @@ func handleSQLSchemaQuery(
 	httpreq *http.Request,
 	responder responderWrapper,
 	connectLogger log.Logger,
-) (queryv0alpha1.SQLSchema, error) {
+) (expr.SQLSchema, error) {
 	pq, err := prepareQuery(ctx, raw, b, httpreq, connectLogger)
 	if err != nil {
 		responder.Error(err)

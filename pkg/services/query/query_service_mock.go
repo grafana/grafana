@@ -9,7 +9,7 @@ import (
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	dtos "github.com/grafana/grafana/pkg/api/dtos"
-	queryv0alpha1 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/expr"
 
 	identity "github.com/grafana/grafana/pkg/apimachinery/identity"
 
@@ -99,7 +99,7 @@ func (_m *FakeQueryService) Run(ctx context.Context) error {
 	return r0
 }
 
-func (_m *FakeQueryService) GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (queryv0alpha1.SQLSchema, error) {
+func (_m *FakeQueryService) GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (expr.SQLSchema, error) {
 	return nil, fmt.Errorf("sql schema endpoint not supported with public dashboards")
 }
 
