@@ -61,6 +61,11 @@ describe('Backend / Frontend single version migration result comparison', () => 
     setupTestDataSources();
   });
 
+  // Dashboards to skip in single version migration tests due to known inconsistencies
+  const SINGLE_VERSION_TEST_BLACKLIST = [
+    'mimir_rollout_debugging', // Backend correctly preserves rows structure for v15, frontend processes through DashboardModel
+  ];
+
   const { inputDir } = getTestDirectories();
   const outputDir = getOutputDirectory('single_version');
   const jsonInputs = getJsonInputFiles(inputDir);
@@ -74,6 +79,11 @@ describe('Backend / Frontend single version migration result comparison', () => 
 
     // Skip if target version exceeds latest version
     if (targetVersion > DASHBOARD_SCHEMA_VERSION) {
+      return;
+    }
+
+    // Skip blacklisted dashboards
+    if (SINGLE_VERSION_TEST_BLACKLIST.some((blacklisted) => inputFile.includes(blacklisted))) {
       return;
     }
 

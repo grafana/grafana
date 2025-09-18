@@ -170,7 +170,8 @@
           "expr": "sum by (job, version) (up{job=~\".*\"})",
           "format": "table",
           "instant": true,
-          "legendFormat": "__auto"
+          "legendFormat": "__auto",
+          "refId": "A"
         }
       ],
       "title": "Versions running",
@@ -242,7 +243,8 @@
             ]
           },
           "unit": "percentunit"
-        }
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 19,
@@ -278,7 +280,8 @@
           "expr": "sum by (deployment) (up{job=\"kube-state-metrics\"})",
           "format": "table",
           "instant": true,
-          "legendFormat": "__auto"
+          "legendFormat": "__auto",
+          "refId": "A"
         }
       ],
       "title": "Deployment rollout progress",
@@ -343,7 +346,8 @@
             ]
           },
           "unit": "percentunit"
-        }
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 19,
@@ -379,7 +383,8 @@
           "expr": "sum by (statefulset) (up{job=\"kube-state-metrics\"})",
           "format": "table",
           "instant": true,
-          "legendFormat": "__auto"
+          "legendFormat": "__auto",
+          "refId": "A"
         }
       ],
       "title": "StatefulSet rollout progress",
@@ -489,7 +494,8 @@
           },
           "expr": "max by (pod) (up{job=\"mimir-aggregator\"})",
           "format": "time_series",
-          "legendFormat": "__auto"
+          "legendFormat": "__auto",
+          "refId": "A"
         }
       ],
       "title": "Aggregator lag",
@@ -541,7 +547,8 @@
             ]
           },
           "unit": ""
-        }
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 19,
@@ -577,7 +584,8 @@
           "expr": "sum by (deployment) (up{job=\"kube-state-metrics\"})",
           "format": "table",
           "instant": true,
-          "legendFormat": "__auto"
+          "legendFormat": "__auto",
+          "refId": "A"
         }
       ],
       "title": "Unhealthy Deployment replicas",
@@ -642,7 +650,8 @@
             ]
           },
           "unit": ""
-        }
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 19,
@@ -678,7 +687,8 @@
           "expr": "sum by (statefulset) (up{job=\"kube-state-metrics\"})",
           "format": "table",
           "instant": true,
-          "legendFormat": "__auto"
+          "legendFormat": "__auto",
+          "refId": "A"
         }
       ],
       "title": "Unhealthy StatefulSet replicas",
