@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/plugins
 go 1.24.4
 
 require (
-	github.com/grafana/authlib/types v0.0.0-20250721184729-1593a38e4933
+	github.com/grafana/authlib/types v0.0.0-20250917093142-83a502239781
 	github.com/grafana/grafana-app-sdk v0.45.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250428110029-a8ea72012bde
 	k8s.io/apimachinery v0.34.1
@@ -35,7 +35,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/pprof v0.0.0-20250403155104-27863c87afa6 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20250910124502-5d080d6bb9ea // indirect
+	github.com/grafana/authlib v0.0.0-20250917093142-83a502239781 // indirect
 	github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.45.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2 // indirect

@@ -1,0 +1,135 @@
+name: Publish NPM packages
+on:
+  workflow_call:
+    inputs:
+      grafana_commit:
+        description: 'Grafana commit SHA to build against'
+        required: true
+        type: string
+      version:
+        description: 'Version to publish as'
+        required: true
+        type: string
+      build_id:
+        description: 'Run ID from the original release-build workflow'
+        required: true
+        type: string
+      version_type:
+        description: 'Version type (canary, nightly, stable)'
+        required: true
+        type: string
+
+  workflow_dispatch:
+    inputs:
+      grafana_commit:
+        description: 'Grafana commit SHA to build against'
+        required: true
+      version:
+        description: 'Version to publish as'
+        required: true
+      build_id:
+        description: 'Run ID from the original release-build workflow'
+        required: true
+      version_type:
+        description: 'Version type (canary, nightly, stable)'
+        required: true
+
+permissions: {}
+
+jobs:
+  # If called with version_type 'canary' or 'stable', build + publish to NPM
+  # If called with version_type 'nightly', just tag the given version with nightly tag. It was already published by the canary build.
+
+  publish:
+    name: Publish NPM packages
+    runs-on: github-hosted-ubuntu-x64-small
+    if: inputs.version_type == 'canary' || inputs.version_type == 'stable'
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Info
+        env:
+          GITHUB_REF: ${{ github.ref }}
+        run: |
+          echo "GRAFANA_COMMIT: $GRAFANA_COMMIT"
+          echo "github.ref: $GITHUB_REF"
+
+      - name: Checkout workflow ref
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Verify commit is in workflow HEAD
+        env:
+          GIT_COMMIT: ${{ github.event.inputs.grafana_commit }}
+        run: ./github/workflows/scripts/validate-commit-in-head.sh
+        shell: bash
+
+      - name: Map version type to NPM tag
+        id: npm-tag
+        env:
+          VERSION_TYPE: ${{ github.event.inputs.version_type }}
+        run: |
+          TAG=$(./github/workflows/scripts/determine-npm-tag.sh)
+          echo "NPM_TAG=$TAG" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Checkout build commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.inputs.grafana_commit }}
+
+      - name: Setup Node
+        uses: ./github/actions/setup-node
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Typecheck packages
+        run: yarn run packages:typecheck
+
+      - name: Version, build, and pack packages
+        run: |
+          yarn run packages:build
+          yarn lerna version "$PACKAGES_VERSION" \
+            --exact \
+            --no-git-tag-version \
+            --no-push \
+            --force-publish \
+            --yes
+          yarn run packages:pack
+
+      - name: Debug packed files
+        run: tree -a ./npm-artifacts
+
+      - name: Validate packages
+        run: ./scripts/validate-npm-packages.sh
+
+      - name: Debug OIDC Claims
+        uses: github/actions-oidc-debugger@2e9ba5d3f4bebaad1f91a2cede055115738b7ae8
+        with:
+          audience: '${{ github.server_url }}/${{ github.repository_owner }}'
+
+      - name: Publish packages
+        env:
+          NPM_TAG: ${{ steps.npm-tag.outputs.NPM_TAG }}
+        run: ./scripts/publish-npm-packages.sh --dist-tag "$NPM_TAG" --registry 'https://registry.npmjs.org/'
+
+  # TODO: finish this step
+  tag-nightly:
+    name: Tag nightly release
+    runs-on: github-hosted-ubuntu-x64-small
+    needs: publish
+    if: inputs.version_type == 'nightly'
+
+    steps:
+      - name: Checkout workflow ref
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # TODO: tag the given release with nightly
+
+

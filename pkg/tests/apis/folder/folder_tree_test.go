@@ -19,7 +19,6 @@ import (
 	"k8s.io/client-go/rest"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -43,11 +42,11 @@ func TestIntegrationFolderTree(t *testing.T) {
 	}
 
 	modes := []grafanarest.DualWriterMode{
-		// grafanarest.Mode1, (nothing new tested)
+		// grafanarest.Mode1, (nothing new tested in mode 0 or 1)
 		grafanarest.Mode2, // write both, read legacy
-		// grafanarest.Mode3, // write both, read unified
-		// grafanarest.Mode4,
-		// grafanarest.Mode5,
+		grafanarest.Mode3, // write both, read unified
+		grafanarest.Mode4,
+		grafanarest.Mode5,
 	}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
@@ -61,12 +60,13 @@ func TestIntegrationFolderTree(t *testing.T) {
 				APIServerStorageType: "unified",
 				EnableFeatureToggles: flags,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					foldersV1.RESOURCEGROUP: {
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: mode,
+					},
+					"folders.folder.grafana.app": {
 						DualWriterMode: mode,
 					},
 				},
-				// We set it to 1 here, so we always get forced pagination based on the response size.
-				UnifiedStorageMaxPageSizeBytes: 1,
 			})
 			defer helper.Shutdown()
 
@@ -209,6 +209,13 @@ func (f *FolderDefinition) CreateWithLegacyAPI(t *testing.T, h *apis.K8sTestHelp
 			require.NoError(t, result.Error(), f.Name)
 			require.Equal(t, int(http.StatusOK), statusCode, f.Name)
 		}
+
+		// Now check that we could get the folder
+		result = client.Get().AbsPath("api", "folders", f.Name).
+			Do(context.Background()).
+			StatusCode(&statusCode)
+		require.NoErrorf(t, result.Error(), "get folder after create: %s", f.Name)
+		require.Equal(t, int(http.StatusOK), statusCode, f.Name)
 	}
 
 	for _, child := range f.Children {
@@ -387,24 +394,32 @@ func getFoldersFromAPIServerList(t *testing.T, who apis.User) *FolderView {
 	require.NoError(t, err)
 	client := dyn.Resource(gvr).Namespace(ns)
 
-	result, err := client.List(context.Background(), v1.ListOptions{Limit: 1000})
-	if apierrors.IsForbidden(err) {
-		return &FolderView{} // empty list
-	}
-	require.NoError(t, err)
-
-	lookup := make(map[string]*FolderView, len(result.Items))
-	for _, hit := range result.Items {
-		obj, err := utils.MetaAccessor(&hit)
+	lookup := map[string]*FolderView{}
+	continueToken := ""
+	for {
+		result, err := client.List(context.Background(), v1.ListOptions{Limit: 1000, Continue: continueToken})
+		if apierrors.IsForbidden(err) {
+			return &FolderView{} // empty list
+		}
 		require.NoError(t, err)
 
-		title, _, err := unstructured.NestedString(hit.Object, "spec", "title")
-		require.NoError(t, err)
+		for _, hit := range result.Items {
+			obj, err := utils.MetaAccessor(&hit)
+			require.NoError(t, err)
 
-		lookup[hit.GetName()] = &FolderView{
-			Name:   hit.GetName(),
-			Title:  title,
-			Parent: obj.GetFolder(),
+			title, _, err := unstructured.NestedString(hit.Object, "spec", "title")
+			require.NoError(t, err)
+
+			lookup[hit.GetName()] = &FolderView{
+				Name:   hit.GetName(),
+				Title:  title,
+				Parent: obj.GetFolder(),
+			}
+		}
+
+		continueToken = result.GetContinue()
+		if continueToken == "" {
+			break
 		}
 	}
 
