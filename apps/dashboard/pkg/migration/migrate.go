@@ -80,14 +80,37 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 		}
 	}
 
-	// Also apply defaults to panels inside rows (for pre-v16 dashboards)
+	// Apply defaults to panels inside rows (for pre-v16 dashboards)
+	// Match frontend upgradeToGridLayout: only panels NOT in collapsed rows get new PanelModel() constructor
 	if rows, ok := dash["rows"].([]interface{}); ok {
+		// Determine if row panels will be created (showRows logic)
+		showRows := false
+		for _, rowInterface := range rows {
+			if row, ok := rowInterface.(map[string]interface{}); ok {
+				collapse, _ := row["collapse"].(bool)
+				showTitle, _ := row["showTitle"].(bool)
+				repeat, hasRepeat := row["repeat"]
+				if collapse || showTitle || (hasRepeat && repeat != nil && repeat != "") {
+					showRows = true
+					break
+				}
+			}
+		}
+
 		for _, rowInterface := range rows {
 			if row, ok := rowInterface.(map[string]interface{}); ok {
 				if rowPanels, ok := row["panels"].([]interface{}); ok {
-					for _, panelInterface := range rowPanels {
-						if panel, ok := panelInterface.(map[string]interface{}); ok {
-							applyPanelDefaults(panel)
+					collapse, _ := row["collapse"].(bool)
+
+					// Frontend: if (rowPanelModel && rowPanel.collapsed) { push(panel) } else { push(new PanelModel(panel)) }
+					// Only non-collapsed panels get PanelModel defaults (refId: "A", overrides: [], etc.)
+					applyDefaults := !showRows || !collapse
+
+					if applyDefaults {
+						for _, panelInterface := range rowPanels {
+							if panel, ok := panelInterface.(map[string]interface{}); ok {
+								applyPanelDefaults(panel)
+							}
 						}
 					}
 				}
