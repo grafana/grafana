@@ -55,6 +55,7 @@ export interface DashboardQueryResult {
   ds_uid: string[];
   isDeleted?: boolean;
   permanentlyDeleteDate?: Date;
+  folder?: string;
 
   // debugging fields
   score: number;
