@@ -10,10 +10,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/auth"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	models2 "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -60,12 +62,13 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 	}
 
 	t.Run("should create a copy of request context", func(t *testing.T) {
-		for _, mock := range []*accesscontrolmock.Mock{
-			accesscontrolmock.New(), accesscontrolmock.New(),
+		for _, acInst := range []ac.AccessControl{
+			acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+			acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		} {
 			proxy := AlertingProxy{
 				DataProxy: nil,
-				ac:        mock,
+				ac:        acInst,
 			}
 
 			req := &http.Request{}
@@ -88,7 +91,7 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 	t.Run("should overwrite response writer", func(t *testing.T) {
 		proxy := AlertingProxy{
 			DataProxy: nil,
-			ac:        accesscontrolmock.New(),
+			ac:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		}
 
 		req := &http.Request{}
@@ -107,7 +110,7 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 		t.Run("should elevate permissions to Editor for Viewer", func(t *testing.T) {
 			proxy := AlertingProxy{
 				DataProxy: nil,
-				ac:        accesscontrolmock.New(),
+				ac:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 			}
 
 			req := &http.Request{}
@@ -125,7 +128,7 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 		t.Run("should not alter user if it is Editor", func(t *testing.T) {
 			proxy := AlertingProxy{
 				DataProxy: nil,
-				ac:        accesscontrolmock.New(),
+				ac:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 			}
 
 			req := &http.Request{}

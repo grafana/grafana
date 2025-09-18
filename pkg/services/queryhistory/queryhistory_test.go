@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -63,7 +63,7 @@ func testScenario(t *testing.T, desc string, isViewer bool, hasDatasourceExplore
 			Cfg:           setting.NewCfg(),
 			store:         sqlStore,
 			now:           time.Now,
-			accessControl: accesscontrolmock.New(),
+			accessControl: acimpl.ProvideAccessControl(nil),
 		}
 		service.Cfg.QueryHistoryEnabled = true
 		quotaService := quotatest.New(false, nil)
