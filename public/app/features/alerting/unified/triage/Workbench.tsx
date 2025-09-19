@@ -9,7 +9,7 @@ import { SceneQueryRunner } from '@grafana/scenes';
 import { ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
-import { EditorColumnHeader } from '../components/contact-points/templates/EditorColumnHeader';
+import { EditorColumnHeader } from '../components/EditorColumnHeader';
 import LoadMoreHelper from '../rule-list/LoadMoreHelper';
 
 import { TimelineHeader } from './Timeline';
