@@ -5350,7 +5350,6 @@
             "json": "Export as JSON"
           }
         },
-        "mark-favorite": "Mark as favorite",
         "more-save-options": "More save options",
         "playlist-next": "Go to next dashboard",
         "playlist-previous": "Go to previous dashboard",
@@ -5379,8 +5378,7 @@
             "yesText": "Save"
           }
         },
-        "unlink-library-panel": "Unlink library panel",
-        "unmark-favorite": "Unmark as favorite"
+        "unlink-library-panel": "Unlink library panel"
       },
       "open-original": "Open original dashboard",
       "playlist-next": "Go to next dashboard",
