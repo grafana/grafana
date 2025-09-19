@@ -24,10 +24,11 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
+import { getDisplayedFieldsForLogs } from '../otel/formats';
 
 import { LogLineTimestampResolution } from './LogLine';
 import { LogLineDetailsMode } from './LogLineDetails';
@@ -287,6 +288,17 @@ export const LogListContextProvider = ({
     // Just once
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // OTel displayed fields
+  useEffect(() => {
+    if (displayedFields.length > 0 || !config.featureToggles.otelLogsFormatting || !setDisplayedFields) {
+      return;
+    }
+    const otelDisplayedFields = getDisplayedFieldsForLogs(logs);
+    if (otelDisplayedFields.length) {
+      setDisplayedFields(otelDisplayedFields);
+    }
+  }, [displayedFields.length, logs, setDisplayedFields]);
 
   // Sync state
   useEffect(() => {
