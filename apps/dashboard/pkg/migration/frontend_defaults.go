@@ -900,8 +900,6 @@ func cleanupRowPanelProperties(panel map[string]interface{}) {
 		return
 	}
 
-	// Note: The frontend keeps "collapsed": false in the output, so we should NOT remove it
-	// This matches the frontend behavior where collapsed: false is preserved in getSaveModel()
 
 	// Remove repeat if empty string (default value)
 	removeIfDefaultValue(panel, "repeat", "")
