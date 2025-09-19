@@ -98,7 +98,7 @@ type ListUserQuery struct {
 }
 
 type ListUserResult struct {
-	Items    []common.UserWithRole
+	Users    []common.UserWithRole
 	Continue int64
 	RV       int64
 }
