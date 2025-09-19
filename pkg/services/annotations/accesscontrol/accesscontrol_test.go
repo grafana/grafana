@@ -206,7 +206,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			u.Permissions = map[int64]map[string][]string{1: tc.permissions}
 			testutil.SetupRBACPermission(t, sql, role, u)
-			authz := NewAuthService(sql, featuremgmt.WithFeatures(tc.featureToggle), dashSvc)
+			authz := NewAuthService(sql, featuremgmt.WithFeatures(tc.featureToggle), dashSvc, cfg)
 
 			query := annotations.ItemQuery{SignedInUser: u, OrgID: 1}
 			resources, err := authz.Authorize(context.Background(), query)
