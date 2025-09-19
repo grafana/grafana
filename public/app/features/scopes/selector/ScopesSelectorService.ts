@@ -185,28 +185,28 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     const nodeToExpand = treeNodeAtPath(this.state.tree!, path);
 
-    try {
-      if (!nodeToExpand) {
-        throw new Error(`Node ${scopeNodeId} not found in tree`);
-      }
+    if (!nodeToExpand) {
+      throw new Error(`Node ${scopeNodeId} not found in tree`);
+    }
 
-      if (nodeToExpand.scopeNodeId !== '' && !isNodeExpandable(this.state.nodes[nodeToExpand.scopeNodeId])) {
-        throw new Error(`Trying to expand node at id ${scopeNodeId} that is not expandable`);
-      }
+    if (nodeToExpand.scopeNodeId !== '' && !isNodeExpandable(this.state.nodes[nodeToExpand.scopeNodeId])) {
+      throw new Error(`Trying to expand node at id ${scopeNodeId} that is not expandable`);
+    }
 
-      if (!nodeToExpand.expanded || nodeToExpand.query !== query) {
-        const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
-          treeNode.expanded = true;
-          treeNode.query = query || '';
-        });
-        this.updateState({ tree: newTree });
+    // Check if this is first expansion or filtering within existing children
+    const haveChildrenLoaded = nodeToExpand.children && Object.keys(nodeToExpand.children).length > 0;
 
-        await this.loadNodeChildren(path, nodeToExpand, query);
-      }
-    } catch (error) {
-      throw error;
-    } finally {
-      this.interactionProfiler?.stopInteraction();
+    if (!nodeToExpand.expanded || nodeToExpand.query !== query || !haveChildrenLoaded) {
+      const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+        treeNode.expanded = true;
+        // Reset query on first expansion, keep it only when filtering within existing children
+        treeNode.query = '';
+      });
+      this.updateState({ tree: newTree });
+
+      // For API call: only pass query if filtering within existing children
+      const queryForAPI = haveChildrenLoaded ? query : query === '' ? '' : undefined;
+      await this.loadNodeChildren(path, nodeToExpand, queryForAPI, haveChildrenLoaded);
     }
   };
 
@@ -226,7 +226,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.updateState({ tree: newTree });
   };
 
-  private loadNodeChildren = async (path: string[], treeNode: TreeNode, query?: string) => {
+  private loadNodeChildren = async (path: string[], treeNode: TreeNode, query?: string, haveChildrenLoaded = false) => {
     this.updateState({ loadingNodeName: treeNode.scopeNodeId });
 
     const childNodes = await this.apiClient.fetchNodes({ parent: treeNode.scopeNodeId, query });
@@ -239,13 +239,14 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
       // Set parent query only when filtering within existing children
+      treeNode.query = haveChildrenLoaded ? query || '' : '';
       treeNode.children = {};
       for (const node of childNodes) {
         treeNode.children[node.metadata.name] = {
           expanded: false,
           scopeNodeId: node.metadata.name,
           // Only set query on tree nodes if parent already has children (filtering vs first expansion). This is used for saerch highlighting.
-          query: query || '',
+          query: haveChildrenLoaded ? query || '' : '',
           children: undefined,
         };
       }
@@ -331,8 +332,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.updateState({ selectedScopes: newSelectedScopes });
   };
 
-  // TODO: Replace all usage of this function with expandNode and filterNode.
-  // @deprecated
+  // TODO: We should split this into two functions: expandNode and filterNode.
   public updateNode = async (scopeNodeId: string, expanded: boolean, query: string) => {
     if (expanded) {
       return this.expandOrFilterNode(scopeNodeId, query);

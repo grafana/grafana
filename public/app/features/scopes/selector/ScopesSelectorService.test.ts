@@ -91,10 +91,8 @@ describe('ScopesSelectorService', () => {
       expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: '', query: '' });
     });
 
-    it.skip('should update node query and fetch children when query changes', async () => {
+    it('should update node query and fetch children when query changes', async () => {
       await service.updateNode('', true, ''); // Expand first
-      // Simulate a change in the query
-      await service.updateNode('', true, 'new-qu');
       await service.updateNode('', true, 'new-query');
       expect(service.state.tree).toMatchObject({
         children: {},
@@ -114,7 +112,7 @@ describe('ScopesSelectorService', () => {
       expect(apiClient.fetchNodes).toHaveBeenCalledTimes(1);
     });
 
-    it.skip('should clear query on first expansion but keep it when filtering within populated node', async () => {
+    it('should clear query on first expansion but keep it when filtering within populated node', async () => {
       const mockChildNode: ScopeNode = {
         metadata: { name: 'child-node' },
         spec: { linkId: 'child-scope', linkType: 'scope', parentName: '', nodeType: 'leaf', title: 'child-node' },
@@ -143,7 +141,7 @@ describe('ScopesSelectorService', () => {
       expect(apiClient.fetchNodes).toHaveBeenCalledTimes(2);
     });
 
-    it.skip('should always reset query on any expansion', async () => {
+    it('should always reset query on any expansion', async () => {
       const mockChildNode: ScopeNode = {
         metadata: { name: 'child-node' },
         spec: { linkId: 'child-scope', linkType: 'scope', parentName: '', nodeType: 'leaf', title: 'child-node' },
@@ -160,7 +158,7 @@ describe('ScopesSelectorService', () => {
       expect(service.state.tree?.children?.['child-node']?.query).toBe('');
     });
 
-    it.skip('should handle query reset correctly for nested levels beyond root', async () => {
+    it('should handle query reset correctly for nested levels beyond root', async () => {
       // Set up mock nodes for multi-level hierarchy
       const mockParentNode: ScopeNode = {
         metadata: { name: 'parent-container' },
