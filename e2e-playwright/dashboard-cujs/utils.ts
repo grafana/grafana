@@ -78,7 +78,7 @@ export async function trackDashboardReloadRequests(page: Page): Promise<{
 }> {
   const dashboardRequests: DashboardRequest[] = [];
   let resolveWhenComplete: () => void;
-  let expectedRequestCount = 1; // Start with expecting 1 request
+  let expectedRequestCount = 1; //initial request that gives us the meta param
 
   const completionPromise = new Promise<void>((resolve) => {
     resolveWhenComplete = resolve;

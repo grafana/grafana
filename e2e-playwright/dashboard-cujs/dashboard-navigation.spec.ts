@@ -117,6 +117,8 @@ test.describe(
             await groupByVariable.press('Enter');
             await groupByVariable.press('Escape');
 
+            await expect(scopesDashboards.first()).toBeVisible();
+
             const { getRequests, waitForExpectedRequests } = await trackDashboardReloadRequests(page);
             await scopesDashboards.first().click();
             await waitForExpectedRequests();
