@@ -10,18 +10,17 @@ import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
 import { Alert, Box, Drawer, Icon, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { AlertQuery, GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
-import { isExpressionQuery } from '../../../../expressions/guards';
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { stateHistoryApi } from '../../api/stateHistoryApi';
 import { AlertLabels } from '../../components/AlertLabels';
 import { getThresholdsForQueries } from '../../components/rule-editor/util';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
-import { useRuleHistoryRecords } from '../../components/rules/central-state-history/useRuleHistoryRecords';
-import { LogRecord } from '../../components/rules/state-history/common';
+import { LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { stringifyErrorLike } from '../../utils/misc';
 
 import { QueryVisualization } from './QueryVisualization';
+import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
 
 const { useGetAlertRuleQuery } = alertRuleApi;
 const { useGetRuleHistoryQuery } = stateHistoryApi;
@@ -57,12 +56,13 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
     to: timeRange.to.unix(),
   });
 
-  // Process state history data into LogRecords
-  const { historyRecords } = useRuleHistoryRecords(stateHistoryData, {
-    labels: Object.entries(instanceLabels)
-      .map(([key, value]) => `${key}=${value}`)
-      .join(','),
-  });
+  // Convert state history to LogRecords and filter by instance labels
+  const { historyRecords, annotations } = useMemo(() => {
+    const historyRecords = historyDataFrameToLogRecords(stateHistoryData);
+    const annotations = convertStateHistoryToAnnotations(historyRecords);
+
+    return { historyRecords, annotations };
+  }, [stateHistoryData]);
 
   if (error) {
     return (
@@ -99,7 +99,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
                   query={query}
                   instanceLabels={instanceLabels}
                   thresholds={thresholds}
-                  recentTransitions={historyRecords}
+                  annotations={annotations}
                 />
               ))}
             </Stack>
