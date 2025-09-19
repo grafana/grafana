@@ -99,40 +99,53 @@ func alignCurrentWithMulti(current map[string]interface{}, multi bool) map[strin
 	}
 
 	if multi {
-		// Convert single values to arrays (match frontend behavior)
-		// Frontend only converts when current.value is NOT an array
-		if value, ok := result["value"]; ok {
-			if !IsArray(value) {
-				result["value"] = []interface{}{value}
-				// Only convert text to array when we're converting value
-				if text, ok := result["text"]; ok {
-					if !IsArray(text) {
-						result["text"] = []interface{}{text}
-					}
-				}
-			}
-		}
+		convertToArrays(result)
 	} else {
-		// Convert arrays to single values (both value and text must be single values)
-		if value, ok := result["value"]; ok {
-			if IsArray(value) {
-				if arr, ok := value.([]interface{}); ok && len(arr) > 0 {
-					result["value"] = arr[0]
-				} else {
-					result["value"] = ""
-				}
-			}
-		}
-		if text, ok := result["text"]; ok {
-			if IsArray(text) {
-				if arr, ok := text.([]interface{}); ok && len(arr) > 0 {
-					result["text"] = arr[0]
-				} else {
-					result["text"] = ""
-				}
-			}
-		}
+		convertToSingleValues(result)
 	}
 
 	return result
+}
+
+// convertToArrays converts single values to arrays (match frontend behavior)
+// Frontend only converts when current.value is NOT an array
+func convertToArrays(result map[string]interface{}) {
+	value, hasValue := result["value"]
+	if !hasValue || IsArray(value) {
+		return
+	}
+
+	// Convert value to array
+	result["value"] = []interface{}{value}
+
+	// Only convert text to array when we're converting value
+	if text, ok := result["text"]; ok && !IsArray(text) {
+		result["text"] = []interface{}{text}
+	}
+}
+
+// convertToSingleValues converts arrays to single values (both value and text must be single values)
+func convertToSingleValues(result map[string]interface{}) {
+	convertArrayToSingle(result, "value")
+	convertArrayToSingle(result, "text")
+}
+
+// convertArrayToSingle converts an array field to a single value
+func convertArrayToSingle(result map[string]interface{}, key string) {
+	value, ok := result[key]
+	if !ok || !IsArray(value) {
+		return
+	}
+
+	arr, ok := value.([]interface{})
+	if !ok {
+		result[key] = ""
+		return
+	}
+
+	if len(arr) > 0 {
+		result[key] = arr[0]
+	} else {
+		result[key] = ""
+	}
 }
