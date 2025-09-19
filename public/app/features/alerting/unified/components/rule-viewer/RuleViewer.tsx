@@ -174,7 +174,7 @@ const RuleViewer = () => {
           {activeTab === ActiveTab.VersionHistory && rulerRuleType.grafana.rule(rule.rulerRule) && (
             <AlertVersionHistory rule={rule.rulerRule} />
           )}
-          {activeTab === ActiveTab.Enrichment && <RulePageEnrichmentSectionExtension />}
+          {activeTab === ActiveTab.Enrichment && rule.uid && <RulePageEnrichmentSectionExtension ruleUid={rule.uid} />}
         </TabContent>
       </Stack>
       {duplicateRuleIdentifier && (

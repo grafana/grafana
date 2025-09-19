@@ -5,7 +5,9 @@ import { withErrorBoundary } from '@grafana/ui';
 
 import { logError } from '../../../../Analytics';
 
-export interface RuleViewerExtensionProps {}
+export interface RuleViewerExtensionProps {
+  ruleUid: string;
+}
 
 let InternalRulePageEnrichmentSection: ComponentType<RuleViewerExtensionProps> | null = null;
 

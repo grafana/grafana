@@ -15,9 +15,7 @@ import {
   AlertRuleAction,
   skipToken,
   useGrafanaPromRuleAbilities,
-  useGrafanaPromRuleAbility,
   useRulerRuleAbilities,
-  useRulerRuleAbility,
 } from '../../hooks/useAbilities';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
@@ -89,16 +87,6 @@ const AlertRuleMenu = ({
     AlertRuleAction.ModifyExport,
   ]);
 
-  const [editRuleSupported, editRuleAllowed] = useRulerRuleAbility(rulerRule, groupIdentifier, AlertRuleAction.Update);
-  // If the consumer of this component comes from the alert list view, we need to use promRule to check abilities and permissions,
-  // as we have removed all requests to the ruler API in the list view.
-  const [grafanaEditRuleSupported, grafanaEditRuleAllowed] = useGrafanaPromRuleAbility(
-    prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken,
-    AlertRuleAction.Update
-  );
-
-  const canEditRule = (editRuleSupported && editRuleAllowed) || (grafanaEditRuleSupported && grafanaEditRuleAllowed);
-
   const [pauseSupported, pauseAllowed] = rulerPauseAbility;
   const [grafanaPauseSupported, grafanaPauseAllowed] = grafanaPauseAbility;
   const canPause = (pauseSupported && pauseAllowed) || (grafanaPauseSupported && grafanaPauseAllowed);
@@ -148,7 +136,6 @@ const AlertRuleMenu = ({
 
   // todo: make this new menu item for enrichments an extension of the alertrulemenu items. For first iteration, we'll keep it here.
   const canManageEnrichments =
-    canEditRule &&
     ruleUid &&
     handleManageEnrichments &&
     config.featureToggles.alertingEnrichmentPerRule &&
