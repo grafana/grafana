@@ -242,6 +242,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.updateState({ selectedScopes: newSelectedScopes });
   };
 
+  // TODO: We should split this into two functions: expandNode and filterNode.
   public updateNode = async (scopeNodeId: string, expanded: boolean, query: string) => {
     if (expanded) {
       return this.expandOrFilterNode(scopeNodeId, query);

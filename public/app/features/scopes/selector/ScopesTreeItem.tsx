@@ -74,6 +74,7 @@ export function ScopesTreeItem({
           isSelectable && !treeNode.expanded && styles.titlePadding,
           highlighted && styles.highlighted
         )}
+        data-testid={`scopes-tree-${treeNode.scopeNodeId}`}
       >
         {isSelectable && !treeNode.expanded ? (
           disableMultiSelect ? (
