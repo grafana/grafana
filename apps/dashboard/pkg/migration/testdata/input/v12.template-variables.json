@@ -1,0 +1,38 @@
+{
+    "title": "V12 Template Variables Migration Test",
+    "schemaVersion": 11,
+    "templating": {
+      "list": [
+        {
+          "type": "query",
+          "name": "refresh_true_var",
+          "refresh": true
+        },
+        {
+          "type": "query",
+          "name": "refresh_false_var",
+          "refresh": false
+        },
+        {
+          "type": "query",
+          "name": "hide_variable_var",
+          "hideVariable": true
+        },
+        {
+          "type": "query",
+          "name": "hide_label_var",
+          "hideLabel": true
+        },
+        {
+          "type": "query",
+          "name": "priority_var",
+          "hideVariable": true,
+          "hideLabel": true
+        },
+        {
+          "type": "query",
+          "name": "no_properties_var"
+        }
+      ]
+    }
+  }
