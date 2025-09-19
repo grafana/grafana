@@ -281,11 +281,11 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
                 name={`labelsInSubform.${index}.key`}
                 control={control}
                 rules={{ required: Boolean(labelsInSubform[index]?.value) ? 'Required.' : false }}
-                render={({ field: { onChange, ref, ...rest } }) => {
+                render={({ field: { onChange, value, ref, ...rest } }) => {
                   return (
                     <AlertLabelDropdown
                       {...rest}
-                      defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
+                      defaultValue={value ? { label: value, value: value } : undefined}
                       options={
                         labelsPluginInstalled
                           ? groupedOptions.flatMap((group) => group.options)
@@ -315,11 +315,11 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
                 control={control}
                 name={`labelsInSubform.${index}.value`}
                 rules={{ required: Boolean(labelsInSubform[index]?.value) ? 'Required.' : false }}
-                render={({ field: { onChange, ref, ...rest } }) => {
+                render={({ field: { onChange, value, ref, ...rest } }) => {
                   return (
                     <AlertLabelDropdown
                       {...rest}
-                      defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
+                      defaultValue={value ? { label: value, value: value } : undefined}
                       options={values}
                       isLoading={loading}
                       onChange={(newValue: SelectableValue) => {
