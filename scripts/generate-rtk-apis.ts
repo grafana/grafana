@@ -54,6 +54,11 @@ const config: ConfigFile = {
       tag: true,
       hooks: true,
     },
+    '../public/app/api/clients/preferences/v1alpha1/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/preferences/v1alpha1/baseAPI.ts',
+      schemaFile: '../data/openapi/preferences.grafana.app-v1alpha1.json',
+      tag: true,
+    },
     '../public/app/api/clients/folder/v1beta1/endpoints.gen.ts': {
       apiFile: '../public/app/api/clients/folder/v1beta1/baseAPI.ts',
       schemaFile: '../data/openapi/folder.grafana.app-v1beta1.json',
