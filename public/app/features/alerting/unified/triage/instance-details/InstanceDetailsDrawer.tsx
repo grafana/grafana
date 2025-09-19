@@ -1,25 +1,30 @@
-import { useMemo } from 'react';
+import { css } from '@emotion/css';
+import { orderBy } from 'lodash';
+import { Fragment, useMemo } from 'react';
+import { useMeasure } from 'react-use';
 
-import { Labels } from '@grafana/data';
+import { GrafanaTheme2, Labels } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
-import { Alert, Box, Drawer, Icon, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
-import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { Alert, Box, Drawer, Icon, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
+import { AlertQuery, GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { isExpressionQuery } from '../../../../expressions/guards';
+import { alertRuleApi } from '../../api/alertRuleApi';
 import { stateHistoryApi } from '../../api/stateHistoryApi';
 import { AlertLabels } from '../../components/AlertLabels';
 import { getThresholdsForQueries } from '../../components/rule-editor/util';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
 import { useRuleHistoryRecords } from '../../components/rules/central-state-history/useRuleHistoryRecords';
 import { LogRecord } from '../../components/rules/state-history/common';
-import { useCombinedRule } from '../../hooks/useCombinedRule';
+import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { stringifyErrorLike } from '../../utils/misc';
-import { rulerRuleType } from '../../utils/rules';
 
 import { QueryVisualization } from './QueryVisualization';
+
+const { useGetAlertRuleQuery } = alertRuleApi;
+const { useGetRuleHistoryQuery } = stateHistoryApi;
 
 interface InstanceDetailsDrawerProps {
   ruleUID: string;
@@ -28,56 +33,24 @@ interface InstanceDetailsDrawerProps {
 }
 
 export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: InstanceDetailsDrawerProps) {
-  // Get the current time range from the scene
+  const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
   const [timeRange] = useTimeRange();
 
-  // Create rule identifier for Grafana managed rules
-  const ruleIdentifier: GrafanaRuleIdentifier = useMemo(
-    () => ({
-      uid: ruleUID,
-      ruleSourceName: 'grafana',
-    }),
-    [ruleUID]
-  );
+  const { data: rule, isLoading: loading, error } = useGetAlertRuleQuery({ uid: ruleUID });
 
-  // Fetch rule data to get alert instances
-  const {
-    loading,
-    error,
-    result: rule,
-  } = useCombinedRule({
-    ruleIdentifier,
-  });
-
-  // Extract and filter data queries (non-expression queries)
-  const dataQueries = useMemo(() => {
-    if (!rule?.rulerRule || !('grafana_alert' in rule.rulerRule) || !rule.rulerRule.grafana_alert.data) {
-      return [];
+  const { dataQueries, thresholds } = useMemo(() => {
+    if (rule) {
+      return extractQueryDetails(rule.grafana_alert);
     }
-
-    return rule.rulerRule.grafana_alert.data.filter((query: AlertQuery) => !isExpressionQuery(query.model));
-  }, [rule]);
-
-  // Extract threshold definitions from expression queries
-  const thresholds = useMemo(() => {
-    const rulerRule = rule?.rulerRule;
-    const grafanaRule = rulerRuleType.grafana.rule(rulerRule) ? rulerRule : undefined;
-    if (!grafanaRule) {
-      return {};
-    }
-
-    const allQueries = grafanaRule.grafana_alert.data;
-    const condition = grafanaRule.grafana_alert.condition;
-
-    return getThresholdsForQueries(allQueries, condition);
+    return { dataQueries: [], thresholds: {} };
   }, [rule]);
 
   // Fetch state history for this specific instance
   const {
     data: stateHistoryData,
-    isLoading: stateHistoryLoading,
+    isFetching: stateHistoryFetching,
     isError: stateHistoryError,
-  } = stateHistoryApi.endpoints.getRuleHistory.useQuery({
+  } = useGetRuleHistoryQuery({
     ruleUid: ruleUID,
     labels: instanceLabels,
     from: timeRange.from.unix(),
@@ -137,12 +110,9 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
           <AlertLabels labels={instanceLabels} />
         </Box>
 
-        {/* State History */}
-        <Box>
-          <Text variant="h6">{t('alerting.instance-details.state-history', 'Recent State Changes')}</Text>
-          {stateHistoryLoading && (
-            <LoadingPlaceholder text={t('alerting.instance-details.loading-history', 'Loading state history...')} />
-          )}
+        <Box ref={ref}>
+          <Text variant="h5">{t('alerting.instance-details.state-history', 'Recent State Changes')}</Text>
+          {stateHistoryFetching && <LoadingBar width={loadingBarWidth} />}
           {stateHistoryError && (
             <Alert
               severity="error"
@@ -154,12 +124,10 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
               )}
             </Alert>
           )}
-          {!stateHistoryLoading && !stateHistoryError && (
+          {!stateHistoryFetching && !stateHistoryError && (
             <Stack direction="column" gap={1}>
               {historyRecords.length > 0 ? (
-                historyRecords.map((record, index) => (
-                  <StateTransition key={`${record.timestamp}-${index}`} record={record} />
-                ))
+                <InstanceStateTransitions records={historyRecords} />
               ) : (
                 <Text color="secondary">{t('alerting.instance-details.no-history', 'No recent state changes')}</Text>
               )}
@@ -171,22 +139,58 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
   );
 }
 
-interface StateTransitionProps {
-  record: LogRecord;
+function extractQueryDetails(rule: GrafanaRuleDefinition) {
+  const dataQueries = rule.data.filter((query: AlertQuery) => isAlertQueryOfAlertData(query));
+
+  const allQueries = rule.data;
+  const condition = rule.condition;
+
+  const thresholds = getThresholdsForQueries(allQueries, condition);
+
+  return { dataQueries, thresholds };
 }
 
-function StateTransition({ record }: StateTransitionProps) {
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+  month: 'short',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+});
+
+function formatTimestamp(timestamp: number) {
+  return dateFormatter.format(new Date(timestamp));
+}
+
+function InstanceStateTransitions({ records }: { records: LogRecord[] }) {
+  const styles = useStyles2(stateTransitionStyles);
+  const sortedRecords = orderBy(records, (r) => r.timestamp, 'desc');
+
   return (
-    <Stack gap={1} direction="row" alignItems="center">
-      <EventState state={record.line.previous} showLabel addFilter={() => {}} type="from" />
-      <Icon name="arrow-right" size="sm" />
-      <EventState state={record.line.current} showLabel addFilter={() => {}} type="to" />
-      <Text variant="bodySmall" color="secondary">
-        {new Date(record.timestamp).toLocaleString()}
-      </Text>
-    </Stack>
+    <div className={styles.container}>
+      {sortedRecords.map((record, index) => (
+        <Fragment key={`${record.timestamp}-${index}`}>
+          <Text color="secondary" variant="bodySmall">
+            {formatTimestamp(record.timestamp)}
+          </Text>
+          <EventState state={record.line.previous} showLabel addFilter={() => {}} type="from" />
+          <Icon name="arrow-right" size="sm" />
+          <EventState state={record.line.current} showLabel addFilter={() => {}} type="to" />
+        </Fragment>
+      ))}
+    </div>
   );
 }
+
+const stateTransitionStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    display: 'grid',
+    gridTemplateColumns: 'max-content max-content max-content max-content',
+    gap: theme.spacing(1, 2),
+    alignItems: 'center',
+    padding: theme.spacing(1, 0),
+  }),
+});
 
 interface ErrorContentProps {
   error: unknown;
