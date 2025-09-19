@@ -26,18 +26,18 @@ type SchemaInfo struct {
 	Error      string        `json:"error,omitempty"`
 }
 
-// SQLSchema returns info about what the Schema for a DS query will be like if the
+// SQLSchemas returns info about what the Schema for a DS query will be like if the
 // query were to be used an input to SQL expressions. So effectively post SQL expressions input
 // conversion.
 // There is a a manual DeepCopy at the end of this file that will need to be updated when this our the
 // underlying structs are change. The hack script will also need to be run to update the Query service API
 // generated types.
-type SQLSchema map[string]SchemaInfo
+type SQLSchemas map[string]SchemaInfo
 
 // GetSQLSchemas returns what the schemas are for SQL expressions for all DS queries
 // in the request. It executes the queries to get the schemas.
 // Intended use is for autocomplete and AI, so used during the authoring/editing experience only.
-func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (SQLSchema, error) {
+func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (SQLSchemas, error) {
 	// Extract DS Nodes and Execute Them
 	// Building the pipeline is maybe not best, as it can have more errors.
 	filtered := make([]Query, 0, len(req.Queries))
@@ -52,7 +52,7 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (SQLSchema, er
 		return nil, err
 	}
 
-	var schemas = make(SQLSchema)
+	var schemas = make(SQLSchemas)
 
 	for _, node := range pipeline {
 		// For now, execute calls convert at the end, so we are being lazy and running the full conversion. Longer run we want to run without
@@ -111,11 +111,11 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (SQLSchema, er
 
 // DeepCopy returns a deep copy of the schema.
 // Used AI to make it, the kubernetes one doesn't like any or interface{}
-func (s SQLSchema) DeepCopy() SQLSchema {
+func (s SQLSchemas) DeepCopy() SQLSchemas {
 	if s == nil {
 		return nil
 	}
-	out := make(SQLSchema, len(s))
+	out := make(SQLSchemas, len(s))
 	for k, v := range s {
 		out[k] = SchemaInfo{
 			Columns:    copyColumns(v.Columns),

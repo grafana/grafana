@@ -513,7 +513,7 @@ func (pd *PublicDashboardServiceImpl) logIsEnabledChanged(existingPubdash *Publi
 	}
 }
 
-func (pd *PublicDashboardServiceImpl) GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (expr.SQLSchema, error) {
+func (pd *PublicDashboardServiceImpl) GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (expr.SQLSchemas, error) {
 	return nil, fmt.Errorf("sql schema endpoint not supported with public dashboards")
 }
 

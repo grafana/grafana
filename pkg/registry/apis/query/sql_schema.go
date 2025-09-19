@@ -34,16 +34,16 @@ var (
 	_ rest.StorageMetadata      = (*sqlSchemaREST)(nil)
 )
 
-func newSQLSchemaREST(builder *QueryAPIBuilder) *sqlSchemaREST {
+func newSQLSchemasREST(builder *QueryAPIBuilder) *sqlSchemaREST {
 	return &sqlSchemaREST{
-		logger:  log.New("query.sqlschema"),
+		logger:  log.New("query.sqlschemas"),
 		builder: builder,
 	}
 }
 
 func (r *sqlSchemaREST) New() runtime.Object {
 	// This is added as the "ResponseType" regardless what ProducesObject() says :)
-	return &query.SQLSchemaResponse{}
+	return &query.SQLSchemas{}
 }
 
 func (r *sqlSchemaREST) Destroy() {}
@@ -61,7 +61,7 @@ func (r *sqlSchemaREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *sqlSchemaREST) ProducesObject(verb string) interface{} {
-	return &query.SQLSchemaResponse{}
+	return &query.SQLSchemas{}
 }
 
 func (r *sqlSchemaREST) ConnectMethods() []string {
@@ -83,7 +83,7 @@ func (r *sqlSchemaREST) Connect(connectCtx context.Context, name string, _ runti
 	b := r.builder
 
 	return http.HandlerFunc(func(w http.ResponseWriter, httpreq *http.Request) {
-		ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.GetSQLSchema")
+		ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.GetSQLSchemas")
 		defer span.End()
 		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
 		traceId := span.SpanContext().TraceID()
@@ -141,13 +141,13 @@ func (r *sqlSchemaREST) Connect(connectCtx context.Context, name string, _ runti
 			return
 		}
 
-		responder.Object(200, &query.SQLSchemaResponse{
-			SQLSchema: qdr,
+		responder.Object(200, &query.SQLSchemas{
+			SQLSchemas: qdr,
 		})
 	}), nil
 }
 
-func handlePreparedSQLSchema(ctx context.Context, pq *preparedQuery) (expr.SQLSchema, error) {
+func handlePreparedSQLSchema(ctx context.Context, pq *preparedQuery) (expr.SQLSchemas, error) {
 	resp, err := service.GetSQLSchemas(ctx, pq.logger, pq.cache, pq.exprSvc, pq.mReq, pq.builder, pq.headers)
 	pq.reportMetrics()
 	return resp, err
@@ -160,7 +160,7 @@ func handleSQLSchemaQuery(
 	httpreq *http.Request,
 	responder responderWrapper,
 	connectLogger log.Logger,
-) (expr.SQLSchema, error) {
+) (expr.SQLSchemas, error) {
 	pq, err := prepareQuery(ctx, raw, b, httpreq, connectLogger)
 	if err != nil {
 		responder.Error(err)

@@ -590,7 +590,7 @@ func (_m *FakePublicDashboardService) Update(ctx context.Context, u *user.Signed
 	return r0, r1
 }
 
-func (_m *FakePublicDashboardService) GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (expr.SQLSchema, error) {
+func (_m *FakePublicDashboardService) GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (expr.SQLSchemas, error) {
 	return nil, fmt.Errorf("not implemented in public dashboards")
 }
 

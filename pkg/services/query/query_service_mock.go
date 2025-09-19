@@ -99,7 +99,7 @@ func (_m *FakeQueryService) Run(ctx context.Context) error {
 	return r0
 }
 
-func (_m *FakeQueryService) GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (expr.SQLSchema, error) {
+func (_m *FakeQueryService) GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (expr.SQLSchemas, error) {
 	return nil, fmt.Errorf("sql schema endpoint not supported with public dashboards")
 }
 

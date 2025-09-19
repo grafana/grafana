@@ -13,12 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/validations"
 )
 
-func (s *ServiceImpl) GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (expr.SQLSchema, error) {
+func (s *ServiceImpl) GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (expr.SQLSchemas, error) {
 	//TODO DEdupe code
 
 	parsedReq, err := s.parseMetricRequest(ctx, user, false, reqDTO, false)
 	if err != nil {
-		return expr.SQLSchema{}, err
+		return expr.SQLSchemas{}, err
 	}
 	exprReq := expr.Request{
 		Queries: []expr.Query{},
@@ -55,7 +55,7 @@ func (s *ServiceImpl) GetSQLSchemas(ctx context.Context, user identity.Requester
 	return s.expressionService.GetSQLSchemas(ctx, exprReq)
 }
 
-func GetSQLSchemas(ctx context.Context, log log.Logger, dscache datasources.CacheService, exprService *expr.Service, reqDTO dtos.MetricRequest, qsDatasourceClientBuilder dsquerierclient.QSDatasourceClientBuilder, headers map[string]string) (expr.SQLSchema, error) {
+func GetSQLSchemas(ctx context.Context, log log.Logger, dscache datasources.CacheService, exprService *expr.Service, reqDTO dtos.MetricRequest, qsDatasourceClientBuilder dsquerierclient.QSDatasourceClientBuilder, headers map[string]string) (expr.SQLSchemas, error) {
 	s := &ServiceImpl{
 		log:                        log,
 		dataSourceCache:            dscache,
