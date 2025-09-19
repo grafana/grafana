@@ -8,14 +8,13 @@ import (
 
 	"github.com/grafana/alerting/definition"
 	"github.com/grafana/alerting/notify"
-	"github.com/grafana/alerting/receivers/schema"
-	"github.com/grafana/alerting/receivers/webhook"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestReceiverInUse(t *testing.T) {
@@ -92,9 +91,8 @@ func TestDeleteReceiver(t *testing.T) {
 }
 
 func TestCreateReceiver(t *testing.T) {
-	rawCfg := notify.AllKnownConfigsForTesting[string(webhook.Type)]
-	typeSchema, _ := notify.GetSchemaForIntegration(webhook.Type)
-	cfgSchema, err := models.IntegrationConfigFromSchema(typeSchema, schema.V1)
+	rawCfg := notify.AllKnownConfigsForTesting["webhook"]
+	cfgSchema, err := models.IntegrationConfigFromType(rawCfg.NotifierType, util.Pointer("v1"))
 	require.NoError(t, err)
 	settings := map[string]any{}
 	require.NoError(t, json.Unmarshal([]byte(rawCfg.Config), &settings))
@@ -199,9 +197,8 @@ func TestCreateReceiver(t *testing.T) {
 }
 
 func TestUpdateReceiver(t *testing.T) {
-	rawCfg := notify.AllKnownConfigsForTesting[string(webhook.Type)]
-	typeSchema, _ := notify.GetSchemaForIntegration(webhook.Type)
-	cfgSchema, err := models.IntegrationConfigFromSchema(typeSchema, schema.V1)
+	rawCfg := notify.AllKnownConfigsForTesting["webhook"]
+	cfgSchema, err := models.IntegrationConfigFromType(rawCfg.NotifierType, util.Pointer("v1"))
 	require.NoError(t, err)
 	settings := map[string]any{}
 	require.NoError(t, json.Unmarshal([]byte(rawCfg.Config), &settings))
@@ -300,9 +297,8 @@ func TestUpdateReceiver(t *testing.T) {
 }
 
 func TestGetReceiver(t *testing.T) {
-	rawCfg := notify.AllKnownConfigsForTesting[string(webhook.Type)]
-	typeSchema, _ := notify.GetSchemaForIntegration(webhook.Type)
-	cfgSchema, err := models.IntegrationConfigFromSchema(typeSchema, schema.V1)
+	rawCfg := notify.AllKnownConfigsForTesting["webhook"]
+	cfgSchema, err := models.IntegrationConfigFromType(rawCfg.NotifierType, util.Pointer("v1"))
 	require.NoError(t, err)
 	settings := map[string]any{}
 	require.NoError(t, json.Unmarshal([]byte(rawCfg.Config), &settings))
