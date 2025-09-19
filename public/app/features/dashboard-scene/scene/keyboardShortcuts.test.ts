@@ -33,10 +33,9 @@ describe('setupKeyboardShortcuts', () => {
     mockOnRefresh.mockClear();
 
     // Mock KeybindingSet
-    mockKeybindingSet = {
-      addBinding: jest.fn(),
-      removeAll: jest.fn(),
-    } as jest.Mocked<KeybindingSet>;
+    mockKeybindingSet = jest.mocked(new KeybindingSet());
+    jest.spyOn(mockKeybindingSet, 'addBinding').mockImplementation();
+    jest.spyOn(mockKeybindingSet, 'removeAll').mockImplementation();
     (KeybindingSet as jest.Mock).mockImplementation(() => mockKeybindingSet);
 
     // Create mock CursorSync behavior
