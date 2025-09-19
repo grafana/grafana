@@ -96,6 +96,7 @@ func getResourceFromStoragePath(storagePath string) (string, error) {
 }
 
 func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSupported bool, storage genericrest.Storage) genericrest.Storage {
+	fmt.Println("CONFIGURE STORAGE")
 	if gs, ok := storage.(*genericregistry.Store); ok {
 		// if dual write is supported, we need to modify the update strategy
 		// this is not needed for the status store
@@ -111,14 +112,26 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 
 	// if the storage is a status store, we need to extract the underlying generic registry store
 	if statusStore, ok := storage.(*appsdkapiserver.StatusREST); ok {
+		fmt.Println("STATUS")
 		statusStore.Store.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
 		statusStore.Store.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
 		return statusStore
+	}
+
+	// if the storage is a subresource store, we need to extract the underlying generic registry store
+	if subresourceStore, ok := storage.(*appsdkapiserver.SubresourceREST); ok {
+		fmt.Println("SUBRESOURCE")
+		subresourceStore.Store.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
+		subresourceStore.Store.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
+		return subresourceStore
 	}
 
 	return storage
 }
 
 func (s *serverWrapper) RegisteredWebServices() []*restful.WebService {
-	return []*restful.WebService{}
+	if s.Handler != nil && s.Handler.GoRestfulContainer != nil {
+		return s.Handler.GoRestfulContainer.RegisteredWebServices()
+	}
+	return nil
 }
