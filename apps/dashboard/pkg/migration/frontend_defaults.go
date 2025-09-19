@@ -626,8 +626,6 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 			cleanupFieldConfigDefaults(defaults, panel)
 		}
 
-		// fieldConfig overrides are preserved as-is (frontend keeps empty value objects)
-
 	}
 }
 
