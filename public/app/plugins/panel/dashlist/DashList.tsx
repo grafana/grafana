@@ -3,6 +3,7 @@ import { SyntheticEvent, useEffect, useMemo, useState } from 'react';
 import { useThrottle } from 'react-use';
 
 import { InterpolateFunction, PanelProps, textUtil } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2, IconButton, ScrollContainer } from '@grafana/ui';
 import { updateNavIndex } from 'app/core/actions';
 import { getConfig } from 'app/core/config';
@@ -12,6 +13,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardSearchItem } from 'app/features/search/types';
+import StarToolbarButton from 'app/features/stars/StarToolbarButton';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { Options } from './panelcfg.gen';
@@ -181,12 +183,16 @@ export function DashList(props: PanelProps<Options>) {
                 </a>
                 {showFolderNames && dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
               </div>
-              <IconButton
-                tooltip={dash.isStarred ? `Unmark "${dash.title}" as favorite` : `Mark "${dash.title}" as favorite`}
-                name={dash.isStarred ? 'favorite' : 'star'}
-                iconType={dash.isStarred ? 'mono' : 'default'}
-                onClick={(e) => toggleDashboardStar(e, dash)}
-              />
+              {config.featureToggles.starsFromAPIServer ? (
+                <StarToolbarButton group="dashboard.grafana.app" kind="Dashboard" name={dash.uid ?? ''} />
+              ) : (
+                <IconButton
+                  tooltip={dash.isStarred ? `Unmark "${dash.title}" as favorite` : `Mark "${dash.title}" as favorite`}
+                  name={dash.isStarred ? 'favorite' : 'star'}
+                  iconType={dash.isStarred ? 'mono' : 'default'}
+                  onClick={(e) => toggleDashboardStar(e, dash)}
+                />
+              )}
             </div>
           </li>
         );
