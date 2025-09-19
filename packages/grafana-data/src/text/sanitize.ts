@@ -186,5 +186,4 @@ export const textUtil = {
   sanitizeSVGContent,
   sanitizeTrustedTypes,
   sanitizeTrustedTypesRSS,
-  sanitizeSimpleText,
 };
