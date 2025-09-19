@@ -6,7 +6,7 @@ manifest: {
 	versions: {
 		"v0alpha1": {
 			codegen: {
-				ts: {enabled: true}
+				ts: {enabled: false}
 				go: {enabled: true}
 			}
 			kinds: [
