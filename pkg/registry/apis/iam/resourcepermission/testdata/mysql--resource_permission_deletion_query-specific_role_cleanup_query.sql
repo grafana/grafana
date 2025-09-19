@@ -4,5 +4,5 @@ WHERE p.scope = 'dash_123'
     SELECT r.id
     FROM `grafana`.`role` as r
     WHERE r.org_id = 3
-      AND r.name LIKE 'managed:%'
+      AND r.name = 'managed:users:1:permissions'
   )

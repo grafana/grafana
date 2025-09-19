@@ -427,7 +427,13 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 			}
 
 			for _, perm := range permsToRemove {
-				removePermQuery, args, err := buildRemovePermissionQuery(dbHelper, perm.Scope, perm.Action, perm.RoleName, ns.OrgID)
+				resourceQuery := &DeleteResourcePermissionsQuery{
+					Scope:    perm.Scope,
+					OrgID:    ns.OrgID,
+					RoleName: perm.RoleName,
+				}
+
+				removePermQuery, args, err := buildDeleteResourcePermissionsQueryFromTemplate(dbHelper, resourceQuery)
 				if err != nil {
 					return err
 				}
