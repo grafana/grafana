@@ -67,7 +67,6 @@
         "y": 8
       },
       "id": 6,
-      "maxPerRow": 24,
       "title": "Panel with minSpan 1",
       "type": "stat"
     },

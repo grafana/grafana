@@ -19,7 +19,6 @@ import {
   extractTargetVersionFromFilename,
   constructBackendOutputFilename,
   handleAngularPanelMigration,
-  TEST_MIN_VERSION,
 } from './__tests__/migrationTestUtils';
 
 /*
@@ -62,61 +61,60 @@ describe('Backend / Frontend single version migration result comparison', () => 
     setupTestDataSources();
   });
 
+  // Dashboards to skip in single version migration tests due to known inconsistencies
+  const SINGLE_VERSION_TEST_BLACKLIST = [
+    'mimir_rollout_debugging', // Backend correctly preserves rows structure for v15, frontend processes through DashboardModel
+  ];
+
   const { inputDir } = getTestDirectories();
   const outputDir = getOutputDirectory('single_version');
   const jsonInputs = getJsonInputFiles(inputDir);
 
-  jsonInputs
-    // TODO: remove this filter when we fixed all inconsistencies
-    .filter((inputFile) => parseInt(inputFile.split('.')[0].replace('v', ''), 10) > TEST_MIN_VERSION)
-    .forEach((inputFile) => {
-      // Extract target version from filename (e.g., v16.grid_layout_upgrade.json -> target v16)
-      const targetVersion = extractTargetVersionFromFilename(inputFile);
-      if (!targetVersion) {
-        return; // Skip files that don't match the expected pattern
-      }
+  jsonInputs.forEach((inputFile) => {
+    // Extract target version from filename (e.g., v16.grid_layout_upgrade.json -> target v16)
+    const targetVersion = extractTargetVersionFromFilename(inputFile);
+    if (!targetVersion) {
+      return; // Skip files that don't match the expected pattern
+    }
 
-      // Skip if target version exceeds latest version
-      if (targetVersion > DASHBOARD_SCHEMA_VERSION) {
-        return;
-      }
+    // Skip if target version exceeds latest version
+    if (targetVersion > DASHBOARD_SCHEMA_VERSION) {
+      return;
+    }
 
-      it(`should migrate ${inputFile} to v${targetVersion} correctly`, async () => {
-        const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
+    // Skip blacklisted dashboards
+    if (SINGLE_VERSION_TEST_BLACKLIST.some((blacklisted) => inputFile.includes(blacklisted))) {
+      return;
+    }
 
-        // Verify the input file follows the naming convention: filename version = target version, schemaVersion = target - 1
-        const expectedSchemaVersion = targetVersion - 1;
-        expect(jsonInput.schemaVersion).toBe(expectedSchemaVersion);
+    it(`should migrate ${inputFile} to v${targetVersion} correctly`, async () => {
+      const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
 
-        // Construct the backend output filename: v15.something.json -> v15.something.v16.json
-        const backendOutputFilename = constructBackendOutputFilename(inputFile, targetVersion);
-        const backendOutputPath = path.join(outputDir, backendOutputFilename);
+      // Verify the input file follows the naming convention: filename version = target version, schemaVersion = target - 1
+      const expectedSchemaVersion = targetVersion - 1;
+      expect(jsonInput.schemaVersion).toBe(expectedSchemaVersion);
 
-        // Check if the backend output file exists
-        let backendMigrationResult: Record<string, unknown>;
-        try {
-          backendMigrationResult = JSON.parse(readFileSync(backendOutputPath, 'utf8'));
-        } catch (error) {
-          // If backend output doesn't exist, skip this test
-          // This can happen if the backend test hasn't generated the single version output yet
-          console.warn(`Skipping ${inputFile}: single version output file ${backendOutputFilename} not found`);
-          return;
-        }
+      // Construct the backend output filename: v15.something.json -> v15.something.v16.json
+      const backendOutputFilename = constructBackendOutputFilename(inputFile, targetVersion);
+      const backendOutputPath = path.join(outputDir, backendOutputFilename);
 
-        expect(backendMigrationResult.schemaVersion).toEqual(targetVersion);
+      // Check if the backend output file exists
+      const backendMigrationResult = JSON.parse(readFileSync(backendOutputPath, 'utf8'));
 
-        // Migrate dashboard in Frontend.
-        const frontendModel = new DashboardModel(jsonInput, undefined, {
-          targetSchemaVersion: targetVersion,
-          getVariablesFromState: () => jsonInput?.templating?.list ?? [],
-        });
+      expect(backendMigrationResult.schemaVersion).toEqual(targetVersion);
 
-        // Handle angular panel migration if needed
-        await handleAngularPanelMigration(frontendModel);
-
-        const frontendMigrationResult = frontendModel.getSaveModelClone();
-
-        expect(backendMigrationResult).toEqual(frontendMigrationResult);
+      // Migrate dashboard in Frontend.
+      const frontendModel = new DashboardModel(jsonInput, undefined, {
+        targetSchemaVersion: targetVersion,
+        getVariablesFromState: () => jsonInput?.templating?.list ?? [],
       });
+
+      // Handle angular panel migration if needed
+      await handleAngularPanelMigration(frontendModel, jsonInput.schemaVersion, targetVersion);
+
+      const frontendMigrationResult = frontendModel.getSaveModelClone();
+
+      expect(backendMigrationResult).toEqual(frontendMigrationResult);
     });
+  });
 });

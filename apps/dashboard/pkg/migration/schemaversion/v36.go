@@ -1,6 +1,8 @@
 package schemaversion
 
-import "context"
+import (
+	"context"
+)
 
 // V36 migrates dashboard datasource references from legacy string format to structured UID-based objects.
 //
@@ -130,8 +132,8 @@ func migrateTemplateVariables(dashboard map[string]interface{}, datasources []Da
 			continue
 		}
 
-		varType, ok := varMap["type"].(string)
-		if !ok || varType != "query" {
+		varType := GetStringValue(varMap, "type")
+		if varType != "query" {
 			continue
 		}
 
@@ -213,17 +215,19 @@ func migratePanelDatasourcesInternal(panelMap map[string]interface{}, datasource
 	if !exists || ds == nil {
 		// Set to default if panel has targets with length > 0 (matches frontend logic)
 		if len(targets) > 0 {
+			// Matches frontend: panel.datasource = getDataSourceRef(defaultDs)
 			panelMap["datasource"] = GetDataSourceRef(defaultDS)
 			panelDataSourceWasDefault = true
 		}
 	} else {
-		// Migrate existing non-null datasource (should be null after V33)
-		migrated := MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": true}, datasources)
-		if migrated == nil {
-			// If migration returned nil, set to default
-			panelMap["datasource"] = GetDataSourceRef(defaultDS)
-			panelDataSourceWasDefault = true
+		// Migrate existing non-null datasource
+		// Frontend preserves existing datasource objects as-is, so backend should too
+		// But don't override empty objects {} that were set by previous migrations (like V33)
+		if dsMap, ok := ds.(map[string]interface{}); ok && len(dsMap) == 0 {
+			// Keep empty object {} as-is (set by V33 migration for empty strings)
+			panelMap["datasource"] = ds
 		} else {
+			migrated := MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
 			panelMap["datasource"] = migrated
 		}
 	}
@@ -253,14 +257,21 @@ func migratePanelDatasourcesInternal(panelMap map[string]interface{}, datasource
 		}
 
 		if needsDefault {
-			// Use panel's datasource if it's not mixed
+			// Frontend: if (panel.datasource?.uid !== MIXED_DATASOURCE_NAME) { target.datasource = { ...panel.datasource }; }
 			panelDS, ok := panelMap["datasource"].(map[string]interface{})
 			if ok {
-				uid, hasUID := panelDS["uid"].(string)
-				if hasUID && uid != "-- Mixed --" {
-					targetMap["datasource"] = panelDS
+				uid := GetStringValue(panelDS, "uid")
+				isMixed := uid == "-- Mixed --"
+
+				if !isMixed {
+					// Spread the panel datasource properties (mimics frontend: { ...panel.datasource })
+					result := make(map[string]interface{})
+					for k, v := range panelDS {
+						result[k] = v
+					}
+					targetMap["datasource"] = result
 				} else {
-					// If panel is mixed, migrate target datasource independently
+					// Frontend: target.datasource = migrateDatasourceNameToRef(target.datasource, { returnDefaultAsNull: false });
 					targetMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
 				}
 			}
@@ -273,8 +284,8 @@ func migratePanelDatasourcesInternal(panelMap map[string]interface{}, datasource
 		if panelDataSourceWasDefault {
 			targetDS, ok := targetMap["datasource"].(map[string]interface{})
 			if ok {
-				uid, ok := targetDS["uid"].(string)
-				if ok && uid != "__expr__" {
+				uid := GetStringValue(targetDS, "uid")
+				if uid != "" && uid != "__expr__" {
 					panelMap["datasource"] = targetDS
 				}
 			}

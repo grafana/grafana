@@ -44,14 +44,8 @@ func V29(_ context.Context, dashboard map[string]interface{}) error {
 			continue
 		}
 		// Set refresh to 1 if not 1 or 2
-		refresh, hasRefresh := variable["refresh"]
-		refreshInt := 0
-		if r, ok := refresh.(int); ok {
-			refreshInt = r
-		} else if r, ok := refresh.(float64); ok {
-			refreshInt = int(r)
-		}
-		if !hasRefresh || (refreshInt != 1 && refreshInt != 2) {
+		refreshInt := GetIntValue(variable, "refresh", 0)
+		if refreshInt != 1 && refreshInt != 2 {
 			variable["refresh"] = 1
 		}
 		// Clear options if they have content (matches frontend behavior)

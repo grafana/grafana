@@ -88,12 +88,6 @@ func processPanels(panels []interface{}) error {
 			continue
 		}
 
-		// Check for auto-migrated panels before migration (preserve autoMigrateFrom)
-		isAutoMigrated := false
-		if p["autoMigrateFrom"] == "singlestat" || p["autoMigrateFrom"] == "grafana-singlestat-panel" {
-			isAutoMigrated = true
-		}
-
 		// Migrate singlestat panels (including those already auto-migrated to stat)
 		if p["type"] == "singlestat" || p["type"] == "grafana-singlestat-panel" ||
 			p["autoMigrateFrom"] == "singlestat" || p["autoMigrateFrom"] == "grafana-singlestat-panel" {
@@ -102,11 +96,9 @@ func processPanels(panels []interface{}) error {
 			}
 		}
 
-		// Normalize existing stat panels to ensure they have current default options
-		// Skip auto-migrated panels as they already have the correct options
-		if p["type"] == "stat" && !isAutoMigrated {
-			normalizeStatPanel(p)
-		}
+		// Note: Panel defaults (including options object) are already applied
+		// by applyPanelDefaults() in the main migration flow for ALL panels
+		// No need for stat-specific normalization
 	}
 
 	return nil
@@ -142,38 +134,6 @@ func migrateSinglestatPanel(panel map[string]interface{}) error {
 	migrateSinglestatOptions(panel, originalType)
 
 	return nil
-}
-
-// normalizeStatPanel ensures existing stat panels have all current default options
-func normalizeStatPanel(panel map[string]interface{}) {
-	if panel["options"] == nil {
-		panel["options"] = map[string]interface{}{}
-	}
-
-	options := panel["options"].(map[string]interface{})
-
-	// Apply missing default options that might not be present in older stat panels
-	// Note: Don't add percentChangeColorMode for existing stat panels - frontend filters it out as default
-	// if _, exists := options["percentChangeColorMode"]; !exists {
-	//	options["percentChangeColorMode"] = "standard"
-	// }
-
-	// Ensure other critical defaults are present
-	if _, exists := options["justifyMode"]; !exists {
-		options["justifyMode"] = "auto"
-	}
-
-	if _, exists := options["textMode"]; !exists {
-		options["textMode"] = "auto"
-	}
-
-	if _, exists := options["wideLayout"]; !exists {
-		options["wideLayout"] = true
-	}
-
-	if _, exists := options["showPercentChange"]; !exists {
-		options["showPercentChange"] = false
-	}
 }
 
 // migrateSinglestatOptions handles the complete migration of singlestat panel options and field config
@@ -212,6 +172,10 @@ func migrateSinglestatOptions(panel map[string]interface{}, originalType string)
 	// Apply shared migration logic
 	applySharedSinglestatMigration(defaults)
 
+	// Apply complete stat panel defaults (matches frontend getPanelOptionsWithDefaults)
+	// The frontend applies these defaults after migration via applyPluginOptionDefaults
+	applyCompleteStatPanelDefaults(panel)
+
 	// Create proper fieldConfig structure from defaults
 	createFieldConfigFromDefaults(panel, defaults)
 
@@ -227,30 +191,28 @@ func migrateSinglestatOptions(panel map[string]interface{}, originalType string)
 // getDefaultStatOptions returns the default options structure for stat panels
 // This matches the frontend's stat panel defaultOptions exactly
 func getDefaultStatOptions() map[string]interface{} {
+	// For now, return the explicit defaults until we integrate the centralized system
 	return map[string]interface{}{
 		"colorMode":              "value",
 		"graphMode":              "area",
 		"justifyMode":            "auto",
-		"percentChangeColorMode": "standard", // Match frontend behavior
+		"percentChangeColorMode": "standard",
 		"showPercentChange":      false,
 		"textMode":               "auto",
 		"wideLayout":             true,
 		"reduceOptions": map[string]interface{}{
-			"calcs":  []string{"mean"},
+			"calcs":  []string{"lastNotNull"}, // Matches frontend: ReducerID.lastNotNull
 			"fields": "",
 			"values": false,
 		},
-		"orientation": "horizontal",
+		"orientation": "auto",
 	}
 }
 
 // migratetSinglestat handles explicit migration from 'singlestat' panels
-// Based on explicit migration logic in DashboardMigrator.ts
+// Based on frontend migrateFromAngularSinglestat function
 func migratetSinglestat(panel map[string]interface{}, defaults map[string]interface{}) {
 	angularOpts := extractAngularOptions(panel)
-
-	// Start with default stat panel options (matches frontend statPanelChangedHandler)
-	options := getDefaultStatOptions()
 
 	// Extract valueName for reducer mapping (matches frontend migrateFromAngularSinglestat)
 	var valueName string
@@ -259,15 +221,23 @@ func migratetSinglestat(panel map[string]interface{}, defaults map[string]interf
 	}
 
 	// Set calcs based on valueName (matches frontend: calcs: [reducer ? reducer.id : ReducerID.mean])
+	var calcs []string
 	if reducer := getReducerForValueName(valueName); reducer != "" {
-		options["reduceOptions"].(map[string]interface{})["calcs"] = []string{reducer}
+		calcs = []string{reducer}
 	} else {
-		// Use mean as fallback (matches frontend ReducerID.mean)
-		options["reduceOptions"].(map[string]interface{})["calcs"] = []string{"mean"}
+		// Use mean as fallback (matches frontend migrateFromAngularSinglestat: ReducerID.mean)
+		calcs = []string{"mean"}
 	}
 
-	// Set orientation to horizontal (matches frontend: orientation: VizOrientation.Horizontal)
-	options["orientation"] = "horizontal"
+	// Create options exactly like frontend migrateFromAngularSinglestat
+	options := map[string]interface{}{
+		"reduceOptions": map[string]interface{}{
+			"calcs":  calcs,
+			"fields": "",
+			"values": false,
+		},
+		"orientation": "horizontal", // Matches frontend migrateFromAngularSinglestat: VizOrientation.Horizontal
+	}
 
 	// Migrate thresholds FIRST (consolidated: both panel types create DEFAULT_THRESHOLDS for empty strings)
 	migrateThresholds(angularOpts, defaults)
@@ -280,7 +250,7 @@ func migratetSinglestat(panel map[string]interface{}, defaults map[string]interf
 			"steps": []interface{}{
 				map[string]interface{}{
 					"color": "green",
-					"value": nil,
+					"value": (*float64)(nil),
 				},
 				map[string]interface{}{
 					"color": "red",
@@ -304,60 +274,10 @@ func migratetSinglestat(panel map[string]interface{}, defaults map[string]interf
 }
 
 // migrateGrafanaSinglestatPanel handles auto-migration from 'grafana-singlestat-panel'
-// Based on frontend changePlugin() and sharedSingleStatPanelChangedHandler logic
+// Uses the same migration logic as singlestat panels since the frontend applies
+// migrateFromAngularSinglestat to both panel types.
 func migrateGrafanaSinglestatPanel(panel map[string]interface{}, defaults map[string]interface{}) {
-	angularOpts := extractAngularOptions(panel)
-
-	// Auto-migration uses different defaults (matches frontend changePlugin behavior)
-	options := map[string]interface{}{
-		"reduceOptions": map[string]interface{}{
-			"calcs":  []string{"lastNotNull"}, // Auto-migration default
-			"fields": "",
-			"values": false,
-		},
-		"orientation":            "auto", // Auto-migration uses auto
-		"justifyMode":            "auto",
-		"percentChangeColorMode": "standard", // Match frontend behavior
-		"showPercentChange":      false,
-		"textMode":               "auto",
-		"wideLayout":             true,
-	}
-
-	// Auto-migration: don't apply valueName mapping - keep default "lastNotNull"
-	// The frontend changePlugin() behavior uses stat panel defaults, not valueName mapping
-
-	// Migrate thresholds FIRST (consolidated: both panel types create DEFAULT_THRESHOLDS for empty strings)
-	migrateThresholds(angularOpts, defaults)
-
-	// If no thresholds were set from angular migration, add default stat panel thresholds
-	// This matches the behavior of frontend pluginLoaded which adds default thresholds
-	if _, hasThresholds := defaults["thresholds"]; !hasThresholds {
-		defaults["thresholds"] = map[string]interface{}{
-			"mode": "absolute",
-			"steps": []interface{}{
-				map[string]interface{}{
-					"color": "green",
-					"value": nil,
-				},
-				map[string]interface{}{
-					"color": "red",
-					"value": 80,
-				},
-			},
-		}
-	}
-
-	// Apply common angular option migrations (value mappings can now use threshold colors)
-	applyCommonAngularMigration(panel, defaults, options, angularOpts)
-
-	// Merge new options with existing panel options to preserve properties like maxDataPoints
-	if existingOptions, exists := panel["options"].(map[string]interface{}); exists {
-		for key, value := range options {
-			existingOptions[key] = value
-		}
-	} else {
-		panel["options"] = options
-	}
+	migratetSinglestat(panel, defaults)
 }
 
 // migrateThresholds handles threshold migration for both singlestat panel types
@@ -396,17 +316,18 @@ func applyCommonAngularMigration(panel map[string]interface{}, defaults map[stri
 		options["reduceOptions"].(map[string]interface{})["fields"] = "/^" + tableColumn + "$/"
 	}
 
-	// Note: Frontend stat panel change handler doesn't add unit property
-	// if format, ok := angularOpts["format"].(string); ok {
-	// 	defaults["unit"] = format
-	// }
+	// Migrate unit from format property (matches frontend sharedSingleStatPanelChangedHandler)
+	if format, ok := angularOpts["format"].(string); ok {
+		defaults["unit"] = format
+	}
 
 	// Migrate decimals
 	if decimals, ok := angularOpts["decimals"]; ok {
 		defaults["decimals"] = decimals
 	}
 
-	// Note: Frontend stat panel change handler doesn't add nullValueMode property
+	// Note: Frontend migrateFromAngularSinglestat does migrate nullPointMode to nullValueMode
+	// but the frontend's getSaveModel() method removes it, so we don't add it here
 	// if nullPointMode, ok := angularOpts["nullPointMode"]; ok {
 	// 	defaults["nullValueMode"] = nullPointMode
 	// }
@@ -421,18 +342,10 @@ func applyCommonAngularMigration(panel map[string]interface{}, defaults map[stri
 	migrateValueMappings(angularOpts, defaults, valueMaps)
 
 	// Migrate sparkline configuration
-	// Based on statPanelChangedHandler lines ~25-35: sparkline migration logic
+	// Based on statPanelChangedHandler lines ~20-23: sparkline migration logic
 	if sparkline, ok := angularOpts["sparkline"].(map[string]interface{}); ok {
 		if show, ok := sparkline["show"].(bool); ok && show {
 			options["graphMode"] = "area"
-
-			// Note: Frontend stat panel change handler doesn't add sparkline color to fieldConfig
-			// if lineColor, ok := sparkline["lineColor"].(string); ok {
-			// 	defaults["color"] = map[string]interface{}{
-			// 		"mode":       "fixed",
-			// 		"fixedColor": lineColor,
-			// 	}
-			// }
 		} else {
 			options["graphMode"] = "none"
 		}
@@ -442,13 +355,13 @@ func applyCommonAngularMigration(panel map[string]interface{}, defaults map[stri
 	}
 
 	// Migrate color configuration
-	// Based on statPanelChangedHandler lines ~35-45: colorBackground and colorValue migration
-	if colorBackground, ok := angularOpts["colorBackground"].(bool); ok && colorBackground {
-		options["colorMode"] = "background"
-	} else if colorValue, ok := angularOpts["colorValue"].(bool); ok && colorValue {
-		options["colorMode"] = "value"
-	} else {
-		options["colorMode"] = "none"
+	// Based on statPanelChangedHandler lines ~25-38: colorBackground and colorValue migration
+	colorMode := determineColorMode(angularOpts)
+	options["colorMode"] = colorMode
+
+	// Sparkline color migration only happens when colorMode is "none"
+	if colorMode == "none" {
+		migrateSparklineColor(angularOpts, defaults, options)
 	}
 
 	// Migrate text mode
@@ -460,6 +373,27 @@ func applyCommonAngularMigration(panel map[string]interface{}, defaults map[stri
 	if angularOpts["gauge"] != nil && angularOpts["gauge"].(map[string]interface{})["show"] == true {
 		defaults["min"] = angularOpts["gauge"].(map[string]interface{})["minValue"]
 		defaults["max"] = angularOpts["gauge"].(map[string]interface{})["maxValue"]
+	}
+}
+
+// applyCompleteStatPanelDefaults applies the complete stat panel defaults
+// This matches the frontend's getPanelOptionsWithDefaults behavior after migration
+func applyCompleteStatPanelDefaults(panel map[string]interface{}) {
+	// Get or create options object
+	options, exists := panel["options"].(map[string]interface{})
+	if !exists {
+		options = map[string]interface{}{}
+		panel["options"] = options
+	}
+
+	defaultOptions := getDefaultStatOptions()
+
+	// Merge defaults with existing options, but don't override existing values
+	// This matches the frontend's getPanelOptionsWithDefaults behavior
+	for key, defaultValue := range defaultOptions {
+		if _, exists := options[key]; !exists {
+			options[key] = defaultValue
+		}
 	}
 }
 
@@ -580,10 +514,19 @@ func migrateValueMappings(panel map[string]interface{}, defaults map[string]inte
 	mappings := []interface{}{}
 	mappingType := panel["mappingType"]
 
-	if mappingType == nil {
-		if panel["valueMaps"] != nil && len(panel["valueMaps"].([]interface{})) > 0 {
+	// Check for inconsistent mapping configuration
+	// If panel has rangeMaps but mappingType is 1, or vice versa, fix it
+	hasValueMaps := panel["valueMaps"] != nil && IsArray(panel["valueMaps"]) && len(panel["valueMaps"].([]interface{})) > 0
+	hasRangeMaps := panel["rangeMaps"] != nil && IsArray(panel["rangeMaps"]) && len(panel["rangeMaps"].([]interface{})) > 0
+
+	if hasRangeMaps && mappingType == float64(1) {
+		mappingType = 2
+	} else if hasValueMaps && mappingType == float64(2) {
+		mappingType = 1
+	} else if mappingType == nil {
+		if hasValueMaps {
 			mappingType = 1
-		} else if panel["rangeMaps"] != nil && len(panel["rangeMaps"].([]interface{})) > 0 {
+		} else if hasRangeMaps {
 			mappingType = 2
 		}
 	}
@@ -878,11 +821,67 @@ func ensureTargetRefIds(panel map[string]interface{}) {
 func removeDeprecatedVariableProperties(variable map[string]interface{}) {
 	// Remove deprecated properties
 	delete(variable, "tags")
-	delete(variable, "tagsQuery")
-	delete(variable, "tagValuesQuery")
 
-	// Only remove useTags if it's truthy (matches frontend behavior)
-	if useTags, exists := variable["useTags"]; exists && useTags != false && useTags != nil {
-		delete(variable, "useTags")
+	// Only remove tagsQuery if it's a non-empty string (matches frontend behavior)
+	if tagsQuery, exists := variable["tagsQuery"]; exists {
+		if str, ok := tagsQuery.(string); ok && str != "" {
+			delete(variable, "tagsQuery")
+		}
+	}
+
+	// Only remove tagValuesQuery if it's a non-empty string (matches frontend behavior)
+	if tagValuesQuery, exists := variable["tagValuesQuery"]; exists {
+		if str, ok := tagValuesQuery.(string); ok && str != "" {
+			delete(variable, "tagValuesQuery")
+		}
+	}
+
+	// Only remove useTags if it's a truthy boolean (matches frontend behavior)
+	if useTags, exists := variable["useTags"]; exists {
+		if val, ok := useTags.(bool); ok && val {
+			delete(variable, "useTags")
+		}
+	}
+}
+
+// determineColorMode determines the color mode based on angular options
+func determineColorMode(angularOpts map[string]interface{}) string {
+	if colorBackground, ok := angularOpts["colorBackground"].(bool); ok && colorBackground {
+		return "background"
+	}
+
+	if colorValue, ok := angularOpts["colorValue"].(bool); ok && colorValue {
+		return "value"
+	}
+
+	return "none"
+}
+
+// migrateSparklineColor migrates sparkline color configuration when colorMode is "none"
+// Based on statPanelChangedHandler lines 31-38
+func migrateSparklineColor(angularOpts map[string]interface{}, defaults map[string]interface{}, options map[string]interface{}) {
+	sparkline, ok := angularOpts["sparkline"].(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	show, ok := sparkline["show"].(bool)
+	if !ok || !show {
+		return
+	}
+
+	graphMode, ok := options["graphMode"].(string)
+	if !ok || graphMode != "area" {
+		return
+	}
+
+	lineColor, ok := sparkline["lineColor"].(string)
+	if !ok {
+		return
+	}
+
+	defaults["color"] = map[string]interface{}{
+		"mode":       "fixed",
+		"fixedColor": lineColor,
 	}
 }

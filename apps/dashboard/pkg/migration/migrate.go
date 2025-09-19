@@ -13,6 +13,15 @@ func Initialize(dsInfoProvider schemaversion.DataSourceInfoProvider) {
 	migratorInstance.init(dsInfoProvider)
 }
 
+// ResetForTesting resets the migrator singleton for testing purposes.
+func ResetForTesting() {
+	migratorInstance = &migrator{
+		migrations: map[int]schemaversion.SchemaVersionMigrationFunc{},
+		ready:      make(chan struct{}),
+	}
+	initOnce = sync.Once{}
+}
+
 // Migrate migrates the given dashboard to the target version.
 // This will block until the migrator is initialized.
 func Migrate(ctx context.Context, dash map[string]interface{}, targetVersion int) error {
@@ -47,17 +56,42 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 	// wait for the migrator to be initialized
 	<-m.ready
 
-	// 1. Apply ALL frontend defaults FIRST (DashboardModel + PanelModel defaults)
+	// 0. Clean up dashboard properties that frontend never includes in save model
+	// These properties are added by backend but frontend filters them out
+	delete(dash, "__elements")
+	delete(dash, "__inputs")
+	delete(dash, "__requires")
+
+	// 1. Track which panels had transformations in original input (before any defaults applied)
+	// This is needed to match frontend hasOwnProperty behavior
+	trackOriginalTransformations(dash)
+
+	// 2. Apply ALL frontend defaults FIRST (DashboardModel + PanelModel defaults)
 	// This replicates the behavior of the frontend DashboardModel and PanelModel constructors
 	applyFrontendDefaults(dash)
 
-	// 2. Apply panel defaults to top-level panels only (not nested panels)
-	// This matches the frontend behavior where PanelModel constructor is only called on top-level panels
+	// 2. Apply panel defaults to ALL panels (both top-level and nested in rows)
+	// The frontend creates PanelModel instances for all panels, including those in rows
 	if dashboardPanels, ok := dash["panels"].([]interface{}); ok {
 		for _, panelInterface := range dashboardPanels {
 			if panel, ok := panelInterface.(map[string]interface{}); ok {
 				applyPanelDefaults(panel)
 			}
+		}
+	}
+
+	// Apply defaults to panels inside rows (for pre-v16 dashboards)
+	// Match frontend upgradeToGridLayout: only panels NOT in collapsed rows get new PanelModel() constructor
+	if rows, ok := dash["rows"].([]interface{}); ok {
+		showRows := shouldShowRows(rows)
+
+		for _, rowInterface := range rows {
+			row, ok := rowInterface.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			applyRowPanelDefaults(row, showRows)
 		}
 	}
 
@@ -97,4 +131,49 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 	}
 
 	return nil
+}
+
+// shouldShowRows determines if row panels will be created (showRows logic)
+func shouldShowRows(rows []interface{}) bool {
+	for _, rowInterface := range rows {
+		row, ok := rowInterface.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		collapse := schemaversion.GetBoolValue(row, "collapse")
+		showTitle := schemaversion.GetBoolValue(row, "showTitle")
+		repeat := schemaversion.GetStringValue(row, "repeat")
+
+		if collapse || showTitle || repeat != "" {
+			return true
+		}
+	}
+	return false
+}
+
+// applyRowPanelDefaults applies panel defaults to panels within a row based on frontend logic
+func applyRowPanelDefaults(row map[string]interface{}, showRows bool) {
+	rowPanels, ok := row["panels"].([]interface{})
+	if !ok {
+		return
+	}
+
+	collapse := schemaversion.GetBoolValue(row, "collapse")
+
+	// Frontend: if (rowPanelModel && rowPanel.collapsed) { push(panel) } else { push(new PanelModel(panel)) }
+	// Only non-collapsed panels get PanelModel defaults (refId: "A", overrides: [], etc.)
+	applyDefaults := !showRows || !collapse
+
+	if !applyDefaults {
+		return
+	}
+
+	for _, panelInterface := range rowPanels {
+		panel, ok := panelInterface.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		applyPanelDefaults(panel)
+	}
 }

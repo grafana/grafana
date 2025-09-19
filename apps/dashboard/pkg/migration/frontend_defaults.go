@@ -5,7 +5,6 @@ import (
 )
 
 // applyFrontendDefaults applies all DashboardModel constructor defaults
-// This replicates the behavior of the frontend DashboardModel constructor
 func applyFrontendDefaults(dashboard map[string]interface{}) {
 	// DashboardModel constructor defaults - only set defaults that the frontend actually sets
 	if dashboard["title"] == nil {
@@ -75,7 +74,6 @@ func applyFrontendDefaults(dashboard map[string]interface{}) {
 }
 
 // applyPanelDefaults applies all PanelModel constructor defaults
-// This replicates the behavior of the frontend PanelModel constructor
 func applyPanelDefaults(panel map[string]interface{}) {
 	// PanelModel constructor defaults - only apply if property doesn't exist
 	// This matches the frontend's defaultsDeep behavior
@@ -101,17 +99,18 @@ func applyPanelDefaults(panel map[string]interface{}) {
 	if panel["links"] == nil {
 		panel["links"] = []interface{}{}
 	}
-	if panel["transformations"] == nil {
-		panel["transformations"] = []interface{}{}
-	}
+
 	if _, exists := panel["fieldConfig"]; !exists {
 		panel["fieldConfig"] = map[string]interface{}{
 			"defaults":  map[string]interface{}{},
 			"overrides": []interface{}{},
 		}
 	} else {
-		// Add overrides array if it doesn't exist (matches frontend behavior)
+		// Add missing defaults and overrides (matches frontend defaultsDeep behavior)
 		if fieldConfig, ok := panel["fieldConfig"].(map[string]interface{}); ok {
+			if _, hasDefaults := fieldConfig["defaults"]; !hasDefaults {
+				fieldConfig["defaults"] = map[string]interface{}{}
+			}
 			if _, hasOverrides := fieldConfig["overrides"]; !hasOverrides {
 				fieldConfig["overrides"] = []interface{}{}
 			}
@@ -121,8 +120,7 @@ func applyPanelDefaults(panel map[string]interface{}) {
 		panel["title"] = ""
 	}
 
-	// Auto-migration logic (matches frontend PanelModel constructor)
-	applyPanelAutoMigration(panel)
+	// Auto-migration logic is now applied during cleanup phase to match frontend behavior
 
 	// Structure normalizations
 	ensureQueryIds(panel)
@@ -155,7 +153,6 @@ func ensureAnnotationsExist(dashboard map[string]interface{}) {
 }
 
 // ensurePanelsHaveUniqueIds ensures all panels have unique IDs
-// This matches the frontend behavior exactly
 func ensurePanelsHaveUniqueIds(dashboard map[string]interface{}) {
 	panels := getPanels(dashboard)
 	if len(panels) == 0 {
@@ -439,9 +436,42 @@ func getPanels(dashboard map[string]interface{}) []map[string]interface{} {
 	return panels
 }
 
-// cleanupPanelForSave mimics the PanelModel.getSaveModel() behavior
+// cleanupPanelForSaveWithContext mimics the PanelModel.getSaveModel() behavior
 // This removes properties that shouldn't be persisted and filters out default values
-func cleanupPanelForSave(panel map[string]interface{}) {
+func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool) {
+	// Apply auto-migration logic (matches frontend PanelModel constructor)
+	// This happens during cleanup phase to match when frontend applies auto-migration
+	// Only apply auto-migration to top-level panels, not nested ones (matches frontend behavior)
+	if !isNested {
+		applyPanelAutoMigration(panel)
+	}
+
+	// Library panel specific cleanup (matches frontend behavior)
+	// Frontend only preserves id, title, gridPos, and libraryPanel for library panels
+	if libraryPanel, hasLibraryPanel := panel["libraryPanel"]; hasLibraryPanel && libraryPanel != nil {
+		// Create a new panel with only the essential properties
+		essentialProps := map[string]interface{}{
+			"id":           panel["id"],
+			"title":        panel["title"],
+			"gridPos":      panel["gridPos"],
+			"libraryPanel": libraryPanel,
+		}
+
+		// Clear the original panel and copy back only essential properties
+		for key := range panel {
+			delete(panel, key)
+		}
+		for key, value := range essentialProps {
+			if value != nil {
+				panel[key] = value
+			}
+		}
+		return // Skip the rest of the cleanup for library panels
+	}
+
+	// Row panel specific cleanup (matches frontend behavior)
+	cleanupRowPanelProperties(panel)
+
 	// Track which properties were present in the input to preserve them even if they become empty
 	originalProperties := make(map[string]bool)
 	for key := range panel {
@@ -465,6 +495,7 @@ func cleanupPanelForSave(panel map[string]interface{}) {
 		"key":                     true,
 		"isNew":                   true,
 		"refreshWhenInView":       true,
+		"scopedVars":              true, // Frontend removes scopedVars from save model
 	}
 
 	// Default values that should be filtered out if they match (defaults)
@@ -479,7 +510,6 @@ func cleanupPanelForSave(panel map[string]interface{}) {
 		"transparent":         false,
 		"options":             map[string]interface{}{},
 		"links":               []interface{}{},
-		"transformations":     []interface{}{},
 		"fieldConfig": map[string]interface{}{
 			"defaults":  map[string]interface{}{},
 			"overrides": []interface{}{},
@@ -501,15 +531,36 @@ func cleanupPanelForSave(panel map[string]interface{}) {
 		}
 	}
 
+	// Remove empty transformations array unless nested panel had them originally
+	if transformations, ok := panel["transformations"].([]interface{}); ok && len(transformations) == 0 {
+		if panel["_originallyHadTransformations"] != true || !isNested {
+			delete(panel, "transformations")
+		}
+	}
+
 	// Remove null values recursively to match frontend's JSON.stringify/parse behavior
-	removeNullValuesRecursively(panel)
+	// Pass panel type information to help with threshold handling
+	panelType := ""
+	if t, ok := panel["type"].(string); ok {
+		panelType = t
+	}
+	removeNullValuesRecursivelyWithContext(panel, panelType)
 
 	// Filter out properties that match defaults (matches frontend's isEqual logic)
 	filterDefaultValues(panel, originalProperties)
+
+	// Clean up internal markers
+	delete(panel, "_originallyHadTransformations")
 }
 
 // filterDefaultValues removes properties that match the default values (matches frontend's isEqual logic)
 func filterDefaultValues(panel map[string]interface{}, originalProperties map[string]bool) {
+	// Get panel type for panel-specific defaults
+	panelType := ""
+	if t, ok := panel["type"].(string); ok {
+		panelType = t
+	}
+
 	// PanelModel defaults from frontend
 	defaults := map[string]interface{}{
 		"gridPos": map[string]interface{}{
@@ -522,7 +573,6 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 		"transparent":         false,
 		"options":             map[string]interface{}{},
 		"links":               []interface{}{},
-		"transformations":     []interface{}{},
 		"fieldConfig": map[string]interface{}{
 			"defaults":  map[string]interface{}{},
 			"overrides": []interface{}{},
@@ -530,30 +580,50 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 		"title": "",
 	}
 
-	// Remove properties that match defaults, but preserve properties that were originally present
-	for prop, defaultValue := range defaults {
-		if panelValue, exists := panel[prop]; exists {
-			if isEqual(panelValue, defaultValue) {
-				// Only remove if it wasn't originally present in the input
-				if !originalProperties[prop] {
+	// Add panel-specific defaults
+	if panelType == "table" {
+		// Remove legacy table properties (matches frontend getSaveModel filtering)
+		// Exception: preserve original properties for old table panels with autoMigrateFrom="table-old"
+		legacyTableProps := []string{"pageSize", "scroll", "fontSize", "showHeader", "sort"}
+		for _, prop := range legacyTableProps {
+			if _, exists := panel[prop]; exists {
+				if autoMigrateFrom, hasAutoMigrate := panel["autoMigrateFrom"]; hasAutoMigrate && autoMigrateFrom == "table-old" {
+					if !originalProperties[prop] {
+						delete(panel, prop)
+					}
+				} else {
 					delete(panel, prop)
 				}
 			}
 		}
 	}
 
-	// Remove empty targets arrays (frontend removes them in cleanup)
-	if targets, exists := panel["targets"].([]interface{}); exists && len(targets) == 0 {
-		delete(panel, "targets")
+	// Remove properties that match defaults, but preserve properties that were originally present
+	for prop, defaultValue := range defaults {
+		if panelValue, exists := panel[prop]; exists {
+			if isEqual(panelValue, defaultValue) {
+				// Special case: fieldConfig is always removed if it matches defaults (frontend getSaveModel behavior)
+				if prop == "fieldConfig" {
+					delete(panel, prop)
+				} else {
+					// Only remove if it wasn't originally present in the input
+					if !originalProperties[prop] {
+						delete(panel, prop)
+					}
+				}
+			}
+		}
 	}
 
-	// Remove fieldConfig objects that only have empty overrides arrays (frontend removes them in cleanup)
+	// Remove empty targets arrays (frontend removes them in cleanup)
+	removeIfDefaultValue(panel, "targets", []interface{}{})
+
+	// Clean up fieldConfig to match frontend behavior
 	if fieldConfig, exists := panel["fieldConfig"].(map[string]interface{}); exists {
-		if overrides, hasOverrides := fieldConfig["overrides"].([]interface{}); hasOverrides && len(overrides) == 0 {
-			// Check if fieldConfig only has empty overrides
-			if len(fieldConfig) == 1 {
-				delete(panel, "fieldConfig")
-			}
+		// Clean up fieldConfig defaults to match frontend behavior
+		if defaults, hasDefaults := fieldConfig["defaults"].(map[string]interface{}); hasDefaults {
+			// Remove properties that frontend considers as defaults and omits
+			cleanupFieldConfigDefaults(defaults, panel)
 		}
 	}
 }
@@ -616,6 +686,7 @@ func cleanupDashboardForSave(dashboard map[string]interface{}) {
 	removeNullValues(dashboard)
 	cleanupTemplating(dashboard)
 	cleanupPanels(dashboard)
+	cleanupDashboardDefaults(dashboard)
 }
 
 // removeNonPersistedProperties removes non-persisted dashboard properties
@@ -648,14 +719,15 @@ func removeNonPersistedProperties(dashboard map[string]interface{}) {
 			delete(dashboard, k)
 		}
 	}
+
+	// Remove properties that frontend omits in getSaveModel
+	delete(dashboard, "variables")
 }
 
 // removeNullValues removes null values to match frontend's JSON.stringify/parse behavior
 func removeNullValues(dashboard map[string]interface{}) {
 	// This handles gnetId: null and other null properties
-	if dashboard["gnetId"] == nil {
-		delete(dashboard, "gnetId")
-	}
+	removeIfDefaultValue(dashboard, "gnetId", nil)
 }
 
 // cleanupTemplating cleans up templating to match frontend's getTemplatingSaveModel behavior
@@ -680,9 +752,10 @@ func cleanupTemplatingVariables(templating map[string]interface{}) {
 // cleanupVariable cleans up individual variable properties
 func cleanupVariable(variable map[string]interface{}) {
 	// Remove null datasource
-	if variable["datasource"] == nil {
-		delete(variable, "datasource")
-	}
+	removeIfDefaultValue(variable, "datasource", nil)
+
+	// Remove properties that frontend omits in getSaveModel
+	delete(variable, "index")
 
 	// Apply variable type-specific logic
 	if variableType, ok := variable["type"].(string); ok {
@@ -715,8 +788,25 @@ func cleanupVariable(variable map[string]interface{}) {
 // cleanupPanels cleans up panels and ensures panels property always exists
 func cleanupPanels(dashboard map[string]interface{}) {
 	if panels, ok := dashboard["panels"].([]interface{}); ok {
-		cleanupPanelList(panels)
-		sortPanelsByGridPosition(panels)
+		// Filter out repeated panels (matches frontend getPanelSaveModels behavior)
+		// Frontend filters: !(panel.repeatPanelId || panel.repeatedByRow)
+		filteredPanels := []interface{}{}
+		for _, panelInterface := range panels {
+			if panel, ok := panelInterface.(map[string]interface{}); ok {
+				// Skip panels with repeatPanelId or repeatedByRow
+				if _, hasRepeatPanelId := panel["repeatPanelId"]; hasRepeatPanelId {
+					continue
+				}
+				if _, hasRepeatedByRow := panel["repeatedByRow"]; hasRepeatedByRow {
+					continue
+				}
+				filteredPanels = append(filteredPanels, panel)
+			}
+		}
+
+		cleanupPanelList(filteredPanels)
+		sortPanelsByGridPosition(filteredPanels)
+		dashboard["panels"] = filteredPanels
 	} else {
 		// Ensure panels property exists even if empty (matches frontend behavior)
 		dashboard["panels"] = []interface{}{}
@@ -727,13 +817,13 @@ func cleanupPanels(dashboard map[string]interface{}) {
 func cleanupPanelList(panels []interface{}) {
 	for _, panelInterface := range panels {
 		if panel, ok := panelInterface.(map[string]interface{}); ok {
-			cleanupPanelForSave(panel)
+			cleanupPanelForSaveWithContext(panel, false)
 
 			// Handle nested panels in row panels
 			if nestedPanels, ok := panel["panels"].([]interface{}); ok {
 				for _, nestedPanelInterface := range nestedPanels {
 					if nestedPanel, ok := nestedPanelInterface.(map[string]interface{}); ok {
-						cleanupPanelForSave(nestedPanel)
+						cleanupPanelForSaveWithContext(nestedPanel, true)
 					}
 				}
 			}
@@ -762,6 +852,8 @@ func sortPanelsByGridPosition(panels []interface{}) {
 		if okA {
 			if y, ok := gridPosA["y"].(float64); ok {
 				yA = y
+			} else if y, ok := gridPosA["y"].(int); ok {
+				yA = float64(y)
 			}
 		}
 
@@ -769,6 +861,8 @@ func sortPanelsByGridPosition(panels []interface{}) {
 		if okB {
 			if y, ok := gridPosB["y"].(float64); ok {
 				yB = y
+			} else if y, ok := gridPosB["y"].(int); ok {
+				yB = float64(y)
 			}
 		}
 
@@ -777,6 +871,8 @@ func sortPanelsByGridPosition(panels []interface{}) {
 			if okA {
 				if x, ok := gridPosA["x"].(float64); ok {
 					xA = x
+				} else if x, ok := gridPosA["x"].(int); ok {
+					xA = float64(x)
 				}
 			}
 
@@ -784,6 +880,8 @@ func sortPanelsByGridPosition(panels []interface{}) {
 			if okB {
 				if x, ok := gridPosB["x"].(float64); ok {
 					xB = x
+				} else if x, ok := gridPosB["x"].(int); ok {
+					xB = float64(x)
 				}
 			}
 			return xA < xB
@@ -792,8 +890,18 @@ func sortPanelsByGridPosition(panels []interface{}) {
 	})
 }
 
+// cleanupRowPanelProperties removes default row panel properties that frontend filters out
+func cleanupRowPanelProperties(panel map[string]interface{}) {
+	panelType, ok := panel["type"].(string)
+	if !ok || panelType != "row" {
+		return
+	}
+
+	// Remove repeat if empty string (default value)
+	removeIfDefaultValue(panel, "repeat", "")
+}
+
 // applyPanelAutoMigration applies the same auto-migration logic as the frontend PanelModel constructor
-// This matches the behavior of getPanelPluginToMigrateTo() and the auto-migration logic
 func applyPanelAutoMigration(panel map[string]interface{}) {
 	panelType, ok := panel["type"].(string)
 	if !ok {
@@ -855,22 +963,123 @@ func applyPanelAutoMigration(panel map[string]interface{}) {
 // removeNullValuesRecursively removes null values from nested objects and arrays
 // This matches the frontend's JSON.stringify/parse behavior
 func removeNullValuesRecursively(data interface{}) {
+	removeNullValuesRecursivelyWithContext(data, "")
+}
+
+// removeNullValuesRecursivelyWithContext removes null values from nested objects and arrays
+// This matches the frontend's JSON.stringify/parse behavior in getSaveModelClone()
+func removeNullValuesRecursivelyWithContext(data interface{}, panelType string) {
 	switch v := data.(type) {
 	case map[string]interface{}:
 		// Remove null values from map
 		for key, value := range v {
 			if value == nil {
+				// Frontend removes null values via JSON serialization, so we should too
+				// No special case needed for threshold steps
 				delete(v, key)
 			} else {
 				// Recursively process nested values
-				removeNullValuesRecursively(value)
+				removeNullValuesRecursivelyWithContext(value, panelType)
 			}
 		}
 	case []interface{}:
 		// Process array elements
 		for _, item := range v {
 			if item != nil {
-				removeNullValuesRecursively(item)
+				removeNullValuesRecursivelyWithContext(item, panelType)
+			}
+		}
+	}
+}
+
+// removeIfDefaultValue removes the key from the map if its value equals the defaultValue
+func removeIfDefaultValue(data map[string]interface{}, key string, defaultValue interface{}) {
+	if val, ok := data[key]; ok && isEqual(val, defaultValue) {
+		delete(data, key)
+	}
+}
+
+// cleanupDashboardDefaults removes dashboard-level default values that frontend filters out
+func cleanupDashboardDefaults(dashboard map[string]interface{}) {
+	// Remove style if it's the default "dark" value
+	removeIfDefaultValue(dashboard, "style", "dark")
+
+	// Remove hideControls if it's the default false value
+	removeIfDefaultValue(dashboard, "hideControls", false)
+
+	// Remove dashboard id if it's null
+	removeIfDefaultValue(dashboard, "id", nil)
+
+	// Remove transient properties that frontend filters out during getSaveModelClone()
+	// These properties are lost during frontend's property copying loop in getSaveModelCloneOld()
+	delete(dashboard, "preload")   // Transient dashboard loading state
+	delete(dashboard, "iteration") // Template variable iteration timestamp
+}
+
+// cleanupFieldConfigDefaults removes properties that frontend considers as defaults and omits
+func cleanupFieldConfigDefaults(defaults map[string]interface{}, panel map[string]interface{}) {
+	// Don't remove mappings, color objects, or unit properties - frontend preserves them
+
+	// Remove empty custom objects from migrated singlestat panels (frontend filters them out)
+	if custom, exists := defaults["custom"].(map[string]interface{}); exists {
+		if len(custom) == 0 {
+			// Check if this is a migrated singlestat panel by looking for characteristic properties
+			isMigratedSinglestat := false
+
+			// Check for autoMigrateFrom property first
+			if autoMigrateFrom, exists := panel["autoMigrateFrom"]; exists {
+				if autoMigrateFrom == "singlestat" || autoMigrateFrom == "grafana-singlestat-panel" {
+					isMigratedSinglestat = true
+				}
+			}
+
+			// If autoMigrateFrom is not present, check for characteristic migrated singlestat properties
+			if !isMigratedSinglestat {
+				// Check for color with fixedColor and mode "fixed" (from sparkline migration)
+				if color, hasColor := defaults["color"].(map[string]interface{}); hasColor {
+					if _, hasFixedColor := color["fixedColor"].(string); hasFixedColor {
+						if mode, hasMode := color["mode"].(string); hasMode && mode == "fixed" {
+							// Check for mappings array (from valueMaps migration)
+							if _, hasMappings := defaults["mappings"].([]interface{}); hasMappings {
+								isMigratedSinglestat = true
+							}
+						}
+					}
+				}
+			}
+
+			// Only remove empty custom objects for migrated singlestat panels
+			if isMigratedSinglestat {
+				delete(defaults, "custom")
+			}
+		}
+	}
+}
+
+// trackOriginalTransformations marks panels that had transformations in the original input
+// This is needed to match frontend hasOwnProperty behavior
+func trackOriginalTransformations(dashboard map[string]interface{}) {
+	if panels, ok := dashboard["panels"].([]interface{}); ok {
+		for _, panelInterface := range panels {
+			if panel, ok := panelInterface.(map[string]interface{}); ok {
+				trackPanelOriginalTransformations(panel)
+			}
+		}
+	}
+}
+
+// trackPanelOriginalTransformations recursively tracks transformations in panels and nested panels
+func trackPanelOriginalTransformations(panel map[string]interface{}) {
+	// Mark if this panel had transformations in original input
+	if _, hasTransformations := panel["transformations"]; hasTransformations {
+		panel["_originallyHadTransformations"] = true
+	}
+
+	// Handle nested panels in row panels
+	if nestedPanels, ok := panel["panels"].([]interface{}); ok {
+		for _, nestedPanelInterface := range nestedPanels {
+			if nestedPanel, ok := nestedPanelInterface.(map[string]interface{}); ok {
+				trackPanelOriginalTransformations(nestedPanel)
 			}
 		}
 	}

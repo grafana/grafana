@@ -27,12 +27,6 @@
         "uid": "default-ds-uid"
       },
       "id": 1,
-      "options": {
-        "justifyMode": "auto",
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
       "targets": [
         {
           "datasource": {
