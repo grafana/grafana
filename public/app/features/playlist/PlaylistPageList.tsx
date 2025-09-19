@@ -48,6 +48,7 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     list: css({
       display: 'grid',
+      gap: theme.spacing(1),
     }),
     listItem: css({
       listStyle: 'none',
