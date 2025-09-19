@@ -17,6 +17,18 @@ func verifyRequestKey(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
 	if key.Resource == "" {
 		return NewBadRequestError("request key is missing resource")
 	}
+	if err := validateName(key.Name); err != nil {
+		return NewBadRequestError(fmt.Sprintf("name '%s' is invalid: '%s'", key.Name, err))
+	}
+	if err := validateQualifiedName(key.Namespace); err != nil {
+		return NewBadRequestError(fmt.Sprintf("namespace '%s' is invalid: '%s'", key.Namespace, err))
+	}
+	if err := validateQualifiedName(key.Group); err != nil {
+		return NewBadRequestError(fmt.Sprintf("group '%s' is invalid: '%s'", key.Group, err))
+	}
+	if err := validateQualifiedName(key.Resource); err != nil {
+		return NewBadRequestError(fmt.Sprintf("resource '%s' is invalid: '%s'", key.Resource, err))
+	}
 	return nil
 }
 
