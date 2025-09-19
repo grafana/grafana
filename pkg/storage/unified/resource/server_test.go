@@ -364,8 +364,8 @@ func TestSimpleServer(t *testing.T) {
 		require.NotNil(t, created)
 
 		invalidQualifiedNames := []string{
-			"",                                     // empty
-			strings.Repeat("1", MaxNameLength+1),   // too long
+			"", // empty
+			strings.Repeat("1", MaxQualifiedNameLength+1), // too long
 			"    ",                                 // only spaces
 			"f8cc010c.ee72.4681;89d2+d46e1bd47d33", // invalid chars
 		}
@@ -408,11 +408,6 @@ func TestSimpleServer(t *testing.T) {
 
 		// namespace
 		for _, invalidNamespace := range invalidQualifiedNames {
-			if invalidNamespace == "" {
-				// empty namespace is allowed
-				continue
-			}
-
 			key = &resourcepb.ResourceKey{
 				Group:     "playlist.grafana.app",
 				Resource:  "rrrr", // can be anything :(

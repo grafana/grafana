@@ -8,10 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
-const MaxNameLength = 253
-const MaxNamespaceLength = 40
-const MaxGroupLength = 60
-const MaxResourceLength = 40
+const MaxQualifiedNameLength = 40
 
 var validNameCharPattern = `a-zA-Z0-9:\-\_\.`
 var validNamePattern = regexp.MustCompile(`^[` + validNameCharPattern + `]*$`).MatchString
@@ -32,47 +29,11 @@ func validateName(name string) *resourcepb.ErrorResult {
 	return nil
 }
 
-func validateNamespace(value string) *resourcepb.ErrorResult {
-	if len(value) == 0 {
-		// empty namespace is allowed (means cluster-scoped)
-		return nil
-	}
-
-	if len(value) > MaxNamespaceLength {
-		return NewBadRequestError("value is too long")
-	}
-
-	err := validation.IsQualifiedName(value)
-	if len(err) > 0 {
-		return NewBadRequestError(fmt.Sprintf("name is not a valid qualified name: %+v", err))
-	}
-
-	return nil
-}
-
-func validateGroup(value string) *resourcepb.ErrorResult {
+func validateQualifiedName(value string) *resourcepb.ErrorResult {
 	if len(value) == 0 {
 		return NewBadRequestError("value is too short")
 	}
-
-	if len(value) > MaxGroupLength {
-		return NewBadRequestError("value is too long")
-	}
-
-	err := validation.IsQualifiedName(value)
-	if len(err) > 0 {
-		return NewBadRequestError(fmt.Sprintf("name is not a valid qualified name: %+v", err))
-	}
-
-	return nil
-}
-
-func validateResource(value string) *resourcepb.ErrorResult {
-	if len(value) == 0 {
-		return NewBadRequestError("value is too short")
-	}
-
-	if len(value) > MaxResourceLength {
+	if len(value) > MaxQualifiedNameLength {
 		return NewBadRequestError("value is too long")
 	}
 
