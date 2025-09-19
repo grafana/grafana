@@ -19,9 +19,9 @@ var WireSet = wire.NewSet(
 	playlist.RegisterAppInstaller,
 	investigations.RegisterApp,
 	advisor.RegisterApp,
-	notifications.RegisterApp,
 	plugins.RegisterAppInstaller,
 	shorturl.RegisterAppInstaller,
 	correlations.RegisterAppInstaller,
 	rules.RegisterAppInstaller,
+	notifications.RegisterAppInstaller,
 )

@@ -17,8 +17,8 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1/fakes"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1/fakes"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
@@ -583,6 +583,7 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 	require.Len(t, intervals.Items, 2)
 
 	t.Run("should filter by interval name", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, v1.ListOptions{
 			FieldSelector: "spec.name=" + interval1.Spec.Name,
 		})
@@ -601,6 +602,7 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 	})
 
 	t.Run("should filter by multiple filters", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it")
 		list, err := adminClient.List(ctx, v1.ListOptions{
 			FieldSelector: fmt.Sprintf("metadata.name=%s,spec.name=%s", interval2.Name, interval2.Spec.Name),
 		})

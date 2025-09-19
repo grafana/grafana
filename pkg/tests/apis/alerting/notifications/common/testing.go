@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 )
 
 func NewReceiverClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.Receiver, v0alpha1.ReceiverList] {

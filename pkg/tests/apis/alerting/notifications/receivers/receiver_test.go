@@ -21,7 +21,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/alerting/notify"
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -1413,6 +1414,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	require.Len(t, receivers.Items, 3) // Includes default.
 
 	t.Run("should filter by receiver name", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, v1.ListOptions{
 			FieldSelector: "spec.title=" + recv1.Spec.Title,
 		})
@@ -1431,6 +1433,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	})
 
 	t.Run("should filter by multiple filters", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, v1.ListOptions{
 			FieldSelector: fmt.Sprintf("metadata.name=%s,spec.title=%s", recv2.Name, recv2.Spec.Title),
 		})

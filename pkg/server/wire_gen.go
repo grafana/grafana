@@ -768,7 +768,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, pluginsAppInstaller, shortURLAppInstaller, alertingRulesAppInstaller, correlationsAppInstaller)
+	alertingNotificationsAppInstaller, err := notifications2.RegisterAppInstaller(cfg, alertNG)
+	if err != nil {
+		return nil, err
+	}
+	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, pluginsAppInstaller, shortURLAppInstaller, alertingRulesAppInstaller, correlationsAppInstaller, alertingNotificationsAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics)
 	if err != nil {
@@ -786,8 +790,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	investigationsAppProvider := investigations.RegisterApp(cfg)
 	checkregistryService := checkregistry.ProvideService(service15, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, managedpluginsNoop, noop, ssosettingsimplService, cfg, pluginerrsStore)
 	advisorAppProvider := advisor2.RegisterApp(checkregistryService, cfg)
-	alertingNotificationsAppProvider := notifications2.RegisterApp(cfg, alertNG)
-	appregistryService, err := appregistry.ProvideBuilderRunners(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, cfg)
+	appregistryService, err := appregistry.ProvideBuilderRunners(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, advisorAppProvider, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -1373,7 +1376,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, pluginsAppInstaller, shortURLAppInstaller, alertingRulesAppInstaller, correlationsAppInstaller)
+	alertingNotificationsAppInstaller, err := notifications2.RegisterAppInstaller(cfg, alertNG)
+	if err != nil {
+		return nil, err
+	}
+	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, pluginsAppInstaller, shortURLAppInstaller, alertingRulesAppInstaller, correlationsAppInstaller, alertingNotificationsAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics)
 	if err != nil {
@@ -1391,8 +1398,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	investigationsAppProvider := investigations.RegisterApp(cfg)
 	checkregistryService := checkregistry.ProvideService(service15, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, managedpluginsNoop, noop, ssosettingsimplService, cfg, pluginerrsStore)
 	advisorAppProvider := advisor2.RegisterApp(checkregistryService, cfg)
-	alertingNotificationsAppProvider := notifications2.RegisterApp(cfg, alertNG)
-	appregistryService, err := appregistry.ProvideBuilderRunners(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, cfg)
+	appregistryService, err := appregistry.ProvideBuilderRunners(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, advisorAppProvider, cfg)
 	if err != nil {
 		return nil, err
 	}
