@@ -10,9 +10,10 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
-	notificationsResource "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
 	notificationsApp "github.com/grafana/grafana/apps/alerting/notifications/pkg/app"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/receiver"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/templategroup"
@@ -42,6 +43,7 @@ func RegisterAppInstaller(
 	ng *ngalert.AlertNG,
 ) (*AlertingNotificationsAppInstaller, error) {
 	if ng.IsDisabled() {
+		log.New("app-registry").Info("Skipping Kubernetes Alerting Notifications API server (notifications.alerting.grafana.app): Unified Alerting is disabled")
 		return nil, nil
 	}
 
@@ -50,15 +52,7 @@ func RegisterAppInstaller(
 		ng:  ng,
 	}
 
-	localManifest := notificationsResource.LocalManifest()
-	// TODO somehow convert it to schema?
-	// import "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
-	// oapi := v0alpha1.GetOpenAPIDefinitions
-	// for _, version := range localManifest.ManifestData.Versions {
-	// 	for _, kind := range version.Kinds {
-	// 		kind.Schema
-	// 	}
-	// }
+	localManifest := apis.LocalManifest()
 
 	provider := simple.NewAppProvider(localManifest, nil, notificationsApp.New)
 
@@ -67,7 +61,8 @@ func RegisterAppInstaller(
 		ManifestData:   *localManifest.ManifestData,
 		SpecificConfig: nil,
 	}
-	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, notificationsResource.ManifestGoTypeAssociator, notificationsResource.ManifestCustomRouteResponsesAssociator)
+
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, &apis.GoTypeAssociator{})
 	if err != nil {
 		return nil, err
 	}
