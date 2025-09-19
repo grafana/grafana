@@ -516,8 +516,8 @@ func migrateValueMappings(panel map[string]interface{}, defaults map[string]inte
 
 	// Check for inconsistent mapping configuration
 	// If panel has rangeMaps but mappingType is 1, or vice versa, fix it
-	hasValueMaps := panel["valueMaps"] != nil && len(panel["valueMaps"].([]interface{})) > 0
-	hasRangeMaps := panel["rangeMaps"] != nil && len(panel["rangeMaps"].([]interface{})) > 0
+	hasValueMaps := panel["valueMaps"] != nil && IsArray(panel["valueMaps"]) && len(panel["valueMaps"].([]interface{})) > 0
+	hasRangeMaps := panel["rangeMaps"] != nil && IsArray(panel["rangeMaps"]) && len(panel["rangeMaps"].([]interface{})) > 0
 
 	if hasRangeMaps && mappingType == float64(1) {
 		mappingType = 2

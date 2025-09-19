@@ -269,8 +269,8 @@ func processLegacyMapping(mappingMap map[string]interface{}, thresholds map[stri
 	color := getColorFromThresholds(mappingMap, thresholds)
 
 	// Convert legacy type numbers to new format
-	if mappingType, ok := mappingMap["type"].(float64); ok {
-		switch int(mappingType) {
+	if mappingType := GetIntValue(mappingMap, "type", -1); mappingType != -1 {
+		switch mappingType {
 		case 1: // ValueToText
 			hasValueMappings = processValueToTextMapping(mappingMap, color, thresholds, valueMaps, newMappings, hasValueMappings)
 		case 2: // RangeToText
@@ -384,7 +384,7 @@ func getActiveThresholdColor(value float64, thresholds map[string]interface{}) i
 						continue
 					}
 
-					if stepNum, ok := stepValue.(float64); ok {
+					if stepNum := GetFloatValue(stepMap, "value", -1); stepNum != -1 {
 						if value >= stepNum {
 							activeStep = stepMap
 						} else {

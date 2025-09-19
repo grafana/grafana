@@ -395,12 +395,7 @@ func migrateTableStyleToOverride(style map[string]interface{}) map[string]interf
 	}
 
 	// Add decimals
-	if decimals, ok := style["decimals"].(float64); ok {
-		properties = append(properties, map[string]interface{}{
-			"id":    "decimals",
-			"value": int(decimals),
-		})
-	} else if decimals, ok := style["decimals"].(int); ok {
+	if decimals := GetIntValue(style, "decimals", -1); decimals != -1 {
 		properties = append(properties, map[string]interface{}{
 			"id":    "decimals",
 			"value": decimals,
@@ -527,12 +522,12 @@ func migrateDefaults(prevDefaults map[string]interface{}) map[string]interface{}
 		return defaults
 	}
 
-	if unit, ok := prevDefaults["unit"].(string); ok && unit != "" {
+	if unit := GetStringValue(prevDefaults, "unit"); unit != "" {
 		defaults["unit"] = unit
 	}
 
-	if decimals, ok := prevDefaults["decimals"].(float64); ok {
-		defaults["decimals"] = int(decimals)
+	if decimals := GetIntValue(prevDefaults, "decimals", -1); decimals != -1 {
+		defaults["decimals"] = decimals
 	}
 
 	if alias, ok := prevDefaults["alias"].(string); ok {

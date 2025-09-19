@@ -132,8 +132,8 @@ func migrateTemplateVariables(dashboard map[string]interface{}, datasources []Da
 			continue
 		}
 
-		varType, ok := varMap["type"].(string)
-		if !ok || varType != "query" {
+		varType := GetStringValue(varMap, "type")
+		if varType != "query" {
 			continue
 		}
 
@@ -260,8 +260,8 @@ func migratePanelDatasourcesInternal(panelMap map[string]interface{}, datasource
 			// Frontend: if (panel.datasource?.uid !== MIXED_DATASOURCE_NAME) { target.datasource = { ...panel.datasource }; }
 			panelDS, ok := panelMap["datasource"].(map[string]interface{})
 			if ok {
-				uid, hasUID := panelDS["uid"].(string)
-				isMixed := hasUID && uid == "-- Mixed --"
+				uid := GetStringValue(panelDS, "uid")
+				isMixed := uid == "-- Mixed --"
 
 				if !isMixed {
 					// Spread the panel datasource properties (mimics frontend: { ...panel.datasource })
@@ -284,8 +284,8 @@ func migratePanelDatasourcesInternal(panelMap map[string]interface{}, datasource
 		if panelDataSourceWasDefault {
 			targetDS, ok := targetMap["datasource"].(map[string]interface{})
 			if ok {
-				uid, ok := targetDS["uid"].(string)
-				if ok && uid != "__expr__" {
+				uid := GetStringValue(targetDS, "uid")
+				if uid != "" && uid != "__expr__" {
 					panelMap["datasource"] = targetDS
 				}
 			}
