@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -124,11 +123,11 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 
 // processQuery converts a Graphite data source query to a Graphite query target. It returns the target,
 // and the model if the target is invalid
-func (s *Service) processQuery(query backend.DataQuery) (string, *GraphiteQuery, error) {
+func (s *Service) processQuery(query backend.DataQuery) (string, *GraphiteQuery, bool, error) {
 	queryJSON := GraphiteQuery{}
 	err := json.Unmarshal(query.JSON, &queryJSON)
 	if err != nil {
-		return "", &queryJSON, fmt.Errorf("failed to decode the Graphite query: %w", err)
+		return "", &queryJSON, false, fmt.Errorf("failed to decode the Graphite query: %w", err)
 	}
 	s.logger.Debug("Graphite", "query", queryJSON)
 	currTarget := queryJSON.TargetFull
@@ -138,11 +137,11 @@ func (s *Service) processQuery(query backend.DataQuery) (string, *GraphiteQuery,
 	}
 	if currTarget == "" {
 		s.logger.Debug("Graphite", "empty query target", queryJSON)
-		return "", &queryJSON, nil
+		return "", &queryJSON, false, nil
 	}
 	target := fixIntervalFormat(currTarget)
 
-	return target, nil, nil
+	return target, nil, queryJSON.IsMetricTank, nil
 }
 
 func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQuery, dsInfo *datasourceInfo) (*http.Request, url.Values, *GraphiteQuery, error) {
@@ -159,7 +158,7 @@ func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQ
 		"target":        []string{},
 	}
 
-	target, emptyQuery, err := s.processQuery(query)
+	target, emptyQuery, isMetricTank, err := s.processQuery(query)
 	if err != nil {
 		return nil, formData, nil, err
 	}
@@ -173,29 +172,23 @@ func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQ
 
 	s.logger.Debug("Graphite request", "params", formData)
 
-	graphiteReq, err := s.createRequest(ctx, dsInfo, formData)
+	params := map[string][]string{}
+	if isMetricTank {
+		params["meta"] = []string{"true"}
+	}
+
+	graphiteReq, err := s.createRequest(ctx, dsInfo, URLParams{
+		SubPath:     "render",
+		Method:      http.MethodPost,
+		Body:        strings.NewReader(formData.Encode()),
+		Headers:     map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
+		QueryParams: params,
+	})
 	if err != nil {
 		return nil, formData, nil, err
 	}
 
 	return graphiteReq, formData, emptyQuery, nil
-}
-
-func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, data url.Values) (*http.Request, error) {
-	u, err := url.Parse(dsInfo.URL)
-	if err != nil {
-		return nil, err
-	}
-	u.Path = path.Join(u.Path, "render")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(data.Encode()))
-	if err != nil {
-		s.logger.Info("Failed to create request", "error", err)
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	return req, err
 }
 
 func (s *Service) toDataFrames(response *http.Response, refId string) (frames data.Frames, error error) {

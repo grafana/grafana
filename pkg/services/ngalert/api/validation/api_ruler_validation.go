@@ -182,7 +182,7 @@ func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule
 	if !metricName.IsValid() {
 		return ngmodels.AlertRule{}, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid utf8 string")
 	}
-	if !prommodels.IsValidMetricName(metricName) {
+	if !prommodels.IsValidMetricName(metricName) { // nolint:staticcheck
 		return ngmodels.AlertRule{}, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid Prometheus metric name")
 	}
 	newRule.Record = ModelRecordFromApiRecord(in.GrafanaManagedAlert.Record)
