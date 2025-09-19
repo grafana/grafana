@@ -159,7 +159,7 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 }
 
 // Compile implements claims.AccessClient.
-func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req claims.ListRequest) (claims.ItemChecker, error) {
+func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req claims.ListRequest) (claims.ItemChecker, claims.Zookie, error) {
 	t := time.Now()
 	fallbackUsed := FallbackUsed(ctx)
 	ctx, span := c.tracer.Start(ctx, "authzLimitedClient.Compile", trace.WithAttributes(
@@ -177,34 +177,34 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 			span.SetStatus(codes.Error, "Namespace empty")
 			err := fmt.Errorf("namespace empty")
 			span.RecordError(err)
-			return nil, err
+			return nil, claims.NoopZookie{}, err
 		}
 		return func(name, folder string) bool {
 			return true
-		}, nil
+		}, claims.NoopZookie{}, nil
 	}
 	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) {
 		span.SetAttributes(attribute.Bool("allowed", false))
 		span.SetStatus(codes.Error, "Namespace mismatch")
 		span.RecordError(claims.ErrNamespaceMismatch)
-		return nil, claims.ErrNamespaceMismatch
+		return nil, claims.NoopZookie{}, claims.ErrNamespaceMismatch
 	}
 
 	if !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
 		return func(name, folder string) bool {
 			return true
-		}, nil
+		}, claims.NoopZookie{}, nil
 	}
-	checker, err := c.client.Compile(ctx, id, req)
+	checker, zookie, err := c.client.Compile(ctx, id, req)
 	if err != nil {
 		c.logger.Error("Compile", "group", req.Group, "resource", req.Resource, "error", err, "traceid", trace.SpanContextFromContext(ctx).TraceID().String())
 		c.metrics.errorsTotal.WithLabelValues(req.Group, req.Resource, req.Verb).Inc()
 		span.SetStatus(codes.Error, fmt.Sprintf("compile failed: %v", err))
 		span.RecordError(err)
-		return nil, err
+		return nil, zookie, err
 	}
 	c.metrics.compileDuration.WithLabelValues(req.Group, req.Resource, req.Verb).Observe(time.Since(t).Seconds())
-	return checker, nil
+	return checker, zookie, nil
 }
 
 func (c authzLimitedClient) IsCompatibleWithRBAC(group, resource string) bool {
