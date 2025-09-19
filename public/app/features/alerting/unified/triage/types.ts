@@ -6,6 +6,7 @@ export type WorkbenchRow = GenericGroupedRow | AlertRuleRow;
 export type TimelineEntry = [timestamp: number, state: 'firing' | 'pending'];
 
 export interface AlertRuleRow {
+  type: 'alertRule';
   metadata: {
     title: string;
     folder: string;
@@ -14,6 +15,7 @@ export interface AlertRuleRow {
 }
 
 export interface GenericGroupedRow {
+  type: 'group';
   metadata: {
     label: string;
     value: string;

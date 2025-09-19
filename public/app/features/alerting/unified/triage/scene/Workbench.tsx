@@ -62,6 +62,7 @@ function createAlertRuleRows(dataPoints: DataPoint[]): AlertRuleRow[] {
   const result: AlertRuleRow[] = [];
   for (const rule of rules.values()) {
     result.push({
+      type: 'alertRule',
       metadata: {
         title: rule.alertname,
         folder: rule.folder,
@@ -91,6 +92,7 @@ function groupData(dataPoints: DataPoint[], groupBy: string[], depth: number): W
   const result: GenericGroupedRow[] = [];
   for (const [value, rows] of grouped.entries()) {
     result.push({
+      type: 'group',
       metadata: {
         label: groupByKey,
         value: value,

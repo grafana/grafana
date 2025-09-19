@@ -17,7 +17,7 @@ import { WorkbenchProvider } from './WorkbenchContext';
 import { AlertRuleRow } from './rows/AlertRuleRow';
 import { FolderGroupRow } from './rows/FolderGroupRow';
 import { GroupRow } from './rows/GroupRow';
-import { generateRowKey, isAlertRuleRow } from './rows/utils';
+import { generateRowKey } from './rows/utils';
 import { GenericRowSkeleton } from './scene/AlertRuleInstances';
 import { SummaryChartReact } from './scene/SummaryChart';
 import { SummaryStatsReact } from './scene/SummaryStats';
@@ -41,7 +41,7 @@ function renderWorkbenchRow(
   key: React.Key,
   depth = 0
 ): React.ReactElement {
-  if (isAlertRuleRow(row)) {
+  if (row.type === 'alertRule') {
     return <AlertRuleRow key={key} row={row} leftColumnWidth={leftColumnWidth} rowKey={key} depth={depth} />;
   } else {
     const children = row.rows.map((childRow, childIndex) =>
