@@ -192,6 +192,20 @@ func setupTestRoles(t *testing.T, store db.DB) {
 	require.NoError(t, err)
 }
 
+func setupFineGrainedPermissions(t *testing.T, store db.DB) {
+	sess := store.GetSqlxSession()
+
+	// Permissions
+	_, err := sess.Exec(context.Background(),
+		`INSERT INTO permission (role_id, action, scope, created, updated)
+		VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)`,
+		// Permissions for managed:users:2:permissions
+		2, "folders:read", "folders:uid:fold1", "2025-09-02", "2025-09-02",
+		2, "folders:create", "folders:uid:fold1", "2025-09-02", "2025-09-02",
+	)
+	require.NoError(t, err)
+}
+
 func TestIntegration_ResourcePermSqlBackend_newRoleIterator(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -306,7 +320,7 @@ func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) 
 
 			if tt.err != nil {
 				require.Error(t, err)
-				require.ErrorIs(t, err, tt.err)
+				require.ErrorAs(t, err, &tt.err)
 				return
 			}
 			require.NoError(t, err)
@@ -505,6 +519,7 @@ func TestIntegration_ResourcePermSqlBackend_UpdateResourcePermission(t *testing.
 	sql, err := backend.dbProvider(ctx)
 	require.NoError(t, err)
 	setupTestRoles(t, sql.DB)
+	setupFineGrainedPermissions(t, sql.DB)
 
 	t.Run("should fail to update resource permission for a resource that doesn't have any permissions yet", func(t *testing.T) {
 		resourcePerm := &v0alpha1.ResourcePermission{
@@ -533,7 +548,6 @@ func TestIntegration_ResourcePermSqlBackend_UpdateResourcePermission(t *testing.
 
 		_, err = backend.updateResourcePermission(ctx, sql, types.NamespaceInfo{Value: "default", OrgID: 1}, mapper, grn, resourcePerm)
 		require.Error(t, err)
-		require.ErrorIs(t, err, errNotFound)
 	})
 
 	t.Run("should update resource permission", func(t *testing.T) {

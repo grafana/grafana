@@ -291,6 +291,10 @@ export interface FeatureToggles {
   */
   kubernetesAlertingRules?: boolean;
   /**
+  * Adds support for Kubernetes correlations
+  */
+  kubernetesCorrelations?: boolean;
+  /**
   * Disable schema validation for dashboards/v1
   */
   dashboardDisableSchemaValidationV1?: boolean;
@@ -552,11 +556,6 @@ export interface FeatureToggles {
   * Sets the logs table as default visualisation in logs explore
   */
   logsExploreTableDefaultVisualization?: boolean;
-  /**
-  * Enables the new sharing drawer design
-  * @default true
-  */
-  newDashboardSharingComponent?: boolean;
   /**
   * Enables the new alert list view design
   */
@@ -1171,6 +1170,11 @@ export interface FeatureToggles {
   * @default false
   */
   pluginContainers?: boolean;
+  /**
+  * Run search queries through the tempo backend
+  * @default false
+  */
+  tempoSearchBackendMigration?: boolean;
   /**
   * Filter out bots from collecting data for Frontend Observability
   * @default false
