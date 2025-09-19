@@ -1459,7 +1459,7 @@ func TestV16(t *testing.T) {
 			},
 		},
 		{
-			name: "should migrate mimir dashboard with string height parsing",
+			name: "should parse string heights with px suffix during rows to panels migration",
 			input: map[string]interface{}{
 				"schemaVersion": 15,
 				"rows": []interface{}{
