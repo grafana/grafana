@@ -625,10 +625,6 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	ctx, span := s.tracer.Start(ctx, "storage_server.Create")
 	defer span.End()
 
-	if r := verifyRequestKey(req.Key); r != nil {
-		return nil, fmt.Errorf("invalid request key: %s", r.Message)
-	}
-
 	rsp := &resourcepb.CreateResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
