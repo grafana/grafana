@@ -4,6 +4,7 @@ import { formatExpectError } from '../errors';
 import { successfulDataQuery } from '../mocks/queries';
 
 const REACT_TABLE_DASHBOARD = { uid: 'U_bZIMRMk' };
+const TABLE_TEST_PANEL_DASHBOARD = { uid: 'pttable' };
 
 test.describe(
   'plugin-e2e-api-tests admin',
