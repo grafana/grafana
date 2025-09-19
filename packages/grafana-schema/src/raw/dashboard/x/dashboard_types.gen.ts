@@ -747,6 +747,10 @@ export interface DataTransformerConfig {
    */
   options: unknown;
   /**
+   * Unique identifier of the instance of the transformer
+   */
+  refId?: string;
+  /**
    * Where to pull DataFrames from as input to transformation
    */
   topic?: ('series' | 'annotations' | 'alertStates'); // replaced with common.DataTopic

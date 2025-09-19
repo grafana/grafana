@@ -225,6 +225,8 @@ func NewDashboardTransformationKind() *DashboardTransformationKind {
 type DashboardDataTransformerConfig struct {
 	// Unique identifier of transformer
 	Id string `json:"id"`
+	// Unique identifier of the instance of the transformer
+	RefId *string `json:"refId,omitempty"`
 	// Disabled transformations are skipped
 	Disabled *bool `json:"disabled,omitempty"`
 	// Optional frame matcher. When missing it will be applied to all results

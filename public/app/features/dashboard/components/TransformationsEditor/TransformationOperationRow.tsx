@@ -1,3 +1,4 @@
+import { css, cx } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 import { useToggle } from 'react-use';
 import { mergeMap } from 'rxjs';
@@ -10,11 +11,12 @@ import {
   getFrameMatchers,
   transformDataFrame,
   DataFrame,
+  GrafanaTheme2,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
-import { ConfirmModal } from '@grafana/ui';
+import { ConfirmModal, FieldValidationMessage, Icon, Input, useStyles2 } from '@grafana/ui';
 import {
   QueryOperationAction,
   QueryOperationToggleAction,
@@ -48,9 +50,11 @@ export const TransformationOperationRow = ({
   uiConfig,
   onChange,
 }: TransformationOperationRowProps) => {
+  const styles = useStyles2(getStyles);
   const [showDeleteModal, setShowDeleteModal] = useToggle(false);
   const [showDebug, toggleShowDebug] = useToggle(false);
   const [showHelp, toggleShowHelp] = useToggle(false);
+  const [isRefIdEditing, toggleIsRefIdEditing] = useToggle(false);
   const disabled = !!configs[index].transformation.disabled;
   const topic = configs[index].transformation.topic;
   const showFilterEditor = configs[index].transformation.filter != null || topic != null;
@@ -157,6 +161,45 @@ export const TransformationOperationRow = ({
     };
   }, [index, data, configs]);
 
+  const renderHeader = () => {
+    ///** <!--{validationError && <FieldValidationMessage horizontal>{validationError}</FieldValidationMessage>}-->
+    return (
+      <div className={styles.wrapper}>
+        {!isRefIdEditing && (
+          <button
+            className={styles.queryNameWrapper}
+            title={t('query.query-editor-row-header.query-name-div-title-edit-query-name', 'Edit transformation name')}
+            onClick={() => toggleIsRefIdEditing()}
+            data-testid="query-name-div"
+            type="button"
+          >
+            <span className={styles.queryName}>{configs[index].refId}</span>
+            <Icon name="pen" className={styles.queryEditIcon} size="sm" />
+          </button>
+        )}
+
+        {isRefIdEditing && (
+          <>
+            <Input
+              type="text"
+              defaultValue={configs[index].refId}
+              //onBlur={onEditQueryBlur}
+              autoFocus
+              //onKeyDown={onKeyDown}
+              //onFocus={onFocus}
+              //invalid={validationError !== null}
+              onChange={(input) => {
+                onChange(index, { ...configs[index].transformation, refId: input.currentTarget.value });
+              }}
+              className={styles.queryNameInput}
+              data-testid="query-name-input"
+            />
+          </>
+        )}
+      </div>
+    );
+  };
+
   const renderActions = () => {
     return (
       <>
@@ -232,6 +275,7 @@ export const TransformationOperationRow = ({
         title={`${index + 1} - ${uiConfig.name}`}
         draggable
         actions={renderActions}
+        headerElement={renderHeader}
         disabled={disabled}
         expanderMessages={{
           close: 'Collapse transformation row',
@@ -262,4 +306,60 @@ export const TransformationOperationRow = ({
       <TransformationEditorHelpDisplay transformer={uiConfig} isOpen={showHelp} onCloseClick={toggleShowHelp} />
     </>
   );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    wrapper: css({
+      label: 'Wrapper',
+      display: 'flex',
+      alignItems: 'center',
+      marginLeft: theme.spacing(0.5),
+      overflow: 'hidden',
+    }),
+    queryNameWrapper: css({
+      display: 'flex',
+      cursor: 'pointer',
+      border: '1px solid transparent',
+      borderRadius: theme.shape.radius.default,
+      alignItems: 'center',
+      padding: theme.spacing(0, 0, 0, 0.5),
+      margin: 0,
+      background: 'transparent',
+      overflow: 'hidden',
+
+      '&:hover': {
+        background: theme.colors.action.hover,
+        border: `1px dashed ${theme.colors.border.strong}`,
+      },
+
+      '&:focus': {
+        border: `2px solid ${theme.colors.primary.border}`,
+      },
+
+      '&:hover, &:focus': {
+        '.query-name-edit-icon': {
+          visibility: 'visible',
+        },
+      },
+    }),
+    queryName: css({
+      fontWeight: theme.typography.fontWeightMedium,
+      color: theme.colors.primary.text,
+      cursor: 'pointer',
+      overflow: 'hidden',
+      marginLeft: theme.spacing(0.5),
+    }),
+    queryEditIcon: cx(
+      css({
+        marginLeft: theme.spacing(2),
+        visibility: 'hidden',
+      }),
+      'query-name-edit-icon'
+    ),
+    queryNameInput: css({
+      maxWidth: '300px',
+      margin: '-4px 0',
+    }),
+  };
 };
