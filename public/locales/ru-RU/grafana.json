@@ -364,14 +364,6 @@
       "tooltip-assigned-role": "После осуществления входа пользователю будет присвоена лицензированная роль"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "Скрыть общие метки",
-      "show": {
-        "tooltip": "Показать общие метки"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Периоды активности"
@@ -486,18 +478,16 @@
     "alert-instance-state-filter": {
       "state": "Состояние"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "Удалить метку"
     },
     "alert-label-dropdown": {
       "placeholder-select": "Выбрать {{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "Метки",
-      "common-labels-count_one": "+{{count}} общей метки",
-      "common-labels-count_few": "+{{count}} общие метки",
-      "common-labels-count_many": "+{{count}} общих меток",
-      "common-labels-count_other": "+{{count}} общей метки"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "Отключение звука, группировка и определение времени (необязательно)",
@@ -9497,7 +9487,7 @@
       "label-signature": "Подпись"
     },
     "description-enable-infinite-scrolling": "Экспериментальная функция. Запросите больше результатов, прокрутив список журналов до конца.",
-    "description-enable-syntax-highlighting": "Использовать предустановленную грамматику подсветки синтаксиса для выделения важных частей строк журнала",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "Отображать элементы управления для перехода к последней или первой строке журнала и фильтры по уровню журнала",
     "fields": {
       "type": {
@@ -9775,14 +9765,14 @@
     },
     "name-common-labels": "Общие метки",
     "name-deduplication": "Дедупликация",
-    "name-details-mode": "Режим панели сведений о журнале",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "Встроенные",
       "label-sidebar": "Боковая панель"
     },
     "name-enable-infinite-scrolling": "Включить бесконечную прокрутку",
     "name-enable-log-details": "Включить сведения о журнале",
-    "name-enable-syntax-highlighting": "Включить подсветку синтаксиса",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "Размер шрифта",
     "name-order": "Порядок",
     "name-prettify-json": "Форматировать JSON",
@@ -11082,7 +11072,6 @@
       "body-not-published": "Этот плагин не опубликован на странице <2>grafana.com/plugins</2> и им невозможно управлять через каталог.",
       "enterprise-plugin-info": "Этот плагин доступен только в Grafana Cloud и Grafana Enterprise.",
       "learn-more": "Подробнее",
-      "no-valid-grafana-enterprise-license-detected": "Не обнаружена действующая лицензия Grafana Enterprise",
       "title-dev-alert": "Это тестовая сборка плагина, которую невозможно удалить.",
       "title-plugin-doesnt-support-version-grafana": "Плагин не поддерживает вашу версию Grafana",
       "title-remote-plugins-unavailable": "Элементы управления экземпляром отключены, поскольку сервер Grafana не может получить доступ к grafana.com.",
@@ -11450,15 +11439,16 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "По вашему запросу ничего не найдено",
+      "partial-managed": "",
       "placeholder-search": "Поиск",
       "all-resources-managed_one": "",
       "all-resources-managed_few": "",
       "all-resources-managed_many": "",
       "all-resources-managed_other": "",
-      "partial-managed_one": "",
-      "partial-managed_few": "",
-      "partial-managed_many": "",
-      "partial-managed_other": ""
+      "unmanaged-resources_one": "",
+      "unmanaged-resources_few": "",
+      "unmanaged-resources_many": "",
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {
