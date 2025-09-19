@@ -22,6 +22,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	clientrest "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -114,6 +115,8 @@ type APIBuilder struct {
 	// Extras provides additional functionality to the API.
 	extras       []Extra
 	extraWorkers []jobs.Worker
+
+	restConfigGetter func(context.Context) (*clientrest.Config, error)
 }
 
 // NewAPIBuilder creates an API builder.
@@ -134,6 +137,7 @@ func NewAPIBuilder(
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
+	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
 	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 ) *APIBuilder {
@@ -163,6 +167,7 @@ func NewAPIBuilder(
 		jobHistoryConfig:    jobHistoryConfig,
 		extraWorkers:        extraWorkers,
 		allowedTargets:      allowedTargets,
+		restConfigGetter:    restConfigGetter,
 		allowImageRendering: allowImageRendering,
 	}
 
@@ -247,6 +252,7 @@ func RegisterAPIService(
 		extraWorkers,
 		createJobHistoryConfigFromSettings(cfg),
 		allowedTargets,
+		nil, // will use loopback instead
 		cfg.ProvisioningAllowImageRendering,
 		nil,
 	)
@@ -678,7 +684,17 @@ func (b *APIBuilder) verifyAgainstExistingRepositories(cfg *provisioning.Reposit
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
 		"grafana-provisioning": func(postStartHookCtx genericapiserver.PostStartHookContext) error {
-			c, err := clientset.NewForConfig(postStartHookCtx.LoopbackClientConfig)
+			var config *clientrest.Config
+			var err error
+			if b.restConfigGetter == nil {
+				config = postStartHookCtx.LoopbackClientConfig
+			} else {
+				config, err = b.restConfigGetter(postStartHookCtx.Context)
+				if err != nil {
+					return err
+				}
+			}
+			c, err := clientset.NewForConfig(config)
 			if err != nil {
 				return err
 			}
