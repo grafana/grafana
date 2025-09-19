@@ -85,5 +85,63 @@ test.describe(
       expectedRange = 'Time range selected: 2024-06-05 10:04:00 to 2024-06-05 10:05:00'; // 1 min back
       await expect(timePickerButton).toHaveAttribute('aria-label', expectedRange);
     });
+
+    test('ctrl+o should toggle shared crosshair', async ({ page, selectors }) => {
+      // Navigate to a new dashboard
+      await page.goto('/dashboard/new?orgId=1');
+
+      // Wait for dashboard to load
+      await page.waitForLoadState('networkidle');
+
+      // Wait for dashboard to be fully initialized by checking for dashboard content
+      await page
+        .locator('[data-testid*="dashboard"]')
+        .or(page.locator('text=Start your new dashboard'))
+        .first()
+        .waitFor({ state: 'visible' });
+
+      // Test the keyboard shortcut first in the main dashboard view
+      const currentUrl = page.url();
+      const modKey = process.platform === 'darwin' ? 'Meta' : 'Control';
+
+      // Test that mod+o works in the main dashboard (should not trigger file dialog)
+      console.log('Testing mod+o in main dashboard view...');
+      await page.keyboard.press(`${modKey}+o`);
+      expect(page.url()).toBe(currentUrl); // Should not navigate away
+
+      // Now open settings to check if the state actually changed
+      await page.keyboard.press('d');
+      await page.keyboard.press('s');
+
+      // Wait for settings page to load by checking for the General tab or settings content
+      await page
+        .locator('text=General')
+        .or(page.locator('[data-testid*="dashboard-settings"]'))
+        .waitFor({ state: 'visible' });
+
+      // Wait for Panel options section to be visible and scroll to it
+      const panelOptionsSection = page.locator('text=Panel options');
+      await panelOptionsSection.waitFor({ state: 'visible' });
+      await panelOptionsSection.scrollIntoViewIfNeeded();
+
+      // Wait for radio buttons to be visible
+      await page
+        .locator('[role="radiogroup"]')
+        .last()
+        .locator('input[type="radio"]')
+        .first()
+        .waitFor({ state: 'visible' });
+
+      // Check current state - after one mod+o press, it should be crosshair (1)
+      await expect(page.locator('[role="radiogroup"]').last().locator('input[type="radio"]').nth(1)).toBeChecked(); // Shared crosshair
+
+      // Test second press in the main dashboard view (should go to tooltip)
+      await page.keyboard.press(`${modKey}+o`);
+      await expect(page.locator('[role="radiogroup"]').last().locator('input[type="radio"]').nth(2)).toBeChecked(); // Shared tooltip
+
+      // Test third press in the main dashboard view (should go back to default)
+      await page.keyboard.press(`${modKey}+o`);
+      await expect(page.locator('[role="radiogroup"]').last().locator('input[type="radio"]').nth(0)).toBeChecked(); // Default
+    });
   }
 );

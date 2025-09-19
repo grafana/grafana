@@ -1,6 +1,6 @@
-import { locationUtil, SetPanelAttentionEvent } from '@grafana/data';
+import { locationUtil, SetPanelAttentionEvent, LegacyGraphHoverClearEvent } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { sceneGraph, VizPanel } from '@grafana/scenes';
+import { behaviors, sceneGraph, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -165,6 +165,20 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     key: 't right',
     onTrigger: () => {
       handleTimeRangeShift(scene, 'right');
+    },
+  });
+
+  keybindings.addBinding({
+    key: 'mod+o',
+    onTrigger: () => {
+      const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
+      if (cursorSync instanceof behaviors.CursorSync) {
+        const currentSync = cursorSync.state.sync;
+        const nextSync = (currentSync + 1) % 3;
+        cursorSync.setState({ sync: nextSync });
+        appEvents.publish(new LegacyGraphHoverClearEvent());
+        sceneGraph.getTimeRange(scene).onRefresh();
+      }
     },
   });
 
