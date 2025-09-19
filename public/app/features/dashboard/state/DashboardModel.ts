@@ -976,11 +976,31 @@ export class DashboardModel implements TimeModel {
   }
 
   destroy() {
-    this.appEventsSubscription.unsubscribe();
-    this.events.removeAllListeners();
-    for (const panel of this.panels) {
-      panel.destroy();
+    // Unsubscribe from app events
+    if (this.appEventsSubscription) {
+      this.appEventsSubscription.unsubscribe();
     }
+
+    // Remove all event listeners
+    if (this.events) {
+      this.events.removeAllListeners();
+    }
+
+    // Destroy all panels and clear references
+    if (this.panels) {
+      for (const panel of this.panels) {
+        if (panel && typeof panel.destroy === 'function') {
+          panel.destroy();
+        }
+      }
+      this.panels = [];
+    }
+
+    // Clear other references to prevent memory leaks
+    this.panelInEdit = undefined;
+    this.panelInView = undefined;
+    this.panelsAffectedByVariableChange = null;
+    this.originalDashboard = null;
   }
 
   toggleRow(row: PanelModel) {
