@@ -64,6 +64,13 @@ for dir in $@; do
     fi
 done
 
+volume_files=$($blocks_dir/**/$compose_volume_section_create_flag)
+
+if [[ ${#volume_files[@]} -ne 0 ]]; then
+    echo "Adding volume section to $compose_file"
+    cat $compose_volume_section_file >> $compose_file
+    echo "" >> $compose_file
+
     for dir in $@; do
         current_dir=$blocks_dir/$dir
         if [ ! -d "$current_dir" ]; then
@@ -73,15 +80,11 @@ done
 
 
         if [ -f $current_dir/$compose_volume_section_create_flag ]; then
-            if [ -z ${inserted_volume_section_start+x} ]; then
-                echo "Adding volume section to $compose_file"
-                cat $compose_volume_section_file >> $compose_file
-                echo "" >> $compose_file
-                inserted_volume_section_start=true
-            fi
-
             echo "Adding volume for $current_dir to $compose_file"
             echo "  $dir-data-volume:" >> $compose_file
             echo "" >> $compose_file
         fi
     done
+
+    cat $compose_file
+fi
