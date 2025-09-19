@@ -310,6 +310,7 @@
 /devenv/docker/blocks/webdav/ @grafana/alerting-backend
 /devenv/docker/buildcontainer/ @bergquist
 /devenv/docker/compose_header.yml @grafana/grafana-backend-services-squad
+/devenv/docker/compose_volume_section.yml @grafana/grafana-backend-services-squad
 /devenv/docker/debtest/ @bergquist
 /devenv/docker/ha-test-unified-alerting/ @grafana/alerting-backend
 /devenv/docker/ha_test/ @grafana/grafana-backend-services-squad
