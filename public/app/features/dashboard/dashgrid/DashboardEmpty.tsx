@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { Button, useStyles2, Text, Box, Stack, TextLink, Divider } from '@grafana/ui';
+import { Button, useStyles2, Text, Box, Stack, TextLink, Divider, Spinner } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -15,10 +14,13 @@ import {
   onCreateNewPanel,
   onImportDashboard,
 } from 'app/features/dashboard/utils/dashboard';
+import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { buildPanelEditScene } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { dispatch } from 'app/store/store';
+import { DashboardDTO } from 'app/types/dashboard';
 import { PluginDashboard } from 'app/types/plugins';
 import { useDispatch, useSelector } from 'app/types/store';
 
@@ -154,9 +156,8 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
 export default DashboardEmpty;
 
 const ProvisionedDashboardsSection = () => {
-  const navigate = useNavigate();
-
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
+  const [isProvisionedLoading, setIsProvisionedLoading] = useState(false);
   const [provisionedDashboards, setProvisionedDashboards] = useState<PluginDashboard[]>([]);
 
   useEffect(() => {
@@ -165,7 +166,8 @@ const ProvisionedDashboardsSection = () => {
     }
   }, [initialDatasource]);
 
-  const getProvisionedDashboards = (datasourceUid: string) => {
+  const getProvisionedDashboards = async (datasourceUid: string) => {
+    setIsProvisionedLoading(true);
     const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
 
     if (!ds) {
@@ -174,11 +176,10 @@ const ProvisionedDashboardsSection = () => {
 
     const url = `api/plugins/${ds.type}/dashboards`;
 
-    getBackendSrv()
-      .get(url)
-      .then((res: PluginDashboard[]) => {
-        setProvisionedDashboards(res);
-      });
+    const res = await getBackendSrv().get(url);
+
+    setProvisionedDashboards(res);
+    setIsProvisionedLoading(false);
   };
 
   const onImportDashboardClick = async (dashboard: PluginDashboard) => {
@@ -195,12 +196,46 @@ const ProvisionedDashboardsSection = () => {
         },
       ],
     };
-    const rs = await getBackendSrv().post('/api/dashboards/import', data);
-    dispatch(notifyApp(createSuccessNotification('Dashboard Imported', dashboard.title)));
-    navigate(rs.importedUrl);
+
+    try {
+      const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
+      const dashboardDTO: DashboardDTO = {
+        dashboard: {
+          ...interpolatedDashboard,
+          // necessary to ensure the dashboard is saved as a new dashboard and correct form is displayed
+          uid: '',
+          version: 0,
+          id: null,
+        },
+        meta: {
+          canSave: true,
+          canEdit: true,
+          canStar: false,
+          canShare: false,
+          canDelete: false,
+          isNew: true,
+          folderUid: '',
+        },
+      };
+
+      const dashboardScene = transformSaveModelToScene(dashboardDTO);
+      dashboardScene.setInitialSaveModel(dashboardDTO.dashboard, dashboardDTO.meta);
+      dashboardScene.onEnterEditMode();
+
+      // mark the dashboard as dirty to ensure it shows the "Save As" form
+      dashboardScene.setState({ isDirty: true });
+
+      const stateManager = getDashboardScenePageStateManager();
+      stateManager.setState({ dashboard: dashboardScene, isLoading: false });
+
+      dispatch(notifyApp(createSuccessNotification('Dashboard Loaded', dashboard.title)));
+    } catch (error) {
+      console.error('Error importing dashboard:', error);
+      dispatch(notifyApp(createSuccessNotification('Failed to load dashboard', '')));
+    }
   };
 
-  if (!provisionedDashboards.length) {
+  if (!provisionedDashboards.length && !isProvisionedLoading) {
     return null;
   }
 
@@ -210,16 +245,20 @@ const ProvisionedDashboardsSection = () => {
         <Text element="h3" textAlignment="center" weight="medium">
           <Trans i18nKey="dashboard.empty.import-a-dashboard-heasfaader">Start from template dashboards</Trans>
         </Text>
-        <Stack gap={2} justifyContent="space-between">
-          {provisionedDashboards.map((dashboard, index) => (
-            <ProvisionedDashboardBox
-              key={dashboard.uid}
-              index={index}
-              dashboard={dashboard}
-              onImportClick={onImportDashboardClick}
-            />
-          ))}
-        </Stack>
+        {isProvisionedLoading ? (
+          <Spinner />
+        ) : (
+          <Stack gap={2} justifyContent="space-between">
+            {provisionedDashboards.map((dashboard, index) => (
+              <ProvisionedDashboardBox
+                key={dashboard.uid}
+                index={index}
+                dashboard={dashboard}
+                onImportClick={onImportDashboardClick}
+              />
+            ))}
+          </Stack>
+        )}
       </Stack>
     </Box>
   );
@@ -284,7 +323,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       paddingBottom: theme.spacing(1),
       border: `1px solid ${theme.colors.border.strong}`,
-      borderRadius: 4,
+      borderRadius: theme.shape.radius.default,
       flexDirection: 'column',
       gap: theme.spacing(1),
     }),
