@@ -305,11 +305,21 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     getDashboardSceneProfiler()
   );
 
+  const interactionTracker = new behaviors.SceneInteractionTracker(
+    {
+      enableInteractionTracking:
+        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
+      onInteractionComplete: getDashboardInteractionCallback(oldModel.uid, oldModel.title),
+    },
+    getDashboardSceneProfiler()
+  );
+
   const behaviorList: SceneObjectState['$behaviors'] = [
     new behaviors.CursorSync({
       sync: oldModel.graphTooltip,
     }),
     queryController,
+    interactionTracker,
     registerDashboardMacro,
     registerPanelInteractionsReporter,
     new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
