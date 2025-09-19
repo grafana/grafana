@@ -1,9 +1,9 @@
 apiVersion: apps.grafana.com/v1alpha2
 kind: AppManifest
 metadata:
-  name: alerting
+  name: alerting-notifications
 spec:
-  appName: alerting
+  appName: alerting-notifications
   group: notifications.alerting.grafana.app
   versions:
   - kinds:

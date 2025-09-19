@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	v0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+	v0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 )
 
 var (
@@ -34,7 +34,7 @@ var (
 )
 
 var appManifestData = app.ManifestData{
-	AppName: "alerting",
+	AppName: "alerting-notifications",
 	Group:   "notifications.alerting.grafana.app",
 	Versions: []app.ManifestVersion{
 		{
@@ -95,7 +95,7 @@ func LocalManifest() app.Manifest {
 }
 
 func RemoteManifest() app.Manifest {
-	return app.NewAPIServerManifest("alerting")
+	return app.NewAPIServerManifest("alerting-notifications")
 }
 
 var kindVersionToGoType = map[string]resource.Kind{

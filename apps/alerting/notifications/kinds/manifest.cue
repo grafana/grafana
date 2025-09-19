@@ -1,7 +1,7 @@
 package kinds
 
 manifest: {
-	appName:       "alerting"
+	appName:       "alerting-notifications"
 	groupOverride: "notifications.alerting.grafana.app"
 	versions: {
 		"v0alpha1": {
