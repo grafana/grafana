@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
+import Highlighter from 'react-highlight-words';
 
-import { GrafanaTheme2, textUtil } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Checkbox, Icon, RadioButtonDot, useStyles2 } from '@grafana/ui';
 
@@ -51,12 +52,11 @@ export function ScopesTreeItem({
   const isSelectable = isNodeSelectable(scopeNode);
   const isExpandable = isNodeExpandable(scopeNode);
 
-  // Create highlighted version of the title if there's a query
+  // Create search words for highlighting if there's a query
   // Only highlight if we have a query AND this node is not expanded (not a parent showing children)
   const titleText = scopeNode.spec.title;
   const shouldHighlight = treeNode.query && !treeNode.expanded;
-  const highlightedTitle = shouldHighlight ? stringToHighlighted(titleText, treeNode.query) : titleText;
-  const hasHighlighting = shouldHighlight && highlightedTitle !== titleText;
+  const searchWords = shouldHighlight ? getSearchWordsFromQuery(treeNode.query) : [];
 
   return (
     <div
@@ -85,8 +85,8 @@ export function ScopesTreeItem({
               label={
                 isExpandable ? (
                   ''
-                ) : hasHighlighting ? (
-                  <span dangerouslySetInnerHTML={{ __html: textUtil.sanitizeSimpleText(highlightedTitle) }} />
+                ) : shouldHighlight ? (
+                  <Highlighter textToHighlight={titleText} searchWords={searchWords} autoEscape />
                 ) : (
                   titleText
                 )
@@ -109,8 +109,8 @@ export function ScopesTreeItem({
               />
               {!isExpandable && (
                 <label htmlFor={treeNode.scopeNodeId} className={styles.checkboxLabel}>
-                  {hasHighlighting ? (
-                    <span dangerouslySetInnerHTML={{ __html: textUtil.sanitizeSimpleText(highlightedTitle) }} />
+                  {shouldHighlight ? (
+                    <Highlighter textToHighlight={titleText} searchWords={searchWords} autoEscape />
                   ) : (
                     titleText
                   )}
@@ -131,7 +131,11 @@ export function ScopesTreeItem({
           >
             <Icon name={!treeNode.expanded ? 'angle-right' : 'angle-down'} />
 
-            {hasHighlighting ? <span dangerouslySetInnerHTML={{ __html: highlightedTitle }} /> : titleText}
+            {shouldHighlight ? (
+              <Highlighter textToHighlight={titleText} searchWords={searchWords} autoEscape />
+            ) : (
+              titleText
+            )}
           </button>
         )}
       </div>
@@ -153,21 +157,13 @@ export function ScopesTreeItem({
   );
 }
 
-// Do substring matching, and split match string on wildcard. Add <mark> tags around the matches.
-export function stringToHighlighted(string: string, match: string) {
-  if (!match) {
-    return string;
+// Convert a query string with wildcards into search words for react-highlight-words
+function getSearchWordsFromQuery(query: string): string[] {
+  if (!query) {
+    return [];
   }
-  let result = string;
-  // Split match string on wildcard.
-  const matchParts = match.split('*').filter((part) => part.length > 0);
-
-  matchParts.forEach((part) => {
-    const regex = new RegExp(`${part}`, 'gi');
-    result = result.replace(regex, `<mark>${part}</mark>`);
-  });
-
-  return result;
+  // Split query string on wildcard and filter out empty parts
+  return query.split('*').filter((part) => part.length > 0);
 }
 
 export const getTreeItemElementId = (scopeNodeId?: string) => {
