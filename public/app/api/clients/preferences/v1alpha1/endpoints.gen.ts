@@ -702,3 +702,18 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
+export const {
+  useGetApiResourcesQuery,
+  useCurrentPreferencesQuery,
+  useListPreferencesQuery,
+  useGetPreferencesQuery,
+  useListStarsQuery,
+  useCreateStarsMutation,
+  useDeletecollectionStarsMutation,
+  useGetStarsQuery,
+  useReplaceStarsMutation,
+  useDeleteStarsMutation,
+  useUpdateStarsMutation,
+  useAddStarMutation,
+  useRemoveStarMutation,
+} = injectedRtkApi;

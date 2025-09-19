@@ -1,5 +1,6 @@
 import { generatedAPI } from './endpoints.gen';
 
-export const iamAPIv0alpha1 = generatedAPI.enhanceEndpoints({});
+export const preferencesAPIv1alpha1 = generatedAPI.enhanceEndpoints({});
 
-export const { useGetStarsQuery, useAddStarMutation, useRemoveStarMutation } = generatedAPI;
+// eslint-disable-next-line no-barrel-files/no-barrel-files
+export * from './endpoints.gen';
