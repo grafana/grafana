@@ -91,9 +91,9 @@ FROM
 LIMIT
   10`;
 
-  const styles = useStyles2(getStyles);
-  const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ height: 0 });
+  const styles = useStyles2((theme) => getStyles(theme, dimensions.height || EDITOR_HEIGHT));
+  const containerRef = useRef<HTMLDivElement>(null);
   const [toolboxRef, toolboxMeasure] = useMeasure<HTMLDivElement>();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSchemaInspectorOpen, setIsSchemaInspectorOpen] = useState(false);
@@ -351,7 +351,7 @@ LIMIT
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, editorHeight: number) => ({
   sqlContainer: css({
     display: 'grid',
     gap: theme.spacing(1),
@@ -381,7 +381,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   editorContainer: css({
     gridArea: 'editor',
-    height: EDITOR_HEIGHT,
+    height: editorHeight, // Use dynamic height from ResizeObserver
     resize: 'vertical',
     overflow: 'auto',
     minHeight: '100px',
@@ -410,7 +410,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   schemaInspector: css({
     gridArea: 'schema',
-    height: EDITOR_HEIGHT,
+    height: editorHeight, // Use 100% height to match the grid row height
     border: `1px solid ${theme.colors.border.weak}`,
     paddingLeft: theme.spacing(1),
     overflow: 'hidden',
