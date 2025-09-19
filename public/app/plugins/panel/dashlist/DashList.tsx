@@ -184,7 +184,7 @@ export function DashList(props: PanelProps<Options>) {
                 {showFolderNames && dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
               </div>
               {config.featureToggles.starsFromAPIServer ? (
-                <StarToolbarButton group="dashboard.grafana.app" kind="Dashboard" name={dash.uid ?? ''} />
+                <StarToolbarButton group="dashboard.grafana.app" kind="Dashboard" id={dash.uid ?? ''} />
               ) : (
                 <IconButton
                   tooltip={dash.isStarred ? `Unmark "${dash.title}" as favorite` : `Mark "${dash.title}" as favorite`}

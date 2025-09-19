@@ -9,7 +9,7 @@ import { ToolbarActionProps } from '../types';
 
 export const StarButton = ({ dashboard }: ToolbarActionProps) => {
   if (config.featureToggles.starsFromAPIServer) {
-    return <StarToolbarButton group="dashboard.grafana.app" kind="Dashboard" name={dashboard.state.meta.uid ?? ''} />;
+    return <StarToolbarButton group="dashboard.grafana.app" kind="Dashboard" id={dashboard.state.meta.uid ?? ''} />;
   }
 
   return (
