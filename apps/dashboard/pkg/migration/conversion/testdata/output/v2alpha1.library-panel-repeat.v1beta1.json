@@ -1,0 +1,14 @@
+{
+  "metadata": {
+    "name": "library-panel-repeat-test",
+    "creationTimestamp": null
+  },
+  "spec": null,
+  "status": {
+    "conversion": {
+      "failed": true,
+      "storedVersion": "v2alpha1",
+      "error": "backend conversion not yet implemented"
+    }
+  }
+}
