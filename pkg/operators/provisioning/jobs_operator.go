@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -169,6 +170,10 @@ func setupWorkers(controllerCfg *jobsControllerConfig) ([]jobs.Worker, error) {
 	resourceLister := resources.NewResourceLister(controllerCfg.unified)
 	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
 	statusPatcher := controller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
+	renderer := pullrequest.NewNoOpRenderer()
+	urlProvider := func(_ string) string { return "" }
+	evaluator := pullrequest.NewEvaluator(renderer, parsers, urlProvider)
+	commenter := pullrequest.NewCommenter()
 
 	workers := make([]jobs.Worker, 0)
 
@@ -210,6 +215,10 @@ func setupWorkers(controllerCfg *jobsControllerConfig) ([]jobs.Worker, error) {
 	// Move
 	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources)
 	workers = append(workers, moveWorker)
+
+	// Pull Request
+	prWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
+	workers = append(workers, prWorker)
 
 	return workers, nil
 }
