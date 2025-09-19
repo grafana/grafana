@@ -90,3 +90,12 @@ func ConvertToInt(value interface{}) (int, bool) {
 		return 0, false
 	}
 }
+
+// IsArray checks if a value is an array (slice)
+func IsArray(value interface{}) bool {
+	if value == nil {
+		return false
+	}
+	_, ok := value.([]interface{})
+	return ok
+}

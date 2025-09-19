@@ -409,35 +409,6 @@ func TestLogMessageStructure(t *testing.T) {
 	})
 }
 
-// findJSONFiles recursively finds all .json files in a directory
-func findJSONFiles(dir string) ([]string, error) {
-	var jsonFiles []string
-
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() && strings.HasSuffix(strings.ToLower(info.Name()), ".json") {
-			jsonFiles = append(jsonFiles, path)
-		}
-		return nil
-	})
-
-	return jsonFiles, err
-}
-
-// getRelativeOutputPath converts an input path to a relative output path preserving directory structure
-func getRelativeOutputPath(inputPath, inputDir string) string {
-	// Get the relative path from the input directory
-	relPath, err := filepath.Rel(inputDir, inputPath)
-	if err != nil {
-		// If we can't get relative path, just use the filename
-		return filepath.Base(inputPath)
-	}
-	// Preserve the directory structure
-	return relPath
-}
-
 func TestMigrateDevDashboards(t *testing.T) {
 	// Reset the migration singleton and use the dev dashboard datasource provider
 	// to match the frontend devDashboardDataSources configuration
@@ -450,13 +421,13 @@ func TestMigrateDevDashboards(t *testing.T) {
 // runDevDashboardMigrationTests runs migration tests for dev dashboards with a unified approach (same as runMigrationTests)
 func runDevDashboardMigrationTests(t *testing.T, targetVersion int, outputDir string) {
 	// Find all JSON files in the dev-dashboards directory
-	jsonFiles, err := findJSONFiles(DEV_DASHBOARDS_INPUT_DIR)
+	jsonFiles, err := migrationtestutil.FindJSONFiles(DEV_DASHBOARDS_INPUT_DIR)
 	require.NoError(t, err, "failed to find JSON files in dev-dashboards directory")
 
 	t.Logf("Found %d JSON files in dev-dashboards", len(jsonFiles))
 
 	for _, jsonFile := range jsonFiles {
-		relativeOutputPath := getRelativeOutputPath(jsonFile, DEV_DASHBOARDS_INPUT_DIR)
+		relativeOutputPath := migrationtestutil.GetRelativeOutputPath(jsonFile, DEV_DASHBOARDS_INPUT_DIR)
 
 		// Load a fresh copy of the dashboard for this test (ensures no object sharing)
 		inputDash := loadDashboard(t, jsonFile)

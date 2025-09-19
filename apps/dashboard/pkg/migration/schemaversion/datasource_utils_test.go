@@ -123,14 +123,7 @@ func TestGetDefaultDSInstanceSettings(t *testing.T) {
 	}
 }
 
-// TestGetInstanceSettings - Function was removed, test disabled
-func TestGetInstanceSettings_DISABLED(t *testing.T) {
-	// datasources := []schemaversion.DataSourceInfo{
-	// 	{UID: "default-ds-uid", Type: "prometheus", Name: "Default Test Datasource Name", Default: true, APIVersion: "v1"},
-	// 	{UID: "existing-target-uid", Type: "elasticsearch", Name: "Existing Target Name", Default: false, APIVersion: "v2"},
-	// 	{UID: "existing-ref-uid", Type: "prometheus", Name: "Existing Ref Name", Default: false, APIVersion: "v1"},
-	// }
-
+func TestGetInstanceSettings(t *testing.T) {
 	tests := []struct {
 		name      string
 		nameOrRef interface{}
