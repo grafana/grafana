@@ -4,47 +4,94 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Icon, ToolbarButton } from '@grafana/ui';
-import { useGetStarsQuery } from 'app/api/clients/preferences/v1alpha1';
+import { useGetStarsQuery, useAddStarMutation, useRemoveStarMutation } from 'app/api/clients/preferences/v1alpha1';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
-import { toggleStarState } from './useToggleStarState';
+const getStarTooltips = () => ({
+  star: t('dashboard.toolbar.mark-favorite', 'Mark as favorite'),
+  unstar: t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite'),
+});
 
 export type Props = {
   group: string;
   kind: string;
-  id: string; // name of the thing with a star
+  dashboard: {
+    onStarDashboard: () => void;
+    state: {
+      meta: {
+        isStarred?: boolean;
+        uid?: string;
+      };
+    };
+  };
 };
 
-export default function StarToolbarButton(props: Props) {
+export function StarToolbarButtonApiServer({ group, kind, id }: { group: string; kind: string; id: string }) {
   const name = `user-${config.bootData.user.uid}`;
   const stars = useGetStarsQuery({ name });
-  console.log('Stars', props.id, name, stars.data);
+  const [addStar] = useAddStarMutation();
+  const [removeStar] = useRemoveStarMutation();
+
   const isStarred = useMemo(() => {
     if (stars.data?.spec.resource.length) {
       for (let info of stars.data?.spec.resource) {
-        if (info.group === props.group && info.kind === props.kind) {
-          return info.names.includes(props.id);
+        if (info.group === group && info.kind === kind) {
+          return info.names.includes(id);
         }
       }
     }
     return false;
-  }, [stars, props]);
+  }, [stars, group, kind, id]);
 
-  if (!config.bootData.user.uid || !props.id?.length) {
-    return null;
-  }
+  const handleStarToggle = () => {
+    const mutationArgs = { name, group, kind, id };
+    if (isStarred) {
+      removeStar(mutationArgs);
+    } else {
+      addStar(mutationArgs);
+    }
+  };
+
+  const tooltips = getStarTooltips();
 
   return (
     <ToolbarButton
-      tooltip={
-        isStarred
-          ? t('dashboard.toolbar.new.unmark-favorite', 'Unmark as favorite')
-          : t('dashboard.toolbar.new.mark-favorite', 'Mark as favorite')
-      }
+      tooltip={isStarred ? tooltips.unstar : tooltips.star}
+      icon={<Icon name={isStarred ? 'favorite' : 'star'} size="lg" type={isStarred ? 'mono' : 'default'} />}
+      data-testid={selectors.components.NavToolbar.markAsFavorite}
+      onClick={handleStarToggle}
+    />
+  );
+}
+
+function StarToolbarButtonLegacy({ dashboard }: { dashboard: Props['dashboard'] }) {
+  const { meta } = dashboard.state;
+  const isStarred = Boolean(meta.isStarred);
+  const tooltips = getStarTooltips();
+
+  return (
+    <ToolbarButton
+      tooltip={isStarred ? tooltips.unstar : tooltips.star}
       icon={<Icon name={isStarred ? 'favorite' : 'star'} size="lg" type={isStarred ? 'mono' : 'default'} />}
       data-testid={selectors.components.NavToolbar.markAsFavorite}
       onClick={() => {
-        toggleStarState(isStarred, name, props);
+        DashboardInteractions.toolbarFavoritesClick();
+        dashboard.onStarDashboard();
       }}
     />
   );
+}
+
+export function StarToolbarButton(props: Props) {
+  const uid = props.dashboard.state.meta.uid;
+
+  if (!config.bootData.user.uid || !uid?.length) {
+    return null;
+  }
+
+  if (config.featureToggles.starsFromAPIServer) {
+    return <StarToolbarButtonApiServer group={props.group} kind={props.kind} id={uid} />;
+  }
+
+  return <StarToolbarButtonLegacy dashboard={props.dashboard} />;
 }

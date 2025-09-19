@@ -13,7 +13,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardSearchItem } from 'app/features/search/types';
-import StarToolbarButton from 'app/features/stars/StarToolbarButton';
+import { StarToolbarButtonApiServer } from 'app/features/stars/StarToolbarButton';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { Options } from './panelcfg.gen';
@@ -184,7 +184,7 @@ export function DashList(props: PanelProps<Options>) {
                 {showFolderNames && dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
               </div>
               {config.featureToggles.starsFromAPIServer ? (
-                <StarToolbarButton group="dashboard.grafana.app" kind="Dashboard" id={dash.uid ?? ''} />
+                <StarToolbarButtonApiServer group="dashboard.grafana.app" kind="Dashboard" id={dash.uid ?? ''} />
               ) : (
                 <IconButton
                   tooltip={dash.isStarred ? `Unmark "${dash.title}" as favorite` : `Mark "${dash.title}" as favorite`}
