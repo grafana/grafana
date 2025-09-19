@@ -835,18 +835,24 @@ func removeDeprecatedVariableProperties(variable map[string]interface{}) {
 	// Remove deprecated properties
 	delete(variable, "tags")
 
-	// Only remove tagsQuery if it's truthy (matches frontend behavior)
-	if tagsQuery, exists := variable["tagsQuery"]; exists && tagsQuery != "" && tagsQuery != nil {
-		delete(variable, "tagsQuery")
+	// Only remove tagsQuery if it's a non-empty string (matches frontend behavior)
+	if tagsQuery, exists := variable["tagsQuery"]; exists {
+		if str, ok := tagsQuery.(string); ok && str != "" {
+			delete(variable, "tagsQuery")
+		}
 	}
 
-	// Only remove tagValuesQuery if it's truthy (matches frontend behavior)
-	if tagValuesQuery, exists := variable["tagValuesQuery"]; exists && tagValuesQuery != "" && tagValuesQuery != nil {
-		delete(variable, "tagValuesQuery")
+	// Only remove tagValuesQuery if it's a non-empty string (matches frontend behavior)
+	if tagValuesQuery, exists := variable["tagValuesQuery"]; exists {
+		if str, ok := tagValuesQuery.(string); ok && str != "" {
+			delete(variable, "tagValuesQuery")
+		}
 	}
 
-	// Only remove useTags if it's truthy (matches frontend behavior)
-	if useTags, exists := variable["useTags"]; exists && useTags != false && useTags != nil {
-		delete(variable, "useTags")
+	// Only remove useTags if it's a truthy boolean (matches frontend behavior)
+	if useTags, exists := variable["useTags"]; exists {
+		if val, ok := useTags.(bool); ok && val {
+			delete(variable, "useTags")
+		}
 	}
 }
