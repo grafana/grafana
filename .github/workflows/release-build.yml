@@ -287,6 +287,28 @@ jobs:
       build_id: ${{ github.run_id }}
       version_type: "canary"
 
+  dispatch-npm-canaries:
+    if: github.ref_name == 'main'
+    name: Dispatch publish NPM canaries
+    permissions:
+      actions: write
+    runs-on: ubuntu-x64-small
+    needs:
+      - setup
+    steps:
+      - name: Dispatch action
+        env:
+          GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
+          VERSION: ${{ needs.setup.outputs.version }}
+          BUILD_ID: ${{ github.run_id }}
+        run: |
+          gh workflow run npm-publish.yml \
+            --repo grafana/grafana \
+            --ref main \
+            --field grafana_commit="$GRAFANA_COMMIT" \
+            --field version="$VERSION" \
+            --field build_id="$BUILD_ID"
+
   # notify-pr creates (or updates) a comment in a pull request to link to this workflow where the release artifacts are
   # being built.
   notify-pr:
