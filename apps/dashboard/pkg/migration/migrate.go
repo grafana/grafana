@@ -83,38 +83,15 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 	// Apply defaults to panels inside rows (for pre-v16 dashboards)
 	// Match frontend upgradeToGridLayout: only panels NOT in collapsed rows get new PanelModel() constructor
 	if rows, ok := dash["rows"].([]interface{}); ok {
-		// Determine if row panels will be created (showRows logic)
-		showRows := false
-		for _, rowInterface := range rows {
-			if row, ok := rowInterface.(map[string]interface{}); ok {
-				collapse, _ := row["collapse"].(bool)
-				showTitle, _ := row["showTitle"].(bool)
-				repeat, hasRepeat := row["repeat"]
-				if collapse || showTitle || (hasRepeat && repeat != nil && repeat != "") {
-					showRows = true
-					break
-				}
-			}
-		}
+		showRows := shouldShowRows(rows)
 
 		for _, rowInterface := range rows {
-			if row, ok := rowInterface.(map[string]interface{}); ok {
-				if rowPanels, ok := row["panels"].([]interface{}); ok {
-					collapse, _ := row["collapse"].(bool)
-
-					// Frontend: if (rowPanelModel && rowPanel.collapsed) { push(panel) } else { push(new PanelModel(panel)) }
-					// Only non-collapsed panels get PanelModel defaults (refId: "A", overrides: [], etc.)
-					applyDefaults := !showRows || !collapse
-
-					if applyDefaults {
-						for _, panelInterface := range rowPanels {
-							if panel, ok := panelInterface.(map[string]interface{}); ok {
-								applyPanelDefaults(panel)
-							}
-						}
-					}
-				}
+			row, ok := rowInterface.(map[string]interface{})
+			if !ok {
+				continue
 			}
+
+			applyRowPanelDefaults(row, showRows)
 		}
 	}
 
@@ -154,4 +131,49 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 	}
 
 	return nil
+}
+
+// shouldShowRows determines if row panels will be created (showRows logic)
+func shouldShowRows(rows []interface{}) bool {
+	for _, rowInterface := range rows {
+		row, ok := rowInterface.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		collapse := schemaversion.GetBoolValue(row, "collapse")
+		showTitle := schemaversion.GetBoolValue(row, "showTitle")
+		repeat := schemaversion.GetStringValue(row, "repeat")
+
+		if collapse || showTitle || repeat != "" {
+			return true
+		}
+	}
+	return false
+}
+
+// applyRowPanelDefaults applies panel defaults to panels within a row based on frontend logic
+func applyRowPanelDefaults(row map[string]interface{}, showRows bool) {
+	rowPanels, ok := row["panels"].([]interface{})
+	if !ok {
+		return
+	}
+
+	collapse := schemaversion.GetBoolValue(row, "collapse")
+
+	// Frontend: if (rowPanelModel && rowPanel.collapsed) { push(panel) } else { push(new PanelModel(panel)) }
+	// Only non-collapsed panels get PanelModel defaults (refId: "A", overrides: [], etc.)
+	applyDefaults := !showRows || !collapse
+
+	if !applyDefaults {
+		return
+	}
+
+	for _, panelInterface := range rowPanels {
+		panel, ok := panelInterface.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		applyPanelDefaults(panel)
+	}
 }
