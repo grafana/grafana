@@ -21,7 +21,7 @@ replace github.com/grafana/grafana/pkg/aggregator => ../../pkg/aggregator
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250911094103-5456b6e45604
 
 require (
-	github.com/grafana/authlib v0.0.0-20250917093142-83a502239781
+	github.com/grafana/authlib v0.0.0-20250910124502-5d080d6bb9ea
 	github.com/grafana/grafana v6.1.6+incompatible
 	github.com/grafana/grafana-app-sdk v0.45.0
 	github.com/grafana/grafana-app-sdk/logging v0.45.0
@@ -205,7 +205,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.2 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/grafana/alerting v0.0.0-20250915130141-a8ee25091876 // indirect
-	github.com/grafana/authlib/types v0.0.0-20250917093142-83a502239781 // indirect
+	github.com/grafana/authlib/types v0.0.0-20250721184729-1593a38e4933 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4 // indirect
 	github.com/grafana/grafana-aws-sdk v1.2.0 // indirect
