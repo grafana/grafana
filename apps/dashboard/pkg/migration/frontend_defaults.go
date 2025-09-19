@@ -898,7 +898,6 @@ func cleanupRowPanelProperties(panel map[string]interface{}) {
 		return
 	}
 
-
 	// Remove repeat if empty string (default value)
 	removeIfDefaultValue(panel, "repeat", "")
 }
