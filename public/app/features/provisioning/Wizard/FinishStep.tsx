@@ -3,8 +3,9 @@ import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
+import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { checkImageRenderer, checkPublicAccess } from '../GettingStarted/features';
+import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
 import { isGitProvider } from '../utils/repositoryTypes';
 
 import { getGitProviderFields } from './fields';
@@ -12,6 +13,7 @@ import { WizardFormData } from './types';
 
 export function FinishStep() {
   const { register, watch, setValue } = useFormContext<WizardFormData>();
+  const settings = useGetFrontendSettingsQuery();
 
   const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
 
@@ -19,6 +21,7 @@ export function FinishStep() {
   const isGitBased = isGitProvider(type);
   const isPublic = checkPublicAccess();
   const hasImageRenderer = checkImageRenderer();
+  const imageRenderingAllowed = checkImageRenderingAllowed(settings.data);
 
   // Set sync enabled by default
   useEffect(() => {
@@ -80,7 +83,7 @@ export function FinishStep() {
         </Field>
       )}
 
-      {isGithub && (
+      {isGithub && imageRenderingAllowed && (
         <Field noMargin>
           <Checkbox
             {...register('repository.generateDashboardPreviews')}
