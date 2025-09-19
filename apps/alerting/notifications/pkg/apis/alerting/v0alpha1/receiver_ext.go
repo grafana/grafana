@@ -35,6 +35,13 @@ func (o *Receiver) SetAccessControl(action string) {
 	o.Annotations[AccessControlAnnotation(action)] = "true"
 }
 
+func (o *Receiver) SetCanUse(canUse bool) {
+	if o.Annotations == nil {
+		o.Annotations = make(map[string]string, 1)
+	}
+	o.Annotations[CanUseAnnotationKey] = fmt.Sprintf("%v", canUse)
+}
+
 // AccessControlAnnotation returns the key for the access control annotation for the given action.
 // Ex. grafana.com/access/canDelete.
 func AccessControlAnnotation(action string) string {

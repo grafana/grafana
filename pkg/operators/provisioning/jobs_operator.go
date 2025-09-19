@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/urfave/cli/v2"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -19,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
+	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
@@ -28,13 +27,13 @@ import (
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 )
 
-func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cfg) error {
+func RunJobController(deps server.OperatorDependencies) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "provisioning-job-controller")
 	logger.Info("Starting provisioning job controller")
 
-	controllerCfg, err := setupJobsControllerFromConfig(cfg)
+	controllerCfg, err := setupJobsControllerFromConfig(deps.Config)
 	if err != nil {
 		return fmt.Errorf("failed to setup operator: %w", err)
 	}

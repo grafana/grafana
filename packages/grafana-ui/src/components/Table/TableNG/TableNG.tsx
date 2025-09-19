@@ -96,6 +96,7 @@ import {
   shouldTextWrap,
   withDataLinksActionsTooltip,
   getSummaryCellTextAlign,
+  parseStyleJson,
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
@@ -108,7 +109,6 @@ export function TableNG(props: TableNGProps) {
     enablePagination = false,
     enableSharedCrosshair = false,
     enableVirtualization,
-    fieldConfig,
     frozenColumns = 0,
     getActions = () => [],
     height,
@@ -125,12 +125,6 @@ export function TableNG(props: TableNGProps) {
     width,
   } = props;
 
-  const hasFooter = useMemo(
-    () => data.fields.some((field) => field.config?.custom?.footer?.reducers?.length ?? false),
-    [data.fields]
-  );
-  const footerHeight = hasFooter ? calculateFooterHeight(data, fieldConfig) : 0;
-
   const theme = useTheme2();
   const styles = useStyles2(getGridStyles, enablePagination, transparent);
   const panelContext = usePanelContext();
@@ -146,7 +140,16 @@ export function TableNG(props: TableNGProps) {
     [getActions, data, userCanExecuteActions]
   );
 
+  const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
   const hasHeader = !noHeader;
+  const hasFooter = useMemo(
+    () => visibleFields.some((field) => Boolean(field.config.custom?.footer?.reducers?.length)),
+    [visibleFields]
+  );
+  const footerHeight = useMemo(
+    () => (hasFooter ? calculateFooterHeight(visibleFields) : 0),
+    [hasFooter, visibleFields]
+  );
 
   const resizeHandler = useColumnResize(onColumnResize);
 
@@ -173,7 +176,7 @@ export function TableNG(props: TableNGProps) {
   const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
 
   // vt scrollbar accounting for column auto-sizing
-  const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+
   const defaultRowHeight = useMemo(
     () => getDefaultRowHeight(theme, visibleFields, cellHeight),
     [theme, visibleFields, cellHeight]
@@ -475,6 +478,10 @@ export function TableNG(props: TableNGProps) {
         const linkStyles = getLinkStyles(theme, canBeColorized);
         const cellParentStyles = clsx(defaultCellStyles, linkStyles);
         const maxHeightClassName = maxRowHeight ? getMaxHeightCellStyles(theme, cellStyleOptions) : undefined;
+        const styleFieldValue = field.config.custom?.styleField;
+        const styleField = styleFieldValue ? data.fields.find(predicateByName(styleFieldValue)) : undefined;
+        const styleFieldName = styleField ? getDisplayName(styleField) : undefined;
+        const hasValidStyleField = Boolean(styleFieldName);
 
         // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
 
@@ -501,6 +508,9 @@ export function TableNG(props: TableNGProps) {
             const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
             const cellColorStyles = getCellColorInlineStyles(cellOptions, displayValue, applyToRowBgFn != null);
             Object.assign(style, cellColorStyles);
+          }
+          if (hasValidStyleField) {
+            style = { ...style, ...parseStyleJson(props.row[styleFieldName!]) };
           }
 
           return (
@@ -677,7 +687,7 @@ export function TableNG(props: TableNGProps) {
           ),
           renderSummaryCell: () => (
             <SummaryCell
-              rows={rows}
+              rows={sortedRows}
               footers={footers}
               field={field}
               colIdx={i}
@@ -707,10 +717,11 @@ export function TableNG(props: TableNGProps) {
       maxRowHeight,
       numFrozenColsFullyInView,
       onCellFilterAdded,
+      rows,
       rowHeight,
       rowHeightFn,
-      rows,
       setFilter,
+      sortedRows,
       showTypeIcons,
       theme,
       timeRange,
