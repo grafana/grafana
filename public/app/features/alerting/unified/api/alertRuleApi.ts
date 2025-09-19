@@ -192,11 +192,19 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         excludeAlerts,
       }) => {
         const queryParams: Record<string, string | undefined> = {
-          rule_group: groupName,
-          rule_name: ruleName,
           dashboard_uid: dashboardUid, // Supported only by Grafana managed rules
           panel_id: panelId?.toString(), // Supported only by Grafana managed rules
         };
+
+        if (groupName) {
+          queryParams[PrometheusAPIFilters.RuleGroup] = groupName;
+          queryParams[PrometheusAPIFilters.RuleGroupVanilla] = groupName;
+        }
+
+        if (ruleName) {
+          queryParams[PrometheusAPIFilters.RuleName] = ruleName;
+          queryParams[PrometheusAPIFilters.RuleNameVanilla] = ruleName;
+        }
 
         if (namespace) {
           if (isGrafanaRulesSource(ruleSourceName)) {
