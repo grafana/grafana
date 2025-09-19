@@ -29,6 +29,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -85,7 +86,8 @@ type APIBuilder struct {
 	// TODO: Set this up in the standalone API server
 	onlyApiServer bool
 
-	allowedTargets []provisioning.SyncTargetType
+	allowedTargets      []provisioning.SyncTargetType
+	allowImageRendering bool
 
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
@@ -136,8 +138,15 @@ func NewAPIBuilder(
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
+	allowImageRendering bool,
+	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 ) *APIBuilder {
-	clients := resources.NewClientFactory(configProvider)
+	var clients resources.ClientFactory
+	if newStandaloneClientFactoryFunc != nil {
+		clients = newStandaloneClientFactoryFunc(configProvider)
+	} else {
+		clients = resources.NewClientFactory(configProvider)
+	}
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceListerForMigrations(unified, legacyMigrator, storageStatus)
 
@@ -159,6 +168,7 @@ func NewAPIBuilder(
 		extraWorkers:        extraWorkers,
 		allowedTargets:      allowedTargets,
 		restConfigGetter:    restConfigGetter,
+		allowImageRendering: allowImageRendering,
 	}
 
 	for _, builder := range extraBuilders {
@@ -243,6 +253,8 @@ func RegisterAPIService(
 		createJobHistoryConfigFromSettings(cfg),
 		allowedTargets,
 		nil, // will use loopback instead
+		cfg.ProvisioningAllowImageRendering,
+		nil,
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
@@ -556,7 +568,18 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	cfg := repo.Config()
 
 	if !slices.Contains(b.allowedTargets, cfg.Spec.Sync.Target) {
-		return fmt.Errorf("sync target %s is not supported", cfg.Spec.Sync.Target)
+		list = append(list,
+			field.Invalid(
+				field.NewPath("spec", "target"),
+				cfg.Spec.Sync.Target,
+				"sync target is not supported"))
+	}
+
+	if !b.allowImageRendering && cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews {
+		list = append(list,
+			field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
+				cfg.Spec.GitHub.GenerateDashboardPreviews,
+				"image rendering is not enabled"))
 	}
 
 	if a.GetOperation() == admission.Update {
