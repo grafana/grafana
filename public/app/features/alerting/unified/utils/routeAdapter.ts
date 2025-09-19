@@ -8,12 +8,6 @@ import { MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/
 import { convertObjectMatcherToAlertingPackageMatcher, matcherToObjectMatcher, parseMatcherToArray } from './matchers';
 
 /**
- * type aliases to help us convert Route and RouteWithID types
- */
-type MapToPackageRoute<T> = T extends RouteWithID ? AlertingRouteWithID : T extends Route ? AlertingRoute : never;
-type MapFromPackageRoute<T> = T extends AlertingRouteWithID ? RouteWithID : T extends AlertingRoute ? Route : never;
-
-/**
  * Enhanced type guards using infer-based utility types
  */
 function hasId<T extends Route | RouteWithID>(route: T): route is T & RouteWithID {
@@ -27,7 +21,9 @@ function hasAlertingId<T extends AlertingRoute | AlertingRouteWithID>(route: T):
 /**
  * Converts from package route format to alertmanager route format
  */
-function fromPackageRoute<T extends AlertingRoute | AlertingRouteWithID>(route: T): MapFromPackageRoute<T> {
+function fromPackageRoute(route: AlertingRouteWithID): RouteWithID;
+function fromPackageRoute(route: AlertingRoute): Route;
+function fromPackageRoute(route: AlertingRoute | AlertingRouteWithID): Route | RouteWithID {
   // Convert matchers from LabelMatcher[] to ObjectMatcher[]
   const object_matchers = route.matchers?.map(labelMatcherToObjectMatcher);
 
@@ -53,22 +49,21 @@ function fromPackageRoute<T extends AlertingRoute | AlertingRouteWithID>(route: 
 
   // If the input route has an ID, include it in the output
   if (hasAlertingId(route)) {
-    const routeWithId = {
+    return {
       ...convertedRoute,
       id: route.id,
     };
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return routeWithId as MapFromPackageRoute<T>;
   }
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return convertedRoute as MapFromPackageRoute<T>;
+  return convertedRoute;
 }
 
 /**
  * Converts from alertmanager route format to package route format
  */
-function toPackageRoute<T extends Route | RouteWithID>(route: T): MapToPackageRoute<T> {
+function toPackageRoute(route: RouteWithID): AlertingRouteWithID;
+function toPackageRoute(route: Route): AlertingRoute;
+function toPackageRoute(route: Route | RouteWithID): AlertingRoute | AlertingRouteWithID {
   // Convert matchers
   let matchers: LabelMatcher[] = [];
 
@@ -106,16 +101,13 @@ function toPackageRoute<T extends Route | RouteWithID>(route: T): MapToPackageRo
 
   // If the input route has an ID, include it in the output
   if (hasId(route)) {
-    const routeWithId = {
+    return {
       ...convertedRoute,
       id: route.id,
     };
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return routeWithId as MapToPackageRoute<T>;
   }
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return convertedRoute as MapToPackageRoute<T>;
+  return convertedRoute;
 }
 
 /**
@@ -136,9 +128,27 @@ export const routeAdapter = {
 };
 
 /**
+ * Safely converts a LabelMatcher type to MatcherOperator
+ */
+function convertToMatcherOperator(type: LabelMatcher['type']): MatcherOperator {
+  switch (type) {
+    case '=':
+      return MatcherOperator.equal;
+    case '!=':
+      return MatcherOperator.notEqual;
+    case '=~':
+      return MatcherOperator.regex;
+    case '!~':
+      return MatcherOperator.notRegex;
+    default:
+      const exhaustiveCheck: never = type;
+      throw new Error(`Unknown matcher type: ${exhaustiveCheck}`);
+  }
+}
+
+/**
  * Converts a LabelMatcher from the alerting package format to an ObjectMatcher for alertmanager format
  */
 export function labelMatcherToObjectMatcher(matcher: LabelMatcher): ObjectMatcher {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return [matcher.label, matcher.type as MatcherOperator, matcher.value];
+  return [matcher.label, convertToMatcherOperator(matcher.type), matcher.value];
 }
