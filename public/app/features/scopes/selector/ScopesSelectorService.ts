@@ -53,7 +53,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     private apiClient: ScopesApiClient,
     private dashboardsService: ScopesDashboardsService,
     private store = storeImpl,
-    private interactionProfiler: SceneRenderProfiler | undefined = config.scopePerformanceMetrics
+    private interactionProfiler: SceneRenderProfiler | undefined = config.dashboardPerformanceMetrics
       ? getDashboardSceneProfiler()
       : undefined
   ) {

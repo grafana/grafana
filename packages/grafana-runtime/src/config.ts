@@ -223,7 +223,6 @@ export class GrafanaBootConfig {
   rudderstackIntegrationsUrl?: string;
   analyticsConsoleReporting = false;
   dashboardPerformanceMetrics: string[] = [];
-  scopePerformanceMetrics = false;
   panelSeriesLimit = 0;
   sqlConnectionLimits = {
     maxOpenConns: 100,

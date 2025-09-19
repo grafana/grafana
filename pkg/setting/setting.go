@@ -241,7 +241,6 @@ type Cfg struct {
 	DefaultHomeDashboardPath    string
 	DashboardPerformanceMetrics []string
 	PanelSeriesLimit            int
-	ScopePerformanceMetrics     bool
 
 	// Auth
 	LoginCookieName               string
@@ -1216,7 +1215,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.MinRefreshInterval = valueAsString(dashboards, "min_refresh_interval", "5s")
 	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
 	cfg.DashboardPerformanceMetrics = util.SplitString(dashboards.Key("dashboard_performance_metrics").MustString(""))
-	cfg.ScopePerformanceMetrics = dashboards.Key("scope_performance_metrics").MustBool(false)
 	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
 
 	if err := readUserSettings(iniFile, cfg); err != nil {

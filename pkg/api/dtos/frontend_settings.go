@@ -203,7 +203,6 @@ type FrontendSettingsDTO struct {
 	RudderstackIntegrationsUrl string `json:"rudderstackIntegrationsUrl"`
 
 	AnalyticsConsoleReporting bool `json:"analyticsConsoleReporting"`
-	ScopePerformanceMetrics   bool `json:"scopePerformanceMetrics"`
 
 	DashboardPerformanceMetrics []string `json:"dashboardPerformanceMetrics"`
 	PanelSeriesLimit            int      `json:"panelSeriesLimit"`

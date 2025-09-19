@@ -293,7 +293,6 @@ export interface GrafanaConfig {
   rendererDefaultImageHeight: number;
   rendererDefaultImageScale: number;
   dashboardPerformanceMetrics: string[];
-  scopePerformanceMetrics: boolean;
   panelSeriesLimit: number;
   sqlConnectionLimits: SqlConnectionLimits;
   sharedWithMeFolderUID: string;
