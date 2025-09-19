@@ -6,13 +6,31 @@
 package apis
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	v0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+)
+
+var (
+	rawSchemaReceiverv0alpha1          = []byte(`{"Integration":{"additionalProperties":false,"properties":{"disableResolveMessage":{"type":"boolean"},"secureFields":{"additionalProperties":{"type":"boolean"},"type":"object"},"settings":{"additionalProperties":{"additionalProperties":{},"type":"object"},"type":"object"},"type":{"type":"string"},"uid":{"type":"string"},"version":{"type":"string"}},"required":["type","version","settings"],"type":"object"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"Receiver":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"integrations":{"items":{"$ref":"#/components/schemas/Integration"},"type":"array"},"title":{"type":"string"}},"required":["title","integrations"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	versionSchemaReceiverv0alpha1      app.VersionSchema
+	_                                  = json.Unmarshal(rawSchemaReceiverv0alpha1, &versionSchemaReceiverv0alpha1)
+	rawSchemaRoutingTreev0alpha1       = []byte(`{"Matcher":{"additionalProperties":false,"properties":{"label":{"type":"string"},"type":{"enum":["=","!=","=~","!~"],"type":"string"},"value":{"type":"string"}},"required":["type","label","value"],"type":"object"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"Route":{"additionalProperties":false,"properties":{"active_time_intervals":{"items":{"type":"string"},"type":"array"},"continue":{"type":"boolean"},"group_by":{"items":{"type":"string"},"type":"array"},"group_interval":{"type":"string"},"group_wait":{"type":"string"},"matchers":{"items":{"$ref":"#/components/schemas/Matcher"},"type":"array"},"mute_time_intervals":{"items":{"type":"string"},"type":"array"},"receiver":{"type":"string"},"repeat_interval":{"type":"string"},"routes":{"items":{"$ref":"#/components/schemas/Route"},"type":"array"}},"required":["continue"],"type":"object"},"RouteDefaults":{"additionalProperties":false,"properties":{"group_by":{"items":{"type":"string"},"type":"array"},"group_interval":{"type":"string"},"group_wait":{"type":"string"},"receiver":{"type":"string"},"repeat_interval":{"type":"string"}},"required":["receiver"],"type":"object"},"RoutingTree":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"defaults":{"$ref":"#/components/schemas/RouteDefaults"},"routes":{"items":{"$ref":"#/components/schemas/Route"},"type":"array"}},"required":["defaults","routes"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	versionSchemaRoutingTreev0alpha1   app.VersionSchema
+	_                                  = json.Unmarshal(rawSchemaRoutingTreev0alpha1, &versionSchemaRoutingTreev0alpha1)
+	rawSchemaTemplateGroupv0alpha1     = []byte(`{"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"TemplateGroup":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"content":{"type":"string"},"title":{"type":"string"}},"required":["title","content"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	versionSchemaTemplateGroupv0alpha1 app.VersionSchema
+	_                                  = json.Unmarshal(rawSchemaTemplateGroupv0alpha1, &versionSchemaTemplateGroupv0alpha1)
+	rawSchemaTimeIntervalv0alpha1      = []byte(`{"Interval":{"additionalProperties":false,"properties":{"days_of_month":{"items":{"type":"string"},"type":"array"},"location":{"type":"string"},"months":{"items":{"type":"string"},"type":"array"},"times":{"items":{"$ref":"#/components/schemas/TimeRange"},"type":"array"},"weekdays":{"items":{"type":"string"},"type":"array"},"years":{"items":{"type":"string"},"type":"array"}},"type":"object"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"TimeInterval":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"TimeRange":{"additionalProperties":false,"properties":{"end_time":{"type":"string"},"start_time":{"type":"string"}},"required":["start_time","end_time"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"name":{"type":"string"},"time_intervals":{"items":{"$ref":"#/components/schemas/Interval"},"type":"array"}},"required":["name","time_intervals"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	versionSchemaTimeIntervalv0alpha1  app.VersionSchema
+	_                                  = json.Unmarshal(rawSchemaTimeIntervalv0alpha1, &versionSchemaTimeIntervalv0alpha1)
 )
 
 var appManifestData = app.ManifestData{
@@ -28,6 +46,7 @@ var appManifestData = app.ManifestData{
 					Plural:     "Receivers",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Schema:     &versionSchemaReceiverv0alpha1,
 					SelectableFields: []string{
 						"spec.title",
 					},
@@ -38,6 +57,7 @@ var appManifestData = app.ManifestData{
 					Plural:     "RoutingTrees",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Schema:     &versionSchemaRoutingTreev0alpha1,
 				},
 
 				{
@@ -45,6 +65,7 @@ var appManifestData = app.ManifestData{
 					Plural:     "TemplateGroups",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Schema:     &versionSchemaTemplateGroupv0alpha1,
 					SelectableFields: []string{
 						"spec.title",
 					},
@@ -55,10 +76,15 @@ var appManifestData = app.ManifestData{
 					Plural:     "TimeIntervals",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Schema:     &versionSchemaTimeIntervalv0alpha1,
 					SelectableFields: []string{
 						"spec.name",
 					},
 				},
+			},
+			Routes: app.ManifestVersionRoutes{
+				Namespaced: map[string]spec3.PathProps{},
+				Cluster:    map[string]spec3.PathProps{},
 			},
 		},
 	},
@@ -91,10 +117,50 @@ var customRouteToGoResponseType = map[string]any{}
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
 // kind may be empty for custom routes which are not kind subroutes. Leading slashes are removed from subroute paths.
 // If there is no association for the provided kind, version, custom route path, and method, exists will return false.
+// Resource routes (those without a kind) should prefix their route with "<namespace>/" if the route is namespaced (otherwise the route is assumed to be cluster-scope)
 func ManifestCustomRouteResponsesAssociator(kind, version, path, verb string) (goType any, exists bool) {
 	if len(path) > 0 && path[0] == '/' {
 		path = path[1:]
 	}
 	goType, exists = customRouteToGoResponseType[fmt.Sprintf("%s|%s|%s|%s", version, kind, path, strings.ToUpper(verb))]
 	return goType, exists
+}
+
+var customRouteToGoParamsType = map[string]runtime.Object{}
+
+func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goType runtime.Object, exists bool) {
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+	goType, exists = customRouteToGoParamsType[fmt.Sprintf("%s|%s|%s|%s", version, kind, path, strings.ToUpper(verb))]
+	return goType, exists
+}
+
+var customRouteToGoRequestBodyType = map[string]any{}
+
+func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+	goType, exists = customRouteToGoRequestBodyType[fmt.Sprintf("%s|%s|%s|%s", version, kind, path, strings.ToUpper(verb))]
+	return goType, exists
+}
+
+type GoTypeAssociator struct{}
+
+func NewGoTypeAssociator() *GoTypeAssociator {
+	return &GoTypeAssociator{}
+}
+
+func (g *GoTypeAssociator) KindToGoType(kind, version string) (goType resource.Kind, exists bool) {
+	return ManifestGoTypeAssociator(kind, version)
+}
+func (g *GoTypeAssociator) CustomRouteReturnGoType(kind, version, path, verb string) (goType any, exists bool) {
+	return ManifestCustomRouteResponsesAssociator(kind, version, path, verb)
+}
+func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb string) (goType runtime.Object, exists bool) {
+	return ManifestCustomRouteQueryAssociator(kind, version, path, verb)
+}
+func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
+	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
 }
