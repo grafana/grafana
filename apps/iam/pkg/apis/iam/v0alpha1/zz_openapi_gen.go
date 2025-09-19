@@ -2398,8 +2398,22 @@ func schema_pkg_apis_iam_v0alpha1_TeamSpec(ref common.ReferenceCallback) common.
 							Format:  "",
 						},
 					},
+					"provisioned": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"externalUID": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 				},
-				Required: []string{"title", "email"},
+				Required: []string{"title", "email", "provisioned", "externalUID"},
 			},
 		},
 	}

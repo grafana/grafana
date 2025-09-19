@@ -134,6 +134,7 @@ type Cfg struct {
 	PermittedProvisioningPaths []string
 	// Provisioning config
 	ProvisioningDisableControllers bool
+	ProvisioningAllowedTargets     []string
 	ProvisioningRepositoryTypes    []string
 	ProvisioningLokiURL            string
 	ProvisioningLokiUser           string
@@ -580,6 +581,8 @@ type Cfg struct {
 	IndexMinCount                              int
 	IndexRebuildInterval                       time.Duration
 	IndexCacheTTL                              time.Duration
+	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will not be reused between restarts.
+	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will not be reused between restarts.
 	EnableSharding                             bool
 	QOSEnabled                                 bool
 	QOSNumberWorker                            int
@@ -2119,6 +2122,10 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	}
 
 	cfg.ProvisioningDisableControllers = iniFile.Section("provisioning").Key("disable_controllers").MustBool(false)
+	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
+	if len(cfg.ProvisioningAllowedTargets) == 0 {
+		cfg.ProvisioningAllowedTargets = []string{"instance", "folder"}
+	}
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

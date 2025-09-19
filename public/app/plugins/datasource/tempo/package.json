@@ -18,12 +18,12 @@
     "@lezer/lr": "1.4.2",
     "@opentelemetry/api": "1.9.0",
     "@opentelemetry/exporter-collector": "0.25.0",
-    "@opentelemetry/semantic-conventions": "1.36.0",
+    "@opentelemetry/semantic-conventions": "1.37.0",
     "buffer": "6.0.3",
     "events": "3.3.0",
     "i18next": "^25.0.0",
     "lodash": "4.17.21",
-    "lru-cache": "11.1.0",
+    "lru-cache": "11.2.1",
     "monaco-editor": "0.34.1",
     "prismjs": "1.30.0",
     "react": "18.3.1",
@@ -69,5 +69,5 @@
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --maxWorkers 4"
   },
-  "packageManager": "yarn@4.9.2"
+  "packageManager": "yarn@4.9.4"
 }

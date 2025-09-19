@@ -27,6 +27,7 @@ type GraphiteQuery struct {
 	TargetFull      string   `json:"targetFull,omitempty"`
 	Tags            []string `json:"tags,omitempty"`
 	FromAnnotations *bool    `json:"fromAnnotations,omitempty"`
+	IsMetricTank    bool     `json:"isMetricTank,omitempty"`
 }
 
 type GraphiteEventsRequest struct {

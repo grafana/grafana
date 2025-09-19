@@ -82,6 +82,7 @@ import (
 	advisor2 "github.com/grafana/grafana/pkg/registry/apps/advisor"
 	notifications2 "github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
+	correlations2 "github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
@@ -506,7 +507,10 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	dualwriteService := dualwrite.ProvideService(featureToggles, registerer, kvStore, cfg)
+	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg)
+	if err != nil {
+		return nil, err
+	}
 	sortService := sort.ProvideService()
 	folderimplService := folderimpl.ProvideService(folderStoreImpl, accessControl, inProcBus, dashboardsStore, userService, sqlStore, featureToggles, bundleregistryService, publicDashboardServiceWrapperImpl, cfg, registerer, tracer, resourceClient, dualwriteService, sortService, eventualRestConfigProvider)
 	searchService := searchV2.ProvideService(cfg, sqlStore, entityEventsService, acimplService, tracingService, featureToggles, orgService, userService, folderimplService)
@@ -760,7 +764,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, pluginsAppInstaller, shortURLAppInstaller, alertingRulesAppInstaller)
+	correlationsAppInstaller, err := correlations2.RegisterAppInstaller(cfg, featureToggles)
+	if err != nil {
+		return nil, err
+	}
+	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, pluginsAppInstaller, shortURLAppInstaller, alertingRulesAppInstaller, correlationsAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics)
 	if err != nil {
@@ -1097,7 +1105,10 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	dualwriteService := dualwrite.ProvideService(featureToggles, registerer, kvStore, cfg)
+	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg)
+	if err != nil {
+		return nil, err
+	}
 	sortService := sort.ProvideService()
 	folderimplService := folderimpl.ProvideService(folderStoreImpl, accessControl, inProcBus, dashboardsStore, userService, sqlStore, featureToggles, bundleregistryService, publicDashboardServiceWrapperImpl, cfg, registerer, tracer, resourceClient, dualwriteService, sortService, eventualRestConfigProvider)
 	searchService := searchV2.ProvideService(cfg, sqlStore, entityEventsService, acimplService, tracingService, featureToggles, orgService, userService, folderimplService)
@@ -1353,7 +1364,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, pluginsAppInstaller, shortURLAppInstaller, alertingRulesAppInstaller)
+	correlationsAppInstaller, err := correlations2.RegisterAppInstaller(cfg, featureToggles)
+	if err != nil {
+		return nil, err
+	}
+	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, pluginsAppInstaller, shortURLAppInstaller, alertingRulesAppInstaller, correlationsAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics)
 	if err != nil {
