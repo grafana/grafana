@@ -510,8 +510,6 @@ func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool)
 		"transparent":         false,
 		"options":             map[string]interface{}{},
 		"links":               []interface{}{},
-		// Don't include transformations in defaults - use explicit cleanup logic instead
-		// "transformations":     []interface{}{},
 		"fieldConfig": map[string]interface{}{
 			"defaults":  map[string]interface{}{},
 			"overrides": []interface{}{},
