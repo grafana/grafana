@@ -17,6 +17,9 @@ type RepositoryViewList struct {
 	// The valid targets (can disable instance or folder types)
 	AllowedTargets []SyncTargetType `json:"allowedTargets,omitempty"`
 
+	// Whether image rendering is allowed for dashboard previews
+	AllowImageRendering bool `json:"allowImageRendering"`
+
 	// AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)
 	AvailableRepositoryTypes []RepositoryType `json:"availableRepositoryTypes,omitempty"`
 
