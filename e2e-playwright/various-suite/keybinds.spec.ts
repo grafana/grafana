@@ -124,77 +124,24 @@ test.describe(
       await panelOptionsSection.waitFor({ state: 'visible' });
       await panelOptionsSection.scrollIntoViewIfNeeded();
 
-      // Look for radio buttons to verify the current state
-      const graphTooltipSection = page.locator('text=Graph tooltip').locator('..').locator('..');
-      const radioButtons = graphTooltipSection.locator('input[type="radio"]');
-      const fallbackRadioButtons = page.locator('[role="radiogroup"]').last().locator('input[type="radio"]');
+      // Wait for radio buttons to be visible
+      await page
+        .locator('[role="radiogroup"]')
+        .last()
+        .locator('input[type="radio"]')
+        .first()
+        .waitFor({ state: 'visible' });
 
-      try {
-        let activeRadioButtons = radioButtons;
-        if ((await radioButtons.count()) === 0) {
-          activeRadioButtons = fallbackRadioButtons;
-        }
+      // Check current state - after one mod+o press, it should be crosshair (1)
+      await expect(page.locator('[role="radiogroup"]').last().locator('input[type="radio"]').nth(1)).toBeChecked(); // Shared crosshair
 
-        await activeRadioButtons.first().waitFor({ state: 'visible' });
+      // Test second press in the main dashboard view (should go to tooltip)
+      await page.keyboard.press(`${modKey}+o`);
+      await expect(page.locator('[role="radiogroup"]').last().locator('input[type="radio"]').nth(2)).toBeChecked(); // Shared tooltip
 
-        const defaultRadio = activeRadioButtons.nth(0); // Default (0)
-        const crosshairRadio = activeRadioButtons.nth(1); // Shared crosshair (1)
-        const tooltipRadio = activeRadioButtons.nth(2); // Shared tooltip (2)
-
-        // Check current state - after one mod+o press, it should be crosshair (1)
-        console.log('Verifying radio button states after first mod+o press...');
-        await expect(defaultRadio).not.toBeChecked();
-        await expect(crosshairRadio).toBeChecked();
-        await expect(tooltipRadio).not.toBeChecked();
-        console.log('✅ First mod+o worked: switched to Shared crosshair');
-
-        // Close settings and test more shortcuts
-        await page.keyboard.press('Escape');
-
-        // Wait for settings to close by checking we're back to main dashboard
-        await page
-          .locator('[data-testid*="dashboard"]')
-          .or(page.locator('text=Start your new dashboard'))
-          .first()
-          .waitFor({ state: 'visible' });
-
-        // Test second press in the main dashboard view (should go to tooltip)
-        console.log('Testing second mod+o press (should go to Shared tooltip)...');
-        await page.keyboard.press(`${modKey}+o`);
-        expect(page.url()).toBe(currentUrl);
-
-        // Test third press in the main dashboard view (should go back to default)
-        console.log('Testing third mod+o press (should go back to Default)...');
-        await page.keyboard.press(`${modKey}+o`);
-        expect(page.url()).toBe(currentUrl);
-
-        // Open settings again to verify final state
-        await page.keyboard.press('d');
-        await page.keyboard.press('s');
-
-        // Wait for settings to open again
-        await page.locator('text=General').waitFor({ state: 'visible' });
-
-        // Wait for Panel options section and scroll to it
-        await panelOptionsSection.waitFor({ state: 'visible' });
-        await panelOptionsSection.scrollIntoViewIfNeeded();
-
-        // Check final state - should be back to default (0) after full cycle
-        console.log('Verifying final state after complete cycle...');
-        await expect(defaultRadio).toBeChecked();
-        await expect(crosshairRadio).not.toBeChecked();
-        await expect(tooltipRadio).not.toBeChecked();
-        console.log('✅ Complete cycle worked: back to Default');
-
-        // Verify that the shortcut works and doesn't cause navigation
-        expect(page.url()).toContain('editview=settings');
-      } catch (error) {
-        console.log('Radio button testing failed:', error.message);
-        // Fallback: just verify the shortcut doesn't cause navigation issues
-      }
-
-      // Verify we're still on the dashboard (shortcut didn't trigger browser file dialog)
-      await expect(page).toHaveURL(/\/dashboard/);
+      // Test third press in the main dashboard view (should go back to default)
+      await page.keyboard.press(`${modKey}+o`);
+      await expect(page.locator('[role="radiogroup"]').last().locator('input[type="radio"]').nth(0)).toBeChecked(); // Default
     });
   }
 );
