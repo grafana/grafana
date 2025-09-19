@@ -8,5 +8,6 @@ UserSpec: {
     login: string
     name: string
     provisioned: bool
-    role: string
+
+    // What to do with salt, rands and password?
 }

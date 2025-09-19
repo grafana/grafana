@@ -14,6 +14,9 @@ func MutateOnCreate(ctx context.Context, obj *iamv0alpha1.User) error {
 	if obj.Spec.Login == "" {
 		obj.Spec.Login = obj.Spec.Email
 	}
+	if obj.Spec.Email == "" {
+		obj.Spec.Email = obj.Spec.Login
+	}
 
 	return nil
 }

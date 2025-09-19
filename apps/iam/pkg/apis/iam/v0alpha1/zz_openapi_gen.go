@@ -2660,20 +2660,14 @@ func schema_pkg_apis_iam_v0alpha1_UserSpec(ref common.ReferenceCallback) common.
 					},
 					"provisioned": {
 						SchemaProps: spec.SchemaProps{
-							Default: false,
-							Type:    []string{"boolean"},
-							Format:  "",
-						},
-					},
-					"role": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "What to do with salt, rands and password?",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 				},
-				Required: []string{"disabled", "email", "emailVerified", "grafanaAdmin", "login", "name", "provisioned", "role"},
+				Required: []string{"disabled", "email", "emailVerified", "grafanaAdmin", "login", "name", "provisioned"},
 			},
 		},
 	}

@@ -10,8 +10,8 @@ type UserSpec struct {
 	GrafanaAdmin  bool   `json:"grafanaAdmin"`
 	Login         string `json:"login"`
 	Name          string `json:"name"`
-	Provisioned   bool   `json:"provisioned"`
-	Role          string `json:"role"`
+	// What to do with salt, rands and password?
+	Provisioned bool `json:"provisioned"`
 }
 
 // NewUserSpec creates a new UserSpec object.

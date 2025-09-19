@@ -44,6 +44,7 @@ func TestMutateOnCreate_LoginEmail(t *testing.T) {
 				},
 			},
 			expectedLogin: "only.login",
+			expectedEmail: "only.login",
 		},
 		{
 			name: "login and email already lowercase",
