@@ -118,7 +118,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       this.updateState({ tree: newTree });
 
       // For API call: only pass query if filtering within existing children
-      const queryForAPI = haveChildrenLoaded ? query : '';
+      const queryForAPI = haveChildrenLoaded ? query : query === '' ? '' : undefined;
       await this.loadNodeChildren(path, nodeToExpand, queryForAPI, haveChildrenLoaded);
     }
   };
