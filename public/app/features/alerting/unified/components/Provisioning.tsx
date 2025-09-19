@@ -9,6 +9,7 @@ export enum ProvisionedResource {
   MuteTiming = 'time interval',
   AlertRule = 'alert rule',
   RootNotificationPolicy = 'root notification policy',
+  AlertEnrichment = 'alert enrichment',
 }
 
 // we'll omit the props we don't want consumers to overwrite and forward the others to the alert component
