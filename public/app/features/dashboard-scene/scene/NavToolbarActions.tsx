@@ -25,6 +25,7 @@ import { trackDashboardSceneEditButtonClicked } from 'app/features/dashboard-sce
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
+import StarToolbarButton from 'app/features/stars/StarToolbarButton';
 import { useSelector } from 'app/types/store';
 
 import { selectFolderRepository } from '../../provisioning/utils/selectors';
@@ -100,6 +101,11 @@ export function ToolbarActions({ dashboard }: Props) {
     group: 'icon-actions',
     condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
     render: () => {
+      if (config.featureToggles.starsFromAPIServer) {
+        return (
+          <StarToolbarButton group="dashboard.grafana.app" kind="Dashboard" name={dashboard.state.meta.uid ?? ''} />
+        );
+      }
       let desc = meta.isStarred
         ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
         : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');

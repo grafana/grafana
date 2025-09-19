@@ -1,11 +1,17 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Icon, ToolbarButton } from '@grafana/ui';
+import StarToolbarButton from 'app/features/stars/StarToolbarButton';
 
 import { DashboardInteractions } from '../../../utils/interactions';
 import { ToolbarActionProps } from '../types';
 
 export const StarButton = ({ dashboard }: ToolbarActionProps) => {
+  if (config.featureToggles.starsFromAPIServer) {
+    return <StarToolbarButton group="dashboard.grafana.app" kind="Dashboard" name={dashboard.state.meta.uid ?? ''} />;
+  }
+
   return (
     <ToolbarButton
       tooltip={
