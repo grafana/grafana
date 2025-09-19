@@ -302,7 +302,7 @@ jobs:
           VERSION: ${{ needs.setup.outputs.version }}
           BUILD_ID: ${{ github.run_id }}
         run: |
-          gh workflow run npm-publish.yml \
+          gh workflow run release-npm.yml \
             --repo grafana/grafana \
             --ref main \
             --field grafana_commit="$GRAFANA_COMMIT" \
