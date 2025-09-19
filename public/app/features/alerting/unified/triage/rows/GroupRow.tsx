@@ -3,7 +3,7 @@ import React from 'react';
 
 import { AlertLabel } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
-import { getTagColorsFromName, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { GenericGroupedRow } from '../types';
 
@@ -24,14 +24,7 @@ export const GroupRow = ({ row, leftColumnWidth, rowKey, depth = 0, children }: 
     <GenericRow
       key={rowKey}
       width={leftColumnWidth}
-      title={
-        <AlertLabel
-          size="sm"
-          labelKey={row.metadata.label}
-          value={row.metadata.value}
-          color={getTagColorsFromName(row.metadata.label).color}
-        />
-      }
+      title={<AlertLabel size="sm" labelKey={row.metadata.label} value={row.metadata.value} colorBy="key" />}
       isOpenByDefault={true}
       leftColumnClassName={styles.groupRow}
       rightColumnClassName={styles.groupRow}

@@ -54,10 +54,7 @@ export const GenericRow = ({
             />
           </div>
         </div>
-        <div
-          style={{ minWidth: 'min-content', flexGrow: 1 }}
-          className={cx(styles.rightColumn, styles.column, rightColumnClassName)}
-        >
+        <div style={{ minWidth: 'min-content', flexGrow: 1 }} className={cx(styles.column, rightColumnClassName)}>
           {content && <div className={styles.columnContent()}>{content}</div>}
         </div>
       </div>
@@ -117,11 +114,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       borderRight: `1px solid ${theme.colors.border.medium}`,
     }),
     leftColumn: css({
-      // background: `rgba(0, 0, 255, 0.1)`,
       overflow: 'hidden',
-    }),
-    rightColumn: css({
-      // background: `rgba(255, 0, 0, 0.1)`,
     }),
     columnContent: (depth?: number) =>
       css({

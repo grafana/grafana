@@ -23,19 +23,19 @@ type Props = MergeExclusive<ChildrenProps, LabelActionsProps>;
 export function EditorColumnHeader({ label, actions, id, children }: Props) {
   const styles = useStyles2(editorColumnStyles);
 
+  if (children) {
+    return <div className={styles.container}>{children}</div>;
+  }
+
   return (
     <div className={styles.container}>
-      {children ?? (
-        <>
-          <Label className={styles.label} id={id}>
-            {label}
-          </Label>
-          {actions && (
-            <Stack direction="row" gap={1}>
-              {actions}
-            </Stack>
-          )}
-        </>
+      <Label className={styles.label} id={id}>
+        {label}
+      </Label>
+      {actions && (
+        <Stack direction="row" gap={1}>
+          {actions}
+        </Stack>
       )}
     </div>
   );
@@ -47,7 +47,6 @@ const editorColumnStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    flex: 1,
     padding: theme.spacing(1, 2),
     backgroundColor: theme.colors.background.secondary,
     border: `1px solid ${theme.colors.border.medium}`,

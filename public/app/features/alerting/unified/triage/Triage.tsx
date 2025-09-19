@@ -10,7 +10,7 @@ export const TriagePage = () => {
   return (
     <AlertingPageWrapper
       navId="alerting"
-      subTitle="Learn about problems in your systems moments after they occur"
+      subTitle={t('alerting.pages.triage.subtitle', 'Learn about problems in your systems moments after they occur')}
       pageNav={{
         text: t('alerting.pages.triage.title', 'Triage'),
       }}
