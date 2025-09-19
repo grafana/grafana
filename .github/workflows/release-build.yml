@@ -293,7 +293,8 @@ jobs:
             --ref main \
             --field grafana_commit="$GRAFANA_COMMIT" \
             --field version="$VERSION" \
-            --field build_id="$BUILD_ID"
+            --field build_id="$BUILD_ID"\
+            --field version_type="canary"
 
   # notify-pr creates (or updates) a comment in a pull request to link to this workflow where the release artifacts are
   # being built.
