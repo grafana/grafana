@@ -10,7 +10,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
@@ -301,4 +303,50 @@ func (c *ExtraConfigsCrypto) DecryptExtraConfigs(ctx context.Context, config *de
 	}
 
 	return nil
+}
+
+func DecryptedReceivers(receivers []*definitions.PostableApiReceiver, decryptFn models.DecryptFn) ([]*definitions.PostableApiReceiver, error) {
+	decrypted := make([]*definitions.PostableApiReceiver, len(receivers))
+	for i, r := range receivers {
+		// We don't care about the provenance here, so we pass ProvenanceNone.
+		rcv, err := legacy_storage.PostableApiReceiverToReceiver(r, models.ProvenanceNone, models.ResourceOriginGrafana)
+		if err != nil {
+			return nil, err
+		}
+
+		err = rcv.Decrypt(decryptFn)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt receiver %q: %w", rcv.Name, err)
+		}
+
+		postable, err := legacy_storage.ReceiverToPostableApiReceiver(rcv)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert Receiver %q to APIReceiver: %w", rcv.Name, err)
+		}
+		decrypted[i] = postable
+	}
+	return decrypted, nil
+}
+
+func EncryptedReceivers(receivers []*definitions.PostableApiReceiver, encryptFn models.EncryptFn) ([]*definitions.PostableApiReceiver, error) {
+	encrypted := make([]*definitions.PostableApiReceiver, len(receivers))
+	for i, r := range receivers {
+		// We don't care about the provenance here, so we pass ProvenanceNone.
+		rcv, err := legacy_storage.PostableApiReceiverToReceiver(r, models.ProvenanceNone, models.ResourceOriginGrafana)
+		if err != nil {
+			return nil, err
+		}
+
+		err = rcv.Encrypt(encryptFn)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt receiver %q: %w", rcv.Name, err)
+		}
+
+		postable, err := legacy_storage.ReceiverToPostableApiReceiver(rcv)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert Receiver %q to APIReceiver: %w", rcv.Name, err)
+		}
+		encrypted[i] = postable
+	}
+	return encrypted, nil
 }
