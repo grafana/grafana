@@ -1041,7 +1041,7 @@ func TestCleanupPanelForSave(t *testing.T) {
 				panel[k] = v
 			}
 
-			cleanupPanelForSave(panel)
+			cleanupPanelForSaveWithContext(panel, false)
 
 			// Verify expected properties exist
 			for key, expectedValue := range tt.expected {
