@@ -132,7 +132,7 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 			if resp != nil {
 				statusCode = resp.StatusCode
 			}
-			return nil, writeErrorResponse(rw, statusCode, fmt.Sprintf("failed to fetch metadata: %s", err))
+			return nil, writeErrorResponse(rw, statusCode, fmt.Sprintf("failed to fetch metadata: %v", err))
 		}
 
 		defer func() {
