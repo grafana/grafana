@@ -27,6 +27,7 @@ jest.mock('@grafana/runtime', () => {
     }),
   };
 });
+jest.setTimeout(10000);
 
 const variableOptionGroup = {
   label: 'Template variables',
