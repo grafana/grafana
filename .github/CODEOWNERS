@@ -67,8 +67,6 @@
 /scripts/modowners/ @grafana/grafana-backend-services-squad
 /scripts/go-workspace @grafana/grafana-app-platform-squad
 /scripts/ci/backend-tests @grafana/grafana-operator-experience-squad
-/scripts/go/golangci-lint/ @grafana/grafana-developer-enablement-squad
-/scripts/go/wirecheck/ @grafana/grafana-developer-enablement-squad
 /hack/ @grafana/grafana-app-platform-squad
 /.air.toml @macabu
 
@@ -1270,6 +1268,9 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-e2e-tests.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/skye-add-to-project.yml @grafana/grafana-frontend-platform
 /.github/workflows/frontend-perf-tests.yaml @grafana/grafana-frontend-platform
+/.github/workflows/release-npm.yml @grafana/grafana-frontend-platform
+/.github/workflows/scripts/determine-npm-tag.sh @grafana/grafana-frontend-platform
+/.github/workflows/scripts/validate-commit-in-head.sh @grafana/grafana-frontend-platform
 /.github/zizmor.yml @grafana/grafana-developer-enablement-squad
 /.github/license_finder.yaml @bergquist
 /.github/actionlint.yaml @grafana/grafana-developer-enablement-squad
