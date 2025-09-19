@@ -121,7 +121,6 @@ type APIBuilder struct {
 	extraWorkers []jobs.Worker
 
 	restConfigGetter func(context.Context) (*clientrest.Config, error)
-	registry         prometheus.Registerer
 }
 
 // NewAPIBuilder creates an API builder.
@@ -142,6 +141,7 @@ func NewAPIBuilder(
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
+	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
 	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 ) *APIBuilder {
@@ -171,6 +171,7 @@ func NewAPIBuilder(
 		jobHistoryConfig:    jobHistoryConfig,
 		extraWorkers:        extraWorkers,
 		allowedTargets:      allowedTargets,
+		restConfigGetter:    restConfigGetter,
 		allowImageRendering: allowImageRendering,
 	}
 
@@ -255,6 +256,7 @@ func RegisterAPIService(
 		extraWorkers,
 		createJobHistoryConfigFromSettings(cfg),
 		allowedTargets,
+		nil, // will use loopback instead
 		cfg.ProvisioningAllowImageRendering,
 		nil,
 	)
