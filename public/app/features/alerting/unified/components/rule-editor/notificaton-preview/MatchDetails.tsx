@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { LabelMatchDetails } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Text, useStyles2 } from '@grafana/ui';
+import { Box, Text, useStyles2 } from '@grafana/ui';
 
 import { labelMatcherToObjectMatcher } from '../../../utils/routeAdapter';
 import { Label } from '../../Label';
@@ -28,13 +28,13 @@ export function MatchDetails({ matchDetails, labels }: MatchDetailsProps) {
         </Text>
       ) : (
         matchingLabels.map((detail) => (
-          <div key={detail.labelIndex} className={styles.matchPill}>
+          <Box key={detail.labelIndex} display="flex" alignItems="center" gap={1}>
             <Label label={labels[detail.labelIndex][0]} value={labels[detail.labelIndex][1]} />
             <Text variant="bodySmall" color="secondary">
               <Trans i18nKey="alerting.match-details.matched">matched</Trans>
             </Text>
             {detail.matcher && <MatcherBadge matcher={labelMatcherToObjectMatcher(detail.matcher)} />}
-          </div>
+          </Box>
         ))
       )}
     </div>
@@ -53,10 +53,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     width: 'fit-content',
     alignSelf: 'center',
-  }),
-  matchPill: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
   }),
 });

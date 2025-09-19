@@ -51,6 +51,6 @@ export const encodeFieldSelector = (value: string): string => {
 };
 
 type FieldSelector = [string, string] | [string, string, '=' | '!='];
-export const createFieldSelector = (fieldSelectors: FieldSelector[]): string => {
+export const stringifyFieldSelector = (fieldSelectors: FieldSelector[]): string => {
   return fieldSelectors.map(([key, value, operator = '=']) => `${key}${operator}${value}`).join(',');
 };

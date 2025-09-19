@@ -1,25 +1,19 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Box, useStyles2 } from '@grafana/ui';
 
 export function ConnectionLine() {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.container}>
+    <Box display="flex" justifyContent="center" alignItems="center" height={4}>
       <div className={styles.line} />
-    </div>
+    </Box>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: theme.spacing(4),
-  }),
   line: css({
     width: '1px',
     height: '100%',

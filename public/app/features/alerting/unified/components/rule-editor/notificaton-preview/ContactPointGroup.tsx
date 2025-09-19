@@ -8,7 +8,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
-import { createFieldSelector } from '../../../utils/k8s/utils';
+import { stringifyFieldSelector } from '../../../utils/k8s/utils';
 import { createContactPointLink } from '../../../utils/misc';
 import { CollapseToggle } from '../../CollapseToggle';
 import { MetaText } from '../../MetaText';
@@ -24,7 +24,7 @@ interface ContactPointGroupProps extends PropsWithChildren {
 export function GrafanaContactPointGroup({ name, matchedInstancesCount, children }: ContactPointGroupProps) {
   // find receiver by name – since this is what we store in the alert rule definition
   const { data, isLoading } = alertingAPI.endpoints.listReceiver.useQuery({
-    fieldSelector: createFieldSelector([['spec.title', name]]),
+    fieldSelector: stringifyFieldSelector([['spec.title', name]]),
   });
 
   // grab the first result from the fieldSelector result

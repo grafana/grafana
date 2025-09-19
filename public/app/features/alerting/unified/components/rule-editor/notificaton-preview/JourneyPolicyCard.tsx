@@ -26,7 +26,7 @@ export function JourneyPolicyCard({ route, isRoot = false, isFinalRoute = false 
   const continueMatching = route.continue ?? false;
 
   return (
-    <div className={styles.policyWrapper(isFinalRoute)}>
+    <article className={styles.policyWrapper(isFinalRoute)} aria-current={isFinalRoute ? 'true' : 'false'}>
       {continueMatching && <ContinueMatchingIndicator />}
       <Stack direction="column" gap={0.5}>
         {/* root route indicator */}
@@ -55,7 +55,7 @@ export function JourneyPolicyCard({ route, isRoot = false, isFinalRoute = false 
           )}
         </Stack>
       </Stack>
-    </div>
+    </article>
   );
 }
 
