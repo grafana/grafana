@@ -116,6 +116,7 @@ describe('ProvisioningWizard', () => {
       data: {
         items: [],
         legacyStorage: false,
+        allowImageRendering: true,
         availableRepositoryTypes: ['github', 'gitlab', 'bitbucket', 'git', 'local'],
       },
       isLoading: false,
