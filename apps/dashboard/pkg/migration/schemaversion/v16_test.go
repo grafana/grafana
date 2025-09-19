@@ -189,12 +189,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        5, // Next ID after row panel (4)
-						"type":      "row",
-						"title":     "",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     5, // Next ID after row panel (4)
+						"type":   "row",
+						"title":  "",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 1,
@@ -260,12 +259,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        4, // Next ID after max panel ID (3)
-						"type":      "row",
-						"title":     "Row",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     4, // Next ID after max panel ID (3)
+						"type":   "row",
+						"title":  "Row",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 0,
@@ -283,12 +281,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        5, // Next ID after row panel (4)
-						"type":      "row",
-						"title":     "",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     5, // Next ID after row panel (4)
+						"type":   "row",
+						"title":  "",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 9,
@@ -391,12 +388,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        8,
-						"type":      "row",
-						"title":     "",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     8,
+						"type":   "row",
+						"title":  "",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 1,
@@ -433,12 +429,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        9,
-						"type":      "row",
-						"title":     "",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     9,
+						"type":   "row",
+						"title":  "",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 10,
@@ -552,12 +547,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        5, // Next ID after row panel (4)
-						"type":      "row",
-						"title":     "",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     5, // Next ID after row panel (4)
+						"type":   "row",
+						"title":  "",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 1,
@@ -1230,12 +1224,11 @@ func TestV16(t *testing.T) {
 					},
 					// Repeated row panel (comes after its panels)
 					map[string]interface{}{
-						"id":        3,
-						"type":      "row",
-						"title":     "Row",
-						"collapsed": false,
-						"repeat":    "server",
-						"panels":    []interface{}{},
+						"id":     3,
+						"type":   "row",
+						"title":  "Row",
+						"repeat": "server",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 0,
@@ -1255,12 +1248,11 @@ func TestV16(t *testing.T) {
 					},
 					// Second row panel (comes after its panels)
 					map[string]interface{}{
-						"id":        4,
-						"type":      "row",
-						"title":     "",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     4,
+						"type":   "row",
+						"title":  "",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 9,
@@ -1316,12 +1308,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        3, // Next ID after max panel ID (2)
-						"type":      "row",
-						"title":     "Row1",
-						"collapsed": false,
-						"repeat":    "server",
-						"panels":    []interface{}{},
+						"id":     3, // Next ID after max panel ID (2)
+						"type":   "row",
+						"title":  "Row1",
+						"repeat": "server",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 0,
