@@ -3521,11 +3521,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.35.3":
-  version: 6.35.3
-  resolution: "@grafana/scenes-react@npm:6.35.3"
+"@grafana/scenes-react@npm:6.38.0":
+  version: 6.38.0
+  resolution: "@grafana/scenes-react@npm:6.38.0"
   dependencies:
-    "@grafana/scenes": "npm:6.35.3"
+    "@grafana/scenes": "npm:6.38.0"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3537,13 +3537,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/2c220eef6aa8560d073a27a02918b4bbf4d0cffee273ff597e94eb4376e75d0e47fcdaa2cd1ca8ea851c29477722dec2e2d2f817f2c5c185151de2051c5e2ab7
+  checksum: 10/7b38553f1950f6592eb24878061cc7c45fc2aa1776c4b1cd521c6995d11f8beb0b2b275afda0ebf0ec19b7f7c79b77126caad4843bc9a75bd09881645e882c91
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.35.3":
-  version: 6.35.3
-  resolution: "@grafana/scenes@npm:6.35.3"
+"@grafana/scenes@npm:6.38.0":
+  version: 6.38.0
+  resolution: "@grafana/scenes@npm:6.38.0"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3563,7 +3563,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/a209e6a1cbe6c4e70c2cd8c413df2560a59b157944888e317385f19e43e23ff826d84c922618b1268a7085278aca45a369c8f6255bf70a06134622c6ef2a542e
+  checksum: 10/9372896e76271becb80e4a8691d8c51bc3b54b54d98c82f2953134f407a7370dc66a3e8afaa508003147e2f1b5b08d0ddbb6b1616a3a3ab3f7ad69fb941dd998
   languageName: node
   linkType: hard
 
@@ -18199,8 +18199,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.10.10"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.35.3"
-    "@grafana/scenes-react": "npm:6.35.3"
+    "@grafana/scenes": "npm:6.38.0"
+    "@grafana/scenes-react": "npm:6.38.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
