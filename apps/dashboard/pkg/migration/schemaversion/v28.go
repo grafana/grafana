@@ -356,25 +356,12 @@ func applyCommonAngularMigration(panel map[string]interface{}, defaults map[stri
 
 	// Migrate color configuration
 	// Based on statPanelChangedHandler lines ~25-38: colorBackground and colorValue migration
-	if colorBackground, ok := angularOpts["colorBackground"].(bool); ok && colorBackground {
-		options["colorMode"] = "background"
-	} else if colorValue, ok := angularOpts["colorValue"].(bool); ok && colorValue {
-		options["colorMode"] = "value"
-	} else {
-		options["colorMode"] = "none"
+	colorMode := determineColorMode(angularOpts)
+	options["colorMode"] = colorMode
 
-		// Sparkline color migration only happens when colorMode is "none"
-		// Based on statPanelChangedHandler lines 31-38
-		if sparkline, ok := angularOpts["sparkline"].(map[string]interface{}); ok {
-			if show, ok := sparkline["show"].(bool); ok && show && options["graphMode"] == "area" {
-				if lineColor, ok := sparkline["lineColor"].(string); ok {
-					defaults["color"] = map[string]interface{}{
-						"mode":       "fixed",
-						"fixedColor": lineColor,
-					}
-				}
-			}
-		}
+	// Sparkline color migration only happens when colorMode is "none"
+	if colorMode == "none" {
+		migrateSparklineColor(angularOpts, defaults, options)
 	}
 
 	// Migrate text mode
@@ -854,5 +841,47 @@ func removeDeprecatedVariableProperties(variable map[string]interface{}) {
 		if val, ok := useTags.(bool); ok && val {
 			delete(variable, "useTags")
 		}
+	}
+}
+
+// determineColorMode determines the color mode based on angular options
+func determineColorMode(angularOpts map[string]interface{}) string {
+	if colorBackground, ok := angularOpts["colorBackground"].(bool); ok && colorBackground {
+		return "background"
+	}
+
+	if colorValue, ok := angularOpts["colorValue"].(bool); ok && colorValue {
+		return "value"
+	}
+
+	return "none"
+}
+
+// migrateSparklineColor migrates sparkline color configuration when colorMode is "none"
+// Based on statPanelChangedHandler lines 31-38
+func migrateSparklineColor(angularOpts map[string]interface{}, defaults map[string]interface{}, options map[string]interface{}) {
+	sparkline, ok := angularOpts["sparkline"].(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	show, ok := sparkline["show"].(bool)
+	if !ok || !show {
+		return
+	}
+
+	graphMode, ok := options["graphMode"].(string)
+	if !ok || graphMode != "area" {
+		return
+	}
+
+	lineColor, ok := sparkline["lineColor"].(string)
+	if !ok {
+		return
+	}
+
+	defaults["color"] = map[string]interface{}{
+		"mode":       "fixed",
+		"fixedColor": lineColor,
 	}
 }
