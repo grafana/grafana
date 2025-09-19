@@ -105,7 +105,11 @@ func (c *jobsConnector) Connect(
 		cfg := repo.Config()
 
 		if cfg.DeletionTimestamp != nil && !cfg.DeletionTimestamp.IsZero() {
-			responder.Error(apierrors.NewBadRequest("cannot create jobs for a repository marked for deletion"))
+			responder.Error(apierrors.NewConflict(
+				provisioning.RepositoryResourceInfo.GroupResource(),
+				"cannot create jobs for a repository marked for deletion",
+				fmt.Errorf("cannot create jobs for a repository marked for deletion"),
+			))
 			return
 		}
 

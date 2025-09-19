@@ -39,8 +39,8 @@ type queueItem struct {
 	attempts int
 }
 
-//go:generate mockery --name Finalizer --structname MockFinalizer --inpackage --filename finalizer_mock.go --with-expecter
-type Finalizer interface {
+//go:generate mockery --name finalizerProcessor --structname MockFinalizerProcessor --inpackage --filename finalizer_mock.go --with-expecter
+type finalizerProcessor interface {
 	process(ctx context.Context, repo repository.Repository, finalizers []string) error
 }
 
@@ -53,7 +53,7 @@ type RepositoryController struct {
 	dualwrite  dualwrite.Service
 
 	jobs          jobs.Queue
-	finalizer     Finalizer
+	finalizer     finalizerProcessor
 	statusPatcher StatusPatcher
 
 	repoFactory   repository.Factory

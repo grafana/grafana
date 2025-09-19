@@ -278,7 +278,7 @@ func (r *githubWebhookRepository) deleteWebhook(ctx context.Context) error {
 		return fmt.Errorf("delete webhook: %w", err)
 	}
 	if errors.Is(err, ErrResourceNotFound) {
-		logger.Debug("webhook already deleted", "url", r.config.Status.Webhook.URL, "id", id)
+		logger.Info("webhook does not exist", "url", r.config.Status.Webhook.URL, "id", id)
 		return nil
 	}
 

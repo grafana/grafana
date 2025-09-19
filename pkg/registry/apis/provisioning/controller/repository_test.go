@@ -100,7 +100,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 	testCases := []struct {
 		name        string
 		repoFactory repository.Factory
-		finalizer   Finalizer
+		finalizer   finalizerProcessor
 		client      client.ProvisioningV0alpha1Interface
 		repo        *provisioning.Repository
 		expectedErr string
@@ -128,8 +128,8 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 
 				return f
 			}(),
-			finalizer: func() Finalizer {
-				f := NewMockFinalizer(t)
+			finalizer: func() finalizerProcessor {
+				f := NewMockFinalizerProcessor(t)
 
 				f.
 					On("process", context.Background(), nil, []string{
@@ -197,8 +197,8 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 
 				return f
 			}(),
-			finalizer: func() Finalizer {
-				f := NewMockFinalizer(t)
+			finalizer: func() finalizerProcessor {
+				f := NewMockFinalizerProcessor(t)
 
 				f.
 					On("process", context.Background(), nil, []string{
@@ -231,8 +231,8 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 
 				return f
 			}(),
-			finalizer: func() Finalizer {
-				f := NewMockFinalizer(t)
+			finalizer: func() finalizerProcessor {
+				f := NewMockFinalizerProcessor(t)
 
 				f.
 					On("process", context.Background(), nil, []string{

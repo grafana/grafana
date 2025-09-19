@@ -287,6 +287,7 @@ func (d *jobDriver) processJob(ctx context.Context, job *provisioning.Job, recor
 			logger.Info("repository is marked for deletion, skipping processing job",
 				"name", r.Name,
 				"namespace", r.Namespace,
+				"deletionTimestamp", r.DeletionTimestamp,
 			)
 			return nil
 		}
