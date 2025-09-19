@@ -101,12 +101,11 @@ func migrateMinSpanToMaxPerRow(panel map[string]interface{}) {
 	} else if factorIndex == 0 {
 		// If the first factor is already greater than max, use 1
 		panel["maxPerRow"] = 1
-	} else {
-		// If no factor is greater than max, don't set maxPerRow
-		// This matches frontend behavior when findIndex returns -1
-		// The frontend sets maxPerRow to undefined, which gets filtered out
-		// So we don't set it at all
 	}
+	// If no factor is greater than max, don't set maxPerRow
+	// This matches frontend behavior when findIndex returns -1
+	// The frontend sets maxPerRow to undefined, which gets filtered out
+	// So we don't set it at all
 
 	// Remove the minSpan property
 	delete(panel, "minSpan")

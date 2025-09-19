@@ -165,7 +165,7 @@ func testMigrationUnified(t *testing.T, dash map[string]interface{}, inputFileNa
 	if _, err := os.Stat(outPath); os.IsNotExist(err) {
 		// 7a. If no existing file, create a new one (ensure directory exists first)
 		outDir := filepath.Dir(outPath)
-		err = os.MkdirAll(outDir, 0755)
+		err = os.MkdirAll(outDir, 0750)
 		require.NoError(t, err, "failed to create output directory %s", outDir)
 
 		err = os.WriteFile(outPath, outBytes, 0644)

@@ -13,13 +13,6 @@ func copyMap(src map[string]interface{}) map[string]interface{} {
 	return dst
 }
 
-// assertPropertyExists checks that a property exists in the map
-func assertPropertyExists(t *testing.T, obj map[string]interface{}, key string) {
-	if _, exists := obj[key]; !exists {
-		t.Errorf("Property %s should exist but is missing", key)
-	}
-}
-
 // assertPropertyRemoved checks that a property has been removed from the map
 func assertPropertyRemoved(t *testing.T, obj map[string]interface{}, key string) {
 	if _, exists := obj[key]; exists {

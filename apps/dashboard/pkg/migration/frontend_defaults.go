@@ -533,7 +533,7 @@ func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool)
 
 	// Remove empty transformations array unless nested panel had them originally
 	if transformations, ok := panel["transformations"].([]interface{}); ok && len(transformations) == 0 {
-		if !(panel["_originallyHadTransformations"] == true && isNested) {
+		if panel["_originallyHadTransformations"] != true || !isNested {
 			delete(panel, "transformations")
 		}
 	}
@@ -625,7 +625,6 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 			// Remove properties that frontend considers as defaults and omits
 			cleanupFieldConfigDefaults(defaults, panel)
 		}
-
 	}
 }
 
