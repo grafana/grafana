@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { Column, SortDirection } from 'react-data-grid';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { getFieldTypeIcon } from '../../../../types/icon';
@@ -55,7 +56,12 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
       {showTypeIcons && (
         <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
       )}
-      <span className={styles.headerCellLabel}>{getDisplayName(field)}</span>
+      <span
+        data-testid={selectors.components.Panels.Visualization.TableNG.ColumnHeader}
+        className={styles.headerCellLabel}
+      >
+        {getDisplayName(field)}
+      </span>
       {direction && (
         <Icon
           className={cx(styles.headerCellIcon, styles.headerSortIcon)}

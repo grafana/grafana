@@ -3,7 +3,7 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": { "type": "datasource", "uid": "grafana" },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -13,76 +13,123 @@
     ]
   },
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "id": 42,
   "links": [],
   "panels": [
     {
-      "columns": [],
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
-      "fontSize": "100%",
-      "gridPos": {
-        "h": 11,
-        "w": 12,
-        "x": 0,
-        "y": 0
-      },
-      "id": 3,
-      "links": [],
-      "pageSize": 10,
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
-      },
-      "styles": [
-        {
-          "alias": "Time",
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "pattern": "Time",
-          "type": "date"
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "PD8C576611E62080A" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "footer": { "reducers": [] },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "red", "value": 80 }
+            ]
+          }
         },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 7,
+      "options": { "cellHeight": "sm", "showHeader": true },
+      "pluginVersion": "11.5.0-pre",
+      "targets": [
         {
-          "alias": "",
-          "colorMode": "cell",
-          "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "ColorCell",
-          "thresholds": ["5", "10"],
-          "type": "number",
-          "unit": "currencyUSD"
-        },
-        {
-          "alias": "",
-          "colorMode": "value",
-          "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "ColorValue",
-          "thresholds": ["5", "10"],
-          "type": "number",
-          "unit": "Bps"
-        },
-        {
-          "alias": "",
-          "colorMode": null,
-          "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-          "decimals": 2,
-          "pattern": "/.*/",
-          "thresholds": [],
-          "type": "number",
-          "unit": "short"
+          "csvContent": "Metric,Value,Stat\ncpu,20,average\ndropped_bytes,10,mean\ncpu_utilization,70,mean\n\n",
+          "refId": "A",
+          "scenarioId": "csv_content"
         }
       ],
+      "title": "New panel",
+      "type": "table"
+    },
+    {
+      "datasource": { "type": "grafana-testdata-datasource" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "cellOptions": { "type": "auto" }, "footer": { "reducers": [] }, "inspect": false },
+          "decimals": 2,
+          "displayName": "",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "red", "value": 80 }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Time" },
+            "properties": [
+              { "id": "displayName", "value": "Time" },
+              { "id": "unit", "value": "time: YYYY-MM-DD HH:mm:ss" },
+              { "id": "custom.align" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "ColorCell" },
+            "properties": [
+              { "id": "unit", "value": "currencyUSD" },
+              { "id": "decimals", "value": 2 },
+              { "id": "custom.cellOptions", "value": { "type": "color-background" } },
+              { "id": "custom.align" },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "rgba(245, 54, 54, 0.9)", "value": 0 },
+                    { "color": "rgba(237, 129, 40, 0.89)", "value": 5 },
+                    { "color": "rgba(50, 172, 45, 0.97)", "value": 10 }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "ColorValue" },
+            "properties": [
+              { "id": "unit", "value": "Bps" },
+              { "id": "decimals", "value": 2 },
+              { "id": "custom.cellOptions", "value": { "type": "color-text" } },
+              { "id": "custom.align" },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "rgba(245, 54, 54, 0.9)", "value": 0 },
+                    { "color": "rgba(237, 129, 40, 0.89)", "value": 5 },
+                    { "color": "rgba(50, 172, 45, 0.97)", "value": 10 }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 11, "w": 12, "x": 0, "y": 0 },
+      "id": 3,
+      "options": { "cellHeight": "sm", "showHeader": true },
+      "pluginVersion": "11.5.0-pre",
       "targets": [
         {
           "alias": "server1",
+          "datasource": { "type": "grafana-testdata-datasource" },
           "expr": "",
           "format": "table",
           "intervalFactor": 1,
@@ -92,94 +139,92 @@
         },
         {
           "alias": "server2",
+          "datasource": { "type": "grafana-testdata-datasource" },
           "refId": "B",
           "scenarioId": "csv_metric_values",
           "stringInput": "1,20,90,30,5,0"
         }
       ],
       "title": "Time series to rows (2 pages)",
-      "transform": "timeseries_to_rows",
+      "transformations": [{ "id": "seriesToRows", "options": { "reducers": [] } }],
       "type": "table"
     },
     {
-      "columns": [
-        {
-          "text": "Avg",
-          "value": "avg"
-        },
-        {
-          "text": "Max",
-          "value": "max"
-        },
-        {
-          "text": "Current",
-          "value": "current"
-        }
-      ],
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
-      "fontSize": "100%",
-      "gridPos": {
-        "h": 11,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
-      "id": 4,
-      "links": [],
-      "pageSize": 10,
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
-      },
-      "styles": [
-        {
-          "alias": "Time",
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "pattern": "Time",
-          "type": "date"
-        },
-        {
-          "alias": "",
-          "colorMode": "cell",
-          "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+      "datasource": { "type": "grafana-testdata-datasource" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "cellOptions": { "type": "auto" }, "footer": { "reducers": [] }, "inspect": false },
           "decimals": 2,
-          "mappingType": 1,
-          "pattern": "ColorCell",
-          "thresholds": ["5", "10"],
-          "type": "number",
-          "unit": "currencyUSD"
-        },
-        {
-          "alias": "",
-          "colorMode": "value",
-          "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "ColorValue",
-          "thresholds": ["5", "10"],
-          "type": "number",
-          "unit": "Bps"
-        },
-        {
-          "alias": "",
-          "colorMode": null,
-          "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-          "decimals": 2,
-          "pattern": "/.*/",
-          "thresholds": [],
-          "type": "number",
+          "displayName": "",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "red", "value": 80 }
+            ]
+          },
           "unit": "short"
-        }
-      ],
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Time" },
+            "properties": [
+              { "id": "displayName", "value": "Time" },
+              { "id": "unit", "value": "time: YYYY-MM-DD HH:mm:ss" },
+              { "id": "custom.align" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "ColorCell" },
+            "properties": [
+              { "id": "unit", "value": "currencyUSD" },
+              { "id": "decimals", "value": 2 },
+              { "id": "custom.cellOptions", "value": { "type": "color-background" } },
+              { "id": "custom.align" },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "rgba(245, 54, 54, 0.9)", "value": 0 },
+                    { "color": "rgba(237, 129, 40, 0.89)", "value": 5 },
+                    { "color": "rgba(50, 172, 45, 0.97)", "value": 10 }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "ColorValue" },
+            "properties": [
+              { "id": "unit", "value": "Bps" },
+              { "id": "decimals", "value": 2 },
+              { "id": "custom.cellOptions", "value": { "type": "color-text" } },
+              { "id": "custom.align" },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "rgba(245, 54, 54, 0.9)", "value": 0 },
+                    { "color": "rgba(237, 129, 40, 0.89)", "value": 5 },
+                    { "color": "rgba(50, 172, 45, 0.97)", "value": 10 }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 11, "w": 12, "x": 12, "y": 0 },
+      "id": 4,
+      "options": { "cellHeight": "sm", "showHeader": true },
+      "pluginVersion": "11.5.0-pre",
       "targets": [
         {
           "alias": "server1",
+          "datasource": { "type": "grafana-testdata-datasource" },
           "expr": "",
           "format": "table",
           "intervalFactor": 1,
@@ -189,69 +234,74 @@
         },
         {
           "alias": "server2",
+          "datasource": { "type": "grafana-testdata-datasource" },
           "refId": "B",
           "scenarioId": "csv_metric_values",
           "stringInput": "1,20,90,30,5,0"
         }
       ],
       "title": "Time series aggregations",
-      "transform": "timeseries_aggregations",
+      "transformations": [
+        { "id": "reduce", "options": { "includeTimeField": false, "reducers": ["mean", "max", "lastNotNull"] } }
+      ],
       "type": "table"
     },
     {
-      "columns": [],
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
-      "fontSize": "100%",
-      "gridPos": {
-        "h": 7,
-        "w": 24,
-        "x": 0,
-        "y": 11
-      },
-      "id": 5,
-      "links": [],
-      "pageSize": null,
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
-      },
-      "styles": [
-        {
-          "alias": "Time",
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "pattern": "Time",
-          "type": "date"
-        },
-        {
-          "alias": "",
-          "colorMode": "row",
-          "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+      "datasource": { "type": "grafana-testdata-datasource" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "cellOptions": { "type": "auto" }, "footer": { "reducers": [] }, "inspect": false },
           "decimals": 2,
-          "mappingType": 1,
-          "pattern": "/Color/",
-          "thresholds": ["5", "10"],
-          "type": "number",
-          "unit": "currencyUSD"
-        },
-        {
-          "alias": "",
-          "colorMode": null,
-          "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-          "decimals": 2,
-          "pattern": "/.*/",
-          "thresholds": [],
-          "type": "number",
+          "displayName": "",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "red", "value": 80 }
+            ]
+          },
           "unit": "short"
-        }
-      ],
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Time" },
+            "properties": [
+              { "id": "displayName", "value": "Time" },
+              { "id": "unit", "value": "time: YYYY-MM-DD HH:mm:ss" },
+              { "id": "custom.align" }
+            ]
+          },
+          {
+            "matcher": { "id": "byRegexp", "options": "/Color/" },
+            "properties": [
+              { "id": "unit", "value": "currencyUSD" },
+              { "id": "decimals", "value": 2 },
+              { "id": "custom.cellOptions", "value": { "type": "color-background" } },
+              { "id": "custom.align" },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "rgba(245, 54, 54, 0.9)", "value": 0 },
+                    { "color": "rgba(237, 129, 40, 0.89)", "value": 5 },
+                    { "color": "rgba(50, 172, 45, 0.97)", "value": 10 }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 11 },
+      "id": 5,
+      "options": { "cellHeight": "sm", "showHeader": true },
+      "pluginVersion": "11.5.0-pre",
       "targets": [
         {
           "alias": "ColorValue",
+          "datasource": { "type": "grafana-testdata-datasource" },
           "expr": "",
           "format": "table",
           "intervalFactor": 1,
@@ -261,75 +311,85 @@
         }
       ],
       "title": "color row by threshold",
-      "transform": "timeseries_to_columns",
+      "transformations": [{ "id": "seriesToColumns", "options": { "reducers": [] } }],
       "type": "table"
     },
     {
-      "columns": [],
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
-      "fontSize": "100%",
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 18
-      },
-      "id": 2,
-      "links": [],
-      "pageSize": null,
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
-      },
-      "styles": [
-        {
-          "alias": "Time",
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "pattern": "Time",
-          "type": "date"
-        },
-        {
-          "alias": "",
-          "colorMode": "cell",
-          "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+      "datasource": { "type": "grafana-testdata-datasource" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "cellOptions": { "type": "auto" }, "footer": { "reducers": [] }, "inspect": false },
           "decimals": 2,
-          "mappingType": 1,
-          "pattern": "ColorCell",
-          "thresholds": ["5", "10"],
-          "type": "number",
-          "unit": "currencyUSD"
-        },
-        {
-          "alias": "",
-          "colorMode": "value",
-          "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "ColorValue",
-          "thresholds": ["5", "10"],
-          "type": "number",
-          "unit": "Bps"
-        },
-        {
-          "alias": "",
-          "colorMode": null,
-          "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-          "decimals": 2,
-          "pattern": "/.*/",
-          "thresholds": [],
-          "type": "number",
+          "displayName": "",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "red", "value": 80 }
+            ]
+          },
           "unit": "short"
-        }
-      ],
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Time" },
+            "properties": [
+              { "id": "displayName", "value": "Time" },
+              { "id": "unit", "value": "time: YYYY-MM-DD HH:mm:ss" },
+              { "id": "custom.align" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "ColorCell" },
+            "properties": [
+              { "id": "unit", "value": "currencyUSD" },
+              { "id": "decimals", "value": 2 },
+              { "id": "custom.cellOptions", "value": { "type": "color-background" } },
+              { "id": "custom.align" },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "rgba(245, 54, 54, 0.9)", "value": 0 },
+                    { "color": "rgba(237, 129, 40, 0.89)", "value": 5 },
+                    { "color": "rgba(50, 172, 45, 0.97)", "value": 10 }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "ColorValue" },
+            "properties": [
+              { "id": "unit", "value": "Bps" },
+              { "id": "decimals", "value": 2 },
+              { "id": "custom.cellOptions", "value": { "type": "color-text" } },
+              { "id": "custom.align" },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "rgba(245, 54, 54, 0.9)", "value": 0 },
+                    { "color": "rgba(237, 129, 40, 0.89)", "value": 5 },
+                    { "color": "rgba(50, 172, 45, 0.97)", "value": 10 }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 18 },
+      "id": 2,
+      "options": { "cellHeight": "sm", "showHeader": true },
+      "pluginVersion": "11.5.0-pre",
       "targets": [
         {
           "alias": "ColorValue",
+          "datasource": { "type": "grafana-testdata-datasource" },
           "expr": "",
           "format": "table",
           "intervalFactor": 1,
@@ -339,87 +399,94 @@
         },
         {
           "alias": "ColorCell",
+          "datasource": { "type": "grafana-testdata-datasource" },
           "refId": "B",
           "scenarioId": "csv_metric_values",
           "stringInput": "5,1,2,3,4,5,10,20"
         }
       ],
       "title": "Column style thresholds & units",
-      "transform": "timeseries_to_columns",
+      "transformations": [{ "id": "seriesToColumns", "options": { "reducers": [] } }],
       "type": "table"
     },
     {
-      "columns": [],
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
-      "fontSize": "100%",
-      "gridPos": {
-        "h": 10,
-        "w": 24,
-        "x": 0,
-        "y": 26
-      },
-      "id": 6,
-      "links": [],
-      "pageSize": 20,
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
-      },
-      "styles": [
-        {
-          "alias": "Time",
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "pattern": "Time",
-          "type": "date"
-        },
-        {
-          "alias": "",
-          "colorMode": "cell",
-          "colors": ["rgba(245, 54, 54, 0.5)", "rgba(237, 129, 40, 0.5)", "rgba(50, 172, 45, 0.5)"],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+      "datasource": { "type": "grafana-testdata-datasource" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "cellOptions": { "type": "auto" }, "footer": { "reducers": [] }, "inspect": false },
           "decimals": 2,
-          "link": true,
-          "linkTargetBlank": true,
-          "linkTooltip": "",
-          "linkUrl": "http://www.grafana.com",
-          "mappingType": 1,
-          "pattern": "ColorCell",
-          "thresholds": ["5", "10"],
-          "type": "number",
-          "unit": "currencyUSD"
-        },
-        {
-          "alias": "",
-          "colorMode": "value",
-          "colors": ["rgba(245, 54, 54, 0.5)", "rgba(237, 129, 40, 0.5)", "rgba(50, 172, 45, 0.5)"],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "link": true,
-          "linkUrl": "http://www.grafana.com",
-          "mappingType": 1,
-          "pattern": "ColorValue",
-          "thresholds": ["5", "10"],
-          "type": "number",
-          "unit": "Bps"
-        },
-        {
-          "alias": "",
-          "colorMode": null,
-          "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-          "decimals": 2,
-          "pattern": "/.*/",
-          "thresholds": [],
-          "type": "number",
+          "displayName": "",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "red", "value": 80 }
+            ]
+          },
           "unit": "short"
-        }
-      ],
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Time" },
+            "properties": [
+              { "id": "displayName", "value": "Time" },
+              { "id": "unit", "value": "time: YYYY-MM-DD HH:mm:ss" },
+              { "id": "custom.align" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "ColorCell" },
+            "properties": [
+              { "id": "unit", "value": "currencyUSD" },
+              { "id": "decimals", "value": 2 },
+              { "id": "links", "value": [{ "targetBlank": true, "title": "", "url": "http://www.grafana.com" }] },
+              { "id": "custom.cellOptions", "value": { "type": "color-background" } },
+              { "id": "custom.align" },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "rgba(245, 54, 54, 0.5)", "value": 0 },
+                    { "color": "rgba(237, 129, 40, 0.5)", "value": 5 },
+                    { "color": "rgba(50, 172, 45, 0.5)", "value": 10 }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "ColorValue" },
+            "properties": [
+              { "id": "unit", "value": "Bps" },
+              { "id": "decimals", "value": 2 },
+              { "id": "links", "value": [{ "targetBlank": false, "title": "", "url": "http://www.grafana.com" }] },
+              { "id": "custom.cellOptions", "value": { "type": "color-text" } },
+              { "id": "custom.align" },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "rgba(245, 54, 54, 0.5)", "value": 0 },
+                    { "color": "rgba(237, 129, 40, 0.5)", "value": 5 },
+                    { "color": "rgba(50, 172, 45, 0.5)", "value": 10 }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 26 },
+      "id": 6,
+      "options": { "cellHeight": "sm", "showHeader": true },
+      "pluginVersion": "11.5.0-pre",
       "targets": [
         {
           "alias": "ColorValue",
+          "datasource": { "type": "grafana-testdata-datasource" },
           "expr": "",
           "format": "table",
           "intervalFactor": 1,
@@ -429,31 +496,26 @@
         },
         {
           "alias": "ColorCell",
+          "datasource": { "type": "grafana-testdata-datasource" },
           "refId": "B",
           "scenarioId": "csv_metric_values",
           "stringInput": "null,5,1,2,3,4,5,10,20"
         }
       ],
       "title": "Column style thresholds and links",
-      "transform": "timeseries_to_columns",
+      "transformations": [{ "id": "seriesToColumns", "options": { "reducers": [] } }],
       "type": "table"
     }
   ],
+  "preload": false,
   "refresh": false,
-  "schemaVersion": 16,
+  "schemaVersion": 42,
   "tags": ["gdev", "panel-tests", "table"],
-  "templating": {
-    "list": []
-  },
-  "time": {
-    "from": "now-1h",
-    "to": "now"
-  },
-  "timepicker": {
-    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
-  },
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
   "timezone": "browser",
   "title": "Panel Tests - Table",
   "uid": "pttable",
-  "version": 3
+  "version": 1
 }
