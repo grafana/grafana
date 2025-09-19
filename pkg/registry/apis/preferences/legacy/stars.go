@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -14,9 +15,12 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/utils/ptr"
 
+	apiserrors "k8s.io/apimachinery/pkg/api/errors"
+
 	authlib "github.com/grafana/authlib/types"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -126,19 +130,45 @@ func (s *DashboardStarsStorage) Get(ctx context.Context, name string, options *m
 	}
 
 	found, _, err := s.sql.GetStars(ctx, ns.OrgID, owner.Name)
-	if err != nil || len(found) == 0 {
+	if err != nil {
 		return nil, err
+	}
+	if len(found) == 0 || len(found[0].Dashboards) == 0 {
+		return nil, apiserrors.NewNotFound(preferences.StarsResourceInfo.GroupResource(), name)
 	}
 	obj := asStarsResource(ns.Value, &found[0])
 	return &obj, nil
 }
 
-func (s *DashboardStarsStorage) StarDashboard(ctx context.Context, name string, uid string) (runtime.Object, error) {
-	return nil, fmt.Errorf("TODO")
+func (s *DashboardStarsStorage) StarDashboard(ctx context.Context, user identity.Requester, uid string) (runtime.Object, error) {
+	id, err := user.GetInternalID()
+	if err != nil {
+		return nil, err
+	}
+	if err = s.stars.Add(ctx, &star.StarDashboardCommand{
+		UserID:       id,
+		OrgID:        user.GetOrgID(),
+		DashboardUID: uid,
+		Updated:      time.Now(),
+	}); err != nil {
+		return nil, err
+	}
+	return &metav1.Status{Code: http.StatusOK, Message: "added star"}, nil
 }
 
-func (s *DashboardStarsStorage) UnstarDashboard(ctx context.Context, name string, uid string) (runtime.Object, error) {
-	return nil, fmt.Errorf("TODO")
+func (s *DashboardStarsStorage) UnstarDashboard(ctx context.Context, user identity.Requester, uid string) (runtime.Object, error) {
+	id, err := user.GetInternalID()
+	if err != nil {
+		return nil, err
+	}
+	if err = s.stars.Delete(ctx, &star.UnstarDashboardCommand{
+		UserID:       id,
+		OrgID:        user.GetOrgID(),
+		DashboardUID: uid,
+	}); err != nil {
+		return nil, err
+	}
+	return &metav1.Status{Code: http.StatusOK, Message: "removed star"}, nil
 }
 
 func getDashboardStars(stars *preferences.Stars) []string {

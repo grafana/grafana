@@ -11,7 +11,9 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 )
 
 type starItem struct {
@@ -33,8 +35,7 @@ func (r *starsREST) New() runtime.Object {
 	return &preferences.Stars{}
 }
 
-func (r *starsREST) Destroy() {
-}
+func (r *starsREST) Destroy() {}
 
 func (r *starsREST) ConnectMethods() []string {
 	return []string{"PUT", "DELETE"}
@@ -53,6 +54,18 @@ func (r *starsREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("must be logged in")
+	}
+	parsed, found := utils.ParseOwnerFromName(name)
+	if !found || parsed.Owner != utils.UserResourceOwner {
+		return nil, fmt.Errorf("only works with user stars")
+	}
+	if user.GetIdentifier() != parsed.Name {
+		return nil, fmt.Errorf("must request as the given user")
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		item, err := itemFromPath(req.URL.Path, fmt.Sprintf("/%s/write", name))
 		if err != nil {
@@ -68,9 +81,9 @@ func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, 
 		var obj runtime.Object
 		switch req.Method {
 		case "DELETE":
-			obj, err = r.store.UnstarDashboard(ctx, name, item.id)
+			obj, err = r.store.UnstarDashboard(ctx, user, item.id)
 		case "PUT":
-			obj, err = r.store.StarDashboard(ctx, name, item.id)
+			obj, err = r.store.StarDashboard(ctx, user, item.id)
 		default:
 			err = fmt.Errorf("unsupported method")
 		}
