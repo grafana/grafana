@@ -167,6 +167,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		// FIXME: this shouldn't be here in provisioning but at the dual writer or something about the storage
 		LegacyStorage:            legacyStorage,
 		AvailableRepositoryTypes: b.repoFactory.Types(),
+		AllowImageRendering:      b.allowImageRendering,
 	}
 
 	for i, val := range all {
