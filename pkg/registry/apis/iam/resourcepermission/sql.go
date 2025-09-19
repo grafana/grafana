@@ -510,6 +510,16 @@ func validateCreateAndUpdateInput(v0ResourcePerm *v0alpha1.ResourcePermission, g
 		return fmt.Errorf("resource permission name does not match spec: %w", errInvalidSpec)
 	}
 
+	// Check for duplicate entities (same kind and name should appear only once)
+	seen := make(map[string]bool)
+	for _, perm := range v0ResourcePerm.Spec.Permissions {
+		key := fmt.Sprintf("%s:%s", perm.Kind, perm.Name)
+		if seen[key] {
+			return fmt.Errorf("duplicate entity found: kind=%s, name=%s (each entity can only appear once per resource): %w", perm.Kind, perm.Name, errInvalidSpec)
+		}
+		seen[key] = true
+	}
+
 	return nil
 }
 
