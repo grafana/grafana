@@ -23,7 +23,6 @@ export interface Props {
   headerDataTestId?: string;
   contentDataTestId?: string;
   unmountContentWhenClosed?: boolean;
-  endHeaderContent?: ReactNode;
 }
 
 export const CollapsableSection = ({
@@ -38,7 +37,6 @@ export const CollapsableSection = ({
   headerDataTestId,
   contentDataTestId,
   unmountContentWhenClosed = true,
-  endHeaderContent,
 }: Props) => {
   const [internalOpenState, toggleInternalOpenState] = useState<boolean>(isOpen);
   const styles = useStyles2(collapsableSectionStyles);
@@ -82,27 +80,24 @@ export const CollapsableSection = ({
       {/* this is just to provide a better experience for mouse users */}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div onClick={onClick} className={cx(styles.header, className)}>
-        <div className={styles.leftHeaderContent}>
-          <button
-            type="button"
-            id={`collapse-button-${id}`}
-            className={styles.button}
-            onClick={onClick}
-            aria-expanded={isSectionOpen && !loading}
-            aria-controls={`collapse-content-${id}`}
-            aria-labelledby={buttonLabelId}
-          >
-            {loading ? (
-              <Spinner className={styles.spinner} />
-            ) : (
-              <Icon name={isSectionOpen ? 'angle-down' : 'angle-right'} className={styles.icon} />
-            )}
-          </button>
-          <div className={styles.label} id={`collapse-label-${id}`} data-testid={headerDataTestId}>
-            {label}
-          </div>
+        <button
+          type="button"
+          id={`collapse-button-${id}`}
+          className={styles.button}
+          onClick={onClick}
+          aria-expanded={isSectionOpen && !loading}
+          aria-controls={`collapse-content-${id}`}
+          aria-labelledby={buttonLabelId}
+        >
+          {loading ? (
+            <Spinner className={styles.spinner} />
+          ) : (
+            <Icon name={isSectionOpen ? 'angle-down' : 'angle-right'} className={styles.icon} />
+          )}
+        </button>
+        <div className={styles.label} id={`collapse-label-${id}`} data-testid={headerDataTestId}>
+          {label}
         </div>
-        <div>{endHeaderContent}</div>
       </div>
       {unmountContentWhenClosed ? isSectionOpen && content : content}
     </>
@@ -116,13 +111,10 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
     cursor: 'pointer',
     boxSizing: 'border-box',
     position: 'relative',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     fontSize: theme.typography.size.lg,
     padding: `${theme.spacing(0.5)} 0`,
     '&:focus-within': getFocusStyles(theme),
-  }),
-  leftHeaderContent: css({
-    display: 'flex',
   }),
   button: css({
     all: 'unset',
@@ -150,6 +142,7 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   }),
   label: css({
     display: 'flex',
+    flex: '1 1 auto',
     fontWeight: theme.typography.fontWeightMedium,
     color: theme.colors.text.maxContrast,
   }),
