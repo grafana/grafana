@@ -2053,6 +2053,7 @@
     },
     "pages": {
       "triage": {
+        "subtitle": "Learn about problems in your systems moments after they occur",
         "title": "Triage"
       }
     },
