@@ -310,7 +310,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     {
       enableInteractionTracking:
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
-      onInteractionComplete: getDashboardComponentInteractionCallback(oldModel.uid, oldModel.title),
+      onInteractionComplete: getDashboardInteractionCallback(oldModel.uid, oldModel.title),
     },
     getDashboardSceneProfiler()
   );

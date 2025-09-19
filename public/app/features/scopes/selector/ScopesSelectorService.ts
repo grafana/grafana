@@ -185,28 +185,34 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     const nodeToExpand = treeNodeAtPath(this.state.tree!, path);
 
-    if (!nodeToExpand) {
-      throw new Error(`Node ${scopeNodeId} not found in tree`);
-    }
+    try {
+      if (!nodeToExpand) {
+        throw new Error(`Node ${scopeNodeId} not found in tree`);
+      }
 
-    if (nodeToExpand.scopeNodeId !== '' && !isNodeExpandable(this.state.nodes[nodeToExpand.scopeNodeId])) {
-      throw new Error(`Trying to expand node at id ${scopeNodeId} that is not expandable`);
-    }
+      if (nodeToExpand.scopeNodeId !== '' && !isNodeExpandable(this.state.nodes[nodeToExpand.scopeNodeId])) {
+        throw new Error(`Trying to expand node at id ${scopeNodeId} that is not expandable`);
+      }
 
-    // Check if this is first expansion or filtering within existing children
-    const haveChildrenLoaded = nodeToExpand.children && Object.keys(nodeToExpand.children).length > 0;
+      // Check if this is first expansion or filtering within existing children
+      const haveChildrenLoaded = nodeToExpand.children && Object.keys(nodeToExpand.children).length > 0;
 
-    if (!nodeToExpand.expanded || nodeToExpand.query !== query || !haveChildrenLoaded) {
-      const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
-        treeNode.expanded = true;
-        // Reset query on first expansion, keep it only when filtering within existing children
-        treeNode.query = '';
-      });
-      this.updateState({ tree: newTree });
+      if (!nodeToExpand.expanded || nodeToExpand.query !== query || !haveChildrenLoaded) {
+        const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+          treeNode.expanded = true;
+          // Reset query on first expansion, keep it only when filtering within existing children
+          treeNode.query = '';
+        });
+        this.updateState({ tree: newTree });
 
-      // For API call: only pass query if filtering within existing children
-      const queryForAPI = haveChildrenLoaded ? query : query === '' ? '' : undefined;
-      await this.loadNodeChildren(path, nodeToExpand, queryForAPI, haveChildrenLoaded);
+        // For API call: only pass query if filtering within existing children
+        const queryForAPI = haveChildrenLoaded ? query : query === '' ? '' : undefined;
+        await this.loadNodeChildren(path, nodeToExpand, queryForAPI, haveChildrenLoaded);
+      }
+    } catch (error) {
+      throw error;
+    } finally {
+      this.interactionProfiler?.stopInteraction();
     }
   };
 

@@ -177,7 +177,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     {
       enableInteractionTracking:
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
-      onInteractionComplete: getDashboardComponentInteractionCallback(metadata.name, dashboard.title),
+      onInteractionComplete: getDashboardInteractionCallback(metadata.name, dashboard.title),
     },
     getDashboardSceneProfiler()
   );
