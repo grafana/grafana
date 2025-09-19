@@ -12,7 +12,7 @@ timeIntervalv0alpha1: timeIntervalKind & {
 	schema: {
 		spec: v0alpha1.TimeIntervalSpec
 	}
-	selectableFields: [
-		"spec.name",
-	]
+//	selectableFields: [ // TODO revisit when custom field selectors are supported
+//		"spec.name",
+//	]
 }

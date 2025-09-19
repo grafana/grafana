@@ -13,7 +13,7 @@ templatev0alpha1: templateKind & {
 	schema: {
 		spec: v0alpha1.TemplateGroupSpec
 	}
-	selectableFields: [
-		"spec.title",
-	]
+//	selectableFields: [ // TODO revisit when custom field selectors are supported
+//		"spec.title",
+//	]
 }

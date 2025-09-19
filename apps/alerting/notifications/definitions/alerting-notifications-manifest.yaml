@@ -104,8 +104,6 @@ spec:
               type: object
           type: object
       scope: Namespaced
-      selectableFields:
-      - spec.title
     - conversion: false
       kind: RoutingTree
       plural: RoutingTrees
@@ -321,8 +319,6 @@ spec:
               type: object
           type: object
       scope: Namespaced
-      selectableFields:
-      - spec.title
     - conversion: false
       kind: TimeInterval
       plural: TimeIntervals
@@ -432,7 +428,5 @@ spec:
               type: object
           type: object
       scope: Namespaced
-      selectableFields:
-      - spec.name
     name: v0alpha1
     served: true

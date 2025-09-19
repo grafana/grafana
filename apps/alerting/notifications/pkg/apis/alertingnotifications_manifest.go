@@ -47,9 +47,6 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaReceiverv0alpha1,
-					SelectableFields: []string{
-						"spec.title",
-					},
 				},
 
 				{
@@ -66,9 +63,6 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaTemplateGroupv0alpha1,
-					SelectableFields: []string{
-						"spec.title",
-					},
 				},
 
 				{
@@ -77,9 +71,6 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaTimeIntervalv0alpha1,
-					SelectableFields: []string{
-						"spec.name",
-					},
 				},
 			},
 			Routes: app.ManifestVersionRoutes{

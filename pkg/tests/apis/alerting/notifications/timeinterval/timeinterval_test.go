@@ -583,6 +583,7 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 	require.Len(t, intervals.Items, 2)
 
 	t.Run("should filter by interval name", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, v1.ListOptions{
 			FieldSelector: "spec.name=" + interval1.Spec.Name,
 		})
@@ -601,6 +602,7 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 	})
 
 	t.Run("should filter by multiple filters", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it")
 		list, err := adminClient.List(ctx, v1.ListOptions{
 			FieldSelector: fmt.Sprintf("metadata.name=%s,spec.name=%s", interval2.Name, interval2.Spec.Name),
 		})

@@ -13,7 +13,7 @@ receiverv0alpha1: receiverKind & {
 	schema: {
 		spec: v0alpha1.ReceiverSpec
 	}
-	selectableFields: [
-				"spec.title",
-	]
+//	selectableFields: [ // TODO revisit when custom field selectors are supported
+//				"spec.title",
+//	]
 }
