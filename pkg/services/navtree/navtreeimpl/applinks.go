@@ -342,7 +342,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-app-observability-app":    {SectionID: navtree.NavIDObservability, SortWeight: 2, Text: "Application"},
 		"grafana-csp-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 3, Icon: "cloud-provider"},
 		"grafana-k8s-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Kubernetes"},
-		"grafana-dbo11y-app":               {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Databases"},
+		"grafana-dbo11y-app":               {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Database"},
 		"grafana-kowalski-app":             {SectionID: navtree.NavIDObservability, SortWeight: 6, Text: "Frontend"},
 		"grafana-metricsdrilldown-app":     {SectionID: navtree.NavIDDrilldown, SortWeight: 1, Text: "Metrics"},
 		"grafana-lokiexplore-app":          {SectionID: navtree.NavIDDrilldown, SortWeight: 2, Text: "Logs"},
