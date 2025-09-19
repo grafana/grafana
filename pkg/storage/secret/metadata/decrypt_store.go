@@ -119,7 +119,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", fmt.Errorf("failed to read secure value metadata storage: %v (%w)", err, contracts.ErrDecryptNotFound)
 	}
 
-	decrypterIdentity, authorized, reason := s.decryptAuthorizer.Authorize(ctx, namespace, name, sv.Spec.Decrypters, sv.OwnerReferences)
+	decrypterIdentity, authorized := s.decryptAuthorizer.Authorize(ctx, namespace, name, sv.Spec.Decrypters, sv.OwnerReferences)
 	if !authorized {
 		return "", fmt.Errorf("failed to authorize decryption with reason %v (%w)", reason, contracts.ErrDecryptNotAuthorized)
 	}

@@ -37,13 +37,7 @@ func ProvideDecryptAuthorizer(
 }
 
 // Authorize checks whether the auth info token has the right permissions to decrypt the secure value.
-func (a *decryptAuthorizer) Authorize(
-	ctx context.Context,
-	ns xkube.Namespace,
-	secureValueName string,
-	secureValueDecrypters []string,
-	owners []metav1.OwnerReference,
-) (id string, isAllowed bool, reason string) {
+func (a *decryptAuthorizer) Authorize(ctx context.Context, ns xkube.Namespace, secureValueName string, secureValueDecrypters []string, owners []metav1.OwnerReference) (id string, isAllowed bool) {
 	ctx, span := a.tracer.Start(ctx, "DecryptAuthorizer.Authorize", trace.WithAttributes(
 		attribute.String("name", secureValueName),
 		attribute.StringSlice("decrypters", secureValueDecrypters),
@@ -89,7 +83,7 @@ func (a *decryptAuthorizer) Authorize(
 	// Check whether the service identity is allowed to decrypt this secure value.
 	for _, decrypter := range secureValueDecrypters {
 		if decrypter == serviceIdentity {
-			return serviceIdentity, true, ""
+			return serviceIdentity, true
 		}
 	}
 
@@ -99,14 +93,14 @@ func (a *decryptAuthorizer) Authorize(
 			if extra.Identity == serviceIdentity {
 				for _, owner := range owners {
 					if strings.HasPrefix(owner.APIVersion, extra.Group) {
-						return serviceIdentity, true, ""
+						return serviceIdentity, true
 					}
 				}
 			}
 		}
 	}
 
-	return serviceIdentity, false, "service identity is not in the secure value decrypters"
+	return serviceIdentity, false
 }
 
 // Adapted from https://github.com/grafana/authlib/blob/1492b99410603ca15730a1805a9220ce48232bc3/authz/client.go#L138
