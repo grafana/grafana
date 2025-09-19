@@ -19,12 +19,9 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { ConfirmModal, Icon, PopoverContent, useStyles2, useTheme2 } from '@grafana/ui';
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
-
-import { getDisplayedFieldsForLogs } from '../otel/formats';
 
 import { InfiniteScrollMode, InfiniteScroll, LoadMoreLogsType } from './InfiniteScroll';
 import { getGridTemplateColumns, LogLineTimestampResolution } from './LogLine';
@@ -239,7 +236,7 @@ const LogListComponent = ({
 }: LogListComponentProps) => {
   const {
     app,
-    displayedFields: contextDisplayedFields,
+    displayedFields,
     dedupStrategy,
     detailsMode,
     filterLevels,
@@ -267,18 +264,6 @@ const LogListComponent = ({
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const virtualization = useMemo(() => new LogLineVirtualization(theme, fontSize), [theme, fontSize]);
-  
-  const displayedFields = useMemo(() => {
-    if (contextDisplayedFields.length > 0 || !config.featureToggles.otelLogsFormatting) {
-      return contextDisplayedFields;
-    }
-    const otelDisplayedFields = getDisplayedFieldsForLogs(logs);
-    if (otelDisplayedFields.length) {
-      return otelDisplayedFields;
-    }
-    return contextDisplayedFields;
-  }, [contextDisplayedFields, logs]);
-
   const dimensions = useMemo(
     () =>
       wrapLogMessage
