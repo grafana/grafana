@@ -139,6 +139,12 @@ func (st ProtoInstanceDBStore) FullSync(ctx context.Context, instances []models.
 	return errors.New("fullsync is not implemented for proto instance database store")
 }
 
+func (st ProtoInstanceDBStore) FullSyncWithJitter(ctx context.Context, instances []models.AlertInstance, jitterFunc func(int) time.Duration, batchSize int) error {
+	logger := st.Logger.FromContext(ctx)
+	logger.Error("FullSyncWithJitter called and not implemented")
+	return errors.New("fullsyncwithjitter is not implemented for proto instance database store")
+}
+
 func alertInstanceModelToProto(modelInstance models.AlertInstance) *pb.AlertInstance {
 	return &pb.AlertInstance{
 		Labels:            modelInstance.Labels,

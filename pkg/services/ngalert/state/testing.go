@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
@@ -82,6 +83,27 @@ func (f *FakeInstanceStore) FullSync(ctx context.Context, instances []models.Ale
 	for _, instance := range instances {
 		f.recordedOps = append(f.recordedOps, instance)
 	}
+	return nil
+}
+
+func (f *FakeInstanceStore) FullSyncWithJitter(ctx context.Context, instances []models.AlertInstance, jitterFunc func(int) time.Duration, batchSize int) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	// Basic call recording (consistent with other fake methods)
+	f.recordedOps = []any{FakeInstanceStoreOp{
+		Name: "FullSyncWithJitter",
+		Args: []any{
+			len(instances),
+			batchSize,
+		},
+	}}
+
+	// Record instances (same as FullSync)
+	for _, instance := range instances {
+		f.recordedOps = append(f.recordedOps, instance)
+	}
+
 	return nil
 }
 
