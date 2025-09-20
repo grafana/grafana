@@ -48,7 +48,7 @@ func TestIntegrationTeams(t *testing.T) {
 }
 
 func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
-	t.Run("should create team and get it using the new APIs as a GrafanaAdmin", func(t *testing.T) {
+	t.Run("should create/get/delete team using the new APIs as a GrafanaAdmin", func(t *testing.T) {
 		ctx := context.Background()
 
 		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -80,6 +80,16 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 
 		require.Equal(t, createdUID, fetched.GetName())
 		require.Equal(t, "default", fetched.GetNamespace())
+
+		err = teamClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
+		require.NoError(t, err)
+
+		_, err = teamClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, "Failure", statusErr.ErrStatus.Status)
+		require.Contains(t, statusErr.ErrStatus.Message, "team not found")
 	})
 
 	t.Run("should not be able to create team when using a user with insufficient permissions", func(t *testing.T) {
@@ -193,7 +203,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 }
 
 func doTeamCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper) {
-	t.Run("should create team using legacy APIs and get it using the new APIs", func(t *testing.T) {
+	t.Run("should create team using legacy APIs and get/delete it using the new APIs", func(t *testing.T) {
 		ctx := context.Background()
 		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Admin,
@@ -232,5 +242,15 @@ func doTeamCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper)
 
 		require.Equal(t, rsp.Result.UID, team.GetName())
 		require.Equal(t, "default", team.GetNamespace())
+
+		err = teamClient.Resource.Delete(ctx, rsp.Result.UID, metav1.DeleteOptions{})
+		require.NoError(t, err)
+
+		_, err = teamClient.Resource.Get(ctx, rsp.Result.UID, metav1.GetOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, "Failure", statusErr.ErrStatus.Status)
+		require.Contains(t, statusErr.ErrStatus.Message, "team not found")
 	})
 }
