@@ -47,6 +47,32 @@ func TestMain(m *testing.M) {
 }
 
 func TestBleveBackend(t *testing.T) {
+	tmpdir, err := os.MkdirTemp("", "grafana-bleve-test")
+	require.NoError(t, err)
+
+	backend, err := NewBleveBackend(BleveOptions{
+		Root:          tmpdir,
+		FileThreshold: 5, // with more than 5 items we create a file on disk
+	}, tracing.NewNoopTracerService(), nil, false)
+	require.NoError(t, err)
+
+	testBleveBackend(t, backend)
+}
+
+func TestBleveBackendFullNgramEnabled(t *testing.T) {
+	tmpdir, err := os.MkdirTemp("", "grafana-bleve-test")
+	require.NoError(t, err)
+
+	backend, err := NewBleveBackend(BleveOptions{
+		Root:          tmpdir,
+		FileThreshold: 5, // with more than 5 items we create a file on disk
+	}, tracing.NewNoopTracerService(), nil, true)
+	require.NoError(t, err)
+
+	testBleveBackend(t, backend)
+}
+
+func testBleveBackend(t *testing.T, backend *bleveBackend) {
 	dashboardskey := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
@@ -57,14 +83,6 @@ func TestBleveBackend(t *testing.T) {
 		Group:     "folder.grafana.app",
 		Resource:  "folders",
 	}
-	tmpdir, err := os.MkdirTemp("", "grafana-bleve-test")
-	require.NoError(t, err)
-
-	backend, err := NewBleveBackend(BleveOptions{
-		Root:          tmpdir,
-		FileThreshold: 5, // with more than 5 items we create a file on disk
-	}, tracing.NewNoopTracerService(), nil)
-	require.NoError(t, err)
 
 	t.Cleanup(backend.CloseAllIndexes)
 
@@ -780,7 +798,7 @@ func setupBleveBackend(t *testing.T, options ...setupOption) (*bleveBackend, pro
 		opts.Root = t.TempDir()
 	}
 
-	backend, err := NewBleveBackend(opts, tracing.NewNoopTracerService(), metrics)
+	backend, err := NewBleveBackend(opts, tracing.NewNoopTracerService(), metrics, false)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	t.Cleanup(backend.CloseAllIndexes)
@@ -1469,7 +1487,7 @@ func TestInvalidBuildVersion(t *testing.T) {
 		Root:         t.TempDir(),
 		BuildVersion: "invalid",
 	}
-	_, err := NewBleveBackend(opts, tracing.NewNoopTracerService(), nil)
+	_, err := NewBleveBackend(opts, tracing.NewNoopTracerService(), nil, false)
 	require.ErrorContains(t, err, "cannot parse build version")
 }
 
