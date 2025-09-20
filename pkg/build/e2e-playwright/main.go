@@ -157,7 +157,8 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		},
 	})
 
-	frontendContainer, err := e2eutil.WithFrontendContainer(ctx, d, yarnHostSrc)
+	yarnCache := d.CacheVolume("yarn-cache")
+	frontendContainer, err := e2eutil.WithFrontendContainer(ctx, d, yarnHostSrc, yarnCache)
 	if err != nil {
 		return fmt.Errorf("failed to create frontend container: %w", err)
 	}
