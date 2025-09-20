@@ -67,6 +67,8 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
       return false;
     }
 
+    return true;
+
     // Are we still on the same dashboard?
     if (originalPath === location.pathname) {
       return true;

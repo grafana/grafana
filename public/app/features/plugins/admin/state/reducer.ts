@@ -85,6 +85,7 @@ const slice = createSlice({
       // Load panel dashboards (backward-compatibility)
       // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
       .addCase(loadPluginDashboards.fulfilled, (state, action) => {
+        console.log('loadPluginDashboards.fulfilled', action.payload);
         state.isLoadingPluginDashboards = false;
         // eslint-disable-next-line
         state.dashboards = action.payload as any; // WritableDraft<PluginDashboard>[],...>

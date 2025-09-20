@@ -1,19 +1,27 @@
 import { css } from '@emotion/css';
+import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
-import { Button, useStyles2, Text, Box, Stack, TextLink } from '@grafana/ui';
+import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { Button, useStyles2, Text, Box, Stack, TextLink, Divider, Spinner } from '@grafana/ui';
+import { notifyApp } from 'app/core/actions';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
   onAddLibraryPanel as onAddLibraryPanelImpl,
   onCreateNewPanel,
   onImportDashboard,
 } from 'app/features/dashboard/utils/dashboard';
+import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { buildPanelEditScene } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { dispatch } from 'app/store/store';
+import { DashboardDTO } from 'app/types/dashboard';
+import { PluginDashboard } from 'app/types/plugins';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { setInitialDatasource } from '../state/reducers';
@@ -83,6 +91,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               </Button>
             </Stack>
           </Box>
+          <ProvisionedDashboardsSection />
           <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
             <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
               <Stack direction="column" alignItems="center" gap={1}>
@@ -146,6 +155,150 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
 
 export default DashboardEmpty;
 
+const ProvisionedDashboardsSection = () => {
+  const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
+  const [isProvisionedLoading, setIsProvisionedLoading] = useState(false);
+  const [provisionedDashboards, setProvisionedDashboards] = useState<PluginDashboard[]>([]);
+
+  useEffect(() => {
+    if (initialDatasource) {
+      getProvisionedDashboards(initialDatasource);
+    }
+  }, [initialDatasource]);
+
+  const getProvisionedDashboards = async (datasourceUid: string) => {
+    setIsProvisionedLoading(true);
+    const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
+
+    if (!ds) {
+      return;
+    }
+
+    const url = `api/plugins/${ds.type}/dashboards`;
+
+    const res = await getBackendSrv().get(url);
+
+    setProvisionedDashboards(res);
+    setIsProvisionedLoading(false);
+  };
+
+  const onImportDashboardClick = async (dashboard: PluginDashboard) => {
+    const data = {
+      pluginId: dashboard.pluginId,
+      path: dashboard.path,
+      overwrite: true,
+      inputs: [
+        {
+          name: '*',
+          type: 'datasource',
+          pluginId: dashboard.pluginId,
+          value: initialDatasource,
+        },
+      ],
+    };
+
+    try {
+      const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
+      const dashboardDTO: DashboardDTO = {
+        dashboard: {
+          ...interpolatedDashboard,
+          // necessary to ensure the dashboard is saved as a new dashboard and correct form is displayed
+          uid: '',
+          version: 0,
+          id: null,
+        },
+        meta: {
+          canSave: true,
+          canEdit: true,
+          canStar: false,
+          canShare: false,
+          canDelete: false,
+          isNew: true,
+          folderUid: '',
+        },
+      };
+
+      const dashboardScene = transformSaveModelToScene(dashboardDTO);
+      dashboardScene.setInitialSaveModel(dashboardDTO.dashboard, dashboardDTO.meta);
+      dashboardScene.onEnterEditMode();
+
+      // mark the dashboard as dirty to ensure it shows the "Save As" form
+      dashboardScene.setState({ isDirty: true });
+
+      const stateManager = getDashboardScenePageStateManager();
+      stateManager.setState({ dashboard: dashboardScene, isLoading: false });
+
+      dispatch(notifyApp(createSuccessNotification('Dashboard Loaded', dashboard.title)));
+    } catch (error) {
+      console.error('Error importing dashboard:', error);
+      dispatch(notifyApp(createSuccessNotification('Failed to load dashboard', '')));
+    }
+  };
+
+  if (!provisionedDashboards.length && !isProvisionedLoading) {
+    return null;
+  }
+
+  return (
+    <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
+      <Stack direction="column" alignItems="center" gap={2}>
+        <Text element="h3" textAlignment="center" weight="medium">
+          <Trans i18nKey="dashboard.empty.import-a-dashboard-heasfaader">Start from template dashboards</Trans>
+        </Text>
+        {isProvisionedLoading ? (
+          <Spinner />
+        ) : (
+          <Stack gap={2} justifyContent="space-between">
+            {provisionedDashboards.map((dashboard, index) => (
+              <ProvisionedDashboardBox
+                key={dashboard.uid}
+                index={index}
+                dashboard={dashboard}
+                onImportClick={onImportDashboardClick}
+              />
+            ))}
+          </Stack>
+        )}
+      </Stack>
+    </Box>
+  );
+};
+
+const ProvisionedDashboardBox = ({
+  dashboard,
+  onImportClick,
+  index,
+}: {
+  dashboard: PluginDashboard;
+  onImportClick: (d: PluginDashboard) => void;
+  index: number;
+}) => {
+  const styles = useStyles2(getStyles);
+  return (
+    <div className={styles.provisionedDashboardBox}>
+      <img
+        src={
+          index % 2 === 0
+            ? 'https://grafana.com/api/dashboards/11350/images/7248/image'
+            : 'https://grafana.com/api/dashboards/10991/images/7003/image'
+        }
+        width={190}
+        height={160}
+        alt={dashboard.title}
+      />
+      <Divider spacing={0} />
+      <div className={styles.privisionedDashboardSection}>
+        <Text element="p" textAlignment="center" color="secondary">
+          {dashboard.title}
+        </Text>
+        <Button fill="outline" onClick={() => onImportClick(dashboard)}>
+          <Trans i18nKey="dashboard.empty.import-dashboaasard-button">Use template</Trans>
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 function getStyles(theme: GrafanaTheme2) {
   return {
     wrapper: css({
@@ -158,6 +311,21 @@ function getStyles(theme: GrafanaTheme2) {
       [theme.breakpoints.up('sm')]: {
         paddingTop: theme.spacing(12),
       },
+    }),
+    privisionedDashboardSection: css({
+      margin: 'auto',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+      alignItems: 'center',
+    }),
+    provisionedDashboardBox: css({
+      display: 'flex',
+      paddingBottom: theme.spacing(1),
+      border: `1px solid ${theme.colors.border.strong}`,
+      borderRadius: theme.shape.radius.default,
+      flexDirection: 'column',
+      gap: theme.spacing(1),
     }),
   };
 }
