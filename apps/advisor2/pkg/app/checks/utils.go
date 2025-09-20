@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/resource"
-	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	advisor "github.com/grafana/grafana/apps/advisor2/pkg/apis/advisor/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
