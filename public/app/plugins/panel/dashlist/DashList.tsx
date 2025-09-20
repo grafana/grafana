@@ -3,22 +3,27 @@ import { SyntheticEvent, useEffect, useMemo, useState } from 'react';
 import { useThrottle } from 'react-use';
 
 import { InterpolateFunction, PanelProps, textUtil } from '@grafana/data';
-import { useStyles2, IconButton, ScrollContainer } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { useStyles2, IconButton, ScrollContainer, Box, Text, EmptyState } from '@grafana/ui';
 import { updateNavIndex } from 'app/core/actions';
 import { getConfig } from 'app/core/config';
 import { ID_PREFIX, setStarred } from 'app/core/reducers/navBarTree';
 import { removeNavIndex } from 'app/core/reducers/navModel';
-import { getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardSearchItem } from 'app/features/search/types';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { DashboardQueryResult, QueryResponse, SearchQuery } from 'app/features/search/service/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { Options } from './panelcfg.gen';
 import { getStyles } from './styles';
 import { useDashListUrlParams } from './utils';
 
-type Dashboard = DashboardSearchItem & { id?: number; isSearchResult?: boolean; isRecent?: boolean };
+type Dashboard = DashboardQueryResult & {
+  isSearchResult?: boolean;
+  isRecent?: boolean;
+  isStarred?: boolean;
+};
 
 interface DashboardGroup {
   show: boolean;
@@ -27,47 +32,53 @@ interface DashboardGroup {
 }
 
 async function fetchDashboards(options: Options, replaceVars: InterpolateFunction) {
-  let starredDashboards: Promise<DashboardSearchItem[]> = Promise.resolve([]);
+  const searcher = getGrafanaSearcher();
+  let starredDashboards: Promise<QueryResponse | void> = Promise.resolve();
+  let recentDashboards: Promise<QueryResponse | void> = Promise.resolve();
+  let searchedDashboards: Promise<QueryResponse | void> = Promise.resolve();
 
   if (options.showStarred) {
-    const params = { limit: options.maxItems, starred: 'true' };
-    starredDashboards = getBackendSrv().search(params);
+    const params: SearchQuery = { limit: options.maxItems, starred: true };
+    starredDashboards = searcher.starred(params);
   }
 
-  let recentDashboards: Promise<DashboardSearchItem[]> = Promise.resolve([]);
   let dashUIDs: string[] = [];
   if (options.showRecentlyViewed) {
     let uids = await impressionSrv.getDashboardOpened();
     dashUIDs = take<string>(uids, options.maxItems);
-    recentDashboards = getBackendSrv().search({ dashboardUIDs: dashUIDs, limit: options.maxItems });
+
+    recentDashboards = searcher.search({ uid: dashUIDs, limit: options.maxItems });
   }
 
-  let searchedDashboards: Promise<DashboardSearchItem[]> = Promise.resolve([]);
   if (options.showSearch) {
     const uid = options.folderUID === '' ? 'general' : options.folderUID;
-    const params = {
+    const params: SearchQuery = {
       limit: options.maxItems,
       query: replaceVars(options.query, {}, 'text'),
-      folderUIDs: uid,
-      tag: options.tags.map((tag: string) => replaceVars(tag, {}, 'text')),
-      type: 'dash-db',
+      location: uid,
+      tags: options.tags.map((tag: string) => replaceVars(tag, {}, 'text')),
+      kind: ['dashboard'],
     };
 
-    searchedDashboards = getBackendSrv().search(params);
+    searchedDashboards = searcher.search(params);
   }
 
   const [starred, searched, recent] = await Promise.all([starredDashboards, searchedDashboards, recentDashboards]);
 
   // We deliberately deal with recent dashboards first so that the order of dash IDs is preserved
-  let dashMap = new Map<string, Dashboard>();
-  for (const dashUID of dashUIDs) {
-    const dash = recent.find((d) => d.uid === dashUID);
-    if (dash) {
-      dashMap.set(dashUID, { ...dash, isRecent: true });
+  let dashMap = new Map<string, DashboardQueryResult>();
+  if (recent) {
+    for (const dashUID of dashUIDs) {
+      const dash = recent.view.find((d: DashboardQueryResult): d is DashboardQueryResult => {
+        return d.uid === dashUID;
+      });
+      if (dash) {
+        dashMap.set(dashUID, { ...dash, title: dash.name, isRecent: true });
+      }
     }
   }
 
-  searched.forEach((dash) => {
+  searched?.view.forEach((dash) => {
     if (!dash.uid) {
       return;
     }
@@ -78,7 +89,7 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
     }
   });
 
-  starred.forEach((dash) => {
+  starred?.view.forEach((dash) => {
     if (!dash.uid) {
       return;
     }
@@ -92,8 +103,20 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
   return dashMap;
 }
 
+async function fetchDashboardFolders(folderUIDs: string[]) {
+  const searcher = getGrafanaSearcher();
+  const result = await searcher.search({
+    kind: ['folder'],
+    uid: folderUIDs,
+  });
+  return new Map(result.view.map((folder) => [folder.uid, folder.name] as const));
+}
+
+const collator = new Intl.Collator();
+
 export function DashList(props: PanelProps<Options>) {
   const [dashboards, setDashboards] = useState(new Map<string, Dashboard>());
+  const [foldersTitleMap, setFoldersTitleMap] = useState(new Map<string, string>());
   const dispatch = useDispatch();
   const navIndex = useSelector((state) => state.navIndex);
 
@@ -105,22 +128,35 @@ export function DashList(props: PanelProps<Options>) {
     });
   }, [props.options, props.replaceVariables, throttledRenderCount]);
 
+  useEffect(() => {
+    if (props.options.showFolderNames && dashboards.size > 0) {
+      const dashboardsArray = Array.from(dashboards.values());
+      const set = new Set<string>(
+        dashboardsArray.map((dash) => dash.folder).filter((folder): folder is string => !!folder)
+      );
+      const uniqueUIDs = Array.from(set);
+      fetchDashboardFolders(uniqueUIDs).then((foldersMap) => {
+        setFoldersTitleMap(foldersMap);
+      });
+    }
+  }, [props.options.showFolderNames, dashboards]);
+
   const toggleDashboardStar = async (e: SyntheticEvent, dash: Dashboard) => {
-    const { uid, title, url } = dash;
+    const { uid, name, url } = dash;
     e.preventDefault();
     e.stopPropagation();
 
-    const isStarred = await getDashboardSrv().starDashboard(dash.uid, dash.isStarred);
+    const isStarred = await getDashboardSrv().starDashboard(dash.uid, Boolean(dash.isStarred));
     const updatedDashboards = new Map(dashboards);
     updatedDashboards.set(dash?.uid ?? '', { ...dash, isStarred });
     setDashboards(updatedDashboards);
-    dispatch(setStarred({ id: uid ?? '', title, url, isStarred }));
+    dispatch(setStarred({ id: uid ?? '', title: name, url, isStarred }));
 
-    const starredNavItem = navIndex['starred'];
+    const starredNavItem = navIndex.starred;
     if (isStarred) {
       starredNavItem.children?.push({
         id: ID_PREFIX + uid,
-        text: title,
+        text: name,
         url: url ?? '',
         parentItem: starredNavItem,
       });
@@ -137,9 +173,9 @@ export function DashList(props: PanelProps<Options>) {
   const [starredDashboards, recentDashboards, searchedDashboards] = useMemo(() => {
     const dashboardList = [...dashboards.values()];
     return [
-      dashboardList.filter((dash) => dash.isStarred).sort((a, b) => a.title.localeCompare(b.title)),
+      dashboardList.filter((dash) => dash.isStarred).sort((a, b) => collator.compare(a.name, b.name)),
       dashboardList.filter((dash) => dash.isRecent),
-      dashboardList.filter((dash) => dash.isSearchResult).sort((a, b) => a.title.localeCompare(b.title)),
+      dashboardList.filter((dash) => dash.isSearchResult).sort((a, b) => collator.compare(a.name, b.name)),
     ];
   }, [dashboards]);
 
@@ -147,17 +183,17 @@ export function DashList(props: PanelProps<Options>) {
 
   const dashboardGroups: DashboardGroup[] = [
     {
-      header: 'Starred dashboards',
+      header: t('panel.dashlist.starred-dashboards', 'Starred dashboards'),
       dashboards: starredDashboards,
       show: showStarred,
     },
     {
-      header: 'Recently viewed dashboards',
+      header: t('panel.dashlist.recently-viewed-dashboards', 'Recently viewed dashboards'),
       dashboards: recentDashboards,
       show: showRecentlyViewed,
     },
     {
-      header: 'Search',
+      header: t('panel.dashlist.search', 'Search'),
       dashboards: searchedDashboards,
       show: showSearch,
     },
@@ -171,18 +207,28 @@ export function DashList(props: PanelProps<Options>) {
       {dashboards.map((dash) => {
         let url = dash.url + urlParams;
         url = getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
+        const markAsStarredText = t('panel.dashlist.mark-as-starred', 'Mark "{{title}}" as favorite', {
+          title: dash.title,
+        });
+        const unmarkAsStarredText = t('panel.dashlist.unmark-as-starred', 'Unmark "{{title}}" as favorite', {
+          title: dash.title,
+        });
+
+        const folderTitle = showFolderNames && dash.folder ? foldersTitleMap.get(dash.folder) : undefined;
 
         return (
-          <li className={css.dashlistItem} key={`dash-${dash.uid}`}>
+          <li key={`dash-${dash.uid}`}>
             <div className={css.dashlistLink}>
-              <div className={css.dashlistLinkBody}>
-                <a className={css.dashlistTitle} href={url}>
-                  {dash.title}
-                </a>
-                {showFolderNames && dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
-              </div>
+              <Box flex={1}>
+                <a href={url}>{dash.name}</a>
+                {showFolderNames && folderTitle && (
+                  <Text color="secondary" variant="bodySmall" element="p">
+                    {folderTitle}
+                  </Text>
+                )}
+              </Box>
               <IconButton
-                tooltip={dash.isStarred ? `Unmark "${dash.title}" as favorite` : `Mark "${dash.title}" as favorite`}
+                tooltip={dash.isStarred ? unmarkAsStarredText : markAsStarredText}
                 name={dash.isStarred ? 'favorite' : 'star'}
                 iconType={dash.isStarred ? 'mono' : 'default'}
                 onClick={(e) => toggleDashboardStar(e, dash)}
@@ -194,15 +240,30 @@ export function DashList(props: PanelProps<Options>) {
     </ul>
   );
 
+  const showEmptyState = dashboardGroups.every(({ show }) => !show);
+
   return (
     <ScrollContainer minHeight="100%">
+      {showEmptyState && (
+        <EmptyState
+          hideImage
+          variant="call-to-action"
+          message={t('panel.dashlist.empty-state-message', 'No dashboards groups configured')}
+        />
+      )}
       {dashboardGroups.map(
         ({ show, header, dashboards }, i) =>
           show && (
-            <div className={css.dashlistSection} key={`dash-group-${i}`}>
-              {showHeadings && <h6 className={css.dashlistSectionHeader}>{header}</h6>}
+            <Box marginBottom={2} paddingTop={0.5} key={`dash-group-${i}`}>
+              {showHeadings && (
+                <Box marginRight={1} paddingX={1} paddingY={0.25}>
+                  <Text variant="h6" element="h6">
+                    {header}
+                  </Text>
+                </Box>
+              )}
               {renderList(dashboards)}
-            </div>
+            </Box>
           )
       )}
     </ScrollContainer>
