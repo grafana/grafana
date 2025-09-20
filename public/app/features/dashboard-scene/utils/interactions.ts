@@ -1,4 +1,5 @@
 import { config, reportInteraction } from '@grafana/runtime';
+import { DashboardCreatedProps } from 'app/features/dashboard-scene/utils/tracking';
 
 let isScenesContextSet = false;
 
@@ -6,6 +7,14 @@ export const DashboardInteractions = {
   // Dashboard interactions:
   dashboardInitialized: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('init_dashboard_completed', { ...properties });
+  },
+
+  dashboardCopied: (properties: DashboardCreatedProps) => {
+    reportInteraction('grafana_dashboard_copied', properties);
+  },
+
+  dashboardCreatedOrSaved: (name: 'created' | 'saved', properties: DashboardCreatedProps) => {
+    reportDashboardInteraction(name, properties);
   },
 
   // grafana_dashboards_edit_button_clicked

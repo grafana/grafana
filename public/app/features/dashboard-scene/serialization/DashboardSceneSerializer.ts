@@ -19,6 +19,7 @@ import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
 import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
+import { getLayoutStatsForDashboard, getSanitizedLayout, getNoOfConditionalRulesInDashboard } from '../utils/tracking';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
@@ -49,7 +50,7 @@ export interface DashboardSceneSerializerLike<T, M, I = T, E = T | { error: unkn
     }
   ) => DashboardChangeInfo;
   onSaveComplete(saveModel: T, result: SaveDashboardResponseDTO): void;
-  getTrackingInformation: (s: DashboardScene) => DashboardTrackingInfo | undefined;
+  getTrackingInformation: (s: DashboardScene) => (DashboardTrackingInfo & Partial<DashboardV2TrackingInfo>) | undefined;
   getSnapshotUrl: () => string | undefined;
   getPanelIdForElement: (elementId: string) => number | undefined;
   getElementIdForPanel: (panelId: number) => string | undefined;
@@ -59,13 +60,23 @@ export interface DashboardSceneSerializerLike<T, M, I = T, E = T | { error: unkn
   getK8SMetadata: () => Partial<ObjectMeta> | undefined;
 }
 
-interface DashboardTrackingInfo {
+export interface DashboardTrackingInfo {
   uid?: string;
   title?: string;
   schemaVersion: number;
   panels_count: number;
   settings_nowdelay?: number;
   settings_livenow?: boolean;
+}
+
+export interface DashboardV2TrackingInfo {
+  tabCount: number;
+  templateVariableCount: number;
+  maxNestingLevel: number;
+  conditionalRenderRulesCount: number;
+  autoLayoutCount: number;
+  customGridLayoutCount: number;
+  dashStructure: string;
 }
 
 export interface DSReferencesMapping {
@@ -400,7 +411,7 @@ export class V2DashboardSerializer
     return this.metadata;
   }
 
-  getTrackingInformation(s: DashboardScene): DashboardTrackingInfo | undefined {
+  getTrackingInformation(s: DashboardScene): (DashboardTrackingInfo & Partial<DashboardV2TrackingInfo>) | undefined {
     if (!this.initialSaveModel) {
       return undefined;
     }
@@ -422,6 +433,7 @@ export class V2DashboardSerializer
       panels_count: panelPluginIds.length || 0,
       settings_nowdelay: undefined,
       settings_livenow: !!this.initialSaveModel.liveNow,
+      ...(isDashboardV2Spec(this.initialSaveModel) ? getDashboardV2TrackingFields(this.initialSaveModel) : {}),
       ...panels,
       ...variables,
     };
@@ -466,4 +478,17 @@ export function getDashboardSceneSerializer(
   }
 
   return new V1DashboardSerializer();
+}
+
+function getDashboardV2TrackingFields(dashboard: DashboardV2Spec): DashboardV2TrackingInfo {
+  const layoutStats = getLayoutStatsForDashboard(dashboard.layout);
+  return {
+    tabCount: layoutStats.tabCount,
+    templateVariableCount: dashboard.variables ? dashboard.variables.length : 0,
+    maxNestingLevel: layoutStats.maxDepth,
+    dashStructure: getSanitizedLayout(dashboard.layout),
+    conditionalRenderRulesCount: getNoOfConditionalRulesInDashboard(dashboard.layout),
+    autoLayoutCount: layoutStats.layoutTypesCount.AutoGridLayout,
+    customGridLayoutCount: layoutStats.layoutTypesCount.GridLayout,
+  };
 }
