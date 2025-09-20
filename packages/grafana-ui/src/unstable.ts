@@ -11,4 +11,5 @@
 
 export * from './utils/skeleton';
 
-export { TableNG } from './components/Table/TableNG/TableNG';
+export { DataGrid } from './components/DataGrid/DataGrid';
+export { TableNG } from './components/TableNG/TableNG';
