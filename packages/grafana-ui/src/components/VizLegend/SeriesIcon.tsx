@@ -71,6 +71,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     marginRight: '8px',
     display: 'inline-block',
+    flex: '0 0.25 auto',
     width: '14px',
     height: '4px',
   }),
