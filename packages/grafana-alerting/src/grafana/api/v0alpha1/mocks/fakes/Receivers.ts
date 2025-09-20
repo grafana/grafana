@@ -47,10 +47,12 @@ export const GenericIntegrationFactory = Factory.define<Integration>(() => ({
   settings: {
     foo: 'bar',
   },
+  version: 'v1', // Add version field
 }));
 
 export const EmailIntegrationFactory = Factory.define<Integration>(() => ({
   type: 'email',
+  version: 'v1',
   settings: {
     addresses: faker.internet.email(),
   },
@@ -58,6 +60,7 @@ export const EmailIntegrationFactory = Factory.define<Integration>(() => ({
 
 export const SlackIntegrationFactory = Factory.define<Integration>(() => ({
   type: 'slack',
+  version: 'v1',
   settings: {
     mentionChannel: '#alerts',
   },
@@ -70,5 +73,6 @@ export const ContactPointMetadataAnnotationsFactory = Factory.define<ContactPoin
   'grafana.com/access/canReadSecrets': 'true',
   'grafana.com/inUse/routes': '1',
   'grafana.com/inUse/rules': '1',
+  'grafana.com/canUse': 'true',
   ...AlertingEntityMetadataAnnotationsFactory.build(),
 }));
