@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -44,12 +45,11 @@ func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, dashboardStor
 func SetupDashboardService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) (*dashboardservice.DashboardServiceImpl, dashboards.Store) {
 	tb.Helper()
 
-	ac := acmock.New()
+	features := featuremgmt.WithFeatures()
+	ac := acimpl.ProvideAccessControl(features)
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	folderPermissions := acmock.NewMockedPermissionsService()
 	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
-
-	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
 
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
