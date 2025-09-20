@@ -101,14 +101,14 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     handleSubmit,
   } = methods;
 
-  const [repoName = '', repoType] = watch(['repositoryName', 'repository.type']);
+  const [repoName = '', repoType, syncTarget] = watch(['repositoryName', 'repository.type', 'repository.sync.target']);
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
   const {
     shouldSkipSync,
     requiresMigration,
     isLoading: isResourceStatsLoading,
-  } = useResourceStats(repoName, isLegacyStorage);
+  } = useResourceStats(repoName, isLegacyStorage, syncTarget);
   const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
     repoName: repoName,
     requiresMigration,

@@ -1,4 +1,5 @@
-name: Publish NPM packages
+name: Release NPM packages
+run-name: Publish NPM ${{ inputs.version_type }} ${{ inputs.version }}
 on:
   workflow_call:
     inputs:
@@ -134,7 +135,6 @@ jobs:
   tag-nightly:
     name: Tag nightly release
     runs-on: github-hosted-ubuntu-x64-small
-    needs: publish
     if: inputs.version_type == 'nightly'
 
     steps:
@@ -144,5 +144,4 @@ jobs:
           persist-credentials: false
 
       # TODO: tag the given release with nightly
-
 
