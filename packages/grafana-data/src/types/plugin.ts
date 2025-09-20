@@ -126,6 +126,8 @@ export type ExtensionInfo = {
   targets: string | string[];
   title: string;
   description?: string;
+  minWidth?: number | string;
+  initialWidth?: number | string;
 };
 
 export interface PluginExtensions {
