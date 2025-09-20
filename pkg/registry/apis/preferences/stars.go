@@ -4,15 +4,17 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 )
 
@@ -23,7 +25,7 @@ type starItem struct {
 }
 
 type starsREST struct {
-	store *legacy.DashboardStarsStorage
+	store grafanarest.Storage
 }
 
 var (
@@ -73,25 +75,119 @@ func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, 
 			return
 		}
 
+		remove := false
+		switch req.Method {
+		case "DELETE":
+			remove = true
+		case "PUT":
+			remove = false
+		default:
+			responder.Error(apierrors.NewMethodNotSupported(preferences.PreferencesResourceInfo.GroupResource(), req.Method))
+			return
+		}
+
+		// For now only dashboard stars are supported
 		if item.group != "dashboard.grafana.app" || item.kind != "Dashboard" {
 			responder.Error(fmt.Errorf("only dashboards are supported right now"))
 			return
 		}
 
-		var obj runtime.Object
-		switch req.Method {
-		case "DELETE":
-			obj, err = r.store.UnstarDashboard(ctx, user, item.id)
-		case "PUT":
-			obj, err = r.store.StarDashboard(ctx, user, item.id)
-		default:
-			err = fmt.Errorf("unsupported method")
+		current, err := r.store.Get(ctx, name, &v1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				if remove {
+					responder.Object(http.StatusNoContent, &v1.Status{
+						Code:    http.StatusNoContent,
+						Message: "not changed",
+					})
+					return
+				}
+				current = &preferences.Stars{
+					ObjectMeta: v1.ObjectMeta{
+						Name:      name,
+						Namespace: user.GetNamespace(),
+					},
+				}
+			}
+		}
+
+		obj, ok := current.(*preferences.Stars)
+		if !ok {
+			responder.Error(fmt.Errorf("expected stars object"))
+			return
+		}
+
+		var stars *preferences.StarsResource
+		for idx, v := range obj.Spec.Resource {
+			if v.Group == item.group && v.Kind == item.kind {
+				stars = &obj.Spec.Resource[idx]
+			}
+		}
+		if stars == nil {
+			if remove {
+				responder.Object(http.StatusNoContent, &v1.Status{
+					Code:    http.StatusNoContent,
+					Message: "not changed",
+				})
+				return
+			}
+			obj.Spec.Resource = append(obj.Spec.Resource, preferences.StarsResource{
+				Group: item.group,
+				Kind:  item.kind,
+				Names: []string{},
+			})
+			stars = &obj.Spec.Resource[len(obj.Spec.Resource)-1]
+		}
+
+		idx := slices.Index(stars.Names, item.id)
+		if idx < 0 { // not found
+			if remove {
+				responder.Object(http.StatusNoContent, &v1.Status{
+					Code:    http.StatusNoContent,
+					Message: "not changed (already gone)",
+				})
+				return
+			}
+			stars.Names = append(stars.Names, item.id)
+		} else if remove {
+			stars.Names = append(stars.Names[:idx], stars.Names[idx+1:]...)
+		} else {
+			responder.Object(http.StatusNoContent, &v1.Status{
+				Code:    http.StatusNoContent,
+				Message: "not changed (already exists)",
+			})
+			return
+		}
+
+		// Remove the slot if only one value
+		if len(stars.Names) == 0 {
+			spec := preferences.StarsSpec{}
+			for _, v := range obj.Spec.Resource {
+				if v.Group == item.group && v.Kind == item.kind {
+					continue
+				}
+				spec.Resource = append(spec.Resource, v)
+			}
+			obj.Spec = spec
+		}
+
+		fmt.Printf("WRITE: %+v", obj.Spec)
+
+		if len(obj.Spec.Resource) == 0 {
+			_, _, err = r.store.Delete(ctx, name, rest.ValidateAllObjectFunc, &v1.DeleteOptions{})
+		} else if obj.ResourceVersion == "" {
+			_, err = r.store.Create(ctx, obj, rest.ValidateAllObjectFunc, &v1.CreateOptions{})
+		} else {
+			_, _, err = r.store.Update(ctx, name, rest.DefaultUpdatedObjectInfo(obj), rest.ValidateAllObjectFunc, rest.ValidateAllObjectUpdateFunc, true, &v1.UpdateOptions{})
 		}
 		if err != nil {
 			responder.Error(err)
 			return
 		}
-		responder.Object(200, obj)
+		responder.Object(http.StatusOK, &v1.Status{
+			Code:    http.StatusOK,
+			Message: "updated",
+		})
 	}), nil
 }
 
