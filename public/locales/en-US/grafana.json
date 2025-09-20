@@ -1919,9 +1919,6 @@
       "title-remove": "Remove",
       "tooltip-remove-time-range": "Remove time range"
     },
-    "namespace": {
-      "title-alert-rules": "Alert rules"
-    },
     "namespace-and-group-filter": {
       "select-group": "Select group",
       "select-namespace": "Select namespace"
