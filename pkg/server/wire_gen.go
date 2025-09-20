@@ -601,7 +601,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	deleteExpiredService := image.ProvideDeleteExpiredService(dBstore)
 	tempuserService := tempuserimpl.ProvideService(sqlStore, cfg)
 	cleanupServiceImpl := annotationsimpl.ProvideCleanupService(sqlStore, cfg)
-	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dBstore, eventualRestConfigProvider, orgService)
 	secretsKVStore, err := kvstore2.ProvideService(sqlStore, secretsService)
 	if err != nil {
 		return nil, err
@@ -613,6 +612,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
+	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dBstore, eventualRestConfigProvider, orgService, teamService, service15)
 	correlationsService, err := correlations.ProvideService(sqlStore, routeRegisterImpl, service15, accessControl, inProcBus, quotaService, cfg)
 	if err != nil {
 		return nil, err
@@ -1199,7 +1199,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	deleteExpiredService := image.ProvideDeleteExpiredService(dBstore)
 	tempuserService := tempuserimpl.ProvideService(sqlStore, cfg)
 	cleanupServiceImpl := annotationsimpl.ProvideCleanupService(sqlStore, cfg)
-	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dBstore, eventualRestConfigProvider, orgService)
 	secretsKVStore, err := kvstore2.ProvideService(sqlStore, secretsService)
 	if err != nil {
 		return nil, err
@@ -1211,6 +1210,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dBstore, eventualRestConfigProvider, orgService, teamService, service15)
 	correlationsService, err := correlations.ProvideService(sqlStore, routeRegisterImpl, service15, accessControl, inProcBus, quotaService, cfg)
 	if err != nil {
 		return nil, err
