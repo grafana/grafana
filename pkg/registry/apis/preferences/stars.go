@@ -86,12 +86,6 @@ func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, 
 			return
 		}
 
-		// For now only dashboard stars are supported
-		if item.group != "dashboard.grafana.app" || item.kind != "Dashboard" {
-			responder.Error(fmt.Errorf("only dashboards are supported right now"))
-			return
-		}
-
 		current, err := r.store.Get(ctx, name, &v1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
@@ -117,61 +111,13 @@ func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, 
 			return
 		}
 
-		var stars *preferences.StarsResource
-		for idx, v := range obj.Spec.Resource {
-			if v.Group == item.group && v.Kind == item.kind {
-				stars = &obj.Spec.Resource[idx]
-			}
-		}
-		if stars == nil {
-			if remove {
-				responder.Object(http.StatusNoContent, &v1.Status{
-					Code:    http.StatusNoContent,
-					Message: "not changed",
-				})
-				return
-			}
-			obj.Spec.Resource = append(obj.Spec.Resource, preferences.StarsResource{
-				Group: item.group,
-				Kind:  item.kind,
-				Names: []string{},
-			})
-			stars = &obj.Spec.Resource[len(obj.Spec.Resource)-1]
-		}
-
-		idx := slices.Index(stars.Names, item.id)
-		if idx < 0 { // not found
-			if remove {
-				responder.Object(http.StatusNoContent, &v1.Status{
-					Code:    http.StatusNoContent,
-					Message: "not changed (already gone)",
-				})
-				return
-			}
-			stars.Names = append(stars.Names, item.id)
-		} else if remove {
-			stars.Names = append(stars.Names[:idx], stars.Names[idx+1:]...)
-		} else {
+		if !apply(&obj.Spec, item, remove) {
 			responder.Object(http.StatusNoContent, &v1.Status{
 				Code:    http.StatusNoContent,
-				Message: "not changed (already exists)",
+				Message: "not changed",
 			})
 			return
 		}
-
-		// Remove the slot if only one value
-		if len(stars.Names) == 0 {
-			spec := preferences.StarsSpec{}
-			for _, v := range obj.Spec.Resource {
-				if v.Group == item.group && v.Kind == item.kind {
-					continue
-				}
-				spec.Resource = append(spec.Resource, v)
-			}
-			obj.Spec = spec
-		}
-
-		fmt.Printf("WRITE: %+v", obj.Spec)
 
 		if len(obj.Spec.Resource) == 0 {
 			_, _, err = r.store.Delete(ctx, name, rest.ValidateAllObjectFunc, &v1.DeleteOptions{})
@@ -207,4 +153,50 @@ func itemFromPath(urlPath, prefix string) (starItem, error) {
 		kind:  parts[1],
 		id:    parts[2],
 	}, nil
+}
+
+func apply(spec *preferences.StarsSpec, item starItem, remove bool) bool {
+	var stars *preferences.StarsResource
+	for idx, v := range spec.Resource {
+		if v.Group == item.group && v.Kind == item.kind {
+			stars = &spec.Resource[idx]
+		}
+	}
+	if stars == nil {
+		if remove {
+			return false
+		}
+		spec.Resource = append(spec.Resource, preferences.StarsResource{
+			Group: item.group,
+			Kind:  item.kind,
+			Names: []string{},
+		})
+		stars = &spec.Resource[len(spec.Resource)-1]
+	}
+
+	idx := slices.Index(stars.Names, item.id)
+	if idx < 0 { // not found
+		if remove {
+			return false
+		}
+		stars.Names = append(stars.Names, item.id)
+	} else if remove {
+		stars.Names = append(stars.Names[:idx], stars.Names[idx+1:]...)
+	} else {
+		return false
+	}
+	slices.Sort(stars.Names)
+
+	// Remove the slot if only one value
+	if len(stars.Names) == 0 {
+		tmp := preferences.StarsSpec{}
+		for _, v := range spec.Resource {
+			if v.Group == item.group && v.Kind == item.kind {
+				continue
+			}
+			tmp.Resource = append(tmp.Resource, v)
+		}
+		spec.Resource = tmp.Resource
+	}
+	return true
 }
