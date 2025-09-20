@@ -11,13 +11,14 @@ import {
   LogsSortOrder,
   systemDateFormats,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString, sortLogRows } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { FieldDef, getAllFields } from '../logParser';
-import { identifyOTelLanguage, getOtelFormattedBody } from '../otel/formats';
+import { identifyOTelLanguage, getOtelAttributesField, LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
 import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
 import { LogLineVirtualization } from './virtualization';
@@ -114,6 +115,10 @@ export class LogListModel implements LogRowModel {
       raw = escapeUnescapedString(raw);
     }
     this.raw = raw;
+
+    if (config.featureToggles.otelLogsFormatting) {
+      this.labels[LOG_LINE_ATTRIBUTES_FIELD_NAME] = getOtelAttributesField(this);
+    }
   }
 
   clone() {
@@ -137,7 +142,7 @@ export class LogListModel implements LogRowModel {
           this.raw = reStringified;
         }
       } catch (error) {}
-      const raw = config.featureToggles.otelLogsFormatting && this.otelLanguage ? getOtelFormattedBody(this) : this.raw;
+      const raw = this.raw;
       this._body = this.collapsed
         ? raw.substring(0, this._virtualization?.getTruncationLength(null) ?? TRUNCATION_DEFAULT_LENGTH)
         : raw;
@@ -334,4 +339,13 @@ export function getLevelsFromLogs(logs: LogListModel[]) {
     levels.add(log.logLevel);
   }
   return Array.from(levels).filter((level) => level != null);
+}
+
+export function getNormalizedFieldName(field: string) {
+  if (field === LOG_LINE_BODY_FIELD_NAME) {
+    return t('logs.log-line-details.log-line-field', 'Log line');
+  } else if (field === LOG_LINE_ATTRIBUTES_FIELD_NAME) {
+    return t('logs.log-line-details.log-attributes-field', 'Log attributes');
+  }
+  return field;
 }
