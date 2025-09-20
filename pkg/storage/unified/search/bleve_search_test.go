@@ -207,6 +207,19 @@ func TestCanSearchByTitle(t *testing.T) {
 		// include terms shorter that are exactly 3 chars
 		checkSearchQuery(t, index, newTestQuery("new das"), []string{"name2", "name1"})
 	})
+
+	t.Run("title search will use wildcard match when using a single term", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "new dashboard",
+			"name2": "new dash",
+			"name3": "somedash",
+		})
+
+		checkSearchQuery(t, index, newTestQuery("das"), []string{"name1", "name2", "name3"})
+		checkSearchQuery(t, index, newTestQuery("ome"), []string{"name3"})
+		checkSearchQuery(t, index, newTestQuery("new das"), []string{"name2", "name1"})
+	})
 }
 
 func newTestQuery(query string) *resourcepb.ResourceSearchRequest {
