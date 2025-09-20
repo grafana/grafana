@@ -347,8 +347,13 @@ async function initEchoSrv() {
   if (contextSrv.user.orgRole !== '') {
     const { PerformanceBackend } = await import('./core/services/echo/backends/PerformanceBackend');
     registerEchoBackend(new PerformanceBackend({}));
+
+    const { MemoryUsageBackend } = await import('./core/services/echo/backends/MemoryUsageBackend');
+    registerEchoBackend(new MemoryUsageBackend({}));
   }
 
+  console.log('config.dashboardMemoryMonitoring', config.dashboardMemoryMonitoring);
+  console.log('config.dashboardMemoryMonitoringInterval', config.dashboardMemoryMonitoringInterval);
   if (config.grafanaJavascriptAgent.enabled) {
     // Ignore Rudderstack URLs
     const rudderstackUrls = [
