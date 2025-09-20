@@ -14,6 +14,7 @@ import (
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -89,21 +90,23 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage := map[string]rest.Storage{}
 
 	// Configure Stars Dual writer
-	stars := preferences.StarsResourceInfo
-	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, stars, opts.OptsGetter)
+	resource := preferences.StarsResourceInfo
+	var stars grafanarest.Storage
+	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, resource, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
-	storage[stars.StoragePath()] = unified
-	if b.stars != nil {
+	stars = unified
+	if b.stars != nil && opts.DualWriteBuilder != nil {
 		legacy := legacy.NewDashboardStarsStorage(b.stars, b.users, b.namespacer, b.sql)
-		storage[stars.StoragePath()], err = opts.DualWriteBuilder(stars.GroupResource(), legacy, unified)
+		stars, err = opts.DualWriteBuilder(resource.GroupResource(), legacy, unified)
 		if err != nil {
 			return err
 		}
-		storage[stars.StoragePath("write")] = &starsREST{
-			store: legacy, // TODO, only supports legacy right now
-		}
+	}
+	storage[resource.StoragePath()] = stars
+	storage[resource.StoragePath("write")] = &starsREST{
+		store: stars,
 	}
 
 	// Configure Preferences
