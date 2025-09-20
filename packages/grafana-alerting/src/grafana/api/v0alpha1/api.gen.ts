@@ -1239,17 +1239,103 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type ReceiverIntegration = {
+export type AlertingEntityMetadataAnnotations = {
+  /** Whether the user can administer this entity */
+  'grafana.com/access/canAdmin'?: 'true' | 'false';
+  /** Whether the user can delete this entity */
+  'grafana.com/access/canDelete'?: 'true' | 'false';
+  /** Whether the user can write to this entity */
+  'grafana.com/access/canWrite'?: 'true' | 'false';
+  /** Used for provisioning to identify what system created the entity */
+  'grafana.com/provenance'?: string;
+};
+export type ContactPointMetadataAnnotations = AlertingEntityMetadataAnnotations & {
+  /** Whether the user can read secrets for this contact point */
+  'grafana.com/access/canReadSecrets'?: 'true' | 'false';
+  /** Number of routes using this contact point */
+  'grafana.com/inUse/routes'?: string;
+  /** Number of rules using this contact point */
+  'grafana.com/inUse/rules'?: string;
+};
+export type ReceiverObjectMeta = ObjectMeta & {
+  annotations?: ContactPointMetadataAnnotations;
+};
+export type EmailIntegration = {
   disableResolveMessage?: boolean;
   secureFields?: {
     [key: string]: boolean;
   };
+  type: 'email';
+  uid?: string;
+  version: string;
   settings: {
-    [key: string]: object;
+    singleEmail?: boolean;
+    /** Email addresses to send notifications to */
+    addresses: string;
+    message?: string;
+    subject?: string;
   };
+};
+export type SlackIntegration = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    [key: string]: boolean;
+  };
+  type: 'slack';
+  uid?: string;
+  version: string;
+  settings: {
+    endpointUrl?: string;
+    url?: string;
+    recipient?: string;
+    text?: string;
+    title?: string;
+    username?: string;
+    icon_emoji?: string;
+    icon_url?: string;
+    mentionChannel?: string;
+    /** Comma separated string of users to mention */
+    mentionUsers?: string;
+    /** Comma separated string of groups to mention */
+    mentionGroups?: string;
+    color?: string;
+  };
+};
+export type OnCallIntegration = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    [key: string]: boolean;
+  };
+  type: 'OnCall';
+  uid?: string;
+  version: string;
+  settings: {
+    url: string;
+    httpMethod?: 'POST' | 'PUT';
+    maxAlerts?: number;
+    authorization_scheme?: string;
+    authorization_credentials?: string;
+    username?: string;
+    password?: string;
+    title?: string;
+    message?: string;
+  };
+};
+export type UnknownIntegration = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    [key: string]: boolean;
+  };
+  /** Type of the receiver integration. Can be any string for extensibility. */
   type: string;
   uid?: string;
+  version: string;
+  /** Generic settings for any integration type */
+  settings: {
+    [key: string]: any;
+  };
 };
+export type ReceiverIntegration = EmailIntegration | SlackIntegration | OnCallIntegration | UnknownIntegration;
 export type ReceiverSpec = {
   integrations: ReceiverIntegration[];
   title: string;
@@ -1279,9 +1365,9 @@ export type ReceiverStatus = {
 export type Receiver = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata: ObjectMeta;
+  /** Kind is a string value representing the REST resource this object represents. Always "Receiver" for this type. */
+  kind: 'Receiver';
+  metadata: ReceiverObjectMeta;
   /** Spec is the spec of the Receiver */
   spec: ReceiverSpec;
   status: ReceiverStatus;
@@ -1358,7 +1444,7 @@ export type RoutingTreeRouteDefaults = {
 };
 export type RoutingTreeMatcher = {
   label: string;
-  type: string;
+  type: '=' | '!=' | '=~' | '!~';
   value: string;
 };
 export type RoutingTreeRoute = {
