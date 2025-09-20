@@ -3,8 +3,6 @@ package schemaversion
 import (
 	"context"
 	"strings"
-
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration/utils"
 )
 
 // V21 migrates data links to replace __series.labels with __field.labels.
@@ -82,7 +80,7 @@ func V21(_ context.Context, dashboard map[string]interface{}) error {
 
 func updateDataLinks(options map[string]interface{}) {
 	dataLinks, ok := options["dataLinks"].([]interface{})
-	if !ok || !utils.IsArray(dataLinks) {
+	if !ok || !IsArray(dataLinks) {
 		return
 	}
 
