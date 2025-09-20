@@ -859,6 +859,10 @@ export interface FeatureToggles {
   */
   fetchRulesUsingPost?: boolean;
   /**
+  * 
+  */
+  alertingFetchRuleStatuses?: boolean;
+  /**
   * Enables the new logs panel in Explore
   */
   newLogsPanel?: boolean;
