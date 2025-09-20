@@ -11,7 +11,7 @@ import {
   getScopesDashboardsSearchInput,
   getScopesSelectorInput,
 } from './cuj-selectors';
-import { getConfigDashboards } from './utils';
+import { checkDashboardReloadBehavior, getConfigDashboards, trackDashboardReloadRequests } from './utils';
 
 test.use({
   featureToggles: {
@@ -118,8 +118,14 @@ test.describe(
             await groupByVariable.press('Escape');
 
             await expect(scopesDashboards.first()).toBeVisible();
+
+            const { getRequests, waitForExpectedRequests } = await trackDashboardReloadRequests(page);
             await scopesDashboards.first().click();
-            await page.waitForURL('**/d/**');
+            await waitForExpectedRequests();
+            await page.waitForLoadState('networkidle');
+
+            const requests = getRequests();
+            expect(checkDashboardReloadBehavior(requests)).toBe(true);
 
             //all values are set after dashboard switch
             await expect(markdownContent).toContainText(`GroupByVar: dev\n\nAdHocVar: ${processedPills}`);
