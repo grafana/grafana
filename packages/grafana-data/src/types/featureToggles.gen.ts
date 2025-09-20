@@ -1161,11 +1161,6 @@ export interface FeatureToggles {
   */
   prometheusTypeMigration?: boolean;
   /**
-  * Enables dskit background service wrapper
-  * @default false
-  */
-  dskitBackgroundServices?: boolean;
-  /**
   * Enables running plugins in containers
   * @default false
   */

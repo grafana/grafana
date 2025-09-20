@@ -16,7 +16,7 @@ var (
 	stopTimeout = 30 * time.Second
 )
 
-type managerAdapter struct {
+type ManagerAdapter struct {
 	services.NamedService
 
 	reg           registry.BackgroundServiceRegistry
@@ -32,8 +32,8 @@ type managerAdapter struct {
 //   - Graceful shutdown with proper cleanup ordering
 //
 // Services implementing CanBeDisabled that are disabled will be skipped.
-func NewManagerAdapter(reg registry.BackgroundServiceRegistry) *managerAdapter {
-	m := &managerAdapter{
+func NewManagerAdapter(reg registry.BackgroundServiceRegistry) *ManagerAdapter {
+	m := &ManagerAdapter{
 		reg:           reg,
 		dependencyMap: dependencyMap(),
 	}
@@ -41,7 +41,12 @@ func NewManagerAdapter(reg registry.BackgroundServiceRegistry) *managerAdapter {
 	return m
 }
 
-func (m *managerAdapter) starting(ctx context.Context) error {
+func (m *ManagerAdapter) WithDependencies(dependencyMap map[string][]string) *ManagerAdapter {
+	m.dependencyMap = dependencyMap
+	return m
+}
+
+func (m *ManagerAdapter) starting(ctx context.Context) error {
 	spanCtx, span := tracing.Start(ctx, "backgroundsvcs.managerAdapter.starting")
 	defer span.End()
 	logger := log.New("backgroundsvcs.managerAdapter").FromContext(spanCtx)
@@ -79,13 +84,13 @@ func (m *managerAdapter) starting(ctx context.Context) error {
 	return nil
 }
 
-func (m *managerAdapter) running(ctx context.Context) error {
+func (m *ManagerAdapter) running(ctx context.Context) error {
 	spanCtx, span := tracing.Start(ctx, "backgroundsvcs.managerAdapter.running")
 	defer span.End()
 	return m.manager.Run(spanCtx)
 }
 
-func (m *managerAdapter) stopping(failure error) error {
+func (m *ManagerAdapter) stopping(failure error) error {
 	ctx, cancel := context.WithTimeout(context.Background(), stopTimeout)
 	defer cancel()
 	spanCtx, span := tracing.Start(ctx, "backgroundsvcs.managerAdapter.stopping")
@@ -98,7 +103,7 @@ func (m *managerAdapter) stopping(failure error) error {
 }
 
 // Run initializes and starts all background services using dskit's module and service patterns.
-func (m *managerAdapter) Run(ctx context.Context) error {
+func (m *ManagerAdapter) Run(ctx context.Context) error {
 	if err := m.StartAsync(ctx); err != nil {
 		return err
 	}
@@ -106,7 +111,7 @@ func (m *managerAdapter) Run(ctx context.Context) error {
 }
 
 // Shutdown calls calls the underlying manager's Shutdown
-func (m *managerAdapter) Shutdown(ctx context.Context, reason string) error {
+func (m *ManagerAdapter) Shutdown(ctx context.Context, reason string) error {
 	m.StopAsync()
 	return m.AwaitTerminated(ctx)
 }
