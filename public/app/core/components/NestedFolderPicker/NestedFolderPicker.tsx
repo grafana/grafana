@@ -14,7 +14,7 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { QueryResponse } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
-import { PermissionLevelString } from 'app/types/acl';
+import { PermissionLevel } from 'app/types/acl';
 
 import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
@@ -57,7 +57,7 @@ export interface NestedFolderPickerProps {
 
 const debouncedSearch = debounce(getSearchResults, 300);
 
-async function getSearchResults(searchQuery: string, permission?: PermissionLevelString) {
+async function getSearchResults(searchQuery: string, permission?: PermissionLevel) {
   const queryResponse = await getGrafanaSearcher().search({
     query: searchQuery,
     kind: ['folder'],
@@ -99,11 +99,11 @@ export function NestedFolderPicker({
   const lastSearchTimestamp = useRef<number>(0);
 
   // Map the permission string union to enum value for compatibility
-  const permissionLevel = useMemo(() => {
+  const permissionLevel = useMemo<PermissionLevel>(() => {
     if (permission === 'view') {
-      return PermissionLevelString.View;
+      return 'view';
     } else if (permission === 'edit') {
-      return PermissionLevelString.Edit;
+      return 'edit';
     }
 
     throw new Error('Invalid permission');
