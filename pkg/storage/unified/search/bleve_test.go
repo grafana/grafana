@@ -41,8 +41,7 @@ func TestMain(m *testing.M) {
 	goleak.VerifyTestMain(m,
 		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.(*eventExecutor).startEventListener.func1.1"),
 		goleak.IgnoreTopFunction("go.opencensus.io/stats/view.(*worker).start"),
-		goleak.IgnoreTopFunction("github.com/blevesearch/bleve_index_api.AnalysisWorker"),                                       // These don't stop when index is closed.
-		goleak.IgnoreAnyFunction("github.com/grafana/grafana/pkg/storage/unified/search.(*bleveBackend).updateIndexSizeMetric"), // We don't have a way to stop this one yet.
+		goleak.IgnoreTopFunction("github.com/blevesearch/bleve_index_api.AnalysisWorker"), // These don't stop when index is closed.
 	)
 }
 
@@ -66,7 +65,7 @@ func TestBleveBackend(t *testing.T) {
 	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 
-	t.Cleanup(backend.CloseAllIndexes)
+	t.Cleanup(backend.Stop)
 
 	rv := int64(10)
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
@@ -783,7 +782,7 @@ func setupBleveBackend(t *testing.T, options ...setupOption) (*bleveBackend, pro
 	backend, err := NewBleveBackend(opts, tracing.NewNoopTracerService(), metrics)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
-	t.Cleanup(backend.CloseAllIndexes)
+	t.Cleanup(backend.Stop)
 	return backend, reg
 }
 
@@ -895,9 +894,9 @@ func TestCloseAllIndexes(t *testing.T) {
 
 	// Verify two open indexes.
 	checkOpenIndexes(t, reg, 1, 1)
-	backend1.CloseAllIndexes()
+	backend1.closeAllIndexes()
 
-	// Verify that there are no open indexes after CloseAllIndexes call.
+	// Verify that there are no open indexes after closeAllIndexes call.
 	checkOpenIndexes(t, reg, 0, 0)
 }
 
@@ -962,7 +961,7 @@ func TestBuildIndex(t *testing.T) {
 							backend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(tmpDir), withBuildVersion(version))
 							_, err := backend.BuildIndex(context.Background(), ns, firstIndexDocsCount, nil, "test", indexTestDocs(ns, firstIndexDocsCount, 100), nil, rebuild)
 							require.NoError(t, err)
-							backend.CloseAllIndexes()
+							backend.Stop()
 						}
 
 						// Make sure we pass at least 1 nanosecond (alwaysRebuildDueToAge) to ensure that the index needs to be rebuild.
