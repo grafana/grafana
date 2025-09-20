@@ -22,6 +22,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleV0alpha1SpecNotificationSettings": schema_pkg_apis_alerting_v0alpha1_AlertRuleV0alpha1SpecNotificationSettings(ref),
 		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleV0alpha1SpecPanelRef":             schema_pkg_apis_alerting_v0alpha1_AlertRuleV0alpha1SpecPanelRef(ref),
 		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRulestatusOperatorState":              schema_pkg_apis_alerting_v0alpha1_AlertRulestatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.GetFooo":                                   schema_pkg_apis_alerting_v0alpha1_GetFooo(ref),
 		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.RecordingRule":                             schema_pkg_apis_alerting_v0alpha1_RecordingRule(ref),
 		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.RecordingRuleExpression":                   schema_pkg_apis_alerting_v0alpha1_RecordingRuleExpression(ref),
 		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.RecordingRuleIntervalTrigger":              schema_pkg_apis_alerting_v0alpha1_RecordingRuleIntervalTrigger(ref),
@@ -540,6 +541,26 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRulestatusOperatorState(ref common.R
 					},
 				},
 				Required: []string{"lastEvaluation", "state"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_GetFooo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"foo": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"foo"},
 			},
 		},
 	}
