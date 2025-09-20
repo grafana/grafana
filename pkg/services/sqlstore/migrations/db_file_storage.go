@@ -67,4 +67,95 @@ func addDbFileStorageMigration(mg *migrator.Migrator) {
 
 	mg.AddMigration("migrate contents column to mediumblob for MySQL", migrator.NewRawSQLMigration("").
 		Mysql("ALTER TABLE file MODIFY contents MEDIUMBLOB;"))
+
+	addDeleteAutoGenIDsFileMigration(mg)
+	addFilePrimaryKeyMigration(mg)
+}
+
+func addFilePrimaryKeyMigration(mg *migrator.Migrator) {
+	// Add primary key to file table on path_hash column
+	// This converts the existing unique constraint to a primary key
+	// Only run if the unique index exists (which means the table exists but doesn't have primary key)
+	migration := migrator.NewRawSQLMigration("").
+		Mysql(`
+			ALTER TABLE file 
+			DROP INDEX UQE_file_path_hash,
+			ADD PRIMARY KEY (path_hash);
+		`).
+		Postgres(`
+			DO $$
+			BEGIN
+				-- Drop the unique constraint if it exists
+				IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'UQE_file_path_hash') THEN
+					ALTER TABLE file DROP CONSTRAINT UQE_file_path_hash;
+				END IF;
+				
+				-- Add primary key
+				ALTER TABLE file ADD PRIMARY KEY (path_hash);
+			END $$;
+		`).
+		SQLite(`
+			-- For SQLite we need to recreate the table with primary key
+			CREATE TABLE file_new (
+				path varchar(1024) NOT NULL,
+				path_hash varchar(64) NOT NULL,
+				parent_folder_path_hash varchar(64) NOT NULL,
+				contents blob,
+				etag varchar(32) NOT NULL,
+				cache_control varchar(128) NOT NULL,
+				content_disposition varchar(128) NOT NULL,
+				updated datetime NOT NULL,
+				created datetime NOT NULL,
+				size bigint NOT NULL,
+				mime_type varchar(255) NOT NULL,
+				PRIMARY KEY (path_hash)
+			);
+			INSERT INTO file_new SELECT path, path_hash, parent_folder_path_hash, contents, etag, cache_control, content_disposition, updated, created, size, mime_type FROM file;
+			DROP TABLE file;
+			ALTER TABLE file_new RENAME TO file;
+			
+			-- Recreate the parent_folder_path_hash index
+			CREATE INDEX IDX_file_parent_folder_path_hash ON file (parent_folder_path_hash);
+		`).
+		Mssql(`
+			-- For MSSQL, drop the unique constraint and add primary key
+			IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UQE_file_path_hash')
+			BEGIN
+				DROP INDEX UQE_file_path_hash ON file;
+			END
+			
+			ALTER TABLE file ADD CONSTRAINT PK_file_path_hash PRIMARY KEY (path_hash);
+		`)
+
+	mg.AddMigration("add primary key to file table", migration)
+}
+
+func addDeleteAutoGenIDsFileMigration(mg *migrator.Migrator) {
+	// Check if delete_auto_gen_ids is enabled in the configuration
+	if mg.Cfg == nil || mg.Cfg.Raw == nil {
+		return
+	}
+
+	deleteAutoGenIDs := mg.Cfg.Raw.Section("database").Key("delete_auto_gen_ids").MustBool(false)
+	if !deleteAutoGenIDs {
+		return
+	}
+
+	// Run the migration to drop the auto-generated primary key
+	migration := migrator.NewRawSQLMigration("").
+		Mysql(`
+			-- Drop the auto-generated my_row_id primary key
+			ALTER TABLE file DROP PRIMARY KEY;
+		`).
+		Postgres(`
+			-- Auto-generated primary keys are a MySQL feature, so we don't need to do anything for Postgres
+		`).
+		SQLite(`
+			-- SQLite doesn't have auto-generated primary keys
+		`).
+		Mssql(`
+			-- MSSQL doesn't have auto-generated primary keys like Azure MySQL
+		`)
+
+	mg.AddMigration("drop auto-generated primary key from file table", migration)
 }
