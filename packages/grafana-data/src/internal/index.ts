@@ -32,7 +32,6 @@ export { type FilterFramesByRefIdTransformerOptions } from '../transformations/t
 export { FormatStringOutput, type FormatStringTransformerOptions } from '../transformations/transformers/formatString';
 export { organizeFieldsTransformer } from '../transformations/transformers/organize';
 export { labelsToFieldsTransformer } from '../transformations/transformers/labelsToFields';
-export { type FormatTimeTransformerOptions } from '../transformations/transformers/formatTime';
 export {
   type GroupByFieldOptions,
   GroupByOperationID,

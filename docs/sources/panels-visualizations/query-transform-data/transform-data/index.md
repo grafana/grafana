@@ -581,30 +581,6 @@ Use this transformation to customize the output of a string field. This transfor
 
 This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.
 
-### Format time
-
-Use this transformation to customize the output of a time field. Output can be formatted using [Moment.js format strings](https://momentjs.com/docs/#/displaying/). For example, if you want to display only the year of a time field, the format string 'YYYY' can be used to show the calendar year (for example, 1999 or 2012).
-
-**Before Transformation:**
-
-| Timestamp           | Event        |
-| ------------------- | ------------ |
-| 1636678740000000000 | System Start |
-| 1636678680000000000 | User Login   |
-| 1636678620000000000 | Data Updated |
-
-**After applying 'YYYY-MM-DD HH:mm:ss':**
-
-| Timestamp           | Event        |
-| ------------------- | ------------ |
-| 2021-11-12 14:25:40 | System Start |
-| 2021-11-12 14:24:40 | User Login   |
-| 2021-11-12 14:23:40 | Data Updated |
-
-This transformation lets you tailor the time representation in your visualizations, providing flexibility and precision in displaying temporal data.
-
-> **Note:** This transformation is available in Grafana 10.1+ as an alpha feature.
-
 ### Group by
 
 Use this transformation to group the data by a specified field (column) value and process calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types][].
