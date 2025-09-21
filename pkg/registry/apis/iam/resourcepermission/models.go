@@ -57,8 +57,9 @@ type ListResourcePermissionsQuery struct {
 }
 
 type DeleteResourcePermissionsQuery struct {
-	Scope string
-	OrgID int64
+	Scope    string
+	OrgID    int64
+	RoleName string
 }
 
 type rbacAssignmentCreate struct {
