@@ -137,37 +137,6 @@ func (s *DashboardStarsStorage) Get(ctx context.Context, name string, options *m
 	return &obj, nil
 }
 
-// func (s *DashboardStarsStorage) StarDashboard(ctx context.Context, user identity.Requester, uid string) (runtime.Object, error) {
-// 	id, err := user.GetInternalID()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	if err = s.stars.Add(ctx, &star.StarDashboardCommand{
-// 		UserID:       id,
-// 		OrgID:        user.GetOrgID(),
-// 		DashboardUID: uid,
-// 		Updated:      time.Now(),
-// 	}); err != nil {
-// 		return nil, err
-// 	}
-// 	return &metav1.Status{Code: http.StatusOK, Message: "added star"}, nil
-// }
-
-// func (s *DashboardStarsStorage) UnstarDashboard(ctx context.Context, user identity.Requester, uid string) (runtime.Object, error) {
-// 	id, err := user.GetInternalID()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	if err = s.stars.Delete(ctx, &star.UnstarDashboardCommand{
-// 		UserID:       id,
-// 		OrgID:        user.GetOrgID(),
-// 		DashboardUID: uid,
-// 	}); err != nil {
-// 		return nil, err
-// 	}
-// 	return &metav1.Status{Code: http.StatusOK, Message: "removed star"}, nil
-// }
-
 func getDashboardStars(stars *preferences.Stars) []string {
 	if stars == nil || len(stars.Spec.Resource) == 0 {
 		return []string{}
