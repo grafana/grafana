@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { unescape } from 'lodash';
 import { PropsWithChildren, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
@@ -306,12 +305,10 @@ function OptionCustomfield({
         label={t('alerting.option-customfield.label-custom-template', 'Custom template')}
         placeholder={
           option.placeholder
-            ? unescape(
-                t(
-                  'alerting.option-customfield.placeholder-with-template',
-                  'Enter plain text or reference a template, e.g. {{currentTemplate}}',
-                  { currentTemplate: option.placeholder }
-                )
+            ? t(
+                'alerting.option-customfield.placeholder-with-template',
+                'Enter plain text or reference a template, e.g. {{- currentTemplate}}',
+                { currentTemplate: option.placeholder }
               )
             : // Placeholder message with default template if no option.placeholder
               t(
