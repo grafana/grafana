@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -196,14 +196,15 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 		return nil, fmt.Errorf("expected User object, got %T", obj)
 	}
 
+	if userObj.GenerateName != "" {
+		userObj.Name = userObj.GenerateName + util.GenerateShortUID()
+		userObj.GenerateName = ""
+	}
+
 	if createValidation != nil {
 		if err := createValidation(ctx, obj); err != nil {
 			return nil, err
 		}
-	}
-
-	if userObj.Spec.Login == "" && userObj.Spec.Email == "" {
-		return nil, fmt.Errorf("user must have either login or email")
 	}
 
 	createCmd := legacy.CreateUserCommand{
@@ -215,6 +216,7 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 		IsDisabled:    userObj.Spec.Disabled,
 		EmailVerified: userObj.Spec.EmailVerified,
 		IsProvisioned: userObj.Spec.Provisioned,
+		Role:          userObj.Spec.Role,
 	}
 
 	result, err := s.store.CreateUser(ctx, ns, createCmd)
@@ -226,7 +228,7 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	return &iamUser, nil
 }
 
-func toUserItem(u *user.User, ns string) iamv0alpha1.User {
+func toUserItem(u *common.UserWithRole, ns string) iamv0alpha1.User {
 	item := &iamv0alpha1.User{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              u.UID,
@@ -242,6 +244,7 @@ func toUserItem(u *user.User, ns string) iamv0alpha1.User {
 			Disabled:      u.IsDisabled,
 			GrafanaAdmin:  u.IsAdmin,
 			Provisioned:   u.IsProvisioned,
+			Role:          u.Role,
 		},
 	}
 	obj, _ := utils.MetaAccessor(item)
