@@ -101,12 +101,31 @@ export function ToolbarActions({ dashboard }: Props) {
     group: 'icon-actions',
     condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
     render: () => {
+      if (config.featureToggles.starsFromAPIServer) {
+        return (
+          <StarToolbarButton
+            key="star-dashboard-button"
+            group="dashboard.grafana.app"
+            kind="Dashboard"
+            dashboard={dashboard}
+          />
+        );
+      }
+      let desc = meta.isStarred
+        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
+        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
       return (
-        <StarToolbarButton
+        <ToolbarButton
+          tooltip={desc}
+          icon={
+            <Icon name={meta.isStarred ? 'favorite' : 'star'} size="lg" type={meta.isStarred ? 'mono' : 'default'} />
+          }
           key="star-dashboard-button"
-          group="dashboard.grafana.app"
-          kind="Dashboard"
-          dashboard={dashboard}
+          data-testid={selectors.components.NavToolbar.markAsFavorite}
+          onClick={() => {
+            DashboardInteractions.toolbarFavoritesClick();
+            dashboard.onStarDashboard();
+          }}
         />
       );
     },
