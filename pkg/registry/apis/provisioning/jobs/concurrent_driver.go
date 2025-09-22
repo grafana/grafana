@@ -69,6 +69,7 @@ func NewConcurrentJobDriver(
 		historicJobs:         historicJobs,
 		workers:              workers,
 		notifications:        notifications,
+		registry:             registry,
 	}, nil
 }
 
