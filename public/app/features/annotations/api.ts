@@ -4,7 +4,7 @@ import { StateHistoryItem } from 'app/types/unified-alerting';
 
 import { AnnotationTagsResponse } from './types';
 
-export interface AnnotationService {
+export interface AnnotationServer {
   query(params: Record<string, unknown>, requestId: string): Promise<DataFrame>;
   forAlert(alertUID: string): Promise<StateHistoryItem[]>;
   save(annotation: AnnotationEvent): Promise<AnnotationEvent>;
@@ -13,7 +13,7 @@ export interface AnnotationService {
   tags(): Promise<Array<{ term: string; count: number }>>;
 }
 
-class LegacyAnnotationService implements AnnotationService {
+class LegacyAnnotationServer implements AnnotationServer {
   query(params: unknown, requestId: string): Promise<DataFrame> {
     return getBackendSrv()
       .get('/api/annotations', params, requestId)
@@ -47,11 +47,11 @@ class LegacyAnnotationService implements AnnotationService {
   }
 }
 
-let instance: AnnotationService | null = null;
+let instance: AnnotationServer | null = null;
 
-export function getAnnotations(): AnnotationService {
+export function annotationServer(): AnnotationServer {
   if (!instance) {
-    instance = new LegacyAnnotationService();
+    instance = new LegacyAnnotationServer();
   }
   return instance;
 }
