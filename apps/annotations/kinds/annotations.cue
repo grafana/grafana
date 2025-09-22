@@ -26,7 +26,7 @@ annotations: {
 
 		#Dashboard: {
 			name: string
-			panel?: string  
+			panel?: int64  
 		}
 
 		#Alert: {

@@ -14,15 +14,15 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/util/errhttp"
-
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	v0alpha1 "github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 var (
@@ -68,19 +68,10 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	gv := v0alpha1.GroupVersion
 	addKnownTypes(scheme, gv)
-
-	// Link this version to the internal representation.
-	// This is used for server-side-apply (PATCH), and avoids the error:
-	//   "no kind is registered for the type"
 	addKnownTypes(scheme, schema.GroupVersion{
 		Group:   gv.Group,
 		Version: runtime.APIVersionInternal,
 	})
-
-	// If multiple versions exist, then register conversions from zz_generated.conversion.go
-	// if err := playlist.RegisterConversions(scheme); err != nil {
-	//   return err
-	// }
 	metav1.AddToGroupVersion(scheme, gv)
 	return scheme.SetVersionPriority(gv)
 }
@@ -107,20 +98,21 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 // Register additional routes with the server
 func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
-	defs := v0alpha1.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
-	annosSchema := defs["github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1.AnnotationList"].Schema
-	tagsSchema := defs["github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1.TagsList"].Schema
+	ref := func(path string) spec.Ref { return spec.Ref{} }
+	defs := v0alpha1.GetOpenAPIDefinitions(ref)
+	df := data.GetOpenAPIDefinitions(ref)["github.com/grafana/grafana-plugin-sdk-go/data.Frame"].Schema
+	tags := defs["github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1.TagsList"].Schema
 
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
-				Path: "annotations/find",
+				Path: "annotations/query",
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
 							Tags:        []string{"Annotation"},
-							OperationId: "findAnnotations",
-							Description: "Find annotations",
+							OperationId: "queryAnnotations",
+							Description: "Query annotations",
 							Parameters: []*spec3.Parameter{
 								{
 									ParameterProps: spec3.ParameterProps{
@@ -170,6 +162,15 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 										Schema:      spec.StringProperty(),
 									},
 								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "tags",
+										In:          "query",
+										Description: "tag query filter",
+										Required:    false,
+										Schema:      spec.ArrayProperty(spec.StringProperty()),
+									},
+								},
 							},
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
@@ -179,7 +180,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 												Content: map[string]*spec3.MediaType{
 													"application/json": {
 														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &annosSchema,
+															Schema: &df,
 														},
 													},
 												},
@@ -193,7 +194,8 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 					},
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
-					query, err := parseQuery(r.URL.Query())
+					url := r.URL.Query()
+					query, err := parseQuery(url)
 					if err != nil {
 						errhttp.Write(r.Context(), err, w)
 						return
@@ -205,8 +207,14 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 						return
 					}
 
+					df, err := toDataFrame(found)
+					if err != nil {
+						errhttp.Write(r.Context(), err, w)
+						return
+					}
+
 					w.Header().Set("Content-Type", "application/json")
-					_ = json.NewEncoder(w).Encode(found)
+					_ = json.NewEncoder(w).Encode(df)
 				},
 			},
 			{
@@ -237,7 +245,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 												Content: map[string]*spec3.MediaType{
 													"application/json": {
 														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &tagsSchema,
+															Schema: &tags,
 														},
 													},
 												},

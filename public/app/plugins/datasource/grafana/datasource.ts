@@ -26,6 +26,7 @@ import {
   StreamingFrameOptions,
 } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
+import { annotations } from 'app/features/annotations/api';
 import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
 
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
@@ -241,12 +242,11 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
       params.tags = tags;
     }
 
-    const annotations = await getBackendSrv().get(
-      '/api/annotations',
+    const df = await annotations.query(
       params,
       `grafana-data-source-annotations-${annotation.name}-${options.dashboard?.uid}`
     );
-    return { data: [toDataFrame(annotations)] };
+    return { data: [df] };
   }
 
   testDatasource(): Promise<TestDataSourceResponse> {

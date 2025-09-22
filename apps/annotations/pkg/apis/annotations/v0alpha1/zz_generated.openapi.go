@@ -144,8 +144,8 @@ func schema_pkg_apis_annotations_v0alpha1_AnnotationDashboard(ref common.Referen
 					},
 					"panel": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Type:   []string{"integer"},
+							Format: "int64",
 						},
 					},
 				},

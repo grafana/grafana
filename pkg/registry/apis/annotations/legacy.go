@@ -3,7 +3,10 @@ package annotations
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -12,6 +15,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 )
@@ -62,7 +66,7 @@ func (s *legacyStorage) Find(ctx context.Context, q *v0alpha1.ItemQuery) (*v0alp
 		return nil, err
 	}
 
-	return toAnnotationList(dto, s.namespacer)
+	return toAnnotationList(dto)
 }
 
 func (s *legacyStorage) Tags(ctx context.Context) (*v0alpha1.TagList, error) {
@@ -110,9 +114,65 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("not implemented")
+	if options.Continue != "" {
+		return nil, fmt.Errorf("pagination is not yet supported")
+	}
+
+	query, err := toLegacyItemQuery(ctx, &v0alpha1.ItemQuery{
+		Limit: options.Limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	dto, err := s.repo.Find(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return toAnnotationList(dto)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("not implemented")
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// For legacy reasons, annotation names are of the form "a123" where 123 is the numeric ID.
+	if !strings.HasPrefix(name, "a") {
+		return nil, apierrors.NewNotFound(schema.GroupResource{
+			Group:    v0alpha1.APIGroup,
+			Resource: "annotations",
+		}, name)
+	}
+
+	query := &annotations.ItemQuery{
+		OrgID:        user.GetOrgID(),
+		SignedInUser: user,
+	}
+	query.AnnotationID, err = strconv.ParseInt(name[1:], 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("expected numeric ID: %w", err)
+	}
+
+	dto, err := s.repo.Find(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	if len(dto) > 1 {
+		return nil, fmt.Errorf("expected single item, got multiple")
+	}
+	if len(dto) == 0 {
+		return nil, apierrors.NewNotFound(schema.GroupResource{
+			Group:    v0alpha1.APIGroup,
+			Resource: "annotations",
+		}, name)
+	}
+
+	item, err := toAnnotation(dto[0])
+	if err != nil {
+		return nil, err
+	}
+	return &item, nil
 }

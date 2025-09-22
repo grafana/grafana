@@ -4,8 +4,8 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type AnnotationDashboard struct {
-	Name  string  `json:"name"`
-	Panel *string `json:"panel,omitempty"`
+	Name  string `json:"name"`
+	Panel *int64 `json:"panel,omitempty"`
 }
 
 // NewAnnotationDashboard creates a new AnnotationDashboard object.
