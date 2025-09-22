@@ -737,13 +737,15 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			usageMetricCollector := usage.MetricCollector(b.tracer, b.getRepositoriesInNamespace, b.unified)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
+			metrics := jobs.RegisterJobMetrics(b.registry)
+
 			stageIfPossible := repository.WrapWithStageAndPushIfPossible
 			exportWorker := export.NewExportWorker(
 				b.clients,
 				b.repositoryResources,
 				export.ExportAll,
 				stageIfPossible,
-				b.registry,
+				metrics,
 			)
 
 			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
@@ -753,7 +755,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.storageStatus,
 				b.statusPatcher.Patch,
 				syncer,
-				b.registry,
+				metrics,
 			)
 			signerFactory := signature.NewSignerFactory(b.clients)
 			legacyResources := migrate.NewLegacyResourcesMigrator(
@@ -785,8 +787,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.storageStatus,
 			)
 
-			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, b.registry)
-			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, b.registry)
+			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
+			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			workers := []jobs.Worker{
 				deleteWorker,
 				exportWorker,

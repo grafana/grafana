@@ -74,7 +74,7 @@ func TestDeleteWorker_IsSupported(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			worker := NewWorker(nil, nil, nil, prometheus.DefaultRegisterer)
+			worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 			result := worker.IsSupported(context.Background(), tt.job)
 			require.Equal(t, tt.expected, result)
 		})
@@ -88,7 +88,7 @@ func TestDeleteWorker_ProcessMissingDeleteSettings(t *testing.T) {
 		},
 	}
 
-	worker := NewWorker(nil, nil, nil, prometheus.DefaultRegisterer)
+	worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := worker.Process(context.Background(), nil, job, nil)
 	require.EqualError(t, err, "missing delete settings")
 }
@@ -117,7 +117,7 @@ func TestDeleteWorker_ProcessNotReaderWriter(t *testing.T) {
 	mockProgress.On("SetTotal", mock.Anything, 1).Return()
 	mockProgress.On("StrictMaxErrors", 1).Return()
 
-	worker := NewWorker(nil, mockWrapFn.Execute, nil, prometheus.DefaultRegisterer)
+	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "delete files from repository: delete job submitted targeting repository that is not a ReaderWriter")
 }
@@ -140,7 +140,7 @@ func TestDeleteWorker_ProcessWrapFnError(t *testing.T) {
 	mockProgress.On("SetTotal", mock.Anything, 1).Return()
 	mockProgress.On("StrictMaxErrors", 1).Return()
 
-	worker := NewWorker(nil, mockWrapFn.Execute, nil, prometheus.DefaultRegisterer)
+	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "delete files from repository: stage failed")
 }
@@ -188,7 +188,7 @@ func TestDeleteWorker_ProcessDeleteFilesSuccess(t *testing.T) {
 		return result.Path == "test/path2" && result.Action == repository.FileActionDeleted && result.Error == nil
 	})).Return()
 
-	worker := NewWorker(nil, mockWrapFn.Execute, nil, prometheus.DefaultRegisterer)
+	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 }
@@ -226,7 +226,7 @@ func TestDeleteWorker_ProcessDeleteFilesWithError(t *testing.T) {
 	})).Return()
 	mockProgress.On("TooManyErrors").Return(errors.New("too many errors"))
 
-	worker := NewWorker(nil, mockWrapFn.Execute, nil, prometheus.DefaultRegisterer)
+	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "delete files from repository: too many errors")
 }
@@ -270,7 +270,7 @@ func TestDeleteWorker_ProcessWithSyncWorker(t *testing.T) {
 		return syncJob.Spec.Pull != nil && !syncJob.Spec.Pull.Incremental
 	}), mockProgress).Return(nil)
 
-	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, nil, prometheus.DefaultRegisterer)
+	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 }
@@ -310,7 +310,7 @@ func TestDeleteWorker_ProcessSyncWorkerError(t *testing.T) {
 	syncError := errors.New("sync failed")
 	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.Anything, mockProgress).Return(syncError)
 
-	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, nil, prometheus.DefaultRegisterer)
+	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "pull resources: sync failed")
 }
@@ -379,7 +379,7 @@ func TestDeleteWorker_deleteFiles(t *testing.T) {
 				}
 			}
 
-			worker := NewWorker(nil, nil, nil, prometheus.DefaultRegisterer)
+			worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 			err := worker.deleteFiles(context.Background(), mockRepo, mockProgress, opts, tt.paths...)
 
 			if tt.expectedError != "" {
@@ -474,7 +474,7 @@ func TestDeleteWorker_ProcessWithResourceRefs(t *testing.T) {
 		return result.Path == "folders/test-folder.json" && result.Action == repository.FileActionDeleted && result.Error == nil
 	})).Return()
 
-	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, prometheus.DefaultRegisterer)
+	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 
@@ -532,7 +532,7 @@ func TestDeleteWorker_ProcessResourceRefsOnly(t *testing.T) {
 		return result.Path == "dashboards/test-dashboard.json" && result.Action == repository.FileActionDeleted && result.Error == nil
 	})).Return()
 
-	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, prometheus.DefaultRegisterer)
+	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 }
@@ -597,7 +597,7 @@ func TestDeleteWorker_ProcessResourceResolutionError(t *testing.T) {
 		return syncJob.Spec.Pull != nil && !syncJob.Spec.Pull.Incremental
 	}), mockProgress).Return(nil)
 
-	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, mockResourcesFactory, prometheus.DefaultRegisterer)
+	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err) // Should succeed even with resource resolution error
 }
@@ -636,7 +636,7 @@ func TestDeleteWorker_ProcessResourcesFactoryError(t *testing.T) {
 	mockProgress.On("StrictMaxErrors", 1).Return()
 	mockProgress.On("SetMessage", mock.Anything, "Resolving resource paths").Return()
 
-	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, prometheus.DefaultRegisterer)
+	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "delete files from repository: create repository resources client: failed to create repository resources client")
 }
@@ -672,7 +672,7 @@ func TestDeleteWorker_ProcessResourceRefsNotReaderWriter(t *testing.T) {
 	mockProgress.On("SetTotal", mock.Anything, 1).Return()
 	mockProgress.On("StrictMaxErrors", 1).Return()
 
-	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, prometheus.DefaultRegisterer)
+	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "delete files from repository: delete job submitted targeting repository that is not a ReaderWriter")
 }
@@ -725,7 +725,7 @@ func TestDeleteWorker_ProcessResourceResolutionTooManyErrors(t *testing.T) {
 	})).Return()
 	mockProgress.On("TooManyErrors").Return(errors.New("too many errors"))
 
-	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, prometheus.DefaultRegisterer)
+	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "delete files from repository: too many errors")
 }
@@ -822,7 +822,7 @@ func TestDeleteWorker_ProcessMixedResourcesWithPartialFailure(t *testing.T) {
 		return result.Path == "folders/valid-folder.json" && result.Error == nil
 	})).Return()
 
-	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, prometheus.DefaultRegisterer)
+	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err) // Should succeed overall, with only the failed resource recorded as error
 }
@@ -920,7 +920,7 @@ func TestDeleteWorker_ProcessWithPathDeduplication(t *testing.T) {
 		return result.Path == "dashboards/unique-dashboard.json" && result.Action == repository.FileActionDeleted && result.Error == nil
 	})).Return()
 
-	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, prometheus.DefaultRegisterer)
+	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 
@@ -1037,7 +1037,7 @@ func TestDeleteWorker_RefURLsSetWithRef(t *testing.T) {
 		},
 	}
 
-	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, prometheus.DefaultRegisterer)
+	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := worker.Process(context.Background(), mockRepoWithURLs, job, mockProgress)
 	require.NoError(t, err)
 
@@ -1093,7 +1093,7 @@ func TestDeleteWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 		},
 	}
 
-	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, mockResourcesFactory, prometheus.DefaultRegisterer)
+	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := worker.Process(context.Background(), mockRepoWithURLs, job, mockProgress)
 	require.NoError(t, err)
 
@@ -1143,7 +1143,7 @@ func TestDeleteWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 		},
 	}
 
-	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, prometheus.DefaultRegisterer)
+	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 

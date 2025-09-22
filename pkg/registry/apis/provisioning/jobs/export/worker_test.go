@@ -55,7 +55,7 @@ func TestExportWorker_IsSupported(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := NewExportWorker(nil, nil, nil, nil, prometheus.DefaultRegisterer)
+			r := NewExportWorker(nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 			got := r.IsSupported(context.Background(), tt.job)
 			require.Equal(t, tt.want, got)
 		})
@@ -69,7 +69,7 @@ func TestExportWorker_ProcessNoExportSettings(t *testing.T) {
 		},
 	}
 
-	r := NewExportWorker(nil, nil, nil, nil, prometheus.DefaultRegisterer)
+	r := NewExportWorker(nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := r.Process(context.Background(), nil, job, nil)
 	require.EqualError(t, err, "missing export settings")
 }
@@ -92,7 +92,7 @@ func TestExportWorker_ProcessWriteNotAllowed(t *testing.T) {
 		},
 	})
 
-	r := NewExportWorker(nil, nil, nil, nil, prometheus.DefaultRegisterer)
+	r := NewExportWorker(nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := r.Process(context.Background(), mockRepo, job, nil)
 	require.EqualError(t, err, "this repository is read only")
 }
@@ -116,7 +116,7 @@ func TestExportWorker_ProcessBranchNotAllowedForLocal(t *testing.T) {
 		},
 	})
 
-	r := NewExportWorker(nil, nil, nil, nil, prometheus.DefaultRegisterer)
+	r := NewExportWorker(nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := r.Process(context.Background(), mockRepo, job, nil)
 	require.EqualError(t, err, "this repository does not support the branch workflow")
 }
@@ -148,7 +148,7 @@ func TestExportWorker_ProcessFailedToCreateClients(t *testing.T) {
 		return fn(repo, true)
 	})
 
-	r := NewExportWorker(mockClients, nil, nil, mockStageFn.Execute, prometheus.DefaultRegisterer)
+	r := NewExportWorker(mockClients, nil, nil, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
@@ -184,7 +184,7 @@ func TestExportWorker_ProcessNotReaderWriter(t *testing.T) {
 		return fn(repo, true)
 	})
 
-	r := NewExportWorker(mockClients, nil, nil, mockStageFn.Execute, prometheus.DefaultRegisterer)
+	r := NewExportWorker(mockClients, nil, nil, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "export job submitted targeting repository that is not a ReaderWriter")
 }
@@ -220,7 +220,7 @@ func TestExportWorker_ProcessRepositoryResourcesError(t *testing.T) {
 	mockStageFn.On("Execute", context.Background(), mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(repo, true)
 	})
-	r := NewExportWorker(mockClients, mockRepoResources, nil, mockStageFn.Execute, prometheus.DefaultRegisterer)
+	r := NewExportWorker(mockClients, mockRepoResources, nil, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "create repository resource client: failed to create repository resources client")
 }
@@ -271,7 +271,7 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 		return fn(repo, true)
 	})
 
-	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute, prometheus.DefaultRegisterer)
+	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 }
@@ -352,7 +352,7 @@ func TestExportWorker_ProcessStageOptionsWithBranch(t *testing.T) {
 				return fn(repo, true)
 			})
 
-			r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute, prometheus.DefaultRegisterer)
+			r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 			err := r.Process(context.Background(), mockRepo, job, mockProgress)
 			require.NoError(t, err)
 		})
@@ -395,7 +395,7 @@ func TestExportWorker_ProcessExportFnError(t *testing.T) {
 		return fn(repo, true)
 	})
 
-	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute, prometheus.DefaultRegisterer)
+	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "export failed")
 }
@@ -423,7 +423,7 @@ func TestExportWorker_ProcessWrapWithStageFnError(t *testing.T) {
 	mockStageFn := NewMockWrapWithStageFn(t)
 	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(errors.New("stage failed"))
 
-	r := NewExportWorker(nil, nil, nil, mockStageFn.Execute, prometheus.DefaultRegisterer)
+	r := NewExportWorker(nil, nil, nil, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "stage failed")
 }
@@ -449,7 +449,7 @@ func TestExportWorker_ProcessBranchNotAllowedForStageableRepositories(t *testing
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 	// No progress messages expected in current implementation
 
-	r := NewExportWorker(nil, nil, nil, nil, prometheus.DefaultRegisterer)
+	r := NewExportWorker(nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "this repository does not support the branch workflow")
 }
@@ -500,7 +500,7 @@ func TestExportWorker_ProcessGitRepository(t *testing.T) {
 		return fn(repo, true)
 	})
 
-	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute, prometheus.DefaultRegisterer)
+	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 }
@@ -546,7 +546,7 @@ func TestExportWorker_ProcessGitRepositoryExportFnError(t *testing.T) {
 		return fn(repo, true)
 	})
 
-	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute, prometheus.DefaultRegisterer)
+	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "export failed")
 }
@@ -609,7 +609,7 @@ func TestExportWorker_RefURLsSetWithBranch(t *testing.T) {
 		return fn(mockReaderWriter, true)
 	})
 
-	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute, prometheus.DefaultRegisterer)
+	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := r.Process(context.Background(), mockRepoWithURLs, job, mockProgress)
 	require.NoError(t, err)
 
@@ -665,7 +665,7 @@ func TestExportWorker_RefURLsNotSetWithoutBranch(t *testing.T) {
 		return fn(mockReaderWriter, true)
 	})
 
-	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute, prometheus.DefaultRegisterer)
+	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := r.Process(context.Background(), mockRepoWithURLs, job, mockProgress)
 	require.NoError(t, err)
 
@@ -721,7 +721,7 @@ func TestExportWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 		return fn(mockReaderWriter, true)
 	})
 
-	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute, prometheus.DefaultRegisterer)
+	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.DefaultRegisterer))
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 
