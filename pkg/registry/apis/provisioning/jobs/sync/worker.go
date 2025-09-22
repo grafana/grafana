@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 //go:generate mockery --name RepositoryPatchFn --structname MockRepositoryPatchFn --inpackage --filename repository_patch_fn_mock.go --with-expecter
@@ -37,8 +36,7 @@ type SyncWorker struct {
 	// Sync functions
 	syncer Syncer
 
-	// Registry for metrics
-	registry prometheus.Registerer
+	metrics jobs.JobMetrics
 }
 
 func NewSyncWorker(
@@ -47,7 +45,7 @@ func NewSyncWorker(
 	storageStatus dualwrite.Service,
 	patchStatus RepositoryPatchFn,
 	syncer Syncer,
-	registry prometheus.Registerer,
+	metrics jobs.JobMetrics,
 ) *SyncWorker {
 	return &SyncWorker{
 		clients:             clients,
@@ -55,7 +53,7 @@ func NewSyncWorker(
 		patchStatus:         patchStatus,
 		storageStatus:       storageStatus,
 		syncer:              syncer,
-		registry:            registry,
+		metrics:             metrics,
 	}
 }
 
@@ -66,26 +64,12 @@ func (r *SyncWorker) IsSupported(ctx context.Context, job provisioning.Job) bool
 func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
 	cfg := repo.Config()
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
-	ctx, span := r.tracer.Start(ctx, "provisioning.sync.process",
-		trace.WithAttributes(
-			attribute.String("job.name", job.GetName()),
-			attribute.String("job.namespace", job.GetNamespace()),
-			attribute.String("job.action", string(job.Spec.Action)),
-			attribute.String("repository.name", cfg.Name),
-			attribute.String("repository.namespace", cfg.Namespace),
-		),
-	)
-	defer span.End()
 
 	start := time.Now()
-	outcome := utils.ErrorOutcome
+	outcome := jobs.ErrorOutcome
 	totalChangesMade := 0
 	defer func() {
 		r.metrics.RecordJob(string(provisioning.JobActionPull), outcome, totalChangesMade, time.Since(start).Seconds())
-		span.SetAttributes(
-			attribute.String("outcome", outcome),
-			attribute.Int("changes_made", totalChangesMade),
-		)
 	}()
 
 	// Check if we are onboarding from legacy storage
@@ -97,8 +81,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 
 	rw, ok := repo.(repository.ReaderWriter)
 	if !ok {
-		err := fmt.Errorf("sync job submitted for repository that does not support read-write")
-		return tracing.Error(span, err)
+		return fmt.Errorf("sync job submitted for repository that does not support read-write")
 	}
 
 	syncStatus := job.Status.ToSyncStatus(job.Name)
@@ -116,6 +99,10 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 
 	progress.SetMessage(ctx, "update sync status at start")
+	if err := r.patchStatus(ctx, cfg, patchOperations...); err != nil {
+		logger.Error("failed to update the repository status at the start of the sync job", "error", err)
+		return fmt.Errorf("update repo with job status at start: %w", err)
+	}
 
 	statusCtx, statusSpan := r.tracer.Start(ctx, "provisioning.sync.update_start_status")
 	if err := r.patchStatus(statusCtx, cfg, patchOperations...); err != nil {
@@ -129,17 +116,13 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	setupCtx, setupSpan := r.tracer.Start(ctx, "provisioning.sync.setup_clients")
 	repositoryResources, err := r.repositoryResources.Client(setupCtx, rw)
 	if err != nil {
-		setupSpan.End()
 		logger.Error("failed to create repository resources client", "error", err)
-		err = fmt.Errorf("create repository resources client: %w", err)
-		return tracing.Error(span, err)
+		return fmt.Errorf("create repository resources client: %w", err)
 	}
 	clients, err := r.clients.Clients(setupCtx, cfg.Namespace)
 	if err != nil {
-		setupSpan.End()
 		logger.Error("failed to get clients for the repository", "error", err)
-		err = fmt.Errorf("get clients for %s: %w", cfg.Name, err)
-		return tracing.Error(span, err)
+		return fmt.Errorf("get clients for %s: %w", cfg.Name, err)
 	}
 	setupSpan.End()
 
@@ -159,6 +142,15 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		}
 	}
 	syncSpan.End()
+
+	if syncError != nil {
+		logger.Debug("failed to sync the repository", "error", syncError)
+	} else {
+		outcome = jobs.SuccessOutcome
+		for _, summary := range jobStatus.Summary {
+			totalChangesMade += int(summary.Create + summary.Update + summary.Delete)
+		}
+	}
 
 	// Create sync status and set hash if successful
 	if syncStatus.State == provisioning.JobStateSuccess {
@@ -200,11 +192,9 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 
 	// Only patch the specific fields we want to update, not the entire status
-	if err := r.patchStatus(finalCtx, cfg, patchOperations...); err != nil {
-		finalSpan.End()
+	if err := r.patchStatus(ctx, cfg, patchOperations...); err != nil {
 		logger.Error("failed to update the repository status at the end of the sync job", "error", err)
-		err = fmt.Errorf("update repo with job final status: %w", err)
-		return tracing.Error(span, err)
+		return fmt.Errorf("update repo with job final status: %w", err)
 	}
 	finalSpan.End()
 

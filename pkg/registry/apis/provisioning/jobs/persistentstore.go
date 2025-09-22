@@ -74,7 +74,7 @@ type persistentStore struct {
 	// If a job is abandoned, it will have its claim cleaned up periodically.
 	expiry time.Duration
 
-	registry prometheus.Registerer
+	queueMetrics QueueMetrics
 }
 
 // NewJobStore creates a new job queue implementation using the API client.
@@ -86,10 +86,10 @@ func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry
 	queueMetrics := RegisterQueueMetrics(registry)
 
 	return &persistentStore{
-		client:   provisioningClient,
-		clock:    time.Now,
-		expiry:   expiry,
-		registry: registry,
+		client:       provisioningClient,
+		clock:        time.Now,
+		expiry:       expiry,
+		queueMetrics: queueMetrics,
 	}, nil
 }
 

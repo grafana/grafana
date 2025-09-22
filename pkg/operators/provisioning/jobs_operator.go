@@ -174,6 +174,8 @@ func setupWorkers(controllerCfg *jobsControllerConfig, registry prometheus.Regis
 
 	workers := make([]jobs.Worker, 0)
 
+	metrics := jobs.RegisterJobMetrics(registry)
+
 	// Sync
 	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
 	syncWorker := sync.NewSyncWorker(
@@ -182,7 +184,7 @@ func setupWorkers(controllerCfg *jobsControllerConfig, registry prometheus.Regis
 		nil, // HACK: we have updated the worker to check for nil
 		statusPatcher.Patch,
 		syncer,
-		registry,
+		metrics,
 	)
 	workers = append(workers, syncWorker)
 
@@ -193,7 +195,7 @@ func setupWorkers(controllerCfg *jobsControllerConfig, registry prometheus.Regis
 		repositoryResources,
 		export.ExportAll,
 		stageIfPossible,
-		registry,
+		metrics,
 	)
 	workers = append(workers, exportWorker)
 
@@ -208,11 +210,11 @@ func setupWorkers(controllerCfg *jobsControllerConfig, registry prometheus.Regis
 	workers = append(workers, migrationWorker)
 
 	// Delete
-	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources, registry)
+	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
 	workers = append(workers, deleteWorker)
 
 	// Move
-	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources, registry)
+	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
 	workers = append(workers, moveWorker)
 
 	return workers, nil

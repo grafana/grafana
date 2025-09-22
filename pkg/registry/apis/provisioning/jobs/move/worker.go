@@ -15,22 +15,21 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Worker struct {
 	syncWorker       jobs.Worker
 	wrapFn           repository.WrapWithStageFn
 	resourcesFactory resources.RepositoryResourcesFactory
-	registry         prometheus.Registerer
+	metrics          jobs.JobMetrics
 }
 
-func NewWorker(syncWorker jobs.Worker, wrapFn repository.WrapWithStageFn, resourcesFactory resources.RepositoryResourcesFactory, registry prometheus.Registerer) *Worker {
+func NewWorker(syncWorker jobs.Worker, wrapFn repository.WrapWithStageFn, resourcesFactory resources.RepositoryResourcesFactory, metrics jobs.JobMetrics) *Worker {
 	return &Worker{
 		syncWorker:       syncWorker,
 		wrapFn:           wrapFn,
 		resourcesFactory: resourcesFactory,
-		registry:         registry,
+		metrics:          metrics,
 	}
 }
 
@@ -44,7 +43,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	}
 	opts := *job.Spec.Move
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
-	outcome := utils.ErrorOutcome
+	outcome := jobs.ErrorOutcome
 	start := time.Now()
 	resourcesMoved := 0
 	defer func() {
@@ -130,7 +129,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		}
 	}
 
-	outcome = utils.SuccessOutcome
+	outcome = jobs.SuccessOutcome
 	jobStatus := progress.Complete(ctx, nil)
 	for _, summary := range jobStatus.Summary {
 		// FileActionRenamed increments both delete & create, use create here

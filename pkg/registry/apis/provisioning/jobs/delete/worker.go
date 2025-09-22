@@ -13,22 +13,21 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Worker struct {
 	syncWorker       jobs.Worker
 	wrapFn           repository.WrapWithStageFn
 	resourcesFactory resources.RepositoryResourcesFactory
-	registry         prometheus.Registerer
+	metrics          jobs.JobMetrics
 }
 
-func NewWorker(syncWorker jobs.Worker, wrapFn repository.WrapWithStageFn, resourcesFactory resources.RepositoryResourcesFactory, registry prometheus.Registerer) *Worker {
+func NewWorker(syncWorker jobs.Worker, wrapFn repository.WrapWithStageFn, resourcesFactory resources.RepositoryResourcesFactory, metrics jobs.JobMetrics) *Worker {
 	return &Worker{
 		syncWorker:       syncWorker,
 		wrapFn:           wrapFn,
 		resourcesFactory: resourcesFactory,
-		registry:         registry,
+		metrics:          metrics,
 	}
 }
 
@@ -45,7 +44,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	opts := *job.Spec.Delete
 	paths := opts.Paths
 	start := time.Now()
-	outcome := utils.ErrorOutcome
+	outcome := jobs.ErrorOutcome
 	resourcesDeleted := 0
 	defer func() {
 		w.metrics.RecordJob(string(provisioning.JobActionDelete), outcome, resourcesDeleted, time.Since(start).Seconds())
@@ -120,7 +119,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		}
 	}
 
-	outcome = utils.SuccessOutcome
+	outcome = jobs.SuccessOutcome
 	jobStatus := progress.Complete(ctx, nil)
 	for _, summary := range jobStatus.Summary {
 		resourcesDeleted += int(summary.Delete)

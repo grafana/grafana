@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 //go:generate mockery --name ExportFn --structname MockExportFn --inpackage --filename mock_export_fn.go --with-expecter
@@ -25,7 +24,7 @@ type ExportWorker struct {
 	repositoryResources resources.RepositoryResourcesFactory
 	exportFn            ExportFn
 	wrapWithStageFn     WrapWithStageFn
-	registry            prometheus.Registerer
+	metrics             jobs.JobMetrics
 }
 
 func NewExportWorker(
@@ -33,14 +32,14 @@ func NewExportWorker(
 	repositoryResources resources.RepositoryResourcesFactory,
 	exportFn ExportFn,
 	wrapWithStageFn WrapWithStageFn,
-	registry prometheus.Registerer,
+	metrics jobs.JobMetrics,
 ) *ExportWorker {
 	return &ExportWorker{
 		clientFactory:       clientFactory,
 		repositoryResources: repositoryResources,
 		exportFn:            exportFn,
 		wrapWithStageFn:     wrapWithStageFn,
-		registry:            registry,
+		metrics:             metrics,
 	}
 }
 
@@ -57,7 +56,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
 	start := time.Now()
-	outcome := utils.ErrorOutcome
+	outcome := jobs.ErrorOutcome
 	resourcesExported := 0
 	defer func() {
 		r.metrics.RecordJob(string(provisioning.JobActionPush), outcome, resourcesExported, time.Since(start).Seconds())
@@ -119,7 +118,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return err
 	}
 
-	outcome = utils.SuccessOutcome
+	outcome = jobs.SuccessOutcome
 	jobStatus := progress.Complete(ctx, nil)
 	for _, summary := range jobStatus.Summary {
 		resourcesExported += int(summary.Write)

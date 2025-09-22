@@ -1,8 +1,10 @@
 package jobs
 
-import (
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
-	"github.com/prometheus/client_golang/prometheus"
+import "github.com/prometheus/client_golang/prometheus"
+
+const (
+	SuccessOutcome = "success"
+	ErrorOutcome   = "error"
 )
 
 type JobMetrics struct {
@@ -85,19 +87,26 @@ func (m *JobMetrics) RecordJob(jobAction string, outcome string, resourceCountCh
 	m.processedTotal.WithLabelValues(jobAction, outcome).Inc()
 
 	// only record duration when the job was successful. otherwise resource count will be incorrect
-	if outcome == utils.SuccessOutcome {
-		m.durationHist.WithLabelValues(jobAction, utils.GetResourceCountBucket(resourceCountChanged)).Observe(duration)
+	if outcome == SuccessOutcome {
+		m.durationHist.WithLabelValues(jobAction, getResourceCountBucket(resourceCountChanged)).Observe(duration)
 	}
 }
 
-func recordConcurrentDriverMetric(registry prometheus.Registerer, numDrivers int) {
-	concurrentDriver := prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "grafana_provisioning_jobs_concurrent_driver_num_drivers",
-			Help: "Number of concurrent job drivers",
-		},
-		[]string{},
-	)
-	registry.MustRegister(concurrentDriver)
-	concurrentDriver.WithLabelValues().Set(float64(numDrivers))
+func getResourceCountBucket(count int) string {
+	switch {
+	case count == 0:
+		return "0"
+	case count <= 10:
+		return "1-10"
+	case count <= 50:
+		return "11-50"
+	case count <= 100:
+		return "51-100"
+	case count <= 500:
+		return "101-500"
+	case count <= 1000:
+		return "501-1000"
+	default:
+		return "1000+"
+	}
 }
