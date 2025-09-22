@@ -271,21 +271,30 @@ jobs:
           docker manifest push "grafana/grafana-dev:${VERSION}"
           docker manifest push "grafana/grafana-dev:${VERSION}-ubuntu"
 
-  publish-npm-canaries:
+  dispatch-npm-canaries:
     if: github.ref_name == 'main'
-    name: Publish NPM canaries
-    uses: ./.github/workflows/release-npm.yml
+    name: Dispatch publish NPM canaries
     permissions:
+      actions: write
       contents: read
-      id-token: write
+    runs-on: ubuntu-x64-small
     needs:
       - setup
-      - build
-    with:
-      grafana_commit: ${{ needs.setup.outputs.grafana-commit }}
-      version: ${{ needs.setup.outputs.version }}
-      build_id: ${{ github.run_id }}
-      version_type: "canary"
+    steps:
+      - name: Dispatch action
+        env:
+          GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
+          VERSION: ${{ needs.setup.outputs.version }}
+          BUILD_ID: ${{ github.run_id }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run release-npm.yml \
+            --repo grafana/grafana \
+            --ref main \
+            --field grafana_commit="$GRAFANA_COMMIT" \
+            --field version="$VERSION" \
+            --field build_id="$BUILD_ID"\
+            --field version_type="canary"
 
   # notify-pr creates (or updates) a comment in a pull request to link to this workflow where the release artifacts are
   # being built.
