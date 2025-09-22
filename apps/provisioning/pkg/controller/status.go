@@ -7,20 +7,17 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
 type RepositoryStatusPatcher struct {
-	client   client.ProvisioningV0alpha1Interface
-	registry prometheus.Registerer
+	client client.ProvisioningV0alpha1Interface
 }
 
-func NewRepositoryStatusPatcher(client client.ProvisioningV0alpha1Interface, registry prometheus.Registerer) *RepositoryStatusPatcher {
+func NewRepositoryStatusPatcher(client client.ProvisioningV0alpha1Interface) *RepositoryStatusPatcher {
 	return &RepositoryStatusPatcher{
-		client:   client,
-		registry: registry,
+		client: client,
 	}
 }
 
