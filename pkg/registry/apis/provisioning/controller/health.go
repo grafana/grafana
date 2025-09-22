@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -21,14 +22,15 @@ type StatusPatcher interface {
 // HealthChecker provides unified health checking for repositories
 type HealthChecker struct {
 	statusPatcher StatusPatcher
-	registry      prometheus.Registerer
+	healthMetrics healthMetrics
 }
 
 // NewHealthChecker creates a new health checker
 func NewHealthChecker(statusPatcher StatusPatcher, registry prometheus.Registerer) *HealthChecker {
+	healthMetrics := registerHealthMetrics(registry)
 	return &HealthChecker{
 		statusPatcher: statusPatcher,
-		registry:      registry,
+		healthMetrics: healthMetrics,
 	}
 }
 

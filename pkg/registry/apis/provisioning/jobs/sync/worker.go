@@ -66,7 +66,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
 
 	start := time.Now()
-	outcome := jobs.ErrorOutcome
+	outcome := utils.ErrorOutcome
 	totalChangesMade := 0
 	defer func() {
 		r.metrics.RecordJob(string(provisioning.JobActionPull), outcome, totalChangesMade, time.Since(start).Seconds())
@@ -146,7 +146,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	if syncError != nil {
 		logger.Debug("failed to sync the repository", "error", syncError)
 	} else {
-		outcome = jobs.SuccessOutcome
+		outcome = utils.SuccessOutcome
 		for _, summary := range jobStatus.Summary {
 			totalChangesMade += int(summary.Create + summary.Update + summary.Delete)
 		}

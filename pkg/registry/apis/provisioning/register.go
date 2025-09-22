@@ -668,7 +668,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return fmt.Errorf("create API client job store: %w", err)
 			}
 
-			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient(), b.registry)
+			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
 			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry)
 
 			// if running solely CRUD, skip the rest of the setup
