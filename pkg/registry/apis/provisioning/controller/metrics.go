@@ -25,7 +25,7 @@ func registerFinalizerMetrics(registry prometheus.Registerer) finalizerMetrics {
 		prometheus.HistogramOpts{
 			Name:    "grafana_provisioning_finalizers_duration_seconds",
 			Help:    "Duration of processing the finalizers",
-			Buckets: []float64{1.0, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0},
+			Buckets: []float64{0.5, 1.0, 2.0, 5.0, 10.0, 30.0},
 		},
 		[]string{"finalizer_type", "resource_count_bucket"},
 	)
@@ -65,7 +65,7 @@ func registerHealthMetrics(registry prometheus.Registerer) healthMetrics {
 		prometheus.HistogramOpts{
 			Name:    "grafana_provisioning_health_checked_duration_seconds",
 			Help:    "Duration of health checks",
-			Buckets: []float64{0.5, 1.0, 2.0, 5.0, 10.0},
+			Buckets: []float64{0.1, 0.2, 0.5, 1.0, 2.0, 5.0},
 		},
 		[]string{},
 	)
