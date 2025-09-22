@@ -131,6 +131,9 @@ type ItemDTO struct {
 	Email        string           `json:"email"`
 	AvatarURL    string           `json:"avatarUrl" xorm:"avatar_url"`
 	Data         *simplejson.Json `json:"data"`
+
+	// for namespace conversions
+	OrgID int64 `json:"-" xorm:"org_id"`
 }
 
 type SortedItems []*ItemDTO
