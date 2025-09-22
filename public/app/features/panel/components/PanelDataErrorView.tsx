@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { css } from '@emotion/css';
 
 import {
@@ -27,7 +28,7 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
   const { dataSummary } = builder;
   const message = getMessageFor(props, dataSummary);
   const dispatch = useDispatch();
-  const panel = getDashboardSrv().getCurrent()?.getPanelById(props.panelId);
+  const panel = useMemo(() => getDashboardSrv().getCurrent()?.getPanelById(props.panelId), [props.panelId]);
 
   const openVizPicker = () => {
     store.setObject(LS_VISUALIZATION_SELECT_TAB_KEY, VisualizationSelectPaneTab.Suggestions);
