@@ -18,6 +18,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -72,18 +73,21 @@ type persistentStore struct {
 	// expiry is the time after which a job is considered abandoned.
 	// If a job is abandoned, it will have its claim cleaned up periodically.
 	expiry time.Duration
+
+	registry prometheus.Registerer
 }
 
 // NewJobStore creates a new job queue implementation using the API client.
-func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry time.Duration) (*persistentStore, error) {
+func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry time.Duration, registry prometheus.Registerer) (*persistentStore, error) {
 	if expiry <= 0 {
 		expiry = time.Second * 30
 	}
 
 	return &persistentStore{
-		client: provisioningClient,
-		clock:  time.Now,
-		expiry: expiry,
+		client:   provisioningClient,
+		clock:    time.Now,
+		expiry:   expiry,
+		registry: registry,
 	}, nil
 }
 

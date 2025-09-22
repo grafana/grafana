@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -33,7 +34,7 @@ func RunJobController(deps server.OperatorDependencies) error {
 	})).With("logger", "provisioning-job-controller")
 	logger.Info("Starting provisioning job controller")
 
-	controllerCfg, err := setupJobsControllerFromConfig(deps.Config)
+	controllerCfg, err := setupJobsControllerFromConfig(deps.Config, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("failed to setup operator: %w", err)
 	}
@@ -94,12 +95,12 @@ func RunJobController(deps server.OperatorDependencies) error {
 	// }
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(controllerCfg.provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(controllerCfg.provisioningClient.ProvisioningV0alpha1(), 30*time.Second)
+	jobStore, err := jobs.NewJobStore(controllerCfg.provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	workers, err := setupWorkers(controllerCfg)
+	workers, err := setupWorkers(controllerCfg, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("setup workers: %w", err)
 	}
@@ -120,6 +121,7 @@ func RunJobController(deps server.OperatorDependencies) error {
 		repoGetter,
 		jobHistoryWriter,
 		jobController.InsertNotifications(),
+		deps.Registerer,
 		workers...,
 	)
 	if err != nil {
@@ -151,8 +153,8 @@ type jobsControllerConfig struct {
 	historyExpiration time.Duration
 }
 
-func setupJobsControllerFromConfig(cfg *setting.Cfg) (*jobsControllerConfig, error) {
-	controllerCfg, err := setupFromConfig(cfg)
+func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*jobsControllerConfig, error) {
+	controllerCfg, err := setupFromConfig(cfg, registry)
 	if err != nil {
 		return nil, err
 	}
@@ -163,12 +165,12 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg) (*jobsControllerConfig, err
 	}, nil
 }
 
-func setupWorkers(controllerCfg *jobsControllerConfig) ([]jobs.Worker, error) {
+func setupWorkers(controllerCfg *jobsControllerConfig, registry prometheus.Registerer) ([]jobs.Worker, error) {
 	clients := controllerCfg.clients
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceLister(controllerCfg.unified)
 	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
-	statusPatcher := controller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
+	statusPatcher := controller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1(), registry)
 
 	workers := make([]jobs.Worker, 0)
 
@@ -180,6 +182,7 @@ func setupWorkers(controllerCfg *jobsControllerConfig) ([]jobs.Worker, error) {
 		nil, // HACK: we have updated the worker to check for nil
 		statusPatcher.Patch,
 		syncer,
+		registry,
 	)
 	workers = append(workers, syncWorker)
 
@@ -190,6 +193,7 @@ func setupWorkers(controllerCfg *jobsControllerConfig) ([]jobs.Worker, error) {
 		repositoryResources,
 		export.ExportAll,
 		stageIfPossible,
+		registry,
 	)
 	workers = append(workers, exportWorker)
 
@@ -204,11 +208,11 @@ func setupWorkers(controllerCfg *jobsControllerConfig) ([]jobs.Worker, error) {
 	workers = append(workers, migrationWorker)
 
 	// Delete
-	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources)
+	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources, registry)
 	workers = append(workers, deleteWorker)
 
 	// Move
-	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources)
+	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources, registry)
 	workers = append(workers, moveWorker)
 
 	return workers, nil
