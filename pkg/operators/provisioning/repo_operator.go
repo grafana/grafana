@@ -55,7 +55,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
-	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1(), deps.Registerer)
+	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
 	healthChecker := controller.NewHealthChecker(statusPatcher, deps.Registerer)
 
 	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()

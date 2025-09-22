@@ -8,7 +8,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1/fake"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,7 +16,7 @@ import (
 
 func TestNewRepositoryStatusPatcher(t *testing.T) {
 	client := &fake.FakeProvisioningV0alpha1{}
-	patcher := NewRepositoryStatusPatcher(client, prometheus.DefaultRegisterer)
+	patcher := NewRepositoryStatusPatcher(client)
 	require.NotNil(t, patcher)
 	require.Equal(t, client, patcher.client)
 }
@@ -104,7 +103,7 @@ func TestRepositoryStatusPatcher_Patch(t *testing.T) {
 				client.AddReactor("patch", "repositories", tt.reactorFunc)
 			}
 
-			patcher := NewRepositoryStatusPatcher(&client, prometheus.DefaultRegisterer)
+			patcher := NewRepositoryStatusPatcher(&client)
 			err := patcher.Patch(context.Background(), tt.repo, tt.patchOperations...)
 
 			if tt.expectedError != "" {

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
 //go:generate mockery --name ExportFn --structname MockExportFn --inpackage --filename mock_export_fn.go --with-expecter
@@ -56,7 +57,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
 	start := time.Now()
-	outcome := jobs.ErrorOutcome
+	outcome := utils.ErrorOutcome
 	resourcesExported := 0
 	defer func() {
 		r.metrics.RecordJob(string(provisioning.JobActionPush), outcome, resourcesExported, time.Since(start).Seconds())
@@ -118,7 +119,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return err
 	}
 
-	outcome = jobs.SuccessOutcome
+	outcome = utils.SuccessOutcome
 	jobStatus := progress.Complete(ctx, nil)
 	for _, summary := range jobStatus.Summary {
 		resourcesExported += int(summary.Write)
