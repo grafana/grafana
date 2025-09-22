@@ -170,7 +170,7 @@ func setupWorkers(controllerCfg *jobsControllerConfig, registry prometheus.Regis
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceLister(controllerCfg.unified)
 	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
-	statusPatcher := controller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1(), registry)
+	statusPatcher := controller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
 
 	workers := make([]jobs.Worker, 0)
 

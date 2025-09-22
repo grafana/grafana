@@ -77,6 +77,8 @@ func NewRepositoryController(
 	statusPatcher StatusPatcher,
 	registry prometheus.Registerer,
 ) (*RepositoryController, error) {
+	finalizerMetrics := registerFinalizerMetrics(registry)
+
 	rc := &RepositoryController{
 		client:     provisioningClient,
 		repoLister: repoInformer.Lister(),
@@ -93,6 +95,7 @@ func NewRepositoryController(
 		finalizer: &finalizer{
 			lister:        resourceLister,
 			clientFactory: clients,
+			metrics:       &finalizerMetrics,
 		},
 		jobs:      jobs,
 		logger:    logging.DefaultLogger.With("logger", loggerName),
