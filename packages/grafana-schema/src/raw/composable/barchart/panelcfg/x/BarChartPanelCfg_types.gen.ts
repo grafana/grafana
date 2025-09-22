@@ -40,8 +40,9 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
   markers?: Array<{
     id: number;
     xValue?: (string | number | number);
-    xIndex?: number;
+    groupIdx?: number;
     yField?: string;
+    yScaleKey?: string;
     yValue?: (number | number);
     seriesField?: string;
     seriesIdx?: number;

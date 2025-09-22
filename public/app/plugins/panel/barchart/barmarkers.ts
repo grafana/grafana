@@ -30,6 +30,7 @@ export function singleBarMarker(_builder: UPlotConfigBuilder, markers: ResolvedM
     }
 
     ctx.save();
+    
 
     const markersToDraw: ResolvedMarker[] = [];
 
@@ -41,25 +42,42 @@ export function singleBarMarker(_builder: UPlotConfigBuilder, markers: ResolvedM
     }
     for (const m of markersToDraw) {
      
-      const width = m.opts?.width ?? 60;
-      const color = m.opts?.color ?? '#ff0000ff';
+      if(!m.opts?.isRotated) {
+        const width = m.opts?.width ?? 60;
+        const color = m.opts?.color ?? '#ff0000ff';
 
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 3;
-      if (typeof m.x === 'number' && typeof m.y === 'number') {
-        ctx.beginPath();
-        ctx.moveTo(m.x - width / 2, m.y);
-        ctx.lineTo(m.x + width / 2, m.y);
-        ctx.stroke();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        if (typeof m.x === 'number' && typeof m.y === 'number') {
+          ctx.beginPath();
+          ctx.moveTo(m.x - width / 2, m.y);
+          ctx.lineTo(m.x + width / 2, m.y);
+          ctx.stroke();
+        }
+      }
+      else {
+        const width = m.opts?.width ?? 60;
+        const color = m.opts?.color ?? '#ff0000ff';
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        if (typeof m.x === 'number' && typeof m.y === 'number') {
+          ctx.beginPath();
+          ctx.moveTo( m.x, m.y - width / 2);
+          ctx.lineTo( m.x, m.y + width / 2);
+          ctx.stroke();
+        }
       }
 
-      if (m.opts?.label) {
-        ctx.fillStyle = color;
-        ctx.font = '12px sans-serif';
-        ctx.textBaseline = 'top';
-        ctx.fillText(m.opts.label, m.x + width / 2, m.y - 15);
-      }
+      // if (m.opts?.label) {
+      //   ctx.fillStyle = color;
+      //   ctx.font = '12px sans-serif';
+      //   ctx.textBaseline = 'top';
+      //   ctx.fillText(m.opts.label, m.x + width / 2, m.y - 15);
+      // }
     }
+
+
 
     ctx.restore();
   };

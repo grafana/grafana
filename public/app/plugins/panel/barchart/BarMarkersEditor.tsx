@@ -4,6 +4,8 @@ import { Button, Field, InlineField, Input, Label, Select, ValuePicker } from '@
 import { useEffect, useState } from 'react';
 import { ColorPicker } from '../../../../../packages/grafana-ui/src/components/ColorPicker/ColorPicker';
 import {Marker, BarMarkerOpts} from './markerTypes';
+import Slider from 'rc-slider';
+
 
 
 
@@ -17,15 +19,31 @@ export const BarMarkersEditor = (props: StandardEditorProps<Marker[]>) => {
 
   // Add a new marker to the list
   const handleAddMarker = () => {
+    var newId = 1;
+    var cond = true;
+    while(cond){
+      cond = false
+      for(const m of props.context?.options?.markers){
+        if(m.id === newId){
+          newId = m.id + 1;
+          cond = true;
+          break;
+        }
+      }
+      
+    }
+      
     const newMarker: Marker = {
-      id: markers.length + 1,
+      id: newId,
       xValue: '',
-      yField: '',
+      yField: "",
+      yScaleKey: '__fixed',
       yValue: 0,
       opts: {
-        label: `Marker ${markers.length + 1}`,
+        label: `Marker ${(props.context?.options?.markers?.length ?? 0) + 1}`,
         color: 'rgb(184, 119, 217)',
         shape: 'line',
+        width: 1,
         isRotated: false
       },
     };
@@ -61,12 +79,29 @@ export const BarMarkersEditor = (props: StandardEditorProps<Marker[]>) => {
 
 
   // Update a specific field of a marker
-  const handleSettingChange = (id: number, field: keyof Marker, newValue: string | number | undefined) => {
+  const handleSettingChange = (id: number, field: keyof Marker, newValue:  string | number | undefined) => {
+    if (field === 'yField') {
+
+      const yFieldIndex = props.context?.data[0]?.fields.findIndex(f => f.name === newValue);
+      const yFieldUnit = props.context?.data[0]?.fields[yFieldIndex];
+      const newValue2 = yFieldUnit?.config?.unit;
+
+      const updatedMarkers = markers.map((marker: Marker) =>
+      marker.id === id ? { ...marker, yField: newValue as string, ['yScaleKey']: newValue2 } : marker
+
+      
+    );
+    setMarkers(updatedMarkers);
+    props.onChange(updatedMarkers); // Notify parent component of the change
+      
+    }
+    else{
     const updatedMarkers = markers.map((marker: Marker) =>
       marker.id === id ? { ...marker, [field]: newValue } : marker
     );
     setMarkers(updatedMarkers);
     props.onChange(updatedMarkers); // Notify parent component of the change
+  }
   };
 
   // Remove a marker from the list
@@ -127,7 +162,7 @@ export const BarMarkersEditor = (props: StandardEditorProps<Marker[]>) => {
                 <Input
             value={marker.opts.label ?? `Marker ${marker.id}`}
             onChange={(e) =>
-              handleSettingChange(marker.id, 'id', (e.target as HTMLInputElement).value)
+              handleOptsSettingChange(marker.id, 'label', (e.target as HTMLInputElement).value)
             }
             placeholder={t('barchart.barmarkers-editor.marker-title-placeholder', `Marker ${marker.id}`)}
                 />
@@ -150,23 +185,26 @@ export const BarMarkersEditor = (props: StandardEditorProps<Marker[]>) => {
             >
               {t('barchart.barmarkers-editor.remove-marker', 'X')}
             </Button>
-            {/* Input field for X-Axis */}
             
             {/* Input field for Y-Axis */}
             <div style={{ minWidth: '120px', padding: '5px' }}>
-              <Field label={t('barchart.barmarkers-editor.y-axis', 'Y-Axis')}>
+              <Field label={t('barchart.barmarkers-editor.y-axis', 'Value')}>
                 <Input
                         type="number"
-                        value={marker.yValue ?? ''}
+                        value={marker.yValue ?? 0}
                         onChange={(e) =>
-                          handleSettingChange(marker.id, 'yValue', (e.target as HTMLInputElement).value)
+                          handleSettingChange(
+                            marker.id,
+                            'yValue',
+                            (e.target as HTMLInputElement).valueAsNumber ?? 0
+                          )
                         }
                         placeholder={t('barchart.barmarkers-editor.y-axis-placeholder', 'Enter Y-Axis value')}
                 />
               </Field>
             </div>            {/* Dropdown for X-Axis */}
             <div style={{ minWidth: '120px', padding: '5px' }}>
-              <Field label={t('barchart.barmarkers-editor.x-axis', 'X-Axis')}>
+              <Field label={t('barchart.barmarkers-editor.x-axis', 'Group')}>
               <Select
                 options= {xFieldOptions}
                 value={marker.xValue}
@@ -177,8 +215,9 @@ export const BarMarkersEditor = (props: StandardEditorProps<Marker[]>) => {
               />
               </Field>
             </div>
+              
             <div style={{ minWidth: '120px', padding: '5px' }}>
-              <Field label={t('barchart.barmarkers-editor.y-axis', 'Y-Axis')}>
+              <Field label={t('barchart.barmarkers-editor.y-axis', 'Field')}>
               <Select
                 options= {yFieldOptions}
                 value={marker.yField}
@@ -210,9 +249,20 @@ export const BarMarkersEditor = (props: StandardEditorProps<Marker[]>) => {
                 />
               </Field>
             </div>
+            <div style={{ minWidth: '120px', padding: '5px' }}>
+                <Field label={t('barchart.barmarkers-editor.width', 'Width')}>
+                <Slider
+                  min={0}
+                  max={2}
+                  step={0.01}
+                  value={marker.opts.width ?? 1}
+                  onChange={(v) => handleOptsSettingChange(marker.id, 'width', typeof v === 'number' ? v : v[0])}
+                />
+                </Field>
           </div>
-
-      ))}
+          </div>
+        ))}
     </div>
+    
   );
 };

@@ -56,8 +56,9 @@ composableKinds: PanelCfg: {
 				markers?: [...{
 					id: number
 					xValue?: string | float | int
-					xIndex?: int
+					groupIdx?: int
 					yField?: string
+					yScaleKey?: string
 					yValue?: float | int
 					seriesField?: string
 					seriesIdx?: int

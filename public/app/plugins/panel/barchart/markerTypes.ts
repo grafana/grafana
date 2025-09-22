@@ -1,3 +1,5 @@
+
+
 export type BarMarkerOpts = {
   label?: string;
   width?: number;
@@ -14,9 +16,10 @@ export interface Marker {
   // canonical reference value for the x-axis group; can be the raw x value or timestamp
   xValue: string | number 
   // optional direct index into aligned x (dataIdx)
-  xIndex?: number | null;
+  groupIdx?: number | null;
   // optional reference to series by name or index
   yField?: string | null;
+  yScaleKey?: string;
   yValue? : number | null;
   // the y value a marker is set at.
   seriesField?: string | null;

@@ -18,10 +18,6 @@ const intervals = systemDateFormats.interval;
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
 import { Marker, ResolvedMarker } from './markerTypes';
-import { Builder } from '@react-awesome-query-builder/ui';
-import { markersLayer } from '../geomap/layers/data/markersLayer';
-import { drawMarkers } from '../candlestick/utils';
-import { single } from 'ix/iterable/single';
 import { markerList } from './utils';
 
 
@@ -466,31 +462,60 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             h: (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor,
           };
 
-            // Match markers to bars and compute marker positions
-        if (markers && Array.isArray(opts.markers)) {
+          
+          // Match markers to bars and compute marker positions
+          if (markers && Array.isArray(opts.markers)) {
           for (const marker of markers) {
             // Only add marker if it matches this bar
+
           if (
-          (marker.seriesIdx === undefined || marker.seriesIdx === seriesIdx) &&
-          (marker.xIndex  === dataIdx) 
+          (marker.groupIdx  === dataIdx && seriesIdx === marker.seriesIdx) 
             ) {
-          // Compute marker position at center of bar
-          const markerX = (labels[dataIdx][seriesIdx].x);
-          const markerY = marker.yValue;
+            if(xOri === ScaleOrientation.Horizontal) {
+              
+                
+              // Compute marker position at center of bar
+              const markerX = (labels[dataIdx][seriesIdx].x);
+              const markerY = (marker.yValue);
 
-          const m : ResolvedMarker = {
-            id: marker.id,
-            x: markerX,
-            y: markerY ?? (top + hgt / 2),
-          
-
-                        opts: marker.opts ?? { color: theme.colors.text.secondary, width: 20, isRotated: !isXHorizontal },
-
-          };
-          markerList.push(m);
-            }
+              let resolvedY: number;
+              if (markerY != null && marker.yScaleKey != '' && marker.yScaleKey != null) {
+                resolvedY = u.valToPos(markerY, marker.yScaleKey, true);
+              } else {
+                resolvedY = top + hgt / 2;
+              }
+              const m: ResolvedMarker = {
+                id: marker.id,
+                x: markerX,
+                y: resolvedY,
+                opts: marker.opts ? { ...marker.opts, isRotated: false,  width: marker.opts.width ? marker.opts.width * wid : wid}
+                : { color: theme.colors.text.secondary, width: 20, isRotated: false },
+              };
+              markerList.push(m);
+              }
+              else{
+                const markerY = (labels[dataIdx][seriesIdx].y);
+                const markerX = (marker.yValue);
+  
+                let resolvedX: number;
+                if (markerX != null && marker.yScaleKey != '' && marker.yScaleKey != null) {
+                  resolvedX = u.valToPos(markerX, marker.yScaleKey, true);
+                } else {
+                  resolvedX = lft + wid / 2;
+                }
+                const m: ResolvedMarker = {
+                  id: marker.id,
+                  x: resolvedX!,
+                  y: markerY!,
+                  opts: marker.opts
+                    ? { ...marker.opts, isRotated: true, width: marker.opts.width ? marker.opts.width * hgt : hgt}
+                    : { color: theme.colors.text.secondary, width: 20, isRotated: true },
+                };
+                markerList.push(m);
+              }
           }
         }
+      }
 
       
         }
@@ -562,6 +587,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const drawClear = (u: uPlot) => {
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
     qt.clear();
+
+    markerList.length = 0;
 
     // clear the path cache to force drawBars() to rebuild new quadtree
     u.series.forEach((s) => {
