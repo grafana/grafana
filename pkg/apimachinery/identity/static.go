@@ -93,7 +93,10 @@ func (u *StaticRequester) GetRawIdentifier() string {
 }
 
 func (u *StaticRequester) GetInternalID() (int64, error) {
-	return u.UserID, nil
+	if u.UserID > 0 {
+		return u.UserID, nil
+	}
+	return 0, fmt.Errorf("user has no internal id")
 }
 
 func (u *StaticRequester) IsIdentityType(expected ...claims.IdentityType) bool {
