@@ -21,7 +21,6 @@ type ConcurrentJobDriver struct {
 	repoGetter           RepoGetter
 	historicJobs         HistoryWriter
 	workers              []Worker
-	registry             prometheus.Registerer
 	notifications        chan struct{}
 }
 
@@ -58,6 +57,8 @@ func NewConcurrentJobDriver(
 		cleanupInterval = 5 * time.Minute // Maximum cleanup interval
 	}
 
+	recordConcurrentDriverMetric(registry, numDrivers)
+
 	return &ConcurrentJobDriver{
 		numDrivers:           numDrivers,
 		jobTimeout:           jobTimeout,
@@ -69,7 +70,6 @@ func NewConcurrentJobDriver(
 		historicJobs:         historicJobs,
 		workers:              workers,
 		notifications:        notifications,
-		registry:             registry,
 	}, nil
 }
 

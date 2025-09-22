@@ -112,11 +112,11 @@ func RunJobController(deps server.OperatorDependencies) error {
 
 	// This is basically our own JobQueue system
 	driver, err := jobs.NewConcurrentJobDriver(
-		3,              // 3 drivers for now
-		20*time.Minute, // Max time for each job
-		time.Minute,    // Cleanup jobs
-		30*time.Second, // Periodically look for new jobs
-		30*time.Second, // Lease renewal interval
+		controllerCfg.concurrentDrivers,
+		controllerCfg.maxJobTimeout,
+		controllerCfg.cleanupInterval,
+		controllerCfg.jobInterval,
+		controllerCfg.leaseRenewalInterval,
 		jobStore,
 		repoGetter,
 		jobHistoryWriter,
@@ -150,7 +150,12 @@ func RunJobController(deps server.OperatorDependencies) error {
 
 type jobsControllerConfig struct {
 	provisioningControllerConfig
-	historyExpiration time.Duration
+	historyExpiration    time.Duration
+	maxJobTimeout        time.Duration
+	cleanupInterval      time.Duration
+	jobInterval          time.Duration
+	leaseRenewalInterval time.Duration
+	concurrentDrivers    int
 }
 
 func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*jobsControllerConfig, error) {
@@ -162,6 +167,11 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registe
 	return &jobsControllerConfig{
 		provisioningControllerConfig: *controllerCfg,
 		historyExpiration:            cfg.SectionWithEnvOverrides("operator").Key("history_expiration").MustDuration(0),
+		concurrentDrivers:            cfg.SectionWithEnvOverrides("operator").Key("concurrent_drivers").MustInt(3),
+		maxJobTimeout:                cfg.SectionWithEnvOverrides("operator").Key("max_job_timeout").MustDuration(20 * time.Minute),
+		cleanupInterval:              cfg.SectionWithEnvOverrides("operator").Key("cleanup_interval").MustDuration(time.Minute),
+		jobInterval:                  cfg.SectionWithEnvOverrides("operator").Key("job_interval").MustDuration(30 * time.Second),
+		leaseRenewalInterval:         cfg.SectionWithEnvOverrides("operator").Key("lease_renewal_interval").MustDuration(30 * time.Second),
 	}, nil
 }
 
