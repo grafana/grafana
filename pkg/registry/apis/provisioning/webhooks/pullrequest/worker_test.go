@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,7 +45,7 @@ func TestPullRequestWorker_IsSupported(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			evaluator := NewMockEvaluator(t)
 			commenter := NewMockCommenter(t)
-			worker := NewPullRequestWorker(evaluator, commenter)
+			worker := NewPullRequestWorker(evaluator, commenter, prometheus.NewPedanticRegistry())
 			result := worker.IsSupported(context.Background(), tt.job)
 			require.Equal(t, tt.expected, result)
 		})
@@ -68,7 +69,7 @@ func TestPullRequestWorker_Process_NotPullRequestRepository(t *testing.T) {
 		},
 	})
 
-	worker := NewPullRequestWorker(evaluator, commenter)
+	worker := NewPullRequestWorker(evaluator, commenter, prometheus.NewPedanticRegistry())
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionPullRequest,
@@ -106,7 +107,7 @@ func TestPullRequestWorker_Process_NotReaderRepository(t *testing.T) {
 		},
 	})
 
-	worker := NewPullRequestWorker(evaluator, commenter)
+	worker := NewPullRequestWorker(evaluator, commenter, prometheus.NewPedanticRegistry())
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionPullRequest,
@@ -392,7 +393,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 			progress := jobs.NewMockJobProgressRecorder(t)
 			tt.setupMocks(evaluator, commenter, &repo, progress)
 
-			worker := NewPullRequestWorker(evaluator, commenter)
+			worker := NewPullRequestWorker(evaluator, commenter, prometheus.NewPedanticRegistry())
 			job := provisioning.Job{
 				Spec: provisioning.JobSpec{
 					Action:      provisioning.JobActionPullRequest,
