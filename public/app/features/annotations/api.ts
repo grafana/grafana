@@ -2,7 +2,7 @@ import { AnnotationEvent, DataFrame, toDataFrame } from '@grafana/data';
 import { getBackendSrv, config } from '@grafana/runtime';
 import { StateHistoryItem } from 'app/types/unified-alerting';
 
-import { AnnotationTagsResponse } from './types';
+import { AnnotationTag, AnnotationTagsResponse } from './types';
 
 export interface AnnotationService {
   query(params: Record<string, unknown>, requestId: string): Promise<DataFrame>;
@@ -106,8 +106,10 @@ class APIServerAnnotationService implements AnnotationService {
   }
 
   async tags() {
-    const response = await getBackendSrv().get<AnnotationTagsResponse>('/api/annotations/tags');
-    return response.result.tags.map(({ tag, count }) => ({
+    const response = await getBackendSrv().get<{
+      items: AnnotationTag[];
+    }>(this.url + '/tags');
+    return response.items.map(({ tag, count }) => ({
       term: tag,
       count,
     }));
