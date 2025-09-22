@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -401,7 +402,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				},
 			}
 
-			err := worker.Process(context.Background(), repo, job, progress)
+			err := worker.Process(logging.Context(context.Background(), logging.DefaultLogger), repo, job, progress)
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)
 			} else {

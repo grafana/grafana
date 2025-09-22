@@ -87,7 +87,6 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 ) error {
 	cfg := repo.Config().Spec
 	opts := job.Spec.PullRequest
-	logger := logging.FromContext(ctx).With("pr", opts.PR, "repo", repo.Config().GetName(), "namespace", job.GetNamespace())
 	startTime := time.Now()
 	outcome := utils.ErrorOutcome
 	defer func() {
@@ -96,9 +95,10 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	}()
 
 	if opts == nil {
-		logger.Debug("missing spec.pr")
 		return apierrors.NewBadRequest("missing spec.pr")
 	}
+
+	logger := logging.FromContext(ctx).With("pr", opts.PR, "repo", repo.Config().GetName(), "namespace", job.GetNamespace())
 
 	if opts.Ref == "" {
 		logger.Debug("missing spec.ref")
