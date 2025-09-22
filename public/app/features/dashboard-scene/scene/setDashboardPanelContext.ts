@@ -3,7 +3,7 @@ import { config, getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, VizPanel } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { AdHocFilterItem, PanelContext } from '@grafana/ui';
-import { deleteAnnotation, saveAnnotation, updateAnnotation } from 'app/features/annotations/api';
+import { getAnnotations } from 'app/features/annotations/api';
 
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
@@ -84,7 +84,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       text: event.description,
     };
 
-    await saveAnnotation(anno);
+    await getAnnotations().save(anno);
 
     reRunBuiltInAnnotationsLayer(dashboard);
 
@@ -106,7 +106,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       text: event.description,
     };
 
-    await updateAnnotation(anno);
+    await getAnnotations().update(anno);
 
     reRunBuiltInAnnotationsLayer(dashboard);
 
@@ -114,7 +114,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   };
 
   context.onAnnotationDelete = async (id: string) => {
-    await deleteAnnotation({ id });
+    await getAnnotations().delete({ id });
 
     reRunBuiltInAnnotationsLayer(getDashboardSceneFor(vizPanel));
 
