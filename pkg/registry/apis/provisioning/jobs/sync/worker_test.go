@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,7 +44,7 @@ func TestSyncWorker_IsSupported(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			worker := NewSyncWorker(nil, nil, nil, nil, nil)
+			worker := NewSyncWorker(nil, nil, nil, nil, nil, prometheus.DefaultRegisterer)
 			result := worker.IsSupported(context.Background(), tt.job)
 			require.Equal(t, tt.expected, result)
 		})
@@ -62,7 +63,7 @@ func TestSyncWorker_ProcessNotReaderWriter(t *testing.T) {
 	})
 	fakeDualwrite := dualwrite.NewMockService(t)
 	fakeDualwrite.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
-	worker := NewSyncWorker(nil, nil, fakeDualwrite, nil, nil)
+	worker := NewSyncWorker(nil, nil, fakeDualwrite, nil, nil, prometheus.DefaultRegisterer)
 	err := worker.Process(context.Background(), repo, provisioning.Job{}, jobs.NewMockJobProgressRecorder(t))
 	require.EqualError(t, err, "sync job submitted for repository that does not support read-write -- this is a bug")
 }
@@ -530,6 +531,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				dualwriteService,
 				repositoryPatchFn.Execute,
 				syncer,
+				prometheus.DefaultRegisterer,
 			)
 
 			// Create test job

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type WebhookRepository interface {
@@ -34,6 +35,7 @@ type webhookConnector struct {
 	webhooksEnabled bool
 	core            *provisioningapis.APIBuilder
 	renderer        pullrequest.ScreenshotRenderer
+	registry        prometheus.Registerer
 }
 
 func NewWebhookConnector(
@@ -41,11 +43,13 @@ func NewWebhookConnector(
 	// TODO: use interface for this
 	core *provisioningapis.APIBuilder,
 	renderer pullrequest.ScreenshotRenderer,
+	registry prometheus.Registerer,
 ) *webhookConnector {
 	return &webhookConnector{
 		webhooksEnabled: webhooksEnabled,
 		core:            core,
 		renderer:        renderer,
+		registry:        registry,
 	}
 }
 

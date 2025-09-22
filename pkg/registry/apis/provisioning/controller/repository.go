@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const loggerName = "provisioning-repository-controller"
@@ -59,6 +60,8 @@ type RepositoryController struct {
 	keyFunc           func(obj any) (string, error)
 
 	queue workqueue.TypedRateLimitingInterface[*queueItem]
+
+	registry prometheus.Registerer
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -72,6 +75,7 @@ func NewRepositoryController(
 	dualwrite dualwrite.Service,
 	healthChecker *HealthChecker,
 	statusPatcher StatusPatcher,
+	registry prometheus.Registerer,
 ) (*RepositoryController, error) {
 	rc := &RepositoryController{
 		client:     provisioningClient,
@@ -93,6 +97,7 @@ func NewRepositoryController(
 		jobs:      jobs,
 		logger:    logging.DefaultLogger.With("logger", loggerName),
 		dualwrite: dualwrite,
+		registry:  registry,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{

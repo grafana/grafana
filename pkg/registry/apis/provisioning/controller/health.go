@@ -7,6 +7,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // StatusPatcher defines the interface for updating repository status
@@ -19,12 +20,14 @@ type StatusPatcher interface {
 // HealthChecker provides unified health checking for repositories
 type HealthChecker struct {
 	statusPatcher StatusPatcher
+	registry      prometheus.Registerer
 }
 
 // NewHealthChecker creates a new health checker
-func NewHealthChecker(statusPatcher StatusPatcher) *HealthChecker {
+func NewHealthChecker(statusPatcher StatusPatcher, registry prometheus.Registerer) *HealthChecker {
 	return &HealthChecker{
 		statusPatcher: statusPatcher,
+		registry:      registry,
 	}
 }
 
