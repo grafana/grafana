@@ -28,7 +28,7 @@ func registerPullRequestMetrics(registry prometheus.Registerer) pullRequestMetri
 				Help:    "Duration of pull request processing",
 				Buckets: []float64{0.5, 1.0, 2.0, 5.0, 10.0, 30.0},
 			},
-			[]string{},
+			[]string{"outcome"},
 		)
 		registry.MustRegister(processingDuration)
 
