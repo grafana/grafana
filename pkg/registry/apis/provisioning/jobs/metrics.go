@@ -29,7 +29,7 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 			Help:    "Duration of job",
 			Buckets: []float64{5.0, 10.0, 30.0, 60.0, 120.0, 300.0},
 		},
-		[]string{"action", "resources_in_repo_bucket", "resources_changed_bucket"},
+		[]string{"action", "resources_changed_bucket"},
 	)
 	registry.MustRegister(durationHist)
 
@@ -40,17 +40,12 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 	}
 }
 
-func (m *JobMetrics) RecordJob(jobAction string, outcome string, resourceCount int, resourceCountChanged int, duration float64) {
+func (m *JobMetrics) RecordJob(jobAction string, outcome string, resourceCountChanged int, duration float64) {
 	m.processedTotal.WithLabelValues(jobAction, outcome).Inc()
 
 	// only record duration when the job was successful. otherwise resource count will be incorrect
 	if outcome == SuccessOutcome {
-		// not all jobs will have the total count of the resources in the repository. If that is the case, the label will be an empty string.
-		resourcesInRepoBucket := ""
-		if resourceCount > 0 {
-			resourcesInRepoBucket = getResourceCountBucket(resourceCount)
-		}
-		m.durationHist.WithLabelValues(jobAction, resourcesInRepoBucket, getResourceCountBucket(resourceCountChanged)).Observe(duration)
+		m.durationHist.WithLabelValues(jobAction, getResourceCountBucket(resourceCountChanged)).Observe(duration)
 	}
 }
 

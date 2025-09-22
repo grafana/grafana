@@ -47,7 +47,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	start := time.Now()
 	resourcesMoved := 0
 	defer func() {
-		w.metrics.RecordJob(string(job.Spec.Action), outcome, 0, resourcesMoved, time.Since(start).Seconds())
+		w.metrics.RecordJob(string(provisioning.JobActionMove), outcome, resourcesMoved, time.Since(start).Seconds())
 	}()
 
 	if opts.TargetPath == "" {

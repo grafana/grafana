@@ -47,7 +47,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	outcome := jobs.ErrorOutcome
 	resourcesDeleted := 0
 	defer func() {
-		w.metrics.RecordJob(string(job.Spec.Action), outcome, 0, resourcesDeleted, time.Since(start).Seconds())
+		w.metrics.RecordJob(string(provisioning.JobActionDelete), outcome, resourcesDeleted, time.Since(start).Seconds())
 	}()
 
 	progress.SetTotal(ctx, len(paths)+len(opts.Resources))

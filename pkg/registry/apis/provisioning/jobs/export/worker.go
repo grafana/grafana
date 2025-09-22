@@ -59,7 +59,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	outcome := jobs.ErrorOutcome
 	resourcesExported := 0
 	defer func() {
-		r.metrics.RecordJob(string(job.Spec.Action), outcome, 0, resourcesExported, time.Since(start).Seconds())
+		r.metrics.RecordJob(string(provisioning.JobActionPush), outcome, resourcesExported, time.Since(start).Seconds())
 	}()
 	cfg := repo.Config()
 	// Can write to external branch

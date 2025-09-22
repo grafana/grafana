@@ -65,10 +65,9 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 
 	start := time.Now()
 	outcome := jobs.ErrorOutcome
-	resourcesInRepo := 0
 	totalChangesMade := 0
 	defer func() {
-		r.metrics.RecordJob(string(job.Spec.Action), outcome, resourcesInRepo, totalChangesMade, time.Since(start).Seconds())
+		r.metrics.RecordJob(string(provisioning.JobActionPull), outcome, totalChangesMade, time.Since(start).Seconds())
 	}()
 
 	// Check if we are onboarding from legacy storage
@@ -160,9 +159,6 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 			"path":  "/status/stats",
 			"value": stats.Managed[0].Stats,
 		})
-		for _, resourceCount := range stats.Managed[0].Stats {
-			resourcesInRepo += int(resourceCount.Count)
-		}
 	default:
 		logger.Warn("unexpected number of managed stats", "count", len(stats.Managed))
 	}
