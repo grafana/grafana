@@ -1047,38 +1047,3 @@ func toJson[T any](entry T) json.RawMessage {
 	}
 	return b
 }
-
-func BenchmarkMerge(b *testing.B) {
-	inputSizes := []int{
-		1,
-		10,
-		100,
-		1000,
-		10000,
-	}
-
-	req := instrumenttest.NewFakeRequester()
-	loki := createTestLokiBackend(nil, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
-
-	for _, size := range inputSizes {
-		streams := []lokiclient.Stream{{
-			Stream: map[string]string{
-				"from":      "state-history",
-				"orgID":     "1",
-				"group":     "test-group-1",
-				"folderUID": "test-folder-1",
-				"extra":     "label",
-			},
-			Values: []lokiclient.Sample{},
-		}}
-		for i := range size {
-			streams[0].Values = append(streams[0].Values, lokiclient.Sample{T: time.Unix(int64(i), 0), V: `{"schemaVersion": 1, "condition": "test", "dashboardUID": "123", "fingerprint": "test", "labels": {}, "panelID": 123, "ruleTitle": "test", "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1", "ruleID": 123}`})
-		}
-
-		b.Run(fmt.Sprintf("%d_entries", size), func(b *testing.B) {
-			for b.Loop() {
-				loki.merge(streams, nil)
-			}
-		})
-	}
-}
