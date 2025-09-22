@@ -1,0 +1,56 @@
+goos: linux
+goarch: amd64
+pkg: github.com/grafana/grafana/pkg/services/ngalert/state/historian
+cpu: Intel(R) Core(TM) i9-14900HX
+BenchmarkMerge/1_entries-32         	  414552	      3844 ns/op	    2905 B/op	      53 allocs/op
+BenchmarkMerge/1_entries-32         	  331875	      3464 ns/op	    2905 B/op	      53 allocs/op
+BenchmarkMerge/1_entries-32         	  342465	      3908 ns/op	    2905 B/op	      53 allocs/op
+BenchmarkMerge/1_entries-32         	  274168	      3870 ns/op	    2905 B/op	      53 allocs/op
+BenchmarkMerge/1_entries-32         	  405288	      3689 ns/op	    2905 B/op	      53 allocs/op
+BenchmarkMerge/1_entries-32         	  346724	      3583 ns/op	    2905 B/op	      53 allocs/op
+BenchmarkMerge/1_entries-32         	  342187	      3373 ns/op	    2905 B/op	      53 allocs/op
+BenchmarkMerge/1_entries-32         	  348289	      3668 ns/op	    2905 B/op	      53 allocs/op
+BenchmarkMerge/1_entries-32         	  342685	      3699 ns/op	    2905 B/op	      53 allocs/op
+BenchmarkMerge/1_entries-32         	  304058	      3679 ns/op	    2905 B/op	      53 allocs/op
+BenchmarkMerge/10_entries-32        	   35607	     31770 ns/op	   24948 B/op	     341 allocs/op
+BenchmarkMerge/10_entries-32        	   34504	     30308 ns/op	   24948 B/op	     341 allocs/op
+BenchmarkMerge/10_entries-32        	   39229	     32137 ns/op	   24948 B/op	     341 allocs/op
+BenchmarkMerge/10_entries-32        	   38341	     29029 ns/op	   24948 B/op	     341 allocs/op
+BenchmarkMerge/10_entries-32        	   34006	     30606 ns/op	   24948 B/op	     341 allocs/op
+BenchmarkMerge/10_entries-32        	   45418	     31236 ns/op	   24948 B/op	     341 allocs/op
+BenchmarkMerge/10_entries-32        	   38214	     32929 ns/op	   24948 B/op	     341 allocs/op
+BenchmarkMerge/10_entries-32        	   41750	     32861 ns/op	   24948 B/op	     341 allocs/op
+BenchmarkMerge/10_entries-32        	   38863	     34291 ns/op	   24948 B/op	     341 allocs/op
+BenchmarkMerge/10_entries-32        	   41508	     31179 ns/op	   24948 B/op	     341 allocs/op
+BenchmarkMerge/100_entries-32       	    4972	    296740 ns/op	  247104 B/op	    3221 allocs/op
+BenchmarkMerge/100_entries-32       	    4240	    305296 ns/op	  247105 B/op	    3221 allocs/op
+BenchmarkMerge/100_entries-32       	    3802	    292136 ns/op	  247104 B/op	    3221 allocs/op
+BenchmarkMerge/100_entries-32       	    3351	    308454 ns/op	  247104 B/op	    3221 allocs/op
+BenchmarkMerge/100_entries-32       	    3331	    326693 ns/op	  247105 B/op	    3221 allocs/op
+BenchmarkMerge/100_entries-32       	    4225	    307933 ns/op	  247104 B/op	    3221 allocs/op
+BenchmarkMerge/100_entries-32       	    3549	    319240 ns/op	  247104 B/op	    3221 allocs/op
+BenchmarkMerge/100_entries-32       	    3579	    312216 ns/op	  247103 B/op	    3221 allocs/op
+BenchmarkMerge/100_entries-32       	    3398	    337066 ns/op	  247103 B/op	    3221 allocs/op
+BenchmarkMerge/100_entries-32       	    3858	    304281 ns/op	  247104 B/op	    3221 allocs/op
+BenchmarkMerge/1000_entries-32      	     360	   2926292 ns/op	 2453085 B/op	   32023 allocs/op
+BenchmarkMerge/1000_entries-32      	     362	   3068515 ns/op	 2453089 B/op	   32023 allocs/op
+BenchmarkMerge/1000_entries-32      	     430	   3027586 ns/op	 2453086 B/op	   32023 allocs/op
+BenchmarkMerge/1000_entries-32      	     450	   3151660 ns/op	 2453081 B/op	   32023 allocs/op
+BenchmarkMerge/1000_entries-32      	     362	   3012100 ns/op	 2453088 B/op	   32023 allocs/op
+BenchmarkMerge/1000_entries-32      	     356	   2904867 ns/op	 2453098 B/op	   32023 allocs/op
+BenchmarkMerge/1000_entries-32      	     446	   2988621 ns/op	 2453086 B/op	   32023 allocs/op
+BenchmarkMerge/1000_entries-32      	     409	   3016653 ns/op	 2453074 B/op	   32023 allocs/op
+BenchmarkMerge/1000_entries-32      	     415	   2929289 ns/op	 2453094 B/op	   32023 allocs/op
+BenchmarkMerge/1000_entries-32      	     372	   2954854 ns/op	 2453084 B/op	   32023 allocs/op
+BenchmarkMerge/10000_entries-32     	      40	  27170406 ns/op	24525054 B/op	  320040 allocs/op
+BenchmarkMerge/10000_entries-32     	      42	  27079741 ns/op	24525053 B/op	  320039 allocs/op
+BenchmarkMerge/10000_entries-32     	      43	  28775220 ns/op	24525215 B/op	  320042 allocs/op
+BenchmarkMerge/10000_entries-32     	      52	  27512774 ns/op	24525065 B/op	  320040 allocs/op
+BenchmarkMerge/10000_entries-32     	      42	  29627050 ns/op	24525104 B/op	  320040 allocs/op
+BenchmarkMerge/10000_entries-32     	      39	  30082157 ns/op	24524887 B/op	  320038 allocs/op
+BenchmarkMerge/10000_entries-32     	      45	  27667244 ns/op	24525149 B/op	  320041 allocs/op
+BenchmarkMerge/10000_entries-32     	      52	  28390149 ns/op	24525197 B/op	  320041 allocs/op
+BenchmarkMerge/10000_entries-32     	      39	  28356771 ns/op	24524926 B/op	  320038 allocs/op
+BenchmarkMerge/10000_entries-32     	      40	  27294574 ns/op	24524937 B/op	  320038 allocs/op
+PASS
+ok  	github.com/grafana/grafana/pkg/services/ngalert/state/historian	77.692s

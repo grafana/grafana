@@ -241,8 +241,9 @@ func merge(res []lokiclient.Stream, folderUIDToFilter []string) (*data.Frame, er
 		if minElStreamIdx == -1 {
 			break
 		}
+		entryBytes := []byte(minEl.V)
 		var entry LokiEntry
-		err := json.Unmarshal([]byte(minEl.V), &entry)
+		err := json.Unmarshal(entryBytes, &entry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to unmarshal entry: %w", err)
 		}
@@ -254,14 +255,9 @@ func merge(res []lokiclient.Stream, folderUIDToFilter []string) (*data.Frame, er
 		if err != nil {
 			return nil, fmt.Errorf("failed to serialize stream labels: %w", err)
 		}
-		line, err := jsonifyRow(minEl.V)
-		if err != nil {
-			return nil, fmt.Errorf("a line was in an invalid format: %w", err)
-		}
-
 		times = append(times, time.Unix(0, tsNano))
 		labels = append(labels, lblsJson)
-		lines = append(lines, line)
+		lines = append(lines, json.RawMessage(entryBytes))
 		pointers[minElStreamIdx]++
 	}
 
@@ -357,17 +353,6 @@ func valuesAsDataBlob(state *state.State) *simplejson.Json {
 	}
 
 	return jsonifyValues(state.Values)
-}
-
-func jsonifyRow(line string) (json.RawMessage, error) {
-	// Ser/deser to validate the contents of the log line before shipping it forward.
-	// TODO: We may want to remove this in the future, as we already have the value in the form of a []byte, and json.RawMessage is also a []byte.
-	// TODO: Though, if the log line does not contain valid JSON, this can cause problems later on when rendering the dataframe.
-	var entry LokiEntry
-	if err := json.Unmarshal([]byte(line), &entry); err != nil {
-		return nil, err
-	}
-	return json.Marshal(entry)
 }
 
 // BuildLogQuery converts models.HistoryQuery and a list of folder UIDs to Loki queries.
