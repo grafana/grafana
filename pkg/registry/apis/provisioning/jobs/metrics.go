@@ -110,3 +110,15 @@ func getResourceCountBucket(count int) string {
 		return "1000+"
 	}
 }
+
+func recordConcurrentDriverMetric(registry prometheus.Registerer, numDrivers int) {
+	concurrentDriver := prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "grafana_provisioning_jobs_concurrent_driver_num_drivers",
+			Help: "Number of concurrent job drivers",
+		},
+		[]string{},
+	)
+	registry.MustRegister(concurrentDriver)
+	concurrentDriver.WithLabelValues().Set(float64(numDrivers))
+}
