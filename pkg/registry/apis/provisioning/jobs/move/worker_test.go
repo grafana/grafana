@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -215,7 +214,7 @@ func TestMoveWorker_ProcessMoveFilesSuccess(t *testing.T) {
 	mockProgress.On("SetMessage", mock.Anything, "Moving test/path1 to new/location/path1").Return()
 	mockProgress.On("SetMessage", mock.Anything, "Moving test/path2 to new/location/path2").Return()
 	mockProgress.On("TooManyErrors").Return(nil).Twice()
-	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
+	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
 
 	mockRepo.On("Move", mock.Anything, "test/path1", "new/location/path1", "main", "Move test/path1 to new/location/path1").Return(nil)
 	mockRepo.On("Move", mock.Anything, "test/path2", "new/location/path2", "main", "Move test/path2 to new/location/path2").Return(nil)
@@ -306,7 +305,7 @@ func TestMoveWorker_ProcessWithSyncWorker(t *testing.T) {
 
 	mockProgress.On("ResetResults").Return()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
-	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
+	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
 
 	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.MatchedBy(func(syncJob provisioning.Job) bool {
 		return syncJob.Spec.Pull != nil && !syncJob.Spec.Pull.Incremental
@@ -535,7 +534,7 @@ func TestMoveWorker_ProcessWithResourceReferences(t *testing.T) {
 	mockProgress.On("SetMessage", mock.Anything, "Moving test/path1 to new/location/path1").Return()
 	mockProgress.On("SetMessage", mock.Anything, "Moving dashboard/file.yaml to new/location/file.yaml").Return()
 	mockProgress.On("TooManyErrors").Return(nil).Times(2)
-	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
+	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
 	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepoResources, nil)
 	mockRepoResources.On("FindResourcePath", mock.Anything, "dashboard-uid", schema.GroupVersionKind{
 		Group: "dashboard.grafana.app",
@@ -598,7 +597,7 @@ func TestMoveWorker_ProcessResourceReferencesError(t *testing.T) {
 	mockProgress.On("SetMessage", mock.Anything, "Resolving resource paths").Return()
 	mockProgress.On("SetMessage", mock.Anything, "Finding path for resource dashboard.grafana.app/Dashboard/non-existent-uid").Return()
 	mockProgress.On("TooManyErrors").Return(nil)
-	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
+	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
 
 	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepoResources, nil)
 	resourceError := errors.New("resource not found")
@@ -868,7 +867,7 @@ func TestMoveWorker_RefURLsSetWithRef(t *testing.T) {
 	mockProgress.On("Record", mock.Anything, mock.Anything).Once()
 	mockProgress.On("TooManyErrors").Return(nil).Once()
 	mockProgress.On("SetRefURLs", mock.Anything, expectedRefURLs).Once()
-	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
+	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
 	mockReaderWriter := repository.NewMockReaderWriter(t)
 	mockReaderWriter.On("Move", mock.Anything, "test.json", "target/test.json", "feature-branch", "Move test.json to target/test.json").Return(nil)
 
@@ -921,7 +920,7 @@ func TestMoveWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 	mockProgress.On("TooManyErrors").Return(nil).Once()
 	mockProgress.On("ResetResults").Once()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Once()
-	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
+	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
 	// SetRefURLs should NOT be called since no ref is specified
 
 	mockReaderWriter := repository.NewMockReaderWriter(t)
@@ -976,7 +975,7 @@ func TestMoveWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	mockProgress.On("SetMessage", mock.Anything, "Moving test.json to target/test.json").Once()
 	mockProgress.On("Record", mock.Anything, mock.Anything).Once()
 	mockProgress.On("TooManyErrors").Return(nil).Once()
-	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
+	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
 	// SetRefURLs should NOT be called since repo doesn't support URLs
 
 	mockReaderWriter := repository.NewMockReaderWriter(t)
