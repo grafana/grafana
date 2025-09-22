@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -21,12 +22,14 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	clientrest "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -83,6 +86,9 @@ type APIBuilder struct {
 	// TODO: Set this up in the standalone API server
 	onlyApiServer bool
 
+	allowedTargets      []provisioning.SyncTargetType
+	allowImageRendering bool
+
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
 
@@ -109,6 +115,8 @@ type APIBuilder struct {
 	// Extras provides additional functionality to the API.
 	extras       []Extra
 	extraWorkers []jobs.Worker
+
+	restConfigGetter func(context.Context) (*clientrest.Config, error)
 }
 
 // NewAPIBuilder creates an API builder.
@@ -128,8 +136,17 @@ func NewAPIBuilder(
 	extraBuilders []ExtraBuilder,
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
+	allowedTargets []provisioning.SyncTargetType,
+	restConfigGetter func(context.Context) (*clientrest.Config, error),
+	allowImageRendering bool,
+	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 ) *APIBuilder {
-	clients := resources.NewClientFactory(configProvider)
+	var clients resources.ClientFactory
+	if newStandaloneClientFactoryFunc != nil {
+		clients = newStandaloneClientFactoryFunc(configProvider)
+	} else {
+		clients = resources.NewClientFactory(configProvider)
+	}
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceListerForMigrations(unified, legacyMigrator, storageStatus)
 
@@ -149,6 +166,9 @@ func NewAPIBuilder(
 		access:              access,
 		jobHistoryConfig:    jobHistoryConfig,
 		extraWorkers:        extraWorkers,
+		allowedTargets:      allowedTargets,
+		restConfigGetter:    restConfigGetter,
+		allowImageRendering: allowImageRendering,
 	}
 
 	for _, builder := range extraBuilders {
@@ -213,6 +233,11 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
+	allowedTargets := []provisioning.SyncTargetType{}
+	for _, target := range cfg.ProvisioningAllowedTargets {
+		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
+	}
+
 	builder := NewAPIBuilder(
 		cfg.ProvisioningDisableControllers,
 		repoFactory,
@@ -226,6 +251,10 @@ func RegisterAPIService(
 		extraBuilders,
 		extraWorkers,
 		createJobHistoryConfigFromSettings(cfg),
+		allowedTargets,
+		nil, // will use loopback instead
+		cfg.ProvisioningAllowImageRendering,
+		nil,
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
@@ -538,6 +567,21 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	list := repository.ValidateRepository(repo)
 	cfg := repo.Config()
 
+	if !slices.Contains(b.allowedTargets, cfg.Spec.Sync.Target) {
+		list = append(list,
+			field.Invalid(
+				field.NewPath("spec", "target"),
+				cfg.Spec.Sync.Target,
+				"sync target is not supported"))
+	}
+
+	if !b.allowImageRendering && cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews {
+		list = append(list,
+			field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
+				cfg.Spec.GitHub.GenerateDashboardPreviews,
+				"image rendering is not enabled"))
+	}
+
 	if a.GetOperation() == admission.Update {
 		oldRepo, err := b.asRepository(ctx, a.GetOldObject(), nil)
 		if err != nil {
@@ -640,7 +684,17 @@ func (b *APIBuilder) verifyAgainstExistingRepositories(cfg *provisioning.Reposit
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
 		"grafana-provisioning": func(postStartHookCtx genericapiserver.PostStartHookContext) error {
-			c, err := clientset.NewForConfig(postStartHookCtx.LoopbackClientConfig)
+			var config *clientrest.Config
+			var err error
+			if b.restConfigGetter == nil {
+				config = postStartHookCtx.LoopbackClientConfig
+			} else {
+				config, err = b.restConfigGetter(postStartHookCtx.Context)
+				if err != nil {
+					return err
+				}
+			}
+			c, err := clientset.NewForConfig(config)
 			if err != nil {
 				return err
 			}

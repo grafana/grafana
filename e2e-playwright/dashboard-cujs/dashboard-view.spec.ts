@@ -134,8 +134,8 @@ test.describe(
 
           expect.soft(await timePickerButton.textContent()).toContain('2024-01-01 08:30:00 to 2024-01-01 08:40:00');
 
-          const forwardBtn = page.locator('button[aria-label="Move time range forwards"]');
-          const backwardBtn = page.locator('button[aria-label="Move time range backwards"]');
+          const forwardBtn = page.locator('button[aria-label*="Move"][aria-label*="forward"]');
+          const backwardBtn = page.locator('button[aria-label*="Move"][aria-label*="backward"]');
 
           await forwardBtn.click();
 

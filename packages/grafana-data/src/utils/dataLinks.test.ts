@@ -48,6 +48,14 @@ describe('mapInternalLinkToExplore', () => {
         title: 'dsName',
         href: `/explore?left=${encodeURIComponent('{"datasource":"uid","queries":[{"query":"12344"}]}')}`,
         onClick: undefined,
+        interpolatedParams: {
+          query: {
+            query: '12344',
+            datasource: {
+              uid: 'uid',
+            },
+          },
+        },
       })
     );
   });
@@ -130,6 +138,14 @@ describe('mapInternalLinkToExplore', () => {
       replaceVariables: (val, scopedVars) => val.replace(/\$var/g, scopedVars!['var1']!.value),
     });
 
+    const query = {
+      query: 'val1 val1',
+      $var: 'foo',
+      nested: { something: 'val1' },
+      num: 1,
+      arr: ['val1', 'non var'],
+    };
+
     expect(decodeURIComponent(link.href)).toEqual(
       `/explore?left=${JSON.stringify({
         range: {
@@ -137,16 +153,17 @@ describe('mapInternalLinkToExplore', () => {
           to: DATE_AS_MS,
         },
         datasource: 'uid',
-        queries: [
-          {
-            query: 'val1 val1',
-            $var: 'foo',
-            nested: { something: 'val1' },
-            num: 1,
-            arr: ['val1', 'non var'],
-          },
-        ],
+        queries: [query],
       })}`
     );
+
+    expect(link.interpolatedParams?.query).toEqual({
+      datasource: {
+        uid: 'uid',
+      },
+      ...query,
+    });
+
+    expect(link.interpolatedParams?.timeRange).toEqual(TIME_RANGE);
   });
 });

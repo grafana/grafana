@@ -5,6 +5,7 @@ import { getAppEvents } from '@grafana/runtime';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
   useCreateRepositoryFilesWithPathMutation,
+  useCreateRepositoryJobsMutation,
   useGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
@@ -25,6 +26,7 @@ jest.mock('@grafana/runtime', () => {
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryFilesWithPathQuery: jest.fn(),
   useCreateRepositoryFilesWithPathMutation: jest.fn(),
+  useCreateRepositoryJobsMutation: jest.fn(),
   provisioningAPIv0alpha1: {
     endpoints: {
       listRepository: {
@@ -146,6 +148,7 @@ describe('MoveProvisionedDashboardForm', () => {
     });
 
     (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([jest.fn(), mockCreateRequest]);
+    (useCreateRepositoryJobsMutation as jest.Mock).mockReturnValue([jest.fn(), mockCreateRequest]);
 
     (useProvisionedRequestHandler as jest.Mock).mockReturnValue(undefined);
   });
