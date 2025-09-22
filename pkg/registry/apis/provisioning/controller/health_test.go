@@ -19,7 +19,7 @@ import (
 func TestNewHealthChecker(t *testing.T) {
 	mockPatcher := mocks.NewStatusPatcher(t)
 
-	hc := NewHealthChecker(mockPatcher, prometheus.DefaultRegisterer)
+	hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry())
 
 	assert.NotNil(t, hc)
 	assert.Equal(t, mockPatcher, hc.statusPatcher)
@@ -136,7 +136,7 @@ func TestShouldCheckHealth(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
-			hc := NewHealthChecker(mockPatcher, prometheus.DefaultRegisterer)
+			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry())
 
 			result := hc.ShouldCheckHealth(tt.repo)
 			assert.Equal(t, tt.expected, result)
@@ -223,7 +223,7 @@ func TestHasRecentFailure(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
-			hc := NewHealthChecker(mockPatcher, prometheus.DefaultRegisterer)
+			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry())
 
 			result := hc.HasRecentFailure(tt.healthStatus, tt.failureType)
 			assert.Equal(t, tt.expected, result)
@@ -265,7 +265,7 @@ func TestRecordFailure(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
-			hc := NewHealthChecker(mockPatcher, prometheus.DefaultRegisterer)
+			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry())
 
 			repo := &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
@@ -310,7 +310,7 @@ func TestRecordFailure(t *testing.T) {
 
 func TestRecordFailureFunction(t *testing.T) {
 	mockPatcher := mocks.NewStatusPatcher(t)
-	hc := NewHealthChecker(mockPatcher, prometheus.DefaultRegisterer)
+	hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry())
 
 	testErr := errors.New("test error")
 	result := hc.recordFailure(provisioning.HealthFailureHook, testErr)
@@ -447,7 +447,7 @@ func TestRefreshHealth(t *testing.T) {
 				testError:  tt.testError,
 			}
 
-			hc := NewHealthChecker(mockPatcher, prometheus.DefaultRegisterer)
+			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry())
 
 			if tt.expectPatch {
 				if tt.patchError != nil {
@@ -557,7 +557,7 @@ func TestHasHealthStatusChanged(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
-			hc := NewHealthChecker(mockPatcher, prometheus.DefaultRegisterer)
+			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry())
 
 			result := hc.hasHealthStatusChanged(tt.old, tt.new)
 			assert.Equal(t, tt.expected, result)
