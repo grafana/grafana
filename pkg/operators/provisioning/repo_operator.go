@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -29,7 +30,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	})).With("logger", "provisioning-repo-controller")
 	logger.Info("Starting provisioning repo controller")
 
-	controllerCfg, err := getRepoControllerConfig(deps.Config)
+	controllerCfg, err := getRepoControllerConfig(deps.Config, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("failed to setup operator: %w", err)
 	}
@@ -65,7 +66,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
-	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
+	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1(), deps.Registerer)
 	healthChecker := controller.NewHealthChecker(statusPatcher, deps.Registerer)
 
 	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
@@ -80,7 +81,6 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		healthChecker,
 		statusPatcher,
 		deps.Registerer,
-		tracer,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository controller: %w", err)

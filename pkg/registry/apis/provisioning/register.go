@@ -121,6 +121,7 @@ type APIBuilder struct {
 	extraWorkers []jobs.Worker
 
 	restConfigGetter func(context.Context) (*clientrest.Config, error)
+	registry         prometheus.Registerer
 }
 
 // NewAPIBuilder creates an API builder.
@@ -143,6 +144,7 @@ func NewAPIBuilder(
 	allowedTargets []provisioning.SyncTargetType,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
+	registry prometheus.Registerer,
 	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 ) *APIBuilder {
 	var clients resources.ClientFactory
@@ -173,6 +175,7 @@ func NewAPIBuilder(
 		allowedTargets:      allowedTargets,
 		restConfigGetter:    restConfigGetter,
 		allowImageRendering: allowImageRendering,
+		registry:            registry,
 	}
 
 	for _, builder := range extraBuilders {
@@ -258,6 +261,7 @@ func RegisterAPIService(
 		allowedTargets,
 		nil, // will use loopback instead
 		cfg.ProvisioningAllowImageRendering,
+		reg,
 		nil,
 	)
 	apiregistration.RegisterAPI(builder)
@@ -664,7 +668,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return fmt.Errorf("create API client job store: %w", err)
 			}
 
-			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
+			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient(), b.registry)
 			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry)
 
 			// if running solely CRUD, skip the rest of the setup
@@ -696,7 +700,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.repositoryResources,
 				export.ExportAll,
 				stageIfPossible,
-				metrics,
+				b.registry,
 			)
 
 			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer)
@@ -706,8 +710,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.storageStatus,
 				b.statusPatcher.Patch,
 				syncer,
-				metrics,
-				b.tracer,
+				b.registry,
 			)
 			signerFactory := signature.NewSignerFactory(b.clients)
 			legacyResources := migrate.NewLegacyResourcesMigrator(
@@ -739,8 +742,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.storageStatus,
 			)
 
-			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
-			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
+			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, b.registry)
+			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, b.registry)
 			workers := []jobs.Worker{
 				deleteWorker,
 				exportWorker,
@@ -799,7 +802,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.GetHealthChecker(),
 				b.statusPatcher,
 				b.registry,
-				b.tracer,
 			)
 			if err != nil {
 				return err

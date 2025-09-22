@@ -13,8 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 //go:generate mockery --name RepositoryPatchFn --structname MockRepositoryPatchFn --inpackage --filename repository_patch_fn_mock.go --with-expecter
@@ -38,9 +37,8 @@ type SyncWorker struct {
 	// Sync functions
 	syncer Syncer
 
-	metrics jobs.JobMetrics
-
-	tracer tracing.Tracer
+	// Registry for metrics
+	registry prometheus.Registerer
 }
 
 func NewSyncWorker(
@@ -49,8 +47,7 @@ func NewSyncWorker(
 	storageStatus dualwrite.Service,
 	patchStatus RepositoryPatchFn,
 	syncer Syncer,
-	metrics jobs.JobMetrics,
-	tracer tracing.Tracer,
+	registry prometheus.Registerer,
 ) *SyncWorker {
 	return &SyncWorker{
 		clients:             clients,
@@ -58,8 +55,7 @@ func NewSyncWorker(
 		patchStatus:         patchStatus,
 		storageStatus:       storageStatus,
 		syncer:              syncer,
-		metrics:             metrics,
-		tracer:              tracer,
+		registry:            registry,
 	}
 }
 

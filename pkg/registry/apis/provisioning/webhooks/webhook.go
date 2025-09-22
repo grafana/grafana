@@ -36,7 +36,6 @@ type webhookConnector struct {
 	core            *provisioningapis.APIBuilder
 	renderer        pullrequest.ScreenshotRenderer
 	registry        prometheus.Registerer
-	metrics         webhookMetrics
 }
 
 func NewWebhookConnector(
@@ -52,7 +51,6 @@ func NewWebhookConnector(
 		core:            core,
 		renderer:        renderer,
 		registry:        registry,
-		metrics:         metrics,
 	}
 }
 

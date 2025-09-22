@@ -68,7 +68,6 @@ type RepositoryController struct {
 	queue workqueue.TypedRateLimitingInterface[*queueItem]
 
 	registry prometheus.Registerer
-	tracer   tracing.Tracer
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -83,7 +82,6 @@ func NewRepositoryController(
 	healthChecker *HealthChecker,
 	statusPatcher StatusPatcher,
 	registry prometheus.Registerer,
-	tracer tracing.Tracer,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 
@@ -109,7 +107,6 @@ func NewRepositoryController(
 		logger:    logging.DefaultLogger.With("logger", loggerName),
 		dualwrite: dualwrite,
 		registry:  registry,
-		tracer:    tracer,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{

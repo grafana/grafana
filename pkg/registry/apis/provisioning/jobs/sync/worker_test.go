@@ -46,7 +46,7 @@ func TestSyncWorker_IsSupported(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			worker := NewSyncWorker(nil, nil, nil, nil, nil, metrics, tracing.NewNoopTracerService())
+			worker := NewSyncWorker(nil, nil, nil, nil, nil, prometheus.DefaultRegisterer)
 			result := worker.IsSupported(context.Background(), tt.job)
 			require.Equal(t, tt.expected, result)
 		})
@@ -65,7 +65,7 @@ func TestSyncWorker_ProcessNotReaderWriter(t *testing.T) {
 	})
 	fakeDualwrite := dualwrite.NewMockService(t)
 	fakeDualwrite.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
-	worker := NewSyncWorker(nil, nil, fakeDualwrite, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracing.NewNoopTracerService())
+	worker := NewSyncWorker(nil, nil, fakeDualwrite, nil, nil, prometheus.DefaultRegisterer)
 	err := worker.Process(context.Background(), repo, provisioning.Job{}, jobs.NewMockJobProgressRecorder(t))
 	require.EqualError(t, err, "sync job submitted for repository that does not support read-write")
 }
@@ -533,8 +533,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				dualwriteService,
 				repositoryPatchFn.Execute,
 				syncer,
-				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
-				tracing.NewNoopTracerService(),
+				prometheus.DefaultRegisterer,
 			)
 
 			// Create test job
