@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 //go:generate mockery --name ExportFn --structname MockExportFn --inpackage --filename mock_export_fn.go --with-expecter
@@ -23,6 +24,7 @@ type ExportWorker struct {
 	repositoryResources resources.RepositoryResourcesFactory
 	exportFn            ExportFn
 	wrapWithStageFn     WrapWithStageFn
+	registry            prometheus.Registerer
 }
 
 func NewExportWorker(
@@ -30,12 +32,14 @@ func NewExportWorker(
 	repositoryResources resources.RepositoryResourcesFactory,
 	exportFn ExportFn,
 	wrapWithStageFn WrapWithStageFn,
+	registry prometheus.Registerer,
 ) *ExportWorker {
 	return &ExportWorker{
 		clientFactory:       clientFactory,
 		repositoryResources: repositoryResources,
 		exportFn:            exportFn,
 		wrapWithStageFn:     wrapWithStageFn,
+		registry:            registry,
 	}
 }
 

@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
@@ -28,7 +29,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	})).With("logger", "provisioning-repo-controller")
 	logger.Info("Starting provisioning repo controller")
 
-	controllerCfg, err := getRepoControllerConfig(deps.Config)
+	controllerCfg, err := getRepoControllerConfig(deps.Config, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("failed to setup operator: %w", err)
 	}
@@ -50,12 +51,12 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	)
 
 	resourceLister := resources.NewResourceLister(controllerCfg.unified)
-	jobs, err := jobs.NewJobStore(controllerCfg.provisioningClient.ProvisioningV0alpha1(), 30*time.Second)
+	jobs, err := jobs.NewJobStore(controllerCfg.provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
-	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
-	healthChecker := controller.NewHealthChecker(statusPatcher)
+	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1(), deps.Registerer)
+	healthChecker := controller.NewHealthChecker(statusPatcher, deps.Registerer)
 
 	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
 	controller, err := controller.NewRepositoryController(
@@ -68,6 +69,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		nil, // dualwrite -- standalone operator assumes it is backed by unified storage
 		healthChecker,
 		statusPatcher,
+		deps.Registerer,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository controller: %w", err)
@@ -87,8 +89,8 @@ type repoControllerConfig struct {
 	workerCount int
 }
 
-func getRepoControllerConfig(cfg *setting.Cfg) (*repoControllerConfig, error) {
-	controllerCfg, err := setupFromConfig(cfg)
+func getRepoControllerConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*repoControllerConfig, error) {
+	controllerCfg, err := setupFromConfig(cfg, registry)
 	if err != nil {
 		return nil, err
 	}
