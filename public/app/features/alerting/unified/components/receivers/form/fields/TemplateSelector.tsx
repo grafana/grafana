@@ -310,7 +310,7 @@ function OptionCustomfield({
                 'Enter plain text or reference a template, e.g. {{- currentTemplate}}',
                 { currentTemplate: option.placeholder }
               )
-            : // Placeholder message with default template if no option.placeholder
+            : // if "option.placeholder" is not set, the placeholder displays the "default.message" template
               t(
                 'alerting.option-customfield.placeholder',
                 'Enter plain text or reference a template, e.g. {{template "default.message" .}}'
