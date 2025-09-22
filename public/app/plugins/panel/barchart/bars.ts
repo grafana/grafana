@@ -209,11 +209,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
       return splits.map((v) => (v == null ? '' : dateTimeFormat(v, { format, timeZone })));
     }
 
-    if (groupByField) { // use only distinct x-axis values when grouping is used.
-      splits = Array.from(new Set(u.data[0]))
-        .map(value => u.data[0].find(obj => obj === value))
-        .filter((v): v is number => v !== undefined);
-    }
     return splits.map((v) => (isXHorizontal ? formatShortValue(0, v) : formatValue(0, v)));
   };
 
@@ -228,16 +223,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
       pctOffset = lftPct + widPct / 2;
     });
     max = Math.max(1, u.data[0].length - 1);
-
-  
-    // TODO change back when cluster stacking works because it currently breaks bar rendering
-    // const clusters = getClustersFromArray(Array.from(u.data[groupByFieldIdx === -1 ? 0 : groupByFieldIdx]), groupByField);
-
-    // distribute(clusters.length, clusterWidth, clusterDistr, 0, (di, lftPct, widPct) => {
-    //   pctOffset = lftPct + widPct / 2;
-    // });
-    // max = Math.max(1, clusters.length - 1);
-    // TODO 
 
     // expand scale range by equal amounts on both ends
     let rn = max - min;

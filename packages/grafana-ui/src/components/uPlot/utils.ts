@@ -162,10 +162,10 @@ export function preparePlotData2(
   let data = Array(frame.fields.length);
 
   // // TODO remove, testing
-  // let data = Array(3);
+  // let data = Array(2);
   // data[0] = Array.from(['A','B','C']);
   // data[1] = Array.from([10,4,8]);
-  // data[2] = Array.from([15,4,8]);
+  // data[1] = Array.from([15,4,8]);
   // return data;
   
 
@@ -206,6 +206,7 @@ export function preparePlotData2(
     });
   });
 
+
   frame.fields.forEach((field, i) => {
     let vals = field.values;
 
@@ -241,6 +242,9 @@ export function preparePlotData2(
 
     let stackingMode = custom.stacking?.mode;
     let clusteredStackingMode = custom.clusteredStacking?.mode;
+    const clusterCount = clusters ? clusters.length : -1;
+
+    let carry = Array(clusterCount).fill(0);
 
     if ((!stackingMode || stackingMode === StackingMode.None) && (!clusteredStackingMode || clusteredStackingMode === StackingMode.None)) {
       data[i] = vals;
@@ -260,31 +264,56 @@ export function preparePlotData2(
           stacked[i] = groupValsAtX[i] ? accum[i] : v;
         }
       }
-    } else {
-      // const clusterCount = clusters.length;
-      // let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
+    } else if (clusters) { 
+      // stacking for clusters
+      const stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
 
-      // let accum = accums[stackIdx]; // accumulated values
-      // let groupValsAtX = anyValsAtX[stackIdx];
-      // let stacked = (data[i]) = Array();
+      const accum = accums[stackIdx]; 
+      // const groupValsAtX = anyValsAtX[stackIdx];
+      const base = accum.slice();               // baseline before adding this series
 
-      // let clusterIdx = 0;
+      const fullSums = Array(clusterCount).fill(0);
+      const partials: number[][] = Array.from({ length: clusterCount }, () => []); 
 
-      // TODO change into stacking for clusters
-      let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
+      // compute the total sum per cluster as well as the steps --> partials to get there:
+      let rowIdx = 0;
+      for (let clusterIdx = 0; clusterIdx < clusterCount; clusterIdx++) {
+        const size = clusters[clusterIdx] ?? 0;
 
-      let accum = accums[stackIdx];
-      let groupValsAtX = anyValsAtX[stackIdx];
-      let stacked = (data[i] = Array(dataLen));
-
-      for (let i = 0; i < dataLen; i++) {
-        let v = vals[i];
-
-        if (v != null) {
-          stacked[i] = accum[i] += v;
-        } else {
-          stacked[i] = groupValsAtX[i] ? accum[i] : v;
+        let running = 0;
+        for (let k = 0; k < size; k++) {
+          const v = vals[rowIdx + k];
+          if (v != null) running += v;
+          partials[clusterIdx].push(running);
         }
+        fullSums[clusterIdx] = running;
+        rowIdx += size;
+      }
+
+      // Emit snapshots: for clusters with size > 1, output a state after each step
+      for (let c = 0; c < clusterCount; c++) {
+        const size = clusters[c] ?? 0;
+        if (size <= 1) continue; // single-row clusters would produce duplicates; skip
+
+        for (let step = 0; step < size; step++) {
+          const barSlice = Array(clusterCount);
+
+          for (let j = 0; j < clusterCount; j++) {
+            // other clusters show their full sums already, the active cluster shows its partial
+            const add = (j === c) ? partials[c][step] : fullSums[j];
+            const prev = base[j] ?? 0;
+
+            barSlice[j] = prev + (add ?? 0);
+          }
+
+          data.push(barSlice);
+        }
+      }
+
+      // Update accum so for next field
+      for (let c = 0; c < clusterCount; c++) {
+        const prev = base[c] ?? 0;
+        accum[c] = prev + (fullSums[c] ?? 0);
       }
     }
   });
