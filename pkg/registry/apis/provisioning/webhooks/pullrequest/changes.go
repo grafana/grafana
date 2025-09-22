@@ -55,11 +55,11 @@ type fileChangeInfo struct {
 type evaluator struct {
 	render      ScreenshotRenderer
 	parsers     resources.ParserFactory
-	urlProvider func(ctx context.Context, namespace string) string
+	urlProvider func(namespace string) string
 	metrics     screenshotMetrics
 }
 
-func NewEvaluator(render ScreenshotRenderer, parsers resources.ParserFactory, urlProvider func(ctx context.Context, namespace string) string, registry prometheus.Registerer) Evaluator {
+func NewEvaluator(render ScreenshotRenderer, parsers resources.ParserFactory, urlProvider func(namespace string) string, registry prometheus.Registerer) Evaluator {
 	metrics := registerScreenshotMetrics(registry)
 	return &evaluator{
 		render:      render,
