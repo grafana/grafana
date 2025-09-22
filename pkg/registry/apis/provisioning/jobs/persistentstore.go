@@ -74,7 +74,7 @@ type persistentStore struct {
 	// If a job is abandoned, it will have its claim cleaned up periodically.
 	expiry time.Duration
 
-	registry prometheus.Registerer
+	queueMetrics QueueMetrics
 }
 
 // NewJobStore creates a new job queue implementation using the API client.
@@ -83,11 +83,13 @@ func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry
 		expiry = time.Second * 30
 	}
 
+	queueMetrics := RegisterQueueMetrics(registry)
+
 	return &persistentStore{
-		client:   provisioningClient,
-		clock:    time.Now,
-		expiry:   expiry,
-		registry: registry,
+		client:       provisioningClient,
+		clock:        time.Now,
+		expiry:       expiry,
+		queueMetrics: queueMetrics,
 	}, nil
 }
 
@@ -120,6 +122,7 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 			job.Labels = make(map[string]string)
 		}
 		job.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
+		s.queueMetrics.RecordWaitTime(string(job.Spec.Action), s.clock().Sub(job.CreationTimestamp.Time).Seconds())
 
 		// Set up the provisioning identity for this namespace
 		ctx, _, err = identity.WithProvisioningIdentity(ctx, job.GetNamespace())
@@ -241,6 +244,7 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 		job.Labels = make(map[string]string)
 	}
 	delete(job.Labels, LabelJobClaim)
+	s.queueMetrics.DecreaseQueueSize(string(job.Spec.Action))
 
 	logger.Debug("job completion done")
 	return nil
@@ -382,6 +386,8 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 	if err != nil {
 		return nil, apifmt.Errorf("failed to create job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
+
+	s.queueMetrics.IncreaseQueueSize(string(job.Spec.Action))
 
 	return created, nil
 }

@@ -13,6 +13,49 @@ type JobMetrics struct {
 	durationHist   *prometheus.HistogramVec
 }
 
+type QueueMetrics struct {
+	queueSize     *prometheus.GaugeVec
+	queueWaitTime *prometheus.HistogramVec
+}
+
+func RegisterQueueMetrics(registry prometheus.Registerer) QueueMetrics {
+	queueSize := prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "grafana_provisioning_jobs_queue_size",
+			Help: "Number of jobs currently in the queue",
+		},
+		[]string{"action"},
+	)
+	registry.MustRegister(queueSize)
+
+	queueWaitTime := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "grafana_provisioning_jobs_queue_wait_seconds",
+			Help:    "Time jobs spend waiting in the queue before being claimed",
+			Buckets: []float64{1.0, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0},
+		},
+		[]string{"action"},
+	)
+	registry.MustRegister(queueWaitTime)
+
+	return QueueMetrics{
+		queueSize:     queueSize,
+		queueWaitTime: queueWaitTime,
+	}
+}
+
+func (m *QueueMetrics) IncreaseQueueSize(action string) {
+	m.queueSize.WithLabelValues(action).Inc()
+}
+
+func (m *QueueMetrics) DecreaseQueueSize(action string) {
+	m.queueSize.WithLabelValues(action).Dec()
+}
+
+func (m *QueueMetrics) RecordWaitTime(action string, waitSeconds float64) {
+	m.queueWaitTime.WithLabelValues(action).Observe(waitSeconds)
+}
+
 func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 	processedTotal := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
