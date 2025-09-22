@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
@@ -129,7 +128,6 @@ func newTestLive(t *testing.T, store db.DB) *live.GrafanaLive {
 		nil,
 		features, acimpl.ProvideAccessControl(features),
 		&dashboards.FakeDashboardService{},
-		annotationstest.NewFakeAnnotationsRepo(),
 		nil, nil)
 	require.NoError(t, err)
 	return gLive
