@@ -172,7 +172,9 @@ func (hc *HealthChecker) refreshHealth(ctx context.Context, repo repository.Repo
 	logger := logging.FromContext(ctx).With("repo", repo.Config().GetName(), "namespace", repo.Config().GetNamespace())
 	start := time.Now()
 	outcome := utils.SuccessOutcome
-	defer hc.healthMetrics.RecordHealthCheck(outcome, time.Since(start).Seconds())
+	defer func() {
+		hc.healthMetrics.RecordHealthCheck(outcome, time.Since(start).Seconds())
+	}()
 
 	res, err := repository.TestRepository(ctx, repo)
 	if err != nil {
