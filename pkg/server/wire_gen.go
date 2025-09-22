@@ -829,7 +829,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, dashboardPermissionsService, accessControl, featureToggles)
 	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
 	v3 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
-	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, resourceClient, eventualRestConfigProvider)
+	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
 	v4 := extras.ProvideExtraWorkers(pullRequestWorker)
 	v5 := _wireValue
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, v5)
@@ -1434,7 +1434,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, dashboardPermissionsService, accessControl, featureToggles)
 	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
 	v3 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
-	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, resourceClient, eventualRestConfigProvider)
+	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
 	v4 := extras.ProvideExtraWorkers(pullRequestWorker)
 	v5 := _wireValue
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, v5)
