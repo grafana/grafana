@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 //go:generate mockery --name ExportFn --structname MockExportFn --inpackage --filename mock_export_fn.go --with-expecter
@@ -24,7 +24,7 @@ type ExportWorker struct {
 	repositoryResources resources.RepositoryResourcesFactory
 	exportFn            ExportFn
 	wrapWithStageFn     WrapWithStageFn
-	registry            prometheus.Registerer
+	metrics             jobs.JobMetrics
 }
 
 func NewExportWorker(
@@ -32,14 +32,14 @@ func NewExportWorker(
 	repositoryResources resources.RepositoryResourcesFactory,
 	exportFn ExportFn,
 	wrapWithStageFn WrapWithStageFn,
-	registry prometheus.Registerer,
+	metrics jobs.JobMetrics,
 ) *ExportWorker {
 	return &ExportWorker{
 		clientFactory:       clientFactory,
 		repositoryResources: repositoryResources,
 		exportFn:            exportFn,
 		wrapWithStageFn:     wrapWithStageFn,
-		registry:            registry,
+		metrics:             metrics,
 	}
 }
 
@@ -54,6 +54,13 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return errors.New("missing export settings")
 	}
 
+	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	start := time.Now()
+	outcome := jobs.ErrorOutcome
+	resourcesExported := 0
+	defer func() {
+		r.metrics.RecordJob(string(provisioning.JobActionPush), outcome, resourcesExported, time.Since(start).Seconds())
+	}()
 	cfg := repo.Config()
 	// Can write to external branch
 	if err := repository.IsWriteAllowed(cfg, options.Branch); err != nil {
@@ -76,16 +83,19 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	fn := func(repo repository.Repository, _ bool) error {
 		clients, err := r.clientFactory.Clients(ctx, cfg.Namespace)
 		if err != nil {
+			logger.Error("failed to create clients", "error", err)
 			return fmt.Errorf("create clients: %w", err)
 		}
 
 		rw, ok := repo.(repository.ReaderWriter)
 		if !ok {
+			logger.Error("export job submitted targeting repository that is not a ReaderWriter")
 			return errors.New("export job submitted targeting repository that is not a ReaderWriter")
 		}
 
 		repositoryResources, err := r.repositoryResources.Client(ctx, rw)
 		if err != nil {
+			logger.Error("failed to create repository resource client", "error", err)
 			return fmt.Errorf("create repository resource client: %w", err)
 		}
 
@@ -103,5 +113,16 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		}
 	}
 
-	return err
+	if err != nil {
+		logger.Error("failed to export", "error", err)
+		return err
+	}
+
+	outcome = jobs.SuccessOutcome
+	jobStatus := progress.Complete(ctx, nil)
+	for _, summary := range jobStatus.Summary {
+		resourcesExported += int(summary.Write)
+	}
+
+	return nil
 }

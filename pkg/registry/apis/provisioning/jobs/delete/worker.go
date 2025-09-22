@@ -8,26 +8,26 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Worker struct {
 	syncWorker       jobs.Worker
 	wrapFn           repository.WrapWithStageFn
 	resourcesFactory resources.RepositoryResourcesFactory
-	registry         prometheus.Registerer
+	metrics          jobs.JobMetrics
 }
 
-func NewWorker(syncWorker jobs.Worker, wrapFn repository.WrapWithStageFn, resourcesFactory resources.RepositoryResourcesFactory, registry prometheus.Registerer) *Worker {
+func NewWorker(syncWorker jobs.Worker, wrapFn repository.WrapWithStageFn, resourcesFactory resources.RepositoryResourcesFactory, metrics jobs.JobMetrics) *Worker {
 	return &Worker{
 		syncWorker:       syncWorker,
 		wrapFn:           wrapFn,
 		resourcesFactory: resourcesFactory,
-		registry:         registry,
+		metrics:          metrics,
 	}
 }
 
@@ -40,8 +40,15 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		return errors.New("missing delete settings")
 	}
 
+	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
 	opts := *job.Spec.Delete
 	paths := opts.Paths
+	start := time.Now()
+	outcome := jobs.ErrorOutcome
+	resourcesDeleted := 0
+	defer func() {
+		w.metrics.RecordJob(string(provisioning.JobActionDelete), outcome, resourcesDeleted, time.Since(start).Seconds())
+	}()
 
 	progress.SetTotal(ctx, len(paths)+len(opts.Resources))
 	progress.StrictMaxErrors(1) // Fail fast on any error during deletion
@@ -49,6 +56,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	fn := func(repo repository.Repository, _ bool) error {
 		rw, ok := repo.(repository.ReaderWriter)
 		if !ok {
+			logger.Error("delete job submitted targeting repository that is not a ReaderWriter")
 			return errors.New("delete job submitted targeting repository that is not a ReaderWriter")
 		}
 
@@ -56,6 +64,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		if len(opts.Resources) > 0 {
 			resolvedPaths, err := w.resolveResourcesToPaths(ctx, rw, progress, opts.Resources)
 			if err != nil {
+				logger.Error("failed to resolve resource paths", "error", err)
 				return err
 			}
 			paths = append(paths, resolvedPaths...)
@@ -78,6 +87,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 
 	err := w.wrapFn(ctx, repo, stageOptions, fn)
 	if err != nil {
+		logger.Error("failed to delete files from repository", "error", err)
 		return fmt.Errorf("delete files from repository: %w", err)
 	}
 
@@ -104,8 +114,15 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		}
 
 		if err := w.syncWorker.Process(ctx, repo, syncJob, progress); err != nil {
+			logger.Error("failed to pull resources", "error", err)
 			return fmt.Errorf("pull resources: %w", err)
 		}
+	}
+
+	outcome = jobs.SuccessOutcome
+	jobStatus := progress.Complete(ctx, nil)
+	for _, summary := range jobStatus.Summary {
+		resourcesDeleted += int(summary.Delete)
 	}
 
 	return nil
