@@ -13,20 +13,18 @@ import {
   isValidLiveChannelAddress,
   MutableDataFrame,
   parseLiveChannelAddress,
-  toDataFrame,
   dataFrameFromJSON,
   LoadingState,
 } from '@grafana/data';
 import {
   DataSourceWithBackend,
-  getBackendSrv,
   getDataSourceSrv,
   getGrafanaLiveSrv,
   getTemplateSrv,
   StreamingFrameOptions,
 } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
-import { annotations } from 'app/features/annotations/api';
+import { getAnnotations } from 'app/features/annotations/api';
 import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
 
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
@@ -242,7 +240,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
       params.tags = tags;
     }
 
-    const df = await annotations.query(
+    const df = await getAnnotations().query(
       params,
       `grafana-data-source-annotations-${annotation.name}-${options.dashboard?.uid}`
     );

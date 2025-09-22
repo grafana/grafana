@@ -327,6 +327,10 @@ const (
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
+	// FlagAnnotationsFromAPIServer
+	// read annotations from the APIServer
+	FlagAnnotationsFromAPIServer = "annotationsFromAPIServer"
+
 	// FlagExtractFieldsNameDeduplication
 	// Make sure extracted field names are unique in the dataframe
 	FlagExtractFieldsNameDeduplication = "extractFieldsNameDeduplication"

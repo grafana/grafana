@@ -26,6 +26,8 @@ var (
 	_ rest.SingularNameProvider = (*legacyStorage)(nil)
 	_ rest.Lister               = (*legacyStorage)(nil)
 	_ rest.Getter               = (*legacyStorage)(nil)
+	_ rest.Creater              = (*legacyStorage)(nil)
+	_ rest.GracefulDeleter      = (*legacyStorage)(nil)
 
 	_ v0alpha1.BasicService = (*legacyStorage)(nil)
 )
@@ -139,21 +141,13 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 
-	// For legacy reasons, annotation names are of the form "a123" where 123 is the numeric ID.
-	if !strings.HasPrefix(name, "a") {
-		return nil, apierrors.NewNotFound(schema.GroupResource{
-			Group:    v0alpha1.APIGroup,
-			Resource: "annotations",
-		}, name)
-	}
-
 	query := &annotations.ItemQuery{
 		OrgID:        user.GetOrgID(),
 		SignedInUser: user,
 	}
-	query.AnnotationID, err = strconv.ParseInt(name[1:], 10, 64)
+	query.AnnotationID, err = legacyIdFromName(name)
 	if err != nil {
-		return nil, fmt.Errorf("expected numeric ID: %w", err)
+		return nil, err
 	}
 
 	dto, err := s.repo.Find(ctx, query)
@@ -175,4 +169,47 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 	return &item, nil
+}
+
+// Create implements rest.Creater.
+func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	v, ok := obj.(*v0alpha1.Annotation)
+	if !ok {
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected annotation, got %T", obj))
+	}
+
+	anno, err := toLegacyItem(ctx, v)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = s.repo.Save(ctx, anno); err != nil {
+		return nil, err
+	}
+	return s.Get(ctx, fmt.Sprintf("a%d", anno.ID), &metav1.GetOptions{})
+}
+
+// Delete implements rest.GracefulDeleter.
+func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+
+	id, err := legacyIdFromName(name)
+	if err != nil {
+		return nil, false, err
+	}
+	err = s.repo.Delete(ctx, &annotations.DeleteParams{
+		ID:    id,
+		OrgID: user.GetOrgID(),
+	})
+	return nil, (err == nil), err
+}
+
+func legacyIdFromName(name string) (int64, error) {
+	if !strings.HasPrefix(name, "a") {
+		return 0, apierrors.NewBadRequest("invalid annotation name (expected to start with 'a')")
+	}
+	return strconv.ParseInt(name[1:], 10, 64)
 }

@@ -361,6 +361,10 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
+  * read annotations from the APIServer
+  */
+  annotationsFromAPIServer?: boolean;
+  /**
   * Make sure extracted field names are unique in the dataframe
   */
   extractFieldsNameDeduplication?: boolean;

@@ -1,10 +1,12 @@
-import { annotations } from 'app/features/annotations/api';
+import { getAnnotations } from 'app/features/annotations/api';
 import { StateHistoryItem } from 'app/types/unified-alerting';
 
 export function fetchAnnotations(alertUID: string): Promise<StateHistoryItem[]> {
-  return annotations.forAlert(alertUID).then((result) => {
-    return result?.sort(sortStateHistory);
-  });
+  return getAnnotations()
+    .forAlert(alertUID)
+    .then((result) => {
+      return result?.sort(sortStateHistory);
+    });
 }
 
 export function sortStateHistory(a: StateHistoryItem, b: StateHistoryItem): number {

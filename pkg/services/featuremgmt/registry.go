@@ -599,6 +599,14 @@ var (
 			Owner:           identityAccessTeam,
 		},
 		{
+			Name:            "annotationsFromAPIServer",
+			Description:     "read annotations from the APIServer",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    true,
+			RequiresDevMode: false,
+			Owner:           grafanaDashboardsSquad, // the frontend bits
+		},
+		{
 			Name:         "extractFieldsNameDeduplication",
 			Description:  "Make sure extracted field names are unique in the dataframe",
 			Stage:        FeatureStageExperimental,
