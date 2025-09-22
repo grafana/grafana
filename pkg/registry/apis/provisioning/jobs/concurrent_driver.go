@@ -21,7 +21,6 @@ type ConcurrentJobDriver struct {
 	repoGetter           RepoGetter
 	historicJobs         HistoryWriter
 	workers              []Worker
-	registry             prometheus.Registerer
 	notifications        chan struct{}
 }
 
@@ -71,7 +70,6 @@ func NewConcurrentJobDriver(
 		historicJobs:         historicJobs,
 		workers:              workers,
 		notifications:        notifications,
-		registry:             registry,
 	}, nil
 }
 
