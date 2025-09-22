@@ -57,7 +57,8 @@ export function prepSeries(
   clusteredStacking: StackingMode,
   theme: GrafanaTheme2,
   xFieldName?: string,
-  colorFieldName?: string
+  colorFieldName?: string,
+  groupByField?: string
 ): BarSeries {
   // this allows PanelDataErrorView to show the default noValue message
   if (frames.length === 0 || frames.every((fr) => fr.length === 0)) {
@@ -72,6 +73,13 @@ export function prepSeries(
   decoupleHideFromState(frames, fieldConfig);
 
   let frame: DataFrame | undefined = { ...frames[0] };
+  const groupByFieldIdx = getFieldIdx(frames, groupByField)
+
+  if (clusteredStacking !== StackingMode.None) {
+    const clusters = getClustersFromArray(Array.from(frames[0].fields[groupByFieldIdx === -1 ? 0 : groupByFieldIdx].values), groupByField);
+    prepareClusterData(frames, clusters);
+    frame = { ...frames[0] };
+  }
 
   // auto-sort and/or join on first time field (if any)
   // TODO: should this always join on the xField (if supplied?)
@@ -500,6 +508,69 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     },
   };
 };
+
+
+export function prepareClusterData(frames: DataFrame[], clusters: number[]): void {
+  if (!frames.length) {
+    return;
+  }
+
+  const frame = frames[0];
+
+  // TODO should work for other names
+  const xField = frame.fields.find(f => f.name === 'X');
+  const catField = frame.fields.find(f => f.name === 'Cat');
+  const yField = frame.fields.find(f => f.name === 'Y');
+  
+  if (!xField || !catField || !yField) {
+    return;
+  }
+
+  const xVals = xField.values;
+  const catVals = catField.values;
+  const yVals = yField.values;
+
+  const newX: any[] = [];
+  const newCat: any[] = [];
+  const newY: number[] = [];
+
+  const newFields: Field[] = [];
+
+  let rowIdx = 0;
+
+  clusters.forEach(clusterSize => {
+    const clusterLabel = String(catVals[rowIdx]);
+
+    newX.push(xVals[rowIdx]);
+    newCat.push(clusterLabel);
+    newY.push(yVals[rowIdx]);
+
+    for (let k = 1; k < clusterSize; k++) {
+      const v = yVals[rowIdx + k];
+
+      const field: Field = {
+        name: `${clusterLabel}_${k}`,
+        type: FieldType.number,
+        config: yField ? yField.config : {},
+        values: Array(clusters.length).fill(0),
+        display: yField.display,
+      };
+
+      // place absorbed value into this cluster’s slot
+      field.values[newX.length - 1] = v ?? 0;
+
+      newFields.push(field);
+    }
+
+    rowIdx += clusterSize;
+  });
+
+  xField.values = newX;
+  catField.values = newCat;
+  yField.values = newY;
+
+  frame.fields.push(...newFields);
+}
 
 // returns an array of ints, where each number n represents the size of the nth cluster
 export function getClustersFromField(series: DataFrame[], groupByField: string | undefined): number[] {

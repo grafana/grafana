@@ -1,6 +1,6 @@
 import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 
-import { colorManipulator, DataFrame, dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
+import { colorManipulator, DataFrame, dateTimeFormat, Field, FieldType, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
 import {
   StackingMode,
   VisibilityMode,
@@ -16,7 +16,7 @@ const intervals = systemDateFormats.interval;
 
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
-import { getClustersFromArray } from './utils';
+import { getClustersFromArray, prepareClusterData } from './utils';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -291,30 +291,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
     return out;
   }
 
-  // stacked distribution with clusters also stacked.
-  let distrClusteredStacked = (groupCount: number, barCount: number, clusterCount: number, groupsPerCluster: number[]) => {
-    let out = Array.from({ length: barCount }, () => ({
-      offs: Array(groupCount).fill(0),
-      size: Array(groupCount).fill(0),
-    }));
-    let groupOffset = 0;
-    distribute(clusterCount, clusterWidth, clusterDistr, null, (clusterIdx, clusterOffPct, clusterDimPct) => {
-      const groupsInCurrentCluster = groupsPerCluster[clusterIdx];
-      const start = groupOffset;
-      const end = groupOffset + groupsInCurrentCluster;
-      groupOffset = end;
-      distribute(groupCount, groupWidth, groupDistr, null, (localGroupIdx, groupOffPct, groupDimPct) => {
-          const globalGroupIdx = start + localGroupIdx;    
-          for (let bar = 0; bar < barCount; bar++) {
-            out[bar].offs[globalGroupIdx] = clusterOffPct;
-            out[bar].size[globalGroupIdx] = clusterDimPct;
-          }
-        });
-    })
-    return out;
-  };
-
-
   const LABEL_OFFSET_FACTOR = isXHorizontal ? LABEL_OFFSET_FACTOR_VT : LABEL_OFFSET_FACTOR_HZ;
   const LABEL_OFFSET_MAX = isXHorizontal ? LABEL_OFFSET_MAX_VT : LABEL_OFFSET_MAX_HZ;
 
@@ -579,10 +555,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
 
     const clusters = getClustersFromArray(Array.from(u.data[groupByFieldIdx === -1 ? 0 : groupByFieldIdx]), groupByField);
 
-    if (isClusteredStacked) {
-      barsPctLayout = [null, ...distrClusteredStacked(u.data[0].length, u.data.length - 1, clusters.length, clusters)];
-    } else 
-      if (isStacked) {
+
+    if (isStacked) {
       barsPctLayout = [null, ...distrStacked(u.data[0].length, u.data.length - 1, clusters.length, clusters)];
     } else {
       barsPctLayout = [null, ...distrNonStacked(u.data[0].length, u.data.length - 1, clusters.length, clusters)]
@@ -699,7 +673,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
   function prepData(frames: DataFrame[], stackingGroups: StackingGroup[]) {
     alignedTotals = null;
     return preparePlotData2(frames[0], stackingGroups, 
-      getClustersFromArray(Array.from(frames[0].fields[groupByFieldIdx === -1 ? 0 : groupByFieldIdx].values), groupByField),
       ({ totals }) => { alignedTotals = totals; });
   }
 
