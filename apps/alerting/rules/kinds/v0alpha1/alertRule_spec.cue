@@ -10,16 +10,16 @@ ExecErrState: *"Error" | "Ok" | "Alerting" | "KeepLast"
 // FIXME: the For and KeepFiringFor types should be using the AlertRulePromDuration type, but there seems to be an issue with the generator
 
 AlertRuleSpec: #RuleSpec & {
-	noDataState:                  NoDataState
-	execErrState:                 ExecErrState
-	"for"?:                       string & #PromDuration
-	keepFiringFor?:               string & #PromDuration
-	missingSeriesEvalsToResolve?: int & >=0
-	notificationSettings?:        #NotificationSettings
 	annotations?: {
 		[string]: TemplateString
 	}
-	panelRef?: #PanelRef
+	"for"?:                       string & #PromDuration
+	keepFiringFor?:               string & #PromDuration
+	missingSeriesEvalsToResolve?: int & >=0
+	noDataState:                  NoDataState
+	execErrState:                 ExecErrState
+	notificationSettings?:        #NotificationSettings
+	panelRef?:                    #PanelRef
 }
 
 #PanelRef: {

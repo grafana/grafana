@@ -156,8 +156,11 @@
       "title": "Obtenha o Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Mapeamento de utilizador de teste",
-      "test-mapping-run-button": "Executar"
+      "test-mapping-run-button": "Executar",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -361,14 +364,6 @@
       "tooltip-assigned-role": "Será atribuída uma função licenciada quando este utilizador iniciar sessão"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "Ocultar etiquetas comuns",
-      "show": {
-        "tooltip": "Mostrar etiquetas comuns"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Tempos ativos"
@@ -477,16 +472,16 @@
     "alert-instance-state-filter": {
       "state": "Estado"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "Remover etiqueta"
     },
     "alert-label-dropdown": {
       "placeholder-select": "Escolher {{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "Etiquetas",
-      "common-labels-count_one": "+{{count}} etiquetas comuns",
-      "common-labels-count_other": "+{{count}} etiquetas comuns"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "Silêncio, agrupamento e tempos (opcional)",
@@ -504,6 +499,7 @@
       "copy-link": "Copiar link",
       "duplicate": "Duplicar",
       "export": "Exportar",
+      "manage-enrichments": "",
       "silence-notifications": "Silenciar notificações",
       "with-modifications": "Com modificações"
     },
@@ -1121,7 +1117,7 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "",
+        "enrichment-drawer-extension": "",
         "rule-viewer-section-extension": ""
       }
     },
@@ -2057,9 +2053,6 @@
       "text-loading-rules": "A carregar regras...",
       "title-dashboard-not-saved": "Painel de controlo não guardado"
     },
-    "paused-badge": {
-      "paused": "Em pausa"
-    },
     "payload-editor": {
       "edit-payload": "Editar carga útil",
       "label-add-custom-alert-instance": "Adicionar instância de alerta personalizado",
@@ -2211,9 +2204,6 @@
       "label-time-range": "Intervalo de tempo",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Intervalo = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> até agora"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2559,6 +2549,10 @@
       "recovering": "{{recoveringStats}} em recuperação",
       "error_one": "{{count}} erros",
       "error_other": "{{count}} erros"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Selecione \"Gerido pela Grafana\", a menos que tenha uma origem de dados Mimir, Loki ou Cortex com a Ruler API ativada."
@@ -3598,6 +3592,7 @@
       "button-cancel": "Cancelar",
       "button-delete": "Eliminar",
       "button-deleting": "A eliminar...",
+      "commit": "",
       "delete-warning": "Isto eliminará esta pasta e todas as suas descendentes. No total, isto afetará:",
       "success-message": "Pasta eliminada com sucesso"
     },
@@ -3662,7 +3657,13 @@
       "text": "Não foram encontrados resultados para a sua consulta"
     },
     "restore": {
-      "success": "Painel de controlo {{name}} restaurado"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Se tiver acesso direto ao destino, copie o JSON e cole-o lá.",
     "trash-state-manager": {
@@ -5399,10 +5400,6 @@
       "save-dashboard-short": "Guardar",
       "save-library-panel": "Guardar painel de biblioteca",
       "settings": "Definições do painel de controlo",
-      "share": {
-        "label": "Partilhar",
-        "tooltip": "Partilhar o painel de controlo"
-      },
       "share-button": "Partilhar",
       "unlink-library-panel": "Desassociar painel de biblioteca",
       "unmark-favorite": "Desmarcar como favorito"
@@ -5653,14 +5650,6 @@
         "title": {
           "new-dashboard": "Novo painel de controlo"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "Revogar URL público"
-      },
-      "title": {
-        "revoke-public-url": "Revogar URL público"
       }
     },
     "constant-variable-form": {
@@ -5917,13 +5906,12 @@
       "usage-count_other": "Utilizado em {{count}} painéis de controlo"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "Erro ao mover o painel de controlo",
       "api-error": "Não foi possível mover o painel de controlo",
       "cancel-action": "Cancelar",
       "current-file-not-found": "Não foi possível encontrar o ficheiro do painel de controlo atual",
       "drawer-title": "Painel de controlo provisionado",
       "file-load-error": "Erro ao carregar o painel de controlo",
-      "loading-file-data": "A carregar dados do painel de controlo",
+      "loading-dashboard-data": "",
       "move-action": "Mover painel de controlo",
       "move-read-only-message": "Este painel de controlo não pode ser movido diretamente da Grafana porque o repositório é apenas de leitura. Para mover este painel de controlo, mova o ficheiro no seu repositório Git.",
       "moving": "A mover...",
@@ -9234,7 +9222,8 @@
       "disable-button": "Desativar",
       "discard-button": "Descartar",
       "save-and-enable-button": "Guardar e ativar",
-      "save-button": "Guardar"
+      "save-button": "Guardar",
+      "test-button": ""
     },
     "documentation": "documentação",
     "host": {
@@ -9264,8 +9253,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "Cancelar",
-      "create": "Criar painel de biblioteca",
       "error": "Já existe um painel de biblioteca com este nome",
       "folder": "Guardar na pasta",
       "folder-description": "As permissões do painel de biblioteca são derivadas das permissões da pasta",
@@ -9444,7 +9431,7 @@
       "label-signature": "Assinatura"
     },
     "description-enable-infinite-scrolling": "Experimental. Obtenha mais resultados deslocando o ecrã até à parte inferior da lista de registos.",
-    "description-enable-syntax-highlighting": "Utilizar uma gramática de coloração de sintaxe predefinida para destacar as partes relevantes das linhas de registo",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "Mostrar controlos para aceder à última ou primeira linha de registo e filtrar por nível de registo",
     "fields": {
       "type": {
@@ -9628,10 +9615,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "Desduplicação",
-      "disable-highlighting": "Desativar destaque",
       "disable-prettify-json": "Recolher registos JSON",
-      "display-level": "Níveis de exibição",
       "display-level-all": "Todos os níveis",
       "download": "Transferir registos",
       "download-logs": {
@@ -9639,18 +9625,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Ativar destaque",
       "escape-newlines": "Corrigir sequências de novas linhas e tabulações ignoradas incorretamente nas linhas de registo",
-      "font-size-default": "Utilize um tamanho de letra pequeno",
-      "font-size-small": "Utilize o tamanho de letra predefinido",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "Fechar a pesquisa",
       "hide-timestamps": "Ocultar registos de hora/data",
       "hide-unique-labels": "Ocultar etiquetas únicas",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "Ordenado por registos mais recentes primeiro - Clique para mostrar os mais antigos primeiro",
       "oldest-first": "Ordenado por registos mais antigos primeiro - Clique para mostrar os mais recentes primeiro",
@@ -9666,8 +9673,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "Revelar linhas",
       "wrap-lines": "Quebra de linhas"
@@ -9686,14 +9703,14 @@
     },
     "name-common-labels": "Etiquetas comuns",
     "name-deduplication": "Desduplicação",
-    "name-details-mode": "Modo de painel de detalhes de registo",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "Em linha",
       "label-sidebar": "Barra lateral"
     },
     "name-enable-infinite-scrolling": "Ativar deslocação infinita",
     "name-enable-log-details": "Ativar detalhes do registo",
-    "name-enable-syntax-highlighting": "Ativar o destaque de sintaxe",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "Tamanho do tipo de letra",
     "name-order": "Ordem",
     "name-prettify-json": "Embelezar JSON",
@@ -10303,9 +10320,6 @@
     },
     "profiles": {
       "title": "Profiles"
-    },
-    "public": {
-      "title": "Painéis de controlo públicos"
     },
     "recently-deleted": {
       "subtitle": "Quaisquer elementos listados aqui por mais de 30 dias serão eliminados automaticamente.",
@@ -10990,7 +11004,6 @@
       "body-not-published": "Este plugin não está publicado em <2>grafana.com/plugins</2> e não pode ser gerido através do catálogo.",
       "enterprise-plugin-info": "Este plugin está disponível apenas no Grafana Cloud e no Grafana Enterprise.",
       "learn-more": "Saiba mais",
-      "no-valid-grafana-enterprise-license-detected": "Não foi detetada nenhuma licença válida do Grafana Enterprise.",
       "title-dev-alert": "Esta é uma compilação de desenvolvimento do plugin e não pode ser desinstalada.",
       "title-plugin-doesnt-support-version-grafana": "Este plugin não suporta a sua versão de Grafana.",
       "title-remote-plugins-unavailable": "Os controlos de instalação foram desativados, porque o servidor Grafana não consegue aceder a grafana.com.",
@@ -11350,7 +11363,12 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Não foram encontrados resultados que correspondam à sua consulta",
-      "placeholder-search": "Pesquisar"
+      "partial-managed": "",
+      "placeholder-search": "Pesquisar",
+      "all-resources-managed_one": "",
+      "all-resources-managed_other": "",
+      "unmanaged-resources_one": "",
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11648,6 +11666,7 @@
       "tooltip-unhealthy-repository": "Não foi possível obter um repositório que não está em bom estado"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Incluir commits para cada valor histórico",
       "synchronization-options": "Opções de sincronização"
     },
@@ -11671,6 +11690,8 @@
       "alert-point-3": "A duração deste processo depende do número de recursos envolvidos.",
       "alert-point-4": "Os administradores de instâncias empresariais podem exibir um banner de anúncio aos utilizadores. Consulte <2>este guia</2> para obter instruções passo a passo.",
       "alert-title": "Importante: não serão perdidos dados ou configurações, mas os painéis de controlo ficarão temporariamente indisponíveis durante alguns minutos.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Concluir",
       "button-start": "Iniciar sincronização",
       "discard-modal": {
@@ -11719,7 +11740,6 @@
       "email-share-type-option-label": "Apenas pessoas especificadas",
       "pause-sharing-dashboard-label": "Pausar a partilha do painel de controlo",
       "public-share-type-option-label": "Qualquer pessoa com o link",
-      "revoke-body": "Tem a certeza de que pretende revogar este URL? O painel de controlo deixará de ser público.",
       "revoke-public-URL-button": "Revogar URL público",
       "revoke-public-URL-button-title": "Revogar URL público",
       "settings-title": "Definições"
@@ -11733,7 +11753,6 @@
       "success-pause": "O seu acesso ao painel de controlo foi pausado",
       "success-resume": "O seu acesso ao painel de controlo foi retomado",
       "success-update": "As definições foram atualizadas com sucesso",
-      "success-update-old": "Painel de controlo público atualizado!",
       "time-range-label": "Intervalo de tempo",
       "time-range-tooltip": "O painel de controlo partilhado utiliza as definições de intervalo de tempo padrão do painel de controlo"
     },
@@ -11741,10 +11760,6 @@
       "generate-public-url-button": "Gerar URL público",
       "unsupported-features-desc": "Atualmente, não suportamos variáveis de modelos ou origens de dados de frontend",
       "welcome-title": "Damos-lhe as boas-vindas aos painéis de controlo públicos!"
-    },
-    "delete-modal": {
-      "revoke-body-text": "Tem a certeza de que pretende revogar este URL? O painel de controlo deixará de ser público.",
-      "revoke-title": "Revogar URL público"
     },
     "email-sharing": {
       "accept-button": "Aceitar",
@@ -11775,11 +11790,8 @@
       "success-share-type-change": "Acesso ao painel de controlo atualizado: agora, apenas pessoas específicas podem aceder com o link"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Contacte o seu administrador para obter permissão para {{action}} painéis de controlo públicos",
-      "no-upsert-perm-alert-title": "Não tem permissão para {{ action }} um painel de controlo público",
       "save-dashboard-changes-alert-title": "Guarde as alterações do seu painel de controlo antes de atualizar a configuração pública",
       "unsupport-data-source-alert-readmore-link": "Leia mais sobre as origens de dados suportadas",
-      "unsupported-data-source-alert-desc": "Existem origens de dados neste painel de controlo que não são suportadas para painéis de controlo públicos. Os painéis que utilizam estas origens de dados podem não funcionar corretamente: {{unsupportedDataSources}}.",
       "unsupported-data-source-alert-title": "Origens de dados não suportadas",
       "unsupported-template-variable-alert-desc": "Este painel de controlo público pode não funcionar, uma vez que utiliza variáveis de modelo",
       "unsupported-template-variable-alert-title": "As variáveis de modelo não são suportadas"
@@ -11813,8 +11825,7 @@
       "time-range-text": "Intervalo de tempo = "
     },
     "share": {
-      "success-delete": "O seu painel de controlo já não pode ser partilhado",
-      "success-delete-old": "Painel de controlo público eliminado!"
+      "success-delete": "O seu painel de controlo já não pode ser partilhado"
     },
     "share-configuration": {
       "share-type-label": "Acesso ao link"
@@ -11833,24 +11844,6 @@
       "revoke-access-button": "Revogar acesso",
       "revoke-access-description": "Tem a certeza de que pretende revogar este acesso? O painel de controlo já não pode ser partilhado.",
       "unsupported-data-source-alert-desc": "Existem origens de dados neste painel de controlo que não são suportadas para painéis de controlo partilhados. Os painéis que utilizam estas origens de dados podem não funcionar corretamente: {{unsupportedDataSources}}."
-    },
-    "sharing": {
-      "success-creation": "O painel de controlo é público!"
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "Configurar o painel de controlo público",
-      "revoke-button-text": "Revogar URL público",
-      "revoke-button-tooltip": "Revogar o URL do painel de controlo público",
-      "view-button-tooltip": "Ver o painel de controlo público"
-    },
-    "empty-state": {
-      "message": "Ainda não criou qualquer painel de controlo",
-      "more-info": "Crie um painel público a partir de qualquer painel de controlo existente através do modal <1>Partilhar</1>. <4>Saiba mais</4>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "Pausar partilha"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11858,8 +11851,6 @@
       "external-link": "Link externo",
       "loading-text": "A carregar...",
       "open-dashboard-list-text": "Abrir lista de painéis de controlo",
-      "public-dashboard-link": "URL do painel de controlo público",
-      "public-dashboard-setting": "Definições do painel de controlo público",
       "sharing-setting": "Definições de partilha"
     },
     "delete-user-modal": {
@@ -11867,14 +11858,12 @@
       "delete-user-cancel-button": "Cancelar",
       "delete-user-revoke-access-button": "Revogar acesso",
       "revoke-access-title": "Revogar acesso",
-      "revoke-user-access-modal-desc-line1": "Tem a certeza de que pretende revogar o acesso a {{email}}?",
-      "revoke-user-access-modal-desc-line2": "Esta ação revogará imediatamente o acesso de {{email}}&apos;s a todos os painéis de controlo públicos."
+      "revoke-user-access-modal-desc-line1": "Tem a certeza de que pretende revogar o acesso a {{email}}?"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "Esta ação revogará imediatamente o acesso de {{email}}&apos;s a todos os painéis de controlo partilhados."
     },
     "modal": {
-      "dashboard-modal-title": "Painéis de controlo públicos",
       "shared-dashboard-modal-title": "Painéis de controlo partilhados"
     },
     "table-body": {
@@ -12376,8 +12365,6 @@
       "export": "Exportar",
       "library-panel": "Painel de biblioteca",
       "link": "Link",
-      "panel-embed": "Incorporar",
-      "public-dashboard": "Painel de controlo público",
       "public-dashboard-title": "Painel de controlo público",
       "snapshot": "Imagem instantânea"
     },
@@ -12772,6 +12759,7 @@
     "description-column-filter": "Ativa/desativa filtros de campo na tabela",
     "description-frozen-columns": "",
     "description-min-column-width": "A largura mínima para o redimensionamento automático da coluna",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Texto alternativo que será exibido se uma imagem não puder ser exibida ou para utilizadores que utilizem um leitor de ecrã",
@@ -12802,6 +12790,7 @@
     "name-max-height": "",
     "name-min-column-width": "Largura mínima da coluna",
     "name-show-table-header": "Mostrar o cabeçalho da tabela",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Encapsular o texto do cabeçalho",
@@ -13971,7 +13960,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Utilizadores do painel de controlo público",
       "shared-dashboard-users-tab-title": "Utilizadores do painel de controlo partilhado"
     }
   },

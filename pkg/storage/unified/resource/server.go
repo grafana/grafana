@@ -22,6 +22,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/dskit/ring"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -182,13 +183,6 @@ type SearchOptions struct {
 	// Skip building index on startup for small indexes
 	InitMinCount int
 
-	// Build empty index on startup for large indexes so that
-	// we don't re-attempt to build the index later.
-	InitMaxCount int
-
-	// Channel to watch for index events (for testing)
-	IndexEventsChan chan *IndexEvent
-
 	// Interval for periodic index rebuilds (0 disables periodic rebuilds)
 	RebuildInterval time.Duration
 
@@ -243,9 +237,6 @@ type ResourceServerOptions struct {
 
 	Ring           *ring.Ring
 	RingLifecycler *ring.BasicLifecycler
-
-	// Enable strong consistency for searches. When enabled, index is always updated with latest changes before search.
-	SearchAfterWrite bool
 }
 
 func NewResourceServer(opts ResourceServerOptions) (*server, error) {
@@ -343,7 +334,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.Ring, opts.RingLifecycler, opts.SearchAfterWrite)
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.Ring, opts.RingLifecycler)
 		if err != nil {
 			return nil, err
 		}
@@ -961,7 +952,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	rsp := &resourcepb.ListResponse{}
 
 	key := req.Options.Key
-	checker, err := s.access.Compile(ctx, user, claims.ListRequest{
+	checker, _, err := s.access.Compile(ctx, user, claims.ListRequest{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -969,7 +960,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	})
 	var trashChecker claims.ItemChecker // only for trash
 	if req.Source == resourcepb.ListRequest_TRASH {
-		trashChecker, err = s.access.Compile(ctx, user, claims.ListRequest{
+		trashChecker, _, err = s.access.Compile(ctx, user, claims.ListRequest{
 			Group:     key.Group,
 			Resource:  key.Resource,
 			Namespace: key.Namespace,
@@ -1106,7 +1097,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 
 	key := req.Options.Key
-	checker, err := s.access.Compile(ctx, user, claims.ListRequest{
+	checker, _, err := s.access.Compile(ctx, user, claims.ListRequest{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,

@@ -113,6 +113,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 				return response, err
 			}
 
+		case string(dataquery.TempoQueryTypeTraceqlSearch):
+			fallthrough
 		case string(dataquery.TempoQueryTypeTraceql):
 			res, err = s.runTraceQlQuery(ctx, req.PluginContext, q)
 			if err != nil {
@@ -271,7 +273,6 @@ func getRunContext() (string, int, string) {
 	return file, line, f.Name()
 }
 
-// Return a formatted string representing the execution context for the logger
 func logEntrypoint() string {
 	file, line, pathToFunction := getRunContext()
 	parts := strings.Split(pathToFunction, "/")

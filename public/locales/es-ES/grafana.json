@@ -156,8 +156,11 @@
       "title": "Consigue Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "Prueba de asignación de usuarios",
-      "test-mapping-run-button": "Ejecutar"
+      "test-mapping-run-button": "Ejecutar",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -361,14 +364,6 @@
       "tooltip-assigned-role": "Se asignará un rol con licencia cuando este usuario inicie sesión"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "Ocultar etiquetas comunes",
-      "show": {
-        "tooltip": "Mostrar etiquetas comunes"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Tiempos de actividad"
@@ -477,16 +472,16 @@
     "alert-instance-state-filter": {
       "state": "Estado"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "Quitar etiqueta"
     },
     "alert-label-dropdown": {
       "placeholder-select": "Seleccionar {{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "Etiquetas",
-      "common-labels-count_one": "+ {{count}} etiquetas comunes",
-      "common-labels-count_other": "+ {{count}} etiquetas comunes"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "Silencio, agrupación y temporización (opcional)",
@@ -504,6 +499,7 @@
       "copy-link": "Copiar enlace",
       "duplicate": "Duplicar",
       "export": "Exportar",
+      "manage-enrichments": "",
       "silence-notifications": "Silenciar notificaciones",
       "with-modifications": "Con modificaciones"
     },
@@ -1121,7 +1117,7 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "",
+        "enrichment-drawer-extension": "",
         "rule-viewer-section-extension": ""
       }
     },
@@ -2057,9 +2053,6 @@
       "text-loading-rules": "Cargando reglas...",
       "title-dashboard-not-saved": "Dashboard no guardado"
     },
-    "paused-badge": {
-      "paused": "En pausa"
-    },
     "payload-editor": {
       "edit-payload": "Editar carga útil",
       "label-add-custom-alert-instance": "Añadir instancia de alerta personalizada",
@@ -2211,9 +2204,6 @@
       "label-time-range": "Rango de tiempo",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Tamaño min. Intervalo = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> hasta ahora"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2559,6 +2549,10 @@
       "recovering": "{{recoveringStats}} recuperando",
       "error_one": "{{count}} errores",
       "error_other": "{{count}} errores"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Selecciona «Gestionadas por Grafana» a menos que tengas una fuente de datos Mimir, Loki o Cortex con la API de Ruler habilitada."
@@ -3598,6 +3592,7 @@
       "button-cancel": "Cancelar",
       "button-delete": "Eliminar",
       "button-deleting": "Eliminando...",
+      "commit": "",
       "delete-warning": "Esto eliminará esta carpeta y todas sus derivadas. En total, esto afectará a:",
       "success-message": "Carpeta eliminada correctamente"
     },
@@ -3662,7 +3657,13 @@
       "text": "No se han encontrado resultados para tu consulta"
     },
     "restore": {
-      "success": "Dashboard {{name}} restaurado"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Si tienes acceso directo al destino, copia el JSON y pégalo allí.",
     "trash-state-manager": {
@@ -5399,10 +5400,6 @@
       "save-dashboard-short": "Guardar",
       "save-library-panel": "Guardar panel de biblioteca",
       "settings": "Ajustes del panel de control",
-      "share": {
-        "label": "Compartir",
-        "tooltip": "Compartir panel o panel de control"
-      },
       "share-button": "Compartir",
       "unlink-library-panel": "Desvincular panel de librería",
       "unmark-favorite": "Deshacer marca como favorito"
@@ -5653,14 +5650,6 @@
         "title": {
           "new-dashboard": "Nuevo panel de control"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "Revocar URL pública"
-      },
-      "title": {
-        "revoke-public-url": "Revocar URL pública"
       }
     },
     "constant-variable-form": {
@@ -5917,13 +5906,12 @@
       "usage-count_other": "Utilizado en {{count}} dashboards"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "Error al mover el dashboard",
       "api-error": "No se ha podido mover el dashboard",
       "cancel-action": "Cancelar",
       "current-file-not-found": "No se ha podido encontrar el archivo del dashboard actual",
       "drawer-title": "Mover dashboard aprovisionado",
       "file-load-error": "Error al cargar el dashboard",
-      "loading-file-data": "Cargando datos del dashboard",
+      "loading-dashboard-data": "",
       "move-action": "Mover dashboard",
       "move-read-only-message": "Este dashboard no se puede mover directamente desde Grafana porque el repositorio es de solo lectura. Para mover este dashboard, mueve el archivo en tu repositorio Git.",
       "moving": "Moviendo...",
@@ -9234,7 +9222,8 @@
       "disable-button": "Deshabilitar",
       "discard-button": "Descartar",
       "save-and-enable-button": "Guardar y habilitar",
-      "save-button": "Guardar"
+      "save-button": "Guardar",
+      "test-button": ""
     },
     "documentation": "documentación",
     "host": {
@@ -9264,8 +9253,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "Cancelar",
-      "create": "Crear panel de librería",
       "error": "Ya existe un panel de librería con este nombre",
       "folder": "Guardar en carpeta",
       "folder-description": "Los permisos del panel de librería se derivan de los permisos de la carpeta",
@@ -9444,7 +9431,7 @@
       "label-signature": "Firma"
     },
     "description-enable-infinite-scrolling": "Experimental. Obtenga más resultados desplazándose hasta la parte inferior de la lista de logs.",
-    "description-enable-syntax-highlighting": "Utilice una gramática de color de sintaxis predefinida para resaltar las partes relevantes de las líneas de log",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "Mostrar controles para saltar a la última o primera línea de log y filtra por nivel de log",
     "fields": {
       "type": {
@@ -9628,10 +9615,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "Deduplicación",
-      "disable-highlighting": "Desactivar resaltado",
       "disable-prettify-json": "Contraer logs JSON",
-      "display-level": "Mostrar niveles",
       "display-level-all": "Todos los niveles",
       "download": "Descargar registros",
       "download-logs": {
@@ -9639,18 +9625,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Activar resaltado",
       "escape-newlines": "Corregir las secuencias de tabulación y de nueva línea que escaparon incorrectamente en las líneas de log",
-      "font-size-default": "Utilizar tamaño de fuente pequeño",
-      "font-size-small": "Utilizar tamaño de fuente predeterminado",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "Cerrar la búsqueda",
       "hide-timestamps": "Ocultar marcas de tiempo",
       "hide-unique-labels": "Ocultar etiquetas únicas",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "Ordenado por los logs más nuevos primero: haga clic para mostrar los más antiguos primero",
       "oldest-first": "Ordenado por los logs más antiguos primero: haga clic para mostrar los más nuevos primero",
@@ -9666,8 +9673,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "Desajustar líneas",
       "wrap-lines": "Ajustar líneas"
@@ -9686,14 +9703,14 @@
     },
     "name-common-labels": "Etiquetas comunes",
     "name-deduplication": "Desduplicación",
-    "name-details-mode": "Modo de panel de detalles de log",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "En línea",
       "label-sidebar": "Barra lateral"
     },
     "name-enable-infinite-scrolling": "Habilitar el desplazamiento infinito",
     "name-enable-log-details": "Habilitar detalles de log",
-    "name-enable-syntax-highlighting": "Habilitar resaltado de sintaxis",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "Tamaño de letra",
     "name-order": "Orden",
     "name-prettify-json": "Embellecer JSON",
@@ -10303,9 +10320,6 @@
     },
     "profiles": {
       "title": "Perfiles"
-    },
-    "public": {
-      "title": "Paneles de control públicos"
     },
     "recently-deleted": {
       "subtitle": "Cualquier elemento que aparezca aquí durante más de 30 días se eliminará automáticamente.",
@@ -10990,7 +11004,6 @@
       "body-not-published": "Este plugin no está publicado en <2>grafana.com/plugins</2> y no se puede gestionar a través del catálogo.",
       "enterprise-plugin-info": "Este complemento solo está disponible en Grafana Cloud y Grafana Enterprise.",
       "learn-more": "Más información",
-      "no-valid-grafana-enterprise-license-detected": "No se ha detectado ninguna licencia válida de Grafana Enterprise.",
       "title-dev-alert": "Esta es una compilación de desarrollo del plugin y no se puede desinstalar.",
       "title-plugin-doesnt-support-version-grafana": "Este plugin no es compatible con tu versión de Grafana.",
       "title-remote-plugins-unavailable": "Los controles de instalación se han desactivado porque el servidor de Grafana no puede acceder a grafana.com.",
@@ -11350,7 +11363,12 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "No hay resultados que coincidan con tu consulta",
-      "placeholder-search": "Buscar"
+      "partial-managed": "",
+      "placeholder-search": "Buscar",
+      "all-resources-managed_one": "",
+      "all-resources-managed_other": "",
+      "unmanaged-resources_one": "",
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11648,6 +11666,7 @@
       "tooltip-unhealthy-repository": "No se puede extraer un repositorio que no está en buen estado"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Incluir confirmaciones para cada valor histórico",
       "synchronization-options": "Opciones de sincronización"
     },
@@ -11671,6 +11690,8 @@
       "alert-point-3": "La duración de este proceso depende del número de recursos involucrados.",
       "alert-point-4": "Los administradores de instancias empresariales pueden mostrar un báner de anuncio a los usuarios. Consulta <2>esta guía</2> para obtener instrucciones paso a paso.",
       "alert-title": "Importante: No se perderán datos ni configuraciones, pero los dashboards no estarán disponibles temporalmente durante unos minutos.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Terminar",
       "button-start": "Iniciar la sincronización",
       "discard-modal": {
@@ -11719,7 +11740,6 @@
       "email-share-type-option-label": "Solo personas especificadas",
       "pause-sharing-dashboard-label": "Pausar el panel compartido",
       "public-share-type-option-label": "Cualquiera con un enlace",
-      "revoke-body": "¿Seguro que quieres revocar esta URL? El tablero dejará de ser público.",
       "revoke-public-URL-button": "Revocar la URL pública",
       "revoke-public-URL-button-title": "Revocar URL pública",
       "settings-title": "Configuración"
@@ -11733,7 +11753,6 @@
       "success-pause": "Se ha pausado el acceso a tu panel de control",
       "success-resume": "Se ha reanudado el acceso a tu panel de control",
       "success-update": "Los ajustes se han actualizado correctamente",
-      "success-update-old": "¡Panel de control público actualizado!",
       "time-range-label": "Intervalo de tiempo",
       "time-range-tooltip": "El panel de control compartido utiliza la configuración predeterminada del intervalo de tiempo del panel de control"
     },
@@ -11741,10 +11760,6 @@
       "generate-public-url-button": "Generar URL pública",
       "unsupported-features-desc": "Actualmente, no son compatibles las variables de plantillas o las fuentes de datos de la interfaz",
       "welcome-title": "¡Bienvenidos al tablero público!"
-    },
-    "delete-modal": {
-      "revoke-body-text": "¿Seguro que quieres revocar esta URL? El tablero dejará de ser público.",
-      "revoke-title": "Revocar URL pública"
     },
     "email-sharing": {
       "accept-button": "Aceptar",
@@ -11775,11 +11790,8 @@
       "success-share-type-change": "Acceso al panel de control actualizado: ahora solo ciertas personas pueden acceder con el enlace"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Ponte en contacto con tu administrador para obtener permiso para {{action}} dashboards públicos",
-      "no-upsert-perm-alert-title": "No tienes permiso para {{ action }} un dashboard público",
       "save-dashboard-changes-alert-title": "Guarda los cambios realizados en el tablero antes de actualizar la configuración pública",
       "unsupport-data-source-alert-readmore-link": "Leer más sobre las fuentes de datos compatibles",
-      "unsupported-data-source-alert-desc": "Hay fuentes de datos en este tablero que no son compatibles con los tableros públicos. Los paneles que utilizan estas fuentes de datos puede que no funcionen correctamente: {{unsupportedDataSources}}.",
       "unsupported-data-source-alert-title": "Fuentes de datos no compatibles",
       "unsupported-template-variable-alert-desc": "Este tablero público puede que no funcione, ya que utiliza variables de plantillas",
       "unsupported-template-variable-alert-title": "Las variables de plantillas no son compatibles"
@@ -11813,8 +11825,7 @@
       "time-range-text": "Rango de tiempo = "
     },
     "share": {
-      "success-delete": "Tu panel de control ya no se puede compartir",
-      "success-delete-old": "¡Panel de control público eliminado!"
+      "success-delete": "Tu panel de control ya no se puede compartir"
     },
     "share-configuration": {
       "share-type-label": "Acceso mediante enlace"
@@ -11833,24 +11844,6 @@
       "revoke-access-button": "Revocar acceso",
       "revoke-access-description": "¿Seguro que quieres revocar este acceso? El panel de control ya no se puede compartir.",
       "unsupported-data-source-alert-desc": "Hay fuentes de datos en este panel de control que no son compatibles con los paneles de control compartidos. Es posible que los paneles que utilizan estas fuentes de datos no funcionen correctamente: {{unsupportedDataSources}}."
-    },
-    "sharing": {
-      "success-creation": "¡El panel de control es público!"
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "Configurar tablero público",
-      "revoke-button-text": "Revocar URL pública",
-      "revoke-button-tooltip": "Revocar URL del tablero público",
-      "view-button-tooltip": "Ver tablero público"
-    },
-    "empty-state": {
-      "message": "Aún no has creado ningún panel de control público",
-      "more-info": "Crea un panel de control público a partir de cualquier panel de control existente mediante la función <1>Compartir</1>. <4>Más información</4>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "Pausar el uso compartido"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11858,8 +11851,6 @@
       "external-link": "Enlace externo",
       "loading-text": "Cargando...",
       "open-dashboard-list-text": "Abrir lista de tableros",
-      "public-dashboard-link": "URL del tablero público",
-      "public-dashboard-setting": "Ajustes del tablero público",
       "sharing-setting": "Compartiendo ajustes"
     },
     "delete-user-modal": {
@@ -11867,14 +11858,12 @@
       "delete-user-cancel-button": "Cancelar",
       "delete-user-revoke-access-button": "Revocar acceso",
       "revoke-access-title": "Revocar acceso",
-      "revoke-user-access-modal-desc-line1": "¿Seguro que quieres revocar el acceso para {{email}}?",
-      "revoke-user-access-modal-desc-line2": "Esta acción revocará inmediatamente el acceso de {{email}} a todos los tableros públicos."
+      "revoke-user-access-modal-desc-line1": "¿Seguro que quieres revocar el acceso para {{email}}?"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "Esta acción revocará inmediatamente el acceso de {{email}} a todos los paneles de control compartidos."
     },
     "modal": {
-      "dashboard-modal-title": "Paneles de control públicos",
       "shared-dashboard-modal-title": "Paneles de control compartidos"
     },
     "table-body": {
@@ -12376,8 +12365,6 @@
       "export": "Exportar",
       "library-panel": "Panel de librería",
       "link": "Enlace",
-      "panel-embed": "Incrustar",
-      "public-dashboard": "Tablero público",
       "public-dashboard-title": "Tablero público",
       "snapshot": "Instantánea"
     },
@@ -12772,6 +12759,7 @@
     "description-column-filter": "Habilita/deshabilita los filtros de campo en la tabla",
     "description-frozen-columns": "",
     "description-min-column-width": "El ancho mínimo para el cambio de tamaño automático de las columnas",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Texto alternativo que se mostrará si no se puede visualizar una imagen o para los usuarios que utilizan un lector de pantalla",
@@ -12802,6 +12790,7 @@
     "name-max-height": "",
     "name-min-column-width": "Ancho mínimo de columna",
     "name-show-table-header": "Mostrar encabezado de tabla",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Ajustar texto del encabezado",
@@ -13971,7 +13960,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Usuarios del tablero público",
       "shared-dashboard-users-tab-title": "Usuarios del panel de control compartido"
     }
   },
