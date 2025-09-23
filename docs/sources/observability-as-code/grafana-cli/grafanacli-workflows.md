@@ -45,7 +45,7 @@ This directory can be configured with the `--directory`/`-d` flags.
 
    ```bash
    grafanactl config use-context YOUR_CONTEXT  # for example "dev"
-   grafanactl resources pull -d ./resources/ -o yaml  # or json
+   grafanactl resources pull --path ./resources/ -o yaml # or json
    ```
 
 1. (Optional) Preview the resources locally before pushing:
@@ -70,7 +70,7 @@ This workflow helps you back up all Grafana resources from one instance and late
 
    ```bash
    grafanactl config use-context YOUR_CONTEXT  # for example "prod"
-   grafanactl resources pull -d ./resources/ -o yaml  # or json
+   grafanactl resources pull --path ./resources/ -o yaml # or json
    ```
 
 1. Save the exported resources to version control or cloud storage.
