@@ -5,25 +5,13 @@
 package v0alpha1
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaTemplateGroup = resource.NewSimpleSchema("notifications.alerting.grafana.app", "v0alpha1", &TemplateGroup{}, &TemplateGroupList{}, resource.WithKind("TemplateGroup"),
-		resource.WithPlural("templategroups"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
-			FieldSelector: "spec.title",
-			FieldValueFunc: func(o resource.Object) (string, error) {
-				cast, ok := o.(*TemplateGroup)
-				if !ok {
-					return "", fmt.Errorf("provided object must be of type *TemplateGroup")
-				}
-				return cast.Spec.Title, nil
-			},
-		},
-		}))
+		resource.WithPlural("templategroups"), resource.WithScope(resource.NamespacedScope))
 	kindTemplateGroup = resource.Kind{
 		Schema: schemaTemplateGroup,
 		Codecs: map[resource.KindEncoding]resource.Codec{
