@@ -5,6 +5,7 @@ import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp, La
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/LogDetailsBody';
 
 import { LogLabels, LogLabelsList, Props as LogLabelsProps } from '../../logs/components/LogLabels';
 import { DownloadFormat, downloadLogs } from '../../logs/utils';
@@ -30,11 +31,11 @@ export type Props = {
   dedupCount: number;
   displayedFields: string[];
   logRows: LogRowModel[];
-  clearDetectedFields: () => void;
+  clearDisplayedFields: (fields?: string[]) => void;
 };
 
 export const LogsMetaRow = memo(
-  ({ meta, dedupStrategy, dedupCount, displayedFields, clearDetectedFields, logRows }: Props) => {
+  ({ meta, dedupStrategy, dedupCount, displayedFields, clearDisplayedFields, logRows }: Props) => {
     const style = useStyles2(getStyles);
 
     const logsMetaItem: Array<LogsMetaItem | MetaItemProps> = [...meta];
@@ -57,9 +58,24 @@ export const LogsMetaRow = memo(
         },
         {
           label: '',
-          value: (
-            <Button variant="primary" fill="outline" size="sm" onClick={clearDetectedFields}>
-              <Trans i18nKey="explore.logs-meta-row.show-original-line">Show original line</Trans>
+          value: config.featureToggles.otelLogsFormatting ? (
+            <Button
+              variant="primary"
+              fill="outline"
+              size="sm"
+              onClick={() =>
+                isDisplayingLogLine(displayedFields)
+                  ? clearDisplayedFields()
+                  : clearDisplayedFields([LOG_LINE_BODY_FIELD_NAME])
+              }
+            >
+              {isDisplayingLogLine(displayedFields)
+                ? t('explore.logs-meta-row.reset-displayed-fields', 'Reset displayed fields')
+                : t('explore.logs-meta-row.show-original-line', 'Show original line')}
+            </Button>
+          ) : (
+            <Button variant="primary" fill="outline" size="sm" onClick={() => clearDisplayedFields()}>
+              {t('explore.logs-meta-row.show-original-line', 'Show original line')}
             </Button>
           ),
         }
@@ -138,4 +154,8 @@ function renderMetaItem(value: string | number | Labels, kind: LogsMetaKind, log
   }
   console.error(`Meta type ${typeof value} ${value} not recognized.`);
   return <></>;
+}
+
+function isDisplayingLogLine(fields: string[]) {
+  return fields.length === 1 && fields[0] === LOG_LINE_BODY_FIELD_NAME;
 }
