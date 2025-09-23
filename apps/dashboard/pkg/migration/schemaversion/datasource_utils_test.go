@@ -281,13 +281,9 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 			assert.Equal(t, expected, result)
 		})
 
-		t.Run("integer input should return default reference", func(t *testing.T) {
+		t.Run("integer input should return nil", func(t *testing.T) {
 			result := schemaversion.MigrateDatasourceNameToRef(123, options, datasources)
-			expected := map[string]interface{}{
-				"uid":        "default-ds-uid",
-				"type":       "prometheus",
-				"apiVersion": "v1",
-			}
+			expected := map[string]interface{}(nil)
 			assert.Equal(t, expected, result)
 		})
 
