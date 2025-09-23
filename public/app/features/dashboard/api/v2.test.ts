@@ -306,7 +306,7 @@ describe('v2 dashboard API', () => {
 
       await api.saveDashboard(saveCommand);
       expect(mockPut).toHaveBeenCalledTimes(1);
-  
+
       const callArgs = mockPut.mock.calls[0];
       const requestBody = callArgs[1];
       expect(requestBody.metadata.annotations).not.toHaveProperty(AnnoKeyFolder);
