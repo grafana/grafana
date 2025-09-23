@@ -2,6 +2,7 @@ import { render as rtlRender, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
+import { ManagerKind } from 'app/features/apiserver/types';
 import { FolderDTO } from 'app/types/folders';
 
 import { mockFolderDTO } from '../fixtures/folder.fixture';
@@ -74,5 +75,23 @@ describe('NewActionsButton', () => {
     expect(screen.queryByText('New dashboard')).not.toBeInTheDocument();
     expect(screen.queryByText('Import')).not.toBeInTheDocument();
     expect(screen.getByText('New folder')).toBeInTheDocument();
+  });
+
+  it('should hide Import button when folder is provisioned', async () => {
+    const provisionedFolder = mockFolderDTO(1, { managedBy: ManagerKind.Repo });
+    await renderAndOpen(provisionedFolder);
+
+    expect(screen.getByRole('link', { name: 'New dashboard' })).toBeInTheDocument();
+    expect(screen.getByText('New folder')).toBeInTheDocument();
+    expect(screen.queryByText('Import')).not.toBeInTheDocument();
+  });
+
+  it('should show Import button when folder is not provisioned', async () => {
+    const regularFolder = mockFolderDTO(1, { managedBy: undefined });
+    await renderAndOpen(regularFolder);
+
+    expect(screen.getByRole('link', { name: 'New dashboard' })).toBeInTheDocument();
+    expect(screen.getByText('New folder')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Import' })).toBeInTheDocument();
   });
 });
