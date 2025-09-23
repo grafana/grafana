@@ -67,8 +67,9 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 		return nil, err
 	}
 
-	// Must be able to get the resource
-	if _, err = r.getter.Get(ctx, name, &v1.GetOptions{}); err != nil {
+	// Can view is managed here (and in the Authorizer)
+	f, err := r.getter.Get(ctx, name, &v1.GetOptions{})
+	if err != nil {
 		return nil, err
 	}
 	obj, err := utils.MetaAccessor(f)

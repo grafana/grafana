@@ -47,12 +47,19 @@ var resourceInfo = folders.FolderResourceInfo
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
-	features            featuremgmt.FeatureToggles
-	namespacer          request.NamespaceMapper
-	storage             grafanarest.Storage
-	permissionStore     reconcilers.PermissionStore
-	accessClient        authlib.AccessClient
-	parents             parentsGetter
+	features             featuremgmt.FeatureToggles
+	namespacer           request.NamespaceMapper
+	folderSvc            folder.LegacyService
+	folderPermissionsSvc accesscontrol.FolderPermissionsService
+	acService            accesscontrol.Service
+	ac                   accesscontrol.AccessControl
+	storage              grafanarest.Storage
+	permissionStore      reconcilers.PermissionStore
+	accessClient         authlib.AccessClient
+
+	authorizer authorizer.Authorizer
+	parents    parentsGetter
+
 	searcher            resourcepb.ResourceIndexClient
 	permissionsOnCreate bool
 
@@ -216,8 +223,8 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		searcher: b.searcher,
 	}
 	storage[resourceInfo.StoragePath("access")] = &subAccessREST{
-		getter: folderStore,
-		ac:     b.ac,
+		getter:       folderStore,
+		accessClient: b.accessClient,
 	}
 
 	// Adds a path to return children of a given folder
