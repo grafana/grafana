@@ -40,7 +40,13 @@ export interface GraphNGProps extends Themeable2 {
   tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
-  prepConfig: (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => UPlotConfigBuilder;
+  // @todo rename to annoLanes, pass count not frames
+  prepConfig: (
+    alignedFrame: DataFrame,
+    allFrames: DataFrame[],
+    getTimeRange: () => TimeRange,
+    annotationFrames?: DataFrame[]
+  ) => UPlotConfigBuilder;
   propsToDiff?: Array<string | PropDiffFn>;
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame | null;
   renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
@@ -63,6 +69,9 @@ export interface GraphNGProps extends Themeable2 {
    * similar to structureRev. then we can drop propsToDiff entirely.
    */
   options?: Record<string, any>;
+
+  // Panel annotations
+  annotations?: DataFrame[];
 }
 
 function sameProps<T extends Record<string, unknown>>(
@@ -191,7 +200,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
       let config = this.state?.config;
 
       if (withConfig) {
-        config = props.prepConfig(alignedFrameFinal, this.props.frames, this.getTimeRange);
+        config = props.prepConfig(alignedFrameFinal, this.props.frames, this.getTimeRange, this.props.annotations);
         pluginLog('GraphNG', false, 'config prepared', config);
       }
 
@@ -225,12 +234,19 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
           timeZone !== prevProps.timeZone ||
           cursorSync !== prevProps.cursorSync ||
           structureRev !== prevProps.structureRev ||
+          this.props.annotations?.length !== prevProps.annotations?.length ||
           !structureRev ||
           propsChanged;
 
         if (shouldReconfig) {
-          newState.config = this.props.prepConfig(newState.alignedFrame, this.props.frames, this.getTimeRange);
+          newState.config = this.props.prepConfig(
+            newState.alignedFrame,
+            this.props.frames,
+            this.getTimeRange,
+            this.props.annotations
+          );
           pluginLog('GraphNG', false, 'config recreated', newState.config);
+          console.log('GraphNG', 'config recreated', newState.config);
         }
 
         newState.alignedData = newState.config!.prepData!([newState.alignedFrame]) as AlignedData;

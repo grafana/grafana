@@ -132,7 +132,9 @@ export const AnnotationsPlugin2 = ({
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       ctx.clip();
 
-      annos.forEach((frame) => {
+      annos.forEach((frame, frameIndex) => {
+        const annotationLaneYOffset = frameIndex * 30;
+        console.log('annotationLaneYOffset', frameIndex, annotationLaneYOffset);
         let vals = getVals(frame);
 
         if (frame.name === 'xymark') {
@@ -166,11 +168,18 @@ export const AnnotationsPlugin2 = ({
             ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
           }
         } else {
-          let y0 = u.bbox.top;
-          let y1 = y0 + u.bbox.height;
+          // if multiple regions, don't shade
+          // @todo toggle functionality, new annotation config option?
+
+          let y0 = u.bbox.top - annotationLaneYOffset;
+          let y1 = y0 + u.bbox.height + annotationLaneYOffset;
 
           ctx.lineWidth = 2;
           ctx.setLineDash([5, 5]);
+
+          // @todo Don't render the vertical lines if multi lane is enabled
+          //@todo Don't render shaded region if multi-lane is enabled
+          // skipping this loop should do it
 
           for (let i = 0; i < vals.time.length; i++) {
             let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
@@ -178,7 +187,9 @@ export const AnnotationsPlugin2 = ({
             let x0 = u.valToPos(vals.time[i], 'x', true);
             renderLine(ctx, y0, y1, x0, color);
 
-            if (vals.isRegion?.[i]) {
+            // If dataframe does not have end times, let's omit rendering the region for now
+            // @todo do we want to fix isRegion to render a point when we're missing timeEnd?
+            if (vals.isRegion?.[i] && vals.timeEnd?.[i]) {
               let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
               renderLine(ctx, y0, y1, x1, color);
 
@@ -215,6 +226,7 @@ export const AnnotationsPlugin2 = ({
 
       let markers: React.ReactNode[] = [];
 
+      const top = frameIdx * 5;
       for (let i = 0; i < vals.time.length; i++) {
         let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
         let left = Math.round(plot.valToPos(vals.time[i], 'x')) || 0; // handles -0
@@ -231,14 +243,14 @@ export const AnnotationsPlugin2 = ({
             let clampedLeft = Math.max(0, left);
             let clampedRight = Math.min(plot.rect.width, right);
 
-            style = { left: clampedLeft, background: color, width: clampedRight - clampedLeft };
+            style = { left: clampedLeft, background: color, width: clampedRight - clampedLeft, top };
             className = styles.annoRegion;
           }
         } else {
           isVisible = left >= 0 && left <= plot.rect.width;
 
           if (isVisible) {
-            style = { left, borderBottomColor: color };
+            style = { left, borderBottomColor: color, top };
             className = styles.annoMarker;
           }
         }

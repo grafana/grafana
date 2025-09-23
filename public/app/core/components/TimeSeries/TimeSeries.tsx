@@ -13,7 +13,12 @@ const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'theme'];
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
 
 export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
-  prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
+  prepConfig = (
+    alignedFrame: DataFrame,
+    allFrames: DataFrame[],
+    getTimeRange: () => TimeRange,
+    annotationFrames?: DataFrame[]
+  ) => {
     const { theme, timeZone, options, renderers, tweakAxis, tweakScale } = this.props;
 
     return preparePlotConfigBuilder({
@@ -27,6 +32,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
       tweakAxis,
       hoverProximity: options?.tooltip?.hoverProximity,
       orientation: options?.orientation,
+      annotations: annotationFrames?.length ? annotationFrames : this.props.annotations,
     });
   };
 

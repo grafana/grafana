@@ -90,7 +90,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
   tweakAxis = (opts) => opts,
   hoverProximity,
   orientation = VizOrientation.Horizontal,
+  annotations,
 }) => {
+  console.log('preparePlotConfigBuilder', annotations);
   // we want the Auto and Horizontal orientation to default to Horizontal
   const isHorizontal = orientation !== VizOrientation.Vertical;
   const builder = new UPlotConfigBuilder(timeZones[0]);
@@ -144,9 +146,29 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
           }
         : undefined;
 
+    // HERE
+    // console.log('build axis', annotations)
+    // https://github.com/leeoniya/uPlot/blob/master/src/opts.js#L552
+    const annotationLaneHeight = 5;
+    const defaultAxisSize = 50;
+    const annotationLanesSize = ((annotations?.length ?? 1) - 1) * annotationLaneHeight;
+    const size = defaultAxisSize + annotationLanesSize;
+    // Add a bit of space below the last annotation lane to show the grid-lines
+    const gapSize = annotationLanesSize + 5;
+
     for (let i = 0; i < timeZones.length; i++) {
       const timeZone = timeZones[i];
+      // tick length to match the gap length?
+      // want gridlines showing below lowest lane a few px
+
       builder.addAxis({
+        // HERE update axis size
+        ticks: {
+          size: gapSize,
+        },
+        gap: gapSize,
+        size,
+        // size is everything
         scaleKey: xScaleKey,
         isTime: true,
         placement: xFieldAxisPlacement,

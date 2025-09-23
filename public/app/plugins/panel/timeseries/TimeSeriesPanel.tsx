@@ -131,8 +131,10 @@ export const TimeSeriesPanel = ({
       replaceVariables={replaceVariables}
       dataLinkPostProcessor={dataLinkPostProcessor}
       cursorSync={cursorSync}
+      annotations={data.annotations}
     >
       {(uplotConfig, alignedFrame) => {
+        console.log('time series config (re)loaded', data.annotations?.length, data.annotations);
         return (
           <>
             <KeyboardPlugin config={uplotConfig} />
