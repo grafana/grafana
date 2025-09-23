@@ -474,6 +474,28 @@ func (d *dataStore) GetResourceStats(ctx context.Context, namespace string, minC
 	return stats, nil
 }
 
+// GetResourceStatsSingle returns resource stats for specified namespaced-resource.
+func (d *dataStore) GetResourceStatsSingle(ctx context.Context, resource NamespacedResource) (ResourceStats, error) {
+	if !resource.Valid() {
+		return ResourceStats{}, fmt.Errorf("invalid resource: %s", resource)
+	}
+
+	gr := GroupResource{Group: resource.Group, Resource: resource.Resource}
+	statsPerNamespace, err := d.processGroupResourceStats(ctx, gr, resource.Namespace, 0)
+	if err != nil {
+		return ResourceStats{}, fmt.Errorf("failed to process stats for %s/%s: %w", gr.Group, gr.Resource, err)
+	}
+
+	// We use for-loop, as there can be 0 or 1 stats for a given namespace.
+	for _, stat := range statsPerNamespace {
+		if stat.NamespacedResource.Namespace == resource.Namespace {
+			return stat, nil
+		}
+	}
+
+	return ResourceStats{NamespacedResource: resource}, nil
+}
+
 // processGroupResourceStats processes stats for a specific group/resource combination
 func (d *dataStore) processGroupResourceStats(ctx context.Context, groupResource GroupResource, namespace string, minCount int) ([]ResourceStats, error) {
 	// Use ListRequestKey to construct the appropriate prefix

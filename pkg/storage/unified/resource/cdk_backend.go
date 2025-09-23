@@ -122,6 +122,9 @@ func (s *cdkBackend) getPath(key *resourcepb.ResourceKey, rv int64) string {
 func (s *cdkBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
 	return nil, fmt.Errorf("not implemented")
 }
+func (s *cdkBackend) GetResourceStatsSingleResource(ctx context.Context, resource NamespacedResource) (ResourceStats, error) {
+	return ResourceStats{}, fmt.Errorf("not implemented")
+}
 
 func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64, err error) {
 	if event.Type == resourcepb.WatchEvent_ADDED {

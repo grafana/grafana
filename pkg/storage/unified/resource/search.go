@@ -574,22 +574,14 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 				return idx, nil
 			}
 
-			// Get correct value of size + RV for building the index. This is important for our Bleve
+			// Get number of documents for building the index. This is important for our Bleve
 			// backend to decide whether to build index in-memory or as file-based.
-			stats, err := s.storage.GetResourceStats(ctx, key.Namespace, 0)
+			stats, err := s.storage.GetResourceStatsSingleResource(ctx, key)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get resource stats: %w", err)
 			}
 
-			size := int64(0)
-			for _, stat := range stats {
-				if stat.Namespace == key.Namespace && stat.Group == key.Group && stat.Resource == key.Resource {
-					size = stat.Count
-					break
-				}
-			}
-
-			idx, err = s.build(ctx, key, size, reason, false)
+			idx, err = s.build(ctx, key, stats.Count, reason, false)
 			if err != nil {
 				return nil, fmt.Errorf("error building search index, %w", err)
 			}

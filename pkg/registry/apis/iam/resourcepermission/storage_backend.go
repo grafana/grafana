@@ -13,6 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -61,6 +62,10 @@ func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider) *Resourc
 
 func (s *ResourcePermSqlBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
 	return []resource.ResourceStats{}, errNotImplemented
+}
+
+func (s *ResourcePermSqlBackend) GetResourceStatsSingleResource(ctx context.Context, res resource.NamespacedResource) (resource.ResourceStats, error) {
+	return resource.ResourceStats{}, errNotImplemented
 }
 
 func (s *ResourcePermSqlBackend) ListHistory(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {

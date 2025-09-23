@@ -29,16 +29,17 @@ import (
 
 // Test names for the storage backend test suite
 const (
-	TestHappyPath                 = "happy path"
-	TestWatchWriteEvents          = "watch write events from latest"
-	TestList                      = "list"
-	TestBlobSupport               = "blob support"
-	TestGetResourceStats          = "get resource stats"
-	TestListHistory               = "list history"
-	TestListHistoryErrorReporting = "list history error reporting"
-	TestListModifiedSince         = "list events since rv"
-	TestListTrash                 = "list trash"
-	TestCreateNewResource         = "create new resource"
+	TestHappyPath                      = "happy path"
+	TestWatchWriteEvents               = "watch write events from latest"
+	TestList                           = "list"
+	TestBlobSupport                    = "blob support"
+	TestGetResourceStats               = "get resource stats"
+	TestGetResourceStatsSingleResource = "get resource stats single resource"
+	TestListHistory                    = "list history"
+	TestListHistoryErrorReporting      = "list history error reporting"
+	TestListModifiedSince              = "list events since rv"
+	TestListTrash                      = "list trash"
+	TestCreateNewResource              = "create new resource"
 )
 
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
@@ -76,6 +77,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestList, runTestIntegrationBackendList},
 		{TestBlobSupport, runTestIntegrationBlobSupport},
 		{TestGetResourceStats, runTestIntegrationBackendGetResourceStats},
+		{TestGetResourceStatsSingleResource, runTestIntegrationBackendGetResourceStatsSingleResource},
 		{TestListHistory, runTestIntegrationBackendListHistory},
 		{TestListHistoryErrorReporting, runTestIntegrationBackendListHistoryErrorReporting},
 		{TestListTrash, runTestIntegrationBackendTrash},
@@ -306,6 +308,104 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 		stats, err := backend.GetResourceStats(ctx, "non-existent", 0)
 		require.NoError(t, err)
 		require.Empty(t, stats)
+	})
+}
+
+func runTestIntegrationBackendGetResourceStatsSingleResource(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
+
+	ns1 := nsPrefix + "-statssingle-ns1"
+	ns2 := nsPrefix + "-statssingle-ns2"
+
+	// Create resources across different namespaces/groups
+	_, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns1),
+		WithGroup("group"),
+		WithResource("resource1"))
+	require.NoError(t, err)
+
+	_, err = writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns1),
+		WithGroup("group"),
+		WithResource("resource1"))
+	require.NoError(t, err)
+
+	_, err = writeEvent(ctx, backend, "item3", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns1),
+		WithGroup("group"),
+		WithResource("resource2"))
+	require.NoError(t, err)
+
+	_, err = writeEvent(ctx, backend, "item4", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns2),
+		WithGroup("group"),
+		WithResource("resource1"))
+	require.NoError(t, err)
+
+	_, err = writeEvent(ctx, backend, "item5", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns2),
+		WithGroup("group"),
+		WithResource("resource1"))
+	require.NoError(t, err)
+
+	t.Run("Get stats for group/resource1/ns1", func(t *testing.T) {
+		stats, err := backend.GetResourceStatsSingleResource(ctx, resource.NamespacedResource{
+			Namespace: ns1,
+			Group:     "group",
+			Resource:  "resource1",
+		})
+		require.NoError(t, err)
+
+		require.Equal(t, ns1, stats.Namespace)
+		require.Equal(t, "group", stats.Group)
+		require.Equal(t, "resource1", stats.Resource)
+		require.Equal(t, int64(2), stats.Count)
+		require.Greater(t, stats.ResourceVersion, int64(0))
+	})
+
+	t.Run("Get stats for group/resource1/ns2", func(t *testing.T) {
+		stats, err := backend.GetResourceStatsSingleResource(ctx, resource.NamespacedResource{
+			Namespace: ns2,
+			Group:     "group",
+			Resource:  "resource1",
+		})
+		require.NoError(t, err)
+
+		require.Equal(t, ns2, stats.Namespace)
+		require.Equal(t, "group", stats.Group)
+		require.Equal(t, "resource1", stats.Resource)
+		require.Equal(t, int64(2), stats.Count)
+		require.Greater(t, stats.ResourceVersion, int64(0))
+	})
+
+	t.Run("Get stats for non-existent namespace", func(t *testing.T) {
+		stats, err := backend.GetResourceStatsSingleResource(ctx, resource.NamespacedResource{
+			Namespace: nsPrefix + "-non-existant",
+			Group:     "group",
+			Resource:  "resource1",
+		})
+		require.NoError(t, err)
+
+		require.Equal(t, nsPrefix+"-non-existant", stats.Namespace)
+		require.Equal(t, "group", stats.Group)
+		require.Equal(t, "resource1", stats.Resource)
+		require.Equal(t, int64(0), stats.Count)
+		require.Equal(t, stats.ResourceVersion, int64(0))
+	})
+
+	t.Run("Get stats for non-existent resource", func(t *testing.T) {
+		stats, err := backend.GetResourceStatsSingleResource(ctx, resource.NamespacedResource{
+			Namespace: ns1,
+			Group:     "group",
+			Resource:  "resource-non-existant",
+		})
+		require.NoError(t, err)
+
+		require.Equal(t, ns1, stats.Namespace)
+		require.Equal(t, "group", stats.Group)
+		require.Equal(t, "resource-non-existant", stats.Resource)
+		require.Equal(t, int64(0), stats.Count)
+		require.Equal(t, stats.ResourceVersion, int64(0))
 	})
 }
 

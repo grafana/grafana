@@ -289,6 +289,39 @@ func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCou
 	return res, err
 }
 
+func (b *backend) GetResourceStatsSingleResource(ctx context.Context, res resource.NamespacedResource) (resource.ResourceStats, error) {
+	if !res.Valid() {
+		return resource.ResourceStats{}, fmt.Errorf("invalid resource: %s", res)
+	}
+
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceStatsSingleResource")
+	defer span.End()
+
+	req := &sqlStatsSingleResourceRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Resource:    res.Resource,
+		Group:       res.Group,
+		Namespace:   res.Namespace,
+	}
+
+	row := resource.ResourceStats{
+		NamespacedResource: res,
+	}
+
+	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceStatsSingleResource, req)
+		if err != nil {
+			return err
+		}
+		for rows.Next() {
+			err = rows.Scan(&row.Count, &row.ResourceVersion)
+		}
+		return err
+	})
+
+	return row, err
+}
+
 func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
 	_, span := b.tracer.Start(ctx, tracePrefix+"WriteEvent")
 	defer span.End()

@@ -398,6 +398,17 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlResourceStatsSingleResource: {
+				{
+					Name: "global",
+					Data: &sqlStatsSingleResourceRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "namespace",
+						Group:       "group",
+						Resource:    "resource",
+					},
+				},
+			},
 			sqlResourceBlobInsert: {
 				{
 					Name: "basic",
