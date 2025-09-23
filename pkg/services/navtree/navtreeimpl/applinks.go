@@ -75,6 +75,34 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	return nil
 }
 
+// shouldIncludeInvestigations checks if the investigations feature should be included for the assistant app
+func (s *ServiceImpl) shouldIncludeInvestigations(plugin pluginstore.Plugin, include *plugins.Includes, c *contextmodel.ReqContext) bool {
+	if plugin.ID != "grafana-assistant-app" || include.Name != "Investigations" {
+		return true
+	}
+
+	ps, err := s.pluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
+		PluginID: plugin.ID,
+		OrgID:    c.GetOrgID(),
+	})
+	if err != nil {
+		return false
+	}
+
+	loopData, exists := ps.JSONData["loop"]
+	if !exists {
+		return false
+	}
+
+	loopConfig, ok := loopData.(map[string]any)
+	if !ok {
+		return false
+	}
+
+	enabled, ok := loopConfig["enabled"].(bool)
+	return ok && enabled
+}
+
 func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
 	appLink := &navtree.NavLink{
@@ -93,30 +121,8 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 			continue
 		}
 
-		// show "investigations" menu only if enabled in the plugin settings
-		if plugin.ID == "grafana-assistant-app" && include.Name == "Investigations" {
-			ps, err := s.pluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
-				PluginID: plugin.ID,
-				OrgID:    c.GetOrgID(),
-			})
-			if err != nil {
-				continue
-			}
-
-			loopData, exists := ps.JSONData["loop"]
-			if !exists {
-				continue
-			}
-
-			loopConfig, ok := loopData.(map[string]any)
-			if !ok {
-				continue
-			}
-
-			enabled, ok := loopConfig["enabled"].(bool)
-			if !ok || !enabled {
-				continue
-			}
+		if !s.shouldIncludeInvestigations(plugin, include, c) {
+			continue
 		}
 
 		if include.Type == "page" {
