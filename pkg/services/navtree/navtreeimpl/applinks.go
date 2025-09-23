@@ -76,6 +76,7 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 }
 
 // shouldIncludeInvestigations checks if the investigations feature should be included for the assistant app
+// see https://github.com/grafana/grafana-assistant-app/issues/2007 for more details
 func (s *ServiceImpl) shouldIncludeInvestigations(plugin pluginstore.Plugin, include *plugins.Includes, c *contextmodel.ReqContext) bool {
 	if plugin.ID != "grafana-assistant-app" || include.Name != "Investigations" {
 		return true
