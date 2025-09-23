@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	apiserrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -126,19 +127,14 @@ func (s *DashboardStarsStorage) Get(ctx context.Context, name string, options *m
 	}
 
 	found, _, err := s.sql.GetStars(ctx, ns.OrgID, owner.Name)
-	if err != nil || len(found) == 0 {
+	if err != nil {
 		return nil, err
+	}
+	if len(found) == 0 || len(found[0].Dashboards) == 0 {
+		return nil, apiserrors.NewNotFound(preferences.StarsResourceInfo.GroupResource(), name)
 	}
 	obj := asStarsResource(ns.Value, &found[0])
 	return &obj, nil
-}
-
-func (s *DashboardStarsStorage) StarDashboard(ctx context.Context, name string, uid string) (runtime.Object, error) {
-	return nil, fmt.Errorf("TODO")
-}
-
-func (s *DashboardStarsStorage) UnstarDashboard(ctx context.Context, name string, uid string) (runtime.Object, error) {
-	return nil, fmt.Errorf("TODO")
 }
 
 func getDashboardStars(stars *preferences.Stars) []string {
@@ -180,12 +176,19 @@ func (s *DashboardStarsStorage) write(ctx context.Context, obj *preferences.Star
 		}}, err
 	}
 
+	current, _, err := s.sql.GetStars(ctx, ns.OrgID, owner.Name)
+	if err != nil {
+		return nil, err
+	}
+
 	changed := false
 	now := time.Now()
 	randID := now.UnixNano() + rand.Int63n(5000)
 	previous := make(map[string]bool)
-	for _, v := range getDashboardStars(obj) {
-		previous[v] = true
+	if len(current) > 0 {
+		for _, v := range current[0].Dashboards {
+			previous[v] = true
+		}
 	}
 	for _, dashboard := range stars {
 		if previous[dashboard] {
