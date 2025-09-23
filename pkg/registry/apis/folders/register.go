@@ -55,6 +55,7 @@ type FolderAPIBuilder struct {
 	ac                   accesscontrol.AccessControl
 	storage              grafanarest.Storage
 	permissionStore      reconcilers.PermissionStore
+	accessClient         authlib.AccessClient
 
 	authorizer authorizer.Authorizer
 	parents    parentsGetter
@@ -83,6 +84,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		folderPermissionsSvc: folderPermissionsSvc,
 		acService:            acService,
 		ac:                   accessControl,
+		accessClient:         accessClient,
 		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
 		authorizer:           newLegacyAuthorizer(accessControl),
 		searcher:             unified,
@@ -206,8 +208,8 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		searcher: b.searcher,
 	}
 	storage[resourceInfo.StoragePath("access")] = &subAccessREST{
-		getter: folderStore,
-		ac:     b.ac,
+		getter:       folderStore,
+		accessClient: b.accessClient,
 	}
 
 	// Adds a path to return children of a given folder
