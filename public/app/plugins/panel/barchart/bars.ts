@@ -1,6 +1,6 @@
 import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 
-import { colorManipulator, DataFrame, dateTimeFormat, Field, FieldType, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
+import { colorManipulator, DataFrame, dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
 import {
   StackingMode,
   VisibilityMode,
@@ -16,7 +16,7 @@ const intervals = systemDateFormats.interval;
 
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
-import { getClustersFromArray, prepareClusterData } from './utils';
+import { getClustersFromArray } from './utils';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
