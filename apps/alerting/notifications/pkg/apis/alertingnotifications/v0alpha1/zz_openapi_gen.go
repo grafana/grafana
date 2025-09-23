@@ -12,36 +12,36 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.Receiver":                         schema_pkg_apis_alerting_v0alpha1_Receiver(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.ReceiverIntegration":              schema_pkg_apis_alerting_v0alpha1_ReceiverIntegration(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.ReceiverList":                     schema_pkg_apis_alerting_v0alpha1_ReceiverList(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.ReceiverSpec":                     schema_pkg_apis_alerting_v0alpha1_ReceiverSpec(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.ReceiverStatus":                   schema_pkg_apis_alerting_v0alpha1_ReceiverStatus(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.ReceiverstatusOperatorState":      schema_pkg_apis_alerting_v0alpha1_ReceiverstatusOperatorState(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTree":                      schema_pkg_apis_alerting_v0alpha1_RoutingTree(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreeList":                  schema_pkg_apis_alerting_v0alpha1_RoutingTreeList(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreeMatcher":               schema_pkg_apis_alerting_v0alpha1_RoutingTreeMatcher(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreeRoute":                 schema_pkg_apis_alerting_v0alpha1_RoutingTreeRoute(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreeRouteDefaults":         schema_pkg_apis_alerting_v0alpha1_RoutingTreeRouteDefaults(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreeSpec":                  schema_pkg_apis_alerting_v0alpha1_RoutingTreeSpec(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreeStatus":                schema_pkg_apis_alerting_v0alpha1_RoutingTreeStatus(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreestatusOperatorState":   schema_pkg_apis_alerting_v0alpha1_RoutingTreestatusOperatorState(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TemplateGroup":                    schema_pkg_apis_alerting_v0alpha1_TemplateGroup(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TemplateGroupList":                schema_pkg_apis_alerting_v0alpha1_TemplateGroupList(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TemplateGroupSpec":                schema_pkg_apis_alerting_v0alpha1_TemplateGroupSpec(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TemplateGroupStatus":              schema_pkg_apis_alerting_v0alpha1_TemplateGroupStatus(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TemplateGroupstatusOperatorState": schema_pkg_apis_alerting_v0alpha1_TemplateGroupstatusOperatorState(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeInterval":                     schema_pkg_apis_alerting_v0alpha1_TimeInterval(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeIntervalInterval":             schema_pkg_apis_alerting_v0alpha1_TimeIntervalInterval(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeIntervalList":                 schema_pkg_apis_alerting_v0alpha1_TimeIntervalList(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeIntervalSpec":                 schema_pkg_apis_alerting_v0alpha1_TimeIntervalSpec(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeIntervalStatus":               schema_pkg_apis_alerting_v0alpha1_TimeIntervalStatus(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeIntervalTimeRange":            schema_pkg_apis_alerting_v0alpha1_TimeIntervalTimeRange(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeIntervalstatusOperatorState":  schema_pkg_apis_alerting_v0alpha1_TimeIntervalstatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.Receiver":                         schema_pkg_apis_alertingnotifications_v0alpha1_Receiver(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.ReceiverIntegration":              schema_pkg_apis_alertingnotifications_v0alpha1_ReceiverIntegration(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.ReceiverList":                     schema_pkg_apis_alertingnotifications_v0alpha1_ReceiverList(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.ReceiverSpec":                     schema_pkg_apis_alertingnotifications_v0alpha1_ReceiverSpec(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.ReceiverStatus":                   schema_pkg_apis_alertingnotifications_v0alpha1_ReceiverStatus(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.ReceiverstatusOperatorState":      schema_pkg_apis_alertingnotifications_v0alpha1_ReceiverstatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTree":                      schema_pkg_apis_alertingnotifications_v0alpha1_RoutingTree(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreeList":                  schema_pkg_apis_alertingnotifications_v0alpha1_RoutingTreeList(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreeMatcher":               schema_pkg_apis_alertingnotifications_v0alpha1_RoutingTreeMatcher(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreeRoute":                 schema_pkg_apis_alertingnotifications_v0alpha1_RoutingTreeRoute(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreeRouteDefaults":         schema_pkg_apis_alertingnotifications_v0alpha1_RoutingTreeRouteDefaults(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreeSpec":                  schema_pkg_apis_alertingnotifications_v0alpha1_RoutingTreeSpec(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreeStatus":                schema_pkg_apis_alertingnotifications_v0alpha1_RoutingTreeStatus(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreestatusOperatorState":   schema_pkg_apis_alertingnotifications_v0alpha1_RoutingTreestatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TemplateGroup":                    schema_pkg_apis_alertingnotifications_v0alpha1_TemplateGroup(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TemplateGroupList":                schema_pkg_apis_alertingnotifications_v0alpha1_TemplateGroupList(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TemplateGroupSpec":                schema_pkg_apis_alertingnotifications_v0alpha1_TemplateGroupSpec(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TemplateGroupStatus":              schema_pkg_apis_alertingnotifications_v0alpha1_TemplateGroupStatus(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TemplateGroupstatusOperatorState": schema_pkg_apis_alertingnotifications_v0alpha1_TemplateGroupstatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeInterval":                     schema_pkg_apis_alertingnotifications_v0alpha1_TimeInterval(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeIntervalInterval":             schema_pkg_apis_alertingnotifications_v0alpha1_TimeIntervalInterval(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeIntervalList":                 schema_pkg_apis_alertingnotifications_v0alpha1_TimeIntervalList(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeIntervalSpec":                 schema_pkg_apis_alertingnotifications_v0alpha1_TimeIntervalSpec(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeIntervalStatus":               schema_pkg_apis_alertingnotifications_v0alpha1_TimeIntervalStatus(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeIntervalTimeRange":            schema_pkg_apis_alertingnotifications_v0alpha1_TimeIntervalTimeRange(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeIntervalstatusOperatorState":  schema_pkg_apis_alertingnotifications_v0alpha1_TimeIntervalstatusOperatorState(ref),
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_Receiver(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_Receiver(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -71,13 +71,13 @@ func schema_pkg_apis_alerting_v0alpha1_Receiver(ref common.ReferenceCallback) co
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the Receiver",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.ReceiverSpec"),
+							Ref:         ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.ReceiverSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.ReceiverStatus"),
+							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.ReceiverStatus"),
 						},
 					},
 				},
@@ -85,11 +85,11 @@ func schema_pkg_apis_alerting_v0alpha1_Receiver(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.ReceiverSpec", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.ReceiverStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.ReceiverSpec", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.ReceiverStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_ReceiverIntegration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_ReceiverIntegration(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -157,7 +157,7 @@ func schema_pkg_apis_alerting_v0alpha1_ReceiverIntegration(ref common.ReferenceC
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_ReceiverList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_ReceiverList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -190,7 +190,7 @@ func schema_pkg_apis_alerting_v0alpha1_ReceiverList(ref common.ReferenceCallback
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.Receiver"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.Receiver"),
 									},
 								},
 							},
@@ -201,11 +201,11 @@ func schema_pkg_apis_alerting_v0alpha1_ReceiverList(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.Receiver", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.Receiver", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_ReceiverSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_ReceiverSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -225,7 +225,7 @@ func schema_pkg_apis_alerting_v0alpha1_ReceiverSpec(ref common.ReferenceCallback
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.ReceiverIntegration"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.ReceiverIntegration"),
 									},
 								},
 							},
@@ -236,11 +236,11 @@ func schema_pkg_apis_alerting_v0alpha1_ReceiverSpec(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.ReceiverIntegration"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.ReceiverIntegration"},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_ReceiverStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_ReceiverStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -255,7 +255,7 @@ func schema_pkg_apis_alerting_v0alpha1_ReceiverStatus(ref common.ReferenceCallba
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.ReceiverstatusOperatorState"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.ReceiverstatusOperatorState"),
 									},
 								},
 							},
@@ -280,11 +280,11 @@ func schema_pkg_apis_alerting_v0alpha1_ReceiverStatus(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.ReceiverstatusOperatorState"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.ReceiverstatusOperatorState"},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_ReceiverstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_ReceiverstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -335,7 +335,7 @@ func schema_pkg_apis_alerting_v0alpha1_ReceiverstatusOperatorState(ref common.Re
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_RoutingTree(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_RoutingTree(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -365,13 +365,13 @@ func schema_pkg_apis_alerting_v0alpha1_RoutingTree(ref common.ReferenceCallback)
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the RoutingTree",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreeSpec"),
+							Ref:         ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreeSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreeStatus"),
+							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreeStatus"),
 						},
 					},
 				},
@@ -379,11 +379,11 @@ func schema_pkg_apis_alerting_v0alpha1_RoutingTree(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreeSpec", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreeStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreeSpec", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreeStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_RoutingTreeList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_RoutingTreeList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -416,7 +416,7 @@ func schema_pkg_apis_alerting_v0alpha1_RoutingTreeList(ref common.ReferenceCallb
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTree"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTree"),
 									},
 								},
 							},
@@ -427,11 +427,11 @@ func schema_pkg_apis_alerting_v0alpha1_RoutingTreeList(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTree", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTree", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_RoutingTreeMatcher(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_RoutingTreeMatcher(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -465,7 +465,7 @@ func schema_pkg_apis_alerting_v0alpha1_RoutingTreeMatcher(ref common.ReferenceCa
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_RoutingTreeRoute(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_RoutingTreeRoute(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -484,7 +484,7 @@ func schema_pkg_apis_alerting_v0alpha1_RoutingTreeRoute(ref common.ReferenceCall
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreeMatcher"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreeMatcher"),
 									},
 								},
 							},
@@ -546,7 +546,7 @@ func schema_pkg_apis_alerting_v0alpha1_RoutingTreeRoute(ref common.ReferenceCall
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreeRoute"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreeRoute"),
 									},
 								},
 							},
@@ -575,11 +575,11 @@ func schema_pkg_apis_alerting_v0alpha1_RoutingTreeRoute(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreeMatcher", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreeRoute"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreeMatcher", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreeRoute"},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_RoutingTreeRouteDefaults(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_RoutingTreeRouteDefaults(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -631,7 +631,7 @@ func schema_pkg_apis_alerting_v0alpha1_RoutingTreeRouteDefaults(ref common.Refer
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_RoutingTreeSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_RoutingTreeSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -640,7 +640,7 @@ func schema_pkg_apis_alerting_v0alpha1_RoutingTreeSpec(ref common.ReferenceCallb
 					"defaults": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreeRouteDefaults"),
+							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreeRouteDefaults"),
 						},
 					},
 					"routes": {
@@ -650,7 +650,7 @@ func schema_pkg_apis_alerting_v0alpha1_RoutingTreeSpec(ref common.ReferenceCallb
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreeRoute"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreeRoute"),
 									},
 								},
 							},
@@ -661,11 +661,11 @@ func schema_pkg_apis_alerting_v0alpha1_RoutingTreeSpec(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreeRoute", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreeRouteDefaults"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreeRoute", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreeRouteDefaults"},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_RoutingTreeStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_RoutingTreeStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -680,7 +680,7 @@ func schema_pkg_apis_alerting_v0alpha1_RoutingTreeStatus(ref common.ReferenceCal
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreestatusOperatorState"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreestatusOperatorState"),
 									},
 								},
 							},
@@ -705,11 +705,11 @@ func schema_pkg_apis_alerting_v0alpha1_RoutingTreeStatus(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.RoutingTreestatusOperatorState"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.RoutingTreestatusOperatorState"},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_RoutingTreestatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_RoutingTreestatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -760,7 +760,7 @@ func schema_pkg_apis_alerting_v0alpha1_RoutingTreestatusOperatorState(ref common
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_TemplateGroup(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_TemplateGroup(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -790,13 +790,13 @@ func schema_pkg_apis_alerting_v0alpha1_TemplateGroup(ref common.ReferenceCallbac
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the TemplateGroup",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TemplateGroupSpec"),
+							Ref:         ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TemplateGroupSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TemplateGroupStatus"),
+							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TemplateGroupStatus"),
 						},
 					},
 				},
@@ -804,11 +804,11 @@ func schema_pkg_apis_alerting_v0alpha1_TemplateGroup(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TemplateGroupSpec", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TemplateGroupStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TemplateGroupSpec", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TemplateGroupStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_TemplateGroupList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_TemplateGroupList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -841,7 +841,7 @@ func schema_pkg_apis_alerting_v0alpha1_TemplateGroupList(ref common.ReferenceCal
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TemplateGroup"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TemplateGroup"),
 									},
 								},
 							},
@@ -852,11 +852,11 @@ func schema_pkg_apis_alerting_v0alpha1_TemplateGroupList(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TemplateGroup", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TemplateGroup", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_TemplateGroupSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_TemplateGroupSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -883,7 +883,7 @@ func schema_pkg_apis_alerting_v0alpha1_TemplateGroupSpec(ref common.ReferenceCal
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_TemplateGroupStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_TemplateGroupStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -898,7 +898,7 @@ func schema_pkg_apis_alerting_v0alpha1_TemplateGroupStatus(ref common.ReferenceC
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TemplateGroupstatusOperatorState"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TemplateGroupstatusOperatorState"),
 									},
 								},
 							},
@@ -923,11 +923,11 @@ func schema_pkg_apis_alerting_v0alpha1_TemplateGroupStatus(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TemplateGroupstatusOperatorState"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TemplateGroupstatusOperatorState"},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_TemplateGroupstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_TemplateGroupstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -978,7 +978,7 @@ func schema_pkg_apis_alerting_v0alpha1_TemplateGroupstatusOperatorState(ref comm
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_TimeInterval(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_TimeInterval(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1008,13 +1008,13 @@ func schema_pkg_apis_alerting_v0alpha1_TimeInterval(ref common.ReferenceCallback
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the TimeInterval",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeIntervalSpec"),
+							Ref:         ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeIntervalSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeIntervalStatus"),
+							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeIntervalStatus"),
 						},
 					},
 				},
@@ -1022,11 +1022,11 @@ func schema_pkg_apis_alerting_v0alpha1_TimeInterval(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeIntervalSpec", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeIntervalStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeIntervalSpec", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeIntervalStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_TimeIntervalInterval(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_TimeIntervalInterval(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1039,7 +1039,7 @@ func schema_pkg_apis_alerting_v0alpha1_TimeIntervalInterval(ref common.Reference
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeIntervalTimeRange"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeIntervalTimeRange"),
 									},
 								},
 							},
@@ -1111,11 +1111,11 @@ func schema_pkg_apis_alerting_v0alpha1_TimeIntervalInterval(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeIntervalTimeRange"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeIntervalTimeRange"},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_TimeIntervalList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_TimeIntervalList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1148,7 +1148,7 @@ func schema_pkg_apis_alerting_v0alpha1_TimeIntervalList(ref common.ReferenceCall
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeInterval"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeInterval"),
 									},
 								},
 							},
@@ -1159,11 +1159,11 @@ func schema_pkg_apis_alerting_v0alpha1_TimeIntervalList(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeInterval", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeInterval", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_TimeIntervalSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_TimeIntervalSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1183,7 +1183,7 @@ func schema_pkg_apis_alerting_v0alpha1_TimeIntervalSpec(ref common.ReferenceCall
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeIntervalInterval"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeIntervalInterval"),
 									},
 								},
 							},
@@ -1194,11 +1194,11 @@ func schema_pkg_apis_alerting_v0alpha1_TimeIntervalSpec(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeIntervalInterval"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeIntervalInterval"},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_TimeIntervalStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_TimeIntervalStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1213,7 +1213,7 @@ func schema_pkg_apis_alerting_v0alpha1_TimeIntervalStatus(ref common.ReferenceCa
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeIntervalstatusOperatorState"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeIntervalstatusOperatorState"),
 									},
 								},
 							},
@@ -1238,11 +1238,11 @@ func schema_pkg_apis_alerting_v0alpha1_TimeIntervalStatus(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1.TimeIntervalstatusOperatorState"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1.TimeIntervalstatusOperatorState"},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_TimeIntervalTimeRange(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_TimeIntervalTimeRange(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1269,7 +1269,7 @@ func schema_pkg_apis_alerting_v0alpha1_TimeIntervalTimeRange(ref common.Referenc
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_TimeIntervalstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alertingnotifications_v0alpha1_TimeIntervalstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
