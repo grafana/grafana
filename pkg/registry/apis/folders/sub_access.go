@@ -52,8 +52,7 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 	}
 
 	// Must be able to get the resource
-	_, err = r.getter.Get(ctx, name, &v1.GetOptions{})
-	if err != nil {
+	if _, err = r.getter.Get(ctx, name, &v1.GetOptions{}); err != nil {
 		return nil, err
 	}
 

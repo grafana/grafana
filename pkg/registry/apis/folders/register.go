@@ -19,9 +19,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	authlib "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana-app-sdk/logging"
-
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -203,11 +201,18 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		getter:  folderStore,
 		parents: b.parents,
 	}
-	storage[resourceInfo.StoragePath("counts")] = &subCountREST{searcher: b.searcher}
-	storage[resourceInfo.StoragePath("access")] = &subAccessREST{folderStore, b.ac}
+	storage[resourceInfo.StoragePath("counts")] = &subCountREST{
+		getter:   folderStore,
+		searcher: b.searcher,
+	}
+	storage[resourceInfo.StoragePath("access")] = &subAccessREST{
+		getter: folderStore,
+		ac:     b.ac,
+	}
 
 	// Adds a path to return children of a given folder
 	storage[resourceInfo.StoragePath("children")] = &subChildrenREST{
+		getter: folderStore,
 		lister: storage[resourceInfo.StoragePath()].(rest.Lister),
 	}
 
