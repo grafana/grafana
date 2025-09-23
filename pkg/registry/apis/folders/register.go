@@ -139,7 +139,6 @@ func (b *FolderAPIBuilder) AllowedV0Alpha1Resources() []string {
 }
 
 func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	storage := map[string]rest.Storage{}
 	opts.StorageOptsRegister(resourceInfo.GroupResource(), apistore.StorageOptions{
 		EnableFolderSupport:         true,
 		RequireDeprecatedInternalID: true})
@@ -149,7 +148,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		return err
 	}
 	b.registerPermissionHooks(unified)
-	b.storage = unified //
+	b.storage = unified
 
 	if b.folderSvc != nil {
 		legacyStore := &legacyStorage{
@@ -162,12 +161,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		if err != nil {
 			return err
 		}
-		switch dw {
-		case unified:
-			// no need to do anything
-		case legacyStore:
-			b.storage = legacyStore
-		default:
+		if dw != unified {
 			// Need to add a wrapper (mode 1-5)
 			b.storage = &folderStorage{
 				tableConverter:       resourceInfo.TableConverter(),
@@ -179,6 +173,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		}
 	}
 
+	storage := map[string]rest.Storage{}
 	storage[resourceInfo.StoragePath()] = b.storage
 
 	b.parents = newParentsGetter(b.storage, folder.MaxNestedFolderDepth) // used for validation
@@ -202,7 +197,6 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[folders.VERSION] = storage
-	b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
 	return nil
 }
 
