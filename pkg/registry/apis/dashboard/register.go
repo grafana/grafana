@@ -366,7 +366,6 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 
 // validateUpdate validates dashboard updates
 func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
-	b.log.Info("Validating dashboard update")
 	// Get the new and old dashboards
 	newDashObj := a.GetObject()
 	oldDashObj := a.GetOldObject()
@@ -376,19 +375,16 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 		return fmt.Errorf("error extracting dashboard properties: %w", err)
 	}
 
-	b.log.Info("Reached point A")
 	oldAccessor, err := utils.MetaAccessor(oldDashObj)
 	if err != nil {
 		return fmt.Errorf("error getting old dash meta accessor: %w", err)
 	}
 
-	b.log.Info("Reached point B")
 	newAccessor, err := utils.MetaAccessor(newDashObj)
 	if err != nil {
 		return fmt.Errorf("error getting new dash meta accessor: %w", err)
 	}
 
-	b.log.Info("Reached point C")
 	// Parse namespace for old dashboard
 	nsInfo, err := authlib.ParseNamespace(oldAccessor.GetNamespace())
 	if err != nil {
@@ -400,12 +396,8 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	b.log.Info("Reached point D")
-	b.log.Info("Values to inspect:", " old folder", oldAccessor.GetFolder(), " new folder", newAccessor.GetFolder(), "dryrun", a.IsDryRun())
-	//oldfolder=nested2-aintar92kovzoekr2utctivagwefazeq newfolder=nested2-aintar92kovzoekr2utctivagwefazeq dryrun=false
 	// Validate folder existence if specified and changed
 	if !a.IsDryRun() && newAccessor.GetFolder() != oldAccessor.GetFolder() && newAccessor.GetFolder() != "" {
-		b.log.Info("Reached point FINAL")
 		id, err := identity.GetRequester(ctx)
 		if err != nil {
 			return fmt.Errorf("error getting requester: %w", err)
