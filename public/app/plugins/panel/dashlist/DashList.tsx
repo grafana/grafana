@@ -3,16 +3,15 @@ import { SyntheticEvent, useEffect, useMemo, useState } from 'react';
 import { useThrottle } from 'react-use';
 
 import { InterpolateFunction, PanelProps, textUtil } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useStyles2, IconButton, ScrollContainer, Box, Text, EmptyState, Link } from '@grafana/ui';
+import { useStyles2, IconButton, ScrollContainer } from '@grafana/ui';
+import { updateNavIndex } from 'app/core/actions';
 import { getConfig } from 'app/core/config';
 import { ID_PREFIX, setStarred } from 'app/core/reducers/navBarTree';
 import { removeNavIndex, updateNavIndex } from 'app/core/reducers/navModel';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult, LocationInfo, QueryResponse, SearchQuery } from 'app/features/search/service/types';
+import { DashboardSearchItem } from 'app/features/search/types';
 import { StarToolbarButtonApiServer } from 'app/features/stars/StarToolbarButton';
 import { useDispatch, useSelector } from 'app/types/store';
 
@@ -234,19 +233,17 @@ export function DashList(props: PanelProps<Options>) {
         return (
           <li key={`dash-${dash.uid}`}>
             <div className={css.dashlistLink}>
-              <Box flex={1}>
-                <Link href={url}>{dash.name}</Link>
-                {showFolderNames && locationInfo && (
-                  <Text color="secondary" variant="bodySmall" element="p">
-                    {locationInfo?.name}
-                  </Text>
-                )}
-              </Box>
+              <div className={css.dashlistLinkBody}>
+                <a className={css.dashlistTitle} href={url}>
+                  {dash.title}
+                </a>
+                {showFolderNames && dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
+              </div>
               {config.featureToggles.starsFromAPIServer ? (
                 <StarToolbarButtonApiServer group="dashboard.grafana.app" kind="Dashboard" id={dash.uid ?? ''} />
               ) : (
                 <IconButton
-                  tooltip={dash.isStarred ? unmarkAsStarredText : markAsStarredText}
+                  tooltip={dash.isStarred ? `Unmark "${dash.title}" as favorite` : `Mark "${dash.title}" as favorite`}
                   name={dash.isStarred ? 'favorite' : 'star'}
                   iconType={dash.isStarred ? 'mono' : 'default'}
                   onClick={(e) => toggleDashboardStar(e, dash)}

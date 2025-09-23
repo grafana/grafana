@@ -36,6 +36,36 @@
         }
       }
     },
+    "/apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/current": {
+      "get": {
+        "tags": [
+          "Preferences"
+        ],
+        "description": "Get preferences for requester.  This combines the user preferences with the team and global defaults",
+        "operationId": "currentPreferences",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/preferences": {
       "get": {
         "tags": [
@@ -193,36 +223,6 @@
           }
         }
       ]
-    },
-    "/apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/preferences/merged": {
-      "get": {
-        "tags": [
-          "Preferences"
-        ],
-        "description": "Get preferences for requester.  This combines the user preferences with the team and global defaults",
-        "operationId": "mergedPreferences",
-        "parameters": [
-          {
-            "name": "namespace",
-            "in": "path",
-            "description": "workspace",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "default"
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      }
     },
     "/apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/preferences/{name}": {
       "get": {
@@ -1122,7 +1122,7 @@
         }
       ]
     },
-    "/apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}": {
+    "/apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}/write/{group}/{kind}/{id}": {
       "put": {
         "tags": [
           "Stars"
