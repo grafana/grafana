@@ -4,7 +4,7 @@ import { wellFormedTree } from '../../../fixtures/folders';
 
 const [_, { folderA_dashbdD, dashbdD }] = wellFormedTree();
 
-const mockStarredDashboards = [dashbdD.item.uid, folderA_dashbdD.item.uid];
+export const mockStarredDashboards = [dashbdD.item.uid, folderA_dashbdD.item.uid];
 
 const getStarsHandler = () =>
   http.get('/api/user/stars', async () => {

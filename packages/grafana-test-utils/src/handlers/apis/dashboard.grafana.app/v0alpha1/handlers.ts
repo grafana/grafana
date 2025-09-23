@@ -24,58 +24,57 @@ const getSearchHandler = () =>
     const nameFilter = new URL(request.url).searchParams.getAll('name');
     const mappedTypeFilter = typeFilter ? typeFilterMap[typeFilter] || typeFilter : null;
 
-    const response = mockTree
-      .filter((filterItem) => {
-        const filters: FilterArray = [
-          // Filter UI items out of fixtures as... they're UI items 🤷
-          ({ item }) => item.kind !== 'ui',
-        ];
+    const filtered = mockTree.filter((filterItem) => {
+      const filters: FilterArray = [
+        // Filter UI items out of fixtures as... they're UI items 🤷
+        ({ item }) => item.kind !== 'ui',
+      ];
 
-        if (nameFilter.length > 0) {
-          const filteredNameFilter = nameFilter.filter((name) => name !== 'general');
-          filters.push(({ item }) => filteredNameFilter.includes(item.uid));
-        }
+      if (nameFilter.length > 0) {
+        const filteredNameFilter = nameFilter.filter((name) => name !== 'general');
+        filters.push(({ item }) => filteredNameFilter.includes(item.uid));
+      }
 
-        if (typeFilter) {
-          filters.push(({ item }) => item.kind === mappedTypeFilter);
-        }
+      if (typeFilter) {
+        filters.push(({ item }) => item.kind === mappedTypeFilter);
+      }
 
-        if (folderFilter && folderFilter !== 'general') {
-          filters.push(
-            ({ item }) => (item.kind === 'folder' || item.kind === 'dashboard') && item.parentUID === folderFilter
-          );
-        }
+      if (folderFilter && folderFilter !== 'general') {
+        filters.push(
+          ({ item }) => (item.kind === 'folder' || item.kind === 'dashboard') && item.parentUID === folderFilter
+        );
+      }
 
-        if (folderFilter === 'general') {
-          filters.push(
-            ({ item }) => (item.kind === 'folder' || item.kind === 'dashboard') && item.parentUID === undefined
-          );
-        }
+      if (folderFilter === 'general') {
+        filters.push(
+          ({ item }) => (item.kind === 'folder' || item.kind === 'dashboard') && item.parentUID === undefined
+        );
+      }
 
-        return filters.every((filterPredicate) => filterPredicate(filterItem));
-      })
+      return filters.every((filterPredicate) => filterPredicate(filterItem));
+    });
 
-      .map(({ item }) => {
-        const random = Chance(item.uid);
-        const parentFolder = 'parentUID' in item ? item.parentUID : undefined;
-        return {
-          resource: typeMap[item.kind],
-          name: item.uid,
-          title: item.title,
-          folder: parentFolder,
-          field: {
-            // Generate mock deprecated IDs only in the mock handlers - not generating in
-            // mock data as it would require updating/tracking in the types as well
-            'grafana.app/deprecatedInternalID': random.integer({ min: 1, max: 1000 }),
-          },
-        };
-      });
+    const mapped = filtered.map(({ item }) => {
+      const random = Chance(item.uid);
+      const parentFolder = 'parentUID' in item ? item.parentUID : undefined;
+      return {
+        resource: typeMap[item.kind],
+        name: item.uid,
+        title: item.title,
+        folder: parentFolder,
+        field: {
+          // Generate mock deprecated IDs only in the mock handlers - not generating in
+          // mock data as it would require updating/tracking in the types as well
+          'grafana.app/deprecatedInternalID': random.integer({ min: 1, max: 1000 }),
+        },
+      };
+    });
 
-    const slicedResponse = limitFilter ? response.slice(0, parseInt(limitFilter, 10)) : response;
+    const sliced = limitFilter ? mapped.slice(0, parseInt(limitFilter, 10)) : mapped;
 
     return HttpResponse.json({
-      totalHits: slicedResponse.length,
-      hits: slicedResponse,
+      totalHits: sliced.length,
+      hits: sliced,
     });
   });
 
