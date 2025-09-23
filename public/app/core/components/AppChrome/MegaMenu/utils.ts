@@ -164,7 +164,6 @@ export function getEditionAndUpdateLinks(): NavModelItem[] {
   return links;
 }
 
-
 export function findByUrl(nodes: NavModelItem[], url: string): NavModelItem | null {
   for (const item of nodes) {
     if (item.url === url) {
