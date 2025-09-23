@@ -455,7 +455,7 @@ func (s *Service) getUserPermissions(ctx context.Context, ns types.NamespaceInfo
 		if err != nil {
 			return nil, err
 		}
-		scopeMap := getScopeMap(permissions)
+		scopeMap := s.getScopeMap(permissions)
 
 		scopeMap, err = s.resolveScopeMap(ctx, ns, scopeMap)
 		if err != nil {
@@ -485,7 +485,7 @@ func (s *Service) getAnonymousPermissions(ctx context.Context, ns types.Namespac
 		if err != nil {
 			return nil, err
 		}
-		scopeMap := getScopeMap(permissions)
+		scopeMap := s.getScopeMap(permissions)
 		s.permCache.Set(ctx, anonPermKey, scopeMap)
 		return scopeMap, nil
 	})
