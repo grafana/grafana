@@ -5,6 +5,11 @@
 ### Features and enhancements
 
 - **Auditing:** Add settings to control recording of datasource query request and response body (Enterprise)
+- **Auditing:** Document new options for recording datasource query request/response body [#109976](https://github.com/grafana/grafana/pull/109976), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Fix:** Fix redirection after login when Grafana is served from subpath [#111099](https://github.com/grafana/grafana/pull/111099), [@mgyongyosi](https://github.com/mgyongyosi)
 
 <!-- 11.5.9 END -->
 <!-- 12.1.1 START -->
