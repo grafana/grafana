@@ -1,0 +1,16 @@
+{
+  "title": "New Dashboard",
+  "services": {
+    "filter": {
+      "list": [],
+      "time": {
+        "from": "now-5m",
+        "to": "now"
+      }
+    }
+  },
+  "rows": [],
+  "editable": true,
+  "failover": false,
+  "panel_hints": true
+}

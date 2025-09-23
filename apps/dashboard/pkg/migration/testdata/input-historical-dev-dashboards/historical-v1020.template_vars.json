@@ -1,0 +1,233 @@
+{
+  "id": null,
+  "title": "Templated Graphs Nested",
+  "tags": ["showcase", "templated"],
+  "timezone": "browser",
+  "editable": true,
+  "rows": [
+    {
+      "title": "Row1",
+      "height": "350px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "span": 12,
+          "editable": true,
+          "type": "graph",
+          "loadingEditor": false,
+          "datasource": null,
+          "renderer": "flot",
+          "x-axis": true,
+          "y-axis": true,
+          "scale": 1,
+          "y_formats": ["short", "short"],
+          "grid": {
+            "max": null,
+            "min": 0,
+            "threshold1": null,
+            "threshold2": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)",
+            "leftMax": null,
+            "rightMax": null,
+            "leftMin": null,
+            "rightMin": null
+          },
+          "annotate": {
+            "enable": false
+          },
+          "resolution": 100,
+          "lines": true,
+          "fill": 1,
+          "linewidth": 1,
+          "dashes": false,
+          "dashLength": 10,
+          "spaceLength": 10,
+          "points": false,
+          "pointradius": 5,
+          "bars": false,
+          "stack": true,
+          "legend": {
+            "show": true,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false
+          },
+          "percentage": false,
+          "nullPointMode": "connected",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "cumulative",
+            "query_as_alias": true
+          },
+          "targets": [
+            {
+              "target": "aliasByNode(apps.$app.$server.counters.requests.count, 2)",
+              "function": "mean",
+              "column": "value"
+            }
+          ],
+          "aliasColors": {
+            "highres.test": "#1F78C1",
+            "scale(highres.test,3)": "#6ED0E0",
+            "mobile": "#6ED0E0",
+            "tablet": "#EAB839"
+          },
+          "title": "Traffic [[period]]",
+          "id": 1,
+          "seriesOverrides": []
+        }
+      ],
+      "notice": false
+    },
+    {
+      "title": "Row1",
+      "height": "350px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "span": 12,
+          "editable": true,
+          "type": "graph",
+          "loadingEditor": false,
+          "datasource": null,
+          "renderer": "flot",
+          "x-axis": true,
+          "y-axis": true,
+          "scale": 1,
+          "y_formats": ["short", "short"],
+          "grid": {
+            "max": null,
+            "min": 0,
+            "threshold1": null,
+            "threshold2": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)",
+            "leftMax": null,
+            "rightMax": null,
+            "leftMin": null,
+            "rightMin": null
+          },
+          "annotate": {
+            "enable": false
+          },
+          "resolution": 100,
+          "lines": true,
+          "fill": 1,
+          "linewidth": 1,
+          "points": false,
+          "pointradius": 5,
+          "bars": false,
+          "stack": true,
+          "legend": {
+            "show": true,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false
+          },
+          "percentage": false,
+          "zerofill": true,
+          "nullPointMode": "connected",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "cumulative",
+            "query_as_alias": true
+          },
+          "targets": [
+            {
+              "target": "aliasByNode(apps.$app.$server.counters.requests.count, 2)"
+            }
+          ],
+          "aliasColors": {
+            "highres.test": "#1F78C1",
+            "scale(highres.test,3)": "#6ED0E0",
+            "mobile": "#6ED0E0",
+            "tablet": "#EAB839"
+          },
+          "title": "Second pannel",
+          "id": 2,
+          "seriesOverrides": []
+        }
+      ],
+      "notice": false
+    }
+  ],
+  "nav": [
+    {
+      "type": "timepicker",
+      "collapse": false,
+      "notice": false,
+      "enable": true,
+      "status": "Stable",
+      "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"],
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+      "now": true
+    }
+  ],
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "type": "query",
+        "name": "app",
+        "query": "apps.*",
+        "includeAll": true,
+        "options": [],
+        "current": {
+          "text": "All",
+          "value": "*"
+        },
+        "datasource": null,
+        "allFormat": "wildcard",
+        "refresh": true
+      },
+      {
+        "type": "query",
+        "name": "server",
+        "query": "apps.$app.*",
+        "includeAll": true,
+        "options": [],
+        "current": {
+          "text": "All",
+          "value": "*"
+        },
+        "datasource": null,
+        "allFormat": "Glob",
+        "refresh": false
+      },
+      {
+        "type": "query",
+        "datasource": null,
+        "refresh": false,
+        "name": "metric",
+        "options": [],
+        "includeAll": true,
+        "allFormat": "glob",
+        "query": "apps.$app.$server.*",
+        "current": {
+          "text": "counters",
+          "value": "counters"
+        }
+      }
+    ],
+    "enable": true
+  },
+  "annotations": {
+    "enable": false
+  },
+  "refresh": 0,
+  "version": 6
+}
