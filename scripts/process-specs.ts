@@ -1,6 +1,47 @@
+import jsonPatch from 'fast-json-patch';
 import fs from 'fs';
 import { OpenAPIV3 } from 'openapi-types';
 import path from 'path';
+
+import specPatches from './patches/openapi-patches.mts';
+
+/**
+ * Apply JSON patches to an OpenAPI spec document.
+ */
+function applyPatches(spec: OpenAPIV3.Document, filename: string): OpenAPIV3.Document {
+  const patches = specPatches[filename];
+  if (!patches?.length) {
+    return spec;
+  }
+
+  console.log(`Applying ${patches.length} patch groups to ${filename}...`);
+
+  let currentSpec = spec;
+
+  for (const patch of patches) {
+    try {
+      // Apply all operations in this patch group
+      const result = jsonPatch.applyPatch(currentSpec, patch.operations, /* validate */ true, /* mutate */ false);
+
+      if (result.newDocument) {
+        currentSpec = result.newDocument;
+
+        if (patch.description) {
+          console.log(`  ✓ ${patch.description} (${patch.operations.length} operations)`);
+        } else {
+          console.log(`  ✓ Applied ${patch.operations.length} operations`);
+        }
+      } else {
+        console.warn(`Warning: Patch operations failed for ${filename}`);
+      }
+    } catch (error) {
+      console.error(`Error applying patch operations:`, error);
+      console.error(`Operations:`, patch.operations);
+    }
+  }
+
+  return currentSpec;
+}
 
 /**
  * Process an OpenAPI spec to remove k8s metadata from names and paths:
@@ -10,8 +51,9 @@ import path from 'path';
  * - Filter out `namespace` from path parameters.
  * - Update all $ref fields to remove k8s metadata from schema names.
  * - Simplify schema names in "components.schemas".
+ * - Apply type narrowing patches.
  */
-function processOpenAPISpec(spec: OpenAPIV3.Document) {
+function processOpenAPISpec(spec: OpenAPIV3.Document, filename?: string) {
   // Create a deep copy of the spec to avoid mutating the original
   const newSpec = JSON.parse(JSON.stringify(spec));
 
@@ -81,6 +123,12 @@ function processOpenAPISpec(spec: OpenAPIV3.Document) {
     newSchemas[newKey] = schemaObject;
   }
   newSpec.components.schemas = newSchemas;
+
+  // Apply type narrowing patches if filename is provided
+  if (filename) {
+    const fileBasename = path.basename(filename, path.extname(filename));
+    return applyPatches(newSpec, fileBasename);
+  }
 
   return newSpec;
 }
@@ -166,7 +214,7 @@ function processDirectory(sourceDir: string, outputDir: string) {
       continue;
     }
 
-    const outputSpec = processOpenAPISpec(inputSpec);
+    const outputSpec = processOpenAPISpec(inputSpec, file);
     fs.writeFileSync(outputPath, JSON.stringify(outputSpec, null, 2), 'utf-8');
     console.log(`Processing completed for file "${file}".`);
   }
@@ -176,6 +224,7 @@ const sourceDirs = [
   path.resolve(import.meta.dirname, '../pkg/tests/apis/openapi_snapshots'),
   path.resolve(import.meta.dirname, '../pkg/extensions/apiserver/tests/openapi_snapshots'),
 ];
+
 const outputDir = path.resolve(import.meta.dirname, '../data/openapi');
 
 for (const sourceDir of sourceDirs) {
