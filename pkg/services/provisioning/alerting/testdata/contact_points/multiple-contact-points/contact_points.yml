@@ -1,0 +1,14 @@
+apiVersion: 1
+contactPoints:
+  - name: cp_1
+    receivers:
+    - uid: first_uid
+      type: prometheus-alertmanager
+      settings:
+        url: http://test:9000
+  - name: cp_2
+    receivers:
+    - uid: second_uid
+      type: prometheus-alertmanager
+      settings:
+        url: http://test:9000

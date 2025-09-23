@@ -1,0 +1,29 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SelectOption renders correctly 1`] = `
+<div>
+  <div
+    aria-disabled="false"
+    class="css-0"
+    id=""
+    tabindex="1"
+  >
+    <div
+      class="gf-form-select-box__desc-option"
+    >
+      <img
+        alt=""
+        class="gf-form-select-box__desc-option__img"
+        src="url/to/avatar"
+      />
+      <div
+        class="gf-form-select-box__desc-option__body"
+      >
+        <div>
+          Model title
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;

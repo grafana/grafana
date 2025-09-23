@@ -1,0 +1,6 @@
+{
+  "type": "datasource",
+  "name": "PTSummary",
+  "id": "pmm-pt-summary-datasource",
+  "metrics": true
+}

@@ -20,7 +20,30 @@ func addTableIndicesMigrations(mg *Migrator, versionSuffix string, table Table) 
 	}
 }
 
+// addTableRenameMigration may cause breaking changes.
+// DEPRECATED: It should no longer be used. Kept only for legacy reasons.
 func addTableRenameMigration(mg *Migrator, oldName string, newName string, versionSuffix string) {
 	migrationId := fmt.Sprintf("Rename table %s to %s - %s", oldName, newName, versionSuffix)
 	mg.AddMigration(migrationId, NewRenameTableMigration(oldName, newName))
+}
+
+func addTableReplaceMigrations(mg *Migrator, from Table, to Table, migrationVersion int64, tableDataMigration map[string]string) {
+	fromV := version(migrationVersion - 1)
+	toV := version(migrationVersion)
+	tmpTableName := to.Name + "_tmp_qwerty"
+
+	createTable := fmt.Sprintf("create %v %v", to.Name, toV)
+	copyTableData := fmt.Sprintf("copy %v %v to %v", to.Name, fromV, toV)
+	dropTable := fmt.Sprintf("drop %v", tmpTableName)
+
+	addDropAllIndicesMigrations(mg, fromV, from)
+	addTableRenameMigration(mg, from.Name, tmpTableName, fromV)
+	mg.AddMigration(createTable, NewAddTableMigration(to))
+	addTableIndicesMigrations(mg, toV, to)
+	mg.AddMigration(copyTableData, NewCopyTableDataMigration(to.Name, tmpTableName, tableDataMigration))
+	mg.AddMigration(dropTable, NewDropTableMigration(tmpTableName))
+}
+
+func version(v int64) string {
+	return fmt.Sprintf("v%v", v)
 }

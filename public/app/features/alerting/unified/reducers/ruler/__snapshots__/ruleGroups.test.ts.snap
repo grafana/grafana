@@ -1,0 +1,176 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`pausing rules should pause a Grafana managed rule in a group 1`] = `
+{
+  "interval": "5m",
+  "name": "group-1",
+  "rules": [
+    {
+      "annotations": {
+        "message": "alert with severity "{{.warning}}}"",
+      },
+      "for": "1m",
+      "grafana_alert": {
+        "condition": "A",
+        "data": [
+          {
+            "datasourceUid": "123",
+            "model": {},
+            "queryType": "huh",
+            "refId": "A",
+          },
+        ],
+        "exec_err_state": "Alerting",
+        "namespace_uid": "123",
+        "no_data_state": "Alerting",
+        "rule_group": "my-group",
+        "title": "myalert",
+        "uid": "1",
+      },
+      "labels": {
+        "severity": "warning",
+      },
+    },
+    {
+      "annotations": {
+        "message": "alert with severity "{{.warning}}}"",
+      },
+      "for": "1m",
+      "grafana_alert": {
+        "condition": "A",
+        "data": [
+          {
+            "datasourceUid": "123",
+            "model": {},
+            "queryType": "huh",
+            "refId": "A",
+          },
+        ],
+        "exec_err_state": "Alerting",
+        "is_paused": true,
+        "namespace_uid": "123",
+        "no_data_state": "Alerting",
+        "rule_group": "my-group",
+        "title": "myalert",
+        "uid": "2",
+      },
+      "labels": {
+        "severity": "warning",
+      },
+    },
+    {
+      "annotations": {
+        "message": "alert with severity "{{.warning}}}"",
+      },
+      "for": "1m",
+      "grafana_alert": {
+        "condition": "A",
+        "data": [
+          {
+            "datasourceUid": "123",
+            "model": {},
+            "queryType": "huh",
+            "refId": "A",
+          },
+        ],
+        "exec_err_state": "Alerting",
+        "namespace_uid": "123",
+        "no_data_state": "Alerting",
+        "rule_group": "my-group",
+        "title": "myalert",
+        "uid": "3",
+      },
+      "labels": {
+        "severity": "warning",
+      },
+    },
+  ],
+}
+`;
+
+exports[`removing a rule should remove a Data source managed ruler rule without touching other rules 1`] = `
+{
+  "interval": "5m",
+  "name": "group-1",
+  "rules": [
+    {
+      "alert": "do not delete me",
+      "annotations": {
+        "summary": "test alert",
+      },
+      "expr": "up = 1",
+      "labels": {
+        "severity": "warning",
+      },
+    },
+    {
+      "expr": "up = 1",
+      "labels": {
+        "severity": "warning",
+      },
+      "record": "do not delete me",
+    },
+  ],
+}
+`;
+
+exports[`removing a rule should remove a Grafana managed ruler rule without touching other rules 1`] = `
+{
+  "interval": "5m",
+  "name": "group-1",
+  "rules": [
+    {
+      "annotations": {
+        "message": "alert with severity "{{.warning}}}"",
+      },
+      "for": "1m",
+      "grafana_alert": {
+        "condition": "A",
+        "data": [
+          {
+            "datasourceUid": "123",
+            "model": {},
+            "queryType": "huh",
+            "refId": "A",
+          },
+        ],
+        "exec_err_state": "Alerting",
+        "namespace_uid": "123",
+        "no_data_state": "Alerting",
+        "rule_group": "my-group",
+        "title": "myalert",
+        "uid": "1",
+      },
+      "labels": {
+        "severity": "warning",
+      },
+    },
+    {
+      "annotations": {
+        "message": "alert with severity "{{.warning}}}"",
+      },
+      "for": "1m",
+      "grafana_alert": {
+        "condition": "A",
+        "data": [
+          {
+            "datasourceUid": "123",
+            "model": {},
+            "queryType": "huh",
+            "refId": "A",
+          },
+        ],
+        "exec_err_state": "Alerting",
+        "namespace_uid": "123",
+        "no_data_state": "Alerting",
+        "rule_group": "my-group",
+        "title": "myalert",
+        "uid": "3",
+      },
+      "labels": {
+        "severity": "warning",
+      },
+    },
+  ],
+}
+`;

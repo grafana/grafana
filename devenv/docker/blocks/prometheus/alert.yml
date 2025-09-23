@@ -1,0 +1,11 @@
+groups:
+  - name: ALERT
+    rules:
+    - alert: AppCrash
+      expr: process_open_fds > 0
+      for: 15s
+      labels:
+        severity: critical
+      annotations:
+        summary: Number of open fds > 0
+        description: Just testing

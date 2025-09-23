@@ -1,0 +1,462 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 209,
+    "links": [
+      {
+        "asDropdown": false,
+        "icon": "external link",
+        "includeVars": false,
+        "keepTime": false,
+        "tags": [
+          "live-tests"
+        ],
+        "targetBlank": false,
+        "title": "gdev live tests",
+        "tooltip": "",
+        "type": "dashboards",
+        "url": ""
+      }
+    ],
+    "panels": [
+      {
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "gridPos": {
+          "h": 2,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "id": 9,
+        "options": {
+          "code": {
+            "language": "plaintext",
+            "showLineNumbers": false,
+            "showMiniMap": false
+          },
+          "content": "## This dashboard requires alpha panels to be enabled!",
+          "mode": "markdown"
+        },
+        "pluginVersion": "11.0.0-pre",
+        "type": "text"
+      },
+      {
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 15,
+          "x": 0,
+          "y": 2
+        },
+        "id": 2,
+        "options": {
+          "channel": {
+            "namespace": "devenv",
+            "path": "weather",
+            "scope": "stream"
+          },
+          "display": "none",
+          "json": {
+            "hello": "world"
+          },
+          "message": "weather,location=west,sensor=A temperature=82\nweather,location=east,sensor=A temperature=76",
+          "publish": "influx"
+        },
+        "title": "Panel Title",
+        "type": "live"
+      },
+      {
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "type": "auto"
+              },
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 9,
+          "x": 15,
+          "y": 2
+        },
+        "id": 4,
+        "options": {
+          "cellHeight": "sm",
+          "footer": {
+            "countRows": false,
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": false
+          },
+          "showHeader": true,
+          "sortBy": []
+        },
+        "pluginVersion": "11.0.0-pre",
+        "targets": [
+          {
+            "channel": "stream/devenv/weather",
+            "datasource": {
+              "type": "datasource",
+              "uid": "grafana"
+            },
+            "queryType": "measurements",
+            "refId": "A"
+          }
+        ],
+        "title": "Weather (values)",
+        "transformations": [
+          {
+            "id": "sortBy",
+            "options": {
+              "fields": {},
+              "sort": [
+                {
+                  "desc": true,
+                  "field": "time"
+                }
+              ]
+            }
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 15,
+          "x": 0,
+          "y": 6
+        },
+        "id": 5,
+        "options": {
+          "channel": {
+            "namespace": "devenv",
+            "path": "weather",
+            "scope": "stream"
+          },
+          "display": "none",
+          "json": {
+            "hello": "world"
+          },
+          "message": "weather,location=west,sensor=A temperature=90\nweather,location=east,sensor=A temperature=80",
+          "publish": "influx"
+        },
+        "title": "Timeseries with multiple streaming queries",
+        "type": "live"
+      },
+      {
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 24,
+          "x": 0,
+          "y": 10
+        },
+        "id": 1,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "channel": "stream/devenv/weather",
+            "datasource": {
+              "type": "datasource",
+              "uid": "grafana"
+            },
+            "queryType": "measurements",
+            "refId": "A"
+          },
+          {
+            "channel": "stream/devenv/weatherX",
+            "datasource": {
+              "type": "datasource",
+              "uid": "grafana"
+            },
+            "hide": false,
+            "queryType": "measurements",
+            "refId": "B"
+          }
+        ],
+        "title": "Panel Title",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 15,
+          "x": 0,
+          "y": 17
+        },
+        "id": 6,
+        "options": {
+          "channel": {
+            "namespace": "devenv",
+            "path": "weather",
+            "scope": "stream"
+          },
+          "display": "none",
+          "json": {
+            "hello": "world"
+          },
+          "message": "weatherX,location=west,sensor=X temperature=82\nweatherX,location=east,sensor=X temperature=76",
+          "publish": "influx"
+        },
+        "title": "Panel Title",
+        "type": "live"
+      },
+      {
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "type": "auto"
+              },
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 9,
+          "x": 15,
+          "y": 17
+        },
+        "id": 7,
+        "options": {
+          "cellHeight": "sm",
+          "footer": {
+            "countRows": false,
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": false
+          },
+          "showHeader": true,
+          "sortBy": []
+        },
+        "pluginVersion": "11.0.0-pre",
+        "targets": [
+          {
+            "channel": "stream/devenv/weatherX",
+            "datasource": {
+              "type": "datasource",
+              "uid": "grafana"
+            },
+            "queryType": "measurements",
+            "refId": "A"
+          }
+        ],
+        "title": "WeatherX (values)",
+        "transformations": [
+          {
+            "id": "sortBy",
+            "options": {
+              "fields": {},
+              "sort": [
+                {
+                  "desc": true,
+                  "field": "time"
+                }
+              ]
+            }
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 15,
+          "x": 0,
+          "y": 21
+        },
+        "id": 8,
+        "options": {
+          "channel": {
+            "namespace": "devenv",
+            "path": "weather",
+            "scope": "stream"
+          },
+          "display": "none",
+          "json": {
+            "hello": "world"
+          },
+          "message": "weatherX,location=west,sensor=X temperature=90\nweatherX,location=east,sensor=X temperature=22",
+          "publish": "influx"
+        },
+        "title": "Panel Title",
+        "type": "live"
+      }
+    ],
+    "schemaVersion": 39,
+    "tags": [
+      "gdev",
+      "live-tests"
+    ],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-1m",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "Live publish test",
+    "uid": "addoomtlivedev",
+    "version": 17,
+    "weekStart": ""
+  }

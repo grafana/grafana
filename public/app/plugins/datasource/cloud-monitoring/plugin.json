@@ -1,0 +1,96 @@
+{
+  "type": "datasource",
+  "name": "Google Cloud Monitoring",
+  "id": "stackdriver",
+  "category": "cloud",
+
+  "metrics": true,
+  "alerting": true,
+  "annotations": true,
+  "logs": true,
+  "backend": true,
+  "includes": [
+    {
+      "type": "dashboard",
+      "name": "Data Processing Monitoring",
+      "path": "dashboards/dataprocessing-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Cloud Functions Monitoring",
+      "path": "dashboards/cloudfunctions-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "GCE VM Instance Monitoring",
+      "path": "dashboards/gce-vm-instance-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "GKE Prometheus Pod/Node Monitoring",
+      "path": "dashboards/gke-prometheus-pod-node-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Firewall Insights Monitoring",
+      "path": "dashboards/firewall-insight-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "GCE Network Monitoring",
+      "path": "dashboards/gce-network-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "HTTP/S LB Backend Services",
+      "path": "dashboards/https-lb-backend-services-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "HTTP/S Load Balancer Monitoring",
+      "path": "dashboards/https-loadbalancer-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Network TCP Load Balancer Monitoring",
+      "path": "dashboards/network-tcp-loadbalancer-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "MicroService Monitoring",
+      "path": "dashboards/micro-service-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Cloud Storage Monitoring",
+      "path": "dashboards/cloud-storage-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Cloud SQL Monitoring",
+      "path": "dashboards/cloudsql-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Cloud SQL(MySQL) Monitoring",
+      "path": "dashboards/cloudsql-mysql-monitoring.json"
+    }
+  ],
+  "queryOptions": {
+    "maxDataPoints": true,
+    "cacheTimeout": true
+  },
+  "executable": "gpx_cloudmonitoring",
+  "info": {
+    "description": "Data source for Google's monitoring service (formerly named Stackdriver)",
+    "version": "%VERSION%",
+    "logos": {
+      "small": "img/cloud_monitoring_logo.svg",
+      "large": "img/cloud_monitoring_logo.svg"
+    },
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    }
+  }
+}

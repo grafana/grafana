@@ -1,0 +1,28 @@
+import { ArgTypes, Canvas } from '@storybook/blocks';
+import { Field } from '../Forms/Field';
+import { TextArea } from './TextArea';
+import * as TextAreaStories from './TextArea.story';
+import { ExampleFrame } from '../../utils/storybook/ExampleFrame';
+
+# TextArea
+
+Use for multi line inputs like descriptions.
+
+### Usage
+
+<Canvas of={TextAreaStories.Basic} />
+
+### Usage in forms with Field
+
+`TextArea` should be used with the `Field` component to get labels and descriptions. It can also be used for validation by using the `required` attribute. See the `Field` component for more information.
+
+<ExampleFrame>
+  <Field
+    label="Important information"
+    description="This information is very important, so you really need to fill it in"
+  >
+    <TextArea name="importantTextarea" required />
+  </Field>
+</ExampleFrame>
+
+<ArgTypes of={TextArea} />

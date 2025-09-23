@@ -1,0 +1,57 @@
+[
+  {
+    "active": true,
+    "integrations": [
+      {
+        "lastNotifyAttempt": "2023-07-02T21:35:34.841+02:00",
+        "lastNotifyAttemptDuration": "1ms",
+        "lastNotifyAttemptError": "failed to send notification to email addresses: gilles.demey@grafana.com: dial tcp 192.168.1.21:1025: connect: connection refused",
+        "name": "email",
+        "sendResolved": true
+      }
+    ],
+    "name": "grafana-default-email"
+  },
+  {
+    "active": false,
+    "integrations": [
+      {
+        "lastNotifyAttempt": "0001-01-01T00:00:00.000Z",
+        "lastNotifyAttemptDuration": "0s",
+        "name": "email",
+        "sendResolved": true
+      }
+    ],
+    "name": "provisioned-contact-point"
+  },
+  {
+    "active": false,
+    "integrations": [
+      {
+        "lastNotifyAttempt": "0001-01-01T00:00:00.000Z",
+        "lastNotifyAttemptDuration": "0s",
+        "name": "email",
+        "sendResolved": true
+      }
+    ],
+    "name": "lotsa-emails"
+  },
+  {
+    "active": false,
+    "integrations": [
+      {
+        "lastNotifyAttempt": "0001-01-01T00:00:00.000Z",
+        "lastNotifyAttemptDuration": "0s",
+        "name": "slack",
+        "sendResolved": true
+      },
+      {
+        "lastNotifyAttempt": "0001-01-01T00:00:00.000Z",
+        "lastNotifyAttemptDuration": "0s",
+        "name": "slack",
+        "sendResolved": true
+      }
+    ],
+    "name": "Slack with multiple channels"
+  }
+]

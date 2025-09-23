@@ -1,0 +1,23 @@
+services:
+  grafana:
+    image: grafana/grafana-dev:3a22eba17f23b18faa27436ab2f9c3ea977b550b
+    volumes:
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+    environment:
+      - VIRTUAL_HOST=grafana.loc
+      - GF_FEATURE_TOGGLES_ENABLE=ngalert
+      - GF_UNIFIED_ALERTING_HA_PEERS=ha-test-unified-alerting-grafana2-1:9094,ha-test-unified-alerting-grafana1-1:9094,ha-test-unified-alerting-grafana3-1:9094,ha-test-unified-alerting-grafana4-1:9094
+      - GF_SERVER_ROOT_URL=http://grafana.loc
+      - GF_DATABASE_NAME=grafana
+      - GF_DATABASE_USER=grafana
+      - GF_DATABASE_PASSWORD=password
+      - GF_DATABASE_TYPE=mysql
+      - GF_DATABASE_HOST=db:3306
+      - GF_DATABASE_MAX_OPEN_CONN=300
+      - GF_SESSION_PROVIDER=mysql
+      - GF_SESSION_PROVIDER_CONFIG=grafana:password@tcp(db:3306)/grafana?allowNativePasswords=true
+    healthcheck:
+      test: timeout 10s bash -c ':> /dev/tcp/127.0.0.1/3000' || exit 1
+      interval: 5s
+      timeout: 15s
+      retries: 3

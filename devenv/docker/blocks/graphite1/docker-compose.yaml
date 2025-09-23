@@ -1,0 +1,15 @@
+  graphite1:
+    image: graphiteapp/graphite-statsd:1.0.2-3
+    ports:
+      - "8280:80"
+      - "2203-2204:2003-2004"
+      - "2223-2224:2023-2024"
+
+  fake-graphite1-data:
+    image: grafana/fake-data-gen
+    environment:
+      FD_DATASOURCE: graphite
+      FD_PORT: 2203
+      FD_GRAPHITE_VERSION: 1.0
+    depends_on:
+      - graphite1

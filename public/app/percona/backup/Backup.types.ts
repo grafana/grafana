@@ -1,0 +1,61 @@
+export enum DataModel {
+  DATA_MODEL_INVALID = 'DATA_MODEL_UNSPECIFIED',
+  PHYSICAL = 'DATA_MODEL_PHYSICAL',
+  LOGICAL = 'DATA_MODEL_LOGICAL',
+}
+
+export enum BackupStatus {
+  BACKUP_STATUS_INVALID = 'BACKUP_STATUS_INVALID',
+  BACKUP_STATUS_PENDING = 'BACKUP_STATUS_PENDING',
+  BACKUP_STATUS_IN_PROGRESS = 'BACKUP_STATUS_IN_PROGRESS',
+  BACKUP_STATUS_PAUSED = 'BACKUP_STATUS_PAUSED',
+  BACKUP_STATUS_SUCCESS = 'BACKUP_STATUS_SUCCESS',
+  BACKUP_STATUS_ERROR = 'BACKUP_STATUS_ERROR',
+  BACKUP_STATUS_DELETING = 'BACKUP_STATUS_DELETING',
+  BACKUP_STATUS_FAILED_TO_DELETE = 'BACKUP_STATUS_FAILED_TO_DELETE',
+  BACKUP_STATUS_FAILED_NOT_SUPPORTED_BY_AGENT = 'BACKUP_STATUS_FAILED_NOT_SUPPORTED_BY_AGENT',
+}
+
+export enum RestoreStatus {
+  RESTORE_STATUS_INVALID = 'RESTORE_STATUS_INVALID',
+  RESTORE_STATUS_IN_PROGRESS = 'RESTORE_STATUS_IN_PROGRESS',
+  RESTORE_STATUS_SUCCESS = 'RESTORE_STATUS_SUCCESS',
+  RESTORE_STATUS_ERROR = 'RESTORE_STATUS_ERROR',
+}
+
+export enum RetryMode {
+  AUTO = 'AUTO',
+  MANUAL = 'MANUAL',
+}
+
+export enum BackupMode {
+  INVALID = 'BACKUP_MODE_UNSPECIFIED',
+  SNAPSHOT = 'BACKUP_MODE_SNAPSHOT',
+  INCREMENTAL = 'BACKUP_MODE_INCREMENTAL',
+  PITR = 'BACKUP_MODE_PITR',
+}
+
+export enum BackupType {
+  DEMAND = 'DEMAND',
+  SCHEDULED = 'SCHEDULED',
+}
+
+export interface RawBackupLog {
+  chunk_id: number;
+  data: string;
+  time: string;
+}
+
+export interface BackupLogResponse {
+  logs: RawBackupLog[];
+  end: boolean;
+}
+
+export interface BackupLogChunk extends Omit<RawBackupLog, 'chunk_id'> {
+  id: number;
+}
+
+export interface BackupLogs {
+  logs: BackupLogChunk[];
+  end: boolean;
+}

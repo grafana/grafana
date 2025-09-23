@@ -1,0 +1,329 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`mute timings should be able to add a new mute timing 1`] = `
+{
+  "alertmanager_config": {
+    "mute_time_intervals": [
+      {
+        "name": "default legacy time interval",
+        "time_intervals": [
+          {
+            "days_of_month": [
+              "15",
+            ],
+            "months": [
+              "august:december",
+              "march",
+            ],
+            "times": [
+              {
+                "end_time": "24:00",
+                "start_time": "12:00",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    "route": {
+      "routes": [
+        {
+          "mute_time_intervals": [
+            "default time interval",
+          ],
+        },
+        {
+          "mute_time_intervals": [
+            "default legacy time interval",
+          ],
+        },
+      ],
+    },
+    "time_intervals": [
+      {
+        "name": "default time interval",
+        "time_intervals": [
+          {
+            "days_of_month": [
+              "15",
+            ],
+            "months": [
+              "august:december",
+              "march",
+            ],
+            "times": [
+              {
+                "end_time": "24:00",
+                "start_time": "12:00",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        "name": "new mute time interval",
+        "time_intervals": [
+          {
+            "days_of_month": [
+              "15",
+            ],
+            "months": [
+              "august:december",
+              "march",
+            ],
+            "times": [
+              {
+                "end_time": "24:00",
+                "start_time": "12:00",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  "template_files": {},
+}
+`;
+
+exports[`mute timings should be able to remove a mute timing 1`] = `
+{
+  "alertmanager_config": {
+    "mute_time_intervals": [],
+    "route": {
+      "active_time_intervals": [],
+      "mute_time_intervals": [],
+      "routes": [
+        {
+          "active_time_intervals": [],
+          "mute_time_intervals": [
+            "default time interval",
+          ],
+          "routes": undefined,
+        },
+        {
+          "active_time_intervals": [],
+          "mute_time_intervals": [],
+          "routes": undefined,
+        },
+      ],
+    },
+    "time_intervals": [
+      {
+        "name": "default time interval",
+        "time_intervals": [
+          {
+            "days_of_month": [
+              "15",
+            ],
+            "months": [
+              "august:december",
+              "march",
+            ],
+            "times": [
+              {
+                "end_time": "24:00",
+                "start_time": "12:00",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  "template_files": {},
+}
+`;
+
+exports[`mute timings should be able to remove a mute timing 2`] = `
+{
+  "alertmanager_config": {
+    "mute_time_intervals": [
+      {
+        "name": "default legacy time interval",
+        "time_intervals": [
+          {
+            "days_of_month": [
+              "15",
+            ],
+            "months": [
+              "august:december",
+              "march",
+            ],
+            "times": [
+              {
+                "end_time": "24:00",
+                "start_time": "12:00",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    "route": {
+      "active_time_intervals": [],
+      "mute_time_intervals": [],
+      "routes": [
+        {
+          "active_time_intervals": [],
+          "mute_time_intervals": [],
+          "routes": undefined,
+        },
+        {
+          "active_time_intervals": [],
+          "mute_time_intervals": [
+            "default legacy time interval",
+          ],
+          "routes": undefined,
+        },
+      ],
+    },
+    "time_intervals": [],
+  },
+  "template_files": {},
+}
+`;
+
+exports[`mute timings should be able to update a time interval 1`] = `
+{
+  "alertmanager_config": {
+    "mute_time_intervals": [
+      {
+        "name": "new mute time interval",
+        "time_intervals": [
+          {
+            "days_of_month": [
+              "15",
+            ],
+            "months": [
+              "august:december",
+              "march",
+            ],
+            "times": [
+              {
+                "end_time": "24:00",
+                "start_time": "12:00",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    "route": {
+      "active_time_intervals": undefined,
+      "mute_time_intervals": undefined,
+      "routes": [
+        {
+          "active_time_intervals": undefined,
+          "mute_time_intervals": [
+            "default time interval",
+          ],
+          "routes": undefined,
+        },
+        {
+          "active_time_intervals": undefined,
+          "mute_time_intervals": [
+            "new mute time interval",
+          ],
+          "routes": undefined,
+        },
+      ],
+    },
+    "time_intervals": [
+      {
+        "name": "default time interval",
+        "time_intervals": [
+          {
+            "days_of_month": [
+              "15",
+            ],
+            "months": [
+              "august:december",
+              "march",
+            ],
+            "times": [
+              {
+                "end_time": "24:00",
+                "start_time": "12:00",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  "template_files": {},
+}
+`;
+
+exports[`mute timings should be able to update a time interval 2`] = `
+{
+  "alertmanager_config": {
+    "mute_time_intervals": [
+      {
+        "name": "default legacy time interval",
+        "time_intervals": [
+          {
+            "days_of_month": [
+              "15",
+            ],
+            "months": [
+              "august:december",
+              "march",
+            ],
+            "times": [
+              {
+                "end_time": "24:00",
+                "start_time": "12:00",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    "route": {
+      "active_time_intervals": undefined,
+      "mute_time_intervals": undefined,
+      "routes": [
+        {
+          "active_time_intervals": undefined,
+          "mute_time_intervals": [
+            "new mute time interval",
+          ],
+          "routes": undefined,
+        },
+        {
+          "active_time_intervals": undefined,
+          "mute_time_intervals": [
+            "default legacy time interval",
+          ],
+          "routes": undefined,
+        },
+      ],
+    },
+    "time_intervals": [
+      {
+        "name": "new mute time interval",
+        "time_intervals": [
+          {
+            "days_of_month": [
+              "15",
+            ],
+            "months": [
+              "august:december",
+              "march",
+            ],
+            "times": [
+              {
+                "end_time": "24:00",
+                "start_time": "12:00",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  "template_files": {},
+}
+`;

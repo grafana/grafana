@@ -1,0 +1,106 @@
+<div class="gf-form-group">
+  <p class="muted" ng-show="ctrl.disabled">
+    Visual thresholds options <strong>disabled.</strong> Visit the Alert tab to update your thresholds.<br />
+    To re-enable thresholds, the alert rule must be deleted from this panel.
+  </p>
+  <div ng-class="{'thresholds-form-disabled': ctrl.disabled}">
+    <div class="gf-form-inline" ng-repeat="threshold in ctrl.panel.thresholds">
+      <div class="gf-form">
+        <label class="gf-form-label">T{{$index+1}}</label>
+      </div>
+
+      <div class="gf-form">
+        <div class="gf-form-select-wrapper">
+          <select
+            class="gf-form-input"
+            ng-model="threshold.op"
+            ng-options="f for f in ['gt', 'lt']"
+            ng-change="ctrl.render()"
+            ng-disabled="ctrl.disabled"
+          ></select>
+        </div>
+        <input
+          type="number"
+          ng-model="threshold.value"
+          class="gf-form-input width-8"
+          ng-change="ctrl.render()"
+          placeholder="value"
+          ng-disabled="ctrl.disabled"
+        />
+      </div>
+
+      <div class="gf-form">
+        <label class="gf-form-label">Color</label>
+        <div class="gf-form-select-wrapper">
+          <select
+            class="gf-form-input"
+            ng-model="threshold.colorMode"
+            ng-options="f for f in ['custom', 'critical', 'warning', 'ok']"
+            ng-change="ctrl.onThresholdTypeChange($index)"
+            ng-disabled="ctrl.disabled"
+          >
+          </select>
+        </div>
+      </div>
+
+      <gf-form-switch
+        class="gf-form"
+        label="Fill"
+        checked="threshold.fill"
+        on-change="ctrl.render()"
+        ng-disabled="ctrl.disabled"
+      ></gf-form-switch>
+
+      <div class="gf-form" ng-if="threshold.fill && threshold.colorMode === 'custom'">
+        <label class="gf-form-label">Fill color</label>
+        <span class="gf-form-label">
+          <color-picker color="threshold.fillColor" on-change="ctrl.onFillColorChange($index)"></color-picker>
+        </span>
+      </div>
+
+      <gf-form-switch
+        class="gf-form"
+        label="Line"
+        checked="threshold.line"
+        on-change="ctrl.render()"
+        ng-disabled="ctrl.disabled"
+      ></gf-form-switch>
+
+      <div class="gf-form" ng-if="threshold.line && threshold.colorMode === 'custom'">
+        <label class="gf-form-label">Line color</label>
+        <span class="gf-form-label">
+          <color-picker color="threshold.lineColor" on-change="ctrl.onLineColorChange($index)"></color-picker>
+        </span>
+      </div>
+
+      <div class="gf-form">
+        <label class="gf-form-label">Y-Axis</label>
+        <div class="gf-form-select-wrapper">
+          <select
+            class="gf-form-input"
+            ng-model="threshold.yaxis"
+            ng-init="threshold.yaxis = threshold.yaxis === 'left' || threshold.yaxis === 'right' ? threshold.yaxis : 'left'"
+            ng-options="f for f in ['left', 'right']"
+            ng-change="ctrl.render()"
+            ng-disabled="ctrl.disabled"
+          >
+          </select>
+        </div>
+      </div>
+
+      <div class="gf-form">
+        <label class="gf-form-label">
+          <a class="pointer" ng-click="ctrl.removeThreshold($index)" ng-disabled="ctrl.disabled">
+            <icon name="'trash-alt'"></icon>
+          </a>
+        </label>
+      </div>
+    </div>
+
+    <div class="gf-form-button-row">
+      <button class="btn btn-inverse" ng-click="ctrl.addThreshold()" ng-disabled="ctrl.disabled">
+        <icon name="'plus'"></icon>&nbsp;Add threshold
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,11 @@
+version: '2'
+
+services:
+  grafana_local_cdn:
+    image: nginx:alpine
+    container_name: grafana_local_cdn
+    ports:
+      - "8080:80"
+    volumes:
+      - ../../public:/data
+      - ./default.conf:/etc/nginx/conf.d/default.conf

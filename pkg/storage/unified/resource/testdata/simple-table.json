@@ -1,0 +1,76 @@
+{
+  "metadata": {},
+  "columnDefinitions": [
+    {
+      "name": "title",
+      "type": "string",
+      "format": "",
+      "description": "",
+      "priority": 0
+    },
+    {
+      "name": "stats.count",
+      "type": "number",
+      "format": "int64",
+      "description": "",
+      "priority": 0
+    },
+    {
+      "name": "number",
+      "type": "number",
+      "format": "double",
+      "description": "float64 value",
+      "priority": 0
+    },
+    {
+      "name": "tags",
+      "type": "string",
+      "format": "",
+      "description": "",
+      "priority": 0
+    }
+  ],
+  "rows": [
+    {
+      "cells": [
+        "AAA",
+        null,
+        12345,
+        [
+          "one"
+        ]
+      ],
+      "object": {
+        "kind": "xyz",
+        "apiVersion": "ggg",
+        "metadata": {
+          "name": "aaa",
+          "namespace": "default",
+          "resourceVersion": "10",
+          "creationTimestamp": null
+        }
+      }
+    },
+    {
+      "cells": [
+        "BBB",
+        12345,
+        null,
+        [
+          "one",
+          "two"
+        ]
+      ],
+      "object": {
+        "kind": "xyz",
+        "apiVersion": "ggg",
+        "metadata": {
+          "name": "bbb",
+          "namespace": "default",
+          "resourceVersion": "10",
+          "creationTimestamp": null
+        }
+      }
+    }
+  ]
+}

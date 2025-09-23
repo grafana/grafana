@@ -5,182 +5,148 @@
 package notifications
 
 import (
-	"crypto/tls"
+	"bytes"
+	"context"
 	"fmt"
-	"net"
+	"html/template"
 	"net/mail"
-	"net/smtp"
-	"os"
-	"strings"
 
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-var mailQueue chan *Message
+var (
+	emailsSentTotal  prometheus.Counter
+	emailsSentFailed prometheus.Counter
+)
 
-func initMailQueue() {
-	mailQueue = make(chan *Message, 10)
-	go processMailQueue()
+func init() {
+	emailsSentTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name:      "emails_sent_total",
+		Help:      "Number of emails sent by Grafana",
+		Namespace: "grafana",
+	})
+
+	emailsSentFailed = promauto.NewCounter(prometheus.CounterOpts{
+		Name:      "emails_sent_failed",
+		Help:      "Number of emails Grafana failed to send",
+		Namespace: "grafana",
+	})
 }
 
-func processMailQueue() {
-	for {
-		select {
-		case msg := <-mailQueue:
-			num, err := buildAndSend(msg)
-			tos := strings.Join(msg.To, "; ")
-			info := ""
-			if err != nil {
-				if len(msg.Info) > 0 {
-					info = ", info: " + msg.Info
-				}
-				log.Error(4, fmt.Sprintf("Async sent email %d succeed, not send emails: %s%s err: %s", num, tos, info, err))
-			} else {
-				log.Trace(fmt.Sprintf("Async sent email %d succeed, sent emails: %s%s", num, tos, info))
-			}
-		}
-	}
+type Mailer interface {
+	Send(ctx context.Context, messages ...*Message) (int, error)
 }
 
-var addToMailQueue = func(msg *Message) {
-	mailQueue <- msg
-}
+func (ns *NotificationService) Send(ctx context.Context, msg *Message) (int, error) {
+	messages := []*Message{}
 
-func sendToSmtpServer(recipients []string, msgContent []byte) error {
-	host, port, err := net.SplitHostPort(setting.Smtp.Host)
-	if err != nil {
-		return err
-	}
-
-	tlsconfig := &tls.Config{
-		InsecureSkipVerify: setting.Smtp.SkipVerify,
-		ServerName:         host,
-	}
-
-	if setting.Smtp.CertFile != "" {
-		cert, err := tls.LoadX509KeyPair(setting.Smtp.CertFile, setting.Smtp.KeyFile)
-		if err != nil {
-			return err
-		}
-		tlsconfig.Certificates = []tls.Certificate{cert}
-	}
-
-	conn, err := net.Dial("tcp", net.JoinHostPort(host, port))
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-
-	isSecureConn := false
-	// Start TLS directly if the port ends with 465 (SMTPS protocol)
-	if strings.HasSuffix(port, "465") {
-		conn = tls.Client(conn, tlsconfig)
-		isSecureConn = true
-	}
-
-	client, err := smtp.NewClient(conn, host)
-	if err != nil {
-		return err
-	}
-
-	hostname, err := os.Hostname()
-	if err != nil {
-		return err
-	}
-
-	if err = client.Hello(hostname); err != nil {
-		return err
-	}
-
-	// If not using SMTPS, alway use STARTTLS if available
-	hasStartTLS, _ := client.Extension("STARTTLS")
-	if !isSecureConn && hasStartTLS {
-		if err = client.StartTLS(tlsconfig); err != nil {
-			return err
-		}
-	}
-
-	canAuth, options := client.Extension("AUTH")
-
-	if canAuth && len(setting.Smtp.User) > 0 {
-		var auth smtp.Auth
-
-		if strings.Contains(options, "CRAM-MD5") {
-			auth = smtp.CRAMMD5Auth(setting.Smtp.User, setting.Smtp.Password)
-		} else if strings.Contains(options, "PLAIN") {
-			auth = smtp.PlainAuth("", setting.Smtp.User, setting.Smtp.Password, host)
-		}
-
-		if auth != nil {
-			if err = client.Auth(auth); err != nil {
-				return err
-			}
-		}
-	}
-
-	if fromAddress, err := mail.ParseAddress(setting.Smtp.FromAddress); err != nil {
-		return err
+	if msg.SingleEmail {
+		messages = append(messages, msg)
 	} else {
-		if err = client.Mail(fromAddress.Address); err != nil {
-			return err
+		for _, address := range msg.To {
+			copy := *msg
+			copy.To = []string{address}
+			messages = append(messages, &copy)
 		}
 	}
 
-	for _, rec := range recipients {
-		if err = client.Rcpt(rec); err != nil {
-			return err
-		}
-	}
-
-	w, err := client.Data()
-	if err != nil {
-		return err
-	}
-	if _, err = w.Write([]byte(msgContent)); err != nil {
-		return err
-	}
-
-	if err = w.Close(); err != nil {
-		return err
-	}
-
-	return client.Quit()
+	return ns.mailer.Send(ctx, messages...)
 }
 
-func buildAndSend(msg *Message) (int, error) {
-	log.Trace("Sending mails to: %s", strings.Join(msg.To, "; "))
-
-	// get message body
-	content := msg.Content()
-
-	if len(msg.To) == 0 {
-		return 0, fmt.Errorf("empty receive emails")
-	} else if len(msg.Body) == 0 {
-		return 0, fmt.Errorf("empty email body")
+func (ns *NotificationService) buildEmailMessage(cmd *SendEmailCommand) (*Message, error) {
+	if !ns.Cfg.Smtp.Enabled {
+		return nil, ErrSmtpNotEnabled
 	}
 
-	if msg.Massive {
-		// send mail to multiple emails one by one
-		num := 0
-		for _, to := range msg.To {
-			body := []byte("To: " + to + "\r\n" + content)
-			err := sendToSmtpServer([]string{to}, body)
-			if err != nil {
-				return num, err
-			}
-			num++
-		}
-		return num, nil
-	} else {
-		body := []byte("To: " + strings.Join(msg.To, ";") + "\r\n" + content)
+	data := cmd.Data
+	if data == nil {
+		data = make(map[string]any, 10)
+	}
 
-		// send to multiple emails in one message
-		err := sendToSmtpServer(msg.To, body)
+	setDefaultTemplateData(ns.Cfg, data, nil)
+
+	body := make(map[string]string)
+	for _, contentType := range ns.Cfg.Smtp.ContentTypes {
+		fileExtension, err := getFileExtensionByContentType(contentType)
 		if err != nil {
-			return 0, err
+			return nil, err
+		}
+		var buffer bytes.Buffer
+		err = mailTemplates.ExecuteTemplate(&buffer, cmd.Template+fileExtension, data)
+		if err != nil {
+			return nil, err
+		}
+
+		body[contentType] = buffer.String()
+	}
+
+	subject := cmd.Subject
+	if cmd.Subject == "" {
+		subjectData := data["Subject"].(map[string]any)
+		subjectText, hasSubject := subjectData["executed_template"].(string)
+		if hasSubject {
+			// first check to see if the template has already been executed in a template func
+			subject = subjectText
 		} else {
-			return 1, nil
+			subjectTemplate, hasSubject := subjectData["value"]
+
+			if !hasSubject {
+				return nil, fmt.Errorf("missing subject in template %s", cmd.Template)
+			}
+
+			subjectTmpl, err := template.New("subject").Parse(subjectTemplate.(string))
+			if err != nil {
+				return nil, err
+			}
+
+			var subjectBuffer bytes.Buffer
+			err = subjectTmpl.ExecuteTemplate(&subjectBuffer, "subject", data)
+			if err != nil {
+				return nil, err
+			}
+
+			subject = subjectBuffer.String()
 		}
+	}
+
+	addr := mail.Address{Name: ns.Cfg.Smtp.FromName, Address: ns.Cfg.Smtp.FromAddress}
+	return &Message{
+		To:               cmd.To,
+		SingleEmail:      cmd.SingleEmail,
+		From:             addr.String(),
+		Subject:          subject,
+		Body:             body,
+		EmbeddedFiles:    cmd.EmbeddedFiles,
+		EmbeddedContents: cmd.EmbeddedContents,
+		AttachedFiles:    buildAttachedFiles(cmd.AttachedFiles),
+		ReplyTo:          cmd.ReplyTo,
+	}, nil
+}
+
+// buildAttachedFiles build attached files
+func buildAttachedFiles(
+	attached []*SendEmailAttachFile,
+) []*AttachedFile {
+	result := make([]*AttachedFile, 0)
+
+	for _, file := range attached {
+		result = append(result, &AttachedFile{
+			Name:    file.Name,
+			Content: file.Content,
+		})
+	}
+
+	return result
+}
+
+func getFileExtensionByContentType(contentType string) (string, error) {
+	switch contentType {
+	case "text/html":
+		return ".html", nil
+	case "text/plain":
+		return ".txt", nil
+	default:
+		return "", fmt.Errorf("unrecognized content type %q", contentType)
 	}
 }

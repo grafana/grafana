@@ -85,17 +85,17 @@
          * @return the calculated layout properties
          */
         Gauge.prototype.calculateLayout = function() {
-            
+
             var canvasWidth = placeholder.width();
             var canvasHeight = placeholder.height();
-            
-            
+
+
 
             // calculate cell size
             var columns = Math.min(series.length, gaugeOptions.layout.columns);
             var rows = Math.ceil(series.length / columns);
-            
-            
+
+
 
             var margin = gaugeOptions.layout.margin;
             var hMargin = gaugeOptions.layout.hMargin;
@@ -107,8 +107,8 @@
                 cellWidth = cell;
                 cellHeight = cell;
             }
-            
-            
+
+
 
             // calculate 'auto' values
             calculateAutoValues(gaugeOptions, cellWidth);
@@ -155,13 +155,13 @@
             var maxRadiusV = outerRadiusV - (thresholdLabelMargin * 2) - thresholdLabelFontSize - thresholdWidth;
 
             var radius = Math.min(maxRadiusH, maxRadiusV);
-            
+
 
             var width = gaugeOptions.gauge.width;
             if (width >= radius) {
                 width = Math.max(3, radius / 3);
             }
-            
+
 
             var outerRadius = (thresholdLabelMargin * 2) + thresholdLabelFontSize + thresholdWidth + radius;
             var gaugeOuterHeight = Math.max(outerRadius * (1 + heightRatioV), outerRadius + valueMargin + (valueFontSize / 2));
@@ -198,7 +198,7 @@
          * @param  {Number} cellWidth the width of cell
          */
         function calculateAutoValues(gaugeOptionsi, cellWidth) {
-            
+
             if (gaugeOptionsi.gauge.width === "auto") {
                 gaugeOptionsi.gauge.width = Math.max(5, cellWidth / 8);
             }
@@ -223,7 +223,7 @@
             if (gaugeOptionsi.threshold.label.font.size === "auto") {
                 gaugeOptionsi.threshold.label.font.size = Math.max(5, cellWidth / 15);
             }
-            
+
         }
         Gauge.prototype.calculateAutoValues = calculateAutoValues;
 
@@ -237,7 +237,7 @@
          * @return the calculated cell layout properties
          */
         Gauge.prototype.calculateCellLayout = function(gaugeOptionsi, layout, i) {
-            
+
             // calculate top, left and center
             var c = col(layout.columns, i);
             var r = row(layout.columns, i);
@@ -276,7 +276,7 @@
          * @param  {Object} layout the layout properties
          */
         Gauge.prototype.drawBackground = function(layout) {
-            
+
             if (!gaugeOptions.frame.show) {
                 return;
             }
@@ -299,7 +299,7 @@
          * @param  {Object} cellLayout the cell layout properties
          */
         Gauge.prototype.drawCellBackground = function(gaugeOptionsi, cellLayout) {
-            
+
             context.save();
             if (gaugeOptionsi.cell.border && gaugeOptionsi.cell.border.show && gaugeOptionsi.cell.border.color && gaugeOptionsi.cell.border.width) {
                 context.strokeStyle = gaugeOptionsi.cell.border.color;
@@ -324,10 +324,10 @@
          * @param  {Number} data the value of the gauge
          */
         Gauge.prototype.drawGauge = function(gaugeOptionsi, layout, cellLayout, label, data) {
-            
 
             var blur = gaugeOptionsi.gauge.shadow.show ? gaugeOptionsi.gauge.shadow.blur : 0;
-            
+            var color = getColor(gaugeOptionsi, data);
+            var angles = calculateAnglesForGauge(gaugeOptionsi, layout, data);
 
             // draw gauge frame
             drawArcWithShadow(
@@ -343,19 +343,74 @@
                 blur);
 
             // draw gauge
-            var c1 = getColor(gaugeOptionsi, data);
-            var a2 = calculateAngle(gaugeOptionsi, layout, data);
             drawArcWithShadow(
                 cellLayout.cx, // center x
                 cellLayout.cy, // center y
                 layout.radius - 1,
                 layout.width - 2,
-                toRad(gaugeOptionsi.gauge.startAngle),
-                toRad(a2),
-                c1,           // line color
+                toRad(angles.a1),
+                toRad(angles.a2),
+                color,
                 1,            // line width
-                c1,           // fill color
+                color,           // fill color
                 blur);
+            
+            if(gaugeOptionsi.gauge.neutralValue != null)  {
+                drawZeroMarker(gaugeOptionsi, layout, cellLayout, color);
+            }
+        }
+
+        /**
+         * Calcualte the angles for the gauge, depending on if there are
+         * negative numbers or not.
+         * 
+         * @method calculateAnglesForGauge
+         * @param {Object} gaugeOptionsi the options of the gauge
+         * @param  {Number} data the value of the gauge
+         * @returns {Object}
+         */
+        function calculateAnglesForGauge(gaugeOptionsi, layout, data) {
+            let angles = {};
+            var neutral = gaugeOptionsi.gauge.neutralValue;
+
+            if (neutral != null) {
+                if (data < neutral) {
+                    angles.a1 = calculateAngle(gaugeOptionsi, layout, data);
+                    angles.a2 = calculateAngle(gaugeOptionsi, layout, neutral);
+                } else {
+                    angles.a1 = calculateAngle(gaugeOptionsi, layout, neutral);
+                    angles.a2 = calculateAngle(gaugeOptionsi, layout, data);
+                }
+            } else {
+                angles.a1 = gaugeOptionsi.gauge.startAngle;
+                angles.a2 = calculateAngle(gaugeOptionsi, layout, data);
+            }
+            
+            return angles;
+        }
+
+        /**
+         * Draw zero marker for Gauge with negative values
+         * 
+         * @method drawZeroMarker
+         * @param  {Object} gaugeOptionsi the options of the gauge
+         * @param  {Object} layout the layout properties
+         * @param  {Object} cellLayout the cell layout properties
+         * @param  {String} color line color
+         */
+        function drawZeroMarker(gaugeOptionsi, layout, cellLayout, color) {
+            var diff = (gaugeOptionsi.gauge.max - gaugeOptionsi.gauge.min) / 600;
+
+            drawArc(context,
+                cellLayout.cx,
+                cellLayout.cy,
+                layout.radius - 2,
+                layout.width - 4,
+                toRad(calculateAngle(gaugeOptionsi, layout, gaugeOptionsi.gauge.neutralValue-diff)),
+                toRad(calculateAngle(gaugeOptionsi, layout, gaugeOptionsi.gauge.neutralValue+diff)),
+                color,
+                2,
+                gaugeOptionsi.gauge.background.color);
         }
 
         /**
@@ -371,7 +426,7 @@
             for (var i = 0; i < gaugeOptionsi.threshold.values.length; i++) {
                 var threshold = gaugeOptionsi.threshold.values[i];
                 color = threshold.color;
-                if (data <= threshold.value) {
+                if (data < threshold.value) {
                     break;
                 }
             }
@@ -410,7 +465,7 @@
          * @param  {Object} cellLayout the cell layout properties
          */
         Gauge.prototype.drawThreshold = function(gaugeOptionsi, layout, cellLayout) {
-            
+
             var a1 = gaugeOptionsi.gauge.startAngle;
             for (var i = 0; i < gaugeOptionsi.threshold.values.length; i++) {
                 var threshold = gaugeOptionsi.threshold.values[i];
@@ -478,11 +533,11 @@
          * @param  {Object} item the item of the series
          */
         Gauge.prototype.drawLable = function(gaugeOptionsi, layout, cellLayout, i, item) {
-            
+
             drawText(
                 cellLayout.cx,
                 cellLayout.y + cellLayout.cellMargin + layout.labelMargin + cellLayout.offsetY,
-                "flotGagueLabel" + i,
+                "flotGaugeLabel" + i,
                 gaugeOptionsi.label.formatter ? gaugeOptionsi.label.formatter(item.label, item.data[0][1]) : text,
                 gaugeOptionsi.label);
         }
@@ -498,11 +553,11 @@
          * @param  {Object} item the item of the series
          */
         Gauge.prototype.drawValue = function(gaugeOptionsi, layout, cellLayout, i, item) {
-            
+
             drawText(
                 cellLayout.cx,
                 cellLayout.cy - (gaugeOptionsi.value.font.size / 2),
-                "flotGagueValue" + i,
+                "flotGaugeValue" + i,
                 gaugeOptionsi.value.formatter ? gaugeOptionsi.value.formatter(item.label, item.data[0][1]) : text,
                 gaugeOptionsi.value);
         }
@@ -517,7 +572,7 @@
          * @param  {Number} i the index of the series
          */
         Gauge.prototype.drawThresholdValues = function(gaugeOptionsi, layout, cellLayout, i) {
-            
+
             // min, max
             drawThresholdValue(gaugeOptionsi, layout, cellLayout, "Min" + i, gaugeOptionsi.gauge.min, gaugeOptionsi.gauge.startAngle);
             drawThresholdValue(gaugeOptionsi, layout, cellLayout, "Max" + i, gaugeOptionsi.gauge.max, gaugeOptionsi.gauge.endAngle);
@@ -528,6 +583,13 @@
                     var a = calculateAngle(gaugeOptionsi, layout, threshold.value);
                     drawThresholdValue(gaugeOptionsi, layout, cellLayout, i + "_" + j, threshold.value, a);
                 }
+            }
+            
+            var neutral = gaugeOptionsi.gauge.neutralValue;
+            if (neutral != null && 
+                neutral>gaugeOptionsi.gauge.min && 
+                neutral<gaugeOptionsi.gauge.max) {
+                drawThresholdValue(gaugeOptionsi, layout, cellLayout, "Neutral" + i, neutral, calculateAngle(gaugeOptionsi, layout, neutral));
             }
         }
 
@@ -550,7 +612,7 @@
                 cellLayout.cy
                     + ((layout.thresholdLabelMargin + (layout.thresholdLabelFontSize / 2) + layout.radius)
                         * Math.sin(toRad(a))),
-                "flotGagueThresholdValue" + i,
+                "flotGaugeThresholdValue" + i,
                 gaugeOptionsi.threshold.label.formatter ? gaugeOptionsi.threshold.label.formatter(value) : value,
                 gaugeOptionsi.threshold.label,
                 a);
@@ -583,29 +645,33 @@
          * @param  {Number} [a] the angle of the value drawn
          */
         function drawText(x, y, id, text, textOptions, a) {
-            var span = $("." + id, placeholder);
+            var span = $(placeholder).find("#" + id);
             var exists = span.length;
             if (!exists) {
                 span = $("<span></span>")
                 span.attr("id", id);
-                span.css("position", "absolute");
-                span.css("top", y + "px");
-                if (textOptions.font.size) {
-                    span.css("font-size", textOptions.font.size + "px");
-                }
-                if (textOptions.font.family) {
-                    span.css("font-family", textOptions.font.family);
-                }
-                if (textOptions.color) {
-                    span.css("color", textOptions.color);
-                }
-                if (textOptions.background.color) {
-                    span.css("background-color", textOptions.background.color);
-                }
-                if (textOptions.background.opacity) {
-                    span.css("opacity", textOptions.background.opacity);
-                }
+                span.attr("class", "flot-temp-elem");
                 placeholder.append(span);
+            }
+
+            span.css("position", "absolute");
+            span.css("top", y + "px");
+            span.css("white-space", "nowrap");
+
+            if (textOptions.font.size) {
+              span.css("font-size", textOptions.font.size + "px");
+            }
+            if (textOptions.font.family) {
+              span.css("font-family", textOptions.font.family);
+            }
+            if (textOptions.color) {
+              span.css("color", textOptions.color);
+            }
+            if (textOptions.background.color) {
+              span.css("background-color", textOptions.background.color);
+            }
+            if (textOptions.background.opacity) {
+              span.css("opacity", textOptions.background.opacity);
             }
             span.text(text);
             // after append, readjust the left position
@@ -729,8 +795,8 @@
         plot.hooks.processOptions.push(function(plot, options) {
             var logger = getLogger(options.series.gauges.debug);
 
-            
-            
+
+
 
             // turn 'grid' and 'legend' off
             if (options.series.gauges.show) {
@@ -740,7 +806,7 @@
 
             // sort threshold
             var thresholds = options.series.gauges.threshold.values;
-            
+
             thresholds.sort(function(a, b) {
                 if (a.value < b.value) {
                     return -1;
@@ -750,9 +816,9 @@
                     return 0;
                 }
             });
-            
 
-            
+
+
         });
 
         // add draw hook
@@ -761,14 +827,14 @@
             var gaugeOptions = options.series.gauges;
 
             var logger = getLogger(gaugeOptions.debug);
-            
+
 
             if (!gaugeOptions.show) {
                 return;
             }
 
             var series = plot.getData();
-            
+
             if (!series || !series.length) {
                 return; // if no series were passed
             }
@@ -777,10 +843,10 @@
 
             // calculate layout
             var layout = gauge.calculateLayout();
-            
+
             // debug layout
             if (gaugeOptions.debug.layout) {
-                
+
             }
 
             // draw background
@@ -789,21 +855,21 @@
             // draw cells (label, gauge, value, threshold)
             for (var i = 0; i < series.length; i++) {
                 var item = series[i];
-                
+
                 var gaugeOptionsi = $.extend({}, gaugeOptions, item.gauges);
                 if (item.gauges) {
                     // re-calculate 'auto' values
                     gauge.calculateAutoValues(gaugeOptionsi, layout.cellWidth);
                 }
-                
+
                 // calculate cell layout
                 var cellLayout = gauge.calculateCellLayout(gaugeOptionsi, layout, i);
-                
+
                 // draw cell background
                 gauge.drawCellBackground(gaugeOptionsi, cellLayout)
                 // debug layout
                 if (gaugeOptionsi.debug.layout) {
-                    
+
                 }
                 // draw label
                 if (gaugeOptionsi.label.show) {
@@ -933,16 +999,7 @@
                         }
                     },
                     values: [
-                        {
-                            value: 50,
-                            color: "lightgreen"
-                        }, {
-                            value: 80,
-                            color: "yellow"
-                        }, {
-                            value: 100,
-                            color: "red"
-                        }
+
                     ]
                 }
             }
@@ -958,3 +1015,4 @@
     });
 
 })(jQuery);
+

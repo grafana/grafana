@@ -1,0 +1,31 @@
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        "*": hash-pin
+        actions/*: any
+        github/*: any
+        grafana/*: any
+  forbidden-uses:
+    config:
+      deny:
+        # Policy-banned by our security team due to CVE-2025-30066 & CVE-2025-30154.
+        # https://www.cisa.gov/news-events/alerts/2025/03/18/supply-chain-compromise-third-party-tj-actionschanged-files-cve-2025-30066-and-reviewdogaction
+        # https://nvd.nist.gov/vuln/detail/cve-2025-30066
+        # https://nvd.nist.gov/vuln/detail/cve-2025-30154
+        - reviewdog/*
+  cache-poisoning:
+    ignore:
+      - backend-unit-tests.yml
+      - frontend-lint.yml
+      - pr-frontend-unit-tests.yml
+      - pr-test-integration.yml
+      - publish-kinds-release.yml
+  dangerous-triggers:
+    ignore:
+      - auto-milestone.yml
+      - backport.yml
+      - pr-checks.yml
+      - pr-commands.yml
+      - pr-patch-check-event.yml
+      - run-dashboard-search-e2e.yml

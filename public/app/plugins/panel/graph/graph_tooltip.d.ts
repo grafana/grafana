@@ -1,2 +1,2 @@
-declare var GraphTooltip: any;
+declare let GraphTooltip: any;
 export default GraphTooltip;

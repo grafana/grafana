@@ -1,0 +1,11 @@
+<!-- @PERCONA -->
+<mj-section padding="0">
+  <mj-column>
+      <mj-text>
+        Questions or need help?
+      </mj-text>
+      <mj-text>
+        Percona can assist with any monitoring challenges. <a target="_blank" href="https://hubs.ly/Q034_Dvp0">Contact us</a> for expert database guidance.
+      </mj-text>
+    </mj-column>
+</mj-section>

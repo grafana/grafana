@@ -1,90 +1,394 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="[[.User.Language]]">
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <meta name="viewport" content="width=device-width">
-    <meta name="theme-color" content="#000">
+    [[ if and .CSPEnabled .IsDevelopmentEnv ]]
+    <!-- Cypress overwrites CSP headers in HTTP requests, so this is required for e2e tests-->
+    <meta  http-equiv="Content-Security-Policy" content="[[.CSPContent]]"/>
+    [[ end ]]
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="theme-color" content="#000" />
 
-    <title>Grafana</title>
+    <!-- @PERCONA -->
+    <title>Percona Monitoring and Management</title>
 
-		<link href='[[.AppSubUrl]]/public/css/fonts.min.css' rel='stylesheet' type='text/css'>
+    <base href="[[.AppSubUrl]]/" />
 
-		[[if .User.LightTheme]]
-		  <link rel="stylesheet" href="[[.AppSubUrl]]/public/css/grafana.light.min.css">
-		[[else]]
-		  <link rel="stylesheet" href="[[.AppSubUrl]]/public/css/grafana.dark.min.css">
-		[[end]]
+    <!-- @PERCONA -->
+    <link rel="icon" type="image/x-icon" href="public/img/percona-favicon.ico?cb=1584890955588" />
+    <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
+    <link rel="mask-icon" href="[[.Assets.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
 
-    <link rel="icon" type="image/png" href="[[.AppSubUrl]]/public/img/fav32.png">
-		<base href="[[.AppSubUrl]]/" />
+    [[range $asset := .Assets.CSSFiles]]
+      <link rel="stylesheet" href="[[$asset.FilePath]]" />
+    [[end]]
 
-	</head>
+    <!-- If theme is "system", we inject the stylesheets with javascript further down the page -->
+    [[ if eq .ThemeType "light" ]]
+    <link rel="stylesheet" href="[[.Assets.Light]]" />
+    [[ else if eq .ThemeType "dark" ]]
+    <link rel="stylesheet" href="[[.Assets.Dark]]" />
+    [[ end ]]
 
-	<body ng-cloak>
-		<grafana-app class="grafana-app">
+    <script nonce="[[.Nonce]]">
+      performance.mark('frontend_boot_css_time_seconds');
+    </script>
 
-			<aside class="sidemenu-wrapper">
-				<sidemenu ng-if="contextSrv.sidemenu"></sidemenu>
-			</aside>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="msapplication-TileColor" content="#2b5797" />
+    <meta name="msapplication-config" content="public/img/browserconfig.xml" />
+  </head>
 
-			<div class="page-alert-list">
-				<div ng-repeat='alert in dashAlerts.list' class="alert-{{alert.severity}} alert">
-					<button type="button" class="alert-close" ng-click="dashAlerts.clear(alert)">
-						<i class="fa fa-times-circle"></i>
-					</button>
-					<div class="alert-title">{{alert.title}}</div>
-					<div ng-bind='alert.text'></div>
-				</div>
-			</div>
+  <body class="theme-[[ .ThemeType ]] [[.AppNameBodyClass]]">
+    <style>
+      .preloader {
+        height: 100%;
+        flex-direction: column;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 32px;
+      }
 
-			<div ng-view class="main-view"></div>
-		</grafana-app>
+      .preloader__enter {
+        opacity: 0;
+        animation-name: preloader-fade-in;
+        animation-iteration-count: 1;
+        animation-duration: 0.9s;
+        animation-delay: 0.5s;
+        animation-fill-mode: forwards;
+      }
+
+      .preloader__bounce {
+        text-align: center;
+        animation-name: preloader-bounce;
+        animation-duration: 0.9s;
+        animation-iteration-count: infinite;
+      }
+
+      .preloader__logo {
+        display: inline-block;
+        animation-name: preloader-squash;
+        animation-duration: 0.9s;
+        animation-iteration-count: infinite;
+        width: 60px;
+        height: 60px;
+        background-repeat: no-repeat;
+        background-size: contain;
+        /* @PERCONA */
+        background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYwIiBoZWlnaHQ9IjE2MCIgdmlld0JveD0iMCAwIDE2MCAxNjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNjAiIGhlaWdodD0iMTYwIiByeD0iMjQiIGZpbGw9InVybCgjcGFpbnQwX3JhZGlhbF8xMDg3M183Mzc1MCkiLz4KPHBhdGggb3BhY2l0eT0iMC4zMyIgZD0iTTI4IDgxLjc0NzNMNTQuOTY4OCAxMjUuNDg2TDU0Ljk3MzkgMTI1LjQ4MUw2NC40NjY2IDEwOC44NThMODIuMzAyMyAxNDBMMTAzLjI5NCAxMDMuMzQ4TDExMC40ODcgMTE1Ljk0N0wxMzIgODEuNzQ3NkwxMjYuNDMzIDgxLjc0NzNMMTEwLjQ5MiAxMDcuMzI2TDEwNS43NTYgOTkuMDU4TDExNS40ODIgODEuNzQ3M0gxMTAuMDIyTDEwMy4wOTQgOTQuNDA2Mkw5NS44NTkyIDgxLjc0NzNIOTAuODM5NkwxMDAuNjQ0IDk4LjY5MDNMODIuMzA3NCAxMzAuNzExTDY3LjEyNiAxMDQuMjA2TDc5Ljk1MDYgODEuNzQ3M0g3NS4wMjg3TDY0Ljc0NTIgMTAwLjA0OUw1NC4xMzA4IDgxLjc0NzNINDguNzQ3Mkw2Mi4wODU5IDEwNC42OTFMNTQuOTczOSAxMTcuMTA2TDMyLjQ0OTMgODEuNzQ3M0gyOFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xMjEuODE0IDYzLjkwODlDMTIzLjc0NCA2Mi4yMDMyIDEyNS4xNDcgNTkuOTQwOSAxMjUuODIgNTcuNDA3OUMxMjYuNzMyIDUzLjk5MTQgMTI2LjI2NiA1MC40MjE3IDEyNC41MTQgNDcuMzU3NUMxMjIuNzYxIDQ0LjI5MzQgMTE5LjkyOSA0Mi4xMDI2IDExNi41NDEgNDEuMTg4NEMxMTUuNDIxIDQwLjg4NzEgMTE0LjI3NyA0MC43MzM5IDExMy4xMjcgNDAuNzMzOUMxMTEuNzI0IDQwLjczMzkgMTEwLjMxNiA0MC45NzM5IDEwOC45NzMgNDEuNDI4NUwxMDUuMDI3IDM0LjUxODlMOTUuNTM1MiA1MS4xNDE3TDc3LjcwMDQgMjBMNTYuNzA5OSA1Ni42NTIxTDQ5LjUxNzIgNDQuMDUzNEwyOCA4MS43NDczSDEzMkwxMjEuODE0IDYzLjkwODlaTTExMy4xMjcgNDQuOTE2NUMxMTMuOTEyIDQ0LjkxNjUgMTE0LjcwMiA0NS4wMjM3IDExNS40NzIgNDUuMjI4QzExNy43ODIgNDUuODQ1OSAxMTkuNzE3IDQ3LjM0MjIgMTIwLjkyMiA0OS40NDEyQzEyMi4xMjMgNTEuNTM1IDEyMi40NDIgNTMuOTc2MSAxMjEuODE5IDU2LjMxNUMxMjEuNDI0IDU3Ljc5MDkgMTIwLjY5NCA1OS4wOTgzIDExOS42ODYgNjAuMTc1OEwxMTEuMTExIDQ1LjE1NjVDMTExLjc3NCA0NC45OTgyIDExMi40NTggNDQuOTE2NSAxMTMuMTMyIDQ0LjkxNjVIMTEzLjEyN1pNMzUuNDAwMyA3Ny40MzcxTDQ5LjUxMjIgNTIuNjczOEw1NC4yNDgyIDYwLjk0MThMNDQuODcyNCA3Ny40MzcxSDM1LjQwMDNaTTU2LjkwNzUgNjUuNTg5MUw2My41MDI0IDc3LjQzNzFINTAuMzEyNUw1Ni45MDc1IDY1LjU4OTFaTTY4LjM3NTIgNzcuNDM3MUw1OS4zNTkgNjEuMzA5NUw3Ny42OTUzIDI5LjI4OTRMOTIuODc1OSA1NS43OTQxTDgwLjcwNDEgNzcuNDM3MUg2OC4zNzUyWk05NS4yNTY2IDU5Ljk1MTFMMTA1LjA3OCA3Ny40MzcxSDg1LjQzNUw5NS4yNTY2IDU5Ljk1MTFaTTExMC41ODkgNzcuNDM3MUw5Ny45MTU4IDU1LjMwOUwxMDUuMDI3IDQyLjg5NDFMMTI0LjgwNyA3Ny40MzcxSDExMC41ODlaIiBmaWxsPSJ3aGl0ZSIvPgo8ZGVmcz4KPHJhZGlhbEdyYWRpZW50IGlkPSJwYWludDBfcmFkaWFsXzEwODczXzczNzUwIiBjeD0iMCIgY3k9IjAiIHI9IjEiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiBncmFkaWVudFRyYW5zZm9ybT0idHJhbnNsYXRlKDIuNzMxOTcgMTU0LjE3Nykgc2NhbGUoMjEwLjY5MSkiPgo8c3RvcCBvZmZzZXQ9IjAuMjIiIHN0b3AtY29sb3I9IiNBQzMxMDAiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRTg3MzE4Ii8+CjwvcmFkaWFsR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+Cg==');
+      }
+
+      .preloader__text {
+        margin-top: 16px;
+        font-weight: 500;
+        font-size: 14px;
+        font-family: Sans-serif;
+        opacity: 0;
+        animation-name: preloader-fade-in;
+        animation-duration: 0.9s;
+        animation-delay: 0.5s;
+        animation-fill-mode: forwards;
+      }
+
+      .theme-light .preloader__text {
+        color: #52545c;
+      }
+
+      .theme-dark .preloader__text {
+        color: #d8d9da;
+      }
+
+      @keyframes preloader-fade-in {
+        0% {
+          opacity: 0;
+          /*animation-timing-function: linear;*/
+          animation-timing-function: cubic-bezier(0, 0, 0.5, 1);
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      @keyframes preloader-bounce {
+        from,
+        to {
+          transform: translateY(0px);
+          animation-timing-function: cubic-bezier(0.3, 0, 0.1, 1);
+        }
+        50% {
+          transform: translateY(-50px);
+          animation-timing-function: cubic-bezier(0.9, 0, 0.7, 1);
+        }
+      }
+
+      @keyframes preloader-squash {
+        0% {
+          transform: scaleX(1.3) scaleY(0.8);
+          animation-timing-function: cubic-bezier(0.3, 0, 0.1, 1);
+        }
+        15% {
+          transform: scaleX(0.75) scaleY(1.25);
+          animation-timing-function: cubic-bezier(0, 0, 0.7, 0.75);
+        }
+        55% {
+          transform: scaleX(1.05) scaleY(0.95);
+          animation-timing-function: cubic-bezier(0.9, 0, 1, 1);
+        }
+        95% {
+          transform: scaleX(0.75) scaleY(1.25);
+          animation-timing-function: cubic-bezier(0, 0, 0, 1);
+        }
+        100% {
+          transform: scaleX(1.3) scaleY(0.8);
+          animation-timing-function: cubic-bezier(0, 0, 0.7, 1);
+        }
+      }
+
+      /* Fail info */
+      .preloader__text--fail {
+        display: none;
+      }
+
+      /* stop logo animation */
+      .preloader--done .preloader__bounce,
+      .preloader--done .preloader__logo {
+        animation-name: none;
+        display: none;
+      }
+
+      .preloader--done .preloader__logo,
+      .preloader--done .preloader__text {
+        display: none;
+        color: #ff5705 !important;
+        font-size: 15px;
+      }
+
+      .theme-light .preloader--done .preloader__text {
+        color: #52545c !important;
+      }
+
+      .preloader--done .preloader__text--fail {
+        display: block;
+      }
+
+      .preloader--done .preloader__text--fail a {
+        color: white;
+      }
+
+      .theme-light .preloader--done .preloader__text--fail a {
+        color: rgb(31, 98, 224);
+      }
+
+      .preloader--done code {
+        white-space: nowrap;
+        padding: 2px 5px;
+        margin: 0px 2px;
+        font-size: 0.8rem;
+        background-color: rgb(24, 27, 31);
+        color: rgb(204, 204, 220);
+        border: 1px solid rgba(204, 204, 220, 0.2);
+        border-radius: 4px;
+      }
+
+      .preloader__error-list li {
+        margin-bottom: 8px;
+      }
+
+      [ng\:cloak],
+      [ng-cloak],
+      .ng-cloak {
+        display: none !important;
+      }
+    </style>
+
+    <div class="preloader">
+      <div class="preloader__enter">
+        <div class="preloader__bounce">
+          <div class="preloader__logo" aria-live="polite" role="status" aria-label="Loading Grafana"></div>
+        </div>
+      </div>
+      <!-- @PERCONA -->
+      <div class="preloader__text">Loading Percona Monitoring and Management</div>
+      <div class="preloader__text preloader__text--fail">
+        <main>
+          <h1>If you're seeing this Grafana has failed to load its application files</h1>
+          <ol class="preloader__error-list">
+            <li>This could be caused by your reverse proxy settings.</li>
+            <li>If you host grafana under a subpath make sure your <code>grafana.ini</code> <code>root_url</code> setting
+              includes subpath. If not using a reverse proxy make sure to set <code>serve_from_sub_path</code> to true.</li>
+            <li>If you have a local dev build make sure you build frontend using: <code>yarn start</code>, or
+              <code>yarn build</code>.</li>
+            <li>Sometimes restarting <code>grafana-server</code> can help.</li>
+            <li>Check if you are using a non-supported browser. For more information, refer to the list of
+              <a href="https://grafana.com/docs/grafana/latest/installation/requirements/#supported-web-browsers">
+                supported browsers </a
+              >.</li>
+          </ol>
+        </main>
+      </div>
+      <script nonce="[[.Nonce]]">
+        // Check to see if browser is not supported by Grafana
+        // Source file in app/core/utils/browser.ts & tests make edits there and copy compiled typescript here
+        function checkBrowserCompatibility() {
+          var isIE = navigator.userAgent.indexOf('MSIE') > -1;
+          var isEdge = navigator.userAgent.indexOf('Edge/') > -1 || navigator.userAgent.indexOf('Edg/') > -1;
+          var isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+          var isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+
+          /* Check for
+          <= IE11 (Trident 7)
+          Edge <= 16
+          Firefox <= 64
+          Chrome <= 54
+          */
+          var isEdgeVersion = /Edge\/([0-9.]+)/.exec(navigator.userAgent);
+
+          if (isIE && parseFloat(/Trident\/([0-9.]+)/.exec(navigator.userAgent)[1]) <= 7) {
+            return false;
+          } else if (
+            isEdge &&
+            ((isEdgeVersion && parseFloat(isEdgeVersion[1]) <= 16) ||
+              parseFloat(/Edg\/([0-9.]+)/.exec(navigator.userAgent)[1]) <= 16)
+          ) {
+            return false;
+          } else if (isFirefox && parseFloat(/Firefox\/([0-9.]+)/.exec(navigator.userAgent)[1]) <= 64) {
+            return false;
+          } else if (isChrome && parseFloat(/Chrome\/([0-9.]+)/.exec(navigator.userAgent)[1]) <= 54) {
+            return false;
+          }
+
+          return true;
+        }
+
+        if (!checkBrowserCompatibility()) {
+          alert('Your browser is not fully supported, please try newer version.');
+        }
+      </script>
+    </div>
+
+    <div id="reactRoot"></div>
+
+    <script nonce="[[.Nonce]]">
+      window.grafanaBootData = {
+        user: [[.User]],
+        settings: [[.Settings]],
+        navTree: [[.NavTree]],
+        assets: [[.Assets]]
+      };
+
+      // Set theme to match system only on startup.
+      // Do not react to changes in system theme after startup.
+      if (window.grafanaBootData.user.theme === "system") {
+        document.body.classList.remove("theme-system");
+        var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        var cssLink = document.createElement("link");
+        cssLink.rel = 'stylesheet';
+
+        if (darkQuery.matches) {
+          document.body.classList.add("theme-dark");
+          cssLink.href = window.grafanaBootData.assets.dark;
+          window.grafanaBootData.user.lightTheme = false;
+        } else {
+          document.body.classList.add("theme-light");
+          cssLink.href = window.grafanaBootData.assets.light;
+          window.grafanaBootData.user.lightTheme = true;
+        }
+        document.head.appendChild(cssLink);
+      }
+
+      window.__grafana_load_failed = function() {
+        var preloader = document.getElementsByClassName("preloader");
+        if (preloader.length) {
+          preloader[0].className = "preloader preloader--done";
+        }
+      }
+
+      // In case the js files fails to load the code below will show an info message.
+      window.onload = function() {
+        if (window.__grafana_app_bundle_loaded) {
+          return;
+        }
+        window.__grafana_load_failed();
+      };
+
+      [[if .Assets.ContentDeliveryURL]]
+        window.public_cdn_path = '[[.Assets.ContentDeliveryURL]]public/build/';
+      [[end]]
+      [[if .Nonce]]
+        window.nonce = '[[.Nonce]]';
+      [[end]]
+    </script>
+
+    [[if .GoogleTagManagerId]]
+    <!-- Google Tag Manager -->
+    <script nonce="[[.Nonce]]">
+      dataLayer = [
+        {
+          IsSignedIn: '[[.User.IsSignedIn]]',
+          Email: '[[.User.Email]]',
+          Name: '[[.User.Name]]',
+          UserId: '[[.User.Id]]',
+          OrgId: '[[.User.OrgId]]',
+          OrgName: '[[.User.OrgName]]',
+        },
+      ];
+    </script>
+    <noscript>
+      <iframe
+        src="//www.googletagmanager.com/ns.html?id=[[.GoogleTagManagerId]]"
+        height="0"
+        width="0"
+        style="display: none; visibility: hidden"
+      ></iframe>
+    </noscript>
+    <script nonce="[[.Nonce]]">
+      (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != 'dataLayer' ? '&l=' + l : '';
+        j.async = true;
+        j.src = '//www.googletagmanager.com/gtm.js?id=' + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, 'script', 'dataLayer', '[[.GoogleTagManagerId]]');
+    </script>
+    <!-- End Google Tag Manager -->
+    [[end]]
+
+    [[if .Settings.FeatureToggles.assetSriChecks ]]
+      [[range $asset := .Assets.JSFiles]]
+        <script
+        nonce="[[$.Nonce]]"
+        src="[[$asset.FilePath]]"
+        integrity="[[$asset.Integrity]]"
+        crossorigin="anonymous"
+        type="text/javascript"
+        defer
+      ></script>
+      [[end]]
+    [[else]]
+      [[range $asset := .Assets.JSFiles]]
+        <script
+        nonce="[[$.Nonce]]"
+        src="[[$asset.FilePath]]"
+        type="text/javascript"
+        defer
+      ></script>
+      [[end]]
+    [[end]]
+
+    <script nonce="[[.Nonce]]">
+      performance.mark('frontend_boot_js_done_time_seconds');
+    </script>
+
+    <!-- @PERCONA -->
+    [[ if eq .Env "development" ]]
+      <script src="http://localhost:35729/livereload.js"></script>
+    [[end]]
   </body>
-
-	<script>
-		window.grafanaBootData = {
-			user:[[.User]],
-			settings: [[.Settings]],
-			mainNavLinks: [[.MainNavLinks]]
-		};
-	</script>
-
-	<!-- build:js [[.AppSubUrl]]/public/app/boot.js -->
-	<script src="[[.AppSubUrl]]/public/vendor/npm/es6-shim/es6-shim.js"></script>
-	<script src="[[.AppSubUrl]]/public/vendor/npm/systemjs/dist/system.src.js"></script>
-	<script src="[[.AppSubUrl]]/public/app/system.conf.js"></script>
-	<script src="[[.AppSubUrl]]/public/app/boot.js"></script>
-	<!-- endbuild -->
-
-	[[if .GoogleAnalyticsId]]
-	<script>
-		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-		ga('create', '[[.GoogleAnalyticsId]]', 'auto');
-		ga('send', 'pageview');
-		</script>
-	[[end]]
-
-	[[if .GoogleTagManagerId]]
-		<script>
-			dataLayer = [{
-				'IsSignedIn': '[[.User.IsSignedIn]]',
-				'Email': '[[.User.Email]]',
-				'Name': '[[.User.Name]]',
-				'UserId': '[[.User.Id]]',
-				'OrgId': '[[.User.OrgId]]',
-				'OrgName': '[[.User.OrgName]]',
-			}];
-		</script>
-		<!-- Google Tag Manager -->
-		<noscript><iframe src="//www.googletagmanager.com/ns.html?id=[[.GoogleTagManagerId]]" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-		<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-			j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-		})(window,document,'script','dataLayer','[[.GoogleTagManagerId]]');</script>
-		<!-- End Google Tag Manager -->
-	[[end]]
 </html>

@@ -1,0 +1,70 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "type": "numeric-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "resultType": "scalar"
+//      }
+//  }
+//  Name: 
+//  Dimensions: 2 Fields by 1 Rows
+//  +-----------------------------------+-----------------+
+//  | Name: Time                        | Name: Value     |
+//  | Labels:                           | Labels:         |
+//  | Type: []time.Time                 | Type: []float64 |
+//  +-----------------------------------+-----------------+
+//  | 2022-05-04 16:02:19.104 +0000 UTC | 2.482e-05       |
+//  +-----------------------------------+-----------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "type": "numeric-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "resultType": "scalar"
+          }
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {}
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1651680139104
+          ],
+          [
+            0.00002482
+          ]
+        ]
+      }
+    }
+  ]
+}

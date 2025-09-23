@@ -1,0 +1,31 @@
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+{
+  "manifestVersion": "2.0.0",
+  "signatureType": "private",
+  "signedByOrg": "willbrowne",
+  "signedByOrgName": "Will Browne",
+  "rootUrls": [
+    "http://localhost:3000/grafana"
+  ],
+  "plugin": "test-datasource",
+  "version": "1.0.0",
+  "time": 1661171981629,
+  "keyId": "7e4d0c6a708866e7",
+  "files": {
+    "plugin.json": "203ef4a613c5693c437a665cd67f95e2756a0f71b336b2ffb265db7c180d0b19"
+  }
+}
+-----BEGIN PGP SIGNATURE-----
+Version: OpenPGP.js v4.10.10
+Comment: https://openpgpjs.org
+
+wrcEARMKAAYFAmMDeQ0AIQkQfk0ManCIZucWIQTzOyW2kQdOhGNlcPN+TQxq
+cIhm5ygmAgiUFIfZrpxCa5VajERXgejFRwGrWYILWXmmXWC4vqHiQaFEE1Ef
+DtLz0JcdEMhvhydD+efJbWuUcv7fEMWMv6k0YAIGLG4xVsef4OhnfMYKjRBf
+Obc4/RuzqbjLg04Z9XDq6gAY06NESYscSj+Vy3rKNo0IiVnjrm9qGvZmSqRx
+sLyae5M=
+=ZAe8
+-----END PGP SIGNATURE-----

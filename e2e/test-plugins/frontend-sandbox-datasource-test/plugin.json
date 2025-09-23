@@ -1,0 +1,26 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "datasource",
+  "name": "Sandbox datasource test plugin",
+  "id": "sandbox-test-datasource",
+  "metrics": true,
+  "info": {
+    "keywords": ["explore", "datasource"],
+    "description": "",
+    "author": {
+      "name": "Grafana"
+    },
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [],
+    "screenshots": [],
+    "version": "1.0.0",
+    "updated": "2023-06-27"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=10.0",
+    "plugins": []
+  }
+}

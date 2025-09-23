@@ -1,0 +1,15 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/blocks';
+import { Tag } from './Tag';
+import * as TagStories from './Tag.story';
+
+<Meta title="MDX|Tag" component={Tag} />
+
+# Tag
+
+Used for displaying metadata, for example to add more details to search results. Background and border colors are generated from the tag name.
+
+<Canvas of={TagStories.Single} />
+
+### Props
+
+<ArgTypes of={Tag} />

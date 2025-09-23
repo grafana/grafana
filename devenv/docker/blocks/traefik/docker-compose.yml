@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  traefik:
+    image: traefik:v2.1
+    volumes:
+      - './traefik.yml:/etc/traefik/traefik.yml'
+      - './configs:/etc/traefik/configs'
+    ports:
+      - '80:80'
+      - '8080:8080'
+    links:
+      - grafana-subpath
+
+  grafana-subpath:
+    image: grafana/grafana:latest
+    environment:
+      - GF_SERVER_ROOT_URL=/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true

@@ -1,0 +1,27 @@
+  oauth2proxy:
+    container_name: oauth2-proxy
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.4.0
+    command: --config /oauth2-proxy.cfg
+    # command: [
+    #   "--provider=azure",
+    #   "--cookie-secret=SECRETSECRET1234",
+    #   "--client-id=<azure client id>",
+    #   "--client-secret=<azure client secret>",
+    #   "--azure-tenant=<azure tenant id>",
+    #   "--oidc-issuer-url=https://login.microsoftonline.com/<azure tenant id>/v2.0",
+    #   "--email-domain=*",
+    #   "--http-address=0.0.0.0:4180",
+    #   "--ssl-upstream-insecure-skip-verify=true",
+    #   "--upstream=http://local-prometheus:9090/",
+    #   "--skip-jwt-bearer-tokens=true",
+    #   "--extra-jwt-issuers=https://sts.windows.net/<azure tenant id>/=https://prometheus.monitor.azure.com",
+    #   "--skip-auth-route=/api/v1/status/buildinfo",
+    # ]
+    ports:
+      - 4180:4180
+    hostname: oauth2-proxy
+    volumes:
+      - "./docker/blocks/auth/prometheus_oauth2_proxy_azure/oauth2-proxy.cfg:/oauth2-proxy.cfg"
+    extra_hosts:
+      - "local-prometheus:host-gateway"
+    restart: unless-stopped

@@ -1,4 +1,4 @@
-# Text Panel -  Native Plugin
+# Text Panel - Native Plugin
 
 The Text Panel is **included** with Grafana.
 

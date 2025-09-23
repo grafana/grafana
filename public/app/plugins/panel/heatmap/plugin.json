@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "Heatmap",
+  "id": "heatmap",
+
+  "info": {
+    "description": "Like a histogram over time",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-heatmap-panel.svg",
+      "large": "img/icn-heatmap-panel.svg"
+    }
+  }
+}

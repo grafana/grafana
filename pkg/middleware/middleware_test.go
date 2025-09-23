@@ -1,314 +1,293 @@
 package middleware
 
 import (
-	"encoding/json"
+	"errors"
 	"net/http"
-	"net/http/httptest"
 	"path/filepath"
 	"testing"
 
-	"github.com/go-macaron/session"
-	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/infra/fs"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/navtree"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
-	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func TestMiddlewareContext(t *testing.T) {
+func TestMiddleWareSecurityHeaders(t *testing.T) {
+	middlewareScenario(t, "middleware should get correct x-xss-protection header", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+		assert.Equal(t, "1; mode=block", sc.resp.Header().Get("X-XSS-Protection"))
+	}, func(cfg *setting.Cfg) {
+		cfg.XSSProtectionHeader = true
+	})
 
-	Convey("Given the grafana middleware", t, func() {
-		middlewareScenario("middleware should add context to injector", func(sc *scenarioContext) {
-			sc.fakeReq("GET", "/").exec()
-			So(sc.context, ShouldNotBeNil)
-		})
+	middlewareScenario(t, "middleware should not get x-xss-protection when disabled", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+		assert.Empty(t, sc.resp.Header().Get("X-XSS-Protection"))
+	}, func(cfg *setting.Cfg) {
+		cfg.XSSProtectionHeader = false
+	})
 
-		middlewareScenario("Default middleware should allow get request", func(sc *scenarioContext) {
-			sc.fakeReq("GET", "/").exec()
-			So(sc.resp.Code, ShouldEqual, 200)
-		})
-
-		middlewareScenario("Non api request should init session", func(sc *scenarioContext) {
-			sc.fakeReq("GET", "/").exec()
-			So(sc.resp.Header().Get("Set-Cookie"), ShouldContainSubstring, "grafana_sess")
-		})
-
-		middlewareScenario("Invalid api key", func(sc *scenarioContext) {
-			sc.apiKey = "invalid_key_test"
-			sc.fakeReq("GET", "/").exec()
-
-			Convey("Should not init session", func() {
-				So(sc.resp.Header().Get("Set-Cookie"), ShouldBeEmpty)
-			})
-
-			Convey("Should return 401", func() {
-				So(sc.resp.Code, ShouldEqual, 401)
-				So(sc.respJson["message"], ShouldEqual, "Invalid API key")
-			})
-		})
-
-		middlewareScenario("Using basic auth", func(sc *scenarioContext) {
-
-			bus.AddHandler("test", func(query *m.GetUserByLoginQuery) error {
-				query.Result = &m.User{
-					Password: util.EncodePassword("myPass", "salt"),
-					Salt:     "salt",
-				}
-				return nil
-			})
-
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
-				return nil
-			})
-
-			setting.BasicAuthEnabled = true
-			authHeader := util.GetBasicAuthHeader("myUser", "myPass")
-			sc.fakeReq("GET", "/").withAuthoriziationHeader(authHeader).exec()
-
-			Convey("Should init middleware context with user", func() {
-				So(sc.context.IsSignedIn, ShouldEqual, true)
-				So(sc.context.OrgId, ShouldEqual, 2)
-				So(sc.context.UserId, ShouldEqual, 12)
-			})
-		})
-
-		middlewareScenario("Valid api key", func(sc *scenarioContext) {
-			keyhash := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
-
-			bus.AddHandler("test", func(query *m.GetApiKeyByNameQuery) error {
-				query.Result = &m.ApiKey{OrgId: 12, Role: m.ROLE_EDITOR, Key: keyhash}
-				return nil
-			})
-
-			sc.fakeReq("GET", "/").withValidApiKey().exec()
-
-			Convey("Should return 200", func() {
-				So(sc.resp.Code, ShouldEqual, 200)
-			})
-
-			Convey("Should init middleware context", func() {
-				So(sc.context.IsSignedIn, ShouldEqual, true)
-				So(sc.context.OrgId, ShouldEqual, 12)
-				So(sc.context.OrgRole, ShouldEqual, m.ROLE_EDITOR)
-			})
-		})
-
-		middlewareScenario("Valid api key, but does not match db hash", func(sc *scenarioContext) {
-			keyhash := "something_not_matching"
-
-			bus.AddHandler("test", func(query *m.GetApiKeyByNameQuery) error {
-				query.Result = &m.ApiKey{OrgId: 12, Role: m.ROLE_EDITOR, Key: keyhash}
-				return nil
-			})
-
-			sc.fakeReq("GET", "/").withValidApiKey().exec()
-
-			Convey("Should return api key invalid", func() {
-				So(sc.resp.Code, ShouldEqual, 401)
-				So(sc.respJson["message"], ShouldEqual, "Invalid API key")
-			})
-		})
-
-		middlewareScenario("UserId in session", func(sc *scenarioContext) {
-
-			sc.fakeReq("GET", "/").handler(func(c *Context) {
-				c.Session.Set(SESS_KEY_USERID, int64(12))
-			}).exec()
-
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
-				return nil
-			})
-
-			sc.fakeReq("GET", "/").exec()
-
-			Convey("should init context with user info", func() {
-				So(sc.context.IsSignedIn, ShouldBeTrue)
-				So(sc.context.UserId, ShouldEqual, 12)
-			})
-		})
-
-		middlewareScenario("When anonymous access is enabled", func(sc *scenarioContext) {
-			setting.AnonymousEnabled = true
-			setting.AnonymousOrgName = "test"
-			setting.AnonymousOrgRole = string(m.ROLE_EDITOR)
-
-			bus.AddHandler("test", func(query *m.GetOrgByNameQuery) error {
-				So(query.Name, ShouldEqual, "test")
-
-				query.Result = &m.Org{Id: 2, Name: "test"}
-				return nil
-			})
-
-			sc.fakeReq("GET", "/").exec()
-
-			Convey("should init context with org info", func() {
-				So(sc.context.UserId, ShouldEqual, 0)
-				So(sc.context.OrgId, ShouldEqual, 2)
-				So(sc.context.OrgRole, ShouldEqual, m.ROLE_EDITOR)
-			})
-
-			Convey("context signed in should be false", func() {
-				So(sc.context.IsSignedIn, ShouldBeFalse)
-			})
-		})
-
-		middlewareScenario("When auth_proxy is enabled enabled and user exists", func(sc *scenarioContext) {
-			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
-			setting.AuthProxyHeaderProperty = "username"
-
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
-				return nil
-			})
-
-			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
-			sc.exec()
-
-			Convey("should init context with user info", func() {
-				So(sc.context.IsSignedIn, ShouldBeTrue)
-				So(sc.context.UserId, ShouldEqual, 12)
-				So(sc.context.OrgId, ShouldEqual, 2)
-			})
-		})
-
-		middlewareScenario("When auth_proxy is enabled enabled and user does not exists", func(sc *scenarioContext) {
-			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
-			setting.AuthProxyHeaderProperty = "username"
-			setting.AuthProxyAutoSignUp = true
-
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				if query.UserId > 0 {
-					query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
-					return nil
-				} else {
-					return m.ErrUserNotFound
-				}
-			})
-
-			var createUserCmd *m.CreateUserCommand
-			bus.AddHandler("test", func(cmd *m.CreateUserCommand) error {
-				createUserCmd = cmd
-				cmd.Result = m.User{Id: 33}
-				return nil
-			})
-
-			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
-			sc.exec()
-
-			Convey("Should create user if auto sign up is enabled", func() {
-				So(sc.context.IsSignedIn, ShouldBeTrue)
-				So(sc.context.UserId, ShouldEqual, 33)
-				So(sc.context.OrgId, ShouldEqual, 4)
-
-			})
-		})
-
+	middlewareScenario(t, "middleware should add correct Strict-Transport-Security header", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+		assert.Equal(t, "max-age=64000", sc.resp.Header().Get("Strict-Transport-Security"))
+		sc.cfg.StrictTransportSecurityPreload = true
+		sc.fakeReq("GET", "/api/").exec()
+		assert.Equal(t, "max-age=64000; preload", sc.resp.Header().Get("Strict-Transport-Security"))
+		sc.cfg.StrictTransportSecuritySubDomains = true
+		sc.fakeReq("GET", "/api/").exec()
+		assert.Equal(t, "max-age=64000; preload; includeSubDomains", sc.resp.Header().Get("Strict-Transport-Security"))
+	}, func(cfg *setting.Cfg) {
+		cfg.StrictTransportSecurity = true
+		cfg.StrictTransportSecurityMaxAge = 64000
 	})
 }
 
-func middlewareScenario(desc string, fn scenarioFunc) {
-	Convey(desc, func() {
-		defer bus.ClearBusHandlers()
+func TestMiddleWareContentSecurityPolicyHeaders(t *testing.T) {
+	policy := `script-src 'self' 'strict-dynamic' 'nonce-[^']+';connect-src 'self' ws://localhost:3000/ wss://localhost:3000/;`
 
-		sc := &scenarioContext{}
-		viewsPath, _ := filepath.Abs("../../public/views")
+	middlewareScenario(t, "middleware should add Content-Security-Policy", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+		assert.Regexp(t, policy, sc.resp.Header().Get("Content-Security-Policy"))
+	}, func(cfg *setting.Cfg) {
+		cfg.CSPEnabled = true
+		cfg.CSPTemplate = "script-src 'self' 'strict-dynamic' $NONCE;connect-src 'self' ws://$ROOT_PATH wss://$ROOT_PATH;"
+		cfg.AppURL = "http://localhost:3000/"
+	})
 
-		sc.m = macaron.New()
-		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
-			Directory: viewsPath,
-			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
-		}))
+	middlewareScenario(t, "middleware should add Content-Security-Policy-Report-Only", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+		assert.Regexp(t, policy, sc.resp.Header().Get("Content-Security-Policy-Report-Only"))
+	}, func(cfg *setting.Cfg) {
+		cfg.CSPReportOnlyEnabled = true
+		cfg.CSPReportOnlyTemplate = "script-src 'self' 'strict-dynamic' $NONCE;connect-src 'self' ws://$ROOT_PATH wss://$ROOT_PATH;"
+		cfg.AppURL = "http://localhost:3000/"
+	})
 
-		sc.m.Use(GetContextHandler())
-		// mock out gc goroutine
-		startSessionGC = func() {}
-		sc.m.Use(Sessioner(&session.Options{}))
+	middlewareScenario(t, "middleware can add both CSP and CSP-Report-Only", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
 
-		sc.defaultHandler = func(c *Context) {
+		cspHeader := sc.resp.Header().Get("Content-Security-Policy")
+		cspReportOnlyHeader := sc.resp.Header().Get("Content-Security-Policy-Report-Only")
+
+		assert.Regexp(t, policy, cspHeader)
+		assert.Regexp(t, policy, cspReportOnlyHeader)
+
+		// assert CSP-Report-Only reuses the same nonce as CSP
+		assert.Equal(t, cspHeader, cspReportOnlyHeader)
+	}, func(cfg *setting.Cfg) {
+		cfg.CSPEnabled = true
+		cfg.CSPTemplate = "script-src 'self' 'strict-dynamic' $NONCE;connect-src 'self' ws://$ROOT_PATH wss://$ROOT_PATH;"
+		cfg.CSPReportOnlyEnabled = true
+		cfg.CSPReportOnlyTemplate = "script-src 'self' 'strict-dynamic' $NONCE;connect-src 'self' ws://$ROOT_PATH wss://$ROOT_PATH;"
+		cfg.AppURL = "http://localhost:3000/"
+	})
+}
+
+func TestMiddlewareContext(t *testing.T) {
+	const noStore = "no-store"
+
+	middlewareScenario(t, "middleware should add context to injector", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/").exec()
+		assert.NotNil(t, sc.context)
+	})
+
+	middlewareScenario(t, "Default middleware should allow get request", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/").exec()
+		assert.Equal(t, 200, sc.resp.Code)
+	})
+
+	middlewareScenario(t, "middleware should add Cache-Control header for requests to API", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/search").exec()
+		assert.Equal(t, noStore, sc.resp.Header().Get("Cache-Control"))
+		assert.Empty(t, sc.resp.Header().Get("Pragma"))
+		assert.Empty(t, sc.resp.Header().Get("Expires"))
+	})
+
+	middlewareScenario(t, "middleware should pass cache-control on datasource resources with private cache control", func(t *testing.T, sc *scenarioContext) {
+		sc = sc.fakeReq("GET", "/api/datasources/1/resources/foo")
+		sc.resp.Header().Add("Cache-Control", "private, max-age=86400")
+		sc.resp.Header().Add("X-Grafana-Cache", "true")
+		sc.exec()
+		assert.Equal(t, "private, max-age=86400", sc.resp.Header().Get("Cache-Control"))
+	})
+
+	middlewareScenario(t, "middleware should not pass cache-control on datasource resources with public cache control", func(t *testing.T, sc *scenarioContext) {
+		sc = sc.fakeReq("GET", "/api/datasources/1/resources/foo")
+		sc.resp.Header().Add("Cache-Control", "public, max-age=86400, private")
+		sc.resp.Header().Add("X-Grafana-Cache", "true")
+		sc.exec()
+		assert.Equal(t, noStore, sc.resp.Header().Get("Cache-Control"))
+	})
+
+	middlewareScenario(t, "middleware should pass cache-control on plugins resources with private cache control", func(t *testing.T, sc *scenarioContext) {
+		sc = sc.fakeReq("GET", "/api/plugins/1/resources/foo")
+		sc.resp.Header().Add("Cache-Control", "private, max-age=86400")
+		sc.resp.Header().Add("X-Grafana-Cache", "true")
+		sc.exec()
+		assert.Equal(t, "private, max-age=86400", sc.resp.Header().Get("Cache-Control"))
+	})
+
+	middlewareScenario(t, "middleware should not pass cache-control on plugins resources with public cache control", func(t *testing.T, sc *scenarioContext) {
+		sc = sc.fakeReq("GET", "/api/plugins/1/resources/foo")
+		sc.resp.Header().Add("Cache-Control", "public, max-age=86400, private")
+		sc.resp.Header().Add("X-Grafana-Cache", "true")
+		sc.exec()
+		assert.Equal(t, noStore, sc.resp.Header().Get("Cache-Control"))
+	})
+
+	middlewareScenario(t, "middleware should not add Cache-Control header for requests to datasource proxy API", func(
+		t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/datasources/proxy/1/test").exec()
+		assert.Empty(t, sc.resp.Header().Get("Cache-Control"))
+		assert.Empty(t, sc.resp.Header().Get("Pragma"))
+		assert.Empty(t, sc.resp.Header().Get("Expires"))
+	})
+
+	middlewareScenario(t, "middleware should add Cache-Control header for requests with HTML response", func(
+		t *testing.T, sc *scenarioContext) {
+		sc.handlerFunc = func(c *contextmodel.ReqContext) {
+			t.Log("Handler called")
+			data := &dtos.IndexViewData{
+				User:     &dtos.CurrentUser{},
+				Settings: &dtos.FrontendSettingsDTO{},
+				NavTree:  &navtree.NavTreeRoot{},
+				Assets: &dtos.EntryPointAssets{
+					JSFiles: []dtos.EntryPointAsset{},
+					Dark:    "dark.css",
+					Light:   "light.css",
+				},
+			}
+			t.Log("Calling HTML", "data", data)
+			c.HTML(http.StatusOK, "index", data)
+			t.Log("Returned HTML with code 200")
+		}
+		sc.fakeReq("GET", "/").exec()
+		require.Equal(t, 200, sc.resp.Code)
+		assert.Equal(t, noStore, sc.resp.Header().Get("Cache-Control"))
+		assert.Empty(t, sc.resp.Header().Get("Pragma"))
+		assert.Empty(t, sc.resp.Header().Get("Expires"))
+	})
+
+	middlewareScenario(t, "middleware should add X-Frame-Options header with deny for request when not allowing embedding", func(
+		t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/search").exec()
+		assert.Equal(t, "deny", sc.resp.Header().Get("X-Frame-Options"))
+	})
+
+	middlewareScenario(t, "middleware should not add X-Frame-Options header for request when allowing embedding", func(
+		t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/search").exec()
+		assert.Empty(t, sc.resp.Header().Get("X-Frame-Options"))
+	}, func(cfg *setting.Cfg) {
+		cfg.AllowEmbedding = true
+	})
+
+	middlewareScenario(t, "middleware should add custom response headers", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+		assert.Regexp(t, "test", sc.resp.Header().Get("X-Custom-Header"))
+		assert.Regexp(t, "other-test", sc.resp.Header().Get("X-Other-Header"))
+	}, func(cfg *setting.Cfg) {
+		cfg.CustomResponseHeaders = map[string]string{
+			"X-Custom-Header": "test",
+			"X-Other-Header":  "other-test",
+		}
+	})
+
+	middlewareScenario(t, "middleware should not add Cache-Control header for requests to render pdf", func(
+		t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/reports/render/pdf/").exec()
+		assert.Empty(t, sc.resp.Header().Get("Cache-Control"))
+		assert.Empty(t, sc.resp.Header().Get("Pragma"))
+		assert.Empty(t, sc.resp.Header().Get("Expires"))
+	})
+
+	middlewareScenario(t, "middleware should not add Cache-Control header for requests to render panel as image", func(
+		t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/render/d-solo/").exec()
+		assert.Empty(t, sc.resp.Header().Get("Cache-Control"))
+		assert.Empty(t, sc.resp.Header().Get("Pragma"))
+		assert.Empty(t, sc.resp.Header().Get("Expires"))
+	})
+}
+
+func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(*setting.Cfg)) {
+	t.Helper()
+
+	t.Run(desc, func(t *testing.T) {
+		logger := log.New("test")
+
+		loginMaxLifetime, err := gtime.ParseDuration("30d")
+		require.NoError(t, err)
+		cfg := setting.NewCfg()
+		cfg.LoginCookieName = "grafana_session"
+		cfg.LoginMaxLifetime = loginMaxLifetime
+		// Required when rendering errors
+		cfg.ErrTemplateName = "error"
+		for _, cb := range cbs {
+			cb(cfg)
+		}
+
+		sc := &scenarioContext{t: t, cfg: cfg}
+		viewsPath, err := filepath.Abs("../../public/views")
+		require.NoError(t, err)
+		exists, err := fs.Exists(viewsPath)
+		require.NoError(t, err)
+		require.Truef(t, exists, "Views directory should exist at %q", viewsPath)
+
+		sc.m = web.New()
+		sc.m.Use(AddCustomResponseHeaders(cfg))
+		sc.m.Use(AddDefaultResponseHeaders(cfg))
+		sc.m.UseMiddleware(ContentSecurityPolicy(cfg, logger))
+		sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
+
+		// defalut to not authenticated request
+		sc.authnService = &authntest.FakeService{ExpectedErr: errors.New("no auth")}
+		sc.userService = usertest.NewUserServiceFake()
+
+		ctxHdlr := getContextHandler(t, cfg, sc.authnService)
+		sc.m.Use(ctxHdlr.Middleware)
+		sc.m.Use(OrgRedirect(sc.cfg, sc.userService))
+		// handle action urls
+		sc.m.Use(ValidateActionUrl(sc.cfg, logger))
+
+		sc.defaultHandler = func(c *contextmodel.ReqContext) {
+			require.NotNil(t, c)
+			t.Log("Default HTTP handler called")
 			sc.context = c
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)
+				if !c.Resp.Written() {
+					c.Resp.WriteHeader(http.StatusOK)
+				}
+			} else {
+				t.Log("Returning JSON OK")
+				resp := make(map[string]any)
+				resp["message"] = "OK"
+				c.JSON(http.StatusOK, resp)
 			}
 		}
 
 		sc.m.Get("/", sc.defaultHandler)
 
-		fn(sc)
+		fn(t, sc)
 	})
 }
 
-type scenarioContext struct {
-	m              *macaron.Macaron
-	context        *Context
-	resp           *httptest.ResponseRecorder
-	apiKey         string
-	authHeader     string
-	respJson       map[string]interface{}
-	handlerFunc    handlerFunc
-	defaultHandler macaron.Handler
+func getContextHandler(t *testing.T, cfg *setting.Cfg, authnService authn.Service) *contexthandler.ContextHandler {
+	t.Helper()
 
-	req *http.Request
+	return contexthandler.ProvideService(cfg, authnService, featuremgmt.WithFeatures())
 }
-
-func (sc *scenarioContext) withValidApiKey() *scenarioContext {
-	sc.apiKey = "eyJrIjoidjVuQXdwTWFmRlA2em5hUzR1cmhkV0RMUzU1MTFNNDIiLCJuIjoiYXNkIiwiaWQiOjF9"
-	return sc
-}
-
-func (sc *scenarioContext) withInvalidApiKey() *scenarioContext {
-	sc.apiKey = "nvalidhhhhds"
-	return sc
-}
-
-func (sc *scenarioContext) withAuthoriziationHeader(authHeader string) *scenarioContext {
-	sc.authHeader = authHeader
-	return sc
-}
-
-func (sc *scenarioContext) fakeReq(method, url string) *scenarioContext {
-	sc.resp = httptest.NewRecorder()
-	req, err := http.NewRequest(method, url, nil)
-	So(err, ShouldBeNil)
-	sc.req = req
-
-	// add session cookie from last request
-	if sc.context != nil {
-		if sc.context.Session.ID() != "" {
-			req.Header.Add("Cookie", "grafana_sess="+sc.context.Session.ID()+";")
-		}
-	}
-
-	return sc
-}
-
-func (sc *scenarioContext) handler(fn handlerFunc) *scenarioContext {
-	sc.handlerFunc = fn
-	return sc
-}
-
-func (sc *scenarioContext) exec() {
-	if sc.apiKey != "" {
-		sc.req.Header.Add("Authorization", "Bearer "+sc.apiKey)
-	}
-
-	if sc.authHeader != "" {
-		sc.req.Header.Add("Authorization", sc.authHeader)
-	}
-
-	sc.m.ServeHTTP(sc.resp, sc.req)
-
-	if sc.resp.Header().Get("Content-Type") == "application/json; charset=UTF-8" {
-		err := json.NewDecoder(sc.resp.Body).Decode(&sc.respJson)
-		So(err, ShouldBeNil)
-	}
-}
-
-type scenarioFunc func(c *scenarioContext)
-type handlerFunc func(c *Context)

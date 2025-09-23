@@ -1,0 +1,9 @@
+  mysql_opendata:
+    build: docker/blocks/mysql_opendata
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: testdata
+      MYSQL_USER: grafana
+      MYSQL_PASSWORD: password
+    ports:
+      - "3307:3306"

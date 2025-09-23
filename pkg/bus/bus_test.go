@@ -1,69 +1,152 @@
 package bus
 
 import (
+	"context"
 	"errors"
-	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
-type TestQuery struct {
-	Id   int64
+type testQuery struct {
+	ID   int64
 	Resp string
 }
 
-func TestQueryHandlerReturnsError(t *testing.T) {
-	bus := New()
+func TestEventPublish(t *testing.T) {
+	bus := ProvideBus(tracing.InitializeTracerForTest())
 
-	bus.AddHandler(func(query *TestQuery) error {
-		return errors.New("handler error")
+	var invoked bool
+
+	bus.AddEventListener(func(ctx context.Context, query *testQuery) error {
+		invoked = true
+		return nil
 	})
 
-	err := bus.Dispatch(&TestQuery{})
+	err := bus.Publish(context.Background(), &testQuery{})
+	require.NoError(t, err, "unable to publish event")
 
-	if err == nil {
-		t.Fatal("Send query failed " + err.Error())
-	} else {
-		t.Log("Handler error received ok")
-	}
+	require.True(t, invoked)
 }
 
-func TestQueryHandlerReturn(t *testing.T) {
-	bus := New()
+func TestEventPublish_NoRegisteredListener(t *testing.T) {
+	bus := ProvideBus(tracing.InitializeTracerForTest())
 
-	bus.AddHandler(func(q *TestQuery) error {
-		q.Resp = "hello from handler"
-		return nil
-	})
-
-	query := &TestQuery{}
-	err := bus.Dispatch(query)
-
-	if err != nil {
-		t.Fatal("Send query failed " + err.Error())
-	} else if query.Resp != "hello from handler" {
-		t.Fatal("Failed to get response from handler")
-	}
+	err := bus.Publish(context.Background(), &testQuery{})
+	require.NoError(t, err, "unable to publish event")
 }
 
-func TestEventListeners(t *testing.T) {
-	bus := New()
-	count := 0
+func TestEventCtxPublishCtx(t *testing.T) {
+	bus := ProvideBus(tracing.InitializeTracerForTest())
 
-	bus.AddEventListener(func(query *TestQuery) error {
-		count += 1
+	var invoked bool
+
+	bus.AddEventListener(func(ctx context.Context, query *testQuery) error {
+		invoked = true
 		return nil
 	})
 
-	bus.AddEventListener(func(query *TestQuery) error {
-		count += 10
+	err := bus.Publish(context.Background(), &testQuery{})
+	require.NoError(t, err, "unable to publish event")
+
+	require.True(t, invoked)
+}
+
+func TestEventPublishCtx_NoRegisteredListener(t *testing.T) {
+	bus := ProvideBus(tracing.InitializeTracerForTest())
+
+	err := bus.Publish(context.Background(), &testQuery{})
+	require.NoError(t, err, "unable to publish event")
+}
+
+func TestEventPublishCtx(t *testing.T) {
+	bus := ProvideBus(tracing.InitializeTracerForTest())
+
+	var invoked bool
+
+	bus.AddEventListener(func(ctx context.Context, query *testQuery) error {
+		invoked = true
 		return nil
 	})
 
-	err := bus.Publish(&TestQuery{})
+	err := bus.Publish(context.Background(), &testQuery{})
+	require.NoError(t, err, "unable to publish event")
 
-	if err != nil {
-		t.Fatal("Publish event failed " + err.Error())
-	} else if count != 11 {
-		t.Fatal(fmt.Sprintf("Publish event failed, listeners called: %v, expected: %v", count, 11))
-	}
+	require.True(t, invoked)
+}
+
+func TestEventCtxPublish(t *testing.T) {
+	bus := ProvideBus(tracing.InitializeTracerForTest())
+
+	var invoked bool
+
+	bus.AddEventListener(func(ctx context.Context, query *testQuery) error {
+		invoked = true
+		return nil
+	})
+
+	err := bus.Publish(context.Background(), &testQuery{})
+	require.NoError(t, err, "unable to publish event")
+
+	require.True(t, invoked)
+}
+
+func TestEventListenerError(t *testing.T) {
+	bus := ProvideBus(tracing.InitializeTracerForTest())
+
+	mockErr := errors.New("error")
+
+	invocations := 0
+
+	// Will be called in order of declaration.
+	bus.AddEventListener(func(ctx context.Context, query *testQuery) error {
+		invocations++
+		return nil
+	})
+
+	bus.AddEventListener(func(ctx context.Context, query *testQuery) error {
+		invocations++
+		return mockErr
+	})
+
+	bus.AddEventListener(func(ctx context.Context, query *testQuery) {
+		invocations++
+	})
+
+	err := bus.Publish(context.Background(), &testQuery{})
+	require.ErrorIs(t, err, mockErr)
+	require.Equal(t, 2, invocations)
+}
+
+func TestEventListenerInvalidCallbackType(t *testing.T) {
+	bus := ProvideBus(tracing.InitializeTracerForTest())
+
+	invoked := false
+
+	bus.AddEventListener(func(ctx context.Context, query *testQuery) bool {
+		invoked = true
+		return invoked
+	})
+
+	err := bus.Publish(context.Background(), &testQuery{})
+	require.Error(t, err)
+	require.True(t, invoked)
+}
+
+func TestEventListenerInvalidCallback(t *testing.T) {
+	bus := ProvideBus(tracing.InitializeTracerForTest())
+
+	invoked := false
+
+	bus.AddEventListener(func(ctx context.Context, query *testQuery) {
+		invoked = true
+	})
+
+	require.Panics(t, func() {
+		err := bus.Publish(context.Background(), &testQuery{})
+		require.NoError(t, err) // unreachable
+	})
+	require.True(t, invoked)
 }

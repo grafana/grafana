@@ -1,16 +1,9 @@
-///<reference path="../../../headers/common.d.ts" />
+import { DataSourcePlugin } from '@grafana/data';
 
-import angular from 'angular';
-import {GrafanaDatasource} from './datasource';
-import {QueryCtrl} from 'app/plugins/sdk';
+import { QueryEditor } from './components/QueryEditor';
+import { GrafanaDatasource } from './datasource';
+import { GrafanaQuery } from './types';
 
-class GrafanaQueryCtrl extends QueryCtrl {
-  static templateUrl = 'partials/query.editor.html';
-}
-
-export {
-  GrafanaDatasource,
-  GrafanaDatasource as Datasource,
-  GrafanaQueryCtrl as QueryCtrl,
-};
-
+export const plugin = new DataSourcePlugin<GrafanaDatasource, GrafanaQuery>(GrafanaDatasource).setQueryEditor(
+  QueryEditor
+);

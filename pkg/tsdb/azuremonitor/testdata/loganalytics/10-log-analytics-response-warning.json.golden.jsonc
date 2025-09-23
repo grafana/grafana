@@ -1,0 +1,87 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "azureColumnTypes": [
+//              "string",
+//              "string"
+//          ]
+//      },
+//      "notices": [
+//          {
+//              "severity": "warning",
+//              "text": "There were some errors when processing your query. Something went wrong processing your query on the server. Not sure what happened."
+//          }
+//      ]
+//  }
+//  Name: 
+//  Dimensions: 2 Fields by 1 Rows
+//  +----------------------------------+-----------------+
+//  | Name: OperationName              | Name: Level     |
+//  | Labels:                          | Labels:         |
+//  | Type: []*string                  | Type: []*string |
+//  +----------------------------------+-----------------+
+//  | Create or Update Virtual Machine | Informational   |
+//  +----------------------------------+-----------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "azureColumnTypes": [
+              "string",
+              "string"
+            ]
+          },
+          "notices": [
+            {
+              "severity": "warning",
+              "text": "There were some errors when processing your query. Something went wrong processing your query on the server. Not sure what happened."
+            }
+          ]
+        },
+        "fields": [
+          {
+            "name": "OperationName",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "Level",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "Create or Update Virtual Machine"
+          ],
+          [
+            "Informational"
+          ]
+        ]
+      }
+    }
+  ]
+}

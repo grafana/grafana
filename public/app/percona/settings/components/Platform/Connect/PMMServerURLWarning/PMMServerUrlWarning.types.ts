@@ -1,0 +1,3 @@
+interface PMMServerUrlWarningProps {
+  className?: string;
+}

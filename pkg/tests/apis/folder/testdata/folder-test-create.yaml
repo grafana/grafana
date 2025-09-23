@@ -1,0 +1,7 @@
+apiVersion: folder.grafana.app/v0alpha1
+kind: Folder
+metadata:
+  name: test
+spec:
+  title: Test folder (created from k8s; 2 items; POST)
+

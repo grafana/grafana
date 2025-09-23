@@ -1,0 +1,7 @@
+purge_other_datasources: true
+datasources:
+  - name: name2
+    type: type2
+    access: proxy
+    orgId: 2
+    url: url2

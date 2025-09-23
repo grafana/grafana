@@ -3,19 +3,32 @@ package migrator
 import (
 	"fmt"
 	"strings"
+
+	"xorm.io/xorm"
 )
 
 const (
-	POSTGRES = "postgres"
-	SQLITE   = "sqlite3"
-	MYSQL    = "mysql"
+	Postgres = "postgres"
+	SQLite   = "sqlite3"
+	MySQL    = "mysql"
+	MSSQL    = "mssql"
+	Spanner  = "spanner"
 )
 
 type Migration interface {
-	Sql(dialect Dialect) string
+	SQL(dialect Dialect) string
 	Id() string
 	SetId(string)
 	GetCondition() MigrationCondition
+	// SkipMigrationLog is used by dashboard alert migration to Grafana 8 Alerts
+	// for skipping recording it in the migration_log so that it can run several times.
+	// For all the other migrations it should be false.
+	SkipMigrationLog() bool
+}
+
+type CodeMigration interface {
+	Migration
+	Exec(sess *xorm.Session, migrator *Migrator) error
 }
 
 type SQLType string
@@ -46,7 +59,7 @@ type Index struct {
 
 func (index *Index) XName(tableName string) string {
 	if index.Name == "" {
-		index.Name = fmt.Sprintf("%s", strings.Join(index.Cols, "_"))
+		index.Name = strings.Join(index.Cols, "_")
 	}
 
 	if !strings.HasPrefix(index.Name, "UQE_") &&
@@ -68,8 +81,7 @@ var (
 	DB_Integer   = "INTEGER"
 	DB_BigInt    = "BIGINT"
 
-	DB_Enum = "ENUM"
-	DB_Set  = "SET"
+	DB_Set = "SET"
 
 	DB_Char       = "CHAR"
 	DB_Varchar    = "VARCHAR"

@@ -1,6 +1,5 @@
-///<reference path="../headers/common.d.ts" />
+import { EventBusSrv, EventBusExtended } from '@grafana/data';
 
-import {Emitter} from './utils/emitter';
+export const appEvents: EventBusExtended = new EventBusSrv();
 
-var appEvents = new Emitter();
 export default appEvents;

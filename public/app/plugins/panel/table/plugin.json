@@ -4,14 +4,14 @@
   "id": "table",
 
   "info": {
+    "description": "Supports many column styles",
     "author": {
-      "name": "Grafana Project",
-      "url": "http://grafana.org"
-},
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
     "logos": {
       "small": "img/icn-table-panel.svg",
       "large": "img/icn-table-panel.svg"
     }
   }
 }
-

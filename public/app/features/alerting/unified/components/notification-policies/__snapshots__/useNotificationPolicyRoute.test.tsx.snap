@@ -1,0 +1,35 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`createKubernetesRoutingTreeSpec 1`] = `
+{
+  "metadata": {
+    "name": "user-defined",
+    "resourceVersion": "abc123",
+  },
+  "spec": {
+    "defaults": {
+      "group_by": [
+        "alertname",
+      ],
+      "receiver": "default-receiver",
+      "repeat_interval": "4h",
+    },
+    "routes": [
+      {
+        "continue": false,
+        "group_interval": "5m",
+        "group_wait": "30s",
+        "matchers": [
+          {
+            "label": "team",
+            "type": "=",
+            "value": "frontend",
+          },
+        ],
+        "receiver": "nested-receiver",
+        "routes": undefined,
+      },
+    ],
+  },
+}
+`;

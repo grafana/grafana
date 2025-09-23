@@ -1,0 +1,43 @@
+{
+  "type": "datasource",
+  "name": "TestData",
+  "id": "grafana-testdata-datasource",
+  "aliasIDs": ["testdata"],
+  "executable": "gpx_testdata",
+
+  "metrics": true,
+  "logs": true,
+  "alerting": true,
+  "annotations": true,
+  "backend": true,
+
+  "queryOptions": {
+    "minInterval": true,
+    "maxDataPoints": true
+  },
+
+  "info": {
+    "description": "Generates test data in different forms",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/testdata.svg",
+      "large": "img/testdata.svg"
+    },
+    "version": "%VERSION%"
+  },
+
+  "includes": [
+    {
+      "type": "dashboard",
+      "name": "Streaming Example",
+      "path": "dashboards/streaming.json"
+    }
+  ],
+
+  "dependencies": {
+    "grafanaDependency": ">=10.3.0-0"
+  }
+}

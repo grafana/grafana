@@ -1,46 +1,81 @@
 package util
 
 import (
+	"net/url"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestUrl(t *testing.T) {
+func TestJoinURLFragments(t *testing.T) {
+	t.Parallel()
 
-	Convey("When joining two urls where right hand side is empty", t, func() {
-		result := JoinUrlFragments("http://localhost:8080", "")
+	tests := []struct {
+		description string
+		base        string
+		path        string
+		expected    string
+	}{
+		{
+			description: "RHS is empty",
+			base:        "http://localhost:8080",
+			path:        "",
+			expected:    "http://localhost:8080",
+		},
+		{
+			description: "RHS is empty and LHS has trailing slash",
+			base:        "http://localhost:8080/",
+			path:        "",
+			expected:    "http://localhost:8080/",
+		},
+		{
+			description: "neither has trailing slash",
+			base:        "http://localhost:8080",
+			path:        "api",
+			expected:    "http://localhost:8080/api",
+		},
+		{
+			description: "LHS has trailing slash",
+			base:        "http://localhost:8080/",
+			path:        "api",
+			expected:    "http://localhost:8080/api",
+		},
+		{
+			description: "LHS and RHS has trailing slash",
+			base:        "http://localhost:8080/",
+			path:        "api/",
+			expected:    "http://localhost:8080/api/",
+		},
+		{
+			description: "LHS has trailing slash and RHS has preceding slash",
+			base:        "http://localhost:8080/",
+			path:        "/api/",
+			expected:    "http://localhost:8080/api/",
+		},
+	}
+	for _, testcase := range tests {
+		t.Run("where "+testcase.description, func(t *testing.T) {
+			assert.Equalf(
+				t,
+				testcase.expected,
+				JoinURLFragments(testcase.base, testcase.path),
+				"base: '%s', path: '%s'",
+				testcase.base,
+				testcase.path,
+			)
+		})
+	}
+}
 
-		So(result, ShouldEqual, "http://localhost:8080")
-	})
+func TestNewURLQueryReader(t *testing.T) {
+	u, err := url.Parse("http://www.abc.com/foo?bar=baz&bar2=baz2")
+	require.NoError(t, err)
 
-	Convey("When joining two urls where right hand side is empty and lefthand side has a trailing slash", t, func() {
-		result := JoinUrlFragments("http://localhost:8080/", "")
+	uqr, err := NewURLQueryReader(u)
+	require.NoError(t, err)
 
-		So(result, ShouldEqual, "http://localhost:8080/")
-	})
-
-	Convey("When joining two urls where neither has a trailing slash", t, func() {
-		result := JoinUrlFragments("http://localhost:8080", "api")
-
-		So(result, ShouldEqual, "http://localhost:8080/api")
-	})
-
-	Convey("When joining two urls where lefthand side has a trailing slash", t, func() {
-		result := JoinUrlFragments("http://localhost:8080/", "api")
-
-		So(result, ShouldEqual, "http://localhost:8080/api")
-	})
-
-	Convey("When joining two urls where righthand side has preceding slash", t, func() {
-		result := JoinUrlFragments("http://localhost:8080", "/api")
-
-		So(result, ShouldEqual, "http://localhost:8080/api")
-	})
-
-	Convey("When joining two urls where righthand side has trailing slash", t, func() {
-		result := JoinUrlFragments("http://localhost:8080", "api/")
-
-		So(result, ShouldEqual, "http://localhost:8080/api/")
-	})
+	assert.Equal(t, "baz", uqr.Get("bar", "foodef"), "first param")
+	assert.Equal(t, "baz2", uqr.Get("bar2", "foodef"), "second param")
+	assert.Equal(t, "foodef", uqr.Get("bar3", "foodef"), "non-existing param, use fallback")
 }

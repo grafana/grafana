@@ -1,0 +1,13 @@
+@lokiDatasourceID = 32
+@prometheusDatasourceID = 35
+
+# unsupported loki backend
+GET http://admin:admin@localhost:3000/api/alertmanager/{{lokiDatasourceID}}/config/api/v1/alerts
+
+###
+# unsupported cortex backend
+GET http://admin:admin@localhost:3000/api/alertmanager/{{prometheusDatasourceID}}/config/api/v1/alerts
+
+###
+# unknown datasource
+GET http://admin:admin@localhost:3000/api/alertmanager/unknown/config/api/v1/alerts

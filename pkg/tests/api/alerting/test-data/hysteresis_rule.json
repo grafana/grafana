@@ -1,0 +1,71 @@
+{
+  "name": "Default",
+  "interval": "1s",
+  "rules": [
+    {
+      "grafana_alert": {
+        "title": "Hysteresis Test",
+        "condition": "C",
+        "no_data_state": "NoData",
+        "exec_err_state": "Error",
+        "data": [
+          {
+            "refId": "A",
+            "datasourceUid": "REPLACE_ME",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 600,
+              "to": 0
+            },
+            "model": {
+              "refId": "A",
+              "scenarioId": "predictable_csv_wave",
+              "csvWave": [
+                {
+                  "timeStep": 1,
+                  "valuesCSV": "5,3,2,1"
+                }
+              ],
+              "seriesCount": 1
+            }
+          },
+          {
+            "refId": "B",
+            "datasourceUid": "__expr__",
+            "model": {
+              "refId": "B",
+              "type": "reduce",
+              "reducer": "last",
+              "expression": "A"
+            }
+          },
+          {
+            "refId": "C",
+            "datasourceUid": "__expr__",
+            "model": {
+              "refId": "C",
+              "type": "threshold",
+              "conditions": [
+                {
+                  "evaluator": {
+                    "params": [
+                      4
+                    ],
+                    "type": "gt"
+                  },
+                  "unloadEvaluator": {
+                    "params": [
+                      2
+                    ],
+                    "type": "lt"
+                  }
+                }
+              ],
+              "expression": "B"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

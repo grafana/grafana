@@ -13,71 +13,75 @@
 
 'use strict';
 
-// accessable variables in this scope
-var window, document, ARGS, $, jQuery, moment, kbn;
+// accessible variables in this scope
+// let window, document, $, jQuery, moment, kbn;
 
 // Setup some variables
-var dashboard;
+let dashboard;
 
 // All url parameters are available via the ARGS object
-var ARGS;
+// eslint-disable-next-line no-redeclare
+// let ARGS;
 
-// Intialize a skeleton with nothing but a rows array and service object
+// Initialize a skeleton with nothing but a rows array and service object
 dashboard = {
-  rows : [],
+  rows: [],
+  schemaVersion: 13,
 };
 
 // Set a title
 dashboard.title = 'Scripted and templated dash';
 
 // Set default time
-// time can be overriden in the url using from/to parameteres, but this is
+// time can be overridden in the url using from/to parameters, but this is
 // handled automatically in grafana core during dashboard initialization
 dashboard.time = {
-  from: "now-6h",
-  to: "now"
+  from: 'now-6h',
+  to: 'now',
 };
 
 dashboard.templating = {
-  enable: true,
   list: [
     {
       name: 'test',
-      query: 'apps.backend.*',
-      refresh: true,
-      options: [],
-      current: null,
-      type: 'custom'
+      hide: 2,
+      includeAll: false,
+      multi: false,
+      query: 'a,b,c\n',
+      skipUrlSync: false,
+      type: 'custom',
     },
     {
-      name: 'test2',
-      query: '*',
-      refresh: true,
-      options: [],
-      current: null,
-      type: 'custom'
-    }
-  ]
+      name: 'seriesName',
+      label: 'Series name',
+      hide: 0,
+      includeAll: false,
+      multi: false,
+      query: 'series1,series2,series3\n',
+      skipUrlSync: false,
+      type: 'custom',
+    },
+  ],
 };
 
-var rows = 1;
-var seriesName = 'argName';
+let rows = 1;
+let seriesName = 'argName';
 
-if(!_.isUndefined(ARGS.rows)) {
+if (!_.isUndefined(ARGS.rows)) {
   rows = parseInt(ARGS.rows, 10);
 }
 
-if(!_.isUndefined(ARGS.name)) {
+if (!_.isUndefined(ARGS.name)) {
   seriesName = ARGS.name;
 }
 
-for (var i = 0; i < rows; i++) {
-
+for (let i = 0; i < rows; i++) {
   dashboard.rows.push({
     title: 'Chart',
     height: '300px',
     panels: [
       {
+        id: 1,
         title: 'Events',
         type: 'graph',
         span: 12,
@@ -85,16 +89,21 @@ for (var i = 0; i < rows; i++) {
         linewidth: 2,
         targets: [
           {
-            'target': "randomWalk('" + seriesName + "')"
+            scenarioId: 'random_walk',
+            refId: 'A',
+            seriesCount: 1,
+            alias: seriesName,
           },
           {
-            'target': "randomWalk('[[test2]]')"
-          }
+            scenarioId: 'random_walk',
+            refId: 'B',
+            seriesCount: 1,
+            alias: '${seriesName}',
+          },
         ],
-      }
-    ]
+      },
+    ],
   });
 }
-
 
 return dashboard;

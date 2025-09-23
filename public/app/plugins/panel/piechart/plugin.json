@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "Pie chart",
+  "id": "piechart",
+
+  "info": {
+    "description": "The new core pie chart visualization",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icon_piechart.svg",
+      "large": "img/icon_piechart.svg"
+    }
+  }
+}

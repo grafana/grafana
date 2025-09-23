@@ -1,0 +1,35 @@
+
+<div class="graph-annotation">
+	<div class="graph-annotation__header">
+		<div class="graph-annotation__user" bs-tooltip="'Created by {{ctrl.login}}'">
+		</div>
+
+		<div class="graph-annotation__title">
+			<span ng-if="!ctrl.event.id">Add annotation</span>
+			<span ng-if="ctrl.event.id">Edit annotation</span>
+		</div>
+
+    <div class="graph-annotation__time">{{ctrl.timeFormated}}</div>
+	</div>
+
+	<form name="ctrl.form" class="graph-annotation__body text-center">
+		<div style="display: inline-block">
+			<div class="gf-form gf-form--v-stretch">
+				<span class="gf-form-label width-7">Description</span>
+				<textarea class="gf-form-input width-20" rows="2" ng-model="ctrl.event.text"  placeholder="Description"></textarea>
+			</div>
+
+			<div class="gf-form">
+				<span class="gf-form-label width-7">Tags</span>
+				<bootstrap-tagsinput ng-model="ctrl.event.tags" tagclass="label label-tag" placeholder="add tags">
+				</bootstrap-tagsinput>
+			</div>
+
+			<div class="gf-form-button-row">
+				<button type="submit" class="btn btn-primary" ng-click="ctrl.save()">Save</button>
+				<button ng-if="ctrl.event.id && ctrl.canDelete()" type="submit" class="btn btn-danger" ng-click="ctrl.delete()">Delete</button>
+				<a class="btn-text" ng-click="ctrl.close();">Cancel</a>
+			</div>
+		</div>
+	</form>
+</div>

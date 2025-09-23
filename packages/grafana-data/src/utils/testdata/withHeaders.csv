@@ -1,0 +1,7 @@
+#name#a,b,c
+#unit#ms,lengthm,s
+#type#number,string,boolean
+10,20,True
+40,50,FALSE
+"40","500",0
+40,50,1

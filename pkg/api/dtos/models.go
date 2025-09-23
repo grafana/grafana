@@ -3,13 +3,19 @@ package dtos
 import (
 	"crypto/md5"
 	"fmt"
+	"regexp"
 	"strings"
-	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var regNonAlphaNumeric = regexp.MustCompile("[^a-zA-Z0-9]+")
+var mlog = log.New("models")
 
 type AnyId struct {
 	Id int64 `json:"id"`
@@ -22,98 +28,130 @@ type LoginCommand struct {
 }
 
 type CurrentUser struct {
-	IsSignedIn     bool       `json:"isSignedIn"`
-	Id             int64      `json:"id"`
-	Login          string     `json:"login"`
-	Email          string     `json:"email"`
-	Name           string     `json:"name"`
-	LightTheme     bool       `json:"lightTheme"`
-	OrgId          int64      `json:"orgId"`
-	OrgName        string     `json:"orgName"`
-	OrgRole        m.RoleType `json:"orgRole"`
-	IsGrafanaAdmin bool       `json:"isGrafanaAdmin"`
-	GravatarUrl    string     `json:"gravatarUrl"`
-	Timezone       string     `json:"timezone"`
+	IsSignedIn                 bool               `json:"isSignedIn"`
+	Id                         int64              `json:"id"`
+	UID                        string             `json:"uid"`
+	Login                      string             `json:"login"`
+	Email                      string             `json:"email"`
+	Name                       string             `json:"name"`
+	Theme                      string             `json:"theme"`
+	LightTheme                 bool               `json:"lightTheme"` // deprecated, use theme instead
+	OrgCount                   int                `json:"orgCount"`
+	OrgId                      int64              `json:"orgId"`
+	OrgName                    string             `json:"orgName"`
+	OrgRole                    org.RoleType       `json:"orgRole"`
+	IsGrafanaAdmin             bool               `json:"isGrafanaAdmin"`
+	GravatarUrl                string             `json:"gravatarUrl"`
+	Timezone                   string             `json:"timezone"`
+	WeekStart                  string             `json:"weekStart"`
+	Locale                     string             `json:"locale"`
+	Language                   string             `json:"language"`
+	HelpFlags1                 user.HelpFlags1    `json:"helpFlags1"`
+	HasEditPermissionInFolders bool               `json:"hasEditPermissionInFolders"`
+	AuthenticatedBy            string             `json:"authenticatedBy"`
+	Permissions                UserPermissionsMap `json:"permissions,omitempty"`
+	Analytics                  AnalyticsSettings  `json:"analytics"`
 }
 
-type DashboardMeta struct {
-	IsStarred  bool      `json:"isStarred,omitempty"`
-	IsHome     bool      `json:"isHome,omitempty"`
-	IsSnapshot bool      `json:"isSnapshot,omitempty"`
-	Type       string    `json:"type,omitempty"`
-	CanSave    bool      `json:"canSave"`
-	CanEdit    bool      `json:"canEdit"`
-	CanStar    bool      `json:"canStar"`
-	Slug       string    `json:"slug"`
-	Expires    time.Time `json:"expires"`
-	Created    time.Time `json:"created"`
-	Updated    time.Time `json:"updated"`
-	UpdatedBy  string    `json:"updatedBy"`
-	CreatedBy  string    `json:"createdBy"`
-	Version    int       `json:"version"`
+type AnalyticsSettings struct {
+	Identifier         string `json:"identifier"`
+	IntercomIdentifier string `json:"intercomIdentifier,omitempty"`
 }
 
-type DashboardFullWithMeta struct {
-	Meta      DashboardMeta    `json:"meta"`
-	Dashboard *simplejson.Json `json:"dashboard"`
+type UserPermissionsMap map[string]bool
+
+// swagger:model
+type MetricRequest struct {
+	// From Start time in epoch timestamps in milliseconds or relative using Grafana time units.
+	// required: true
+	// example: now-1h
+	From string `json:"from"`
+	// To End time in epoch timestamps in milliseconds or relative using Grafana time units.
+	// required: true
+	// example: now
+	To string `json:"to"`
+	// queries.refId – Specifies an identifier of the query. Is optional and default to “A”.
+	// queries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId.
+	// queries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.
+	// queries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.
+	// required: true
+	// example: [ { "refId": "A", "intervalMs": 86400000, "maxDataPoints": 1092, "datasource":{ "uid":"PD8C576611E62080A" }, "rawSql": "SELECT 1 as valueOne, 2 as valueTwo", "format": "table" } ]
+	Queries []*simplejson.Json `json:"queries"`
+	// required: false
+	Debug bool `json:"debug"`
 }
 
-type DashboardRedirect struct {
-	RedirectUri string `json:"redirectUri"`
+func (mr *MetricRequest) GetUniqueDatasourceTypes() []string {
+	dsTypes := make(map[string]bool)
+	for _, query := range mr.Queries {
+		if dsType, ok := query.Get("datasource").CheckGet("type"); ok {
+			name := dsType.MustString()
+			if _, ok := dsTypes[name]; !ok {
+				dsTypes[name] = true
+			}
+		}
+	}
+
+	res := make([]string, 0, len(dsTypes))
+	for dsType := range dsTypes {
+		res = append(res, dsType)
+	}
+
+	return res
 }
 
-type DataSource struct {
-	Id                int64            `json:"id"`
-	OrgId             int64            `json:"orgId"`
-	Name              string           `json:"name"`
-	Type              string           `json:"type"`
-	TypeLogoUrl       string           `json:"typeLogoUrl"`
-	Access            m.DsAccess       `json:"access"`
-	Url               string           `json:"url"`
-	Password          string           `json:"password"`
-	User              string           `json:"user"`
-	Database          string           `json:"database"`
-	BasicAuth         bool             `json:"basicAuth"`
-	BasicAuthUser     string           `json:"basicAuthUser"`
-	BasicAuthPassword string           `json:"basicAuthPassword"`
-	WithCredentials   bool             `json:"withCredentials"`
-	IsDefault         bool             `json:"isDefault"`
-	JsonData          *simplejson.Json `json:"jsonData,omitempty"`
+func (mr *MetricRequest) CloneWithQueries(queries []*simplejson.Json) MetricRequest {
+	return MetricRequest{
+		From:    mr.From,
+		To:      mr.To,
+		Queries: queries,
+		Debug:   mr.Debug,
+	}
 }
 
-type DataSourceList []DataSource
+func GetGravatarUrl(cfg *setting.Cfg, text string) string {
+	if cfg.DisableGravatar {
+		return cfg.AppSubURL + "/public/img/user_profile.png"
+	}
 
-func (slice DataSourceList) Len() int {
-	return len(slice)
-}
-
-func (slice DataSourceList) Less(i, j int) bool {
-	return slice[i].Name < slice[j].Name
-}
-
-func (slice DataSourceList) Swap(i, j int) {
-	slice[i], slice[j] = slice[j], slice[i]
-}
-
-type MetricQueryResultDto struct {
-	Data []MetricQueryResultDataDto `json:"data"`
-}
-
-type MetricQueryResultDataDto struct {
-	Target     string       `json:"target"`
-	DataPoints [][2]float64 `json:"datapoints"`
-}
-
-type UserStars struct {
-	DashboardIds map[string]bool `json:"dashboardIds"`
-}
-
-func GetGravatarUrl(text string) string {
 	if text == "" {
 		return ""
 	}
 
+	hash, _ := GetGravatarHash(text)
+	return fmt.Sprintf(cfg.AppSubURL+"/avatar/%x", hash)
+}
+
+func GetGravatarHash(text string) ([]byte, bool) {
+	if text == "" {
+		return make([]byte, 0), false
+	}
+
 	hasher := md5.New()
-	hasher.Write([]byte(strings.ToLower(text)))
-	return fmt.Sprintf(setting.AppSubUrl+"/avatar/%x", hasher.Sum(nil))
+	if _, err := hasher.Write([]byte(strings.ToLower(text))); err != nil {
+		mlog.Warn("Failed to hash text", "err", err)
+	}
+	return hasher.Sum(nil), true
+}
+
+func GetGravatarUrlWithDefault(cfg *setting.Cfg, text string, defaultText string) string {
+	if text != "" {
+		return GetGravatarUrl(cfg, text)
+	}
+
+	text = regNonAlphaNumeric.ReplaceAllString(defaultText, "") + "@localhost"
+
+	return GetGravatarUrl(cfg, text)
+}
+
+func IsHiddenUser(userLogin string, signedInUser identity.Requester, cfg *setting.Cfg) bool {
+	if userLogin == "" || signedInUser.GetIsGrafanaAdmin() || userLogin == signedInUser.GetLogin() {
+		return false
+	}
+
+	if _, hidden := cfg.HiddenUsers[userLogin]; hidden {
+		return true
+	}
+
+	return false
 }

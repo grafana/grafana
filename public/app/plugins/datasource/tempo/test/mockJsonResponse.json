@@ -1,0 +1,818 @@
+{
+  "batches": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "db"
+            }
+          },
+          {
+            "key": "job",
+            "value": {
+              "stringValue": "tns/db"
+            }
+          },
+          {
+            "key": "opencensus.exporterversion",
+            "value": {
+              "stringValue": "Jaeger-Go-2.22.1"
+            }
+          },
+          {
+            "key": "host.name",
+            "value": {
+              "stringValue": "63d16772b4a2"
+            }
+          },
+          {
+            "key": "ip",
+            "value": {
+              "stringValue": "172.24.0.2"
+            }
+          },
+          {
+            "key": "client-uuid",
+            "value": {
+              "stringValue": "39fb01637a579639"
+            }
+          }
+        ]
+      },
+      "instrumentationLibrarySpans": [
+        {
+          "instrumentationLibrary": {},
+          "spans": [
+            {
+              "traceId": "000000000000000060ba2abb44f13eae",
+              "spanId": "726b5e30102fc0d0",
+              "parentSpanId": "398f0f21a3db99ae",
+              "name": "HTTP GET - root",
+              "kind": "SPAN_KIND_SERVER",
+              "startTimeUnixNano": "1627471657255809000",
+              "endTimeUnixNano": "1627471657256268000",
+              "attributes": [
+                {
+                  "key": "http.status_code",
+                  "value": {
+                    "intValue": "200"
+                  }
+                },
+                {
+                  "key": "http.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "http.url",
+                  "value": {
+                    "stringValue": "/"
+                  }
+                },
+                {
+                  "key": "component",
+                  "value": {
+                    "stringValue": "net/http"
+                  }
+                }
+              ],
+              "links": [
+                {
+                  "spanId": "spanId",
+                  "traceId": "traceId",
+                  "attributes": [
+                    {
+                      "key": "key",
+                      "value": {
+                        "stringValue": "Value"
+                      }
+                    },
+                    {
+                      "key": "intValue",
+                      "value": {
+                        "intValue": 4
+                      }
+                    }
+                  ]
+                },
+                {
+                  "spanId": "spanId2",
+                  "traceId": "traceId2",
+                  "attributes": []
+                }
+              ],
+              "status": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "app"
+            }
+          },
+          {
+            "key": "job",
+            "value": {
+              "stringValue": "tns/app"
+            }
+          },
+          {
+            "key": "opencensus.exporterversion",
+            "value": {
+              "stringValue": "Jaeger-Go-2.22.1"
+            }
+          },
+          {
+            "key": "host.name",
+            "value": {
+              "stringValue": "f68212e86151"
+            }
+          },
+          {
+            "key": "ip",
+            "value": {
+              "stringValue": "172.24.0.7"
+            }
+          },
+          {
+            "key": "client-uuid",
+            "value": {
+              "stringValue": "8b6e8600b53a24"
+            }
+          }
+        ]
+      },
+      "instrumentationLibrarySpans": [
+        {
+          "instrumentationLibrary": {},
+          "spans": [
+            {
+              "traceId": "000000000000000060ba2abb44f13eae",
+              "spanId": "1957671c4ad85a8a",
+              "parentSpanId": "WgdmnUQaoyY=",
+              "name": "HTTP Client",
+              "startTimeUnixNano": "1627471657251425000",
+              "endTimeUnixNano": "1627471657258789000",
+              "status": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "lb"
+            }
+          },
+          {
+            "key": "job",
+            "value": {
+              "stringValue": "tns/loadgen"
+            }
+          },
+          {
+            "key": "opencensus.exporterversion",
+            "value": {
+              "stringValue": "Jaeger-Go-2.22.1"
+            }
+          },
+          {
+            "key": "host.name",
+            "value": {
+              "stringValue": "6475ba6d3c8b"
+            }
+          },
+          {
+            "key": "ip",
+            "value": {
+              "stringValue": "172.24.0.8"
+            }
+          },
+          {
+            "key": "client-uuid",
+            "value": {
+              "stringValue": "535eb863d7ade742"
+            }
+          }
+        ]
+      },
+      "instrumentationLibrarySpans": [
+        {
+          "instrumentationLibrary": {},
+          "spans": [
+            {
+              "traceId": "000000000000000060ba2abb44f13eae",
+              "spanId": "60ba2abb44f13eae",
+              "name": "HTTP Client",
+              "startTimeUnixNano": "1627471657247632000",
+              "endTimeUnixNano": "1627471657260233000",
+              "attributes": [
+                {
+                  "key": "sampler.type",
+                  "value": {
+                    "stringValue": "const"
+                  }
+                },
+                {
+                  "key": "sampler.param",
+                  "value": {
+                    "boolValue": true
+                  }
+                }
+              ],
+              "status": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "lb"
+            }
+          },
+          {
+            "key": "job",
+            "value": {
+              "stringValue": "tns/loadgen"
+            }
+          },
+          {
+            "key": "opencensus.exporterversion",
+            "value": {
+              "stringValue": "Jaeger-Go-2.22.1"
+            }
+          },
+          {
+            "key": "host.name",
+            "value": {
+              "stringValue": "6475ba6d3c8b"
+            }
+          },
+          {
+            "key": "ip",
+            "value": {
+              "stringValue": "172.24.0.8"
+            }
+          },
+          {
+            "key": "client-uuid",
+            "value": {
+              "stringValue": "535eb863d7ade742"
+            }
+          }
+        ]
+      },
+      "instrumentationLibrarySpans": [
+        {
+          "instrumentationLibrary": {},
+          "spans": [
+            {
+              "traceId": "000000000000000060ba2abb44f13eae",
+              "spanId": "5738616ec68e79d2",
+              "parentSpanId": "60ba2abb44f13eae",
+              "name": "HTTP GET",
+              "kind": "SPAN_KIND_CLIENT",
+              "startTimeUnixNano": "1627471657247674000",
+              "endTimeUnixNano": "1627471657261178000",
+              "attributes": [
+                {
+                  "key": "http.status_code",
+                  "value": {
+                    "intValue": "200"
+                  }
+                },
+                {
+                  "key": "component",
+                  "value": {
+                    "stringValue": "net/http"
+                  }
+                },
+                {
+                  "key": "http.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "http.url",
+                  "value": {
+                    "stringValue": "app:80"
+                  }
+                },
+                {
+                  "key": "net/http.reused",
+                  "value": {
+                    "boolValue": false
+                  }
+                },
+                {
+                  "key": "net/http.was_idle",
+                  "value": {
+                    "boolValue": false
+                  }
+                }
+              ],
+              "events": [
+                {
+                  "timeUnixNano": "1627471657247711000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "GetConn"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "timeUnixNano": "1627471657247822000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "DNSStart"
+                      }
+                    },
+                    {
+                      "key": "host",
+                      "value": {
+                        "stringValue": "app"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "timeUnixNano": "1627471657249309000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "DNSDone"
+                      }
+                    },
+                    {
+                      "key": "addr",
+                      "value": {
+                        "stringValue": "172.24.0.7"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "timeUnixNano": "1627471657249395000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "ConnectStart"
+                      }
+                    },
+                    {
+                      "key": "network",
+                      "value": {
+                        "stringValue": "tcp"
+                      }
+                    },
+                    {
+                      "key": "addr",
+                      "value": {
+                        "stringValue": "172.24.0.7:80"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "timeUnixNano": "1627471657250250000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "ConnectDone"
+                      }
+                    },
+                    {
+                      "key": "network",
+                      "value": {
+                        "stringValue": "tcp"
+                      }
+                    },
+                    {
+                      "key": "addr",
+                      "value": {
+                        "stringValue": "172.24.0.7:80"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "timeUnixNano": "1627471657250313000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "GotConn"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "timeUnixNano": "1627471657250446000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "WroteHeaders"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "timeUnixNano": "1627471657250465000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "WroteRequest"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "timeUnixNano": "1627471657260087000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "GotFirstResponseByte"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "timeUnixNano": "1627471657260804000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "ClosedBody"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "status": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "app"
+            }
+          },
+          {
+            "key": "job",
+            "value": {
+              "stringValue": "tns/app"
+            }
+          },
+          {
+            "key": "opencensus.exporterversion",
+            "value": {
+              "stringValue": "Jaeger-Go-2.22.1"
+            }
+          },
+          {
+            "key": "host.name",
+            "value": {
+              "stringValue": "f68212e86151"
+            }
+          },
+          {
+            "key": "ip",
+            "value": {
+              "stringValue": "172.24.0.7"
+            }
+          },
+          {
+            "key": "client-uuid",
+            "value": {
+              "stringValue": "8b6e8600b53a24"
+            }
+          }
+        ]
+      },
+      "instrumentationLibrarySpans": [
+        {
+          "instrumentationLibrary": {},
+          "spans": [
+            {
+              "traceId": "000000000000000060ba2abb44f13eae",
+              "spanId": "398f0f21a3db99ae",
+              "parentSpanId": "1957671c4ad85a8a",
+              "name": "HTTP GET",
+              "kind": "SPAN_KIND_CLIENT",
+              "startTimeUnixNano": "1627471657251445000",
+              "endTimeUnixNano": "1627471657260828000",
+              "attributes": [
+                {
+                  "key": "http.status_code",
+                  "value": {
+                    "intValue": "200"
+                  }
+                },
+                {
+                  "key": "component",
+                  "value": {
+                    "stringValue": "net/http"
+                  }
+                },
+                {
+                  "key": "http.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "http.url",
+                  "value": {
+                    "stringValue": "db:80"
+                  }
+                },
+                {
+                  "key": "net/http.reused",
+                  "value": {
+                    "boolValue": false
+                  }
+                },
+                {
+                  "key": "net/http.was_idle",
+                  "value": {
+                    "boolValue": false
+                  }
+                }
+              ],
+              "events": [
+                {
+                  "timeUnixNano": "1627471657251575000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "GetConn"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "timeUnixNano": "1627471657251700000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "DNSStart"
+                      }
+                    },
+                    {
+                      "key": "host",
+                      "value": {
+                        "stringValue": "db"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "timeUnixNano": "1627471657254144000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "DNSDone"
+                      }
+                    },
+                    {
+                      "key": "addr",
+                      "value": {
+                        "stringValue": "172.24.0.2"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "timeUnixNano": "1627471657254295000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "ConnectStart"
+                      }
+                    },
+                    {
+                      "key": "network",
+                      "value": {
+                        "stringValue": "tcp"
+                      }
+                    },
+                    {
+                      "key": "addr",
+                      "value": {
+                        "stringValue": "172.24.0.2:80"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "timeUnixNano": "1627471657255054000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "ConnectDone"
+                      }
+                    },
+                    {
+                      "key": "network",
+                      "value": {
+                        "stringValue": "tcp"
+                      }
+                    },
+                    {
+                      "key": "addr",
+                      "value": {
+                        "stringValue": "172.24.0.2:80"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "timeUnixNano": "1627471657255199000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "GotConn"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "timeUnixNano": "1627471657255257000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "WroteHeaders"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "timeUnixNano": "1627471657255274000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "WroteRequest"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "timeUnixNano": "1627471657258308000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "GotFirstResponseByte"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "timeUnixNano": "1627471657260811000",
+                  "attributes": [
+                    {
+                      "key": "event",
+                      "value": {
+                        "stringValue": "ClosedBody"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "status": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "app"
+            }
+          },
+          {
+            "key": "job",
+            "value": {
+              "stringValue": "tns/app"
+            }
+          },
+          {
+            "key": "opencensus.exporterversion",
+            "value": {
+              "stringValue": "Jaeger-Go-2.22.1"
+            }
+          },
+          {
+            "key": "host.name",
+            "value": {
+              "stringValue": "f68212e86151"
+            }
+          },
+          {
+            "key": "ip",
+            "value": {
+              "stringValue": "172.24.0.7"
+            }
+          },
+          {
+            "key": "client-uuid",
+            "value": {
+              "stringValue": "8b6e8600b53a24"
+            }
+          }
+        ]
+      },
+      "instrumentationLibrarySpans": [
+        {
+          "instrumentationLibrary": {},
+          "spans": [
+            {
+              "traceId": "000000000000000060ba2abb44f13eae",
+              "spanId": "5a07669d441aa326",
+              "parentSpanId": "5738616ec68e79d2",
+              "name": "HTTP GET - root",
+              "kind": "SPAN_KIND_SERVER",
+              "startTimeUnixNano": "1627471657251228000",
+              "endTimeUnixNano": "1627471657260930000",
+              "attributes": [
+                {
+                  "key": "http.status_code",
+                  "value": {
+                    "intValue": "200"
+                  }
+                },
+                {
+                  "key": "http.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "http.url",
+                  "value": {
+                    "stringValue": "/"
+                  }
+                },
+                {
+                  "key": "component",
+                  "value": {
+                    "stringValue": "net/http"
+                  }
+                }
+              ],
+              "status": {}
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,320 @@
+@grafanaRecipient = grafana
+
+// should point to an existing folder UID
+@namespace1 = baf2c548-5e1e-42e8-8fde-8320e50d801e
+
+// create group42 under unknown namespace - it should fail
+POST http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/unknown
+content-type: application/json
+
+< ./post-rulegroup-42.json
+
+###
+// create group42
+POST http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}
+content-type: application/json
+
+< ./post-rulegroup-42.json
+
+###
+// create group101
+POST http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}
+content-type: application/json
+
+< ./post-rulegroup-101.json
+
+###
+// get group42 rules
+GET http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}/group42
+
+###
+// get group101 rules
+GET http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}/group101
+
+###
+// get group101 rules - empty namespace
+GET http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules//group101
+
+###
+// get namespace rules
+GET http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}
+
+###
+// get org rules
+GET http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules
+
+###
+// delete group42 rules
+DELETE http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}/group42
+
+###
+// get namespace rules - only group101 should be listed
+GET http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}
+
+###
+// delete namespace rules
+DELETE http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}
+
+###
+// get namespace rules - no rules
+GET http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}
+
+###
+// recreate group42
+POST http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}
+content-type: application/json
+
+{
+  "name": "group42",
+  "interval": "10s",
+  "rules": [
+    {
+      "grafana_alert": {
+        "title": "prom query with SSE",
+        "condition": "condition",
+        "data": [
+          {
+            "refId": "query",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "datasourceUid": "000000002",
+            "model": {
+              "expr": "http_request_duration_microseconds_count",
+              "hide": false,
+              "interval": "",
+              "intervalMs": 1000,
+              "legendFormat": "",
+              "maxDataPoints": 100,
+              "refId": "query"
+            }
+          },
+          {
+            "refId": "reduced",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+              "expression": "query",
+              "hide": false,
+              "intervalMs": 1000,
+              "maxDataPoints": 100,
+              "reducer": "mean",
+              "refId": "reduced",
+              "type": "reduce"
+            }
+          },
+          {
+            "refId": "condition",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+              "expression": "$reduced > 10",
+              "hide": false,
+              "intervalMs": 1000,
+              "maxDataPoints": 100,
+              "refId": "condition",
+              "type": "math"
+            }
+          }
+        ],
+        "no_data_state": "NoData",
+        "exec_err_state": "Alerting"
+      }
+    }
+  ]
+}
+
+
+###
+// get group42 rules
+# @name getRule
+GET http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}/group42
+
+###
+@ruleUID = {{getRule.response.body.$.rules[0].grafana_alert.uid}}
+
+###
+// update group42 interval and condition threshold
+
+POST http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}
+content-type: application/json
+
+{
+  "name": "group42",
+  "interval": "20s",
+  "rules": [
+    {
+      "grafana_alert": {
+        "title": "prom query with SSE",
+        "condition": "condition",
+        "uid": "{{ruleUID}}",
+        "data": [
+          {
+            "refId": "query",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "datasourceUid": "000000002",
+            "model": {
+              "expr": "http_request_duration_microseconds_count",
+              "hide": false,
+              "interval": "",
+              "intervalMs": 1000,
+              "legendFormat": "",
+              "maxDataPoints": 100,
+              "refId": "query"
+            }
+          },
+          {
+            "refId": "reduced",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+              "expression": "query",
+              "hide": false,
+              "intervalMs": 1000,
+              "maxDataPoints": 100,
+              "reducer": "mean",
+              "refId": "reduced",
+              "type": "reduce"
+            }
+          },
+          {
+            "refId": "condition",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+              "expression": "$reduced > 42",
+              "hide": false,
+              "intervalMs": 1000,
+              "maxDataPoints": 100,
+              "refId": "condition",
+              "type": "math"
+            }
+          }
+        ],
+        "no_data_state": "NoData",
+        "exec_err_state": "Alerting"
+      }
+    }
+  ]
+}
+
+###
+// get group42 rules
+GET http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}/group42
+
+###
+// update group42 - delete all rules
+POST http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}
+content-type: application/json
+
+{
+  "name": "group42",
+  "interval": "20s",
+  "rules": []
+}
+
+###
+// get group42 rules
+GET http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}/group42
+
+###
+// get namespace rules
+GET http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}
+
+###
+// update rulegroup; Bad Request; not existing UID
+POST http://admin:admin@localhost:3000/api/ruler/grafana/api/v1/rules/{{namespace1}}
+Content-Type: application/json
+
+{
+  "name": "group42",
+  "interval": "20s",
+  "rules": [
+    {
+      "grafana_alert": {
+        "title": "prom query with SSE",
+        "condition": "condition",
+        "uid": "unknown",
+        "data": [
+          {
+            "refId": "query",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "datasourceUid": "000000002",
+            "model": {
+              "expr": "http_request_duration_microseconds_count",
+              "hide": false,
+              "interval": "",
+              "intervalMs": 1000,
+              "legendFormat": "",
+              "maxDataPoints": 100,
+              "refId": "query"
+            }
+          },
+          {
+            "refId": "reduced",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+              "expression": "query",
+              "hide": false,
+              "intervalMs": 1000,
+              "maxDataPoints": 100,
+              "reducer": "mean",
+              "refId": "reduced",
+              "type": "reduce"
+            }
+          },
+          {
+            "refId": "condition",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+              "expression": "$reduced > 42",
+              "hide": false,
+              "intervalMs": 1000,
+              "maxDataPoints": 100,
+              "refId": "condition",
+              "type": "math"
+            }
+          }
+        ],
+        "no_data_state": "NoData",
+        "exec_err_state": "Alerting"
+      }
+    }
+  ]
+}

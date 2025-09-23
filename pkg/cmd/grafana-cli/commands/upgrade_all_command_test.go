@@ -1,46 +1,67 @@
 package commands
 
 import (
+	"fmt"
 	"testing"
 
-	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
-func TestVersionComparsion(t *testing.T) {
-	Convey("Validate that version is outdated", t, func() {
-		versions := []m.Version{
+func TestVersionComparison(t *testing.T) {
+	t.Run("Validate that version is outdated", func(t *testing.T) {
+		versions := []models.Version{
 			{Version: "1.1.1"},
 			{Version: "2.0.0"},
 		}
 
-		shouldUpgrade := map[string]m.Plugin{
-			"0.0.0": {Versions: versions},
-			"1.0.0": {Versions: versions},
+		upgradeablePlugins := []struct {
+			have      plugins.FoundPlugin
+			requested models.Plugin
+		}{
+			{
+				have:      plugins.FoundPlugin{JSONData: plugins.JSONData{Info: plugins.Info{Version: "0.0.0"}}},
+				requested: models.Plugin{Versions: versions},
+			},
+			{
+				have:      plugins.FoundPlugin{JSONData: plugins.JSONData{Info: plugins.Info{Version: "1.0.0"}}},
+				requested: models.Plugin{Versions: versions},
+			},
 		}
 
-		Convey("should return error", func() {
-			for k, v := range shouldUpgrade {
-				So(ShouldUpgrade(k, v), ShouldBeTrue)
-			}
-		})
+		for _, v := range upgradeablePlugins {
+			t.Run(fmt.Sprintf("for %s should be true", v.have.JSONData.Info.Version), func(t *testing.T) {
+				require.True(t, shouldUpgrade(v.have, v.requested))
+			})
+		}
 	})
 
-	Convey("Validate that version is ok", t, func() {
-		versions := []m.Version{
+	t.Run("Validate that version is ok", func(t *testing.T) {
+		versions := []models.Version{
 			{Version: "1.1.1"},
 			{Version: "2.0.0"},
 		}
 
-		shouldNotUpgrade := map[string]m.Plugin{
-			"2.0.0": {Versions: versions},
-			"6.0.0": {Versions: versions},
+		shouldNotUpgrade := []struct {
+			have      plugins.FoundPlugin
+			requested models.Plugin
+		}{
+			{
+				have:      plugins.FoundPlugin{JSONData: plugins.JSONData{Info: plugins.Info{Version: "2.0.0"}}},
+				requested: models.Plugin{Versions: versions},
+			},
+			{
+				have:      plugins.FoundPlugin{JSONData: plugins.JSONData{Info: plugins.Info{Version: "6.0.0"}}},
+				requested: models.Plugin{Versions: versions},
+			},
 		}
 
-		Convey("should return error", func() {
-			for k, v := range shouldNotUpgrade {
-				So(ShouldUpgrade(k, v), ShouldBeFalse)
-			}
-		})
+		for _, v := range shouldNotUpgrade {
+			t.Run(fmt.Sprintf("for %s should be false", v.have.JSONData.Info.Version), func(t *testing.T) {
+				require.False(t, shouldUpgrade(v.have, v.requested))
+			})
+		}
 	})
 }

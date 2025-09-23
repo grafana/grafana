@@ -3,15 +3,17 @@
   "name": "Text",
   "id": "text",
 
+  "skipDataQuery": true,
+
   "info": {
+    "description": "Supports markdown and html content",
     "author": {
-      "name": "Grafana Project",
-      "url": "http://grafana.org"
-},
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
     "logos": {
       "small": "img/icn-text-panel.svg",
       "large": "img/icn-text-panel.svg"
     }
   }
 }
-

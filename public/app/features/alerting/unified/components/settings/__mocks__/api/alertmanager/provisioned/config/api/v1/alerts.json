@@ -1,0 +1,26 @@
+{
+  "template_files": {},
+  "alertmanager_config": {
+    "global": {},
+    "receivers": [
+      {
+        "name": "default"
+      },
+      {
+        "name": "Telegram",
+        "telegram_configs": [
+          {
+            "bot_token": "abc",
+            "chat_id": -123,
+            "disable_notifications": false,
+            "parse_mode": "MarkdownV2",
+            "send_resolved": true
+          }
+        ]
+      }
+    ],
+    "route": {
+      "receiver": "default"
+    }
+  }
+}

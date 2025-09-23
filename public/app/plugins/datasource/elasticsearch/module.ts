@@ -1,19 +1,13 @@
-import {ElasticDatasource} from './datasource';
-import {ElasticQueryCtrl} from './query_ctrl';
-import {ElasticConfigCtrl} from './config_ctrl';
+import { DashboardLoadedEvent, DataSourcePlugin } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
 
-class ElasticQueryOptionsCtrl {
-  static templateUrl = 'partials/query.options.html';
-}
+import { QueryEditor } from './components/QueryEditor';
+import { ConfigEditor } from './configuration/ConfigEditor';
+import { ElasticDatasource } from './datasource';
+import { onDashboardLoadedHandler } from './tracking';
+import { ElasticsearchQuery } from './types';
 
-class ElasticAnnotationsQueryCtrl {
-  static templateUrl = 'partials/annotations.editor.html';
-}
+export const plugin = new DataSourcePlugin(ElasticDatasource).setQueryEditor(QueryEditor).setConfigEditor(ConfigEditor);
 
-export {
-  ElasticDatasource as Datasource,
-  ElasticQueryCtrl as QueryCtrl,
-  ElasticConfigCtrl as ConfigCtrl,
-  ElasticQueryOptionsCtrl as QueryOptionsCtrl,
-  ElasticAnnotationsQueryCtrl as AnnotationsQueryCtrl,
-};
+// Subscribe to on dashboard loaded event so that we can track plugin adoption
+getAppEvents().subscribe<DashboardLoadedEvent<ElasticsearchQuery>>(DashboardLoadedEvent, onDashboardLoadedHandler);
