@@ -5147,6 +5147,7 @@
     "rows-layout": {
       "cancel": "Cancel",
       "continue": "Continue",
+      "convert-to": "Convert to {{name}}",
       "delete-row-text": "Deleting this row will also remove all panels. Are you sure you want to continue?",
       "delete-row-title": "Delete row?",
       "delete-row-yes": "Delete",
