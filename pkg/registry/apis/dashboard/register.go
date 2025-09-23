@@ -108,6 +108,8 @@ type DashboardsAPIBuilder struct {
 	dualWriter                   dualwrite.Service
 	folderClientProvider         client.K8sHandlerProvider
 
+	log          log.Logger
+	reg          prometheus.Registerer
 	isStandalone bool // skips any handling including anything to do with legacy storage
 }
 
@@ -743,20 +745,14 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderIds ...string) error {
-	folderClient := b.folderClient
-	orgID := user.GetOrgID()
-
-	if b.folderClient == nil && b.folderClientProvider != nil {
-		ns, err := request.NamespaceInfoFrom(ctx, false)
-		if err != nil {
-			return err
-		}
-		folderClient = b.folderClientProvider.GetOrCreateHandler(ns.Value)
-		orgID = ns.OrgID
+	ns, err := request.NamespaceInfoFrom(ctx, false)
+	if err != nil {
+		return err
 	}
+	folderClient := b.folderClientProvider.GetOrCreateHandler(ns.Value)
 
 	for _, folderId := range folderIds {
-		resp, err := folderClient.Get(ctx, folderId, orgID, metav1.GetOptions{}, "access")
+		resp, err := folderClient.Get(ctx, folderId, ns.OrgID, metav1.GetOptions{}, "access")
 		if err != nil {
 			return dashboards.ErrFolderAccessDenied
 		}
