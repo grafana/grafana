@@ -1,0 +1,1540 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "datasource": {
+        "uid": "Grafana TestData"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "A",
+          "scenario": "random_walk",
+          "scenarioId": "no_data_points",
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "title": "No Data Points Warning",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "datasource": {
+        "uid": "Grafana TestData"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "id": 2,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "A",
+          "scenario": "random_walk",
+          "scenarioId": "datapoints_outside_range",
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "title": "Datapoints Outside Range Warning",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "datasource": {
+        "uid": "Grafana TestData"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 3,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "A",
+          "scenario": "random_walk",
+          "scenarioId": "random_walk",
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "title": "Random walk series",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "datasource": {
+        "uid": "Grafana TestData"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 16,
+        "x": 0,
+        "y": 7
+      },
+      "id": 4,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "A",
+          "scenario": "random_walk",
+          "scenarioId": "random_walk",
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": "2s",
+      "title": "Millisecond res x-axis and tooltip",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ]
+    },
+    {
+      "content": "Just verify that the tooltip time has millisecond resolution ",
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "editable": true,
+      "error": false,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 7
+      },
+      "id": 6,
+      "mode": "markdown",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "type": "text"
+    },
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "datasource": {
+        "uid": "Grafana TestData"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "gridPos": {
+        "h": 9,
+        "w": 16,
+        "x": 0,
+        "y": 14
+      },
+      "id": 5,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "B-series",
+          "yaxis": 2
+        }
+      ],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "2000,3000,4000,1000,3000,10000",
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "title": "2 yaxis and axis lables",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": "Perecent",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": "Pressure",
+          "logBase": 1,
+          "show": true
+        }
+      ]
+    },
+    {
+      "content": "Verify that axis labels look ok",
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "editable": true,
+      "error": false,
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 14
+      },
+      "id": 7,
+      "mode": "markdown",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "type": "text"
+    },
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "datasource": {
+        "uid": "Grafana TestData"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 23
+      },
+      "id": 8,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,null,null,null,null,null,null,100,10,10,20,30,40,10",
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "title": "null value connected",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "datasource": {
+        "uid": "Grafana TestData"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 23
+      },
+      "id": 10,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "nullPointMode": "null as zero",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,null,null,null,null,null,null,100,10,10,20,30,40,10",
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "title": "null value null as zero",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ]
+    },
+    {
+      "content": "Should be a long line connecting the null region in the `connected`  mode, and in zero it should just be a line with zero value at the null points. ",
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "editable": true,
+      "error": false,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 23
+      },
+      "id": 13,
+      "mode": "markdown",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "type": "text"
+    },
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "datasource": {
+        "uid": "Grafana TestData"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 16,
+        "x": 0,
+        "y": 30
+      },
+      "id": 9,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "B-series",
+          "zindex": -3
+        }
+      ],
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "hide": false,
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,null,null,null,null,null,null,100,10,10,20,30,40,10",
+          "target": ""
+        },
+        {
+          "alias": "",
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "hide": false,
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,10,20,30,40,40,40,100,10,20,20",
+          "target": ""
+        },
+        {
+          "alias": "",
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "hide": false,
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,10,20,30,40,40,40,100,10,20,20",
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "title": "Stacking value ontop of nulls",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ]
+    },
+    {
+      "content": "Stacking values on top of nulls, should treat the null values as zero. ",
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "editable": true,
+      "error": false,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 30
+      },
+      "id": 14,
+      "mode": "markdown",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "type": "text"
+    },
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "datasource": {
+        "uid": "Grafana TestData"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 16,
+        "x": 0,
+        "y": 37
+      },
+      "id": 12,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "B-series",
+          "zindex": -3
+        }
+      ],
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "hide": false,
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,40,null,null,null,null,null,null,100,10,10,20,30,40,10",
+          "target": ""
+        },
+        {
+          "alias": "",
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "hide": false,
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,40,null,null,null,null,null,null,100,10,10,20,30,40,10",
+          "target": ""
+        },
+        {
+          "alias": "",
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "hide": false,
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,40,null,null,null,null,null,null,100,10,10,20,30,40,10",
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "title": "Stacking all series null segment",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ]
+    },
+    {
+      "content": "Stacking when all values are null should leave a gap in the graph",
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "editable": true,
+      "error": false,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 37
+      },
+      "id": 15,
+      "mode": "markdown",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "type": "text"
+    },
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "datasource": {
+        "uid": "Grafana TestData"
+      },
+      "decimals": 3,
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 44
+      },
+      "id": 20,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "title": "Legend Table Single Series Should Take Minium Height",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "datasource": {
+        "uid": "Grafana TestData"
+      },
+      "decimals": 3,
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 51
+      },
+      "id": 16,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "title": "Legend Table No Scroll Visible",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "datasource": {
+        "uid": "Grafana TestData"
+      },
+      "decimals": 3,
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 51
+      },
+      "id": 17,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "E",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "F",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "G",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "H",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "I",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "J",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "title": "Legend Table Should Scroll",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "datasource": {
+        "uid": "Grafana TestData"
+      },
+      "decimals": 3,
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 58
+      },
+      "id": 18,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "rightSide": true,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "title": "Legend Table No Scroll Visible",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "datasource": {
+        "uid": "Grafana TestData"
+      },
+      "decimals": 3,
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 58
+      },
+      "id": 19,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "rightSide": true,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "E",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "F",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "G",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "H",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "I",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "J",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "K",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "Grafana TestData"
+          },
+          "refId": "L",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0",
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "title": "Legend Table No Scroll Visible",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ]
+    }
+  ],
+  "refresh": "",
+  "revision": 8,
+  "schemaVersion": 42,
+  "tags": [
+    "grafana-test"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "browser",
+  "title": "TestData - Graph Panel Last 1h",
+  "weekStart": ""
+}
