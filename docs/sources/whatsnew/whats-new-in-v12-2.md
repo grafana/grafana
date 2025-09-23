@@ -18,13 +18,13 @@ posts:
       - whats-new/2025-09-05-sql-expressions.md
   - title: Dashboards and visualizations
     items:
+      - whats-new/2025-08-22-new-table-visualization-is-generally-available.md
+      - whats-new/2025-08-27-generate-tooltips-from-table-fields.md
+      - whats-new/2025-08-27-improved-footer-for-table-visualization.md
       - whats-new/2025-07-17-disable-tooltips-in-canvas-visualizations.md
       - whats-new/2025-07-14-static-options-for-query-variable.md
       - whats-new/2025-07-24-dynamic-connection-direction-in-canvas.md
       - whats-new/2025-08-04-canvas-pan-zoom-improvements.md
-      - whats-new/2025-08-22-new-table-visualization-is-generally-available.md
-      - whats-new/2025-08-27-generate-tooltips-from-table-fields.md
-      - whats-new/2025-08-27-improved-footer-for-table-visualization.md
       - whats-new/2025-09-01-actions-authentication-via-infinity-datasource.md
       - whats-new/2025-09-02-enhanced-ad-hoc-filter-support.md
       - whats-new/2025-09-02-new-dashboard-apis-now-enabled-by-default.md
@@ -45,6 +45,9 @@ posts:
   - title: Metrics Drilldown
     items:
       - whats-new/2025-08-07-grafana-metrics-drilldown-entry-point-from-alerting-rule.md
+  - title: Plugins
+    items:
+      - whats-new/2025-09-11-translate-your-plugin.md
   - title: Authentication and authorization
     items:
       - whats-new/2025-09-10-scim-configuration-ui.md
