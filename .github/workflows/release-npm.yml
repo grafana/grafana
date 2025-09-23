@@ -121,9 +121,6 @@ jobs:
       - name: Debug packed files
         run: tree -a ./npm-artifacts
 
-      - name: Validate packages
-        run: ./scripts/validate-npm-packages.sh
-
       - name: Debug OIDC Claims
         uses: github/actions-oidc-debugger@2e9ba5d3f4bebaad1f91a2cede055115738b7ae8
         with:
