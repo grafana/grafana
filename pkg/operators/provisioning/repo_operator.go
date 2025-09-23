@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -32,6 +33,16 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	controllerCfg, err := getRepoControllerConfig(deps.Config, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("failed to setup operator: %w", err)
+	}
+
+	tracingConfig, err := tracing.ProvideTracingConfig(deps.Config)
+	if err != nil {
+		return fmt.Errorf("failed to provide tracing config: %w", err)
+	}
+
+	tracer, err := tracing.ProvideService(tracingConfig)
+	if err != nil {
+		return fmt.Errorf("failed to provide tracing service: %w", err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -55,7 +66,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
-	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1(), deps.Registerer)
+	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
 	healthChecker := controller.NewHealthChecker(statusPatcher, deps.Registerer)
 
 	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
@@ -70,6 +81,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		healthChecker,
 		statusPatcher,
 		deps.Registerer,
+		tracer,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository controller: %w", err)

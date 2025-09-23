@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"sort"
 	"strings"
+	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -17,11 +18,13 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
 type finalizer struct {
 	lister        resources.ResourceLister
 	clientFactory resources.ClientFactory
+	metrics       *finalizerMetrics
 }
 
 func (f *finalizer) process(ctx context.Context,
@@ -31,18 +34,24 @@ func (f *finalizer) process(ctx context.Context,
 	logger := logging.FromContext(ctx)
 
 	for _, finalizer := range finalizers {
+		var err error
+		var count int
+		start := time.Now()
+		outcome := metricutils.SuccessOutcome
+
 		switch finalizer {
 		case repository.CleanFinalizer:
 			// NOTE: the controller loop will never get run unless a finalizer is set
 			hooks, ok := repo.(repository.Hooks)
 			if ok {
-				if err := hooks.OnDelete(ctx); err != nil {
+				if err = hooks.OnDelete(ctx); err != nil {
 					logger.Warn("Error running deletion hooks", "err", err)
+					outcome = metricutils.ErrorOutcome
 				}
 			}
 
 		case repository.ReleaseOrphanResourcesFinalizer:
-			err := f.processExistingItems(ctx, repo.Config(),
+			count, err = f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
 					patchAnnotations, err := getPatchedAnnotations(item)
 					if err != nil {
@@ -55,20 +64,29 @@ func (f *finalizer) process(ctx context.Context,
 					return err
 				})
 			if err != nil {
-				return err
+				outcome = metricutils.ErrorOutcome
+				logger.Warn("Error processing release orphan resources finalizer", "err", err)
 			}
 
 		case repository.RemoveOrphanResourcesFinalizer:
-			err := f.processExistingItems(ctx, repo.Config(),
+			count, err = f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
 					return client.Delete(ctx, item.Name, v1.DeleteOptions{})
 				})
 			if err != nil {
-				return err
+				outcome = metricutils.ErrorOutcome
+				logger.Warn("Error processing remove orphan resources finalizer", "err", err)
 			}
 
 		default:
 			logger.Warn("skipping unknown finalizer", "finalizer", finalizer)
+			continue
+		}
+
+		f.metrics.RecordFinalizer(finalizer, outcome, count, time.Since(start).Seconds())
+
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -79,17 +97,17 @@ func (f *finalizer) processExistingItems(
 	ctx context.Context,
 	repo *provisioning.Repository,
 	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
-) error {
+) (int, error) {
 	logger := logging.FromContext(ctx)
 	clients, err := f.clientFactory.Clients(ctx, repo.Namespace)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	items, err := f.lister.List(ctx, repo.Namespace, repo.Name)
 	if err != nil {
 		logger.Warn("error listing resources", "error", err)
-		return err
+		return 0, err
 	}
 
 	// Safe deletion order
@@ -103,7 +121,7 @@ func (f *finalizer) processExistingItems(
 			Resource: item.Resource,
 		})
 		if err != nil {
-			return err
+			return count, err
 		}
 
 		err = cb(res, &item)
@@ -115,7 +133,7 @@ func (f *finalizer) processExistingItems(
 		}
 	}
 	logger.Info("processed orphan items", "items", count, "errors", errors)
-	return nil
+	return count, nil
 }
 
 type jsonPatchOperation struct {

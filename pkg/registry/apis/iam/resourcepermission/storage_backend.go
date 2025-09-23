@@ -95,7 +95,7 @@ func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resource
 	}
 
 	pagination := &common.Pagination{
-		Limit:    limit,
+		Limit:    limit + 1, // fetch one more to determine if there is a next page
 		Continue: token.offset,
 	}
 
