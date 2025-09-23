@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
@@ -49,9 +50,7 @@ type FolderAPIBuilder struct {
 	ac                   accesscontrol.AccessControl
 	storage              grafanarest.Storage
 	permissionStore      reconcilers.PermissionStore
-
-	authorizer authorizer.Authorizer
-	parents    parentsGetter
+	parents              parentsGetter
 
 	searcher            resourcepb.ResourceIndexClient
 	permissionsOnCreate bool
@@ -78,7 +77,6 @@ func RegisterAPIService(cfg *setting.Cfg,
 		acService:            acService,
 		ac:                   accessControl,
 		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
-		authorizer:           newAuthorizer(accessClient),
 		searcher:             unified,
 		permissionStore:      reconcilers.NewZanzanaPermissionStore(zanzanaClient),
 	}
@@ -86,11 +84,12 @@ func RegisterAPIService(cfg *setting.Cfg,
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient) *FolderAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
-		authorizer:   newAuthorizer(ac),
-		searcher:     searcher,
-		ignoreLegacy: true,
+		features:        features,
+		searcher:        searcher,
+		ignoreLegacy:    true,
+		permissionStore: reconcilers.NewZanzanaPermissionStore(zanzanaClient),
 	}
 }
 func (b *FolderAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -146,6 +145,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		if err != nil {
 			return err
 		}
+		b.registerPermissionHooks(store)
 		storage[resourceInfo.StoragePath()] = store
 		apiGroupInfo.VersionedResourcesStorageMap[folders.VERSION] = storage
 		b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
@@ -176,14 +176,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 			return err
 		}
 
-		log := logging.FromContext(context.Background())
-		if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-			log.Info("Enabling Zanzana folder propagation hooks")
-			store.BeginCreate = b.beginCreate
-			store.BeginUpdate = b.beginUpdate
-		} else {
-			log.Info("Zanzana is not enabled; skipping folder propagation hooks")
-		}
+		b.registerPermissionHooks(store)
 
 		dw, err := dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
 		if err != nil {
@@ -212,6 +205,18 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	return nil
 }
 
+func (b *FolderAPIBuilder) registerPermissionHooks(store *genericregistry.Store) {
+	log := logging.FromContext(context.Background())
+
+	if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		log.Info("Enabling Zanzana folder propagation hooks")
+		store.BeginCreate = b.beginCreate
+		store.BeginUpdate = b.beginUpdate
+	} else {
+		log.Info("Zanzana is not enabled; skipping folder propagation hooks")
+	}
+}
+
 func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return folders.GetOpenAPIDefinitions
 }
@@ -221,8 +226,9 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 	return oas, nil
 }
 
+// The default authorizer is fine because authorization happens in storage where we know the parent folder
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return b.authorizer
+	return nil
 }
 
 func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {

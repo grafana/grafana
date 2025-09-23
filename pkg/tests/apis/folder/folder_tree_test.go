@@ -19,6 +19,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -95,14 +96,15 @@ func TestIntegrationFolderTree(t *testing.T) {
 						},
 					},
 					Expected: []ExpectedTree{
-						{Users: []apis.User{
-							helper.Org1.Admin,
-							helper.Org1.Viewer, // By default, viewer can view all dashboards
-						}, Listing: `
-						└── top
-						....└── middle
-						........└── child`},
-						{Users: []apis.User{helper.Org1.None}, Listing: ``},
+						{User: helper.Org1.Admin, Listing: `
+						└── top (admin,edit,save,delete)
+						....└── middle (admin,edit,save,delete)
+						........└── child (admin,edit,save,delete)`},
+						{User: helper.Org1.Viewer, Listing: `
+						└── top (view)
+						....└── middle (view)
+						........└── child (view)`},
+						{User: helper.Org1.None, Listing: ``}, // nothing
 					},
 				},
 			}
@@ -115,21 +117,20 @@ func TestIntegrationFolderTree(t *testing.T) {
 					// CreateWithLegacyAPI
 
 					for _, expect := range tt.Expected {
-						for _, user := range expect.Users {
-							t.Run(fmt.Sprintf("query as %s", user.Identity.GetLogin()), func(t *testing.T) {
-								legacy := getFoldersFromLegacyAPISearch(t, user)
-								legacy.requireEqual(t, expect.Listing, "legacy")
+						user := expect.User
+						t.Run(fmt.Sprintf("query as %s", user.Identity.GetLogin()), func(t *testing.T) {
+							legacy := getFoldersFromLegacyAPISearch(t, user)
+							legacy.requireEqual(t, expect.Listing, "legacy")
 
-								listed := getFoldersFromAPIServerList(t, user)
-								listed.requireEqual(t, expect.Listing, "listed")
+							listed := getFoldersFromAPIServerList(t, user)
+							listed.requireEqual(t, expect.Listing, "listed")
 
-								search := getFoldersFromDashboardV0Search(t, user)
-								search.requireEqual(t, expect.Listing, "search")
+							search := getFoldersFromDashboardV0Search(t, user)
+							search.requireEqual(t, expect.Listing, "search")
 
-								// ensure sure GET also works on each folder we can list
-								requireGettable(t, user, listed)
-							})
-						}
+							// ensure sure GET also works on each folder we can list
+							requireGettable(t, user, listed)
+						})
 					}
 				})
 			}
@@ -138,7 +139,7 @@ func TestIntegrationFolderTree(t *testing.T) {
 }
 
 type ExpectedTree struct {
-	Users   []apis.User
+	User    apis.User
 	Listing string
 }
 
@@ -272,6 +273,7 @@ type FolderView struct {
 	Parent   string
 	Title    string
 	Children []*FolderView
+	Access   *folderV1.FolderAccessInfo
 }
 
 func (n *FolderView) forEach(cb func(*FolderView)) {
@@ -294,9 +296,32 @@ func (n *FolderView) requireEqual(t *testing.T, expect string, msg string) {
 	require.Equal(t, expect, found, fmt.Sprintf("%s // EXPECT:\n%s\n\nFOUND:\n%s", msg, expect, found))
 }
 
+func accessDescription(access *folderV1.FolderAccessInfo) string {
+	if access == nil {
+		return "???"
+	}
+	perms := []string{}
+	if access.CanAdmin {
+		perms = append(perms, "admin")
+	}
+	if access.CanEdit {
+		perms = append(perms, "edit")
+	}
+	if access.CanSave {
+		perms = append(perms, "save")
+	}
+	if access.CanDelete {
+		perms = append(perms, "delete")
+	}
+	if len(perms) == 0 {
+		return "view" // because it was not nil!
+	}
+	return strings.Join(perms, ",")
+}
+
 func (n *FolderView) build(tree treeprint.Tree) treeprint.Tree {
 	for _, child := range n.Children {
-		child.build(tree.AddBranch(child.Name))
+		child.build(tree.AddBranch(fmt.Sprintf("%s (%s)", child.Name, accessDescription(child.Access))))
 	}
 	return tree
 }
@@ -324,11 +349,25 @@ func getFoldersFromLegacyAPISearch(t *testing.T, who apis.User) *FolderView {
 
 	lookup := make(map[string]*FolderView, len(hits))
 	for _, hit := range hits {
-		lookup[hit.UID] = &FolderView{
+		fv := &FolderView{
 			Name:   hit.UID,
 			Title:  hit.Title,
 			Parent: hit.FolderUID,
 		}
+
+		// Read the access info (note not the same model but the fields we care about do overlap)
+		result = client.Get().AbsPath("api", "folders", hit.UID).
+			Do(context.Background()).
+			StatusCode(&statusCode)
+		require.NoError(t, result.Error(), "getting folder access info (/api)")
+		require.Equal(t, int(http.StatusOK), statusCode)
+
+		body, err := result.Raw()
+		require.NoError(t, err)
+		err = json.Unmarshal(body, &fv.Access)
+		require.NoError(t, err)
+
+		lookup[hit.UID] = fv
 	}
 	return makeRoot(t, lookup, "/api/search")
 }
@@ -375,11 +414,25 @@ func getFoldersFromDashboardV0Search(t *testing.T, who apis.User) *FolderView {
 
 	lookup := make(map[string]*FolderView, len(results.Hits))
 	for _, hit := range results.Hits {
-		lookup[hit.Name] = &FolderView{
+		fv := &FolderView{
 			Name:   hit.Name,
 			Title:  hit.Title,
 			Parent: hit.Folder,
 		}
+
+		result = client.Get().AbsPath("apis", folderV1.APIGroup,
+			folderV1.APIVersion, "namespaces", who.Identity.GetNamespace(), "folders", hit.Name, "access").
+			Do(context.Background()).
+			StatusCode(&statusCode)
+		require.NoError(t, result.Error(), "getting folder access info (/access)")
+		require.Equal(t, int(http.StatusOK), statusCode)
+
+		body, err := result.Raw()
+		require.NoError(t, err)
+		err = json.Unmarshal(body, &fv.Access)
+		require.NoError(t, err)
+
+		lookup[hit.Name] = fv
 	}
 
 	return makeRoot(t, lookup, "dashboards/search")
@@ -410,11 +463,20 @@ func getFoldersFromAPIServerList(t *testing.T, who apis.User) *FolderView {
 			title, _, err := unstructured.NestedString(hit.Object, "spec", "title")
 			require.NoError(t, err)
 
-			lookup[hit.GetName()] = &FolderView{
+			fv := &FolderView{
 				Name:   hit.GetName(),
 				Title:  title,
 				Parent: obj.GetFolder(),
 			}
+
+			access, err := client.Get(context.Background(), fv.Name, v1.GetOptions{}, "access")
+			require.NoError(t, err)
+			jj, err := json.Marshal(access)
+			require.NoError(t, err)
+			err = json.Unmarshal(jj, &fv.Access)
+			require.NoError(t, err)
+
+			lookup[fv.Name] = fv
 		}
 
 		continueToken = result.GetContinue()

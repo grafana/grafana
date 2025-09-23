@@ -162,10 +162,12 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	settings := provisioning.RepositoryViewList{
-		Items: make([]provisioning.RepositoryView, len(all)),
+		Items:          make([]provisioning.RepositoryView, len(all)),
+		AllowedTargets: b.allowedTargets,
 		// FIXME: this shouldn't be here in provisioning but at the dual writer or something about the storage
 		LegacyStorage:            legacyStorage,
 		AvailableRepositoryTypes: b.repoFactory.Types(),
+		AllowImageRendering:      b.allowImageRendering,
 	}
 
 	for i, val := range all {
