@@ -69,7 +69,6 @@ func TestFrontendDefaultsCleanup(t *testing.T) {
 
 			assertPropertyRemoved(t, dashboard, "id")
 			assertPropertyValue(t, dashboard, "title", "Test Dashboard")
-
 		})
 	}
 }
@@ -157,7 +156,6 @@ func TestCleanupDashboardForSave(t *testing.T) {
 			// Verify unwanted properties are removed
 			unwantedProps := []string{"meta", "events", "originalTime", "variables", "gnetId"}
 			assertPropertiesRemoved(t, dashboard, unwantedProps)
-
 		})
 	}
 }
@@ -274,7 +272,6 @@ func TestCleanupVariable(t *testing.T) {
 
 			// Verify unwanted properties are removed
 			assertPropertyRemoved(t, variable, "index")
-
 		})
 	}
 }
@@ -363,7 +360,6 @@ func TestCleanupPanels(t *testing.T) {
 
 			// Verify expected properties exist
 			assertPropertiesExist(t, dashboard, tt.expected)
-
 		})
 	}
 }
@@ -430,7 +426,6 @@ func TestCleanupRowPanelProperties(t *testing.T) {
 
 			// Verify expected properties exist
 			assertPropertiesExist(t, panel, tt.expected)
-
 		})
 	}
 }
@@ -526,7 +521,6 @@ func TestCleanupFieldConfigDefaults(t *testing.T) {
 
 			// Verify expected properties exist
 			assertPropertiesExist(t, defaults, tt.expected)
-
 		})
 	}
 }
@@ -596,7 +590,6 @@ func TestApplyFrontendDefaults(t *testing.T) {
 					t.Errorf("Property %s has wrong value. Expected: %v (type: %T), Got: %v (type: %T)", key, expectedValue, expectedValue, actualValue, actualValue)
 				}
 			}
-
 		})
 	}
 }
@@ -674,7 +667,6 @@ func TestApplyPanelDefaults(t *testing.T) {
 
 			// Verify expected properties exist
 			assertPropertiesExist(t, panel, tt.expected)
-
 		})
 	}
 }
@@ -977,7 +969,6 @@ func TestCleanupPanelForSave(t *testing.T) {
 			// Verify unwanted properties are removed
 			unwantedProps := []string{"events", "isViewing", "cachedPluginOptions", "scopedVars"}
 			assertPropertiesRemoved(t, panel, unwantedProps)
-
 		})
 	}
 }
@@ -1078,7 +1069,6 @@ func TestApplyPanelAutoMigration(t *testing.T) {
 					t.Errorf("autoMigrateFrom should not be added for this panel type")
 				}
 			}
-
 		})
 	}
 }
@@ -1155,7 +1145,6 @@ func TestRemoveNullValuesRecursively(t *testing.T) {
 			if !compareValues(data, tt.expected) {
 				t.Errorf("Null value removal failed. Expected: %v, Got: %v", tt.expected, data)
 			}
-
 		})
 	}
 }
@@ -1236,7 +1225,6 @@ func TestIsEqual(t *testing.T) {
 			if result != tt.expected {
 				t.Errorf("isEqual(%v, %v) = %v, expected %v", tt.a, tt.b, result, tt.expected)
 			}
-
 		})
 	}
 }
@@ -1363,7 +1351,6 @@ func TestEnsureTemplatingExists(t *testing.T) {
 
 			// Verify expected properties exist
 			assertPropertiesExist(t, dashboard, tt.expected)
-
 		})
 	}
 }
@@ -1427,7 +1414,6 @@ func TestEnsureAnnotationsExist(t *testing.T) {
 
 			// Verify expected properties exist
 			assertPropertiesExist(t, dashboard, tt.expected)
-
 		})
 	}
 }
@@ -1495,7 +1481,6 @@ func TestEnsurePanelsHaveUniqueIds(t *testing.T) {
 
 			// Verify expected properties exist
 			assertPropertiesExist(t, dashboard, tt.expected)
-
 		})
 	}
 }
@@ -1566,7 +1551,6 @@ func TestEnsureQueryIds(t *testing.T) {
 
 			// Verify expected properties exist
 			assertPropertiesExist(t, panel, tt.expected)
-
 		})
 	}
 }
@@ -1671,7 +1655,6 @@ func TestAddBuiltInAnnotationQuery(t *testing.T) {
 
 			// Verify expected properties exist
 			assertPropertiesExist(t, dashboard, tt.expected)
-
 		})
 	}
 }
@@ -1752,7 +1735,6 @@ func TestInitMeta(t *testing.T) {
 
 			// Verify expected properties exist
 			assertPropertiesExist(t, dashboard, tt.expected)
-
 		})
 	}
 }
