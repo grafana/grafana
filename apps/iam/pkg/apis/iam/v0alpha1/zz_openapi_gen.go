@@ -2398,8 +2398,22 @@ func schema_pkg_apis_iam_v0alpha1_TeamSpec(ref common.ReferenceCallback) common.
 							Format:  "",
 						},
 					},
+					"provisioned": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"externalUID": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 				},
-				Required: []string{"title", "email"},
+				Required: []string{"title", "email", "provisioned", "externalUID"},
 			},
 		},
 	}
@@ -2646,14 +2660,20 @@ func schema_pkg_apis_iam_v0alpha1_UserSpec(ref common.ReferenceCallback) common.
 					},
 					"provisioned": {
 						SchemaProps: spec.SchemaProps{
-							Description: "What to do with salt, rands and password?",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"role": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 				},
-				Required: []string{"disabled", "email", "emailVerified", "grafanaAdmin", "login", "name", "provisioned"},
+				Required: []string{"disabled", "email", "emailVerified", "grafanaAdmin", "login", "name", "provisioned", "role"},
 			},
 		},
 	}

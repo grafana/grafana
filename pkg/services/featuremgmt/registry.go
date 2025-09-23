@@ -328,7 +328,7 @@ var (
 			Description:     "Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.",
 			Stage:           FeatureStageExperimental,
 			FrontendOnly:    false,
-			Owner:           grafanaOperatorExperienceSquad,
+			Owner:           grafanaBackendServicesSquad,
 			RequiresRestart: true,
 			HideFromDocs:    true,
 		},
@@ -484,6 +484,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesCorrelations",
+			Description:     "Adds support for Kubernetes correlations",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDataProSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,
@@ -625,6 +632,13 @@ var (
 		{
 			Name:         "dashboardNewLayouts",
 			Description:  "Enables experimental new dashboard layouts",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "dashboardUndoRedo",
+			Description:  "Enables undo/redo in dynamic dashboards",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
@@ -939,14 +953,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityLogsSquad,
 			FrontendOnly: true,
-		},
-		{
-			Name:         "newDashboardSharingComponent",
-			Description:  "Enables the new sharing drawer design",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaSharingSquad,
-			FrontendOnly: true,
-			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "alertingListViewV2",
@@ -2021,6 +2027,22 @@ var (
 			Owner:           grafanaPluginsPlatformSquad,
 			Expression:      "false",
 			RequiresRestart: true,
+		},
+		{
+			Name:            "tempoSearchBackendMigration",
+			Description:     "Run search queries through the tempo backend",
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaOSSBigTent,
+			Expression:      "false",
+			RequiresRestart: true,
+		},
+		{
+			Name:         "filterOutBotsFromFrontendLogs",
+			Description:  "Filter out bots from collecting data for Frontend Observability",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
 		},
 	}
 )

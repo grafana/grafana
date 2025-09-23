@@ -71,7 +71,6 @@ describe('Tempo data source', () => {
   beforeEach(() => (console.error = consoleErrorMock));
 
   describe('runs correctly', () => {
-    jest.spyOn(TempoDatasource.prototype, 'isFeatureAvailable').mockImplementation(() => true);
     const handleStreamingQuery = jest.spyOn(TempoDatasource.prototype, 'handleStreamingQuery');
     const request = jest.spyOn(TempoDatasource.prototype, '_request');
     const templateSrv: TemplateSrv = { replace: (s: string) => s } as unknown as TemplateSrv;

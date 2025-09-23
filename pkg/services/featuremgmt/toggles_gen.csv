@@ -41,7 +41,7 @@ datasourceAPIServers,experimental,@grafana/grafana-app-platform-squad,false,true
 grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
 provisioning,experimental,@grafana/grafana-app-platform-squad,false,true,false
 grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,true,true,false
-featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,false,true,false
+featureToggleAdminPage,experimental,@grafana/grafana-backend-services-squad,false,true,false
 awsAsyncQueryCaching,GA,@grafana/aws-datasources,false,false,false
 queryCacheRequestDeduplication,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 permissionsFilterRemoveSubquery,experimental,@grafana/search-and-storage,false,false,false
@@ -62,6 +62,7 @@ kubernetesDashboards,GA,@grafana/dashboards-squad,false,false,true
 kubernetesShortURLs,experimental,@grafana/grafana-app-platform-squad,false,true,false
 useKubernetesShortURLsAPI,experimental,@grafana/sharing-squad,false,false,true
 kubernetesAlertingRules,experimental,@grafana/alerting-squad,false,true,false
+kubernetesCorrelations,experimental,@grafana/datapro,false,true,false
 dashboardDisableSchemaValidationV1,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardDisableSchemaValidationV2,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardSchemaValidationLogging,experimental,@grafana/grafana-app-platform-squad,false,false,false
@@ -83,6 +84,7 @@ dashboardSceneForViewers,GA,@grafana/dashboards-squad,false,false,true
 dashboardSceneSolo,GA,@grafana/dashboards-squad,false,false,true
 dashboardScene,GA,@grafana/dashboards-squad,false,false,true
 dashboardNewLayouts,experimental,@grafana/dashboards-squad,false,false,true
+dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
 panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,true
 pdfTables,preview,@grafana/grafana-operator-experience-squad,false,false,false
 canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
@@ -122,7 +124,6 @@ grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,fa
 queryLibrary,privatePreview,@grafana/sharing-squad,false,false,false
 savedQueries,preview,@grafana/sharing-squad,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
-newDashboardSharingComponent,GA,@grafana/sharing-squad,false,false,true
 alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
@@ -259,3 +260,5 @@ azureResourcePickerUpdates,preview,@grafana/partner-datasources,false,false,true
 prometheusTypeMigration,experimental,@grafana/partner-datasources,false,true,false
 dskitBackgroundServices,experimental,@grafana/plugins-platform-backend,false,true,false
 pluginContainers,privatePreview,@grafana/plugins-platform-backend,false,true,false
+tempoSearchBackendMigration,GA,@grafana/oss-big-tent,false,true,false
+filterOutBotsFromFrontendLogs,experimental,@grafana/plugins-platform-backend,false,false,true

@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
@@ -72,6 +73,9 @@ type BleveOptions struct {
 
 	BuildVersion string
 
+	MaxFileIndexAge time.Duration   // Maximum age of file-based index that can be reused. Ignored if zero.
+	MinBuildVersion *semver.Version // Minimum build version for reusing file-based indexes. Ignored if nil.
+
 	Logger *slog.Logger
 }
 
@@ -102,6 +106,14 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 	}
 	if !root.IsDir() {
 		return nil, fmt.Errorf("bleve root is configured against a file (not folder)")
+	}
+
+	if opts.BuildVersion != "" {
+		// Don't allow storing invalid versions to the index.
+		_, err := semver.NewVersion(opts.BuildVersion)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse build version %s: %w", opts.BuildVersion, err)
+		}
 	}
 
 	log := opts.Logger
@@ -241,6 +253,24 @@ type IndexBuildInfo struct {
 	BuildVersion string `json:"build_version"` // Grafana version used when building the index
 }
 
+func (bi IndexBuildInfo) GetBuildTime() time.Time {
+	if bi.BuildTime == 0 {
+		return time.Time{}
+	}
+	return time.Unix(bi.BuildTime, 0)
+}
+
+func (bi IndexBuildInfo) GetBuildVersion() *semver.Version {
+	if bi.BuildVersion == "" {
+		return nil
+	}
+	v, err := semver.NewVersion(bi.BuildVersion)
+	if err != nil {
+		return nil
+	}
+	return v
+}
+
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
 // If built successfully, the new index replaces the old index in the cache (if there was any).
 // Existing index in the file system is reused, if it exists, and if size indicates that we should use file-based index, and rebuild is not true.
@@ -317,7 +347,11 @@ func (b *bleveBackend) BuildIndex(
 		// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 		// If we do have an unexpired cached index already, we always build a new index from scratch.
 		if cachedIndex == nil && !rebuild {
-			index, fileIndexName, indexRV = b.findPreviousFileBasedIndex(resourceDir)
+			minBuildTime := time.Time{}
+			if b.opts.MaxFileIndexAge > 0 {
+				minBuildTime = time.Now().Add(-b.opts.MaxFileIndexAge)
+			}
+			index, fileIndexName, indexRV = b.findPreviousFileBasedIndex(resourceDir, minBuildTime, b.opts.MinBuildVersion)
 		}
 
 		if index != nil {
@@ -535,7 +569,7 @@ func formatIndexName(now time.Time) string {
 	return now.Format("20060102-150405")
 }
 
-func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Index, string, int64) {
+func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, minBuildTime time.Time, minBuildVersion *semver.Version) (bleve.Index, string, int64) {
 	entries, err := os.ReadDir(resourceDir)
 	if err != nil {
 		return nil, "", 0
@@ -557,10 +591,33 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 		indexRV, err := getRV(idx)
 		if err != nil {
 			b.log.Error("error getting rv from index", "indexDir", indexDir, "err", err)
-			if !errors.Is(err, bleve.ErrorIndexClosed) {
-				_ = idx.Close()
-			}
+			_ = idx.Close()
 			continue
+		}
+
+		buildInfo, err := getBuildInfo(idx)
+		if err != nil {
+			b.log.Error("error getting build info from index", "indexDir", indexDir, "err", err)
+			_ = idx.Close()
+			continue
+		}
+
+		if !minBuildTime.IsZero() {
+			bt := buildInfo.GetBuildTime()
+			if bt.IsZero() || bt.Before(minBuildTime) {
+				b.log.Debug("index build time is before minBuildTime, not reusing the index", "indexDir", indexDir, "indexBuildTime", bt, "minBuildTime", minBuildTime)
+				_ = idx.Close()
+				continue
+			}
+		}
+
+		if minBuildVersion != nil {
+			bv := buildInfo.GetBuildVersion()
+			if bv == nil || bv.Compare(minBuildVersion) < 0 {
+				b.log.Debug("index build version is before minBuildVersion, not reusing the index", "indexDir", indexDir, "indexBuildVersion", bv, "minBuildVersion", minBuildVersion)
+				_ = idx.Close()
+				continue
+			}
 		}
 
 		return idx, indexName, indexRV
@@ -725,6 +782,10 @@ func getBuildInfo(index bleve.Index) (IndexBuildInfo, error) {
 	raw, err := index.GetInternal([]byte(internalBuildInfoKey))
 	if err != nil {
 		return IndexBuildInfo{}, err
+	}
+
+	if len(raw) == 0 {
+		return IndexBuildInfo{}, nil
 	}
 
 	res := IndexBuildInfo{}
@@ -1092,7 +1153,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		queryPhrase.Analyzer = standard.Name
 
 		// Query 3: Match query with standard analyzer
-		queryAnalyzed := bleve.NewMatchQuery(req.Query)
+		queryAnalyzed := bleve.NewMatchQuery(removeSmallTerms(req.Query))
 		queryAnalyzed.Analyzer = standard.Name
 		queryAnalyzed.Operator = query.MatchQueryOperatorAnd // Make sure all terms from the query are matched
 
@@ -1120,7 +1181,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			verb = utils.VerbPatch
 		}
 
-		checker, err := access.Compile(ctx, auth, authlib.ListRequest{
+		checker, _, err := access.Compile(ctx, auth, authlib.ListRequest{
 			Namespace: b.key.Namespace,
 			Group:     b.key.Group,
 			Resource:  b.key.Resource,
@@ -1135,7 +1196,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 
 		// handle federation
 		for _, federated := range req.Federated {
-			checker, err := access.Compile(ctx, auth, authlib.ListRequest{
+			checker, _, err := access.Compile(ctx, auth, authlib.ListRequest{
 				Namespace: federated.Namespace,
 				Group:     federated.Group,
 				Resource:  federated.Resource,
@@ -1176,6 +1237,23 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	return searchrequest, nil
+}
+
+func removeSmallTerms(query string) string {
+	words := strings.Fields(query)
+	validWords := make([]string, 0, len(words))
+
+	for _, word := range words {
+		if len(word) >= EDGE_NGRAM_MIN_TOKEN {
+			validWords = append(validWords, word)
+		}
+	}
+
+	if len(validWords) == 0 {
+		return query
+	}
+
+	return strings.Join(validWords, " ")
 }
 
 func (b *bleveIndex) stopUpdaterAndCloseIndex() error {
