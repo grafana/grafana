@@ -105,6 +105,24 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       name: 'Normal',
       defaultValue: false,
       category: ['Alert state filter'],
+    })
+    .addBooleanSwitch({
+      path: 'stateFilter.critical',
+      name: 'Critical',
+      defaultValue: false,
+      category: ['Alert severity filter'],
+    })
+    .addBooleanSwitch({
+      path: 'stateFilter.warn',
+      name: 'Warn',
+      defaultValue: false,
+      category: ['Alert severity filter'],
+    })
+    .addBooleanSwitch({
+      path: 'stateFilter.noData',
+      name: 'No Data',
+      defaultValue: false,
+      category: ['Alert severity filter'],
     });
 });
 

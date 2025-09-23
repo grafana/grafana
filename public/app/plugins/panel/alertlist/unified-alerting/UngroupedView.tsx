@@ -80,11 +80,7 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                         {ruleWithLocation.name}
                       </div>
                       <Spacer />
-                      {severity && (
-                        <div className={styles.severityTag}>
-                          {severity.toUpperCase()} Monitor
-                        </div>
-                      )}
+                      {severity && <div className={styles.severityTag}>{severity.toUpperCase()} Monitor</div>}
                       {href && (
                         <a
                           href={href}

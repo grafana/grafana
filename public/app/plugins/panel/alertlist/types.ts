@@ -44,9 +44,11 @@ export interface StateFilter {
   firing: boolean;
   pending: boolean;
   inactive?: boolean; // backwards compat
-  noData: boolean;
   normal: boolean;
   error: boolean;
+  critical: boolean;
+  warn: boolean;
+  noData: boolean;
 }
 
 export interface UnifiedAlertListOptions {
