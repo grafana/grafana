@@ -1,3 +1,26 @@
+<!-- 12.1.2 START -->
+
+# 12.1.2 (2025-09-23)
+
+### Features and enhancements
+
+- **Alerting:** Update alerting module [#109999](https://github.com/grafana/grafana/pull/109999), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Auditing:** Add settings to control recording of datasource query request and response body (Enterprise)
+- **Auditing:** Document new options for recording datasource query request/response body [#109981](https://github.com/grafana/grafana/pull/109981), [@macabu](https://github.com/macabu)
+- **Chore:** Don't show a "Not found" for public-dashboard fetches if the service is disabled via config [#110144](https://github.com/grafana/grafana/pull/110144), [@mmandrus](https://github.com/mmandrus)
+- **CloudWatch:** Use default region when query region is unset [#111079](https://github.com/grafana/grafana/pull/111079), [@iwysiu](https://github.com/iwysiu)
+
+### Bug fixes
+
+- **Alerting:** Fix bug where rules with identical mute/active intervals produced conflicting routes [#110973](https://github.com/grafana/grafana/pull/110973), [@alexander-akhmetov](https://github.com/alexander-akhmetov)
+- **Alerting:** Fix copying of recording rule fields [#110312](https://github.com/grafana/grafana/pull/110312), [@moustafab](https://github.com/moustafab)
+- **Fix:** Fix redirection after login when Grafana is served from subpath [#111097](https://github.com/grafana/grafana/pull/111097), [@mgyongyosi](https://github.com/mgyongyosi)
+
+### Plugin development fixes & changes
+
+- **Fix:** Prevent Rollup from treeshaking NPM packages [#108570](https://github.com/grafana/grafana/pull/108570), [@jackw](https://github.com/jackw)
+
+<!-- 12.1.2 END -->
 <!-- 12.0.5 START -->
 
 # 12.0.5 (2025-09-23)
