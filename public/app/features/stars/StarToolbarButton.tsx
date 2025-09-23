@@ -4,7 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Icon, ToolbarButton } from '@grafana/ui';
-import { useGetStarsQuery, useAddStarMutation, useRemoveStarMutation } from 'app/api/clients/preferences/v1alpha1';
+import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/preferences/v1alpha1';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 const getStarTooltips = () => ({
@@ -28,20 +28,18 @@ export type Props = {
 
 export function StarToolbarButtonApiServer({ group, kind, id }: { group: string; kind: string; id: string }) {
   const name = `user-${config.bootData.user.uid}`;
-  const stars = useGetStarsQuery({ name });
+  const stars = useListStarsQuery({ fieldSelector: `metadata.name=${name}` });
   const [addStar] = useAddStarMutation();
   const [removeStar] = useRemoveStarMutation();
 
   const isStarred = useMemo(() => {
-    if (stars.data?.spec.resource.length) {
-      for (let info of stars.data?.spec.resource) {
-        if (info.group === group && info.kind === kind) {
-          return info.names.includes(id);
-        }
-      }
+    const starredItems = stars.data?.items || [];
+    if (!starredItems.length) {
+      return false;
     }
-    return false;
-  }, [stars, group, kind, id]);
+    const matchingInfo = starredItems[0]?.spec.resource.find((info) => info.group === group && info.kind === kind);
+    return matchingInfo ? matchingInfo.names.includes(id) : false;
+  }, [stars.data?.items, id, group, kind]);
 
   const handleStarToggle = () => {
     const mutationArgs = { name, group, kind, id };
