@@ -4,6 +4,7 @@ import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import impressionSrv from 'app/core/services/impression_srv';
 import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 
 import { getPanelProps } from '../test-utils';
@@ -32,8 +33,13 @@ const defaultOptions: Options = {
 const findStarButton = (title: string, isStarred: boolean) =>
   screen.findByRole('button', { name: new RegExp(`^${isStarred ? 'unmark' : 'mark'} "${title}" as favorite`, 'i') });
 
-describe('DashList', () => {
-  testWithFeatureToggles(['unifiedStorageSearchUI']);
+describe.each([
+  // App platform APIs
+  true,
+  // Legacy APIs
+  false,
+])('DashList - unifiedStorageSearchUI: %s', (unifiedStorageSearchUI) => {
+  testWithFeatureToggles(unifiedStorageSearchUI ? ['unifiedStorageSearchUI'] : []);
 
   it('renders different groups of dashboards', async () => {
     const props = getPanelProps({
@@ -67,7 +73,7 @@ describe('DashList', () => {
     });
     render(<DashList {...props} />);
 
-    expect(await screen.findByText('No dashboards groups configured')).toBeInTheDocument();
+    expect(await screen.findByText('No dashboard groups configured')).toBeInTheDocument();
   });
 
   it('allows un-starring a dashboard', async () => {
@@ -107,5 +113,16 @@ describe('DashList', () => {
       name: new RegExp(`^unmark "${dashbdE.item.title}" as favorite`, 'i'),
     });
     expect(unmarkButton).toBeInTheDocument();
+  });
+
+  it('shows recently viewed dashboards', async () => {
+    impressionSrv.addDashboardImpression(dashbdE.item.uid);
+    const props = getPanelProps({
+      ...defaultOptions,
+      showRecentlyViewed: true,
+    });
+    render(<DashList {...props} />);
+
+    expect(await screen.findByText(dashbdE.item.title)).toBeInTheDocument();
   });
 });
