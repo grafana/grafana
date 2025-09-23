@@ -7054,6 +7054,7 @@
         "deduplication-count": "Deduplication count",
         "showing-only-selected-fields": "Showing only selected fields"
       },
+      "reset-displayed-fields": "Reset displayed fields",
       "show-original-line": "Show original line"
     },
     "logs-sample-panel": {
