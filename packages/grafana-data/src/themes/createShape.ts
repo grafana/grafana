@@ -11,6 +11,7 @@ interface Radii {
   default: string;
   sm: string;
   lg: string;
+  xl: string;
   pill: string;
   circle: string;
 }
@@ -27,6 +28,7 @@ export function createShape(options: ThemeShapeInput): ThemeShape {
     default: `${baseBorderRadius}px`,
     sm: `${Math.ceil(baseBorderRadius * (1 / 3))}px`, // for default base becomes 2
     lg: `${Math.ceil(baseBorderRadius * (5 / 3))}px`, // for default base becomes 10
+    xl: `${Math.ceil(baseBorderRadius * (7 / 3))}px`, // for default base becomes 14
     pill: '9999px',
     circle: '100%',
   };
