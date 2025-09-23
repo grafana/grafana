@@ -675,8 +675,17 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderIds ...string) error {
+	folderClient := b.folderClient
+	if b.folderClient == nil && b.folderClientProvider != nil {
+		ns, err := request.NamespaceInfoFrom(ctx, false)
+		if err != nil {
+			return err
+		}
+		folderClient = b.folderClientProvider.GetOrCreateHandler(ns.Value)
+	}
+
 	for _, folderId := range folderIds {
-		resp, err := b.folderClient.Get(ctx, folderId, user.GetOrgID(), metav1.GetOptions{}, "access")
+		resp, err := folderClient.Get(ctx, folderId, user.GetOrgID(), metav1.GetOptions{}, "access")
 		if err != nil {
 			return dashboards.ErrFolderAccessDenied
 		}
