@@ -1,3 +1,12 @@
+<!-- 11.6.6 START -->
+
+# 11.6.6 (2025-09-23)
+
+### Features and enhancements
+
+- **Auditing:** Add settings to control recording of datasource query request and response body (Enterprise)
+
+<!-- 11.6.6 END -->
 <!-- 11.5.9 START -->
 
 # 11.5.9 (2025-09-23)
