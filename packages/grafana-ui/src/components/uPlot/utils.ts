@@ -105,7 +105,7 @@ export function getStackingGroups(frame: DataFrame) {
       return;
     }
 
-    let { stacking } = custom;
+    let { stacking, clusteredStacking } = custom;
 
     if (stacking == null) {
       return;
@@ -113,8 +113,10 @@ export function getStackingGroups(frame: DataFrame) {
 
     let { mode: stackingMode, group: stackingGroup } = stacking;
 
+    let {mode: clusteredStackingMode} = clusteredStacking;
+    
     // not stacking
-    if (stackingMode === StackingMode.None) {
+    if (stackingMode === StackingMode.None && clusteredStackingMode === StackingMode.None) {
       return;
     }
 

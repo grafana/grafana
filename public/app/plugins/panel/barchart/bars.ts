@@ -556,7 +556,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
     const clusters = getClustersFromArray(Array.from(u.data[groupByFieldIdx === -1 ? 0 : groupByFieldIdx]), groupByField);
 
 
-    if (isStacked) {
+    if (isStacked || isClusteredStacked) {
       barsPctLayout = [null, ...distrStacked(u.data[0].length, u.data.length - 1, clusters.length, clusters)];
     } else {
       barsPctLayout = [null, ...distrNonStacked(u.data[0].length, u.data.length - 1, clusters.length, clusters)]

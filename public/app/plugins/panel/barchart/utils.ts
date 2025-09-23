@@ -77,7 +77,7 @@ export function prepSeries(
 
   if (clusteredStacking !== StackingMode.None) {
     const clusters = getClustersFromArray(Array.from(frames[0].fields[groupByFieldIdx === -1 ? 0 : groupByFieldIdx].values), groupByField);
-    prepareClusterData(frames, clusters);
+    prepareClusterData(frames, clusters, groupByField);
     frame = { ...frames[0] };
   }
 
@@ -510,16 +510,16 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
 };
 
 
-export function prepareClusterData(frames: DataFrame[], clusters: number[]): void {
-  if (!frames.length) {
+export function prepareClusterData(frames: DataFrame[], clusters: number[], groupByField: string | undefined): void {
+  if (!frames.length || !groupByField) {
     return;
   }
 
   const frame = frames[0];
 
-  // TODO should work for other names
+  // TODO should work for other field names
   const xField = frame.fields.find(f => f.name === 'X');
-  const catField = frame.fields.find(f => f.name === 'Cat');
+  const catField = frame.fields.find(f => f.name === groupByField);
   const yField = frame.fields.find(f => f.name === 'Y');
   
   if (!xField || !catField || !yField) {
