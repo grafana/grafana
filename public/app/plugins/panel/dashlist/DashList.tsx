@@ -4,15 +4,14 @@ import { useThrottle } from 'react-use';
 
 import { InterpolateFunction, PanelProps, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useStyles2, IconButton, ScrollContainer, Box, Text, EmptyState } from '@grafana/ui';
-import { updateNavIndex } from 'app/core/actions';
+import { useStyles2, IconButton, ScrollContainer, Box, Text, EmptyState, Link } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { ID_PREFIX, setStarred } from 'app/core/reducers/navBarTree';
-import { removeNavIndex } from 'app/core/reducers/navModel';
+import { removeNavIndex, updateNavIndex } from 'app/core/reducers/navModel';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult, QueryResponse, SearchQuery } from 'app/features/search/service/types';
+import { DashboardQueryResult, LocationInfo, QueryResponse, SearchQuery } from 'app/features/search/service/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { Options } from './panelcfg.gen';
@@ -47,7 +46,7 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
     let uids = await impressionSrv.getDashboardOpened();
     dashUIDs = take<string>(uids, options.maxItems);
 
-    recentDashboards = searcher.search({ uid: dashUIDs, limit: options.maxItems });
+    recentDashboards = searcher.search({ uid: dashUIDs, limit: options.maxItems, kind: ['dashboard'] });
   }
 
   if (options.showSearch) {
@@ -63,13 +62,17 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
     searchedDashboards = searcher.search(params);
   }
 
-  const [starred, searched, recent] = await Promise.all([starredDashboards, searchedDashboards, recentDashboards]);
+  const [starred, searched, recent] = await Promise.allSettled([
+    starredDashboards,
+    searchedDashboards,
+    recentDashboards,
+  ]);
 
   // We deliberately deal with recent dashboards first so that the order of dash IDs is preserved
   let dashMap = new Map<string, DashboardQueryResult>();
-  if (recent) {
+  if (recent && recent.status === 'fulfilled') {
     for (const dashUID of dashUIDs) {
-      const dash = recent.view.find((d: DashboardQueryResult): d is DashboardQueryResult => {
+      const dash = recent.value?.view.find((d: DashboardQueryResult): d is DashboardQueryResult => {
         return d.uid === dashUID;
       });
       if (dash) {
@@ -78,45 +81,44 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
     }
   }
 
-  searched?.view.forEach((dash) => {
-    if (!dash.uid) {
-      return;
-    }
-    if (dashMap.has(dash.uid)) {
-      dashMap.get(dash.uid)!.isSearchResult = true;
-    } else {
-      dashMap.set(dash.uid, { ...dash, isSearchResult: true });
-    }
-  });
+  if (searched && searched.status === 'fulfilled') {
+    searched?.value?.view.forEach((dash) => {
+      if (!dash.uid) {
+        return;
+      }
+      if (dashMap.has(dash.uid)) {
+        dashMap.get(dash.uid)!.isSearchResult = true;
+      } else {
+        dashMap.set(dash.uid, { ...dash, isSearchResult: true });
+      }
+    });
+  }
 
-  starred?.view.forEach((dash) => {
-    if (!dash.uid) {
-      return;
-    }
-    if (dashMap.has(dash.uid)) {
-      dashMap.get(dash.uid)!.isStarred = true;
-    } else {
-      dashMap.set(dash.uid, { ...dash, isStarred: true });
-    }
-  });
+  if (starred && starred.status === 'fulfilled') {
+    starred?.value?.view.forEach((dash) => {
+      if (!dash.uid) {
+        return;
+      }
+      if (dashMap.has(dash.uid)) {
+        dashMap.get(dash.uid)!.isStarred = true;
+      } else {
+        dashMap.set(dash.uid, { ...dash, isStarred: true });
+      }
+    });
+  }
 
   return dashMap;
 }
 
-async function fetchDashboardFolders(folderUIDs: string[]) {
-  const searcher = getGrafanaSearcher();
-  const result = await searcher.search({
-    kind: ['folder'],
-    uid: folderUIDs,
-  });
-  return new Map(result.view.map((folder) => [folder.uid, folder.name] as const));
+async function fetchDashboardFolders() {
+  return getGrafanaSearcher().getLocationInfo();
 }
 
 const collator = new Intl.Collator();
 
 export function DashList(props: PanelProps<Options>) {
   const [dashboards, setDashboards] = useState(new Map<string, Dashboard>());
-  const [foldersTitleMap, setFoldersTitleMap] = useState(new Map<string, string>());
+  const [foldersTitleMap, setFoldersTitleMap] = useState<Record<string, LocationInfo>>({});
   const dispatch = useDispatch();
   const navIndex = useSelector((state) => state.navIndex);
 
@@ -130,13 +132,8 @@ export function DashList(props: PanelProps<Options>) {
 
   useEffect(() => {
     if (props.options.showFolderNames && dashboards.size > 0) {
-      const dashboardsArray = Array.from(dashboards.values());
-      const set = new Set<string>(
-        dashboardsArray.map((dash) => dash.folder).filter((folder): folder is string => !!folder)
-      );
-      const uniqueUIDs = Array.from(set);
-      fetchDashboardFolders(uniqueUIDs).then((foldersMap) => {
-        setFoldersTitleMap(foldersMap);
+      fetchDashboardFolders().then((locationInfo) => {
+        setFoldersTitleMap(locationInfo);
       });
     }
   }, [props.options.showFolderNames, dashboards]);
@@ -172,10 +169,27 @@ export function DashList(props: PanelProps<Options>) {
 
   const [starredDashboards, recentDashboards, searchedDashboards] = useMemo(() => {
     const dashboardList = [...dashboards.values()];
+    const dashboardsGroupsMap: Record<string, Dashboard[]> = {
+      starred: [],
+      recent: [],
+      searched: [],
+    };
+
+    for (const dash of dashboardList) {
+      if (dash.isStarred) {
+        dashboardsGroupsMap.starred.push(dash);
+      }
+      if (dash.isRecent) {
+        dashboardsGroupsMap.recent.push(dash);
+      }
+      if (dash.isSearchResult) {
+        dashboardsGroupsMap.searched.push(dash);
+      }
+    }
     return [
-      dashboardList.filter((dash) => dash.isStarred).sort((a, b) => collator.compare(a.name, b.name)),
-      dashboardList.filter((dash) => dash.isRecent),
-      dashboardList.filter((dash) => dash.isSearchResult).sort((a, b) => collator.compare(a.name, b.name)),
+      dashboardsGroupsMap.starred.sort((a, b) => collator.compare(a.name, b.name)),
+      dashboardsGroupsMap.recent,
+      dashboardsGroupsMap.searched.sort((a, b) => collator.compare(a.name, b.name)),
     ];
   }, [dashboards]);
 
@@ -214,16 +228,15 @@ export function DashList(props: PanelProps<Options>) {
           title: dash.title,
         });
 
-        const folderTitle = showFolderNames && dash.folder ? foldersTitleMap.get(dash.folder) : undefined;
-
+        const locationInfo = showFolderNames && dash.location ? foldersTitleMap[dash.location] : undefined;
         return (
           <li key={`dash-${dash.uid}`}>
             <div className={css.dashlistLink}>
               <Box flex={1}>
-                <a href={url}>{dash.name}</a>
-                {showFolderNames && folderTitle && (
+                <Link href={url}>{dash.name}</Link>
+                {showFolderNames && locationInfo && (
                   <Text color="secondary" variant="bodySmall" element="p">
-                    {folderTitle}
+                    {locationInfo?.name}
                   </Text>
                 )}
               </Box>
@@ -248,7 +261,7 @@ export function DashList(props: PanelProps<Options>) {
         <EmptyState
           hideImage
           variant="call-to-action"
-          message={t('panel.dashlist.empty-state-message', 'No dashboards groups configured')}
+          message={t('panel.dashlist.empty-state-message', 'No dashboard groups configured')}
         />
       )}
       {dashboardGroups.map(
