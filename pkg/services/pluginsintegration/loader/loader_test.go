@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -1219,38 +1220,6 @@ func TestLoader_Load_Angular(t *testing.T) {
 	}
 }
 
-func TestLoader_HideAngularDeprecation(t *testing.T) {
-	fakePluginSource := &fakes.FakePluginSource{
-		PluginClassFunc: func(ctx context.Context) plugins.Class {
-			return plugins.ClassExternal
-		},
-		DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "valid-v2-signature")}).Discover,
-	}
-	for _, tc := range []struct {
-		name string
-		cfg  *config.PluginManagementCfg
-	}{
-		{name: "with plugin id in HideAngularDeprecation list", cfg: &config.PluginManagementCfg{
-			HideAngularDeprecation: []string{"one-app", "two-panel", "test-datasource", "three-datasource"},
-		}},
-		{name: "without plugin id in HideAngularDeprecation list", cfg: &config.PluginManagementCfg{
-			HideAngularDeprecation: []string{"one-app", "two-panel", "three-datasource"},
-		}},
-		{name: "with empty HideAngularDeprecation", cfg: &config.PluginManagementCfg{
-			HideAngularDeprecation: nil,
-		}},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			l := newLoaderWithOpts(t, tc.cfg, loaderDepOpts{
-				angularInspector: angularinspector.AlwaysAngularFakeInspector,
-			})
-			p, err := l.Load(context.Background(), fakePluginSource)
-			require.NoError(t, err)
-			require.Empty(t, p, "plugin shouldn't have been loaded")
-		})
-	}
-}
-
 func TestLoader_Load_NestedPlugins(t *testing.T) {
 	parent := &plugins.Plugin{
 		JSONData: plugins.JSONData{
@@ -1590,7 +1559,7 @@ func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Servi
 	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
-		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest()),
+		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop()),
 		terminate, errTracker)
 }
 
@@ -1621,7 +1590,7 @@ func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loade
 	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
-		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest()),
+		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop()),
 		terminate, errTracker)
 }
 

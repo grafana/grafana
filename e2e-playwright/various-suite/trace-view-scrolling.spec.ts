@@ -1,27 +1,21 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
-
 import { test, expect } from '@grafana/plugin-e2e';
+
+import longTraceResponse from '../fixtures/long-trace-response.json';
 
 // this test requires a larger viewport
 test.use({
   viewport: { width: 1280, height: 1080 },
 });
 
-// TODO for some reason, this test gives "connection refused" errors in CI
-test.describe.skip(
+test.describe(
   'Trace view',
   {
     tag: ['@various'],
   },
   () => {
     test('Can lazy load big traces', async ({ page, selectors }) => {
-      // Load the fixture data
-      const fixturePath = join(__dirname, '../fixtures/long-trace-response.json');
-      const longTraceResponse = JSON.parse(readFileSync(fixturePath, 'utf8'));
-
       // Mock the API response
-      await page.route('*/**/api/traces/trace', async (route) => {
+      await page.route('**/api/ds/query?ds_type=jaeger*', async (route) => {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
