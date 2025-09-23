@@ -73,7 +73,7 @@ export function ExternalContactPointGroup({
 }
 
 interface ContactPointGroupInnerProps extends Omit<ContactPointGroupProps, 'name'> {
-  name: ReactNode;
+  name: NonNullable<ReactNode>;
   description?: ReactNode;
   isLoading?: boolean;
   children: ReactNode;

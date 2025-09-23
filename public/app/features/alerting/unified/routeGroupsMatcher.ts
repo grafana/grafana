@@ -32,39 +32,29 @@ export const routeGroupsMatcher = {
   },
 
   matchInstancesToRoutes(routeTree: RouteWithID, instances: Labels[], options?: MatchOptions): InstanceMatchResult[] {
-    const normalizedRootRoute = getNormalizedRoute(routeTree, options);
-
-    // construct a single tree, external Alertmanagers only support one tree
-    const trees = [normalizedRootRoute] as const;
+    const normalizedRouteTree = getNormalizedRoute(routeTree, options);
 
     return instances.map<InstanceMatchResult>((instance) => {
       const labels = Object.entries(instance);
       // Collect all matched routes from all trees
       const allMatchedRoutes: RouteMatch[] = [];
 
-      // Process each tree for this instance
-      trees.forEach((tree) => {
-        const treeName = 'user-defined';
-        // We have to convert the RoutingTree structure to a Route structure to be able to use the matching functions
-        const rootRoute = trees[0];
+      // Match this single instance against the route tree
+      // Convert the RouteWithID to the alerting package format to ensure compatibility
+      const convertedRoute = routeAdapter.toPackage(normalizedRouteTree);
+      const { expandedTree, matchedPolicies } = matchAlertInstancesToPolicyTree([labels], convertedRoute);
 
-        // Match this single instance against the route tree
-        // Convert the RouteWithID to the alerting package format to ensure compatibility
-        const convertedRoute = routeAdapter.toPackage(rootRoute);
-        const { expandedTree, matchedPolicies } = matchAlertInstancesToPolicyTree([labels], convertedRoute);
-
-        // Process each matched route from the tree
-        matchedPolicies.forEach((results, route) => {
-          // For each match result, create a RouteMatch object
-          results.forEach((matchDetails) => {
-            allMatchedRoutes.push({
-              route,
-              routeTree: {
-                metadata: { name: treeName },
-                expandedSpec: expandedTree,
-              },
-              matchDetails,
-            });
+      // Process each matched route from the tree
+      matchedPolicies.forEach((results, route) => {
+        // For each match result, create a RouteMatch object
+        results.forEach((matchDetails) => {
+          allMatchedRoutes.push({
+            route,
+            routeTree: {
+              metadata: { name: 'user-defined' },
+              expandedSpec: expandedTree,
+            },
+            matchDetails,
           });
         });
       });
