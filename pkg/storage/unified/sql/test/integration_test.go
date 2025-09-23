@@ -106,40 +106,9 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 	search, err := search.NewBleveBackend(search.BleveOptions{
 		FileThreshold: 0,
 		Root:          tempDir,
-		UseFullNgram:  false,
 	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, search)
-
-	t.Cleanup(search.CloseAllIndexes)
-
-	// Create a new resource backend
-	storage := newTestBackend(t, false, 0)
-	require.NotNil(t, storage)
-
-	// Run the shared storage and search tests
-	unitest.RunTestSearchAndStorage(t, ctx, storage, search)
-}
-
-func TestIntegrationSearchAndStorageFullNgramEnabled(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	ctx := context.Background()
-
-	tempDir := t.TempDir()
-	t.Cleanup(func() {
-		_ = os.RemoveAll(tempDir)
-	})
-	// Create a new bleve backend
-	search, err := search.NewBleveBackend(search.BleveOptions{
-		FileThreshold: 0,
-		Root:          tempDir,
-		UseFullNgram:  true,
-	}, tracing.NewNoopTracerService(), nil)
-	require.NoError(t, err)
-	require.NotNil(t, search)
-
-	t.Cleanup(search.Stop)
 
 	// Create a new resource backend
 	storage := newTestBackend(t, false, 0)
