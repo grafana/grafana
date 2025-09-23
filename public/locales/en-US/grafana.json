@@ -5401,6 +5401,10 @@
       "save-library-panel": "Save library panel",
       "settings": "Dashboard settings",
       "share-button": "Share",
+      "star-add-error": "Failed to add to starred",
+      "star-added": "Added to starred",
+      "star-remove-error": "Failed to remove from starred",
+      "star-removed": "Removed from starred",
       "unlink-library-panel": "Unlink library panel",
       "unmark-favorite": "Unmark as favorite"
     },
