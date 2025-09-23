@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
-	folderLegacy "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -101,7 +100,7 @@ func validateOnUpdate(ctx context.Context,
 	}
 
 	// moving to the root folder
-	if newParent == "" || newParent == folderLegacy.GeneralFolderUID {
+	if newParent == "" || newParent == folder.GeneralFolderUID {
 		return nil
 	}
 

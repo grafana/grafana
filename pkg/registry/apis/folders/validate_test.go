@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/folder"
-	folderLegacy "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -231,7 +230,7 @@ func TestValidateUpdate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "nnn",
 					Annotations: map[string]string{
-						utils.AnnoKeyFolder: folderLegacy.GeneralFolderUID,
+						utils.AnnoKeyFolder: folder.GeneralFolderUID,
 					},
 				},
 				Spec: folders.FolderSpec{
