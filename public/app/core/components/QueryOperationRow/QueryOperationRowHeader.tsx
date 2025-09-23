@@ -72,7 +72,7 @@ export const QueryOperationRowHeader = ({
           // this is just to provide a better experience for mouse users
           // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
           <div className={styles.titleWrapper} onClick={onRowToggle}>
-            <div className={cx(styles.title, disabled && styles.disabled)}>{title} test</div>
+            <div className={cx(styles.title, disabled && styles.disabled)}>{title}</div>
           </div>
         )}
         {headerElement}

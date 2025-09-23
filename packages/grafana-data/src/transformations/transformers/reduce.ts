@@ -22,6 +22,7 @@ export interface ReduceTransformerOptions {
   mode?: ReduceTransformerMode;
   includeTimeField?: boolean;
   labelsToFields?: boolean;
+  refId?: string;
 }
 
 export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = {
@@ -57,7 +58,12 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
         // Add a row for each series
         const res = reduceSeriesToRows(data, matcher, options.reducers, options.labelsToFields);
         return res
-          ? [{ ...res, refId: `${DataTransformerID.reduce}-${data.map((frame) => frame.refId).join('-')}` }]
+          ? [
+              {
+                ...res,
+                refId: options.refId ?? `${DataTransformerID.reduce}-${data.map((frame) => frame.refId).join('-')}`,
+              },
+            ]
           : [];
       })
     ),

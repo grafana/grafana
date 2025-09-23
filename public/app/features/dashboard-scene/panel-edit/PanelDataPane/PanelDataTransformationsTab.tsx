@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
 import { useState } from 'react';
 
-import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
+import { DataTransformerConfig, getNextRefId, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -175,6 +175,12 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
     update.splice(endIndex, 0, removed);
     model.onChangeTransformations(update.map((t) => t.transformation));
   };
+
+  // populate refIds for any transformations that don't have them
+  const refLessTransformations = transformations.filter((transformation) => transformation.refId === undefined);
+  refLessTransformations.forEach((transformation) => {
+    transformation.refId = getNextRefId(transformations, 'T-');
+  });
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
