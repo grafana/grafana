@@ -327,6 +327,5 @@
   "timezone": "browser",
   "title": "Datasource tests - InfluxDB Templated",
   "uid": "000000002",
-  "version": 2,
   "weekStart": ""
 }

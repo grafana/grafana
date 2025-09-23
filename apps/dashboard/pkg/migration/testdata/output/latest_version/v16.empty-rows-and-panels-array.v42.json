@@ -1073,6 +1073,5 @@
   "timezone": "default",
   "title": "Sample dashboard",
   "uid": "sample-dashboard",
-  "version": 1,
   "weekStart": ""
 }

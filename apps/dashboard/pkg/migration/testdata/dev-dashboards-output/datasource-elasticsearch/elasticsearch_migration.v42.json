@@ -10346,6 +10346,5 @@
   "timezone": "",
   "title": "Datasource tests - Elasticsearch migration",
   "uid": "es_migration",
-  "version": 1,
   "weekStart": ""
 }

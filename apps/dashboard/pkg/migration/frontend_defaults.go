@@ -40,9 +40,7 @@ func applyFrontendDefaults(dashboard map[string]interface{}) {
 	if dashboard["fiscalYearStartMonth"] == nil {
 		dashboard["fiscalYearStartMonth"] = float64(0)
 	}
-	if dashboard["version"] == nil {
-		dashboard["version"] = float64(0)
-	}
+	// Note: version is NOT set as a default - it's managed in metadata, not spec
 	if dashboard["links"] == nil {
 		dashboard["links"] = []interface{}{}
 	}
@@ -1009,6 +1007,9 @@ func cleanupDashboardDefaults(dashboard map[string]interface{}) {
 
 	// Remove dashboard id if it's null
 	removeIfDefaultValue(dashboard, "id", nil)
+
+	// Remove version property - it's managed by the backend metadata, not the spec
+	delete(dashboard, "version")
 
 	// Remove transient properties that frontend filters out during getSaveModelClone()
 	// These properties are lost during frontend's property copying loop in getSaveModelCloneOld()

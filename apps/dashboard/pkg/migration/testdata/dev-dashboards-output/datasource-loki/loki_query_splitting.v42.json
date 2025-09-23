@@ -1124,6 +1124,5 @@
   "timezone": "",
   "title": "Datasource tests - Loki query splitting",
   "uid": "dc4ec947-7e6b-4c3b-be8f-0abec7b0652a",
-  "version": 2,
   "weekStart": ""
 }

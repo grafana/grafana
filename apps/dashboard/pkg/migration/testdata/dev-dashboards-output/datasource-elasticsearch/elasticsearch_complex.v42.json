@@ -5809,6 +5809,5 @@
   "timezone": "",
   "title": "Datasource tests - Elasticsearch complex with template variables",
   "uid": "es_complex",
-  "version": 1,
   "weekStart": ""
 }

@@ -1120,6 +1120,5 @@
   "timezone": "",
   "title": "Datasource tests - Elasticsearch simple",
   "uid": "es_simple",
-  "version": 1,
   "weekStart": ""
 }

@@ -59,6 +59,16 @@ func TestFrontendDefaultsCleanup(t *testing.T) {
 				"title": "Test Dashboard",
 			},
 		},
+		{
+			name: "remove_version_property",
+			input: map[string]interface{}{
+				"version": float64(123),
+				"title":   "Test Dashboard",
+			},
+			expected: map[string]interface{}{
+				"title": "Test Dashboard",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -67,8 +77,18 @@ func TestFrontendDefaultsCleanup(t *testing.T) {
 
 			cleanupDashboardDefaults(dashboard)
 
-			assertPropertyRemoved(t, dashboard, "id")
-			assertPropertyValue(t, dashboard, "title", "Test Dashboard")
+			// Check that expected properties exist
+			for key, expectedValue := range tt.expected {
+				assertPropertyValue(t, dashboard, key, expectedValue)
+			}
+
+			// Check that version is always removed
+			assertPropertyRemoved(t, dashboard, "version")
+
+			// Check that id is removed when it was null in input
+			if idValue, exists := tt.input["id"]; exists && idValue == nil {
+				assertPropertyRemoved(t, dashboard, "id")
+			}
 		})
 	}
 }
@@ -548,8 +568,8 @@ func TestApplyFrontendDefaults(t *testing.T) {
 				"timepicker":           map[string]interface{}{},
 				"schemaVersion":        float64(42), // Preserved from input
 				"fiscalYearStartMonth": float64(0),
-				"version":              float64(0),
-				"links":                []interface{}{},
+				// version is NOT set as default - managed by backend metadata
+				"links": []interface{}{},
 			},
 		},
 		{
@@ -570,8 +590,8 @@ func TestApplyFrontendDefaults(t *testing.T) {
 				"timepicker":           map[string]interface{}{},
 				"schemaVersion":        float64(0),
 				"fiscalYearStartMonth": float64(0),
-				"version":              float64(0),
-				"links":                []interface{}{},
+				// version is NOT set as default - managed by backend metadata
+				"links": []interface{}{},
 			},
 		},
 	}
@@ -588,6 +608,13 @@ func TestApplyFrontendDefaults(t *testing.T) {
 					t.Errorf("Property %s should exist but is missing", key)
 				} else if !compareValues(actualValue, expectedValue) {
 					t.Errorf("Property %s has wrong value. Expected: %v (type: %T), Got: %v (type: %T)", key, expectedValue, expectedValue, actualValue, actualValue)
+				}
+			}
+
+			// Verify that version is NOT set as default (unless it was in input)
+			if _, hadVersionInInput := tt.input["version"]; !hadVersionInInput {
+				if _, hasVersion := dashboard["version"]; hasVersion {
+					t.Errorf("Property version should not be set as default but was found")
 				}
 			}
 		})
