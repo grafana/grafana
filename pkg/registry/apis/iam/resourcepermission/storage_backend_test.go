@@ -580,6 +580,9 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 				continueToken = it.ContinueToken()
 				require.NoError(t, json.Unmarshal(it.Value(), &perm))
 				results = append(results, perm.Name)
+				if len(results) >= int(req.Limit) {
+					return nil
+				}
 			}
 			return nil
 		})
@@ -591,6 +594,9 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 				continueToken = it.ContinueToken()
 				require.NoError(t, json.Unmarshal(it.Value(), &perm))
 				results = append(results, perm.Name)
+				if len(results) >= int(req.Limit) {
+					return nil
+				}
 			}
 			return nil
 		})
@@ -603,6 +609,9 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 				continueToken = it.ContinueToken()
 				require.NoError(t, json.Unmarshal(it.Value(), &perm))
 				results = append(results, perm.Name)
+				if len(results) >= int(req.Limit) {
+					return nil
+				}
 			}
 			return nil
 		})
