@@ -1,3 +1,24 @@
+<!-- 12.0.5 START -->
+
+# 12.0.5 (2025-09-23)
+
+### Features and enhancements
+
+- **Alerting:** Update alerting module [#110000](https://github.com/grafana/grafana/pull/110000), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Auditing:** Add settings to control recording of datasource query request and response body (Enterprise)
+- **Auditing:** Document new options for recording datasource query request/response body [#109980](https://github.com/grafana/grafana/pull/109980), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Alerting:** Fix copying of recording rule fields [#110346](https://github.com/grafana/grafana/pull/110346), [@moustafab](https://github.com/moustafab)
+- **Azure:** Fix time management field [#108481](https://github.com/grafana/grafana/pull/108481), [@aangelisc](https://github.com/aangelisc)
+- **Fix:** Fix redirection after login when Grafana is served from subpath [#111156](https://github.com/grafana/grafana/pull/111156), [@mgyongyosi](https://github.com/mgyongyosi)
+
+### Plugin development fixes & changes
+
+- **Fix:** Prevent Rollup from treeshaking NPM packages [#110523](https://github.com/grafana/grafana/pull/110523), [@jackw](https://github.com/jackw)
+
+<!-- 12.0.5 END -->
 <!-- 12.0.4 START -->
 
 # 12.0.4 (2025-08-13)
