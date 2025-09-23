@@ -118,12 +118,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       if (!nodeToExpand.expanded || nodeToExpand.query !== query) {
         const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
           treeNode.expanded = true;
-          // Reset query on first expansion, keep it only when filtering within existing children
-          treeNode.query = '';
+          treeNode.query = query || '';
         });
         this.updateState({ tree: newTree });
 
-        // For API call: only pass query if filtering within existing children
         await this.loadNodeChildren(path, nodeToExpand, query);
       }
     } catch (error) {
