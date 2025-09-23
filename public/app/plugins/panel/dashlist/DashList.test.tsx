@@ -38,8 +38,8 @@ describe.each([
   true,
   // Legacy APIs
   false,
-])('DashList - unifiedStorageSearchUI: %s', (unifiedStorageSearchUI) => {
-  testWithFeatureToggles(unifiedStorageSearchUI ? ['unifiedStorageSearchUI'] : []);
+])('DashList - app platform APIs: %s', (featureTogglesEnabled) => {
+  testWithFeatureToggles(featureTogglesEnabled ? ['unifiedStorageSearchUI'] : []);
 
   it('renders different groups of dashboards', async () => {
     const props = getPanelProps({
