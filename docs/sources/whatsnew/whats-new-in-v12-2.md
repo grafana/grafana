@@ -16,9 +16,6 @@ posts:
   - title: SQL expressions
     items:
       - whats-new/2025-09-05-sql-expressions.md
-  - title: Authentication and authorization
-    items:
-      - whats-new/2025-09-10-scim-configuration-ui.md
   - title: Dashboards and visualizations
     items:
       - whats-new/2025-07-17-disable-tooltips-in-canvas-visualizations.md
@@ -48,6 +45,9 @@ posts:
   - title: Metrics Drilldown
     items:
       - whats-new/2025-08-07-grafana-metrics-drilldown-entry-point-from-alerting-rule.md
+  - title: Authentication and authorization
+    items:
+      - whats-new/2025-09-10-scim-configuration-ui.md
 whats_new_grafana_version: 12.2
 weight: -51
 ---
