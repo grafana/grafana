@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	folderLegacy "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -97,6 +98,11 @@ func validateOnUpdate(ctx context.Context,
 	// folder cannot be moved to a k6 folder
 	if newParent == accesscontrol.K6FolderUID {
 		return fmt.Errorf("k6 project may not be moved")
+	}
+
+	// moving to the root folder
+	if newParent == "" || newParent == folderLegacy.GeneralFolderUID {
+		return nil
 	}
 
 	parentObj, err := getter.Get(ctx, newParent, &metav1.GetOptions{})
