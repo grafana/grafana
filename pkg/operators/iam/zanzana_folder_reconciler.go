@@ -16,9 +16,8 @@ import (
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/app"
 	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/urfave/cli/v2"
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
 
@@ -26,22 +25,14 @@ import (
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 )
 
-func init() {
-	server.RegisterOperator(server.Operator{
-		Name:        "iam-folder-reconciler",
-		Description: "Watch folder resources and manage IAM permissions with Zanzana",
-		RunFunc:     RunIAMFolderReconciler,
-	})
-}
-
-func RunIAMFolderReconciler(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cfg) error {
+func RunIAMFolderReconciler(deps server.OperatorDependencies) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "iam-folder-reconciler")
 	logger.Info("Starting IAM folder reconciler operator")
 
 	// Get configuration from Grafana settings
-	iamConfig, err := buildIAMConfigFromSettings(cfg)
+	iamConfig, err := buildIAMConfigFromSettings(deps.Config, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("failed to build IAM config: %w", err)
 	}
@@ -78,7 +69,7 @@ type iamConfig struct {
 	AppConfig    app.AppConfig
 }
 
-func buildIAMConfigFromSettings(cfg *setting.Cfg) (*iamConfig, error) {
+func buildIAMConfigFromSettings(cfg *setting.Cfg, registerer prometheus.Registerer) (*iamConfig, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
 	}
@@ -106,6 +97,8 @@ func buildIAMConfigFromSettings(cfg *setting.Cfg) (*iamConfig, error) {
 	}
 	iamCfg.AppConfig.ZanzanaClientCfg.URL = zanzanaURL
 
+	iamCfg.AppConfig.InformerConfig.MaxConcurrentWorkers = operatorSec.Key("max_concurrent_workers").MustUint64(20)
+
 	folderAppURL := operatorSec.Key("folder_app_url").MustString("")
 	if folderAppURL == "" {
 		return nil, fmt.Errorf("folder_app_url is required in [operator] section")
@@ -130,6 +123,8 @@ func buildIAMConfigFromSettings(cfg *setting.Cfg) (*iamConfig, error) {
 	metricsSection := cfg.SectionWithEnvOverrides("metrics")
 	iamCfg.RunnerConfig.MetricsConfig.Enabled = metricsSection.Key("enabled").MustBool(true)
 	iamCfg.RunnerConfig.MetricsConfig.Namespace = metricsSection.Key("namespace").MustString("grafana-iam")
+	iamCfg.AppConfig.Namespace = iamCfg.RunnerConfig.MetricsConfig.Namespace
+	iamCfg.AppConfig.MetricsRegisterer = registerer
 
 	return &iamCfg, nil
 }

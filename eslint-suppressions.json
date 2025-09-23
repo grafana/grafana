@@ -1809,11 +1809,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/rule-list/StateView.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/types/alerting.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 5
@@ -1898,11 +1893,6 @@
   },
   "public/app/features/auth-config/utils/data.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/browse-dashboards/components/BrowseActions/MoveModal.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -3930,11 +3920,6 @@
       "count": 4
     }
   },
-  "public/app/plugins/datasource/dashboard/datasource.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/dashboard/runSharedRequest.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
@@ -4093,17 +4078,12 @@
       "count": 3
     }
   },
-  "public/app/plugins/datasource/graphite/datasource.test.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 3
-    }
-  },
   "public/app/plugins/datasource/graphite/datasource.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 4
+      "count": 3
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 10
+      "count": 8
     }
   },
   "public/app/plugins/datasource/graphite/gfunc.ts": {
@@ -4186,11 +4166,6 @@
     }
   },
   "public/app/plugins/datasource/influxdb/components/editor/query/flux/FluxQueryEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
-  "public/app/plugins/datasource/influxdb/components/editor/query/fsql/FSQLEditor.tsx": {
     "no-restricted-syntax": {
       "count": 3
     }

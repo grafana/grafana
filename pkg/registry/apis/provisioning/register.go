@@ -5,45 +5,48 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	clientrest "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
-	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-
-	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
@@ -83,11 +86,14 @@ type APIBuilder struct {
 	// TODO: Set this up in the standalone API server
 	onlyApiServer bool
 
+	allowedTargets      []provisioning.SyncTargetType
+	allowImageRendering bool
+
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
 
 	tracer              tracing.Tracer
-	getter              rest.Getter
+	store               grafanarest.Storage
 	parsers             resources.ParserFactory
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
@@ -98,7 +104,6 @@ type APIBuilder struct {
 	jobHistoryConfig *JobHistoryConfig
 	jobHistoryLoki   *jobs.LokiJobHistory
 	resourceLister   resources.ResourceLister
-	repositoryLister listers.RepositoryLister
 	legacyMigrator   legacy.LegacyMigrator
 	storageStatus    dualwrite.Service
 	unified          resource.ResourceClient
@@ -110,6 +115,9 @@ type APIBuilder struct {
 	// Extras provides additional functionality to the API.
 	extras       []Extra
 	extraWorkers []jobs.Worker
+
+	restConfigGetter func(context.Context) (*clientrest.Config, error)
+	registry         prometheus.Registerer
 }
 
 // NewAPIBuilder creates an API builder.
@@ -129,8 +137,18 @@ func NewAPIBuilder(
 	extraBuilders []ExtraBuilder,
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
+	allowedTargets []provisioning.SyncTargetType,
+	restConfigGetter func(context.Context) (*clientrest.Config, error),
+	allowImageRendering bool,
+	registry prometheus.Registerer,
+	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 ) *APIBuilder {
-	clients := resources.NewClientFactory(configProvider)
+	var clients resources.ClientFactory
+	if newStandaloneClientFactoryFunc != nil {
+		clients = newStandaloneClientFactoryFunc(configProvider)
+	} else {
+		clients = resources.NewClientFactory(configProvider)
+	}
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceListerForMigrations(unified, legacyMigrator, storageStatus)
 
@@ -150,6 +168,10 @@ func NewAPIBuilder(
 		access:              access,
 		jobHistoryConfig:    jobHistoryConfig,
 		extraWorkers:        extraWorkers,
+		allowedTargets:      allowedTargets,
+		restConfigGetter:    restConfigGetter,
+		allowImageRendering: allowImageRendering,
+		registry:            registry,
 	}
 
 	for _, builder := range extraBuilders {
@@ -214,6 +236,11 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
+	allowedTargets := []provisioning.SyncTargetType{}
+	for _, target := range cfg.ProvisioningAllowedTargets {
+		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
+	}
+
 	builder := NewAPIBuilder(
 		cfg.ProvisioningDisableControllers,
 		repoFactory,
@@ -227,6 +254,11 @@ func RegisterAPIService(
 		extraBuilders,
 		extraWorkers,
 		createJobHistoryConfigFromSettings(cfg),
+		allowedTargets,
+		nil, // will use loopback instead
+		cfg.ProvisioningAllowImageRendering,
+		reg,
+		nil,
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
@@ -403,7 +435,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
-	b.getter = repositoryStorage
+	b.store = repositoryStorage
 
 	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
 	if err != nil {
@@ -485,8 +517,8 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	// This is called on every update, so be careful to only add the finalizer for create
 	if len(r.Finalizers) == 0 && a.GetOperation() == admission.Create {
 		r.Finalizers = []string{
-			controller.RemoveOrphanResourcesFinalizer,
-			controller.CleanFinalizer,
+			repository.RemoveOrphanResourcesFinalizer,
+			repository.CleanFinalizer,
 		}
 	}
 
@@ -539,6 +571,21 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	list := repository.ValidateRepository(repo)
 	cfg := repo.Config()
 
+	if !slices.Contains(b.allowedTargets, cfg.Spec.Sync.Target) {
+		list = append(list,
+			field.Invalid(
+				field.NewPath("spec", "target"),
+				cfg.Spec.Sync.Target,
+				"sync target is not supported"))
+	}
+
+	if !b.allowImageRendering && cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews {
+		list = append(list,
+			field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
+				cfg.Spec.GitHub.GenerateDashboardPreviews,
+				"image rendering is not enabled"))
+	}
+
 	if a.GetOperation() == admission.Update {
 		oldRepo, err := b.asRepository(ctx, a.GetOldObject(), nil)
 		if err != nil {
@@ -564,7 +611,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	}
 
 	// Exit early if we have already found errors
-	targetError := b.verifyAgaintsExistingRepositories(cfg)
+	targetError := b.verifyAgainstExistingRepositories(cfg)
 	if targetError != nil {
 		return invalidRepositoryError(a.GetName(), field.ErrorList{targetError})
 	}
@@ -578,9 +625,28 @@ func invalidRepositoryError(name string, list field.ErrorList) error {
 		name, list)
 }
 
+func (b *APIBuilder) getRepositoriesInNamespace(ctx context.Context) ([]provisioning.Repository, error) {
+	obj, err := b.store.List(ctx, &internalversion.ListOptions{
+		Limit: 100,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	all, ok := obj.(*provisioning.RepositoryList)
+	if !ok {
+		return nil, fmt.Errorf("expected repository list")
+	}
+	return all.Items, nil
+}
+
 // TODO: move this to a more appropriate place. Probably controller/validation.go
-func (b *APIBuilder) verifyAgaintsExistingRepositories(cfg *provisioning.Repository) *field.Error {
-	all, err := b.repositoryLister.Repositories(cfg.Namespace).List(labels.Everything())
+func (b *APIBuilder) verifyAgainstExistingRepositories(cfg *provisioning.Repository) *field.Error {
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), cfg.Namespace)
+	if err != nil {
+		return &field.Error{Type: field.ErrorTypeInternal, Detail: err.Error()}
+	}
+	all, err := b.getRepositoriesInNamespace(request.WithNamespace(ctx, cfg.Namespace))
 	if err != nil {
 		return field.Forbidden(field.NewPath("spec"),
 			"Unable to verify root target: "+err.Error())
@@ -622,7 +688,17 @@ func (b *APIBuilder) verifyAgaintsExistingRepositories(cfg *provisioning.Reposit
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
 		"grafana-provisioning": func(postStartHookCtx genericapiserver.PostStartHookContext) error {
-			c, err := clientset.NewForConfig(postStartHookCtx.LoopbackClientConfig)
+			var config *clientrest.Config
+			var err error
+			if b.restConfigGetter == nil {
+				config = postStartHookCtx.LoopbackClientConfig
+			} else {
+				config, err = b.restConfigGetter(postStartHookCtx.Context)
+				if err != nil {
+					return err
+				}
+			}
+			c, err := clientset.NewForConfig(config)
 			if err != nil {
 				return err
 			}
@@ -633,16 +709,15 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
 
 			b.client = c.ProvisioningV0alpha1()
-			b.repositoryLister = repoInformer.Lister()
 
 			// Initialize the API client-based job store
-			b.jobs, err = jobs.NewJobStore(b.client, 30*time.Second)
+			b.jobs, err = jobs.NewJobStore(b.client, 30*time.Second, b.registry)
 			if err != nil {
 				return fmt.Errorf("create API client job store: %w", err)
 			}
 
 			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
-			b.healthChecker = controller.NewHealthChecker(b.statusPatcher)
+			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry)
 
 			// if running solely CRUD, skip the rest of the setup
 			if b.onlyApiServer {
@@ -659,8 +734,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			// Create the repository resources factory
-			usageMetricCollector := usage.MetricCollector(b.tracer, b.repositoryLister, b.unified)
+			usageMetricCollector := usage.MetricCollector(b.tracer, b.getRepositoriesInNamespace, b.unified)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
+
+			metrics := jobs.RegisterJobMetrics(b.registry)
 
 			stageIfPossible := repository.WrapWithStageAndPushIfPossible
 			exportWorker := export.NewExportWorker(
@@ -668,15 +745,18 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.repositoryResources,
 				export.ExportAll,
 				stageIfPossible,
+				metrics,
 			)
 
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer)
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
 				b.storageStatus,
 				b.statusPatcher.Patch,
 				syncer,
+				metrics,
+				b.tracer,
 			)
 			signerFactory := signature.NewSignerFactory(b.clients)
 			legacyResources := migrate.NewLegacyResourcesMigrator(
@@ -708,8 +788,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.storageStatus,
 			)
 
-			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources)
-			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources)
+			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
+			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			workers := []jobs.Worker{
 				deleteWorker,
 				exportWorker,
@@ -744,6 +824,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				30*time.Second, // Lease renewal interval
 				b.jobs, repoGetter, jobHistoryWriter,
 				jobController.InsertNotifications(),
+				b.registry,
 				workers...,
 			)
 			if err != nil {
@@ -766,6 +847,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.storageStatus,
 				b.GetHealthChecker(),
 				b.statusPatcher,
+				b.registry,
+				b.tracer,
 			)
 			if err != nil {
 				return err
@@ -1231,7 +1314,7 @@ func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 // TODO: where should the helpers live?
 
 func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository.Repository, error) {
-	obj, err := b.getter.Get(ctx, name, &metav1.GetOptions{})
+	obj, err := b.store.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

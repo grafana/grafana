@@ -2150,27 +2150,6 @@
         },
         "type": "object"
       },
-      "AddAPIKeyCommand": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "role": {
-            "enum": [
-              "None",
-              "Viewer",
-              "Editor",
-              "Admin"
-            ],
-            "type": "string"
-          },
-          "secondsToLive": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
       "AddDataSourceCommand": {
         "description": "Also acts as api DTO",
         "properties": {
@@ -6572,6 +6551,9 @@
       },
       "Hit": {
         "properties": {
+          "description": {
+            "type": "string"
+          },
           "folderId": {
             "format": "int64",
             "type": "integer"
