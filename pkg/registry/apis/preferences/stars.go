@@ -91,8 +91,7 @@ func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, 
 			if apierrors.IsNotFound(err) {
 				if remove {
 					responder.Object(http.StatusNoContent, &v1.Status{
-						Code:    http.StatusNoContent,
-						Message: "not changed",
+						Code: http.StatusNoContent,
 					})
 					return
 				}
@@ -113,8 +112,7 @@ func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, 
 
 		if !apply(&obj.Spec, item, remove) {
 			responder.Object(http.StatusNoContent, &v1.Status{
-				Code:    http.StatusNoContent,
-				Message: "not changed",
+				Code: http.StatusNoContent,
 			})
 			return
 		}
@@ -131,8 +129,7 @@ func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, 
 			return
 		}
 		responder.Object(http.StatusOK, &v1.Status{
-			Code:    http.StatusOK,
-			Message: "updated",
+			Code: http.StatusOK,
 		})
 	}), nil
 }
