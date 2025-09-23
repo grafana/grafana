@@ -9,6 +9,13 @@ import { mockFolderDTO } from '../fixtures/folder.fixture';
 
 import CreateNewButton from './CreateNewButton';
 
+jest.mock('app/features/provisioning/hooks/useIsProvisionedInstance', () => ({
+  useIsProvisionedInstance: jest.fn(),
+}));
+
+import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+const mockUseIsProvisionedInstance = useIsProvisionedInstance as jest.MockedFunction<typeof useIsProvisionedInstance>;
+
 const mockParentFolder = mockFolderDTO();
 
 function render(...[ui, options]: Parameters<typeof rtlRender>) {
@@ -22,6 +29,9 @@ async function renderAndOpen(folder?: FolderDTO) {
 }
 
 describe('NewActionsButton', () => {
+  beforeEach(() => {
+    mockUseIsProvisionedInstance.mockReturnValue(false);
+  });
   it('should display the correct urls with a given parent folder', async () => {
     await renderAndOpen(mockParentFolder);
 
@@ -93,5 +103,25 @@ describe('NewActionsButton', () => {
     expect(screen.getByRole('link', { name: 'New dashboard' })).toBeInTheDocument();
     expect(screen.getByText('New folder')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Import' })).toBeInTheDocument();
+  });
+
+  it('should hide Import button when entire instance is provisioned', async () => {
+    mockUseIsProvisionedInstance.mockReturnValue(true);
+    const regularFolder = mockFolderDTO(1, { managedBy: undefined });
+    await renderAndOpen(regularFolder);
+
+    expect(screen.getByRole('link', { name: 'New dashboard' })).toBeInTheDocument();
+    expect(screen.getByText('New folder')).toBeInTheDocument();
+    expect(screen.queryByText('Import')).not.toBeInTheDocument();
+  });
+
+  it('should hide Import button when both instance and folder are provisioned', async () => {
+    mockUseIsProvisionedInstance.mockReturnValue(true);
+    const provisionedFolder = mockFolderDTO(1, { managedBy: ManagerKind.Repo });
+    await renderAndOpen(provisionedFolder);
+
+    expect(screen.getByRole('link', { name: 'New dashboard' })).toBeInTheDocument();
+    expect(screen.getByText('New folder')).toBeInTheDocument();
+    expect(screen.queryByText('Import')).not.toBeInTheDocument();
   });
 });
