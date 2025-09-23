@@ -104,11 +104,14 @@ func TestIntegrationFolderTree(t *testing.T) {
 						└── top (view)
 						....└── middle (view)
 						........└── child (view)`},
-						{User: helper.Org1.None, Listing: ``}, // nothing
+						{User: helper.Org1.None, Listing: ``, // nothing
+							E403: []string{"top", "middle", "child"},
+						},
 					},
 				},
 			}
 
+			var statusCode int
 			for _, tt := range tests {
 				t.Run(tt.Name, func(t *testing.T) {
 					tt.Definition.RequireUniqueName(t, make(map[string]bool))
@@ -117,19 +120,52 @@ func TestIntegrationFolderTree(t *testing.T) {
 					// CreateWithLegacyAPI
 
 					for _, expect := range tt.Expected {
-						user := expect.User
-						t.Run(fmt.Sprintf("query as %s", user.Identity.GetLogin()), func(t *testing.T) {
-							legacy := getFoldersFromLegacyAPISearch(t, user)
+						unstructured, client := getFolderClients(t, expect.User)
+						t.Run(fmt.Sprintf("query as %s", expect.User.Identity.GetLogin()), func(t *testing.T) {
+							legacy := getFoldersFromLegacyAPISearch(t, client)
 							legacy.requireEqual(t, expect.Listing, "legacy")
 
-							listed := getFoldersFromAPIServerList(t, user)
+							listed := getFoldersFromAPIServerList(t, unstructured)
 							listed.requireEqual(t, expect.Listing, "listed")
 
-							search := getFoldersFromDashboardV0Search(t, user)
+							search := getFoldersFromDashboardV0Search(t, client, expect.User.Identity.GetNamespace())
 							search.requireEqual(t, expect.Listing, "search")
 
 							// ensure sure GET also works on each folder we can list
-							requireGettable(t, user, listed)
+							listed.forEach(func(fv *FolderView) {
+								found, err := unstructured.Get(context.Background(), fv.Name, v1.GetOptions{})
+								require.NoErrorf(t, err, "getting folder: %s", fv.Name)
+								require.Equal(t, found.GetName(), fv.Name)
+							})
+
+							// Forbidden things should really be hidden
+							for _, name := range expect.E403 {
+								_, err := unstructured.Get(context.Background(), name, v1.GetOptions{})
+								require.Error(t, err)
+								require.Truef(t, apierrors.IsForbidden(err), "error: %w", err) // 404 vs 403 ????
+
+								result := client.Get().AbsPath("api", "folders", name).
+									Do(context.Background()).
+									StatusCode(&statusCode)
+								require.Equal(t, int(http.StatusForbidden), statusCode)
+								require.Error(t, result.Error())
+
+								// Verify sub-resources are hidden
+								for _, sub := range []string{"access", "parents", "children", "counts"} {
+									_, err := unstructured.Get(context.Background(), name, v1.GetOptions{}, sub)
+									require.Error(t, err, "expect error for subresource", sub)
+									require.Truef(t, apierrors.IsForbidden(err), "error: %w", err) // 404 vs 403 ????
+								}
+
+								// Verify legacy API access is also hidden
+								for _, sub := range []string{"permissions", "counts"} {
+									result := client.Get().AbsPath("api", "folders", name, sub).
+										Do(context.Background()).
+										StatusCode(&statusCode)
+									require.Equal(t, int(http.StatusForbidden), statusCode)
+									require.Error(t, result.Error())
+								}
+							}
 						})
 					}
 				})
@@ -141,6 +177,7 @@ func TestIntegrationFolderTree(t *testing.T) {
 type ExpectedTree struct {
 	User    apis.User
 	Listing string
+	E403    []string
 }
 
 type FolderDefinition struct {
@@ -326,12 +363,7 @@ func (n *FolderView) build(tree treeprint.Tree) treeprint.Tree {
 	return tree
 }
 
-func getFoldersFromLegacyAPISearch(t *testing.T, who apis.User) *FolderView {
-	cfg := dynamic.ConfigFor(who.NewRestConfig())
-	cfg.GroupVersion = &schema.GroupVersion{Group: "folder.grafana.app", Version: "v1beta1"} // group does not matter
-	client, err := rest.RESTClientFor(cfg)
-	require.NoError(t, err)
-
+func getFoldersFromLegacyAPISearch(t *testing.T, client *rest.RESTClient) *FolderView {
 	var statusCode int
 	result := client.Get().AbsPath("api", "search").
 		Param("type", "dash-folder").
@@ -386,18 +418,13 @@ func makeRoot(t *testing.T, lookup map[string]*FolderView, name string) *FolderV
 	return root
 }
 
-func getFoldersFromDashboardV0Search(t *testing.T, who apis.User) *FolderView {
-	cfg := dynamic.ConfigFor(who.NewRestConfig())
-	cfg.GroupVersion = &schema.GroupVersion{Group: "dashboard.grafana.app", Version: "v0alpha1"} // group does not matter
-	client, err := rest.RESTClientFor(cfg)
-	require.NoError(t, err)
-
+func getFoldersFromDashboardV0Search(t *testing.T, client *rest.RESTClient, ns string) *FolderView {
 	var statusCode int
-	result := client.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", who.Identity.GetNamespace(), "search").
+	result := client.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
 		Param("limit", "1000").
 		Do(context.Background()).
 		StatusCode(&statusCode)
-	err = result.Error()
+	err := result.Error()
 	if err != nil {
 		if apierrors.IsForbidden(err) {
 			return &FolderView{} // empty list
@@ -421,7 +448,7 @@ func getFoldersFromDashboardV0Search(t *testing.T, who apis.User) *FolderView {
 		}
 
 		result = client.Get().AbsPath("apis", folderV1.APIGroup,
-			folderV1.APIVersion, "namespaces", who.Identity.GetNamespace(), "folders", hit.Name, "access").
+			folderV1.APIVersion, "namespaces", ns, "folders", hit.Name, "access").
 			Do(context.Background()).
 			StatusCode(&statusCode)
 		require.NoError(t, result.Error(), "getting folder access info (/access)")
@@ -438,15 +465,21 @@ func getFoldersFromDashboardV0Search(t *testing.T, who apis.User) *FolderView {
 	return makeRoot(t, lookup, "dashboards/search")
 }
 
-func getFoldersFromAPIServerList(t *testing.T, who apis.User) *FolderView {
-	gvr := schema.GroupVersionResource{Group: "folder.grafana.app", Version: "v1beta1", Resource: "folders"}
-
+func getFolderClients(t *testing.T, who apis.User) (dynamic.ResourceInterface, *rest.RESTClient) {
+	gvr := schema.GroupVersionResource{Group: folderV1.APIGroup, Version: folderV1.APIVersion, Resource: "folders"}
 	ns := who.Identity.GetNamespace()
 	cfg := dynamic.ConfigFor(who.NewRestConfig())
 	dyn, err := dynamic.NewForConfig(cfg)
 	require.NoError(t, err)
-	client := dyn.Resource(gvr).Namespace(ns)
+	dc := dyn.Resource(gvr).Namespace(ns)
 
+	cfg.GroupVersion = &schema.GroupVersion{Group: gvr.Group, Version: gvr.Version}
+	client, err := rest.RESTClientFor(cfg)
+	require.NoError(t, err)
+	return dc, client
+}
+
+func getFoldersFromAPIServerList(t *testing.T, client dynamic.ResourceInterface) *FolderView {
 	lookup := map[string]*FolderView{}
 	continueToken := ""
 	for {
@@ -486,22 +519,6 @@ func getFoldersFromAPIServerList(t *testing.T, who apis.User) *FolderView {
 	}
 
 	return makeRoot(t, lookup, "folders/list")
-}
-
-func requireGettable(t *testing.T, who apis.User, root *FolderView) {
-	gvr := schema.GroupVersionResource{Group: "folder.grafana.app", Version: "v1beta1", Resource: "folders"}
-
-	ns := who.Identity.GetNamespace()
-	cfg := dynamic.ConfigFor(who.NewRestConfig())
-	dyn, err := dynamic.NewForConfig(cfg)
-	require.NoError(t, err)
-	client := dyn.Resource(gvr).Namespace(ns)
-
-	root.forEach(func(fv *FolderView) {
-		found, err := client.Get(context.Background(), fv.Name, v1.GetOptions{})
-		require.NoErrorf(t, err, "getting folder: %s", fv.Name)
-		require.Equal(t, found.GetName(), fv.Name)
-	})
 }
 
 func dotify(t treeprint.Tree) string {

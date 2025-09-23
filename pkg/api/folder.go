@@ -22,28 +22,25 @@ import (
 
 const REDACTED = "redacted"
 
-func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authorize func(accesscontrol.Evaluator) web.Handler) {
-	// #TODO add back auth part
+func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister) {
 	apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
-		idScope := dashboards.ScopeFoldersProvider.GetResourceScope(accesscontrol.Parameter(":id"))
-		uidScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
-		folderRoute.Get("/id/:id", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, idScope)), routing.Wrap(hs.GetFolderByID))
+		folderRoute.Get("/id/:id", routing.Wrap(hs.GetFolderByID))
 
 		folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
 			folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
-				folderPermissionRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsRead, uidScope)), routing.Wrap(hs.GetFolderPermissionList))
-				folderPermissionRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsWrite, uidScope)), routing.Wrap(hs.UpdateFolderPermissions))
+				folderPermissionRoute.Get("/", routing.Wrap(hs.GetFolderPermissionList))
+				folderPermissionRoute.Post("/", routing.Wrap(hs.UpdateFolderPermissions))
 			})
 		})
 
-		folderRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
-		folderRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
+		folderRoute.Post("/", routing.Wrap(hs.CreateFolder))
+		folderRoute.Get("/", routing.Wrap(hs.GetFolders))
 		folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
-			folderUidRoute.Put("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.UpdateFolder))
-			folderUidRoute.Delete("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, uidScope)), routing.Wrap(hs.DeleteFolder))
-			folderUidRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderByUID))
-			folderUidRoute.Get("/counts", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderDescendantCounts))
-			folderUidRoute.Post("/move", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
+			folderUidRoute.Put("/", routing.Wrap(hs.UpdateFolder))
+			folderUidRoute.Delete("/", routing.Wrap(hs.DeleteFolder))
+			folderUidRoute.Get("/", routing.Wrap(hs.GetFolderByUID))
+			folderUidRoute.Get("/counts", routing.Wrap(hs.GetFolderDescendantCounts))
+			folderUidRoute.Post("/move", routing.Wrap(hs.MoveFolder))
 		})
 	})
 }
