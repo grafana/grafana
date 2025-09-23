@@ -7,6 +7,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	mock "github.com/stretchr/testify/mock"
@@ -65,7 +66,7 @@ func TestSyncer_Sync(t *testing.T) {
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
 
 				progress.On("SetMessage", mock.Anything, "full sync").Return()
-				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything).Return(nil)
+				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedMessages: []string{"full sync"},
 		},
@@ -87,7 +88,7 @@ func TestSyncer_Sync(t *testing.T) {
 				})
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
 				progress.On("SetMessage", mock.Anything, "incremental sync").Return()
-				incrementalSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, "old-ref", "new-ref", mock.Anything, mock.Anything).Return(nil)
+				incrementalSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, "old-ref", "new-ref", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedRef:      "new-ref",
 			expectedMessages: []string{"incremental sync"},
@@ -130,7 +131,7 @@ func TestSyncer_Sync(t *testing.T) {
 				})
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
 				progress.On("SetMessage", mock.Anything, "incremental sync").Return()
-				incrementalSyncFn.On("Execute", mock.Anything, mock.Anything, "old-ref", "new-ref", mock.Anything, mock.Anything).Return(fmt.Errorf("incremental sync failed"))
+				incrementalSyncFn.On("Execute", mock.Anything, mock.Anything, "old-ref", "new-ref", mock.Anything, mock.Anything, mock.Anything).Return(fmt.Errorf("incremental sync failed"))
 			},
 			expectedRef:      "new-ref",
 			expectedMessages: []string{"incremental sync"},
@@ -158,6 +159,7 @@ func TestSyncer_Sync(t *testing.T) {
 				compareFn.Execute,
 				fullSyncFn.Execute,
 				incrementalSyncFn.Execute,
+				tracing.NewNoopTracerService(),
 			)
 
 			ref, err := syncer.Sync(context.Background(), repo, tt.options, repoResources, clients, progress)
