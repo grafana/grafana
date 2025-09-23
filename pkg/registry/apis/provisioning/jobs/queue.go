@@ -11,7 +11,7 @@ import (
 //
 //go:generate mockery --name RepoGetter --structname MockRepoGetter --inpackage --filename repo_getter_mock.go --with-expecter
 type RepoGetter interface {
-	GetRepository(ctx context.Context, name string) (repository.Repository, error)
+	GetRepository(ctx context.Context, namespace, name string) (repository.Repository, error)
 }
 
 // JobProgressRecorder is a function that can be called to record the progress of a job

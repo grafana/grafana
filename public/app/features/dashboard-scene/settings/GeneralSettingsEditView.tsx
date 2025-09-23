@@ -19,11 +19,11 @@ import {
   WeekStart,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import { GenAIDashDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIDashDescriptionButton';
 import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/GenAIDashTitleButton';
 import { MoveProvisionedDashboardDrawer } from 'app/features/provisioning/components/Dashboards/MoveProvisionedDashboardDrawer';
+import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 
 import { updateNavModel } from '../pages/utils';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -286,9 +286,11 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
             <TagsInput id="tags-input" tags={tags} onChange={model.onTagsChange} width={40} />
           </Field>
           <Field noMargin label={t('dashboard-settings.general.folder-label', 'Folder')}>
-            <FolderPicker
+            <ProvisioningAwareFolderPicker
               value={meta.folderUid}
               onChange={dashboard.isManagedRepository() ? model.onProvisionedFolderChange : model.onFolderChange}
+              repositoryName={dashboard.getManagerIdentity()}
+              excludeUIDs={meta?.folderUid ? [meta.folderUid] : undefined}
             />
           </Field>
 

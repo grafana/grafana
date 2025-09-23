@@ -91,6 +91,10 @@ const (
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
 
+	// FlagStarsFromAPIServer
+	// populate star status from apiserver
+	FlagStarsFromAPIServer = "starsFromAPIServer"
+
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
 	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
@@ -183,6 +187,10 @@ const (
 	// Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
 
+	// FlagQueryCacheRequestDeduplication
+	// Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
+	FlagQueryCacheRequestDeduplication = "queryCacheRequestDeduplication"
+
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
 	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
@@ -244,8 +252,20 @@ const (
 	FlagKubernetesDashboards = "kubernetesDashboards"
 
 	// FlagKubernetesShortURLs
-	// Routes short url requests from /api to the /apis endpoint
+	// Enables k8s short url api and uses it under the hood when handling legacy /api
 	FlagKubernetesShortURLs = "kubernetesShortURLs"
+
+	// FlagUseKubernetesShortURLsAPI
+	// Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
+	FlagUseKubernetesShortURLsAPI = "useKubernetesShortURLsAPI"
+
+	// FlagKubernetesAlertingRules
+	// Adds support for Kubernetes alerting and recording rules
+	FlagKubernetesAlertingRules = "kubernetesAlertingRules"
+
+	// FlagKubernetesCorrelations
+	// Adds support for Kubernetes correlations
+	FlagKubernetesCorrelations = "kubernetesCorrelations"
 
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
@@ -331,6 +351,10 @@ const (
 	// Enables experimental new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
+	// FlagDashboardUndoRedo
+	// Enables undo/redo in dynamic dashboards
+	FlagDashboardUndoRedo = "dashboardUndoRedo"
+
 	// FlagPanelFilterVariable
 	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
 	FlagPanelFilterVariable = "panelFilterVariable"
@@ -390,6 +414,10 @@ const (
 	// FlagSecretsManagementAppPlatform
 	// Enable the secrets management API and services under app platform
 	FlagSecretsManagementAppPlatform = "secretsManagementAppPlatform"
+
+	// FlagSecretsManagementAppPlatformUI
+	// Enable the secrets management app platform UI
+	FlagSecretsManagementAppPlatformUI = "secretsManagementAppPlatformUI"
 
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
@@ -483,10 +511,6 @@ const (
 	// Sets the logs table as default visualisation in logs explore
 	FlagLogsExploreTableDefaultVisualization = "logsExploreTableDefaultVisualization"
 
-	// FlagNewDashboardSharingComponent
-	// Enables the new sharing drawer design
-	FlagNewDashboardSharingComponent = "newDashboardSharingComponent"
-
 	// FlagAlertingListViewV2
 	// Enables the new alert list view design
 	FlagAlertingListViewV2 = "alertingListViewV2"
@@ -554,6 +578,10 @@ const (
 	// FlagNewFiltersUI
 	// Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
 	FlagNewFiltersUI = "newFiltersUI"
+
+	// FlagVizActionsAuth
+	// Allows authenticated API calls in actions
+	FlagVizActionsAuth = "vizActionsAuth"
 
 	// FlagAlertingPrometheusRulesPrimary
 	// Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
@@ -683,6 +711,10 @@ const (
 	// Enable enrichment per rule in the alerting UI.
 	FlagAlertingEnrichmentPerRule = "alertingEnrichmentPerRule"
 
+	// FlagAlertingEnrichmentAssistantInvestigations
+	// Enable Assistant Investigations enrichment type.
+	FlagAlertingEnrichmentAssistantInvestigations = "alertingEnrichmentAssistantInvestigations"
+
 	// FlagAlertingAIAnalyzeCentralStateHistory
 	// Enable AI-analyze central state history.
 	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"
@@ -700,7 +732,7 @@ const (
 	FlagUnifiedStorageSearchUI = "unifiedStorageSearchUI"
 
 	// FlagElasticsearchCrossClusterSearch
-	// Enables cross cluster search in the Elasticsearch datasource
+	// Enables cross cluster search in the Elasticsearch data source
 	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
 
 	// FlagUnifiedHistory
@@ -867,10 +899,6 @@ const (
 	// Enables auto-updating of users installed plugins
 	FlagPluginsAutoUpdate = "pluginsAutoUpdate"
 
-	// FlagMultiTenantFrontend
-	// Register MT frontend
-	FlagMultiTenantFrontend = "multiTenantFrontend"
-
 	// FlagAlertingListViewV2PreviewToggle
 	// Enables the alerting list view v2 preview toggle
 	FlagAlertingListViewV2PreviewToggle = "alertingListViewV2PreviewToggle"
@@ -906,6 +934,14 @@ const (
 	// FlagAlertEnrichment
 	// Enable configuration of alert enrichments in Grafana Cloud.
 	FlagAlertEnrichment = "alertEnrichment"
+
+	// FlagAlertEnrichmentMultiStep
+	// Allow multiple steps per enrichment.
+	FlagAlertEnrichmentMultiStep = "alertEnrichmentMultiStep"
+
+	// FlagAlertEnrichmentConditional
+	// Enable conditional alert enrichment steps.
+	FlagAlertEnrichmentConditional = "alertEnrichmentConditional"
 
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
@@ -991,10 +1027,6 @@ const (
 	// Enables new design for the Clickhouse data source configuration page
 	FlagNewClickhouseConfigPageDesign = "newClickhouseConfigPageDesign"
 
-	// FlagUnifiedStorageSearchAfterWriteExperimentalAPI
-	// Enable experimental search-after-write guarantees to unified-storage search endpoints
-	FlagUnifiedStorageSearchAfterWriteExperimentalAPI = "unifiedStorageSearchAfterWriteExperimentalAPI"
-
 	// FlagTeamFolders
 	// Enables team folders functionality
 	FlagTeamFolders = "teamFolders"
@@ -1010,4 +1042,24 @@ const (
 	// FlagAzureResourcePickerUpdates
 	// Enables the updated Azure Monitor resource picker
 	FlagAzureResourcePickerUpdates = "azureResourcePickerUpdates"
+
+	// FlagPrometheusTypeMigration
+	// Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
+	FlagPrometheusTypeMigration = "prometheusTypeMigration"
+
+	// FlagDskitBackgroundServices
+	// Enables dskit background service wrapper
+	FlagDskitBackgroundServices = "dskitBackgroundServices"
+
+	// FlagPluginContainers
+	// Enables running plugins in containers
+	FlagPluginContainers = "pluginContainers"
+
+	// FlagTempoSearchBackendMigration
+	// Run search queries through the tempo backend
+	FlagTempoSearchBackendMigration = "tempoSearchBackendMigration"
+
+	// FlagFilterOutBotsFromFrontendLogs
+	// Filter out bots from collecting data for Frontend Observability
+	FlagFilterOutBotsFromFrontendLogs = "filterOutBotsFromFrontendLogs"
 )

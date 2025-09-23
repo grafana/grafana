@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // this tests the /api path still, but behind the scenes is using search to get the library connections
@@ -22,9 +23,8 @@ import (
 //
 // it also ensures we create the connection in modes 0-2 if a dashboard v1 is created with a reference
 func TestIntegrationLibraryPanelConnections(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
@@ -87,9 +87,8 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 // this tests the /apis path to ensure authorization is being enforced. /api integration tests are within the service package
 // only works in modes 0-2 because the library element is created through the /api path
 func TestIntegrationLibraryElementPermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {

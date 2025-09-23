@@ -25,11 +25,11 @@ func (o OwnerReference) AsName() string {
 	if o.Name == "" || o.Owner == NamespaceResourceOwner {
 		return string(o.Owner)
 	}
-	return string(o.Owner) + ":" + o.Name
+	return string(o.Owner) + "-" + o.Name
 }
 
 func ParseOwnerFromName(name string) (OwnerReference, bool) {
-	before, after, found := strings.Cut(name, ":")
+	before, after, found := strings.Cut(name, "-")
 	if found && len(after) > 0 {
 		switch before {
 		case "user":

@@ -273,6 +273,14 @@ var (
 				Action: ActionSettingsWrite,
 				Scope:  ScopeSettingsOAuth("ldap"),
 			},
+			{
+				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsSCIM,
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  ScopeSettingsSCIM,
+			},
 		},
 	}
 

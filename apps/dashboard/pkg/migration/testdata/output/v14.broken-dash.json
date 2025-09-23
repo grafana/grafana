@@ -3886,7 +3886,7 @@
     }
   ],
   "refresh": "1m",
-  "schemaVersion": 41,
+  "schemaVersion": 42,
   "style": "dark",
   "tags": [
     "example-service",

@@ -1,6 +1,7 @@
 package schemaversion
 
 import (
+	"context"
 	"strconv"
 )
 
@@ -64,7 +65,7 @@ import (
 //             },
 //             "transformations": [],
 //             "targets": [{ "refId": "A" }],
-//             "pluginVersion": "1.0.0"
+//             "pluginVersion": "{current_grafana_version}"
 //         }
 //     ]
 // }
@@ -180,26 +181,12 @@ import (
 //                 }
 //             ],
 //             "targets": [{ "refId": "A" }],
-//             "pluginVersion": "1.0.0"
+//             "pluginVersion": "{current_grafana_version}"
 //         }
 //     ]
 // }
 
-type v24Migrator struct {
-	panelProvider PanelPluginInfoProvider
-	panelPlugins  []PanelPluginInfo
-}
-
-func V24(panelProvider PanelPluginInfoProvider) SchemaVersionMigrationFunc {
-	migrator := &v24Migrator{
-		panelProvider: panelProvider,
-		panelPlugins:  panelProvider.GetPanels(),
-	}
-
-	return migrator.migrate
-}
-
-func (m *v24Migrator) migrate(dashboard map[string]interface{}) error {
+func V24(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 24
 
 	panels, ok := dashboard["panels"].([]interface{})
@@ -224,12 +211,8 @@ func (m *v24Migrator) migrate(dashboard map[string]interface{}) error {
 			continue
 		}
 
-		// Find if the panel plugin exists
-		tablePanelPlugin := m.panelProvider.GetPanelPlugin("table")
-		if tablePanelPlugin.ID == "" {
-			return NewMigrationError("table panel plugin not found when migrating dashboard to schema version 24", 24, LATEST_VERSION, "V24")
-		}
-		panelMap["pluginVersion"] = tablePanelPlugin.Version
+		// The grafana version that matches the hardcoded autoMigrate plugins
+		panelMap["pluginVersion"] = pluginVersionForAutoMigrate
 		err := tablePanelChangedHandler(panelMap)
 		if err != nil {
 			return err
@@ -510,6 +493,9 @@ func migrateDefaults(prevDefaults map[string]interface{}) map[string]interface{}
 				"type": "auto",
 			},
 			"inspect": false,
+			"footer": map[string]interface{}{
+				"reducers": []interface{}{},
+			},
 		},
 		"mappings": []interface{}{},
 	}

@@ -4,7 +4,7 @@ import { createRef } from 'react';
 import { Provider } from 'react-redux';
 
 import { DataFrame, MutableDataFrame, TimeRange } from '@grafana/data';
-import { DataSourceSrv, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
+import { DataSourceSrv, setDataSourceSrv, setPluginLinksHook, setPluginComponentsHook } from '@grafana/runtime';
 
 import { configureStore } from '../../../store/configureStore';
 
@@ -50,6 +50,11 @@ describe('TraceView', () => {
     setPluginLinksHook(() => ({
       isLoading: false,
       links: [],
+    }));
+
+    setPluginComponentsHook(() => ({
+      isLoading: false,
+      components: [],
     }));
 
     setDataSourceSrv({

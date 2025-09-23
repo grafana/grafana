@@ -17,31 +17,31 @@ func TestLegacyAuthorizer(t *testing.T) {
 	}{
 		{
 			name:   "invalid",
-			input:  "xxx:yyy",
+			input:  "xxx-yyy",
 			output: utils.OwnerReference{},
 			found:  false,
 		},
 		{
 			name:   "with user",
-			input:  "user:a",
+			input:  "user-a",
 			output: utils.OwnerReference{Owner: utils.UserResourceOwner, Name: "a"},
 			found:  true,
 		},
 		{
 			name:   "missing user",
-			input:  "user:",
+			input:  "user-",
 			output: utils.OwnerReference{},
 			found:  false,
 		},
 		{
 			name:   "with team",
-			input:  "team:b",
+			input:  "team-b",
 			output: utils.OwnerReference{Owner: utils.TeamResourceOwner, Name: "b"},
 			found:  true,
 		},
 		{
 			name:   "missing team",
-			input:  "team:",
+			input:  "team-",
 			output: utils.OwnerReference{},
 			found:  false,
 		},

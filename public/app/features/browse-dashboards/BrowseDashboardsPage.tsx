@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { LinkButton, FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
-import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
 import { useDispatch } from 'app/types/store';
@@ -21,7 +21,6 @@ import { useGetResourceRepositoryView } from '../provisioning/hooks/useGetResour
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
-import { useSaveFolderMutation } from './api/browseDashboardsAPI';
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
@@ -73,7 +72,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   }, [isSearching, searchState.result, stateManager]);
 
   const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
-  const [saveFolder] = useSaveFolderMutation();
+  const [saveFolder] = useUpdateFolder();
   const navModel = useMemo(() => {
     if (!folderDTO) {
       return undefined;

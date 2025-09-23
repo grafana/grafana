@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -101,6 +101,7 @@ func convertToK8sResource(
 			rules = append(rules, rule.UID)
 		}
 		r.SetInUse(metadata.InUseByRoutes, rules)
+		r.SetCanUse(metadata.CanUse)
 	}
 	r.UID = gapiutil.CalculateClusterWideUID(r)
 	return r, nil
@@ -120,6 +121,7 @@ func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[str
 		Integrations: make([]*ngmodels.Integration, 0, len(receiver.Spec.Integrations)),
 		Version:      receiver.ResourceVersion,
 		Provenance:   ngmodels.ProvenanceNone,
+		Origin:       ngmodels.ResourceOriginGrafana, // Set to Grafana by default.
 	}
 	storedSecureFields := make(map[string][]string, len(receiver.Spec.Integrations))
 	for _, integration := range receiver.Spec.Integrations {

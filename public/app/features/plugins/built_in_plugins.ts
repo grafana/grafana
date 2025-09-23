@@ -1,5 +1,3 @@
-const graphitePlugin = async () =>
-  await import(/* webpackChunkName: "graphitePlugin" */ 'app/plugins/datasource/graphite/module');
 const cloudwatchPlugin = async () =>
   await import(/* webpackChunkName: "cloudwatchPlugin" */ 'app/plugins/datasource/cloudwatch/module');
 const dashboardDSPlugin = async () =>
@@ -44,8 +42,6 @@ const histogramPanel = async () =>
   await import(/* webpackChunkName: "histogramPanel" */ 'app/plugins/panel/histogram/module');
 const livePanel = async () => await import(/* webpackChunkName: "livePanel" */ 'app/plugins/panel/live/module');
 const logsPanel = async () => await import(/* webpackChunkName: "logsPanel" */ 'app/plugins/panel/logs/module');
-const newLogsPanel = async () =>
-  await import(/* webpackChunkName: "newLogsPanel" */ 'app/plugins/panel/logs-new/module');
 const newsPanel = async () => await import(/* webpackChunkName: "newsPanel" */ 'app/plugins/panel/news/module');
 const pieChartPanel = async () =>
   await import(/* webpackChunkName: "pieChartPanel" */ 'app/plugins/panel/piechart/module');
@@ -74,7 +70,6 @@ const nodeGraph = async () =>
 
 const builtInPlugins: Record<string, System.Module | (() => Promise<System.Module>)> = {
   // datasources
-  'core:plugin/graphite': graphitePlugin,
   'core:plugin/cloudwatch': cloudwatchPlugin,
   'core:plugin/dashboard': dashboardDSPlugin,
   'core:plugin/elasticsearch': elasticsearchPlugin,
@@ -111,7 +106,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/bargauge': barGaugePanel,
   'core:plugin/barchart': barChartPanel,
   'core:plugin/logs': logsPanel,
-  'core:plugin/logs-new': newLogsPanel,
   'core:plugin/traces': tracesPanel,
   'core:plugin/welcome': welcomeBanner,
   'core:plugin/nodeGraph': nodeGraph,

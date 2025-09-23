@@ -227,16 +227,26 @@
       "select-resource": "리소스 선택"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "적용",
       "button-cancel": "취소",
       "header-location": "위치",
+      "header-resource-group": "",
       "header-scope": "적용 범위",
       "header-type": "유형",
       "heading-selection": "선택",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "처음 {{numResults}}건의 결과 표시 중",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "로딩 중...",
+      "text-no-recent-resources": "",
       "text-no-resources": "리소스를 찾을 수 없음",
-      "title-error-occurred": "Azure Monitor에서 리소스를 요청하는 동안 오류가 발생했습니다."
+      "title-error-occurred": "Azure Monitor에서 리소스를 요청하는 동안 오류가 발생했습니다.",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "범위"

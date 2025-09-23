@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestReceiver_Clone(t *testing.T) {
@@ -45,7 +46,7 @@ func TestReceiver_EncryptDecrypt(t *testing.T) {
 			decrypedIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
 
 			encrypted := decrypedIntegration.Clone()
-			secrets, err := channels_config.GetSecretKeysForContactPointType(integrationType)
+			secrets, err := channels_config.GetSecretKeysForContactPointType(integrationType, channels_config.V1)
 			assert.NoError(t, err)
 			for _, key := range secrets {
 				val, ok, err := extractField(encrypted.Settings, NewIntegrationFieldPath(key))
@@ -70,9 +71,8 @@ func TestReceiver_EncryptDecrypt(t *testing.T) {
 }
 
 func TestIntegration_Redact(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	redactFn := func(key string) string {
 		return "TESTREDACTED"
 	}
@@ -82,7 +82,7 @@ func TestIntegration_Redact(t *testing.T) {
 			validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
 
 			expected := validIntegration.Clone()
-			secrets, err := channels_config.GetSecretKeysForContactPointType(integrationType)
+			secrets, err := channels_config.GetSecretKeysForContactPointType(integrationType, channels_config.V1)
 			assert.NoError(t, err)
 			for _, key := range secrets {
 				err := setField(expected.Settings, NewIntegrationFieldPath(key), func(current any) any {
@@ -103,11 +103,9 @@ func TestIntegration_Redact(t *testing.T) {
 }
 
 func TestIntegration_Validate(t *testing.T) {
-	// Test that all known integration types are valid.
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
+	// Test that all known integration types are valid.
 	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
 		t.Run(integrationType, func(t *testing.T) {
 			validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
@@ -122,11 +120,9 @@ func TestIntegration_Validate(t *testing.T) {
 }
 
 func TestIntegration_WithExistingSecureFields(t *testing.T) {
-	// Test that WithExistingSecureFields will copy over the secure fields from the existing integration.
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
+	// Test that WithExistingSecureFields will copy over the secure fields from the existing integration.
 	testCases := []struct {
 		name         string
 		integration  Integration
@@ -251,12 +247,12 @@ func TestSecretsIntegrationConfig(t *testing.T) {
 			assert.NoError(t, err)
 
 			t.Run("v1 is current", func(t *testing.T) {
-				configv1, err := IntegrationConfigFromType(integrationType, util.Pointer("v1"))
+				configv1, err := IntegrationConfigFromType(integrationType, util.Pointer(string(channels_config.V1)))
 				assert.NoError(t, err)
 				assert.Equal(t, config, configv1)
 			})
 
-			secrets, err := channels_config.GetSecretKeysForContactPointType(integrationType)
+			secrets, err := channels_config.GetSecretKeysForContactPointType(integrationType, channels_config.V1)
 			assert.NoError(t, err)
 			allSecrets := make(map[string]struct{}, len(secrets))
 			for _, key := range secrets {
@@ -290,11 +286,9 @@ func TestSecretsIntegrationConfig(t *testing.T) {
 }
 
 func TestIntegration_SecureFields(t *testing.T) {
-	// Test that all known integration types have a config and correctly mark their secrets as secure.
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
+	// Test that all known integration types have a config and correctly mark their secrets as secure.
 	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
 		t.Run(integrationType, func(t *testing.T) {
 			t.Run("contains SecureSettings", func(t *testing.T) {
@@ -384,6 +378,7 @@ func TestReceiver_Fingerprint(t *testing.T) {
 		fingerprint := baseReceiver.Fingerprint()
 		excludedFields := map[string]struct{}{
 			"Version": {},
+			"Origin":  {},
 		}
 
 		reflectVal := reflect.ValueOf(&completelyDifferentReceiver).Elem()

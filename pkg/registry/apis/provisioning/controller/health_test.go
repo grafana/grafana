@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,13 +17,11 @@ import (
 )
 
 func TestNewHealthChecker(t *testing.T) {
-	mockTester := mocks.NewRepositoryTester(t)
 	mockPatcher := mocks.NewStatusPatcher(t)
 
-	hc := NewHealthChecker(mockTester, mockPatcher)
+	hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry())
 
 	assert.NotNil(t, hc)
-	assert.Equal(t, mockTester, hc.tester)
 	assert.Equal(t, mockPatcher, hc.statusPatcher)
 }
 
@@ -136,9 +135,8 @@ func TestShouldCheckHealth(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockTester := mocks.NewRepositoryTester(t)
 			mockPatcher := mocks.NewStatusPatcher(t)
-			hc := NewHealthChecker(mockTester, mockPatcher)
+			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry())
 
 			result := hc.ShouldCheckHealth(tt.repo)
 			assert.Equal(t, tt.expected, result)
@@ -224,9 +222,8 @@ func TestHasRecentFailure(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockTester := mocks.NewRepositoryTester(t)
 			mockPatcher := mocks.NewStatusPatcher(t)
-			hc := NewHealthChecker(mockTester, mockPatcher)
+			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry())
 
 			result := hc.HasRecentFailure(tt.healthStatus, tt.failureType)
 			assert.Equal(t, tt.expected, result)
@@ -267,9 +264,8 @@ func TestRecordFailure(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockTester := mocks.NewRepositoryTester(t)
 			mockPatcher := mocks.NewStatusPatcher(t)
-			hc := NewHealthChecker(mockTester, mockPatcher)
+			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry())
 
 			repo := &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
@@ -313,9 +309,8 @@ func TestRecordFailure(t *testing.T) {
 }
 
 func TestRecordFailureFunction(t *testing.T) {
-	mockTester := mocks.NewRepositoryTester(t)
 	mockPatcher := mocks.NewStatusPatcher(t)
-	hc := NewHealthChecker(mockTester, mockPatcher)
+	hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry())
 
 	testErr := errors.New("test error")
 	result := hc.recordFailure(provisioning.HealthFailureHook, testErr)
@@ -437,23 +432,22 @@ func TestRefreshHealth(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockTester := mocks.NewRepositoryTester(t)
 			mockPatcher := mocks.NewStatusPatcher(t)
 			mockRepo := &mockRepository{
 				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Title: "Test Repository",
+						Type:  provisioning.LocalRepositoryType,
+					},
 					Status: provisioning.RepositoryStatus{
 						Health: tt.existingStatus,
 					},
 				},
+				testResult: tt.testResult,
+				testError:  tt.testError,
 			}
 
-			hc := NewHealthChecker(mockTester, mockPatcher)
-
-			if tt.testError != nil {
-				mockTester.On("TestRepository", mock.Anything, mockRepo).Return(tt.testResult, tt.testError)
-			} else {
-				mockTester.On("TestRepository", mock.Anything, mockRepo).Return(tt.testResult, nil)
-			}
+			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry())
 
 			if tt.expectPatch {
 				if tt.patchError != nil {
@@ -484,8 +478,6 @@ func TestRefreshHealth(t *testing.T) {
 					assert.Equal(t, tt.testResult, testResult)
 				}
 			}
-
-			mockTester.AssertExpectations(t)
 			if tt.expectPatch {
 				mockPatcher.AssertExpectations(t)
 			}
@@ -564,9 +556,8 @@ func TestHasHealthStatusChanged(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockTester := mocks.NewRepositoryTester(t)
 			mockPatcher := mocks.NewStatusPatcher(t)
-			hc := NewHealthChecker(mockTester, mockPatcher)
+			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry())
 
 			result := hc.hasHealthStatusChanged(tt.old, tt.new)
 			assert.Equal(t, tt.expected, result)
@@ -576,7 +567,9 @@ func TestHasHealthStatusChanged(t *testing.T) {
 
 // mockRepository implements repository.Repository interface for testing
 type mockRepository struct {
-	config *provisioning.Repository
+	config     *provisioning.Repository
+	testResult *provisioning.TestResults
+	testError  error
 }
 
 func (m *mockRepository) Config() *provisioning.Repository {
@@ -588,5 +581,11 @@ func (m *mockRepository) Validate() field.ErrorList {
 }
 
 func (m *mockRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
-	return &provisioning.TestResults{Success: true}, nil
+	if m.testError != nil {
+		return m.testResult, m.testError
+	}
+	if m.testResult != nil {
+		return m.testResult, nil
+	}
+	return &provisioning.TestResults{Success: true, Code: 200}, nil
 }

@@ -1,6 +1,7 @@
 package schemaversion
 
 import (
+	"context"
 	"regexp"
 	"strings"
 )
@@ -36,7 +37,7 @@ import (
 //	    ]
 //	  }
 //	]
-func V19(dashboard map[string]interface{}) error {
+func V19(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 19
 
 	panels, ok := dashboard["panels"].([]interface{})

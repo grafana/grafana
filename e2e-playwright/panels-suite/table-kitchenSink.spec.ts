@@ -2,7 +2,7 @@ import { Page, Locator } from '@playwright/test';
 
 import { test, expect, E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { getCell, getCellHeight } from './table-utils';
+import { getCell, getCellHeight, getColumnIdx } from './table-utils';
 
 const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 
@@ -11,24 +11,6 @@ test.use({ viewport: { width: 2000, height: 1080 } });
 // helper utils
 const waitForTableLoad = async (loc: Page | Locator) => {
   await expect(loc.locator('.rdg')).toBeVisible();
-};
-
-const getColumnIdx = async (loc: Page | Locator, columnName: string) => {
-  // find the index of the column "Long text." The kitchen sink table will change over time, but
-  // we can just find the column programatically and use it throughout the test.
-  let result = -1;
-  const colCount = await loc.getByRole('columnheader').count();
-  for (let colIdx = 0; colIdx < colCount; colIdx++) {
-    const cell = await getCell(loc, 0, colIdx);
-    if ((await cell.textContent()) === columnName) {
-      result = colIdx;
-      break;
-    }
-  }
-  if (result === -1) {
-    throw new Error(`Could not find the "${columnName}" column in the table`);
-  }
-  return result;
 };
 
 const disableAllTextWrap = async (loc: Page | Locator, selectors: E2ESelectorGroups) => {
@@ -422,6 +404,50 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
     ).not.toBeVisible();
+  });
+
+  test('Styling overrides with styling from field', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+    ).toBeVisible();
+
+    await waitForTableLoad(page);
+
+    const infoColumnIdx = await getColumnIdx(page, 'Info');
+    const dataLinkColumnIdx = await getColumnIdx(page, 'Data Link');
+    const stateColumnHeader = page.getByRole('columnheader').nth(infoColumnIdx);
+
+    // filter to only "Up," which we have a style override on.
+    await stateColumnHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    const filterContainer = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Visualization.TableNG.Filters.Container
+    );
+
+    await expect(filterContainer).toBeVisible();
+
+    await filterContainer.getByTitle('up', { exact: true }).locator('label').click();
+    await filterContainer.getByRole('button', { name: 'Ok' }).click();
+
+    const cell = await getCell(page, 1, dataLinkColumnIdx);
+    await expect(cell).toBeVisible();
+    await expect(cell).toHaveCSS('text-decoration', /line-through/);
+
+    // now filter out "up," and confirm that the style override isn't present.
+    await stateColumnHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    await expect(filterContainer).toBeVisible();
+
+    // select all, then click the first value to unselect it, filtering it out.
+    await filterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
+    await filterContainer.getByTitle('up', { exact: true }).locator('label').click();
+    await filterContainer.getByRole('button', { name: 'Ok' }).click();
+
+    await expect(cell).toBeVisible();
+    await expect(cell).not.toHaveCSS('text-decoration', /line-through/);
   });
 
   test('Empty Table panel', async ({ gotoDashboardPage, selectors }) => {

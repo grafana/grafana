@@ -13,6 +13,7 @@
 - **Alerting:** Fix active time intervals when time interval is renamed [#108547](https://github.com/grafana/grafana/pull/108547), [@yuri-tceretian](https://github.com/yuri-tceretian)
 - **Alerting:** Fix subpath handling in the alerting package [#109505](https://github.com/grafana/grafana/pull/109505), [@konrad147](https://github.com/konrad147)
 - **Config:** Fix date_formats options being moved to a different section [#109366](https://github.com/grafana/grafana/pull/109366), [@joshhunt](https://github.com/joshhunt)
+- **Pyroscope:** Fix flamegraph totals showing incorrect values after rate aggregation changes [#110470](https://github.com/grafana/grafana/pull/110470), [@marcsanmiquel](https://github.com/marcsanmiquel)
 
 <!-- 12.1.1 END -->
 <!-- 12.0.4 START -->

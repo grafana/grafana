@@ -227,16 +227,26 @@
       "select-resource": "選取資源"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "套用",
       "button-cancel": "取消",
       "header-location": "位置",
+      "header-resource-group": "",
       "header-scope": "範圍",
       "header-type": "類型",
       "heading-selection": "選擇",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "顯示前 {{numResults}} 個結果",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "正在載入…",
+      "text-no-recent-resources": "",
       "text-no-resources": "沒有找到資源",
-      "title-error-occurred": "從 Azure Monitor 請求資源時發生錯誤"
+      "title-error-occurred": "從 Azure Monitor 請求資源時發生錯誤",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "範圍"
