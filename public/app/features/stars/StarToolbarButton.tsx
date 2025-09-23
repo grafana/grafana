@@ -50,6 +50,11 @@ export function StarToolbarButtonApiServer({ group, kind, id }: { group: string;
     }
   };
 
+  // Do not render the icon until data is loaded to make sure correct icon is displayed
+  if (stars.isLoading) {
+    return null;
+  }
+
   const tooltips = getStarTooltips();
 
   return (
