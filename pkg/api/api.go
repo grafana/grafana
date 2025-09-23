@@ -451,7 +451,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/datasources/uid/:uid/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealthWithUID))
 
 		// Folders
-		hs.registerFolderAPI(apiRoute)
+		hs.registerFolderAPI(apiRoute, authorize)
 
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
