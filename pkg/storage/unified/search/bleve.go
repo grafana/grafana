@@ -101,11 +101,8 @@ type bleveBackend struct {
 
 	indexMetrics *resource.BleveIndexMetrics
 
-	// if true will use ngram instead of edge_ngram for title indexes. See custom_analyzers.go
-	useFullNgram bool
-
-	bgTasksCancel func()
-	bgTasksWg     sync.WaitGroup
+	metricsUpdaterCancel func()
+	metricsUpdaterWg     sync.WaitGroup
 }
 
 func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
@@ -155,15 +152,13 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 		useFullNgram: opts.UseFullNgram,
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	be.bgTasksCancel = cancel
-
-	be.bgTasksWg.Add(1)
-	go be.evictExpiredOrUnownedIndexesPeriodically(ctx)
-
 	if be.indexMetrics != nil {
-		be.bgTasksWg.Add(1)
+		ctx, cancel := context.WithCancel(context.Background())
+		be.metricsUpdaterCancel = cancel
+		be.metricsUpdaterWg.Add(1)
 		go be.updateIndexSizeMetric(ctx, opts.Root)
+	} else {
+		be.metricsUpdaterCancel = func() { /* empty */ }
 	}
 
 	return be, nil
@@ -267,7 +262,7 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 
 // updateIndexSizeMetric sets the total size of all file-based indices metric.
 func (b *bleveBackend) updateIndexSizeMetric(ctx context.Context, indexPath string) {
-	defer b.bgTasksWg.Done()
+	defer b.metricsUpdaterWg.Done()
 
 	for ctx.Err() == nil {
 		var totalSize int64
@@ -719,8 +714,8 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, minBuildTi
 func (b *bleveBackend) Stop() {
 	b.closeAllIndexes()
 
-	b.bgTasksCancel()
-	b.bgTasksWg.Wait()
+	b.metricsUpdaterCancel()
+	b.metricsUpdaterWg.Wait()
 }
 
 func (b *bleveBackend) closeAllIndexes() {
