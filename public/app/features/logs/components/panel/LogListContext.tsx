@@ -28,7 +28,7 @@ import { config, getDataSourceSrv } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
-import { getDisplayedFieldsForLogs } from '../otel/formats';
+import { getDisplayedFieldsForLogs, isSupportedApp } from '../otel/formats';
 
 import { LogLineTimestampResolution } from './LogLine';
 import { LogLineDetailsMode } from './LogLineDetails';
@@ -291,14 +291,20 @@ export const LogListContextProvider = ({
 
   // OTel displayed fields
   useEffect(() => {
-    if (displayedFields.length > 0 || !config.featureToggles.otelLogsFormatting || !setDisplayedFields) {
+    if (
+      displayedFields.length > 0 ||
+      !config.featureToggles.otelLogsFormatting ||
+      !setDisplayedFields ||
+      isSupportedApp(app)
+    ) {
       return;
     }
     const otelDisplayedFields = getDisplayedFieldsForLogs(logs);
+    console.log(otelDisplayedFields);
     if (otelDisplayedFields.length) {
       setDisplayedFields(otelDisplayedFields);
     }
-  }, [displayedFields.length, logs, setDisplayedFields]);
+  }, [app, displayedFields.length, logs, setDisplayedFields]);
 
   // Sync state
   useEffect(() => {

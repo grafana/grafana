@@ -1,4 +1,4 @@
-import { LogRowModel } from '@grafana/data';
+import { CoreApp, LogRowModel } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogListModel } from '../panel/processing';
@@ -55,7 +55,13 @@ export function getDisplayFormatForLanguage(language: string) {
 }
 
 export function getDefaultOTelDisplayFormat() {
-  return ['thread_name', 'exception_type', 'exception_message', LOG_LINE_BODY_FIELD_NAME, LOG_LINE_ATTRIBUTES_FIELD_NAME];
+  return [
+    'thread_name',
+    'exception_type',
+    'exception_message',
+    LOG_LINE_BODY_FIELD_NAME,
+    LOG_LINE_ATTRIBUTES_FIELD_NAME,
+  ];
 }
 
 const OTEL_RESOURCE_ATTRS_REGEX =
@@ -70,7 +76,14 @@ export function getOtelAttributesField(log: LogListModel) {
     return log.raw;
   }
   const additionalFields = Object.keys(log.labels).filter(
-    (label) => !OTEL_RESOURCE_ATTRS_REGEX.test(label) && !OTEL_LOG_FIELDS_REGEX.test(label) && label !== LOG_LINE_ATTRIBUTES_FIELD_NAME,
+    (label) =>
+      !OTEL_RESOURCE_ATTRS_REGEX.test(label) &&
+      !OTEL_LOG_FIELDS_REGEX.test(label) &&
+      label !== LOG_LINE_ATTRIBUTES_FIELD_NAME
   );
   return additionalFields.map((field) => (log.labels[field] ? `${field}=${log.labels[field]}` : '')).join(' ');
+}
+
+export function isSupportedApp(app: CoreApp) {
+  return app !== CoreApp.Dashboard && app !== CoreApp.PanelEditor && app !== CoreApp.PanelViewer;
 }
