@@ -98,17 +98,6 @@ export function NestedFolderPicker({
   const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
 
-  // Map the permission string union to enum value for compatibility
-  const permissionLevel = useMemo<PermissionLevel>(() => {
-    if (permission === 'view') {
-      return 'view';
-    } else if (permission === 'edit') {
-      return 'edit';
-    }
-
-    throw new Error('Invalid permission');
-  }, [permission]);
-
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
     items: browseFlatTree,
@@ -117,7 +106,7 @@ export function NestedFolderPicker({
   } = useFoldersQuery({
     isBrowsing,
     openFolders: foldersOpenState,
-    permission: permissionLevel,
+    permission,
     rootFolderUID,
     rootFolderItem,
   });
@@ -131,7 +120,7 @@ export function NestedFolderPicker({
     const timestamp = Date.now();
     setIsFetchingSearchResults(true);
 
-    debouncedSearch(search, permissionLevel).then((queryResponse) => {
+    debouncedSearch(search, permission).then((queryResponse) => {
       // Only keep the results if it's was issued after the most recently resolved search.
       // This prevents results showing out of order if first request is slower than later ones.
       // We don't need to worry about clearing the isFetching state either - if there's a later
@@ -143,7 +132,7 @@ export function NestedFolderPicker({
         lastSearchTimestamp.current = timestamp;
       }
     });
-  }, [search, permissionLevel]);
+  }, [search, permission]);
 
   // the order of middleware is important!
   const middleware = [
