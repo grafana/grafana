@@ -25,6 +25,12 @@ const SINGLE_VERSION_OUTPUT_DIR = "testdata/output/single_version"
 const LATEST_VERSION_OUTPUT_DIR = "testdata/output/latest_version"
 const DEV_DASHBOARDS_INPUT_DIR = "../../../../devenv/dev-dashboards"
 const DEV_DASHBOARDS_OUTPUT_DIR = "testdata/dev-dashboards-output"
+const COMMUNITY_DASHBOARDS_INPUT_DIR = "testdata/input-community-dashboards"
+const COMMUNITY_DASHBOARDS_OUTPUT_DIR = "testdata/output-community-dashboards"
+const HISTORICAL_DEV_DASHBOARDS_INPUT_DIR = "testdata/input-historical-dev-dashboards"
+const HISTORICAL_DEV_DASHBOARDS_OUTPUT_DIR = "testdata/output-historical-dev-dashboards"
+const OLDEST_HISTORICAL_INPUT_DIR = "testdata/input-oldest-historical"
+const OLDEST_HISTORICAL_OUTPUT_DIR = "testdata/output-oldest-historical"
 
 func TestMigrate(t *testing.T) {
 	// Reset the migration singleton and use the same datasource provider as the frontend test to ensure consistency
@@ -146,22 +152,28 @@ func testMigrationUnified(t *testing.T, dash map[string]interface{}, inputFileNa
 	actualInputVersion := getSchemaVersion(t, dash)
 	require.Equal(t, inputVersion, actualInputVersion, "input version mismatch for %s", inputFileName)
 
-	// 2. Run migration to target version
+	// 2. Skip dashboards with schema versions below minimum supported version
+	if inputVersion < schemaversion.MIN_VERSION {
+		t.Skipf("Skipping %s: schema version %d is below minimum supported version %d", inputFileName, inputVersion, schemaversion.MIN_VERSION)
+		return
+	}
+
+	// 3. Run migration to target version
 	require.NoError(t, Migrate(context.Background(), dash, targetVersion), "migration from v%d to v%d failed", inputVersion, targetVersion)
 
-	// 3. Verify final schema version
+	// 4. Verify final schema version
 	finalVersion := getSchemaVersion(t, dash)
 	require.Equal(t, targetVersion, finalVersion, "dashboard not migrated to target version %d", targetVersion)
 
-	// 4. Generate output filename with target version suffix
+	// 5. Generate output filename with target version suffix
 	outputFileName := strings.TrimSuffix(inputFileName, ".json") + fmt.Sprintf(".v%d.json", targetVersion)
 	outPath := filepath.Join(outputDir, outputFileName)
 
-	// 5. Marshal the migrated dashboard
+	// 6. Marshal the migrated dashboard
 	outBytes, err := json.MarshalIndent(dash, "", "  ")
 	require.NoError(t, err, "failed to marshal migrated dashboard")
 
-	// 6. Check if output file already exists
+	// 7. Check if output file already exists
 	if _, err := os.Stat(outPath); os.IsNotExist(err) {
 		// 7a. If no existing file, create a new one (ensure directory exists first)
 		outDir := filepath.Dir(outPath)
@@ -432,6 +444,148 @@ func runDevDashboardMigrationTests(t *testing.T, targetVersion int, outputDir st
 		// Load a fresh copy of the dashboard for this test (ensures no object sharing)
 		inputDash := loadDashboard(t, jsonFile)
 		inputVersion := getSchemaVersion(t, inputDash)
+
+		testName := fmt.Sprintf("%s v%d to v%d", relativeOutputPath, inputVersion, targetVersion)
+		t.Run(testName, func(t *testing.T) {
+			testMigrationUnified(t, inputDash, relativeOutputPath, inputVersion, targetVersion, outputDir)
+		})
+	}
+}
+
+func TestMigrateCommunityDashboards(t *testing.T) {
+	// Reset the migration singleton and use the standard datasource provider for community dashboards
+	ResetForTesting()
+	Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+
+	runCommunityDashboardMigrationTests(t, schemaversion.LATEST_VERSION, COMMUNITY_DASHBOARDS_OUTPUT_DIR)
+}
+
+// runCommunityDashboardMigrationTests runs migration tests for community dashboards with a unified approach
+func runCommunityDashboardMigrationTests(t *testing.T, targetVersion int, outputDir string) {
+	// Find all JSON files in the community-dashboards directory
+	jsonFiles, err := migrationtestutil.FindJSONFiles(COMMUNITY_DASHBOARDS_INPUT_DIR)
+	require.NoError(t, err, "failed to find JSON files in community-dashboards directory")
+
+	t.Logf("Found %d JSON files in community-dashboards", len(jsonFiles))
+
+	for _, jsonFile := range jsonFiles {
+		relativeOutputPath := migrationtestutil.GetRelativeOutputPath(jsonFile, COMMUNITY_DASHBOARDS_INPUT_DIR)
+
+		// Load a fresh copy of the dashboard for this test (ensures no object sharing)
+		inputDash := loadDashboard(t, jsonFile)
+
+		// Check if dashboard has schemaVersion and get it safely
+		version, hasVersion := inputDash["schemaVersion"]
+		if !hasVersion {
+			t.Logf("Skipping %s: dashboard missing schemaVersion", relativeOutputPath)
+			continue
+		}
+
+		var inputVersion int
+		switch v := version.(type) {
+		case int:
+			inputVersion = v
+		case float64:
+			inputVersion = int(v)
+		default:
+			t.Logf("Skipping %s: invalid schemaVersion type %T", relativeOutputPath, version)
+			continue
+		}
+
+		testName := fmt.Sprintf("%s v%d to v%d", relativeOutputPath, inputVersion, targetVersion)
+		t.Run(testName, func(t *testing.T) {
+			testMigrationUnified(t, inputDash, relativeOutputPath, inputVersion, targetVersion, outputDir)
+		})
+	}
+}
+
+func TestMigrateHistoricalDevDashboards(t *testing.T) {
+	// Reset the migration singleton and use the dev dashboard datasource provider
+	// to match the frontend devDashboardDataSources configuration
+	ResetForTesting()
+	Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.DevDashboardConfig))
+
+	runHistoricalDevDashboardMigrationTests(t, schemaversion.LATEST_VERSION, HISTORICAL_DEV_DASHBOARDS_OUTPUT_DIR)
+}
+
+// runHistoricalDevDashboardMigrationTests runs migration tests for historical dev dashboards with a unified approach
+func runHistoricalDevDashboardMigrationTests(t *testing.T, targetVersion int, outputDir string) {
+	// Find all JSON files in the historical-dev-dashboards directory
+	jsonFiles, err := migrationtestutil.FindJSONFiles(HISTORICAL_DEV_DASHBOARDS_INPUT_DIR)
+	require.NoError(t, err, "failed to find JSON files in historical-dev-dashboards directory")
+
+	t.Logf("Found %d JSON files in historical-dev-dashboards", len(jsonFiles))
+
+	for _, jsonFile := range jsonFiles {
+		relativeOutputPath := migrationtestutil.GetRelativeOutputPath(jsonFile, HISTORICAL_DEV_DASHBOARDS_INPUT_DIR)
+
+		// Load a fresh copy of the dashboard for this test (ensures no object sharing)
+		inputDash := loadDashboard(t, jsonFile)
+
+		// Check if dashboard has schemaVersion and get it safely
+		version, hasVersion := inputDash["schemaVersion"]
+		if !hasVersion {
+			t.Logf("Skipping %s: dashboard missing schemaVersion", relativeOutputPath)
+			continue
+		}
+
+		var inputVersion int
+		switch v := version.(type) {
+		case int:
+			inputVersion = v
+		case float64:
+			inputVersion = int(v)
+		default:
+			t.Logf("Skipping %s: invalid schemaVersion type %T", relativeOutputPath, version)
+			continue
+		}
+
+		testName := fmt.Sprintf("%s v%d to v%d", relativeOutputPath, inputVersion, targetVersion)
+		t.Run(testName, func(t *testing.T) {
+			testMigrationUnified(t, inputDash, relativeOutputPath, inputVersion, targetVersion, outputDir)
+		})
+	}
+}
+
+func TestMigrateOldestHistoricalDashboards(t *testing.T) {
+	// Reset the migration singleton and use the standard datasource provider for oldest historical dashboards
+	ResetForTesting()
+	Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+
+	runOldestHistoricalDashboardMigrationTests(t, schemaversion.LATEST_VERSION, OLDEST_HISTORICAL_OUTPUT_DIR)
+}
+
+// runOldestHistoricalDashboardMigrationTests runs migration tests for oldest historical dashboards with a unified approach
+func runOldestHistoricalDashboardMigrationTests(t *testing.T, targetVersion int, outputDir string) {
+	// Find all JSON files in the oldest-historical directory
+	jsonFiles, err := migrationtestutil.FindJSONFiles(OLDEST_HISTORICAL_INPUT_DIR)
+	require.NoError(t, err, "failed to find JSON files in oldest-historical directory")
+
+	t.Logf("Found %d JSON files in oldest-historical", len(jsonFiles))
+
+	for _, jsonFile := range jsonFiles {
+		relativeOutputPath := migrationtestutil.GetRelativeOutputPath(jsonFile, OLDEST_HISTORICAL_INPUT_DIR)
+
+		// Load a fresh copy of the dashboard for this test (ensures no object sharing)
+		inputDash := loadDashboard(t, jsonFile)
+
+		// Check if dashboard has schemaVersion and get it safely
+		version, hasVersion := inputDash["schemaVersion"]
+		if !hasVersion {
+			t.Logf("Skipping %s: dashboard missing schemaVersion", relativeOutputPath)
+			continue
+		}
+
+		var inputVersion int
+		switch v := version.(type) {
+		case int:
+			inputVersion = v
+		case float64:
+			inputVersion = int(v)
+		default:
+			t.Logf("Skipping %s: invalid schemaVersion type %T", relativeOutputPath, version)
+			continue
+		}
 
 		testName := fmt.Sprintf("%s v%d to v%d", relativeOutputPath, inputVersion, targetVersion)
 		t.Run(testName, func(t *testing.T) {
