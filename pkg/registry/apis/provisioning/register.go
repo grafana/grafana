@@ -748,7 +748,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				metrics,
 			)
 
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer)
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
@@ -756,6 +756,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.statusPatcher.Patch,
 				syncer,
 				metrics,
+				b.tracer,
 			)
 			signerFactory := signature.NewSignerFactory(b.clients)
 			legacyResources := migrate.NewLegacyResourcesMigrator(
@@ -847,6 +848,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.GetHealthChecker(),
 				b.statusPatcher,
 				b.registry,
+				b.tracer,
 			)
 			if err != nil {
 				return err

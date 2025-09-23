@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
@@ -33,6 +34,16 @@ func RunJobController(deps server.OperatorDependencies) error {
 		Level: slog.LevelDebug,
 	})).With("logger", "provisioning-job-controller")
 	logger.Info("Starting provisioning job controller")
+
+	tracingConfig, err := tracing.ProvideTracingConfig(deps.Config)
+	if err != nil {
+		return fmt.Errorf("failed to provide tracing config: %w", err)
+	}
+
+	tracer, err := tracing.ProvideService(tracingConfig)
+	if err != nil {
+		return fmt.Errorf("failed to provide tracing service: %w", err)
+	}
 
 	controllerCfg, err := setupJobsControllerFromConfig(deps.Config, deps.Registerer)
 	if err != nil {
@@ -100,7 +111,7 @@ func RunJobController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	workers, err := setupWorkers(controllerCfg, deps.Registerer)
+	workers, err := setupWorkers(controllerCfg, deps.Registerer, tracer)
 	if err != nil {
 		return fmt.Errorf("setup workers: %w", err)
 	}
@@ -175,7 +186,7 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registe
 	}, nil
 }
 
-func setupWorkers(controllerCfg *jobsControllerConfig, registry prometheus.Registerer) ([]jobs.Worker, error) {
+func setupWorkers(controllerCfg *jobsControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer) ([]jobs.Worker, error) {
 	clients := controllerCfg.clients
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceLister(controllerCfg.unified)
@@ -187,7 +198,7 @@ func setupWorkers(controllerCfg *jobsControllerConfig, registry prometheus.Regis
 	metrics := jobs.RegisterJobMetrics(registry)
 
 	// Sync
-	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
+	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, tracer)
 	syncWorker := sync.NewSyncWorker(
 		clients,
 		repositoryResources,
@@ -195,6 +206,7 @@ func setupWorkers(controllerCfg *jobsControllerConfig, registry prometheus.Regis
 		statusPatcher.Patch,
 		syncer,
 		metrics,
+		tracer,
 	)
 	workers = append(workers, syncWorker)
 
