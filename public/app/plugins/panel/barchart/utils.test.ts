@@ -7,7 +7,6 @@ import {
   MutableDataFrame,
   VizOrientation,
   FieldConfigSource,
-  createDataFrame,
 } from '@grafana/data';
 import {
   LegendDisplayMode,
@@ -20,7 +19,7 @@ import {
 } from '@grafana/schema';
 
 import { FieldConfig as PanelFieldConfig } from './panelcfg.gen';
-import { prepSeries, prepConfig, PrepConfigOpts, getClustersFromField, getDistinctValuesFromField } from './utils';
+import { prepSeries, prepConfig, PrepConfigOpts, getClustersFromArray } from './utils';
 
 const fieldConfig: FieldConfigSource = {
   defaults: {},
@@ -263,77 +262,31 @@ describe('BarChart utils', () => {
       expect(info.series[0].fields[2].config.unit).toBeUndefined();
     });
   });
-  describe('getClustersFromField', () => {
-    it('should return an empty array when no fields', () => {
-      const df = createDataFrame({
-        fields: [],
-      });
-      const info = prepSeries([df], fieldConfig, StackingMode.Percent, StackingMode.None,createTheme());
-      const groupByField = "testField"
-      expect(getClustersFromField(info.series, groupByField)).toEqual([]);
+  
+  describe('getClustersFromArray', () => {
+    it('should give correct fallback cluster with incorrect input data', () => {
+      const inputArray = ['A', 'A', 'B', 'C'];
+      const groupByField = "test";
+      const expectedOutput = [1,1,1,1];
+      const actualOutput = getClustersFromArray(inputArray, undefined);
+      expect(actualOutput).toEqual(expectedOutput);
+      expect(getClustersFromArray([], groupByField)).toEqual([])
     });
-    it('should return an empty array when no, empty or invalid groupByField', () => {
-      const df = createDataFrame({
-        fields: [
-          { name: 'station', values: [1,1,2,2]},
-          { name: 'type', type: FieldType.string, values: ['actual', 'estimate', 'actual', 'estimate']},
-          { name: 'welding', values: [50.0, 55.0, 30.0, 25.0]},
-          { name: 'lineup', values: [70.0, 90.0, , ,]},
-          { name: 'other', values: [20.0, 15.0, 10.0, 15.0]},
-        ],
-      });
-      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
-
-      const info = prepSeries([df], fieldConfig, StackingMode.Percent,StackingMode.None, createTheme());
-      expect(getClustersFromField(info.series, undefined)).toEqual([]);
-      expect(getClustersFromField(info.series, "")).toEqual([]);
-      expect(getClustersFromField(info.series, "non-existent")).toEqual([]);
+    it('should give correct clusters with a longer array', () => {
+      const inputArray = [1,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,9,9,9];
+      const groupByField = "test";
+      const expectedOutput = [3,2,2,2,2,2,2,1,3];
+      const actualOutput = getClustersFromArray(inputArray, groupByField);
+      expect(actualOutput).toEqual(expectedOutput);
     });
-    it('should return correct clusters', () => {
-      const df = createDataFrame({
-        fields: [
-          { name: 'station', values: [1,1,2,2]},
-          { name: 'type', type: FieldType.string, values: ['actual', 'estimate', 'actual', 'estimate']},
-          { name: 'welding', values: [50.0, 55.0, 30.0, 25.0]},
-          { name: 'lineup', values: [70.0, 90.0, , ,]},
-          { name: 'other', values: [20.0, 15.0, 10.0, 15.0]},
-        ],
-      });
-      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
-      const info = prepSeries([df], fieldConfig, StackingMode.Percent, StackingMode.None,createTheme());
-      expect(getClustersFromField(info.series, "station")).toEqual([2,2]);
+    it('should work with single clusters', () => {
+      const inputArray = [1,2,3,4];
+      const groupByField = "test";
+      const expectedOutput = [1,1,1,1];
+      const actualOutput = getClustersFromArray(inputArray, groupByField);
+      expect(actualOutput).toEqual(expectedOutput);
     });
-    it('should return correct clusters for a large amount of fields', () => {
-      const df = createDataFrame({
-        fields: [
-          { name: 'station', 
-            values: ['ML01','ML01','ML01','ML02_5','ML02_5','ML02','ML02','ML02'
-              ,'ML03','ML03','ML03','ML04','ML04','ML06','ML06','ML07_5','ML07_5','ML07','ML07',
-              'ML08','ML08','PB01','PB01','PB02','PB02','PB03','PB03','PB04','PB04','PB05','PB05']},
-        ],
-      });
-      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
-      const info = prepSeries([df], fieldConfig, StackingMode.Percent, StackingMode.None,createTheme());
-      expect(getClustersFromField(info.series, "station")).toEqual([3,2,3,3,2,2,2,2,2,2,2,2,2,2]);
-    });
-  });
-  describe('getDistinctClustersFromField', () => {
-    it('should return a correct values', () => {
-      const df = createDataFrame({
-        fields: [
-          { name: 'station', 
-            values: ['ML01','ML01','ML01','ML02_5','ML02_5','ML02','ML02','ML02'
-              ,'ML03','ML03','ML03','ML04','ML04','ML06','ML06','ML07_5','ML07_5','ML07','ML07',
-              'ML08','ML08','PB01','PB01','PB02','PB02','PB03','PB03','PB04','PB04','PB05','PB05']},
-        ],
-      });
-      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
-      const info = prepSeries([df], fieldConfig, StackingMode.Percent, StackingMode.None,createTheme());
-      const distinctValues = getDistinctValuesFromField(info.series[0].fields[0]);
-      expect(distinctValues.length).toEqual(14);
-      expect(distinctValues).toEqual(['ML01','ML02_5','ML02','ML03','ML04','ML06','ML07_5','ML07','ML08','PB01','PB02','PB03','PB04','PB05']);
-    });
-  });
+  })
 });
 
 

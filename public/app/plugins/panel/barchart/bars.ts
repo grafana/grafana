@@ -159,6 +159,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
   // for distr: 2 scales, the splits array should contain indices into data[0] rather than values
   const xSplits: Axis.Splits | undefined = (u) => Array.from(u.data[0].map((v, i) => i));
 
+  
+
   const hFilter: Axis.Filter | undefined =
     xSpacing === 0
       ? undefined
@@ -209,6 +211,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
       return splits.map((v) => (v == null ? '' : dateTimeFormat(v, { format, timeZone })));
     }
 
+    if (groupByField) { // use only distinct x-axis values when grouping is used.
+      splits = Array.from(new Set(u.data[0]))
+        .map(value => u.data[0].find(obj => obj === value))
+        .filter((v): v is number => v !== undefined);
+    }
     return splits.map((v) => (isXHorizontal ? formatShortValue(0, v) : formatValue(0, v)));
   };
 
@@ -240,7 +247,45 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
     return [min, max];
   };
 
-  // stacked distribution
+
+  // Range for the x-axis values
+  const xAxisRange: Scale.Range = (u, min, max) => {    
+    min = 0;
+
+    let pctOffset = 0;
+
+    const clusters = getClustersFromArray(Array.from(u.data[groupByFieldIdx === -1 ? 0 : groupByFieldIdx]), groupByField);
+
+    if (!groupByField) {
+      // how far in is the first tick in % of full dimension
+      distribute(u.data[0].length, groupWidth, groupDistr, 0, (di, lftPct, widPct) => {
+        pctOffset = lftPct + widPct / 2;
+      });
+      max = Math.max(1, u.data[0].length - 1);
+    } else {
+      distribute(clusters.length, clusterWidth, clusterDistr, 0, (di, lftPct, widPct) => {
+        pctOffset = lftPct + widPct / 2;
+      });
+      max = Math.max(1, clusters.length - 1);
+    }
+
+    // expand scale range by equal amounts on both ends
+    let rn = max - min;
+
+    if (pctOffset === 0.5) {
+      min -= rn;
+    } else {
+      let upScale = 1 / (1 - pctOffset * 2);
+      let offset = (upScale * rn - rn) / 2;
+
+      min -= offset;
+      max += offset;
+    }
+
+    return [min, max];
+  };
+
+
   let distrStacked = (groupCount: number, barCount: number, clusterCount: number, groupsPerCluster: number[]) => {
     let out = Array.from({ length: barCount }, () => ({
       offs: Array(groupCount).fill(0),
@@ -679,6 +724,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
   return {
     cursor,
     // scale & axis opts
+    xAxisRange,
     xRange,
     xValues,
     xSplits,
