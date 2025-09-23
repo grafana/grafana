@@ -106,6 +106,7 @@ func (a *ArtifactHandlerCache) Builder(ctx context.Context, opts *ArtifactContai
 		return nil, err
 	}
 
+	// nolint:gosec
 	out, err := exec.Command("docker", "pull", image).CombinedOutput()
 	log.Println("docker", "pull", image, string(out))
 	if err == nil {

@@ -33,7 +33,6 @@ func (f *BundledPlugins) Dependencies(ctx context.Context) ([]*pipeline.Artifact
 	return []*pipeline.Artifact{
 		f.NodeModules,
 	}, nil
-
 }
 
 // Builder will return a node.js alpine container that matches the .nvmrc in the Grafana source repository

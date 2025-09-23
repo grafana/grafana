@@ -61,7 +61,6 @@ func WithNode(d *dagger.Client, version string) *dagger.Container {
 
 func WithPlaywright(d *dagger.Client, base *dagger.Container, version string) *dagger.Container {
 	return base.WithExec([]string{"npx", "-y", fmt.Sprintf("playwright@%s", version), "install", "--with-deps"})
-
 }
 
 func WithYarnInstall(d *dagger.Client, base *dagger.Container, yarnHostSrc *dagger.Directory, yarnCache *dagger.CacheVolume) *dagger.Container {
