@@ -123,7 +123,7 @@ jobs:
           echo "No changes in generated Go files"
         else
           if [[ "${{ github.event.pull_request.head.repo.fork }}" == "false" ]]; then
-            echo "> !!! Please link Enterprise and run 'make gen-go', then commit the changes to both repositories."
+            echo "> !!! Please synchronize the grafana OSS and grafana enterprise code bases as defined in the enterprise readme, then run 'make gen-go' in the OSS folder and commit the changes to both repositories."
           else
             echo "> !!! Please run 'make gen-go' and commit the changes."
           fi
