@@ -3,7 +3,7 @@ import uFuzzy from '@leeoniya/ufuzzy';
 import { DataFrameView, SelectableValue } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
-import { DashboardQueryResult, GrafanaSearcher, LocationInfo, QueryResponse, SearchQuery } from './types';
+import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from './types';
 
 export class FrontendSearcher implements GrafanaSearcher {
   readonly cache = new Map<string, Promise<FullResultCache>>();
@@ -76,7 +76,7 @@ export class FrontendSearcher implements GrafanaSearcher {
     return this.parent.tags(query);
   }
 
-  async getLocationInfo(): Promise<Record<string, LocationInfo>> {
+  async getLocationInfo() {
     return this.parent.getLocationInfo();
   }
 
