@@ -1,11 +1,11 @@
 import { config, reportInteraction } from '@grafana/runtime';
-import { DashboardCreatedProps } from 'app/features/dashboard-scene/utils/tracking';
+import { DashboardCreatedProps, DashboardInitProps } from 'app/features/dashboard-scene/utils/tracking';
 
 let isScenesContextSet = false;
 
 export const DashboardInteractions = {
   // Dashboard interactions:
-  dashboardInitialized: (properties?: Record<string, unknown>) => {
+  dashboardInitialized: (properties: DashboardInitProps) => {
     reportDashboardInteraction('init_dashboard_completed', { ...properties });
   },
 

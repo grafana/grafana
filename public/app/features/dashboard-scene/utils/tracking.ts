@@ -6,14 +6,27 @@ import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardEl
 
 import { DashboardInteractions } from './interactions';
 
+export interface DashboardInitProps {
+  [key: string]: unknown;
+}
+
 export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: number) {
   const trackingInformation = dashboard.getTrackingInformation();
+  const v2TrackingFields = {
+    tabCount: trackingInformation?.tabCount,
+    templateVariableCount: trackingInformation?.templateVariableCount,
+    maxNestingLevel: trackingInformation?.maxNestingLevel,
+    dashStructure: trackingInformation?.dashStructure,
+    conditionalRenderRules: trackingInformation?.conditionalRenderRulesCount,
+    autoLayoutCount: trackingInformation?.autoLayoutCount,
+    customGridLayoutCount: trackingInformation?.customGridLayoutCount,
+  };
 
   DashboardInteractions.dashboardInitialized({
     theme: undefined,
     duration,
     isScene: true,
-    ...trackingInformation,
+    ...v2TrackingFields,
   });
 }
 
@@ -186,8 +199,8 @@ export function trackDashboardSceneCreatedOrSaved(
   const v2TrackingFields = {
     numPanels: trackingInformation?.panels_count,
     conditionalRenderRules: trackingInformation?.conditionalRenderRulesCount,
-    autoLayout: trackingInformation?.autoLayoutCount,
-    customGridLayout: trackingInformation?.customGridLayoutCount,
+    autoLayoutCount: trackingInformation?.autoLayoutCount,
+    customGridLayoutCount: trackingInformation?.customGridLayoutCount,
   };
 
   DashboardInteractions.dashboardCreatedOrSaved(name, {
