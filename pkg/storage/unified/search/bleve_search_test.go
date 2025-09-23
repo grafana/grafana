@@ -281,7 +281,8 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, batchSize
 		Root:          t.TempDir(),
 		FileThreshold: threshold, // use in-memory for tests
 		BatchSize:     int(batchSize),
-	}, tracing.NewNoopTracerService(), nil, useFullNgram)
+		UseFullNgram:  useFullNgram,
+	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 
 	t.Cleanup(backend.CloseAllIndexes)

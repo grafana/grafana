@@ -53,7 +53,8 @@ func TestBleveBackend(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
-	}, tracing.NewNoopTracerService(), nil, false)
+		UseFullNgram:  false,
+	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 
 	testBleveBackend(t, backend)
@@ -66,7 +67,8 @@ func TestBleveBackendFullNgramEnabled(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
-	}, tracing.NewNoopTracerService(), nil, true)
+		UseFullNgram:  true,
+	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 
 	testBleveBackend(t, backend)
@@ -790,6 +792,7 @@ func setupBleveBackend(t *testing.T, options ...setupOption) (*bleveBackend, pro
 		IndexCacheTTL: defaultIndexCacheTTL,
 		Logger:        slog.New(logtest.NewNopHandler(t)),
 		BuildVersion:  buildVersion,
+		UseFullNgram:  false,
 	}
 	for _, opt := range options {
 		opt(&opts)
@@ -798,7 +801,7 @@ func setupBleveBackend(t *testing.T, options ...setupOption) (*bleveBackend, pro
 		opts.Root = t.TempDir()
 	}
 
-	backend, err := NewBleveBackend(opts, tracing.NewNoopTracerService(), metrics, false)
+	backend, err := NewBleveBackend(opts, tracing.NewNoopTracerService(), metrics)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	t.Cleanup(backend.CloseAllIndexes)
@@ -1486,8 +1489,9 @@ func TestInvalidBuildVersion(t *testing.T) {
 	opts := BleveOptions{
 		Root:         t.TempDir(),
 		BuildVersion: "invalid",
+		UseFullNgram: false,
 	}
-	_, err := NewBleveBackend(opts, tracing.NewNoopTracerService(), nil, false)
+	_, err := NewBleveBackend(opts, tracing.NewNoopTracerService(), nil)
 	require.ErrorContains(t, err, "cannot parse build version")
 }
 

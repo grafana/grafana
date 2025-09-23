@@ -77,6 +77,8 @@ type BleveOptions struct {
 	MinBuildVersion *semver.Version // Minimum build version for reusing file-based indexes. Ignored if nil.
 
 	Logger *slog.Logger
+
+	UseFullNgram bool
 }
 
 type bleveBackend struct {
@@ -93,7 +95,7 @@ type bleveBackend struct {
 	useFullNgram bool
 }
 
-func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resource.BleveIndexMetrics, useFullNgram bool) (*bleveBackend, error) {
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
 	if opts.Root == "" {
 		return nil, fmt.Errorf("bleve backend missing root folder configuration")
 	}
@@ -130,7 +132,7 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 		cache:        map[resource.NamespacedResource]*bleveIndex{},
 		opts:         opts,
 		indexMetrics: indexMetrics,
-		useFullNgram: useFullNgram,
+		useFullNgram: opts.UseFullNgram,
 	}
 
 	go be.updateIndexSizeMetric(opts.Root)
