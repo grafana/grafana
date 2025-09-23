@@ -22,6 +22,7 @@ import (
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -62,6 +63,7 @@ type RepositoryController struct {
 	queue workqueue.TypedRateLimitingInterface[*queueItem]
 
 	registry prometheus.Registerer
+	tracer   tracing.Tracer
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -76,6 +78,7 @@ func NewRepositoryController(
 	healthChecker *HealthChecker,
 	statusPatcher StatusPatcher,
 	registry prometheus.Registerer,
+	tracer tracing.Tracer,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 
@@ -101,6 +104,7 @@ func NewRepositoryController(
 		logger:    logging.DefaultLogger.With("logger", loggerName),
 		dualwrite: dualwrite,
 		registry:  registry,
+		tracer:    tracer,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
