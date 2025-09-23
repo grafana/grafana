@@ -132,7 +132,7 @@ export function getEditionAndUpdateLinks(): NavModelItem[] {
   const stateInfo = licenseInfo.stateInfo ? ` (${licenseInfo.stateInfo})` : '';
   const links: NavModelItem[] = [];
 
-// @PERCONA
+  // @PERCONA
   if (licenseInfo.licenseUrl === '/graph/admin/upgrading') {
     links.push({
       target: '_blank',
