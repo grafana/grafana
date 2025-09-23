@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import { CoreApp, DataQuery, getNextRefId, GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Collapse, Modal, useStyles2 } from '@grafana/ui';
+import { Button, Collapse, Modal, Stack, useStyles2 } from '@grafana/ui';
 
 import { PromQuery } from '../types';
 
@@ -125,7 +125,7 @@ export const QueryPatternsModal = (props: Props) => {
               );
             }}
           >
-            <div className={styles.cardsContainer}>
+            <Stack wrap justifyContent="space-between">
               {promQueryModeller
                 .getQueryPatterns()
                 .filter((pattern) => pattern.type === patternType)
@@ -140,7 +140,7 @@ export const QueryPatternsModal = (props: Props) => {
                     setSelectedPatternName={setSelectedPatternName}
                   />
                 ))}
-            </div>
+            </Stack>
           </Collapse>
         );
       })}
@@ -160,12 +160,6 @@ export const QueryPatternsModal = (props: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    cardsContainer: css({
-      display: 'flex',
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-    }),
     spacing: css({
       marginBottom: theme.spacing(1),
     }),
