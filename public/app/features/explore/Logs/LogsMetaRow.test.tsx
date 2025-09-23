@@ -26,7 +26,7 @@ const defaultProps: LogsMetaRowProps = {
   dedupCount: 0,
   displayedFields: [],
   logRows: [],
-  clearDetectedFields: jest.fn(),
+  clearDisplayedFields: jest.fn(),
 };
 
 const setup = (propOverrides?: object, disableDownload = false) => {
@@ -61,7 +61,7 @@ describe('LogsMetaRow', () => {
 
   it('renders a button to clear displayedfields', () => {
     const clearSpy = jest.fn();
-    setup({ displayedFields: ['testField1234'], clearDetectedFields: clearSpy });
+    setup({ displayedFields: ['testField1234'], clearDisplayedFields: clearSpy });
     fireEvent(
       screen.getByRole('button', {
         name: 'Show original line',
