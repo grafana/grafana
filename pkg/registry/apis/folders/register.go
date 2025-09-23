@@ -158,20 +158,16 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 			namespacer:     b.namespacer,
 			tableConverter: resourceInfo.TableConverter(),
 		}
-
 		dw, err := opts.DualWriteBuilder(resourceInfo.GroupResource(), legacyStore, unified)
 		if err != nil {
 			return err
 		}
-		if dw != unified {
-			// Need to add a wrapper (mode 1-4)
-			b.storage = &folderStorage{
-				tableConverter:       resourceInfo.TableConverter(),
-				folderPermissionsSvc: b.folderPermissionsSvc,
-				acService:            b.acService,
-				permissionsOnCreate:  b.permissionsOnCreate,
-				store:                dw,
-			}
+		b.storage = &folderStorage{
+			tableConverter:       resourceInfo.TableConverter(),
+			folderPermissionsSvc: b.folderPermissionsSvc,
+			acService:            b.acService,
+			permissionsOnCreate:  b.permissionsOnCreate,
+			store:                dw,
 		}
 	}
 
