@@ -1,3 +1,19 @@
+<!-- 11.6.6 START -->
+
+# 11.6.6 (2025-09-23)
+
+### Features and enhancements
+
+- **Alerting:** Update alerting module [#110001](https://github.com/grafana/grafana/pull/110001), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Auditing:** Add settings to control recording of datasource query request and response body (Enterprise)
+- **Auditing:** Document new options for recording datasource query request/response body [#109978](https://github.com/grafana/grafana/pull/109978), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Alerting:** Fix copying of recording rule fields [#110345](https://github.com/grafana/grafana/pull/110345), [@moustafab](https://github.com/moustafab)
+- **Fix:** Fix redirection after login when Grafana is served from subpath [#111098](https://github.com/grafana/grafana/pull/111098), [@mgyongyosi](https://github.com/mgyongyosi)
+
+<!-- 11.6.6 END -->
 <!-- 11.6.5 START -->
 
 # 11.6.5 (2025-08-13)
