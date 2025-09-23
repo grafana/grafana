@@ -9,6 +9,8 @@ export interface ThemeShape {
 
 interface Radii {
   default: string;
+  sm: string;
+  lg: string;
   pill: string;
   circle: string;
 }
@@ -19,10 +21,12 @@ export interface ThemeShapeInput {
 }
 
 export function createShape(options: ThemeShapeInput): ThemeShape {
-  const baseBorderRadius = options.borderRadius ?? 2;
+  const baseBorderRadius = options.borderRadius ?? 6;
 
   const radius = {
     default: `${baseBorderRadius}px`,
+    sm: `${Math.ceil(baseBorderRadius * (1 / 3))}px`, // for default base becomes 2
+    lg: `${Math.ceil(baseBorderRadius * (5 / 3))}px`, // for default base becomes 10
     pill: '9999px',
     circle: '100%',
   };
