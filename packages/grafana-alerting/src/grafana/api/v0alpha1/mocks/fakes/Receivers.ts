@@ -51,7 +51,7 @@ export const GenericIntegrationFactory = Factory.define<Integration>(() => ({
   settings: {
     foo: 'bar',
   },
-  version: 'v1',
+  version: 'v1', // Add version field
 }));
 
 export const EmailIntegrationFactory = Factory.define<Integration>(() => ({
