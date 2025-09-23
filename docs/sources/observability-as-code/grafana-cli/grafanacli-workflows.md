@@ -52,7 +52,7 @@ This directory can be configured with the `--directory`/`-d` flags.
 
    ```bash
    grafanactl config use-context YOUR_CONTEXT  # for example "prod"
-   grafanactl resources serve -d ./resources/
+   grafanactl resources serve ./resources/
    ```
 
 1. Switch to the **production instance** and push the resources:
@@ -81,7 +81,7 @@ This workflow helps you back up all Grafana resources from one instance and late
 
    ```bash
    grafanactl config use-context YOUR_CONTEXT  # for example "prod"
-   grafanactl resources serve -d ./resources/
+   grafanactl resources serve ./resources/
    ```
 
 1. To restore the resources later or restore them on another instance, push the saved resources:
