@@ -128,55 +128,42 @@ export const getActiveItem = (
 };
 
 // Builds "edition/update" links for the Help menu.
-// For OSS builds (or when Grafana default upgrading link is detected), we replace the default
-// "version/license" item with a Percona Open Source link.
 export function getEditionAndUpdateLinks(): NavModelItem[] {
   const { buildInfo, licenseInfo } = config;
   const stateInfo = licenseInfo.stateInfo ? ` (${licenseInfo.stateInfo})` : '';
   const links: NavModelItem[] = [];
 
-  // Detect Grafana's default upgrading/license link (as seen in OSS builds)
-  const licenseUrl = licenseInfo.licenseUrl ?? '';
-  const isDefaultGrafanaUpgradeLink =
-    licenseUrl === '/graph/admin/upgrading' ||
-    /grafana\.com\/grafana\/.*upgrade|admin\/upgrading/i.test(licenseUrl);
-
-  // Consider it OSS if edition explicitly contains "open source"
-  const isOssEdition = /open\s*source/i.test(buildInfo.edition ?? '');
-
-  if (isDefaultGrafanaUpgradeLink || isOssEdition) {
-    // Replace with Percona OSS link
+  if (licenseInfo.licenseUrl === '/graph/admin/upgrading') {
     links.push({
+      target: '_blank',
       id: 'open-source',
       text: 'Open source',
       url: 'https://grafana.com/oss/grafana/?utm_source=grafana_footer',
-      target: '_blank',
-      icon: 'github',
+      icon: 'external-link-alt',
     });
   } else {
-    // Keep original behavior for non-OSS or when a specific license URL is provided
     links.push({
+      target: '_blank',
       id: 'version',
       text: `${buildInfo.edition}${stateInfo}`,
-      url: licenseUrl,
-      target: '_blank',
+      url: licenseInfo.licenseUrl,
       icon: 'external-link-alt',
     });
   }
 
   if (buildInfo.hasUpdate) {
     links.push({
-      id: 'updateVersion',
-      text: 'New version available!',
-      url: 'https://grafana.com/grafana/download?utm_source=grafana_footer',
       target: '_blank',
+      id: 'updateVersion',
+      text: `New version available!`,
+      url: 'https://grafana.com/grafana/download?utm_source=grafana_footer',
       icon: 'download-alt',
     });
   }
 
-
   return links;
 }
+
 
 export function findByUrl(nodes: NavModelItem[], url: string): NavModelItem | null {
   for (const item of nodes) {
