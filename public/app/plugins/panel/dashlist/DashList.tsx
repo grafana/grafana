@@ -4,6 +4,7 @@ import { useThrottle } from 'react-use';
 
 import { InterpolateFunction, PanelProps, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { useStyles2, IconButton, ScrollContainer, Box, Text, EmptyState, Link } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { ID_PREFIX, setStarred } from 'app/core/reducers/navBarTree';
@@ -12,6 +13,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { DashboardQueryResult, LocationInfo, QueryResponse, SearchQuery } from 'app/features/search/service/types';
+import { StarToolbarButtonApiServer } from 'app/features/stars/StarToolbarButton';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { Options } from './panelcfg.gen';
@@ -240,12 +242,16 @@ export function DashList(props: PanelProps<Options>) {
                   </Text>
                 )}
               </Box>
-              <IconButton
-                tooltip={dash.isStarred ? unmarkAsStarredText : markAsStarredText}
-                name={dash.isStarred ? 'favorite' : 'star'}
-                iconType={dash.isStarred ? 'mono' : 'default'}
-                onClick={(e) => toggleDashboardStar(e, dash)}
-              />
+              {config.featureToggles.starsFromAPIServer ? (
+                <StarToolbarButtonApiServer group="dashboard.grafana.app" kind="Dashboard" id={dash.uid ?? ''} />
+              ) : (
+                <IconButton
+                  tooltip={dash.isStarred ? unmarkAsStarredText : markAsStarredText}
+                  name={dash.isStarred ? 'favorite' : 'star'}
+                  iconType={dash.isStarred ? 'mono' : 'default'}
+                  onClick={(e) => toggleDashboardStar(e, dash)}
+                />
+              )}
             </div>
           </li>
         );

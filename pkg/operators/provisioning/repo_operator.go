@@ -11,27 +11,38 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	"github.com/urfave/cli/v2"
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
+	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
 
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 )
 
-func RunRepoController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cfg) error {
+func RunRepoController(deps server.OperatorDependencies) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "provisioning-repo-controller")
 	logger.Info("Starting provisioning repo controller")
 
-	controllerCfg, err := getRepoControllerConfig(cfg)
+	controllerCfg, err := getRepoControllerConfig(deps.Config, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("failed to setup operator: %w", err)
+	}
+
+	tracingConfig, err := tracing.ProvideTracingConfig(deps.Config)
+	if err != nil {
+		return fmt.Errorf("failed to provide tracing config: %w", err)
+	}
+
+	tracer, err := tracing.ProvideService(tracingConfig)
+	if err != nil {
+		return fmt.Errorf("failed to provide tracing service: %w", err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -51,12 +62,12 @@ func RunRepoController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.C
 	)
 
 	resourceLister := resources.NewResourceLister(controllerCfg.unified)
-	jobs, err := jobs.NewJobStore(controllerCfg.provisioningClient.ProvisioningV0alpha1(), 30*time.Second)
+	jobs, err := jobs.NewJobStore(controllerCfg.provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
-	healthChecker := controller.NewHealthChecker(statusPatcher)
+	healthChecker := controller.NewHealthChecker(statusPatcher, deps.Registerer)
 
 	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
 	controller, err := controller.NewRepositoryController(
@@ -69,6 +80,8 @@ func RunRepoController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.C
 		nil, // dualwrite -- standalone operator assumes it is backed by unified storage
 		healthChecker,
 		statusPatcher,
+		deps.Registerer,
+		tracer,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository controller: %w", err)
@@ -88,8 +101,8 @@ type repoControllerConfig struct {
 	workerCount int
 }
 
-func getRepoControllerConfig(cfg *setting.Cfg) (*repoControllerConfig, error) {
-	controllerCfg, err := setupFromConfig(cfg)
+func getRepoControllerConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*repoControllerConfig, error) {
+	controllerCfg, err := setupFromConfig(cfg, registry)
 	if err != nil {
 		return nil, err
 	}

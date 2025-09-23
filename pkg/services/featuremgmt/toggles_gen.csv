@@ -20,6 +20,7 @@ lokiShardSplitting,experimental,@grafana/observability-logs,false,false,true
 lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
 individualCookiePreferences,experimental,@grafana/grafana-backend-group,false,false,false
 influxdbBackendMigration,GA,@grafana/partner-datasources,false,false,true
+starsFromAPIServer,experimental,@grafana/grafana-frontend-platform,false,false,true
 influxqlStreamingParser,experimental,@grafana/partner-datasources,false,false,false
 influxdbRunQueriesInParallel,privatePreview,@grafana/partner-datasources,false,false,false
 lokiLogsDataplane,experimental,@grafana/observability-logs,false,false,false
@@ -62,6 +63,7 @@ kubernetesDashboards,GA,@grafana/dashboards-squad,false,false,true
 kubernetesShortURLs,experimental,@grafana/grafana-app-platform-squad,false,true,false
 useKubernetesShortURLsAPI,experimental,@grafana/sharing-squad,false,false,true
 kubernetesAlertingRules,experimental,@grafana/alerting-squad,false,true,false
+kubernetesCorrelations,experimental,@grafana/datapro,false,true,false
 dashboardDisableSchemaValidationV1,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardDisableSchemaValidationV2,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardSchemaValidationLogging,experimental,@grafana/grafana-app-platform-squad,false,false,false

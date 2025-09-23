@@ -111,6 +111,10 @@ export interface FeatureToggles {
   */
   influxdbBackendMigration?: boolean;
   /**
+  * populate star status from apiserver
+  */
+  starsFromAPIServer?: boolean;
+  /**
   * Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
   */
   influxqlStreamingParser?: boolean;
@@ -290,6 +294,10 @@ export interface FeatureToggles {
   * Adds support for Kubernetes alerting and recording rules
   */
   kubernetesAlertingRules?: boolean;
+  /**
+  * Adds support for Kubernetes correlations
+  */
+  kubernetesCorrelations?: boolean;
   /**
   * Disable schema validation for dashboards/v1
   */

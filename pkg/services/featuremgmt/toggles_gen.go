@@ -91,6 +91,10 @@ const (
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
 
+	// FlagStarsFromAPIServer
+	// populate star status from apiserver
+	FlagStarsFromAPIServer = "starsFromAPIServer"
+
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
 	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
@@ -258,6 +262,10 @@ const (
 	// FlagKubernetesAlertingRules
 	// Adds support for Kubernetes alerting and recording rules
 	FlagKubernetesAlertingRules = "kubernetesAlertingRules"
+
+	// FlagKubernetesCorrelations
+	// Adds support for Kubernetes correlations
+	FlagKubernetesCorrelations = "kubernetesCorrelations"
 
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1

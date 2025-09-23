@@ -364,14 +364,6 @@
       "tooltip-assigned-role": "A licensed role will be assigned when this user signs in"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "Hide common labels",
-      "show": {
-        "tooltip": "Show common labels"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Active timings"
@@ -480,16 +472,16 @@
     "alert-instance-state-filter": {
       "state": "State"
     },
+    "alert-instances-table": {
+      "created": "Created",
+      "labels": "Labels",
+      "state": "State"
+    },
     "alert-label": {
       "tooltip-remove-label": "Remove label"
     },
     "alert-label-dropdown": {
       "placeholder-select": "Choose {{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "Labels",
-      "common-labels-count_one": "+{{count}} common labels",
-      "common-labels-count_other": "+{{count}} common labels"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "Muting, grouping and timings (optional)",
@@ -1927,9 +1919,6 @@
       "title-remove": "Remove",
       "tooltip-remove-time-range": "Remove time range"
     },
-    "namespace": {
-      "title-alert-rules": "Alert rules"
-    },
     "namespace-and-group-filter": {
       "select-group": "Select group",
       "select-namespace": "Select namespace"
@@ -2047,7 +2036,9 @@
       "recipient-notification-fires": "Select who should receive a notification when an alert rule fires."
     },
     "option-customfield": {
-      "label-custom-template": "Custom template"
+      "label-custom-template": "Custom template",
+      "placeholder": "Enter plain text or reference a template, e.g. {{template \"default.message\" .}}",
+      "placeholder-with-template": "Enter plain text or reference a template, e.g. {{- currentTemplate}}"
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "The selected Alertmanager no longer exists or you may not have permission to access it. You can select a different Alertmanager from the dropdown.",
@@ -5358,7 +5349,6 @@
             "json": "Export as JSON"
           }
         },
-        "mark-favorite": "Mark as favorite",
         "more-save-options": "More save options",
         "playlist-next": "Go to next dashboard",
         "playlist-previous": "Go to previous dashboard",
@@ -5387,8 +5377,7 @@
             "yesText": "Save"
           }
         },
-        "unlink-library-panel": "Unlink library panel",
-        "unmark-favorite": "Unmark as favorite"
+        "unlink-library-panel": "Unlink library panel"
       },
       "open-original": "Open original dashboard",
       "playlist-next": "Go to next dashboard",
@@ -5409,6 +5398,10 @@
       "save-library-panel": "Save library panel",
       "settings": "Dashboard settings",
       "share-button": "Share",
+      "star-add-error": "Failed to add to starred",
+      "star-added": "Added to starred",
+      "star-remove-error": "Failed to remove from starred",
+      "star-removed": "Removed from starred",
       "unlink-library-panel": "Unlink library panel",
       "unmark-favorite": "Unmark as favorite"
     },
@@ -11020,7 +11013,6 @@
       "body-not-published": "This plugin is not published to <2>grafana.com/plugins</2> and can't be managed via the catalog.",
       "enterprise-plugin-info": "This plugin is only available in Grafana Cloud and Grafana Enterprise.",
       "learn-more": "Learn more",
-      "no-valid-grafana-enterprise-license-detected": "No valid Grafana Enterprise license detected.",
       "title-dev-alert": "This is a development build of the plugin and can't be uninstalled.",
       "title-plugin-doesnt-support-version-grafana": "This plugin doesn't support your version of Grafana.",
       "title-remote-plugins-unavailable": "The install controls have been disabled because the Grafana server cannot access grafana.com.",
@@ -11382,9 +11374,10 @@
       "all-resources-managed_one": "All {{count}} resource is managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
       "no-results-matching-your-query": "No results matching your query",
-      "partial-managed_one": "{{managedCount}}/{{count}} resources managed. {{unmanagedCount}} resources aren't managed as code yet.",
-      "partial-managed_other": "{{managedCount}}/{{count}} resources managed. {{unmanagedCount}} resources aren't managed as code yet.",
-      "placeholder-search": "Search"
+      "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed.",
+      "placeholder-search": "Search",
+      "unmanaged-resources_one": "{{count}} resource isn't managed as code yet.",
+      "unmanaged-resources_other": "{{count}} resources aren't managed as code yet."
     },
     "get-default-values": {
       "title": {

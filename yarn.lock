@@ -2536,7 +2536,7 @@ __metadata:
     typescript: "npm:5.9.2"
     webpack: "npm:5.101.0"
   peerDependencies:
-    "@grafana/assistant": ^0.0.17
+    "@grafana/assistant": ^0.0.17 || ^0.0.18
     "@grafana/runtime": "*"
   languageName: unknown
   linkType: soft
@@ -2594,7 +2594,7 @@ __metadata:
     "@grafana/runtime": "npm:12.3.0-pre"
     "@grafana/schema": "npm:12.3.0-pre"
     "@grafana/ui": "npm:12.3.0-pre"
-    "@reduxjs/toolkit": "npm:2.8.2"
+    "@reduxjs/toolkit": "npm:2.9.0"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
@@ -2876,7 +2876,7 @@ __metadata:
     "@lezer/lr": "npm:1.4.2"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
-    "@opentelemetry/semantic-conventions": "npm:1.36.0"
+    "@opentelemetry/semantic-conventions": "npm:1.37.0"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
@@ -2895,7 +2895,7 @@ __metadata:
     i18next: "npm:^25.0.0"
     jest: "npm:29.7.0"
     lodash: "npm:4.17.21"
-    lru-cache: "npm:11.1.0"
+    lru-cache: "npm:11.2.1"
     monaco-editor: "npm:0.34.1"
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
@@ -2991,9 +2991,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/assistant@npm:0.0.17":
-  version: 0.0.17
-  resolution: "@grafana/assistant@npm:0.0.17"
+"@grafana/assistant@npm:0.0.18":
+  version: 0.0.18
+  resolution: "@grafana/assistant@npm:0.0.18"
   peerDependencies:
     "@grafana/data": ">=12.1.0"
     "@grafana/runtime": ">=12.1.0"
@@ -3001,7 +3001,7 @@ __metadata:
     "@grafana/ui": ">=12.1.0"
     react: ">=18.0.0"
     rxjs: ">=7.0.0"
-  checksum: 10/0d10a4cb0b1dd1082157f106072b5ea164471b51e0a7ee8b70c48b6d3115d049d36783a04f0b04d6202f2eac01863fa08efd61ecf4d79febfc039966133c1c6a
+  checksum: 10/6e95f6e7026121f220a20064aa1fc715cf969d93e02b506268dd589d4400b399a6e7d1f2a1a69edb973b604be932c7b091deee1960f90eccf8ea53b67314438e
   languageName: node
   linkType: hard
 
@@ -3062,7 +3062,7 @@ __metadata:
     fast_array_intersect: "npm:1.1.0"
     history: "npm:4.10.1"
     lodash: "npm:4.17.21"
-    marked: "npm:16.1.1"
+    marked: "npm:16.3.0"
     marked-mangle: "npm:1.1.11"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.47"
@@ -3221,7 +3221,7 @@ __metadata:
     tslib: "npm:2.8.1"
     typescript: "npm:5.9.2"
   peerDependencies:
-    "@grafana/assistant": ^0.0.17
+    "@grafana/assistant": ^0.0.17 || ^0.0.18
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -3428,7 +3428,7 @@ __metadata:
     "@lezer/highlight": "npm:1.2.1"
     "@lezer/lr": "npm:1.4.2"
     "@prometheus-io/lezer-promql": "npm:0.305.0"
-    "@reduxjs/toolkit": "npm:2.8.2"
+    "@reduxjs/toolkit": "npm:2.9.0"
     "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
     "@rollup/plugin-image": "npm:3.0.3"
     "@rollup/plugin-json": "npm:6.1.0"
@@ -3521,11 +3521,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.35.3":
-  version: 6.35.3
-  resolution: "@grafana/scenes-react@npm:6.35.3"
+"@grafana/scenes-react@npm:6.38.0":
+  version: 6.38.0
+  resolution: "@grafana/scenes-react@npm:6.38.0"
   dependencies:
-    "@grafana/scenes": "npm:6.35.3"
+    "@grafana/scenes": "npm:6.38.0"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3537,13 +3537,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/2c220eef6aa8560d073a27a02918b4bbf4d0cffee273ff597e94eb4376e75d0e47fcdaa2cd1ca8ea851c29477722dec2e2d2f817f2c5c185151de2051c5e2ab7
+  checksum: 10/7b38553f1950f6592eb24878061cc7c45fc2aa1776c4b1cd521c6995d11f8beb0b2b275afda0ebf0ec19b7f7c79b77126caad4843bc9a75bd09881645e882c91
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.35.3":
-  version: 6.35.3
-  resolution: "@grafana/scenes@npm:6.35.3"
+"@grafana/scenes@npm:6.38.0":
+  version: 6.38.0
+  resolution: "@grafana/scenes@npm:6.38.0"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3563,7 +3563,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/a209e6a1cbe6c4e70c2cd8c413df2560a59b157944888e317385f19e43e23ff826d84c922618b1268a7085278aca45a369c8f6255bf70a06134622c6ef2a542e
+  checksum: 10/9372896e76271becb80e4a8691d8c51bc3b54b54d98c82f2953134f407a7370dc66a3e8afaa508003147e2f1b5b08d0ddbb6b1616a3a3ab3f7ad69fb941dd998
   languageName: node
   linkType: hard
 
@@ -3750,7 +3750,7 @@ __metadata:
     rc-cascader: "npm:3.34.0"
     rc-drawer: "npm:7.3.0"
     rc-picker: "npm:4.11.3"
-    rc-slider: "npm:11.1.8"
+    rc-slider: "npm:11.1.9"
     rc-tooltip: "npm:6.4.0"
     react: "npm:18.3.1"
     react-calendar: "npm:^6.0.0"
@@ -6009,10 +6009,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/semantic-conventions@npm:1.36.0, @opentelemetry/semantic-conventions@npm:^1.29.0, @opentelemetry/semantic-conventions@npm:^1.32.0":
-  version: 1.36.0
-  resolution: "@opentelemetry/semantic-conventions@npm:1.36.0"
-  checksum: 10/f1939066c30147348b326840d67cc48e73072b762f2e2af5c3ea894268d64c62fc4e73fad49a72ed4a52a543b2fa0824c969a676e658ae727f75182f52104007
+"@opentelemetry/semantic-conventions@npm:1.37.0, @opentelemetry/semantic-conventions@npm:^1.29.0, @opentelemetry/semantic-conventions@npm:^1.32.0":
+  version: 1.37.0
+  resolution: "@opentelemetry/semantic-conventions@npm:1.37.0"
+  checksum: 10/919951c2ddbe5509dad26afc7b09d9a5e3c169de187013d1836d2771a7e840e85ea500725128b798d7659d89aff480c07fd039cf77858df3f3573a15063db7c3
   languageName: node
   linkType: hard
 
@@ -6728,9 +6728,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@reduxjs/toolkit@npm:2.8.2":
-  version: 2.8.2
-  resolution: "@reduxjs/toolkit@npm:2.8.2"
+"@reduxjs/toolkit@npm:2.9.0":
+  version: 2.9.0
+  resolution: "@reduxjs/toolkit@npm:2.9.0"
   dependencies:
     "@standard-schema/spec": "npm:^1.0.0"
     "@standard-schema/utils": "npm:^0.3.0"
@@ -6746,7 +6746,7 @@ __metadata:
       optional: true
     react-redux:
       optional: true
-  checksum: 10/7834b7b91a364f98f5ffa932b1027179d9a0a27a145206a7b5256304acafe5516c6622540656435e310e4a08e579eecaee5c2582442c4ef6a4dbe6f417b7d395
+  checksum: 10/d2f1b59c96638d9a36c3709f31f24ec1ce25604f2010eebb89506e6782142dfa3a97bd64f6b4650d9230d1a8a7f09a2dfed5ee2eb7a4454cbeb08fcb8cc6cf36
   languageName: node
   linkType: hard
 
@@ -18178,7 +18178,7 @@ __metadata:
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
-    "@grafana/assistant": "npm:0.0.17"
+    "@grafana/assistant": "npm:0.0.18"
     "@grafana/aws-sdk": "npm:0.7.1"
     "@grafana/azure-sdk": "npm:0.0.7"
     "@grafana/data": "workspace:*"
@@ -18199,8 +18199,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.10.10"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.35.3"
-    "@grafana/scenes-react": "npm:6.35.3"
+    "@grafana/scenes": "npm:6.38.0"
+    "@grafana/scenes-react": "npm:6.38.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -18220,7 +18220,7 @@ __metadata:
     "@npmcli/package-json": "npm:^6.0.0"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
-    "@opentelemetry/semantic-conventions": "npm:1.36.0"
+    "@opentelemetry/semantic-conventions": "npm:1.37.0"
     "@playwright/test": "npm:1.54.1"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:0.6.1"
     "@popperjs/core": "npm:2.11.8"
@@ -18233,7 +18233,7 @@ __metadata:
     "@react-types/menu": "npm:3.10.3"
     "@react-types/overlays": "npm:3.9.0"
     "@react-types/shared": "npm:3.31.0"
-    "@reduxjs/toolkit": "npm:2.8.2"
+    "@reduxjs/toolkit": "npm:2.9.0"
     "@rsdoctor/webpack-plugin": "npm:^1.0.0"
     "@rtk-query/codegen-openapi": "npm:^2.0.0"
     "@rtsao/plugin-proposal-class-properties": "npm:7.0.1-patch.1"
@@ -18396,10 +18396,10 @@ __metadata:
     lodash: "npm:4.17.21"
     logfmt: "npm:^1.3.2"
     lossless-json: "npm:^4.1.1"
-    lru-cache: "npm:11.1.0"
+    lru-cache: "npm:11.2.1"
     lru-memoize: "npm:^1.1.0"
     lucene: "npm:^2.1.1"
-    marked: "npm:16.1.1"
+    marked: "npm:16.3.0"
     memoize-one: "npm:6.0.0"
     micro-memoize: "npm:^4.1.2"
     mini-css-extract-plugin: "npm:2.9.2"
@@ -18430,7 +18430,7 @@ __metadata:
     prismjs: "npm:1.30.0"
     prom-client: "npm:^15.1.3"
     publint: "npm:^0.3.12"
-    rc-slider: "npm:11.1.8"
+    rc-slider: "npm:11.1.9"
     rc-tree: "npm:5.13.1"
     re-resizable: "npm:6.11.2"
     react: "npm:18.3.1"
@@ -21813,9 +21813,9 @@ __metadata:
   linkType: hard
 
 "leven@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "leven@npm:4.0.0"
-  checksum: 10/d70b9fef4cca487a38021bb173a5cae98d39b1c7f4a5b2439763bd89df8e389f178a3c941b6fc3fab1582f5052b5e8c91353d9607799a2ad3841e7ea22f9720f
+  version: 4.1.0
+  resolution: "leven@npm:4.1.0"
+  checksum: 10/ab6c1af4a44e9cd83d3fba79a36ed405afce146e7f12c6653d3ac02f17d3d6de0ace0e0d2728b38446e7f40c1df7692352d8b1278cb3ff0dfb868324219636e5
   languageName: node
   linkType: hard
 
@@ -22287,9 +22287,9 @@ __metadata:
   linkType: hard
 
 "lossless-json@npm:^4.1.1":
-  version: 4.1.1
-  resolution: "lossless-json@npm:4.1.1"
-  checksum: 10/1e22e9e4ad8ebf169567a8c24553403bfd7abc33c141f4918f1b9626417f80477b849e6175a315a224e0c68072759c69a0e332a925de80269a7f9720af3a7fbd
+  version: 4.2.0
+  resolution: "lossless-json@npm:4.2.0"
+  checksum: 10/b29cbf9a90b8f3108219ff410223a90a3a6ad14cf902eed4038571d9421c69ade7077fb59737e1ca20f3f404ddd68fad69be11365b0d79b4b61421b054759551
   languageName: node
   linkType: hard
 
@@ -22319,10 +22319,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lru-cache@npm:11.1.0, lru-cache@npm:^11.0.0, lru-cache@npm:^11.0.1":
-  version: 11.1.0
-  resolution: "lru-cache@npm:11.1.0"
-  checksum: 10/5011011675ca98428902de774d0963b68c3a193cd959347cb63b781dad4228924124afab82159fd7b8b4db18285d9aff462b877b8f6efd2b41604f806c1d9db4
+"lru-cache@npm:11.2.1, lru-cache@npm:^11.0.0, lru-cache@npm:^11.0.1":
+  version: 11.2.1
+  resolution: "lru-cache@npm:11.2.1"
+  checksum: 10/cd1cc7a8d7617ede28702f80449d9c3f851bb6671d5ec37b34ca10ffb18d5aa068d798ed057e73092f25e563202d33ab6562c356b0c1ff4a6065525dbe577b1c
   languageName: node
   linkType: hard
 
@@ -22570,12 +22570,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:16.1.1":
-  version: 16.1.1
-  resolution: "marked@npm:16.1.1"
+"marked@npm:16.3.0":
+  version: 16.3.0
+  resolution: "marked@npm:16.3.0"
   bin:
     marked: bin/marked.js
-  checksum: 10/9f4d2d8f862e1d874f03f1b8614fbf859ae788b4a1b4174be83a65c8ea5ecabf0c991c455dcb6b650e7106fb5b65a94865b9de45667bb2471ca2272e1798971d
+  checksum: 10/60497834b9acfb3b3994222509d359ecb9a197c885dfeb77e2050a287cd2f4ab19f00d5597172b47f9e0c54d9e1e13d8b2dd73322b7838599e1f16d1d6283f5b
   languageName: node
   linkType: hard
 
@@ -26716,9 +26716,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-slider@npm:11.1.8":
-  version: 11.1.8
-  resolution: "rc-slider@npm:11.1.8"
+"rc-slider@npm:11.1.9":
+  version: 11.1.9
+  resolution: "rc-slider@npm:11.1.9"
   dependencies:
     "@babel/runtime": "npm:^7.10.1"
     classnames: "npm:^2.2.5"
@@ -26726,7 +26726,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10/3efaefebd1699f9fcdb7008f03f9ecc73eb0c9db69b8a4009fbec1107950ec84b241275503505fa7e77d85fcef62d93934b8a94efb2be44d70d3e889db1070b4
+  checksum: 10/b9b1c5b9e690db565a09fde0d6cc9b8562cbb15dd8a0d1eb0a7039c4fcb6c4307ba1cb58047322b8be518a6eb226af9db5c7d974d6ff197fe07f0db84d56cc5e
   languageName: node
   linkType: hard
 
@@ -32162,12 +32162,12 @@ __metadata:
   linkType: hard
 
 "vis-data@npm:^8.0.0":
-  version: 8.0.1
-  resolution: "vis-data@npm:8.0.1"
+  version: 8.0.3
+  resolution: "vis-data@npm:8.0.3"
   peerDependencies:
-    uuid: ^3.4.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0
+    uuid: ^3.4.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0 || ^13.0.0
     vis-util: ">=6.0.0"
-  checksum: 10/d69045c555a79fde292270d42f111b0d1ba644989481eec08393f73cf64573563e6533718eff0534f4255f44d363b078d0520704190328b97f8e244d4b4c8b73
+  checksum: 10/5b011fe0d8e2b95f4826a685a0c5a8e1b532177fe7a3a2e07b66f25f87c7c0943b30b95564e3994038f2ef91d4bf835becd75fca6b31ac0813f33d245621f5da
   languageName: node
   linkType: hard
 

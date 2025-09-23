@@ -172,6 +172,15 @@ var (
 			AllowSelfServe: false,
 		},
 		{
+			Name:           "starsFromAPIServer",
+			Description:    "populate star status from apiserver",
+			Stage:          FeatureStageExperimental,
+			FrontendOnly:   true,
+			Owner:          grafanaFrontendPlatformSquad,
+			AllowSelfServe: false,
+			HideFromDocs:   true,
+		},
+		{
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
@@ -481,6 +490,13 @@ var (
 			Description:     "Adds support for Kubernetes alerting and recording rules",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:            "kubernetesCorrelations",
+			Description:     "Adds support for Kubernetes correlations",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDataProSquad,
 			RequiresRestart: true,
 		},
 		{
