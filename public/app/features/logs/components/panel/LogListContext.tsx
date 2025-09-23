@@ -295,7 +295,7 @@ export const LogListContextProvider = ({
       displayedFields.length > 0 ||
       !config.featureToggles.otelLogsFormatting ||
       !setDisplayedFields ||
-      isSupportedApp(app)
+      !isSupportedApp(app)
     ) {
       return;
     }
