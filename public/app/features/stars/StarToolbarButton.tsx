@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Icon, ToolbarButton } from '@grafana/ui';
 import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/preferences/v1alpha1';
+import { contextSrv } from 'app/core/core';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DashboardScene } from '../dashboard-scene/scene/DashboardScene';
@@ -20,8 +21,8 @@ export type Props = {
   dashboard: DashboardScene;
 };
 
-export function StarToolbarButtonApiServer({ group, kind, id }: { group: string; kind: string; id: string }) {
-  const name = `user-${config.bootData.user.uid}`;
+export function StarToolbarButtonApiServer({ group, kind, id }: Pick<Props, 'group' | 'kind'> & { id: string }) {
+  const name = `user-${contextSrv.user.uid}`;
   const stars = useListStarsQuery({ fieldSelector: `metadata.name=${name}` });
   const [addStar] = useAddStarMutation();
   const [removeStar] = useRemoveStarMutation();
@@ -79,16 +80,18 @@ function StarToolbarButtonLegacy({ dashboard }: { dashboard: Props['dashboard'] 
   );
 }
 
-export function StarToolbarButton(props: Props) {
-  const uid = props.dashboard.state.meta.uid;
+export function StarToolbarButton({ dashboard, group, kind }: Props) {
+  const state = dashboard.useState();
+  // In legacy storage dashboard uid is stored in state.uid
+  const uid = state.meta.uid || state.uid;
 
-  if (!config.bootData.user.uid || !uid?.length) {
+  if (!contextSrv.user.uid || !uid?.length) {
     return null;
   }
 
   if (config.featureToggles.starsFromAPIServer) {
-    return <StarToolbarButtonApiServer group={props.group} kind={props.kind} id={uid} />;
+    return <StarToolbarButtonApiServer group={group} kind={kind} id={uid} />;
   }
 
-  return <StarToolbarButtonLegacy dashboard={props.dashboard} />;
+  return <StarToolbarButtonLegacy dashboard={dashboard} />;
 }
