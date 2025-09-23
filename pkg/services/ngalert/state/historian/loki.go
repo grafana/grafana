@@ -259,13 +259,6 @@ func (h RemoteLokiBackend) merge(res []lokiclient.Stream, folderUIDToFilter []st
 			pointers[minElStreamIdx]++
 			continue
 		}
-		line, err := jsonifyRow(minEl.V)
-		if err != nil {
-			h.log.Warn("a line was in an invalid format, continuing", "err", err, "line", minEl.V)
-			pointers[minElStreamIdx]++
-			continue
-		}
-
 		times = append(times, time.Unix(0, tsNano))
 		labels = append(labels, lblsJson)
 		lines = append(lines, json.RawMessage(entryBytes))
