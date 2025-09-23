@@ -47,7 +47,7 @@ func TestBleveSearchBackendFullNgramEnabled(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, backend)
 
-		t.Cleanup(backend.CloseAllIndexes)
+		t.Cleanup(backend.Stop)
 
 		return backend
 	}, &unitest.TestOptions{
@@ -96,7 +96,7 @@ func TestSearchBackendBenchmarkFullNgramEnabled(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 
-	t.Cleanup(backend.CloseAllIndexes)
+	t.Cleanup(backend.Stop)
 
 	unitest.BenchmarkSearchBackend(t, backend, opts)
 }

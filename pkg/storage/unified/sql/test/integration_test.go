@@ -139,7 +139,7 @@ func TestIntegrationSearchAndStorageFullNgramEnabled(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, search)
 
-	t.Cleanup(search.CloseAllIndexes)
+	t.Cleanup(search.Stop)
 
 	// Create a new resource backend
 	storage := newTestBackend(t, false, 0)

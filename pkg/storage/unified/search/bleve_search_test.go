@@ -285,7 +285,7 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, batchSize
 	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 
-	t.Cleanup(backend.CloseAllIndexes)
+	t.Cleanup(backend.Stop)
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 

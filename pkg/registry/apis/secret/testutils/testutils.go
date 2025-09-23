@@ -139,7 +139,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, secureValueValidator, secureValueMutator, keeperMetadataStorage, keeperService, nil)
 
-	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
+	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, nil)
 
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
 	require.NoError(t, err)

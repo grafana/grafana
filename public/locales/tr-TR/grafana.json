@@ -364,14 +364,6 @@
       "tooltip-assigned-role": "Bu kullanıcı oturum açtığında lisanslı bir rol atanacaktır"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "Ortak etiketleri gizle",
-      "show": {
-        "tooltip": "Ortak etiketleri göster"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Aktif zamanlamalar"
@@ -480,16 +472,16 @@
     "alert-instance-state-filter": {
       "state": "Durum"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "Etiketi kaldır"
     },
     "alert-label-dropdown": {
       "placeholder-select": "{{type}} ögesini seçin"
-    },
-    "alert-labels": {
-      "aria-label-labels": "Etiketler",
-      "common-labels-count_one": "+{{count}} ortak etiket",
-      "common-labels-count_other": "+{{count}} ortak etiket"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "Sessize alma, gruplandırma ve zamanlamalar (isteğe bağlı)",
@@ -9439,7 +9431,7 @@
       "label-signature": "İmza"
     },
     "description-enable-infinite-scrolling": "Deneysel. Günlük listesinin en altına kaydırarak daha fazla sonuç isteyin.",
-    "description-enable-syntax-highlighting": "Günlük satırlarının ilgili bölümlerini vurgulamak için önceden tanımlanmış bir sözdizimi renklendirme kuralı kullan",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "Son veya ilk günlük satırına atlamak için ekran kontrolleri ve günlük düzeyine göre filtreler",
     "fields": {
       "type": {
@@ -9711,14 +9703,14 @@
     },
     "name-common-labels": "Ortak etiketler",
     "name-deduplication": "Yinelenenleri kaldırma",
-    "name-details-mode": "Günlük Ayrıntıları panel modu",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "Satır içi",
       "label-sidebar": "Kenar çubuğu"
     },
     "name-enable-infinite-scrolling": "Sonsuz kaydırmayı etkinleştir",
     "name-enable-log-details": "Günlük ayrıntılarını etkinleştir",
-    "name-enable-syntax-highlighting": "Sözdizimi renklendirmesini etkinleştir",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "Yazı tipi boyutu",
     "name-order": "Sıralama",
     "name-prettify-json": "JSON'u iyileştir",
@@ -11012,7 +11004,6 @@
       "body-not-published": "Bu eklenti <2>grafana.com/plugins</2> adresinde yayımlanmadı ve katalog üzerinden yönetilemez.",
       "enterprise-plugin-info": "Bu eklenti yalnızca Grafana Cloud ve Grafana Enterprise'da kullanılabilir.",
       "learn-more": "Daha fazla bilgi edinin",
-      "no-valid-grafana-enterprise-license-detected": "Geçerli bir Grafana Enterprise lisansı bulunamadı.",
       "title-dev-alert": "Bu, eklentinin geliştirme sürümüdür ve kaldırılamaz.",
       "title-plugin-doesnt-support-version-grafana": "Bu eklenti Grafana sürümünüzü desteklemiyor.",
       "title-remote-plugins-unavailable": "Yükleme kontrolleri devre dışı bırakıldı çünkü Grafana sunucusu grafana.com adresine erişemiyor.",
@@ -11372,11 +11363,12 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Sorgunuzla eşleşen sonuç yok",
+      "partial-managed": "",
       "placeholder-search": "Ara",
       "all-resources-managed_one": "",
       "all-resources-managed_other": "",
-      "partial-managed_one": "",
-      "partial-managed_other": ""
+      "unmanaged-resources_one": "",
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // WebhookExtraBuilder is a function that returns an ExtraBuilder.
@@ -63,6 +64,7 @@ func ProvideWebhooksWithImages(
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
 	configProvider apiserver.RestConfigProvider,
+	registry prometheus.Registerer,
 ) *WebhookExtraBuilder {
 	urlProvider := func(_ string) string {
 		return cfg.AppURL
@@ -82,11 +84,12 @@ func ProvideWebhooksWithImages(
 				isPublic,
 				b,
 				screenshotRenderer,
+				registry,
 			)
 
-			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urlProvider)
+			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urlProvider, registry)
 			commenter := pullrequest.NewCommenter()
-			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
+			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
 
 			return NewWebhookExtraWithImages(
 				render,
@@ -98,7 +101,7 @@ func ProvideWebhooksWithImages(
 	}
 }
 
-func ProvideWebhooks(provisioningURL string) *WebhookExtraBuilder {
+func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer) *WebhookExtraBuilder {
 	urlProvider := func(_ string) string {
 		return provisioningURL
 	}
@@ -110,7 +113,7 @@ func ProvideWebhooks(provisioningURL string) *WebhookExtraBuilder {
 		urlProvider: urlProvider,
 		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
 			screenshotRenderer := pullrequest.NewNoOpRenderer()
-			webhook := NewWebhookConnector(isPublic, b, screenshotRenderer)
+			webhook := NewWebhookConnector(isPublic, b, screenshotRenderer, registry)
 
 			return NewWebhookExtra(webhook)
 		},

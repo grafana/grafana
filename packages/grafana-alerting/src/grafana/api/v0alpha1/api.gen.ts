@@ -1249,6 +1249,7 @@ export type ReceiverIntegration = {
   };
   type: string;
   uid?: string;
+  version: string;
 };
 export type ReceiverSpec = {
   integrations: ReceiverIntegration[];
