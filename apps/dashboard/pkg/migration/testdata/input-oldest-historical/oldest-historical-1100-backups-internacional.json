@@ -1,0 +1,704 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_REPORTING_DATASOURCE",
+      "label": "Reporting datasource",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "graph",
+      "name": "Graph",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "grafana-piechart-panel",
+      "name": "Pie Chart",
+      "version": "1.1.4"
+    },
+    {
+      "type": "panel",
+      "id": "grafana-clock-panel",
+      "name": "Clock",
+      "version": "0.0.8"
+    },
+    {
+      "type": "panel",
+      "id": "grafana-worldmap-panel",
+      "name": "Worldmap Panel",
+      "version": "0.0.16"
+    },
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "4.0.1"
+    },
+    {
+      "type": "datasource",
+      "id": "influxdb",
+      "name": "InfluxDB",
+      "version": "1.0.0"
+    }
+  ],
+  "id": null,
+  "title": "Backups Internacional",
+  "tags": [
+    "nas",
+    "monitor",
+    "storage"
+  ],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "sharedCrosshair": false,
+  "hideControls": false,
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {
+    "now": true,
+    "refresh_intervals": [
+      "6h",
+      "12h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "refresh": "6h",
+  "schemaVersion": 13,
+  "version": 69,
+  "links": [],
+  "gnetId": 1100,
+  "rows": [
+    {
+      "title": "INTERNATIONAL DATA SYNC STATUS",
+      "panels": [
+        {
+          "columns": [],
+          "datasource": "${DS_REPORTING_DATASOURCE}",
+          "editable": true,
+          "error": false,
+          "fontSize": "80%",
+          "id": 3,
+          "interval": ">2d",
+          "links": [],
+          "pageSize": null,
+          "scroll": true,
+          "showHeader": true,
+          "sort": {
+            "col": 0,
+            "desc": true
+          },
+          "span": 6,
+          "styles": [
+            {
+              "dateFormat": "YYYY-MM-DD",
+              "pattern": "Time",
+              "type": "date"
+            },
+            {
+              "colorMode": "cell",
+              "colors": [
+                "rgba(50, 172, 45, 0.97)",
+                "rgba(212, 28, 28, 0.8)",
+                "rgba(245, 54, 54, 0.9)"
+              ],
+              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "decimals": 1,
+              "pattern": "/.*/",
+              "thresholds": [
+                "0.5",
+                "1"
+              ],
+              "type": "number",
+              "unit": "none"
+            }
+          ],
+          "targets": [
+            {
+              "alias": "$tag_location",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "1d"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "location"
+                  ],
+                  "type": "tag"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "backupstatus",
+              "policy": "default",
+              "query": "SELECT max(\"roboerr\") FROM \"backupstatus\" WHERE \"scope\" = 'INT' AND $timeFilter GROUP BY time(2d), \"location\" fill(null)",
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "roboerr"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "max"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "scope",
+                  "operator": "=",
+                  "value": "INT"
+                }
+              ]
+            }
+          ],
+          "title": "Copy Status",
+          "transform": "timeseries_to_columns",
+          "type": "table"
+        },
+        {
+          "columns": [],
+          "datasource": "${DS_REPORTING_DATASOURCE}",
+          "editable": true,
+          "error": false,
+          "fontSize": "80%",
+          "id": 4,
+          "interval": ">2d",
+          "links": [],
+          "pageSize": null,
+          "scroll": true,
+          "showHeader": true,
+          "sort": {
+            "col": 0,
+            "desc": true
+          },
+          "span": 6,
+          "styles": [
+            {
+              "dateFormat": "YYYY-MM-DD",
+              "pattern": "Time",
+              "type": "date"
+            },
+            {
+              "colorMode": null,
+              "colors": [
+                "rgba(50, 172, 45, 0.97)",
+                "rgba(212, 132, 28, 0.8)",
+                "rgba(245, 54, 54, 0.9)"
+              ],
+              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "decimals": 2,
+              "pattern": "/.*/",
+              "thresholds": [
+                "0",
+                "23",
+                "30"
+              ],
+              "type": "number",
+              "unit": "h"
+            }
+          ],
+          "targets": [
+            {
+              "alias": "$tag_location",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "1d"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "location"
+                  ],
+                  "type": "tag"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "backupstatus",
+              "policy": "default",
+              "query": "SELECT max(\"duration\") FROM \"backupstatus\" WHERE \"scope\" = 'INT' AND $timeFilter GROUP BY time(2d), \"location\" fill(null)",
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "duration"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "max"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "scope",
+                  "operator": "=",
+                  "value": "INT"
+                }
+              ]
+            }
+          ],
+          "title": "Copy Duration",
+          "transform": "timeseries_to_columns",
+          "type": "table"
+        }
+      ],
+      "showTitle": true,
+      "titleSize": "h6",
+      "height": "250px",
+      "repeat": null,
+      "repeatRowId": null,
+      "repeatIteration": null,
+      "collapse": false
+    },
+    {
+      "title": "International Used Storage",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_REPORTING_DATASOURCE}",
+          "decimals": 0,
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {},
+          "id": 2,
+          "legend": {
+            "alignAsTable": true,
+            "avg": false,
+            "current": true,
+            "max": true,
+            "min": true,
+            "rightSide": true,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 3,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 9,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_location",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "policy": "default",
+              "query": "SELECT sum(\"used\") FROM \"quotausage\" WHERE \"scope\" = 'INT' AND $timeFilter GROUP BY time(1d), \"location\" fill(null)",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": []
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "value_type": "individual",
+            "sort": 0
+          },
+          "type": "graph",
+          "xaxis": {
+            "show": true,
+            "mode": "time",
+            "name": null,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "gbytes",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": false
+            }
+          ],
+          "thresholds": []
+        },
+        {
+          "aliasColors": {},
+          "cacheTimeout": null,
+          "datasource": "${DS_REPORTING_DATASOURCE}",
+          "editable": true,
+          "error": false,
+          "fontSize": "80%",
+          "format": "gbytes",
+          "hideTimeOverride": true,
+          "id": 5,
+          "interval": null,
+          "legend": {
+            "show": true,
+            "values": true
+          },
+          "legendType": "On graph",
+          "links": [],
+          "maxDataPoints": 3,
+          "nullPointMode": "connected",
+          "pieType": "pie",
+          "span": 3,
+          "strokeWidth": "1",
+          "targets": [
+            {
+              "alias": "$tag_location",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "location"
+                  ],
+                  "type": "tag"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "quotausage",
+              "policy": "default",
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "used"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "scope",
+                  "operator": "=",
+                  "value": "INT"
+                }
+              ]
+            }
+          ],
+          "timeFrom": "1w",
+          "title": "",
+          "type": "grafana-piechart-panel",
+          "valueName": "current",
+          "combine": {
+            "threshold": 0,
+            "label": "Others"
+          }
+        }
+      ],
+      "showTitle": true,
+      "titleSize": "h6",
+      "height": "250px",
+      "repeat": null,
+      "repeatRowId": null,
+      "repeatIteration": null,
+      "collapse": false
+    },
+    {
+      "title": "TIME ZONES",
+      "panels": [
+        {
+          "bgColor": null,
+          "clockType": "custom",
+          "countdownSettings": {
+            "endCountdownTime": "2016-06-07T14:19:00.000Z",
+            "endText": "00:00:00"
+          },
+          "dateSettings": {
+            "dateFormat": "YYYY-MM-DD",
+            "fontSize": "20px",
+            "fontWeight": "normal",
+            "showDate": false
+          },
+          "editable": true,
+          "error": false,
+          "id": 11,
+          "links": [],
+          "mode": "time",
+          "offsetFromUtc": "+5",
+          "offsetFromUtcMinutes": "+30",
+          "span": 4,
+          "timeSettings": {
+            "customFormat": "HH:mm",
+            "fontSize": "60px",
+            "fontWeight": "normal"
+          },
+          "title": "Bangalore",
+          "type": "grafana-clock-panel"
+        },
+        {
+          "bgColor": null,
+          "clockType": "custom",
+          "countdownSettings": {
+            "endCountdownTime": "2016-06-07T14:19:00.000Z",
+            "endText": "00:00:00"
+          },
+          "dateSettings": {
+            "dateFormat": "YYYY-MM-DD",
+            "fontSize": "20px",
+            "fontWeight": "normal",
+            "showDate": false
+          },
+          "editable": true,
+          "error": false,
+          "id": 12,
+          "links": [],
+          "mode": "time",
+          "offsetFromUtc": "+8",
+          "offsetFromUtcMinutes": null,
+          "span": 4,
+          "timeSettings": {
+            "customFormat": "HH:mm",
+            "fontSize": "60px",
+            "fontWeight": "normal"
+          },
+          "title": "China",
+          "type": "grafana-clock-panel"
+        },
+        {
+          "bgColor": null,
+          "clockType": "custom",
+          "countdownSettings": {
+            "endCountdownTime": "2016-06-07T14:19:00.000Z",
+            "endText": "00:00:00"
+          },
+          "dateSettings": {
+            "dateFormat": "YYYY-MM-DD",
+            "fontSize": "20px",
+            "fontWeight": "normal",
+            "showDate": false
+          },
+          "editable": true,
+          "error": false,
+          "id": 13,
+          "links": [],
+          "mode": "time",
+          "offsetFromUtc": "+9",
+          "offsetFromUtcMinutes": null,
+          "span": 4,
+          "timeSettings": {
+            "customFormat": "HH:mm",
+            "fontSize": "60px",
+            "fontWeight": "normal"
+          },
+          "title": "Korea",
+          "type": "grafana-clock-panel"
+        }
+      ],
+      "showTitle": true,
+      "titleSize": "h6",
+      "height": "100px",
+      "repeat": null,
+      "repeatRowId": null,
+      "repeatIteration": null,
+      "collapse": false
+    },
+    {
+      "title": "WORLD MAP LAST DATA SYNC STATUS",
+      "panels": [
+        {
+          "circleMaxSize": "10",
+          "circleMinSize": "10",
+          "colors": [
+            "rgba(22, 144, 21, 0.9)",
+            "rgba(179, 18, 18, 0.89)",
+            "rgba(34, 211, 27, 0)"
+          ],
+          "datasource": "${DS_REPORTING_DATASOURCE}",
+          "decimals": 0,
+          "editable": true,
+          "error": false,
+          "esMetric": "Count",
+          "height": "400",
+          "id": 14,
+          "initialZoom": "2",
+          "links": [],
+          "locationData": "countries",
+          "mapCenter": "custom",
+          "mapCenterLatitude": "30",
+          "mapCenterLongitude": "24",
+          "maxDataPoints": 1,
+          "showLegend": false,
+          "span": 12,
+          "targets": [
+            {
+              "alias": "$tag_country",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "country"
+                  ],
+                  "type": "tag"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "backupstatus",
+              "policy": "default",
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "roboerr"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": []
+            }
+          ],
+          "thresholds": "0.9,2",
+          "title": "",
+          "type": "grafana-worldmap-panel",
+          "unitPlural": "",
+          "unitSingle": "",
+          "unitSingular": "",
+          "valueName": "current",
+          "hideEmpty": false,
+          "hideZero": false,
+          "stickyLabels": false
+        }
+      ],
+      "showTitle": true,
+      "titleSize": "h6",
+      "height": "400px",
+      "repeat": null,
+      "repeatRowId": null,
+      "repeatIteration": null,
+      "collapse": false
+    }
+  ],
+  "description": "Status, duration and size of remote backups"
+}

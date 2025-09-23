@@ -1,0 +1,828 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROXY-NGINXACCESSLOG",
+      "label": "proxy-nginxAccessLog",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "elasticsearch",
+      "pluginName": "Elasticsearch"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "panel",
+      "id": "grafana-worldmap-panel",
+      "name": "Worldmap Panel",
+      "version": "0.0.16"
+    },
+    {
+      "type": "panel",
+      "id": "graph",
+      "name": "Graph",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    },
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "3.1.1"
+    },
+    {
+      "type": "datasource",
+      "id": "elasticsearch",
+      "name": "Elasticsearch",
+      "version": "3.0.0"
+    }
+  ],
+  "id": null,
+  "title": "51.com-\u57df\u540d\u65e5\u5fd7",
+  "tags": [
+    "51.com",
+    "\u8bbf\u95ee\u65e5\u5fd7"
+  ],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "hideControls": false,
+  "sharedCrosshair": false,
+  "rows": [
+    {
+      "collapse": false,
+      "editable": true,
+      "height": 281.1875,
+      "panels": [
+        {
+          "circleMaxSize": "15",
+          "circleMinSize": "1",
+          "colors": [
+            "rgba(245, 236, 236, 0.9)",
+            "rgba(132, 245, 12, 0.89)",
+            "rgba(215, 35, 35, 0.97)"
+          ],
+          "datasource": "${DS_PROXY-NGINXACCESSLOG}",
+          "decimals": 0,
+          "editable": true,
+          "error": false,
+          "esGeoPoint": "geoip.location",
+          "esLocationName": "geoip.city_name",
+          "esMetric": "Count",
+          "hideEmpty": false,
+          "hideZero": true,
+          "id": 18,
+          "initialZoom": 1,
+          "isNew": true,
+          "links": [],
+          "locationData": "geohash",
+          "mapCenter": "custom",
+          "mapCenterLatitude": "10",
+          "mapCenterLongitude": "5",
+          "maxDataPoints": 1,
+          "showLegend": true,
+          "span": 4.118774180388854,
+          "stickyLabels": false,
+          "targets": [
+            {
+              "bucketAggs": [
+                {
+                  "fake": true,
+                  "field": "geoip.city_name",
+                  "id": "3",
+                  "settings": {
+                    "order": "desc",
+                    "orderBy": "_term",
+                    "size": "0"
+                  },
+                  "type": "terms"
+                },
+                {
+                  "field": "geoip.location",
+                  "id": "2",
+                  "settings": {
+                    "precision": 7
+                  },
+                  "type": "geohash_grid"
+                }
+              ],
+              "dsType": "elasticsearch",
+              "metrics": [
+                {
+                  "field": "select field",
+                  "id": "1",
+                  "type": "count"
+                }
+              ],
+              "query": "server_name:$dm AND status:$status",
+              "refId": "A",
+              "timeField": "@timestamp"
+            }
+          ],
+          "thresholds": "500,10000",
+          "title": "$dm $status\u8bbf\u95ee\u5206\u5e03",
+          "transparent": true,
+          "type": "grafana-worldmap-panel",
+          "unitPlural": "\u4e2a",
+          "unitSingle": "",
+          "unitSingular": "\u4e2a",
+          "valueName": "total"
+        },
+        {
+          "aliasColors": {
+            "10.80.2.144": "#D683CE"
+          },
+          "bars": false,
+          "datasource": "${DS_PROXY-NGINXACCESSLOG}",
+          "decimals": 0,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "hideTimeOverride": false,
+          "id": 8,
+          "isNew": true,
+          "legend": {
+            "alignAsTable": true,
+            "avg": false,
+            "current": false,
+            "hideEmpty": false,
+            "hideZero": false,
+            "max": false,
+            "min": false,
+            "rightSide": true,
+            "show": true,
+            "sort": null,
+            "sortDesc": null,
+            "total": true,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "game.51.com BJVM-2-182",
+              "yaxis": 1
+            }
+          ],
+          "span": 7.881225819611146,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "bucketAggs": [
+                {
+                  "fake": true,
+                  "field": "server_ip",
+                  "id": "6",
+                  "settings": {
+                    "order": "desc",
+                    "orderBy": "_count",
+                    "size": "5"
+                  },
+                  "type": "terms"
+                },
+                {
+                  "field": "@timestamp",
+                  "id": "2",
+                  "settings": {
+                    "interval": "$inter",
+                    "min_doc_count": 0,
+                    "trimEdges": 0
+                  },
+                  "type": "date_histogram"
+                }
+              ],
+              "dsType": "elasticsearch",
+              "hide": false,
+              "metrics": [
+                {
+                  "field": "count",
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "sum"
+                }
+              ],
+              "query": "server_name:$dm",
+              "refId": "A",
+              "timeField": "@timestamp"
+            },
+            {
+              "bucketAggs": [
+                {
+                  "field": "@timestamp",
+                  "id": "2",
+                  "settings": {
+                    "interval": "$inter",
+                    "min_doc_count": 0,
+                    "trimEdges": 0
+                  },
+                  "type": "date_histogram"
+                }
+              ],
+              "dsType": "elasticsearch",
+              "hide": false,
+              "metrics": [
+                {
+                  "field": "count",
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "sum"
+                }
+              ],
+              "query": "server_name:$dm",
+              "refId": "B",
+              "timeField": "@timestamp"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "$dm",
+          "tooltip": {
+            "msResolution": true,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "show": true
+          },
+          "yaxes": [
+            {
+              "format": "none",
+              "label": "\u8bbf\u95ee\u91cf",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": 288,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_PROXY-NGINXACCESSLOG}",
+          "decimals": 0,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 16,
+          "isNew": true,
+          "legend": {
+            "alignAsTable": true,
+            "avg": false,
+            "current": false,
+            "hideEmpty": false,
+            "hideZero": false,
+            "max": false,
+            "min": false,
+            "rightSide": true,
+            "show": true,
+            "sortDesc": false,
+            "total": true,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "game.51.com BJVM-2-182",
+              "yaxis": 1
+            }
+          ],
+          "span": 8.904364946380696,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "bucketAggs": [
+                {
+                  "fake": true,
+                  "field": "status",
+                  "id": "6",
+                  "settings": {
+                    "order": "desc",
+                    "orderBy": "_count",
+                    "size": "0"
+                  },
+                  "type": "terms"
+                },
+                {
+                  "field": "@timestamp",
+                  "id": "2",
+                  "settings": {
+                    "interval": "$inter",
+                    "min_doc_count": 0,
+                    "trimEdges": 0
+                  },
+                  "type": "date_histogram"
+                }
+              ],
+              "dsType": "elasticsearch",
+              "metrics": [
+                {
+                  "field": "count",
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "sum"
+                }
+              ],
+              "query": "server_name:$dm",
+              "refId": "A",
+              "timeField": "@timestamp"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "$dm\u72b6\u6001\u7801\u66f2\u7ebf",
+          "tooltip": {
+            "msResolution": true,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "show": true
+          },
+          "yaxes": [
+            {
+              "format": "none",
+              "label": "\u72b6\u6001\u7801\u6570\u91cf",
+              "logBase": 10,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "columns": [
+            {
+              "text": "clientip",
+              "value": "clientip"
+            },
+            {
+              "text": "Sum",
+              "value": "Sum"
+            },
+            {
+              "text": "geoip.city_name",
+              "value": "geoip.city_name"
+            }
+          ],
+          "datasource": "${DS_PROXY-NGINXACCESSLOG}",
+          "editable": true,
+          "error": false,
+          "fontSize": "100%",
+          "id": 17,
+          "isNew": true,
+          "links": [],
+          "pageSize": null,
+          "scroll": true,
+          "showHeader": true,
+          "sort": {
+            "col": 1,
+            "desc": true
+          },
+          "span": 3.0956350536193042,
+          "styles": [],
+          "targets": [
+            {
+              "bucketAggs": [
+                {
+                  "fake": true,
+                  "field": "geoip.city_name",
+                  "id": "3",
+                  "settings": {
+                    "order": "desc",
+                    "orderBy": "_count",
+                    "size": "10"
+                  },
+                  "type": "terms"
+                },
+                {
+                  "field": "clientip",
+                  "id": "2",
+                  "settings": {
+                    "order": "desc",
+                    "orderBy": "_count",
+                    "size": "10"
+                  },
+                  "type": "terms"
+                }
+              ],
+              "dsType": "elasticsearch",
+              "metrics": [
+                {
+                  "field": "count",
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "sum"
+                }
+              ],
+              "query": "server_name:$dm AND status:$status",
+              "refId": "A",
+              "timeField": "@timestamp"
+            }
+          ],
+          "title": "$dm $status\u72b6\u6001\u7801\u5ba2\u6237\u7aefIP\u524d10",
+          "transform": "json",
+          "type": "table"
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": 498.125,
+      "panels": [
+        {
+          "columns": [
+            {
+              "text": "@timestamp",
+              "value": "@timestamp"
+            },
+            {
+              "text": "server_name",
+              "value": "server_name"
+            },
+            {
+              "text": "status",
+              "value": "status"
+            },
+            {
+              "text": "server_ip",
+              "value": "server_ip"
+            },
+            {
+              "text": "clientip",
+              "value": "clientip"
+            },
+            {
+              "text": "geoip.city_name",
+              "value": "geoip.city_name"
+            },
+            {
+              "text": "request",
+              "value": "request"
+            },
+            {
+              "text": "referrer",
+              "value": "referrer"
+            }
+          ],
+          "datasource": "${DS_PROXY-NGINXACCESSLOG}",
+          "editable": true,
+          "error": false,
+          "fontSize": "100%",
+          "id": 15,
+          "isNew": true,
+          "links": [],
+          "pageSize": 100,
+          "scroll": true,
+          "showHeader": true,
+          "sort": {
+            "col": 0,
+            "desc": true
+          },
+          "span": 12,
+          "styles": [
+            {
+              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "pattern": "/@time.*/",
+              "type": "date"
+            }
+          ],
+          "targets": [
+            {
+              "bucketAggs": [],
+              "dsType": "elasticsearch",
+              "metrics": [
+                {
+                  "field": "select field",
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "raw_document"
+                }
+              ],
+              "query": "server_name:$dm AND status:$status AND server_ip:$dh",
+              "refId": "A",
+              "timeField": "@timestamp"
+            }
+          ],
+          "title": "\u72b6\u6001\u7801$status",
+          "transform": "json",
+          "type": "table"
+        }
+      ],
+      "title": "New row"
+    }
+  ],
+  "time": {
+    "from": "now-1d/d",
+    "to": "now-1d/d"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": "${DS_PROXY-NGINXACCESSLOG}",
+        "hide": 0,
+        "includeAll": true,
+        "label": "\u57df\u540d",
+        "multi": false,
+        "name": "dm",
+        "options": [],
+        "query": "{\"find\": \"terms\", \"field\": \"server_name\"}",
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "current": {},
+        "datasource": "${DS_PROXY-NGINXACCESSLOG}",
+        "hide": 0,
+        "includeAll": true,
+        "label": "\u670d\u52a1\u5668IP",
+        "multi": true,
+        "name": "dh",
+        "options": [],
+        "query": "{\"find\": \"terms\", \"field\": \"server_ip\", \"query\": \"server_name:$dm\"}",
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "tags": [],
+          "text": "200",
+          "value": [
+            "200"
+          ]
+        },
+        "datasource": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "\u72b6\u6001\u7801",
+        "multi": true,
+        "name": "status",
+        "options": [
+          {
+            "selected": true,
+            "text": "200",
+            "value": "200"
+          },
+          {
+            "selected": false,
+            "text": "301",
+            "value": "301"
+          },
+          {
+            "selected": false,
+            "text": "302",
+            "value": "302"
+          },
+          {
+            "selected": false,
+            "text": "403",
+            "value": "403"
+          },
+          {
+            "selected": false,
+            "text": "404",
+            "value": "404"
+          },
+          {
+            "selected": false,
+            "text": "499",
+            "value": "499"
+          },
+          {
+            "selected": false,
+            "text": "500",
+            "value": "500"
+          },
+          {
+            "selected": false,
+            "text": "502",
+            "value": "502"
+          },
+          {
+            "selected": false,
+            "text": "503",
+            "value": "503"
+          },
+          {
+            "selected": false,
+            "text": "504",
+            "value": "504"
+          }
+        ],
+        "query": "200,301,302,403,404,499,500,502,503,504",
+        "refresh": 0,
+        "type": "custom"
+      },
+      {
+        "auto": true,
+        "auto_count": 100,
+        "auto_min": "10s",
+        "current": {
+          "selected": true,
+          "text": "auto",
+          "value": "$__auto_interval"
+        },
+        "datasource": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "\u65f6\u95f4\u95f4\u9694",
+        "multi": false,
+        "name": "inter",
+        "options": [
+          {
+            "selected": true,
+            "text": "auto",
+            "value": "$__auto_interval"
+          },
+          {
+            "selected": false,
+            "text": "1s",
+            "value": "1s"
+          },
+          {
+            "selected": false,
+            "text": "5s",
+            "value": "5s"
+          },
+          {
+            "selected": false,
+            "text": "15s",
+            "value": "15s"
+          },
+          {
+            "selected": false,
+            "text": "30s",
+            "value": "30s"
+          },
+          {
+            "selected": false,
+            "text": "45s",
+            "value": "45s"
+          },
+          {
+            "selected": false,
+            "text": "1m",
+            "value": "1m"
+          },
+          {
+            "selected": false,
+            "text": "5s",
+            "value": "5s"
+          },
+          {
+            "selected": false,
+            "text": "10m",
+            "value": "10m"
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "30m"
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "1h"
+          }
+        ],
+        "query": "1s,5s,15s,30s,45s,1m,5s,10m,30m,1h",
+        "refresh": 0,
+        "type": "interval"
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "refresh": false,
+  "schemaVersion": 12,
+  "version": 32,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [
+        "\u8bbf\u95ee\u65e5\u5fd7"
+      ],
+      "title": "\u70b9\u6211\u67e5\u770b\u8bbf\u95ee\u65e5\u5fd7",
+      "type": "dashboards"
+    },
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [
+        "\u4e1a\u52a1\u65e5\u5fd7"
+      ],
+      "title": "\u70b9\u6211\u67e5\u770b\u4e1a\u52a1\u65e5\u5fd7",
+      "type": "dashboards"
+    },
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [
+        "\u76d1\u63a7"
+      ],
+      "title": "\u70b9\u6211\u67e5\u770b\u76d1\u63a7",
+      "type": "dashboards"
+    }
+  ],
+  "gnetId": 1013
+}
