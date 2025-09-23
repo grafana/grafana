@@ -115,9 +115,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         throw new Error(`Trying to expand node at id ${scopeNodeId} that is not expandable`);
       }
 
-      // Check if this is first expansion or filtering within existing children
-      const haveChildrenLoaded = nodeToExpand.children && Object.keys(nodeToExpand.children).length > 0;
-
       if (!nodeToExpand.expanded || nodeToExpand.query !== query) {
         const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
           treeNode.expanded = true;
@@ -127,7 +124,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         this.updateState({ tree: newTree });
 
         // For API call: only pass query if filtering within existing children
-        await this.loadNodeChildren(path, nodeToExpand, query, haveChildrenLoaded);
+        await this.loadNodeChildren(path, nodeToExpand, query);
       }
     } catch (error) {
       throw error;
