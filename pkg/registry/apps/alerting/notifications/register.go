@@ -13,6 +13,7 @@ import (
 	notificationsApp "github.com/grafana/grafana/apps/alerting/notifications/pkg/app"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/receiver"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/receiver/receivertesting"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/templategroup"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/timeinterval"
@@ -37,12 +38,18 @@ func RegisterApp(
 	if ng.IsDisabled() {
 		return nil
 	}
+
+	customCfg := notificationsApp.Config{
+		ReceiverTestingHandler: receivertesting.New(ng),
+	}
+
 	appCfg := &runner.AppBuilderConfig{
 		Authorizer:               getAuthorizer(ng.Api.AccessControl),
 		LegacyStorageGetter:      getLegacyStorage(request.GetNamespaceMapper(cfg), ng),
 		OpenAPIDefGetter:         v0alpha1.GetOpenAPIDefinitions,
 		ManagedKinds:             notificationsResource.GetKinds(),
 		AllowedV0Alpha1Resources: []string{builder.AllResourcesAllowed},
+		CustomConfig:             &customCfg,
 	}
 
 	return &AlertingNotificationsAppProvider{
@@ -62,6 +69,8 @@ func getAuthorizer(authz accesscontrol.AccessControl) authorizer.Authorizer {
 				return receiver.Authorize(ctx, ac.NewReceiverAccess[*ngmodels.Receiver](authz, false), a)
 			case routingtree.ResourceInfo.GroupResource().Resource:
 				return routingtree.Authorize(ctx, authz, a)
+			case v0alpha1.ReceiverTestingResource:
+				return receivertesting.Authorize(ctx, authz, a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		})

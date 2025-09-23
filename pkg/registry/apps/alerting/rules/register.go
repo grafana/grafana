@@ -75,7 +75,7 @@ func (a *AlertingRulesAppInstaller) GetAuthorizer() authorizer.Authorizer {
 			case alertrule.ResourceInfo.GroupResource().Resource:
 				return alertrule.Authorize(ctx, authz, a)
 			}
-			return authorizer.DecisionNoOpinion, "", nil
+			return authorizer.DecisionAllow, "", nil
 		},
 	)
 }

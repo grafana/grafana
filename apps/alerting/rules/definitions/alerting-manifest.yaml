@@ -361,4 +361,21 @@ spec:
       - spec.title
       - spec.paused
     name: v0alpha1
+    routes:
+      namespaced:
+        /fooo:
+          get:
+            operationId: GetFooo
+            responses:
+              default:
+                content:
+                  application/json:
+                    schema:
+                      properties:
+                        foo:
+                          type: string
+                      required:
+                      - foo
+                      type: object
+                description: Default OK response
     served: true

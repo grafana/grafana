@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	v0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
 )
@@ -57,6 +58,17 @@ var appManifestData = app.ManifestData{
 					Conversion: false,
 					SelectableFields: []string{
 						"spec.name",
+					},
+				},
+			},
+			Routes: app.ManifestVersionRoutes{
+				Namespaced: map[string]spec3.PathProps{
+					"/" + v0alpha1.ReceiverTestingResource: {
+						Post: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+								Description: "Test a receiver",
+							},
+						},
 					},
 				},
 			},

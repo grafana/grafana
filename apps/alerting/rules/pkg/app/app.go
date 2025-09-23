@@ -27,6 +27,18 @@ func New(cfg app.Config) (app.App, error) {
 			},
 		},
 		ManagedKinds: managedKinds,
+		VersionedCustomRoutes: map[string]simple.AppVersionRouteHandlers{
+			"v0alpha1": {
+				simple.AppVersionRoute{
+					Namespaced: true,
+					Path:       "fooo",
+					Method:     "GET",
+				}: func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
+					writer.WriteHeader(444)
+					return nil
+				},
+			},
+		},
 	}
 
 	a, err := simple.NewApp(c)
