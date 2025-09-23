@@ -1,4 +1,3 @@
-import { css, cx } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 import { useToggle } from 'react-use';
 import { mergeMap } from 'rxjs';
@@ -11,12 +10,11 @@ import {
   getFrameMatchers,
   transformDataFrame,
   DataFrame,
-  GrafanaTheme2,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
-import { ConfirmModal, useStyles2 } from '@grafana/ui';
+import { ConfirmModal } from '@grafana/ui';
 import {
   QueryOperationAction,
   QueryOperationToggleAction,
@@ -166,7 +164,7 @@ export const TransformationOperationRow = ({
         index={index}
         transformation={configs[index].transformation}
         transformations={configs.map((config) => config.transformation)}
-        transformationTypeName={uiConfig.name}
+        transformationTypeName={`${index + 1} - ${uiConfig.name}`}
         disabled
         onChange={onChange}
       />

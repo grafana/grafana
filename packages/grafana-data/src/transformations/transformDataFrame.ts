@@ -23,7 +23,7 @@ const getOperator =
     }
 
     const defaultOptions = info.transformation.defaultOptions ?? {};
-    const options = { ...defaultOptions, ...config.options, refId: config.refId };
+    const options = { ...defaultOptions, refId: config.refId, ...config.options };
 
     // when running within Scenes, we can skip var interpolation, since it's already handled upstream
     const isScenes = window.__grafanaSceneContext != null;
