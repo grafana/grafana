@@ -175,7 +175,7 @@ func TestCanSearchByTitle(t *testing.T) {
 
 				// word that doesn't exist
 				checkSearchQuery(t, index, newTestQuery("cats"), nil)
-				// string shorter than 3 chars (ngam min)
+				// string shorter than 3 chars (ngram min)
 				checkSearchQuery(t, index, newTestQuery("ma"), nil)
 				// substring that doesn't exist
 				checkSearchQuery(t, index, newTestQuery("A01"), nil)
