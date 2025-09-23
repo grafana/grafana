@@ -3371,6 +3371,20 @@
     },
     {
       "metadata": {
+        "name": "starsFromAPIServer",
+        "resourceVersion": "1758276055065",
+        "creationTimestamp": "2025-09-19T10:00:55Z"
+      },
+      "spec": {
+        "description": "populate star status from apiserver",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "storage",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2022-03-17T17:19:23Z"
