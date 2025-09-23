@@ -310,6 +310,7 @@
 /devenv/docker/blocks/webdav/ @grafana/alerting-backend
 /devenv/docker/buildcontainer/ @bergquist
 /devenv/docker/compose_header.yml @grafana/grafana-backend-services-squad
+/devenv/docker/compose_volume_section.yml @grafana/grafana-backend-services-squad
 /devenv/docker/debtest/ @bergquist
 /devenv/docker/ha-test-unified-alerting/ @grafana/alerting-backend
 /devenv/docker/ha_test/ @grafana/grafana-backend-services-squad
@@ -926,6 +927,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/inspector/ @grafana/dashboards-squad
 /public/app/features/logs/ @grafana/observability-logs
 /public/app/features/live/ @grafana/dashboards-squad
+/public/app/features/stars/ @grafana/grafana-search-navigate-organise
 /public/app/features/apiserver/ @grafana/grafana-app-platform-squad
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
 /public/app/features/migrate-to-cloud @grafana/grafana-operator-experience-squad
