@@ -61,7 +61,7 @@ export function getDefaultOTelDisplayFormat() {
 const OTEL_RESOURCE_ATTRS_REGEX =
   /^(aws_|cloud_|cloudfoundry_|container_|deployment_|faas_|gcp_|host_|k8s_|os_|process_|service_|telemetry_)/;
 const OTEL_LOG_FIELDS_REGEX =
-  /^(flags|observed_timestamp|scope_name|severity_number|severity_text|span_id|trace_id|detected_level)$/;
+  /^(flags|observed_timestamp|severity_number|severity_text|span_id|trace_id|detected_level)$/;
 
 export const LOG_LINE_ATTRIBUTES_FIELD_NAME = '___OTEL_LOG_ATTRIBUTES___';
 
