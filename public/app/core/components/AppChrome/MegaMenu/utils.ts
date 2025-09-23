@@ -127,14 +127,12 @@ export const getActiveItem = (
   return undefined;
 };
 
-// @PERCONA
-// Builds "edition/update" links for the Help menu.
 export function getEditionAndUpdateLinks(): NavModelItem[] {
   const { buildInfo, licenseInfo } = config;
   const stateInfo = licenseInfo.stateInfo ? ` (${licenseInfo.stateInfo})` : '';
   const links: NavModelItem[] = [];
 
-
+// @PERCONA
   if (licenseInfo.licenseUrl === '/graph/admin/upgrading') {
     links.push({
       target: '_blank',
