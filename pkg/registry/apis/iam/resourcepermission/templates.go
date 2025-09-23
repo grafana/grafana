@@ -23,7 +23,6 @@ var (
 	roleInsertTplt                      = mustTemplate("role_insert.sql")
 	assignmentInsertTplt                = mustTemplate("assignment_insert.sql")
 	permissionInsertTplt                = mustTemplate("permission_insert.sql")
-	permissionRemoveTplt                = mustTemplate("permission_remove.sql")
 	pageQueryTplt                       = mustTemplate("page_query.sql")
 	latestUpdateTplt                    = mustTemplate("latest_update_query.sql")
 )
@@ -34,8 +33,6 @@ func mustTemplate(filename string) *template.Template {
 	}
 	panic(fmt.Sprintf("template file not found: %s", filename))
 }
-
-// List
 
 type pageQueryTemplate struct {
 	sqltemplate.SQLTemplate
@@ -140,8 +137,6 @@ func buildListResourcePermissionsQueryFromTemplate(dbHelper *legacysql.LegacyDat
 	return rawQuery, req.GetArgs(), nil
 }
 
-// Create
-
 type insertRoleTemplate struct {
 	sqltemplate.SQLTemplate
 	RoleTable string
@@ -235,47 +230,13 @@ func buildInsertPermissionQuery(dbHelper *legacysql.LegacyDatabaseHelper, roleID
 	return rawQuery, req.GetArgs(), nil
 }
 
-// Update
-
-type removePermissionTemplate struct {
-	sqltemplate.SQLTemplate
-	PermissionTable string
-	RoleTable       string
-	Scope           string
-	Action          string
-	OrgID           int64
-	RoleName        string
-}
-
-func (t removePermissionTemplate) Validate() error {
-	return nil
-}
-
-func buildRemovePermissionQuery(dbHelper *legacysql.LegacyDatabaseHelper, scope, action, roleName string, orgID int64) (string, []any, error) {
-	req := removePermissionTemplate{
-		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
-		PermissionTable: dbHelper.Table("permission"),
-		RoleTable:       dbHelper.Table("role"),
-		Scope:           scope,
-		Action:          action,
-		OrgID:           orgID,
-		RoleName:        roleName,
-	}
-	rawQuery, err := sqltemplate.Execute(permissionRemoveTplt, req)
-	if err != nil {
-		return "", nil, fmt.Errorf("rendering sql template: %w", err)
-	}
-	return rawQuery, req.GetArgs(), nil
-}
-
-// Delete
-
 type deleteResourcePermissionsQueryTemplate struct {
 	sqltemplate.SQLTemplate
 	Query              *DeleteResourcePermissionsQuery
 	PermissionTable    string
 	RoleTable          string
 	ManagedRolePattern string
+	RoleName           string
 }
 
 func (r deleteResourcePermissionsQueryTemplate) Validate() error {
@@ -289,6 +250,10 @@ func buildDeleteResourcePermissionsQueryFromTemplate(sql *legacysql.LegacyDataba
 		PermissionTable:    sql.Table("permission"),
 		RoleTable:          sql.Table("role"),
 		ManagedRolePattern: "managed:%",
+	}
+
+	if query.RoleName != "" {
+		req.RoleName = query.RoleName
 	}
 
 	rawQuery, err := sqltemplate.Execute(resourcePermissionDeletionQueryTplt, req)

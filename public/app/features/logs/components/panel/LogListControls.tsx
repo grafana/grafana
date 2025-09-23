@@ -27,6 +27,7 @@ import { ScrollToLogsEvent } from './virtualization';
 type Props = {
   eventBus: EventBus;
   visualisationType?: LogsVisualisationType;
+  logLevels?: LogLevel[];
 };
 
 const DEDUP_OPTIONS = [
@@ -46,7 +47,7 @@ const FILTER_LEVELS: LogLevel[] = [
   LogLevel.unknown,
 ];
 
-export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props) => {
+export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisationType = 'logs' }: Props) => {
   const {
     app,
     controlsExpanded,
@@ -56,6 +57,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
     fontSize,
     forceEscape,
     hasUnescapedContent,
+    logOptionsStorageKey,
     prettifyJSON,
     setControlsExpanded,
     setDedupStrategy,
@@ -73,7 +75,6 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
     sortOrder,
     syntaxHighlighting,
     wrapLogMessage,
-    logOptionsStorageKey,
   } = useLogListContext();
   const { hideSearch, searchVisible, showSearch } = useLogListSearchContext();
 
@@ -209,7 +210,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
           label={t('logs.logs-controls.display-level-all', 'All levels')}
           onClick={() => onFilterLevelClick()}
         />
-        {FILTER_LEVELS.map((level) => (
+        {logLevels.map((level) => (
           <Menu.Item
             key={level}
             className={filterLevels.includes(level) ? styles.menuItemActive : undefined}
@@ -219,7 +220,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
         ))}
       </Menu>
     ),
-    [filterLevels, onFilterLevelClick, styles.menuItemActive]
+    [filterLevels, logLevels, onFilterLevelClick, styles.menuItemActive]
   );
 
   const downloadMenu = useMemo(

@@ -19,7 +19,6 @@ import (
 	"k8s.io/client-go/rest"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -43,7 +42,7 @@ func TestIntegrationFolderTree(t *testing.T) {
 	}
 
 	modes := []grafanarest.DualWriterMode{
-		// grafanarest.Mode1, (nothing new tested)
+		// grafanarest.Mode1, (nothing new tested in mode 0 or 1)
 		grafanarest.Mode2, // write both, read legacy
 		grafanarest.Mode3, // write both, read unified
 		grafanarest.Mode4,
@@ -51,7 +50,7 @@ func TestIntegrationFolderTree(t *testing.T) {
 	}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
-			flags := []string{featuremgmt.FlagManagedDualWriter}
+			flags := []string{}
 			if mode >= grafanarest.Mode3 { // make sure modes 0-3 work without it
 				flags = append(flags, featuremgmt.FlagUnifiedStorageSearch)
 			}
@@ -61,12 +60,13 @@ func TestIntegrationFolderTree(t *testing.T) {
 				APIServerStorageType: "unified",
 				EnableFeatureToggles: flags,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					foldersV1.RESOURCEGROUP: {
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: mode,
+					},
+					"folders.folder.grafana.app": {
 						DualWriterMode: mode,
 					},
 				},
-				// We set it to 1 here, so we always get forced pagination based on the response size.
-				UnifiedStorageMaxPageSizeBytes: 1,
 			})
 			defer helper.Shutdown()
 
@@ -209,6 +209,13 @@ func (f *FolderDefinition) CreateWithLegacyAPI(t *testing.T, h *apis.K8sTestHelp
 			require.NoError(t, result.Error(), f.Name)
 			require.Equal(t, int(http.StatusOK), statusCode, f.Name)
 		}
+
+		// Now check that we could get the folder
+		result = client.Get().AbsPath("api", "folders", f.Name).
+			Do(context.Background()).
+			StatusCode(&statusCode)
+		require.NoErrorf(t, result.Error(), "get folder after create: %s", f.Name)
+		require.Equal(t, int(http.StatusOK), statusCode, f.Name)
 	}
 
 	for _, child := range f.Children {
