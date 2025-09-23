@@ -288,7 +288,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       displayedFields = Object.values(panelState?.logs?.displayedFields);
     }
     setDisplayedFields(displayedFields);
-  }, [panelState?.logs?.displayedFields]);
+    // Run once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useUnmount(() => {
     if (flipOrderTimer) {
