@@ -81,6 +81,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		healthChecker,
 		statusPatcher,
 		deps.Registerer,
+		tracer,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository controller: %w", err)
