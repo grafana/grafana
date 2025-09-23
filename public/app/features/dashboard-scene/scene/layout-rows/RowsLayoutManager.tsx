@@ -76,6 +76,9 @@ function ConvertMixedGridsModal({
         )}
       </p>
       <Modal.ButtonRow>
+        <Button variant="secondary" fill="outline" onClick={onDismiss}>
+          {t('dashboard.rows-layout.cancel', 'Cancel')}
+        </Button>
         {options.map((opt) => (
           <Button
             icon={opt.icon}
@@ -89,9 +92,6 @@ function ConvertMixedGridsModal({
             {t('dashboard.rows-layout.convert-to', 'Convert to {{name}}', { name: opt.name })}
           </Button>
         ))}
-        <Button variant="secondary" fill="outline" onClick={onDismiss}>
-          {t('dashboard.rows-layout.cancel', 'Cancel')}
-        </Button>
       </Modal.ButtonRow>
     </Modal>
   );
@@ -315,28 +315,35 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     }
 
     this.setState({ rows: [firstRow] });
-    this.removeRow(firstRow);
+    this.removeRow(firstRow, true);
   }
 
-  public removeRow(row: RowItem) {
+  public removeRow(row: RowItem, skipUndo?: boolean) {
     // When removing last row replace ourselves with the inner row layout
     if (this.shouldUngroup()) {
-      ungroupLayout(this, row.state.layout);
+      ungroupLayout(this, row.state.layout, skipUndo);
       return;
     }
 
     const indexOfRowToRemove = this.state.rows.findIndex((r) => r === row);
 
-    dashboardEditActions.removeElement({
-      removedObject: row,
-      source: this,
-      perform: () => this.setState({ rows: this.state.rows.filter((r) => r !== row) }),
-      undo: () => {
-        const rows = [...this.state.rows];
-        rows.splice(indexOfRowToRemove, 0, row);
-        this.setState({ rows });
-      },
-    });
+    const perform = () => this.setState({ rows: this.state.rows.filter((r) => r !== row) });
+    const undo = () => {
+      const rows = [...this.state.rows];
+      rows.splice(indexOfRowToRemove, 0, row);
+      this.setState({ rows });
+    };
+
+    if (skipUndo) {
+      perform();
+    } else {
+      dashboardEditActions.removeElement({
+        removedObject: row,
+        source: this,
+        perform,
+        undo,
+      });
+    }
   }
 
   public moveRow(_rowKey: string, fromIndex: number, toIndex: number) {
