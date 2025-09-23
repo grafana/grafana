@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { ManagerKind } from 'app/features/apiserver/types';
+import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { FolderDTO } from 'app/types/folders';
 
 import { mockFolderDTO } from '../fixtures/folder.fixture';
@@ -13,7 +14,6 @@ jest.mock('app/features/provisioning/hooks/useIsProvisionedInstance', () => ({
   useIsProvisionedInstance: jest.fn(),
 }));
 
-import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 const mockUseIsProvisionedInstance = useIsProvisionedInstance as jest.MockedFunction<typeof useIsProvisionedInstance>;
 
 const mockParentFolder = mockFolderDTO();
