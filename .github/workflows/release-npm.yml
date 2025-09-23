@@ -83,14 +83,17 @@ jobs:
           echo "NPM_TAG=$TAG" >> "$GITHUB_OUTPUT"
         shell: bash
 
-      - name: Setup Node
-        uses: ./.github/actions/setup-node
-
       - name: Checkout build commit
         uses: actions/checkout@v4
         with:
           persist-credentials: false
           ref: ${{ inputs.grafana_commit }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+          cache-dependency-path: 'yarn.lock'
 
       # Trusted Publishing is only available in npm v11.5.1 and later
       - name: Update npm
@@ -145,5 +148,3 @@ jobs:
           persist-credentials: false
 
       # TODO: tag the given release with nightly
-
-
