@@ -743,21 +743,15 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderIds ...string) error {
-	ns, err := request.NamespaceInfoFrom(ctx, false)
-	if err != nil {
-		return err
-	}
-	folderClient := b.folderClientProvider.GetOrCreateHandler(ns.Value)
-
 	for _, folderId := range folderIds {
-		resp, err := folderClient.Get(ctx, folderId, ns.OrgID, metav1.GetOptions{}, "access")
+		resp, err := b.folderClient.Get(ctx, folderId, user.GetOrgID(), metav1.GetOptions{}, "access")
 		if err != nil {
 			return dashboards.ErrFolderAccessDenied
 		}
 		var accessInfo folders.FolderAccessInfo
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(resp.Object, &accessInfo)
 		if err != nil {
-			logging.FromContext(ctx).Error("Failed to convert folder access response", "error", err)
+			b.log.Error("Failed to convert folder access response", "error", err)
 			return dashboards.ErrFolderAccessDenied
 		}
 
