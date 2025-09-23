@@ -93,6 +93,32 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 			continue
 		}
 
+		// show "investigations" menu only if enabled in the plugin settings
+		if plugin.ID == "grafana-assistant-app" && include.Name == "Investigations" {
+			ps, err := s.pluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
+				PluginID: plugin.ID,
+				OrgID:    c.GetOrgID(),
+			})
+			if err != nil {
+				continue
+			}
+
+			loopData, exists := ps.JSONData["loop"]
+			if !exists {
+				continue
+			}
+
+			loopConfig, ok := loopData.(map[string]any)
+			if !ok {
+				continue
+			}
+
+			enabled, ok := loopConfig["enabled"].(bool)
+			if !ok || !enabled {
+				continue
+			}
+		}
+
 		if include.Type == "page" {
 			link := &navtree.NavLink{
 				Text:     include.Name,
