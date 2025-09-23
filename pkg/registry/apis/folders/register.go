@@ -47,28 +47,21 @@ var resourceInfo = folders.FolderResourceInfo
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
-	features             featuremgmt.FeatureToggles
-	namespacer           request.NamespaceMapper
-	folderSvc            folder.LegacyService
-	folderPermissionsSvc accesscontrol.FolderPermissionsService
-	acService            accesscontrol.Service
-	ac                   accesscontrol.AccessControl
-	storage              grafanarest.Storage
-	permissionStore      reconcilers.PermissionStore
-	accessClient         authlib.AccessClient
-
-	authorizer authorizer.Authorizer
-	parents    parentsGetter
-
+	features            featuremgmt.FeatureToggles
+	namespacer          request.NamespaceMapper
+	storage             grafanarest.Storage
+	permissionStore     reconcilers.PermissionStore
+	authorizer          authorizer.Authorizer
+	accessClient        authlib.AccessClient
+	parents             parentsGetter
 	searcher            resourcepb.ResourceIndexClient
 	permissionsOnCreate bool
 
 	// Legacy services -- these will not exist in the MT environment
-	folderSvc              folder.LegacyService
-	resourcePermissionsSvc *dynamic.NamespaceableResourceInterface
-	folderPermissionsSvc   accesscontrol.FolderPermissionsService // TODO: Remove this once kubernetesAuthzResourcePermissionApis is removed and the frontend is calling /apis directly to create root level folders
-	acService              accesscontrol.Service
-	ac                     accesscontrol.AccessControl
+	folderSvc            folder.LegacyService
+	folderPermissionsSvc accesscontrol.FolderPermissionsService
+	acService            accesscontrol.Service
+	ac                   accesscontrol.AccessControl
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
@@ -104,7 +97,6 @@ func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, fe
 		features:        features,
 		authorizer:      newMultiTenantAuthorizer(ac),
 		searcher:        searcher,
-		ignoreLegacy:    true,
 		permissionStore: reconcilers.NewZanzanaPermissionStore(zanzanaClient),
 	}
 }
@@ -148,34 +140,6 @@ func (b *FolderAPIBuilder) AllowedV0Alpha1Resources() []string {
 }
 
 func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	scheme := opts.Scheme
-	optsGetter := opts.OptsGetter
-	dualWriteBuilder := opts.DualWriteBuilder
-	storage := map[string]rest.Storage{}
-
-	if b.ignoreLegacy {
-		opts.StorageOptsRegister(resourceInfo.GroupResource(), apistore.StorageOptions{
-			EnableFolderSupport:         true,
-			RequireDeprecatedInternalID: true})
-
-		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
-		if err != nil {
-			return err
-		}
-		b.registerPermissionHooks(store)
-		storage[resourceInfo.StoragePath()] = store
-		apiGroupInfo.VersionedResourcesStorageMap[folders.VERSION] = storage
-		b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
-		b.parents = newParentsGetter(store, folder.MaxNestedFolderDepth)
-		return nil
-	}
-
-	legacyStore := &legacyStorage{
-		service:        b.folderSvc,
-		namespacer:     b.namespacer,
-		tableConverter: resourceInfo.TableConverter(),
-	}
-
 	opts.StorageOptsRegister(resourceInfo.GroupResource(), apistore.StorageOptions{
 		EnableFolderSupport:         true,
 		RequireDeprecatedInternalID: true,
@@ -199,15 +163,13 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		if err != nil {
 			return err
 		}
-
-		b.registerPermissionHooks(store)
-
-		dw, err := dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
-		if err != nil {
-			return err
+		b.storage = &folderStorage{
+			tableConverter:       resourceInfo.TableConverter(),
+			folderPermissionsSvc: b.folderPermissionsSvc,
+			acService:            b.acService,
+			permissionsOnCreate:  b.permissionsOnCreate,
+			store:                dw,
 		}
-
-		folderStore.store = dw
 	}
 
 	storage := map[string]rest.Storage{}
@@ -219,18 +181,18 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		parents: b.parents,
 	}
 	storage[resourceInfo.StoragePath("counts")] = &subCountREST{
-		getter:   folderStore,
+		getter:   b.storage,
 		searcher: b.searcher,
 	}
 	storage[resourceInfo.StoragePath("access")] = &subAccessREST{
-		getter:       folderStore,
+		getter:       b.storage,
 		accessClient: b.accessClient,
 	}
 
 	// Adds a path to return children of a given folder
 	storage[resourceInfo.StoragePath("children")] = &subChildrenREST{
-		getter: folderStore,
-		lister: storage[resourceInfo.StoragePath()].(rest.Lister),
+		getter: b.storage,
+		lister: b.storage,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[folders.VERSION] = storage
