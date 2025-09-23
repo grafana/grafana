@@ -7,6 +7,8 @@ import { Icon, ToolbarButton } from '@grafana/ui';
 import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/preferences/v1alpha1';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
+import { DashboardScene } from '../dashboard-scene/scene/DashboardScene';
+
 const getStarTooltips = () => ({
   star: t('dashboard.toolbar.mark-favorite', 'Mark as favorite'),
   unstar: t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite'),
@@ -15,15 +17,7 @@ const getStarTooltips = () => ({
 export type Props = {
   group: string;
   kind: string;
-  dashboard: {
-    onStarDashboard: () => void;
-    state: {
-      meta: {
-        isStarred?: boolean;
-        uid?: string;
-      };
-    };
-  };
+  dashboard: DashboardScene;
 };
 
 export function StarToolbarButtonApiServer({ group, kind, id }: { group: string; kind: string; id: string }) {
@@ -68,7 +62,7 @@ export function StarToolbarButtonApiServer({ group, kind, id }: { group: string;
 }
 
 function StarToolbarButtonLegacy({ dashboard }: { dashboard: Props['dashboard'] }) {
-  const { meta } = dashboard.state;
+  const { meta } = dashboard.useState();
   const isStarred = Boolean(meta.isStarred);
   const tooltips = getStarTooltips();
 
