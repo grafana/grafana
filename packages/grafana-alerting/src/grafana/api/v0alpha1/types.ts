@@ -17,6 +17,7 @@ type EmailIntegration = OverrideProperties<
   GenericIntegration,
   {
     type: 'email';
+    version: 'v1';
     settings: {
       singleEmail?: boolean;
       addresses: string;
@@ -32,6 +33,7 @@ type SlackIntegration = OverrideProperties<
   GenericIntegration,
   {
     type: 'slack';
+    version: 'v1';
     settings: {
       endpointUrl?: string;
       url?: string;
@@ -56,6 +58,7 @@ type OnCallIntegration = OverrideProperties<
   GenericIntegration,
   {
     type: 'OnCall';
+    version: 'v1';
     settings: {
       url: string;
       httpMethod?: 'POST' | 'PUT';
@@ -98,6 +101,7 @@ export type AlertingEntityMetadataAnnotations = Partial<{
   'grafana.com/access/canAdmin': 'true' | 'false';
   'grafana.com/access/canDelete': 'true' | 'false';
   'grafana.com/access/canWrite': 'true' | 'false';
+  'grafana.com/canUse': 'true' | 'false';
   // used for provisioning to identify what system created the entity
   'grafana.com/provenance': string;
 }>;
