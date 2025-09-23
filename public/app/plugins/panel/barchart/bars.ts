@@ -285,7 +285,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
   };
 
 
-  let distrClusteredStacked = (groupCount: number, barCount: number, clusterCount: number, groupsPerCluster: number[]) => {
+  let distrStacked = (groupCount: number, barCount: number, clusterCount: number, groupsPerCluster: number[]) => {
     let out = Array.from({ length: barCount }, () => ({
       offs: Array(groupCount).fill(0),
       size: Array(groupCount).fill(0),
@@ -313,7 +313,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
   };
 
 
-  let distrClusteredNonStacked = (groupCount: number, barCount: number, clusterCount: number, groupsPerCluster: number[]) => {
+  let distrNonStacked = (groupCount: number, barCount: number, clusterCount: number, groupsPerCluster: number[]) => {
     let out = Array.from({ length: barCount }, () => ({
       offs: Array(groupCount).fill(0),
       size: Array(groupCount).fill(0),
@@ -334,7 +334,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
         });
     return out;
   }
-
 
   const LABEL_OFFSET_FACTOR = isXHorizontal ? LABEL_OFFSET_FACTOR_VT : LABEL_OFFSET_FACTOR_HZ;
   const LABEL_OFFSET_MAX = isXHorizontal ? LABEL_OFFSET_MAX_VT : LABEL_OFFSET_MAX_HZ;
@@ -601,9 +600,9 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
     const clusters = getClustersFromArray(Array.from(u.data[groupByFieldIdx === -1 ? 0 : groupByFieldIdx]), groupByField);
 
     if (isStacked) {
-      barsPctLayout = [null, ...distrClusteredStacked(u.data[0].length, u.data.length -1, clusters.length, clusters)];
+      barsPctLayout = [null, ...distrStacked(u.data[0].length, u.data.length -1, clusters.length, clusters)];
     } else {
-      barsPctLayout = [null, ...distrClusteredNonStacked(u.data[0].length, u.data.length - 1, clusters.length, clusters)]
+      barsPctLayout = [null, ...distrNonStacked(u.data[0].length, u.data.length - 1, clusters.length, clusters)]
     }
 
     if (useMappedColors) {

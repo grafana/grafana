@@ -206,7 +206,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         path: 'groupByField',
         name: 'Group by',
         description: 'Select field to group bars by',
-        // defaultValue: defaultOptions.groupByField,
+        defaultValue: defaultOptions.groupByField,
       })
       .addSliderInput({
         path: 'clusterWidth',
