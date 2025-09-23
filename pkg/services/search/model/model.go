@@ -73,6 +73,7 @@ type Hit struct {
 	Type                  HitType    `json:"type"`
 	Tags                  []string   `json:"tags"`
 	IsStarred             bool       `json:"isStarred"`
+	Description           string     `json:"description,omitempty"`
 	FolderID              int64      `json:"folderId,omitempty"` // Deprecated: use FolderUID instead
 	FolderUID             string     `json:"folderUid,omitempty"`
 	FolderTitle           string     `json:"folderTitle,omitempty"`

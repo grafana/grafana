@@ -41,7 +41,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -51,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 //go:embed test-data/*.*
@@ -151,7 +151,7 @@ func TestGetRemoteState(t *testing.T) {
 
 	// getOkHandler allows us to specify a full state the test server is going to respond with.
 	getOkHandler := func(state string) http.HandlerFunc {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		return func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
 			require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
 
@@ -163,7 +163,7 @@ func TestGetRemoteState(t *testing.T) {
 			}
 			w.Header().Add("content-type", "application/json")
 			require.NoError(t, json.NewEncoder(w).Encode(res))
-		})
+		}
 	}
 
 	// errorHandler makes the test server return a 500 status code and a non-JSON response.
@@ -260,11 +260,10 @@ func TestGetRemoteState(t *testing.T) {
 }
 
 func TestIntegrationApplyConfig(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
+	testutil.SkipIntegrationTestInShortMode(t)
 
-		// errorHandler returns an error response for the readiness check and state sync.
-	}
+	// errorHandler returns an error response for the readiness check and state sync.
+
 	const tenantID = "test"
 
 	errorHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -302,7 +301,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	var c apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &c))
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
-	encryptedReceivers, err := legacy_storage.EncryptedReceivers(c.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
+	encryptedReceivers, err := notifier.EncryptedReceivers(c.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
 		encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
 		if err != nil {
 			return "", err
@@ -381,7 +380,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	// should result in us sending the configuration but not the state.
 	am.syncInterval = 0
 	config = &ngmodels.AlertConfiguration{
-		AlertmanagerConfiguration: string(testGrafanaConfig),
+		AlertmanagerConfiguration: testGrafanaConfig,
 	}
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.Equal(t, 2, configSyncs)
@@ -467,7 +466,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	// Create a config with correctly encrypted and encoded secrets.
 	var inputCfg apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &inputCfg))
-	encryptedReceivers, err := legacy_storage.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
+	encryptedReceivers, err := notifier.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
 		encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
 		if err != nil {
 			return "", err
@@ -669,7 +668,7 @@ func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
 
 	var inputCfg apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &inputCfg))
-	encryptedReceivers, err := legacy_storage.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
+	encryptedReceivers, err := notifier.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
 		encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
 		if err != nil {
 			return "", err
@@ -938,9 +937,7 @@ receivers:
 }
 
 func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {
@@ -1047,7 +1044,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	{
 		postableCfg, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 		require.NoError(t, err)
-		encryptedReceivers, err := legacy_storage.EncryptedReceivers(postableCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
+		encryptedReceivers, err := notifier.EncryptedReceivers(postableCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
 			encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
 			if err != nil {
 				return "", err
@@ -1119,9 +1116,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 }
 
 func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {
@@ -1153,9 +1148,7 @@ func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
 }
 
 func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {
@@ -1239,9 +1232,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 }
 
 func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {
@@ -1316,9 +1307,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 }
 
 func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {
@@ -1355,9 +1344,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 }
 
 func TestIntegrationRemoteAlertmanagerTestTemplates(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {

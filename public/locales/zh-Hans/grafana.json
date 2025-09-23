@@ -156,8 +156,11 @@
       "title": "获取 Grafana 企业版"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "测试用户映射",
-      "test-mapping-run-button": "运行"
+      "test-mapping-run-button": "运行",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -361,14 +364,6 @@
       "tooltip-assigned-role": "此用户登录时，系统将分配一个许可角色"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "隐藏通用标签",
-      "show": {
-        "tooltip": "显示通用标签"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "活跃时间设定"
@@ -474,15 +469,16 @@
     "alert-instance-state-filter": {
       "state": "状态"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "移除标签"
     },
     "alert-label-dropdown": {
       "placeholder-select": "选择{{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "标签",
-      "common-labels-count_other": "+{{count}} 个常用标签"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "静音、分组和时间设定（可选）",
@@ -500,6 +496,7 @@
       "copy-link": "复制链接",
       "duplicate": "复制",
       "export": "导出",
+      "manage-enrichments": "",
       "silence-notifications": "静默通知",
       "with-modifications": "含修改"
     },
@@ -1115,7 +1112,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -1697,9 +1695,6 @@
       "notes": "备注",
       "returns": "退回"
     },
-    "label-picker": {
-      "no-options-message": "找不到标签"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "编辑标签"
     },
@@ -1717,9 +1712,6 @@
     "labels-sub-form": {
       "description": "从以下选项中选择一个标签键/值，或输入新的标签键/值，然后按 Enter 键。",
       "save": "保存"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "加载现有标签"
     },
     "labels-without-suggestions": {
       "message": {
@@ -2055,9 +2047,6 @@
       "text-loading-rules": "正在加载规则...",
       "title-dashboard-not-saved": "数据面板未保存"
     },
-    "paused-badge": {
-      "paused": "已暂停"
-    },
     "payload-editor": {
       "edit-payload": "编辑负载",
       "label-add-custom-alert-instance": "添加自定义警报实例",
@@ -2207,9 +2196,6 @@
       "label-time-range": "时间范围",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "最小间隔 = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0>至现在"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2551,6 +2537,10 @@
       "recording": "{{recordingStats}} 正在录制",
       "recovering": "{{recoveringStats}}正在恢复",
       "error_other": "{{count}} 个错误"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "选择“Grafana 托管”，除非您有启用了 Ruler API 的 Mimir、Loki 或 Cortex 数据源。"
@@ -3035,6 +3025,7 @@
       "page-nav": {
         "text": {
           "details": "详情",
+          "enrichment": "",
           "history": "历史记录",
           "instances": "实例",
           "query-and-conditions": "查询和条件",
@@ -3584,6 +3575,7 @@
       "button-cancel": "取消",
       "button-delete": "删除",
       "button-deleting": "正在删除...",
+      "commit": "",
       "delete-warning": "这将删除此文件夹及其所有子文件夹。总体而言，这将影响：",
       "success-message": "文件夹已成功删除"
     },
@@ -3648,7 +3640,10 @@
       "text": "未找到与您的查询相关的结果"
     },
     "restore": {
-      "success": "数据面板 {{name}} 已恢复"
+      "success": "",
+      "all-failed_other": "",
+      "failed-count_other": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "如果您可以直接访问目标，请复制 JSON 并将其粘贴到那里。",
     "trash-state-manager": {
@@ -4488,16 +4483,11 @@
             "any": "任意匹配",
             "label": "匹配规则"
           },
-          "label": "组",
           "visibility": {
             "hide": "隐藏",
             "label": "{{type}}可见性",
             "show": "显示"
           }
-        },
-        "shared": {
-          "delete-condition": "删除条件",
-          "unsupported-item-type": "此条件不受元素支持，因此将被忽略。"
         },
         "time-range-size": {
           "info": "如果数据面板时间范围短于所选时间范围，则显示或隐藏{{type}}。",
@@ -4527,17 +4517,21 @@
             "not-matches": "不匹配"
           },
           "value": "值"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "自定义网格布局不支持条件渲染。请切换到自动网格以使用条件渲染。",
-        "unsupported-item-type": "此项目类型不支持条件渲染"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "由于条件渲染，元素已被隐藏。"
       },
       "root": {
-        "info": "设置规则以通过匹配任何或所有规则来控制{{type}}可见性。",
         "title": "显示/隐藏规则"
       }
     },
@@ -4670,6 +4664,7 @@
       "move": "移动{{typeName}}",
       "panel-background": "更改面板背景",
       "panel-description": "更改面板描述",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "每行最大重复次数",
       "panel-repeat-direction": "重复方向",
       "panel-repeat-variable": "面板重复方式",
@@ -4677,7 +4672,8 @@
       "paste-panel": "粘贴面板",
       "remove": "移除{{typeName}}",
       "row-title": "",
-      "switch-layout": "切换布局"
+      "switch-layout": "切换布局",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -4923,12 +4919,11 @@
       "dataframe-aria-label": "选择 dataframe",
       "dataframe-label": "显示数据框",
       "download-csv": "下载 CSV",
-      "download-excel-description": "向 CSV 中添加页眉，以便在 Excel 中使用",
-      "download-excel-label": "下载 Excel 版本",
       "download-logs": "下载日志",
       "download-service": "下载服务图表",
       "download-traces": "下载跟踪",
-      "excel-header": "Excel 页眉",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "格式化数据",
       "formatted-data-description": "按照\"字段\"和\"覆盖\"选项卡中定义的选项将表格数据格式化。",
       "formatted-data-label": "格式化数据",
@@ -5384,10 +5379,6 @@
       "save-dashboard-short": "保存",
       "save-library-panel": "保存库面板",
       "settings": "仪表板设置",
-      "share": {
-        "label": "分享",
-        "tooltip": "分享仪表板或面板"
-      },
       "share-button": "分享",
       "unlink-library-panel": "取消链接库面板",
       "unmark-favorite": "取消标记为收藏"
@@ -5638,14 +5629,6 @@
         "title": {
           "new-dashboard": "新建仪表板"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "撤销公共 URL"
-      },
-      "title": {
-        "revoke-public-url": "撤销公共网址"
       }
     },
     "constant-variable-form": {
@@ -5901,13 +5884,12 @@
       "usage-count_other": "用于 {{count}} 个数据面板"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "移动数据面板时出错",
       "api-error": "移动数据面板失败",
       "cancel-action": "取消",
       "current-file-not-found": "找不到当前数据面板文件",
       "drawer-title": "移动已预置的数据面板",
       "file-load-error": "加载数据面板时出错",
-      "loading-file-data": "正在加载数据面板",
+      "loading-dashboard-data": "",
       "move-action": "移动数据面板",
       "move-read-only-message": "此数据面板无法直接从 Grafana 移动，因为存储库为只读。要移动此数据面板，请移动 Git 存储库中的文件。",
       "moving": "正在移动…",
@@ -8327,6 +8309,10 @@
         "action-title": "标题",
         "action-title-placeholder": "操作标题",
         "action-variables": "变量",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "一次只能为一个链接或操作启用一次点击"
       }
     },
@@ -9211,7 +9197,8 @@
       "disable-button": "禁用",
       "discard-button": "丢弃",
       "save-and-enable-button": "保存并启用",
-      "save-button": "保存"
+      "save-button": "保存",
+      "test-button": ""
     },
     "documentation": "文档",
     "host": {
@@ -9241,8 +9228,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "取消",
-      "create": "创建库面板",
       "error": "库面板名称已存在",
       "folder": "保存在文件夹中",
       "folder-description": "库面板权限沿用自文件夹权限",
@@ -9418,7 +9403,7 @@
       "label-signature": "签名"
     },
     "description-enable-infinite-scrolling": "实验性。通过滚动到日志列表底部来请求更多结果。",
-    "description-enable-syntax-highlighting": "使用预定义的语法着色规则来突出显示日志行的相关部分",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "显示控件以跳转到最后一行或第一行日志，并按日志级别筛选",
     "fields": {
       "type": {
@@ -9599,10 +9584,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "去重",
-      "disable-highlighting": "禁用突出显示",
       "disable-prettify-json": "收起 JSON 日志",
-      "display-level": "显示级别",
       "display-level-all": "所有级别",
       "download": "下载日志",
       "download-logs": {
@@ -9610,13 +9594,40 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "启用突出显示",
       "escape-newlines": "修复日志行中错误转义的换行和制表符序列",
-      "font-size-default": "使用小字号",
-      "font-size-small": "使用默认字号",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "关闭搜索",
       "hide-timestamps": "隐藏时间戳",
       "hide-unique-labels": "隐藏唯一标签",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
+      },
       "newest-first": "先显示最新日志 - 点击以先显示最旧日志",
       "oldest-first": "先显示最旧日志 - 点击以先显示最新日志",
       "prettify-json": "展开 JSON 日志",
@@ -9625,13 +9636,26 @@
       "resolution-ns": "ns",
       "scroll-bottom": "滚动到底部",
       "scroll-top": "滚动到顶部",
-      "show-ms-timestamps": "显示毫秒时间戳",
-      "show-ns-timestamps": "显示纳秒时间戳",
       "show-search": "在日志结果中搜索",
       "show-timestamps": "显示时间戳",
       "show-unique-labels": "显示唯一标签",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
+        "milliseconds": "",
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
+      },
       "unwrap-lines": "取消多行显示",
-      "wrap-json-lines": "",
       "wrap-lines": "多行显示"
     },
     "logs-navigation": {
@@ -9648,14 +9672,14 @@
     },
     "name-common-labels": "常用标签",
     "name-deduplication": "去重",
-    "name-details-mode": "日志详情面板模式",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "内联",
       "label-sidebar": "侧边栏"
     },
     "name-enable-infinite-scrolling": "启用无限滚动",
     "name-enable-log-details": "启用日志详情",
-    "name-enable-syntax-highlighting": "启用语法高亮",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "字体大小",
     "name-order": "顺序",
     "name-prettify-json": "美化 JSON",
@@ -9698,30 +9722,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}：{{total}} 行（共 {{rowCount}} 行）含有该字段",
       "label-log-stats": "{{label}}：{{total}} 行（共 {{rowCount}} 行）含有该标签"
-    }
-  },
-  "logs-new": {
-    "category-logs": "日志",
-    "deduplication-options": {
-      "label-exact": "确切",
-      "label-none": "无",
-      "label-numbers": "数字",
-      "label-signature": "签名"
-    },
-    "description-infinite-scrolling": "实验性。通过滚动到日志列表底部来请求更多结果。",
-    "description-show-controls": "显示控件以跳转到最后一行或第一行日志，并按日志级别筛选",
-    "description-syntax-highlighting": "使用预定义的语法着色规则来突出显示日志行的相关部分",
-    "name-deduplication": "去重",
-    "name-enable-log-details": "启用日志详情",
-    "name-infinite-scrolling": "启用无限滚动",
-    "name-order": "顺序",
-    "name-show-controls": "显示控件",
-    "name-syntax-highlighting": "启用语法高亮",
-    "name-time": "时间",
-    "name-wrap-lines": "多行显示",
-    "order-options": {
-      "label-newest-first": "最新靠前",
-      "label-oldest-first": "最旧靠前"
     }
   },
   "manage-dashbaords": {
@@ -10289,9 +10289,6 @@
     },
     "profiles": {
       "title": "个人资料"
-    },
-    "public": {
-      "title": "公共仪表板"
     },
     "recently-deleted": {
       "subtitle": "此处列出的任何项目超过 30 天都将被自动删除。",
@@ -10973,7 +10970,6 @@
       "body-not-published": "此插件未发布到 <2>grafana.com/plugins</2>，无法通过目录管理。",
       "enterprise-plugin-info": "此插件仅在 Grafana Cloud 和 Grafana Enterprise 中可用。",
       "learn-more": "了解更多",
-      "no-valid-grafana-enterprise-license-detected": "未检测到有效的 Grafana 企业版许可证。",
       "title-dev-alert": "这是插件的开发版本，无法卸载。",
       "title-plugin-doesnt-support-version-grafana": "此插件不支持您的 Grafana 版本。",
       "title-remote-plugins-unavailable": "安装控件已被禁用，因为 Grafana 服务器无法访问 grafana.com。",
@@ -11196,11 +11192,11 @@
       "description-clear-repository-connection": "为此存储库连接添加明确的名称",
       "empty": "空",
       "error-field-required": "此字段是必填字段。",
-      "ext-storage": "外部存储",
-      "grafana": "Grafana 实例",
+      "external-storage-label": "",
       "label-display-name": "显示名称",
       "placeholder-my-repository-connection": "我的存储库连接",
       "text-loading-resource-information": "正在加载资源信息...",
+      "unmanaged-resources-label": "",
       "dashboards-count_other": "{{count}} 个数据面板",
       "files-count_other": "{{count}} 个文件",
       "folders-count_other": "{{count}} 个文件夹"
@@ -11245,7 +11241,8 @@
     },
     "connect-repository-button": {
       "configure": "配置",
-      "repository-limit-info-alert": "已达到存储库限制 ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "删除",
@@ -11328,7 +11325,10 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "没有找到与您的查询匹配的结果",
-      "placeholder-search": "搜索"
+      "partial-managed": "",
+      "placeholder-search": "搜索",
+      "all-resources-managed_other": "",
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11626,6 +11626,7 @@
       "tooltip-unhealthy-repository": "无法拉取状态不良的存储库"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "包括每个历史值的提交",
       "synchronization-options": "同步选项"
     },
@@ -11649,6 +11650,8 @@
       "alert-point-3": "此过程的持续时间取决于所涉及资源的数量。",
       "alert-point-4": "企业实例管理员可以向用户显示公告横幅。有关分步说明，请参阅<2>本指南</2>。",
       "alert-title": "重要提示：数据或配置不会丢失，但数据面板将在几分钟内暂时不可用。",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "完成",
       "button-start": "开始同步",
       "discard-modal": {
@@ -11697,7 +11700,6 @@
       "email-share-type-option-label": "仅指定人员",
       "pause-sharing-dashboard-label": "暂停共享仪表板",
       "public-share-type-option-label": "任何有链接的人",
-      "revoke-body": "您确定要注销此网址吗？仪表板将不再公开。",
       "revoke-public-URL-button": "撤销公共网址",
       "revoke-public-URL-button-title": "注销公共网址",
       "settings-title": "设置"
@@ -11711,7 +11713,6 @@
       "success-pause": "您的数据面板访问已暂停",
       "success-resume": "您的数据面板访问已恢复",
       "success-update": "设置已成功更新",
-      "success-update-old": "公共数据面板已更新！",
       "time-range-label": "时间范围",
       "time-range-tooltip": "共享数据面板使用数据面板的默认时间范围设置"
     },
@@ -11719,10 +11720,6 @@
       "generate-public-url-button": "生成公共网址",
       "unsupported-features-desc": "目前，我们不支持模板变量或前端数据源",
       "welcome-title": "欢迎使用公共仪表板 ！"
-    },
-    "delete-modal": {
-      "revoke-body-text": "您确定要注销此网址吗？仪表板将不再公开。",
-      "revoke-title": "注销公共网址"
     },
     "email-sharing": {
       "accept-button": "接受",
@@ -11753,11 +11750,8 @@
       "success-share-type-change": "数据面板访问权限已更新：现在只有特定人员才能通过链接访问"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "请与您的管理员联系，以获取{{action}}公共数据面板的权限",
-      "no-upsert-perm-alert-title": "您没有{{ action }}公共数据面板的权限",
       "save-dashboard-changes-alert-title": "请在更新公共配置之前保存您的仪表板更改",
       "unsupport-data-source-alert-readmore-link": "阅读更多关于支持的数据源的信息",
-      "unsupported-data-source-alert-desc": "此仪表板中有公共仪表板不支持的数据源。使用这些数据源的面板可能无法正常运行：{{unsupportedDataSources}}。",
       "unsupported-data-source-alert-title": "不受支持的数据源",
       "unsupported-template-variable-alert-desc": "此公共仪表板可能无法工作，因为其使用了模板变量",
       "unsupported-template-variable-alert-title": "模板变量不受支持"
@@ -11791,8 +11785,7 @@
       "time-range-text": "时间范围 = "
     },
     "share": {
-      "success-delete": "您的数据面板不再可共享",
-      "success-delete-old": "公开的数据面板已删除！"
+      "success-delete": "您的数据面板不再可共享"
     },
     "share-configuration": {
       "share-type-label": "链接访问"
@@ -11811,24 +11804,6 @@
       "revoke-access-button": "注销访问权限",
       "revoke-access-description": "您确定要撤销此访问权限吗？数据面板不再可共享。",
       "unsupported-data-source-alert-desc": "此数据面板中有不支持共享数据面板的数据源。使用这些数据源的面板可能无法正常工作：{{unsupportedDataSources}}。"
-    },
-    "sharing": {
-      "success-creation": "数据面板已公开！"
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "配置公共仪表板",
-      "revoke-button-text": "注销公共网址",
-      "revoke-button-tooltip": "撤销公共仪表板网址",
-      "view-button-tooltip": "查看公共仪表板"
-    },
-    "empty-state": {
-      "message": "您还没有创建任何公开的数据面板",
-      "more-info": "通过<1>共享</1>模式，从任何现有的数据面板创建一个公开数据面板。<4>了解更多</4>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "暂停共享"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11836,8 +11811,6 @@
       "external-link": "外部链接",
       "loading-text": "加载中...",
       "open-dashboard-list-text": "打开仪表板列表",
-      "public-dashboard-link": "公共仪表板网址",
-      "public-dashboard-setting": "公共仪表板设置",
       "sharing-setting": "共享设置"
     },
     "delete-user-modal": {
@@ -11845,14 +11818,12 @@
       "delete-user-cancel-button": "取消",
       "delete-user-revoke-access-button": "注销访问权限",
       "revoke-access-title": "注销访问权限",
-      "revoke-user-access-modal-desc-line1": "您确定要注销对 {{email}} 的访问权限吗？",
-      "revoke-user-access-modal-desc-line2": "此操作将立即注销 {{email}} 对所有公共仪表板的访问权限。"
+      "revoke-user-access-modal-desc-line1": "您确定要注销对 {{email}} 的访问权限吗？"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "此操作将立即撤销 {{email}} 对所有共享数据面板的访问权限。"
     },
     "modal": {
-      "dashboard-modal-title": "公共仪表板",
       "shared-dashboard-modal-title": "共享的数据面板"
     },
     "table-body": {
@@ -11924,7 +11895,6 @@
       "expand-row": "展开查询行",
       "hide-response": "隐藏回复",
       "remove-query": "删除查询",
-      "replace-query-from-library": "替换为已保存的查询",
       "show-response": "显示回复"
     },
     "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
@@ -11937,13 +11907,6 @@
       "no-deleted-dashboards": "您最近没有删除任何数据面板。",
       "no-deleted-dashboards-text": "当您删除数据面板时，它将在此处显示 30 天，然后会被永久删除。您的组织管理员可以还原最近删除的数据面板。",
       "no-search-result": "未找到与您的查询相关的结果"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "删除",
-      "delete-button": "删除",
-      "delete-loading": "正在删除...",
-      "title": "永久删除数据面板",
-      "text_other": "此操作将删除 {{numberOfDashboards}} 个数据面板。"
     },
     "restore-modal": {
       "restore-button": "还原",
@@ -12358,8 +12321,6 @@
       "export": "导出",
       "library-panel": "库面板",
       "link": "链接",
-      "panel-embed": "嵌入",
-      "public-dashboard": "公共仪表板",
       "public-dashboard-title": "公共仪表板",
       "snapshot": "快照"
     },
@@ -12753,6 +12714,7 @@
     "description-column-filter": "启用/禁用表格中的字段筛选条件",
     "description-frozen-columns": "",
     "description-min-column-width": "列自动调整大小的最小宽度",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "在图片无法显示或用户使用屏幕阅读器时，将显示的替代文本",
@@ -12783,6 +12745,7 @@
     "name-max-height": "",
     "name-min-column-width": "最小列宽",
     "name-show-table-header": "显示表格表头",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "表头文字换行",
@@ -13952,7 +13915,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "公共仪表板用户",
       "shared-dashboard-users-tab-title": "共享数据面板的用户"
     }
   },

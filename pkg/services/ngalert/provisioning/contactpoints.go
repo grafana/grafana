@@ -43,7 +43,7 @@ type ContactPointService struct {
 
 type receiverService interface {
 	GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error)
-	RenameReceiverInDependentResources(ctx context.Context, orgID int64, route *apimodels.Route, oldName, newName string, receiverProvenance models.Provenance) error
+	RenameReceiverInDependentResources(ctx context.Context, orgID int64, route *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error
 }
 
 func NewContactPointService(
@@ -247,7 +247,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if err != nil {
 		return err
 	}
-	secretKeys, err := channels_config.GetSecretKeysForContactPointType(contactPoint.Type)
+	secretKeys, err := channels_config.GetSecretKeysForContactPointType(contactPoint.Type, channels_config.V1)
 	if err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
@@ -321,7 +321,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 			}
 
 			if fullRemoval {
-				if err := ecp.receiverService.RenameReceiverInDependentResources(ctx, orgID, revision.Config.AlertmanagerConfig.Route, oldReceiverName, mergedReceiver.Name, provenance); err != nil {
+				if err := ecp.receiverService.RenameReceiverInDependentResources(ctx, orgID, revision, oldReceiverName, mergedReceiver.Name, provenance); err != nil {
 					return err
 				}
 				if err := ecp.resourcePermissions.DeleteResourcePermissions(ctx, orgID, legacy_storage.NameToUid(oldReceiverName)); err != nil {
@@ -522,7 +522,7 @@ func ValidateContactPoint(ctx context.Context, e apimodels.EmbeddedContactPoint,
 // RemoveSecretsForContactPoint removes all secrets from the contact point's settings and returns them as a map. Returns error if contact point type is not known.
 func RemoveSecretsForContactPoint(e *apimodels.EmbeddedContactPoint) (map[string]string, error) {
 	s := map[string]string{}
-	secretKeys, err := channels_config.GetSecretKeysForContactPointType(e.Type)
+	secretKeys, err := channels_config.GetSecretKeysForContactPointType(e.Type, channels_config.V1)
 	if err != nil {
 		return nil, err
 	}

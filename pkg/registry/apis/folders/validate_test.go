@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,6 +12,7 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -24,193 +24,224 @@ func TestValidateCreate(t *testing.T) {
 		getterError error
 		expectedErr string
 		maxDepth    int // defaults to 5 unless set
-	}{{
-		name: "ok",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        "p1",
-				Annotations: map[string]string{"grafana.app/folder": "p2"},
+	}{
+		{
+			name: "ok",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "p1",
+					Annotations: map[string]string{"grafana.app/folder": "p2"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
 			},
-			Spec: folders.FolderSpec{
-				Title: "some title",
-			},
-		},
-		getter: &folders.FolderInfoList{
-			Items: []folders.FolderInfo{
-				{Name: "p2", Parent: "p3"},
-				{Name: "p3"},
-			},
-		},
-	}, {
-		name: "reserved name",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "general", // can not name something with general
-			},
-		},
-		expectedErr: "invalid uid for folder provided",
-	}, {
-		name: "too long",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "a0123456789012345678901234567890123456789", // longer than 40
-			},
-		},
-		expectedErr: "uid too long, max 40 characters",
-	}, {
-		name: "bad name",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "hello world", // not a-z|0-9,
-			},
-		},
-		expectedErr: "uid contains illegal characters",
-	}, {
-		name: "can not be a parent of yourself",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        "p1",
-				Annotations: map[string]string{"grafana.app/folder": "p1"},
-			},
-			Spec: folders.FolderSpec{
-				Title: "some title",
-			},
-		},
-		expectedErr: "folder cannot be parent of itself",
-	}, {
-		name: "can not create a tree that is too deep",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        "p1",
-				Annotations: map[string]string{"grafana.app/folder": "p2"},
-			},
-			Spec: folders.FolderSpec{
-				Title: "some title",
-			},
-		},
-		getter: &folders.FolderInfoList{
-			Items: []folders.FolderInfo{
-				{Name: "p2", Parent: "p3"},
-				{Name: "p3"},
-			},
-		},
-		maxDepth:    2, // will become 3
-		expectedErr: "folder max depth exceeded",
-	}, {
-		name: "team folder",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "team-abc",
-				OwnerReferences: []metav1.OwnerReference{
-					{Name: "abc", Kind: "Team", APIVersion: "iam.grafana.app/vAnything"},
+			getter: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "p2", Parent: "p3"},
+					{Name: "p3"},
 				},
 			},
 		},
-	}, {
-		name: "user folder",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "user-xyz",
-				OwnerReferences: []metav1.OwnerReference{
-					{Name: "xyz", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
+		{
+			name: "reserved name",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "general", // can not name something with general
 				},
 			},
+			expectedErr: "invalid uid for folder provided",
 		},
-	}, {
-		name: "team without owner reference",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "user-xyz",
-			},
-		},
-		expectedErr: "folder is missing owner reference (xyz)",
-	}, {
-		name: "team with owner mismatch",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "user-xyz",
-				OwnerReferences: []metav1.OwnerReference{
-					{Name: "ABC", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
+		{
+			name: "too long",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "a0123456789012345678901234567890123456789", // longer than 40
 				},
 			},
+			expectedErr: "uid too long, max 40 characters",
 		},
-		expectedErr: "owner reference must match the same name",
-	}, {
-		name: "team with wrong owner kind",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "user-xyz",
-				OwnerReferences: []metav1.OwnerReference{
-					{Name: "xyz", Kind: "NotUser", APIVersion: "iam.grafana.app/vAnything"},
+		{
+			name: "bad name",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "hello world", // not a-z|0-9,
 				},
 			},
+			expectedErr: "uid contains illegal characters",
 		},
-		expectedErr: "owner reference kind must match the name",
-	}, {
-		name: "team with wrong owner apiVersion",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "user-xyz",
-				OwnerReferences: []metav1.OwnerReference{
-					{Name: "xyz", Kind: "User", APIVersion: "not-iam.grafana.app"},
+		{
+			name: "can not be a parent of yourself",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "p1",
+					Annotations: map[string]string{"grafana.app/folder": "p1"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
 				},
 			},
+			expectedErr: "folder cannot be parent of itself",
 		},
-		expectedErr: "owner reference should be iam.grafana.app",
-	}, {
-		name: "team with multiple owners",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "user-xyz",
-				OwnerReferences: []metav1.OwnerReference{
-					{Name: "ABC", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
-					{Name: "EFG", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
+		{
+			name: "can not create a tree that is too deep",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "p1",
+					Annotations: map[string]string{"grafana.app/folder": "p2"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
 				},
 			},
-		},
-		expectedErr: "folder has multiple owner references",
-	}, {
-		name: "team with title set",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "user-xyz",
-				OwnerReferences: []metav1.OwnerReference{
-					{Name: "xyz", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
+			getter: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "p2", Parent: "p3"},
+					{Name: "p3", Parent: "p4"},
+					{Name: "p4", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
 				},
 			},
-			Spec: folders.FolderSpec{
-				Title: "should not set a title",
-			},
+			maxDepth:    2,
+			expectedErr: "folder max depth exceeded",
 		},
-		expectedErr: "folder title must be empty",
-	}, {
-		name: "team folder must be root",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        "user-xyz",
-				Annotations: map[string]string{"grafana.app/folder": "p1"},
+		{
+			name: "can create a folder in max depth",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "5",
+					Annotations: map[string]string{"grafana.app/folder": "4"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
 			},
-		},
-		expectedErr: "folder must be a root",
-	}, {
-		name: "team folder must be root",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        "user-xyz",
-				Annotations: map[string]string{"grafana.app/folder": "p1"},
+			getter: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "4", Parent: "3"},
+					{Name: "3", Parent: "2"},
+					{Name: "2", Parent: "1"},
+					{Name: "1", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
 			},
+			maxDepth: folder.MaxNestedFolderDepth,
 		},
-		expectedErr: "folder must be a root",
-	}, {
-		name: "team folder with grant permissions",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        "team-abc",
-				Annotations: map[string]string{"grafana.app/grant-permissions": "default"},
+		{
+			name: "team folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "team-abc",
+					OwnerReferences: []metav1.OwnerReference{
+						{Name: "abc", Kind: "Team", APIVersion: "iam.grafana.app/vAnything"},
+					},
+				},
 			},
-		},
-		expectedErr: "team folders do not support:",
-	}}
+		}, {
+			name: "user folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "user-xyz",
+					OwnerReferences: []metav1.OwnerReference{
+						{Name: "xyz", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
+					},
+				},
+			},
+		}, {
+			name: "team without owner reference",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "user-xyz",
+				},
+			},
+			expectedErr: "folder is missing owner reference (xyz)",
+		}, {
+			name: "team with owner mismatch",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "user-xyz",
+					OwnerReferences: []metav1.OwnerReference{
+						{Name: "ABC", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
+					},
+				},
+			},
+			expectedErr: "owner reference must match the same name",
+		}, {
+			name: "team with wrong owner kind",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "user-xyz",
+					OwnerReferences: []metav1.OwnerReference{
+						{Name: "xyz", Kind: "NotUser", APIVersion: "iam.grafana.app/vAnything"},
+					},
+				},
+			},
+			expectedErr: "owner reference kind must match the name",
+		}, {
+			name: "team with wrong owner apiVersion",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "user-xyz",
+					OwnerReferences: []metav1.OwnerReference{
+						{Name: "xyz", Kind: "User", APIVersion: "not-iam.grafana.app"},
+					},
+				},
+			},
+			expectedErr: "owner reference should be iam.grafana.app",
+		}, {
+			name: "team with multiple owners",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "user-xyz",
+					OwnerReferences: []metav1.OwnerReference{
+						{Name: "ABC", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
+						{Name: "EFG", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
+					},
+				},
+			},
+			expectedErr: "folder has multiple owner references",
+		}, {
+			name: "team with title set",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "user-xyz",
+					OwnerReferences: []metav1.OwnerReference{
+						{Name: "xyz", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "should not set a title",
+				},
+			},
+			expectedErr: "folder title must be empty",
+		}, {
+			name: "team folder must be root",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "user-xyz",
+					Annotations: map[string]string{"grafana.app/folder": "p1"},
+				},
+			},
+			expectedErr: "folder must be a root",
+		}, {
+			name: "team folder must be root",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "user-xyz",
+					Annotations: map[string]string{"grafana.app/folder": "p1"},
+				},
+			},
+			expectedErr: "folder must be a root",
+		}, {
+			name: "team folder with grant permissions",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "team-abc",
+					Annotations: map[string]string{"grafana.app/grant-permissions": "default"},
+				},
+			},
+			expectedErr: "team folders do not support:",
+		}}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -242,106 +273,143 @@ func TestValidateUpdate(t *testing.T) {
 		parentsError error
 		expectedErr  string
 		maxDepth     int // defaults to 5 unless set
-	}{{
-		name: "change title",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
-			Spec: folders.FolderSpec{
-				Title: "changed",
-			},
-		},
-		old: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
-			Spec: folders.FolderSpec{
-				Title: "old title",
-			},
-		},
-	}, {
-		name: "error to move into k6 folder",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-				Annotations: map[string]string{
-					utils.AnnoKeyFolder: "k6-app",
+	}{
+		{
+			name: "change title",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
 				},
 			},
-			Spec: folders.FolderSpec{
-				Title: "changed",
-			},
-		},
-		old: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
-			Spec: folders.FolderSpec{
-				Title: "old title",
-			},
-		},
-		expectedErr: "k6 project may not be moved",
-	}, {
-		name: "error when moving too deep",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test",
-				Annotations: map[string]string{
-					utils.AnnoKeyFolder: "p1",
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
 				},
-			},
-			Spec: folders.FolderSpec{
-				Title: "changed",
-			},
-		},
-		old: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{},
-			Spec: folders.FolderSpec{
-				Title: "old title",
-			},
-		},
-		parents: &folders.FolderInfoList{
-			Items: []folders.FolderInfo{
-				{Name: "p1", Parent: "p2"},
-				{Name: "p2", Parent: "p3"},
-				{Name: "p3"},
-			},
-		},
-		maxDepth:    2, // will become 3
-		expectedErr: "[folder.maximum-depth-reached]",
-	}, {
-		name: "change team folder title",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "team-xyz",
-				OwnerReferences: []metav1.OwnerReference{
-					{Name: "xyz", Kind: "Team", APIVersion: "iam.grafana.app/vAnything"},
-				},
-			},
-			Spec: folders.FolderSpec{
-				Title: "changed",
-			},
-		},
-		old: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "team-xyz",
-				OwnerReferences: []metav1.OwnerReference{
-					{Name: "xyz", Kind: "Team", APIVersion: "iam.grafana.app/vAnything"},
+				Spec: folders.FolderSpec{
+					Title: "old title",
 				},
 			},
 		},
-		expectedErr: "folder title must be empty",
-	}, {
-		name: "remove owner from team folder",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "team-xyz",
+		{
+			name: "error to move into k6 folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "k6-app",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
 			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+				},
+				Spec: folders.FolderSpec{
+					Title: "old title",
+				},
+			},
+			expectedErr: "k6 project may not be moved",
 		},
-		old:         &folders.Folder{},
-		expectedErr: "folder is missing owner reference",
-	}}
+		{
+			name: "no error when moving to max depth",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "4",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec: folders.FolderSpec{
+					Title: "old title",
+				},
+			},
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "4", Parent: "3"},
+					{Name: "3", Parent: "2"},
+					{Name: "2", Parent: "1"},
+					{Name: "1", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
+			},
+			maxDepth:    folder.MaxNestedFolderDepth,
+			expectedErr: "[folder.maximum-depth-reached]",
+		},
+		{
+			name: "error when moving too deep",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "5",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec: folders.FolderSpec{
+					Title: "old title",
+				},
+			},
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "5", Parent: "4"},
+					{Name: "4", Parent: "3"},
+					{Name: "3", Parent: "2"},
+					{Name: "2", Parent: "1"},
+					{Name: "1", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
+			},
+			maxDepth:    folder.MaxNestedFolderDepth,
+			expectedErr: "[folder.maximum-depth-reached]",
+		}, {
+			name: "change team folder title",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "team-xyz",
+					OwnerReferences: []metav1.OwnerReference{
+						{Name: "xyz", Kind: "Team", APIVersion: "iam.grafana.app/vAnything"},
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "team-xyz",
+					OwnerReferences: []metav1.OwnerReference{
+						{Name: "xyz", Kind: "Team", APIVersion: "iam.grafana.app/vAnything"},
+					},
+				},
+			},
+			expectedErr: "folder title must be empty",
+		}, {
+			name: "remove owner from team folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "team-xyz",
+				},
+			},
+			old:         &folders.Folder{},
+			expectedErr: "folder is missing owner reference",
+		}}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -349,8 +417,7 @@ func TestValidateUpdate(t *testing.T) {
 			if maxDepth == 0 {
 				maxDepth = 5
 			}
-			s := (grafanarest.Storage)(nil)
-			m := &mock.Mock{}
+			m := grafanarest.NewMockStorage(t)
 			if tt.parents != nil {
 				for _, v := range tt.parents.Items {
 					m.On("Get", context.Background(), v.Name, &metav1.GetOptions{}).Return(&folders.Folder{
@@ -359,11 +426,11 @@ func TestValidateUpdate(t *testing.T) {
 						}, Spec: folders.FolderSpec{
 							Title: v.Title,
 						},
-					}, nil)
+					}, nil).Maybe()
 				}
 			}
 
-			err := validateOnUpdate(context.Background(), tt.folder, tt.old, storageMock{m, s},
+			err := validateOnUpdate(context.Background(), tt.folder, tt.old, m,
 				func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error) {
 					return tt.parents, tt.parentsError
 				}, maxDepth)

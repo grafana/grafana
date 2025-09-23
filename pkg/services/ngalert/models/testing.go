@@ -314,7 +314,7 @@ func (a *AlertRuleMutators) WithIntervalSeconds(seconds int64) AlertRuleMutator 
 	}
 }
 
-// WithIntervalMatching mutator that generates random interval and `for` duration that are times of the provided base interval.
+// WithIntervalMatching mutator that generates random interval and `for` duration that are multiples of the provided base interval.
 func (a *AlertRuleMutators) WithIntervalMatching(baseInterval time.Duration) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.IntervalSeconds = int64(baseInterval.Seconds()) * (rand.Int63n(10) + 1)
@@ -1180,6 +1180,7 @@ func ReceiverGen(mutators ...Mutator[Receiver]) func() Receiver {
 			Name:         name,
 			Integrations: []*Integration{&integration},
 			Provenance:   ProvenanceNone,
+			Origin:       ResourceOriginGrafana,
 		}
 		for _, mutator := range mutators {
 			mutator(&c)
@@ -1243,6 +1244,12 @@ func (n ReceiverMutators) Encrypted(fn EncryptFn) Mutator[Receiver] {
 func (n ReceiverMutators) Decrypted(fn DecryptFn) Mutator[Receiver] {
 	return func(r *Receiver) {
 		_ = r.Decrypt(fn)
+	}
+}
+
+func (n ReceiverMutators) WithOrigin(origin ResourceOrigin) Mutator[Receiver] {
+	return func(r *Receiver) {
+		r.Origin = origin
 	}
 }
 
