@@ -83,14 +83,14 @@ jobs:
           echo "NPM_TAG=$TAG" >> "$GITHUB_OUTPUT"
         shell: bash
 
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+
       - name: Checkout build commit
         uses: actions/checkout@v4
         with:
           persist-credentials: false
           ref: ${{ inputs.grafana_commit }}
-
-      - name: Setup Node
-        uses: ./.github/actions/setup-node
 
       # Trusted Publishing is only available in npm v11.5.1 and later
       - name: Update npm
