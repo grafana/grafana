@@ -110,6 +110,7 @@ func NewMapperRegistry() MapperRegistry {
 			"folders": newResourceTranslation("folders", "uid", true, false),
 		},
 		"iam.grafana.app": {
+			"users":           newResourceTranslation("users", "uid", false, true),
 			"serviceaccounts": newResourceTranslation("serviceaccounts", "uid", false, true),
 			// Teams is a special case. We translate user permissions from id to uid based.
 			"teams": newResourceTranslation("teams", "uid", false, true),
