@@ -21,7 +21,6 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -213,18 +212,18 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		parents: b.parents,
 	}
 	storage[resourceInfo.StoragePath("counts")] = &subCountREST{
-		getter:   b.storage,
+		getter:   folderStore,
 		searcher: b.searcher,
 	}
 	storage[resourceInfo.StoragePath("access")] = &subAccessREST{
-		getter:       b.storage,
-		accessClient: b.accessClient,
+		getter: folderStore,
+		ac:     b.ac,
 	}
 
 	// Adds a path to return children of a given folder
 	storage[resourceInfo.StoragePath("children")] = &subChildrenREST{
-		getter: b.storage,
-		lister: b.storage,
+		getter: folderStore,
+		lister: storage[resourceInfo.StoragePath()].(rest.Lister),
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[folders.VERSION] = storage
