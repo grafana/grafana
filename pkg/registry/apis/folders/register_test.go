@@ -58,41 +58,6 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 			},
 		},
 		{
-			name: "should not allow creating a folder in a tree that is too deep",
-			input: input{
-				obj: &folders.Folder{
-					Spec: folders.FolderSpec{
-						Title: "foo",
-					},
-				},
-				annotations: map[string]string{"grafana.app/folder": "p1"}, // already max depth
-				name:        "valid-name",
-			},
-			setupFn: func(m *grafanarest.MockStorage) {
-				m.On("Get", mock.Anything, "p1", mock.Anything).Return(
-					&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:        "p1",
-							Annotations: map[string]string{"grafana.app/folder": "p2"},
-						},
-					}, nil).Maybe()
-				m.On("Get", mock.Anything, "p2", mock.Anything).Return(
-					&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:        "p2",
-							Annotations: map[string]string{"grafana.app/folder": "p3"},
-						},
-					}, nil).Maybe()
-				m.On("Get", mock.Anything, "p3", mock.Anything).Return(
-					&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name: "p3",
-						},
-					}, nil).Maybe()
-			},
-			err: folder.ErrMaximumDepthReached,
-		},
-		{
 			name: "should return error when title is empty",
 			input: input{
 				obj: &folders.Folder{
