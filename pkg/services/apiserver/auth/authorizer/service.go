@@ -6,6 +6,7 @@ import (
 
 	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
@@ -26,6 +27,14 @@ func NewServiceAuthorizer() authorizer.Authorizer {
 
 			res := authzlib.CheckServicePermissions(ident, attr.GetAPIGroup(), attr.GetResource(), attr.GetVerb())
 			if !res.Allowed {
+				log := logging.FromContext(context.Background())
+				log.Info("calling service lacks required permissions",
+					"isServiceCall", res.ServiceCall,
+					"apiGroup", attr.GetAPIGroup(),
+					"resource", attr.GetResource(),
+					"verb", attr.GetVerb(),
+					"permissions", len(res.Permissions),
+				)
 				return authorizer.DecisionDeny, "calling service lacks required permissions", nil
 			}
 
