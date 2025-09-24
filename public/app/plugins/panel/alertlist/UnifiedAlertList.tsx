@@ -267,9 +267,20 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const havePreviousResults = Object.values(promRulesRequests).some((state) => state.result);
 
-  const criticalRules = deduplicateRules(firingRules).filter((rule) => rule.labels?.['severity'] === 'critical');
-  const warnRules = deduplicateRules(firingRules).filter((rule) => rule.labels?.['severity'] === 'warn');
-  const noDataRules = deduplicateRules(firingRules).filter((rule) => rule.labels?.['severity'] === 'no_data');
+  // Calculate counts based on the filtered rules that are actually displayed
+  // Use the same filtering logic as the display to ensure counts match what's shown
+  const criticalRules = firingRules.filter((rule) => {
+    const alertingRule = getAlertingRule(rule);
+    return alertingRule?.labels?.['severity'] === 'critical' && alertingRule?.state === PromAlertingRuleState.Firing;
+  });
+  const warnRules = firingRules.filter((rule) => {
+    const alertingRule = getAlertingRule(rule);
+    return alertingRule?.labels?.['severity'] === 'warn' && alertingRule?.state === PromAlertingRuleState.Firing;
+  });
+  const noDataRules = firingRules.filter((rule) => {
+    const alertingRule = getAlertingRule(rule);
+    return alertingRule?.labels?.['severity'] === 'no_data' && alertingRule?.state === PromAlertingRuleState.Firing;
+  });
 
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
@@ -458,14 +469,32 @@ function sortRules(sortOrder: SortOrder, rules: CombinedRuleWithLocation[]) {
         return 999; // Put rules without alerting data at the end
       }
 
+      // Get severity priority
+      const severityPriority = (severity: string | undefined) => {
+        switch (severity) {
+          case 'critical':
+            return 1;
+          case 'warn':
+            return 2;
+          case 'no_data':
+            return 3;
+          default:
+            return 4;
+        }
+      };
+
+      const severity = alertingRule.labels?.['severity'];
+      const severityScore = severityPriority(severity);
+
       // Priority order: Firing (Critical) = 1, Pending (Warning) = 2, Inactive (Normal) = 3
+      // Within each state, sort by severity: critical > warn > no_data > other
       switch (alertingRule.state) {
         case PromAlertingRuleState.Firing:
-          return 1; // Highest priority - Critical alerts
+          return 100 + severityScore; // Firing alerts with severity priority
         case PromAlertingRuleState.Pending:
-          return 2; // Medium priority - Warning alerts
+          return 200 + severityScore; // Pending alerts with severity priority
         case PromAlertingRuleState.Inactive:
-          return 3; // Lowest priority - Normal/OK alerts
+          return 300 + severityScore; // Inactive alerts with severity priority
         default:
           return 999; // Unknown states at the end
       }
