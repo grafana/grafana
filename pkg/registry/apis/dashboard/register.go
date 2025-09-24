@@ -20,6 +20,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -33,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
@@ -48,7 +48,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -102,12 +101,10 @@ type DashboardsAPIBuilder struct {
 	dashStore                    dashboards.Store
 	QuotaService                 quota.Service
 	ProvisioningService          provisioning.ProvisioningService
-	cfg                          *setting.Cfg
+	minRefreshInterval           string
 	dualWriter                   dualwrite.Service
 	folderClientProvider         client.K8sHandlerProvider
 
-	log          log.Logger
-	reg          prometheus.Registerer
 	isStandalone bool // skips any handling including anything to do with legacy storage
 }
 
@@ -117,7 +114,6 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
 	provisioningDashboardService dashboards.DashboardProvisioningService,
-	pluginStore pluginstore.Store,
 	datasourceService datasources.DataSourceService,
 	dashboardPermissions dashboards.PermissionsRegistrationService,
 	dashboardPermissionsSvc accesscontrol.DashboardPermissionsService,
@@ -141,9 +137,7 @@ func RegisterAPIService(
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
 
-	dashLog := log.New("grafana-apiserver.dashboards")
 	builder := &DashboardsAPIBuilder{
-		log:                          dashLog,
 		dashboardService:             dashboardService,
 		dashboardPermissions:         dashboardPermissions,
 		dashboardPermissionsSvc:      dashboardPermissionsSvc,
@@ -156,7 +150,7 @@ func RegisterAPIService(
 		dashStore:                    dashStore,
 		QuotaService:                 quotaService,
 		ProvisioningService:          provisioning,
-		cfg:                          cfg,
+		minRefreshInterval:           cfg.MinRefreshInterval,
 		dualWriter:                   dual,
 		folderClientProvider:         newSimpleFolderClientProvider(folderClient),
 
@@ -164,7 +158,6 @@ func RegisterAPIService(
 			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
 			DashboardService: dashboardService,
 		},
-		reg: reg,
 	}
 
 	migration.RegisterMetrics(reg)
@@ -175,24 +168,10 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceInfoProvider, pluginStore *pluginstore.Service) *DashboardsAPIBuilder {
-	// TODO: Plugin store will soon be removed,
-	// as the cases for plugin fetching is not needed. Keeping it now to not break implementation
-	if pluginStore == nil {
-		panic("pluginStore is nil")
-	}
-
-	logger := log.New("grafana-apiserver.dashboards")
-
+func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceInfoProvider) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider)
-
 	return &DashboardsAPIBuilder{
-		log: logger,
-		reg: prometheus.NewRegistry(),
-
-		cfg: &setting.Cfg{
-			MinRefreshInterval: "10s",
-		},
+		minRefreshInterval:   "10s",
 		accessClient:         ac,
 		features:             features,
 		dashboardService:     &dashsvc.DashboardServiceImpl{}, // for validation helpers only
@@ -333,7 +312,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	}
 
 	// Validate refresh interval
-	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.cfg.MinRefreshInterval, refresh); err != nil {
+	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.minRefreshInterval, refresh); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
@@ -419,7 +398,7 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 	}
 
 	// Validate refresh interval
-	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.cfg.MinRefreshInterval, refresh); err != nil {
+	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.minRefreshInterval, refresh); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
@@ -589,7 +568,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		return nil
 	}
 
-	legacyStore, err := b.legacy.NewStore(dashboards, opts.Scheme, opts.OptsGetter, b.reg, b.dashboardPermissions, b.accessClient)
+	legacyStore, err := b.legacy.NewStore(dashboards, opts.Scheme, opts.OptsGetter, opts.MetricsRegister, b.dashboardPermissions, b.accessClient)
 	if err != nil {
 		return err
 	}
@@ -690,7 +669,7 @@ func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context
 		var accessInfo folders.FolderAccessInfo
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(resp.Object, &accessInfo)
 		if err != nil {
-			b.log.Error("Failed to convert folder access response", "error", err)
+			logging.FromContext(ctx).Error("Failed to convert folder access response", "error", err)
 			return dashboards.ErrFolderAccessDenied
 		}
 
