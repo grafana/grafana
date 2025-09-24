@@ -146,35 +146,25 @@ func getRolePermissions(ctx context.Context, sess *db.Session, id int64) ([]acce
 }
 
 func permissionDiff(previous, new []accesscontrol.Permission) (added, removed []accesscontrol.Permission) {
-	type key struct{ Action, Scope, Kind, Attribute, Identifier string }
+	type key struct{ Action, Scope string }
 	prevMap := map[key]int64{}
+	unSplit := map[key]int64{}
 	for i := range previous {
-		prevMap[key{
-			previous[i].Action,
-			previous[i].Scope,
-			previous[i].Kind,
-			previous[i].Attribute,
-			previous[i].Identifier,
-		}] = previous[i].ID
+		// FIXME: This can be removed after a few releases.
+		// Previously, external service accounts scopes weren't split.
+		// We need to remove any unsplit permissions.
+		if previous[i].Scope != "" && previous[i].Kind == "" {
+			unSplit[key{previous[i].Action, previous[i].Scope}] = previous[i].ID
+			continue
+		}
+		prevMap[key{previous[i].Action, previous[i].Scope}] = previous[i].ID
 	}
 	newMap := map[key]int64{}
 	for i := range new {
-		newMap[key{
-			new[i].Action,
-			new[i].Scope,
-			new[i].Kind,
-			new[i].Attribute,
-			new[i].Identifier,
-		}] = 0
+		newMap[key{new[i].Action, new[i].Scope}] = 0
 	}
 	for i := range new {
-		key := key{
-			new[i].Action,
-			new[i].Scope,
-			new[i].Kind,
-			new[i].Attribute,
-			new[i].Identifier,
-		}
+		key := key{new[i].Action, new[i].Scope}
 		if _, already := prevMap[key]; !already {
 			added = append(added, new[i])
 		} else {
@@ -183,6 +173,12 @@ func permissionDiff(previous, new []accesscontrol.Permission) (added, removed []
 	}
 
 	for p, id := range prevMap {
+		removed = append(removed, accesscontrol.Permission{ID: id, Action: p.Action, Scope: p.Scope})
+	}
+
+	// FIXME: This can be removed after a few releases.
+	// Remove any unsplit permissions
+	for p, id := range unSplit {
 		removed = append(removed, accesscontrol.Permission{ID: id, Action: p.Action, Scope: p.Scope})
 	}
 
