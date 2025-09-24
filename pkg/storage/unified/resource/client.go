@@ -19,6 +19,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
+	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
+
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/authlib/types"
@@ -74,6 +76,12 @@ func newResourceClient(storageCc grpc.ClientConnInterface, indexCc grpc.ClientCo
 
 func NewAuthlessResourceClient(cc grpc.ClientConnInterface) ResourceClient {
 	return newResourceClient(cc, cc)
+}
+
+func NewChannelResourceClientForTests(channel grpc.ClientConnInterface, indexChannel grpc.ClientConnInterface) ResourceClient {
+	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
+	cci := grpchan.InterceptClientConn(indexChannel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
+	return newResourceClient(cc, cci)
 }
 
 func NewLocalResourceClient(server ResourceServer) ResourceClient {

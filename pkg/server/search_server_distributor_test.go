@@ -47,7 +47,7 @@ func TestIntegrationDistributor(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dbType := sqlutil.GetTestDBType()
-	if dbType != "mysql" {
+	if dbType != "mysql" && false {
 		t.Skip()
 	}
 
@@ -284,7 +284,7 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 	require.NoError(t, err)
 
 	server := initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
-	server.resourceClient = resource.NewAuthlessResourceClient(conn)
+	server.resourceClient = resource.NewChannelResourceClientForTests(conn, conn)
 
 	return server
 }
