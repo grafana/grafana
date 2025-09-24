@@ -40,7 +40,7 @@ export function SynchronizeStep({ isLegacyStorage, onCancel, isCancelling }: Syn
     message: repositoryHealthMessages,
     checked,
   } = repositoryStatusQuery?.data?.status?.health || {};
-  const isButtonDisabled = checked !== undefined && isRepositoryHealthy === false;
+  const isButtonDisabled = repositoryStatusQuery.isFetching || (checked !== undefined && isRepositoryHealthy === false);
 
   const startSynchronization = async () => {
     const [history] = getValues(['migrate.history']);
