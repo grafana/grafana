@@ -54,17 +54,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		query.Limit = defaultAnnotationsLimit
 	}
 
-	// When dashboard UID present in the request, we ignore dashboard ID
-	if query.DashboardUID != "" {
-		dq := dashboards.GetDashboardQuery{UID: query.DashboardUID, OrgID: c.GetOrgID()}
-		dqResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "Invalid dashboard UID in annotation request", err)
-		} else {
-			query.DashboardID = dqResult.ID // nolint:staticcheck
-		}
-	}
-
+	// When dashboard ID exists without UID, find the UID from dashboards api
 	if query.DashboardID != 0 && query.DashboardUID == "" { // nolint:staticcheck
 		dq := dashboards.GetDashboardQuery{ID: query.DashboardID, OrgID: c.GetOrgID()} // nolint:staticcheck
 		dqResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
