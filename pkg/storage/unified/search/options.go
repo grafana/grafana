@@ -43,6 +43,7 @@ func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tra
 			BuildVersion:    cfg.BuildVersion,
 			MaxFileIndexAge: cfg.MaxFileIndexAge,
 			MinBuildVersion: minVersion,
+			UseFullNgram:    features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageUseFullNgram),
 		}, tracer, indexMetrics)
 
 		if err != nil {

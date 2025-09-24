@@ -77,6 +77,8 @@ type BleveOptions struct {
 	MinBuildVersion *semver.Version // Minimum build version for reusing file-based indexes. Ignored if nil.
 
 	Logger *slog.Logger
+
+	UseFullNgram bool
 }
 
 type bleveBackend struct {
@@ -88,6 +90,9 @@ type bleveBackend struct {
 	cache   map[resource.NamespacedResource]*bleveIndex
 
 	indexMetrics *resource.BleveIndexMetrics
+
+	// if true will use ngram instead of edge_ngram for title indexes. See custom_analyzers.go
+	useFullNgram bool
 
 	metricsUpdaterCancel func()
 	metricsUpdaterWg     sync.WaitGroup
@@ -130,6 +135,7 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 		cache:        map[resource.NamespacedResource]*bleveIndex{},
 		opts:         opts,
 		indexMetrics: indexMetrics,
+		useFullNgram: opts.UseFullNgram,
 	}
 
 	if be.indexMetrics != nil {
@@ -314,7 +320,7 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("reason", indexBuildReason),
 	)
 
-	mapper, err := GetBleveMappings(fields)
+	mapper, err := GetBleveMappings(fields, b.useFullNgram)
 	if err != nil {
 		return nil, err
 	}
