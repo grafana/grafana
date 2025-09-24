@@ -78,7 +78,7 @@
 /pkg/tests/apis/provisioning @grafana/grafana-git-ui-sync-team
 # Git Sync frontend owned by frontend team as a whole.
 
-/apps/annotations/ @grafana/grafana-backend-group
+/apps/annotations/ @grafana/grafana-backend-services-squad
 /apps/alerting/ @grafana/alerting-backend
 /apps/dashboard/ @grafana/grafana-app-platform-squad @grafana/dashboards-squad
 /apps/folder/ @grafana/grafana-app-platform-squad
