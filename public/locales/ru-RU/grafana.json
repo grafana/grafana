@@ -1931,9 +1931,6 @@
       "title-remove": "Удалить",
       "tooltip-remove-time-range": "Удалить временной диапазон"
     },
-    "namespace": {
-      "title-alert-rules": "Правила оповещения"
-    },
     "namespace-and-group-filter": {
       "select-group": "Выбрать группу",
       "select-namespace": "Выбрать пространство имен"
@@ -2051,7 +2048,9 @@
       "recipient-notification-fires": "Выберите, кто должен получать уведомление при активации правила оповещения."
     },
     "option-customfield": {
-      "label-custom-template": "Пользовательский шаблон"
+      "label-custom-template": "Пользовательский шаблон",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Выбранный обработчик оповещений Alertmanager больше не существует или у вас может не быть разрешения на доступ к нему. Вы можете выбрать другой обработчик оповещений из раскрывающегося списка.",
@@ -5392,7 +5391,6 @@
             "json": "Экспорт в формате JSON"
           }
         },
-        "mark-favorite": "Добавить в избранное",
         "more-save-options": "Больше параметров сохранения",
         "playlist-next": "Перейти к следующему дашборду",
         "playlist-previous": "Перейти к предыдущему дашборду",
@@ -5421,8 +5419,7 @@
             "yesText": "Сохранить"
           }
         },
-        "unlink-library-panel": "Отсоединить панель библиотеки",
-        "unmark-favorite": "Убрать из избранного"
+        "unlink-library-panel": "Отсоединить панель библиотеки"
       },
       "open-original": "Открыть исходный дашборд",
       "playlist-next": "Перейти к следующему дашборду",
@@ -5443,6 +5440,10 @@
       "save-library-panel": "Сохранить панель библиотеки",
       "settings": "Параметры дашборда",
       "share-button": "Общий доступ",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Отсоединить панель библиотеки",
       "unmark-favorite": "Убрать из избранного"
     },

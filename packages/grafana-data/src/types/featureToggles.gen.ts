@@ -111,6 +111,10 @@ export interface FeatureToggles {
   */
   influxdbBackendMigration?: boolean;
   /**
+  * populate star status from apiserver
+  */
+  starsFromAPIServer?: boolean;
+  /**
   * Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
   */
   influxqlStreamingParser?: boolean;
@@ -687,6 +691,10 @@ export interface FeatureToggles {
   * Enable sprinkles on unified storage search
   */
   unifiedStorageSearchSprinkles?: boolean;
+  /**
+  * Use full n-gram indexing instead of edge n-gram for unified storage search
+  */
+  unifiedStorageUseFullNgram?: boolean;
   /**
   * Pick the dual write mode from database configs
   */
