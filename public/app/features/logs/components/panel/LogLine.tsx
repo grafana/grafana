@@ -26,7 +26,7 @@ import { InlineLogLineDetails } from './LogLineDetails';
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
-import { LogListModel } from './processing';
+import { getNormalizedFieldName, LogListModel } from './processing';
 import {
   FIELD_GAP_MULTIPLIER,
   getLogLineDOMHeight,
@@ -390,7 +390,7 @@ const DisplayedFields = ({
     field === LOG_LINE_BODY_FIELD_NAME ? (
       <LogLineBody log={log} key={field} styles={styles} />
     ) : (
-      <span className="field" title={field} key={field}>
+      <span className="field" title={getNormalizedFieldName(field)} key={field}>
         {searchWords ? (
           <Highlighter
             textToHighlight={log.getDisplayedFieldValue(field)}
