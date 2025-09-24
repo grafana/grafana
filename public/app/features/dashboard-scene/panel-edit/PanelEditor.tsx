@@ -5,6 +5,7 @@ import { NavIndex, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import {
+  NewSceneObjectAddedEvent,
   PanelBuilders,
   SceneDataTransformer,
   SceneObjectBase,
@@ -14,6 +15,7 @@ import {
   SceneQueryRunner,
   sceneUtils,
   VizPanel,
+  isSceneObject,
 } from '@grafana/scenes';
 import { Panel } from '@grafana/schema/dist/esm/index.gen';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
@@ -93,6 +95,16 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     );
 
     const deactivateParents = activateSceneObjectAndParentTree(panel);
+
+    // Ensure headerActions are activated
+    const headerActions = panel.state.headerActions;
+    if (headerActions) {
+      (Array.isArray(headerActions) ? headerActions : [headerActions]).forEach((action) => {
+        if (isSceneObject(action)) {
+          action.activate();
+        }
+      });
+    }
 
     this.waitForPlugin();
 
@@ -245,15 +257,16 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
       // clean up data provider when switching from data to non data panel
       if (panel.state.$data) {
-        panel.setState({
-          $data: undefined,
-        });
+        panel.setState({ $data: undefined });
       }
     }
 
     if (!skipDataQuery) {
       if (!this.state.dataPane) {
-        this.setState({ dataPane: PanelDataPane.createFor(this.getPanel()) });
+        const dataPane = PanelDataPane.createFor(this.getPanel());
+        this.setState({ dataPane });
+        // This is to notify UrlSyncManager that a new object has been added to scene that requires url sync
+        this.publishEvent(new NewSceneObjectAddedEvent(dataPane), true);
       }
 
       // add data provider when switching from non data to data panel

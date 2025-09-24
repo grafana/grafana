@@ -25,6 +25,12 @@ export {
 export { USER_DEFINED_TREE_NAME } from './grafana/notificationPolicies/consts';
 export * from './grafana/notificationPolicies/types';
 
+// Rules
+export { StateText } from './grafana/rules/components/state/StateText';
+export { StateIcon } from './grafana/rules/components/state/StateIcon';
+export { AlertLabel, type AlertLabelProps } from './grafana/rules/components/labels/AlertLabel';
+export { AlertLabels, type AlertLabelsProps } from './grafana/rules/components/labels/AlertLabels';
+
 // Matchers
 export { type LabelMatcher, type Label } from './grafana/matchers/types';
 export { matchLabelsSet, matchLabels, isLabelMatch, type LabelMatchDetails } from './grafana/matchers/utils';

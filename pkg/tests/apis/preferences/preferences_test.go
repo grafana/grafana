@@ -30,7 +30,6 @@ func TestIntegrationPreferences(t *testing.T) {
 		DisableAnonymous:  true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-			featuremgmt.FlagMultiTenantFrontend, // So we can compare to boot-data preferences
 		},
 	})
 

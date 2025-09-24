@@ -21,7 +21,9 @@ AND (u.uid IS NOT NULL OR t.uid IS NOT NULL OR br.role IS NOT NULL)
 {{ if .Query.OrgID }}
 AND COALESCE(ur.org_id, tr.org_id, r.org_id) = {{ .Arg .Query.OrgID }}
 {{ end }}
-{{ if .Query.Scope }}
-AND p.scope = {{ .Arg .Query.Scope }}
+{{ if eq (len .Query.Scopes) 1 }}
+AND p.scope = {{ .Arg (index .Query.Scopes 0) }}
+{{ else if gt (len .Query.Scopes) 1 }}
+AND p.scope IN ({{ .ArgList .Query.Scopes }})
 {{ end }}
-ORDER BY p.id
+ORDER BY p.scope

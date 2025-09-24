@@ -18,6 +18,40 @@ import { EditableDashboardElement, EditableDashboardElementInfo } from '../types
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 
+function useEditPaneOptions(this: SceneGridRowEditableElement, row: SceneGridRow): OptionsPaneCategoryDescriptor[] {
+  const rowOptions = useMemo(() => {
+    return new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.default-layout.row-options.title', 'Row options'),
+      id: 'row-options',
+      isOpenDefault: true,
+    }).addItem(
+      new OptionsPaneItemDescriptor({
+        title: t('dashboard.default-layout.row-options.form.title', 'Title'),
+        id: 'row-options-title',
+        render: () => <RowTitleInput row={row} />,
+      })
+    );
+  }, [row]);
+
+  const rowRepeatOptions = useMemo(() => {
+    const dashboard = getDashboardSceneFor(row);
+
+    return new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.default-layout.row-options.repeat.title', 'Repeat options'),
+      id: 'row-repeat-options',
+      isOpenDefault: true,
+    }).addItem(
+      new OptionsPaneItemDescriptor({
+        title: t('dashboard.default-layout.row-options.repeat.variable.title', 'Variable'),
+        id: 'row-options-repeat-variable',
+        render: () => <RowRepeatSelect row={row} dashboard={dashboard} />,
+      })
+    );
+  }, [row]);
+
+  return [rowOptions, rowRepeatOptions];
+}
+
 export class SceneGridRowEditableElement implements EditableDashboardElement, BulkActionElement {
   public readonly isEditableDashboardElement = true;
 
@@ -35,41 +69,7 @@ export class SceneGridRowEditableElement implements EditableDashboardElement, Bu
     return this._row.state.children;
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    const row = this._row;
-
-    const rowOptions = useMemo(() => {
-      return new OptionsPaneCategoryDescriptor({
-        title: t('dashboard.default-layout.row-options.title', 'Row options'),
-        id: 'row-options',
-        isOpenDefault: true,
-      }).addItem(
-        new OptionsPaneItemDescriptor({
-          title: t('dashboard.default-layout.row-options.form.title', 'Title'),
-          id: 'row-options-title',
-          render: (descriptor) => <RowTitleInput id={descriptor.props.id} row={row} />,
-        })
-      );
-    }, [row]);
-
-    const rowRepeatOptions = useMemo(() => {
-      const dashboard = getDashboardSceneFor(row);
-
-      return new OptionsPaneCategoryDescriptor({
-        title: t('dashboard.default-layout.row-options.repeat.title', 'Repeat options'),
-        id: 'row-repeat-options',
-        isOpenDefault: true,
-      }).addItem(
-        new OptionsPaneItemDescriptor({
-          title: t('dashboard.default-layout.row-options.repeat.variable.title', 'Variable'),
-          id: 'row-options-repeat-variable',
-          render: (descriptor) => <RowRepeatSelect id={descriptor.props.id} row={row} dashboard={dashboard} />,
-        })
-      );
-    }, [row]);
-
-    return [rowOptions, rowRepeatOptions];
-  }
+  public useEditPaneOptions = useEditPaneOptions.bind(this, this._row);
 
   public onDelete() {
     const layoutManager = getLayoutManagerFor(this._row);

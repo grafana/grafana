@@ -1,4 +1,6 @@
+import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Box, Text, TextLink } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
@@ -30,6 +32,12 @@ export default function GettingStartedPage({ items }: Props) {
 }
 
 function Banner() {
+  const isOnPrem = [GrafanaEdition.OpenSource, GrafanaEdition.Enterprise].includes(config.buildInfo.edition);
+
+  if (!isOnPrem) {
+    return null;
+  }
+
   return (
     <Box
       display="flex"
