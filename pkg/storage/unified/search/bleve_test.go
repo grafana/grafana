@@ -55,6 +55,7 @@ func TestBleveBackend(t *testing.T) {
 		UseFullNgram:  false,
 	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
 
 	testBleveBackend(t, backend)
 }
@@ -69,6 +70,7 @@ func TestBleveBackendFullNgramEnabled(t *testing.T) {
 		UseFullNgram:  true,
 	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
 
 	testBleveBackend(t, backend)
 }
@@ -84,8 +86,6 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		Group:     "folder.grafana.app",
 		Resource:  "folders",
 	}
-
-	t.Cleanup(backend.Stop)
 
 	rv := int64(10)
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})

@@ -158,12 +158,13 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 	ctx, cancel := context.WithCancel(context.Background())
 	be.bgTasksCancel = cancel
 
+	be.bgTasksWg.Add(1)
+	go be.evictExpiredOrUnownedIndexesPeriodically(ctx)
+
 	if be.indexMetrics != nil {
 		be.bgTasksWg.Add(1)
 		go be.updateIndexSizeMetric(ctx, opts.Root)
 	}
-
-	go be.evictExpiredOrUnownedIndexesPeriodically(ctx)
 
 	return be, nil
 }
@@ -205,6 +206,8 @@ func (b *bleveBackend) closeIndex(idx *bleveIndex, key resource.NamespacedResour
 
 // This function will periodically evict expired or un-owned indexes from the cache.
 func (b *bleveBackend) evictExpiredOrUnownedIndexesPeriodically(ctx context.Context) {
+	defer b.bgTasksWg.Done()
+
 	t := time.NewTicker(2 * time.Minute)
 
 	for ctx.Err() == nil {
@@ -220,34 +223,29 @@ func (b *bleveBackend) evictExpiredOrUnownedIndexesPeriodically(ctx context.Cont
 func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 	cacheTTLMillis := b.opts.IndexCacheTTL.Milliseconds()
 
-	// Collect all expired or unowned into this map, and perform the actual closing without keeping the lock.
+	// Collect all expired or unowned into this map, and perform the actual closing without holding the lock.
 	expired := map[resource.NamespacedResource]*bleveIndex{}
 	unowned := map[resource.NamespacedResource]*bleveIndex{}
 	ownCheckErrors := map[resource.NamespacedResource]error{}
 
 	b.cacheMx.Lock()
 	for key, idx := range b.cache {
-		deleteIdx := false
-
 		// Check if index has expired.
 		if !idx.expiration.IsZero() && now.After(idx.expiration) {
-			deleteIdx = true
+			delete(b.cache, key)
 			expired[key] = idx
+			continue
 		}
 
 		// Check if index is owned by this instance.
-		if !deleteIdx && cacheTTLMillis > 0 {
+		if cacheTTLMillis > 0 {
 			owned, err := b.ownsIndexFn(key)
 			if err != nil {
 				ownCheckErrors[key] = err
 			} else if !owned && now.UnixMilli()-idx.lastFetchedFromCache.Load() > cacheTTLMillis {
-				deleteIdx = true
+				delete(b.cache, key)
 				unowned[key] = idx
 			}
-		}
-
-		if deleteIdx {
-			delete(b.cache, key)
 		}
 	}
 	b.cacheMx.Unlock()
