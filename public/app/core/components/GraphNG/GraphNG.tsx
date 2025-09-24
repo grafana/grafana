@@ -40,7 +40,6 @@ export interface GraphNGProps extends Themeable2 {
   tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
-  // @todo rename to annoLanes, pass count not frames
   prepConfig: (
     alignedFrame: DataFrame,
     allFrames: DataFrame[],
