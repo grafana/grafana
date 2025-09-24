@@ -46,6 +46,34 @@ func TestMain(m *testing.M) {
 }
 
 func TestBleveBackend(t *testing.T) {
+	tmpdir, err := os.MkdirTemp("", "grafana-bleve-test")
+	require.NoError(t, err)
+
+	backend, err := NewBleveBackend(BleveOptions{
+		Root:          tmpdir,
+		FileThreshold: 5, // with more than 5 items we create a file on disk
+		UseFullNgram:  false,
+	}, tracing.NewNoopTracerService(), nil)
+	require.NoError(t, err)
+
+	testBleveBackend(t, backend)
+}
+
+func TestBleveBackendFullNgramEnabled(t *testing.T) {
+	tmpdir, err := os.MkdirTemp("", "grafana-bleve-test")
+	require.NoError(t, err)
+
+	backend, err := NewBleveBackend(BleveOptions{
+		Root:          tmpdir,
+		FileThreshold: 5, // with more than 5 items we create a file on disk
+		UseFullNgram:  true,
+	}, tracing.NewNoopTracerService(), nil)
+	require.NoError(t, err)
+
+	testBleveBackend(t, backend)
+}
+
+func testBleveBackend(t *testing.T, backend *bleveBackend) {
 	dashboardskey := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
@@ -56,14 +84,6 @@ func TestBleveBackend(t *testing.T) {
 		Group:     "folder.grafana.app",
 		Resource:  "folders",
 	}
-	tmpdir, err := os.MkdirTemp("", "grafana-bleve-test")
-	require.NoError(t, err)
-
-	backend, err := NewBleveBackend(BleveOptions{
-		Root:          tmpdir,
-		FileThreshold: 5, // with more than 5 items we create a file on disk
-	}, tracing.NewNoopTracerService(), nil)
-	require.NoError(t, err)
 
 	t.Cleanup(backend.Stop)
 
@@ -771,6 +791,7 @@ func setupBleveBackend(t *testing.T, options ...setupOption) (*bleveBackend, pro
 		IndexCacheTTL: defaultIndexCacheTTL,
 		Logger:        slog.New(logtest.NewNopHandler(t)),
 		BuildVersion:  buildVersion,
+		UseFullNgram:  false,
 	}
 	for _, opt := range options {
 		opt(&opts)
@@ -1467,6 +1488,7 @@ func TestInvalidBuildVersion(t *testing.T) {
 	opts := BleveOptions{
 		Root:         t.TempDir(),
 		BuildVersion: "invalid",
+		UseFullNgram: false,
 	}
 	_, err := NewBleveBackend(opts, tracing.NewNoopTracerService(), nil)
 	require.ErrorContains(t, err, "cannot parse build version")
