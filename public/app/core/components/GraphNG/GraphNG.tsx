@@ -246,7 +246,6 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
             this.props.annotationLanes
           );
           pluginLog('GraphNG', false, 'config recreated', newState.config);
-          console.log('GraphNG', 'config recreated', newState.config);
         }
 
         newState.alignedData = newState.config!.prepData!([newState.alignedFrame]) as AlignedData;

@@ -154,7 +154,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
 
     for (let i = 0; i < timeZones.length; i++) {
       const timeZone = timeZones[i];
-
       builder.addAxis({
         scaleKey: xScaleKey,
         isTime: true,

@@ -135,7 +135,6 @@ export const TimeSeriesPanel = ({
       annotationLanes={getAnnotationFrames(data.annotations).length}
     >
       {(uplotConfig, alignedFrame) => {
-        console.log('time series config (re)loaded', data.annotations?.length, data.annotations);
         return (
           <>
             <KeyboardPlugin config={uplotConfig} />
