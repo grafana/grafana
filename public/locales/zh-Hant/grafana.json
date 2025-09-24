@@ -1913,9 +1913,6 @@
       "title-remove": "移除",
       "tooltip-remove-time-range": "移除時間範圍"
     },
-    "namespace": {
-      "title-alert-rules": "警報規則"
-    },
     "namespace-and-group-filter": {
       "select-group": "選擇群組",
       "select-namespace": "選擇命名空間"
@@ -2033,7 +2030,9 @@
       "recipient-notification-fires": "選擇當警報規則觸發時應該收到通知的人。"
     },
     "option-customfield": {
-      "label-custom-template": "自訂範本"
+      "label-custom-template": "自訂範本",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "所選的 Alertmanager 不再存在，或者您可能沒有存取權限。您可以從下拉式選單中選擇其他的 Alertmanager。",
@@ -5329,7 +5328,6 @@
             "json": "匯出為 JSON"
           }
         },
-        "mark-favorite": "標記為「我的最愛」",
         "more-save-options": "更多儲存選項",
         "playlist-next": "前往下一個儀表板",
         "playlist-previous": "前往上一個儀表板",
@@ -5358,8 +5356,7 @@
             "yesText": "儲存"
           }
         },
-        "unlink-library-panel": "取消連結資料庫面板",
-        "unmark-favorite": "取消標記為「我的最愛」"
+        "unlink-library-panel": "取消連結資料庫面板"
       },
       "open-original": "開啟原始儀表板",
       "playlist-next": "前往下一個儀表板",
@@ -5380,6 +5377,10 @@
       "save-library-panel": "儲存資料庫面板",
       "settings": "儀表板設定",
       "share-button": "分享",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "取消連結資料庫面板",
       "unmark-favorite": "取消標記為「我的最愛」"
     },

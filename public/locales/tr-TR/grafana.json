@@ -1919,9 +1919,6 @@
       "title-remove": "Kaldır",
       "tooltip-remove-time-range": "Zaman aralığını kaldır"
     },
-    "namespace": {
-      "title-alert-rules": "Uyarı kuralları"
-    },
     "namespace-and-group-filter": {
       "select-group": "Grup seç",
       "select-namespace": "Ad alanı seç"
@@ -2039,7 +2036,9 @@
       "recipient-notification-fires": "Bir uyarı kuralı tetiklendiğinde bildirimi kimin alacağını seçin."
     },
     "option-customfield": {
-      "label-custom-template": "Özel şablon"
+      "label-custom-template": "Özel şablon",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Seçilen Alertmanager artık mevcut değil veya erişim izniniz olmayabilir. Açılır menüden başka bir Alertmanager seçebilirsiniz.",
@@ -5350,7 +5349,6 @@
             "json": "JSON olarak dışa aktar"
           }
         },
-        "mark-favorite": "Favori olarak işaretle",
         "more-save-options": "Diğer kaydetme seçenekleri",
         "playlist-next": "Sonraki panoya git",
         "playlist-previous": "Önceki panoya git",
@@ -5379,8 +5377,7 @@
             "yesText": "Kaydet"
           }
         },
-        "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır",
-        "unmark-favorite": "Favorilerden kaldır"
+        "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır"
       },
       "open-original": "Orijinal panoyu aç",
       "playlist-next": "Sonraki panoya git",
@@ -5401,6 +5398,10 @@
       "save-library-panel": "Kütüphane panelini kaydet",
       "settings": "Pano ayarları",
       "share-button": "Paylaş",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır",
       "unmark-favorite": "Favorilerden kaldır"
     },

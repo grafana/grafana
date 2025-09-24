@@ -1919,9 +1919,6 @@
       "title-remove": "Verwijderen",
       "tooltip-remove-time-range": "Tijdsbereik verwijderen"
     },
-    "namespace": {
-      "title-alert-rules": "Waarschuwingsregels"
-    },
     "namespace-and-group-filter": {
       "select-group": "Groep selecteren",
       "select-namespace": "Namespace selecteren"
@@ -2039,7 +2036,9 @@
       "recipient-notification-fires": "Selecteer wie een melding moet ontvangen wanneer een waarschuwingsregel geactiveerd wordt."
     },
     "option-customfield": {
-      "label-custom-template": "Aangepast sjabloon"
+      "label-custom-template": "Aangepast sjabloon",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "De geselecteerde waarschuwingsmanager bestaat niet meer of je hebt mogelijk geen toestemming om deze te openen. Je kunt een andere waarschuwingsmanager selecteren in de vervolgkeuzelijst.",
@@ -5350,7 +5349,6 @@
             "json": "Exporteren als JSON"
           }
         },
-        "mark-favorite": "Markeren als favoriet",
         "more-save-options": "Meer opties voor opslaan",
         "playlist-next": "Naar het volgende dashboard",
         "playlist-previous": "Naar het vorige dashboard",
@@ -5379,8 +5377,7 @@
             "yesText": "Opslaan"
           }
         },
-        "unlink-library-panel": "Bibliotheekpaneel ontkoppelen",
-        "unmark-favorite": "Markering als favoriet ongedaan maken"
+        "unlink-library-panel": "Bibliotheekpaneel ontkoppelen"
       },
       "open-original": "Origineel dashboard openen",
       "playlist-next": "Naar het volgende dashboard",
@@ -5401,6 +5398,10 @@
       "save-library-panel": "Bibliotheekpaneel",
       "settings": "Dashboardinstellingen",
       "share-button": "Delen",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Bibliotheekpaneel ontkoppelen",
       "unmark-favorite": "Markering als favoriet ongedaan maken"
     },

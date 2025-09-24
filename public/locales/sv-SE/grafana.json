@@ -1919,9 +1919,6 @@
       "title-remove": "Ta bort",
       "tooltip-remove-time-range": "Ta bort tidsintervall"
     },
-    "namespace": {
-      "title-alert-rules": "Varningsregler"
-    },
     "namespace-and-group-filter": {
       "select-group": "Markera grupp",
       "select-namespace": "Välj namnutrymme"
@@ -2039,7 +2036,9 @@
       "recipient-notification-fires": "Välj vem som ska få en avisering när en larmregel utlöses."
     },
     "option-customfield": {
-      "label-custom-template": "Anpassad mall"
+      "label-custom-template": "Anpassad mall",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Vald Alertmanager finns inte längre eller så kanske du inte har behörighet att komma åt den. Du kan välja en annan larmhanterare i rullgardinsmenyn.",
@@ -5350,7 +5349,6 @@
             "json": "Exportera som JSON"
           }
         },
-        "mark-favorite": "Markera som favorit",
         "more-save-options": "Fler sparalternativ",
         "playlist-next": "Gå till nästa instrumentpanel",
         "playlist-previous": "Gå till föregående instrumentpanel",
@@ -5379,8 +5377,7 @@
             "yesText": "Spara"
           }
         },
-        "unlink-library-panel": "Ta bort länk till bibliotekspanel",
-        "unmark-favorite": "Avmarkera som favorit"
+        "unlink-library-panel": "Ta bort länk till bibliotekspanel"
       },
       "open-original": "Öppna ursprunglig instrumentpanel",
       "playlist-next": "Gå till nästa instrumentpanel",
@@ -5401,6 +5398,10 @@
       "save-library-panel": "Spara bibliotekspanel",
       "settings": "Instrumentpanelens inställningar",
       "share-button": "Dela",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Ta bort länk till bibliotekspanel",
       "unmark-favorite": "Avmarkera som favorit"
     },

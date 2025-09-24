@@ -1931,9 +1931,6 @@
       "title-remove": "Odebrat",
       "tooltip-remove-time-range": "Odebrat časový rozsah"
     },
-    "namespace": {
-      "title-alert-rules": "Pravidla výstrah"
-    },
     "namespace-and-group-filter": {
       "select-group": "Vybrat skupinu",
       "select-namespace": "Vyberte jmenný prostor"
@@ -2051,7 +2048,9 @@
       "recipient-notification-fires": "Vyberte, kdo by měl obdržet oznámení při spuštění pravidla výstrahy."
     },
     "option-customfield": {
-      "label-custom-template": "Vlastní šablona"
+      "label-custom-template": "Vlastní šablona",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Vybraný správce výstrah již neexistuje nebo nemáte potřebná oprávnění. Vyberte jiného správce výstrah z rozevíracího seznamu.",
@@ -5392,7 +5391,6 @@
             "json": "Exportovat jako JSON"
           }
         },
-        "mark-favorite": "Označit jako oblíbené",
         "more-save-options": "Další možnosti uložení",
         "playlist-next": "Přejít na další nástěnku",
         "playlist-previous": "Přejít na předchozí nástěnku",
@@ -5421,8 +5419,7 @@
             "yesText": "Uložit"
           }
         },
-        "unlink-library-panel": "Odpojit panel knihovny",
-        "unmark-favorite": "Zrušit označení jako oblíbené"
+        "unlink-library-panel": "Odpojit panel knihovny"
       },
       "open-original": "Otevřít původní nástěnku",
       "playlist-next": "Přejít na další nástěnku",
@@ -5443,6 +5440,10 @@
       "save-library-panel": "Uložit panel knihovny",
       "settings": "Nastavení nástěnky",
       "share-button": "Sdílet",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Odpojit panel knihovny",
       "unmark-favorite": "Odznačit z oblíbených"
     },

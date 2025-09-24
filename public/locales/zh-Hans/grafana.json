@@ -1913,9 +1913,6 @@
       "title-remove": "删除",
       "tooltip-remove-time-range": "移除时间范围"
     },
-    "namespace": {
-      "title-alert-rules": "警报规则"
-    },
     "namespace-and-group-filter": {
       "select-group": "选择组",
       "select-namespace": "选择命名空间"
@@ -2033,7 +2030,9 @@
       "recipient-notification-fires": "选择警报规则触发时应向谁发送通知。"
     },
     "option-customfield": {
-      "label-custom-template": "自定义模板"
+      "label-custom-template": "自定义模板",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "所选 Alertmanager 不再存在，或者您可能没有访问它的权限。您可以从下拉列表中选择其他 Alertmanager。",
@@ -5329,7 +5328,6 @@
             "json": "导出为 JSON"
           }
         },
-        "mark-favorite": "标记为收藏",
         "more-save-options": "更多保存选项",
         "playlist-next": "前往下一个仪表板",
         "playlist-previous": "前往上一个仪表板",
@@ -5358,8 +5356,7 @@
             "yesText": "保存"
           }
         },
-        "unlink-library-panel": "取消链接库面板",
-        "unmark-favorite": "取消标记为收藏"
+        "unlink-library-panel": "取消链接库面板"
       },
       "open-original": "打开原始仪表板",
       "playlist-next": "前往下一个仪表板",
@@ -5380,6 +5377,10 @@
       "save-library-panel": "保存库面板",
       "settings": "仪表板设置",
       "share-button": "分享",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "取消链接库面板",
       "unmark-favorite": "取消标记为收藏"
     },

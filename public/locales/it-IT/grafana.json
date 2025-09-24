@@ -1919,9 +1919,6 @@
       "title-remove": "Rimuovi",
       "tooltip-remove-time-range": "Rimuovi intervallo di tempo"
     },
-    "namespace": {
-      "title-alert-rules": "Regole di avviso"
-    },
     "namespace-and-group-filter": {
       "select-group": "Seleziona gruppo",
       "select-namespace": "Seleziona spazio di nomi"
@@ -2039,7 +2036,9 @@
       "recipient-notification-fires": "Seleziona chi deve ricevere una notifica quando viene attivata una regola di avviso."
     },
     "option-customfield": {
-      "label-custom-template": "Modello personalizzato"
+      "label-custom-template": "Modello personalizzato",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "L'Alertmanager selezionato non esiste più o potresti non avere l'autorizzazione per accedervi. È possibile selezionare un diverso Alertmanager dal menu a discesa.",
@@ -5350,7 +5349,6 @@
             "json": "Esporta in formato JSON"
           }
         },
-        "mark-favorite": "Contrassegna come preferito",
         "more-save-options": "Altre opzioni di salvataggio",
         "playlist-next": "Vai alla dashboard successiva",
         "playlist-previous": "Vai alla dashboard precedente",
@@ -5379,8 +5377,7 @@
             "yesText": "Salva"
           }
         },
-        "unlink-library-panel": "Scollega pannello della libreria",
-        "unmark-favorite": "Rimuovi dai preferiti"
+        "unlink-library-panel": "Scollega pannello della libreria"
       },
       "open-original": "Apri il originale",
       "playlist-next": "Vai al dashboard successivo",
@@ -5401,6 +5398,10 @@
       "save-library-panel": "Salva pannello della libreria",
       "settings": "Impostazioni dashboard",
       "share-button": "Condividi",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Scollega pannello della libreria",
       "unmark-favorite": "Rimuovi dai preferiti"
     },
