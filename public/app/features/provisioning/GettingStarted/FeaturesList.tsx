@@ -4,7 +4,7 @@ import { FeatureState, GrafanaTheme2 } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Box, FeatureBadge, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, FeatureBadge, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { RepositoryTypeCards } from '../Shared/RepositoryTypeCards';
 
@@ -37,6 +37,20 @@ export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesL
           </Trans>
         </li>
       </ul>
+      <Text>
+        <Trans i18nKey="provisioning.features-list.learn-more-documentation">
+          Want to learn more? See our{' '}
+          <TextLink
+            external
+            href={
+              'https://grafana.com/docs/grafana-cloud/developer-resources/observability-as-code/provision-resources'
+            }
+          >
+            documentation
+          </TextLink>
+          .
+        </Trans>
+      </Text>
       {!hasRequiredFeatures ? (
         <Box>
           <LinkButton fill="outline" onClick={onSetupFeatures}>
