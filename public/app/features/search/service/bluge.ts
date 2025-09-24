@@ -85,6 +85,11 @@ export class BlugeSearcher implements GrafanaSearcher {
     return [];
   }
 
+  async getLocationInfo() {
+    // TODO: Implement location info, or deprecate this entire file(?)
+    return {};
+  }
+
   // This should eventually be filled by an API call, but hardcoded is a good start
   getSortOptions(): Promise<SelectableValue[]> {
     const opts: SelectableValue[] = [

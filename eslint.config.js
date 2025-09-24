@@ -26,7 +26,7 @@ const commonTestIgnores = [
   '**/__mocks__/**',
   '**/mocks/**/*.{ts,tsx}',
   '**/public/test/**',
-  '**/mocks.{ts,tsx}',
+  '**/{mocks,test-utils}.{ts,tsx}',
   '**/*.mock.{ts,tsx}',
   '**/{test-helpers,testHelpers}.{ts,tsx}',
   '**/{spec,test-helpers}/**/*.{ts,tsx}',

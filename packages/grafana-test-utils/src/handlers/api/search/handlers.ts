@@ -2,6 +2,7 @@ import { Chance } from 'chance';
 import { HttpResponse, http } from 'msw';
 
 import { wellFormedTree } from '../../../fixtures/folders';
+import { mockStarredDashboards } from '../user/handlers';
 
 import { SORT_OPTIONS } from './constants';
 
@@ -22,9 +23,19 @@ const getLegacySearchHandler = () =>
     const typeFilter = new URL(request.url).searchParams.get('type') || null;
     // Workaround for the fixture kind being 'dashboard' instead of 'dash-db'
     const mappedTypeFilter = typeFilter === 'dash-db' ? 'dashboard' : typeFilter;
+    const starredFilter = new URL(request.url).searchParams.get('starred') || null;
+
     const response = mockTree
       .filter((filterItem) => {
-        const filters: FilterArray = [];
+        const filters: FilterArray = [
+          // Filter UI items out of fixtures as... they're UI items 🤷
+          ({ item }) => item.kind !== 'ui',
+        ];
+
+        if (starredFilter) {
+          filters.push(({ item }) => mockStarredDashboards.includes(item.uid));
+        }
+
         if (folderFilter && folderFilter !== 'general') {
           filters.push(
             ({ item }) => (item.kind === 'folder' || item.kind === 'dashboard') && item.parentUID === folderFilter

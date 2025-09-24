@@ -10651,6 +10651,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "No dashboard groups configured",
+      "mark-as-starred": "Mark \"{{title}}\" as favorite",
+      "recently-viewed-dashboards": "Recently viewed dashboards",
+      "search": "Search",
+      "starred-dashboards": "Starred dashboards",
+      "unmark-as-starred": "Unmark \"{{title}}\" as favorite"
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {

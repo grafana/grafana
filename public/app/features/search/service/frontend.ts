@@ -76,6 +76,10 @@ export class FrontendSearcher implements GrafanaSearcher {
     return this.parent.tags(query);
   }
 
+  async getLocationInfo() {
+    return this.parent.getLocationInfo();
+  }
+
   getFolderViewSort(): string {
     return this.parent.getFolderViewSort();
   }

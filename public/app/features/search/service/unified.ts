@@ -92,6 +92,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
     return resp.facets?.tags?.terms || [];
   }
 
+  async getLocationInfo() {
+    return this.locationInfo;
+  }
+
   // TODO: Implement this correctly
   getSortOptions(): Promise<SelectableValue[]> {
     const opts: SelectableValue[] = [
