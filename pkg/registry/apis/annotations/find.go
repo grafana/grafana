@@ -33,10 +33,20 @@ func parseQuery(values url.Values) (annotationsV0.AnnotationQuery, error) {
 		return query, apierrors.NewBadRequest(fmt.Sprintf("invalid 'to' time: %s", err.Error()))
 	}
 	query.To = t.UnixMilli()
-
 	query.Tags = values["tags"]
-	query.Dashboard = values.Get("dashboard")
-	query.Alert = values.Get("alert")
+
+	// Find the first existing value
+	getFirst := func(params ...string) string {
+		for _, key := range params {
+			v := values.Get(key)
+			if v != "" {
+				return v
+			}
+		}
+		return ""
+	}
+	query.Dashboard = getFirst("dashboard", "dashboardUID")
+	query.Alert = getFirst("alert", "alertUID")
 
 	return query, nil
 }

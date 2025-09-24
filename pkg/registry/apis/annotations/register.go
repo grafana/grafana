@@ -34,7 +34,10 @@ type APIBuilder struct {
 }
 
 func RegisterAPIService(features *featuremgmt.FeatureManager,
-	accessClient authlib.AccessClient, // TBD... where/how should we implement access control
+	// TBD... where/how should we implement access control
+	// if visibility is based on access to the dashboard...
+	// we will also need to know what folder dashboards live in
+	accessClient authlib.AccessClient,
 	repo annotations.Repository,
 	apiregistration builder.APIRegistrar,
 	cfg *setting.Cfg,

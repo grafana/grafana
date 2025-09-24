@@ -14,7 +14,7 @@ export interface AnnotationServer {
 }
 
 class LegacyAnnotationServer implements AnnotationServer {
-  query(params: unknown, requestId: string): Promise<DataFrame> {
+  query(params: Record<string, unknown>, requestId: string): Promise<DataFrame> {
     return getBackendSrv()
       .get('/api/annotations', params, requestId)
       .then((v) => toDataFrame(v));
@@ -54,9 +54,9 @@ class APIServerAnnotationServer implements AnnotationServer {
     this.url = `/apis/annotation.grafana.app/v0alpha1/namespaces/${config.namespace}/annotations`;
   }
 
-  query(params: unknown, requestId: string): Promise<DataFrame> {
+  query(params: Record<string, unknown>, requestId: string): Promise<DataFrame> {
     return getBackendSrv()
-      .get(this.url + '/find', params, requestId)
+      .get(this.url + '/find', { ...params, format: 'frame' }, requestId)
       .then((v) => toDataFrame(v));
   }
 

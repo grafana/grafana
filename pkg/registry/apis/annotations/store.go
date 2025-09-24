@@ -30,9 +30,7 @@ type annotationStore struct {
 	tableConverter rest.TableConvertor
 }
 
-func newAnnotationStorage(
-	service annotationsV0.Service,
-) *annotationStore {
+func newAnnotationStorage(service annotationsV0.Service) *annotationStore {
 	return &annotationStore{
 		service: service,
 		tableConverter: rest.NewDefaultTableConvertor(
@@ -80,7 +78,6 @@ func (s *annotationStore) Get(ctx context.Context, name string, options *metav1.
 	if err != nil {
 		return nil, err
 	}
-
 	if len(rsp.Items) > 1 {
 		return nil, fmt.Errorf("expected single item, got multiple")
 	}
@@ -99,7 +96,6 @@ func (s *annotationStore) Create(ctx context.Context, obj runtime.Object, create
 	if !ok {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected annotation, got %T", obj))
 	}
-
 	rsp, err := s.service.Append(ctx, []annotationsV0.AnnotationSpec{v.Spec})
 	if err != nil {
 		return nil, err
