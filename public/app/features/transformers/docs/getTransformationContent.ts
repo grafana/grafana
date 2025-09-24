@@ -1,6 +1,8 @@
-import { transformationDocsContent, getLinkToDocs, ImageRenderType } from './content';
+import { FALLBACK_DOCS_LINK } from './constants';
+import { transformationDocsContent, ImageRenderType } from './content';
 
 export function getTransformationContent(id: string): { name: string; helperDocs: string } {
+  console.log('getTransformationContent', id);
   if (id in transformationDocsContent) {
     const { name, getHelperDocs, links } = transformationDocsContent[id];
 
@@ -23,7 +25,7 @@ export function getTransformationContent(id: string): { name: string; helperDocs
         name,
         helperDocs: `
         ${cleansedMarkdown}
-        ${getLinkToDocs()}
+        ${FALLBACK_DOCS_LINK}
   ${renderedLinks}
         `,
       };
@@ -34,7 +36,7 @@ export function getTransformationContent(id: string): { name: string; helperDocs
       name,
       helperDocs: `
       ${cleansedMarkdown}
-      ${getLinkToDocs()}
+      ${FALLBACK_DOCS_LINK}
       `,
     };
   }
@@ -42,7 +44,7 @@ export function getTransformationContent(id: string): { name: string; helperDocs
   // If the transformation has no documentation, return an external link to the online documentation.
   return {
     name: 'No documentation found',
-    helperDocs: getLinkToDocs(),
+    helperDocs: FALLBACK_DOCS_LINK,
   };
 }
 
