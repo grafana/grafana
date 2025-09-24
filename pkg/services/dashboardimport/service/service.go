@@ -171,6 +171,5 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		Imported:         true,
 		DashboardId:      savedDashboard.ID,
 		Slug:             savedDashboard.Slug,
-		Dashboard:        generatedDash,
 	}, nil
 }

@@ -59,15 +59,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/dashboard/template/:datasourceUid',
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
-      pageClass: 'page-dashboard',
-      routeName: DashboardRoutes.Template,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPageProxy')
-      ),
-    },
-    {
       path: '/dashboard/new-with-ds/:datasourceUid',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       component: SafeDynamicImport(
