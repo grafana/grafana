@@ -178,6 +178,15 @@ gen-apps: ## Generate code for Grafana App SDK apps
 		$(MAKE) -C $$dir generate; \
 	done
 	./hack/update-codegen.sh
+	@if [ -n "$$CODEGEN_VERIFY" ]; then \
+		echo "Verifying generated code is up to date..."; \
+		if ! git diff --quiet; then \
+			echo "Error: Generated apps code is not up to date. Please run 'make gen-apps' to regenerate."; \
+			git diff --name-only; \
+			exit 1; \
+		fi; \
+		echo "Generated apps code is up to date."; \
+	fi
 
 .PHONY: gen-feature-toggles
 gen-feature-toggles:
