@@ -26,7 +26,7 @@ func NewServiceAuthorizer() authorizer.Authorizer {
 
 			res := authzlib.CheckServicePermissions(ident, attr.GetAPIGroup(), attr.GetResource(), attr.GetVerb())
 			if !res.Allowed {
-				return authorizer.DecisionDeny, "unauthorized request", nil
+				return authorizer.DecisionDeny, "calling service lacks required permissions", nil
 			}
 
 			return authorizer.DecisionAllow, "", nil
