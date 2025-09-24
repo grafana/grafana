@@ -10,7 +10,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1"
+	annotationsV0 "github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -21,35 +21,35 @@ func TestConvertToLegacyItem(t *testing.T) {
 	tests := []struct {
 		name   string
 		user   identity.Requester
-		input  *v0alpha1.Annotation
+		input  *annotationsV0.Annotation
 		expect *annotations.Item
 		err    string
 	}{
 		{
 			name:  "missing user",
-			input: &v0alpha1.Annotation{},
+			input: &annotationsV0.Annotation{},
 			err:   "a Requester was not found in the context",
 		},
 		{
 			name:  "missing user",
 			user:  &identity.StaticRequester{OrgID: 25, Login: "bob"},
-			input: &v0alpha1.Annotation{},
+			input: &annotationsV0.Annotation{},
 			err:   "user has no internal id",
 		},
 		{
 			name: "simple",
 			user: userOrg25,
-			input: &v0alpha1.Annotation{
-				Spec: v0alpha1.AnnotationSpec{
+			input: &annotationsV0.Annotation{
+				Spec: annotationsV0.AnnotationSpec{
 					Text:    "hello world",
 					Tags:    []string{"tag1", "tag2"},
 					Time:    1234,
 					TimeEnd: ptr.To(int64(5678)),
-					Dashboard: &v0alpha1.AnnotationDashboard{
+					Dashboard: &annotationsV0.AnnotationDashboard{
 						Name:  "dash",
 						Panel: ptr.To[int64](3),
 					},
-					Alert: &v0alpha1.AnnotationAlert{
+					Alert: &annotationsV0.AnnotationAlert{
 						Name:      "alert-uid",
 						NewState:  "alerting",
 						PrevState: "ok",
@@ -102,22 +102,22 @@ func TestToLegacyItemQuery(t *testing.T) {
 	tests := []struct {
 		name   string
 		user   identity.Requester
-		query  *v0alpha1.ItemQuery
+		query  *annotationsV0.AnnotationQuery
 		expect *annotations.ItemQuery
 		err    string
 	}{
 		{
 			name:  "missing user",
-			query: &v0alpha1.ItemQuery{},
+			query: &annotationsV0.AnnotationQuery{},
 			err:   "a Requester was not found in the context",
 		},
 		{
 			name: "simple",
 			user: userOrg25,
-			query: &v0alpha1.ItemQuery{
-				From:         1234,
-				To:           5678,
-				DashboardUID: "aaa",
+			query: &annotationsV0.AnnotationQuery{
+				From:      1234,
+				To:        5678,
+				Dashboard: "aaa",
 			},
 			expect: &annotations.ItemQuery{
 				OrgID:        25,
@@ -151,7 +151,7 @@ func TestToAnnotations(t *testing.T) {
 	tests := []struct {
 		name   string
 		input  []*annotations.ItemDTO
-		expect *v0alpha1.AnnotationList
+		expect *annotationsV0.AnnotationList
 		err    string
 	}{
 		{
@@ -181,8 +181,8 @@ func TestToAnnotations(t *testing.T) {
 					Data:      simplejson.NewFromAny(map[string]any{}),
 				},
 			},
-			expect: &v0alpha1.AnnotationList{
-				Items: []v0alpha1.Annotation{
+			expect: &annotationsV0.AnnotationList{
+				Items: []annotationsV0.Annotation{
 					{
 						ObjectMeta: v1.ObjectMeta{
 							Name:              "a10",
@@ -194,16 +194,16 @@ func TestToAnnotations(t *testing.T) {
 								"grafana.app/deprecatedInternalID": "10",
 							},
 						},
-						Spec: v0alpha1.AnnotationSpec{
+						Spec: annotationsV0.AnnotationSpec{
 							Text:    "hello",
 							Time:    1234,
 							TimeEnd: ptr.To(int64(5678)),
 							Tags:    []string{"tag1", "tag2"},
-							Dashboard: &v0alpha1.AnnotationDashboard{
+							Dashboard: &annotationsV0.AnnotationDashboard{
 								Name:  "dash-uid",
 								Panel: ptr.To[int64](3),
 							},
-							Alert: &v0alpha1.AnnotationAlert{
+							Alert: &annotationsV0.AnnotationAlert{
 								Id: ptr.To[int64](55),
 								Data: map[string]any{
 									"hello": "world",
@@ -218,9 +218,9 @@ func TestToAnnotations(t *testing.T) {
 								"grafana.app/deprecatedInternalID": "11",
 							},
 						},
-						Spec: v0alpha1.AnnotationSpec{
+						Spec: annotationsV0.AnnotationSpec{
 							Text: "empty data",
-							Alert: &v0alpha1.AnnotationAlert{
+							Alert: &annotationsV0.AnnotationAlert{
 								Id:        ptr.To[int64](66),
 								NewState:  "alerting",
 								PrevState: "ok",

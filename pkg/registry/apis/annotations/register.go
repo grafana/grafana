@@ -14,12 +14,11 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	authlib "github.com/grafana/authlib/types"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	v0alpha1 "github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	annotationsV0 "github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -30,14 +29,12 @@ var (
 	_ builder.APIGroupRouteProvider = (*APIBuilder)(nil)
 )
 
-// This is used just so wire has something unique to return
 type APIBuilder struct {
-	legacy *legacyStorage
-	ac     accesscontrol.AccessControl
+	service annotationsV0.Service
 }
 
 func RegisterAPIService(features *featuremgmt.FeatureManager,
-	ac accesscontrol.AccessControl,
+	accessClient authlib.AccessClient, // TBD... where/how should we implement access control
 	repo annotations.Repository,
 	apiregistration builder.APIRegistrar,
 	cfg *setting.Cfg,
@@ -45,28 +42,26 @@ func RegisterAPIService(features *featuremgmt.FeatureManager,
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil
 	}
-	namespacer := request.GetNamespaceMapper(cfg)
 	builder := &APIBuilder{
-		legacy: newLegacyStorage(ac, repo, namespacer),
-		ac:     ac,
+		service: newLegacyService(repo),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
 func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
-	return v0alpha1.GroupVersion
+	return annotationsV0.GroupVersion
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
-		&v0alpha1.Annotation{},
-		&v0alpha1.AnnotationList{},
+		&annotationsV0.Annotation{},
+		&annotationsV0.AnnotationList{},
 	)
 }
 
 func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	gv := v0alpha1.GroupVersion
+	gv := annotationsV0.GroupVersion
 	addKnownTypes(scheme, gv)
 	addKnownTypes(scheme, schema.GroupVersion{
 		Group:   gv.Group,
@@ -82,14 +77,14 @@ func (b *APIBuilder) AllowedV0Alpha1Resources() []string {
 
 func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
-	storage["annotations"] = b.legacy
+	storage["annotations"] = newAnnotationStorage(b.service)
 
-	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.APIVersion] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[annotationsV0.APIVersion] = storage
 	return nil
 }
 
 func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return v0alpha1.GetOpenAPIDefinitions
+	return annotationsV0.GetOpenAPIDefinitions
 }
 
 func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
@@ -99,20 +94,20 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 // Register additional routes with the server
 func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	ref := func(path string) spec.Ref { return spec.Ref{} }
-	defs := v0alpha1.GetOpenAPIDefinitions(ref)
+	defs := annotationsV0.GetOpenAPIDefinitions(ref)
 	df := data.GetOpenAPIDefinitions(ref)["github.com/grafana/grafana-plugin-sdk-go/data.Frame"].Schema
-	tags := defs["github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1.TagsList"].Schema
+	tags := defs["github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/annotationsV0.TagsList"].Schema
 
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
-				Path: "annotations/query",
+				Path: "annotations/find",
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
 							Tags:        []string{"Annotation"},
-							OperationId: "queryAnnotations",
-							Description: "Query annotations",
+							OperationId: "findAnnotations",
+							Description: "Find annotations",
 							Parameters: []*spec3.Parameter{
 								{
 									ParameterProps: spec3.ParameterProps{
@@ -146,7 +141,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
-										Name:        "dashboardUID",
+										Name:        "dashboard",
 										In:          "query",
 										Description: "dashboard identifier",
 										Required:    false,
@@ -155,7 +150,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
-										Name:        "alertUID",
+										Name:        "alert",
 										In:          "query",
 										Description: "alert identifier",
 										Required:    false,
@@ -169,6 +164,15 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 										Description: "tag query filter",
 										Required:    false,
 										Schema:      spec.ArrayProperty(spec.StringProperty()),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "format",
+										In:          "query",
+										Description: "the response shape",
+										Required:    false,
+										Schema:      spec.StringProperty().WithEnum("frame", "event", "resource"),
 									},
 								},
 							},
@@ -201,20 +205,28 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 						return
 					}
 
-					found, err := b.legacy.Find(r.Context(), &query)
+					var rsp any
+					found, err := b.service.Find(r.Context(), &query)
 					if err != nil {
 						errhttp.Write(r.Context(), err, w)
 						return
 					}
+					rsp = found
 
-					df, err := toDataFrame(found)
+					switch url.Get("format") {
+					case "frame":
+						rsp, err = toDataFrame(found)
+					case "event":
+						rsp = toEventArray(found)
+					}
+
 					if err != nil {
 						errhttp.Write(r.Context(), err, w)
 						return
 					}
 
 					w.Header().Set("Content-Type", "application/json")
-					_ = json.NewEncoder(w).Encode(df)
+					_ = json.NewEncoder(w).Encode(rsp)
 				},
 			},
 			{
@@ -259,7 +271,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 					},
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
-					found, err := b.legacy.Tags(r.Context())
+					found, err := b.service.Tags(r.Context())
 					if err != nil {
 						errhttp.Write(r.Context(), err, w)
 						return

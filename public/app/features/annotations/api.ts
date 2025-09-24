@@ -56,32 +56,32 @@ class APIServerAnnotationServer implements AnnotationServer {
 
   query(params: unknown, requestId: string): Promise<DataFrame> {
     return getBackendSrv()
-      .get(this.url + '/query', params, requestId)
+      .get(this.url + '/find', params, requestId)
       .then((v) => toDataFrame(v));
   }
 
-  forAlert(alertUID: string) {
+  forAlert(alert: string) {
     return getBackendSrv().get(
-      this.url + '/query',
+      this.url + '/find',
       {
-        alertUID,
-        format: 'legacyEvent', // the legacy DTO format
+        alert,
+        format: 'event', // the legacy events format
       },
-      'alert-query'
+      'alert-query' // request-id
     );
   }
 
   save(annotation: AnnotationEvent) {
     const spec: Record<string, unknown> = {
       text: annotation.text,
-      epoch: annotation.time,
+      time: annotation.time,
       dashboard: {
         name: annotation.dashboardUID,
         panel: annotation.panelId,
       },
     };
     if (annotation.isRegion) {
-      spec.epochEnd = annotation.timeEnd;
+      spec.timeEnd = annotation.timeEnd;
     }
     if (annotation.tags?.length) {
       spec.tags = annotation.tags;

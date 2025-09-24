@@ -4,20 +4,25 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
+	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1"
+	annotationsV0 "github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/annotations"
 )
 
-func toLegacyItem(ctx context.Context, q *v0alpha1.Annotation) (*annotations.Item, error) {
+func toLegacyItem(ctx context.Context, q *annotationsV0.Annotation) (*annotations.Item, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
@@ -55,22 +60,29 @@ func toLegacyItem(ctx context.Context, q *v0alpha1.Annotation) (*annotations.Ite
 	return item, nil
 }
 
-func toLegacyItemQuery(ctx context.Context, q *v0alpha1.ItemQuery) (*annotations.ItemQuery, error) {
+func toLegacyItemQuery(ctx context.Context, q *annotationsV0.AnnotationQuery) (*annotations.ItemQuery, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	if q.Creator != "" {
+		return nil, fmt.Errorf("creator to userId not yet supported")
+	}
+	if q.Continue != "" {
+		return nil, fmt.Errorf("continue token not yet supported")
 	}
 
 	query := &annotations.ItemQuery{
 		OrgID:        user.GetOrgID(),
 		From:         q.From,
 		To:           q.To,
-		AlertUID:     q.AlertUID,
-		DashboardUID: q.DashboardUID,
+		AlertUID:     q.Alert,
+		DashboardUID: q.Dashboard,
 		Tags:         q.Tags,
 		MatchAny:     q.MatchAny,
 		Limit:        q.Limit,
-		Page:         q.Page,
+		//	Page:         q.Page,
 
 		SignedInUser: user,
 	}
@@ -78,12 +90,12 @@ func toLegacyItemQuery(ctx context.Context, q *v0alpha1.ItemQuery) (*annotations
 	return query, nil
 }
 
-func toAnnotation(dto *annotations.ItemDTO) (v0alpha1.Annotation, error) {
-	anno := v0alpha1.Annotation{
+func toAnnotation(dto *annotations.ItemDTO) (annotationsV0.Annotation, error) {
+	anno := annotationsV0.Annotation{
 		ObjectMeta: v1.ObjectMeta{
 			Name: fmt.Sprintf("a%d", dto.ID),
 		},
-		Spec: v0alpha1.AnnotationSpec{
+		Spec: annotationsV0.AnnotationSpec{
 			Text: dto.Text,
 			Time: dto.Time,
 			Tags: dto.Tags,
@@ -109,7 +121,7 @@ func toAnnotation(dto *annotations.ItemDTO) (v0alpha1.Annotation, error) {
 	}
 
 	if dto.DashboardUID != nil {
-		anno.Spec.Dashboard = &v0alpha1.AnnotationDashboard{
+		anno.Spec.Dashboard = &annotationsV0.AnnotationDashboard{
 			Name: *dto.DashboardUID,
 		}
 		if dto.PanelID > 0 {
@@ -129,7 +141,7 @@ func toAnnotation(dto *annotations.ItemDTO) (v0alpha1.Annotation, error) {
 	}
 
 	if dto.AlertID > 0 || dto.AlertName != "" || data != nil {
-		anno.Spec.Alert = &v0alpha1.AnnotationAlert{
+		anno.Spec.Alert = &annotationsV0.AnnotationAlert{
 			Name:      dto.AlertName,
 			Data:      data,
 			NewState:  dto.NewState,
@@ -143,8 +155,71 @@ func toAnnotation(dto *annotations.ItemDTO) (v0alpha1.Annotation, error) {
 	return anno, nil
 }
 
-func toAnnotationList(dto []*annotations.ItemDTO) (*v0alpha1.AnnotationList, error) {
-	items := make([]v0alpha1.Annotation, 0, len(dto))
+func itemToAnnotation(dto annotations.Item) (annotationsV0.Annotation, error) {
+	anno := annotationsV0.Annotation{
+		ObjectMeta: v1.ObjectMeta{
+			Name: fmt.Sprintf("a%d", dto.ID),
+		},
+		Spec: annotationsV0.AnnotationSpec{
+			Text: dto.Text,
+			Time: dto.Epoch,
+			Tags: dto.Tags,
+		},
+	}
+
+	// The DB sets both time and timeEnd to the same value for region annotations.
+	if dto.EpochEnd > 0 && dto.EpochEnd != dto.Epoch {
+		anno.Spec.TimeEnd = ptr.To(dto.EpochEnd)
+	}
+
+	meta, err := utils.MetaAccessor(&anno)
+	if err != nil {
+		return anno, err
+	}
+	meta.SetDeprecatedInternalID(dto.ID) // nolint:staticcheck
+
+	if dto.Created > 0 {
+		anno.CreationTimestamp = v1.NewTime(time.UnixMilli(dto.Created))
+	}
+	if dto.Updated > 0 && dto.Updated != dto.Created {
+		meta.SetUpdatedTimestampMillis(dto.Updated)
+	}
+
+	if dto.DashboardUID != "" {
+		anno.Spec.Dashboard = &annotationsV0.AnnotationDashboard{
+			Name: dto.DashboardUID,
+		}
+		if dto.PanelID > 0 {
+			anno.Spec.Dashboard.Panel = &dto.PanelID
+		}
+	}
+
+	var data map[string]any
+	if dto.Data != nil {
+		data, err = dto.Data.Map()
+		if err != nil {
+			return anno, fmt.Errorf("failed to convert annotation data: %w", err)
+		}
+		if len(data) == 0 {
+			data = nil
+		}
+	}
+
+	if dto.AlertID > 0 || data != nil {
+		anno.Spec.Alert = &annotationsV0.AnnotationAlert{
+			Data:      data,
+			NewState:  dto.NewState,
+			PrevState: dto.PrevState,
+		}
+		if dto.AlertID > 0 {
+			anno.Spec.Alert.Id = ptr.To(dto.AlertID)
+		}
+	}
+	return anno, nil
+}
+
+func toAnnotationList(dto []*annotations.ItemDTO) (*annotationsV0.AnnotationList, error) {
+	items := make([]annotationsV0.Annotation, 0, len(dto))
 	for _, d := range dto {
 		item, err := toAnnotation(d)
 		if err != nil {
@@ -152,12 +227,12 @@ func toAnnotationList(dto []*annotations.ItemDTO) (*v0alpha1.AnnotationList, err
 		}
 		items = append(items, item)
 	}
-	return &v0alpha1.AnnotationList{
+	return &annotationsV0.AnnotationList{
 		Items: items,
 	}, nil
 }
 
-func toDataFrame(result *v0alpha1.AnnotationList) (*data.Frame, error) {
+func toDataFrame(result *annotationsV0.AnnotationList) (*data.Frame, error) {
 	size := len(result.Items)
 
 	id := data.NewFieldFromFieldType(data.FieldTypeString, size)
@@ -229,4 +304,43 @@ func toDataFrame(result *v0alpha1.AnnotationList) (*data.Frame, error) {
 	}
 	frame.Fields = append(frame.Fields, tags)
 	return frame, nil
+}
+
+func toEventArray(result *annotationsV0.AnnotationList) []annotations.ItemDTO {
+	rsp := make([]annotations.ItemDTO, len(result.Items))
+	for i, v := range result.Items {
+		id, _ := legacyIdFromName(v.Name)
+		info, _ := authlib.ParseNamespace(v.Namespace)
+
+		dto := annotations.ItemDTO{
+			ID:      id,
+			OrgID:   info.OrgID,
+			Text:    v.Spec.Text,
+			Time:    v.Spec.Time,
+			Tags:    v.Spec.Tags,
+			Created: v.CreationTimestamp.UnixMilli(),
+			TimeEnd: ptr.Deref(v.Spec.TimeEnd, v.Spec.Time),
+		}
+
+		if v.Spec.Dashboard != nil {
+			dto.DashboardUID = &v.Spec.Dashboard.Name
+			dto.PanelID = ptr.Deref(v.Spec.Dashboard.Panel, 0)
+		}
+		if v.Spec.Alert != nil {
+			dto.AlertName = v.Spec.Alert.Name
+			dto.NewState = v.Spec.Alert.NewState
+			dto.PrevState = v.Spec.Alert.PrevState
+			dto.AlertID = ptr.Deref(v.Spec.Alert.Id, 0)
+			dto.Data = simplejson.NewFromAny(v.Spec.Alert.Data)
+		}
+		rsp[i] = dto
+	}
+	return rsp
+}
+
+func legacyIdFromName(name string) (int64, error) {
+	if !strings.HasPrefix(name, "a") {
+		return 0, apierrors.NewBadRequest("invalid annotation name (expected to start with 'a')")
+	}
+	return strconv.ParseInt(name[1:], 10, 64)
 }

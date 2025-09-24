@@ -19,28 +19,34 @@ type TagList struct {
 	Items           []TagCount `json:"items" yaml:"items"`
 }
 
-// NOTE this query is done with a user in context that must be namespaced
-// +k8s:openapi-gen=true
-type ItemQuery struct {
-	From         int64    `json:"from"` // time range
-	To           int64    `json:"to"`
-	AlertUID     string   `json:"alertUID"`
-	DashboardUID string   `json:"dashboardUID"`
-	PanelID      int64    `json:"panelId"` // necessary in the query?
-	Tags         []string `json:"tags"`
-	MatchAny     bool     `json:"matchAny"` // tags should be all or any
+// +k8s:openapi-gen=false
+type AnnotationQuery struct {
+	From int64 `json:"from,omitempty"` // time range
+	To   int64 `json:"to,omitempty"`
 
-	Limit int64 `json:"limit"`
-	Page  int64
+	Annotation string `json:"annotation,omitempty"` // The annotation id
+	Alert      string `json:"alert,omitempty"`
+	Dashboard  string `json:"dashboard,omitempty"`
+	PanelID    int64  `json:"panelId,omitempty"` // necessary in the query?
+	Creator    string `json:"creator,omitempty"` // the created by identity
+
+	Tags     []string `json:"tags,omitempty"`
+	MatchAny bool     `json:"matchAny,omitempty"` // tags should be all or any
+
+	Limit    int64  `json:"limit,omitempty"`
+	Continue string `json:"continue,omitempty"`
 }
 
-// Minimal service used by alerting
-type BasicService interface {
+// Minimal annotation backend service
+type Service interface {
 	// Query with the user in context
-	Find(ctx context.Context, query *ItemQuery) (*AnnotationList, error)
+	Find(ctx context.Context, query *AnnotationQuery) (*AnnotationList, error)
 
-	// Write new annotations with the user in context
-	SaveMany(ctx context.Context, items []AnnotationSpec) error
+	// Write annotations -- the set of created values will be returned
+	Append(ctx context.Context, items []AnnotationSpec) (*AnnotationList, error)
+
+	// Remove an annotation
+	Remove(ctx context.Context, annotation string) error
 
 	// List the top tags in a namespace
 	Tags(ctx context.Context) (*TagList, error)
