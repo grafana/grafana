@@ -1,7 +1,8 @@
 import { SceneComponentProps, SceneObjectBase, VizPanel, sceneGraph } from '@grafana/scenes';
 import { PanelHeaderNotices } from 'app/features/dashboard/dashgrid/PanelHeader/PanelHeaderNotices';
 
-import { getPanelIdForVizPanel } from '../utils/utils';
+import { getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import { PanelErrorNotice } from './PanelErrorNotice';
 
 export class PanelNotices extends SceneObjectBase {
   static Component = PanelNoticesRenderer;
@@ -40,8 +41,44 @@ function PanelNoticesRenderer({ model }: SceneComponentProps<PanelNotices>) {
 
   const panelId = getPanelIdForVizPanel(panel);
 
+  // Check if there are any errors in the data
+  const hasErrors = data.data?.series?.some((frame: any) => 
+    frame.meta?.notices?.some((notice: any) => notice.severity === 'error')
+  ) || data.data?.error;
+
+  const onRetryQuery = () => {
+    const queryRunner = getQueryRunnerFor(panel);
+    if (queryRunner) {
+      queryRunner.runQueries();
+    }
+  };
+
   if (data.data?.series) {
-    return <PanelHeaderNotices frames={data.data?.series} panelId={panelId} />;
+    return (
+      <>
+        <PanelHeaderNotices frames={data.data?.series} panelId={panelId} />
+        {hasErrors && (
+          <PanelErrorNotice 
+            panel={panel}
+            error={data.data?.error} 
+            onRetry={onRetryQuery}
+            frames={data.data?.series}
+          />
+        )}
+      </>
+    );
+  }
+
+  // Show error notice even if no series data but there's an error
+  if (data.data?.error) {
+    return (
+      <PanelErrorNotice 
+        panel={panel}
+        error={data.data.error} 
+        onRetry={onRetryQuery}
+        frames={[]}
+      />
+    );
   }
 
   return null;
