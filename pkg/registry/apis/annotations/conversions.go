@@ -12,8 +12,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
-	authlib "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	annotationsV0 "github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -310,11 +308,8 @@ func toEventArray(result *annotationsV0.AnnotationList) []annotations.ItemDTO {
 	rsp := make([]annotations.ItemDTO, len(result.Items))
 	for i, v := range result.Items {
 		id, _ := legacyIdFromName(v.Name)
-		info, _ := authlib.ParseNamespace(v.Namespace)
-
 		dto := annotations.ItemDTO{
 			ID:      id,
-			OrgID:   info.OrgID,
 			Text:    v.Spec.Text,
 			Time:    v.Spec.Time,
 			Tags:    v.Spec.Tags,
