@@ -277,6 +277,7 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 	cfg.SearchRingReplicationFactor = 1
 	cfg.Target = []string{modules.SearchServerDistributor}
 	cfg.InstanceID = "distributor" // does nothing for the distributor but may be useful to debug tests
+	cfg.Env = setting.Dev          // allows insecure
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
