@@ -2,9 +2,11 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -73,6 +75,11 @@ var (
 	_ builder.APIGroupRouteProvider         = (*APIBuilder)(nil)
 	_ builder.APIGroupPostStartHookProvider = (*APIBuilder)(nil)
 	_ builder.OpenAPIPostProcessor          = (*APIBuilder)(nil)
+)
+
+var (
+	ErrRepositoryParentFolderConflict = errors.New("parent folder conflict")
+	ErrRepositoryDuplicatePath        = errors.New("duplicate repository path")
 )
 
 // JobHistoryConfig holds configuration for job history backends
@@ -626,18 +633,32 @@ func invalidRepositoryError(name string, list field.ErrorList) error {
 }
 
 func (b *APIBuilder) getRepositoriesInNamespace(ctx context.Context) ([]provisioning.Repository, error) {
-	obj, err := b.store.List(ctx, &internalversion.ListOptions{
-		Limit: 100,
-	})
-	if err != nil {
-		return nil, err
+	var allRepositories []provisioning.Repository
+	continueToken := ""
+
+	for {
+		obj, err := b.store.List(ctx, &internalversion.ListOptions{
+			Limit:    100,
+			Continue: continueToken,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		repositoryList, ok := obj.(*provisioning.RepositoryList)
+		if !ok {
+			return nil, fmt.Errorf("expected repository list")
+		}
+
+		allRepositories = append(allRepositories, repositoryList.Items...)
+
+		continueToken = repositoryList.GetContinue()
+		if continueToken == "" {
+			break
+		}
 	}
 
-	all, ok := obj.(*provisioning.RepositoryList)
-	if !ok {
-		return nil, fmt.Errorf("expected repository list")
-	}
-	return all.Items, nil
+	return allRepositories, nil
 }
 
 // TODO: move this to a more appropriate place. Probably controller/validation.go
@@ -666,6 +687,33 @@ func (b *APIBuilder) verifyAgainstExistingRepositories(cfg *provisioning.Reposit
 			if v.Spec.Sync.Target == provisioning.SyncTargetTypeInstance && v.Name != cfg.Name {
 				return field.Forbidden(field.NewPath("spec", "sync", "target"),
 					"Cannot create folder repository when instance repository exists: "+v.Name)
+			}
+		}
+	}
+
+	// If repo is git, ensure no other repository is defined with a child path
+	if cfg.Spec.Type.IsGit() {
+		for _, v := range all {
+			// skip itself
+			if cfg.Name == v.Name {
+				continue
+			}
+			if v.URL() == cfg.URL() {
+				if v.Path() == cfg.Path() {
+					return field.Forbidden(field.NewPath("spec", string(cfg.Spec.Type), "path"),
+						fmt.Sprintf("%s: %s", ErrRepositoryDuplicatePath.Error(), v.Name))
+				}
+
+				relPath, err := filepath.Rel(v.Path(), cfg.Path())
+				if err != nil {
+					return field.Forbidden(field.NewPath("spec", string(cfg.Spec.Type), "path"), "failed to evaluate path: "+err.Error())
+				}
+				// https://pkg.go.dev/path/filepath#Rel
+				// Rel will return "../" if the relative paths are not related
+				if !strings.HasPrefix(relPath, "../") {
+					return field.Forbidden(field.NewPath("spec", string(cfg.Spec.Type), "path"),
+						fmt.Sprintf("%s: %s", ErrRepositoryParentFolderConflict.Error(), v.Name))
+				}
 			}
 		}
 	}
