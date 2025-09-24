@@ -91,6 +91,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
 		features:        features,
+		accessClient:    ac,
 		searcher:        searcher,
 		permissionStore: reconcilers.NewZanzanaPermissionStore(zanzanaClient),
 	}
