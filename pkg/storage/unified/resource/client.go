@@ -27,7 +27,6 @@ import (
 	authnGrpcUtils "github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -52,10 +51,6 @@ type resourceClient struct {
 }
 
 func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (ResourceClient, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
-		return NewLegacyResourceClient(conn, indexConn), nil
-	}
-
 	clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
 
 	return NewRemoteResourceClient(tracer, conn, indexConn, RemoteResourceClientConfig{
@@ -80,12 +75,6 @@ func newResourceClient(storageCc grpc.ClientConnInterface, indexCc grpc.ClientCo
 
 func NewAuthlessResourceClient(cc grpc.ClientConnInterface) ResourceClient {
 	return newResourceClient(cc, cc)
-}
-
-func NewLegacyResourceClient(channel grpc.ClientConnInterface, indexChannel grpc.ClientConnInterface) ResourceClient {
-	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
-	cci := grpchan.InterceptClientConn(indexChannel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
-	return newResourceClient(cc, cci)
 }
 
 func NewLocalResourceClient(server ResourceServer) ResourceClient {

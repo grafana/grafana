@@ -668,7 +668,8 @@
       "metadata": {
         "name": "appPlatformGrpcClientAuth",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-10-14T10:47:18Z"
+        "creationTimestamp": "2024-10-14T10:47:18Z",
+        "deletionTimestamp": "2025-09-24T09:42:21Z"
       },
       "spec": {
         "description": "Enables the gRPC client to authenticate with the App Platform by using ID \u0026 access tokens",
@@ -3710,6 +3711,20 @@
       },
       "spec": {
         "description": "Enable unified storage search UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageUseFullNgram",
+        "resourceVersion": "1758706941313",
+        "creationTimestamp": "2025-09-24T09:42:21Z"
+      },
+      "spec": {
+        "description": "Use full n-gram indexing instead of edge n-gram for unified storage search",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,

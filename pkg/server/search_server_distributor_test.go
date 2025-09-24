@@ -12,6 +12,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/metadata"
+	"k8s.io/component-base/metrics/legacyregistry"
+
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -25,14 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/health/grpc_health_v1"
-	"google.golang.org/grpc/metadata"
-	"k8s.io/component-base/metrics/legacyregistry"
 )
 
 var (
@@ -281,7 +282,7 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	require.NoError(t, err)
-	client := resource.NewLegacyResourceClient(conn, conn)
+	client := resource.NewAuthlessResourceClient(conn)
 
 	server := initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
 
