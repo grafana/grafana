@@ -173,11 +173,7 @@ gen-cuev2: ## Do all CUE code generation
 APPS_DIRS := ./apps/dashboard ./apps/folder ./apps/alerting/notifications
 
 .PHONY: gen-apps
-gen-apps: ## Generate code for Grafana App SDK apps
-	for dir in $(APPS_DIRS); do \
-		$(MAKE) -C $$dir generate; \
-	done
-	./hack/update-codegen.sh
+gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt
 	@if [ -n "$$CODEGEN_VERIFY" ]; then \
 		echo "Verifying generated code is up to date..."; \
 		if ! git diff --quiet; then \
@@ -187,6 +183,13 @@ gen-apps: ## Generate code for Grafana App SDK apps
 		fi; \
 		echo "Generated apps code is up to date."; \
 	fi
+
+.PHONY: do-gen-apps
+do-gen-apps: ## Generate code for Grafana App SDK apps
+	for dir in $(APPS_DIRS); do \
+		$(MAKE) -C $$dir generate; \
+	done
+	./hack/update-codegen.sh
 
 .PHONY: gen-feature-toggles
 gen-feature-toggles:
@@ -397,7 +400,7 @@ lint-go-diff:
 
 .PHONY: gofmt
 gofmt: ## Run gofmt for all Go files.
-	gofmt -s -w .
+	@go list -m -f '{{.Dir}}' | xargs -I{} sh -c 'test ! -f {}/.nolint && echo {}' | xargs gofmt -s -w 2>&1 | grep -v '/pkg/build/' || true
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
