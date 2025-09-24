@@ -1,11 +1,19 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp, Labels, store } from '@grafana/data';
+import {
+  LogsDedupStrategy,
+  LogsMetaItem,
+  LogsMetaKind,
+  LogRowModel,
+  CoreApp,
+  Labels,
+  store,
+  shallowCompare,
+} from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/LogDetailsBody';
 
 import { LogLabels, LogLabelsList, Props as LogLabelsProps } from '../../logs/components/LogLabels';
 import { DownloadFormat, downloadLogs } from '../../logs/utils';
@@ -32,10 +40,19 @@ export type Props = {
   displayedFields: string[];
   logRows: LogRowModel[];
   clearDisplayedFields: (fields?: string[]) => void;
+  defaultDisplayedFields: string[];
 };
 
 export const LogsMetaRow = memo(
-  ({ meta, dedupStrategy, dedupCount, displayedFields, clearDisplayedFields, logRows }: Props) => {
+  ({
+    meta,
+    dedupStrategy,
+    dedupCount,
+    displayedFields,
+    clearDisplayedFields,
+    logRows,
+    defaultDisplayedFields,
+  }: Props) => {
     const style = useStyles2(getStyles);
 
     const logsMetaItem: Array<LogsMetaItem | MetaItemProps> = [...meta];
@@ -50,7 +67,7 @@ export const LogsMetaRow = memo(
     }
 
     // Add detected fields info
-    if (displayedFields?.length > 0) {
+    if (displayedFields?.length > 0 && shallowCompare(displayedFields, defaultDisplayedFields) === false) {
       logsMetaItem.push(
         {
           label: t('explore.logs-meta-row.label.showing-only-selected-fields', 'Showing only selected fields'),
@@ -58,22 +75,7 @@ export const LogsMetaRow = memo(
         },
         {
           label: '',
-          value: config.featureToggles.otelLogsFormatting ? (
-            <Button
-              variant="primary"
-              fill="outline"
-              size="sm"
-              onClick={() =>
-                isDisplayingLogLine(displayedFields)
-                  ? clearDisplayedFields()
-                  : clearDisplayedFields([LOG_LINE_BODY_FIELD_NAME])
-              }
-            >
-              {isDisplayingLogLine(displayedFields)
-                ? t('explore.logs-meta-row.reset-displayed-fields', 'Reset displayed fields')
-                : t('explore.logs-meta-row.show-original-line', 'Show original line')}
-            </Button>
-          ) : (
+          value: (
             <Button variant="primary" fill="outline" size="sm" onClick={() => clearDisplayedFields()}>
               {t('explore.logs-meta-row.show-original-line', 'Show original line')}
             </Button>
@@ -154,8 +156,4 @@ function renderMetaItem(value: string | number | Labels, kind: LogsMetaKind, log
   }
   console.error(`Meta type ${typeof value} ${value} not recognized.`);
   return <></>;
-}
-
-function isDisplayingLogLine(fields: string[]) {
-  return fields.length === 1 && fields[0] === LOG_LINE_BODY_FIELD_NAME;
 }

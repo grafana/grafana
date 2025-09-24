@@ -53,7 +53,7 @@ import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
-import { LogList, LogListControlOptions } from 'app/features/logs/components/panel/LogList';
+import { LogList, LogListOptions } from 'app/features/logs/components/panel/LogList';
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
 import { LogLevelColor, dedupLogRows } from 'app/features/logs/logsModel';
 import { getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
@@ -206,6 +206,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   );
   const [isFlipping, setIsFlipping] = useState<boolean>(false);
   const [displayedFields, setDisplayedFields] = useState<string[]>([]);
+  const [defaultDisplayedFields, setDefaultDisplayedFields] = useState<string[]>([]);
   const [contextOpen, setContextOpen] = useState<boolean>(false);
   const [contextRow, setContextRow] = useState<LogRowModel | undefined>(undefined);
   const [pinLineButtonTooltipTitle, setPinLineButtonTooltipTitle] = useState<PopoverContent>(PINNED_LOGS_MESSAGE);
@@ -708,7 +709,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const visibilityChangedRef = useRef(true);
   const onLogOptionsChange = useCallback(
-    (option: LogListControlOptions, value: string | string[] | boolean) => {
+    (option: LogListOptions, value: string | string[] | boolean) => {
       if (option === 'sortOrder' && isLogsSortOrder(value)) {
         sortOrderChanged(value);
       } else if (option === 'dedupStrategy' && isDedupStrategy(value)) {
@@ -762,6 +763,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
           return newLevels;
         });
+      } else if (option === 'defaultDisplayedFields' && Array.isArray(value)) {
+        setDefaultDisplayedFields(value);
       }
     },
     [logsVolumeData?.data, logsVolumeEnabled, sortOrderChanged]
@@ -991,6 +994,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             dedupCount={dedupCount}
             displayedFields={displayedFields}
             clearDisplayedFields={clearDisplayedFields}
+            defaultDisplayedFields={defaultDisplayedFields}
           />
         </div>
         <div className={cx(styles.logsSection, visualisationType === 'table' ? styles.logsTable : undefined)}>

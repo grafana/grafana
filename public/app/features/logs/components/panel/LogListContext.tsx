@@ -33,7 +33,7 @@ import { getDisplayedFieldsForLogs, isSupportedApp } from '../otel/formats';
 import { LogLineTimestampResolution } from './LogLine';
 import { LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
-import { LogListControlOptions, LogListFontSize } from './LogList';
+import { LogListOptions, LogListFontSize } from './LogList';
 import { reportInteractionOnce } from './analytics';
 import { LogListModel } from './processing';
 import { getScrollbarWidth, LOG_LIST_CONTROLS_WIDTH, LOG_LIST_MIN_WIDTH } from './virtualization';
@@ -176,7 +176,7 @@ export interface Props {
   onClickFilterOutString?: (value: string, refId?: string) => void;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
-  onLogOptionsChange?: (option: LogListControlOptions, value: string | boolean | string[]) => void;
+  onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
@@ -289,6 +289,8 @@ export const LogListContextProvider = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const otelDisplayedFields = useMemo(() => getDisplayedFieldsForLogs(logs), [logs]);
+
   // OTel displayed fields
   useEffect(() => {
     if (
@@ -299,11 +301,16 @@ export const LogListContextProvider = ({
     ) {
       return;
     }
-    const otelDisplayedFields = getDisplayedFieldsForLogs(logs);
     if (otelDisplayedFields.length) {
       setDisplayedFields(otelDisplayedFields);
     }
-  }, [app, displayedFields.length, logs, setDisplayedFields]);
+  }, [app, displayedFields.length, otelDisplayedFields, setDisplayedFields]);
+
+  useEffect(() => {
+    if (config.featureToggles.otelLogsFormatting) {
+      onLogOptionsChange?.('defaultDisplayedFields', otelDisplayedFields);
+    }
+  }, [onLogOptionsChange, otelDisplayedFields]);
 
   // Sync state
   useEffect(() => {

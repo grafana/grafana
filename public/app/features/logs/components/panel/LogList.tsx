@@ -66,7 +66,7 @@ export interface Props {
   onClickFilterOutString?: (value: string, refId?: string) => void;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
-  onLogOptionsChange?: (option: LogListControlOptions, value: string | boolean | string[]) => void;
+  onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
@@ -90,7 +90,7 @@ export interface Props {
 
 export type LogListFontSize = 'default' | 'small';
 
-export type LogListControlOptions = keyof LogListState | 'wrapLogMessage' | 'prettifyLogMessage';
+export type LogListOptions = keyof LogListState | 'wrapLogMessage' | 'prettifyLogMessage' | 'defaultDisplayedFields';
 
 type LogListComponentProps = Omit<
   Props,

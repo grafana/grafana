@@ -2,7 +2,7 @@ import React, { ReactNode } from 'react';
 
 import { CoreApp, DataFrame, Field, LinkModel, ScopedVars } from '@grafana/data';
 import { LogLineMenuCustomItem } from 'app/features/logs/components/panel/LogLineMenu';
-import { LogListControlOptions } from 'app/features/logs/components/panel/LogList';
+import { LogListOptions } from 'app/features/logs/components/panel/LogList';
 
 export type { Options } from './panelcfg.gen';
 
@@ -14,7 +14,7 @@ type filterLabelActiveType = (key: string, value: string, refId?: string) => Pro
 type onClickShowFieldType = (value: string) => void;
 type onClickHideFieldType = (value: string) => void;
 export type onNewLogsReceivedType = (allLogs: DataFrame[], newLogs: DataFrame[]) => void;
-type onLogOptionsChangeType = (option: LogListControlOptions, value: string | boolean | string[]) => void;
+type onLogOptionsChangeType = (option: LogListOptions, value: string | boolean | string[]) => void;
 type setDisplayedFieldsType = (fields: string[]) => void;
 
 export type GetFieldLinksFn = (

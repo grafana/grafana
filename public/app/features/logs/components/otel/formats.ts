@@ -41,7 +41,10 @@ export function getDisplayedFieldsForLanguages(logs: LogListModel[] | LogRowMode
   });
 
   return displayedFields.filter(
-    (field) => field === LOG_LINE_BODY_FIELD_NAME || logs.some((log) => log.labels[field] !== undefined)
+    (field) =>
+      field === LOG_LINE_BODY_FIELD_NAME ||
+      field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME ||
+      logs.some((log) => log.labels[field] !== undefined)
   );
 }
 
@@ -72,9 +75,6 @@ const OTEL_LOG_FIELDS_REGEX =
 export const OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME = '___OTEL_LOG_ATTRIBUTES___';
 
 export function getOtelAttributesField(log: LogListModel) {
-  if (!log.otelLanguage) {
-    return log.raw;
-  }
   const additionalFields = Object.keys(log.labels).filter(
     (label) =>
       !OTEL_RESOURCE_ATTRS_REGEX.test(label) &&
