@@ -78,7 +78,7 @@ import {
 import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { DashboardWithAccessInfo } from './types';
-import { isDashboardResource, isDashboardV0Spec, isDashboardV2Resource } from './utils';
+import { isDashboardResource, isDashboardV0Spec, isDashboardV2Resource, isDashboardV2Spec } from './utils';
 
 export function ensureV2Response(
   dto: DashboardDTO | DashboardWithAccessInfo<DashboardDataDTO> | DashboardWithAccessInfo<DashboardV2Spec>
@@ -93,14 +93,6 @@ export function ensureV2Response(
   } else {
     dashboard = dto.dashboard;
   }
-
-  const timeSettingsDefaults = defaultTimeSettingsSpec();
-  const dashboardDefaults = defaultDashboardV2Spec();
-  const [elements, layout] = getElementsFromPanels(dashboard.panels || []);
-  // @ts-expect-error - dashboard.templating.list is VariableModel[] and we need TypedVariableModel[] here
-  // that would allow accessing unique properties for each variable type that the API returns
-  const variables = getVariables(dashboard.templating?.list || []);
-  const annotations = getAnnotations(dashboard.annotations?.list || []);
 
   let accessMeta: DashboardWithAccessInfo<DashboardV2Spec>['access'];
   let annotationsMeta: DashboardWithAccessInfo<DashboardV2Spec>['metadata']['annotations'];
@@ -154,6 +146,36 @@ export function ensureV2Response(
     annotationsMeta[AnnoKeyDashboardSnapshotOriginalUrl] = dashboard.snapshot?.originalUrl;
   }
 
+  const metadata = {
+    creationTimestamp: creationTimestamp || '', // TODO verify this empty string is valid
+    name: dashboard.uid,
+    resourceVersion: dashboard.version?.toString() || '0',
+    annotations: annotationsMeta,
+    labels: labelsMeta,
+  };
+
+  if (!isDashboardResource(dto)) {
+    if (isDashboardV2Spec(dto.dashboard)) {
+      // sometimes we can have a v2 spec returned through legacy api like public dashboard
+      // in that case we need to return dashboard as it is, since the conversion is not needed
+      return {
+        apiVersion: 'v2beta1',
+        kind: 'DashboardWithAccessInfo',
+        metadata,
+        spec: dto.dashboard,
+        access: accessMeta,
+      };
+    }
+  }
+
+  const timeSettingsDefaults = defaultTimeSettingsSpec();
+  const dashboardDefaults = defaultDashboardV2Spec();
+  const [elements, layout] = getElementsFromPanels(dashboard.panels || []);
+  // @ts-expect-error - dashboard.templating.list is VariableModel[] and we need TypedVariableModel[] here
+  // that would allow accessing unique properties for each variable type that the API returns
+  const variables = getVariables(dashboard.templating?.list || []);
+  const annotations = getAnnotations(dashboard.annotations?.list || []);
+
   const spec: DashboardV2Spec = {
     title: dashboard.title,
     description: dashboard.description,
@@ -185,13 +207,7 @@ export function ensureV2Response(
   return {
     apiVersion: 'v2beta1',
     kind: 'DashboardWithAccessInfo',
-    metadata: {
-      creationTimestamp: creationTimestamp || '', // TODO verify this empty string is valid
-      name: dashboard.uid,
-      resourceVersion: dashboard.version?.toString() || '0',
-      annotations: annotationsMeta,
-      labels: labelsMeta,
-    },
+    metadata,
     spec,
     access: accessMeta,
   };

@@ -287,6 +287,8 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
       usedJSHeapSize: performance.memory?.usedJSHeapSize || 0,
       jsHeapSizeLimit: performance.memory?.jsHeapSizeLimit || 0,
       timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
+      longFramesCount: data.longFramesCount,
+      longFramesTotalTime: data.longFramesTotalTime,
     };
 
     const panelMetrics = this.getPanelMetrics();

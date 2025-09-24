@@ -108,6 +108,14 @@ export const versionedPages = {
       '10.0.0': 'data-testid Confirm Modal Danger Button',
       [MIN_GRAFANA_VERSION]: 'Confirm Modal Danger Button',
     },
+    input: {
+      '12.2.0': 'data-testid Confirm Modal Input',
+    },
+  },
+  SecretsManagement: {
+    SecretForm: {
+      '12.2.0': 'data-testid Secret Form',
+    },
   },
   AddDashboard: {
     url: {

@@ -294,3 +294,7 @@ func (ts *testSpan) SetStatus(code codes.Code, msg string) {}
 func (ts *testSpan) AddEvent(name string, opts ...trace.EventOption) {}
 
 func (ts *testSpan) SetAttributes(kv ...attribute.KeyValue) {}
+
+func (ts *testSpan) SpanContext() trace.SpanContext {
+	return trace.SpanContext{}
+}

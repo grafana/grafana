@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/models"
+
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -17,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/retryer"
+	"github.com/grafana/grafana/pkg/util/testutil"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,10 +28,9 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestGetFolders(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+func TestIntegrationGetFolders(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,

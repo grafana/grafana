@@ -55,6 +55,7 @@ import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
   getDashboardSceneProfilerWithMetadata,
   enablePanelProfilingForDashboard,
+  getDashboardInteractionCallback,
 } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardMeta } from 'app/types/dashboard';
 
@@ -169,7 +170,24 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       enableProfiling:
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
     },
-    getDashboardSceneProfilerWithMetadata(metadata.name, dashboard.title, dashboard.elements?.length || 0)
+    getDashboardSceneProfilerWithMetadata(
+      metadata.name,
+      dashboard.title,
+      Object.keys(dashboard.elements || {}).length || 0
+    )
+  );
+
+  const interactionTracker = new behaviors.SceneInteractionTracker(
+    {
+      enableInteractionTracking:
+        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
+      onInteractionComplete: getDashboardInteractionCallback(metadata.name, dashboard.title),
+    },
+    getDashboardSceneProfilerWithMetadata(
+      metadata.name,
+      dashboard.title,
+      Object.keys(dashboard.elements || {}).length || 0
+    )
   );
 
   const dashboardScene = new DashboardScene(
@@ -200,6 +218,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
           sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
         }),
         queryController,
+        interactionTracker,
         registerDashboardMacro,
         registerPanelInteractionsReporter,
         new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
@@ -279,7 +298,6 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
     name: variable.spec.name,
     label: variable.spec.label,
     description: variable.spec.description,
-    showInControlsMenu: variable.spec.showInControlsMenu,
   };
   if (variable.kind === defaultAdhocVariableKind().kind) {
     const ds = getDataSourceForQuery(

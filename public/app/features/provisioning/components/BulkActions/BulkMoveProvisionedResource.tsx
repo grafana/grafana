@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -16,7 +16,10 @@ import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/provisionin
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
+import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { StepStatusInfo } from '../../Wizard/types';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
+import { StatusInfo } from '../../types';
 import { MoveActionAvailableTargetWarning } from '../Shared/MoveActionAvailableTargetWarning';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
@@ -36,6 +39,7 @@ interface FormProps extends BulkActionProvisionResourceProps {
 function FormContent({ initialValues, selectedItems, repository, workflowOptions, onDismiss }: FormProps) {
   // States
   const [job, setJob] = useState<Job>();
+  const [jobError, setJobError] = useState<string | StatusInfo>();
   const [targetFolderUID, setTargetFolderUID] = useState<string | undefined>(undefined);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
@@ -109,20 +113,30 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
     }
   };
 
+  const onStatusChange = useCallback((statusInfo: StepStatusInfo) => {
+    if (statusInfo.status === 'error' && statusInfo.error) {
+      setJobError(statusInfo.error);
+    }
+  }, []);
+
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(handleSubmitForm)}>
         <Stack direction="column" gap={2}>
-          <MoveActionAvailableTargetWarning />
-          <Box paddingBottom={2}>
-            <Trans i18nKey="browse-dashboards.bulk-move-resources-form.move-total">In total, this will affect:</Trans>
-            <DescendantCount selectedItems={{ ...selectedItems, panel: {}, $all: false }} />
-          </Box>
-
           {hasSubmitted && job ? (
-            <JobStatus watch={job} jobType="move" />
+            <>
+              <ProvisioningAlert error={jobError} />
+              <JobStatus watch={job} jobType="move" onStatusChange={onStatusChange} />
+            </>
           ) : (
             <>
+              <MoveActionAvailableTargetWarning />
+              <Box paddingBottom={2}>
+                <Trans i18nKey="browse-dashboards.bulk-move-resources-form.move-total">
+                  In total, this will affect:
+                </Trans>
+                <DescendantCount selectedItems={{ ...selectedItems, panel: {}, $all: false }} />
+              </Box>
               {/* Target folder selection */}
               <Field
                 noMargin
@@ -137,6 +151,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
                     clearErrors('targetFolderUID');
                   }}
                   repositoryName={repository.name}
+                  excludeUIDs={[...Object.keys(selectedItems?.folder).map((uid) => uid)]}
                 />
               </Field>
               <ResourceEditFormSharedFields
@@ -149,6 +164,9 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
               />
 
               <Stack gap={2}>
+                <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreatingJob}>
+                  <Trans i18nKey="browse-dashboards.bulk-move-resources-form.button-cancel">Cancel</Trans>
+                </Button>
                 <Button
                   type="submit"
                   disabled={!!job || isCreatingJob || hasSubmitted || targetFolderUID === undefined}
@@ -156,9 +174,6 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
                   {isCreatingJob
                     ? t('browse-dashboards.bulk-move-resources-form.button-moving', 'Moving...')
                     : t('browse-dashboards.bulk-move-resources-form.button-move', 'Move')}
-                </Button>
-                <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreatingJob}>
-                  <Trans i18nKey="browse-dashboards.bulk-move-resources-form.button-cancel">Cancel</Trans>
                 </Button>
               </Stack>
             </>

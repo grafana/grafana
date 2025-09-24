@@ -101,14 +101,14 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     handleSubmit,
   } = methods;
 
-  const [repoName = '', repoType] = watch(['repositoryName', 'repository.type']);
+  const [repoName = '', repoType, syncTarget] = watch(['repositoryName', 'repository.type', 'repository.sync.target']);
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
   const {
     shouldSkipSync,
     requiresMigration,
     isLoading: isResourceStatsLoading,
-  } = useResourceStats(repoName, isLegacyStorage);
+  } = useResourceStats(repoName, isLegacyStorage, syncTarget);
   const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
     repoName: repoName,
     requiresMigration,
@@ -168,6 +168,14 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         setStepStatusInfo({ status: 'idle' });
       }
     }
+  };
+
+  const onDiscard = async () => {
+    if (repoName) {
+      await handleRepositoryDeletion(repoName);
+    }
+
+    await handlePrevious();
   };
 
   const handlePrevious = async () => {
@@ -333,7 +341,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         <div className={styles.divider} />
         <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
           <FormPrompt
-            onDiscard={handlePrevious}
+            onDiscard={onDiscard}
             confirmRedirect={isDirty && !['connection', 'finish'].includes(activeStep) && !isCancelling}
           />
           <Stack direction="column">
@@ -350,7 +358,13 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
             <div className={styles.content}>
               {activeStep === 'connection' && <ConnectStep />}
               {activeStep === 'bootstrap' && <BootstrapStep settingsData={data} repoName={repoName} />}
-              {activeStep === 'synchronize' && <SynchronizeStep isLegacyStorage={isLegacyStorage} />}
+              {activeStep === 'synchronize' && (
+                <SynchronizeStep
+                  isLegacyStorage={isLegacyStorage}
+                  onCancel={handleRepositoryDeletion}
+                  isCancelling={isCancelling}
+                />
+              )}
               {activeStep === 'finish' && <FinishStep />}
             </div>
 

@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // StatusPatcher defines the interface for updating repository status
@@ -18,22 +21,16 @@ type StatusPatcher interface {
 
 // HealthChecker provides unified health checking for repositories
 type HealthChecker struct {
-	tester        RepositoryTester
 	statusPatcher StatusPatcher
-}
-
-// RepositoryTester defines the interface for testing repository connectivity
-//
-//go:generate mockery --name=RepositoryTester
-type RepositoryTester interface {
-	TestRepository(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, error)
+	healthMetrics healthMetrics
 }
 
 // NewHealthChecker creates a new health checker
-func NewHealthChecker(tester RepositoryTester, statusPatcher StatusPatcher) *HealthChecker {
+func NewHealthChecker(statusPatcher StatusPatcher, registry prometheus.Registerer) *HealthChecker {
+	healthMetrics := registerHealthMetrics(registry)
 	return &HealthChecker{
-		tester:        tester,
 		statusPatcher: statusPatcher,
+		healthMetrics: healthMetrics,
 	}
 }
 
@@ -172,8 +169,17 @@ func (hc *HealthChecker) RefreshTimestamp(ctx context.Context, repo *provisionin
 // refreshHealth performs a comprehensive health check
 // Returns test results, health status, and any error
 func (hc *HealthChecker) refreshHealth(ctx context.Context, repo repository.Repository, existingStatus provisioning.HealthStatus) (*provisioning.TestResults, provisioning.HealthStatus, error) {
-	res, err := hc.tester.TestRepository(ctx, repo)
+	logger := logging.FromContext(ctx).With("repo", repo.Config().GetName(), "namespace", repo.Config().GetNamespace())
+	start := time.Now()
+	outcome := utils.SuccessOutcome
+	defer func() {
+		hc.healthMetrics.RecordHealthCheck(outcome, time.Since(start).Seconds())
+	}()
+
+	res, err := repository.TestRepository(ctx, repo)
 	if err != nil {
+		outcome = utils.ErrorOutcome
+		logger.Error("failed to test repository", "error", err)
 		return nil, existingStatus, fmt.Errorf("failed to test repository: %w", err)
 	}
 

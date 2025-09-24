@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
@@ -36,6 +35,11 @@ var (
 	ErrReceiverDependentResourcesProvenance = errutil.Conflict("alerting.notifications.receivers.usedProvisioned").MustTemplate(
 		"Receiver cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}",
 		errutil.WithPublic(`Receiver cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}. You must update those resources first using the original provision method.`),
+	)
+
+	ErrReceiverOrigin = errutil.BadRequest("alerting.notifications.receivers.originInvalid").MustTemplate(
+		"Receiver '{{ .Public.Name }} cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
+		errutil.WithPublic("Receiver '{{ .Public.Name }} cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
 	)
 )
 
@@ -119,6 +123,10 @@ func NewReceiverService(
 	}
 }
 
+func (rs *ReceiverService) loadProvenances(ctx context.Context, orgID int64) (map[string]models.Provenance, error) {
+	return rs.provisioningStore.GetProvenances(ctx, orgID, (&models.Integration{}).ResourceType())
+}
+
 // GetReceiver returns a receiver by name.
 // The receiver's secure settings are decrypted if requested and the user has access to do so.
 func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (*models.Receiver, error) {
@@ -133,7 +141,13 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	if err != nil {
 		return nil, err
 	}
-	postable, err := revision.GetReceiver(legacy_storage.NameToUid(q.Name))
+
+	prov, err := rs.loadProvenances(ctx, q.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	rcv, err := revision.GetReceiver(legacy_storage.NameToUid(q.Name), prov)
 	if err != nil {
 		return nil, err
 	}
@@ -141,15 +155,6 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	span.AddEvent("Loaded receiver", trace.WithAttributes(
 		attribute.String("concurrency_token", revision.ConcurrencyToken),
 	))
-
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
-	if err != nil {
-		return nil, err
-	}
-	rcv, err := legacy_storage.PostableApiReceiverToReceiver(postable, legacy_storage.GetReceiverProvenance(storedProvenances, postable))
-	if err != nil {
-		return nil, err
-	}
 
 	auth := rs.authz.AuthorizeReadDecrypted
 	if !q.Decrypt {
@@ -195,21 +200,21 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	if err != nil {
 		return nil, err
 	}
-	postables := revision.GetReceivers(uids)
+
+	prov, err := rs.loadProvenances(ctx, q.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	receivers, err := revision.GetReceivers(uids, prov)
+	if err != nil {
+		return nil, err
+	}
 
 	span.AddEvent("Loaded receivers", trace.WithAttributes(
 		attribute.String("concurrency_token", revision.ConcurrencyToken),
-		attribute.Int("count", len(postables)),
+		attribute.Int("count", len(receivers)),
 	))
-
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
-	if err != nil {
-		return nil, err
-	}
-	receivers, err := legacy_storage.PostableApiReceiversToReceivers(postables, storedProvenances)
-	if err != nil {
-		return nil, err
-	}
 
 	filterFn := rs.authz.FilterReadDecrypted
 	if !q.Decrypt {
@@ -243,7 +248,7 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 
 // DeleteReceiver deletes a receiver by uid.
 // UID field currently does not exist, we assume the uid is a particular hashed value of the receiver name.
-func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, callerProvenance definitions.Provenance, version string, orgID int64, user identity.Requester) error {
+func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, callerProvenance models.Provenance, version string, orgID int64, user identity.Requester) error {
 	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.delete", trace.WithAttributes(
 		attribute.String("receiver_uid", uid),
 		attribute.String("receiver_version", version),
@@ -257,7 +262,13 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 	if err != nil {
 		return err
 	}
-	postable, err := revision.GetReceiver(uid)
+
+	prov, err := rs.loadProvenances(ctx, orgID)
+	if err != nil {
+		return err
+	}
+
+	existing, err := revision.GetReceiver(uid, prov)
 	if err != nil {
 		if errors.Is(err, legacy_storage.ErrReceiverNotFound) {
 			return nil
@@ -265,13 +276,8 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		return err
 	}
 
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, orgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
-	if err != nil {
-		return err
-	}
-	existing, err := legacy_storage.PostableApiReceiverToReceiver(postable, legacy_storage.GetReceiverProvenance(storedProvenances, postable))
-	if err != nil {
-		return err
+	if existing.Origin != models.ResourceOriginGrafana {
+		return makeErrReceiverOrigin(existing, "delete")
 	}
 
 	logger := rs.log.FromContext(ctx).New("receiver", existing.Name, "uid", uid, "version", version, "integrations", existing.GetIntegrationTypes())
@@ -287,7 +293,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		logger.Debug("Ignoring optimistic concurrency check because version was not provided", "operation", "delete")
 	}
 
-	if err := rs.provenanceValidator(existing.Provenance, models.Provenance(callerProvenance)); err != nil {
+	if err := rs.provenanceValidator(existing.Provenance, callerProvenance); err != nil {
 		return err
 	}
 
@@ -332,7 +338,9 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	if err := rs.authz.AuthorizeCreate(ctx, user); err != nil {
 		return nil, err
 	}
-
+	if r.Origin != models.ResourceOriginGrafana {
+		return nil, makeErrReceiverOrigin(r, "create")
+	}
 	revision, err := rs.cfgStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -354,7 +362,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	// Generate UID from name.
 	createdReceiver.UID = legacy_storage.NameToUid(createdReceiver.Name)
 
-	created, err := revision.CreateReceiver(&createdReceiver)
+	result, err = revision.CreateReceiver(&createdReceiver)
 	if err != nil {
 		return nil, err
 	}
@@ -371,10 +379,6 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	result, err = legacy_storage.PostableApiReceiverToReceiver(created, createdReceiver.Provenance)
-	if err != nil {
-		return nil, err
-	}
 	span.AddEvent("Created a new receiver", trace.WithAttributes(
 		attribute.String("uid", result.UID),
 		attribute.String("version", result.Version),
@@ -403,16 +407,13 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	if err != nil {
 		return nil, err
 	}
-	postable, err := revision.GetReceiver(r.GetUID())
+
+	prov, err := rs.loadProvenances(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, orgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
-	if err != nil {
-		return nil, err
-	}
-	existing, err := legacy_storage.PostableApiReceiverToReceiver(postable, legacy_storage.GetReceiverProvenance(storedProvenances, postable))
+	existing, err := revision.GetReceiver(r.GetUID(), prov)
 	if err != nil {
 		return nil, err
 	}
@@ -439,6 +440,10 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
+	if existing.Origin != models.ResourceOriginGrafana {
+		return nil, makeErrReceiverOrigin(existing, "update")
+	}
+
 	if err := rs.provenanceValidator(existing.Provenance, r.Provenance); err != nil {
 		return nil, err
 	}
@@ -460,7 +465,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, legacy_storage.MakeErrReceiverInvalid(err)
 	}
 
-	updated, err := revision.UpdateReceiver(&updatedReceiver)
+	result, err := revision.UpdateReceiver(&updatedReceiver)
 	if err != nil {
 		return nil, err
 	}
@@ -468,7 +473,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	err = rs.xact.InTransaction(ctx, func(ctx context.Context) error {
 		// If the name of the receiver changed, we must update references to it in both routes and notification settings.
 		if existing.Name != r.Name {
-			err := rs.RenameReceiverInDependentResources(ctx, orgID, revision.Config.AlertmanagerConfig.Route, existing.Name, r.Name, r.Provenance)
+			err := rs.RenameReceiverInDependentResources(ctx, orgID, revision, existing.Name, r.Name, r.Provenance)
 			if err != nil {
 				return err
 			}
@@ -499,10 +504,6 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	result, err := legacy_storage.PostableApiReceiverToReceiver(updated, updatedReceiver.Provenance)
-	if err != nil {
-		return nil, err
-	}
 	logger.Info("Updated receiver", "new_version", result.Version)
 	return result, nil
 }
@@ -552,6 +553,7 @@ func (rs *ReceiverService) InUseMetadata(ctx context.Context, orgID int64, recei
 		results[rcv.GetUID()] = models.ReceiverMetadata{
 			InUseByRoutes: receiverUses[rcv.Name],
 			InUseByRules:  byReceiver[rcv.Name],
+			CanUse:        rcv.Origin == models.ResourceOriginGrafana, // Only receivers from the Grafana configuration can be used.
 		}
 	}
 
@@ -575,8 +577,7 @@ func removedIntegrations(old, new *models.Receiver) []*models.Integration {
 func (rs *ReceiverService) setReceiverProvenance(ctx context.Context, orgID int64, receiver *models.Receiver) error {
 	// Add provenance for all integrations in the receiver.
 	for _, integration := range receiver.Integrations {
-		target := definitions.EmbeddedContactPoint{UID: integration.UID}
-		if err := rs.provisioningStore.SetProvenance(ctx, &target, orgID, receiver.Provenance); err != nil { // TODO: Should we set ProvenanceNone?
+		if err := rs.provisioningStore.SetProvenance(ctx, integration, orgID, receiver.Provenance); err != nil { // TODO: Should we set ProvenanceNone?
 			return err
 		}
 	}
@@ -586,8 +587,7 @@ func (rs *ReceiverService) setReceiverProvenance(ctx context.Context, orgID int6
 func (rs *ReceiverService) deleteProvenances(ctx context.Context, orgID int64, integrations []*models.Integration) error {
 	// Delete provenance for all integrations.
 	for _, integration := range integrations {
-		target := definitions.EmbeddedContactPoint{UID: integration.UID}
-		if err := rs.provisioningStore.DeleteProvenance(ctx, &target, orgID); err != nil {
+		if err := rs.provisioningStore.DeleteProvenance(ctx, integration, orgID); err != nil {
 			return err
 		}
 	}
@@ -700,7 +700,11 @@ func makeErrReceiverDependentResourcesProvenance(usedByRoutes bool, rules []mode
 	})
 }
 
-func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Context, orgID int64, route *definitions.Route, oldName, newName string, receiverProvenance models.Provenance) error {
+func makeErrReceiverOrigin(r *models.Receiver, action string) error {
+	return ErrReceiverOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": r.Name}})
+}
+
+func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error {
 	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.rename-dependent-resources", trace.WithAttributes(
 		attribute.String("oldName", oldName),
 		attribute.String("newName", newName),
@@ -710,10 +714,10 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 
 	validate := validation.ValidateProvenanceOfDependentResources(receiverProvenance)
 	// if there are no references to the old time interval, exit
-	updatedRoutes := legacy_storage.RenameReceiverInRoute(oldName, newName, route)
+	updatedRoutes := revision.RenameReceiverInRoutes(oldName, newName)
 	canUpdate := true
 	if updatedRoutes > 0 {
-		routeProvenance, err := rs.provisioningStore.GetProvenance(ctx, route, orgID)
+		routeProvenance, err := rs.provisioningStore.GetProvenance(ctx, revision.Config.AlertmanagerConfig.Route, orgID)
 		if err != nil {
 			return err
 		}

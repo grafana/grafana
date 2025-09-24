@@ -80,7 +80,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
 
   const submitHandler: SubmitHandler<SearchQueryForm> = (values: SearchQueryForm) => {
     const parsedFilter = getSearchFilterFromQuery(values.query);
-    trackAlertRuleFilterEvent({ filterMethod: 'search-input', filter: parsedFilter });
+    trackAlertRuleFilterEvent({ filterMethod: 'search-input', filter: parsedFilter, filterVariant: 'v2' });
     updateFilters(parsedFilter);
   };
 
@@ -175,7 +175,11 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
                   onBlur={() => {
                     const currentQuery = field.value;
                     const parsedFilter = getSearchFilterFromQuery(currentQuery);
-                    trackAlertRuleFilterEvent({ filterMethod: 'search-input', filter: parsedFilter });
+                    trackAlertRuleFilterEvent({
+                      filterMethod: 'search-input',
+                      filter: parsedFilter,
+                      filterVariant: 'v2',
+                    });
                     updateFilters(parsedFilter);
                   }}
                   value={field.value}

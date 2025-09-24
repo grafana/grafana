@@ -7,8 +7,10 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	notificationHistorian "github.com/grafana/alerting/notify/historian"
+	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/alerting/notify/nfstatus"
-	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
+	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/matchers/compat"
 	"golang.org/x/sync/errgroup"
@@ -321,7 +323,12 @@ func (ng *AlertNG) init() error {
 	ng.RecordingWriter = recordingWriter
 
 	schedCfg := schedule.SchedulerCfg{
-		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
+		RetryConfig: schedule.RetryConfig{
+			MaxAttempts:         ng.Cfg.UnifiedAlerting.MaxAttempts,
+			InitialRetryDelay:   ng.Cfg.UnifiedAlerting.InitialRetryDelay,
+			MaxRetryDelay:       ng.Cfg.UnifiedAlerting.MaxRetryDelay,
+			RandomizationFactor: ng.Cfg.UnifiedAlerting.RandomizationFactor,
+		},
 		C:                    clk,
 		BaseInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
 		MinRuleInterval:      ng.Cfg.UnifiedAlerting.MinInterval,
@@ -654,7 +661,7 @@ func configureHistorianBackend(
 		return historian.NewAnnotationBackend(annotationBackendLogger, store, rs, met, ac), nil
 	}
 	if backend == historian.BackendTypeLoki {
-		lcfg, err := lokiclient.NewLokiConfig(cfg.LokiSettings)
+		lcfg, err := lokiconfig.NewLokiConfig(cfg.LokiSettings)
 		if err != nil {
 			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
 		}
@@ -707,20 +714,20 @@ func configureNotificationHistorian(
 	}
 
 	met.Info.Set(1)
-	lcfg, err := lokiclient.NewLokiConfig(cfg.LokiSettings)
+	lcfg, err := lokiconfig.NewLokiConfig(cfg.LokiSettings)
 	if err != nil {
 		return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
 	}
 	req := lokiclient.NewRequester()
 	logger := log.New("ngalert.notifier.historian").FromContext(ctx)
-	notificationHistorian := notifier.NewNotificationHistorian(logger, lcfg, req, met, tracer)
+	nh := notificationHistorian.NewNotificationHistorian(logger, lcfg, req, met.BytesWritten, met.WriteDuration, met.WritesTotal, met.WritesFailed, tracer)
 
 	testConnCtx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 	defer cancelFunc()
-	if err := notificationHistorian.TestConnection(testConnCtx); err != nil {
+	if err := nh.TestConnection(testConnCtx); err != nil {
 		l.Error("Failed to communicate with configured remote Loki backend, notification history may not be persisted", "error", err)
 	}
-	return notificationHistorian, nil
+	return nh, nil
 }
 
 func createRecordingWriter(settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, datasourceService datasources.DataSourceService, pluginContextProvider *plugincontext.Provider, clock clock.Clock, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {

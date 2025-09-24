@@ -31,7 +31,8 @@ type WebhookServerConfig struct {
 }
 
 type FolderReconcilerConfig struct {
-	Namespace string
+	Namespace            string
+	MaxConcurrentWorkers uint64
 }
 
 func LoadConfigFromEnv() (*Config, error) {
@@ -109,12 +110,22 @@ func LoadConfigFromEnv() (*Config, error) {
 		cfg.KubeConfig = kubeConfig
 	}
 
-	cfg.ZanzanaClient.Address = os.Getenv("ZANZANA_ADDR")
+	cfg.ZanzanaClient.URL = os.Getenv("ZANZANA_ADDR")
 	cfg.ZanzanaClient.Token = os.Getenv("ZANZANA_TOKEN")
 	cfg.ZanzanaClient.TokenExchangeURL = os.Getenv("TOKEN_EXCHANGE_URL")
 	cfg.ZanzanaClient.ServerCertFile = os.Getenv("ZANZANA_SERVER_CERT_FILE")
 
 	cfg.FolderReconciler.Namespace = os.Getenv("FOLDER_RECONCILER_NAMESPACE")
+	maxConcurrentWorkersStr := os.Getenv("FOLDER_RECONCILER_MAX_CONCURRENT_WORKERS")
+	if maxConcurrentWorkersStr == "" {
+		cfg.FolderReconciler.MaxConcurrentWorkers = 20
+	} else {
+		maxConcurrentWorkers, err := strconv.ParseUint(maxConcurrentWorkersStr, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid FOLDER_RECONCILER_MAX_CONCURRENT_WORKERS '%s': %w", maxConcurrentWorkersStr, err)
+		}
+		cfg.FolderReconciler.MaxConcurrentWorkers = maxConcurrentWorkers
+	}
 
 	return &cfg, nil
 }

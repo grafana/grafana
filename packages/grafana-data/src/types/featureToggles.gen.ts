@@ -111,6 +111,10 @@ export interface FeatureToggles {
   */
   influxdbBackendMigration?: boolean;
   /**
+  * populate star status from apiserver
+  */
+  starsFromAPIServer?: boolean;
+  /**
   * Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
   */
   influxqlStreamingParser?: boolean;
@@ -210,6 +214,11 @@ export interface FeatureToggles {
   */
   awsAsyncQueryCaching?: boolean;
   /**
+  * Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
+  * @default false
+  */
+  queryCacheRequestDeduplication?: boolean;
+  /**
   * Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
   */
   permissionsFilterRemoveSubquery?: boolean;
@@ -270,12 +279,25 @@ export interface FeatureToggles {
   kubernetesLibraryPanels?: boolean;
   /**
   * Use the kubernetes API in the frontend for dashboards
+  * @default true
   */
   kubernetesDashboards?: boolean;
   /**
-  * Routes short url requests from /api to the /apis endpoint
+  * Enables k8s short url api and uses it under the hood when handling legacy /api
   */
   kubernetesShortURLs?: boolean;
+  /**
+  * Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
+  */
+  useKubernetesShortURLsAPI?: boolean;
+  /**
+  * Adds support for Kubernetes alerting and recording rules
+  */
+  kubernetesAlertingRules?: boolean;
+  /**
+  * Adds support for Kubernetes correlations
+  */
+  kubernetesCorrelations?: boolean;
   /**
   * Disable schema validation for dashboards/v1
   */
@@ -365,6 +387,10 @@ export interface FeatureToggles {
   * Enables experimental new dashboard layouts
   */
   dashboardNewLayouts?: boolean;
+  /**
+  * Enables undo/redo in dynamic dashboards
+  */
+  dashboardUndoRedo?: boolean;
   /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
@@ -535,11 +561,6 @@ export interface FeatureToggles {
   */
   logsExploreTableDefaultVisualization?: boolean;
   /**
-  * Enables the new sharing drawer design
-  * @default true
-  */
-  newDashboardSharingComponent?: boolean;
-  /**
   * Enables the new alert list view design
   */
   alertingListViewV2?: boolean;
@@ -616,6 +637,10 @@ export interface FeatureToggles {
   */
   newFiltersUI?: boolean;
   /**
+  * Allows authenticated API calls in actions
+  */
+  vizActionsAuth?: boolean;
+  /**
   * Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
   */
   alertingPrometheusRulesPrimary?: boolean;
@@ -666,6 +691,10 @@ export interface FeatureToggles {
   * Enable sprinkles on unified storage search
   */
   unifiedStorageSearchSprinkles?: boolean;
+  /**
+  * Use full n-gram indexing instead of edge n-gram for unified storage search
+  */
+  unifiedStorageUseFullNgram?: boolean;
   /**
   * Pick the dual write mode from database configs
   */
@@ -757,6 +786,11 @@ export interface FeatureToggles {
   */
   alertingEnrichmentPerRule?: boolean;
   /**
+  * Enable Assistant Investigations enrichment type.
+  * @default false
+  */
+  alertingEnrichmentAssistantInvestigations?: boolean;
+  /**
   * Enable AI-analyze central state history.
   * @default false
   */
@@ -775,7 +809,8 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchUI?: boolean;
   /**
-  * Enables cross cluster search in the Elasticsearch datasource
+  * Enables cross cluster search in the Elasticsearch data source
+  * @default false
   */
   elasticsearchCrossClusterSearch?: boolean;
   /**
@@ -960,10 +995,6 @@ export interface FeatureToggles {
   */
   pluginsAutoUpdate?: boolean;
   /**
-  * Register MT frontend
-  */
-  multiTenantFrontend?: boolean;
-  /**
   * Enables the alerting list view v2 preview toggle
   */
   alertingListViewV2PreviewToggle?: boolean;
@@ -1004,6 +1035,16 @@ export interface FeatureToggles {
   * @default false
   */
   alertEnrichment?: boolean;
+  /**
+  * Allow multiple steps per enrichment.
+  * @default false
+  */
+  alertEnrichmentMultiStep?: boolean;
+  /**
+  * Enable conditional alert enrichment steps.
+  * @default false
+  */
+  alertEnrichmentConditional?: boolean;
   /**
   * Enables the API to import Alertmanager configuration
   * @default false
@@ -1068,6 +1109,7 @@ export interface FeatureToggles {
   unifiedStorageSearchDualReaderEnabled?: boolean;
   /**
   * Enables adhoc filtering support for the dashboard datasource
+  * @default true
   */
   dashboardDsAdHocFiltering?: boolean;
   /**
@@ -1085,6 +1127,7 @@ export interface FeatureToggles {
   restrictedPluginApis?: boolean;
   /**
   * Enable adhoc filter buttons in visualization tooltips
+  * @default true
   */
   adhocFiltersInTooltips?: boolean;
   /**
@@ -1100,11 +1143,6 @@ export interface FeatureToggles {
   * @default false
   */
   newClickhouseConfigPageDesign?: boolean;
-  /**
-  * Enable experimental search-after-write guarantees to unified-storage search endpoints
-  * @default false
-  */
-  unifiedStorageSearchAfterWriteExperimentalAPI?: boolean;
   /**
   * Enables team folders functionality
   * @default false
@@ -1125,4 +1163,29 @@ export interface FeatureToggles {
   * @default false
   */
   azureResourcePickerUpdates?: boolean;
+  /**
+  * Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
+  * @default false
+  */
+  prometheusTypeMigration?: boolean;
+  /**
+  * Enables dskit background service wrapper
+  * @default false
+  */
+  dskitBackgroundServices?: boolean;
+  /**
+  * Enables running plugins in containers
+  * @default false
+  */
+  pluginContainers?: boolean;
+  /**
+  * Run search queries through the tempo backend
+  * @default false
+  */
+  tempoSearchBackendMigration?: boolean;
+  /**
+  * Filter out bots from collecting data for Frontend Observability
+  * @default false
+  */
+  filterOutBotsFromFrontendLogs?: boolean;
 }

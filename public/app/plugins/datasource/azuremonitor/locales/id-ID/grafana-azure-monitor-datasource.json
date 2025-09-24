@@ -227,16 +227,26 @@
       "select-resource": "Pilih sumber daya"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Terapkan",
       "button-cancel": "Batalkan",
       "header-location": "Lokasi",
+      "header-resource-group": "",
       "header-scope": "Ruang Lingkup",
       "header-type": "Jenis",
       "heading-selection": "Pilihan",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "Menampilkan {{numResults}} hasil pertama",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Memuat...",
+      "text-no-recent-resources": "",
       "text-no-resources": "Tidak ada sumber daya yang ditemukan",
-      "title-error-occurred": "Terjadi kesalahan saat meminta sumber daya dari Azure Monitor"
+      "title-error-occurred": "Terjadi kesalahan saat meminta sumber daya dari Azure Monitor",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "Ruang Lingkup"

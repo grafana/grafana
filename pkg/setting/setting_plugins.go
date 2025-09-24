@@ -141,7 +141,6 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 
 	cfg.PluginsAllowUnsigned = util.SplitString(pluginsSection.Key("allow_loading_unsigned_plugins").MustString(""))
 	cfg.DisablePlugins = util.SplitString(pluginsSection.Key("disable_plugins").MustString(""))
-	cfg.HideAngularDeprecation = util.SplitString(pluginsSection.Key("hide_angular_deprecation").MustString(""))
 	cfg.ForwardHostEnvVars = util.SplitString(pluginsSection.Key("forward_host_env_vars").MustString(""))
 	disablePreinstall := pluginsSection.Key("preinstall_disabled").MustBool(false)
 	if !disablePreinstall {

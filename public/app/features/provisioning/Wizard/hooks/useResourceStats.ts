@@ -5,27 +5,34 @@ import { t } from '@grafana/i18n';
 import {
   GetRepositoryFilesApiResponse,
   GetResourceStatsApiResponse,
+  ManagerStats,
+  RepositoryView,
+  ResourceCount,
   useGetRepositoryFilesQuery,
   useGetResourceStatsQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 
-/**
- * Calculates resource statistics from API responses
- */
-function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetResourceStatsApiResponse) {
-  const isSupportedFile = (path: string) => path.endsWith('.json') || path.endsWith('.yaml');
+function getManagedCount(managed?: ManagerStats[]) {
+  let totalCount = 0;
 
-  const items = files?.items ?? [];
+  // Loop through each managed repository
+  managed?.forEach((manager) => {
+    // Loop through stats inside each manager and sum up the counts
+    manager.stats.forEach((stat) => {
+      if (stat.group === 'folder.grafana.app' || stat.group === 'dashboard.grafana.app') {
+        totalCount += stat.count;
+      }
+    });
+  });
 
-  const fileCount = items.filter((file) => {
-    const path = file.path ?? '';
-    return isSupportedFile(path);
-  }).length;
+  return totalCount;
+}
 
+function getResourceCount(stats?: ResourceCount[]) {
   let counts: string[] = [];
   let resourceCount = 0;
 
-  stats?.instance?.forEach((stat) => {
+  stats?.forEach((stat) => {
     switch (stat.group) {
       case 'folders':
       case 'folder.grafana.app':
@@ -40,6 +47,27 @@ function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetReso
   });
 
   return {
+    counts,
+    resourceCount,
+  };
+}
+
+/**
+ * Calculates resource statistics from API responses
+ */
+function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetResourceStatsApiResponse) {
+  const isSupportedFile = (path: string) => path.endsWith('.json') || path.endsWith('.yaml');
+
+  const items = files?.items ?? [];
+
+  const fileCount = items.filter((file) => {
+    const path = file.path ?? '';
+    return isSupportedFile(path);
+  }).length;
+
+  const { counts, resourceCount } = getResourceCount(stats?.instance);
+
+  return {
     fileCount,
     resourceCount,
     resourceCountString: counts.join(',\n'),
@@ -49,7 +77,7 @@ function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetReso
 /**
  * Hook that provides resource statistics and sync logic
  */
-export function useResourceStats(repoName?: string, isLegacyStorage?: boolean) {
+export function useResourceStats(repoName?: string, isLegacyStorage?: boolean, syncTarget?: RepositoryView['target']) {
   const resourceStatsQuery = useGetResourceStatsQuery(repoName ? undefined : skipToken);
   const filesQuery = useGetRepositoryFilesQuery(repoName ? { name: repoName } : skipToken);
 
@@ -60,8 +88,16 @@ export function useResourceStats(repoName?: string, isLegacyStorage?: boolean) {
     [filesQuery.data, resourceStatsQuery.data]
   );
 
+  const { managedCount, unmanagedCount } = useMemo(() => {
+    return {
+      // managed does not exist in response when first time connecting to a repo
+      managedCount: getManagedCount(resourceStatsQuery.data?.managed),
+      unmanagedCount: getResourceCount(resourceStatsQuery.data?.unmanaged).resourceCount,
+    };
+  }, [resourceStatsQuery.data]);
+
   const requiresMigration = isLegacyStorage || resourceCount > 0;
-  const shouldSkipSync = !requiresMigration && resourceCount === 0 && fileCount === 0;
+  const shouldSkipSync = !isLegacyStorage && (resourceCount === 0 || syncTarget === 'folder') && fileCount === 0;
 
   // Format display strings
   const resourceCountDisplay =
@@ -72,6 +108,8 @@ export function useResourceStats(repoName?: string, isLegacyStorage?: boolean) {
       : t('provisioning.bootstrap-step.empty', 'Empty');
 
   return {
+    managedCount,
+    unmanagedCount,
     resourceCount,
     resourceCountString: resourceCountDisplay,
     fileCount,
