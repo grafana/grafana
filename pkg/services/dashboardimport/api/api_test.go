@@ -28,6 +28,9 @@ func TestImportDashboardAPI(t *testing.T) {
 				importDashboardServiceCalled = true
 				return nil, nil
 			},
+			interpolateDashboardFunc: func(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*simplejson.Json, error) {
+				return nil, nil
+			},
 		}
 
 		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, actest.FakeAccessControl{ExpectedEvaluate: true})
@@ -160,12 +163,21 @@ func TestImportDashboardAPI(t *testing.T) {
 }
 
 type serviceMock struct {
-	importDashboardFunc func(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error)
+	importDashboardFunc      func(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error)
+	interpolateDashboardFunc func(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*simplejson.Json, error)
 }
 
 func (s *serviceMock) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
 	if s.importDashboardFunc != nil {
 		return s.importDashboardFunc(ctx, req)
+	}
+
+	return nil, nil
+}
+
+func (s *serviceMock) InterpolateDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*simplejson.Json, error) {
+	if s.interpolateDashboardFunc != nil {
+		return s.interpolateDashboardFunc(ctx, req)
 	}
 
 	return nil, nil
