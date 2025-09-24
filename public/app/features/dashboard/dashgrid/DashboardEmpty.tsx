@@ -6,8 +6,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { getBackendSrv, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack, TextLink, Divider, Spinner } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
   onAddLibraryPanel as onAddLibraryPanelImpl,
@@ -18,11 +16,10 @@ import { buildPanelEditScene } from 'app/features/dashboard-scene/panel-edit/Pan
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { dispatch } from 'app/store/store';
 import { PluginDashboard } from 'app/types/plugins';
 import { useDispatch, useSelector } from 'app/types/store';
 import templateDashboard1 from 'img/template-dashboards/template_dashboard_1.png';
-import templateDashboard2 from 'img/template-dashboards/template_dashboard_2.jpeg';
+import templateDashboard2 from 'img/template-dashboards/template_dashboard_2.png';
 import templateDashboard3 from 'img/template-dashboards/template_dashboard_3.png';
 
 import { setInitialDatasource } from '../state/reducers';
