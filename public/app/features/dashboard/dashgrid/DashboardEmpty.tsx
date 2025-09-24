@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { getBackendSrv, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack, TextLink, Divider, Spinner } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
@@ -170,27 +170,38 @@ const TemplateDashboardsSection = () => {
     if (!initialDatasource) {
       return [];
     }
+
     const ds = getDataSourceSrv().getInstanceSettings(initialDatasource);
     if (!ds) {
       return [];
     }
-    return await getBackendSrv().get(`api/plugins/${ds.type}/dashboards`);
+
+    const dashboards = await getBackendSrv().get(`api/plugins/${ds.type}/dashboards`);
+    if (dashboards.length > 0) {
+      reportInteraction('grafana_dashboard_empty_page_template_dashboards_loaded', {
+        count: dashboards.length,
+        datasource: ds.type,
+      });
+    }
+
+    return dashboards;
   }, [initialDatasource]);
 
   const onImportDashboardClick = async (dashboard: PluginDashboard) => {
-    try {
-      const templateUrl =
-        `/dashboard/template?` +
-        `datasource=${encodeURIComponent(initialDatasource || '')}&` +
-        `title=${encodeURIComponent(dashboard.title || 'Template')}&` +
-        `pluginId=${encodeURIComponent(dashboard.pluginId)}&` +
-        `path=${encodeURIComponent(dashboard.path)}`;
+    reportInteraction('grafana_dashboard_empty_page_template_dashboard_clicked', {
+      id: dashboard.uid,
+      title: dashboard.title,
+      datasource: dashboard.pluginId,
+    });
 
-      locationService.push(templateUrl);
-    } catch (error) {
-      console.error('Error navigating to templated dashboard:', error);
-      dispatch(notifyApp(createSuccessNotification('Failed to load dashboard', '')));
-    }
+    const templateUrl =
+      `/dashboard/template?` +
+      `datasource=${encodeURIComponent(initialDatasource || '')}&` +
+      `title=${encodeURIComponent(dashboard.title || 'Template')}&` +
+      `pluginId=${encodeURIComponent(dashboard.pluginId)}&` +
+      `path=${encodeURIComponent(dashboard.path)}`;
+
+    locationService.push(templateUrl);
   };
 
   if (!provisionedDashboards?.length && !isProvisionedLoading) {

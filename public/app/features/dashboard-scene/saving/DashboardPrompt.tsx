@@ -3,7 +3,8 @@ import * as H from 'history';
 import { memo, useContext, useEffect, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import { ModalsContext, Modal, Button, useStyles2 } from '@grafana/ui';
 import { Prompt } from 'app/core/components/FormPrompt/Prompt';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -18,7 +19,8 @@ interface DashboardPromptProps {
 
 export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const originalPath = useMemo(() => locationService.getLocation().pathname, [dashboard]);
+  const originalLocation = useMemo(() => locationService.getLocation(), [dashboard]);
+  const originalPath = useMemo(() => originalLocation.pathname, [originalLocation]);
   const { showModal, hideModal } = useContext(ModalsContext);
 
   useEffect(() => {
@@ -67,8 +69,6 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
       return false;
     }
 
-    return true;
-
     // Are we still on the same dashboard?
     if (originalPath === location.pathname) {
       return true;
@@ -96,6 +96,11 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
       onDiscard: () => {
         dashboard.exitEditMode({ skipConfirm: true });
         hideModal();
+        if (originalPath === '/dashboard/template') {
+          reportInteraction('grafana_dashboard_prompt_discard_template_dashboard', {
+            datasource: new URLSearchParams(originalLocation.search).get('pluginId'),
+          });
+        }
         moveToBlockedLocationAfterReactStateUpdate(location);
       },
       onDismiss: hideModal,
@@ -180,10 +185,28 @@ export function ignoreChanges(scene: DashboardScene | null) {
     return true;
   }
 
+  // Ignore changes if the original is empty (new dashboard)
+  if (original && 'schemaVersion' in original && isEmptyDashboard(original)) {
+    return true;
+  }
+
   const { canSave, fromScript, fromFile } = scene.state.meta;
   if (!contextSrv.isEditor && !canSave) {
     return true;
   }
 
   return !canSave || fromScript || fromFile;
+}
+
+function isEmptyDashboard(dashboard: Dashboard): boolean {
+  if (!dashboard) {
+    return true;
+  }
+
+  const hasNoPanels = !dashboard.panels?.length;
+  const hasNoLinks = !dashboard.links?.length;
+  const hasNoTemplates = !dashboard.templating?.list?.length;
+  const hasNoUid = !dashboard.uid;
+
+  return hasNoPanels && hasNoLinks && hasNoTemplates && hasNoUid;
 }
