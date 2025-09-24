@@ -397,8 +397,7 @@ func TestIdentityQueries(t *testing.T) {
 				{
 					Name: "delete_team_basic",
 					Data: deleteTeam(&DeleteTeamCommand{
-						UID:   "team-1",
-						OrgID: 1,
+						UID: "team-1",
 					}),
 				},
 			},

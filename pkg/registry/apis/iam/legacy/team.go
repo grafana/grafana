@@ -266,8 +266,7 @@ func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo
 }
 
 type DeleteTeamCommand struct {
-	UID   string
-	OrgID int64
+	UID string
 }
 
 var sqlDeleteTeamTemplate = mustTemplate("delete_team.sql")
@@ -302,12 +301,7 @@ func (s *legacySQLStore) DeleteTeam(ctx context.Context, ns claims.NamespaceInfo
 	}
 
 	return sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
-		teamDeleteCmd := DeleteTeamCommand{
-			UID:   cmd.UID,
-			OrgID: cmd.OrgID,
-		}
-
-		teamDeleteReq := newDeleteTeam(sql, &teamDeleteCmd)
+		teamDeleteReq := newDeleteTeam(sql, &cmd)
 		if err := teamDeleteReq.Validate(); err != nil {
 			return err
 		}
