@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
-import { Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { Spacer } from 'app/features/alerting/unified/components/Spacer';
 import {
@@ -35,6 +35,20 @@ function getGrafanaInstancesTotal(totals: Partial<Record<AlertInstanceTotalState
 const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstances, hideViewRuleLinkText }: Props) => {
   const styles = useStyles2(getStyles);
   const stateStyle = useStyles2(getStateTagStyles);
+  const theme = useTheme2();
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity.toLowerCase()) {
+      case 'critical':
+        return theme.colors.error.main;
+      case 'warn':
+        return theme.colors.warning.main;
+      case 'no_data':
+        return theme.colors.text.secondary;
+      default:
+        return theme.colors.text.primary;
+    }
+  };
 
   const rulesToDisplay = rules.length <= options.maxItems ? rules : rules.slice(0, options.maxItems);
 
@@ -71,6 +85,13 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                     name={alertDef.getStateDisplayModel(alertingRule.state).iconClass}
                     className={stateStyle[alertStateToState(alertingRule.state)]}
                     size={'lg'}
+                    style={
+                      severity &&
+                      (alertingRule.state === PromAlertingRuleState.Firing ||
+                        alertingRule.state === PromAlertingRuleState.Pending)
+                        ? { color: getSeverityColor(severity) }
+                        : undefined
+                    }
                   />
                 </div>
                 <div className={styles.alertNameWrapper}>
@@ -80,7 +101,6 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                         {ruleWithLocation.name}
                       </div>
                       <Spacer />
-                      {severity && <div className={styles.severityTag}>{severity.toUpperCase()} Monitor</div>}
                       {href && (
                         <a
                           href={href}
@@ -95,8 +115,21 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                       )}
                     </Stack>
                     <div className={styles.alertDuration}>
-                      <span className={stateStyle[alertStateToState(alertingRule.state)]}>
-                        {alertStateToReadable(alertingRule.state)}
+                      <span
+                        className={stateStyle[alertStateToState(alertingRule.state)]}
+                        style={
+                          severity &&
+                          (alertingRule.state === PromAlertingRuleState.Firing ||
+                            alertingRule.state === PromAlertingRuleState.Pending)
+                            ? { color: getSeverityColor(severity) }
+                            : undefined
+                        }
+                      >
+                        {severity &&
+                        (alertingRule.state === PromAlertingRuleState.Firing ||
+                          alertingRule.state === PromAlertingRuleState.Pending)
+                          ? (severity.charAt(0).toUpperCase() + severity.slice(1).toLowerCase()).replace('_', ' ')
+                          : alertStateToReadable(alertingRule.state)}
                       </span>{' '}
                       {firstActiveAt && alertingRule.state !== PromAlertingRuleState.Inactive && (
                         <>
