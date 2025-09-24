@@ -74,14 +74,20 @@ const OTEL_LOG_FIELDS_REGEX =
 
 export const OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME = '___OTEL_LOG_ATTRIBUTES___';
 
-export function getOtelAttributesField(log: LogListModel) {
+export function getOtelAttributesField(log: LogListModel, wrapLogMessage: boolean) {
   const additionalFields = Object.keys(log.labels).filter(
     (label) =>
       !OTEL_RESOURCE_ATTRS_REGEX.test(label) &&
       !OTEL_LOG_FIELDS_REGEX.test(label) &&
       label !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME
   );
-  return additionalFields.map((field) => (log.labels[field] ? `${field}=${log.labels[field]}` : '')).join(' ');
+  const attributes = additionalFields
+    .map((field) => (log.labels[field] ? `${field}=${log.labels[field]}` : ''))
+    .join(' ');
+  if (!wrapLogMessage) {
+    return attributes.replace(NEWLINES_REGEX, '');
+  }
+  return attributes;
 }
 
 export function isSupportedApp(app: CoreApp) {
