@@ -1,4 +1,4 @@
-import { getScenePerformanceTracker } from '@grafana/scenes';
+import { getScenePerformanceTracker, writePerformanceLog } from '@grafana/scenes';
 
 import { getDashboardAnalyticsAggregator } from '../../dashboard/services/DashboardAnalyticsAggregator';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -18,6 +18,7 @@ export function dashboardAnalyticsInitializer(dashboard: DashboardScene) {
     return;
   }
 
+  // writePerformanceLog('DashboardAnalyticsInitializer', 'Initializing dashboard analytics behavior');
   // Initialize analytics aggregator
   const aggregator = getDashboardAnalyticsAggregator();
   aggregator.initialize(uid, title || 'Untitled Dashboard');
@@ -26,7 +27,7 @@ export function dashboardAnalyticsInitializer(dashboard: DashboardScene) {
   const tracker = getScenePerformanceTracker();
   const unsubscribe = tracker.addObserver(aggregator);
 
-  console.log('DashboardAnalyticsAggregator initialized:', { uid, title });
+  writePerformanceLog('DashboardAnalyticsInitializer', 'DashboardAnalyticsAggregator initialized:', { uid, title });
 
   // Return cleanup function
   return () => {
@@ -38,6 +39,6 @@ export function dashboardAnalyticsInitializer(dashboard: DashboardScene) {
     // Clean up aggregator state
     aggregator.destroy();
 
-    console.log('DashboardAnalyticsAggregator cleaned up');
+    writePerformanceLog('DashboardAnalyticsInitializer', 'DashboardAnalyticsAggregator cleaned up');
   };
 }

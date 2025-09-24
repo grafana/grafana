@@ -1,9 +1,10 @@
 import { logMeasurement, reportInteraction } from '@grafana/runtime';
 import {
   type ScenePerformanceObserver,
-  type DashboardPerformanceData,
+  type PerformanceEventData,
   type PanelPerformanceData,
   type QueryPerformanceData,
+  writePerformanceLog,
 } from '@grafana/scenes';
 
 /**
@@ -42,7 +43,6 @@ interface PanelAnalyticsMetrics {
   renderOperations: Array<{
     duration: number;
     timestamp: number;
-    renderType?: string;
   }>;
 }
 
@@ -101,16 +101,16 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   }
 
   // Dashboard-level events (we don't need to track these for panel analytics)
-  onDashboardInteractionStart(data: DashboardPerformanceData): void {
+  onDashboardInteractionStart(data: PerformanceEventData): void {
     // Clear metrics when new dashboard interaction starts
     this.clearMetrics();
   }
 
-  onDashboardInteractionMilestone(data: DashboardPerformanceData): void {
+  onDashboardInteractionMilestone(data: PerformanceEventData): void {
     // No action needed for milestones in analytics
   }
 
-  onDashboardInteractionComplete(data: DashboardPerformanceData): void {
+  onDashboardInteractionComplete(data: PerformanceEventData): void {
     // Replicate the logic from getDashboardInteractionCallback
     this.sendAnalyticsReport(data);
   }
@@ -126,7 +126,7 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   }
 
   onPanelOperationComplete(data: PanelPerformanceData): void {
-    console.log('🔍 onPanelOperationComplete called with:', data);
+    writePerformanceLog('DashboardAnalyticsAggregator', '🔍 onPanelOperationComplete called with:', data);
 
     const panel = this.panelMetrics.get(data.panelKey);
     if (!panel) {
@@ -142,8 +142,9 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
         panel.fieldConfigOperations.push({
           duration,
           timestamp: data.timestamp,
-          dataPointsCount: data.metadata?.dataPointsCount,
-          seriesCount: data.metadata?.seriesCount,
+          dataPointsCount:
+            typeof data.metadata?.dataPointsCount === 'number' ? data.metadata.dataPointsCount : undefined,
+          seriesCount: typeof data.metadata?.seriesCount === 'number' ? data.metadata.seriesCount : undefined,
         });
         break;
 
@@ -152,9 +153,11 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
         panel.transformationOperations.push({
           duration,
           timestamp: data.timestamp,
-          transformationId: data.metadata?.transformationId,
-          success: data.metadata?.success,
-          outputSeriesCount: data.metadata?.outputSeriesCount,
+          transformationId:
+            typeof data.metadata?.transformationId === 'string' ? data.metadata.transformationId : undefined,
+          success: typeof data.metadata?.success === 'boolean' ? data.metadata.success : undefined,
+          outputSeriesCount:
+            typeof data.metadata?.outputSeriesCount === 'number' ? data.metadata.outputSeriesCount : undefined,
         });
         break;
 
@@ -163,29 +166,37 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
         panel.renderOperations.push({
           duration,
           timestamp: data.timestamp,
-          renderType: data.metadata?.renderType,
         });
         break;
     }
   }
 
   onPanelLifecycleComplete(data: PanelPerformanceData): void {
-    console.log('🔍 onPanelLifecycleComplete called with:', data);
+    writePerformanceLog('DashboardAnalyticsAggregator', '🔍 onPanelLifecycleComplete called with:', data);
 
     // Ensure panel exists even if it never went through queries (cached renders)
     this.ensurePanelExists(data.panelKey, data.panelId, data.pluginId, data.pluginVersion);
 
     const panel = this.panelMetrics.get(data.panelKey);
-    console.log('🔍 Panel found in metrics:', panel ? 'YES' : 'NO', 'operation:', data.operation);
+    // writePerformanceLog(
+    //   'DashboardAnalyticsAggregator',
+    //   '🔍 Panel found in metrics:',
+    //   panel ? 'YES' : 'NO',
+    //   'operation:',
+    //   data.operation
+    // );
 
     if (panel && data.operation === 'render') {
       panel.totalRenderTime += data.duration || 0;
       panel.renderOperations.push({
         duration: data.duration || 0,
         timestamp: data.timestamp,
-        renderType: data.metadata?.renderType,
       });
-      console.log('🔍 Recorded render operation, totalRenderTime now:', panel.totalRenderTime);
+      writePerformanceLog(
+        'DashboardAnalyticsAggregator',
+        '🔍 Recorded render operation, totalRenderTime now:',
+        panel.totalRenderTime
+      );
     }
   }
 
@@ -200,7 +211,7 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   }
 
   onQueryComplete(data: QueryPerformanceData): void {
-    console.log('🔍 onQueryComplete called with:', data);
+    writePerformanceLog('DashboardAnalyticsAggregator', '🔍 onQueryComplete called with:', data);
     // Find the panel this query belongs to (queries have panelId but not panelKey)
     const panel = this.findPanelByPanelId(data.panelId);
     if (!panel) {
@@ -265,7 +276,7 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   /**
    * Send analytics report - replicates the logic from getDashboardInteractionCallback
    */
-  private sendAnalyticsReport(data: DashboardPerformanceData): void {
+  private sendAnalyticsReport(data: PerformanceEventData): void {
     const payload = {
       duration: data.duration || 0,
       networkDuration: data.networkDuration || 0, // TODO: Calculate network duration from data
@@ -282,6 +293,8 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
 
     // S4.0/S5.0: Log complete analytics event including panel metrics
     this.logDashboardAnalyticsEvent(data, payload, panelMetrics);
+
+    writePerformanceLog('DashboardAnalyticsAggregator', 'Analytics payload:', payload);
 
     // Send the same analytics as before
     reportInteraction('dashboard_render', {
@@ -301,20 +314,13 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
    * Log dashboard analytics event with panel metrics and performance insights
    */
   private logDashboardAnalyticsEvent(
-    data: DashboardPerformanceData,
+    data: PerformanceEventData,
     payload: Record<string, unknown>,
     panelMetrics: PanelAnalyticsMetrics[] | null
   ): void {
-    console.log('🎯 Dashboard Analytics Event - UID:', this.dashboardUID, 'Title:', this.dashboardTitle);
-    console.log('Interaction Type:', data.interactionType);
-    console.log('Dashboard Metrics:', payload);
-    console.log('🔍 Panel metrics map size:', this.panelMetrics.size);
-    console.log('🔍 Panel metrics array length:', panelMetrics?.length || 0);
-
+    // Calculate performance insights if panel metrics are available
+    let performanceInsights = null;
     if (panelMetrics && panelMetrics.length > 0) {
-      console.log(`Panel Metrics (${panelMetrics.length} panels):`, panelMetrics);
-
-      // Performance insights (S5.0: Calculate totals from aggregated metrics)
       const totalPanelTime = panelMetrics.reduce((sum: number, panel) => {
         const panelTotal =
           panel.totalQueryTime +
@@ -351,15 +357,27 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
         slowestPanel.totalRenderTime +
         slowestPanel.pluginLoadTime;
 
-      console.log(`Performance Insights:`);
-      console.log(`  Total Panel Time: ${totalPanelTime.toFixed(2)}ms`);
-      console.log(`  Average Panel Time: ${avgPanelTime.toFixed(2)}ms`);
-      console.log(
-        `  Slowest Panel: ${slowestPanel.panelId} (${slowestPanel.pluginId}) - ${slowestPanelTime.toFixed(2)}ms`
-      );
-    } else {
-      console.log('No panel metrics found in analytics aggregator');
+      performanceInsights = {
+        totalPanelTime: `${totalPanelTime.toFixed(2)}ms`,
+        averagePanelTime: `${avgPanelTime.toFixed(2)}ms`,
+        slowestPanel: {
+          panelId: slowestPanel.panelId,
+          pluginId: slowestPanel.pluginId,
+          time: `${slowestPanelTime.toFixed(2)}ms`,
+        },
+      };
     }
+
+    writePerformanceLog('DashboardAnalyticsAggregator', '🎯 Dashboard Analytics Event:', {
+      uid: this.dashboardUID,
+      title: this.dashboardTitle,
+      interactionType: data.interactionType,
+      dashboardMetrics: payload,
+      panelMetricsMapSize: this.panelMetrics.size,
+      panelMetricsArrayLength: panelMetrics?.length || 0,
+      panelMetrics: (panelMetrics?.length ?? 0) > 0 ? panelMetrics : 'No panel metrics found',
+      performanceInsights: performanceInsights || 'No performance insights available',
+    });
   }
 }
 

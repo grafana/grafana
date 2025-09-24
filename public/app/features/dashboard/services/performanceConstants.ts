@@ -87,7 +87,7 @@ export function createPerformanceMark(name: string, timestamp?: number): void {
       } else {
         performance.mark(name);
       }
-      console.log(`🎯 Created performance mark: ${name}`, { timestamp });
+      // writePerformanceLog('PerformanceConstants', `🎯 Created performance mark: ${name}`, { timestamp });
     }
   } catch (error) {
     console.error(`❌ Failed to create performance mark: ${name}`, { timestamp, error });
@@ -105,7 +105,7 @@ export function createPerformanceMeasure(name: string, startMark: string, endMar
       } else {
         performance.measure(name, startMark);
       }
-      console.log(`✅ Created performance measure: ${name}`, { startMark, endMark });
+      // writePerformanceLog('PerformanceConstants', `✅ Created performance measure: ${name}`, { startMark, endMark });
     }
   } catch (error) {
     console.error(`❌ Failed to create performance measure: ${name}`, { startMark, endMark, error });

@@ -1,9 +1,10 @@
 import {
   type ScenePerformanceObserver,
-  type DashboardPerformanceData,
+  type PerformanceEventData,
   type PanelPerformanceData,
   type QueryPerformanceData,
   getScenePerformanceTracker,
+  writePerformanceLog,
 } from '@grafana/scenes';
 
 import {
@@ -47,7 +48,7 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     // Note: Analytics aggregator will be initialized separately with dashboard context
 
     this.isInitialized = true;
-    console.log('ScenePerformanceService: Initialized and subscribed to Scene performance events');
+    writePerformanceLog('ScenePerformanceService', 'Initialized and subscribed to Scene performance events');
   }
 
   public destroy() {
@@ -62,41 +63,41 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     }
 
     this.isInitialized = false;
-    console.log('ScenePerformanceService: Destroyed and unsubscribed from Scene performance events');
+    writePerformanceLog('ScenePerformanceService', 'Destroyed and unsubscribed from Scene performance events');
   }
 
   // Dashboard-level events
-  onDashboardInteractionStart(data: DashboardPerformanceData): void {
+  onDashboardInteractionStart(data: PerformanceEventData): void {
     // Create standardized dashboard performance mark
     const dashboardStartMark = PERFORMANCE_MARKS.DASHBOARD_INTERACTION_START(data.operationId);
     createPerformanceMark(dashboardStartMark, data.timestamp);
 
-    console.log('🎯 Dashboard Interaction Started:', {
+    writePerformanceLog('ScenePerformanceService', '🎯 Dashboard Interaction Started:', {
       type: data.interactionType,
-      uid: data.dashboardUID,
-      title: data.dashboardTitle,
-      panelCount: data.panelCount,
+      uid: data.metadata?.dashboardUID,
+      title: data.metadata?.dashboardTitle,
+      panelCount: data.metadata?.panelCount,
       timestamp: data.timestamp,
       operationId: data.operationId,
     });
   }
 
-  onDashboardInteractionMilestone(data: DashboardPerformanceData): void {
+  onDashboardInteractionMilestone(data: PerformanceEventData): void {
     // Create standardized dashboard milestone mark
     const milestone = data.milestone || 'unknown';
     const dashboardMilestoneMark = PERFORMANCE_MARKS.DASHBOARD_MILESTONE(data.operationId, milestone);
     createPerformanceMark(dashboardMilestoneMark, data.timestamp);
 
-    console.log('🔄 Dashboard Milestone:', {
+    writePerformanceLog('ScenePerformanceService', '🔄 Dashboard Milestone:', {
       type: data.interactionType,
-      uid: data.dashboardUID,
-      milestone: data.milestone, // milestone is in the extended data
+      uid: data.metadata?.dashboardUID,
+      milestone: data.milestone,
       timestamp: data.timestamp,
       operationId: data.operationId,
     });
   }
 
-  onDashboardInteractionComplete(data: DashboardPerformanceData): void {
+  onDashboardInteractionComplete(data: PerformanceEventData): void {
     // Create standardized dashboard performance marks and measure
     const dashboardEndMark = PERFORMANCE_MARKS.DASHBOARD_INTERACTION_END(data.operationId);
     const dashboardStartMark = PERFORMANCE_MARKS.DASHBOARD_INTERACTION_START(data.operationId);
@@ -105,10 +106,10 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     createPerformanceMark(dashboardEndMark, data.timestamp);
     createPerformanceMeasure(dashboardMeasureName, dashboardStartMark, dashboardEndMark);
 
-    console.log('✅ Dashboard Interaction Complete:', {
+    writePerformanceLog('ScenePerformanceService', '✅ Dashboard Interaction Complete:', {
       type: data.interactionType,
-      uid: data.dashboardUID,
-      title: data.dashboardTitle,
+      uid: data.metadata?.dashboardUID,
+      title: data.metadata?.dashboardTitle,
       duration: data.duration,
       networkDuration: data.networkDuration,
       timestamp: data.timestamp,
@@ -122,7 +123,7 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     this.createStandardizedPanelMark(data, 'start');
 
     const operationIcon = this.getOperationIcon(data.operation);
-    console.log(`${operationIcon} Panel Lifecycle Started [${data.operation}]:`, {
+    writePerformanceLog('ScenePerformanceService', `${operationIcon} Panel Lifecycle Started [${data.operation}]:`, {
       panelId: data.panelId,
       panelKey: data.panelKey,
       pluginId: data.pluginId,
@@ -137,7 +138,7 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     this.createStandardizedPanelMark(data, 'start');
 
     const operationIcon = this.getOperationIcon(data.operation);
-    console.log(`${operationIcon} Panel Operation Started [${data.operation}]:`, {
+    writePerformanceLog('ScenePerformanceService', `${operationIcon} Panel Operation Started [${data.operation}]:`, {
       panelId: data.panelId,
       panelKey: data.panelKey,
       pluginId: data.pluginId,
@@ -154,7 +155,7 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     this.createStandardizedPanelMeasure(data);
 
     const operationIcon = this.getOperationIcon(data.operation);
-    console.log(`${operationIcon} Panel Operation Complete [${data.operation}]:`, {
+    writePerformanceLog('ScenePerformanceService', `${operationIcon} Panel Operation Complete [${data.operation}]:`, {
       panelId: data.panelId,
       panelKey: data.panelKey,
       pluginId: data.pluginId,
@@ -172,7 +173,7 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     this.createStandardizedPanelMeasure(data);
 
     const operationIcon = this.getOperationIcon(data.operation);
-    console.log(`${operationIcon} Panel Lifecycle Complete [${data.operation}]:`, {
+    writePerformanceLog('ScenePerformanceService', `${operationIcon} Panel Lifecycle Complete [${data.operation}]:`, {
       panelId: data.panelId,
       panelKey: data.panelKey,
       pluginId: data.pluginId,
@@ -189,7 +190,7 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     const queryStartMark = PERFORMANCE_MARKS.QUERY_START(data.panelId, data.queryId);
     createPerformanceMark(queryStartMark, data.timestamp);
 
-    console.log('🔍 Query Started:', {
+    writePerformanceLog('ScenePerformanceService', '🔍 Query Started:', {
       panelId: data.panelId,
       queryId: data.queryId,
       queryType: data.queryType,
@@ -208,7 +209,7 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     createPerformanceMark(queryEndMark, data.timestamp);
     createPerformanceMeasure(queryMeasureName, queryStartMark, queryEndMark);
 
-    console.log('🔍 Query Complete:', {
+    writePerformanceLog('ScenePerformanceService', '🔍 Query Complete:', {
       panelId: data.panelId,
       queryId: data.queryId,
       queryType: data.queryType,

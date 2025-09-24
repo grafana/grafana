@@ -3,22 +3,16 @@ import { SceneRenderProfiler, type SceneObject } from '@grafana/scenes';
 
 import { initializeScenePerformanceService } from './ScenePerformanceService';
 
-// Local configuration interface for panel profiling
-interface PanelProfilingConfig {
-  dashboardUIDs?: string[]; // Which dashboards to profile ('*' for all)
-  watchStateKey?: string; // State property to watch for structural changes (e.g., 'body', 'children')
-}
-
 let dashboardSceneProfiler: SceneRenderProfiler | undefined;
 
 export function getDashboardSceneProfiler() {
   if (!dashboardSceneProfiler) {
     // Create panel profiling configuration
-    const panelProfilingConfig: PanelProfilingConfig = {
+    const panelProfilingConfig = {
       watchStateKey: 'body', // Watch dashboard body changes for panel structure changes
     };
 
-    dashboardSceneProfiler = new SceneRenderProfiler(undefined, panelProfilingConfig);
+    dashboardSceneProfiler = new SceneRenderProfiler(panelProfilingConfig);
 
     // Initialize the Scene performance service to start listening to events
     initializeScenePerformanceService();
@@ -30,8 +24,12 @@ export function getDashboardSceneProfiler() {
 export function getDashboardSceneProfilerWithMetadata(uid: string, title: string, panelCount: number) {
   const profiler = getDashboardSceneProfiler();
 
-  // Set dashboard metadata for observer notifications
-  profiler.setDashboardMetadata(uid, title, panelCount);
+  // Set metadata for observer notifications
+  profiler.setMetadata({
+    dashboardUID: uid,
+    dashboardTitle: title,
+    panelCount: panelCount,
+  });
 
   // Note: Analytics aggregator initialization and observer registration
   // is now handled by DashboardAnalyticsInitializerBehavior
