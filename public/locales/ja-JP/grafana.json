@@ -1913,9 +1913,6 @@
       "title-remove": "削除",
       "tooltip-remove-time-range": "時間範囲を削除"
     },
-    "namespace": {
-      "title-alert-rules": "アラートルール"
-    },
     "namespace-and-group-filter": {
       "select-group": "グループを選択",
       "select-namespace": "名前空間を選択"
@@ -2033,7 +2030,9 @@
       "recipient-notification-fires": "アラートルールの発生時に通知を受け取る相手を選択してください。"
     },
     "option-customfield": {
-      "label-custom-template": "カスタムテンプレート"
+      "label-custom-template": "カスタムテンプレート",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "選択したAlertmanagerは存在しないか、アクセス権限がない可能性があります。ドロップダウンから別のAlertmanagerを選択できます。",
@@ -5329,7 +5328,6 @@
             "json": "JSON形式でエクスポート"
           }
         },
-        "mark-favorite": "お気に入りに登録",
         "more-save-options": "その他の保存オプション",
         "playlist-next": "次のダッシュボードへ",
         "playlist-previous": "前のダッシュボードへ",
@@ -5358,8 +5356,7 @@
             "yesText": "保存"
           }
         },
-        "unlink-library-panel": "ライブラリパネルのリンクを解除",
-        "unmark-favorite": "お気に入りから削除"
+        "unlink-library-panel": "ライブラリパネルのリンクを解除"
       },
       "open-original": "元のダッシュボードを開く",
       "playlist-next": "次のダッシュボードに移動",
@@ -5380,6 +5377,10 @@
       "save-library-panel": "ライブラリパネルを保存",
       "settings": "ダッシュボードの設定",
       "share-button": "共有",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "ライブラリパネルのリンクを解除",
       "unmark-favorite": "お気に入りを解除"
     },

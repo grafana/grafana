@@ -1919,9 +1919,6 @@
       "title-remove": "Remove",
       "tooltip-remove-time-range": "Remove time range"
     },
-    "namespace": {
-      "title-alert-rules": "Alert rules"
-    },
     "namespace-and-group-filter": {
       "select-group": "Select group",
       "select-namespace": "Select namespace"
@@ -5352,7 +5349,6 @@
             "json": "Export as JSON"
           }
         },
-        "mark-favorite": "Mark as favorite",
         "more-save-options": "More save options",
         "playlist-next": "Go to next dashboard",
         "playlist-previous": "Go to previous dashboard",
@@ -5381,8 +5377,7 @@
             "yesText": "Save"
           }
         },
-        "unlink-library-panel": "Unlink library panel",
-        "unmark-favorite": "Unmark as favorite"
+        "unlink-library-panel": "Unlink library panel"
       },
       "open-original": "Open original dashboard",
       "playlist-next": "Go to next dashboard",
@@ -5403,6 +5398,10 @@
       "save-library-panel": "Save library panel",
       "settings": "Dashboard settings",
       "share-button": "Share",
+      "star-add-error": "Failed to add to starred",
+      "star-added": "Added to starred",
+      "star-remove-error": "Failed to remove from starred",
+      "star-removed": "Removed from starred",
       "unlink-library-panel": "Unlink library panel",
       "unmark-favorite": "Unmark as favorite"
     },
