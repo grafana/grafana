@@ -6,6 +6,7 @@ import { DataFrame, Field } from '../../types/dataFrame';
 import { DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
+import { getTransformationLegacyRefId } from './utils';
 
 interface ValuePointer {
   key: string;
@@ -46,7 +47,7 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
         const fieldIndexByName: Record<string, Record<number, number>> = {};
         const fieldNamesForKey: string[] = [];
         const dataFrame = new MutableDataFrame({
-          refId: options.refId ?? `${DataTransformerID.merge}-${data.map((frame) => frame.refId).join('-')}`,
+          refId: options.refId ?? getTransformationLegacyRefId(DataTransformerID.merge, data),
           fields: [],
         });
 

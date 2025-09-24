@@ -1,6 +1,13 @@
 import { map } from 'rxjs/operators';
 
-import { DataFrame, DataTransformerID, Field, FieldType, SynchronousDataTransformerInfo } from '@grafana/data';
+import {
+  DataFrame,
+  DataTransformerID,
+  Field,
+  FieldType,
+  getTransformationLegacyRefId,
+  SynchronousDataTransformerInfo,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { getDistinctLabels } from '../utils';
@@ -112,7 +119,7 @@ export function joinByLabels(options: JoinByLabelsTransformOptions, data: DataFr
   const frame: DataFrame = {
     fields: [],
     length: nameValues[0].length,
-    refId: options.refId ?? `${DataTransformerID.joinByLabels}-${data.map((frame) => frame.refId).join('-')}`,
+    refId: options.refId ?? getTransformationLegacyRefId(DataTransformerID.joinByLabels, data),
   };
   for (let i = 0; i < join.length; i++) {
     frame.fields.push({

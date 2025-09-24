@@ -15,6 +15,7 @@ import {
 import { DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
+import { getTransformationLegacyRefId } from './utils';
 
 export interface SeriesToRowsTransformerOptions {
   refId?: string;
@@ -40,7 +41,7 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
         const timeFieldByIndex: Record<number, number> = {};
         const targetFields = new Set<string>();
         const dataFrame = new MutableDataFrame({
-          refId: options.refId ?? `${DataTransformerID.seriesToRows}-${data.map((frame) => frame.refId).join('-')}`,
+          refId: options.refId ?? getTransformationLegacyRefId(DataTransformerID.seriesToRows, data),
           fields: [],
         });
         const metricField: Field = {

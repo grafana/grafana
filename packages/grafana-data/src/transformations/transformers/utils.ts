@@ -1,6 +1,8 @@
 import { DataFrame } from '../../types/dataFrame';
 import { SpecialValue } from '../../types/transformations';
 
+import { DataTransformerID } from './ids';
+
 /**
  * Retrieve the maximum number of fields in a series of a dataframe.
  */
@@ -33,3 +35,7 @@ export function getSpecialValue(specialValue: SpecialValue) {
       return '';
   }
 }
+
+export const getTransformationLegacyRefId = (transformationId: DataTransformerID, data: DataFrame[]) => {
+  return `${transformationId}-${data.map((frame) => frame.refId).join('-')}`;
+};

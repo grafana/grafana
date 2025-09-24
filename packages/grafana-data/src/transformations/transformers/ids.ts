@@ -44,3 +44,11 @@ export enum DataTransformerID {
   regression = 'regression',
   groupToNestedTable = 'groupToNestedTable',
 }
+
+export const refIDDependentIDs = [
+  DataTransformerID.joinByField,
+  DataTransformerID.merge,
+  DataTransformerID.reduce,
+  DataTransformerID.seriesToRows,
+  DataTransformerID.joinByLabels,
+];

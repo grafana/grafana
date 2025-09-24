@@ -10,6 +10,7 @@ import { getFieldMatcher } from '../matchers';
 import { alwaysFieldMatcher, notTimeFieldMatcher } from '../matchers/predicates';
 
 import { DataTransformerID } from './ids';
+import { getTransformationLegacyRefId } from './utils';
 
 export enum ReduceTransformerMode {
   SeriesToRows = 'seriesToRows', // default
@@ -61,7 +62,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
           ? [
               {
                 ...res,
-                refId: options.refId ?? `${DataTransformerID.reduce}-${data.map((frame) => frame.refId).join('-')}`,
+                refId: options.refId ?? getTransformationLegacyRefId(DataTransformerID.reduce, data),
               },
             ]
           : [];
