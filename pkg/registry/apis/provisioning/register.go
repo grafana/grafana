@@ -340,7 +340,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					// Access to files is controlled by the AccessClient
 					return authorizer.DecisionAllow, "", nil
 
-				case "resources", "sync", "history":
+				case "resources", "sync", "history", "status":
 					// These are strictly read operations.
 					// Sync can also be somewhat destructive, but it's expected to be fine to import changes.
 					if id.GetOrgRole().Includes(identity.RoleEditor) {
