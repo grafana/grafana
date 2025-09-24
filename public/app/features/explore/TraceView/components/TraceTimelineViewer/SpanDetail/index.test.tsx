@@ -17,7 +17,7 @@ jest.mock('../utils');
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createDataFrame, DataSourceInstanceSettings } from '@grafana/data';
+import { createDataFrame, DataSourceInstanceSettings, dateTime } from '@grafana/data';
 import { data } from '@grafana/flamegraph';
 import { DataSourceSrv, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
 
@@ -71,6 +71,8 @@ describe('<SpanDetail>', () => {
     traceFlameGraphs: { [span.spanID]: createDataFrame(data) },
     setRedrawListView: jest.fn(),
     timeRange: {
+      from: dateTime(0),
+      to: dateTime(1000000000000),
       raw: {
         from: 0,
         to: 1000000000000,
@@ -273,6 +275,10 @@ describe('<SpanDetail>', () => {
           attributes: expect.objectContaining({
             'http.url': expect.arrayContaining([expect.any(String)]),
           }),
+          timeRange: {
+            from: 0,
+            to: 1000000000000,
+          },
           datasource: {
             type: 'tempo',
             uid: 'grafanacloud-traces',

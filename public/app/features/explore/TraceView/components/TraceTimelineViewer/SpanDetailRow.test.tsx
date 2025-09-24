@@ -14,7 +14,7 @@
 
 import { render, screen } from '@testing-library/react';
 
-import { createTheme } from '@grafana/data';
+import { createTheme, dateTime } from '@grafana/data';
 import { setPluginLinksHook } from '@grafana/runtime';
 
 import DetailState from './SpanDetail/DetailState';
@@ -48,6 +48,8 @@ const setup = (propOverrides?: SpanDetailRowProps) => {
     theme: createTheme(),
     traceFlameGraphs: {},
     timeRange: {
+      from: dateTime(0),
+      to: dateTime(1000000000000),
       raw: {
         from: 0,
         to: 1000000000000,

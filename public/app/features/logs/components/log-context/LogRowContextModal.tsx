@@ -492,6 +492,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
 
   const loadingStateAbove = context.above.loadingState;
   const loadingStateBelow = context.below.loadingState;
+  const timeRange = getFullTimeRange();
 
   return (
     <Modal
@@ -552,6 +553,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   onClickShowField={showField}
                   onClickHideField={hideField}
                   scrollElement={null}
+                  timeRange={timeRange}
                 />
               </td>
             </tr>
@@ -575,6 +577,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   pinnedLogs={sticky ? [row.uid] : undefined}
                   overflowingContent={true}
                   scrollElement={null}
+                  timeRange={timeRange}
                 />
               </td>
             </tr>
@@ -594,6 +597,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                     onClickShowField={showField}
                     onClickHideField={hideField}
                     scrollElement={null}
+                    timeRange={timeRange}
                   />
                 </>
               </td>
@@ -637,7 +641,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
               dispatch(
                 splitOpen({
                   queries: [contextQuery],
-                  range: getFullTimeRange(),
+                  range: timeRange,
                   datasourceUid: contextQuery.datasource!.uid!,
                   panelsState: {
                     logs: {

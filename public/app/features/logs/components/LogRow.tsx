@@ -1,7 +1,15 @@
 import { debounce } from 'lodash';
 import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { CoreApp, DataFrame, dateTimeFormat, LogRowContextOptions, LogRowModel, LogsSortOrder } from '@grafana/data';
+import {
+  CoreApp,
+  DataFrame,
+  dateTimeFormat,
+  LogRowContextOptions,
+  LogRowModel,
+  LogsSortOrder,
+  TimeRange,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
@@ -56,6 +64,7 @@ export interface Props {
   handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
   logRowMenuIconsBefore?: ReactNode[];
   logRowMenuIconsAfter?: ReactNode[];
+  timeRange: TimeRange;
 }
 
 export const LogRow = ({
@@ -314,6 +323,7 @@ export const LogRow = ({
           styles={styles}
           isFilterLabelActive={props.isFilterLabelActive}
           pinLineButtonTooltipTitle={props.pinLineButtonTooltipTitle}
+          timeRange={props.timeRange}
         />
       )}
     </>

@@ -4,6 +4,7 @@ import { ComponentProps } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { CoreApp, createTheme, LogLevel, LogRowModel } from '@grafana/data';
+import { mockTimeRange } from '@grafana/plugin-ui';
 
 import { LogRow } from './LogRow';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -40,6 +41,7 @@ const setup = (propOverrides?: Partial<ComponentProps<typeof LogRow>>, rowOverri
     wrapLogMessage: false,
     timeZone: 'utc',
     styles,
+    timeRange: mockTimeRange(),
     ...(propOverrides || {}),
   };
 

@@ -14,6 +14,7 @@ import {
   LogsSortOrder,
   DataFrame,
   ScopedVars,
+  dateTime,
   getDefaultTimeRange,
 } from '@grafana/data';
 import { setPluginLinksHook } from '@grafana/runtime';
@@ -64,7 +65,14 @@ const setup = (
     containerElement: document.createElement('div'),
     focusLogLine: jest.fn(),
     logs,
-    timeRange: getDefaultTimeRange(),
+    timeRange: {
+      from: dateTime(1757937009041),
+      to: dateTime(1757940609041),
+      raw: {
+        from: 'now-1h',
+        to: 'now',
+      },
+    },
     timeZone: 'browser',
     showControls: true,
     ...(propOverrides || {}),
@@ -371,6 +379,10 @@ describe('LogLineDetails', () => {
         datasource: {
           type: 'loki',
           uid: 'grafanacloud-logs',
+        },
+        timeRange: {
+          from: 1757937009041,
+          to: 1757940609041,
         },
         attributes: { key1: ['label1'], key2: ['label2'] },
       },
