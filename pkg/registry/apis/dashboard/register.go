@@ -22,6 +22,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -108,8 +109,6 @@ type DashboardsAPIBuilder struct {
 	dualWriter                   dualwrite.Service
 	folderClientProvider         client.K8sHandlerProvider
 
-	log          log.Logger
-	reg          prometheus.Registerer
 	isStandalone bool // skips any handling including anything to do with legacy storage
 }
 
@@ -174,25 +173,17 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceInfoProvider, pluginStore *pluginstore.Service) *DashboardsAPIBuilder {
-	// TODO: Plugin store will soon be removed,
-	// as the cases for plugin fetching is not needed. Keeping it now to not break implementation
-	if pluginStore == nil {
-		panic("pluginStore is nil")
-	}
-
-	logger := log.New("grafana-apiserver.dashboards")
-
+func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceInfoProvider) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider)
 	return &DashboardsAPIBuilder{
-		minRefreshInterval:     "10s",
-		accessClient:           ac,
-		authorizer:             authsvc.NewResourceAuthorizer(ac),
-		features:               features,
-		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
-		folderClientProvider:   folderClientProvider,
-		resourcePermissionsSvc: resourcePermissionsSvc,
-		isStandalone:           true,
+		minRefreshInterval:   "10s",
+		accessClient:         ac,
+		authorizer:           authsvc.NewResourceAuthorizer(ac),
+		features:             features,
+		dashboardService:     &dashsvc.DashboardServiceImpl{}, // for validation helpers only
+		folderClientProvider: folderClientProvider,
+
+		isStandalone: true,
 	}
 }
 
@@ -759,7 +750,7 @@ func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context
 		var accessInfo folders.FolderAccessInfo
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(resp.Object, &accessInfo)
 		if err != nil {
-			b.log.Error("Failed to convert folder access response", "error", err)
+			logging.FromContext(ctx).Error("Failed to convert folder access response", "error", err)
 			return dashboards.ErrFolderAccessDenied
 		}
 
