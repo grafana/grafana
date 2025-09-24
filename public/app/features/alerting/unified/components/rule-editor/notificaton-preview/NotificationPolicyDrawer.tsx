@@ -1,12 +1,11 @@
 import { Fragment, useState } from 'react';
 
-import { RouteMatchResult, RouteWithID } from '@grafana/alerting/unstable';
+import { AlertLabel, RouteMatchResult, RouteWithID } from '@grafana/alerting/unstable';
 import { Trans } from '@grafana/i18n';
 import { Button, Drawer, Text, TextLink } from '@grafana/ui';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { createRelativeUrl } from '../../../utils/url';
-import { Label } from '../../Label';
 
 import { ConnectionLine } from './ConnectionLine';
 import { JourneyPolicyCard } from './JourneyPolicyCard';
@@ -90,7 +89,7 @@ export function NotificationPolicyDrawer({
                   <Stack direction="row" gap={0.5}>
                     {nonMatchingLabels.map((detail) => (
                       <Text key={detail.labelIndex} color="secondary" variant="bodySmall">
-                        <Label label={labels[detail.labelIndex][0]} value={labels[detail.labelIndex][1]} />
+                        <AlertLabel labelKey={labels[detail.labelIndex][0]} value={labels[detail.labelIndex][1]} />
                       </Text>
                     ))}
                   </Stack>

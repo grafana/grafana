@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 
-import { LabelMatchDetails } from '@grafana/alerting/unstable';
+import { AlertLabel, LabelMatchDetails } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Box, Text, useStyles2 } from '@grafana/ui';
 
 import { labelMatcherToObjectMatcher } from '../../../utils/routeAdapter';
-import { Label } from '../../Label';
 import { MatcherBadge } from '../../notification-policies/Matchers';
 
 interface MatchDetailsProps {
@@ -29,7 +28,7 @@ export function MatchDetails({ matchDetails, labels }: MatchDetailsProps) {
       ) : (
         matchingLabels.map((detail) => (
           <Box key={detail.labelIndex} display="flex" alignItems="center" gap={1}>
-            <Label label={labels[detail.labelIndex][0]} value={labels[detail.labelIndex][1]} />
+            <AlertLabel labelKey={labels[detail.labelIndex][0]} value={labels[detail.labelIndex][1]} />
             <Text variant="bodySmall" color="secondary">
               <Trans i18nKey="alerting.match-details.matched">matched</Trans>
             </Text>

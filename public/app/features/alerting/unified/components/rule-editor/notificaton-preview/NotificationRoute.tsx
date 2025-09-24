@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 
-import { RouteMatchResult, RouteWithID } from '@grafana/alerting/unstable';
+import { AlertLabels, RouteMatchResult, RouteWithID } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Text, useStyles2 } from '@grafana/ui';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { arrayLabelsToObject } from '../../../utils/labels';
-import { AlertLabels } from '../../AlertLabels';
 import { Spacer } from '../../Spacer';
 
 import { NotificationPolicyDrawer } from './NotificationPolicyDrawer';
