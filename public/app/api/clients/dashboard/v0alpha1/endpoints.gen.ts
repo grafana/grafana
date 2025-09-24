@@ -12,7 +12,11 @@ const injectedRtkApi = api
           params: {
             query: queryArg.query,
             folder: queryArg.folder,
+            facet: queryArg.facet,
+            tags: queryArg.tags,
             sort: queryArg.sort,
+            limit: queryArg.limit,
+            explain: queryArg.explain,
           },
         }),
         providesTags: ['Search'],
@@ -48,6 +52,14 @@ export type GetSearchApiArg = {
   query?: string;
   /** search/list within a folder (not recursive) */
   folder?: string;
+  /** count distinct terms for selected fields */
+  facet?: string[];
+  /** tag query filter */
+  tags?: string[];
   /** sortable field */
   sort?: string;
+  /** number of results to return */
+  limit?: number;
+  /** add debugging info that may help explain why the result matched */
+  explain?: boolean;
 };

@@ -96,6 +96,24 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "facet",
+										In:          "query",
+										Description: "count distinct terms for selected fields",
+										Required:    false,
+										Schema:      spec.ArrayProperty(spec.StringProperty()),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "tags",
+										In:          "query",
+										Description: "tag query filter",
+										Required:    false,
+										Schema:      spec.ArrayProperty(spec.StringProperty()),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "sort",
 										In:          "query",
 										Description: "sortable field",
@@ -122,6 +140,24 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										},
 										Required: false,
 										Schema:   spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "limit",
+										In:          "query",
+										Description: "number of results to return",
+										Required:    false,
+										Schema:      spec.Int64Property(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "explain",
+										In:          "query",
+										Description: "add debugging info that may help explain why the result matched",
+										Required:    false,
+										Schema:      spec.BoolProperty(),
 									},
 								},
 							},
