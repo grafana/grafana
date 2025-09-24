@@ -95,8 +95,8 @@ github.com/gopherjs/gopherjs v1.17.2 h1:fQnZVsXk8uxXIStYb0N4bGk7jeyTalG/wsZjQ25d
 github.com/gopherjs/gopherjs v1.17.2/go.mod h1:pRRIvn/QzFLrKfvEz3qUuEhtE/zLCWfreZ6J5gM2i+k=
 github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
 github.com/gorilla/mux v1.8.1/go.mod h1:AKf9I4AEqPTmMytcMc0KkNouC66V3BtZ4qD5fmWSiMQ=
-github.com/grafana/authlib v0.0.0-20250917093142-83a502239781 h1:sdI2P18j78expDtLB6YbVI5dV+HguV719iiQNqx3wqw=
-github.com/grafana/authlib v0.0.0-20250917093142-83a502239781/go.mod h1:C6CmTG6vfiqebjJswKsc6zes+1F/OtTCi6aAtL5Um6A=
+github.com/grafana/authlib v0.0.0-20250924100039-ea07223cdb6c h1:8GIMe1KclDdfogaeRsiU69Ev2zTF9kmjqjQqqZMzerc=
+github.com/grafana/authlib v0.0.0-20250924100039-ea07223cdb6c/go.mod h1:C6CmTG6vfiqebjJswKsc6zes+1F/OtTCi6aAtL5Um6A=
 github.com/grafana/authlib/types v0.0.0-20250917093142-83a502239781 h1:jymmOFIWnW26DeUjFgYEoltI170KeT5r1rI8a/dUf0E=
 github.com/grafana/authlib/types v0.0.0-20250917093142-83a502239781/go.mod h1:qeWYbnWzaYGl88JlL9+DsP1GT2Cudm58rLtx13fKZdw=
 github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4 h1:jSojuc7njleS3UOz223WDlXOinmuLAIPI0z2vtq8EgI=

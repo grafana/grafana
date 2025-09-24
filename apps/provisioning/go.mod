@@ -5,7 +5,7 @@ go 1.24.6
 require (
 	github.com/google/go-github/v70 v70.0.0
 	github.com/google/uuid v1.6.0
-	github.com/grafana/authlib v0.0.0-20250917093142-83a502239781
+	github.com/grafana/authlib v0.0.0-20250924100039-ea07223cdb6c
 	github.com/grafana/grafana-app-sdk/logging v0.45.0
 	github.com/grafana/grafana/apps/secret v0.0.0-20250902093454-b56b7add012f
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250804150913-990f1c69ecc2
