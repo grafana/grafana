@@ -52,7 +52,7 @@ func TestIntegrationStars(t *testing.T) {
 					},
 					"spec": map[string]any{
 						"title":         fmt.Sprintf("test %d", i),
-						"schemaVersion": 41, // not really!
+						"schemaVersion": 42, // not really!
 						"panels":        []any{},
 					},
 				},

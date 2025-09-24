@@ -1,420 +1,224 @@
-package schemaversion_test
+package schemaversion
 
 import (
+	"context"
 	"testing"
-
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 )
 
-func TestV33(t *testing.T) {
-	// Pass the mock provider to V33
-	migration := schemaversion.V33(testutil.GetTestDataSourceProvider())
-
-	tests := []migrationTestCase{
-		{
-			name: "dashboard with no panels",
-			input: map[string]interface{}{
-				"schemaVersion": 32,
+func TestV33DatasourceMigration(t *testing.T) {
+	// Create test datasource provider
+	dsProvider := &testDataSourceProvider{
+		datasources: []DataSourceInfo{
+			{
+				Default:    true,
+				UID:        "default-ds-uid",
+				Type:       "prometheus",
+				APIVersion: "v1",
+				Name:       "Default Test Datasource Name",
+				ID:         1,
 			},
-			expected: map[string]interface{}{
-				"schemaVersion": 33,
-			},
-		},
-		{
-			name: "panel with default datasource should return null",
-			input: map[string]interface{}{
-				"schemaVersion": 32,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"datasource": "default",
-						"targets": []interface{}{
-							map[string]interface{}{
-								"datasource": "default",
-							},
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"schemaVersion": 33,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"datasource": nil,
-						"targets": []interface{}{
-							map[string]interface{}{
-								"datasource": "default",
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "panel with null datasource should return null",
-			input: map[string]interface{}{
-				"schemaVersion": 32,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"datasource": nil,
-						"targets": []interface{}{
-							map[string]interface{}{
-								"datasource": nil,
-							},
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"schemaVersion": 33,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"datasource": nil,
-						"targets": []interface{}{
-							map[string]interface{}{
-								"datasource": nil,
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "panel with existing datasource reference should be preserved",
-			input: map[string]interface{}{
-				"schemaVersion": 32,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"datasource": map[string]interface{}{
-							"uid":  "existing-uid",
-							"type": "existing-type",
-						},
-						"targets": []interface{}{
-							map[string]interface{}{
-								"datasource": map[string]interface{}{
-									"uid":  "target-uid",
-									"type": "target-type",
-								},
-							},
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"schemaVersion": 33,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"datasource": map[string]interface{}{
-							"uid":  "existing-uid",
-							"type": "existing-type",
-						},
-						"targets": []interface{}{
-							map[string]interface{}{
-								"datasource": map[string]interface{}{
-									"uid":  "target-uid",
-									"type": "target-type",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "panel with datasource by name should be migrated",
-			input: map[string]interface{}{
-				"schemaVersion": 32,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"datasource": "Existing Target Name",
-						"targets": []interface{}{
-							map[string]interface{}{
-								"datasource": "Existing Target Name",
-							},
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"schemaVersion": 33,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"datasource": map[string]interface{}{
-							"type":       "elasticsearch",
-							"uid":        "existing-target-uid",
-							"apiVersion": "v2",
-						},
-						"targets": []interface{}{
-							map[string]interface{}{
-								"datasource": map[string]interface{}{
-									"type":       "elasticsearch",
-									"uid":        "existing-target-uid",
-									"apiVersion": "v2",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "panel with datasource by UID should be migrated",
-			input: map[string]interface{}{
-				"schemaVersion": 32,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"datasource": "existing-target-uid",
-						"targets": []interface{}{
-							map[string]interface{}{
-								"datasource": "existing-target-uid",
-							},
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"schemaVersion": 33,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"datasource": map[string]interface{}{
-							"type":       "elasticsearch",
-							"uid":        "existing-target-uid",
-							"apiVersion": "v2",
-						},
-						"targets": []interface{}{
-							map[string]interface{}{
-								"datasource": map[string]interface{}{
-									"type":       "elasticsearch",
-									"uid":        "existing-target-uid",
-									"apiVersion": "v2",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "panel with unknown datasource should preserve as UID",
-			input: map[string]interface{}{
-				"schemaVersion": 32,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"datasource": "unknown-datasource",
-						"targets": []interface{}{
-							map[string]interface{}{
-								"datasource": "unknown-datasource",
-							},
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"schemaVersion": 33,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"datasource": map[string]interface{}{
-							"uid": "unknown-datasource",
-						},
-						"targets": []interface{}{
-							map[string]interface{}{
-								"datasource": map[string]interface{}{
-									"uid": "unknown-datasource",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "panel with mixed datasources",
-			input: map[string]interface{}{
-				"schemaVersion": 32,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"datasource": "Existing Target Name",
-						"targets": []interface{}{
-							map[string]interface{}{
-								"datasource": "default",
-							},
-							map[string]interface{}{
-								"datasource": "existing-target-uid",
-							},
-							map[string]interface{}{
-								"datasource": "unknown-ds",
-							},
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"schemaVersion": 33,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"datasource": map[string]interface{}{
-							"type":       "elasticsearch",
-							"uid":        "existing-target-uid",
-							"apiVersion": "v2",
-						},
-						"targets": []interface{}{
-							map[string]interface{}{
-								"datasource": "default",
-							},
-							map[string]interface{}{
-								"datasource": map[string]interface{}{
-									"type":       "elasticsearch",
-									"uid":        "existing-target-uid",
-									"apiVersion": "v2",
-								},
-							},
-							map[string]interface{}{
-								"datasource": map[string]interface{}{
-									"uid": "unknown-ds",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "panel without targets should not fail",
-			input: map[string]interface{}{
-				"schemaVersion": 32,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"datasource": "Existing Target Name",
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"schemaVersion": 33,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"datasource": map[string]interface{}{
-							"type":       "elasticsearch",
-							"uid":        "existing-target-uid",
-							"apiVersion": "v2",
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "nested panels in collapsed rows should be migrated",
-			input: map[string]interface{}{
-				"schemaVersion": 32,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"type":       "row",
-						"collapsed":  true,
-						"datasource": "Existing Target Name",
-						"panels": []interface{}{
-							map[string]interface{}{
-								"datasource": "default",
-								"targets": []interface{}{
-									map[string]interface{}{
-										"datasource": "existing-target-uid",
-									},
-								},
-							},
-							map[string]interface{}{
-								"datasource": "unknown-ds",
-								"targets": []interface{}{
-									map[string]interface{}{
-										"datasource": "Existing Target Name",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"schemaVersion": 33,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"type":      "row",
-						"collapsed": true,
-						"datasource": map[string]interface{}{
-							"type":       "elasticsearch",
-							"uid":        "existing-target-uid",
-							"apiVersion": "v2",
-						},
-						"panels": []interface{}{
-							map[string]interface{}{
-								"datasource": nil,
-								"targets": []interface{}{
-									map[string]interface{}{
-										"datasource": map[string]interface{}{
-											"type":       "elasticsearch",
-											"uid":        "existing-target-uid",
-											"apiVersion": "v2",
-										},
-									},
-								},
-							},
-							map[string]interface{}{
-								"datasource": map[string]interface{}{
-									"uid": "unknown-ds",
-								},
-								"targets": []interface{}{
-									map[string]interface{}{
-										"datasource": map[string]interface{}{
-											"type":       "elasticsearch",
-											"uid":        "existing-target-uid",
-											"apiVersion": "v2",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-
-		{
-			name: "targets with lowercase default keyword should not be updated",
-			input: map[string]interface{}{
-				"schemaVersion": 32,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"datasource": "Existing Target Name",
-						"targets": []interface{}{
-							map[string]interface{}{
-								"datasource": "default",
-							},
-							map[string]interface{}{
-								"datasource": nil,
-							},
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"schemaVersion": 33,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"datasource": map[string]interface{}{
-							"type":       "elasticsearch",
-							"uid":        "existing-target-uid",
-							"apiVersion": "v2",
-						},
-						"targets": []interface{}{
-							map[string]interface{}{
-								"datasource": "default",
-							},
-							map[string]interface{}{
-								"datasource": nil,
-							},
-						},
-					},
-				},
+			{
+				Default:    false,
+				UID:        "non-default-test-ds-uid",
+				Type:       "loki",
+				APIVersion: "v1",
+				Name:       "Non Default Test Datasource Name",
+				ID:         2,
 			},
 		},
 	}
 
-	runMigrationTests(t, tests, migration)
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
+		{
+			name: "empty_string_datasource_should_become_empty_object",
+			input: map[string]interface{}{
+				"datasource": "",
+				"targets": []interface{}{
+					map[string]interface{}{
+						"refId":      "A",
+						"datasource": "",
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"datasource": map[string]interface{}{},
+				"targets": []interface{}{
+					map[string]interface{}{
+						"refId":      "A",
+						"datasource": map[string]interface{}{},
+					},
+				},
+			},
+			description: "Empty string datasources should migrate to empty objects {} to match frontend behavior",
+		},
+		{
+			name: "null_datasource_should_remain_null",
+			input: map[string]interface{}{
+				"datasource": nil,
+			},
+			expected: map[string]interface{}{
+				"datasource": nil,
+			},
+			description: "Null datasources should remain null when returnDefaultAsNull is true",
+		},
+		{
+			name: "existing_object_datasource_should_remain_unchanged",
+			input: map[string]interface{}{
+				"datasource": map[string]interface{}{
+					"uid":  "existing-ref-uid",
+					"type": "prometheus",
+				},
+			},
+			expected: map[string]interface{}{
+				"datasource": map[string]interface{}{
+					"uid":  "existing-ref-uid",
+					"type": "prometheus",
+				},
+			},
+			description: "Existing datasource objects should remain unchanged",
+		},
+		{
+			name: "string_datasource_should_migrate_to_object",
+			input: map[string]interface{}{
+				"datasource": "Non Default Test Datasource Name",
+			},
+			expected: map[string]interface{}{
+				"datasource": map[string]interface{}{
+					"uid":        "non-default-test-ds-uid",
+					"type":       "loki",
+					"apiVersion": "v1",
+				},
+			},
+			description: "String datasources should migrate to structured objects with uid, type, and apiVersion",
+		},
+		{
+			name: "default_datasource_should_become_null",
+			input: map[string]interface{}{
+				"datasource": "default",
+			},
+			expected: map[string]interface{}{
+				"datasource": nil,
+			},
+			description: "Default datasource should become null when returnDefaultAsNull is true",
+		},
+		{
+			name: "unknown_datasource_should_be_preserved_as_uid",
+			input: map[string]interface{}{
+				"datasource": "unknown-datasource",
+			},
+			expected: map[string]interface{}{
+				"datasource": map[string]interface{}{
+					"uid": "unknown-datasource",
+				},
+			},
+			description: "Unknown datasource names should be preserved as UID-only reference",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a dashboard with the test panel
+			dashboard := map[string]interface{}{
+				"schemaVersion": 32,
+				"panels": []interface{}{
+					tt.input,
+				},
+			}
+
+			// Run V33 migration
+			migration := V33(dsProvider)
+			err := migration(context.Background(), dashboard)
+			if err != nil {
+				t.Fatalf("V33 migration failed: %v", err)
+			}
+
+			// Verify schema version was updated
+			if dashboard["schemaVersion"] != 33 {
+				t.Errorf("Expected schemaVersion to be 33, got %v", dashboard["schemaVersion"])
+			}
+
+			// Get the migrated panel
+			panels, ok := dashboard["panels"].([]interface{})
+			if !ok || len(panels) == 0 {
+				t.Fatalf("Expected panels array with at least one panel")
+			}
+
+			panel, ok := panels[0].(map[string]interface{})
+			if !ok {
+				t.Fatalf("Expected panel to be a map")
+			}
+
+			// Verify panel datasource
+			if !compareDatasource(panel["datasource"], tt.expected["datasource"]) {
+				t.Errorf("Panel datasource mismatch.\nExpected: %v\nGot: %v", tt.expected["datasource"], panel["datasource"])
+			}
+
+			// Verify targets if they exist
+			if expectedTargets, hasTargets := tt.expected["targets"].([]interface{}); hasTargets {
+				actualTargets, ok := panel["targets"].([]interface{})
+				if !ok {
+					t.Fatalf("Expected targets array")
+				}
+
+				if len(actualTargets) != len(expectedTargets) {
+					t.Fatalf("Expected %d targets, got %d", len(expectedTargets), len(actualTargets))
+				}
+
+				for i, expectedTarget := range expectedTargets {
+					expectedTargetMap := expectedTarget.(map[string]interface{})
+					actualTargetMap := actualTargets[i].(map[string]interface{})
+
+					if !compareDatasource(actualTargetMap["datasource"], expectedTargetMap["datasource"]) {
+						t.Errorf("Target %d datasource mismatch.\nExpected: %v\nGot: %v", i, expectedTargetMap["datasource"], actualTargetMap["datasource"])
+					}
+				}
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+// Helper function to compare datasource objects
+func compareDatasource(actual, expected interface{}) bool {
+	if actual == nil && expected == nil {
+		return true
+	}
+	if actual == nil || expected == nil {
+		return false
+	}
+
+	actualMap, actualOk := actual.(map[string]interface{})
+	expectedMap, expectedOk := expected.(map[string]interface{})
+
+	if !actualOk || !expectedOk {
+		return actual == expected
+	}
+
+	if len(actualMap) != len(expectedMap) {
+		return false
+	}
+
+	for key, expectedValue := range expectedMap {
+		actualValue, exists := actualMap[key]
+		if !exists || actualValue != expectedValue {
+			return false
+		}
+	}
+
+	return true
+}
+
+// Test datasource provider for testing
+type testDataSourceProvider struct {
+	datasources []DataSourceInfo
+}
+
+func (p *testDataSourceProvider) GetDataSourceInfo(_ context.Context) []DataSourceInfo {
+	return p.datasources
 }
