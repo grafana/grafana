@@ -1,7 +1,7 @@
 import { CoreApp, LogRowModel } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-import { LogListModel } from '../panel/processing';
+import { LogListModel, NEWLINES_REGEX } from '../panel/processing';
 
 /**
  * The presence of this field along log fields determines OTel origin.
@@ -68,7 +68,7 @@ export function getDefaultOTelDisplayFormat() {
 }
 
 const OTEL_RESOURCE_ATTRS_REGEX =
-  /^(aws_|cloud_|cloudfoundry_|container_|deployment_|faas_|gcp_|host_|k8s_|os_|process_|service_|telemetry_)/;
+  /^(aws_|cloud_|cloudfoundry_|container_|deployment_|faas_|gcp_|host_|k8s_|os_|process_|service_|telemetry_|cluster$|namespace$|pod$)/;
 const OTEL_LOG_FIELDS_REGEX =
   /^(flags|observed_timestamp|severity_number|severity_text|span_id|trace_id|detected_level)$/;
 
