@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )
@@ -127,7 +128,7 @@ func (s *Service) processQuery(query backend.DataQuery) (string, *GraphiteQuery,
 	queryJSON := GraphiteQuery{}
 	err := json.Unmarshal(query.JSON, &queryJSON)
 	if err != nil {
-		return "", &queryJSON, false, fmt.Errorf("failed to decode the Graphite query: %w", err)
+		return "", &queryJSON, false, backend.PluginError(fmt.Errorf("failed to decode the Graphite query: %w", err))
 	}
 	s.logger.Debug("Graphite", "query", queryJSON)
 	currTarget := queryJSON.TargetFull
@@ -237,7 +238,7 @@ func (s *Service) toDataFrames(response *http.Response, refId string) (frames da
 func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, err
+		return nil, backend.DownstreamError(err)
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
@@ -246,18 +247,42 @@ func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error)
 	}()
 
 	if res.StatusCode/100 != 2 {
-		s.logger.Info("Request failed", "status", res.Status, "body", string(body))
-		return nil, fmt.Errorf("request failed, status: %s", res.Status)
+		graphiteError := parseGraphiteError(res.StatusCode, string(body))
+		s.logger.Info("Request failed", "status", res.Status, "error", graphiteError, "body", string(body))
+		return nil, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed with error: %s", graphiteError), false)
 	}
 
 	var data []TargetResponseDTO
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		s.logger.Info("Failed to unmarshal graphite response", "error", err, "status", res.Status, "body", string(body))
-		return nil, err
+		return nil, backend.DownstreamError(err)
 	}
 
 	return data, nil
+}
+
+/**
+ * Duplicated from the frontend.
+ * Graphite-web before v1.6 returns HTTP 500 with full stack traces in an HTML page
+ * when a query fails. It results in massive error alerts with HTML tags in the UI.
+ * This function removes all HTML tags and keeps only the last line from the stack
+ * trace which should be the most meaningful.
+ */
+func parseGraphiteError(status int, body string) (errorMsg string) {
+	errorMsg = body
+	if status == http.StatusInternalServerError {
+		if strings.HasPrefix(body, "<body") {
+			htmlRegex := regexp.MustCompile(`(<([^>]+)>)`)
+			unicodeRegex := regexp.MustCompile(`u?&#[^;]+;`)
+
+			errorMsg = htmlRegex.ReplaceAllString(body, "")
+			errorMsg = strings.TrimSpace(errorMsg)
+			errorMsgSplit := strings.Split(errorMsg, "\n")
+			errorMsg = unicodeRegex.ReplaceAllString(errorMsgSplit[len(errorMsgSplit)-1], "")
+		}
+	}
+	return errorMsg
 }
 
 func fixIntervalFormat(target string) string {
