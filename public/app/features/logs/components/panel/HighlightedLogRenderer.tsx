@@ -12,7 +12,7 @@ export const HighlightedLogRenderer = memo(({ tokens }: { tokens: Array<string |
 });
 HighlightedLogRenderer.displayName = 'HighlightedLogRenderer';
 
-const LogToken = ({ token }: { token: Token | string }) => {
+const LogToken = memo(({ token }: { token: Token | string }) => {
   if (typeof token === 'string') {
     return token;
   }
@@ -30,4 +30,5 @@ const LogToken = ({ token }: { token: Token | string }) => {
       {typeof token.content === 'string' ? token.content : <LogToken token={token.content} />}
     </span>
   );
-};
+});
+LogToken.displayName = 'LogToken';

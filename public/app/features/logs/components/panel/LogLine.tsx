@@ -20,6 +20,7 @@ import { Button, Icon, Tooltip } from '@grafana/ui';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogLabels } from '../LogLabels';
 import { LogMessageAnsi } from '../LogMessageAnsi';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
 import { HighlightedLogRenderer } from './HighlightedLogRenderer';
 import { InlineLogLineDetails } from './LogLineDetails';
@@ -386,10 +387,18 @@ const DisplayedFields = ({
     return searchWords;
   }, [log.searchWords, log.uid, matchingUids, search]);
 
-  return displayedFields.map((field) =>
-    field === LOG_LINE_BODY_FIELD_NAME ? (
-      <LogLineBody log={log} key={field} styles={styles} />
-    ) : (
+  return displayedFields.map((field) => {
+    if (field === LOG_LINE_BODY_FIELD_NAME) {
+      return <LogLineBody log={log} key={field} styles={styles} />;
+    }
+    if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME) {
+      return (
+        <span className="field log-syntax-highlight" title={getNormalizedFieldName(field)} key={field}>
+          <HighlightedLogRenderer tokens={log.highlightedLogAttributesTokens} />
+        </span>
+      );
+    }
+    return (
       <span className="field" title={getNormalizedFieldName(field)} key={field}>
         {searchWords ? (
           <Highlighter
@@ -402,8 +411,8 @@ const DisplayedFields = ({
           log.getDisplayedFieldValue(field)
         )}
       </span>
-    )
-  );
+    );
+  });
 };
 
 const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles }) => {
