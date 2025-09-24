@@ -1707,6 +1707,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardDataTransformerConfig(ref common
 							Format:      "",
 						},
 					},
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Unique identifier of the instance of the transformer",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"disabled": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Disabled transformations are skipped",
