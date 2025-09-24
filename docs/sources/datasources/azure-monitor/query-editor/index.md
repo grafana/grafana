@@ -36,8 +36,21 @@ refs:
 
 # Azure Monitor query editor
 
-This topic explains querying specific to the Azure Monitor data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
+Grafana provides a query editor for the  Azure Monitor data source, which is located on the [Explore page](ref:explore). You can also access the Azure Monitor query editor from a dashboard panel. Click the menu in the upper right of the panel and select **Edit**.
+
+This document explains querying specific to the Azure Monitor data source.
+For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data). For options and functions common to all query editors, refer to [Query editors](ref:query-transform-data).
+
+
+<!-- For more information on writing Transact-SQL statements, refer to [Write Transact-SQL statements](https://learn.microsoft.com/en-us/sql/t-sql/tutorial-writing-transact-sql-statements?view=sql-server-ver17) and [Transact-SQL reference](https://learn.microsoft.com/en-us/sql/t-sql/language-reference?view=sql-server-ver17) in the Microsoft SQL Server documentation. -->
+
+<!-- 
+The Microsoft SQL Server query editor has two modes: -->
+
+
+
+
+
 
 ## Choose a query editing mode
 
