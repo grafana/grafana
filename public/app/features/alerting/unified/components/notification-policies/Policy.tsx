@@ -5,7 +5,8 @@ import * as React from 'react';
 import { FC, Fragment, ReactNode, useState } from 'react';
 import { useToggle } from 'react-use';
 
-import { AlertLabel } from '@grafana/alerting/unstable';
+import { InheritableProperties } from '@grafana/alerting/internal';
+import { AlertLabel, getInheritedProperties } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
