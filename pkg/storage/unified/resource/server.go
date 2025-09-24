@@ -235,8 +235,7 @@ type ResourceServerOptions struct {
 	QOSQueue  QOSEnqueuer
 	QOSConfig QueueConfig
 
-	Ring           *ring.Ring
-	RingLifecycler *ring.BasicLifecycler
+	OwnsIndexFn func(key NamespacedResource) (bool, error)
 }
 
 func NewResourceServer(opts ResourceServerOptions) (*server, error) {
@@ -334,7 +333,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.Ring, opts.RingLifecycler)
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.OwnsIndexFn)
 		if err != nil {
 			return nil, err
 		}

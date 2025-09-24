@@ -8,13 +8,13 @@ import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/St
 import { Labels } from '../../../../../../types/unified-alerting-dto';
 import { AlertManagerDataSource } from '../../../utils/datasource';
 
-import { ExternalContactPointGroup } from './ContactPointGroup';
+import { GrafanaContactPointGroup } from './ContactPointGroup';
 import { InstanceMatch } from './NotificationRoute';
 import { useAlertmanagerNotificationRoutingPreview } from './useAlertmanagerNotificationRoutingPreview';
 
 const UNKNOWN_RECEIVER = 'unknown';
 
-function NotificationPreviewByAlertManager({
+function NotificationPreviewGrafanaManaged({
   alertManagerSource,
   instances,
 }: {
@@ -67,12 +67,7 @@ function NotificationPreviewByAlertManager({
     <Box display="flex" direction="column" gap={1} width="100%">
       <Stack direction="column" gap={0}>
         {Object.entries(contactPointGroups).map(([receiver, resultsForReceiver]) => (
-          <ExternalContactPointGroup
-            key={receiver}
-            name={receiver}
-            matchedInstancesCount={resultsForReceiver.length}
-            alertmanagerSourceName={alertManagerSource.name}
-          >
+          <GrafanaContactPointGroup key={receiver} name={receiver} matchedInstancesCount={resultsForReceiver.length}>
             <Stack direction="column" gap={0}>
               {resultsForReceiver.map(({ routeTree, matchDetails }) => (
                 <InstanceMatch
@@ -83,7 +78,7 @@ function NotificationPreviewByAlertManager({
                 />
               ))}
             </Stack>
-          </ExternalContactPointGroup>
+          </GrafanaContactPointGroup>
         ))}
       </Stack>
     </Box>
@@ -92,4 +87,4 @@ function NotificationPreviewByAlertManager({
 
 // export default because we want to load the component dynamically using React.lazy
 // Due to loading of the web worker we don't want to load this component when not necessary
-export default withErrorBoundary(NotificationPreviewByAlertManager);
+export default withErrorBoundary(NotificationPreviewGrafanaManaged);
