@@ -1227,7 +1227,7 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 		return descendantUIDs, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	_, err := s.Get(ctx, &folder.GetFolderQuery{
+	_, err := s.store.Get(ctx, folder.GetFolderQuery{
 		UID:          &cmd.UID,
 		OrgID:        cmd.OrgID,
 		SignedInUser: cmd.SignedInUser,
