@@ -80,7 +80,6 @@ Content-Type: application/json
         "time": 1507266395000,
         "timeEnd": 1507266395000,
         "text": "test",
-        "metric": "",
         "tags": [
             "tag1",
             "tag2"
@@ -99,7 +98,6 @@ Content-Type: application/json
         "prevState": "",
         "time": 1507265111000,
         "text": "test",
-        "metric": "",
         "tags": [
             "tag1",
             "tag2"
@@ -145,7 +143,6 @@ Content-Type: application/json
 
 {
   "dashboardUID":"jcIIG-07z",
-  "panelId":1,
   "time":1507037197339,
   "timeEnd":1507180805056,
   "tags":["tag1","tag2"],
