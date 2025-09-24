@@ -11637,6 +11637,7 @@
         "removed-from-repo-test-ui": "removed from repo test UI",
         "updated-from-repo-test-ui": "updated from repo test UI"
       },
+      "read-only-repo-tooltip": "This is a read-only repository",
       "repository": "Repository",
       "tab-info": {
         "label": {
@@ -11673,6 +11674,8 @@
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
+      "repository-error": "Repository error",
+      "repository-error-message": "Unable to check repository status. Please verify the repository configuration and try again.",
       "repository-unhealthy": "The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below.",
       "synchronization-description": "Include commits for each historical value",
       "synchronization-options": "Synchronization options"
