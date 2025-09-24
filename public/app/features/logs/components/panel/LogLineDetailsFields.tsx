@@ -12,7 +12,7 @@ import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
 import { LogLabelStats } from '../LogLabelStats';
 import { FieldDef } from '../logParser';
-import { LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
 import { useLogListContext } from './LogListContext';
 import { LogListModel, getNormalizedFieldName } from './processing';
@@ -259,7 +259,7 @@ export const LogLineDetailsField = ({
   const singleKey = keys.length === 1;
   const singleValue = values.length === 1;
 
-  const fieldSupportsFilters = keys[0] !== LOG_LINE_ATTRIBUTES_FIELD_NAME;
+  const fieldSupportsFilters = keys[0] !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME;
 
   return (
     <>

@@ -60,7 +60,7 @@ export function getDefaultOTelDisplayFormat() {
     'exception_type',
     'exception_message',
     LOG_LINE_BODY_FIELD_NAME,
-    LOG_LINE_ATTRIBUTES_FIELD_NAME,
+    OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME,
   ];
 }
 
@@ -69,7 +69,7 @@ const OTEL_RESOURCE_ATTRS_REGEX =
 const OTEL_LOG_FIELDS_REGEX =
   /^(flags|observed_timestamp|severity_number|severity_text|span_id|trace_id|detected_level)$/;
 
-export const LOG_LINE_ATTRIBUTES_FIELD_NAME = '___OTEL_LOG_ATTRIBUTES___';
+export const OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME = '___OTEL_LOG_ATTRIBUTES___';
 
 export function getOtelAttributesField(log: LogListModel) {
   if (!log.otelLanguage) {
@@ -79,7 +79,7 @@ export function getOtelAttributesField(log: LogListModel) {
     (label) =>
       !OTEL_RESOURCE_ATTRS_REGEX.test(label) &&
       !OTEL_LOG_FIELDS_REGEX.test(label) &&
-      label !== LOG_LINE_ATTRIBUTES_FIELD_NAME
+      label !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME
   );
   return additionalFields.map((field) => (log.labels[field] ? `${field}=${log.labels[field]}` : '')).join(' ');
 }

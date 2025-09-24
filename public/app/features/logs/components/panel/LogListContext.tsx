@@ -300,7 +300,6 @@ export const LogListContextProvider = ({
       return;
     }
     const otelDisplayedFields = getDisplayedFieldsForLogs(logs);
-    console.log(otelDisplayedFields);
     if (otelDisplayedFields.length) {
       setDisplayedFields(otelDisplayedFields);
     }

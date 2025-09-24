@@ -18,7 +18,7 @@ import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { checkLogsError, checkLogsSampled, escapeUnescapedString, sortLogRows } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { FieldDef, getAllFields } from '../logParser';
-import { identifyOTelLanguage, getOtelAttributesField, LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
+import { identifyOTelLanguage, getOtelAttributesField, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
 import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
 import { LogLineVirtualization } from './virtualization';
@@ -117,7 +117,7 @@ export class LogListModel implements LogRowModel {
     this.raw = raw;
 
     if (config.featureToggles.otelLogsFormatting) {
-      this.labels[LOG_LINE_ATTRIBUTES_FIELD_NAME] = getOtelAttributesField(this);
+      this.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME] = getOtelAttributesField(this);
     }
   }
 
@@ -344,7 +344,7 @@ export function getLevelsFromLogs(logs: LogListModel[]) {
 export function getNormalizedFieldName(field: string) {
   if (field === LOG_LINE_BODY_FIELD_NAME) {
     return t('logs.log-line-details.log-line-field', 'Log line');
-  } else if (field === LOG_LINE_ATTRIBUTES_FIELD_NAME) {
+  } else if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME) {
     return t('logs.log-line-details.log-attributes-field', 'Log attributes');
   }
   return field;
