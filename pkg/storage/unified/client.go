@@ -147,7 +147,7 @@ func newClient(opts options.StorageOptions,
 		}
 
 		// Create a client instance
-		client, err := resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
+		client, err := resource.NewResourceClient(conn, indexConn, cfg, tracer)
 		if err != nil {
 			return nil, err
 		}

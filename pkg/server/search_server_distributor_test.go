@@ -282,7 +282,8 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	require.NoError(t, err)
-	client := resource.NewAuthlessResourceClient(conn)
+	client, err := resource.NewResourceClient(conn, conn, cfg, tracing.InitializeTracerForTest())
+	require.NoError(t, err)
 
 	server := initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
 

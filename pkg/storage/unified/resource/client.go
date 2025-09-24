@@ -25,7 +25,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	authnGrpcUtils "github.com/grafana/grafana/pkg/services/authn/grpcutils"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -50,7 +49,7 @@ type resourceClient struct {
 	resourcepb.DiagnosticsClient
 }
 
-func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (ResourceClient, error) {
+func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cfg, tracer trace.Tracer) (ResourceClient, error) {
 	clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
 
 	return NewRemoteResourceClient(tracer, conn, indexConn, RemoteResourceClientConfig{
