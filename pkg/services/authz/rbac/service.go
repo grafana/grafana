@@ -640,6 +640,8 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 func (s *Service) getScopeMap(permissions []accesscontrol.Permission) map[string]bool {
 	permMap := make(map[string]bool, len(permissions))
 	for _, perm := range permissions {
+		// We've had cases where the scope wasn't split properly,
+		// failing wildcard checks, this is a recovery mechanism.
 		if perm.Kind == "" && perm.Scope != "" {
 			s.logger.Warn("found unsplit permission scope", "scope", perm.Scope)
 			perm.Kind, perm.Attribute, perm.Identifier = accesscontrol.SplitScope(perm.Scope)
