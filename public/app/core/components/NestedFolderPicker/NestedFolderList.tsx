@@ -172,7 +172,6 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
       </span>
     ) : null;
   }
-  console.log('item', item);
 
   return (
     // don't need a key handler here, it's handled at the input level in NestedFolderPicker
@@ -214,11 +213,11 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
           <span className={styles.folderButtonSpacer} />
         )}
 
-        <FolderParent item={items[index]} />
         <label className={styles.label} id={labelId}>
           <Text truncate>{item.title}</Text>
           <FolderRepo folder={item} />
         </label>
+        <FolderParent item={items[index]} />
       </div>
     </div>
   );
@@ -285,7 +284,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       gap: theme.spacing(1),
       lineHeight: ROW_HEIGHT + 'px',
-      flexGrow: 1,
       minWidth: 0,
       overflow: 'hidden',
       textOverflow: 'ellipsis',
