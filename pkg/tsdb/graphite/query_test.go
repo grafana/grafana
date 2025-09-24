@@ -117,13 +117,14 @@ func TestProcessQuery(t *testing.T) {
 
 	t.Run("QueryData happy path with service provider and plugin context", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			_, _ = w.Write([]byte(`[
+			_, err := w.Write([]byte(`[
 				{
 					"target": "target A",
 					"tags": { "fooTag": "fooValue", "barTag": "barValue", "int": 100, "float": 3.14 },
 					"datapoints": [[50, 1], [null, 2], [100, 3]]
 				}	
 			]`))
+			require.NoError(t, err)
 		}))
 		t.Cleanup(server.Close)
 
@@ -578,7 +579,8 @@ Error: Target not found
 				}
 
 				w.WriteHeader(tt.serverStatus)
-				w.Write([]byte(response))
+				_, err = w.Write([]byte(response))
+				require.NoError(t, err)
 			}))
 			defer server.Close()
 
