@@ -226,23 +226,28 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			expectError error
 		}{
 			{
-				name:        "first repo with path 'demo' should succeed",
-				path:        "demo",
+				name:        "first repo with path 'demo/nested' should succeed",
+				path:        "demo/nested",
 				expectError: nil,
 			},
 			{
-				name:        "second repo with child path 'demo/nested' should fail",
-				path:        "demo/nested",
+				name:        "second repo with child path 'demo/nested/again' should fail",
+				path:        "demo/nested/again",
 				expectError: provisioningAPIServer.ErrRepositoryParentFolderConflict,
 			},
 			{
-				name:        "third repo with nested child path 'demo/nested/nested-second' should fail",
-				path:        "demo/nested/nested-second",
-				expectError: provisioningAPIServer.ErrRepositoryParentFolderConflict,
-			},
-			{
-				name:        "fourth repo with duplicate path 'demo' should fail",
+				name:        "third repo with parent path 'demo' should fail",
 				path:        "demo",
+				expectError: provisioningAPIServer.ErrRepositoryParentFolderConflict,
+			},
+			{
+				name:        "fourth repo with nested child path 'demo/nested/nested-second' should fail",
+				path:        "demo/nested/again/two",
+				expectError: provisioningAPIServer.ErrRepositoryParentFolderConflict,
+			},
+			{
+				name:        "fifth repo with duplicate path 'demo/nested' should fail",
+				path:        "demo/nested",
 				expectError: provisioningAPIServer.ErrRepositoryDuplicatePath,
 			},
 		}
