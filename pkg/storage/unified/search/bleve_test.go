@@ -845,6 +845,12 @@ func withMaxFileIndexAge(maxAge time.Duration) setupOption {
 	}
 }
 
+func withOwnsIndexFn(fn func(key resource.NamespacedResource) (bool, error)) setupOption {
+	return func(options *BleveOptions) {
+		options.OwnsIndex = fn
+	}
+}
+
 func TestBuildIndexExpiration(t *testing.T) {
 	ns := resource.NamespacedResource{
 		Namespace: "test",
@@ -852,46 +858,90 @@ func TestBuildIndexExpiration(t *testing.T) {
 		Resource:  "resource",
 	}
 
-	t.Run("memory based indexes should expire", func(t *testing.T) {
-		backend, reg := setupBleveBackend(t, withIndexCacheTTL(time.Nanosecond))
+	type testCase struct {
+		inMemory         bool
+		owned            bool
+		ownedCheckError  error
+		expectedEviction bool
+	}
 
-		builtIndex, err := backend.BuildIndex(context.Background(), ns, 1 /* below FileThreshold */, nil, "test", indexTestDocs(ns, 1, 100), nil, false)
-		require.NoError(t, err)
+	cacheTTL := time.Millisecond
 
-		// Wait for index expiration, which is 1ns
-		time.Sleep(10 * time.Millisecond)
-		idx, err := backend.GetIndex(context.Background(), ns)
-		require.NoError(t, err)
-		require.Nil(t, idx)
+	for name, tc := range map[string]testCase{
+		"memory index should expire, if owned": {
+			inMemory:         true,
+			owned:            true,
+			expectedEviction: true,
+		},
+		"memory index should expire, if not owned": {
+			inMemory:         true,
+			owned:            false,
+			expectedEviction: true,
+		},
+		"memory index should expire, if ownership check fails": {
+			inMemory:         true,
+			ownedCheckError:  errors.New("error"),
+			expectedEviction: true,
+		},
+		"file index should NOT expire, if owned": {
+			inMemory:         false,
+			owned:            true,
+			expectedEviction: false,
+		},
+		"file index should expire, if not owned": {
+			inMemory:         false,
+			owned:            false,
+			expectedEviction: true,
+		},
+		"file index should NOT expire, if ownership check fails": {
+			inMemory:         false,
+			ownedCheckError:  errors.New("error"),
+			expectedEviction: false,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			backend, reg := setupBleveBackend(t, withIndexCacheTTL(cacheTTL), withOwnsIndexFn(func(key resource.NamespacedResource) (bool, error) {
+				return tc.owned, tc.ownedCheckError
+			}))
 
-		// Verify that builtIndex is now closed.
-		_, err = builtIndex.DocCount(context.Background(), "")
-		require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+			size := int64(1)
+			if !tc.inMemory {
+				size = 100 // above defaultFileTreshold
+			}
+			builtIndex, err := backend.BuildIndex(context.Background(), ns, size, nil, "test", indexTestDocs(ns, 1, 100), nil, false)
+			require.NoError(t, err)
 
-		// Verify that there are no open indexes.
-		checkOpenIndexes(t, reg, 0, 0)
-	})
+			// Evict indexes.
+			backend.runEvictExpiredOrUnownedIndexes(time.Now().Add(5 * time.Minute))
 
-	t.Run("file based indexes should NOT expire", func(t *testing.T) {
-		backend, reg := setupBleveBackend(t, withIndexCacheTTL(time.Nanosecond))
+			if tc.expectedEviction {
+				idx, err := backend.GetIndex(context.Background(), ns)
+				require.NoError(t, err)
+				require.Nil(t, idx)
 
-		// size=100 is above FileThreshold, this will be file-based index
-		builtIndex, err := backend.BuildIndex(context.Background(), ns, 100, nil, "test", indexTestDocs(ns, 1, 100), nil, false)
-		require.NoError(t, err)
+				_, err = builtIndex.DocCount(context.Background(), "")
+				require.ErrorIs(t, err, bleve.ErrorIndexClosed)
 
-		// Wait for index expiration, which is 1ns
-		time.Sleep(10 * time.Millisecond)
-		idx, err := backend.GetIndex(context.Background(), ns)
-		require.NoError(t, err)
-		require.NotNil(t, idx)
+				// Verify that there are no open indexes.
+				checkOpenIndexes(t, reg, 0, 0)
+			} else {
+				idx, err := backend.GetIndex(context.Background(), ns)
+				require.NoError(t, err)
+				require.NotNil(t, idx)
 
-		// Verify that builtIndex is still open.
-		cnt, err := builtIndex.DocCount(context.Background(), "")
-		require.NoError(t, err)
-		require.Equal(t, int64(1), cnt)
+				cnt, err := builtIndex.DocCount(context.Background(), "")
+				require.NoError(t, err)
+				require.Equal(t, int64(1), cnt)
 
-		checkOpenIndexes(t, reg, 0, 1)
-	})
+				// Verify that index is still open
+				if tc.inMemory {
+					checkOpenIndexes(t, reg, 1, 0)
+				} else {
+					checkOpenIndexes(t, reg, 0, 1)
+				}
+			}
+		})
+	}
 }
 
 func TestCloseAllIndexes(t *testing.T) {
