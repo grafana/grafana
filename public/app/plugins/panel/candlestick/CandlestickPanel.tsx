@@ -24,6 +24,7 @@ import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { ExemplarsPlugin } from '../timeseries/plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
+import { getAnnotationFrames } from '../timeseries/plugins/utils';
 
 import { prepareCandlestickFields } from './fields';
 import { Options, defaultCandlestickColors, VizDisplayMode } from './types';
@@ -266,6 +267,7 @@ export const CandlestickPanel = ({
       replaceVariables={replaceVariables}
       dataLinkPostProcessor={dataLinkPostProcessor}
       cursorSync={cursorSync}
+      annotationLanes={getAnnotationFrames(data.annotations).length}
     >
       {(uplotConfig, alignedFrame) => {
         return (

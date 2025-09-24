@@ -93,6 +93,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   mergeValues,
   getValueColor,
   hoverMulti,
+  xAxis,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -176,6 +177,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     placement: AxisPlacement.Bottom,
     timeZone: timeZones[0],
     theme,
+    ...xAxis,
   });
 
   const yCustomConfig = frame.fields[1].config.custom;

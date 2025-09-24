@@ -6,7 +6,7 @@ import { hasVisibleLegendSeries, PlotLegend, UPlotConfigBuilder } from '@grafana
 
 import { GraphNG, GraphNGProps, PropDiffFn } from '../GraphNG/GraphNG';
 
-import { preparePlotConfigBuilder } from './utils';
+import { calculateAnnotationLaneSizes, preparePlotConfigBuilder } from './utils';
 
 const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'theme'];
 
@@ -32,7 +32,9 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
       tweakAxis,
       hoverProximity: options?.tooltip?.hoverProximity,
       orientation: options?.orientation,
-      annotationLanes,
+      xAxis: {
+        ...calculateAnnotationLaneSizes(annotationLanes),
+      },
     });
   };
 

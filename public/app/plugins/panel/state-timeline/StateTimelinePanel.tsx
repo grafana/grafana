@@ -20,6 +20,7 @@ import {
 
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
+import { getAnnotationFrames } from '../timeseries/plugins/utils';
 import { getTimezones } from '../timeseries/utils';
 
 import { StateTimelineTooltip2 } from './StateTimelineTooltip2';
@@ -94,6 +95,7 @@ export const StateTimelinePanel = ({
         replaceVariables={replaceVariables}
         dataLinkPostProcessor={dataLinkPostProcessor}
         cursorSync={cursorSync}
+        annotationLanes={getAnnotationFrames(data.annotations).length}
       >
         {(builder, alignedFrame) => {
           return (

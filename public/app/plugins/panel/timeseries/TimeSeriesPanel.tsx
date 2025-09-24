@@ -119,8 +119,6 @@ export const TimeSeriesPanel = ({
     );
   }
 
-  const annotationLanes = getAnnotationFrames(data.annotations ?? []).length;
-
   return (
     <TimeSeries
       frames={frames}
@@ -134,7 +132,7 @@ export const TimeSeriesPanel = ({
       replaceVariables={replaceVariables}
       dataLinkPostProcessor={dataLinkPostProcessor}
       cursorSync={cursorSync}
-      annotationLanes={annotationLanes}
+      annotationLanes={getAnnotationFrames(data.annotations).length}
     >
       {(uplotConfig, alignedFrame) => {
         console.log('time series config (re)loaded', data.annotations?.length, data.annotations);

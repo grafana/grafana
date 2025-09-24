@@ -5,6 +5,7 @@ import { VisibilityMode, TimelineValueAlignment, TooltipDisplayMode, VizTooltipO
 import { UPlotConfigBuilder, VizLayout, VizLegend, VizLegendItem } from '@grafana/ui';
 
 import { GraphNG, GraphNGProps } from '../GraphNG/GraphNG';
+import { calculateAnnotationLaneSizes } from '../TimeSeries/utils';
 
 import { preparePlotConfigBuilder, TimelineMode } from './utils';
 
@@ -54,6 +55,7 @@ export class TimelineChart extends Component<TimelineProps> {
       getValueColor: this.getValueColor,
 
       hoverMulti: this.props.tooltip?.mode === TooltipDisplayMode.Multi,
+      xAxis: calculateAnnotationLaneSizes(this.props.annotationLanes),
     });
   };
 

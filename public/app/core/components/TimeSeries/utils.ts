@@ -68,12 +68,14 @@ import {
   buildScaleKey,
   getStackingGroups,
   preparePlotData2,
+  AxisProps,
 } from '@grafana/ui/internal';
 
 import { ANNOTATION_LANE_SIZE } from '../../../plugins/panel/timeseries/plugins/utils';
 
-// See https://github.com/leeoniya/uPlot/blob/master/src/opts.js#L552 for default uplot values
-const UPLOT_DEFAULT_AXIS_SIZE = 50;
+// See UPlotAxisBuilder.ts::calculateAxisSize for default axis size calculation
+const UPLOT_DEFAULT_AXIS_SIZE = 17;
+const UPLOT_DEFAULT_AXIS_GAP = 5;
 
 const defaultFormatter = (v: any, decimals: DecimalCount = 1) => (v == null ? '-' : v.toFixed(decimals));
 
@@ -95,9 +97,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
   tweakAxis = (opts) => opts,
   hoverProximity,
   orientation = VizOrientation.Horizontal,
-  annotationLanes,
+  xAxis,
 }) => {
-  console.log('preparePlotConfigBuilder', annotationLanes);
   // we want the Auto and Horizontal orientation to default to Horizontal
   const isHorizontal = orientation !== VizOrientation.Vertical;
   const builder = new UPlotConfigBuilder(timeZones[0]);
@@ -151,24 +152,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
           }
         : undefined;
 
-    const annotationLanesSize = (annotationLanes ?? 0) * ANNOTATION_LANE_SIZE;
-    const size = UPLOT_DEFAULT_AXIS_SIZE + annotationLanesSize;
-    // Add a bit of space below the last annotation lane to show the grid-lines
-    const gapSize = annotationLanesSize + ANNOTATION_LANE_SIZE;
-
     for (let i = 0; i < timeZones.length; i++) {
       const timeZone = timeZones[i];
-      // tick length to match the gap length?
-      // want gridlines showing below lowest lane a few px
 
       builder.addAxis({
-        // HERE update axis size
-        ticks: {
-          size: gapSize,
-        },
-        gap: gapSize,
-        size,
-        // size is everything
         scaleKey: xScaleKey,
         isTime: true,
         placement: xFieldAxisPlacement,
@@ -178,6 +165,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
         theme,
         grid: { show: i === 0 && xField.config.custom?.axisGridShow },
         filter: filterTicks,
+        ...xAxis,
       });
     }
 
@@ -727,4 +715,22 @@ function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<str
     }
   });
   return originNames;
+}
+
+export function calculateAnnotationLaneSizes(annotationLanes = 0): Pick<AxisProps, 'size' | 'gap' | 'ticks'> {
+  const annotationLanesSize = annotationLanes * ANNOTATION_LANE_SIZE;
+  // Add an extra lane's worth of height below the annotation lanes in order to show the gridlines through the annotation lanes
+  const axisSize = annotationLanes > 0 ? annotationLanesSize + UPLOT_DEFAULT_AXIS_GAP : 0;
+  // Consistent gap between gridlines and x-axis labels
+  const gap = UPLOT_DEFAULT_AXIS_GAP;
+  // Axis size is: default size + gap size + annotationLaneSize
+  const size = annotationLanes > 0 ? UPLOT_DEFAULT_AXIS_SIZE + gap + annotationLanesSize : UPLOT_DEFAULT_AXIS_SIZE;
+
+  return {
+    size,
+    gap,
+    ticks: {
+      size: axisSize,
+    },
+  };
 }

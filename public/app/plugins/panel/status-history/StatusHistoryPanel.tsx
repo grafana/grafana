@@ -23,6 +23,7 @@ import { StateTimelineTooltip2 } from '../state-timeline/StateTimelineTooltip2';
 import { containerStyles, usePagination } from '../state-timeline/utils';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
+import { getAnnotationFrames } from '../timeseries/plugins/utils';
 import { getTimezones } from '../timeseries/utils';
 
 import { Options } from './panelcfg.gen';
@@ -107,6 +108,7 @@ export const StatusHistoryPanel = ({
         replaceVariables={replaceVariables}
         dataLinkPostProcessor={dataLinkPostProcessor}
         cursorSync={cursorSync}
+        annotationLanes={getAnnotationFrames(data.annotations).length}
       >
         {(builder, alignedFrame) => {
           return (
