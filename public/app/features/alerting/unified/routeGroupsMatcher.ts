@@ -1,4 +1,9 @@
-import { InstanceMatchResult, RouteMatch, matchAlertInstancesToPolicyTree } from '@grafana/alerting/unstable';
+import {
+  InstanceMatchResult,
+  RouteMatch,
+  USER_DEFINED_TREE_NAME,
+  matchInstancesToRoute,
+} from '@grafana/alerting/unstable';
 
 import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../types/unified-alerting-dto';
@@ -34,30 +39,30 @@ export const routeGroupsMatcher = {
   matchInstancesToRoutes(routeTree: RouteWithID, instances: Labels[], options?: MatchOptions): InstanceMatchResult[] {
     const normalizedRouteTree = getNormalizedRoute(routeTree, options);
 
-    return instances.map<InstanceMatchResult>((instance) => {
-      const labels = Object.entries(instance);
-      // Collect all matched routes from all trees
-      const allMatchedRoutes: RouteMatch[] = [];
+    // Convert all instances to labels format and match them all at once
+    const allLabels = instances.map((instance) => Object.entries(instance));
 
-      // Match this single instance against the route tree
-      // Convert the RouteWithID to the alerting package format to ensure compatibility
-      const convertedRoute = routeAdapter.toPackage(normalizedRouteTree);
-      const { expandedTree, matchedPolicies } = matchAlertInstancesToPolicyTree([labels], convertedRoute);
+    // Convert the RouteWithID to the alerting package format to ensure compatibility
+    const convertedRoute = routeAdapter.toPackage(normalizedRouteTree);
+    const { expandedTree, matchedPolicies } = matchInstancesToRoute(convertedRoute, allLabels);
 
-      // Process each matched route from the tree
-      matchedPolicies.forEach((results, route) => {
-        // For each match result, create a RouteMatch object
-        results.forEach((matchDetails) => {
-          allMatchedRoutes.push({
+    // Group results by instance
+    return instances.map<InstanceMatchResult>((instance, index) => {
+      const labels = allLabels[index];
+
+      // Collect matches for this specific instance
+      const allMatchedRoutes = Array.from(matchedPolicies.entries()).flatMap(([route, results]) =>
+        results
+          .filter((matchDetails) => matchDetails.labels === labels)
+          .map((matchDetails) => ({
             route,
             routeTree: {
               metadata: { name: 'user-defined' },
               expandedSpec: expandedTree,
             },
             matchDetails,
-          });
-        });
-      });
+          }))
+      );
 
       return {
         labels,

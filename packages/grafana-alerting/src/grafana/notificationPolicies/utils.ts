@@ -150,6 +150,7 @@ export function addUniqueIdentifier(route: Route): RouteWithID {
   };
 }
 
+// all policies that were matched of a single tree
 export type TreeMatch = {
   /* we'll include the entire expanded policy tree for diagnostics */
   expandedTree: RouteWithID;
@@ -166,13 +167,13 @@ export type TreeMatch = {
  * @param instances - A set of labels for which you want to determine the matching policies
  * @param routingTree - A notification policy tree (or subtree)
  */
-export function matchAlertInstancesToPolicyTree(instances: Label[][], routingTree: Route): TreeMatch {
+export function matchInstancesToRoute(rootRoute: Route, instances: Label[][]): TreeMatch {
   // initially empty map of matches policies
   const matchedPolicies = new Map();
 
   // compute the entire expanded tree for matching routes and diagnostics
   // this will include inherited properties from parent nodes
-  const expandedTree = addUniqueIdentifier(computeInheritedTree(routingTree));
+  const expandedTree = addUniqueIdentifier(computeInheritedTree(rootRoute));
 
   // let's first find all matching routes for the provided instances
   const matchesArray = instances.flatMap((labels) => findMatchingRoutes(expandedTree, labels));

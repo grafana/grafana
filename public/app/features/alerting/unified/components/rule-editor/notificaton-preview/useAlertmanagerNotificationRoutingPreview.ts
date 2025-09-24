@@ -16,6 +16,7 @@ export const useAlertmanagerNotificationRoutingPreview = (alertmanager: string, 
     error: policiesError,
   } = useNotificationPolicyRoute({ alertmanager });
 
+  // this function will use a web worker to compute matching routes
   const { matchInstancesToRoutes } = useRouteGroupsMatcher();
 
   const [defaultPolicy] = currentData ?? [];

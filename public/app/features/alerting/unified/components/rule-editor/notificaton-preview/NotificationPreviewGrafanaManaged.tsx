@@ -1,6 +1,5 @@
 import { groupBy } from 'lodash';
 
-import { useMatchAlertInstancesToNotificationPolicies } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
 import { Alert, Box, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
@@ -11,6 +10,7 @@ import { AlertManagerDataSource } from '../../../utils/datasource';
 
 import { GrafanaContactPointGroup } from './ContactPointGroup';
 import { InstanceMatch } from './NotificationRoute';
+import { useAlertmanagerNotificationRoutingPreview } from './useAlertmanagerNotificationRoutingPreview';
 
 const UNKNOWN_RECEIVER = 'unknown';
 
@@ -21,7 +21,10 @@ function NotificationPreviewGrafanaManaged({
   alertManagerSource: AlertManagerDataSource;
   instances: Labels[];
 }) {
-  const { matchInstancesToPolicies, isLoading, error } = useMatchAlertInstancesToNotificationPolicies();
+  const { treeMatchingResults, isLoading, error } = useAlertmanagerNotificationRoutingPreview(
+    alertManagerSource.name,
+    instances
+  );
 
   if (error) {
     const title = t('alerting.notification-preview.error', 'Could not load routing preview for {{alertmanager}}', {
@@ -45,7 +48,6 @@ function NotificationPreviewGrafanaManaged({
     );
   }
 
-  const treeMatchingResults = matchInstancesToPolicies(instances.map((instance) => Object.entries(instance)));
   const matchingPoliciesFound = treeMatchingResults.some((result) => result.matchedRoutes.length > 0);
 
   // Group results by receiver name

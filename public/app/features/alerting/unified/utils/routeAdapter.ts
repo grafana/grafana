@@ -3,7 +3,12 @@ import {
   RouteWithID as AlertingRouteWithID,
   type LabelMatcher,
 } from '@grafana/alerting/unstable';
-import { MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import {
+  MatcherOperator,
+  type ObjectMatcher,
+  type Route,
+  type RouteWithID,
+} from 'app/plugins/datasource/alertmanager/types';
 
 import { convertObjectMatcherToAlertingPackageMatcher, matcherToObjectMatcher, parseMatcherToArray } from './matchers';
 
