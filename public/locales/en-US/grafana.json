@@ -1919,9 +1919,6 @@
       "title-remove": "Remove",
       "tooltip-remove-time-range": "Remove time range"
     },
-    "namespace": {
-      "title-alert-rules": "Alert rules"
-    },
     "namespace-and-group-filter": {
       "select-group": "Select group",
       "select-namespace": "Select namespace"
@@ -11330,6 +11327,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Set up required feature toggles"
       },
+      "learn-more-documentation": "Want to learn more? See our <2>documentation</2>.",
       "manage-dashboards-provision-updates-automatically": "Manage dashboards as code in Git and provision updates automatically",
       "manage-your-dashboards-with-remote-provisioning": "Get started with Git Sync",
       "store-dashboards-in-version-controlled-storage": "Store dashboards in version-controlled storage for better organization and history tracking"

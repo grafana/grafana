@@ -1913,9 +1913,6 @@
       "title-remove": "Hapus",
       "tooltip-remove-time-range": "Hapus rentang waktu"
     },
-    "namespace": {
-      "title-alert-rules": "Aturan peringatan"
-    },
     "namespace-and-group-filter": {
       "select-group": "Pilih grup",
       "select-namespace": "Pilih namespace"
@@ -2033,7 +2030,9 @@
       "recipient-notification-fires": "Pilih siapa yang akan menerima pemberitahuan saat aturan peringatan menyala."
     },
     "option-customfield": {
-      "label-custom-template": "Templat kustom"
+      "label-custom-template": "Templat kustom",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Alertmanager yang dipilih tidak ada lagi atau Anda mungkin tidak memiliki izin untuk mengaksesnya. Anda dapat memilih Alertmanager lain dari menu dropdown.",
@@ -5329,7 +5328,6 @@
             "json": "Ekspor sebagai JSON"
           }
         },
-        "mark-favorite": "Tandai sebagai favorit",
         "more-save-options": "Opsi simpan lainnya",
         "playlist-next": "Buka dasbor berikutnya",
         "playlist-previous": "Buka dasbor sebelumnya",
@@ -5358,8 +5356,7 @@
             "yesText": "Simpan"
           }
         },
-        "unlink-library-panel": "Putus tautan panel pustaka",
-        "unmark-favorite": "Batal tandai sebagai favorit"
+        "unlink-library-panel": "Putus tautan panel pustaka"
       },
       "open-original": "Buka dasbor asli",
       "playlist-next": "Buka dasbor berikutnya",
@@ -5380,6 +5377,10 @@
       "save-library-panel": "Simpan panel pustaka",
       "settings": "Pengaturan dasbor",
       "share-button": "Bagikan",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Putuskan tautan panel pustaka",
       "unmark-favorite": "Batal tanda sebagai favorit"
     },
