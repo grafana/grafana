@@ -14,6 +14,7 @@ describe('matchInstancesToRouteTrees', () => {
     const treeName = 'test-tree';
     const trees: RoutingTree[] = [
       {
+        kind: 'RoutingTree',
         metadata: { name: treeName },
         spec: {
           defaults: {
@@ -47,6 +48,7 @@ describe('matchInstancesToRouteTrees', () => {
     const treeName = 'test-tree';
     const trees: RoutingTree[] = [
       {
+        kind: 'RoutingTree',
         metadata: { name: treeName },
         spec: {
           defaults: {
