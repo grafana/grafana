@@ -10651,6 +10651,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "No dashboard groups configured",
+      "mark-as-starred": "Mark \"{{title}}\" as favorite",
+      "recently-viewed-dashboards": "Recently viewed dashboards",
+      "search": "Search",
+      "starred-dashboards": "Starred dashboards",
+      "unmark-as-starred": "Unmark \"{{title}}\" as favorite"
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11327,6 +11335,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Set up required feature toggles"
       },
+      "learn-more-documentation": "Want to learn more? See our <2>documentation</2>.",
       "manage-dashboards-provision-updates-automatically": "Manage dashboards as code in Git and provision updates automatically",
       "manage-your-dashboards-with-remote-provisioning": "Get started with Git Sync",
       "store-dashboards-in-version-controlled-storage": "Store dashboards in version-controlled storage for better organization and history tracking"

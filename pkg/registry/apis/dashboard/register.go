@@ -73,6 +73,18 @@ const (
 	dashboardSpecRefreshInterval = "refresh"
 )
 
+type simpleFolderClientProvider struct {
+	handler client.K8sHandler
+}
+
+func newSimpleFolderClientProvider(handler client.K8sHandler) client.K8sHandlerProvider {
+	return &simpleFolderClientProvider{handler: handler}
+}
+
+func (p *simpleFolderClientProvider) GetOrCreateHandler(namespace string) client.K8sHandler {
+	return p.handler
+}
+
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
 	dashboardService dashboards.DashboardService
@@ -93,10 +105,7 @@ type DashboardsAPIBuilder struct {
 	ProvisioningService          provisioning.ProvisioningService
 	cfg                          *setting.Cfg
 	dualWriter                   dualwrite.Service
-
-	// only one of the two is required to be set, folderClientProvider is used when isStandalone is true
-	folderClient         client.K8sHandler
-	folderClientProvider client.K8sHandlerProvider
+	folderClientProvider         client.K8sHandlerProvider
 
 	log          log.Logger
 	reg          prometheus.Registerer
@@ -151,7 +160,7 @@ func RegisterAPIService(
 		ProvisioningService:          provisioning,
 		cfg:                          cfg,
 		dualWriter:                   dual,
-		folderClient:                 folderClient,
+		folderClientProvider:         newSimpleFolderClientProvider(folderClient),
 
 		legacy: &DashboardStorage{
 			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
@@ -422,18 +431,12 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 
 // validateFolderExists checks if a folder exists
 func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderUID string, orgID int64) error {
-	// Check if folder exists using the folder store
-	var folderClient client.K8sHandler
-	if b.isStandalone {
-		ns, err := request.NamespaceInfoFrom(ctx, false)
-		if err != nil {
-			return err
-		}
-		folderClient = b.folderClientProvider.GetOrCreateHandler(ns.Value)
-	} else {
-		folderClient = b.folderClient
+	ns, err := request.NamespaceInfoFrom(ctx, false)
+	if err != nil {
+		return err
 	}
-	_, err := folderClient.Get(ctx, folderUID, orgID, metav1.GetOptions{})
+	folderClient := b.folderClientProvider.GetOrCreateHandler(ns.Value)
+	_, err = folderClient.Get(ctx, folderUID, orgID, metav1.GetOptions{})
 	// Check if the error is a context deadline exceeded error
 	if err != nil {
 		// historically, we returned a more verbose error with folder name when its not found, below just keeps that behavior
@@ -675,8 +678,14 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderIds ...string) error {
+	ns, err := request.NamespaceInfoFrom(ctx, false)
+	if err != nil {
+		return err
+	}
+	folderClient := b.folderClientProvider.GetOrCreateHandler(ns.Value)
+
 	for _, folderId := range folderIds {
-		resp, err := b.folderClient.Get(ctx, folderId, user.GetOrgID(), metav1.GetOptions{}, "access")
+		resp, err := folderClient.Get(ctx, folderId, ns.OrgID, metav1.GetOptions{}, "access")
 		if err != nil {
 			return dashboards.ErrFolderAccessDenied
 		}
