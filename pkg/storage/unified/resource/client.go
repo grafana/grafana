@@ -19,15 +19,13 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
-	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
-
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	authnGrpcUtils "github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/setting"
+	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
