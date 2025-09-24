@@ -641,7 +641,7 @@ func (s *Service) getScopeMap(permissions []accesscontrol.Permission) map[string
 	permMap := make(map[string]bool, len(permissions))
 	for _, perm := range permissions {
 		if perm.Kind == "" && perm.Scope != "" {
-			s.logger.Warn("permission scope is set, but kind is empty, splitting scope", "scope", perm.Scope)
+			s.logger.Warn("found unsplit permission scope", "scope", perm.Scope)
 			perm.Kind, perm.Attribute, perm.Identifier = accesscontrol.SplitScope(perm.Scope)
 		}
 		// If has any wildcard, return immediately
