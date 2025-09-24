@@ -21,6 +21,9 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { dispatch } from 'app/store/store';
 import { PluginDashboard } from 'app/types/plugins';
 import { useDispatch, useSelector } from 'app/types/store';
+import templateDashboard1 from 'img/template-dashboards/template_dashboard_1.png';
+import templateDashboard2 from 'img/template-dashboards/template_dashboard_2.jpeg';
+import templateDashboard3 from 'img/template-dashboards/template_dashboard_3.png';
 
 import { setInitialDatasource } from '../state/reducers';
 
@@ -94,7 +97,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               </Button>
             </Stack>
           </Box>
-          <ProvisionedDashboardsSection />
+          <TemplateDashboardsSection />
           <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
             <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
               <Stack direction="column" alignItems="center" gap={1}>
@@ -158,7 +161,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
 
 export default DashboardEmpty;
 
-const ProvisionedDashboardsSection = () => {
+const TemplateDashboardsSection = () => {
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
 
   const { value: provisionedDashboards, loading: isProvisionedLoading } = useAsync(async (): Promise<
@@ -205,7 +208,7 @@ const ProvisionedDashboardsSection = () => {
         ) : (
           <Stack gap={2} justifyContent="space-between">
             {provisionedDashboards?.map((dashboard, index) => (
-              <ProvisionedDashboardBox
+              <TemplateDashboardBox
                 key={dashboard.uid}
                 index={index}
                 dashboard={dashboard}
@@ -219,7 +222,7 @@ const ProvisionedDashboardsSection = () => {
   );
 };
 
-const ProvisionedDashboardBox = ({
+const TemplateDashboardBox = ({
   dashboard,
   onImportClick,
   index,
@@ -228,18 +231,19 @@ const ProvisionedDashboardBox = ({
   onImportClick: (d: PluginDashboard) => void;
   index: number;
 }) => {
+  const templateDashboardImages = [templateDashboard1, templateDashboard2, templateDashboard3];
+
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.provisionedDashboardBox}>
       <img
         src={
-          index % 2 === 0
-            ? 'https://grafana.com/api/dashboards/11350/images/7248/image'
-            : 'https://grafana.com/api/dashboards/10991/images/7003/image'
+          index <= 2 ? templateDashboardImages[index] : templateDashboardImages[index % templateDashboardImages.length]
         }
         width={190}
         height={160}
         alt={dashboard.title}
+        className={styles.templateDashboardImage}
       />
       <Divider spacing={0} />
       <div className={styles.privisionedDashboardSection}>
@@ -281,6 +285,9 @@ function getStyles(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.default,
       flexDirection: 'column',
       gap: theme.spacing(1),
+    }),
+    templateDashboardImage: css({
+      objectFit: 'cover',
     }),
   };
 }
