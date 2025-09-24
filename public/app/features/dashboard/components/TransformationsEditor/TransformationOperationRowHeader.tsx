@@ -79,7 +79,10 @@ export const TransformationOperationRowHeader = (props: Props) => {
       {!isRefIdEditing && (
         <button
           className={styles.refIdWrapper}
-          title={t('query.query-editor-row-header.query-name-div-title-edit-query-name', 'Edit transformation name')}
+          title={t(
+            'dashboard.transformation-operation-row.transformation-editor-row-header.edit-refId',
+            'Edit transformation name'
+          )}
           onClick={() => toggleIsRefIdEditing()}
           data-testid="query-name-div"
           type="button"
