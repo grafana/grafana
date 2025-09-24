@@ -330,7 +330,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					}
 					return authorizer.DecisionDeny, "admin role is required", nil
 
-				case "refs":
+				case "refs", "status":
 					// This is strictly a read operation. It is handy on the frontend for viewers.
 					if id.GetOrgRole().Includes(identity.RoleViewer) {
 						return authorizer.DecisionAllow, "", nil
@@ -340,7 +340,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					// Access to files is controlled by the AccessClient
 					return authorizer.DecisionAllow, "", nil
 
-				case "resources", "sync", "history", "status":
+				case "resources", "sync", "history":
 					// These are strictly read operations.
 					// Sync can also be somewhat destructive, but it's expected to be fine to import changes.
 					if id.GetOrgRole().Includes(identity.RoleEditor) {
