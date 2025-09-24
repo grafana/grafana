@@ -282,11 +282,14 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     return alertingRule?.labels?.['severity'] === 'no_data' && alertingRule?.state === PromAlertingRuleState.Firing;
   });
 
+  // Check if there are any firing alerts with severity labels
+  const hasFiringAlerts = criticalRules.length > 0 || warnRules.length > 0 || noDataRules.length > 0;
+
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
-      {firingRules.length > 0 || normalRules.length > 0 ? (
+      {hasFiringAlerts || normalRules.length > 0 ? (
         <div className={styles.alertCountContainer}>
-          {firingRules.length > 0 && (
+          {hasFiringAlerts && (
             <div className={styles.firingAlertCountContainer}>
               <div className={styles.firingAlertCountTitle}>Firing</div>
               <div className={styles.firingAlertCountItems}>
