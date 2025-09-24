@@ -431,7 +431,8 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 					"Name":        test.name,
 					"URL":         test.input,
 					"SyncTarget":  "folder",
-					"SyncEnabled": false, // Disable sync since we're just testing URL cleanup
+					"SyncEnabled": false, // Disable sync since we're just testing URL cleanup,
+					"Path":        fmt.Sprintf("grafana-%s/", test.name),
 				})
 
 				_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
