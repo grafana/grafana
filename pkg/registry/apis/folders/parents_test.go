@@ -148,6 +148,13 @@ func TestParents(t *testing.T) {
 							},
 						}, nil).Maybe() // we don't care how often they are called
 				}
+				p := len(tt.expected.Items)
+				m.On("Get", context.TODO(), tt.expected.Items[p-1].Parent, &metav1.GetOptions{}).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: tt.expected.Items[p-1].Parent,
+						},
+					}, nil).Maybe() // we don't care how often they are called
 			} else {
 				for k, v := range tt.getter {
 					v.Name = k // set the name

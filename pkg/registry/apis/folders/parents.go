@@ -72,7 +72,9 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 				break
 			}
 
-			if len(info.Items) >= maxDepth {
+			// if we exceed max depth, return an error
+			// info.Items does not include the general folder, so we do not add +1 here
+			if len(info.Items) > maxDepth {
 				err = folderLegacy.ErrMaximumDepthReached
 				break
 			}
