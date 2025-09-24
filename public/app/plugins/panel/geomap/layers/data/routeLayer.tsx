@@ -110,12 +110,8 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     vectorLayer.setStyle((feature: FeatureLike) => {
       const styleBase = routeStyle(style.base);
       if (style.config.size && style.config.size.fixed) {
-<<<<<<< HEAD
-        styleBase.getStroke().setWidth(style.config.size.fixed);
-=======
         // Applies width to base style if specified
         styleBase.getStroke()?.setWidth(style.config.size.fixed);
->>>>>>> upstream/main
       }
 
       if (config.useUniqueColors && config.groupBy) {
@@ -336,40 +332,12 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
             style.dims = getStyleDimension(frame, style, theme);
           }
 
-<<<<<<< HEAD
           if (config.groupBy) {
             source.updateLineStringGrouped(frame, config.groupBy);
           } else {
             source.updateLineString(frame);
           }
           break;
-=======
-          source.clear(true);
-          const info = getGeometryField(frame, location);
-          if (!info.field) {
-            source.changed();
-            break;
-          }
-          const coords: number[][] = [];
-          for (const v of info.field.values) {
-            if (v instanceof Point) {
-              coords.push(v.getCoordinates());
-            }
-          }
-          if (coords.length >= 2) {
-            const geometry = new LineString(coords);
-            source['addFeatureInternal'](
-              new Feature({
-                frame,
-                rowIndex: 0,
-                geometry,
-              })
-            );
-          }
-          source.changed();
-
-          break; // Only the first frame for now!
->>>>>>> upstream/main
         }
       },
 
