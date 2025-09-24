@@ -15,7 +15,7 @@ export interface Radii {
   default: string;
   /**
    * Use for most things (inputs, buttons, cards, panels, etc)
-   * Same as `default`
+   * Same as `md`
    */
   md: string;
   /**
