@@ -277,18 +277,14 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 	cfg.SearchRingReplicationFactor = 1
 	cfg.Target = []string{modules.SearchServerDistributor}
 	cfg.InstanceID = "distributor" // does nothing for the distributor but may be useful to debug tests
-	cfg.Env = setting.Dev          // allows insecure
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	require.NoError(t, err)
-	client, err := resource.NewResourceClient(conn, conn, cfg, tracing.InitializeTracerForTest())
-	require.NoError(t, err)
 
 	server := initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
-
-	server.resourceClient = client
+	server.resourceClient = resource.NewAuthlessResourceClient(conn)
 
 	return server
 }
