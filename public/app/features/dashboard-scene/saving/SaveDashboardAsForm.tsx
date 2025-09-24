@@ -90,7 +90,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     return (
       <SaveButton
         isValid={showSaveButton && !isTitleValidating}
-        isLoading={state.loading || isTitleValidating}
+        isLoading={state.loading}
         onSave={onSave}
         overwrite={overwrite}
       />
