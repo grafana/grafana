@@ -355,7 +355,11 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					} else {
 						return authorizer.DecisionDeny, "editor role is required", nil
 					}
-
+				case "status":
+					if id.GetOrgRole().Includes(identity.RoleViewer) && a.GetVerb() == apiutils.VerbGet {
+						return authorizer.DecisionAllow, "", nil
+					}
+					return authorizer.DecisionDeny, "users cannot update the status of a repository", nil
 				default:
 					if id.GetIsGrafanaAdmin() {
 						return authorizer.DecisionAllow, "", nil
