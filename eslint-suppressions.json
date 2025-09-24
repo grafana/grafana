@@ -4418,11 +4418,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/annolist/AnnoListPanel.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/annolist/AnnotationListItem.tsx": {
     "no-restricted-syntax": {
       "count": 1
