@@ -31,10 +31,10 @@ func toLegacyItem(ctx context.Context, q *v0alpha1.Annotation) (*annotations.Ite
 		UserID: userId,
 		Text:   q.Spec.Text,
 		Tags:   q.Spec.Tags,
-		Epoch:  q.Spec.Epoch,
+		Epoch:  q.Spec.Time,
 	}
-	if q.Spec.EpochEnd != nil {
-		item.EpochEnd = *q.Spec.EpochEnd
+	if q.Spec.TimeEnd != nil {
+		item.EpochEnd = *q.Spec.TimeEnd
 	}
 	if q.Spec.Dashboard != nil {
 		item.DashboardUID = q.Spec.Dashboard.Name
@@ -84,15 +84,15 @@ func toAnnotation(dto *annotations.ItemDTO) (v0alpha1.Annotation, error) {
 			Name: fmt.Sprintf("a%d", dto.ID),
 		},
 		Spec: v0alpha1.AnnotationSpec{
-			Text:  dto.Text,
-			Epoch: dto.Time,
-			Tags:  dto.Tags,
+			Text: dto.Text,
+			Time: dto.Time,
+			Tags: dto.Tags,
 		},
 	}
 
 	// The DB sets both time and timeEnd to the same value for region annotations.
 	if dto.TimeEnd > 0 && dto.TimeEnd != dto.Time {
-		anno.Spec.EpochEnd = ptr.To(dto.TimeEnd)
+		anno.Spec.TimeEnd = ptr.To(dto.TimeEnd)
 	}
 
 	meta, err := utils.MetaAccessor(&anno)
@@ -186,11 +186,11 @@ func toDataFrame(result *v0alpha1.AnnotationList) (*data.Frame, error) {
 
 	for i, item := range result.Items {
 		id.Set(i, item.Name)
-		if item.Spec.Epoch > 0 {
-			timeStart.Set(i, time.UnixMilli(item.Spec.Epoch))
+		if item.Spec.Time > 0 {
+			timeStart.Set(i, time.UnixMilli(item.Spec.Time))
 		}
-		if item.Spec.EpochEnd != nil && *item.Spec.EpochEnd > 0 {
-			timeEnd.SetConcrete(i, time.UnixMilli(*item.Spec.EpochEnd))
+		if item.Spec.TimeEnd != nil && *item.Spec.TimeEnd > 0 {
+			timeEnd.SetConcrete(i, time.UnixMilli(*item.Spec.TimeEnd))
 			hasRegion = true
 		}
 		if item.Spec.Text != "" {

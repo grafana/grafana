@@ -89,9 +89,10 @@ func schema_pkg_apis_annotations_v0alpha1_AnnotationAlert(ref common.ReferenceCa
 					},
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "The alert k8s name (grafana UID)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"prevState": {
@@ -137,9 +138,10 @@ func schema_pkg_apis_annotations_v0alpha1_AnnotationDashboard(ref common.Referen
 				Properties: map[string]spec.Schema{
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "The dashboard k8s name (grafana UID)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"panel": {
@@ -232,7 +234,7 @@ func schema_pkg_apis_annotations_v0alpha1_AnnotationSpec(ref common.ReferenceCal
 							},
 						},
 					},
-					"epoch": {
+					"time": {
 						SchemaProps: spec.SchemaProps{
 							Description: "milliseconds to draw the annotation",
 							Default:     0,
@@ -240,7 +242,7 @@ func schema_pkg_apis_annotations_v0alpha1_AnnotationSpec(ref common.ReferenceCal
 							Format:      "int64",
 						},
 					},
-					"epochEnd": {
+					"timeEnd": {
 						SchemaProps: spec.SchemaProps{
 							Description: "when the annotation is a range, this is the right side",
 							Type:        []string{"integer"},
@@ -249,7 +251,8 @@ func schema_pkg_apis_annotations_v0alpha1_AnnotationSpec(ref common.ReferenceCal
 					},
 					"dashboard": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1.AnnotationDashboard"),
+							Description: "Display the annotation on a specific dashboard + panel",
+							Ref:         ref("github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1.AnnotationDashboard"),
 						},
 					},
 					"alert": {
@@ -259,7 +262,7 @@ func schema_pkg_apis_annotations_v0alpha1_AnnotationSpec(ref common.ReferenceCal
 						},
 					},
 				},
-				Required: []string{"text", "epoch"},
+				Required: []string{"text", "time"},
 			},
 		},
 		Dependencies: []string{

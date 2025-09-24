@@ -4,6 +4,7 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type AnnotationDashboard struct {
+	// The dashboard k8s name (grafana UID)
 	Name  string `json:"name"`
 	Panel *int64 `json:"panel,omitempty"`
 }
@@ -15,11 +16,13 @@ func NewAnnotationDashboard() *AnnotationDashboard {
 
 // +k8s:openapi-gen=true
 type AnnotationAlert struct {
-	Id        *int64                 `json:"id,omitempty"`
-	Name      string                 `json:"name"`
-	PrevState string                 `json:"prevState"`
-	NewState  string                 `json:"newState"`
-	Data      map[string]interface{} `json:"data"`
+	Id *int64 `json:"id,omitempty"`
+	// The alert k8s name (grafana UID)
+	Name      string `json:"name"`
+	PrevState string `json:"prevState"`
+	NewState  string `json:"newState"`
+	// TODO? is there a more specific model
+	Data map[string]interface{} `json:"data"`
 }
 
 // NewAnnotationAlert creates a new AnnotationAlert object.
@@ -36,9 +39,10 @@ type AnnotationSpec struct {
 	// Query tags
 	Tags []string `json:"tags,omitempty"`
 	// milliseconds to draw the annotation
-	Epoch int64 `json:"epoch"`
+	Time int64 `json:"time"`
 	// when the annotation is a range, this is the right side
-	EpochEnd  *int64               `json:"epochEnd,omitempty"`
+	TimeEnd *int64 `json:"timeEnd,omitempty"`
+	// Display the annotation on a specific dashboard + panel
 	Dashboard *AnnotationDashboard `json:"dashboard,omitempty"`
 	// The source alert data
 	Alert *AnnotationAlert `json:"alert,omitempty"`

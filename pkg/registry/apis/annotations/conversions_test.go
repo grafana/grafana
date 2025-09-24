@@ -41,10 +41,10 @@ func TestConvertToLegacyItem(t *testing.T) {
 			user: userOrg25,
 			input: &v0alpha1.Annotation{
 				Spec: v0alpha1.AnnotationSpec{
-					Text:     "hello world",
-					Tags:     []string{"tag1", "tag2"},
-					Epoch:    1234,
-					EpochEnd: ptr.To(int64(5678)),
+					Text:    "hello world",
+					Tags:    []string{"tag1", "tag2"},
+					Time:    1234,
+					TimeEnd: ptr.To(int64(5678)),
 					Dashboard: &v0alpha1.AnnotationDashboard{
 						Name:  "dash",
 						Panel: ptr.To[int64](3),
@@ -195,10 +195,10 @@ func TestToAnnotations(t *testing.T) {
 							},
 						},
 						Spec: v0alpha1.AnnotationSpec{
-							Text:     "hello",
-							Epoch:    1234,
-							EpochEnd: ptr.To(int64(5678)),
-							Tags:     []string{"tag1", "tag2"},
+							Text:    "hello",
+							Time:    1234,
+							TimeEnd: ptr.To(int64(5678)),
+							Tags:    []string{"tag1", "tag2"},
 							Dashboard: &v0alpha1.AnnotationDashboard{
 								Name:  "dash-uid",
 								Panel: ptr.To[int64](3),

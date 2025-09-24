@@ -3,7 +3,6 @@ package kinds
 annotations: {
   kind:    "Annotation"
   pluralName:  "Annotations"
-  validation: operations: ["CREATE"] // must have title or text
   schema: {
     spec: {
       // Display text (supports markdown)
@@ -13,11 +12,12 @@ annotations: {
       tags?: [...string]
 
       // milliseconds to draw the annotation
-			epoch: int64	
+			time: int64	
 
       // when the annotation is a range, this is the right side
-			epochEnd?: int64	
+			timeEnd?: int64	
 
+      // Display the annotation on a specific dashboard + panel
       dashboard?: #Dashboard
 
 			// The source alert data
@@ -25,16 +25,16 @@ annotations: {
     }
 
 		#Dashboard: {
-			name: string
+			name: string // The dashboard k8s name (grafana UID)
 			panel?: int64  
 		}
 
 		#Alert: {
 			id?: int64
-			name: string
+			name: string // The alert k8s name (grafana UID)
 			prevState: string  
 			newState: string  
-			data: [string]: _ 
+			data: [string]: _  // TODO? is there a more specific model
 		}
   }
 }
