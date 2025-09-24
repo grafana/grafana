@@ -301,6 +301,14 @@ func (s *legacySQLStore) DeleteTeam(ctx context.Context, ns claims.NamespaceInfo
 	}
 
 	return sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		_, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{
+			OrgID: ns.OrgID,
+			UID:   cmd.UID,
+		})
+		if err != nil {
+			return err
+		}
+
 		teamDeleteReq := newDeleteTeam(sql, &cmd)
 		if err := teamDeleteReq.Validate(); err != nil {
 			return err
@@ -311,18 +319,9 @@ func (s *legacySQLStore) DeleteTeam(ctx context.Context, ns claims.NamespaceInfo
 			return fmt.Errorf("error executing team delete template: %w", err)
 		}
 
-		result, err := st.Exec(ctx, teamDeleteQuery, teamDeleteReq.GetArgs()...)
+		_, err = st.Exec(ctx, teamDeleteQuery, teamDeleteReq.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("failed to delete team: %w", err)
-		}
-
-		affectedRows, err := result.RowsAffected()
-		if err != nil {
-			return fmt.Errorf("failed to get rows affected: %w", err)
-		}
-
-		if affectedRows == 0 {
-			return fmt.Errorf("team not found")
 		}
 
 		return nil
