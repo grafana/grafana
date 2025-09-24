@@ -1086,6 +1086,25 @@ func TestService_Check(t *testing.T) {
 			},
 			expected: true,
 		},
+		{
+			// We've had cases where permissions were saved to the database
+			// without splitting the scope into 'kind', 'attribute', and 'identifier'.
+			// Our wildcard check depends on this separation to work correctly.
+			// This test makes sure we can still handle those unsplit permissions.
+			name: "should split wildcard scope if needed",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "iam.grafana.app",
+				Resource:  "teams",
+				Verb:      "get",
+				Name:      "t1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "teams:read", Scope: "teams:*"},
+			},
+			expected: true,
+		},
 	}
 	t.Run("User permission check", func(t *testing.T) {
 		for _, tc := range testCases {
