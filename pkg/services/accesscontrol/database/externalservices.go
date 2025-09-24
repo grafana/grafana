@@ -146,17 +146,35 @@ func getRolePermissions(ctx context.Context, sess *db.Session, id int64) ([]acce
 }
 
 func permissionDiff(previous, new []accesscontrol.Permission) (added, removed []accesscontrol.Permission) {
-	type key struct{ Action, Scope string }
+	type key struct{ Action, Scope, Kind, Attribute, Identifier string }
 	prevMap := map[key]int64{}
 	for i := range previous {
-		prevMap[key{previous[i].Action, previous[i].Scope}] = previous[i].ID
+		prevMap[key{
+			previous[i].Action,
+			previous[i].Scope,
+			previous[i].Kind,
+			previous[i].Attribute,
+			previous[i].Identifier,
+		}] = previous[i].ID
 	}
 	newMap := map[key]int64{}
 	for i := range new {
-		newMap[key{new[i].Action, new[i].Scope}] = 0
+		newMap[key{
+			new[i].Action,
+			new[i].Scope,
+			new[i].Kind,
+			new[i].Attribute,
+			new[i].Identifier,
+		}] = 0
 	}
 	for i := range new {
-		key := key{new[i].Action, new[i].Scope}
+		key := key{
+			new[i].Action,
+			new[i].Scope,
+			new[i].Kind,
+			new[i].Attribute,
+			new[i].Identifier,
+		}
 		if _, already := prevMap[key]; !already {
 			added = append(added, new[i])
 		} else {
@@ -204,16 +222,6 @@ func (*AccessControlStore) savePermissions(ctx context.Context, sess *db.Session
 		return err
 	}
 	added, removed := permissionDiff(storedPermissions, permissions)
-	if len(added) > 0 {
-		for i := range added {
-			added[i].RoleID = roleID
-			added[i].Created = now
-			added[i].Updated = now
-		}
-		if _, err := sess.Insert(&added); err != nil {
-			return err
-		}
-	}
 	if len(removed) > 0 {
 		ids := make([]int64, len(removed))
 		for i := range removed {
@@ -225,6 +233,16 @@ func (*AccessControlStore) savePermissions(ctx context.Context, sess *db.Session
 		}
 		if count != int64(len(removed)) {
 			return errors.New("failed to delete permissions that have been removed from role")
+		}
+	}
+	if len(added) > 0 {
+		for i := range added {
+			added[i].RoleID = roleID
+			added[i].Created = now
+			added[i].Updated = now
+		}
+		if _, err := sess.Insert(&added); err != nil {
+			return err
 		}
 	}
 	return nil
