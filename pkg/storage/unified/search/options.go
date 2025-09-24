@@ -49,6 +49,7 @@ func NewSearchOptions(
 			MaxFileIndexAge: cfg.MaxFileIndexAge,
 			MinBuildVersion: minVersion,
 			UseFullNgram:    features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageUseFullNgram),
+			OwnsIndex:       ownsIndexFn,
 		}, tracer, indexMetrics)
 
 		if err != nil {

@@ -104,6 +104,7 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, search)
+	t.Cleanup(search.Stop)
 
 	// Create a new resource backend
 	storage := newTestBackend(t, false, 0)

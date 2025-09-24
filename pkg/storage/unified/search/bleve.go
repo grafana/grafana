@@ -81,6 +81,11 @@ type BleveOptions struct {
 	Logger *slog.Logger
 
 	UseFullNgram bool
+
+	// This function is called to check whether the index is owned by the current instance.
+	// Indexes that are not owned by current instance are eligible for cleanup.
+	// If nil, all indexes are owned by the current instance.
+	OwnsIndex func(key resource.NamespacedResource) (bool, error)
 }
 
 type bleveBackend struct {
@@ -99,8 +104,8 @@ type bleveBackend struct {
 	// if true will use ngram instead of edge_ngram for title indexes. See custom_analyzers.go
 	useFullNgram bool
 
-	metricsUpdaterCancel func()
-	metricsUpdaterWg     sync.WaitGroup
+	bgTasksCancel func()
+	bgTasksWg     sync.WaitGroup
 }
 
 func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
@@ -150,13 +155,15 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 		useFullNgram: opts.UseFullNgram,
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	be.bgTasksCancel = cancel
+
+	be.bgTasksWg.Add(1)
+	go be.evictExpiredOrUnownedIndexesPeriodically(ctx)
+
 	if be.indexMetrics != nil {
-		ctx, cancel := context.WithCancel(context.Background())
-		be.metricsUpdaterCancel = cancel
-		be.metricsUpdaterWg.Add(1)
+		be.bgTasksWg.Add(1)
 		go be.updateIndexSizeMetric(ctx, opts.Root)
-	} else {
-		be.metricsUpdaterCancel = func() { /* empty */ }
 	}
 
 	return be, nil
@@ -260,7 +267,7 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 
 // updateIndexSizeMetric sets the total size of all file-based indices metric.
 func (b *bleveBackend) updateIndexSizeMetric(ctx context.Context, indexPath string) {
-	defer b.metricsUpdaterWg.Done()
+	defer b.bgTasksWg.Done()
 
 	for ctx.Err() == nil {
 		var totalSize int64
@@ -712,8 +719,8 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, minBuildTi
 func (b *bleveBackend) Stop() {
 	b.closeAllIndexes()
 
-	b.metricsUpdaterCancel()
-	b.metricsUpdaterWg.Wait()
+	b.bgTasksCancel()
+	b.bgTasksWg.Wait()
 }
 
 func (b *bleveBackend) closeAllIndexes() {
