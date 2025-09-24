@@ -75,6 +75,35 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	return nil
 }
 
+// shouldIncludeInvestigations checks if the investigations feature should be included for the assistant app
+// see https://github.com/grafana/grafana-assistant-app/issues/2007 for more details
+func (s *ServiceImpl) shouldIncludeInvestigations(plugin pluginstore.Plugin, include *plugins.Includes, c *contextmodel.ReqContext) bool {
+	if plugin.ID != "grafana-assistant-app" || include.Name != "Investigations" {
+		return true
+	}
+
+	ps, err := s.pluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
+		PluginID: plugin.ID,
+		OrgID:    c.GetOrgID(),
+	})
+	if err != nil {
+		return false
+	}
+
+	loopData, exists := ps.JSONData["loop"]
+	if !exists {
+		return false
+	}
+
+	loopConfig, ok := loopData.(map[string]any)
+	if !ok {
+		return false
+	}
+
+	enabled, ok := loopConfig["enabled"].(bool)
+	return ok && enabled
+}
+
 func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
 	appLink := &navtree.NavLink{
@@ -90,6 +119,10 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 
 	for _, include := range plugin.Includes {
 		if !hasAccessToInclude(include) {
+			continue
+		}
+
+		if !s.shouldIncludeInvestigations(plugin, include, c) {
 			continue
 		}
 

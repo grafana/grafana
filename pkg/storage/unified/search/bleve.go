@@ -77,6 +77,8 @@ type BleveOptions struct {
 	MinBuildVersion *semver.Version // Minimum build version for reusing file-based indexes. Ignored if nil.
 
 	Logger *slog.Logger
+
+	UseFullNgram bool
 }
 
 type bleveBackend struct {
@@ -88,6 +90,12 @@ type bleveBackend struct {
 	cache   map[resource.NamespacedResource]*bleveIndex
 
 	indexMetrics *resource.BleveIndexMetrics
+
+	// if true will use ngram instead of edge_ngram for title indexes. See custom_analyzers.go
+	useFullNgram bool
+
+	metricsUpdaterCancel func()
+	metricsUpdaterWg     sync.WaitGroup
 }
 
 func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
@@ -127,9 +135,17 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 		cache:        map[resource.NamespacedResource]*bleveIndex{},
 		opts:         opts,
 		indexMetrics: indexMetrics,
+		useFullNgram: opts.UseFullNgram,
 	}
 
-	go be.updateIndexSizeMetric(opts.Root)
+	if be.indexMetrics != nil {
+		ctx, cancel := context.WithCancel(context.Background())
+		be.metricsUpdaterCancel = cancel
+		be.metricsUpdaterWg.Add(1)
+		go be.updateIndexSizeMetric(ctx, opts.Root)
+	} else {
+		be.metricsUpdaterCancel = func() { /* empty */ }
+	}
 
 	return be, nil
 }
@@ -184,16 +200,17 @@ func (b *bleveBackend) getCachedIndex(key resource.NamespacedResource) *bleveInd
 }
 
 // updateIndexSizeMetric sets the total size of all file-based indices metric.
-func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
-	if b.indexMetrics == nil {
-		return
-	}
+func (b *bleveBackend) updateIndexSizeMetric(ctx context.Context, indexPath string) {
+	defer b.metricsUpdaterWg.Done()
 
-	for {
+	for ctx.Err() == nil {
 		var totalSize int64
 
 		err := filepath.WalkDir(indexPath, func(path string, info os.DirEntry, err error) error {
 			if err != nil {
+				return err
+			}
+			if err = ctx.Err(); err != nil {
 				return err
 			}
 			if !info.IsDir() {
@@ -212,7 +229,12 @@ func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
 			b.log.Error("got error while trying to calculate bleve file index size", "error", err)
 		}
 
-		time.Sleep(60 * time.Second)
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(60 * time.Second):
+			continue
+		}
 	}
 }
 
@@ -298,7 +320,7 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("reason", indexBuildReason),
 	)
 
-	mapper, err := GetBleveMappings(fields)
+	mapper, err := GetBleveMappings(fields, b.useFullNgram)
 	if err != nil {
 		return nil, err
 	}
@@ -626,7 +648,15 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, minBuildTi
 	return nil, "", 0
 }
 
-func (b *bleveBackend) CloseAllIndexes() {
+// Stop closes all indexes and stops background tasks.
+func (b *bleveBackend) Stop() {
+	b.closeAllIndexes()
+
+	b.metricsUpdaterCancel()
+	b.metricsUpdaterWg.Wait()
+}
+
+func (b *bleveBackend) closeAllIndexes() {
 	b.cacheMx.Lock()
 	defer b.cacheMx.Unlock()
 
@@ -1181,7 +1211,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			verb = utils.VerbPatch
 		}
 
-		checker, err := access.Compile(ctx, auth, authlib.ListRequest{
+		checker, _, err := access.Compile(ctx, auth, authlib.ListRequest{
 			Namespace: b.key.Namespace,
 			Group:     b.key.Group,
 			Resource:  b.key.Resource,
@@ -1196,7 +1226,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 
 		// handle federation
 		for _, federated := range req.Federated {
-			checker, err := access.Compile(ctx, auth, authlib.ListRequest{
+			checker, _, err := access.Compile(ctx, auth, authlib.ListRequest{
 				Namespace: federated.Namespace,
 				Group:     federated.Group,
 				Resource:  federated.Resource,
