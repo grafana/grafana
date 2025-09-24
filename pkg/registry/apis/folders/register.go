@@ -2,7 +2,6 @@ package folders
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -20,12 +19,13 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -42,16 +42,12 @@ var _ builder.APIGroupValidation = (*FolderAPIBuilder)(nil)
 
 var resourceInfo = folders.FolderResourceInfo
 
-var errNoUser = errors.New("valid user is required")
-var errNoResource = errors.New("resource name is required")
-
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
 	features            featuremgmt.FeatureToggles
 	namespacer          request.NamespaceMapper
 	storage             grafanarest.Storage
 	permissionStore     reconcilers.PermissionStore
-	authorizer          authorizer.Authorizer
 	accessClient        authlib.AccessClient
 	parents             parentsGetter
 	searcher            resourcepb.ResourceIndexClient
@@ -85,7 +81,6 @@ func RegisterAPIService(cfg *setting.Cfg,
 		ac:                   accessControl,
 		accessClient:         accessClient,
 		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
-		authorizer:           newLegacyAuthorizer(accessControl),
 		searcher:             unified,
 		permissionStore:      reconcilers.NewZanzanaPermissionStore(zanzanaClient),
 	}
@@ -96,7 +91,6 @@ func RegisterAPIService(cfg *setting.Cfg,
 func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
 		features:        features,
-		authorizer:      newMultiTenantAuthorizer(ac),
 		searcher:        searcher,
 		permissionStore: reconcilers.NewZanzanaPermissionStore(zanzanaClient),
 	}
@@ -219,13 +213,9 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 	return oas, nil
 }
 
-type authorizerParams struct {
-	user      identity.Requester
-	evaluator accesscontrol.Evaluator
-}
-
+// The default authorizer is fine because authorization happens in storage where we know the parent folder
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return b.authorizer
+	return grafanaauthorizer.NewServiceAuthorizer()
 }
 
 func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {

@@ -40,7 +40,7 @@ func TestIntegrationFolderTree(t *testing.T) {
 	}
 
 	modes := []grafanarest.DualWriterMode{
-		// grafanarest.Mode1, (nothing new tested in mode 0 or 1)
+		grafanarest.Mode0, // legacy only
 		grafanarest.Mode2, // write both, read legacy
 		grafanarest.Mode3, // write both, read unified
 		grafanarest.Mode4,
