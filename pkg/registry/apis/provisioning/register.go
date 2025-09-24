@@ -694,6 +694,10 @@ func (b *APIBuilder) verifyAgainstExistingRepositories(cfg *provisioning.Reposit
 	// If repo is git, ensure no other repository is defined with a child path
 	if cfg.Spec.Type.IsGit() {
 		for _, v := range all {
+			// skip itself
+			if cfg.Name == v.Name {
+				continue
+			}
 			if v.URL() == cfg.URL() {
 				if v.Path() == cfg.Path() {
 					return field.Forbidden(field.NewPath("spec", string(cfg.Spec.Type), "path"),
