@@ -1,6 +1,3 @@
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1,AnnotationSpec,Tags
-API rule violation: list_type_missing,github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1,ItemQuery,Tags
-API rule violation: names_match,github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1,ItemQuery,Page
-API rule violation: names_match,github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1,ItemQuery,PanelID
 API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1,AnnotationList,ListMeta
 API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1,TagList,ListMeta

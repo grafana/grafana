@@ -21,7 +21,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1.AnnotationSpec":                schema_pkg_apis_annotations_v0alpha1_AnnotationSpec(ref),
 		"github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1.AnnotationStatus":              schema_pkg_apis_annotations_v0alpha1_AnnotationStatus(ref),
 		"github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1.AnnotationstatusOperatorState": schema_pkg_apis_annotations_v0alpha1_AnnotationstatusOperatorState(ref),
-		"github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1.ItemQuery":                     schema_pkg_apis_annotations_v0alpha1_ItemQuery(ref),
 		"github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1.TagCount":                      schema_pkg_apis_annotations_v0alpha1_TagCount(ref),
 		"github.com/grafana/grafana/apps/annotations/pkg/apis/annotations/v0alpha1.TagList":                       schema_pkg_apis_annotations_v0alpha1_TagList(ref),
 	}
@@ -360,92 +359,6 @@ func schema_pkg_apis_annotations_v0alpha1_AnnotationstatusOperatorState(ref comm
 					},
 				},
 				Required: []string{"lastEvaluation", "state"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_annotations_v0alpha1_ItemQuery(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "NOTE this query is done with a user in context that must be namespaced",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"from": {
-						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
-						},
-					},
-					"to": {
-						SchemaProps: spec.SchemaProps{
-							Description: "time range",
-							Default:     0,
-							Type:        []string{"integer"},
-							Format:      "int64",
-						},
-					},
-					"alertUID": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"dashboardUID": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"panelId": {
-						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
-						},
-					},
-					"tags": {
-						SchemaProps: spec.SchemaProps{
-							Description: "necessary in the query?",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"matchAny": {
-						SchemaProps: spec.SchemaProps{
-							Default: false,
-							Type:    []string{"boolean"},
-							Format:  "",
-						},
-					},
-					"limit": {
-						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
-						},
-					},
-					"Page": {
-						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
-						},
-					},
-				},
-				Required: []string{"from", "to", "alertUID", "dashboardUID", "panelId", "tags", "matchAny", "limit", "Page"},
 			},
 		},
 	}
