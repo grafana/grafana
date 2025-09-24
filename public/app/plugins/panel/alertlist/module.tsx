@@ -89,20 +89,8 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       category: ['Filter'],
     })
     .addBooleanSwitch({
-      path: 'stateFilter.firing',
-      name: 'Alerting / Firing',
-      defaultValue: true,
-      category: ['Alert state filter'],
-    })
-    .addBooleanSwitch({
-      path: 'stateFilter.pending',
-      name: 'Pending',
-      defaultValue: true,
-      category: ['Alert state filter'],
-    })
-    .addBooleanSwitch({
       path: 'stateFilter.normal',
-      name: 'Normal',
+      name: 'Show Normal',
       defaultValue: false,
       category: ['Alert state filter'],
     })
@@ -110,19 +98,19 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       path: 'stateFilter.critical',
       name: 'Critical',
       defaultValue: false,
-      category: ['Alert severity filter'],
+      category: ['Firing Alert severity filter'],
     })
     .addBooleanSwitch({
       path: 'stateFilter.warn',
       name: 'Warn',
       defaultValue: false,
-      category: ['Alert severity filter'],
+      category: ['Firing Alert severity filter'],
     })
     .addBooleanSwitch({
       path: 'stateFilter.noData',
       name: 'No Data',
       defaultValue: false,
-      category: ['Alert severity filter'],
+      category: ['Firing Alert severity filter'],
     });
 });
 
