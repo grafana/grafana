@@ -47,7 +47,7 @@ func TestIntegrationDistributor(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dbType := sqlutil.GetTestDBType()
-	if dbType != "mysql" && false {
+	if dbType != "mysql" {
 		t.Skip()
 	}
 
