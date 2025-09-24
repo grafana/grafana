@@ -203,6 +203,11 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
             // by using onMouseDown here instead of onClick we can stop focus moving
             // to the button when the user clicks it (via preventDefault + stopPropagation)
             onMouseDown={handleExpand}
+            // Additionally, prevent the click event from bubbling to the row, which would select the folder
+            onClick={(ev) => {
+              ev.preventDefault();
+              ev.stopPropagation();
+            }}
             // tabIndex not needed here because we handle keyboard navigation at the input level
             tabIndex={-1}
             aria-label={isOpen ? `Collapse folder ${item.title}` : `Expand folder ${item.title}`}
