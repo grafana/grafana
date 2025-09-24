@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -157,30 +157,19 @@ export default DashboardEmpty;
 
 const ProvisionedDashboardsSection = () => {
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
-  const [isProvisionedLoading, setIsProvisionedLoading] = useState(false);
-  const [provisionedDashboards, setProvisionedDashboards] = useState<PluginDashboard[]>([]);
 
-  useEffect(() => {
-    if (initialDatasource) {
-      getProvisionedDashboards(initialDatasource);
+  const { value: provisionedDashboards, loading: isProvisionedLoading } = useAsync(async (): Promise<
+    PluginDashboard[]
+  > => {
+    if (!initialDatasource) {
+      return [];
     }
-  }, [initialDatasource]);
-
-  const getProvisionedDashboards = async (datasourceUid: string) => {
-    setIsProvisionedLoading(true);
-    const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
-
+    const ds = getDataSourceSrv().getInstanceSettings(initialDatasource);
     if (!ds) {
-      return;
+      return [];
     }
-
-    const url = `api/plugins/${ds.type}/dashboards`;
-
-    const res = await getBackendSrv().get(url);
-
-    setProvisionedDashboards(res);
-    setIsProvisionedLoading(false);
-  };
+    return await getBackendSrv().get(`api/plugins/${ds.type}/dashboards`);
+  }, [initialDatasource]);
 
   const onImportDashboardClick = async (dashboard: PluginDashboard) => {
     const data = {
@@ -228,14 +217,14 @@ const ProvisionedDashboardsSection = () => {
       const stateManager = getDashboardScenePageStateManager();
       stateManager.setState({ dashboard: dashboardScene, isLoading: false });
 
-      dispatch(notifyApp(createSuccessNotification('Dashboard Loaded', dashboard.title)));
+      dispatch(notifyApp(createSuccessNotification('Provisioned dashboard loaded', dashboard.title)));
     } catch (error) {
       console.error('Error importing dashboard:', error);
       dispatch(notifyApp(createSuccessNotification('Failed to load dashboard', '')));
     }
   };
 
-  if (!provisionedDashboards.length && !isProvisionedLoading) {
+  if (!provisionedDashboards?.length && !isProvisionedLoading) {
     return null;
   }
 
@@ -243,13 +232,13 @@ const ProvisionedDashboardsSection = () => {
     <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
       <Stack direction="column" alignItems="center" gap={2}>
         <Text element="h3" textAlignment="center" weight="medium">
-          <Trans i18nKey="dashboard.empty.import-a-dashboard-heasfaader">Start from template dashboards</Trans>
+          <Trans i18nKey="dashboard.empty.import-a-dashboard-heasfaader">Start with suggested dashboards</Trans>
         </Text>
         {isProvisionedLoading ? (
           <Spinner />
         ) : (
           <Stack gap={2} justifyContent="space-between">
-            {provisionedDashboards.map((dashboard, index) => (
+            {provisionedDashboards?.map((dashboard, index) => (
               <ProvisionedDashboardBox
                 key={dashboard.uid}
                 index={index}
