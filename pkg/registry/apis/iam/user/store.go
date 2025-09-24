@@ -75,11 +75,11 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 	if err != nil {
 		return nil, false, err
 	}
-	if found == nil || len(found.Users) < 1 {
+	if found == nil || len(found.Items) < 1 {
 		return nil, false, resource.NewNotFound(name)
 	}
 
-	userToDelete := &found.Users[0]
+	userToDelete := &found.Items[0]
 
 	if deleteValidation != nil {
 		userObj := toUserItem(userToDelete, ns.Value)
@@ -135,8 +135,8 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 				return nil, err
 			}
 
-			users := make([]iamv0alpha1.User, 0, len(found.Users))
-			for _, u := range found.Users {
+			users := make([]iamv0alpha1.User, 0, len(found.Items))
+			for _, u := range found.Items {
 				users = append(users, toUserItem(&u, ns.Value))
 			}
 
@@ -172,11 +172,11 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 	if found == nil || err != nil {
 		return nil, resource.NewNotFound(name)
 	}
-	if len(found.Users) < 1 {
+	if len(found.Items) < 1 {
 		return nil, resource.NewNotFound(name)
 	}
 
-	obj := toUserItem(&found.Users[0], ns.Value)
+	obj := toUserItem(&found.Items[0], ns.Value)
 	return &obj, nil
 }
 

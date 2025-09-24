@@ -98,7 +98,7 @@ type ListUserQuery struct {
 }
 
 type ListUserResult struct {
-	Users    []common.UserWithRole
+	Items    []common.UserWithRole
 	Continue int64
 	RV       int64
 }
@@ -176,9 +176,9 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDa
 			}
 
 			lastID = u.ID
-			res.Users = append(res.Users, u)
-			if len(res.Users) > limit {
-				res.Users = res.Users[0 : len(res.Users)-1]
+			res.Items = append(res.Items, u)
+			if len(res.Items) > limit {
+				res.Items = res.Items[0 : len(res.Items)-1]
 				res.Continue = lastID
 				break
 			}
