@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -330,7 +331,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					}
 					return authorizer.DecisionDeny, "admin role is required", nil
 
-				case "refs", "status":
+				case "refs":
 					// This is strictly a read operation. It is handy on the frontend for viewers.
 					if id.GetOrgRole().Includes(identity.RoleViewer) {
 						return authorizer.DecisionAllow, "", nil
@@ -348,7 +349,11 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					} else {
 						return authorizer.DecisionDeny, "editor role is required", nil
 					}
-
+				case "status":
+					if id.GetOrgRole().Includes(identity.RoleViewer) && a.GetVerb() == utils.VerbGet {
+						return authorizer.DecisionAllow, "", nil
+					}
+					return authorizer.DecisionDeny, "users cannot update the status of a repository", nil
 				default:
 					if id.GetIsGrafanaAdmin() {
 						return authorizer.DecisionAllow, "", nil
