@@ -286,7 +286,7 @@ type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
   hoverProximity?: number;
   orientation?: VizOrientation;
-  annotations?: DataFrame[];
+  annotationLanes?: number;
 } & T;
 
 /** @alpha */

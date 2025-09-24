@@ -10,6 +10,7 @@ import { TimeZone } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR, getPortalContainer, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
+import { ANNOTATION_LANE_SIZE, getAnnotationFrames } from './utils';
 
 // (copied from TooltipPlugin2)
 interface TimeRange2 {
@@ -74,9 +75,7 @@ export const AnnotationsPlugin2 = ({
   const [_, forceUpdate] = useReducer((x) => x + 1, 0);
 
   const annos = useMemo(() => {
-    let annos = annotations.filter(
-      (frame) => frame.name !== 'exemplar' && frame.length > 0 && frame.fields.some((f) => f.name === 'time')
-    );
+    let annos = getAnnotationFrames(annotations);
 
     if (newRange) {
       let isRegion = newRange.to > newRange.from;
@@ -132,9 +131,7 @@ export const AnnotationsPlugin2 = ({
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       ctx.clip();
 
-      annos.forEach((frame, frameIndex) => {
-        const annotationLaneYOffset = frameIndex * 30;
-        console.log('annotationLaneYOffset', frameIndex, annotationLaneYOffset);
+      annos.forEach((frame) => {
         let vals = getVals(frame);
 
         if (frame.name === 'xymark') {
@@ -171,8 +168,8 @@ export const AnnotationsPlugin2 = ({
           // if multiple regions, don't shade
           // @todo toggle functionality, new annotation config option?
 
-          let y0 = u.bbox.top - annotationLaneYOffset;
-          let y1 = y0 + u.bbox.height + annotationLaneYOffset;
+          let y0 = u.bbox.top;
+          let y1 = y0 + u.bbox.height;
 
           ctx.lineWidth = 2;
           ctx.setLineDash([5, 5]);
@@ -226,7 +223,7 @@ export const AnnotationsPlugin2 = ({
 
       let markers: React.ReactNode[] = [];
 
-      const top = frameIdx * 5;
+      const top = frameIdx * ANNOTATION_LANE_SIZE;
       for (let i = 0; i < vals.time.length; i++) {
         let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
         let left = Math.round(plot.valToPos(vals.time[i], 'x')) || 0; // handles -0

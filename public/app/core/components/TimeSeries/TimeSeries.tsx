@@ -17,7 +17,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
     alignedFrame: DataFrame,
     allFrames: DataFrame[],
     getTimeRange: () => TimeRange,
-    annotationFrames?: DataFrame[]
+    annotationLanes?: number
   ) => {
     const { theme, timeZone, options, renderers, tweakAxis, tweakScale } = this.props;
 
@@ -32,7 +32,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
       tweakAxis,
       hoverProximity: options?.tooltip?.hoverProximity,
       orientation: options?.orientation,
-      annotations: annotationFrames?.length ? annotationFrames : this.props.annotations,
+      annotationLanes,
     });
   };
 
