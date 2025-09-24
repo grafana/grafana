@@ -21,9 +21,9 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -51,7 +51,6 @@ type FolderAPIBuilder struct {
 	namespacer          request.NamespaceMapper
 	storage             grafanarest.Storage
 	permissionStore     reconcilers.PermissionStore
-	authorizer          authorizer.Authorizer
 	accessClient        authlib.AccessClient
 	parents             parentsGetter
 	searcher            resourcepb.ResourceIndexClient
@@ -95,7 +94,6 @@ func RegisterAPIService(cfg *setting.Cfg,
 func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
 		features:        features,
-		authorizer:      newMultiTenantAuthorizer(ac),
 		searcher:        searcher,
 		permissionStore: reconcilers.NewZanzanaPermissionStore(zanzanaClient),
 	}
