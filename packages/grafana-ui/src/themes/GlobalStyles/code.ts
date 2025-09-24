@@ -10,7 +10,7 @@ export function getCodeStyles(theme: GrafanaTheme2) {
       backgroundColor: theme.colors.background.primary,
       color: theme.colors.text.primary,
       border: `1px solid ${theme.colors.border.medium}`,
-      borderRadius: '4px',
+      borderRadius: theme.shape.radius.default,
     },
 
     code: {

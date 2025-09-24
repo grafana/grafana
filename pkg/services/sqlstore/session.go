@@ -10,8 +10,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 
+	"github.com/grafana/grafana/pkg/util/xorm"
 	"github.com/grafana/grafana/pkg/util/xorm/core"
-	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -30,10 +30,6 @@ type DBSession struct {
 }
 
 type DBTransactionFunc func(sess *DBSession) error
-
-func (sess *DBSession) publishAfterCommit(msg any) {
-	sess.events = append(sess.events, msg)
-}
 
 func (sess *DBSession) PublishAfterCommit(msg any) {
 	sess.events = append(sess.events, msg)
@@ -146,11 +142,6 @@ func (sess *DBSession) WithReturningID(driverName string, query string, args []a
 			return id, err
 		}
 	} else {
-		if driverName == migrator.Spanner {
-			// Only works with INSERT statements.
-			query = fmt.Sprintf("%s THEN RETURN id", query)
-		}
-
 		sqlOrArgs := append([]any{query}, args...)
 		res, err := sess.Exec(sqlOrArgs...)
 		if err != nil {

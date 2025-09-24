@@ -13,7 +13,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/templategroup/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -29,10 +29,11 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
-	testsuite.RunButSkipOnSpanner(m)
+	testsuite.Run(m)
 }
 
 func getTestHelper(t *testing.T) *apis.K8sTestHelper {
@@ -40,9 +41,7 @@ func getTestHelper(t *testing.T) *apis.K8sTestHelper {
 }
 
 func TestIntegrationResourceIdentifier(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -52,7 +51,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "templateGroup",
 			Content: `{{ define "test" }} test {{ end }}`,
 		},
@@ -108,9 +107,9 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
 
-		defaultDefn, err := templates.DefaultTemplate()
+		defaultDefn, err := templates.DefaultTemplate(templates.DefaultTemplatesToOmit)
 		require.NoError(t, err)
-		require.Equal(t, v0alpha1.Spec{
+		require.Equal(t, v0alpha1.TemplateGroupSpec{
 			Title:   v0alpha1.DefaultTemplateTitle,
 			Content: defaultDefn.Template,
 		}, actual.Spec)
@@ -138,9 +137,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 }
 
 func TestIntegrationAccessControl(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -226,7 +223,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
-				Spec: v0alpha1.Spec{
+				Spec: v0alpha1.TemplateGroupSpec{
 					Title:   fmt.Sprintf("template-group-1-%s", tc.user.Identity.GetLogin()),
 					Content: `{{ define "test" }} test {{ end }}`,
 				},
@@ -366,9 +363,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 }
 
 func TestIntegrationProvisioning(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -387,7 +382,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "template-group-1",
 			Content: `{{ define "test" }} test {{ end }}`,
 		},
@@ -419,9 +414,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 }
 
 func TestIntegrationOptimisticConcurrency(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -432,7 +425,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "template-group-1",
 			Content: `{{ define "test" }} test {{ end }}`,
 		},
@@ -503,9 +496,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 }
 
 func TestIntegrationPatch(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -516,7 +507,7 @@ func TestIntegrationPatch(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "template-group",
 			Content: `{{ define "test" }} test {{ end }}`,
 		},
@@ -564,9 +555,7 @@ func TestIntegrationPatch(t *testing.T) {
 }
 
 func TestIntegrationListSelector(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -576,7 +565,7 @@ func TestIntegrationListSelector(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "test1",
 			Content: `{{ define "test1" }} test {{ end }}`,
 		},
@@ -588,7 +577,7 @@ func TestIntegrationListSelector(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "test2",
 			Content: `{{ define "test2" }} test {{ end }}`,
 		},
@@ -611,6 +600,7 @@ func TestIntegrationListSelector(t *testing.T) {
 	require.Len(t, tmpls.Items, 3) // Includes default template.
 
 	t.Run("should filter by template name", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, v1.ListOptions{
 			FieldSelector: "spec.title=" + template1.Spec.Title,
 		})
@@ -629,6 +619,7 @@ func TestIntegrationListSelector(t *testing.T) {
 	})
 
 	t.Run("should filter by multiple filters", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, v1.ListOptions{
 			FieldSelector: fmt.Sprintf("metadata.name=%s,spec.title=%s", template2.Name, template2.Spec.Title),
 		})
@@ -646,6 +637,7 @@ func TestIntegrationListSelector(t *testing.T) {
 	})
 
 	t.Run("should filter by default template name", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, v1.ListOptions{
 			FieldSelector: "spec.title=" + v0alpha1.DefaultTemplateTitle,
 		})

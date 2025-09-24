@@ -1,18 +1,14 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 
-import {
-  EXTENSION_SIDEBAR_EXTENSION_POINT_ID,
-  getComponentMetaFromComponentId,
-  useExtensionSidebarContext,
-} from './ExtensionSidebarProvider';
+import { getComponentMetaFromComponentId, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 
 export const DEFAULT_EXTENSION_SIDEBAR_WIDTH = 300;
 export const MIN_EXTENSION_SIDEBAR_WIDTH = 100;
-export const MAX_EXTENSION_SIDEBAR_WIDTH = 700;
+export const MAX_EXTENSION_SIDEBAR_WIDTH = Math.floor(window.innerWidth * (2 / 3));
 
 type ExtensionSidebarComponentProps = {
   props?: Record<string, unknown>;
@@ -20,12 +16,12 @@ type ExtensionSidebarComponentProps = {
 
 export function ExtensionSidebar() {
   const styles = getStyles(useTheme2());
-  const { dockedComponentId, isEnabled, props = {} } = useExtensionSidebarContext();
+  const { dockedComponentId, props = {} } = useExtensionSidebarContext();
   const { components, isLoading } = usePluginComponents<ExtensionSidebarComponentProps>({
-    extensionPointId: EXTENSION_SIDEBAR_EXTENSION_POINT_ID,
+    extensionPointId: PluginExtensionPoints.ExtensionSidebar,
   });
 
-  if (isLoading || !dockedComponentId || !isEnabled) {
+  if (isLoading || !dockedComponentId) {
     return null;
   }
 

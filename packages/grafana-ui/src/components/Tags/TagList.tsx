@@ -2,10 +2,10 @@ import { css, cx } from '@emotion/css';
 import { forwardRef, memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types/icon';
-import { t } from '../../utils/i18n';
 import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 
 import { OnTagClick, Tag } from './Tag';
@@ -49,10 +49,12 @@ const TagListComponent = memo(
             </li>
           ))}
           {displayMax && displayMax > 0 && numTags - displayMax > 0 && (
-            <span className={styles.moreTagsLabel}>
-              {'+ '}
-              {numTags - displayMax}
-            </span>
+            <li className={styles.li}>
+              <span className={styles.moreTagsLabel}>
+                {'+ '}
+                {numTags - displayMax}
+              </span>
+            </li>
           )}
         </ul>
       );

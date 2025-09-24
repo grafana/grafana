@@ -17,11 +17,12 @@ const (
 	WeightDashboard
 	WeightExplore
 	WeightDrilldown
+	WeightAssistant
 	WeightAlerting
 	WeightAlertsAndIncidents
 	WeightAIAndML
 	WeightTestingAndSynthetics
-	WeightMonitoring
+	WeightObservability
 	WeightCloudServiceProviders
 	WeightInfrastructure
 	WeightApplication
@@ -40,11 +41,12 @@ const (
 	NavIDDashboards           = "dashboards/browse"
 	NavIDExplore              = "explore"
 	NavIDDrilldown            = "drilldown"
+	NavIDAdaptiveTelemetry    = "adaptive-telemetry"
 	NavIDCfg                  = "cfg" // NavIDCfg is the id for org configuration navigation node
 	NavIDAlertsAndIncidents   = "alerts-and-incidents"
 	NavIDTestingAndSynthetics = "testing-and-synthetics"
 	NavIDAlerting             = "alerting"
-	NavIDMonitoring           = "monitoring"
+	NavIDObservability        = "observability"
 	NavIDInfrastructure       = "infrastructure"
 	NavIDFrontend             = "frontend"
 	NavIDReporting            = "reports"

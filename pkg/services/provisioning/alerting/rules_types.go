@@ -62,21 +62,23 @@ func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (models.AlertRuleGroupWithFold
 }
 
 type AlertRuleV1 struct {
-	UID                  values.StringValue      `json:"uid" yaml:"uid"`
-	Title                values.StringValue      `json:"title" yaml:"title"`
-	Condition            values.StringValue      `json:"condition" yaml:"condition"`
-	Data                 []QueryV1               `json:"data" yaml:"data"`
-	DasboardUID          values.StringValue      `json:"dasboardUid" yaml:"dasboardUid"` // TODO: Grandfathered typo support. TODO: This should be removed in V2.
-	DashboardUID         values.StringValue      `json:"dashboardUid" yaml:"dashboardUid"`
-	PanelID              values.Int64Value       `json:"panelId" yaml:"panelId"`
-	NoDataState          values.StringValue      `json:"noDataState" yaml:"noDataState"`
-	ExecErrState         values.StringValue      `json:"execErrState" yaml:"execErrState"`
-	For                  values.StringValue      `json:"for" yaml:"for"`
-	Annotations          values.StringMapValue   `json:"annotations" yaml:"annotations"`
-	Labels               values.StringMapValue   `json:"labels" yaml:"labels"`
-	IsPaused             values.BoolValue        `json:"isPaused" yaml:"isPaused"`
-	NotificationSettings *NotificationSettingsV1 `json:"notification_settings" yaml:"notification_settings"`
-	Record               *RecordV1               `json:"record" yaml:"record"`
+	UID                         values.StringValue      `json:"uid" yaml:"uid"`
+	Title                       values.StringValue      `json:"title" yaml:"title"`
+	Condition                   values.StringValue      `json:"condition" yaml:"condition"`
+	Data                        []QueryV1               `json:"data" yaml:"data"`
+	DasboardUID                 values.StringValue      `json:"dasboardUid" yaml:"dasboardUid"` // TODO: Grandfathered typo support. TODO: This should be removed in V2.
+	DashboardUID                values.StringValue      `json:"dashboardUid" yaml:"dashboardUid"`
+	PanelID                     values.Int64Value       `json:"panelId" yaml:"panelId"`
+	NoDataState                 values.StringValue      `json:"noDataState" yaml:"noDataState"`
+	ExecErrState                values.StringValue      `json:"execErrState" yaml:"execErrState"`
+	For                         values.StringValue      `json:"for" yaml:"for"`
+	KeepFiringFor               values.StringValue      `json:"keepFiringFor" yaml:"keepFiringFor"`
+	MissingSeriesEvalsToResolve values.Int64Value       `json:"missing_series_evals_to_resolve" yaml:"missing_series_evals_to_resolve"`
+	Annotations                 values.StringMapValue   `json:"annotations" yaml:"annotations"`
+	Labels                      values.StringMapValue   `json:"labels" yaml:"labels"`
+	IsPaused                    values.BoolValue        `json:"isPaused" yaml:"isPaused"`
+	NotificationSettings        *NotificationSettingsV1 `json:"notification_settings" yaml:"notification_settings"`
+	Record                      *RecordV1               `json:"record" yaml:"record"`
 }
 
 func withFallback(value, fallback string) *string {
@@ -107,6 +109,24 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 		}
 	}
 	alertRule.For = time.Duration(duration)
+
+	keepFiringForDuration := model.Duration(0)
+	if rule.KeepFiringFor.Value() != "" {
+		var err error
+		keepFiringForDuration, err = model.ParseDuration(rule.KeepFiringFor.Value())
+		if err != nil {
+			return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse 'keepFiringFor' field: %w", alertRule.Title, err)
+		}
+	}
+	alertRule.KeepFiringFor = time.Duration(keepFiringForDuration)
+
+	if rule.MissingSeriesEvalsToResolve.Raw != "" {
+		missingSeriesEvalsToResolve := rule.MissingSeriesEvalsToResolve.Value()
+		if missingSeriesEvalsToResolve < 0 {
+			return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse 'missing_series_evals_to_resolve' field: cannot be negative", alertRule.Title)
+		}
+		alertRule.MissingSeriesEvalsToResolve = &missingSeriesEvalsToResolve
+	}
 
 	dasboardUID := rule.DasboardUID.Value()
 	dashboardUID := rule.DashboardUID.Value()
@@ -203,12 +223,13 @@ func (queryV1 *QueryV1) mapToModel() (models.AlertQuery, error) {
 }
 
 type NotificationSettingsV1 struct {
-	Receiver          values.StringValue   `json:"receiver" yaml:"receiver"`
-	GroupBy           []values.StringValue `json:"group_by,omitempty" yaml:"group_by"`
-	GroupWait         values.StringValue   `json:"group_wait,omitempty" yaml:"group_wait"`
-	GroupInterval     values.StringValue   `json:"group_interval,omitempty" yaml:"group_interval"`
-	RepeatInterval    values.StringValue   `json:"repeat_interval,omitempty" yaml:"repeat_interval"`
-	MuteTimeIntervals []values.StringValue `json:"mute_time_intervals,omitempty" yaml:"mute_time_intervals"`
+	Receiver            values.StringValue   `json:"receiver" yaml:"receiver"`
+	GroupBy             []values.StringValue `json:"group_by,omitempty" yaml:"group_by"`
+	GroupWait           values.StringValue   `json:"group_wait,omitempty" yaml:"group_wait"`
+	GroupInterval       values.StringValue   `json:"group_interval,omitempty" yaml:"group_interval"`
+	RepeatInterval      values.StringValue   `json:"repeat_interval,omitempty" yaml:"repeat_interval"`
+	MuteTimeIntervals   []values.StringValue `json:"mute_time_intervals,omitempty" yaml:"mute_time_intervals"`
+	ActiveTimeIntervals []values.StringValue `json:"active_time_intervals,omitempty" yaml:"active_time_intervals"`
 }
 
 func (nsV1 *NotificationSettingsV1) mapToModel() (models.NotificationSettings, error) {
@@ -259,14 +280,25 @@ func (nsV1 *NotificationSettingsV1) mapToModel() (models.NotificationSettings, e
 			mute = append(mute, value.Value())
 		}
 	}
+	var active []string
+	if len(nsV1.ActiveTimeIntervals) > 0 {
+		active = make([]string, 0, len(nsV1.ActiveTimeIntervals))
+		for _, value := range nsV1.ActiveTimeIntervals {
+			if value.Value() == "" {
+				continue
+			}
+			active = append(active, value.Value())
+		}
+	}
 
 	return models.NotificationSettings{
-		Receiver:          nsV1.Receiver.Value(),
-		GroupBy:           groupBy,
-		GroupWait:         gw,
-		GroupInterval:     gi,
-		RepeatInterval:    ri,
-		MuteTimeIntervals: mute,
+		Receiver:            nsV1.Receiver.Value(),
+		GroupBy:             groupBy,
+		GroupWait:           gw,
+		GroupInterval:       gi,
+		RepeatInterval:      ri,
+		MuteTimeIntervals:   mute,
+		ActiveTimeIntervals: active,
 	}, nil
 }
 

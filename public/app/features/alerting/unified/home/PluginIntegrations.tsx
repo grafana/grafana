@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { Trans } from '../../../../core/internationalization';
 import { useAlertingHomePageExtensions } from '../plugins/useAlertingHomePageExtensions';
 
 export function PluginIntegrations() {

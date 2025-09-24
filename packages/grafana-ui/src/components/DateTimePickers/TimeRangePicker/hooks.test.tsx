@@ -1,9 +1,16 @@
-import { act, fireEvent, render, renderHook, screen } from '@testing-library/react';
+import { render, renderHook, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createRef, KeyboardEvent, RefObject } from 'react';
 
 import { useListFocus } from './hooks';
 
 describe('useListFocus', () => {
+  let user: ReturnType<typeof userEvent.setup>;
+
+  beforeEach(() => {
+    user = userEvent.setup();
+  });
+
   const testid = 'test';
   const getListElement = (
     ref: RefObject<HTMLUListElement>,
@@ -26,7 +33,7 @@ describe('useListFocus', () => {
     { from: 'now-7d', to: 'now', display: 'Last 7 days' },
   ];
 
-  it('sets correct focused item on keydown', () => {
+  it('sets correct focused item on keydown', async () => {
     const ref = createRef<HTMLUListElement>();
     const { rerender } = render(getListElement(ref));
 
@@ -38,10 +45,7 @@ describe('useListFocus', () => {
     expect(screen.getByText('Last 6 hours').tabIndex).toBe(-1);
     expect(screen.getByText('Last 24 hours').tabIndex).toBe(-1);
     expect(screen.getByText('Last 7 days').tabIndex).toBe(-1);
-
-    act(() => {
-      fireEvent.keyDown(screen.getByTestId(testid), { key: 'ArrowDown' });
-    });
+    await user.type(screen.getByTestId(testid), '{ArrowDown}');
 
     const [handleKeys2] = result.current;
     rerender(getListElement(ref, handleKeys2));
@@ -51,9 +55,7 @@ describe('useListFocus', () => {
     expect(screen.getByText('Last 24 hours').tabIndex).toBe(-1);
     expect(screen.getByText('Last 7 days').tabIndex).toBe(-1);
 
-    act(() => {
-      fireEvent.keyDown(screen.getByTestId(testid), { key: 'ArrowDown' });
-    });
+    await user.type(screen.getByTestId(testid), '{ArrowDown}');
 
     const [handleKeys3] = result.current;
     rerender(getListElement(ref, handleKeys3));
@@ -63,9 +65,7 @@ describe('useListFocus', () => {
     expect(screen.getByText('Last 24 hours').tabIndex).toBe(0);
     expect(screen.getByText('Last 7 days').tabIndex).toBe(-1);
 
-    act(() => {
-      fireEvent.keyDown(screen.getByTestId(testid), { key: 'ArrowUp' });
-    });
+    await user.type(screen.getByTestId(testid), '{ArrowUp}');
 
     const [handleKeys4] = result.current;
     rerender(getListElement(ref, handleKeys4));
@@ -75,9 +75,7 @@ describe('useListFocus', () => {
     expect(screen.getByText('Last 24 hours').tabIndex).toBe(-1);
     expect(screen.getByText('Last 7 days').tabIndex).toBe(-1);
 
-    act(() => {
-      fireEvent.keyDown(screen.getByTestId(testid), { key: 'ArrowUp' });
-    });
+    await user.type(screen.getByTestId(testid), '{ArrowUp}');
 
     const [handleKeys5] = result.current;
     rerender(getListElement(ref, handleKeys5));
@@ -87,9 +85,7 @@ describe('useListFocus', () => {
     expect(screen.getByText('Last 24 hours').tabIndex).toBe(-1);
     expect(screen.getByText('Last 7 days').tabIndex).toBe(-1);
 
-    act(() => {
-      fireEvent.keyDown(screen.getByTestId(testid), { key: 'ArrowUp' });
-    });
+    await user.type(screen.getByTestId(testid), '{ArrowUp}');
 
     const [handleKeys6] = result.current;
     rerender(getListElement(ref, handleKeys6));
@@ -100,7 +96,7 @@ describe('useListFocus', () => {
     expect(screen.getByText('Last 7 days').tabIndex).toBe(0);
   });
 
-  it('clicks focused item when Enter key is pressed', () => {
+  it('clicks focused item when Enter key is pressed', async () => {
     const ref = createRef<HTMLUListElement>();
     const onClick = jest.fn();
     const { rerender } = render(getListElement(ref));
@@ -109,9 +105,7 @@ describe('useListFocus', () => {
     const [handleKeys] = result.current;
     rerender(getListElement(ref, handleKeys, onClick));
 
-    act(() => {
-      fireEvent.keyDown(screen.getByTestId(testid), { key: 'Enter' });
-    });
+    await user.type(screen.getByTestId(testid), '{Enter}');
 
     expect(onClick).toHaveBeenCalled();
   });

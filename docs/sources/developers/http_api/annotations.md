@@ -54,7 +54,7 @@ Query Parameters:
 - `to`: epoch datetime in milliseconds. Optional.
 - `limit`: number. Optional - default is 100. Max limit for results returned.
 - `alertId`: number. Optional. Find annotations for a specified alert.
-- `dashboardId`: number. Optional. Find annotations that are scoped to a specific dashboard
+- `dashboardId`: Deprecated. Use dashboardUID instead.
 - `dashboardUID`: string. Optional. Find annotations that are scoped to a specific dashboard, when dashboardUID presents, dashboardId would be ignored.
 - `panelId`: number. Optional. Find annotations that are scoped to a specific panel
 - `userId`: number. Optional. Find annotations created by a specific user
@@ -70,7 +70,6 @@ Content-Type: application/json
     {
         "id": 1124,
         "alertId": 0,
-        "dashboardId": 468,
         "dashboardUID": "uGlb_lG7z",
         "panelId": 2,
         "userId": 1,
@@ -80,7 +79,6 @@ Content-Type: application/json
         "time": 1507266395000,
         "timeEnd": 1507266395000,
         "text": "test",
-        "metric": "",
         "tags": [
             "tag1",
             "tag2"
@@ -90,7 +88,6 @@ Content-Type: application/json
     {
         "id": 1123,
         "alertId": 0,
-        "dashboardId": 468,
         "dashboardUID": "jcIIG-07z",
         "panelId": 2,
         "userId": 1,
@@ -99,7 +96,6 @@ Content-Type: application/json
         "prevState": "",
         "time": 1507265111000,
         "text": "test",
-        "metric": "",
         "tags": [
             "tag1",
             "tag2"
@@ -113,7 +109,7 @@ Content-Type: application/json
 
 ## Create Annotation
 
-Creates an annotation in the Grafana database. The `dashboardId` and `panelId` fields are optional.
+Creates an annotation in the Grafana database. The `dashboardUid` and `panelId` fields are optional.
 If they are not specified then an organization annotation is created and can be queried in any dashboard that adds
 the Grafana annotations data source. When creating a region annotation include the timeEnd property.
 
@@ -145,7 +141,6 @@ Content-Type: application/json
 
 {
   "dashboardUID":"jcIIG-07z",
-  "panelId":1,
   "time":1507037197339,
   "timeEnd":1507180805056,
   "tags":["tag1","tag2"],

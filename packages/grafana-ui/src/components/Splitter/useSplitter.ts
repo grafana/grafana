@@ -5,8 +5,8 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
-import { ComponentSize } from '../../types';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { ComponentSize } from '../../types/size';
 import { DragHandlePosition, getDragStyles } from '../DragHandle/DragHandle';
 
 export interface UseSplitterOptions {
@@ -308,6 +308,8 @@ export function useSplitter(options: UseSplitterOptions) {
     secondaryStyles.flexBasis = `${initialSize}px`;
   }
 
+  const primaryId = `start-panel-${id}`;
+
   return {
     containerProps: {
       ref: containerRef,
@@ -317,6 +319,7 @@ export function useSplitter(options: UseSplitterOptions) {
       ref: firstPaneRef,
       className: styles.panel,
       style: primaryStyles,
+      id: primaryId,
     },
     secondaryProps: {
       ref: secondPaneRef,
@@ -337,7 +340,7 @@ export function useSplitter(options: UseSplitterOptions) {
       'aria-valuemin': 0,
       'aria-valuemax': 100,
       'aria-valuenow': initialSize * 100,
-      'aria-controls': `start-panel-${id}`,
+      'aria-controls': primaryId,
       'aria-label': 'Pane resize widget',
       tabIndex: 0,
       className: dragHandleStyle,

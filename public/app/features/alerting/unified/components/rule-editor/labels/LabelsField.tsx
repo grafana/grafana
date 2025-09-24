@@ -2,9 +2,10 @@ import { css, cx } from '@emotion/css';
 import { FC, useCallback, useMemo, useState } from 'react';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from 'react-hook-form';
 
+import { AlertLabels } from '@grafana/alerting/unstable';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Field, InlineLabel, Input, LoadingPlaceholder, Space, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+import { Trans, t } from '@grafana/i18n';
+import { Button, ComboboxOption, Field, InlineLabel, Input, Space, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { labelsApi } from '../../../api/labelsApi';
 import { usePluginBridge } from '../../../hooks/usePluginBridge';
@@ -13,7 +14,6 @@ import { KBObjectArray, RuleFormType, RuleFormValues } from '../../../types/rule
 import { isPrivateLabelKey } from '../../../utils/labels';
 import { isRecordingRuleByType } from '../../../utils/rules';
 import AlertLabelDropdown from '../../AlertLabelDropdown';
-import { AlertLabels } from '../../AlertLabels';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 import { useGetLabelsFromDataSourceName } from '../useAlertRuleSuggestions';
 
@@ -29,9 +29,13 @@ const useGetOpsLabelsKeys = (skip: boolean) => {
 function mapLabelsToOptions(
   items: Iterable<string> = [],
   labelsInSubForm?: Array<{ key: string; value: string }>
-): Array<SelectableValue<string>> {
+): Array<ComboboxOption<string>> {
   const existingKeys = new Set(labelsInSubForm ? labelsInSubForm.map((label) => label.key) : []);
-  return Array.from(items, (item) => ({ label: item, value: item, isDisabled: existingKeys.has(item) }));
+  return Array.from(items, (item) => ({
+    label: item,
+    value: item,
+    disabled: existingKeys.has(item),
+  }));
 }
 
 export interface LabelsInRuleProps {
@@ -62,6 +66,7 @@ export interface LabelsSubFormProps {
 export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: LabelsSubFormProps) {
   const styles = useStyles2(getStyles);
   const { watch } = useFormContext<RuleFormValues>();
+
   const type = watch('type') ?? RuleFormType.grafana;
 
   const onSave = (labels: LabelsSubformValues) => {
@@ -142,12 +147,12 @@ export function useCombinedLabels(
   // create two groups of labels, one for ops and one for custom
   const groupedOptions = [
     {
-      label: 'From alerts',
+      label: t('alerting.use-combined-labels.grouped-options.label.from-alerts', 'From alerts'),
       options: keysFromExistingAlerts,
       expanded: true,
     },
     {
-      label: 'From system',
+      label: t('alerting.use-combined-labels.grouped-options.label.from-system', 'From system'),
       options: keysFromGopsLabels,
       expanded: true,
     },
@@ -243,11 +248,11 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
     append({ key: '', value: '' });
   }, [append]);
 
+  const [selectedKey, setSelectedKey] = useState('');
   // check if the labels plugin is installed
   const { installed: labelsPluginInstalled = false, loading: loadingLabelsPlugin } = usePluginBridge(
     SupportedPlugin.Labels
   );
-  const [selectedKey, setSelectedKey] = useState('');
 
   const { loading, keysFromExistingAlerts, groupedOptions, getValuesForLabel } = useCombinedLabels(
     dataSourceName,
@@ -261,84 +266,83 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
     return getValuesForLabel(selectedKey);
   }, [selectedKey, getValuesForLabel]);
 
-  const isLoading = loading || loadingLabelsPlugin;
-
   return (
-    <>
-      {isLoading && (
-        <LoadingPlaceholder
-          text={t('alerting.labels-with-suggestions.text-loading-existing-labels', 'Loading existing labels')}
-        />
-      )}
-      {!isLoading && (
-        <Stack direction="column" gap={1} alignItems="flex-start">
-          {fields.map((field, index) => {
-            return (
-              <div key={field.id} className={cx(styles.flexRow, styles.centerAlignRow)}>
-                <Field
-                  className={styles.labelInput}
-                  invalid={Boolean(errors.labelsInSubform?.[index]?.key?.message)}
-                  error={errors.labelsInSubform?.[index]?.key?.message}
-                  data-testid={`labelsInSubform-key-${index}`}
-                >
-                  <Controller
-                    name={`labelsInSubform.${index}.key`}
-                    control={control}
-                    rules={{ required: Boolean(labelsInSubform[index]?.value) ? 'Required.' : false }}
-                    render={({ field: { onChange, ref, ...rest } }) => {
-                      return (
-                        <AlertLabelDropdown
-                          {...rest}
-                          defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
-                          options={labelsPluginInstalled ? groupedOptions : keysFromExistingAlerts}
-                          onChange={(newValue: SelectableValue) => {
-                            onChange(newValue.value);
-                            setSelectedKey(newValue.value);
-                          }}
-                          type="key"
-                        />
-                      );
-                    }}
-                  />
-                </Field>
-                <InlineLabel className={styles.equalSign}>=</InlineLabel>
-                <Field
-                  className={styles.labelInput}
-                  invalid={Boolean(errors.labelsInSubform?.[index]?.value?.message)}
-                  error={errors.labelsInSubform?.[index]?.value?.message}
-                  data-testid={`labelsInSubform-value-${index}`}
-                >
-                  <Controller
-                    control={control}
-                    name={`labelsInSubform.${index}.value`}
-                    rules={{ required: Boolean(labelsInSubform[index]?.value) ? 'Required.' : false }}
-                    render={({ field: { onChange, ref, ...rest } }) => {
-                      return (
-                        <AlertLabelDropdown
-                          {...rest}
-                          defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
-                          options={values}
-                          onChange={(newValue: SelectableValue) => {
-                            onChange(newValue.value);
-                          }}
-                          onOpenMenu={() => {
-                            setSelectedKey(labelsInSubform[index].key);
-                          }}
-                          type="value"
-                        />
-                      );
-                    }}
-                  />
-                </Field>
+    <Stack direction="column" gap={2} alignItems="flex-start">
+      {fields.map((field, index) => {
+        return (
+          <div key={field.id} className={cx(styles.flexRow, styles.centerAlignRow)} id="hola">
+            <Field
+              className={styles.labelInput}
+              invalid={Boolean(errors.labelsInSubform?.[index]?.key?.message)}
+              error={errors.labelsInSubform?.[index]?.key?.message}
+              data-testid={`labelsInSubform-key-${index}`}
+            >
+              <Controller
+                name={`labelsInSubform.${index}.key`}
+                control={control}
+                rules={{ required: Boolean(labelsInSubform[index]?.value) ? 'Required.' : false }}
+                render={({ field: { onChange, value, ref, ...rest } }) => {
+                  return (
+                    <AlertLabelDropdown
+                      {...rest}
+                      defaultValue={value ? { label: value, value: value } : undefined}
+                      options={
+                        labelsPluginInstalled
+                          ? groupedOptions.flatMap((group) => group.options)
+                          : keysFromExistingAlerts
+                      }
+                      isLoading={loading}
+                      onChange={(newValue: SelectableValue) => {
+                        if (newValue) {
+                          onChange(newValue.value || newValue.label || '');
+                          setSelectedKey(newValue.value);
+                        }
+                      }}
+                      type="key"
+                    />
+                  );
+                }}
+              />
+            </Field>
+            <InlineLabel className={styles.equalSign}>=</InlineLabel>
+            <Field
+              className={styles.labelInput}
+              invalid={Boolean(errors.labelsInSubform?.[index]?.value?.message)}
+              error={errors.labelsInSubform?.[index]?.value?.message}
+              data-testid={`labelsInSubform-value-${index}`}
+            >
+              <Controller
+                control={control}
+                name={`labelsInSubform.${index}.value`}
+                rules={{ required: Boolean(labelsInSubform[index]?.value) ? 'Required.' : false }}
+                render={({ field: { onChange, value, ref, ...rest } }) => {
+                  return (
+                    <AlertLabelDropdown
+                      {...rest}
+                      defaultValue={value ? { label: value, value: value } : undefined}
+                      options={values}
+                      isLoading={loading}
+                      onChange={(newValue: SelectableValue) => {
+                        if (newValue) {
+                          onChange(newValue.value || newValue.label || '');
+                        }
+                      }}
+                      onOpenMenu={() => {
+                        setSelectedKey(labelsInSubform[index].key);
+                      }}
+                      type="value"
+                    />
+                  );
+                }}
+              />
+            </Field>
 
-                <RemoveButton index={index} remove={remove} />
-              </div>
-            );
-          })}
-          <AddButton append={appendLabel} />
-        </Stack>
-      )}
-    </>
+            <RemoveButton index={index} remove={remove} />
+          </div>
+        );
+      })}
+      <AddButton append={appendLabel} />
+    </Stack>
   );
 }
 
@@ -370,7 +374,10 @@ export const LabelsWithoutSuggestions: FC = () => {
               >
                 <Input
                   {...register(`labels.${index}.key`, {
-                    required: { value: !!labels[index]?.value, message: 'Required.' },
+                    required: {
+                      value: !!labels[index]?.value,
+                      message: t('alerting.labels-without-suggestions.message.required', 'Required.'),
+                    },
                   })}
                   placeholder={t('alerting.labels-without-suggestions.placeholder-key', 'key')}
                   data-testid={`label-key-${index}`}
@@ -385,7 +392,10 @@ export const LabelsWithoutSuggestions: FC = () => {
               >
                 <Input
                   {...register(`labels.${index}.value`, {
-                    required: { value: !!labels[index]?.key, message: 'Required.' },
+                    required: {
+                      value: !!labels[index]?.key,
+                      message: t('alerting.labels-without-suggestions.message.required', 'Required.'),
+                    },
                   })}
                   placeholder={t('alerting.labels-without-suggestions.placeholder-value', 'value')}
                   data-testid={`label-value-${index}`}
@@ -404,6 +414,7 @@ export const LabelsWithoutSuggestions: FC = () => {
 
 function LabelsField() {
   const { watch } = useFormContext<RuleFormValues>();
+
   const type = watch('type') ?? RuleFormType.grafana;
 
   return (
@@ -470,7 +481,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: 0,
     }),
     labelInput: css({
-      width: '175px',
+      width: '215px',
       margin: 0,
     }),
     confirmButton: css({

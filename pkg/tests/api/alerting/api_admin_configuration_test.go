@@ -24,18 +24,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
-	const disableOrgID int64 = 3
+	const disableOrgID int64 = 2
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:          true,
 		EnableUnifiedAlerting:          true,
 		DisableAnonymous:               true,
 		NGAlertAdminConfigPollInterval: 2 * time.Second,
-		UnifiedAlertingDisabledOrgs:    []int64{disableOrgID}, // disable unified alerting for organisation 3
+		UnifiedAlertingDisabledOrgs:    []int64{disableOrgID}, // disable unified alerting for organisation 2
 		AppModeProduction:              true,
 	})
 

@@ -19,7 +19,7 @@ To learn more about Grafana Enterprise, refer to [our product page](/enterprise)
 
 ## Enterprise features in Grafana Cloud
 
-Many Grafana Enterprise features are also available in [Grafana Cloud](/docs/grafana-cloud) Free, Pro, and Advanced accounts. For details, refer to [Grafana Cloud pricing](/pricing/#featuresTable).
+Many Grafana Enterprise features are also available in paid [Grafana Cloud](/docs/grafana-cloud) accounts. For details, refer to [Grafana Cloud features](/docs/grafana-cloud/introduction/understand-grafana-cloud-features/). For pricing and plans, refer to [Grafana Cloud pricing](https://grafana.com/pricing/).
 
 To migrate to Grafana Cloud, refer to [Migrate from Grafana Enterprise to Grafana Cloud](/docs/grafana/<GRAFANA_VERSION>/administration/migration-guide/)
 
@@ -36,9 +36,9 @@ Supported auth providers:
 - [Auth Proxy](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/auth-proxy#team-sync-enterprise-only)
 - [Azure AD OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/azuread/#team-sync-enterprise-only)
 - [GitHub OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/github/#configure-team-synchronization)
-- [Generic OAuth integration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/generic-oauth#configure-team-synchronization)
+- [Generic OAuth integration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/generic-oauth/#configure-team-synchronization)
 - [GitLab OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/gitlab/#configure-team-synchronization)
-- [Google OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/google#configure-team-synchronization)
+- [Google OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/google/#configure-team-synchronization)
 - [LDAP](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/enhanced-ldap/#ldap-group-synchronization-for-teams)
 - [Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/okta#configure-team-synchronization-enterprise-only)
 - [SAML](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml#configure-team-sync)
@@ -96,6 +96,7 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 - [Grafana Enterprise Traces](/grafana/plugins/grafana-enterprise-traces-app/)
 - [Honeycomb](/grafana/plugins/grafana-honeycomb-datasource)
 - [Jira](/grafana/plugins/grafana-jira-datasource)
+- [LogicMonitor Devices](/grafana/plugins/grafana-logicmonitor-datasource/)
 - [Looker](/grafana/plugins/grafana-looker-datasource/)
 - [MongoDB](/grafana/plugins/grafana-mongodb-datasource)
 - [Netlify](/grafana/plugins/grafana-netlify-datasource)

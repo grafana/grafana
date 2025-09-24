@@ -1,6 +1,7 @@
 import memoizeOne from 'memoize-one';
 
 import { PanelPlugin } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
@@ -26,14 +27,14 @@ export const getPanelEditorTabs = memoizeOne((tab?: string, plugin?: PanelPlugin
 
     tabs.push({
       id: PanelEditorTabId.Query,
-      text: 'Query',
+      text: t('dashboard.get-panel-editor-tabs.text.query', 'Query'),
       icon: 'database',
       active: false,
     });
 
     tabs.push({
       id: PanelEditorTabId.Transform,
-      text: 'Transform data',
+      text: t('dashboard.get-panel-editor-tabs.text.transform-data', 'Transform data'),
       icon: 'process',
       active: false,
     });
@@ -42,7 +43,7 @@ export const getPanelEditorTabs = memoizeOne((tab?: string, plugin?: PanelPlugin
   if (shouldShowAlertingTab(plugin)) {
     tabs.push({
       id: PanelEditorTabId.Alert,
-      text: 'Alert',
+      text: t('dashboard.get-panel-editor-tabs.text.alert', 'Alert'),
       icon: 'bell',
       active: false,
     });

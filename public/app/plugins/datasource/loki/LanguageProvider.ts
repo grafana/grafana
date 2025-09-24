@@ -36,13 +36,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
   private labelsPromisesCache = new LRUCache<string, Promise<string[]>>({ max: 10 });
   private detectedLabelValuesPromisesCache = new LRUCache<string, Promise<string[]>>({ max: 10 });
 
-  constructor(datasource: LokiDatasource, initialValues?: any) {
+  constructor(datasource: LokiDatasource) {
     super();
 
     this.datasource = datasource;
     this.labelKeys = [];
-
-    Object.assign(this, initialValues);
   }
 
   request = async (
@@ -477,9 +475,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
       hasLogfmt: false,
       hasPack: false,
     };
-    if (!config.featureToggles.lokiQueryHints) {
-      return empty;
-    }
 
     const series = await this.datasource.getDataSamples(
       {
@@ -514,7 +509,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    *
    * @returns {TimeRange} The default time range
    */
-  private getDefaultTimeRange(): TimeRange {
+  getDefaultTimeRange(): TimeRange {
     return getDefaultTimeRange();
   }
 }

@@ -1,4 +1,4 @@
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
 import { AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';

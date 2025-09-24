@@ -6,17 +6,16 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 
 import ResponseParser from '../azure_monitor/response_parser';
 import { getCredentials } from '../credentials';
+import { AzureMonitorQuery, AzureQueryType } from '../types/query';
 import {
+  AzureMonitorDataSourceJsonData,
+  AzureMonitorDataSourceInstanceSettings,
   AzureAPIResponse,
   AzureLogsVariable,
-  AzureMonitorDataSourceInstanceSettings,
-  AzureMonitorDataSourceJsonData,
-  AzureMonitorQuery,
-  AzureQueryType,
+  Workspace,
   DatasourceValidationResult,
   Subscription,
-  Workspace,
-} from '../types';
+} from '../types/types';
 import { interpolateVariable, routeNames } from '../utils/common';
 
 import { transformMetadataToKustoSchema } from './utils';

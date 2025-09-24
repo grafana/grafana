@@ -5,17 +5,20 @@ import (
 	"errors"
 	"testing"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestSyncWorker_IsSupported(t *testing.T) {
+	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
 	tests := []struct {
 		name     string
 		job      provisioning.Job
@@ -43,7 +46,7 @@ func TestSyncWorker_IsSupported(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			worker := NewSyncWorker(nil, nil, nil, nil, nil)
+			worker := NewSyncWorker(nil, nil, nil, nil, nil, metrics, tracing.NewNoopTracerService())
 			result := worker.IsSupported(context.Background(), tt.job)
 			require.Equal(t, tt.expected, result)
 		})
@@ -62,9 +65,9 @@ func TestSyncWorker_ProcessNotReaderWriter(t *testing.T) {
 	})
 	fakeDualwrite := dualwrite.NewMockService(t)
 	fakeDualwrite.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
-	worker := NewSyncWorker(nil, nil, fakeDualwrite, nil, nil)
+	worker := NewSyncWorker(nil, nil, fakeDualwrite, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracing.NewNoopTracerService())
 	err := worker.Process(context.Background(), repo, provisioning.Job{}, jobs.NewMockJobProgressRecorder(t))
-	require.EqualError(t, err, "sync job submitted for repository that does not support read-write -- this is a bug")
+	require.EqualError(t, err, "sync job submitted for repository that does not support read-write")
 }
 
 func TestSyncWorker_Process(t *testing.T) {
@@ -112,16 +115,12 @@ func TestSyncWorker_Process(t *testing.T) {
 				rw.MockRepository.On("Config").Return(repoConfig)
 				pr.On("SetMessage", mock.Anything, "update sync status at start").Return()
 
-				rpf.On("Execute", mock.Anything, repoConfig, mock.MatchedBy(func(patch []map[string]interface{}) bool {
-					if len(patch) != 1 {
+				rpf.On("Execute", mock.Anything, repoConfig, mock.MatchedBy(func(patch map[string]interface{}) bool {
+					if patch["op"] != "replace" || patch["path"] != "/status/sync" {
 						return false
 					}
 
-					if patch[0]["op"] != "replace" || patch[0]["path"] != "/status/sync" {
-						return false
-					}
-
-					if patch[0]["value"].(provisioning.SyncStatus).LastRef != "existing-ref" || patch[0]["value"].(provisioning.SyncStatus).JobID != "test-job" {
+					if patch["value"].(provisioning.SyncStatus).LastRef != "existing-ref" || patch["value"].(provisioning.SyncStatus).JobID != "test-job" {
 						return false
 					}
 
@@ -229,6 +228,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Sync execution succeeds
 				pr.On("SetMessage", mock.Anything, "execute sync job").Return()
+				pr.On("StrictMaxErrors", 20).Return()
 				s.On("Sync", mock.Anything, rw, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
 					return true // Add specific sync options validation if needed
 				}), mockRepoResources, mock.Anything, pr).Return("new-ref", nil)
@@ -238,15 +238,12 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("SetMessage", mock.Anything, "update status and stats").Return()
 
 				// Final patch should include new ref
-				rpf.On("Execute", mock.Anything, repoConfig, mock.MatchedBy(func(patch []map[string]interface{}) bool {
-					if len(patch) != 1 {
+				rpf.On("Execute", mock.Anything, repoConfig, mock.MatchedBy(func(patch map[string]interface{}) bool {
+					if patch["op"] != "replace" || patch["path"] != "/status/sync" {
 						return false
 					}
-					syncStatus := patch[0]["value"].(provisioning.SyncStatus)
-					return patch[0]["op"] == "replace" &&
-						patch[0]["path"] == "/status/sync" &&
-						syncStatus.LastRef == "new-ref" &&
-						syncStatus.State == provisioning.JobStateSuccess
+					syncStatus := patch["value"].(provisioning.SyncStatus)
+					return syncStatus.LastRef == "new-ref" && syncStatus.State == provisioning.JobStateSuccess
 				})).Return(nil)
 			},
 			expectedError: "",
@@ -284,6 +281,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Sync execution fails
 				pr.On("SetMessage", mock.Anything, "execute sync job").Return()
+				pr.On("StrictMaxErrors", 20).Return()
 				syncError := errors.New("sync operation failed")
 				s.On("Sync", mock.Anything, rw, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
 					return true // Add specific sync options validation if needed
@@ -294,13 +292,10 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("SetMessage", mock.Anything, "update status and stats").Return()
 
 				// Final patch should preserve existing ref on failure
-				rpf.On("Execute", mock.Anything, repoConfig, mock.MatchedBy(func(patch []map[string]interface{}) bool {
-					if len(patch) != 1 {
-						return false
-					}
-					syncStatus := patch[0]["value"].(provisioning.SyncStatus)
-					return patch[0]["op"] == "replace" &&
-						patch[0]["path"] == "/status/sync" &&
+				rpf.On("Execute", mock.Anything, repoConfig, mock.MatchedBy(func(patch map[string]interface{}) bool {
+					syncStatus := patch["value"].(provisioning.SyncStatus)
+					return patch["op"] == "replace" &&
+						patch["path"] == "/status/sync" &&
 						syncStatus.LastRef == "existing-ref" && // LastRef should not change on failure
 						syncStatus.State == provisioning.JobStateError
 				})).Return(nil)
@@ -327,6 +322,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				mockClients := resources.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+				pr.On("StrictMaxErrors", 20).Return()
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
@@ -350,14 +346,15 @@ func TestSyncWorker_Process(t *testing.T) {
 				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				// Verify only sync status is patched
-				rpf.On("Execute", mock.Anything, mock.Anything, mock.MatchedBy(func(patch []map[string]interface{}) bool {
-					return len(patch) == 1 && patch[0]["path"] == "/status/sync"
+				rpf.On("Execute", mock.Anything, mock.Anything, mock.MatchedBy(func(patch map[string]interface{}) bool {
+					return patch["path"] == "/status/sync"
 				})).Return(nil)
 
 				// Simple mocks for other calls
 				mockClients := resources.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+				pr.On("StrictMaxErrors", 20).Return()
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 			},
@@ -394,19 +391,14 @@ func TestSyncWorker_Process(t *testing.T) {
 				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				// Verify both sync status and stats are patched
-				rpf.On("Execute", mock.Anything, mock.Anything, mock.MatchedBy(func(patch []map[string]interface{}) bool {
-					if len(patch) != 2 {
-						return false
-					}
-					if patch[0]["path"] != "/status/sync" {
-						return false
-					}
-
-					if patch[1]["path"] != "/status/stats" {
+				rpf.On("Execute", mock.Anything, mock.Anything, mock.MatchedBy(func(patch map[string]interface{}) bool {
+					return patch["path"] == "/status/sync"
+				}), mock.MatchedBy(func(patch map[string]interface{}) bool {
+					if patch["path"] != "/status/stats" {
 						return false
 					}
 
-					value := patch[1]["value"].([]provisioning.ResourceCount)
+					value := patch["value"].([]provisioning.ResourceCount)
 					if len(value) != 1 {
 						return false
 					}
@@ -422,6 +414,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				mockClients := resources.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+				pr.On("StrictMaxErrors", 20).Return()
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 			},
@@ -466,14 +459,15 @@ func TestSyncWorker_Process(t *testing.T) {
 				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				// Verify only sync status is patched (multiple stats should be ignored)
-				rpf.On("Execute", mock.Anything, mock.Anything, mock.MatchedBy(func(patch []map[string]interface{}) bool {
-					return len(patch) == 1 && patch[0]["path"] == "/status/sync"
+				rpf.On("Execute", mock.Anything, mock.Anything, mock.MatchedBy(func(patch map[string]interface{}) bool {
+					return patch["path"] == "/status/sync"
 				})).Return(nil)
 
 				// Simple mocks for other calls
 				mockClients := resources.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+				pr.On("StrictMaxErrors", 20).Return()
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 			},
@@ -504,6 +498,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Sync succeeds
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+				pr.On("StrictMaxErrors", 20).Return()
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 				pr.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 
@@ -538,6 +533,8 @@ func TestSyncWorker_Process(t *testing.T) {
 				dualwriteService,
 				repositoryPatchFn.Execute,
 				syncer,
+				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
+				tracing.NewNoopTracerService(),
 			)
 
 			// Create test job

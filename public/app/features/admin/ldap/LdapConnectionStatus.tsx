@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Alert, CellProps, Column, Icon, InteractiveTable, Stack, Text, Tooltip } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
-import { AppNotificationSeverity, LdapConnectionInfo, LdapServerInfo } from 'app/types';
+import { AppNotificationSeverity } from 'app/types/appNotifications';
+import { LdapConnectionInfo, LdapServerInfo } from 'app/types/ldap';
 
 interface Props {
   ldapConnectionInfo: LdapConnectionInfo;
@@ -32,13 +33,23 @@ export const LdapConnectionStatus = ({ ldapConnectionInfo }: Props) => {
         cell: (serverInfo: CellProps<ServerInfo>) => {
           return serverInfo.cell.value ? (
             <Stack justifyContent="end">
-              <Tooltip content="Connection is available">
+              <Tooltip
+                content={t(
+                  'admin.ldap-connection-status.columns.content-connection-is-available',
+                  'Connection is available'
+                )}
+              >
                 <Icon name="check" />
               </Tooltip>
             </Stack>
           ) : (
             <Stack justifyContent="end">
-              <Tooltip content="Connection is not available">
+              <Tooltip
+                content={t(
+                  'admin.ldap-connection-status.columns.content-connection-is-not-available',
+                  'Connection is not available'
+                )}
+              >
                 <Icon name="exclamation-triangle" />
               </Tooltip>
             </Stack>

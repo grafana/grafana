@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 
-import { DashboardCursorSync, PanelProps } from '@grafana/data';
+import { DashboardCursorSync, PanelProps, useDataLinksContext } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { PanelDataErrorView } from '@grafana/runtime';
 import {
   AxisPlacement,
   EventBusPlugin,
@@ -37,17 +39,21 @@ export const StatusHistoryPanel = ({
   options,
   width,
   height,
+  fieldConfig,
   replaceVariables,
   onChangeTimeRange,
+  id: panelId,
 }: TimelinePanelProps) => {
   const theme = useTheme2();
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
-  const { sync, eventsScope, canAddAnnotations, dataLinkPostProcessor, eventBus } = usePanelContext();
+  const { sync, eventsScope, canAddAnnotations, eventBus, canExecuteActions } = usePanelContext();
+  const { dataLinkPostProcessor } = useDataLinksContext();
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   const { frames, warn } = useMemo(
     () => prepareTimelineFields(data.series, false, timeRange, theme),
@@ -66,12 +72,8 @@ export const StatusHistoryPanel = ({
 
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
 
-  if (!paginatedFrames || warn) {
-    return (
-      <div className="panel-empty">
-        <p>{warn ?? 'No data found in response'}</p>
-      </div>
-    );
+  if (!paginatedFrames || typeof warn === 'string') {
+    return <PanelDataErrorView panelId={panelId} fieldConfig={fieldConfig} data={data} message={warn} needsTimeField />;
   }
 
   // Status grid requires some space between values
@@ -79,8 +81,10 @@ export const StatusHistoryPanel = ({
     return (
       <div className="panel-empty">
         <p>
-          Too many points to visualize properly. <br />
-          Update the query to return fewer points. <br />({paginatedFrames[0].length} points received)
+          <Trans i18nKey="status-history.status-history-panel.too-many-points" count={paginatedFrames[0].length}>
+            Too many points to visualize properly. <br />
+            Update the query to return fewer points. <br />({'{{count}}'} points received)
+          </Trans>
         </p>
       </div>
     );
@@ -150,6 +154,7 @@ export const StatusHistoryPanel = ({
                         maxHeight={options.tooltip.maxHeight}
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
+                        canExecuteActions={userCanExecuteActions}
                       />
                     );
                   }}

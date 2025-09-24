@@ -4,13 +4,14 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getAppEvents, isFetchError } from '@grafana/runtime';
-import { Alert, Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
+import { Box, Button, ConfirmModal, Stack, Text, useStyles2 } from '@grafana/ui';
+import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
-import { t } from 'app/core/internationalization';
 
 import { getDefaultValues } from '../Config/defaults';
+import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { dataToSpec } from '../utils/data';
@@ -19,9 +20,12 @@ import { getFormErrors } from '../utils/getFormErrors';
 import { BootstrapStep } from './BootstrapStep';
 import { ConnectStep } from './ConnectStep';
 import { FinishStep } from './FinishStep';
+import { useStepStatus } from './StepStatusContext';
 import { Step, Stepper } from './Stepper';
 import { SynchronizeStep } from './SynchronizeStep';
-import { RepoType, StepStatusInfo, WizardFormData, WizardStep } from './types';
+import { useCreateSyncJob } from './hooks/useCreateSyncJob';
+import { useResourceStats } from './hooks/useResourceStats';
+import { RepoType, WizardFormData, WizardStep } from './types';
 
 const appEvents = getAppEvents();
 
@@ -57,14 +61,23 @@ const getSteps = (): Array<Step<WizardStep>> => {
 export function ProvisioningWizard({ type }: { type: RepoType }) {
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
-  const [requiresMigration, setRequiresMigration] = useState(false);
-  const [stepStatusInfo, setStepStatusInfo] = useState<StepStatusInfo>({ status: 'idle' });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
 
-  const settingsQuery = useGetFrontendSettingsQuery();
+  const { stepStatusInfo, setStepStatusInfo, isStepSuccess, isStepRunning, hasStepError, hasStepWarning } =
+    useStepStatus();
+
+  const isSyncCompleted = activeStep === 'synchronize' && (isStepSuccess || hasStepWarning || hasStepError);
+  const isFinishWithSyncCompleted =
+    activeStep === 'finish' && (isStepSuccess || completedSteps.includes('synchronize'));
+  const shouldUseCancelBehavior = activeStep === 'connection' || isSyncCompleted || isFinishWithSyncCompleted;
+
+  const { data } = useGetFrontendSettingsQuery();
+  const isLegacyStorage = Boolean(data?.legacyStorage);
   const navigate = useNavigate();
+
   const steps = getSteps();
   const styles = useStyles2(getStyles);
 
@@ -88,17 +101,30 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     handleSubmit,
   } = methods;
 
-  const repoName = watch('repositoryName');
+  const [repoName = '', repoType, syncTarget] = watch(['repositoryName', 'repository.type', 'repository.sync.target']);
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
+  const {
+    shouldSkipSync,
+    requiresMigration,
+    isLoading: isResourceStatsLoading,
+  } = useResourceStats(repoName, isLegacyStorage, syncTarget);
+  const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
+    repoName: repoName,
+    requiresMigration,
+    repoType,
+    isLegacyStorage,
+    setStepStatusInfo,
+  });
 
   const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
   const currentStepConfig = steps[currentStepIndex];
-  const isStepSuccess = stepStatusInfo.status === 'success';
+
+  const canSkipSync = repoName && !isResourceStatsLoading && shouldSkipSync;
 
   // A different repository is marked with instance target -- nothing will succeed
   useEffect(() => {
-    if (settingsQuery.data?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
+    if (data?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: [
@@ -108,9 +134,10 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
       navigate(PROVISIONING_URL);
     }
-  }, [navigate, repoName, settingsQuery.data?.items]);
+  }, [navigate, repoName, data?.items]);
 
   const handleRepositoryDeletion = async (name: string) => {
+    setIsCancelling(true);
     try {
       await deleteRepository({ name });
       // Wait before redirecting to ensure deletion is processed
@@ -122,13 +149,52 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     }
   };
 
-  const handleCancel = async () => {
-    // For the first step, do not delete anything — just go back.
-    if (activeStep === 'connection' || !repoName) {
-      navigate(PROVISIONING_URL);
+  const handleBack = () => {
+    const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
+
+    if (currentStepIndex > 0) {
+      let previousStepIndex = currentStepIndex - 1;
+
+      // Handle special case: if we're on finish step and sync was skipped
+      if (activeStep === 'finish' && canSkipSync) {
+        previousStepIndex = currentStepIndex - 2; // Go back to bootstrap
+      }
+
+      if (previousStepIndex >= 0) {
+        const previousStep = steps[previousStepIndex];
+        setActiveStep(previousStep.id);
+        // Remove current step from completed steps when going back
+        setCompletedSteps((prev) => prev.filter((step) => step !== activeStep));
+        setStepStatusInfo({ status: 'idle' });
+      }
+    }
+  };
+
+  const onDiscard = async () => {
+    if (repoName) {
+      await handleRepositoryDeletion(repoName);
+    }
+
+    await handlePrevious();
+  };
+
+  const handlePrevious = async () => {
+    // For cancel actions, show confirmation modal
+    if (shouldUseCancelBehavior) {
+      if (!repoName) {
+        navigate(PROVISIONING_URL);
+        return;
+      }
+      setShowCancelConfirmation(true);
       return;
     }
-    setIsCancelling(true);
+
+    // For other steps, go back one step
+    handleBack();
+  };
+
+  const handleConfirmCancel = () => {
+    setShowCancelConfirmation(false);
     handleRepositoryDeletion(repoName);
   };
 
@@ -142,10 +208,32 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         return t('provisioning.wizard.button-next', 'Finish');
       }
 
+      // If on bootstrap step and should skip sync, show finish step name
+      if (currentStep === 'bootstrap' && canSkipSync) {
+        const finishStepIndex = stepIndex + 2;
+        if (finishStepIndex < steps.length) {
+          return steps[finishStepIndex].name;
+        }
+        return t('provisioning.wizard.button-next', 'Finish');
+      }
+
       return steps[stepIndex + 1].name;
     },
-    [steps]
+    [steps, canSkipSync]
   );
+
+  // Calculate previous/cancel button text based on current state
+  const getPreviousButtonText = useCallback(() => {
+    if (isCancelling) {
+      return t('provisioning.wizard-content.button-cancelling', 'Cancelling...');
+    }
+
+    if (shouldUseCancelBehavior) {
+      return t('provisioning.wizard-content.button-cancel', 'Cancel');
+    }
+
+    return t('provisioning.wizard-content.button-previous', 'Previous');
+  }, [isCancelling, shouldUseCancelBehavior]);
 
   const handleNext = async () => {
     const isLastStep = currentStepIndex === steps.length - 1;
@@ -154,7 +242,25 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     if (isLastStep) {
       navigate(PROVISIONING_URL);
     } else {
-      setActiveStep(steps[currentStepIndex + 1].id);
+      let nextStepIndex = currentStepIndex + 1;
+
+      // Skip synchronize step if no sync is needed
+      if (activeStep === 'bootstrap' && canSkipSync) {
+        nextStepIndex = currentStepIndex + 2; // Skip to finish step
+
+        // Create a pull job to initialize the repository
+        const job = await createSyncJob();
+        if (!job) {
+          return; // Don't proceed if job creation fails
+        }
+      }
+
+      if (nextStepIndex >= steps.length) {
+        navigate(PROVISIONING_URL);
+        return;
+      }
+
+      setActiveStep(steps[nextStepIndex].id);
       setCompletedSteps((prev) => [...new Set([...prev, activeStep])]);
       setStepStatusInfo({ status: 'idle' });
     }
@@ -163,18 +269,19 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   const onSubmit = async () => {
     if (currentStepConfig?.submitOnNext) {
       // Validate form data before proceeding
-      if (activeStep === 'connection' || activeStep === 'bootstrap') {
-        const isValid = await trigger(['repository', 'repository.title']);
-        if (!isValid) {
-          return;
-        }
+      const fieldsToValidate =
+        activeStep === 'connection' ? (['repository'] as const) : (['repository', 'repository.title'] as const);
+
+      const isValid = await trigger(fieldsToValidate);
+      if (!isValid) {
+        return;
       }
 
       setIsSubmitting(true);
       try {
         const formData = getValues();
         const spec = dataToSpec(formData.repository);
-        const rsp = await submitData(spec);
+        const rsp = await submitData(spec, formData.repository.token);
         if (rsp.error) {
           setStepStatusInfo({
             status: 'error',
@@ -208,23 +315,23 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         setIsSubmitting(false);
       }
     } else {
-      // only proceed if the job was successful
-      if (isStepSuccess) {
+      // proceed if the job was successful or had warnings
+      if (isStepSuccess || hasStepWarning) {
         handleNext();
       }
     }
   };
 
   const isNextButtonDisabled = () => {
-    if (activeStep === 'synchronize') {
-      return stepStatusInfo.status !== 'success';
+    // If the step is not on Connect page, we only enable it if the job was successful
+    if (activeStep !== 'connection' && hasStepError) {
+      return true;
     }
-    return (
-      isSubmitting ||
-      isCancelling ||
-      stepStatusInfo.status === 'running' ||
-      (activeStep !== 'connection' && stepStatusInfo.status === 'error')
-    );
+    // Synchronize step requires success or warning to proceed
+    if (activeStep === 'synchronize') {
+      return !(isStepSuccess || hasStepWarning); // Disable next button if the step is not successful or has warnings
+    }
+    return isSubmitting || isCancelling || isStepRunning || isCreatingSkipJob;
   };
 
   return (
@@ -233,40 +340,41 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         <Stepper steps={steps} activeStep={activeStep} visitedSteps={completedSteps} />
         <div className={styles.divider} />
         <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-          <FormPrompt onDiscard={handleCancel} confirmRedirect={isDirty && activeStep !== 'finish' && !isCancelling} />
+          <FormPrompt
+            onDiscard={onDiscard}
+            confirmRedirect={isDirty && !['connection', 'finish'].includes(activeStep) && !isCancelling}
+          />
           <Stack direction="column">
             <Box marginBottom={2}>
-              {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
               <Text element="h2">
                 {currentStepIndex + 1}. {currentStepConfig?.title}
               </Text>
             </Box>
 
-            {stepStatusInfo.status === 'error' && (
-              <Alert severity="error" title={'error' in stepStatusInfo ? stepStatusInfo.error : ''} />
-            )}
+            {hasStepError && 'error' in stepStatusInfo && <ProvisioningAlert error={stepStatusInfo.error} />}
+            {hasStepWarning && 'warning' in stepStatusInfo && <ProvisioningAlert warning={stepStatusInfo.warning} />}
+            {isStepSuccess && 'success' in stepStatusInfo && <ProvisioningAlert success={stepStatusInfo.success} />}
 
             <div className={styles.content}>
               {activeStep === 'connection' && <ConnectStep />}
-              {activeStep === 'bootstrap' && (
-                <BootstrapStep
-                  onOptionSelect={setRequiresMigration}
-                  onStepStatusUpdate={setStepStatusInfo}
-                  settingsData={settingsQuery.data}
-                  repoName={repoName ?? ''}
-                />
-              )}
+              {activeStep === 'bootstrap' && <BootstrapStep settingsData={data} repoName={repoName} />}
               {activeStep === 'synchronize' && (
-                <SynchronizeStep onStepStatusUpdate={setStepStatusInfo} requiresMigration={requiresMigration} />
+                <SynchronizeStep
+                  isLegacyStorage={isLegacyStorage}
+                  onCancel={handleRepositoryDeletion}
+                  isCancelling={isCancelling}
+                />
               )}
               {activeStep === 'finish' && <FinishStep />}
             </div>
 
             <Stack gap={2} justifyContent="flex-end">
-              <Button variant={'secondary'} onClick={handleCancel} disabled={isSubmitting || isCancelling}>
-                {isCancelling
-                  ? t('provisioning.wizard-content.button-cancelling', 'Cancelling...')
-                  : t('provisioning.wizard-content.button-cancel', 'Cancel')}
+              <Button
+                variant={'secondary'}
+                onClick={handlePrevious}
+                disabled={isSubmitting || isCancelling || isStepRunning || showCancelConfirmation}
+              >
+                {getPreviousButtonText()}
               </Button>
               <Button type={'submit'} disabled={isNextButtonDisabled()}>
                 {isSubmitting
@@ -277,6 +385,18 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
           </Stack>
         </form>
       </Stack>
+      <ConfirmModal
+        isOpen={showCancelConfirmation}
+        title={t('provisioning.wizard.discard-modal.title', 'Discard repository setup?')}
+        body={t(
+          'provisioning.wizard.discard-modal.body',
+          'This will delete the repository configuration and you will lose all progress. Are you sure you want to discard your changes?'
+        )}
+        confirmText={t('provisioning.wizard.discard-modal.confirm', 'Yes, discard')}
+        dismissText={t('provisioning.wizard.discard-modal.dismiss', 'Keep working')}
+        onConfirm={handleConfirmCancel}
+        onDismiss={() => setShowCancelConfirmation(false)}
+      />
     </FormProvider>
   );
 }

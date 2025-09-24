@@ -1,12 +1,13 @@
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { NavModel, NavModelItem } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useDataSource, useDataSourceMeta, useDataSourceSettings } from 'app/features/datasources/state/hooks';
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from 'app/features/datasources/state/navModel';
 import { useGetSingle } from 'app/features/plugins/admin/state/hooks';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
 export function useDataSourceSettingsNav(pageIdParam?: string) {
   const { uid = '' } = useParams<{ uid: string }>();
@@ -27,17 +28,17 @@ export function useDataSourceSettingsNav(pageIdParam?: string) {
   const navIndexId = pageId ? `datasource-${pageId}-${uid}` : `datasource-settings-${uid}`;
   let pageNav: NavModel = {
     node: {
-      text: 'Data Source Nav Node',
+      text: t('connections.use-data-source-settings-nav.page-nav.text.data-source-nav-node', 'Data Source Nav Node'),
     },
     main: {
-      text: 'Data Source Nav Node',
+      text: t('connections.use-data-source-settings-nav.page-nav.text.data-source-nav-node', 'Data Source Nav Node'),
     },
   };
 
   if (loadError) {
     const node: NavModelItem = {
       text: loadError,
-      subTitle: 'Data Source Error',
+      subTitle: t('connections.use-data-source-settings-nav.node.subTitle.data-source-error', 'Data Source Error'),
       icon: 'exclamation-triangle',
     };
 
@@ -49,6 +50,18 @@ export function useDataSourceSettingsNav(pageIdParam?: string) {
 
   if (loading || !plugin) {
     pageNav = getNavModel(navIndex, navIndexId, getDataSourceLoadingNav('settings'));
+  }
+
+  if (!datasource.uid) {
+    const node: NavModelItem = {
+      text: t('connections.use-data-source-settings-nav.node.subTitle.data-source-error', 'Data Source Error'),
+      icon: 'exclamation-triangle',
+    };
+
+    pageNav = {
+      node: node,
+      main: node,
+    };
   }
 
   if (plugin) {
@@ -63,8 +76,8 @@ export function useDataSourceSettingsNav(pageIdParam?: string) {
     ...pageNav.main,
     dataSourcePluginName: datasourcePlugin?.name || plugin?.meta.name || '',
     active: true,
-    text: datasource.name,
-    subTitle: `Type: ${dataSourceMeta.name}`,
+    text: datasource.name || '',
+    subTitle: dataSourceMeta.name ? `Type: ${dataSourceMeta.name}` : '',
     children: (pageNav.main.children || []).map((navModelItem) => ({
       ...navModelItem,
       url: navModelItem.url?.replace('datasources/edit/', '/connections/datasources/edit/'),

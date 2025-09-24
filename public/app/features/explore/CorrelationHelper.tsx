@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
 import { DataLinkTransformationConfig, ExploreCorrelationHelperData, GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Collapse,
   Alert,
@@ -18,8 +19,7 @@ import {
   Icon,
   Stack,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { getTransformationVars } from '../correlations/transformations';
 import { generateDefaultLabel } from '../correlations/utils';

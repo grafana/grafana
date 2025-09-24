@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
 import { InlineLabel } from '../Forms/InlineLabel';
 

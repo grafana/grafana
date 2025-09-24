@@ -1,4 +1,4 @@
-import { Map as OpenLayersMap } from 'ol';
+import OpenLayersMap from 'ol/Map';
 import BaseLayer from 'ol/layer/Base';
 import { ReactNode } from 'react';
 

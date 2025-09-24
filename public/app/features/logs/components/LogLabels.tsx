@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { memo, forwardRef, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, Labels } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 
@@ -68,6 +68,7 @@ export const LogLabels = memo(
             size="sm"
             fill="outline"
             variant="secondary"
+            className={styles.button}
             aria-label={t('logs.log-labels.expand', 'Expand labels')}
             onClick={() => {
               setDisplayAll(true);
@@ -83,6 +84,7 @@ export const LogLabels = memo(
             size="sm"
             fill="outline"
             variant="secondary"
+            className={styles.button}
             aria-label={t('logs.log-labels.collapse', 'Collapse labels')}
             onClick={() => {
               setDisplayAll(false);
@@ -104,6 +106,7 @@ interface LogLabelsArrayProps {
 
 export const LogLabelsList = memo(({ labels }: LogLabelsArrayProps) => {
   const styles = useStyles2(getStyles);
+
   return (
     <span className={styles.logsLabels}>
       {labels.map((label) => (
@@ -136,7 +139,7 @@ LogLabel.displayName = 'LogLabel';
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     logsLabels: css({
-      display: 'flex',
+      display: 'inline-flex',
       flexWrap: 'wrap',
       fontSize: theme.typography.size.xs,
       alignItems: 'center',
@@ -159,6 +162,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       maxWidth: theme.spacing(25),
       textOverflow: 'ellipsis',
       overflow: 'hidden',
+    }),
+    button: css({
+      height: theme.spacing(2.75),
     }),
   };
 };

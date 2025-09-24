@@ -2,14 +2,14 @@ import { useCallback, useState } from 'react';
 import * as React from 'react';
 
 import { ValueMatcherID, BasicValueMatcherOptions } from '@grafana/data';
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { getVariableSuggestions, numberOrVariableValidator } from '../../utils';
 
 import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
 
-export function basicMatcherEditor<T = any>(
+export function basicMatcherEditor(
   config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<BasicValueMatcherOptions>> {
   return function Render({ options, onChange }) {
@@ -46,56 +46,56 @@ export const getBasicValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<Basi
     {
       name: 'Is greater',
       id: ValueMatcherID.greater,
-      component: basicMatcherEditor<string | number>({
+      component: basicMatcherEditor({
         validator: numberOrVariableValidator,
       }),
     },
     {
       name: 'Is greater or equal',
       id: ValueMatcherID.greaterOrEqual,
-      component: basicMatcherEditor<string | number>({
+      component: basicMatcherEditor({
         validator: numberOrVariableValidator,
       }),
     },
     {
       name: 'Is lower',
       id: ValueMatcherID.lower,
-      component: basicMatcherEditor<string | number>({
+      component: basicMatcherEditor({
         validator: numberOrVariableValidator,
       }),
     },
     {
       name: 'Is lower or equal',
       id: ValueMatcherID.lowerOrEqual,
-      component: basicMatcherEditor<string | number>({
+      component: basicMatcherEditor({
         validator: numberOrVariableValidator,
       }),
     },
     {
       name: 'Is equal',
       id: ValueMatcherID.equal,
-      component: basicMatcherEditor<string | number | boolean>({
+      component: basicMatcherEditor({
         validator: () => true,
       }),
     },
     {
       name: 'Is not equal',
       id: ValueMatcherID.notEqual,
-      component: basicMatcherEditor<string | number | boolean>({
+      component: basicMatcherEditor({
         validator: () => true,
       }),
     },
     {
       name: 'Is Substring',
       id: ValueMatcherID.substring,
-      component: basicMatcherEditor<string | number | boolean>({
+      component: basicMatcherEditor({
         validator: () => true,
       }),
     },
     {
       name: 'Is not substring',
       id: ValueMatcherID.notSubstring,
-      component: basicMatcherEditor<string | number | boolean>({
+      component: basicMatcherEditor({
         validator: () => true,
       }),
     },

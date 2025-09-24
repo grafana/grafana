@@ -1,5 +1,5 @@
+import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';

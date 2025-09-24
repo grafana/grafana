@@ -2,6 +2,7 @@ import { useAsync } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 
 import { DB, ResourceSelectorProps } from '../types';
@@ -29,7 +30,7 @@ export const TableSelector = ({ db, dataset, table, className, onChange, inputId
     <Select
       className={className}
       disabled={state.loading}
-      aria-label="Table selector"
+      aria-label={t('grafana-sql.components.table-selector.aria-label-table-selector', 'Table selector')}
       inputId={inputId}
       data-testid={selectors.components.SQLQueryEditor.headerTableSelector}
       value={table}
@@ -37,7 +38,12 @@ export const TableSelector = ({ db, dataset, table, className, onChange, inputId
       onChange={onChange}
       isLoading={state.loading}
       menuShouldPortal={true}
-      placeholder={state.loading ? 'Loading tables' : 'Select table'}
+      placeholder={
+        state.loading
+          ? t('grafana-sql.components.table-selector.placeholder-loading', 'Loading tables')
+          : t('grafana-sql.components.table-selector.placeholder-select-table', 'Select table')
+      }
+      allowCustomValue={true}
     />
   );
 };

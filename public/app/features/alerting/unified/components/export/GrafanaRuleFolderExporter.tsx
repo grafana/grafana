@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
+import { t } from '@grafana/i18n';
 import { LoadingPlaceholder } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { FolderDTO } from 'app/types/folders';
 
-import { FolderDTO } from '../../../../../types';
 import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';

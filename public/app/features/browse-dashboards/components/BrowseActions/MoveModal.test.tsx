@@ -1,36 +1,24 @@
-import { render as rtlRender, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+import { render, screen } from 'test/test-utils';
 
-import { selectors } from '@grafana/e2e-selectors';
-import { setBackendSrv } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/__mocks__/backend_srv';
-import * as api from 'app/features/manage-dashboards/state/actions';
-import { DashboardSearchHit } from 'app/features/search/types';
+import { config, setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 import { MoveModal, Props } from './MoveModal';
 
-function render(...[ui, options]: Parameters<typeof rtlRender>) {
-  rtlRender(<TestProvider>{ui}</TestProvider>, options);
-}
+const [_, { folderA, folderB }] = getFolderFixtures();
+
+setBackendSrv(backendSrv);
+setupMockServer();
+
+const originalToggles = { ...config.featureToggles };
 
 describe('browse-dashboards MoveModal', () => {
   const mockOnDismiss = jest.fn();
   const mockOnConfirm = jest.fn();
-  const mockFolders = [
-    { title: 'Dashboards', uid: '' } as DashboardSearchHit,
-    { title: 'Folder 1', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
-  ];
   let props: Props;
-
-  beforeAll(() => {
-    setBackendSrv(backendSrv);
-    jest.spyOn(backendSrv, 'get').mockResolvedValue({
-      dashboard: 0,
-      folder: 0,
-    });
-  });
+  window.HTMLElement.prototype.scrollIntoView = () => {};
 
   beforeEach(() => {
     props = {
@@ -44,9 +32,6 @@ describe('browse-dashboards MoveModal', () => {
         panel: {},
       },
     };
-
-    // mock the searchFolders api call so the folder picker has some folders in it
-    jest.spyOn(api, 'searchFolders').mockResolvedValue(mockFolders);
   });
 
   it('renders a dialog with the correct title', async () => {
@@ -70,50 +55,89 @@ describe('browse-dashboards MoveModal', () => {
   it('displays a folder picker', async () => {
     render(<MoveModal {...props} />);
 
-    expect(await screen.findByTestId(selectors.components.FolderPicker.input)).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Select folder' })).toBeInTheDocument();
   });
 
-  it('displays a warning about permissions if a folder is selected', async () => {
-    props.selectedItems.folder = {
-      myFolderUid: true,
-    };
-    render(<MoveModal {...props} />);
+  describe('when a folder is selected', () => {
+    describe.each([
+      // app platform
+      true,
+      // legacy
+      false,
+    ])('with foldersAppPlatformAPI set to %s', (toggle) => {
+      beforeEach(() => {
+        props.selectedItems.folder = {
+          [folderA.item.uid]: true,
+        };
+        config.featureToggles.foldersAppPlatformAPI = toggle;
+      });
+      afterEach(() => {
+        config.featureToggles = originalToggles;
+      });
 
-    expect(
-      await screen.findByRole('status', { name: 'Moving this item may change its permissions.' })
-    ).toBeInTheDocument();
+      it('displays a warning about permissions if a folder is selected', async () => {
+        render(<MoveModal {...props} />);
+
+        expect(
+          await screen.findByRole('status', { name: 'Moving this item may change its permissions.' })
+        ).toBeInTheDocument();
+      });
+
+      it('displays summary of affected items', async () => {
+        render(<MoveModal {...props} />);
+
+        expect(await screen.findByText(/This action will move the following content/i)).toBeInTheDocument();
+
+        expect(await screen.findByText(/5 item/)).toBeInTheDocument();
+        expect(screen.getByText(/2 folder/)).toBeInTheDocument();
+        expect(screen.getByText(/1 dashboard/)).toBeInTheDocument();
+        expect(screen.getByText(/1 library panel/)).toBeInTheDocument();
+        expect(screen.getByText(/1 alert rule/)).toBeInTheDocument();
+      });
+
+      it('shows an error if one of the folder counts cannot be fetched', async () => {
+        props.selectedItems.folder = {
+          [folderA.item.uid]: true,
+          [folderB.item.uid]: true,
+        };
+        render(<MoveModal {...props} />);
+
+        expect(await screen.findByRole('alert', { name: /unable to retrieve/i })).toBeInTheDocument();
+      });
+    });
   });
 
-  it('only enables the `Move` button if a folder is selected', async () => {
-    render(<MoveModal {...props} />);
+  it('enables the `Move` button once a folder is selected', async () => {
+    const { user } = render(<MoveModal {...props} />);
 
     expect(await screen.findByRole('button', { name: 'Move' })).toBeDisabled();
-    const folderPicker = await screen.findByTestId(selectors.components.FolderPicker.input);
 
-    await selectOptionInTest(folderPicker, mockFolders[1].title);
-    expect(await screen.findByRole('button', { name: 'Move' })).toBeEnabled();
-  });
+    // Open the picker and wait for children to load
+    const folderPicker = await screen.findByRole('button', { name: 'Select folder' });
+    await user.click(folderPicker);
+    await screen.findByLabelText(folderA.item.title);
 
-  it('calls onConfirm when clicking the `Move` button', async () => {
-    render(<MoveModal {...props} />);
-    const folderPicker = await screen.findByTestId(selectors.components.FolderPicker.input);
+    // Select the folder
+    await user.click(screen.getByLabelText(folderA.item.title));
 
-    await selectOptionInTest(folderPicker, mockFolders[1].title);
-    await userEvent.click(await screen.findByRole('button', { name: 'Move' }));
-    expect(mockOnConfirm).toHaveBeenCalledWith(mockFolders[1].uid);
+    const moveButton = await screen.findByRole('button', { name: 'Move' });
+    expect(moveButton).toBeEnabled();
+
+    await user.click(moveButton);
+    expect(mockOnConfirm).toHaveBeenCalledWith(folderA.item.uid);
   });
 
   it('calls onDismiss when clicking the `Cancel` button', async () => {
-    render(<MoveModal {...props} />);
+    const { user } = render(<MoveModal {...props} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
+    await user.click(await screen.findByRole('button', { name: 'Cancel' }));
     expect(mockOnDismiss).toHaveBeenCalled();
   });
 
   it('calls onDismiss when clicking the X', async () => {
-    render(<MoveModal {...props} />);
+    const { user } = render(<MoveModal {...props} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Close' }));
+    await user.click(await screen.findByRole('button', { name: 'Close' }));
     expect(mockOnDismiss).toHaveBeenCalled();
   });
 });

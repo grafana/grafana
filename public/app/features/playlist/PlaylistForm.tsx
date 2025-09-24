@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Field, FieldSet, Input, LinkButton, Stack } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
-import { Trans, t } from 'app/core/internationalization';
 
-import { Playlist } from '../../api/clients/playlist';
+import { Playlist, PlaylistSpec } from '../../api/clients/playlist/v0alpha1';
 import { getGrafanaSearcher } from '../search/service/searcher';
 
 import { PlaylistTable } from './PlaylistTable';
@@ -21,7 +21,7 @@ interface Props {
 
 export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
   const [saving, setSaving] = useState(false);
-  const { title: name, interval, items: propItems } = playlist.spec;
+  const { title: name, interval, items: propItems } = playlist.spec || {};
   const tagOptions = useMemo(() => {
     return () => getGrafanaSearcher().tags({ kind: ['dashboard'] });
   }, []);
@@ -34,13 +34,15 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
       ...playlist,
       spec: {
         ...specUpdates,
+        interval: specUpdates?.interval ?? '5m',
+        title: specUpdates?.title ?? '',
         items,
       },
     });
   };
 
   return (
-    <Form onSubmit={doSubmit} validateOn={'onBlur'}>
+    <Form<PlaylistSpec> onSubmit={doSubmit} validateOn={'onBlur'}>
       {({ register, errors }) => {
         const isDisabled = items.length === 0 || Object.keys(errors).length > 0;
         return (

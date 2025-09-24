@@ -1,6 +1,11 @@
-import { render } from '@testing-library/react';
+import { render, act } from '@testing-library/react';
+import { createRef } from 'react';
 
 import { AnnotationQuery, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
+import { PromQuery } from '@grafana/prometheus';
+import { DataQuery } from '@grafana/schema';
+
+import { updateAnnotationFromSavedQuery, getDataQueryFromAnnotationForSavedQueries } from '../utils/savedQueryUtils';
 
 import StandardAnnotationQueryEditor, { Props as EditorProps } from './StandardAnnotationQueryEditor';
 
@@ -26,6 +31,22 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   getTimeSrv: jest.fn().mockReturnValue({
     timeRange: jest.fn().mockReturnValue({}),
   }),
+}));
+
+jest.mock('../utils/savedQueryUtils', () => ({
+  updateAnnotationFromSavedQuery: jest.fn(),
+  getDataQueryFromAnnotationForSavedQueries: jest.fn(),
+}));
+
+jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
+  useQueryLibraryContext: jest.fn().mockReturnValue({
+    renderSavedQueryButtons: jest.fn().mockReturnValue(null),
+  }),
+}));
+
+jest.mock('../standardAnnotationSupport', () => ({
+  ...jest.requireActual('../standardAnnotationSupport'),
+  shouldUseLegacyRunner: jest.fn().mockReturnValue(false),
 }));
 
 describe('StandardAnnotationQueryEditor', () => {
@@ -68,14 +89,14 @@ describe('StandardAnnotationQueryEditor', () => {
     );
   });
 
-  it('v2 dashboard - should preserve options field when changing target', () => {
-    // Setup with annotation that has options
+  it('v2 dashboard - should preserve legacyOptions field when changing target', () => {
+    // Setup with annotation that has legacyOptions
     const mockOnChange = jest.fn();
     const { props } = setup({
       annotation: {
-        name: 'annotationWithOptions',
+        name: 'annotationWithLegacyOptions',
         target: { refId: 'refId1' },
-        options: {
+        legacyOptions: {
           expr: 'rate(http_requests_total[5m])',
           queryType: 'range',
         },
@@ -98,11 +119,11 @@ describe('StandardAnnotationQueryEditor', () => {
     // Simulate changing the target
     componentInstance.onChange({ refId: 'refId2', newField: 'value' });
 
-    // Check that options are preserved
+    // Check that legacyOptions are preserved
     expect(mockOnChange).toHaveBeenCalledWith(
       expect.objectContaining({
         target: { refId: 'refId2', newField: 'value' },
-        options: {
+        legacyOptions: {
           expr: 'rate(http_requests_total[5m])',
           queryType: 'range',
         },
@@ -110,13 +131,13 @@ describe('StandardAnnotationQueryEditor', () => {
     );
   });
 
-  it('should preserve options field when using onAnnotationChange', () => {
-    // Setup with annotation that has options
+  it('should preserve legacyOptions field when using onAnnotationChange', () => {
+    // Setup with annotation that has legacyOptions
     const mockOnChange = jest.fn();
     const { props } = setup({
       annotation: {
-        name: 'annotationWithOptions',
-        options: {
+        name: 'annotationWithLegacyOptions',
+        legacyOptions: {
           expr: 'rate(http_requests_total[5m])',
           queryType: 'range',
         },
@@ -142,12 +163,12 @@ describe('StandardAnnotationQueryEditor', () => {
       iconColor: 'red',
     });
 
-    // Check that options are preserved
+    // Check that legacyOptions are preserved
     expect(mockOnChange).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'newName',
         iconColor: 'red',
-        options: {
+        legacyOptions: {
           expr: 'rate(http_requests_total[5m])',
           queryType: 'range',
         },
@@ -187,17 +208,17 @@ describe('StandardAnnotationQueryEditor', () => {
     );
   });
 
-  it('should propagate options to root level for v2 dashboards', () => {
+  it('should propagate legacyOptions to root level for v2 dashboards', () => {
     const { props } = setup({
       annotation: {
-        name: 'v2annotationWithOptions',
+        name: 'v2annotationWithLegacyOptions',
         query: {
           kind: 'prometheus',
           spec: {
             refId: 'A',
           },
         },
-        options: {
+        legacyOptions: {
           expr: 'rate(http_requests_total[5m])',
           legendFormat: '{{method}} {{endpoint}}',
         },
@@ -210,13 +231,13 @@ describe('StandardAnnotationQueryEditor', () => {
       } as unknown as DataSourceApi,
     });
 
-    // Check that options are propagated to root level for the editor
+    // Check that legacyOptions are propagated to root level for the editor
     expect(props.datasource?.annotations?.QueryEditor).toHaveBeenCalledWith(
       expect.objectContaining({
         annotation: expect.objectContaining({
-          name: 'v2annotationWithOptions',
+          name: 'v2annotationWithLegacyOptions',
           query: expect.anything(),
-          options: expect.anything(),
+          legacyOptions: expect.anything(),
           expr: 'rate(http_requests_total[5m])',
           legendFormat: '{{method}} {{endpoint}}',
         }),
@@ -235,7 +256,7 @@ describe('StandardAnnotationQueryEditor', () => {
           type: 'prometheus',
           uid: 'abc123',
         },
-        // v1 dashboards don't have options field
+        // v1 dashboards don't have legacyOptions field
         enable: true,
         iconColor: 'red',
         hide: false,
@@ -345,5 +366,223 @@ describe('StandardAnnotationQueryEditor', () => {
         enable: false,
       })
     );
+  });
+
+  describe('verifyDataSource behavior', () => {
+    it('should always run prepareAnnotation for proper query formatting', () => {
+      const mockPrepareAnnotation = jest.fn((annotation: AnnotationQuery) => annotation);
+
+      setup({
+        annotation: {
+          name: 'test annotation',
+          datasource: { uid: 'prometheus-uid', type: 'prometheus' },
+          target: { refId: 'A', expr: 'up' } as PromQuery,
+          enable: true,
+          iconColor: 'green',
+        } as AnnotationQuery,
+        datasource: {
+          uid: 'testdata-uid',
+          type: 'testdata', // Different datasource
+          annotations: {
+            QueryEditor: jest.fn(() => <div>Editor</div>),
+            prepareAnnotation: mockPrepareAnnotation,
+          },
+        } as unknown as DataSourceApi,
+      });
+
+      // The component should always call prepareAnnotation to ensure proper query structure
+      expect(mockPrepareAnnotation).toHaveBeenCalledTimes(1);
+    });
+
+    it('should run prepareAnnotation for v2 annotations with query.spec', () => {
+      const mockPrepareAnnotation = jest.fn((annotation: AnnotationQuery) => annotation);
+
+      setup({
+        annotation: {
+          name: 'v2 test annotation',
+          datasource: { uid: 'prometheus-uid', type: 'prometheus' },
+          query: {
+            kind: 'prometheus',
+            spec: { refId: 'A', expr: 'up' } as PromQuery,
+          },
+          enable: true,
+          iconColor: 'green',
+        } as AnnotationQuery,
+        datasource: {
+          uid: 'testdata-uid',
+          type: 'testdata', // Different datasource
+          annotations: {
+            QueryEditor: jest.fn(() => <div>Editor</div>),
+            prepareAnnotation: mockPrepareAnnotation,
+          },
+        } as unknown as DataSourceApi,
+      });
+
+      // The component should call prepareAnnotation to ensure proper query structure
+      expect(mockPrepareAnnotation).toHaveBeenCalledTimes(1);
+    });
+
+    it('should run prepareAnnotation for clean annotations', () => {
+      const mockPrepareAnnotation = jest.fn((annotation: AnnotationQuery) => annotation);
+
+      setup({
+        annotation: {
+          name: 'clean annotation',
+          datasource: { uid: 'prometheus-uid', type: 'prometheus' },
+          // No target field = clean annotation
+          enable: true,
+          iconColor: 'green',
+        } as AnnotationQuery,
+        datasource: {
+          uid: 'testdata-uid',
+          type: 'testdata', // Different datasource
+          annotations: {
+            QueryEditor: jest.fn(() => <div>Editor</div>),
+            prepareAnnotation: mockPrepareAnnotation,
+          },
+        } as unknown as DataSourceApi,
+      });
+
+      // The component should call prepareAnnotation
+      expect(mockPrepareAnnotation).toHaveBeenCalledTimes(1);
+    });
+
+    it('should run prepareAnnotation when datasources match', () => {
+      const mockPrepareAnnotation = jest.fn((annotation: AnnotationQuery) => annotation);
+
+      setup({
+        annotation: {
+          name: 'matching datasource annotation',
+          datasource: { uid: 'prometheus-uid', type: 'prometheus' },
+          target: { refId: 'A', expr: 'up' } as PromQuery,
+          enable: true,
+          iconColor: 'green',
+        } as AnnotationQuery,
+        datasource: {
+          uid: 'prometheus-uid',
+          type: 'prometheus', // Matches annotation datasource
+          annotations: {
+            QueryEditor: jest.fn(() => <div>Editor</div>),
+            prepareAnnotation: mockPrepareAnnotation,
+          },
+        } as unknown as DataSourceApi,
+      });
+
+      // Should always run prepareAnnotation
+      expect(mockPrepareAnnotation).toHaveBeenCalledTimes(1);
+    });
+
+    it('should skip prepareAnnotation on next verifyDataSource call after onQueryReplace', async () => {
+      // Mocking all dependencies
+      const mockPrepareAnnotation = jest.fn((annotation: AnnotationQuery) => annotation);
+      const mockOnChange = jest.fn();
+      const mockUpdateAnnotation = updateAnnotationFromSavedQuery as jest.MockedFunction<
+        typeof updateAnnotationFromSavedQuery
+      >;
+
+      // mocks the updateAnnotationFromSavedQuery to return a prepared annotation
+      const mockGetDataQuery = getDataQueryFromAnnotationForSavedQueries as jest.MockedFunction<
+        typeof getDataQueryFromAnnotationForSavedQueries
+      >;
+
+      const originalAnnotation = {
+        name: 'test annotation',
+        datasource: { uid: 'prometheus-uid', type: 'prometheus' },
+        target: { refId: 'A', expr: 'up' } as PromQuery,
+        enable: true,
+        iconColor: 'green',
+      } as AnnotationQuery;
+
+      // this is the method a datasource could implement
+      const preparedAnnotation = {
+        name: 'test annotation',
+        datasource: { uid: 'loki-uid', type: 'loki' },
+        target: { refId: 'B', expr: '{job="test"}' },
+        enable: true,
+        iconColor: 'green',
+      } as AnnotationQuery;
+
+      mockUpdateAnnotation.mockResolvedValue(preparedAnnotation);
+
+      // Mock getDataQueryFromAnnotationForSavedQueries to return a basic query
+      mockGetDataQuery.mockReturnValue({
+        refId: 'Anno',
+        datasource: originalAnnotation.datasource,
+      });
+
+      const componentRef = createRef<StandardAnnotationQueryEditor>();
+
+      const { rerender } = render(
+        <StandardAnnotationQueryEditor
+          ref={componentRef}
+          annotation={originalAnnotation}
+          datasource={
+            {
+              uid: 'prometheus-uid',
+              type: 'prometheus',
+              annotations: {
+                QueryEditor: jest.fn(() => <div>Editor</div>),
+                prepareAnnotation: mockPrepareAnnotation,
+              },
+            } as unknown as DataSourceApi
+          }
+          datasourceInstanceSettings={{} as DataSourceInstanceSettings}
+          onChange={mockOnChange}
+        />
+      );
+
+      // Initial mount should call prepareAnnotation once
+      expect(mockPrepareAnnotation).toHaveBeenCalledTimes(1);
+
+      // Call onQueryReplace to set the skipNextVerification flag
+      const replacedQuery = {
+        refId: 'B',
+        expr: '{job="test"}',
+        datasource: { uid: 'loki-uid', type: 'loki' },
+      } as DataQuery;
+
+      await act(async () => {
+        await componentRef.current!.onQueryReplace(replacedQuery);
+      });
+
+      // Verify onQueryReplace worked correctly
+      expect(mockUpdateAnnotation).toHaveBeenCalledWith(originalAnnotation, replacedQuery);
+      expect(mockOnChange).toHaveBeenCalledWith(preparedAnnotation);
+
+      // Reset the mock to track subsequent calls
+      mockPrepareAnnotation.mockClear();
+
+      // Create a completely new annotation object to ensure componentDidUpdate is triggered
+      const newAnnotation = {
+        ...preparedAnnotation,
+        // Force a new object reference
+        name: preparedAnnotation.name + ' updated',
+      };
+
+      // Now simulate componentDidUpdate by re-rendering with the new annotation
+      // This should trigger verifyDataSource and with skip logic commented out, should call prepareAnnotation
+      act(() => {
+        rerender(
+          <StandardAnnotationQueryEditor
+            ref={componentRef}
+            annotation={newAnnotation} // New annotation object reference
+            datasource={
+              {
+                uid: 'loki-uid', // Different datasource to match the new annotation
+                type: 'loki',
+                annotations: {
+                  QueryEditor: jest.fn(() => <div>Editor</div>),
+                  prepareAnnotation: mockPrepareAnnotation,
+                },
+              } as unknown as DataSourceApi
+            }
+            datasourceInstanceSettings={{} as DataSourceInstanceSettings}
+            onChange={mockOnChange}
+          />
+        );
+      });
+
+      expect(mockPrepareAnnotation).not.toHaveBeenCalled();
+    });
   });
 });

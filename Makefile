@@ -5,10 +5,10 @@
 WIRE_TAGS = "oss"
 
 -include local/Makefile
-include .bingo/Variables.mk
+include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.24.2
+GO_VERSION = 1.24.6
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -18,18 +18,16 @@ GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(GO_RACE_FLAG)
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
-GO_TEST_OUTPUT := $(shell [ -n "$(GO_TEST_OUTPUT)" ] && echo '-json | tee $(GO_TEST_OUTPUT) | tparse -all')
-GO_UNIT_COVERAGE ?= true
-GO_UNIT_COVER_PROFILE ?= unit.cov
-GO_INTEGRATION_COVER_PROFILE ?= integration.cov
 GIT_BASE = remotes/origin/main
 
 # GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
 XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
 
-targets := $(shell echo '$(sources)' | tr "," " ")
+# Test sharding to replicate CI behaviour locally.
+SHARD ?= 1
+SHARDS ?= 1
 
-GO_INTEGRATION_TESTS := $(shell find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+targets := $(shell echo '$(sources)' | tr "," " ")
 
 .PHONY: all
 all: deps build
@@ -62,16 +60,17 @@ $(NGALERT_SPEC_TARGET):
 
 $(MERGED_SPEC_TARGET): swagger-oss-gen swagger-enterprise-gen $(NGALERT_SPEC_TARGET)  ## Merge generated and ngalert API specs
 	# known conflicts DsPermissionType, AddApiKeyCommand, Json, Duration (identical models referenced by both specs)
-	GODEBUG=gotypesalias=0 $(GO) tool swagger mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
+	GODEBUG=gotypesalias=0 $(swagger) mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
 
 .PHONY: swagger-oss-gen
 swagger-oss-gen: ## Generate API Swagger specification
 	@echo "re-generating swagger for OSS"
 	rm -f $(SPEC_TARGET)
-	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(GO) tool swagger generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
+	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(swagger) generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
+	-x "github.com/docker/docker" \
 	-i pkg/api/swagger_tags.json \
 	--exclude-tag=alpha \
 	--exclude-tag=enterprise
@@ -86,11 +85,13 @@ else
 swagger-enterprise-gen: ## Generate API Swagger specification
 	@echo "re-generating swagger for enterprise"
 	rm -f $(ENTERPRISE_SPEC_TARGET)
-	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(GO) tool swagger generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
+	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(swagger) generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
+	-x "github.com/docker/docker" \
 	-i pkg/api/swagger_tags.json \
+	-t enterprise \
 	--exclude-tag=alpha \
 	--include-tag=enterprise
 endif
@@ -100,7 +101,7 @@ swagger-gen: gen-go $(MERGED_SPEC_TARGET) swagger-validate
 
 .PHONY: swagger-validate
 swagger-validate: $(MERGED_SPEC_TARGET) # Validate API spec
-	GODEBUG=gotypesalias=0 $(GO) tool swagger validate --skip-warnings $(<)
+	GODEBUG=gotypesalias=0 $(swagger) validate --skip-warnings $(<)
 
 .PHONY: swagger-clean
 swagger-clean:
@@ -112,11 +113,11 @@ cleanup-old-git-hooks:
 
 .PHONY: lefthook-install
 lefthook-install: cleanup-old-git-hooks # install lefthook for pre-commit hooks
-	$(GO) tool lefthook install -f
+	$(lefthook) install -f
 
 .PHONY: lefthook-uninstall
 lefthook-uninstall:
-	$(GO) tool lefthook uninstall
+	$(lefthook) uninstall
 
 ##@ OpenAPI 3
 OAPI_SPEC_TARGET = public/openapi3.json
@@ -141,6 +142,10 @@ endif
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
 	yarn run i18next --config public/locales/i18next-parser.config.cjs
+	@echo "Extracting i18n strings for packages"
+	yarn run packages:i18n-extract
+	@echo "Extracting i18n strings for plugins"
+	yarn run plugin:i18n-extract
 
 ##@ Building
 .PHONY: gen-cue
@@ -164,11 +169,23 @@ gen-cuev2: ## Do all CUE code generation
 # TODO (@radiohead): uncomment once we want to start generating code for all apps.
 # For now, we want to use an explicit list of apps to generate code for.
 #
-# APPS_DIRS=$(shell find ./apps -mindepth 1 -maxdepth 1 -type d | sort)
+#APPS_DIRS=$(shell find ./apps -type d -exec test -f "{}/Makefile" \; -print | sort)
 APPS_DIRS := ./apps/dashboard ./apps/folder ./apps/alerting/notifications
 
 .PHONY: gen-apps
-gen-apps: ## Generate code for Grafana App SDK apps
+gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt
+	@if [ -n "$$CODEGEN_VERIFY" ]; then \
+		echo "Verifying generated code is up to date..."; \
+		if ! git diff --quiet; then \
+			echo "Error: Generated apps code is not up to date. Please run 'make gen-apps' to regenerate."; \
+			git diff --name-only; \
+			exit 1; \
+		fi; \
+		echo "Generated apps code is up to date."; \
+	fi
+
+.PHONY: do-gen-apps
+do-gen-apps: ## Generate code for Grafana App SDK apps
 	for dir in $(APPS_DIRS); do \
 		$(MAKE) -C $$dir generate; \
 	done
@@ -186,16 +203,24 @@ gen-feature-toggles:
 		go test -v ./pkg/services/featuremgmt/...; \
 	fi
 
-.PHONY: gen-go
-gen-go:
-	@echo "generate go files"
-	$(GO) run $(GO_RACE_FLAG) ./pkg/build/wire/cmd/wire/main.go gen -tags $(WIRE_TAGS) ./pkg/server
+.PHONY: gen-go gen-enterprise-go
+ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled
+gen-enterprise-go:
+	@echo "skipping re-generating Wire graph for enterprise: not enabled"
+else
+gen-enterprise-go: ## Generate Wire graph (Enterprise)
+	@echo "re-generating Wire graph for enterprise"
+	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "enterprise" -gen_tags "(enterprise || pro)" -output_file_prefix="enterprise_" ./pkg/server
+endif
+gen-go: gen-enterprise-go ## Generate Wire graph
+	@echo "generating Wire graph"
+	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server
 
 .PHONY: fix-cue
 fix-cue:
 	@echo "formatting cue files"
-	$(GO) tool cue fix kinds/**/*.cue
-	$(GO) tool cue fix public/app/plugins/**/**/*.cue
+	$(cue) fix kinds/**/*.cue
+	$(cue) fix public/app/plugins/**/**/*.cue
 
 .PHONY: gen-jsonnet
 gen-jsonnet:
@@ -251,8 +276,8 @@ build-plugin-go: ## Build decoupled plugins
 build: build-go build-js ## Build backend and frontend.
 
 .PHONY: run
-run: ## Build and run web server on filesystem changes. See /.bra.toml for configuration.
-	$(GO) tool bra run
+run: ## Build and run backend, and watch for changes. See .air.toml for configuration.
+	$(air) -c .air.toml
 
 .PHONY: run-go
 run-go: ## Build and run web server immediately.
@@ -263,6 +288,18 @@ run-go: ## Build and run web server immediately.
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
 
+.PHONY: run-bra
+run-bra: ## [Deprecated] Build and run web server on filesystem changes. See /.bra.toml for configuration.
+	$(bra) run
+
+.PHONY: frontend-service-check
+frontend-service-check:
+	./devenv/frontend-service/local-init.sh
+
+.PHONY: frontend-service
+frontend-service: frontend-service-check
+	bash ./devenv/frontend-service/run.sh
+
 ##@ Testing
 
 .PHONY: test-go
@@ -270,13 +307,9 @@ test-go: test-go-unit test-go-integration
 
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
-	@echo "backend unit tests"
-	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -v -short -timeout=30m $(GO_TEST_FILES) $(GO_TEST_OUTPUT)
-
-.PHONY: test-go-unit-cov
-test-go-unit-cov: ## Run unit tests for backend with flags and coverage
-	@echo "backend unit tests with coverage"
-	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -v -short $(if $(filter true,$(GO_UNIT_COVERAGE)),-covermode=atomic -coverprofile=$(GO_UNIT_COVER_PROFILE) $(if $(GO_UNIT_TEST_COVERPKG),-coverpkg=$(GO_UNIT_TEST_COVERPKG)),) -timeout=30m $(GO_TEST_FILES) $(GO_TEST_OUTPUT)
+	@echo "backend unit tests ($(SHARD)/$(SHARDS))"
+	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -v -short -timeout=30m \
+		$(shell ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
 
 .PHONY: test-go-unit-pretty
 test-go-unit-pretty: check-tparse
@@ -289,7 +322,8 @@ test-go-unit-pretty: check-tparse
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.
 	@echo "test backend integration tests"
-	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -count=1 -run "^TestIntegration" -covermode=atomic -coverprofile=$(GO_INTEGRATION_COVER_PROFILE)  -timeout=5m $(GO_INTEGRATION_TESTS) $(GO_TEST_OUTPUT)
+	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -count=1 -run "^TestIntegration" -covermode=atomic -coverprofile=$(GO_INTEGRATION_COVER_PROFILE) -timeout=5m \
+		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
 
 .PHONY: test-go-integration-alertmanager
 test-go-integration-alertmanager: ## Run integration tests for the remote alertmanager (config taken from the mimir_backend block).
@@ -311,32 +345,29 @@ test-go-integration-postgres: devenv-postgres ## Run integration tests for postg
 	@echo "test backend integration postgres tests"
 	$(GO) clean -testcache
 	GRAFANA_TEST_DB=postgres \
-	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m $(GO_INTEGRATION_TESTS)
+	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m \
+		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
 
 .PHONY: test-go-integration-mysql
 test-go-integration-mysql: devenv-mysql ## Run integration tests for mysql backend with flags.
 	@echo "test backend integration mysql tests"
 	GRAFANA_TEST_DB=mysql \
-	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m $(GO_INTEGRATION_TESTS)
+	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m \
+		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
 
 .PHONY: test-go-integration-redis
 test-go-integration-redis: ## Run integration tests for redis cache.
 	@echo "test backend integration redis tests"
 	$(GO) clean -testcache
-	REDIS_URL=localhost:6379 $(GO) test $(GO_TEST_FLAGS) -run IntegrationRedis -covermode=atomic -timeout=2m $(GO_INTEGRATION_TESTS)
+	REDIS_URL=localhost:6379 $(GO) test $(GO_TEST_FLAGS) -run IntegrationRedis -covermode=atomic -timeout=2m \
+		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
 
 .PHONY: test-go-integration-memcached
 test-go-integration-memcached: ## Run integration tests for memcached cache.
 	@echo "test backend integration memcached tests"
 	$(GO) clean -testcache
-	MEMCACHED_HOSTS=localhost:11211 $(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -run IntegrationMemcached -covermode=atomic -timeout=2m $(GO_INTEGRATION_TESTS)
-
-.PHONY: test-go-integration-spanner
-test-go-integration-spanner: ## Run integration tests for Spanner backend with flags. Uses spanner-emulator on localhost:9010 and localhost:9020.
-	@if [ "${WIRE_TAGS}" != "enterprise" ]; then echo "Spanner integration test require enterprise setup"; exit 1; fi
-	@echo "test backend integration spanner tests"
-	GRAFANA_TEST_DB=spanner \
-	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -v -run "^TestIntegration" -covermode=atomic -timeout=2m $(GO_INTEGRATION_TESTS)
+	MEMCACHED_HOSTS=localhost:11211 $(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -run IntegrationMemcached -covermode=atomic -timeout=2m \
+		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
 
 .PHONY: test-js
 test-js: ## Run tests for frontend.
@@ -350,7 +381,7 @@ test: test-go test-js ## Run all tests.
 .PHONY: golangci-lint
 golangci-lint:
 	@echo "lint via golangci-lint"
-	$(GO) tool golangci-lint run \
+	$(golangci-lint) run \
 		--config .golangci.yml \
 		$(if $(GO_BUILD_TAGS),--build-tags $(GO_BUILD_TAGS)) \
 		$(GO_LINT_FILES)
@@ -365,7 +396,11 @@ lint-go-diff:
 		$(XARGSR) dirname | \
 		sort -u | \
 		sed 's,^,./,' | \
-		$(XARGSR) $(GO) tool golangci-lint run --config .golangci.yml
+		$(XARGSR) $(golangci-lint) run --config .golangci.yml
+
+.PHONY: gofmt
+gofmt: ## Run gofmt for all Go files.
+	@go list -m -f '{{.Dir}}' | xargs -I{} sh -c 'test ! -f {}/.nolint && echo {}' | xargs gofmt -s -w 2>&1 | grep -v '/pkg/build/' || true
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
@@ -378,13 +413,35 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 TAG_SUFFIX=$(if $(WIRE_TAGS)!=oss,-$(WIRE_TAGS))
 PLATFORM=linux/amd64
 
+# default to a production build for frontend
+#
+DOCKER_JS_NODE_ENV_FLAG = production
+DOCKER_JS_YARN_BUILD_FLAG = build
+DOCKER_JS_YARN_INSTALL_FLAG = --immutable
+#
+# if go is in dev mode, also build node in dev mode
+ifeq ($(GO_BUILD_DEV), dev)
+  DOCKER_JS_NODE_ENV_FLAG = dev
+  DOCKER_JS_YARN_BUILD_FLAG = dev
+	DOCKER_JS_YARN_INSTALL_FLAG =
+endif
+# if NODE_ENV is set in the environment to dev, build frontend in dev mode, and allow go builds to use their default
+ifeq (${NODE_ENV}, dev)
+  DOCKER_JS_NODE_ENV_FLAG = dev
+  DOCKER_JS_YARN_BUILD_FLAG = dev
+	DOCKER_JS_YARN_INSTALL_FLAG =
+endif
+
 .PHONY: build-docker-full
 build-docker-full: ## Build Docker image for development.
-	@echo "build docker container"
+	@echo "build docker container mode=($(DOCKER_JS_NODE_ENV_FLAG))"
 	tar -ch . | \
 	docker buildx build - \
 	--platform $(PLATFORM) \
-	--build-arg BINGO=false \
+	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
+	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
+	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
+	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
@@ -394,11 +451,14 @@ build-docker-full: ## Build Docker image for development.
 
 .PHONY: build-docker-full-ubuntu
 build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
-	@echo "build docker container"
+	@echo "build docker container mode=($(DOCKER_JS_NODE_ENV_FLAG))"
 	tar -ch . | \
 	docker buildx build - \
 	--platform $(PLATFORM) \
-	--build-arg BINGO=false \
+	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
+	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
+	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
+	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
@@ -458,11 +518,11 @@ devenv-mysql:
 .PHONY: protobuf
 protobuf: ## Compile protobuf definitions
 	bash scripts/protobuf-check.sh
-	go install google.golang.org/protobuf/cmd/protoc-gen-go
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.5
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
 	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
-	buf generate pkg/apis/secret/v0alpha1/decrypt --template pkg/apis/secret/v0alpha1/decrypt/buf.gen.yaml
-	buf generate pkg/storage/unified/resource --template pkg/storage/unified/resource/buf.gen.yaml
+	buf generate apps/secret --template apps/secret/buf.gen.yaml
+	buf generate pkg/storage/unified/proto --template pkg/storage/unified/proto/buf.gen.yaml
 	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml
 	buf generate pkg/services/ngalert/store/proto/v1 --template pkg/services/ngalert/store/proto/v1/buf.gen.yaml
 
@@ -478,25 +538,6 @@ gen-ts:
 	go get github.com/tkrajina/typescriptify-golang-structs/typescriptify@v0.1.7
 	tscriptify -interface -package=github.com/grafana/grafana/pkg/services/live/pipeline -import="import { FieldConfig } from '@grafana/data'" -target=public/app/features/live/pipeline/models.gen.ts pkg/services/live/pipeline/config.go
 	go mod tidy
-
-# This repository's configuration is protected (https://readme.drone.io/signature/).
-# Use this make target to regenerate the configuration YAML files when
-# you modify starlark files.
-.PHONY: drone
-drone: $(DRONE)
-	bash scripts/drone/env-var-check.sh
-	$(DRONE) starlark --format
-	$(DRONE) lint .drone.yml --trusted
-	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
-
-# Generate an Emacs tags table (https://www.gnu.org/software/emacs/manual/html_node/emacs/Tags-Tables.html) for Starlark files.
-.PHONY: scripts/drone/TAGS
-scripts/drone/TAGS: $(shell find scripts/drone -name '*.star')
-	etags --lang none --regex="/def \(\w+\)[^:]+:/\1/" --regex="/\s*\(\w+\) =/\1/" $^ -o $@
-
-.PHONY: format-drone
-format-drone:
-	buildifier --lint=fix -r scripts/drone
 
 .PHONY: go-race-is-enabled
 go-race-is-enabled:
@@ -519,3 +560,8 @@ check-tparse:
 .PHONY: help
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+# check licenses of used dependencies (can be run using build image using
+# container/check-licenses target)
+check-licenses:
+	license_finder --decisions-file .github/license_finder.yaml

@@ -6,12 +6,12 @@ import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
-import { Alert, Button, Field, FieldSet, Icon, Input, LoadingBar, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from '@grafana/i18n';
+import { config, getBackendSrv } from '@grafana/runtime';
+import { Button, Field, FieldSet, Icon, Input, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { DashboardInteractions } from '../../utils/interactions';
+import { ImagePreview } from '../components/ImagePreview';
 
 type ImageSettingsForm = {
   width: number;
@@ -26,8 +26,6 @@ type Props = {
   disabled: boolean;
   theme: string;
 };
-
-const selector = e2eSelectors.pages.ShareDashboardDrawer.ShareInternally.SharePanel;
 
 export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }: Props) {
   const styles = useStyles2(getStyles);
@@ -78,12 +76,15 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
   };
 
   return (
-    <div data-testid={selector.preview}>
+    <section aria-labelledby="panel-preview-heading">
       <Stack gap={2} direction="column">
-        <Text element="h4">
+        <Text element="h4" id="panel-preview-heading">
           <Trans i18nKey="share-panel-image.preview.title">Panel preview</Trans>
         </Text>
-        <form onSubmit={handleSubmit(onRenderImageClick)}>
+        <form
+          onSubmit={handleSubmit(onRenderImageClick)}
+          aria-label={t('share-panel-image.form.label', 'Panel image settings')}
+        >
           <FieldSet
             disabled={!config.rendererAvailable}
             label={
@@ -123,7 +124,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
                   placeholder={t('share-panel-image.settings.width-placeholder', '1000')}
                   type="number"
                   suffix="px"
-                  data-testid={selector.widthInput}
+                  aria-label={t('share-panel-image.settings.width-label', 'Width')}
                 />
               </Field>
               <Field
@@ -146,7 +147,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
                   placeholder={t('share-panel-image.settings.height-placeholder', '500')}
                   type="number"
                   suffix="px"
-                  data-testid={selector.heightInput}
+                  aria-label={t('share-panel-image.settings.height-label', 'Height')}
                 />
               </Field>
               <Field
@@ -171,7 +172,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
                   })}
                   placeholder={t('share-panel-image.settings.scale-factor-placeholder', '1')}
                   type="number"
-                  data-testid={selector.scaleFactorInput}
+                  aria-label={t('share-panel-image.settings.scale-factor-label', 'Scale factor')}
                 />
               </Field>
             </Stack>
@@ -182,7 +183,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
                 fill="solid"
                 type="submit"
                 disabled={disabled || loading || !isValid}
-                data-testid={selector.generateImageButton}
+                aria-describedby={disabled ? 'generate-button-disabled-help' : undefined}
               >
                 <Trans i18nKey="link.share-panel.render-image">Generate image</Trans>
               </Button>
@@ -191,46 +192,43 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
                 icon={'download-alt'}
                 variant="secondary"
                 disabled={!image || loading || disabled}
-                data-testid={selector.downloadImageButton}
+                aria-describedby={!image && !loading ? 'download-button-disabled-help' : undefined}
               >
                 <Trans i18nKey="link.share-panel.download-image">Download image</Trans>
               </Button>
             </Stack>
+            {disabled && (
+              <Text variant="bodySmall" color="secondary" id="generate-button-disabled-help">
+                <Trans i18nKey="share-panel-image.disabled-help">Save the dashboard to enable image generation</Trans>
+              </Text>
+            )}
+            {!image && !loading && (
+              <Text variant="bodySmall" color="secondary" id="download-button-disabled-help">
+                <Trans i18nKey="share-panel-image.download-disabled-help">
+                  Generate an image first to enable download
+                </Trans>
+              </Text>
+            )}
           </FieldSet>
         </form>
-        {loading && (
-          <div>
-            <LoadingBar width={128} />
-            <div className={styles.imageLoadingContainer}>
-              <Text variant="body">{title || ''}</Text>
-            </div>
-          </div>
-        )}
-        {image && !loading && <img src={URL.createObjectURL(image)} alt="panel-preview-img" className={styles.image} />}
-        {error && !loading && (
-          <Alert severity="error" title={t('link.share-panel.render-image-error', 'Failed to render panel image')}>
-            {isFetchError(error)
-              ? error.statusText
-              : t('link.share-panel.render-image-error-description', 'An error occurred when generating the image')}
-          </Alert>
-        )}
+
+        <ImagePreview
+          imageBlob={image || null}
+          isLoading={loading}
+          error={
+            error
+              ? { title: t('share-panel-image.error-title', 'Failed to generate image'), message: error.message }
+              : null
+          }
+          title={title}
+        />
       </Stack>
-    </div>
+    </section>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   imageConfigurationField: css({
     flex: 1,
-  }),
-  image: css({
-    maxWidth: '100%',
-    width: 'max-content',
-  }),
-  imageLoadingContainer: css({
-    maxWidth: '100%',
-    height: 362,
-    border: `1px solid ${theme.components.input.borderColor}`,
-    padding: theme.spacing(1),
   }),
 });

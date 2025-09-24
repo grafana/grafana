@@ -12,11 +12,10 @@ import { default as AsyncCreatable } from 'react-select/async-creatable';
 import Creatable from 'react-select/creatable';
 
 import { SelectableValue, toOption } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 
-import { useTheme2 } from '../../themes';
-import { t, Trans } from '../../utils/i18n';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
-import { Spinner } from '../Spinner/Spinner';
 
 import { CustomInput } from './CustomInput';
 import { DropdownIndicator } from './DropdownIndicator';
@@ -364,7 +363,8 @@ export function SelectBase<T, Rest = {}>({
             );
           },
           LoadingIndicator() {
-            return <Spinner inline />;
+            // Handled with DropdownIndicator, to avoid resize flickering with auto width
+            return null;
           },
           LoadingMessage() {
             return <div className={styles.loadingMessage}>{loadingMessage}</div>;
@@ -398,6 +398,7 @@ export function SelectBase<T, Rest = {}>({
         }
         styles={selectStyles}
         className={className}
+        autoWidth={width === 'auto'}
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}

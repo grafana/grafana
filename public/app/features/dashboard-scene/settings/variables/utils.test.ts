@@ -25,8 +25,8 @@ import { QueryVariableEditor } from './editors/QueryVariableEditor';
 import { TextBoxVariableEditor } from './editors/TextBoxVariableEditor';
 import {
   isEditableVariableType,
-  EDITABLE_VARIABLES,
   EDITABLE_VARIABLES_SELECT_ORDER,
+  getEditableVariables,
   getVariableTypeSelectOptions,
   getVariableEditor,
   getVariableScene,
@@ -136,20 +136,22 @@ describe('getVariableTypeSelectOptions', () => {
 
     it('should contain all editable variable types', () => {
       const options = getVariableTypeSelectOptions();
-      expect(options).toHaveLength(Object.keys(EDITABLE_VARIABLES).length);
+      const editableVariables = getEditableVariables();
+      expect(options).toHaveLength(Object.keys(editableVariables).length);
 
       EDITABLE_VARIABLES_SELECT_ORDER.forEach((type) => {
-        expect(EDITABLE_VARIABLES).toHaveProperty(type);
+        expect(editableVariables).toHaveProperty(type);
       });
     });
 
     it('should return an array of selectable values for editable variable types', () => {
+      const editableVariables = getEditableVariables();
       const options = getVariableTypeSelectOptions();
       expect(options).toHaveLength(8);
 
       options.forEach((option, index) => {
         const editableType = EDITABLE_VARIABLES_SELECT_ORDER[index];
-        const variableTypeConfig = EDITABLE_VARIABLES[editableType];
+        const variableTypeConfig = editableVariables[editableType];
 
         expect(option.value).toBe(editableType);
         expect(option.label).toBe(variableTypeConfig.name);
@@ -160,21 +162,23 @@ describe('getVariableTypeSelectOptions', () => {
 
   describe('when groupByVariable is disabled', () => {
     it('should contain all editable variable types except groupby', () => {
+      const editableVariables = getEditableVariables();
       const options = getVariableTypeSelectOptions();
-      expect(options).toHaveLength(Object.keys(EDITABLE_VARIABLES).length - 1);
+      expect(options).toHaveLength(Object.keys(editableVariables).length - 1);
 
       EDITABLE_VARIABLES_SELECT_ORDER.forEach((type) => {
-        expect(EDITABLE_VARIABLES).toHaveProperty(type);
+        expect(editableVariables).toHaveProperty(type);
       });
     });
 
     it('should return an array of selectable values for editable variable types', () => {
+      const editableVariables = getEditableVariables();
       const options = getVariableTypeSelectOptions();
       expect(options).toHaveLength(7);
 
       options.forEach((option, index) => {
         const editableType = EDITABLE_VARIABLES_SELECT_ORDER[index];
-        const variableTypeConfig = EDITABLE_VARIABLES[editableType];
+        const variableTypeConfig = editableVariables[editableType];
 
         expect(option.value).toBe(editableType);
         expect(option.label).toBe(variableTypeConfig.name);
@@ -185,11 +189,12 @@ describe('getVariableTypeSelectOptions', () => {
 });
 
 describe('getVariableEditor', () => {
+  const editableVariables = getEditableVariables();
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it.each(Object.keys(EDITABLE_VARIABLES) as EditableVariableType[])(
+  it.each(Object.keys(editableVariables) as EditableVariableType[])(
     'should define an editor for variable type "%s"',
     (type) => {
       const editor = getVariableEditor(type);
@@ -212,11 +217,12 @@ describe('getVariableEditor', () => {
 });
 
 describe('getVariableScene', () => {
+  const editableVariables = getEditableVariables();
   beforeAll(() => {
     setTemplateSrv(templateSrv);
   });
 
-  it.each(Object.keys(EDITABLE_VARIABLES) as EditableVariableType[])(
+  it.each(Object.keys(editableVariables) as EditableVariableType[])(
     'should define a scene object for every variable type',
     (type) => {
       const variable = getVariableScene(type, { name: 'foo' });
@@ -328,10 +334,8 @@ describe('getDefinition', () => {
 describe('getOptionDataSourceTypes', () => {
   it('should return all data source types when no data source types are specified', () => {
     const optionTypes = getOptionDataSourceTypes();
-    expect(optionTypes).toHaveLength(2);
-    // in the old code we always had an empty option
-    expect(optionTypes[0].value).toBe('');
-    expect(optionTypes[1].label).toBe('ds1');
+    expect(optionTypes).toHaveLength(1);
+    expect(optionTypes[0].label).toBe('ds1');
   });
 });
 

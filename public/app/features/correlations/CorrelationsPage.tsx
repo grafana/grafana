@@ -3,6 +3,7 @@ import { negate } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { CorrelationData, isFetchError, reportInteraction } from '@grafana/runtime';
 import {
   Badge,
@@ -16,13 +17,12 @@ import {
   type CellProps,
   type SortByFn,
   Pagination,
-  Icon,
+  TextLink,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { Trans, t } from 'app/core/internationalization';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { AddCorrelationForm } from './Forms/AddCorrelationForm';
 import { EditCorrelationForm } from './Forms/EditCorrelationForm';
@@ -160,14 +160,9 @@ export default function CorrelationsPage() {
         <>
           <Trans i18nKey="correlations.sub-title">
             Define how data living in different data sources relates to each other. Read more in the{' '}
-            <a
-              href="https://grafana.com/docs/grafana/next/administration/correlations/"
-              target="_blank"
-              rel="noreferrer"
-            >
+            <TextLink href="https://grafana.com/docs/grafana/next/administration/correlations/" external>
               documentation
-              <Icon name="external-link-alt" />
-            </a>
+            </TextLink>
           </Trans>
         </>
       }

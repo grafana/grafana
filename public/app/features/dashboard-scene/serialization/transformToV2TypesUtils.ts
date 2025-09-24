@@ -17,7 +17,7 @@ import {
   VariableRefresh,
   VariableSort,
   FieldColorModeId as FieldColorModeIdV2,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 // used for QueryVariableKind's query prop - in schema V2 we've deprecated string type and support only DataQuery
 export const LEGACY_STRING_VALUE_KEY = '__legacyStringValue';
@@ -55,6 +55,8 @@ export function transformVariableHideToEnum(hide?: VariableHideV1): VariableHide
       return 'hideLabel';
     case 2:
       return 'hideVariable';
+    case 3:
+      return 'inControlsMenu';
     default:
       return defaultVariableHide();
   }

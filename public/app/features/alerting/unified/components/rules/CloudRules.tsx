@@ -3,9 +3,11 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Badge, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -48,13 +50,11 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
     DEFAULT_PER_PAGE_PAGINATION
   );
 
-  const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
-  const [viewExternalRuleSupported, viewExternalRuleAllowed] = useAlertingAbility(AlertingAction.ViewExternalAlertRule);
-
-  const canViewCloudRules = viewExternalRuleSupported && viewExternalRuleAllowed;
-  const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
   const canMigrateToGMA =
-    hasDataSourcesConfigured && canCreateGrafanaRules && canViewCloudRules && config.featureToggles.alertingMigrationUI;
+    hasDataSourcesConfigured &&
+    config.featureToggles.alertingMigrationUI &&
+    contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
+    contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
   return (
     <section className={styles.wrapper}>
@@ -169,6 +169,7 @@ export function CreateRecordingRuleButton() {
 
 function MigrateToGMAButton() {
   const importUrl = createRelativeUrl('/alerting/import-datasource-managed-rules');
+
   return (
     <LinkButton variant="secondary" href={importUrl} icon="arrow-up">
       <Stack direction="row" gap={1} alignItems="center">

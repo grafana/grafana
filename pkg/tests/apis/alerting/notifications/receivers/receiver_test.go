@@ -13,7 +13,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/alerting/notify"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -21,15 +20,13 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha1"
+	"github.com/grafana/alerting/notify"
 
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/routingtree"
-
-	test_common "github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -45,16 +42,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	test_common "github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 //go:embed test-data/*.*
 var testData embed.FS
 
 func TestMain(m *testing.M) {
-	testsuite.RunButSkipOnSpanner(m)
+	testsuite.Run(m)
 }
 
 func getTestHelper(t *testing.T) *apis.K8sTestHelper {
@@ -62,9 +61,7 @@ func getTestHelper(t *testing.T) *apis.K8sTestHelper {
 }
 
 func TestIntegrationResourceIdentifier(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -73,9 +70,9 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.ReceiverSpec{
 			Title:        "Test-Receiver",
-			Integrations: []v0alpha1.Integration{},
+			Integrations: []v0alpha1.ReceiverIntegration{},
 		},
 	}
 
@@ -126,16 +123,13 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 // TestIntegrationResourcePermissions focuses on testing resource permissions for the alerting receiver resource. It
 // verifies that access is correctly set when creating resources and assigning permissions to users, teams, and roles.
 func TestIntegrationResourcePermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
 	org1 := helper.Org1
-
-	noneUser := helper.CreateUser("none", apis.Org1, org.RoleNone, nil)
+	noneUser := org1.None
 
 	creator := helper.CreateUser("creator", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 		createWildcardPermission(
@@ -305,9 +299,9 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
-				Spec: v0alpha1.Spec{
+				Spec: v0alpha1.ReceiverSpec{
 					Title:        "receiver-1",
-					Integrations: []v0alpha1.Integration{},
+					Integrations: []v0alpha1.ReceiverIntegration{},
 				},
 			}
 			d, err := json.Marshal(created)
@@ -402,9 +396,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 }
 
 func TestIntegrationAccessControl(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -571,9 +563,9 @@ func TestIntegrationAccessControl(t *testing.T) {
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
-				Spec: v0alpha1.Spec{
+				Spec: v0alpha1.ReceiverSpec{
 					Title:        fmt.Sprintf("receiver-1-%s", tc.user.Identity.GetLogin()),
-					Integrations: []v0alpha1.Integration{},
+					Integrations: []v0alpha1.ReceiverIntegration{},
 				},
 			}
 			d, err := json.Marshal(expected)
@@ -613,6 +605,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 				// Set expected metadata.
 				expectedWithMetadata := expected.Copy().(*v0alpha1.Receiver)
 				expectedWithMetadata.SetInUse(0, nil)
+				expectedWithMetadata.SetCanUse(true)
 				if tc.canUpdate {
 					expectedWithMetadata.SetAccessControl("canWrite")
 				}
@@ -730,9 +723,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 }
 
 func TestIntegrationInUseMetadata(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -858,9 +849,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 }
 
 func TestIntegrationProvisioning(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -878,9 +867,9 @@ func TestIntegrationProvisioning(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.ReceiverSpec{
 			Title: "test-receiver-1",
-			Integrations: []v0alpha1.Integration{
+			Integrations: []v0alpha1.ReceiverIntegration{
 				createIntegration(t, "email"),
 			},
 		},
@@ -915,9 +904,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 }
 
 func TestIntegrationOptimisticConcurrency(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -927,9 +914,9 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.ReceiverSpec{
 			Title:        "receiver-1",
-			Integrations: []v0alpha1.Integration{},
+			Integrations: []v0alpha1.ReceiverIntegration{},
 		},
 	}
 
@@ -998,9 +985,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 }
 
 func TestIntegrationPatch(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -1010,9 +995,9 @@ func TestIntegrationPatch(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.ReceiverSpec{
 			Title: "receiver",
-			Integrations: []v0alpha1.Integration{
+			Integrations: []v0alpha1.ReceiverIntegration{
 				createIntegration(t, "email"),
 				createIntegration(t, "webhook"),
 				createIntegration(t, "sns"),
@@ -1028,7 +1013,7 @@ func TestIntegrationPatch(t *testing.T) {
 		current, err := adminClient.Get(ctx, current.Name, v1.GetOptions{})
 		require.NoError(t, err)
 
-		index := slices.IndexFunc(current.Spec.Integrations, func(t v0alpha1.Integration) bool {
+		index := slices.IndexFunc(current.Spec.Integrations, func(t v0alpha1.ReceiverIntegration) bool {
 			return t.Type == "webhook"
 		})
 
@@ -1094,9 +1079,7 @@ func TestIntegrationPatch(t *testing.T) {
 }
 
 func TestIntegrationReferentialIntegrity(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -1214,9 +1197,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 }
 
 func TestIntegrationCRUD(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -1269,9 +1250,9 @@ func TestIntegrationCRUD(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "default",
 			},
-			Spec: v0alpha1.Spec{
+			Spec: v0alpha1.ReceiverSpec{
 				Title:        defaultReceiver.Spec.Title,
-				Integrations: []v0alpha1.Integration{},
+				Integrations: []v0alpha1.ReceiverIntegration{},
 			},
 		}
 		_, err := adminClient.Create(ctx, newReceiver, v1.CreateOptions{})
@@ -1285,7 +1266,7 @@ func TestIntegrationCRUD(t *testing.T) {
 
 	var receiver *v0alpha1.Receiver
 	t.Run("should correctly persist all known integrations", func(t *testing.T) {
-		integrations := make([]v0alpha1.Integration, 0, len(notify.AllKnownConfigsForTesting))
+		integrations := make([]v0alpha1.ReceiverIntegration, 0, len(notify.AllKnownConfigsForTesting))
 		keysIter := maps.Keys(notify.AllKnownConfigsForTesting)
 		keys := slices.Collect(keysIter)
 		sort.Strings(keys)
@@ -1297,7 +1278,7 @@ func TestIntegrationCRUD(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "default",
 			},
-			Spec: v0alpha1.Spec{
+			Spec: v0alpha1.ReceiverSpec{
 				Title:        "all-receivers",
 				Integrations: integrations,
 			},
@@ -1311,6 +1292,7 @@ func TestIntegrationCRUD(t *testing.T) {
 		receiver.SetAccessControl("canReadSecrets")
 		receiver.SetAccessControl("canAdmin")
 		receiver.SetInUse(0, nil)
+		receiver.SetCanUse(true)
 
 		// Use export endpoint because it's the only way to get decrypted secrets fast.
 		cliCfg := helper.Org1.Admin.NewRestConfig()
@@ -1333,7 +1315,7 @@ func TestIntegrationCRUD(t *testing.T) {
 					expected := notify.AllKnownConfigsForTesting[strings.ToLower(integration.Type)]
 					var fields map[string]any
 					require.NoError(t, json.Unmarshal([]byte(expected.Config), &fields))
-					secretFields, err := channels_config.GetSecretKeysForContactPointType(integration.Type)
+					secretFields, err := channels_config.GetSecretKeysForContactPointType(integration.Type, channels_config.V1)
 					require.NoError(t, err)
 					for _, field := range secretFields {
 						if _, ok := fields[field]; !ok { // skip field that is not in the original setting
@@ -1369,9 +1351,9 @@ func TestIntegrationCRUD(t *testing.T) {
 					ObjectMeta: v1.ObjectMeta{
 						Namespace: "default",
 					},
-					Spec: v0alpha1.Spec{
+					Spec: v0alpha1.ReceiverSpec{
 						Title:        fmt.Sprintf("invalid-%s", key),
-						Integrations: []v0alpha1.Integration{integration},
+						Integrations: []v0alpha1.ReceiverIntegration{integration},
 					},
 				}, v1.CreateOptions{})
 				require.Errorf(t, err, "Expected error but got successful result: %v", receiver)
@@ -1382,9 +1364,7 @@ func TestIntegrationCRUD(t *testing.T) {
 }
 
 func TestIntegrationReceiverListSelector(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -1394,9 +1374,9 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.ReceiverSpec{
 			Title: "test-receiver-1",
-			Integrations: []v0alpha1.Integration{
+			Integrations: []v0alpha1.ReceiverIntegration{
 				createIntegration(t, "email"),
 			},
 		},
@@ -1408,9 +1388,9 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.ReceiverSpec{
 			Title: "test-receiver-2",
-			Integrations: []v0alpha1.Integration{
+			Integrations: []v0alpha1.ReceiverIntegration{
 				createIntegration(t, "email"),
 			},
 		},
@@ -1434,6 +1414,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	require.Len(t, receivers.Items, 3) // Includes default.
 
 	t.Run("should filter by receiver name", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, v1.ListOptions{
 			FieldSelector: "spec.title=" + recv1.Spec.Title,
 		})
@@ -1452,6 +1433,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	})
 
 	t.Run("should filter by multiple filters", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, v1.ListOptions{
 			FieldSelector: fmt.Sprintf("metadata.name=%s,spec.title=%s", recv2.Name, recv2.Spec.Title),
 		})
@@ -1486,16 +1468,16 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig)
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "default",
 			},
-			Spec: v0alpha1.Spec{
+			Spec: v0alpha1.ReceiverSpec{
 				Title:        receiver.Name,
-				Integrations: []v0alpha1.Integration{},
+				Integrations: []v0alpha1.ReceiverIntegration{},
 			},
 		}
 
 		for _, integration := range receiver.GrafanaManagedReceivers {
 			settings := common.Unstructured{}
 			require.NoError(t, settings.UnmarshalJSON(integration.Settings))
-			toCreate.Spec.Integrations = append(toCreate.Spec.Integrations, v0alpha1.Integration{
+			toCreate.Spec.Integrations = append(toCreate.Spec.Integrations, v0alpha1.ReceiverIntegration{
 				Settings:              settings.Object,
 				Type:                  integration.Type,
 				DisableResolveMessage: util.Pointer(false),
@@ -1519,17 +1501,18 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig)
 	require.NoError(t, err)
 }
 
-func createIntegration(t *testing.T, integrationType string) v0alpha1.Integration {
+func createIntegration(t *testing.T, integrationType string) v0alpha1.ReceiverIntegration {
 	cfg, ok := notify.AllKnownConfigsForTesting[integrationType]
 	require.Truef(t, ok, "no known config for integration type %s", integrationType)
-	return createIntegrationWithSettings(t, integrationType, cfg.Config)
+	return createIntegrationWithSettings(t, integrationType, "v1", cfg.Config)
 }
-func createIntegrationWithSettings(t *testing.T, integrationType string, settingsJson string) v0alpha1.Integration {
+func createIntegrationWithSettings(t *testing.T, integrationType string, integrationVersion string, settingsJson string) v0alpha1.ReceiverIntegration {
 	settings := common.Unstructured{}
 	require.NoError(t, settings.UnmarshalJSON([]byte(settingsJson)))
-	return v0alpha1.Integration{
+	return v0alpha1.ReceiverIntegration{
 		Settings:              settings.Object,
 		Type:                  integrationType,
+		Version:               integrationVersion,
 		DisableResolveMessage: util.Pointer(false),
 	}
 }

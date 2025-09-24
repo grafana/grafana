@@ -2,9 +2,7 @@ import { css } from '@emotion/css';
 import {
   FloatingFocusManager,
   autoUpdate,
-  flip,
   offset as floatingUIOffset,
-  shift,
   useClick,
   useDismiss,
   useFloating,
@@ -16,8 +14,9 @@ import { CSSTransition } from 'react-transition-group';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
-import { ReactUtils } from '../../utils';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { getPositioningMiddleware } from '../../utils/floating';
+import { renderOrCallToRender } from '../../utils/reactUtils';
 import { getPlacement } from '../../utils/tooltipUtils';
 import { Portal } from '../Portal/Portal';
 import { TooltipPlacement } from '../Tooltip/types';
@@ -34,6 +33,7 @@ export interface Props {
 export const Dropdown = React.memo(({ children, overlay, placement, offset, onVisibleChange }: Props) => {
   const [show, setShow] = useState(false);
   const transitionRef = useRef(null);
+  const floatingUIPlacement = getPlacement(placement);
 
   const handleOpenChange = useCallback(
     (newState: boolean) => {
@@ -49,18 +49,12 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
       mainAxis: offset?.[0] ?? 8,
       crossAxis: offset?.[1] ?? 0,
     }),
-    flip({
-      fallbackAxisSideDirection: 'end',
-      // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: false,
-      boundary: document.body,
-    }),
-    shift(),
+    ...getPositioningMiddleware(floatingUIPlacement),
   ];
 
   const { context, refs, floatingStyles } = useFloating({
     open: show,
-    placement: getPlacement(placement),
+    placement: floatingUIPlacement,
     onOpenChange: handleOpenChange,
     middleware,
     whileElementsMounted: autoUpdate,
@@ -105,7 +99,7 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
                 timeout={{ appear: animationDuration, exit: 0, enter: 0 }}
                 classNames={animationStyles}
               >
-                <div ref={transitionRef}>{ReactUtils.renderOrCallToRender(overlay, { ...getFloatingProps() })}</div>
+                <div ref={transitionRef}>{renderOrCallToRender(overlay, { ...getFloatingProps() })}</div>
               </CSSTransition>
             </div>
           </FloatingFocusManager>

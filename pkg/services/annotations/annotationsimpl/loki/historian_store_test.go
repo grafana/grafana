@@ -10,9 +10,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/maps"
+
+	alertingInstrument "github.com/grafana/alerting/http/instrument"
+	"github.com/grafana/alerting/http/instrument/instrumenttest"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -22,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -33,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	tutil "github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -40,9 +44,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationAlertStateHistoryStore(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	sql, cfg := db.InitTestDBWithCfg(t)
 
@@ -84,7 +86,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		t.Run("can query history by alert id", func(t *testing.T) {
 			rule := dashboardRules[dashboard1.UID][0]
 
-			fakeLokiClient.rangeQueryRes = []historian.Stream{
+			fakeLokiClient.rangeQueryRes = []lokiclient.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger()),
 			}
 
@@ -111,7 +113,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		t.Run("can query history by alert uid", func(t *testing.T) {
 			rule := dashboardRules[dashboard1.UID][0]
 
-			fakeLokiClient.rangeQueryRes = []historian.Stream{
+			fakeLokiClient.rangeQueryRes = []lokiclient.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger()),
 			}
 
@@ -186,14 +188,14 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		})
 
 		t.Run("can query history by dashboard id", func(t *testing.T) {
-			fakeLokiClient.rangeQueryRes = []historian.Stream{
+			fakeLokiClient.rangeQueryRes = []lokiclient.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
 			}
 
 			query := annotations.ItemQuery{
 				OrgID:       1,
-				DashboardID: dashboard1.ID,
+				DashboardID: dashboard1.ID, // nolint: staticcheck
 				From:        start.UnixMilli(),
 				To:          start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
 			}
@@ -212,7 +214,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		})
 
 		t.Run("should return empty results when type is annotation", func(t *testing.T) {
-			fakeLokiClient.rangeQueryRes = []historian.Stream{
+			fakeLokiClient.rangeQueryRes = []lokiclient.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
 			}
@@ -236,14 +238,14 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		})
 
 		t.Run("should return empty results when history is outside time range", func(t *testing.T) {
-			fakeLokiClient.rangeQueryRes = []historian.Stream{
+			fakeLokiClient.rangeQueryRes = []lokiclient.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
 			}
 
 			query := annotations.ItemQuery{
 				OrgID:       1,
-				DashboardID: dashboard1.ID,
+				DashboardID: dashboard1.ID, // nolint: staticcheck
 				From:        start.Add(-2 * time.Second).UnixMilli(),
 				To:          start.Add(-1 * time.Second).UnixMilli(),
 			}
@@ -262,7 +264,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		})
 
 		t.Run("should return partial results when history is partly outside clamped time range", func(t *testing.T) {
-			fakeLokiClient.rangeQueryRes = []historian.Stream{
+			fakeLokiClient.rangeQueryRes = []lokiclient.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
 			}
@@ -273,7 +275,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 
 			query := annotations.ItemQuery{
 				OrgID:       1,
-				DashboardID: dashboard1.ID,
+				DashboardID: dashboard1.ID,                           // nolint: staticcheck
 				From:        start.Add(-1 * time.Second).UnixMilli(), // should clamp to start
 				To:          start.Add(1 * time.Second).UnixMilli(),
 			}
@@ -294,17 +296,17 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			fakeLokiClient.cfg.MaxQueryLength = oldMax
 		})
 
-		t.Run("should sort history by time", func(t *testing.T) {
-			fakeLokiClient.rangeQueryRes = []historian.Stream{
+		t.Run("should sort history by time and be able to query by dashboard uid", func(t *testing.T) {
+			fakeLokiClient.rangeQueryRes = []lokiclient.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
 			}
 
 			query := annotations.ItemQuery{
-				OrgID:       1,
-				DashboardID: dashboard1.ID,
-				From:        start.UnixMilli(),
-				To:          start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
+				OrgID:        1,
+				DashboardUID: dashboard1.UID,
+				From:         start.UnixMilli(),
+				To:           start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
 			}
 			res, err := store.Get(
 				context.Background(),
@@ -329,7 +331,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		})
 
 		t.Run("should return nothing if query is for tags only", func(t *testing.T) {
-			fakeLokiClient.rangeQueryRes = []historian.Stream{
+			fakeLokiClient.rangeQueryRes = []lokiclient.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
 			}
@@ -360,13 +362,13 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		store := createTestLokiStore(t, sql, fakeLokiClient)
 
 		t.Run("should return empty list when no streams", func(t *testing.T) {
-			items := store.annotationsFromStream(historian.Stream{}, annotation_ac.AccessResources{})
+			items := store.annotationsFromStream(lokiclient.Stream{}, annotation_ac.AccessResources{})
 			require.Empty(t, items)
 		})
 
 		t.Run("should return empty list when no entries", func(t *testing.T) {
-			items := store.annotationsFromStream(historian.Stream{
-				Values: []historian.Sample{},
+			items := store.annotationsFromStream(lokiclient.Stream{
+				Values: []lokiclient.Sample{},
 			}, annotation_ac.AccessResources{})
 			require.Empty(t, items)
 		})
@@ -393,7 +395,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 
 				expected := &annotations.ItemDTO{
 					AlertID:      rule.ID,
-					DashboardID:  dashboard1.ID,
+					DashboardID:  dashboard1.ID, // nolint: staticcheck
 					DashboardUID: &dashboard1.UID,
 					PanelID:      *rule.PanelID,
 					Time:         transition.LastEvaluationTime.UnixMilli(),
@@ -419,7 +421,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			rule = createAlertRule(t, sql, "Test rule", gen)
 			stream2 := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
 
-			stream := historian.Stream{
+			stream := lokiclient.Stream{
 				Values: append(stream1.Values, stream2.Values...),
 				Stream: stream1.Stream,
 			}
@@ -433,6 +435,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			require.Len(t, items, numTransitions)
 
 			for _, item := range items {
+				// nolint: staticcheck
 				require.Equal(t, dashboard1.ID, item.DashboardID)
 				require.Equal(t, dashboard1.UID, *item.DashboardUID)
 			}
@@ -449,7 +452,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			rule.DashboardUID = nil
 			stream2 := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
 
-			stream := historian.Stream{
+			stream := lokiclient.Stream{
 				Values: append(stream1.Values, stream2.Values...),
 				Stream: stream1.Stream,
 			}
@@ -464,7 +467,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 
 			for _, item := range items {
 				require.Zero(t, *item.DashboardUID)
-				require.Zero(t, item.DashboardID)
+				require.Zero(t, item.DashboardID) // nolint: staticcheck
 			}
 		})
 	})
@@ -553,7 +556,7 @@ func TestBuildHistoryQuery(t *testing.T) {
 	t.Run("should set dashboard UID from dashboard ID if query does not contain UID", func(t *testing.T) {
 		query := buildHistoryQuery(
 			&annotations.ItemQuery{
-				DashboardID: 1,
+				DashboardID: 1, // nolint: staticcheck
 			},
 			map[string]int64{
 				"dashboard-uid": 1,
@@ -566,7 +569,7 @@ func TestBuildHistoryQuery(t *testing.T) {
 	t.Run("should skip dashboard UID if missing from query and dashboard map", func(t *testing.T) {
 		query := buildHistoryQuery(
 			&annotations.ItemQuery{
-				DashboardID: 1,
+				DashboardID: 1, // nolint: staticcheck
 			},
 			map[string]int64{
 				"other-dashboard-uid": 2,
@@ -794,7 +797,7 @@ func compareAnnotationItem(t *testing.T, expected, actual *annotations.ItemDTO) 
 		require.Equal(t, expected.PanelID, actual.PanelID)
 	}
 	if expected.DashboardUID != nil {
-		require.Equal(t, expected.DashboardID, actual.DashboardID)
+		require.Equal(t, expected.DashboardID, actual.DashboardID) // nolint: staticcheck
 		require.Equal(t, *expected.DashboardUID, *actual.DashboardUID)
 	}
 	require.Equal(t, expected.NewState, actual.NewState)
@@ -809,24 +812,24 @@ func compareAnnotationItem(t *testing.T, expected, actual *annotations.ItemDTO) 
 }
 
 type FakeLokiClient struct {
-	client        client.Requester
-	cfg           historian.LokiConfig
+	client        alertingInstrument.Requester
+	cfg           lokiclient.LokiConfig
 	metrics       *metrics.Historian
 	log           log.Logger
-	rangeQueryRes []historian.Stream
+	rangeQueryRes []lokiclient.Stream
 }
 
 func NewFakeLokiClient() *FakeLokiClient {
 	url, _ := url.Parse("http://some.url")
-	req := historian.NewFakeRequester()
+	req := instrumenttest.NewFakeRequester()
 	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), "annotations_test")
 
 	return &FakeLokiClient{
-		client: client.NewTimedClient(req, metrics.WriteDuration),
-		cfg: historian.LokiConfig{
+		client: alertingInstrument.NewTimedClient(req, metrics.WriteDuration),
+		cfg: lokiclient.LokiConfig{
 			WritePathURL:   url,
 			ReadPathURL:    url,
-			Encoder:        historian.JsonEncoder{},
+			Encoder:        lokiclient.JSONEncoder{},
 			MaxQueryLength: 721 * time.Hour,
 			MaxQuerySize:   65536,
 		},
@@ -835,15 +838,15 @@ func NewFakeLokiClient() *FakeLokiClient {
 	}
 }
 
-func (c *FakeLokiClient) RangeQuery(ctx context.Context, query string, from, to, limit int64) (historian.QueryRes, error) {
-	streams := make([]historian.Stream, len(c.rangeQueryRes))
+func (c *FakeLokiClient) RangeQuery(ctx context.Context, query string, from, to, limit int64) (lokiclient.QueryRes, error) {
+	streams := make([]lokiclient.Stream, len(c.rangeQueryRes))
 
 	// clamp time range using logic from historian
-	from, to = historian.ClampRange(from, to, c.cfg.MaxQueryLength.Nanoseconds())
+	from, to = lokiclient.ClampRange(from, to, c.cfg.MaxQueryLength.Nanoseconds())
 
 	for n, stream := range c.rangeQueryRes {
 		streams[n].Stream = stream.Stream
-		streams[n].Values = []historian.Sample{}
+		streams[n].Values = []lokiclient.Sample{}
 		for _, sample := range stream.Values {
 			if sample.T.UnixNano() < from || sample.T.UnixNano() >= to { // matches Loki behavior
 				continue
@@ -852,14 +855,14 @@ func (c *FakeLokiClient) RangeQuery(ctx context.Context, query string, from, to,
 		}
 	}
 
-	res := historian.QueryRes{
-		Data: historian.QueryData{
+	res := lokiclient.QueryRes{
+		Data: lokiclient.QueryData{
 			Result: streams,
 		},
 	}
 
 	// reset expected streams on read
-	c.rangeQueryRes = []historian.Stream{}
+	c.rangeQueryRes = []lokiclient.Stream{}
 	return res, nil
 }
 

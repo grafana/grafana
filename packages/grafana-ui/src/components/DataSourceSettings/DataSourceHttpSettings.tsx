@@ -3,11 +3,11 @@ import { useState, useCallback, useId, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 
-import { useTheme2 } from '../../themes';
-import { t, Trans } from '../../utils/i18n';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { Field } from '../Forms/Field';
 import { InlineField } from '../Forms/InlineField';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';

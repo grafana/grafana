@@ -1,7 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { useTheme2 } from '../../../themes';
 import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
+import { Card } from '../../Card/Card';
 
 import { Grid } from './Grid';
 import mdx from './Grid.mdx';
@@ -11,7 +11,7 @@ const dimensions = Array.from({ length: 9 }).map(() => ({
 }));
 
 const meta: Meta<typeof Grid> = {
-  title: 'General/Layout/Grid',
+  title: 'Layout/Grid',
   component: Grid,
   parameters: {
     docs: {
@@ -24,13 +24,12 @@ const meta: Meta<typeof Grid> = {
 };
 
 export const ColumnsNumber: StoryFn<typeof Grid> = (args) => {
-  const theme = useTheme2();
   return (
     <Grid {...args}>
       {Array.from({ length: 9 }).map((_, i) => (
-        <div key={i} style={{ background: theme.colors.background.secondary, textAlign: 'center', ...dimensions[i] }}>
-          N# {i}
-        </div>
+        <Card key={i} style={dimensions[i]}>
+          <Card.Heading>N# {i}</Card.Heading>
+        </Card>
       ))}
     </Grid>
   );
@@ -54,13 +53,12 @@ ColumnsNumber.parameters = {
 };
 
 export const ColumnsMinWidth: StoryFn<typeof Grid> = (args) => {
-  const theme = useTheme2();
   return (
     <Grid {...args}>
       {Array.from({ length: 9 }).map((_, i) => (
-        <div key={i} style={{ background: theme.colors.background.secondary, textAlign: 'center' }}>
-          N# {i}
-        </div>
+        <Card key={i}>
+          <Card.Heading>N# {i}</Card.Heading>
+        </Card>
       ))}
     </Grid>
   );

@@ -17,14 +17,14 @@ import {
   TimeRange,
   LoadingState,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Modal, useTheme2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
 import { splitOpen } from 'app/features/explore/state/main';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { dataFrameToLogsModel } from '../../logsModel';
 import { sortLogRows } from '../../utils';
@@ -492,6 +492,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
 
   const loadingStateAbove = context.above.loadingState;
   const loadingStateBelow = context.below.loadingState;
+  const timeRange = getFullTimeRange();
 
   return (
     <Modal
@@ -552,6 +553,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   onClickShowField={showField}
                   onClickHideField={hideField}
                   scrollElement={null}
+                  timeRange={timeRange}
                 />
               </td>
             </tr>
@@ -575,6 +577,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   pinnedLogs={sticky ? [row.uid] : undefined}
                   overflowingContent={true}
                   scrollElement={null}
+                  timeRange={timeRange}
                 />
               </td>
             </tr>
@@ -594,6 +597,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                     onClickShowField={showField}
                     onClickHideField={hideField}
                     scrollElement={null}
+                    timeRange={timeRange}
                   />
                 </>
               </td>
@@ -637,7 +641,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
               dispatch(
                 splitOpen({
                   queries: [contextQuery],
-                  range: getFullTimeRange(),
+                  range: timeRange,
                   datasourceUid: contextQuery.datasource!.uid!,
                   panelsState: {
                     logs: {

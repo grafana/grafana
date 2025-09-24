@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
 import { Icon, Input, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 const getStyles = (theme: GrafanaTheme2, headerHeight: number) => ({
   searchContainer: css({
@@ -27,6 +27,7 @@ export interface Props {
 export const Search = ({ onChange, value }: Props) => {
   const chromeHeaderHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, chromeHeaderHeight ?? 0);
+
   const placeholder = t('connections.search.placeholder', 'Search all');
 
   return (

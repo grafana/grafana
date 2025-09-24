@@ -109,9 +109,25 @@ func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *
 	labels, _ := expand(ctx, log, alertRule.Title, alertRule.Labels, templateData, externalURL, result.EvaluatedAt)
 	annotations, _ := expand(ctx, log, alertRule.Title, alertRule.Annotations, templateData, externalURL, result.EvaluatedAt)
 
-	lbs := make(data.Labels, len(extraLabels)+len(labels)+len(resultLabels))
+	// If the result contains an error, we want to add the ref_id and datasource_uid labels
+	// to the new state if the alert rule should be in the ErrorErrState.
+	var errorLabels data.Labels
+	if result.State == eval.Error && alertRule.ExecErrState == ngModels.ErrorErrState {
+		refID, datasourceUID := datasourceErrorInfo(result.Error, alertRule)
+		if refID != "" || datasourceUID != "" {
+			errorLabels = data.Labels{
+				"ref_id":         refID,
+				"datasource_uid": datasourceUID,
+			}
+		}
+	}
+
+	lbs := make(data.Labels, len(extraLabels)+len(labels)+len(resultLabels)+len(errorLabels))
 	dupes := make(data.Labels)
 	for key, val := range extraLabels {
+		lbs[key] = val
+	}
+	for key, val := range errorLabels {
 		lbs[key] = val
 	}
 	for key, val := range labels {
@@ -167,25 +183,23 @@ func expand(ctx context.Context, log log.Logger, name string, original map[strin
 	return expanded, errs
 }
 
-func (rs *ruleStates) deleteStates(predicate func(s *State) bool) []*State {
-	deleted := make([]*State, 0)
+func (rs *ruleStates) deleteStates(predicate func(s *State) bool) {
 	for id, state := range rs.states {
 		if predicate(state) {
 			delete(rs.states, id)
-			deleted = append(deleted, state)
 		}
 	}
-	return deleted
 }
 
-func (c *cache) deleteRuleStates(ruleKey ngModels.AlertRuleKey, predicate func(s *State) bool) []*State {
+// deleteRuleStates iterates over all states for the given rule and deletes those where predicate returns true.
+// The predicate function is called once for each state and should return true if the state should be deleted.
+func (c *cache) deleteRuleStates(ruleKey ngModels.AlertRuleKey, predicate func(s *State) bool) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 	ruleStates, ok := c.states[ruleKey.OrgID][ruleKey.UID]
 	if ok {
-		return ruleStates.deleteStates(predicate)
+		ruleStates.deleteStates(predicate)
 	}
-	return nil
 }
 
 func (c *cache) setRuleStates(ruleKey ngModels.AlertRuleKey, s ruleStates) {
@@ -296,6 +310,7 @@ func (c *cache) GetAlertInstances() []ngModels.AlertInstance {
 					LastEvalTime:      v2.LastEvaluationTime,
 					CurrentStateSince: v2.StartsAt,
 					CurrentStateEnd:   v2.EndsAt,
+					FiredAt:           v2.FiredAt,
 					ResolvedAt:        v2.ResolvedAt,
 					LastSentAt:        v2.LastSentAt,
 					ResultFingerprint: v2.ResultFingerprint.String(),

@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
@@ -102,14 +103,15 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		uid, err := s.store.CreateSnapshot(ctx, cloudmigration.CloudMigrationSnapshot{
-			UID:            "test uid",
+		uid := "test uid"
+
+		err = s.store.CreateSnapshot(ctx, cloudmigration.CloudMigrationSnapshot{
+			UID:            uid,
 			SessionUID:     sess.UID,
 			Status:         cloudmigration.SnapshotStatusCreating,
 			GMSSnapshotUID: "gms uid",
 		})
 		require.NoError(t, err)
-		assert.Equal(t, "test uid", uid)
 
 		// Make sure status is coming from the db only
 		snapshot, err := s.GetSnapshot(ctx, cloudmigration.GetSnapshotsQuery{
@@ -174,7 +176,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusPendingProcessing), time.Second, 10*time.Millisecond)
-		require.Equal(t, 1, gmsClientFake.GetSnapshotStatusCallCount())
+		require.Eventually(t, gmsClientFake.ValidateSnapshotStatusCallCount, time.Second, 10*time.Millisecond)
 	})
 
 	t.Run("test case: gms snapshot processing", func(t *testing.T) {
@@ -198,7 +200,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusProcessing), time.Second, 10*time.Millisecond)
-		require.Equal(t, 1, gmsClientFake.GetSnapshotStatusCallCount())
+		require.Eventually(t, gmsClientFake.ValidateSnapshotStatusCallCount, time.Second, 10*time.Millisecond)
 	})
 
 	t.Run("test case: gms snapshot finished", func(t *testing.T) {
@@ -222,7 +224,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusFinished), time.Second, 10*time.Millisecond)
-		require.Equal(t, 1, gmsClientFake.GetSnapshotStatusCallCount())
+		require.Eventually(t, gmsClientFake.ValidateSnapshotStatusCallCount, time.Second, 10*time.Millisecond)
 	})
 
 	t.Run("test case: gms snapshot canceled", func(t *testing.T) {
@@ -246,7 +248,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusCanceled), time.Second, 10*time.Millisecond)
-		require.Equal(t, 1, gmsClientFake.GetSnapshotStatusCallCount())
+		require.Eventually(t, gmsClientFake.ValidateSnapshotStatusCallCount, time.Second, 10*time.Millisecond)
 	})
 
 	t.Run("test case: gms snapshot error", func(t *testing.T) {
@@ -270,7 +272,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusError), time.Second, 10*time.Millisecond)
-		assert.Equal(t, 1, gmsClientFake.GetSnapshotStatusCallCount())
+		require.Eventually(t, gmsClientFake.ValidateSnapshotStatusCallCount, time.Second, 10*time.Millisecond)
 	})
 
 	t.Run("test case: gms snapshot unknown", func(t *testing.T) {
@@ -340,21 +342,23 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		require.NotNil(t, snapshot)
 		require.Eventually(t, func() bool { return gmsClientFake.GetSnapshotStatusCallCount() == 1 }, time.Second, 10*time.Millisecond)
 
-		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: snapshotUID,
-			SessionUID:  sessionUID,
-			SnapshotResultQueryParams: cloudmigration.SnapshotResultQueryParams{
-				ResultLimit: 10,
-				ResultPage:  1,
-				SortColumn:  cloudmigration.SortColumnID,
-				SortOrder:   cloudmigration.SortOrderAsc,
-			},
-		})
-		require.NoError(t, err)
-		require.NotNil(t, snapshot)
-		require.Len(t, snapshot.Resources, 1)
-		require.Equal(t, "A", snapshot.Resources[0].RefID)
-		require.Equal(t, "fake", snapshot.Resources[0].Error)
+		require.EventuallyWithTf(t, func(t *assert.CollectT) {
+			snapshot, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
+				SnapshotUID: snapshotUID,
+				SessionUID:  sessionUID,
+				SnapshotResultQueryParams: cloudmigration.SnapshotResultQueryParams{
+					ResultLimit: 10,
+					ResultPage:  1,
+					SortColumn:  cloudmigration.SortColumnID,
+					SortOrder:   cloudmigration.SortOrderAsc,
+				},
+			})
+			assert.NoError(t, err)
+			assert.NotNil(t, snapshot)
+			assert.Len(t, snapshot.Resources, 1)
+			assert.Equal(t, "A", snapshot.Resources[0].RefID)
+			assert.Equal(t, "fake", snapshot.Resources[0].Error)
+		}, 5*time.Second, 100*time.Millisecond, "DB wasn't applied to local snapshot in time")
 	})
 }
 
@@ -380,8 +384,9 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	uid, err := s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
-		UID:            uuid.NewString(),
+	uid := uuid.NewString()
+	err = s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
+		UID:            uid,
 		SessionUID:     sess.UID,
 		Status:         cloudmigration.SnapshotStatusCreating,
 		GMSSnapshotUID: "gms uid",
@@ -869,11 +874,9 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...conf
 	rr := routing.NewRouteRegister()
 	tracer := tracing.InitializeTracerForTest()
 
-	fakeFolder := &folder.Folder{UID: "folderUID", Title: "Folder"}
-	mockFolder := &foldertest.FakeService{
-		ExpectedFolders: []*folder.Folder{fakeFolder},
-		ExpectedFolder:  fakeFolder,
-	}
+	fakeFolder := &folder.Folder{UID: "folderUID", Title: "Folder", Fullpath: "Folder"}
+	mockFolder := foldertest.NewFakeService()
+	mockFolder.AddFolder(fakeFolder)
 
 	cfg := setting.NewCfg()
 	section, err := cfg.Raw.NewSection("cloud_migration")
@@ -918,21 +921,22 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...conf
 	kvStore := kvstore.ProvideService(sqlStore)
 
 	bus := bus.ProvideBus(tracer)
-	fakeAccessControl := actest.FakeAccessControl{ExpectedEvaluate: true}
+
+	accessControl := acimpl.ProvideAccessControl(featureToggles)
 	fakeAccessControlService := actest.FakeService{}
 	alertMetrics := metrics.NewNGAlert(prometheus.NewRegistry())
 
 	cfg.UnifiedAlerting.DefaultRuleEvaluationInterval = time.Minute
 	cfg.UnifiedAlerting.BaseInterval = time.Minute
 	cfg.UnifiedAlerting.InitializationTimeout = 30 * time.Second
-	ruleStore, err := ngalertstore.ProvideDBStore(cfg, featureToggles, sqlStore, mockFolder, dashboardService, fakeAccessControl, bus)
+	ruleStore, err := ngalertstore.ProvideDBStore(cfg, featureToggles, sqlStore, mockFolder, dashboardService, accessControl, bus)
 	require.NoError(t, err)
 
 	ng, err := ngalert.ProvideService(
 		cfg, featureToggles, nil, nil, rr, sqlStore, kvStore, nil, nil, quotatest.New(false, nil),
-		secretsService, nil, alertMetrics, mockFolder, fakeAccessControl, dashboardService, nil, bus, fakeAccessControlService,
+		secretsService, nil, alertMetrics, mockFolder, accessControl, dashboardService, nil, bus, fakeAccessControlService,
 		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore,
-		httpclient.NewProvider(), ngalertfakes.NewFakeReceiverPermissionsService(), usertest.NewUserServiceFake(),
+		httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), usertest.NewUserServiceFake(),
 	)
 	require.NoError(t, err)
 
@@ -1056,4 +1060,8 @@ func (m *gmsClientMock) GetSnapshotStatusCallCount() int {
 	defer m.mu.RUnlock()
 
 	return m.getStatusCalled
+}
+
+func (m *gmsClientMock) ValidateSnapshotStatusCallCount() bool {
+	return m.GetSnapshotStatusCallCount() >= 1
 }

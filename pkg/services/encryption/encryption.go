@@ -2,9 +2,8 @@ package encryption
 
 import (
 	"context"
+	"crypto/pbkdf2"
 	"crypto/sha256"
-
-	"golang.org/x/crypto/pbkdf2"
 )
 
 const (
@@ -44,5 +43,5 @@ type Provider interface {
 
 // KeyToBytes key length needs to be 32 bytes
 func KeyToBytes(secret, salt string) ([]byte, error) {
-	return pbkdf2.Key([]byte(secret), []byte(salt), 10000, 32, sha256.New), nil
+	return pbkdf2.Key(sha256.New, secret, []byte(salt), 10000, 32)
 }

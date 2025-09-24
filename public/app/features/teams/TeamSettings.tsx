@@ -1,13 +1,14 @@
 import { useForm } from 'react-hook-form';
 import { ConnectedProps, connect } from 'react-redux';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, FieldSet, Input, Stack } from '@grafana/ui';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
-import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Team } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { Team } from 'app/types/teams';
 
 import { updateTeam } from './state/actions';
 
@@ -76,7 +77,7 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
             )}
             disabled={!canWriteTeamSettings}
           >
-            {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+            {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
             <Input {...register('email')} placeholder="team@email.com" type="email" id="email-input" />
           </Field>
           <Button type="submit" disabled={!canWriteTeamSettings}>

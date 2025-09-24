@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Modal, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 const AnnotationsStateHistory = lazy(() => import('../components/rules/state-history/StateHistory'));
@@ -22,9 +22,9 @@ function useStateHistoryModal() {
   const styles = useStyles2(getStyles);
 
   // can be "loki", "multiple" or "annotations"
-  const stateHistoryBackend = config.unifiedAlerting.alertStateHistoryBackend;
+  const stateHistoryBackend = config.unifiedAlerting.stateHistory?.backend;
   // can be "loki" or "annotations"
-  const stateHistoryPrimary = config.unifiedAlerting.alertStateHistoryPrimary;
+  const stateHistoryPrimary = config.unifiedAlerting.stateHistory?.primary;
 
   // if "loki" is either the backend or the primary, show the new state history implementation
   const usingNewAlertStateHistory = [stateHistoryBackend, stateHistoryPrimary].some(

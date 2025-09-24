@@ -261,7 +261,9 @@ type LegacyCloudMonitoringAnnotationQuery struct {
 
 // NewLegacyCloudMonitoringAnnotationQuery creates a new LegacyCloudMonitoringAnnotationQuery object.
 func NewLegacyCloudMonitoringAnnotationQuery() *LegacyCloudMonitoringAnnotationQuery {
-	return &LegacyCloudMonitoringAnnotationQuery{}
+	return &LegacyCloudMonitoringAnnotationQuery{
+		Filters: []string{},
+	}
 }
 
 // Query filter representation.

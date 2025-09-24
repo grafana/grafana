@@ -18,7 +18,8 @@ const (
 	ClientSecretPost = "client_secret_post"
 	None             = "none"
 	// Azure AD
-	ManagedIdentity = "managed_identity"
+	ManagedIdentity  = "managed_identity"
+	WorkloadIdentity = "workload_identity"
 	// Other providers...
 
 	AzureADProviderName      = "azuread"
@@ -72,6 +73,7 @@ type OAuthInfo struct {
 	ClientId                    string            `mapstructure:"client_id" toml:"client_id"`
 	ClientSecret                string            `mapstructure:"client_secret" toml:"-"`
 	ManagedIdentityClientID     string            `mapstructure:"managed_identity_client_id" toml:"managed_identity_client_id"`
+	WorkloadIdentityTokenFile   string            `mapstructure:"workload_identity_token_file" toml:"workload_identity_token_file"`
 	FederatedCredentialAudience string            `mapstructure:"federated_credential_audience" toml:"federated_credential_audience"`
 	EmailAttributeName          string            `mapstructure:"email_attribute_name" toml:"email_attribute_name"`
 	EmailAttributePath          string            `mapstructure:"email_attribute_path" toml:"email_attribute_path"`
@@ -97,6 +99,7 @@ type OAuthInfo struct {
 	TokenUrl                    string            `mapstructure:"token_url" toml:"token_url"`
 	UsePKCE                     bool              `mapstructure:"use_pkce" toml:"use_pkce"`
 	UseRefreshToken             bool              `mapstructure:"use_refresh_token" toml:"use_refresh_token"`
+	LoginPrompt                 string            `mapstructure:"login_prompt" toml:"login_prompt"`
 	Extra                       map[string]string `mapstructure:",remain" toml:"extra,omitempty"`
 }
 

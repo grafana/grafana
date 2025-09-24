@@ -14,8 +14,8 @@
 
 import * as React from 'react';
 
+import { t } from '@grafana/i18n';
 import { IconButton, Input } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 type Props = {
   value: string | undefined;

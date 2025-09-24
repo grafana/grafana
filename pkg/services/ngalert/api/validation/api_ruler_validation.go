@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	prommodels "github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -14,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	prommodels "github.com/prometheus/common/model"
 )
 
 type RuleLimits struct {
@@ -22,15 +23,12 @@ type RuleLimits struct {
 	DefaultRuleEvaluationInterval time.Duration
 	// All intervals must be an integer multiple of this duration.
 	BaseInterval time.Duration
-	// Whether recording rules are allowed.
-	RecordingRulesAllowed bool
 }
 
 func RuleLimitsFromConfig(cfg *setting.UnifiedAlertingSettings, toggles featuremgmt.FeatureToggles) RuleLimits {
 	return RuleLimits{
 		DefaultRuleEvaluationInterval: cfg.DefaultRuleEvaluationInterval,
 		BaseInterval:                  cfg.BaseInterval,
-		RecordingRulesAllowed:         toggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules),
 	}
 }
 
@@ -141,7 +139,7 @@ func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule 
 	}
 
 	if in.GrafanaManagedAlert.NotificationSettings != nil {
-		newRule.NotificationSettings, err = validateNotificationSettings(in.GrafanaManagedAlert.NotificationSettings)
+		newRule.NotificationSettings, err = ValidateNotificationSettings(in.GrafanaManagedAlert.NotificationSettings)
 		if err != nil {
 			return ngmodels.AlertRule{}, err
 		}
@@ -175,10 +173,6 @@ func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule 
 // validateRecordingRuleFields validates only the fields on a rule that are specific to Recording rules.
 // it will load fields that pass validation onto newRule and return the result.
 func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule ngmodels.AlertRule, limits RuleLimits, canPatch bool) (ngmodels.AlertRule, error) {
-	if !limits.RecordingRulesAllowed {
-		return ngmodels.AlertRule{}, fmt.Errorf("%w: recording rules cannot be created on this instance", ngmodels.ErrAlertRuleFailedValidation)
-	}
-
 	err := ValidateCondition(in.GrafanaManagedAlert.Record.From, in.GrafanaManagedAlert.Data, canPatch)
 	if err != nil {
 		return ngmodels.AlertRule{}, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err.Error())
@@ -188,7 +182,7 @@ func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule
 	if !metricName.IsValid() {
 		return ngmodels.AlertRule{}, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid utf8 string")
 	}
-	if !prommodels.IsValidMetricName(metricName) {
+	if !prommodels.IsValidMetricName(metricName) { // nolint:staticcheck
 		return ngmodels.AlertRule{}, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid Prometheus metric name")
 	}
 	newRule.Record = ModelRecordFromApiRecord(in.GrafanaManagedAlert.Record)
@@ -305,10 +299,10 @@ func validateKeepFiringForInterval(ruleNode *apimodels.PostableExtendedRuleNode)
 //   - == 0, returns nil (reset to default)
 //   - == nil && UID == "", returns nil (new rule)
 //   - == nil && UID != "", returns -1 (existing rule)
-func validateMissingSeriesEvalsToResolve(ruleNode *apimodels.PostableExtendedRuleNode) (*int, error) {
+func validateMissingSeriesEvalsToResolve(ruleNode *apimodels.PostableExtendedRuleNode) (*int64, error) {
 	if ruleNode.GrafanaManagedAlert.MissingSeriesEvalsToResolve == nil {
 		if ruleNode.GrafanaManagedAlert.UID != "" {
-			return util.Pointer(-1), nil // will be patched later with the real value of the current version of the rule
+			return util.Pointer[int64](-1), nil // will be patched later with the real value of the current version of the rule
 		}
 		return nil, nil // if it's a new rule, use nil as the default
 	}
@@ -335,7 +329,9 @@ func ValidateRuleGroup(
 		return nil, errors.New("rule group name cannot be empty")
 	}
 
-	if len(ruleGroupConfig.Name) > store.AlertRuleMaxRuleGroupNameLength {
+	isNoGroupRuleGroup := ngmodels.IsNoGroupRuleGroup(ruleGroupConfig.Name)
+
+	if len(ruleGroupConfig.Name) > store.AlertRuleMaxRuleGroupNameLength && !isNoGroupRuleGroup {
 		return nil, fmt.Errorf("rule group name is too long. Max length is %d", store.AlertRuleMaxRuleGroupNameLength)
 	}
 
@@ -350,6 +346,11 @@ func ValidateRuleGroup(
 	}
 
 	// TODO should we validate that interval is >= cfg.MinInterval? Currently, we allow to save but fix the specified interval if it is < cfg.MinInterval
+
+	// If the rule group is reserved for no-group rules, we cannot have multiple rules in it.
+	if isNoGroupRuleGroup && len(ruleGroupConfig.Rules) > 1 {
+		return nil, fmt.Errorf("rule group %s is reserved for no-group rules and cannot be used for rule groups with multiple rules", ruleGroupConfig.Name)
+	}
 
 	result := make([]*ngmodels.AlertRuleWithOptionals, 0, len(ruleGroupConfig.Rules))
 	uids := make(map[string]int, cap(result))
@@ -390,14 +391,15 @@ func ValidateRuleGroup(
 	return result, nil
 }
 
-func validateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) ([]ngmodels.NotificationSettings, error) {
+func ValidateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) ([]ngmodels.NotificationSettings, error) {
 	s := ngmodels.NotificationSettings{
-		Receiver:          n.Receiver,
-		GroupBy:           n.GroupBy,
-		GroupWait:         n.GroupWait,
-		GroupInterval:     n.GroupInterval,
-		RepeatInterval:    n.RepeatInterval,
-		MuteTimeIntervals: n.MuteTimeIntervals,
+		Receiver:            n.Receiver,
+		GroupBy:             n.GroupBy,
+		GroupWait:           n.GroupWait,
+		GroupInterval:       n.GroupInterval,
+		RepeatInterval:      n.RepeatInterval,
+		MuteTimeIntervals:   n.MuteTimeIntervals,
+		ActiveTimeIntervals: n.ActiveTimeIntervals,
 	}
 
 	if err := s.Validate(); err != nil {

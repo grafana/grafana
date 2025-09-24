@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { Button, Menu, Stack, Text, useStyles2, Dropdown, Icon, IconButton } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { trackDeleteDashboardElement } from 'app/features/dashboard/utils/tracking';
 
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 
@@ -25,6 +27,15 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   const onGoBack = () => editPane.clearSelection();
   const canGoBack = editPane.state.selection;
 
+  const onDeleteElement = () => {
+    if (onConfirmDelete) {
+      onConfirmDelete();
+    } else if (onDelete) {
+      onDelete();
+    }
+    trackDeleteDashboardElement(elementInfo);
+  };
+
   return (
     <div className={styles.wrapper}>
       <Stack direction="row" gap={0.5}>
@@ -35,6 +46,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
             onClick={onGoBack}
             tooltip={t('grafana.dashboard.edit-pane.go-back', 'Go back')}
             aria-label={t('grafana.dashboard.edit-pane.go-back', 'Go back')}
+            data-testid={selectors.components.EditPaneHeader.backButton}
           />
         )}
         <Text>{elementInfo.typeName}</Text>
@@ -64,6 +76,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
               variant="secondary"
               size="sm"
               icon="copy"
+              data-testid={selectors.components.EditPaneHeader.copyDropdown}
             >
               <Icon name="angle-down" />
             </Button>
@@ -72,12 +85,13 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
 
         {(onDelete || onConfirmDelete) && (
           <Button
-            onClick={onConfirmDelete || onDelete}
+            onClick={onDeleteElement}
             size="sm"
             variant="destructive"
             fill="outline"
             icon="trash-alt"
             tooltip={t('dashboard.layout.common.delete', 'Delete')}
+            data-testid={selectors.components.EditPaneHeader.deleteButton}
           />
         )}
       </Stack>

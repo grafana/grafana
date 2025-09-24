@@ -1,11 +1,10 @@
 import { useAsync } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Icon, Select } from '@grafana/ui';
 import { DEFAULT_SORT } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-
-import { t } from '../../internationalization';
 
 export interface Props {
   onChange: (sortValue: SelectableValue) => void;
@@ -14,13 +13,14 @@ export interface Props {
   getSortOptions?: () => Promise<SelectableValue[]>;
   filter?: string[];
   isClearable?: boolean;
+  disabled?: boolean;
 }
 
 const defaultSortOptionsGetter = (): Promise<SelectableValue[]> => {
   return getGrafanaSearcher().getSortOptions();
 };
 
-export function SortPicker({ onChange, value, placeholder, filter, getSortOptions, isClearable }: Props) {
+export function SortPicker({ onChange, value, placeholder, filter, getSortOptions, isClearable, disabled }: Props) {
   // Using sync Select and manual options fetching here since we need to find the selected option by value
   const options = useAsync<() => Promise<SelectableValue[]>>(async () => {
     const vals = await (getSortOptions ?? defaultSortOptionsGetter)();
@@ -46,6 +46,7 @@ export function SortPicker({ onChange, value, placeholder, filter, getSortOption
       placeholder={placeholder ?? `Sort (Default ${DEFAULT_SORT.label})`}
       prefix={<Icon name={isDesc ? 'sort-amount-down' : 'sort-amount-up'} />}
       isClearable={isClearable}
+      disabled={disabled}
     />
   );
 }

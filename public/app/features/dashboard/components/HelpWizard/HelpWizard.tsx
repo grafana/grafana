@@ -3,6 +3,7 @@ import { useMemo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { PanelPlugin, GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   Drawer,
@@ -20,10 +21,9 @@ import {
   Stack,
   TextLink,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { ShowMessage, SnapshotTab, SupportSnapshotService } from './SupportSnapshotService';
 
@@ -60,8 +60,8 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
   }
 
   const tabs = [
-    { label: 'Snapshot', value: SnapshotTab.Support },
-    { label: 'Data', value: SnapshotTab.Data },
+    { label: t('dashboard.help-wizard.tabs.label.snapshot', 'Snapshot'), value: SnapshotTab.Support },
+    { label: t('dashboard.help-wizard.tabs.label.data', 'Data'), value: SnapshotTab.Data },
   ];
 
   const hasSupportBundleAccess =
@@ -89,7 +89,7 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
             <span className="muted">
               <Trans i18nKey="help-wizard.support-bundle">
                 You can also retrieve a support bundle containing information concerning your Grafana instance and
-                configured datasources in the <a href="/support-bundles">support bundles section</a>.
+                configured datasources in the <TextLink href="/support-bundles">support bundles section</TextLink>.
               </Trans>
             </span>
           )}

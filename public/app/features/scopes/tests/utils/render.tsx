@@ -8,7 +8,7 @@ import { sceneGraph } from '@grafana/scenes';
 import { defaultDashboard } from '@grafana/schema';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
-import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';
+import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types/dashboard';
 
 import { defaultScopesServices, ScopesContextProvider } from '../../ScopesContextProvider';
 
@@ -197,7 +197,7 @@ export async function renderDashboard(
     </KBarProvider>
   );
 
-  await waitFor(() => expect(sceneGraph.getScopesBridge(scene)).toBeDefined());
+  await waitFor(() => expect(sceneGraph.getScopes(scene)).toBeDefined());
 
   return {
     scene,

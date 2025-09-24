@@ -20,12 +20,13 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
-import { Trans } from '../../../../../core/internationalization';
 import { autoColor } from '../Theme';
 import { Popover } from '../common/Popover';
-import { TraceSpan, TNil, CriticalPathSection } from '../types';
+import TNil from '../types/TNil';
+import { TraceSpan, CriticalPathSection } from '../types/trace';
 
 import AccordianLogs from './SpanDetail/AccordianLogs';
 import { ViewedBoundsFunctionType } from './utils';

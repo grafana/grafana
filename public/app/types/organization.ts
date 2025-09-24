@@ -1,4 +1,4 @@
-import { UserOrg } from 'app/types';
+import { UserOrg } from 'app/types/user';
 
 export interface Organization {
   name: string;

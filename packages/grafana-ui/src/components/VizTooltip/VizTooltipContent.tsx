@@ -3,7 +3,7 @@ import { CSSProperties, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 import { VizTooltipRow } from './VizTooltipRow';
 import { VizTooltipItem } from './types';
@@ -34,7 +34,7 @@ export const VizTooltipContent = ({
 
   return (
     <div className={styles.wrapper} style={scrollableStyle}>
-      {items.map(({ label, value, color, colorIndicator, colorPlacement, isActive, lineStyle }, i) => (
+      {items.map(({ label, value, color, colorIndicator, colorPlacement, isActive, lineStyle, isHiddenFromViz }, i) => (
         <VizTooltipRow
           key={i}
           label={label}
@@ -47,6 +47,7 @@ export const VizTooltipContent = ({
           isPinned={isPinned}
           lineStyle={lineStyle}
           showValueScroll={!scrollable}
+          isHiddenFromViz={isHiddenFromViz}
         />
       ))}
       {children}

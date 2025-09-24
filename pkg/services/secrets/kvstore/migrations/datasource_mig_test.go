@@ -24,6 +24,7 @@ import (
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -44,7 +45,9 @@ func SetupTestDataSourceSecretMigrationService(t *testing.T, sqlStore db.DB, kvS
 	return migService
 }
 
-func TestMigrate(t *testing.T) {
+func TestIntegrationMigrate(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("should migrate from legacy to unified with compatibility", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		kvStore := kvstore.ProvideService(sqlStore)

@@ -18,9 +18,6 @@ import {
   ElasticsearchDataQuery,
 } from './dataquery.gen';
 
-export * from './dataquery.gen';
-export type { ElasticsearchDataQuery as ElasticsearchQuery } from './dataquery.gen';
-
 // We want to extend the settings of the Logs query with additional properties that
 // are not part of the schema. This is a workaround, because exporting LogsSettings
 // from dataquery.gen.ts and extending that produces error in SettingKeyOf.

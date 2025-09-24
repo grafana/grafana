@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
-import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist';
+import { Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist/v0alpha1';
 
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
@@ -29,7 +29,7 @@ export const PlaylistPage = () => {
       return;
     }
     deletePlaylist({
-      name: playlistToDelete.metadata.name ?? '',
+      name: playlistToDelete.metadata?.name ?? '',
     }).finally(() => {
       setPlaylistToDelete(undefined);
     });
@@ -84,10 +84,10 @@ export const PlaylistPage = () => {
             )}
             {playlistToDelete && (
               <ConfirmModal
-                title={playlistToDelete.spec.title}
+                title={playlistToDelete.spec?.title ?? ''}
                 confirmText={t('playlist-page.delete-modal.confirm-text', 'Delete')}
                 body={t('playlist-page.delete-modal.body', 'Are you sure you want to delete {{name}} playlist?', {
-                  name: playlistToDelete.spec.title,
+                  name: playlistToDelete.spec?.title,
                 })}
                 onConfirm={onDeletePlaylist}
                 isOpen={Boolean(playlistToDelete)}

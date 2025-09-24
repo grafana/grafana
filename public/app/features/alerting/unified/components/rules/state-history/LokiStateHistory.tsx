@@ -4,13 +4,13 @@ import * as React from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { AlertLabels } from '@grafana/alerting/unstable';
 import { DataFrame, GrafanaTheme2, TimeRange, dateTime } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Field, Icon, Input, Label, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
-import { AlertLabels } from '../../AlertLabels';
 import { PopupCard } from '../../HoverCard';
 
 import { LogRecordViewerByTimestamp } from './LogRecordViewer';
@@ -121,7 +121,12 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
             <Text variant="bodySmall">
               <Trans i18nKey="alerting.loki-state-history.common-labels">Common labels</Trans>
             </Text>
-            <Tooltip content="Common labels are the ones attached to all of the alert instances">
+            <Tooltip
+              content={t(
+                'alerting.loki-state-history.tooltip-common-labels',
+                'Common labels are the ones attached to all of the alert instances'
+              )}
+            >
               <Icon name="info-circle" size="sm" />
             </Tooltip>
           </Stack>

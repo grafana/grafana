@@ -5,12 +5,12 @@ import { useEffect, useId, useState } from 'react';
 import * as React from 'react';
 
 import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { getOperationParamId } from '../operationUtils';
-
 import { OperationHeader } from './OperationHeader';
-import { getOperationParamEditor } from './OperationParamEditor';
+import { getOperationParamEditor } from './OperationParamEditorRegistry';
+import { getOperationParamId } from './param_utils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
@@ -19,7 +19,7 @@ import {
   VisualQueryModeller,
 } from './types';
 
-export interface Props {
+interface Props {
   operation: QueryBuilderOperation;
   index: number;
   query: any;
@@ -52,7 +52,13 @@ export function OperationEditor({
   const id = useId();
 
   if (!def) {
-    return <span>Operation {operation.id} not found</span>;
+    return (
+      <span>
+        <Trans i18nKey="grafana-prometheus.querybuilder.operation-editor.not-found" values={{ id: operation.id }}>
+          Operation {'{{id}}'} not found
+        </Trans>
+      </span>
+    );
   }
 
   const onParamValueChanged = (paramIdx: number, value: QueryBuilderOperationParamValue) => {
@@ -95,16 +101,16 @@ export function OperationEditor({
         <div className={styles.paramValue}>
           <Stack gap={0.5} direction="row" alignItems="center">
             <Editor
-              index={paramIndex}
               paramDef={paramDef}
               value={operation.params[paramIndex]}
-              operation={operation}
-              operationId={id}
-              onChange={onParamValueChanged}
-              onRunQuery={onRunQuery}
+              index={paramIndex}
+              operationId={operation.id}
               query={query}
               datasource={datasource}
               timeRange={timeRange}
+              onChange={onParamValueChanged}
+              onRunQuery={onRunQuery}
+              queryModeller={queryModeller}
             />
             {paramDef.restParam && (operation.params.length > def.params.length || paramDef.optional) && (
               <Button
@@ -113,7 +119,9 @@ export function OperationEditor({
                 fill="text"
                 icon="times"
                 variant="secondary"
-                title={`Remove ${paramDef.name}`}
+                aria-label={t('grafana-prometheus.querybuilder.operation-editor.title-remove', 'Remove {{name}}', {
+                  name: paramDef.name,
+                })}
                 onClick={() => onRemoveRestParam(paramIndex)}
               />
             )}

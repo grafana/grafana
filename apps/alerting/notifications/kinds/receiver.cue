@@ -4,25 +4,16 @@ import (
 	"github.com/grafana/grafana/apps/alerting/notifications/kinds/v0alpha1"
 )
 
-receiver: {
+receiverKind: {
 	kind: "Receiver"
-	apiResource: {
-		groupOverride: "notifications.alerting.grafana.app"
-	}
 	pluralName: "Receivers"
-	current:    "v0alpha1"
-	codegen: {
-		ts: {enabled: false}
-		go: {enabled: true}
+}
+
+receiverv0alpha1: receiverKind & {
+	schema: {
+		spec: v0alpha1.ReceiverSpec
 	}
-	versions: {
-		"v0alpha1": {
-			schema: {
-				spec: v0alpha1.ReceiverSpec
-			}
-			selectableFields: [
-				"spec.title",
-			]
-		}
-	}
+//	selectableFields: [ // TODO revisit when custom field selectors are supported
+//				"spec.title",
+//	]
 }

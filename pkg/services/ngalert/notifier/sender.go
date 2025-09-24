@@ -8,25 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
-type sender struct {
+type emailSender struct {
 	ns notifications.Service
 }
 
-func (s sender) SendWebhook(ctx context.Context, cmd *receivers.SendWebhookSettings) error {
-	return s.ns.SendWebhookSync(ctx, &notifications.SendWebhookSync{
-		Url:         cmd.URL,
-		User:        cmd.User,
-		Password:    cmd.Password,
-		Body:        cmd.Body,
-		HttpMethod:  cmd.HTTPMethod,
-		HttpHeader:  cmd.HTTPHeader,
-		ContentType: cmd.ContentType,
-		Validation:  cmd.Validation,
-		TLSConfig:   cmd.TLSConfig,
-	})
-}
-
-func (s sender) SendEmail(ctx context.Context, cmd *receivers.SendEmailSettings) error {
+func (s emailSender) SendEmail(ctx context.Context, cmd *receivers.SendEmailSettings) error {
 	sendEmailCommand := notifications.SendEmailCommand{
 		To:            cmd.To,
 		SingleEmail:   cmd.SingleEmail,

@@ -5,10 +5,10 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
 import { FeatureState, GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-import { t } from '../../../internationalization';
 import { Indent } from '../../Indent/Indent';
 
 import { FeatureHighlight } from './FeatureHighlight';

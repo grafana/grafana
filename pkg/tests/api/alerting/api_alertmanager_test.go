@@ -22,9 +22,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationAMConfigAccess(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -46,11 +49,6 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
-	})
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
 	})
 
 	type testCase struct {
@@ -359,18 +357,16 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 }
 
 func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		AppModeProduction:     true,
 	})
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
+
 	client := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
 	cases := []struct {
@@ -513,9 +509,12 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 }
 
 func TestIntegrationAlertmanagerStatus(t *testing.T) {
-	testinfra.SQLiteIntegrationTest(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
+
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -524,7 +523,7 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	// Create a users to make authenticated requests
+	// Create users to make authenticated requests
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
@@ -534,11 +533,6 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
-	})
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
 	})
 
 	type testCase struct {

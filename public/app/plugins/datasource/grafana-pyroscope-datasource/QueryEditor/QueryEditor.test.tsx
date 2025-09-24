@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { CoreApp, PluginType } from '@grafana/data';
 
 import { PyroscopeDataSource } from '../datasource';
-import { mockFetchPyroscopeDatasourceSettings } from '../datasource.test';
+import { mockFetchPyroscopeDatasourceSettings } from '../mocks';
 import { ProfileTypeMessage } from '../types';
 
 import { Props, QueryEditor } from './QueryEditor';

@@ -1,9 +1,9 @@
 import { PropsWithChildren, useMemo } from 'react';
 
 import { VariableRefresh } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
-import { t } from 'app/core/internationalization';
 
 interface Props {
   onChange: (option: VariableRefresh) => void;

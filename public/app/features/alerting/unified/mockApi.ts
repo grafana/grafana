@@ -1,14 +1,16 @@
 import { HttpResponse, http } from 'msw';
-import { SetupServer, setupServer } from 'msw/node';
+import { SetupServer } from 'msw/node';
 
 import { setBackendSrv } from '@grafana/runtime';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';
 import {
   setupAlertmanagerConfigMapDefaultState,
   setupAlertmanagerStatusMapDefaultState,
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { resetRoutingTreeMap } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
-import { DashboardDTO, FolderDTO, OrgUser } from 'app/types';
+import { DashboardDTO } from 'app/types/dashboard';
+import { FolderDTO } from 'app/types/folders';
 import {
   PromRulesResponse,
   RulerGrafanaRuleDTO,
@@ -228,22 +230,6 @@ export function mockFolderApi(server: SetupServer) {
   };
 }
 
-export function mockSearchApi(server: SetupServer) {
-  return {
-    search: (results: DashboardSearchItem[]) => {
-      server.use(http.get(`/api/search`, () => HttpResponse.json(results)));
-    },
-  };
-}
-
-export function mockUserApi(server: SetupServer) {
-  return {
-    user: (user: OrgUser) => {
-      server.use(http.get(`/api/user`, () => HttpResponse.json(user)));
-    },
-  };
-}
-
 export function mockDashboardApi(server: SetupServer) {
   return {
     search: (results: DashboardSearchItem[]) => {
@@ -255,31 +241,22 @@ export function mockDashboardApi(server: SetupServer) {
   };
 }
 
-const server = setupServer(...allHandlers);
-
 /**
- * Sets up beforeAll, afterAll and beforeEach handlers for mock server
+ * Sets up MSW server with additional handlers for Alerting tests
  */
 export function setupMswServer() {
+  setupMockServer(allHandlers);
+
   beforeAll(() => {
     setBackendSrv(backendSrv);
-    server.listen({ onUnhandledRequest: 'error' });
   });
 
   afterEach(() => {
-    server.resetHandlers();
-
     // Reset any other necessary mock entities/state
     setupAlertmanagerConfigMapDefaultState();
     setupAlertmanagerStatusMapDefaultState();
     resetRoutingTreeMap();
   });
 
-  afterAll(() => {
-    server.close();
-  });
-
   return server;
 }
-
-export default server;

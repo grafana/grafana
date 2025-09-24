@@ -17,12 +17,15 @@ import cx from 'classnames';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { withTheme2, stylesFactory, Button } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { autoColor } from '../../Theme';
-import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate, TNil } from '../../index';
-import DraggableManager, { DraggableBounds, DraggingUpdate, EUpdateTypes } from '../../utils/DraggableManager';
+import { TUpdateViewRangeTimeFunction, ViewRangeTimeUpdate, ViewRange } from '../../TraceTimelineViewer/types';
+import TNil from '../../types/TNil';
+import DraggableManager from '../../utils/DraggableManager/DraggableManager';
+import EUpdateTypes from '../../utils/DraggableManager/EUpdateTypes';
+import { DraggableBounds, DraggingUpdate } from '../../utils/DraggableManager/types';
 
 import GraphTicks from './GraphTicks';
 import Scrubber from './Scrubber';

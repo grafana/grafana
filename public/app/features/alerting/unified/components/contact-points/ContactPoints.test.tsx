@@ -7,7 +7,7 @@ import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server
 import { flushMicrotasks } from 'app/features/alerting/unified/test/test-utils';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
@@ -17,11 +17,11 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasourc
 
 import { ContactPoint } from './ContactPoint';
 import { ContactPointsPageContents } from './ContactPoints';
-import setupMimirFlavoredServer from './__mocks__/mimirFlavoredServer';
+import { RECEIVER_META_KEY } from './constants';
+import setupMimirFlavoredServer from './mocks/mimirFlavoredServer';
 import setupVanillaAlertmanagerFlavoredServer, {
   VANILLA_ALERTMANAGER_DATASOURCE_UID,
-} from './__mocks__/vanillaAlertmanagerServer';
-import { RECEIVER_META_KEY } from './constants';
+} from './mocks/vanillaAlertmanagerServer';
 import { ContactPointWithMetadata, ReceiverConfigWithMetadata, RouteReference } from './utils';
 
 /**
@@ -154,6 +154,20 @@ describe('contact points', () => {
 
         expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
       });
+
+      test('defaults to contact points tab if user has only read permission', async () => {
+        grantUserPermissions([AccessControlAction.AlertingReceiversRead]);
+        renderWithProvider(<ContactPointsPageContents />);
+
+        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+      });
+
+      test('defaults to contact points tab if user has only create permission', async () => {
+        grantUserPermissions([AccessControlAction.AlertingReceiversCreate]);
+        renderWithProvider(<ContactPointsPageContents />);
+
+        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+      });
     });
 
     describe('templates tab', () => {
@@ -184,12 +198,37 @@ describe('contact points', () => {
       const unusedBadge = screen.getAllByLabelText('unused');
       expect(unusedBadge).toHaveLength(4);
 
-      const viewProvisioned = screen.getByTestId('view-action');
-      expect(viewProvisioned).toBeInTheDocument();
-      expect(viewProvisioned).toBeEnabled();
+      // Two contact points should have view buttons: grafana-default-email (cannot be edited) and provisioned-contact-point (provisioned)
+      const viewButtons = screen.getAllByRole('link', { name: /^view$/i });
+      expect(viewButtons).toHaveLength(2);
 
-      const editButtons = screen.getAllByTestId('edit-action');
-      expect(editButtons).toHaveLength(4);
+      // Check view buttons by their href to verify which contact points they belong to
+      // The url is the same but the form should be readonly
+      expect(viewButtons[0]).toHaveAttribute('href', '/alerting/notifications/receivers/grafana-default-email/edit');
+      expect(viewButtons[1]).toHaveAttribute(
+        'href',
+        '/alerting/notifications/receivers/provisioned-contact-point/edit'
+      );
+
+      viewButtons.forEach((button) => {
+        expect(button).toBeEnabled();
+      });
+
+      // Three contact points should have edit buttons: lotsa-emails, Slack with multiple channels, OnCall Contact point
+      const editButtons = screen.getAllByRole('link', { name: /^edit$/i });
+      expect(editButtons).toHaveLength(3);
+
+      // Check edit buttons by their href to verify which contact points they belong to
+      expect(editButtons[0]).toHaveAttribute('href', '/alerting/notifications/receivers/lotsa-emails/edit');
+      expect(editButtons[1]).toHaveAttribute(
+        'href',
+        '/alerting/notifications/receivers/OnCall%20Conctact%20point/edit'
+      );
+      expect(editButtons[2]).toHaveAttribute(
+        'href',
+        '/alerting/notifications/receivers/Slack%20with%20multiple%20channels/edit'
+      );
+
       editButtons.forEach((button) => {
         expect(button).toBeEnabled();
       });
@@ -213,11 +252,11 @@ describe('contact points', () => {
       expect(screen.getByRole('link', { name: 'add contact point' })).toHaveAttribute('aria-disabled', 'true');
 
       // edit permission is based on API response - we should have 3 buttons
-      const editButtons = await screen.findAllByTestId('edit-action');
+      const editButtons = await screen.findAllByRole('link', { name: /^edit$/i });
       expect(editButtons).toHaveLength(3);
 
       // there should be view buttons though - one for provisioned, and one for the un-editable contact point
-      const viewButtons = screen.getAllByTestId('view-action');
+      const viewButtons = screen.getAllByRole('link', { name: /^view$/i });
       expect(viewButtons).toHaveLength(2);
 
       // check buttons in Notification Templates
@@ -315,7 +354,18 @@ describe('contact points', () => {
         },
       ];
 
-      const { user } = renderWithProvider(<ContactPoint contactPoint={{ ...basicContactPoint, policies }} />);
+      // Add the necessary K8s annotations to allow deletion
+      const contactPointWithDeletePermission: ContactPointWithMetadata = {
+        ...basicContactPoint,
+        metadata: {
+          annotations: {
+            [K8sAnnotations.AccessDelete]: 'true',
+          },
+        },
+        policies,
+      };
+
+      const { user } = renderWithProvider(<ContactPoint contactPoint={contactPointWithDeletePermission} />);
 
       const moreActions = screen.getByRole('button', { name: /More/ });
       await user.click(moreActions);
@@ -373,7 +423,7 @@ describe('contact points', () => {
       const unusedBadge = screen.getAllByLabelText('unused');
       expect(unusedBadge).toHaveLength(1);
 
-      const editButtons = screen.getAllByTestId('edit-action');
+      const editButtons = screen.getAllByRole('link', { name: /^edit$/i });
       expect(editButtons).toHaveLength(2);
       editButtons.forEach((button) => {
         expect(button).toBeEnabled();
@@ -417,9 +467,9 @@ describe('contact points', () => {
 
       expect(screen.queryByRole('link', { name: 'add contact point' })).not.toBeInTheDocument();
 
-      const viewProvisioned = screen.getByTestId('view-action');
-      expect(viewProvisioned).toBeInTheDocument();
-      expect(viewProvisioned).toBeEnabled();
+      const viewButton = screen.getByRole('link', { name: /^view$/i });
+      expect(viewButton).toBeInTheDocument();
+      expect(viewButton).toBeEnabled();
 
       // check buttons in Notification Templates
       const notificationTemplatesTab = screen.getByRole('tab', { name: 'Notification Templates' });

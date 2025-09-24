@@ -8,15 +8,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 var (
@@ -82,9 +83,9 @@ type writeOpResult struct {
 
 // writeOp is a write operation that is executed with an incremented resource version
 type writeOp struct {
-	key  *resource.ResourceKey // The key of the resource
-	fn   WriteEventFunc        // The function to execute to write the event
-	done chan writeOpResult    // A channel informing the operation is done
+	key  *resourcepb.ResourceKey // The key of the resource
+	fn   WriteEventFunc          // The function to execute to write the event
+	done chan writeOpResult      // A channel informing the operation is done
 }
 
 // WriteEventFunc is a function that writes a resource to the database
@@ -128,7 +129,7 @@ func NewResourceVersionManager(opts ResourceManagerOptions) (*resourceVersionMan
 }
 
 // ExecWithRV executes the given function with an incremented resource version
-func (m *resourceVersionManager) ExecWithRV(ctx context.Context, key *resource.ResourceKey, fn WriteEventFunc) (rv int64, err error) {
+func (m *resourceVersionManager) ExecWithRV(ctx context.Context, key *resourcepb.ResourceKey, fn WriteEventFunc) (rv int64, err error) {
 	rvmInflightWrites.WithLabelValues(key.Group, key.Resource).Inc()
 	defer rvmInflightWrites.WithLabelValues(key.Group, key.Resource).Dec()
 

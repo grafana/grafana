@@ -25,7 +25,7 @@ func newImageProvider(store store.ImageStore, logger log.Logger) alertingImages.
 	return alertingImages.NewTokenProvider(&tokenStore{
 		store:  store,
 		logger: logger,
-	}, newLogWrapper(logger))
+	}, logger)
 }
 
 func (t tokenStore) GetImage(ctx context.Context, token string) (*alertingImages.Image, error) {
@@ -38,6 +38,7 @@ func (t tokenStore) GetImage(ctx context.Context, token string) (*alertingImages
 	}
 
 	return &alertingImages.Image{
+		ID:  token,
 		URL: image.URL,
 		RawData: func(_ context.Context) (alertingImages.ImageContent, error) {
 			if image.Path == "" {

@@ -1,27 +1,23 @@
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState, useMemo } from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { store, type ExtensionInfo } from '@grafana/data';
-import { config, getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
+import { PluginExtensionPoints, store, type ExtensionInfo } from '@grafana/data';
+import { getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
-import { OpenExtensionSidebarEvent } from 'app/types/events';
+import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent } from 'app/types/events';
 
-import { DEFAULT_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
+import { DEFAULT_EXTENSION_SIDEBAR_WIDTH, MAX_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
 
-export const EXTENSION_SIDEBAR_EXTENSION_POINT_ID = 'grafana/extension-sidebar/v0-alpha';
 export const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDocked';
 export const EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarWidth';
 const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
   'grafana-investigations-app',
-  'grafana-aiassistant-app',
+  'grafana-assistant-app',
   'grafana-dash-app',
+  'grafana-grafanadocsplugin-app',
 ];
 
-type ExtensionSidebarContextType = {
-  /**
-   * Whether the extension sidebar is enabled.
-   */
-  isEnabled: boolean;
+export type ExtensionSidebarContextType = {
   /**
    * Whether the extension sidebar is open.
    */
@@ -51,7 +47,6 @@ type ExtensionSidebarContextType = {
 };
 
 export const ExtensionSidebarContext = createContext<ExtensionSidebarContextType>({
-  isEnabled: !!config.featureToggles.extensionSidebar,
   isOpen: false,
   dockedComponentId: undefined,
   setDockedComponentId: () => {},
@@ -92,19 +87,19 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   // that means, a plugin would need to register both, a link and a component to
   // `grafana/extension-sidebar/v0-alpha` and the link's `configure` method would control
   // whether the component is rendered or not
-  const { links } = usePluginLinks({
-    extensionPointId: EXTENSION_SIDEBAR_EXTENSION_POINT_ID,
+  const { links, isLoading } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.ExtensionSidebar,
     context: {
       path: currentPath,
     },
   });
 
-  const isEnabled = !!config.featureToggles.extensionSidebar;
   // get all components for this extension point, but only for the permitted plugins
   // if the extension sidebar is not enabled, we will return an empty map
-  const availableComponents = isEnabled
-    ? new Map(
-        Array.from(getExtensionPointPluginMeta(EXTENSION_SIDEBAR_EXTENSION_POINT_ID).entries()).filter(
+  const availableComponents = useMemo(
+    () =>
+      new Map(
+        Array.from(getExtensionPointPluginMeta(PluginExtensionPoints.ExtensionSidebar).entries()).filter(
           ([pluginId, pluginMeta]) =>
             PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId) &&
             links.some(
@@ -113,30 +108,38 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
                 pluginMeta.addedComponents.some((component) => component.title === link.title)
             )
         )
-      )
-    : new Map<
-        string,
-        {
-          readonly addedComponents: ExtensionInfo[];
-          readonly addedLinks: ExtensionInfo[];
-        }
-      >();
+      ),
+    [links]
+  );
 
   // check if the stored docked component is still available
   let defaultDockedComponentId: string | undefined;
   if (storedDockedPluginId) {
     const dockedMeta = getComponentMetaFromComponentId(storedDockedPluginId);
     if (dockedMeta) {
-      const plugin = availableComponents.get(dockedMeta.pluginId);
-      if (plugin) {
-        const component = plugin.addedComponents.find((c) => c.title === dockedMeta.componentTitle);
-        if (component) {
-          defaultDockedComponentId = storedDockedPluginId;
-        }
-      }
+      defaultDockedComponentId = storedDockedPluginId;
     }
   }
   const [dockedComponentId, setDockedComponentId] = useState<string | undefined>(defaultDockedComponentId);
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    if (dockedComponentId) {
+      const dockedMeta = getComponentMetaFromComponentId(dockedComponentId);
+      if (dockedMeta) {
+        const plugin = availableComponents.get(dockedMeta.pluginId);
+        if (!plugin || !plugin.addedComponents.some((c) => c.title === dockedMeta.componentTitle)) {
+          setDockedComponentId(undefined);
+        }
+      } else {
+        // no component found, so we clear the docked component id
+        setDockedComponentId(undefined);
+      }
+    }
+  }, [isLoading, availableComponents, dockedComponentId]);
 
   const setDockedComponentWithProps = useCallback(
     (componentId: string | undefined, props?: Record<string, unknown>) => {
@@ -147,16 +150,15 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   );
 
   useEffect(() => {
-    if (!isEnabled) {
-      return;
-    }
-
     // handler to open the extension sidebar from plugins. this is done with the `helpers.openSidebar` function
     const openSidebarHandler = (event: OpenExtensionSidebarEvent) => {
       if (
         event.payload.pluginId &&
         event.payload.componentTitle &&
-        PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(event.payload.pluginId)
+        PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(event.payload.pluginId) &&
+        availableComponents
+          .get(event.payload.pluginId)
+          ?.addedComponents.some((component) => component.title === event.payload.componentTitle)
       ) {
         setDockedComponentWithProps(
           JSON.stringify({ pluginId: event.payload.pluginId, componentTitle: event.payload.componentTitle }),
@@ -165,14 +167,24 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       }
     };
 
-    const subscription = getAppEvents().subscribe(OpenExtensionSidebarEvent, openSidebarHandler);
-    return () => {
-      subscription.unsubscribe();
+    const closeSidebarHandler = () => {
+      setDockedComponentId(undefined);
     };
-  }, [isEnabled, setDockedComponentWithProps]);
+
+    const openSubscription = getAppEvents().subscribe(OpenExtensionSidebarEvent, openSidebarHandler);
+    const closeSubscription = getAppEvents().subscribe(CloseExtensionSidebarEvent, closeSidebarHandler);
+    return () => {
+      openSubscription.unsubscribe();
+      closeSubscription.unsubscribe();
+    };
+  }, [setDockedComponentWithProps, availableComponents]);
 
   // update the stored docked component id when it changes
   useEffect(() => {
+    // wait for the plugin links to be loaded before we update the stored docked component id
+    if (isLoading) {
+      return;
+    }
     const componentMeta = getComponentMetaFromComponentId(dockedComponentId ?? '');
     const storedComponentId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
     const storedComponentMeta = getComponentMetaFromComponentId(storedComponentId ?? '');
@@ -191,17 +203,19 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     } else {
       store.delete(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
     }
-  }, [dockedComponentId]);
+  }, [dockedComponentId, isLoading]);
 
   return (
     <ExtensionSidebarContext.Provider
       value={{
-        isEnabled,
-        isOpen: isEnabled && dockedComponentId !== undefined,
+        isOpen: dockedComponentId !== undefined,
         dockedComponentId,
         setDockedComponentId: (componentId) => setDockedComponentWithProps(componentId, undefined),
         availableComponents,
-        extensionSidebarWidth: extensionSidebarWidth ?? DEFAULT_EXTENSION_SIDEBAR_WIDTH,
+        extensionSidebarWidth: Math.min(
+          extensionSidebarWidth ?? DEFAULT_EXTENSION_SIDEBAR_WIDTH,
+          MAX_EXTENSION_SIDEBAR_WIDTH
+        ),
         setExtensionSidebarWidth,
         props,
       }}

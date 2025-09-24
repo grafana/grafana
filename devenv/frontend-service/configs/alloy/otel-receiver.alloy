@@ -1,0 +1,13 @@
+//
+// Traces
+otelcol.receiver.otlp "grafana_dev" {
+	output {
+		metrics = []
+		logs    = []
+		traces  = [otelcol.processor.transform.publish_traces.input]
+	}
+
+	grpc {
+		endpoint = "0.0.0.0:4317"
+	}
+}

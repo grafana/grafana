@@ -38,7 +38,7 @@ func TestWithTimeout(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/", nil)
-			withTimeout(handler, tt.timeout).ServeHTTP(w, r)
+			WithTimeout(handler, tt.timeout).ServeHTTP(w, r)
 
 			if w.Code != tt.wantStatus {
 				t.Errorf("withTimeout() status = %v, want %v", w.Code, tt.wantStatus)

@@ -29,7 +29,7 @@ export const ElementSelectionContext = createContext<ElementSelectionContextStat
 export interface UseElementSelectionResult {
   isSelected?: boolean;
   isSelectable?: boolean;
-  onSelect?: (evt: React.PointerEvent, options?: ElementSelectionOnSelectOptions) => void;
+  onSelect?: (evt: React.MouseEvent, options?: ElementSelectionOnSelectOptions) => void;
   onClear?: () => void;
 }
 
@@ -45,7 +45,7 @@ export function useElementSelection(id: string | undefined): UseElementSelection
 
   const isSelected = context.selected.some((item) => item.id === id);
   const onSelect = useCallback(
-    (evt: React.PointerEvent, options: ElementSelectionOnSelectOptions = {}) => {
+    (evt: React.MouseEvent, options: ElementSelectionOnSelectOptions = {}) => {
       if (!context.enabled) {
         return;
       }

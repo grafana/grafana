@@ -3,14 +3,14 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, GrafanaTheme2, PluginType } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { locationSearchToObject } from '@grafana/runtime';
 import { Select, RadioButtonGroup, useStyles2, Tooltip, Field, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { t, Trans } from 'app/core/internationalization';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { AdvisorRedirectNotice } from 'app/features/connections/components/AdvisorRedirectNotice/AdvisorRedirectNotice';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { PluginList } from '../components/PluginList';
@@ -29,6 +29,7 @@ export default function Browse() {
   const styles = useStyles2(getStyles);
   const history = useHistory();
   const remotePluginsAvailable = useIsRemotePluginsAvailable();
+
   const keyword = locationSearch.q?.toString() || '';
   const filterBy = locationSearch.filterBy?.toString() || 'all';
   const filterByType = (locationSearch.filterByType as PluginType | 'all') || 'all';
@@ -44,9 +45,9 @@ export default function Browse() {
   );
 
   const filterByOptions = [
-    { value: 'all', label: 'All' },
-    { value: 'installed', label: 'Installed' },
-    { value: 'has-update', label: 'New Updates' },
+    { value: 'all', label: t('plugins.browse.filter-by-options.label.all', 'All') },
+    { value: 'installed', label: t('plugins.browse.filter-by-options.label.installed', 'Installed') },
+    { value: 'has-update', label: t('plugins.browse.filter-by-options.label.new-updates', 'New Updates') },
   ];
 
   const { isLoading: areUpdatesLoading, updatablePlugins } = useGetUpdatable();
@@ -93,54 +94,59 @@ export default function Browse() {
   );
 
   return (
-    <Page navModel={navModel} actions={updateAllButton} subTitle={subTitle}>
+    <Page navModel={navModel} actions={updateAllButton} subTitle={subTitle} className={styles.pageContainer}>
       <Page.Contents>
         <AdvisorRedirectNotice />
-        <HorizontalGroup wrap>
-          <Field label={t('plugins.browse.label-search', 'Search')}>
-            <SearchField value={keyword} onSearch={onSearch} />
-          </Field>
-          <HorizontalGroup wrap className={styles.actionBar}>
-            {/* Filter by type */}
-            <Field label={t('plugins.browse.label-type', 'Type')}>
-              <Select
-                aria-label={t('plugins.browse.aria-label-plugin-type-filter', 'Plugin type filter')}
-                value={filterByType}
-                onChange={onFilterByTypeChange}
-                width={18}
-                options={[
-                  { value: 'all', label: 'All' },
-                  { value: 'datasource', label: 'Data sources' },
-                  { value: 'panel', label: 'Panels' },
-                  { value: 'app', label: 'Applications' },
-                ]}
-              />
+        <div className={styles.searchContainer}>
+          <HorizontalGroup wrap>
+            <Field label={t('plugins.browse.label-search', 'Search')}>
+              <SearchField value={keyword} onSearch={onSearch} />
             </Field>
-
-            {/* Filter by installed / all */}
-            {remotePluginsAvailable ? (
-              <Field label={t('plugins.browse.label-state', 'State')}>
-                <RadioButtonGroup value={filterBy} onChange={onFilterByChange} options={filterByOptions} />
+            <HorizontalGroup wrap className={styles.actionBar}>
+              {/* Filter by type */}
+              <Field label={t('plugins.browse.label-type', 'Type')}>
+                <Select
+                  aria-label={t('plugins.browse.aria-label-plugin-type-filter', 'Plugin type filter')}
+                  value={filterByType}
+                  onChange={onFilterByTypeChange}
+                  width={18}
+                  options={[
+                    { value: 'all', label: t('plugins.browse.label.all', 'All') },
+                    { value: 'datasource', label: t('plugins.browse.label.data-sources', 'Data sources') },
+                    { value: 'panel', label: t('plugins.browse.label.panels', 'Panels') },
+                    { value: 'app', label: t('plugins.browse.label.applications', 'Applications') },
+                  ]}
+                />
               </Field>
-            ) : (
-              <Tooltip
-                content="This filter has been disabled because the Grafana server cannot access grafana.com"
-                placement="top"
-              >
-                <div>
-                  <Field label={t('plugins.browse.label-state', 'State')}>
-                    <RadioButtonGroup
-                      disabled={true}
-                      value={filterBy}
-                      onChange={onFilterByChange}
-                      options={filterByOptions}
-                    />
-                  </Field>
-                </div>
-              </Tooltip>
-            )}
+
+              {/* Filter by installed / all */}
+              {remotePluginsAvailable ? (
+                <Field label={t('plugins.browse.label-state', 'State')}>
+                  <RadioButtonGroup value={filterBy} onChange={onFilterByChange} options={filterByOptions} />
+                </Field>
+              ) : (
+                <Tooltip
+                  content={t(
+                    'plugins.browse.tooltip-filter-disabled',
+                    'This filter has been disabled because the Grafana server cannot access grafana.com'
+                  )}
+                  placement="top"
+                >
+                  <div>
+                    <Field label={t('plugins.browse.label-state', 'State')}>
+                      <RadioButtonGroup
+                        disabled={true}
+                        value={filterBy}
+                        onChange={onFilterByChange}
+                        options={filterByOptions}
+                      />
+                    </Field>
+                  </div>
+                </Tooltip>
+              )}
+            </HorizontalGroup>
           </HorizontalGroup>
-        </HorizontalGroup>
+        </div>
         <div className={styles.listWrap}>
           <PluginList plugins={plugins} isLoading={isLoading} />
         </div>
@@ -157,13 +163,24 @@ export default function Browse() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  pageContainer: css({
+    height: '100vh',
+    overflow: 'hidden',
+  }),
+  searchContainer: css({
+    paddingTop: theme.spacing(0.5),
+    paddingBottom: theme.spacing(1),
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    marginBottom: theme.spacing(3),
+  }),
+  listWrap: css({
+    height: 'calc(100vh - 350px)',
+    overflowY: 'auto',
+  }),
   actionBar: css({
     [theme.breakpoints.up('xl')]: {
       marginLeft: 'auto',
     },
-  }),
-  listWrap: css({
-    marginTop: theme.spacing(2),
   }),
   displayAs: css({
     svg: {

@@ -1,8 +1,8 @@
 import { forwardRef, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom-v5-compat';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import * as ruleId from '../../utils/rule-id';
@@ -56,7 +56,7 @@ export function RedirectToCloneRule({
           </p>
         </div>
       }
-      confirmText="Copy"
+      confirmText={t('alerting.redirect-to-clone-rule.confirmText-copy', 'Copy')}
       onConfirm={() => setStage('redirect')}
       onDismiss={onDismiss}
     />

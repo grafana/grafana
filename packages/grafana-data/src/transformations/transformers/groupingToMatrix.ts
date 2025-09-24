@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, Field } from '../../types/dataFrame';
+import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import {
   SpecialValue,
   DataTransformerInfo,
@@ -12,6 +12,7 @@ import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
 import { DataTransformerID } from './ids';
+import { getSpecialValue } from './utils';
 
 export interface GroupingToMatrixTransformerOptions {
   columnField?: string;
@@ -27,8 +28,7 @@ const DEFAULT_EMPTY_VALUE = SpecialValue.Empty;
 
 // grafana-data does not have access to runtime so we are accessing the window object
 // to get access to the feature toggle
-// eslint-disable-next-line
-const supportDataplaneFallback = (window as any)?.grafanaBootData?.settings?.featureToggles?.dataplaneFrontendFallback;
+const supportDataplaneFallback = window.grafanaBootData?.settings?.featureToggles?.dataplaneFrontendFallback;
 
 export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTransformerOptions> = {
   id: DataTransformerID.groupingToMatrix,
@@ -60,7 +60,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
       numFields += frame.fields.length;
     }
 
-    return `Grouping to matrix requiers at least 3 fields to work. Currently there are ${numFields} fields.`;
+    return `Grouping to matrix requires at least 3 fields to work. Currently there are ${numFields} fields.`;
   },
   operator: (options: GroupingToMatrixTransformerOptions, ctx: DataTransformContext) => (source) =>
     source.pipe(
@@ -107,14 +107,17 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
             name: rowColumnField,
             values: rowValues,
             type: keyRowField.type,
-            config: {},
+            config: { ...keyRowField.config },
           },
         ];
 
         for (const columnName of columnValues) {
           let values = [];
           for (const rowName of rowValues) {
-            const value = matrixValues[columnName][rowName] ?? getSpecialValue(emptyValue);
+            // nested dataframes need to be undefined when empty
+            const value =
+              matrixValues[columnName][rowName] ??
+              (valueField.type === FieldType.frame ? undefined : getSpecialValue(emptyValue));
             values.push(value);
           }
 
@@ -125,6 +128,9 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           if (supportDataplaneFallback && typeof columnName === 'number') {
             valueField.config = { ...valueField.config, displayNameFromDS: undefined };
           }
+
+          // the names of these columns need to be the selected column values, and not be overridden with the display name
+          delete valueField.config.displayName;
 
           fields.push({
             name: columnName?.toString() ?? null,
@@ -168,20 +174,4 @@ function findKeyField(frame: DataFrame, matchTitle: string): Field | null {
   }
 
   return null;
-}
-
-function getSpecialValue(specialValue: SpecialValue) {
-  switch (specialValue) {
-    case SpecialValue.False:
-      return false;
-    case SpecialValue.True:
-      return true;
-    case SpecialValue.Null:
-      return null;
-    case SpecialValue.Zero:
-      return 0;
-    case SpecialValue.Empty:
-    default:
-      return '';
-  }
 }

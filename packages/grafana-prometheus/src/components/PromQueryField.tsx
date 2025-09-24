@@ -1,9 +1,17 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromQueryField.tsx
 import { css, cx } from '@emotion/css';
-import { MutableRefObject, ReactNode, useCallback, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 
-import { getDefaultTimeRange, isDataFrame, QueryEditorProps, QueryHint, toLegacyResponseData } from '@grafana/data';
+import {
+  DataFrame,
+  getDefaultTimeRange,
+  isDataFrame,
+  QueryEditorProps,
+  QueryHint,
+  toLegacyResponseData,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { clearButtonStyles, Icon, useTheme2 } from '@grafana/ui';
 
@@ -11,15 +19,13 @@ import { PrometheusDatasource } from '../datasource';
 import { getInitHints } from '../query_hints';
 import { PromOptions, PromQuery } from '../types';
 
-import { CancelablePromise, isCancelablePromiseRejection, makePromiseCancelable } from './cancelable-promise';
 import { MetricsBrowser } from './metrics-browser/MetricsBrowser';
 import { MetricsBrowserProvider } from './metrics-browser/MetricsBrowserContext';
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
-import { useMetricsState } from './useMetricsState';
-import { usePromQueryFieldEffects } from './usePromQueryFieldEffects';
 
 interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions> {
   ExtraFieldElement?: ReactNode;
+  hideMetricsBrowser?: boolean;
   'data-testid'?: string;
 }
 
@@ -35,72 +41,37 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
     range,
     onChange,
     onRunQuery,
+    hideMetricsBrowser = false,
   } = props;
 
   const theme = useTheme2();
 
-  const [syntaxLoaded, setSyntaxLoaded] = useState(false);
   const [hint, setHint] = useState<QueryHint | null>(null);
   const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
 
-  const updateLanguage = useCallback(() => {
-    if (languageProvider.metrics) {
-      setSyntaxLoaded(true);
-    }
-  }, [languageProvider]);
+  const refreshHint = useCallback(
+    (series: DataFrame[]) => {
+      const initHints = getInitHints(datasource);
+      const initHint = initHints[0] ?? null;
 
-  const refreshMetrics = useCallback(
-    async (languageProviderInitRef: MutableRefObject<CancelablePromise<any> | null>) => {
-      // Cancel any existing initialization using the ref
-      if (languageProviderInitRef.current) {
-        languageProviderInitRef.current.cancel();
-      }
-
-      if (!languageProvider || !range) {
+      // If no data or empty series, use default hint
+      if (!data?.series?.length) {
+        setHint(initHint);
         return;
       }
 
-      try {
-        const initialization = makePromiseCancelable(languageProvider.start(range));
-        languageProviderInitRef.current = initialization;
+      const result = isDataFrame(series[0]) ? series.map(toLegacyResponseData) : series;
+      const queryHints = datasource.getQueryHints(query, result);
+      let queryHint = queryHints.length > 0 ? queryHints[0] : null;
 
-        const remainingTasks = await initialization.promise;
-
-        // If there are remaining tasks, wait for them
-        if (Array.isArray(remainingTasks) && remainingTasks.length > 0) {
-          await Promise.all(remainingTasks);
-        }
-
-        updateLanguage();
-      } catch (err) {
-        if (isCancelablePromiseRejection(err) && err.isCanceled) {
-          // do nothing, promise was canceled
-        } else {
-          throw err;
-        }
-      } finally {
-        languageProviderInitRef.current = null;
-      }
+      setHint(queryHint ?? initHint);
     },
-    [languageProvider, range, updateLanguage]
+    [data, datasource, query]
   );
 
-  const refreshHint = useCallback(() => {
-    const initHints = getInitHints(datasource);
-    const initHint = initHints[0] ?? null;
-
-    // If no data or empty series, use default hint
-    if (!data?.series?.length) {
-      setHint(initHint);
-      return;
-    }
-
-    const result = isDataFrame(data.series[0]) ? data.series.map(toLegacyResponseData) : data.series;
-    const queryHints = datasource.getQueryHints(query, result);
-    let queryHint = queryHints.length > 0 ? queryHints[0] : null;
-
-    setHint(queryHint ?? initHint);
-  }, [data, datasource, query]);
+  useEffect(() => {
+    refreshHint(data?.series ?? []);
+  }, [data?.series, refreshHint]);
 
   const onChangeQuery = (value: string, override?: boolean) => {
     if (!onChange) {
@@ -136,27 +107,28 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
     onRunQuery();
   };
 
-  // Use our custom effects hook
-  usePromQueryFieldEffects(languageProvider, range, data?.series, refreshMetrics, refreshHint);
-
-  const { chooserText, buttonDisabled } = useMetricsState(datasource, languageProvider, syntaxLoaded);
-
   return (
     <>
       <div
         className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
         data-testid={props['data-testid']}
       >
-        <button
-          className="gf-form-label query-keyword pointer"
-          onClick={onClickChooserButton}
-          disabled={buttonDisabled}
-          type="button"
-          data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.openButton}
-        >
-          {chooserText}
-          <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
-        </button>
+        {!hideMetricsBrowser && (
+          <button
+            className="gf-form-label query-keyword pointer"
+            onClick={onClickChooserButton}
+            disabled={datasource.lookupsDisabled}
+            type="button"
+            data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.openButton}
+          >
+            {datasource.lookupsDisabled ? (
+              <Trans i18nKey="grafana-prometheus.metrics-browser.disabled-label">(Disabled)</Trans>
+            ) : (
+              <Trans i18nKey="grafana-prometheus.metrics-browser.enabled-label">Metrics browser</Trans>
+            )}
+            <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
+          </button>
+        )}
 
         <div className="flex-grow-1 min-width-15">
           <MonacoQueryFieldWrapper
@@ -165,7 +137,10 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
             onChange={onChangeQuery}
             onRunQuery={onRunQuery}
             initialValue={query.expr ?? ''}
-            placeholder="Enter a PromQL query…"
+            placeholder={t(
+              'grafana-prometheus.components.prom-query-field.placeholder-enter-a-prom-ql-query',
+              'Enter a PromQL query…'
+            )}
             datasource={datasource}
             timeRange={range ?? getDefaultTimeRange()}
           />

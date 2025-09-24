@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { useCopyToClipboard } from 'react-use';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { isValidLegacyName, utf8Support } from '@grafana/prometheus/src/utf8_support';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { ItemLabels } from './ItemLabels';
 import { ItemValues } from './ItemValues';
@@ -97,10 +97,11 @@ function getQueryValues(allLabels: Pick<instantQueryRawVirtualizedListData, 'Val
 const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, isExpandedView }: RawListProps) => {
   const { __name__, ...allLabels } = listItemData;
   // We must know whether it is a utf8 metric name or not
-  const isLegacyMetric = isValidLegacyName(__name__);
+  const isLegacyMetric = isValidLegacyName(__name__ ?? '');
   const [_, copyToClipboard] = useCopyToClipboard();
   const displayLength = valueLabels?.length ?? totalNumberOfValues;
   const styles = useStyles2(getStyles, displayLength, isExpandedView);
+
   const { values, attributeValues } = getQueryValues(allLabels);
 
   /**
@@ -141,11 +142,11 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
         </span>
         <span role={'cell'} className={styles.rowLabelWrapWrap}>
           <div className={styles.rowLabelWrap}>
-            {isLegacyMetric && <span>{__name__}</span>}
+            {!!__name__ && isLegacyMetric && <span>{__name__}</span>}
             <span>{`{`}</span>
-            {!isLegacyMetric && __name__ !== '' && (
+            {!isLegacyMetric && !!__name__ && __name__ !== '' && (
               <span>
-                "{__name__}"{', '}
+                &#34;{__name__}&#34;{', '}
               </span>
             )}
             <span>

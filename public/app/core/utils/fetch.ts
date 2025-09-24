@@ -1,6 +1,7 @@
 import { omitBy } from 'lodash';
+import { Observable, of, throwError } from 'rxjs';
 
-import { deprecationWarning } from '@grafana/data';
+import { deprecationWarning, validatePath } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 
 export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {
@@ -152,7 +153,7 @@ export async function parseResponseBody<T>(
   return textData as T;
 }
 
-function serializeParams(data: Record<string, any>): string {
+function serializeParams(data: Record<string, string | number | boolean | Array<string | number | boolean>>): string {
   return Object.keys(data)
     .map((key) => {
       const value = data[key];
@@ -164,10 +165,25 @@ function serializeParams(data: Record<string, any>): string {
     .join('&');
 }
 
-export const parseUrlFromOptions = (options: BackendSrvRequest): string => {
-  const cleanParams = omitBy(options.params, (v) => v === undefined || (v && v.length === 0));
-  const serializedParams = serializeParams(cleanParams);
-  return options.params && serializedParams.length ? `${options.url}?${serializedParams}` : options.url;
+/**
+ * Formats and validates the URL.
+ * If options.validatePath is true, this will throw an exception if the URL fails validation.
+ * @param options - The options to parse.
+ * @returns An observable that emits the parsed URL or an error if the URL fails validation.
+ */
+export const parseUrlFromOptions = (options: BackendSrvRequest): Observable<string> => {
+  try {
+    const cleanParams = omitBy(options.params, (v) => v === undefined || (v && v.length === 0));
+    const serializedParams = serializeParams(cleanParams);
+
+    const url = options.validatePath //
+      ? validatePath(options.url)
+      : options.url;
+
+    return options.params && serializedParams.length ? of(`${url}?${serializedParams}`) : of(url);
+  } catch (error) {
+    return throwError(() => error);
+  }
 };
 
 export const parseCredentials = (options: BackendSrvRequest): RequestCredentials => {

@@ -41,6 +41,8 @@ export interface AzureMonitorDataSourceJsonData extends AzureDataSourceJsonData 
   appInsightsAppId?: string;
 
   enableSecureSocksProxy?: boolean;
+  timeout?: number;
+  keepCookies?: string[];
 }
 
 export interface AzureMonitorDataSourceSecureJsonData extends AzureDataSourceSecureJsonData {
@@ -525,4 +527,10 @@ export function instanceOfLogAnalyticsTableError(
     return false;
   }
   return response.hasOwnProperty('error');
+}
+
+export interface ResourceGraphFilters {
+  subscriptions: string[];
+  types: string[];
+  locations: string[];
 }

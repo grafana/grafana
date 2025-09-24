@@ -1,7 +1,10 @@
+import { formatDateRange } from '@grafana/i18n';
+
 import { RawTimeRange, TimeRange, TimeZone, IntervalValues, RelativeTimeRange, TimeOption } from '../types/time';
+import { getFeatureToggle } from '../utils/featureToggles';
 
 import * as dateMath from './datemath';
-import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
+import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo, toIANATimezone } from './formatter';
 import { isDateTime, DateTime, dateTime } from './moment_wrapper';
 import { dateTimeParse } from './parser';
 
@@ -134,6 +137,17 @@ export function describeTextRange(expr: string): TimeOption {
   return opt;
 }
 
+// TODO: Should we keep these format presets somewhere common?
+const rangeFormatShort: Intl.DateTimeFormatOptions = {
+  dateStyle: 'short',
+  timeStyle: 'short',
+};
+
+const rangeFormatFull: Intl.DateTimeFormatOptions = {
+  dateStyle: 'short',
+  timeStyle: 'medium',
+};
+
 /**
  * Use this function to get a properly formatted string representation of a {@link @grafana/data:RawTimeRange | range}.
  *
@@ -154,9 +168,25 @@ export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quic
   const options = { timeZone };
 
   if (isDateTime(range.from) && isDateTime(range.to)) {
-    return dateTimeFormat(range.from, options) + ' to ' + dateTimeFormat(range.to, options);
+    const fromDate = range.from.toDate();
+    const toDate = range.to.toDate();
+
+    if (!getFeatureToggle('localeFormatPreference')) {
+      return dateTimeFormat(range.from, options) + ' to ' + dateTimeFormat(range.to, options);
+    }
+
+    const hasSeconds = fromDate.getSeconds() !== 0 || toDate.getSeconds() !== 0;
+    const intlFormat = hasSeconds ? rangeFormatFull : rangeFormatShort;
+    const intlFormatOptions = {
+      ...intlFormat,
+      timeZone: timeZone ? toIANATimezone(timeZone) : undefined,
+    };
+
+    return formatDateRange(fromDate, toDate, intlFormatOptions);
   }
 
+  // TODO: We could update these to all use Intl APIs.
+  // Could we use formatRangeToParts and replace the 'other side' with the ago formatting?
   if (isDateTime(range.from)) {
     const parsed = dateMath.parse(range.to, true, 'utc');
     return parsed ? dateTimeFormat(range.from, options) + ' to ' + dateTimeFormatTimeAgo(parsed, options) : '';
@@ -473,5 +503,16 @@ export function relativeToTimeRange(relativeTimeRange: RelativeTimeRange, now: D
     from,
     to,
     raw: { from, to },
+  };
+}
+
+/**
+ * @internal
+ * Returns a RawTimeRange that has been converted so that from and to are strings
+ */
+export function formatRawTimeRange(range: RawTimeRange): RawTimeRange {
+  return {
+    from: isDateTime(range.from) ? range.from.toISOString() : range.from,
+    to: isDateTime(range.to) ? range.to.toISOString() : range.to,
   };
 }

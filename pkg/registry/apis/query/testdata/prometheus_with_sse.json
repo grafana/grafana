@@ -1,0 +1,39 @@
+{
+    "results": {
+      
+      "B": {
+        "status": 200,
+        "frames": [
+          {
+            "schema": {
+              "refId": "B",
+              "fields": [
+                {
+                  "name": "B",
+                  "type": "number",
+                  "typeInfo": {
+                    "frame": "float64",
+                    "nullable": true
+                  }
+                }
+              ],
+              "meta": {
+                "type": "numeric-multi",
+                "typeVersion": [
+                  0,
+                  1
+                ]
+              }
+            },
+            "data": {
+              "values": [
+                [
+                  21
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }

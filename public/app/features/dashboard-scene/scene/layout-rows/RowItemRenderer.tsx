@@ -4,20 +4,21 @@ import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { SceneComponentProps } from '@grafana/scenes';
 import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
-import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
-import { useIsClone } from '../../utils/clone';
+import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
+import { useSoloPanelContext } from '../SoloPanelContext';
 
 import { RowItem } from './RowItem';
 
 export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const { layout, collapse: isCollapsed, fillScreen, hideHeader: isHeaderHidden, isDropTarget, key } = model.useState();
-  const isClone = useIsClone(model);
+  const isClone = isRepeatCloneOrChildOf(model);
   const { isEditing } = useDashboardState(model);
   const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] =
     useIsConditionallyHidden(model);
@@ -28,6 +29,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const clearStyles = useStyles2(clearButtonStyles);
   const isTopLevel = model.parent?.parent instanceof DashboardScene;
   const pointerDistance = usePointerDistance();
+  const soloPanelContext = useSoloPanelContext();
 
   const myIndex = rows.findIndex((row) => row === model);
 
@@ -45,6 +47,10 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
     return null;
   }
 
+  if (soloPanelContext) {
+    return <layout.Component model={layout} />;
+  }
+
   return (
     <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isDraggable}>
       {(dragProvided, dragSnapshot) => (
@@ -58,8 +64,6 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             styles.wrapper,
             !isCollapsed && styles.wrapperNotCollapsed,
             dragSnapshot.isDragging && styles.dragging,
-            isEditing && !isCollapsed && styles.wrapperEditing,
-            isEditing && isCollapsed && styles.wrapperEditingCollapsed,
             isCollapsed && styles.wrapperCollapsed,
             shouldGrow && styles.wrapperGrow,
             conditionalRenderingClass,
@@ -85,6 +89,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
 
             setTimeout(() => onSelect?.(evt));
           }}
+          data-testid={selectors.components.DashboardRow.wrapper(title!)}
           {...dragProvided.draggableProps}
         >
           {(!isHeaderHidden || isEditing) && (
@@ -112,7 +117,6 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                     !isTopLevel && styles.rowTitleNested,
                     isCollapsed && styles.rowTitleCollapsed
                   )}
-                  role="heading"
                 >
                   {!model.hasUniqueTitle() && (
                     <Tooltip
@@ -179,7 +183,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(2),
-      fontSize: theme.typography.h5.fontSize,
+      ...theme.typography.h5,
       fontWeight: theme.typography.fontWeightMedium,
       whiteSpace: 'nowrap',
       overflow: 'hidden',
@@ -206,6 +210,10 @@ function getStyles(theme: GrafanaTheme2) {
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',
+      // Without this min height, the custom grid (SceneGridLayout) wont render
+      // should be 1px more than row header + padding + margin
+      // consist of lineHeight + paddingBlock + margin + 0.125 = 39px
+      minHeight: theme.spacing(2.75 + 1 + 1 + 0.125),
     }),
     wrapperNotCollapsed: css({
       '> div:nth-child(2)': {
@@ -226,21 +234,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     dragging: css({
       cursor: 'move',
-    }),
-    wrapperEditing: css({
-      padding: theme.spacing(0.5),
-
-      '.dashboard-row-header': {
-        padding: 0,
-      },
-    }),
-    wrapperEditingCollapsed: css({
-      padding: theme.spacing(0.5),
-
-      '.dashboard-row-header': {
-        marginBottom: theme.spacing(0),
-        padding: 0,
-      },
     }),
     wrapperGrow: css({
       flexGrow: 1,

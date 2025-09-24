@@ -3,23 +3,38 @@ package cloudmigrationimpl
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/alerting/definition"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// Read-only.
+var alertRulesPermissions = map[string][]string{
+	accesscontrol.ActionAlertingRuleRead:   {"*"},
+	accesscontrol.ActionAlertingRuleCreate: {"*"},
+	accesscontrol.ActionAlertingRuleUpdate: {"*"},
+	dashboards.ActionFoldersRead:           {"*"},
+	datasources.ActionQuery:                {"*"},
+}
 
 func TestGetAlertMuteTimings(t *testing.T) {
 	t.Parallel()
@@ -89,14 +104,34 @@ func TestGetContactPoints(t *testing.T) {
 			},
 		}
 
-		defaultEmailContactPointCount := 1
-
 		createdContactPoints := createContactPoints(t, ctx, s, user)
 
 		contactPoints, err := s.getContactPoints(ctx, user)
 		require.NoError(t, err)
 		require.NotNil(t, contactPoints)
-		require.Len(t, contactPoints, len(createdContactPoints)+defaultEmailContactPointCount)
+		require.Len(t, contactPoints, len(createdContactPoints))
+	})
+
+	t.Run("it returns an error when user lacks permission to read contact point secrets", func(t *testing.T) {
+		t.Parallel()
+
+		s := setUpServiceTest(t, false).(*Service)
+
+		user := &user.SignedInUser{
+			OrgID: 1,
+			Permissions: map[int64]map[string][]string{
+				1: {
+					accesscontrol.ActionAlertingNotificationsRead: nil,
+				},
+			},
+		}
+
+		contactPoints, err := s.getContactPoints(ctx, user)
+		require.Nil(t, contactPoints)
+
+		gfErr := errutil.Error{}
+		require.ErrorAs(t, err, &gfErr)
+		require.Equal(t, http.StatusForbidden, gfErr.Reason.Status().HTTPStatus())
 	})
 }
 
@@ -139,7 +174,7 @@ func TestGetAlertRules(t *testing.T) {
 
 		s := setUpServiceTest(t, false).(*Service)
 
-		user := &user.SignedInUser{OrgID: 1}
+		user := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: alertRulesPermissions}}
 
 		alertRule := createAlertRule(t, ctx, s, user, false, "")
 
@@ -158,7 +193,7 @@ func TestGetAlertRules(t *testing.T) {
 
 		s := setUpServiceTest(t, false, alertRulesState).(*Service)
 
-		user := &user.SignedInUser{OrgID: 1}
+		user := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: alertRulesPermissions}}
 
 		alertRulePaused := createAlertRule(t, ctx, s, user, true, "")
 		require.True(t, alertRulePaused.IsPaused)
@@ -185,7 +220,7 @@ func TestGetAlertRuleGroups(t *testing.T) {
 
 		s := setUpServiceTest(t, false).(*Service)
 
-		user := &user.SignedInUser{OrgID: 1}
+		user := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: alertRulesPermissions}}
 
 		ruleGroupTitle := "ruleGroupTitle"
 
@@ -224,7 +259,7 @@ func TestGetAlertRuleGroups(t *testing.T) {
 
 		s := setUpServiceTest(t, false, alertRulesState).(*Service)
 
-		user := &user.SignedInUser{OrgID: 1}
+		user := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: alertRulesPermissions}}
 
 		ruleGroupTitle := "ruleGroupTitle"
 
@@ -375,6 +410,9 @@ func updateNotificationPolicyTree(t *testing.T, ctx context.Context, service *Se
 func createAlertRule(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser, isPaused bool, ruleGroup string) models.AlertRule {
 	t.Helper()
 
+	// Ensure the folder exists before creating alert rules
+	createFolder(t, ctx, service, user, "folderUID", "Test Folder")
+
 	rule := models.AlertRule{
 		OrgID:        user.GetOrgID(),
 		Title:        fmt.Sprintf("Alert Rule SLO (Paused: %v) - %v", isPaused, ruleGroup),
@@ -402,6 +440,19 @@ func createAlertRule(t *testing.T, ctx context.Context, service *Service, user *
 	require.NoError(t, err)
 
 	return createdRule
+}
+
+func createFolder(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser, uid, title string) {
+	t.Helper()
+	_, err := service.folderService.Create(ctx, &folder.CreateFolderCommand{
+		OrgID:        user.GetOrgID(),
+		UID:          uid,
+		Title:        title,
+		SignedInUser: user,
+	})
+	if err != nil && !errors.Is(err, dashboards.ErrFolderWithSameUIDExists) {
+		require.NoError(t, err)
+	}
 }
 
 func createAlertRuleGroup(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser, title string, rules []models.AlertRule) models.AlertRuleGroup {

@@ -1,0 +1,126 @@
+{
+  "title": "V37 Legend Normalization Test Dashboard",
+  "schemaVersion": 36,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Panel with Boolean Legend True",
+      "id": 1,
+      "options": {
+        "legend": true
+      }
+    },
+    {
+      "type": "timeseries", 
+      "title": "Panel with Boolean Legend False",
+      "id": 2,
+      "options": {
+        "legend": false
+      }
+    },
+    {
+      "type": "graph",
+      "title": "Panel with Hidden DisplayMode",
+      "id": 3,
+      "options": {
+        "legend": {
+          "displayMode": "hidden",
+          "showLegend": true
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Panel with ShowLegend False",
+      "id": 4,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "showLegend": false
+        }
+      }
+    },
+    {
+      "type": "barchart",
+      "title": "Panel with Table Legend",
+      "id": 5,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "type": "histogram",
+      "title": "Panel with List Legend",
+      "id": 6,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "right"
+        }
+      }
+    },
+    {
+      "type": "text",
+      "title": "Panel with No Options",
+      "id": 7
+    },
+    {
+      "type": "gauge",
+      "title": "Panel with No Legend Config",
+      "id": 8,
+      "options": {
+        "reduceOptions": {
+          "fields": "/.*temperature.*/"
+        }
+      }
+    },
+    {
+      "type": "piechart",
+      "title": "Panel with Null Legend",
+      "id": 9,
+      "options": {
+        "legend": null
+      }
+    },
+    {
+      "type": "row",
+      "title": "Row with Nested Panels Having Various Legend Configs",
+      "id": 10,
+      "collapsed": false,
+      "panels": [
+        {
+          "type": "timeseries",
+          "title": "Nested Panel with Boolean Legend",
+          "id": 11,
+          "options": {
+            "legend": true
+          }
+        },
+        {
+          "type": "graph",
+          "title": "Nested Panel with Hidden DisplayMode",
+          "id": 12,
+          "options": {
+            "legend": {
+              "displayMode": "hidden"
+            }
+          }
+        },
+        {
+          "type": "stat",
+          "title": "Nested Panel with Conflicting Properties",
+          "id": 13,
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "showLegend": false
+            }
+          }
+        }
+      ]
+    }
+  ]
+} 

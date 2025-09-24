@@ -1051,13 +1051,7 @@
                   "field": "value",
                   "id": "1",
                   "settings": {
-                    "percents": [
-                      "25",
-                      "50",
-                      "75",
-                      "95",
-                      "99"
-                    ]
+                    "percents": ["25", "50", "75", "95", "99"]
                   },
                   "type": "percentiles"
                 }
@@ -1167,13 +1161,7 @@
                   "field": "value",
                   "id": "1",
                   "settings": {
-                    "percents": [
-                      "25",
-                      "50",
-                      "75",
-                      "95",
-                      "99"
-                    ]
+                    "percents": ["25", "50", "75", "95", "99"]
                   },
                   "type": "percentiles"
                 }
@@ -9165,13 +9153,7 @@
                   "field": "float",
                   "id": "1",
                   "settings": {
-                    "percents": [
-                      "25",
-                      "50",
-                      "75",
-                      "95",
-                      "99"
-                    ],
+                    "percents": ["25", "50", "75", "95", "99"],
                     "script": "_value * 2"
                   },
                   "type": "percentiles"
@@ -9295,13 +9277,7 @@
                   "field": "float",
                   "id": "1",
                   "settings": {
-                    "percents": [
-                      "25",
-                      "50",
-                      "75",
-                      "95",
-                      "99"
-                    ],
+                    "percents": ["25", "50", "75", "95", "99"],
                     "script": "_value * 2"
                   },
                   "type": "percentiles"
@@ -9436,9 +9412,7 @@
                   "field": "value",
                   "id": "1",
                   "settings": {
-                    "percents": [
-                      "99"
-                    ]
+                    "percents": ["99"]
                   },
                   "type": "percentiles"
                 }
@@ -9561,9 +9535,7 @@
                   "field": "value",
                   "id": "1",
                   "settings": {
-                    "percents": [
-                      "99"
-                    ]
+                    "percents": ["99"]
                   },
                   "type": "percentiles"
                 }
@@ -9959,9 +9931,7 @@
             "footer": {
               "countRows": false,
               "fields": "",
-              "reducer": [
-                "sum"
-              ],
+              "reducer": ["sum"],
               "show": false
             },
             "showHeader": true
@@ -10048,9 +10018,7 @@
             "footer": {
               "countRows": false,
               "fields": "",
-              "reducer": [
-                "sum"
-              ],
+              "reducer": ["sum"],
               "show": false
             },
             "showHeader": true
@@ -10290,9 +10258,7 @@
             "footer": {
               "countRows": false,
               "fields": "",
-              "reducer": [
-                "sum"
-              ],
+              "reducer": ["sum"],
               "show": false
             },
             "showHeader": true
@@ -10330,11 +10296,7 @@
   ],
   "refresh": "",
   "schemaVersion": 38,
-  "tags": [
-    "gdev",
-    "elasticsearch",
-    "datasource-test"
-  ],
+  "tags": ["gdev", "elasticsearch", "datasource-test"],
   "templating": {
     "list": []
   },

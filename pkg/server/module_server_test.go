@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,9 +20,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	if db.IsTestDbSQLite() {
 		t.Skip("sqlite is not supported by the storage server target")
 	}
@@ -37,11 +37,14 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 
 	errChan := make(chan error, 1)
 	go func() {
+		time.Sleep(1 * time.Second)
 		errChan <- ms.Run()
 	}()
 
 	require.Eventually(t, func() bool {
-		client := http.Client{}
+		client := http.Client{
+			Timeout: 1 * time.Second,
+		}
 		res, err := client.Get("http://localhost:3001/metrics")
 		if err != nil {
 			return false

@@ -12,10 +12,10 @@ import { VariableSizeList } from 'react-window';
 
 import { FieldType, ReducerID, getRowUniqueId, getFieldMatcher } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { TableCellHeight } from '@grafana/schema';
 
-import { useTheme2 } from '../../../themes';
-import { Trans } from '../../../utils/i18n';
+import { useTheme2 } from '../../../themes/ThemeContext';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../../Pagination/Pagination';
 import { TableCellInspector } from '../TableCellInspector';

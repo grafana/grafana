@@ -2,8 +2,8 @@ import { useState, useRef } from 'react';
 import * as React from 'react';
 import { useDebounce } from 'react-use';
 
+import { t } from '@grafana/i18n';
 import { FilterInput } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 interface Props {
   value?: string;

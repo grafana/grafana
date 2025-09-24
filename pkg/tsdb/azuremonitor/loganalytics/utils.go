@@ -16,16 +16,24 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
 
-func AddCustomDataLink(frame data.Frame, dataLink data.DataLink) data.Frame {
+func AddCustomDataLink(frame data.Frame, dataLink data.DataLink, singleField bool) data.Frame {
 	for i := range frame.Fields {
 		if frame.Fields[i].Config == nil {
 			frame.Fields[i].Config = &data.FieldConfig{}
 		}
 
 		frame.Fields[i].Config.Links = append(frame.Fields[i].Config.Links, dataLink)
+
+		// Queries using the trace viz only need the link added to a single field
+		if singleField {
+			break
+		}
 	}
 	return frame
 }
+
+const SingleField bool = true
+const MultiField bool = false
 
 func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 	linkTitle := "View query in Azure Portal"
@@ -39,7 +47,7 @@ func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 		URL:         dl,
 	}
 
-	frame = AddCustomDataLink(frame, deepLink)
+	frame = AddCustomDataLink(frame, deepLink, MultiField)
 
 	return frame
 }

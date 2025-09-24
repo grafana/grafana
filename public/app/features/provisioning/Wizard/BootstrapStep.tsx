@@ -1,21 +1,27 @@
-import { useEffect, useMemo } from 'react';
+import { css } from '@emotion/css';
+import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
-import { RepositoryViewList, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning';
-import { t, Trans } from 'app/core/internationalization';
+import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
+import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
-import { getResourceStats, useModeOptions } from './actions';
-import { StepStatusInfo, WizardFormData } from './types';
+import { BootstrapStepCardIcons } from './BootstrapStepCardIcons';
+import { BootstrapStepResourceCounting } from './BootstrapStepResourceCounting';
+import { useStepStatus } from './StepStatusContext';
+import { useModeOptions } from './hooks/useModeOptions';
+import { useResourceStats } from './hooks/useResourceStats';
+import { WizardFormData } from './types';
 
-interface Props {
-  onOptionSelect: (requiresMigration: boolean) => void;
-  onStepStatusUpdate: (info: StepStatusInfo) => void;
+export interface Props {
   settingsData?: RepositoryViewList;
   repoName: string;
 }
 
-export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepStatusUpdate }: Props) {
+export function BootstrapStep({ settingsData, repoName }: Props) {
+  const { setStepStatusInfo } = useStepStatus();
   const {
     register,
     control,
@@ -25,44 +31,29 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
-  const resourceStats = useGetResourceStatsQuery();
-  const filesQuery = useGetRepositoryFilesQuery({ name: repoName });
   const selectedTarget = watch('repository.sync.target');
+  const repositoryType = watch('repository.type');
   const options = useModeOptions(repoName, settingsData);
-  const { resourceCount, resourceCountString, fileCount } = useMemo(
-    () => getResourceStats(filesQuery.data, resourceStats.data),
-    [filesQuery.data, resourceStats.data]
-  );
+  const { target } = options[0];
+  const { resourceCountString, fileCountString, isLoading } = useResourceStats(repoName, settingsData?.legacyStorage);
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     // Pick a name nice name based on type+settings
     const repository = getValues('repository');
-    switch (repository.type) {
-      case 'github':
-        const name = repository.url ?? 'github';
-        setValue('repository.title', name.replace('https://github.com/', ''));
-        break;
-      case 'local':
-        setValue('repository.title', repository.path ?? 'local');
-        break;
-    }
+    const title = generateRepositoryTitle(repository);
+    setValue('repository.title', title);
   }, [getValues, setValue]);
 
   useEffect(() => {
-    const isLoading = resourceStats.isLoading || filesQuery.isLoading;
-    onStepStatusUpdate({ status: isLoading ? 'running' : 'idle' });
-  }, [filesQuery.isLoading, onStepStatusUpdate, resourceStats.isLoading]);
+    setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });
+  }, [isLoading, setStepStatusInfo]);
 
-  // Auto select the first option on mount
   useEffect(() => {
-    const { target } = options[0];
     setValue('repository.sync.target', target);
-    onOptionSelect(settingsData?.legacyStorage || resourceCount > 0);
-    // Only run this effect on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [target, setValue]);
 
-  if (resourceStats.isLoading || filesQuery.isLoading) {
+  if (isLoading) {
     return (
       <Box padding={4}>
         <LoadingPlaceholder
@@ -75,51 +66,42 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
   return (
     <Stack direction="column" gap={2}>
       <Stack direction="column" gap={2}>
-        <Box alignItems="center" padding={4}>
-          <Stack direction="row" gap={4} alignItems="flex-start" justifyContent="center">
-            <Stack direction="column" gap={1} alignItems="center">
-              <Text color="secondary">
-                <Trans i18nKey="provisioning.bootstrap-step.grafana">Grafana instance</Trans>
-              </Text>
-              <Stack direction="row" gap={2}>
-                <Text variant="h4">
-                  {resourceCount > 0 ? resourceCountString : t('provisioning.bootstrap-step.empty', 'Empty')}
-                </Text>
-              </Stack>
-            </Stack>
-            <Stack direction="column" gap={1} alignItems="center">
-              <Text color="secondary">
-                <Trans i18nKey="provisioning.bootstrap-step.ext-storage">External storage</Trans>
-              </Text>
-              <Text variant="h4">
-                {fileCount > 0
-                  ? t('provisioning.bootstrap-step.files-count', '{{count}} files', { count: fileCount })
-                  : t('provisioning.bootstrap-step.empty', 'Empty')}
-              </Text>
-            </Stack>
-          </Stack>
-        </Box>
-
         <Controller
           name="repository.sync.target"
           control={control}
           render={({ field: { ref, onChange, ...field } }) => (
             <>
-              {options.map((action, index) => (
+              {options.map((action) => (
                 <Card
                   key={action.target}
                   isSelected={action.target === selectedTarget}
                   onClick={() => {
                     onChange(action.target);
                   }}
+                  noMargin
                   {...field}
                 >
-                  <Card.Heading>{action.label}</Card.Heading>
+                  <Card.Heading>
+                    <Text variant="h5">{action.label}</Text>
+                  </Card.Heading>
                   <Card.Description>
+                    <div className={styles.divider} />
+
+                    <Box paddingBottom={2}>
+                      <BootstrapStepCardIcons target={action.target} repoType={repositoryType} />
+                    </Box>
                     <Stack direction="column" gap={3}>
                       {action.description}
                       <Text color="primary">{action.subtitle}</Text>
                     </Stack>
+
+                    <div className={styles.divider} />
+
+                    <BootstrapStepResourceCounting
+                      target={action.target}
+                      fileCountString={fileCountString}
+                      resourceCountString={resourceCountString}
+                    />
                   </Card.Description>
                 </Card>
               ))}
@@ -138,8 +120,10 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
             error={errors.repository?.title?.message}
             invalid={!!errors.repository?.title}
             required
+            noMargin
           >
             <Input
+              id="repository-title"
               {...register('repository.title', {
                 required: t('provisioning.bootstrap-step.error-field-required', 'This field is required.'),
               })}
@@ -156,3 +140,13 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
     </Stack>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  divider: css({
+    height: 1,
+    width: '100%',
+    backgroundColor: theme.colors.border.medium,
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(2),
+  }),
+});

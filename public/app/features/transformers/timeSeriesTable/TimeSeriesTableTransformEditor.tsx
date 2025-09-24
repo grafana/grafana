@@ -11,13 +11,15 @@ import {
   FieldType,
   isTimeSeriesField,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { InlineFieldRow, InlineField, StatsPicker, Select, InlineLabel } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/timeSeriesTable.svg';
+import lightImage from '../images/light/timeSeriesTable.svg';
 
 import {
-  timeSeriesTableTransformer,
+  getTimeSeriesTableTransformer,
   TimeSeriesTableTransformerOptions,
   getRefData,
 } from './timeSeriesTableTransformer';
@@ -123,12 +125,18 @@ export function TimeSeriesTableTransformEditor({
   return <>{configRows}</>;
 }
 
-export const timeSeriesTableTransformRegistryItem: TransformerRegistryItem<TimeSeriesTableTransformerOptions> = {
-  id: timeSeriesTableTransformer.id,
-  editor: TimeSeriesTableTransformEditor,
-  transformation: timeSeriesTableTransformer,
-  name: timeSeriesTableTransformer.name,
-  description: timeSeriesTableTransformer.description,
-  state: PluginState.beta,
-  help: getTransformationContent(timeSeriesTableTransformer.id).helperDocs,
-};
+export const getTimeSeriesTableTransformRegistryItem: () => TransformerRegistryItem<TimeSeriesTableTransformerOptions> =
+  () => {
+    const timeSeriesTableTransformer = getTimeSeriesTableTransformer();
+    return {
+      id: timeSeriesTableTransformer.id,
+      editor: TimeSeriesTableTransformEditor,
+      transformation: timeSeriesTableTransformer,
+      name: timeSeriesTableTransformer.name,
+      description: timeSeriesTableTransformer.description,
+      state: PluginState.beta,
+      help: getTransformationContent(timeSeriesTableTransformer.id).helperDocs,
+      imageDark: darkImage,
+      imageLight: lightImage,
+    };
+  };

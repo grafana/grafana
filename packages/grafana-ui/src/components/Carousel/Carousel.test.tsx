@@ -24,9 +24,10 @@ describe('Carousel', () => {
     render(<Carousel images={testImages} />);
 
     testImages.forEach((image) => {
-      const imgElement = screen.getByAltText(image.name);
-      expect(imgElement).toBeInTheDocument();
-      expect(imgElement).toHaveAttribute('src', image.path);
+      const name = screen.getByText(image.name);
+      expect(name).toBeInTheDocument();
+      const imageElement = document.querySelector(`img[src="${image.path}"]`);
+      expect(imageElement).toBeInTheDocument();
     });
   });
 
@@ -111,13 +112,13 @@ describe('Carousel', () => {
 
     await user.click(screen.getByText('Alert rule'));
 
-    fireEvent.keyDown(screen.getByTestId('carousel-full-screen'), { key: 'ArrowRight' });
+    await user.keyboard('{ArrowRight}');
 
     let previewImage = screen.getByTestId('carousel-full-image').querySelector('img');
     expect(previewImage).toHaveAttribute('src', testImages[1].path);
 
-    fireEvent.keyDown(screen.getByTestId('carousel-full-screen'), { key: 'ArrowLeft' });
-    fireEvent.keyDown(screen.getByTestId('carousel-full-screen'), { key: 'ArrowLeft' });
+    await user.keyboard('{ArrowLeft}');
+    await user.keyboard('{ArrowLeft}');
 
     previewImage = screen.getByTestId('carousel-full-image').querySelector('img');
     expect(previewImage).toHaveAttribute('src', testImages[3].path);
@@ -129,7 +130,7 @@ describe('Carousel', () => {
     await user.click(screen.getByText('Alert rule'));
     expect(screen.getByTestId('carousel-full-screen')).toBeInTheDocument();
 
-    fireEvent.keyDown(screen.getByTestId('carousel-full-screen'), { key: 'Escape' });
+    await user.keyboard('{Escape}');
 
     expect(screen.queryByTestId('carousel-full-screen')).not.toBeInTheDocument();
   });
@@ -140,7 +141,7 @@ describe('Carousel', () => {
 
     render(<Carousel images={testImages} />);
 
-    const images = screen.getAllByRole('img');
+    const images = screen.getAllByRole('presentation');
     images.forEach((img) => {
       fireEvent.error(img);
     });

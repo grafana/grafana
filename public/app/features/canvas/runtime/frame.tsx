@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
-import { DimensionContext } from 'app/features/dimensions';
+import { DimensionContext } from 'app/features/dimensions/context';
 import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
@@ -29,7 +29,7 @@ export const frameItemDummy: CanvasElementItem = {
 
   display: () => {
     // never shown to end user
-    // eslint-disable-next-line @grafana/no-untranslated-strings
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
     return <div>FRAME!</div>;
   },
 };

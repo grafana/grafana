@@ -5,7 +5,7 @@ import { byLabelText, byRole, byText } from 'testing-library-selector';
 import { setPluginLinksHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 
 import {
@@ -24,11 +24,13 @@ import { grantPermissionsHelper } from '../../test/test-utils';
 import { setupDataSources } from '../../testSetup/datasources';
 import { Annotation } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';
+import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import * as ruleId from '../../utils/rule-id';
 import { stringifyIdentifier } from '../../utils/rule-id';
 
 import { AlertRuleProvider } from './RuleContext';
 import RuleViewer, { ActiveTab } from './RuleViewer';
+import { addRulePageEnrichmentSection } from './tabs/extensions/RuleViewerExtension';
 
 // metadata and interactive elements
 const ELEMENTS = {
@@ -84,7 +86,7 @@ const openSilenceDrawer = async () => {
   await screen.findByText(/Configure silences/i);
 };
 
-beforeAll(() => {
+beforeEach(() => {
   grantPermissionsHelper([
     AccessControlAction.AlertingRuleCreate,
     AccessControlAction.AlertingRuleRead,
@@ -137,7 +139,7 @@ describe('RuleViewer', () => {
     );
     const mockRuleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
 
-    beforeAll(() => {
+    beforeEach(() => {
       grantPermissionsHelper([
         AccessControlAction.AlertingRuleCreate,
         AccessControlAction.AlertingRuleRead,
@@ -286,6 +288,19 @@ describe('RuleViewer', () => {
         expect(versionSummary).toHaveTextContent(/Version 5 updated by alerting/i);
         expect(versionSummary).toHaveTextContent(/Version 6 updated by provisioning/i);
       });
+
+      it('should not show any labels if we only have private labels', async () => {
+        const ruleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
+        const rule = getGrafanaRule({
+          name: 'Test alert',
+          labels: {
+            [GRAFANA_ORIGIN_LABEL]: 'plugins/synthetic-monitoring-app',
+          },
+        });
+
+        await renderRuleViewer(rule, ruleIdentifier);
+        expect(screen.queryByText('Labels')).not.toBeInTheDocument();
+      });
     });
   });
 
@@ -395,6 +410,79 @@ describe('RuleViewer', () => {
       expect(ELEMENTS.metadata.summary(mockRule.annotations[Annotation.summary]).getAll()).toHaveLength(2);
 
       expect(ELEMENTS.details.pendingPeriod.get()).toHaveTextContent(/15m/i);
+    });
+  });
+
+  describe('Enrichment tab', () => {
+    const mockRule = getGrafanaRule(
+      {
+        name: 'Test alert',
+        uid: 'test-rule-uid',
+        annotations: {
+          [Annotation.summary]: 'This is the summary for the rule',
+        },
+        labels: {
+          team: 'operations',
+          severity: 'low',
+        },
+        group: {
+          name: 'my-group',
+          interval: '15m',
+          rules: [],
+          totals: { alerting: 1 },
+        },
+      },
+      { uid: grafanaRulerRule.grafana_alert.uid }
+    );
+    const mockRuleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
+
+    beforeEach(() => {
+      grantPermissionsHelper([
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleUpdate,
+        AccessControlAction.AlertingRuleDelete,
+        AccessControlAction.AlertingInstanceRead,
+        AccessControlAction.AlertingInstanceCreate,
+        AccessControlAction.AlertingInstancesExternalRead,
+        AccessControlAction.AlertingInstancesExternalWrite,
+      ]);
+    });
+
+    it('should pass correct props to enrichment section extension for editable rule', async () => {
+      const mockEnrichmentExtension = jest.fn(() => <div data-testid="enrichment-section">Enrichment Section</div>);
+      addRulePageEnrichmentSection(mockEnrichmentExtension);
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Enrichment);
+
+      expect(mockEnrichmentExtension).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ruleUid: 'test-rule-uid',
+        }),
+        expect.any(Object)
+      );
+      expect(screen.getByTestId('enrichment-section')).toBeInTheDocument();
+    });
+
+    it('should pass correct props to enrichment section extension for read-only rule', async () => {
+      grantPermissionsHelper([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingInstanceRead,
+        AccessControlAction.AlertingInstancesExternalRead,
+      ]);
+
+      const mockEnrichmentExtension = jest.fn(() => <div data-testid="enrichment-section">Enrichment Section</div>);
+      addRulePageEnrichmentSection(mockEnrichmentExtension);
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Enrichment);
+
+      expect(mockEnrichmentExtension).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ruleUid: 'test-rule-uid',
+        }),
+        expect.any(Object)
+      );
+      expect(screen.getByTestId('enrichment-section')).toBeInTheDocument();
     });
   });
 });

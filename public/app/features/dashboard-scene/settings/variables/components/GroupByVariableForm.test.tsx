@@ -45,6 +45,7 @@ describe('GroupByVariableForm', () => {
     onAllowCustomValueChange: onAllowCustomValueChangeMock,
     onDataSourceChange: onDataSourceChangeMock,
     onDefaultOptionsChange: onDefaultOptionsChangeMock,
+    datasourceSupported: true,
   };
 
   function setup(props?: Partial<GroupByVariableFormProps>) {
@@ -129,5 +130,28 @@ describe('GroupByVariableForm', () => {
     await userEvent.click(toggle);
     expect(onDefaultOptionsChangeMock).toHaveBeenCalledTimes(1);
     expect(onDefaultOptionsChangeMock).toHaveBeenCalledWith(undefined);
+  });
+
+  it('should render only datasource picker and alert when not supported', async () => {
+    const mockOnAllowCustomValueChange = jest.fn();
+    const { renderer } = await setup({
+      ...defaultProps,
+      datasourceSupported: false,
+      onAllowCustomValueChange: mockOnAllowCustomValueChange,
+    });
+
+    const dataSourcePicker = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.dataSourceSelect
+    );
+
+    const allowCustomValueCheckbox = renderer.queryByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+    );
+
+    const alertText = renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.infoText);
+
+    expect(dataSourcePicker).toBeInTheDocument();
+    expect(allowCustomValueCheckbox).not.toBeInTheDocument();
+    expect(alertText).toBeInTheDocument();
   });
 });

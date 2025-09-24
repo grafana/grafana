@@ -250,7 +250,7 @@ type channelCache[T any] interface {
 	ReadInto(dst chan T) error
 }
 
-type cache[T any] struct {
+type localCache[T any] struct {
 	cache     []T
 	size      int
 	cacheZero int
@@ -261,7 +261,7 @@ type cache[T any] struct {
 }
 
 func newChannelCache[T any](ctx context.Context, size int) channelCache[T] {
-	c := &cache[T]{}
+	c := &localCache[T]{}
 
 	c.ctx = ctx
 	if size <= 0 {
@@ -278,15 +278,15 @@ func newChannelCache[T any](ctx context.Context, size int) channelCache[T] {
 	return c
 }
 
-func (c *cache[T]) Len() int {
+func (c *localCache[T]) Len() int {
 	return c.cacheLen
 }
 
-func (c *cache[T]) Add(item T) {
+func (c *localCache[T]) Add(item T) {
 	c.add <- item
 }
 
-func (c *cache[T]) run() {
+func (c *localCache[T]) run() {
 	for {
 		select {
 		case <-c.ctx.Done():
@@ -314,7 +314,7 @@ func (c *cache[T]) run() {
 	}
 }
 
-func (c *cache[T]) Get(i int) T {
+func (c *localCache[T]) Get(i int) T {
 	r := make(chan T, c.size)
 	c.read <- r
 	idx := 0
@@ -328,7 +328,7 @@ func (c *cache[T]) Get(i int) T {
 	return zero
 }
 
-func (c *cache[T]) Range(f func(T) error) error {
+func (c *localCache[T]) Range(f func(T) error) error {
 	r := make(chan T, c.size)
 	c.read <- r
 	for item := range r {
@@ -340,7 +340,7 @@ func (c *cache[T]) Range(f func(T) error) error {
 	return nil
 }
 
-func (c *cache[T]) Slice() []T {
+func (c *localCache[T]) Slice() []T {
 	s := make([]T, 0, c.size)
 	r := make(chan T, c.size)
 	c.read <- r
@@ -350,7 +350,7 @@ func (c *cache[T]) Slice() []T {
 	return s
 }
 
-func (c *cache[T]) ReadInto(dst chan T) error {
+func (c *localCache[T]) ReadInto(dst chan T) error {
 	r := make(chan T, c.size)
 	c.read <- r
 	for item := range r {

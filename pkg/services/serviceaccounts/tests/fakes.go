@@ -52,10 +52,6 @@ func (f *FakeServiceAccountService) ListTokens(ctx context.Context, query *servi
 	return f.ExpectedServiceAccountTokens, f.ExpectedErr
 }
 
-func (f *FakeServiceAccountService) MigrateApiKey(ctx context.Context, orgID, keyID int64) error {
-	return f.ExpectedErr
-}
-
 func (f *FakeServiceAccountService) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*serviceaccounts.MigrationResult, error) {
 	return f.ExpectedMigrationResult, f.ExpectedErr
 }

@@ -4,6 +4,7 @@ import { MouseEvent, memo } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { Field, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Icon, useTheme2 } from '@grafana/ui';
 
 import { HoverState } from './NodeGraph';
@@ -94,7 +95,11 @@ export const Node = memo(function Node(props: {
   }
 
   return (
-    <g data-node-id={node.id} className={styles.mainGroup} aria-label={`Node: ${node.title}`}>
+    <g
+      data-node-id={node.id}
+      className={styles.mainGroup}
+      aria-label={t('nodeGraph.node.aria-label-node-title', 'Node: {{nodeName}}', { nodeName: node.title })}
+    >
       <circle
         data-testid={`node-circle-${node.id}`}
         className={node.highlighted ? styles.filledCircle : styles.mainCircle}

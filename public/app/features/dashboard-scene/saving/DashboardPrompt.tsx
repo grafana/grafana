@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import * as H from 'history';
 import { memo, useContext, useEffect, useMemo } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { ModalsContext, Modal, Button, useStyles2 } from '@grafana/ui';
 import { Prompt } from 'app/core/components/FormPrompt/Prompt';
-import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { SaveLibraryVizPanelModal } from '../panel-edit/SaveLibraryVizPanelModal';

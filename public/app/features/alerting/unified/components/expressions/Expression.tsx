@@ -12,8 +12,8 @@ import {
   dateTimeFormat,
   isTimeSeriesFrames,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, AutoSizeInput, Button, IconButton, Stack, Text, clearButtonStyles, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -133,7 +133,15 @@ export const Expression: FC<ExpressionProps> = ({
           );
 
         case ExpressionQueryType.sql:
-          return <SqlExpr onChange={(query) => onChangeQuery(query)} query={query} refIds={availableRefIds} alerting />;
+          return (
+            <SqlExpr
+              onChange={(query) => onChangeQuery(query)}
+              query={query}
+              refIds={availableRefIds}
+              alerting
+              queries={[]}
+            />
+          );
 
         default:
           return (
@@ -145,6 +153,7 @@ export const Expression: FC<ExpressionProps> = ({
     },
     [onChangeQuery, queries, onQueriesValidationError]
   );
+
   const selectedExpressionType = expressionTypes.find((o) => o.value === queryType);
   const selectedExpressionDescription = selectedExpressionType?.description ?? '';
 
@@ -412,7 +421,6 @@ interface FrameProps extends Pick<ExpressionProps, 'isAlertCondition'> {
 
 const OpeningBracket = () => <span>{'{'}</span>;
 const ClosingBracket = () => <span>{'}'}</span>;
-// eslint-disable-next-line @grafana/no-untranslated-strings
 const Quote = () => <span>&quot;</span>;
 const Equals = () => <span>{'='}</span>;
 

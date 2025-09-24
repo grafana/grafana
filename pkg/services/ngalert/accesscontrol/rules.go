@@ -1,10 +1,9 @@
 package accesscontrol
 
 import (
+	"context"
 	"fmt"
 	"slices"
-
-	"golang.org/x/net/context"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/expr"

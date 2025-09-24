@@ -1,54 +1,21 @@
 package rest
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
-
-var (
-	_ rest.Storage              = (DualWriter)(nil)
-	_ rest.Scoper               = (DualWriter)(nil)
-	_ rest.TableConvertor       = (DualWriter)(nil)
-	_ rest.CreaterUpdater       = (DualWriter)(nil)
-	_ rest.CollectionDeleter    = (DualWriter)(nil)
-	_ rest.GracefulDeleter      = (DualWriter)(nil)
-	_ rest.SingularNameProvider = (DualWriter)(nil)
-)
-
-type dualWriteContextKey struct{}
-
-func IsDualWriteUpdate(ctx context.Context) bool {
-	return ctx.Value(dualWriteContextKey{}) == true
-}
-
-func WithDualWriteUpdate(ctx context.Context) context.Context {
-	return context.WithValue(ctx, dualWriteContextKey{}, true)
-}
 
 // Function that will create a dual writer
 type DualWriteBuilder func(gr schema.GroupResource, legacy Storage, unified Storage) (Storage, error)
-
-// Storage is a storage implementation that satisfies the same interfaces as genericregistry.Store.
-type Storage interface {
-	rest.Storage
-	rest.Scoper
-	rest.TableConvertor
-	rest.SingularNameProvider
-	rest.Getter
-	rest.Lister
-	rest.CreaterUpdater
-	rest.GracefulDeleter
-	rest.CollectionDeleter
-}
 
 // DualWriter is a storage implementation that writes first to LegacyStorage and then to Storage.
 // If writing to LegacyStorage fails, the write to Storage is skipped and the error is returned.
@@ -112,6 +79,7 @@ func SetDualWritingMode(
 	ctx context.Context,
 	kvs NamespacedKVStore,
 	cfg *SyncerConfig,
+	metrics *DualWriterMetrics,
 ) (DualWriterMode, error) {
 	if cfg == nil {
 		return Mode0, errors.New("syncer config is nil")
@@ -133,17 +101,17 @@ func SetDualWritingMode(
 	errDualWriterSetCurrentMode := errors.New("failed to set current dual writing mode")
 
 	// Use entity name as key
-	m, ok, err := kvs.Get(ctx, cfg.Kind)
+	kvMode, ok, err := kvs.Get(ctx, cfg.Kind)
 	if err != nil {
 		return Mode0, errors.New("failed to fetch current dual writing mode")
 	}
 
-	currentMode, exists := toMode[m]
+	currentMode, exists := toMode[kvMode]
 
 	// If the mode does not exist in our mapping, we log an error.
 	if !exists && ok {
 		// Only log if "ok" because initially all instances will have mode unset for playlists.
-		klog.Infof("invalid dual writing mode for %s mode: %v", cfg.Kind, m)
+		klog.Infof("invalid dual writing mode for %s mode: %v", cfg.Kind, kvMode)
 	}
 
 	// If the mode does not exist in our mapping, and we also didn't find an entry for this kind, fallback.
@@ -155,74 +123,69 @@ func SetDualWritingMode(
 		}
 	}
 
-	// Handle transitions to the desired mode.
-	switch {
-	case cfg.Mode == Mode2 || cfg.Mode == Mode1:
-		// Directly set the mode for Mode1 and Mode2.
-		currentMode = cfg.Mode
-		if err := kvs.Set(ctx, cfg.Kind, fmt.Sprint(currentMode)); err != nil {
-			return Mode0, errDualWriterSetCurrentMode
-		}
-	case cfg.Mode >= Mode3 && currentMode < Mode3:
-		if cfg.SkipDataSync {
-			return currentMode, nil
-		}
-
-		// Transitioning to Mode3 or higher requires data synchronization.
-		cfgModeTmp := cfg.Mode
-		// Before running the sync, set the syncer config to the current mode, as we have to run the syncer
-		// once in the current active mode before we can upgrade.
-		cfg.Mode = currentMode
-		syncOk, err := runDataSyncer(ctx, cfg)
-		// Once we are done with running the syncer, we can change the mode back on the config to the desired one.
-		cfg.Mode = cfgModeTmp
-		if err != nil {
-			klog.Error("data syncer failed for mode:", m, "err", err)
-			return currentMode, nil
-		}
-		if !syncOk {
-			klog.Info("data syncer not ok for mode:", m)
-			return currentMode, nil
-		}
-		// If sync is successful, update the mode to the desired one.
+	isUpgradeToReadUnifiedMode := currentMode < Mode3 && cfg.Mode >= Mode3
+	if !isUpgradeToReadUnifiedMode {
 		if err := kvs.Set(ctx, cfg.Kind, fmt.Sprint(cfg.Mode)); err != nil {
 			return Mode0, errDualWriterSetCurrentMode
 		}
 		return cfg.Mode, nil
-	case cfg.Mode >= Mode3 && currentMode >= Mode3:
-		// If already in Mode3 or higher, simply update to the desired mode.
-		currentMode = cfg.Mode
-		if err := kvs.Set(ctx, cfg.Kind, fmt.Sprint(currentMode)); err != nil {
+	}
+
+	// If SkipDataSync is enabled, we can set the mode directly without running the syncer.
+	if cfg.SkipDataSync {
+		if err := kvs.Set(ctx, cfg.Kind, fmt.Sprint(cfg.Mode)); err != nil {
 			return Mode0, errDualWriterSetCurrentMode
 		}
-	default:
-		// Handle any unexpected cases (should not normally happen).
+		return cfg.Mode, nil
+	}
+
+	// Transitioning to Mode3 or higher from Mode0, Mode1, or Mode2.
+	// We need to run the syncer in the current mode before we can upgrade to Mode3 or higher.
+	cfgModeTmp := cfg.Mode
+	// Before running the sync, set the syncer config to the current mode, as we have to run the syncer
+	// once in the current active mode before we can upgrade.
+	cfg.Mode = currentMode
+	syncOk, err := runDataSyncer(ctx, cfg, metrics)
+	// Once we are done with running the syncer, we can change the mode back on the config to the desired one.
+	cfg.Mode = cfgModeTmp
+	if err != nil {
+		klog.Error("data syncer failed for mode:", kvMode, "err", err)
+		return currentMode, nil
+	}
+	if !syncOk {
+		klog.Info("data syncer not ok for mode:", kvMode)
+		return currentMode, nil
+	}
+	// If sync is successful, update the mode to the desired one.
+	if err := kvs.Set(ctx, cfg.Kind, fmt.Sprint(cfg.Mode)); err != nil {
 		return Mode0, errDualWriterSetCurrentMode
 	}
-	return currentMode, nil
+	return cfg.Mode, nil
 }
-
-var defaultConverter = runtime.UnstructuredConverter(runtime.DefaultUnstructuredConverter)
 
 // Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
-func Compare(storageObj, legacyObj runtime.Object) bool {
-	if storageObj == nil || legacyObj == nil {
-		return storageObj == nil && legacyObj == nil
+func Compare(objA, objB runtime.Object) bool {
+	if objA == nil || objB == nil {
+		return objA == nil && objB == nil
 	}
-	return bytes.Equal(extractSpec(storageObj), extractSpec(legacyObj))
-}
-
-func extractSpec(obj runtime.Object) []byte {
-	cpy := obj.DeepCopyObject()
-	unstObj, err := defaultConverter.ToUnstructured(cpy)
+	if objA == objB {
+		return true
+	}
+	mA, err := utils.MetaAccessor(objA)
 	if err != nil {
-		return nil
+		return false
 	}
-
-	// we just want to compare the spec field
-	jsonObj, err := json.Marshal(unstObj["spec"])
+	mB, err := utils.MetaAccessor(objB)
 	if err != nil {
-		return nil
+		return false
 	}
-	return jsonObj
+	sA, err := mA.GetSpec()
+	if err != nil {
+		return false
+	}
+	sB, err := mB.GetSpec()
+	if err != nil {
+		return false
+	}
+	return apiequality.Semantic.DeepEqual(sA, sB)
 }

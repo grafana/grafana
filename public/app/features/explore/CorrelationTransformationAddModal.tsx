@@ -4,8 +4,8 @@ import Highlighter from 'react-highlight-words';
 import { useForm, Controller } from 'react-hook-form';
 
 import { DataLinkTransformationConfig, ScopedVars } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, Modal, Select, Tooltip, Stack } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import {
   getSupportedTransTypeDetails,

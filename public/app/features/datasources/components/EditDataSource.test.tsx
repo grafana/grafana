@@ -1,16 +1,19 @@
 import { screen, render } from '@testing-library/react';
+import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 
-import { PluginState } from '@grafana/data';
-import { setPluginComponentsHook } from '@grafana/runtime';
+import { DataSourceJsonData, PluginExtensionDataSourceConfigContext, PluginState } from '@grafana/data';
+import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { configureStore } from 'app/store/configureStore';
 
-import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../__mocks__';
+import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../mocks/dataSourcesMocks';
 
 import { missingRightsMessage } from './DataSourceMissingRightsMessage';
 import { readOnlyMessage } from './DataSourceReadOnlyMessage';
 import { EditDataSourceView, ViewProps } from './EditDataSource';
+
+const onOptionsChange = jest.fn();
 
 jest.mock('@grafana/runtime', () => {
   return {
@@ -23,6 +26,8 @@ jest.mock('@grafana/runtime', () => {
     })),
   };
 });
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 const setup = (props?: Partial<ViewProps>) => {
   const store = configureStore();
@@ -38,7 +43,7 @@ const setup = (props?: Partial<ViewProps>) => {
         onDelete={jest.fn()}
         onDefaultChange={jest.fn()}
         onNameChange={jest.fn()}
-        onOptionsChange={jest.fn()}
+        onOptionsChange={onOptionsChange}
         onTest={jest.fn()}
         onUpdate={jest.fn()}
         {...props}
@@ -50,6 +55,7 @@ const setup = (props?: Partial<ViewProps>) => {
 describe('<EditDataSource>', () => {
   beforeEach(() => {
     setPluginComponentsHook(jest.fn().mockReturnValue({ isLoading: false, components: [] }));
+    onOptionsChange.mockClear();
   });
 
   describe('On loading errors', () => {
@@ -101,6 +107,14 @@ describe('<EditDataSource>', () => {
       });
 
       expect(screen.queryByText(readOnlyMessage)).toBeVisible();
+    });
+
+    it('should render a message if the datasource is not found', () => {
+      setup({
+        dataSource: getMockDataSource({ uid: undefined, id: 0 }),
+      });
+
+      expect(screen.queryByText('Data source not found')).toBeVisible();
     });
   });
 
@@ -320,7 +334,7 @@ describe('<EditDataSource>', () => {
 
     it('should pass a context prop to the rendered UI extension component', () => {
       const message = "I'm a UI extension component!";
-      const component = jest.fn().mockReturnValue(<div>{message}</div>);
+      const Component = jest.fn().mockReturnValue(<div>{message}</div>);
 
       setPluginComponentsHook(
         jest.fn().mockReturnValue({
@@ -331,7 +345,7 @@ describe('<EditDataSource>', () => {
                 pluginId: 'grafana-pdc-app',
                 title: 'Example component',
                 description: 'Example description',
-                component,
+                component: Component,
               },
               '1'
             ),
@@ -347,9 +361,9 @@ describe('<EditDataSource>', () => {
         },
       });
 
-      expect(component).toHaveBeenCalled();
+      expect(Component).toHaveBeenCalled();
 
-      const props = component.mock.calls[0][0];
+      const props = Component.mock.calls[0][0];
 
       expect(props.context).toBeDefined();
       expect(props.context.dataSource).toBeDefined();
@@ -357,6 +371,96 @@ describe('<EditDataSource>', () => {
       expect(props.context.setJsonData).toBeDefined();
       expect(props.context.setSecureJsonData).toBeDefined();
       expect(props.context.testingStatus).toBeDefined();
+    });
+  });
+
+  it('should be possible to update the `jsonData` first and `secureJsonData` directly afterwards from the extension component', () => {
+    const message = "I'm a UI extension component!";
+    const Component = ({ context }: { context: PluginExtensionDataSourceConfigContext }) => {
+      useEffect(() => {
+        context.setJsonData({ test: 'test' } as unknown as DataSourceJsonData);
+        context.setSecureJsonData({ test: 'test' });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, []);
+
+      return <div>{message}</div>;
+    };
+
+    setPluginComponentsHook(
+      jest.fn().mockReturnValue({
+        isLoading: false,
+        components: [
+          createComponentWithMeta(
+            {
+              pluginId: 'grafana-pdc-app',
+              title: 'Example component',
+              description: 'Example description',
+              component: Component as unknown as React.ComponentType<{}>,
+            },
+            '1'
+          ),
+        ],
+      })
+    );
+
+    setup({
+      dataSourceRights: {
+        readOnly: false,
+        hasDeleteRights: true,
+        hasWriteRights: true,
+      },
+    });
+
+    expect(onOptionsChange).toHaveBeenCalledTimes(2);
+    expect(onOptionsChange).toHaveBeenCalledWith({
+      ...getMockDataSource(),
+      jsonData: { ...getMockDataSource().jsonData, test: 'test' },
+      secureJsonData: { test: 'test' },
+    });
+  });
+
+  it('should be possible to update the `secureJsonData` first and `jsonData` directly afterwards from the extension component', () => {
+    const message = "I'm a UI extension component!";
+    const Component = ({ context }: { context: PluginExtensionDataSourceConfigContext }) => {
+      useEffect(() => {
+        context.setSecureJsonData({ test: 'test' });
+        context.setJsonData({ test: 'test' } as unknown as DataSourceJsonData);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, []);
+
+      return <div>{message}</div>;
+    };
+
+    setPluginComponentsHook(
+      jest.fn().mockReturnValue({
+        isLoading: false,
+        components: [
+          createComponentWithMeta(
+            {
+              pluginId: 'grafana-pdc-app',
+              title: 'Example component',
+              description: 'Example description',
+              component: Component as unknown as React.ComponentType<{}>,
+            },
+            '1'
+          ),
+        ],
+      })
+    );
+
+    setup({
+      dataSourceRights: {
+        readOnly: false,
+        hasDeleteRights: true,
+        hasWriteRights: true,
+      },
+    });
+
+    expect(onOptionsChange).toHaveBeenCalledTimes(2);
+    expect(onOptionsChange).toHaveBeenCalledWith({
+      ...getMockDataSource(),
+      jsonData: { ...getMockDataSource().jsonData, test: 'test' },
+      secureJsonData: { test: 'test' },
     });
   });
 });

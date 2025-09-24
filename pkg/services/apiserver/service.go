@@ -2,9 +2,11 @@ package apiserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"path"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,27 +18,30 @@ import (
 	"k8s.io/apiserver/pkg/util/notfoundhandler"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
+	"k8s.io/kube-openapi/pkg/common"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
-	servicetracing "github.com/grafana/grafana/pkg/modules/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
-	kubeaggregator "github.com/grafana/grafana/pkg/services/apiserver/aggregator"
+	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
+	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -46,6 +51,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -100,9 +106,14 @@ type service struct {
 	contextProvider    datasource.PluginContextWrapper
 	pluginStore        pluginstore.Store
 	unified            resource.ResourceClient
+	secrets            secret.InlineSecureValueSupport
 	restConfigProvider RestConfigProvider
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
+	aggregatorRunner                  aggregatorrunner.AggregatorRunner
+	appInstallers                     []appsdkapiserver.AppInstaller
+	builderMetrics                    *builder.BuilderMetrics
+	dualWriterMetrics                 *grafanarest.DualWriterMetrics
 }
 
 func ProvideService(
@@ -119,9 +130,14 @@ func ProvideService(
 	pluginStore pluginstore.Store,
 	storageStatus dualwrite.Service,
 	unified resource.ResourceClient,
+	secrets secret.InlineSecureValueSupport,
 	restConfigProvider RestConfigProvider,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 	eventualRestConfigProvider *eventualRestConfigProvider,
+	reg prometheus.Registerer,
+	aggregatorRunner aggregatorrunner.AggregatorRunner,
+	appInstallers []appsdkapiserver.AppInstaller,
+	builderMetrics *builder.BuilderMetrics,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -134,10 +150,10 @@ func ProvideService(
 		rr:                                rr,
 		stopCh:                            make(chan struct{}),
 		builders:                          []builder.APIGroupBuilder{},
-		authorizer:                        authorizer.NewGrafanaAuthorizer(cfg),
+		authorizer:                        authorizer.NewGrafanaBuiltInSTAuthorizer(cfg),
 		tracing:                           tracing,
 		db:                                db, // For Unified storage
-		metrics:                           metrics.ProvideRegisterer(),
+		metrics:                           reg,
 		kvStore:                           kvStore,
 		pluginClient:                      pluginClient,
 		datasources:                       datasources,
@@ -146,12 +162,16 @@ func ProvideService(
 		serverLockService:                 serverLockService,
 		storageStatus:                     storageStatus,
 		unified:                           unified,
+		secrets:                           secrets,
 		restConfigProvider:                restConfigProvider,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
+		aggregatorRunner:                  aggregatorRunner,
+		appInstallers:                     appInstallers,
+		builderMetrics:                    builderMetrics,
+		dualWriterMetrics:                 grafanarest.NewDualWriterMetrics(reg),
 	}
 	// This will be used when running as a dskit service
-	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
-	s.NamedService = servicetracing.NewServiceTracer(tracing.GetTracerProvider(), service)
+	s.NamedService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
 
 	// TODO: this is very hacky
 	// We need to register the routes in ProvideService to make sure
@@ -176,6 +196,11 @@ func ProvideService(
 			}
 
 			if c.SignedInUser != nil {
+				// For unauthenticated requests, we set the namespace to the requested one
+				if !c.IsSignedIn {
+					useNamespaceFromPath(req.URL.Path, c.SignedInUser)
+				}
+
 				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
 				req = req.WithContext(ctx)
 			}
@@ -183,6 +208,7 @@ func ProvideService(
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 			s.handler.ServeHTTP(resp, req)
 		}
+		k8sRoute.Any("/features.grafana.app/v0alpha1/*", handler)
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
 	}
@@ -233,8 +259,8 @@ func (s *service) start(ctx context.Context) error {
 	builders := s.builders
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
 
-	// Install schemas
-	for i, b := range builders {
+	// Install schemas for existing builders
+	for _, b := range builders {
 		gvs := builder.GetGroupVersions(b)
 		groupVersions = append(groupVersions, gvs...)
 		if len(gvs) == 0 {
@@ -245,12 +271,7 @@ func (s *service) start(ctx context.Context) error {
 		}
 		pvs := s.scheme.PrioritizedVersionsForGroup(gvs[0].Group)
 
-		for j, gv := range pvs {
-			if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-				// set the priority for the group+version
-				kubeaggregator.APIVersionPriorities[gv] = kubeaggregator.Priority{Group: int32(15000 + i), Version: int32(len(pvs) - j)}
-			}
-
+		for _, gv := range pvs {
 			if a, ok := b.(builder.APIGroupAuthorizer); ok {
 				auth := a.GetAuthorizer()
 				if auth != nil {
@@ -260,14 +281,28 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
+	// Add schemas from app installers to the scheme before creating options
+	additionalGroupVersions, err := appinstaller.AddToScheme(s.appInstallers, s.scheme)
+	if err != nil {
+		return err
+	}
+	groupVersions = append(groupVersions, additionalGroupVersions...)
+
 	o := grafanaapiserveroptions.NewOptions(s.codecs.LegacyCodec(groupVersions...))
-	err := applyGrafanaConfig(s.cfg, s.features, o)
+
+	// Register authorizers from app installers
+	appinstaller.RegisterAuthorizers(ctx, s.appInstallers, s.authorizer)
+
+	err = applyGrafanaConfig(s.cfg, s.features, o)
 	if err != nil {
 		return err
 	}
 
 	if errs := o.Validate(); len(errs) != 0 {
-		// TODO: handle multiple errors
+		return errs[0]
+	}
+
+	if errs := o.APIEnablementOptions.Validate(s.scheme); len(errs) != 0 {
 		return errs[0]
 	}
 
@@ -275,12 +310,23 @@ func (s *service) start(ctx context.Context) error {
 	if err := o.ApplyTo(serverConfig); err != nil {
 		return err
 	}
+	serverConfig.EffectiveVersion = builder.GetEffectiveVersion(
+		s.cfg.BuildStamp,
+		s.cfg.BuildVersion,
+		s.cfg.BuildCommit,
+		s.cfg.BuildBranch,
+	)
+
+	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, appinstaller.NewAPIResourceConfig(s.appInstallers), s.scheme); err != nil {
+		return err
+	}
+
 	serverConfig.Authorization.Authorizer = s.authorizer
 	serverConfig.Authentication.Authenticator = authenticator.NewAuthenticator(serverConfig.Authentication.Authenticator)
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 
 	// setup loopback transport for the aggregator server
-	transport := &roundTripperFunc{ready: make(chan struct{})}
+	transport := &grafanaapiserveroptions.RoundTripperFunc{Ready: make(chan struct{})}
 	serverConfig.LoopbackClientConfig.Transport = transport
 	serverConfig.LoopbackClientConfig.TLSClientConfig = clientrest.TLSClientConfig{}
 	serverConfig.MaxRequestBodyBytes = MaxRequestBodyBytes
@@ -295,23 +341,32 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
+		getter := apistore.NewRESTOptionsGetterForClient(s.unified, s.secrets, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
 		optsregister = getter.RegisterOptions
-
-		// Use unified storage client
 		serverConfig.RESTOptionsGetter = getter
 	}
 
-	// Add OpenAPI specs for each group+version
+	defGetters := []common.GetOpenAPIDefinitions{
+		appinstaller.BuildOpenAPIDefGetter(s.appInstallers),
+	}
+
+	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
 		s.scheme,
 		serverConfig,
 		builders,
-		s.cfg.BuildStamp,
 		s.cfg.BuildVersion,
-		s.cfg.BuildCommit,
-		s.cfg.BuildBranch,
 		s.buildHandlerChainFuncFromBuilders,
+		groupVersions,
+		defGetters,
+	)
+	if err != nil {
+		return err
+	}
+
+	serverConfig.AdmissionControl, err = appinstaller.RegisterAdmission(
+		serverConfig.AdmissionControl,
+		s.appInstallers,
 	)
 	if err != nil {
 		return err
@@ -319,21 +374,46 @@ func (s *service) start(ctx context.Context) error {
 
 	notFoundHandler := notfoundhandler.New(s.codecs, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
 
+	if err := appinstaller.RegisterPostStartHooks(s.appInstallers, serverConfig); err != nil {
+		return fmt.Errorf("failed to register post start hooks for app installers: %w", err)
+	}
+
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler))
 	if err != nil {
 		return err
 	}
 
-	// Install the API group+version
+	// Install the API group+version for existing builders
 	err = builder.InstallAPIs(s.scheme, s.codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
-		// Required for the dual writer initialization
-		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
+		s.metrics,
+		request.GetNamespaceMapper(s.cfg),
+		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
 		s.serverLockService,
 		s.storageStatus,
 		optsregister,
+		s.features,
+		s.dualWriterMetrics,
+		s.builderMetrics,
 	)
 	if err != nil {
+		return err
+	}
+
+	if err := appinstaller.InstallAPIs(
+		ctx,
+		s.appInstallers,
+		server,
+		serverConfig.RESTOptionsGetter,
+		o.StorageOptions,
+		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
+		s.serverLockService,
+		request.GetNamespaceMapper(s.cfg),
+		s.storageStatus,
+		s.dualWriterMetrics,
+		s.builderMetrics,
+		serverConfig.MergedResourceConfig,
+	); err != nil {
 		return err
 	}
 
@@ -341,27 +421,41 @@ func (s *service) start(ctx context.Context) error {
 	s.options = o
 
 	delegate := server
-	var aggregatorServer *aggregatorapiserver.APIAggregator
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-		aggregatorServer, err = s.createKubeAggregator(serverConfig, server, s.metrics)
+
+	var runningServer *genericapiserver.GenericAPIServer
+	isKubernetesAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator)
+	isDataplaneAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator)
+
+	if isKubernetesAggregatorEnabled {
+		aggregatorServer, err := s.aggregatorRunner.Configure(s.options, serverConfig, delegate, s.scheme, builders)
 		if err != nil {
 			return err
 		}
-		delegate = aggregatorServer.GenericAPIServer
+		// we are running with KubernetesAggregator FT set to true but with enterprise unlinked, handle this gracefully
+		if aggregatorServer != nil {
+			if !isDataplaneAggregatorEnabled {
+				runningServer, err = s.aggregatorRunner.Run(ctx, transport, s.stoppedCh)
+				if err != nil {
+					s.log.Error("aggregator runner failed to run", "error", err)
+					return err
+				}
+			} else {
+				delegate = aggregatorServer
+			}
+		} else {
+			// even though the FT is set to true, enterprise isn't linked
+			isKubernetesAggregatorEnabled = false
+		}
 	}
 
-	var runningServer *genericapiserver.GenericAPIServer
-	if s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator) {
+	if isDataplaneAggregatorEnabled {
 		runningServer, err = s.startDataplaneAggregator(ctx, transport, serverConfig, delegate)
 		if err != nil {
 			return err
 		}
-	} else if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-		runningServer, err = s.startKubeAggregator(ctx, transport, aggregatorServer)
-		if err != nil {
-			return err
-		}
-	} else {
+	}
+
+	if !isDataplaneAggregatorEnabled && !isKubernetesAggregatorEnabled {
 		runningServer, err = s.startCoreServer(ctx, transport, server)
 		if err != nil {
 			return err
@@ -380,20 +474,27 @@ func (s *service) start(ctx context.Context) error {
 	// used by local clients to make requests to the server
 	s.restConfig = runningServer.LoopbackClientConfig
 
+	for _, installer := range s.appInstallers {
+		err := installer.InitializeApp(*s.restConfig)
+		if err != nil && !errors.Is(err, appsdkapiserver.ErrAppAlreadyInitialized) {
+			return err
+		}
+	}
+
 	return nil
 }
 
 func (s *service) startCoreServer(
 	ctx context.Context,
-	transport *roundTripperFunc,
+	transport *grafanaapiserveroptions.RoundTripperFunc,
 	server *genericapiserver.GenericAPIServer,
 ) (*genericapiserver.GenericAPIServer, error) {
 	// setup the loopback transport and signal that it's ready.
 	// ignore the lint error because the response is passed directly to the client,
 	// so the client will be responsible for closing the response body.
 	// nolint:bodyclose
-	transport.fn = grafanaresponsewriter.WrapHandler(server.Handler)
-	close(transport.ready)
+	transport.Fn = grafanaresponsewriter.WrapHandler(server.Handler)
+	close(transport.Ready)
 
 	prepared := server.PrepareRun()
 	go func() {
@@ -405,7 +506,7 @@ func (s *service) startCoreServer(
 
 func (s *service) startDataplaneAggregator(
 	ctx context.Context,
-	transport *roundTripperFunc,
+	transport *grafanaapiserveroptions.RoundTripperFunc,
 	serverConfig *genericapiserver.RecommendedConfig,
 	delegate *genericapiserver.GenericAPIServer,
 ) (*genericapiserver.GenericAPIServer, error) {
@@ -436,8 +537,8 @@ func (s *service) startDataplaneAggregator(
 	// ignore the lint error because the response is passed directly to the client,
 	// so the client will be responsible for closing the response body.
 	// nolint:bodyclose
-	transport.fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
-	close(transport.ready)
+	transport.Fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
+	close(transport.Ready)
 
 	prepared, err := aggregatorServer.PrepareRun()
 	if err != nil {
@@ -451,49 +552,10 @@ func (s *service) startDataplaneAggregator(
 	return aggregatorServer.GenericAPIServer, nil
 }
 
-func (s *service) createKubeAggregator(
-	serverConfig *genericapiserver.RecommendedConfig,
-	server *genericapiserver.GenericAPIServer,
-	reg prometheus.Registerer,
-) (*aggregatorapiserver.APIAggregator, error) {
-	namespaceMapper := request.GetNamespaceMapper(s.cfg)
-
-	aggregatorConfig, err := kubeaggregator.CreateAggregatorConfig(s.options, *serverConfig, namespaceMapper(1))
-	if err != nil {
-		return nil, err
-	}
-
-	return kubeaggregator.CreateAggregatorServer(aggregatorConfig, server, reg)
-}
-
-func (s *service) startKubeAggregator(
-	ctx context.Context,
-	transport *roundTripperFunc,
-	aggregatorServer *aggregatorapiserver.APIAggregator,
-) (*genericapiserver.GenericAPIServer, error) {
-	// setup the loopback transport for the aggregator server and signal that it's ready
-	// ignore the lint error because the response is passed directly to the client,
-	// so the client will be responsible for closing the response body.
-	// nolint:bodyclose
-	transport.fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
-	close(transport.ready)
-
-	prepared, err := aggregatorServer.PrepareRun()
-	if err != nil {
-		return nil, err
-	}
-
-	go func() {
-		s.stoppedCh <- prepared.Run(ctx)
-	}()
-
-	return aggregatorServer.GenericAPIServer, nil
-}
-
 func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
 	return &clientrest.Config{
-		Transport: &roundTripperFunc{
-			fn: func(req *http.Request) (*http.Response, error) {
+		Transport: &grafanaapiserveroptions.RoundTripperFunc{
+			Fn: func(req *http.Request) (*http.Response, error) {
 				if err := s.AwaitRunning(req.Context()); err != nil {
 					return nil, err
 				}
@@ -519,7 +581,6 @@ func (s *service) running(ctx context.Context) error {
 			return err
 		}
 	case <-ctx.Done():
-		return ctx.Err()
 	}
 	return nil
 }
@@ -529,18 +590,6 @@ func ensureKubeConfig(restConfig *clientrest.Config, dir string) error {
 		utils.FormatKubeConfig(restConfig),
 		path.Join(dir, "grafana.kubeconfig"),
 	)
-}
-
-type roundTripperFunc struct {
-	ready chan struct{}
-	fn    func(req *http.Request) (*http.Response, error)
-}
-
-func (f *roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	if f.fn == nil {
-		<-f.ready
-	}
-	return f.fn(req)
 }
 
 type pluginContextProvider struct {
@@ -568,4 +617,17 @@ func (p *pluginContextProvider) GetPluginContext(ctx context.Context, pluginID s
 	}
 
 	return p.contextProvider.PluginContextForDataSource(ctx, s)
+}
+
+func useNamespaceFromPath(path string, user *user.SignedInUser) {
+	if strings.HasPrefix(path, "/apis/") && len(path) > 6 {
+		parts := strings.Split(path[6:], "/")
+		if len(parts) >= 4 && parts[2] == "namespaces" {
+			ns, err := types.ParseNamespace(parts[3])
+			if err == nil {
+				user.Namespace = ns.Value
+				user.OrgID = ns.OrgID
+			}
+		}
+	}
 }

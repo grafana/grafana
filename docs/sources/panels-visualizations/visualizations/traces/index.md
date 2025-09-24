@@ -50,8 +50,12 @@ refs:
 
 # Traces
 
+{{< shared id="traces-viz" >}}
+
 Traces visualizations let you follow a request as it traverses the services in your infrastructure.
 The traces visualization displays traces data in a diagram that allows you to easily interpret it. Traces visualizations currently render one trace traversal based on the traceID used in TraceQL or using a variable.
+
+{{< /shared >}}
 
 For more information about traces and how to use them, refer to the following documentation:
 
@@ -87,7 +91,6 @@ This procedure uses dashboard variables and templates to allow you to enter trac
 
 1. From your Grafana stack, create a new dashboard or go to an existing dashboard where you'd like to add traces visualizations.
 1. Do one of the following:
-
    - New dashboard - Click **+ Add visualization**.
    - Existing dashboard - Click **Edit** in the top-right corner and then select **Visualization** in the **Add** drop-down.
 

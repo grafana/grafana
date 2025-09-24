@@ -4,11 +4,13 @@ import classNames from 'classnames';
 import { ReactElement } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { useStyles2, Stack, Button, EmptyState, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
+import { isVariableEditable } from '../../serialization/sceneVariablesSetToVariables';
+import { DashboardInteractions } from '../../utils/interactions';
 import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
 import { UsagesToNetwork, VariableUsageTree } from '../../variables/utils';
 
@@ -46,8 +48,15 @@ export function VariableEditorList({
     onChangeOrder(result.source.index, result.destination.index);
   };
 
-  return variables.length <= 0 ? (
-    <EmptyVariablesList onAdd={onAdd} />
+  const onVariableAdd = () => {
+    onAdd();
+    DashboardInteractions.addVariableButtonClicked({ source: 'settings_pane' });
+  };
+
+  const editableVariables = variables.filter(isVariableEditable);
+
+  return editableVariables.length <= 0 ? (
+    <EmptyVariablesList onAdd={onVariableAdd} />
   ) : (
     <Stack direction="column" gap={3}>
       <table
@@ -71,6 +80,10 @@ export function VariableEditorList({
             {(provided) => (
               <tbody ref={provided.innerRef} {...provided.droppableProps}>
                 {variables.map((variableScene, index) => {
+                  if (!isVariableEditable(variableScene)) {
+                    return null;
+                  }
+
                   const variableState = variableScene.state;
                   return (
                     <VariableEditorListRow
@@ -93,7 +106,11 @@ export function VariableEditorList({
       </table>
       <Stack>
         <VariablesDependenciesButton variables={variables} />
-        <Button data-testid={selectors.pages.Dashboard.Settings.Variables.List.newButton} onClick={onAdd} icon="plus">
+        <Button
+          data-testid={selectors.pages.Dashboard.Settings.Variables.List.newButton}
+          onClick={onVariableAdd}
+          icon="plus"
+        >
           <Trans i18nKey="dashboard-scene.variable-editor-list.new-variable">New variable</Trans>
         </Button>
       </Stack>

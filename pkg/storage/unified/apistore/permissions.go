@@ -8,14 +8,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	authtypes "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type permissionCreatorFunc = func(ctx context.Context) error
 
 func afterCreatePermissionCreator(ctx context.Context,
-	key *resource.ResourceKey,
+	key *resourcepb.ResourceKey,
 	grantPermisions string,
 	obj runtime.Object,
 	setter DefaultPermissionSetter,

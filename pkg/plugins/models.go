@@ -126,8 +126,9 @@ type AddedComponent struct {
 }
 
 type AddedFunction struct {
-	Targets []string `json:"targets"`
-	Title   string   `json:"title"`
+	Targets     []string `json:"targets"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
 }
 
 type ExposedComponent struct {
@@ -341,9 +342,9 @@ type AppDTO struct {
 }
 
 const (
-	errorCodeSignatureMissing   ErrorCode = "signatureMissing"
-	errorCodeSignatureModified  ErrorCode = "signatureModified"
-	errorCodeSignatureInvalid   ErrorCode = "signatureInvalid"
+	ErrorCodeSignatureMissing   ErrorCode = "signatureMissing"
+	ErrorCodeSignatureModified  ErrorCode = "signatureModified"
+	ErrorCodeSignatureInvalid   ErrorCode = "signatureInvalid"
 	ErrorCodeFailedBackendStart ErrorCode = "failedBackendStart"
 	ErrorAngular                ErrorCode = "angular"
 )
@@ -392,11 +393,11 @@ func (e Error) AsErrorCode() ErrorCode {
 
 	switch e.SignatureStatus {
 	case SignatureStatusInvalid:
-		return errorCodeSignatureInvalid
+		return ErrorCodeSignatureInvalid
 	case SignatureStatusModified:
-		return errorCodeSignatureModified
+		return ErrorCodeSignatureModified
 	case SignatureStatusUnsigned:
-		return errorCodeSignatureMissing
+		return ErrorCodeSignatureMissing
 	case SignatureStatusInternal, SignatureStatusValid:
 		return ""
 	}
@@ -411,11 +412,11 @@ func (e *Error) WithMessage(m string) *Error {
 
 func (e Error) PublicMessage() string {
 	switch e.ErrorCode {
-	case errorCodeSignatureInvalid:
+	case ErrorCodeSignatureInvalid:
 		return "Invalid plugin signature"
-	case errorCodeSignatureModified:
+	case ErrorCodeSignatureModified:
 		return "Plugin signature does not match"
-	case errorCodeSignatureMissing:
+	case ErrorCodeSignatureMissing:
 		return "Plugin signature is missing"
 	case ErrorCodeFailedBackendStart:
 		return "Plugin failed to start"
@@ -455,3 +456,20 @@ type QueryCachingConfig struct {
 	Enabled bool  `json:"enabled"`
 	TTLMS   int64 `json:"TTLMs"`
 }
+
+// CloudProvisioningMethod is the method used to provision the plugin in Grafana Cloud.
+type CloudProvisioningMethod string
+
+const (
+	// CloudProvisioningMethodUnknown is used when the plugin provisioning method is unknown.
+	CloudProvisioningMethodUnknown CloudProvisioningMethod = "unknown"
+
+	// CloudProvisioningMethodNone is used when the plugin is not provisioned in Grafana Cloud.
+	CloudProvisioningMethodNone CloudProvisioningMethod = "none"
+
+	// CloudProvisioningMethodURL is used when the plugin is provisioned from a URL.
+	CloudProvisioningMethodURL CloudProvisioningMethod = "url"
+
+	// CloudProvisioningMethodCatalog is used when the plugin is provisioned from the catalog.
+	CloudProvisioningMethodCatalog CloudProvisioningMethod = "catalog"
+)

@@ -4,7 +4,7 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { StringSelector, selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { getFocusStyles, getInternalRadius, getMouseFocusStyles } from '../../../themes/mixins';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { getPropertiesForButtonSize } from '../commonStyles';

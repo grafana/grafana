@@ -12,15 +12,17 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/trace"
+
+	alertingInstrument "github.com/grafana/alerting/http/instrument"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -42,6 +44,7 @@ const (
 const (
 	StateHistoryLabelKey   = "from"
 	StateHistoryLabelValue = "state-history"
+	LokiClientSpanName     = "ngalert.historian.client"
 )
 
 const defaultQueryRange = 6 * time.Hour
@@ -67,8 +70,8 @@ func NewErrLokiQueryTooLong(query string, maxLimit int) error {
 
 type remoteLokiClient interface {
 	Ping(context.Context) error
-	Push(context.Context, []Stream) error
-	RangeQuery(ctx context.Context, logQL string, start, end, limit int64) (QueryRes, error)
+	Push(context.Context, []lokiclient.Stream) error
+	RangeQuery(ctx context.Context, logQL string, start, end, limit int64) (lokiclient.QueryRes, error)
 	MaxQuerySize() int
 }
 
@@ -83,9 +86,9 @@ type RemoteLokiBackend struct {
 	ruleStore      RuleStore
 }
 
-func NewRemoteLokiBackend(logger log.Logger, cfg LokiConfig, req client.Requester, metrics *metrics.Historian, tracer tracing.Tracer, ruleStore RuleStore, ac AccessControl) *RemoteLokiBackend {
+func NewRemoteLokiBackend(logger log.Logger, cfg lokiclient.LokiConfig, req alertingInstrument.Requester, metrics *metrics.Historian, tracer tracing.Tracer, ruleStore RuleStore, ac AccessControl) *RemoteLokiBackend {
 	return &RemoteLokiBackend{
-		client:         NewLokiClient(cfg, req, metrics, logger, tracer),
+		client:         lokiclient.NewLokiClient(cfg, req, metrics.BytesWritten, metrics.WriteDuration, logger, tracer, LokiClientSpanName),
 		externalLabels: cfg.ExternalLabels,
 		clock:          clock.New(),
 		metrics:        metrics,
@@ -161,7 +164,7 @@ func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery
 	if query.From.IsZero() {
 		query.From = now.Add(-defaultQueryRange)
 	}
-	var res []Stream
+	var res []lokiclient.Stream
 	for _, logQL := range queries {
 		// Timestamps are expected in RFC3339Nano.
 		// Apply user-defined limit to every request. Multiple batches is a very rare case, and therefore we can tolerate getting more data than needed.
@@ -172,11 +175,11 @@ func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery
 		}
 		res = append(res, r.Data.Result...)
 	}
-	return merge(res, uids)
+	return h.merge(res, uids)
 }
 
 // merge will put all the results in one array sorted by timestamp.
-func merge(res []Stream, folderUIDToFilter []string) (*data.Frame, error) {
+func (h RemoteLokiBackend) merge(res []lokiclient.Stream, folderUIDToFilter []string) (*data.Frame, error) {
 	filterByFolderUIDMap := make(map[string]struct{}, len(folderUIDToFilter))
 	for _, uid := range folderUIDToFilter {
 		filterByFolderUIDMap[uid] = struct{}{}
@@ -207,7 +210,7 @@ func merge(res []Stream, folderUIDToFilter []string) (*data.Frame, error) {
 	pointers := make([]int, len(res))
 	for {
 		minTime := int64(math.MaxInt64)
-		minEl := Sample{}
+		minEl := lokiclient.Sample{}
 		minElStreamIdx := -1
 		// Find the element with the earliest time among all arrays.
 		for i, stream := range res {
@@ -238,27 +241,27 @@ func merge(res []Stream, folderUIDToFilter []string) (*data.Frame, error) {
 		if minElStreamIdx == -1 {
 			break
 		}
+		entryBytes := []byte(minEl.V)
 		var entry LokiEntry
-		err := json.Unmarshal([]byte(minEl.V), &entry)
+		err := json.Unmarshal(entryBytes, &entry)
 		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal entry: %w", err)
+			h.log.Warn("failed to unmarshal entry, continuing", "err", err, "entry", minEl.V)
+			pointers[minElStreamIdx]++
+			continue
 		}
 		// Append the minimum element to the merged slice and move the pointer.
 		tsNano := minEl.T.UnixNano()
-		// TODO: In general, perhaps we should omit the offending line and log, rather than failing the request entirely.
 		streamLbls := res[minElStreamIdx].Stream
 		lblsJson, err := json.Marshal(streamLbls)
 		if err != nil {
-			return nil, fmt.Errorf("failed to serialize stream labels: %w", err)
+			// This should in theory never happen, as we're marshalling a map[string]string.
+			h.log.Warn("failed to serialize stream labels, continuing", "err", err, "labels", streamLbls)
+			pointers[minElStreamIdx]++
+			continue
 		}
-		line, err := jsonifyRow(minEl.V)
-		if err != nil {
-			return nil, fmt.Errorf("a line was in an invalid format: %w", err)
-		}
-
 		times = append(times, time.Unix(0, tsNano))
 		labels = append(labels, lblsJson)
-		lines = append(lines, line)
+		lines = append(lines, json.RawMessage(entryBytes))
 		pointers[minElStreamIdx]++
 	}
 
@@ -269,7 +272,7 @@ func merge(res []Stream, folderUIDToFilter []string) (*data.Frame, error) {
 	return frame, nil
 }
 
-func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) Stream {
+func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) lokiclient.Stream {
 	labels := mergeLabels(make(map[string]string), externalLabels)
 	// System-defined labels take precedence over user-defined external labels.
 	labels[StateHistoryLabelKey] = StateHistoryLabelValue
@@ -277,7 +280,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 	labels[GroupLabel] = fmt.Sprint(rule.Group)
 	labels[FolderUIDLabel] = fmt.Sprint(rule.NamespaceUID)
 
-	samples := make([]Sample, 0, len(states))
+	samples := make([]lokiclient.Sample, 0, len(states))
 	for _, state := range states {
 		if !shouldRecord(state) {
 			continue
@@ -309,20 +312,20 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		}
 		line := string(jsn)
 
-		samples = append(samples, Sample{
+		samples = append(samples, lokiclient.Sample{
 			T: state.LastEvaluationTime,
 			V: line,
 		})
 	}
 
-	return Stream{
+	return lokiclient.Stream{
 		Stream: labels,
 		Values: samples,
 	}
 }
 
-func (h *RemoteLokiBackend) recordStreams(ctx context.Context, stream Stream, logger log.Logger) error {
-	if err := h.client.Push(ctx, []Stream{stream}); err != nil {
+func (h *RemoteLokiBackend) recordStreams(ctx context.Context, stream lokiclient.Stream, logger log.Logger) error {
+	if err := h.client.Push(ctx, []lokiclient.Stream{stream}); err != nil {
 		return err
 	}
 
@@ -354,17 +357,6 @@ func valuesAsDataBlob(state *state.State) *simplejson.Json {
 	}
 
 	return jsonifyValues(state.Values)
-}
-
-func jsonifyRow(line string) (json.RawMessage, error) {
-	// Ser/deser to validate the contents of the log line before shipping it forward.
-	// TODO: We may want to remove this in the future, as we already have the value in the form of a []byte, and json.RawMessage is also a []byte.
-	// TODO: Though, if the log line does not contain valid JSON, this can cause problems later on when rendering the dataframe.
-	var entry LokiEntry
-	if err := json.Unmarshal([]byte(line), &entry); err != nil {
-		return nil, err
-	}
-	return json.Marshal(entry)
 }
 
 // BuildLogQuery converts models.HistoryQuery and a list of folder UIDs to Loki queries.
@@ -463,6 +455,20 @@ func buildQueryTail(query models.HistoryQuery) (string, error) {
 		b.WriteString(" | panelID=")
 		b.WriteString(strconv.FormatInt(query.PanelID, 10))
 	}
+	if query.Previous != "" {
+		b.WriteString(" | previous=~")
+		_, err := fmt.Fprintf(&b, "%q", "^"+regexp.QuoteMeta(query.Previous)+".*")
+		if err != nil {
+			return "", err
+		}
+	}
+	if query.Current != "" {
+		b.WriteString(" | current=~")
+		_, err := fmt.Fprintf(&b, "%q", "^"+regexp.QuoteMeta(query.Current)+".*")
+		if err != nil {
+			return "", err
+		}
+	}
 
 	requiredSize := 0
 	labelKeys := make([]string, 0, len(query.Labels))
@@ -489,6 +495,8 @@ func queryHasLogFilters(query models.HistoryQuery) bool {
 	return query.RuleUID != "" ||
 		query.DashboardUID != "" ||
 		query.PanelID != 0 ||
+		query.Previous != "" ||
+		query.Current != "" ||
 		len(query.Labels) > 0
 }
 

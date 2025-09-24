@@ -11,9 +11,9 @@ import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 const { usePrometheusRuleNamespacesQuery, useLazyRulerRulesQuery, useRulerRulesQuery } = alertRuleApi;
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
-const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const emptyRulerConfig: RulerRulesConfigDTO = {};
 
+const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 export function useGetLabelsFromDataSourceName(rulesSourceName: string) {
   const { data: features, isLoading: isFeaturesLoading } = useDiscoverDsFeaturesQuery({ rulesSourceName });
 
@@ -29,7 +29,7 @@ export function useGetLabelsFromDataSourceName(rulesSourceName: string) {
 
   useEffect(() => {
     if (features?.rulerConfig && !prometheusRulesPrimary) {
-      fetchRulerRules({ rulerConfig: features.rulerConfig });
+      fetchRulerRules({ rulerConfig: features.rulerConfig }, true);
     }
   }, [features?.rulerConfig, fetchRulerRules]);
 

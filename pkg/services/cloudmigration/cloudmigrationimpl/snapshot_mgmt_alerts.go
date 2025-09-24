@@ -92,6 +92,12 @@ func (s *Service) getContactPoints(ctx context.Context, signedInUser *user.Signe
 	contactPoints := make([]contactPoint, 0, len(embeddedContactPoints))
 
 	for _, embeddedContactPoint := range embeddedContactPoints {
+		// This happens in the default contact point, and would otherwise fail to migrate because it has no UID.
+		// If that contact point is edited in any way, an UID is generated.
+		if embeddedContactPoint.UID == "" {
+			continue
+		}
+
 		contactPoints = append(contactPoints, contactPoint{
 			UID:                   embeddedContactPoint.UID,
 			Name:                  embeddedContactPoint.Name,
@@ -135,7 +141,6 @@ type alertRule struct {
 	Title                string                                     `json:"title"`
 	ExecErrState         string                                     `json:"execErrState"`
 	Data                 []definitions.AlertQuery                   `json:"data"`
-	ID                   int64                                      `json:"id"`
 	For                  model.Duration                             `json:"for"`
 	OrgID                int64                                      `json:"orgID"`
 	IsPaused             bool                                       `json:"isPaused"`
@@ -158,7 +163,6 @@ func (s *Service) getAlertRules(ctx context.Context, signedInUser *user.SignedIn
 		}
 
 		provisionedAlertRules = append(provisionedAlertRules, alertRule{
-			ID:                   rule.ID,
 			UID:                  rule.UID,
 			OrgID:                rule.OrgID,
 			FolderUID:            rule.NamespaceUID,
@@ -208,7 +212,6 @@ func (s *Service) getAlertRuleGroups(ctx context.Context, signedInUser *user.Sig
 			}
 
 			provisionedAlertRules = append(provisionedAlertRules, alertRule{
-				ID:                   rule.ID,
 				UID:                  rule.UID,
 				OrgID:                rule.OrgID,
 				FolderUID:            rule.NamespaceUID,

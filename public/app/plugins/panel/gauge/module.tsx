@@ -1,4 +1,5 @@
 import { PanelPlugin } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { BarGaugeSizing, VizOrientation } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
@@ -14,61 +15,67 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
     useCustomConfig: (builder) => {
       builder.addNumberInput({
         path: 'neutral',
-        name: 'Neutral',
-        description: 'Leave empty to use Min as neutral point',
-        category: ['Gauge'],
+        name: t('gauge.name-neutral', 'Neutral'),
+        description: t('gauge.description-neutral', 'Leave empty to use Min as neutral point'),
+        category: [t('gauge.category-gauge', 'Gauge')],
         settings: {
-          placeholder: 'auto',
+          placeholder: t('gauge.placeholder-neutral', 'auto'),
         },
       });
     },
   })
   .setPanelOptions((builder) => {
+    const category = [t('gauge.category-gauge', 'Gauge')];
     addStandardDataReduceOptions(builder);
-    addOrientationOption(builder);
+    addOrientationOption(builder, category);
     builder
       .addBooleanSwitch({
         path: 'showThresholdLabels',
-        name: 'Show threshold labels',
-        description: 'Render the threshold values around the gauge bar',
+        name: t('gauge.name-show-threshold-labels', 'Show threshold labels'),
+        description: t('gauge.description-show-threshold-labels', 'Render the threshold values around the gauge bar'),
+        category,
         defaultValue: defaultOptions.showThresholdLabels,
       })
       .addBooleanSwitch({
         path: 'showThresholdMarkers',
-        name: 'Show threshold markers',
-        description: 'Renders the thresholds as an outer bar',
+        name: t('gauge.name-show-threshold-markers', 'Show threshold markers'),
+        description: t('gauge.description-show-threshold-markers', 'Renders the thresholds as an outer bar'),
+        category,
         defaultValue: defaultOptions.showThresholdMarkers,
       })
       .addRadio({
         path: 'sizing',
-        name: 'Gauge size',
+        name: t('gauge.name-gauge-size', 'Gauge size'),
         settings: {
           options: [
-            { value: BarGaugeSizing.Auto, label: 'Auto' },
-            { value: BarGaugeSizing.Manual, label: 'Manual' },
+            { value: BarGaugeSizing.Auto, label: t('gauge.gauge-size-options.label-auto', 'Auto') },
+            { value: BarGaugeSizing.Manual, label: t('gauge.gauge-size-options.label-manual', 'Manual') },
           ],
         },
+        category,
         defaultValue: defaultOptions.sizing,
         showIf: (options: Options) => options.orientation !== VizOrientation.Auto,
       })
       .addSliderInput({
         path: 'minVizWidth',
-        name: 'Min width',
-        description: 'Minimum column width (vertical orientation)',
+        name: t('gauge.name-min-width', 'Min width'),
+        description: t('gauge.description-min-width', 'Minimum column width (vertical orientation)'),
         defaultValue: defaultOptions.minVizWidth,
         settings: {
           min: 0,
           max: 600,
           step: 1,
         },
+        category,
         showIf: (options: Options) =>
           options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Vertical,
       })
       .addSliderInput({
         path: 'minVizHeight',
-        name: 'Min height',
-        description: 'Minimum row height (horizontal orientation)',
+        name: t('gauge.name-min-height', 'Min height'),
+        description: t('gauge.description-min-height', 'Minimum row height (horizontal orientation)'),
         defaultValue: defaultOptions.minVizHeight,
+        category,
         settings: {
           min: 0,
           max: 600,

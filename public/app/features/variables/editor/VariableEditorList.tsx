@@ -4,9 +4,9 @@ import { ReactElement } from 'react';
 
 import { TypedVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2, Stack, EmptyState, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
 import { UsagesToNetwork, VariableUsageTree } from '../inspect/utils';

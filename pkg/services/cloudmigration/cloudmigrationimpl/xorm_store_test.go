@@ -1,11 +1,18 @@
 package cloudmigrationimpl
 
 import (
+	"bytes"
 	"context"
+	cryptoRand "crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"strconv"
 	"testing"
 
+	"github.com/google/uuid"
+	snapshot "github.com/grafana/grafana-cloud-migration-snapshot/src"
+	"github.com/grafana/grafana-cloud-migration-snapshot/src/contracts"
+	"github.com/grafana/grafana-cloud-migration-snapshot/src/infra/crypto"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -13,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/nacl/box"
 )
 
 func Test_GetAllCloudMigrationSessions(t *testing.T) {
@@ -96,25 +104,6 @@ func Test_GetMigrationSessionByUID(t *testing.T) {
 	})
 }
 
-/** rewrite this test using the new functions
-func Test_DeleteMigrationSession(t *testing.T) {
-	_, s := setUpTest(t)
-	ctx := context.Background()
-
-	t.Run("deletes a session from the db", func(t *testing.T) {
-		uid := "qwerty"
-		session, snapshots, err := s.DeleteMigrationSessionByUID(ctx, uid)
-		require.NoError(t, err)
-		require.Equal(t, uid, session.UID)
-		require.NotNil(t, snapshots)
-
-		// now we try to find it, should return an error
-		_, err = s.GetMigrationSessionByUID(ctx, uid)
-		require.ErrorIs(t, cloudmigration.ErrMigrationNotFound, err)
-	})
-}
-*/
-
 func Test_SnapshotManagement(t *testing.T) {
 	t.Parallel()
 
@@ -129,17 +118,18 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.NoError(t, err)
 
 		// create a snapshot
+		uid := uuid.NewString()
 		cmr := cloudmigration.CloudMigrationSnapshot{
+			UID:        uid,
 			SessionUID: session.UID,
 			Status:     cloudmigration.SnapshotStatusCreating,
 		}
 
-		snapshotUid, err := s.CreateSnapshot(ctx, cmr)
+		err = s.CreateSnapshot(ctx, cmr)
 		require.NoError(t, err)
-		require.NotEmpty(t, snapshotUid)
 
 		//retrieve it from the db
-		snapshot, err := s.GetSnapshotByUID(ctx, 1, session.UID, snapshotUid, cloudmigration.SnapshotResultQueryParams{
+		snapshot, err := s.GetSnapshotByUID(ctx, 1, session.UID, uid, cloudmigration.SnapshotResultQueryParams{
 			ResultPage:  1,
 			ResultLimit: 100,
 			SortColumn:  cloudmigration.SortColumnID,
@@ -149,11 +139,11 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 
 		// update its status
-		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{UID: snapshotUid, Status: cloudmigration.SnapshotStatusCreating, SessionID: session.UID})
+		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{UID: uid, Status: cloudmigration.SnapshotStatusCreating, SessionID: session.UID})
 		require.NoError(t, err)
 
 		//retrieve it again
-		snapshot, err = s.GetSnapshotByUID(ctx, 1, session.UID, snapshotUid, cloudmigration.SnapshotResultQueryParams{
+		snapshot, err = s.GetSnapshotByUID(ctx, 1, session.UID, uid, cloudmigration.SnapshotResultQueryParams{
 			ResultPage:  1,
 			ResultLimit: 100,
 			SortColumn:  cloudmigration.SortColumnID,
@@ -169,11 +159,11 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.Equal(t, *snapshot, snapshots[0])
 
 		// delete snapshot
-		err = s.deleteSnapshot(ctx, snapshotUid)
+		err = s.deleteSnapshot(ctx, uid)
 		require.NoError(t, err)
 
 		// now we expect not to find the snapshot
-		snapshot, err = s.GetSnapshotByUID(ctx, 1, session.UID, snapshotUid, cloudmigration.SnapshotResultQueryParams{
+		snapshot, err = s.GetSnapshotByUID(ctx, 1, session.UID, uid, cloudmigration.SnapshotResultQueryParams{
 			ResultPage:  1,
 			ResultLimit: 100,
 			SortColumn:  cloudmigration.SortColumnID,
@@ -181,6 +171,93 @@ func Test_SnapshotManagement(t *testing.T) {
 		})
 		require.ErrorIs(t, err, cloudmigration.ErrSnapshotNotFound)
 		require.Nil(t, snapshot)
+	})
+
+	t.Run("tests a snapshot with a large number of resources", func(t *testing.T) {
+		session, err := s.CreateMigrationSession(ctx, cloudmigration.CloudMigrationSession{
+			OrgID:     1,
+			AuthToken: encodeToken("token"),
+		})
+		require.NoError(t, err)
+
+		// create a snapshot
+		uid := uuid.NewString()
+		err = s.CreateSnapshot(ctx, cloudmigration.CloudMigrationSnapshot{
+			UID:        uid,
+			SessionUID: session.UID,
+			Status:     cloudmigration.SnapshotStatusCreating,
+		})
+		require.NoError(t, err)
+
+		// Generate 50,001 test resources in order to test both update conditions (reached the batch limit or reached the end)
+		const numResources = 50001
+		resources := make([]cloudmigration.CloudMigrationResource, numResources)
+
+		for i := 0; i < numResources; i++ {
+			resources[i] = cloudmigration.CloudMigrationResource{
+				Name:   fmt.Sprintf("Resource %d", i),
+				Type:   cloudmigration.DashboardDataType,
+				RefID:  fmt.Sprintf("refid-%d", i),
+				Status: cloudmigration.ItemStatusPending,
+			}
+		}
+
+		// Update the snapshot with the resources to create
+		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+			UID:                    uid,
+			Status:                 cloudmigration.SnapshotStatusPendingUpload,
+			SessionID:              session.UID,
+			LocalResourcesToCreate: resources,
+		})
+		require.NoError(t, err)
+
+		// Get the Snapshot and ensure it's in the right state
+		snapshot, err := s.GetSnapshotByUID(ctx, 1, session.UID, uid, cloudmigration.SnapshotResultQueryParams{
+			ResultPage:  1,
+			ResultLimit: numResources,
+			SortColumn:  cloudmigration.SortColumnID,
+			SortOrder:   cloudmigration.SortOrderAsc,
+		})
+		require.NoError(t, err)
+		require.Equal(t, cloudmigration.SnapshotStatusPendingUpload, snapshot.Status)
+		require.Len(t, snapshot.Resources, numResources)
+
+		for i, r := range snapshot.Resources {
+			assert.Equal(t, cloudmigration.ItemStatusPending, r.Status)
+
+			if i%2 == 0 {
+				snapshot.Resources[i].Status = cloudmigration.ItemStatusOK
+			} else {
+				snapshot.Resources[i].Status = cloudmigration.ItemStatusError
+			}
+		}
+
+		// Update the snapshot with the resources to update
+		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+			UID:                    uid,
+			Status:                 cloudmigration.SnapshotStatusFinished,
+			SessionID:              session.UID,
+			CloudResourcesToUpdate: snapshot.Resources,
+		})
+		require.NoError(t, err)
+
+		// Get the Snapshot and ensure it's in the right state
+		snapshot, err = s.GetSnapshotByUID(ctx, 1, session.UID, uid, cloudmigration.SnapshotResultQueryParams{
+			ResultPage:  1,
+			ResultLimit: numResources,
+			SortColumn:  cloudmigration.SortColumnID,
+			SortOrder:   cloudmigration.SortOrderAsc,
+		})
+		require.NoError(t, err)
+		require.Equal(t, cloudmigration.SnapshotStatusFinished, snapshot.Status)
+
+		for i, r := range snapshot.Resources {
+			if i%2 == 0 {
+				assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
+			} else {
+				assert.Equal(t, cloudmigration.ItemStatusError, r.Status)
+			}
+		}
 	})
 }
 
@@ -357,6 +434,116 @@ func Test_SnapshotResources(t *testing.T) {
 			assert.Equal(t, "2", results[0].UID)
 		})
 	})
+
+	t.Run("test creating and updating a large number of resources", func(t *testing.T) {
+		// Generate 50,001 test resources in order to test both update conditions (reached the batch limit or reached the end)
+		const numResources = 50001
+		resources := make([]cloudmigration.CloudMigrationResource, numResources)
+		snapshotUid := uuid.New().String()
+
+		t.Run("create the resources", func(t *testing.T) {
+			for i := 0; i < numResources; i++ {
+				resources[i] = cloudmigration.CloudMigrationResource{
+					Name:   fmt.Sprintf("Resource %d", i),
+					Type:   cloudmigration.DashboardDataType,
+					RefID:  fmt.Sprintf("refid-%d", i),
+					Status: cloudmigration.ItemStatusPending,
+				}
+			}
+
+			// Attempt to create all resources at once -- it should batch under the hood
+			err := s.CreateSnapshotResources(ctx, snapshotUid, resources)
+			require.NoError(t, err)
+
+			// Get the resources and ensure they're all there
+			resources, err := s.getSnapshotResources(ctx, snapshotUid, cloudmigration.SnapshotResultQueryParams{
+				ResultPage:  1,
+				ResultLimit: numResources,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
+			})
+			require.NoError(t, err)
+			assert.Len(t, resources, numResources)
+		})
+
+		t.Run("update the resources", func(t *testing.T) {
+			// Initially, update with a mix of ok and error statuses
+			for i := 0; i < numResources; i++ {
+				if i%2 == 0 {
+					resources[i].Status = cloudmigration.ItemStatusOK
+				} else {
+					resources[i].Status = cloudmigration.ItemStatusError
+					resources[i].ErrorCode = "test-error"
+					resources[i].Error = "test-error-message"
+				}
+			}
+
+			err := s.UpdateSnapshotResources(ctx, snapshotUid, resources)
+			require.NoError(t, err)
+
+			resources, err := s.getSnapshotResources(ctx, snapshotUid, cloudmigration.SnapshotResultQueryParams{
+				ResultPage:  1,
+				ResultLimit: numResources,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
+			})
+			require.NoError(t, err)
+			assert.Len(t, resources, numResources)
+			for i, r := range resources {
+				if i%2 == 0 {
+					assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
+				} else {
+					assert.Equal(t, cloudmigration.ItemStatusError, r.Status)
+					assert.Equal(t, "test-error", string(r.ErrorCode))
+					assert.Equal(t, "test-error-message", r.Error)
+				}
+			}
+
+			// Now update with only error statuses
+			for i := 0; i < numResources; i++ {
+				resources[i].Status = cloudmigration.ItemStatusError
+				resources[i].ErrorCode = "test-error-2"
+				resources[i].Error = "test-error-message-2"
+			}
+
+			err = s.UpdateSnapshotResources(ctx, snapshotUid, resources)
+			require.NoError(t, err)
+
+			resources, err = s.getSnapshotResources(ctx, snapshotUid, cloudmigration.SnapshotResultQueryParams{
+				ResultPage:  1,
+				ResultLimit: numResources,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
+			})
+			require.NoError(t, err)
+			assert.Len(t, resources, numResources)
+			for _, r := range resources {
+				assert.Equal(t, cloudmigration.ItemStatusError, r.Status)
+				assert.Equal(t, "test-error-2", string(r.ErrorCode))
+				assert.Equal(t, "test-error-message-2", r.Error)
+			}
+
+			// Finally, all okay
+			for i := 0; i < numResources; i++ {
+				resources[i].Status = cloudmigration.ItemStatusOK
+			}
+
+			err = s.UpdateSnapshotResources(ctx, snapshotUid, resources)
+			require.NoError(t, err)
+
+			resources, err = s.getSnapshotResources(ctx, snapshotUid, cloudmigration.SnapshotResultQueryParams{
+				ResultPage:  1,
+				ResultLimit: numResources,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
+			})
+			require.NoError(t, err)
+			assert.Len(t, resources, numResources)
+			for _, r := range resources {
+				assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
+			}
+		})
+	})
 }
 
 func Test_SnapshotResourceCaseInsensitiveSorting(t *testing.T) {
@@ -458,7 +645,7 @@ func TestGetSnapshotList(t *testing.T) {
 	})
 
 	t.Run("return no snapshots if limit is set to 0", func(t *testing.T) {
-		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 0})
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, OrgID: 1, Page: 1, Limit: 0})
 		require.NoError(t, err)
 		assert.Empty(t, snapshots)
 	})
@@ -490,7 +677,7 @@ func TestGetSnapshotList(t *testing.T) {
 	})
 
 	t.Run("only the snapshots that belong to a specific session are returned", func(t *testing.T) {
-		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: "session-uid-that-doesnt-exist", Page: 1, Limit: 100})
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: "session-uid-that-doesnt-exist", OrgID: 1, Page: 1, Limit: 100})
 		require.NoError(t, err)
 		assert.Empty(t, snapshots)
 	})
@@ -501,7 +688,7 @@ func TestGetSnapshotList(t *testing.T) {
 		require.NoError(t, err)
 
 		// Fetch the snapshots that belong to the deleted session.
-		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 100})
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, OrgID: 1, Page: 1, Limit: 100})
 		require.NoError(t, err)
 
 		// No snapshots should be returned because the session that
@@ -570,12 +757,12 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 	// insert cloud migration test data
 	_, err := testDB.GetSqlxSession().Exec(ctx, `
 		INSERT INTO
-			cloud_migration_session (id, uid, org_id, auth_token, slug, stack_id, region_slug, cluster_slug, created, updated)
+			cloud_migration_session (uid, org_id, auth_token, slug, stack_id, region_slug, cluster_slug, created, updated)
 		VALUES
-			(1,'qwerty', 1, ?, '11111', 11111, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
-			(2,'asdfgh', 1, ?, '22222', 22222, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
-			(3,'zxcvbn', 1, ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
-			(4,'zxcvbn_org2', 2, ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000');
+			('qwerty', 1, ?, '11111', 11111, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
+			('asdfgh', 1, ?, '22222', 22222, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
+			('zxcvbn', 1, ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
+			('zxcvbn_org2', 2, ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000');
  		`,
 		encodeToken("12345"),
 		encodeToken("6789"),
@@ -587,12 +774,12 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 	// insert cloud migration run test data
 	_, err = testDB.GetSqlxSession().Exec(ctx, `
 		INSERT INTO
-			cloud_migration_snapshot (session_uid, uid, created, updated, finished, status)
+			cloud_migration_snapshot (session_uid, uid, created, updated, status)
 		VALUES
-			('qwerty', 'poiuy',  '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
-			('qwerty', 'lkjhg', '2024-03-26 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
-			('zxcvbn', 'mnbvvc', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
-			('zxcvbn_org2', 'mnbvvc_org2', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished");
+			('qwerty', 'poiuy',  '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', 'finished'),
+			('qwerty', 'lkjhg', '2024-03-26 15:30:36.000', '2024-03-27 15:30:43.000', 'finished'),
+			('zxcvbn', 'mnbvvc', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', 'finished'),
+			('zxcvbn_org2', 'mnbvvc_org2', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', 'finished');
 		`,
 	)
 	require.NoError(t, err)
@@ -621,4 +808,43 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 
 func encodeToken(t string) string {
 	return base64.StdEncoding.EncodeToString([]byte(t))
+}
+
+func TestEncodeDecode(t *testing.T) {
+	gmsPublicKey, gmsPrivateKey, err := box.GenerateKey(cryptoRand.Reader)
+	require.NoError(t, err)
+
+	grafanaPublicKey, grafanaPrivateKey, err := box.GenerateKey(cryptoRand.Reader)
+	require.NoError(t, err)
+
+	snapshotWriter, err := snapshot.NewSnapshotWriter(contracts.AssymetricKeys{
+		Public:  gmsPublicKey[:],
+		Private: grafanaPrivateKey[:],
+	},
+		crypto.NewNacl(),
+		"",
+	)
+	require.NoError(t, err)
+
+	chunk := []snapshot.MigrateDataRequestItemDTO{{
+		Type:  snapshot.AlertRuleGroupType,
+		RefID: "foo",
+		Name:  "name",
+		Data:  map[string]any{"a": "b"},
+	}}
+	encoded, err := snapshotWriter.EncodePartition(chunk)
+	require.NoError(t, err)
+
+	require.NoError(t, snapshotWriter.Write("RESOURCE_TYPE", chunk))
+
+	reader := snapshot.NewSnapshotReader(contracts.AssymetricKeys{
+		Public:  grafanaPublicKey[:],
+		Private: gmsPrivateKey[:],
+	},
+		crypto.NewNacl())
+
+	partition, err := reader.ReadFile(bytes.NewReader(encoded))
+	require.NoError(t, err)
+
+	require.Equal(t, chunk, partition.Items)
 }

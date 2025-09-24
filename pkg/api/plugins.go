@@ -211,6 +211,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 		AngularDetected:  plugin.Angular.Detected,
 		LoadingStrategy:  hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin),
 		Extensions:       plugin.Extensions,
+		Translations:     plugin.Translations,
 	}
 
 	if plugin.IsApp() {

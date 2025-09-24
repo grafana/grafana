@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 type setUserPermissionTest struct {
@@ -31,7 +32,9 @@ type setUserPermissionTest struct {
 	callHook bool
 }
 
-func TestService_SetUserPermission(t *testing.T) {
+func TestIntegrationService_SetUserPermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []setUserPermissionTest{
 		{
 			desc:     "should call hook when updating user permissions",
@@ -75,7 +78,9 @@ type setTeamPermissionTest struct {
 	callHook bool
 }
 
-func TestService_SetTeamPermission(t *testing.T) {
+func TestIntegrationService_SetTeamPermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []setTeamPermissionTest{
 		{
 			desc:     "should call hook when updating user permissions",
@@ -124,7 +129,9 @@ type setBuiltInRolePermissionTest struct {
 	callHook bool
 }
 
-func TestService_SetBuiltInRolePermission(t *testing.T) {
+func TestIntegrationService_SetBuiltInRolePermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []setBuiltInRolePermissionTest{
 		{
 			desc:     "should call hook when updating user permissions",
@@ -166,7 +173,9 @@ type setPermissionsTest struct {
 	expectErr bool
 }
 
-func TestService_SetPermissions(t *testing.T) {
+func TestIntegrationService_SetPermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []setPermissionsTest{
 		{
 			desc: "should set all permissions",
@@ -235,7 +244,9 @@ func TestService_SetPermissions(t *testing.T) {
 	}
 }
 
-func TestService_RegisterActionSets(t *testing.T) {
+func TestIntegrationService_RegisterActionSets(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	type registerActionSetsTest struct {
 		desc               string
 		options            Options

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv } from '@grafana/runtime';
-import { FolderDTO } from 'app/types';
+import { FolderDTO } from 'app/types/folders';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -62,6 +62,7 @@ export function useGetRulesToBeImported(skip: boolean, selectedDatasourceName: s
 
   return { rulesToBeImported, isloadingCloudRules };
 }
+
 function useFilterRulesThatMightBeOverwritten(
   targetNestedFolders: FolderDTO[],
   rulesToBeImported: RulerRulesConfigDTO,

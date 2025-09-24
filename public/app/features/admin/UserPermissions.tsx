@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { ConfirmButton, RadioButtonGroup, Icon, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { ExternalUserTooltip } from 'app/features/admin/UserOrgs';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 interface Props {
   isGrafanaAdmin: boolean;
@@ -75,7 +75,7 @@ export function UserPermissions({ isGrafanaAdmin, isExternalUser, lockMessage, o
                   onClick={onChangeClick}
                   onConfirm={handleGrafanaAdminChange}
                   onCancel={onCancelClick}
-                  confirmText="Change"
+                  confirmText={t('admin.user-permissions.confirmText-change', 'Change')}
                 >
                   {t('admin.user-permissions.change-button', 'Change')}
                 </ConfirmButton>

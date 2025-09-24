@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Button, useStyles2, Text, Box, Stack } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Button, useStyles2, Text, Box, Stack, TextLink } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
   onAddLibraryPanel as onAddLibraryPanelImpl,
@@ -14,7 +14,7 @@ import {
 import { buildPanelEditScene } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { setInitialDatasource } from '../state/reducers';
 
@@ -115,7 +115,11 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 <Box marginBottom={2}>
                   <Text element="p" textAlignment="center" color="secondary">
                     <Trans i18nKey="dashboard.empty.import-a-dashboard-body">
-                      Import dashboards from files or <a href="https://grafana.com/grafana/dashboards/">grafana.com</a>.
+                      Import dashboards from files or{' '}
+                      <TextLink external href="https://grafana.com/grafana/dashboards/">
+                        grafana.com
+                      </TextLink>
+                      .
                     </Trans>
                   </Text>
                 </Box>

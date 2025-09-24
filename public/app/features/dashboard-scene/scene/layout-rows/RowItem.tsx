@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { t } from '@grafana/i18n';
 import {
   sceneGraph,
   SceneObject,
@@ -8,21 +9,18 @@ import {
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
-import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import appEvents from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
-import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
-import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
-import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
@@ -33,7 +31,6 @@ import { LayoutParent } from '../types/LayoutParent';
 
 import { useEditOptions } from './RowItemEditor';
 import { RowItemRenderer } from './RowItemRenderer';
-import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
 import { RowItems } from './RowItems';
 import { RowsLayoutManager } from './RowsLayoutManager';
 
@@ -44,7 +41,11 @@ export interface RowItemState extends SceneObjectState {
   hideHeader?: boolean;
   fillScreen?: boolean;
   isDropTarget?: boolean;
-  conditionalRendering?: ConditionalRendering;
+  conditionalRendering?: ConditionalRenderingGroup;
+  repeatByVariable?: string;
+  repeatedRows?: RowItem[];
+  /** Marks object as a repeated object and a key pointer to source object */
+  repeatSourceKey?: string;
 }
 
 export class RowItem
@@ -59,7 +60,6 @@ export class RowItem
 
   public readonly isEditableDashboardElement = true;
   public readonly isDashboardDropTarget = true;
-  private _layoutRestorer = new LayoutRestorer();
   public containerRef: React.MutableRefObject<HTMLDivElement | null> = React.createRef<HTMLDivElement>();
 
   public constructor(state?: Partial<RowItemState>) {
@@ -67,7 +67,7 @@ export class RowItem
       ...state,
       title: state?.title ?? t('dashboard.rows-layout.row.new', 'New row'),
       layout: state?.layout ?? AutoGridLayoutManager.createEmpty(),
-      conditionalRendering: state?.conditionalRendering ?? ConditionalRendering.createEmpty(),
+      conditionalRendering: state?.conditionalRendering ?? ConditionalRenderingGroup.createEmpty(),
     });
 
     this.addActivationHandler(() => this._activationHandler());
@@ -88,8 +88,11 @@ export class RowItem
       typeName: t('dashboard.edit-pane.elements.row', 'Row'),
       instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
       icon: 'list-ul',
-      isContainer: true,
     };
+  }
+
+  public getOutlineChildren(): SceneObject[] {
+    return this.state.layout.getOutlineChildren();
   }
 
   public getLayout(): DashboardLayoutManager {
@@ -101,12 +104,10 @@ export class RowItem
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
-    this.setState({ layout: this._layoutRestorer.getLayout(layout, this.state.layout) });
+    this.setState({ layout });
   }
 
-  public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
-    return useEditOptions(this, isNewElement);
-  }
+  public useEditPaneOptions = useEditOptions.bind(this);
 
   public onDelete() {
     this.getParentLayout().removeRow(this);
@@ -161,10 +162,6 @@ export class RowItem
     store.set(LS_ROW_COPY_KEY, JSON.stringify({ elements, row: this.serialize() }));
   }
 
-  public onAddPanel(panel = getDefaultVizPanel()) {
-    this.getLayout().addPanel(panel);
-  }
-
   public setIsDropTarget(isDropTarget: boolean) {
     if (!!this.state.isDropTarget !== isDropTarget) {
       this.setState({ isDropTarget });
@@ -180,10 +177,6 @@ export class RowItem
     panel.clearParent();
     this.getLayout().addPanel(panel);
     this.setIsDropTarget(false);
-  }
-
-  public getRepeatVariable(): string | undefined {
-    return this._getRepeatBehavior()?.state.variableName;
   }
 
   public onChangeTitle(title: string) {
@@ -203,19 +196,10 @@ export class RowItem
   }
 
   public onChangeRepeat(repeat: string | undefined) {
-    let repeatBehavior = this._getRepeatBehavior();
-
     if (repeat) {
-      // Remove repeat behavior if it exists to trigger repeat when adding new one
-      if (repeatBehavior) {
-        repeatBehavior.removeBehavior();
-      }
-
-      repeatBehavior = new RowItemRepeaterBehavior({ variableName: repeat });
-      this.setState({ $behaviors: [...(this.state.$behaviors ?? []), repeatBehavior] });
-      repeatBehavior.activate();
+      this.setState({ repeatByVariable: repeat });
     } else {
-      repeatBehavior?.removeBehavior();
+      this.setState({ repeatedRows: undefined, $variables: undefined, repeatByVariable: undefined });
     }
   }
 
@@ -225,10 +209,6 @@ export class RowItem
 
   public getParentLayout(): RowsLayoutManager {
     return sceneGraph.getAncestor(this, RowsLayoutManager);
-  }
-
-  private _getRepeatBehavior(): RowItemRepeaterBehavior | undefined {
-    return this.state.$behaviors?.find((b) => b instanceof RowItemRepeaterBehavior);
   }
 
   public scrollIntoView() {

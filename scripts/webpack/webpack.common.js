@@ -1,3 +1,4 @@
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const path = require('path');
 const webpack = require('webpack');
 
@@ -67,6 +68,22 @@ module.exports = {
     new CorsWorkerPlugin(),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
+    }),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: 'public/img',
+          to: 'img',
+        },
+        {
+          from: 'public/maps',
+          to: 'maps',
+        },
+        {
+          from: 'public/gazetteer',
+          to: 'gazetteer',
+        },
+      ],
     }),
   ],
   module: {

@@ -1,7 +1,5 @@
-import { set } from 'lodash';
-
 import { RelativeTimeRange } from '@grafana/data';
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import {
@@ -49,11 +47,18 @@ export interface Datasource {
 export const PREVIEW_URL = '/api/v1/rule/test/grafana';
 export const PROM_RULES_URL = 'api/prometheus/grafana/api/v1/rules';
 
+// for some reason vanilla Prometheus uses param notation with [] appended
 export enum PrometheusAPIFilters {
+  RuleName = 'rule_name',
+  RuleNameVanilla = 'rule_name[]',
   RuleGroup = 'rule_group',
+  RuleGroupVanilla = 'rule_group[]',
   Namespace = 'file',
+  NamespaceVanilla = 'file[]',
   FolderUID = 'folder_uid',
   LimitAlerts = 'limit_alerts',
+  MaxGroups = 'max_groups',
+  ExcludeAlerts = 'exclude_alerts',
 }
 
 export interface Data {
@@ -146,7 +151,9 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
         if (identifier && (isPrometheusRuleIdentifier(identifier) || isCloudRuleIdentifier(identifier))) {
           searchParams.set(PrometheusAPIFilters.Namespace, identifier.namespace);
+          searchParams.set(PrometheusAPIFilters.NamespaceVanilla, identifier.namespace);
           searchParams.set(PrometheusAPIFilters.RuleGroup, identifier.groupName);
+          searchParams.set(PrometheusAPIFilters.RuleGroupVanilla, identifier.groupName);
         }
 
         const filterParams = getRulesFilterSearchParams(filter);
@@ -185,30 +192,39 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         excludeAlerts,
       }) => {
         const queryParams: Record<string, string | undefined> = {
-          rule_group: groupName,
-          rule_name: ruleName,
           dashboard_uid: dashboardUid, // Supported only by Grafana managed rules
           panel_id: panelId?.toString(), // Supported only by Grafana managed rules
         };
 
+        if (groupName) {
+          queryParams[PrometheusAPIFilters.RuleGroup] = groupName;
+          queryParams[PrometheusAPIFilters.RuleGroupVanilla] = groupName;
+        }
+
+        if (ruleName) {
+          queryParams[PrometheusAPIFilters.RuleName] = ruleName;
+          queryParams[PrometheusAPIFilters.RuleNameVanilla] = ruleName;
+        }
+
         if (namespace) {
           if (isGrafanaRulesSource(ruleSourceName)) {
-            set(queryParams, PrometheusAPIFilters.FolderUID, namespace);
+            queryParams[PrometheusAPIFilters.FolderUID] = namespace;
           } else {
-            set(queryParams, PrometheusAPIFilters.Namespace, namespace);
+            queryParams[PrometheusAPIFilters.Namespace] = namespace;
+            queryParams[PrometheusAPIFilters.NamespaceVanilla] = namespace;
           }
         }
 
         if (limitAlerts !== undefined) {
-          set(queryParams, PrometheusAPIFilters.LimitAlerts, String(limitAlerts));
+          queryParams[PrometheusAPIFilters.LimitAlerts] = String(PrometheusAPIFilters.LimitAlerts);
         }
 
         if (maxGroups) {
-          set(queryParams, 'max_groups', maxGroups);
+          queryParams[PrometheusAPIFilters.MaxGroups] = String(maxGroups);
         }
 
         if (excludeAlerts) {
-          set(queryParams, 'exclude_alerts', 'true');
+          queryParams[PrometheusAPIFilters.ExcludeAlerts] = 'true';
         }
 
         return {
@@ -238,7 +254,9 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
         return { url: path, params };
       },
-      providesTags: (_result, _error, { namespace }) => [{ type: 'RuleNamespace', id: namespace }],
+      providesTags: (_result, _error, { namespace, rulerConfig }) => [
+        { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },
+      ],
     }),
 
     // TODO This should be probably a separate ruler API file
@@ -329,6 +347,18 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       invalidatesTags: (result, _error, { namespace, payload, rulerConfig }) => {
         const grafanaRulerRules = payload.rules.filter(rulerRuleType.grafana.rule);
 
+        const promTags: Array<{ type: 'GrafanaPrometheusGroups'; id: string }> = [];
+        if (rulerConfig.dataSourceUid === GRAFANA_RULES_SOURCE_NAME) {
+          promTags.push(
+            { type: 'GrafanaPrometheusGroups', id: `grafana/${namespace}/__any__/` },
+            { type: 'GrafanaPrometheusGroups', id: `grafana/${namespace}/${payload.name}/__any__` },
+            ...grafanaRulerRules.map((rule) => ({
+              type: 'GrafanaPrometheusGroups' as const,
+              id: `grafana/${namespace}/${payload.name}/${rule.grafana_alert.title}`,
+            }))
+          );
+        }
+
         return [
           { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },
           { type: 'RuleGroup', id: `${rulerConfig.dataSourceUid}/${namespace}/${payload.name}` },
@@ -336,6 +366,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
             { type: 'GrafanaRulerRule', id: rule.grafana_alert.uid } as const,
             { type: 'GrafanaRulerRuleVersion', id: rule.grafana_alert.uid } as const,
           ]),
+          ...promTags,
           'DeletedRules',
         ];
       },

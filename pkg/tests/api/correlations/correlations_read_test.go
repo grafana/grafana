@@ -15,25 +15,25 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationReadCorrelation(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ctx := NewTestEnv(t)
 
 	adminUser := ctx.createUser(user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
+		Password:       "admin2",
+		Login:          "admin2",
 	})
 
 	otherOrgId := ctx.createOrg("New organization")
 	otherOrgUser := ctx.createUser(user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin2",
-		Login:          "admin2",
+		Password:       "admin3",
+		Login:          "admin3",
 		OrgID:          otherOrgId,
 	})
 

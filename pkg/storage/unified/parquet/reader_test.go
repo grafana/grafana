@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestParquetWriteThenRead(t *testing.T) {
@@ -75,7 +76,7 @@ func TestParquetWriteThenRead(t *testing.T) {
 		require.NoError(t, err)
 		for reader.Next() {
 			req := reader.Request()
-			keys = append(keys, req.Key.SearchID())
+			keys = append(keys, resource.SearchID(req.Key))
 		}
 
 		// Verify that we read all values
@@ -101,14 +102,14 @@ func TestParquetWriteThenRead(t *testing.T) {
 		require.NoError(t, err)
 		for reader.Next() {
 			req := reader.Request()
-			keys = append(keys, req.Key.SearchID())
+			keys = append(keys, resource.SearchID(req.Key))
 		}
 		require.NoError(t, reader.err)
 		require.Empty(t, keys)
 	})
 }
 
-func toKeyAndBytes(ctx context.Context, group string, res string, obj *unstructured.Unstructured) (context.Context, *resource.ResourceKey, []byte) {
+func toKeyAndBytes(ctx context.Context, group string, res string, obj *unstructured.Unstructured) (context.Context, *resourcepb.ResourceKey, []byte) {
 	if obj.GetKind() == "" {
 		obj.SetKind(res)
 	}
@@ -116,7 +117,7 @@ func toKeyAndBytes(ctx context.Context, group string, res string, obj *unstructu
 		obj.SetAPIVersion(group + "/vXyz")
 	}
 	data, _ := obj.MarshalJSON()
-	return ctx, &resource.ResourceKey{
+	return ctx, &resourcepb.ResourceKey{
 		Namespace: obj.GetNamespace(),
 		Resource:  res,
 		Group:     group,

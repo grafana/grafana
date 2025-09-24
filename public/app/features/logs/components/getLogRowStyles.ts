@@ -206,7 +206,6 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
     logDetailsLabel: css({
       label: 'logs-row-details__label',
       maxWidth: '30em',
-      minWidth: '20em',
       padding: theme.spacing(0, 1),
       overflowWrap: 'break-word',
     }),

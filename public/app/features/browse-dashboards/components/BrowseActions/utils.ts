@@ -1,4 +1,4 @@
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
 
 export function buildBreakdownString(
   folderCount: number,

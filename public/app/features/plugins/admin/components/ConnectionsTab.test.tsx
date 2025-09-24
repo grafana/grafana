@@ -4,16 +4,20 @@ import { render } from 'test/test-utils';
 import { DataSourceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
-import { getMockDataSources } from 'app/features/datasources/__mocks__';
-import { AccessControlAction } from 'app/types';
+import { getMockDataSources } from 'app/features/datasources/mocks/dataSourcesMocks';
+import { AccessControlAction } from 'app/types/accessControl';
 
-import { datasourcePlugin } from '../__mocks__/catalogPlugin.mock';
+import { datasourcePlugin } from '../mocks/catalogPlugin.mock';
 
 import ConnectionsTab, { ConnectionsList } from './ConnectionsTab';
 
-jest.mock('app/features/datasources/state', () => ({
-  ...jest.requireActual('app/features/datasources/state'),
+jest.mock('app/features/datasources/state/hooks.ts', () => ({
+  ...jest.requireActual('app/features/datasources/state/hooks.ts'),
   useLoadDataSource: jest.fn().mockReturnValue({ isLoading: false }),
+}));
+
+jest.mock('app/features/datasources/state/selectors.ts', () => ({
+  ...jest.requireActual('app/features/datasources/state/selectors.ts'),
   getDataSources: jest.fn(() => 'getDataSources mock implementation'),
 }));
 
@@ -46,7 +50,7 @@ describe('<ConnectionsTab>', () => {
     setupContextSrv();
     const mockedConnections = getMockDataSources(3, { type: datasourcePlugin.id });
     mockedConnections[2].type = 'other-plugin-id';
-    jest.requireMock('app/features/datasources/state').getDataSources.mockReturnValue(mockedConnections);
+    jest.requireMock('app/features/datasources/state/selectors.ts').getDataSources.mockReturnValue(mockedConnections);
 
     render(<ConnectionsTab plugin={datasourcePlugin} />);
 
@@ -59,7 +63,9 @@ describe('<ConnectionsTab>', () => {
 
   it('should render add new datasource button when no datasources are defined', async () => {
     setupContextSrv();
-    jest.requireMock('app/features/datasources/state').getDataSources.mockReturnValue(getMockDataSources(1));
+    jest
+      .requireMock('app/features/datasources/state/selectors.ts')
+      .getDataSources.mockReturnValue(getMockDataSources(1));
     render(<ConnectionsTab plugin={datasourcePlugin} />);
 
     expect(screen.getByText('Add new data source')).toBeVisible();

@@ -4,9 +4,9 @@ import { ReactElement } from 'react';
 
 import { GrafanaTheme2, TypedVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { hasOptions } from '../guard';
 import { VariableUsagesButton } from '../inspect/VariableUsagesButton';
@@ -35,6 +35,7 @@ export function VariableEditorListRow({
 }: VariableEditorListRowProps): ReactElement {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+
   const definition = getDefinition(variable);
   const usages = getVariableUsages(variable.id, usageTree);
   const passed = usages > 0 || variable.type === 'adhoc';
@@ -134,6 +135,7 @@ interface VariableCheckIndicatorProps {
 
 function VariableCheckIndicator({ passed }: VariableCheckIndicatorProps): ReactElement {
   const styles = useStyles2(getStyles);
+
   if (passed) {
     return (
       <Icon

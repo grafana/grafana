@@ -5,7 +5,11 @@ import { Provider } from 'react-redux';
 import { TimeRange } from '@grafana/data';
 
 import { configureStore } from '../../../store/configureStore';
+import { initialExploreState } from '../state/main';
+import { makeExplorePaneState } from '../state/utils';
 
+// TODO: rebase after https://github.com/grafana/grafana/pull/105711, as this is already fixed
+// eslint-disable-next-line no-restricted-imports
 import { frameOld } from './TraceView.test';
 import { TraceViewContainer } from './TraceViewContainer';
 
@@ -18,7 +22,19 @@ jest.mock('@grafana/runtime', () => {
 });
 
 function renderTraceViewContainer(frames = [frameOld]) {
-  const store = configureStore();
+  const initialState = {
+    explore: {
+      ...initialExploreState,
+      panes: {
+        left: makeExplorePaneState({
+          initialized: true,
+          datasourceInstance: null,
+        }),
+      },
+    },
+  };
+
+  const store = configureStore(initialState);
 
   const { container, baseElement } = render(
     <Provider store={store}>
@@ -82,7 +98,6 @@ describe('TraceViewContainer', () => {
     const tagOption = screen.getByText('component');
     await waitFor(() => expect(tagOption).toBeInTheDocument());
     await user.click(tagOption);
-
     await waitFor(() => {
       expect(
         screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[0].parentElement!.className

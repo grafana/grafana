@@ -6,8 +6,9 @@ import { dateTime } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
-import { SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { LocalValueVariable, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
+import { contextSrv } from '../../../core/services/context_srv';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -36,7 +37,7 @@ describe('ShareLinkTab', () => {
 
     config.appUrl = 'http://dashboards.grafana.com/grafana/';
     config.rendererAvailable = true;
-    config.bootData.user.orgId = 1;
+    contextSrv.user.orgId = 1;
     config.featureToggles.dashboardSceneForViewers = true;
     locationService.push('/d/dash-1?from=now-6h&to=now');
   });
@@ -46,7 +47,7 @@ describe('ShareLinkTab', () => {
       buildAndRenderScenario({});
 
       expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
-        'http://dashboards.grafana.com/grafana/d/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&viewPanel=panel-12'
+        'http://dashboards.grafana.com/grafana/d/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&viewPanel=A$panel-12'
       );
     });
   });
@@ -57,7 +58,7 @@ describe('ShareLinkTab', () => {
       await act(() => tab.onToggleLockedTime());
 
       expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
-        'http://dashboards.grafana.com/grafana/d/dash-1?from=now-6h&to=now&viewPanel=panel-12'
+        'http://dashboards.grafana.com/grafana/d/dash-1?from=now-6h&to=now&viewPanel=A$panel-12'
       );
     });
   });
@@ -67,7 +68,7 @@ describe('ShareLinkTab', () => {
     await act(() => tab.onThemeChange('light'));
 
     expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
-      'http://dashboards.grafana.com/grafana/d/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&viewPanel=panel-12&theme=light'
+      'http://dashboards.grafana.com/grafana/d/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&viewPanel=A$panel-12&theme=light'
     );
   });
 
@@ -88,7 +89,7 @@ describe('ShareLinkTab', () => {
       await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
     ).toHaveAttribute(
       'href',
-      'http://dashboards.grafana.com/grafana/render/d-solo/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&panelId=panel-12&__feature.dashboardSceneSolo&width=1000&height=500&tz=Pacific%2FEaster'
+      'http://dashboards.grafana.com/grafana/render/d-solo/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&panelId=A$panel-12&__feature.dashboardSceneSolo=true&width=1000&height=500&tz=Pacific%2FEaster'
     );
   });
 });
@@ -102,6 +103,15 @@ function buildAndRenderScenario(options: ScenarioOptions) {
     title: 'Panel A',
     pluginId: 'table',
     key: 'panel-12',
+    $variables: new SceneVariableSet({
+      variables: [
+        new LocalValueVariable({
+          name: 'server',
+          value: 'A',
+          text: 'A',
+        }),
+      ],
+    }),
   });
   const tab = new ShareLinkTab({ panelRef: panel.getRef() });
   const scene = new DashboardScene({

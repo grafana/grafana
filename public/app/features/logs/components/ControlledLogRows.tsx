@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useEffect, useMemo, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
 
 import {
   AbsoluteTimeRange,
@@ -7,6 +7,7 @@ import {
   DataFrame,
   EventBusSrv,
   ExploreLogsPanelState,
+  LogLevel,
   LogsMetaItem,
   LogsSortOrder,
   SplitOpen,
@@ -25,13 +26,13 @@ import { LogListControls } from './panel/LogListControls';
 import { ScrollToLogsEvent } from './panel/virtualization';
 
 export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
-  hasUnescapedContent?: boolean;
   loading: boolean;
   logsMeta?: LogsMetaItem[];
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
   logOptionsStorageKey?: string;
-  onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
+  onLogOptionsChange?: (option: LogListControlOptions, value: string | boolean | string[]) => void;
   range: TimeRange;
+  filterLevels?: LogLevel[];
 
   /** Props added for Table **/
   visualisationType: LogsVisualisationType;
@@ -45,7 +46,14 @@ export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
 
 export type LogRowsComponentProps = Omit<
   ControlledLogRowsProps,
-  'app' | 'dedupStrategy' | 'showLabels' | 'showTime' | 'logsSortOrder' | 'prettifyLogMessage' | 'wrapLogMessage'
+  | 'app'
+  | 'dedupStrategy'
+  | 'filterLevels'
+  | 'showLabels'
+  | 'showTime'
+  | 'logsSortOrder'
+  | 'prettifyLogMessage'
+  | 'wrapLogMessage'
 >;
 
 export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLogRowsProps>(
@@ -53,7 +61,7 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
     {
       deduplicatedRows,
       dedupStrategy,
-      hasUnescapedContent,
+      filterLevels,
       showLabels,
       showTime,
       logsMeta,
@@ -71,7 +79,9 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
         app={rest.app || CoreApp.Unknown}
         displayedFields={[]}
         dedupStrategy={dedupStrategy}
-        hasUnescapedContent={hasUnescapedContent}
+        enableLogDetails={false}
+        filterLevels={filterLevels}
+        fontSize="default"
         logOptionsStorageKey={logOptionsStorageKey}
         logs={deduplicatedRows ?? []}
         logsMeta={logsMeta}
@@ -86,9 +96,7 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
         {rest.visualisationType === 'logs' && (
           <LogRowsComponent ref={ref} {...rest} deduplicatedRows={deduplicatedRows} />
         )}
-        {rest.visualisationType === 'table' && rest.panelState && rest.updatePanelState && (
-          <ControlledLogsTable {...rest} />
-        )}
+        {rest.visualisationType === 'table' && rest.updatePanelState && <ControlledLogsTable {...rest} />}
       </LogListContextProvider>
     );
   }
@@ -97,7 +105,17 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
 ControlledLogRows.displayName = 'ControlledLogRows';
 
 const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps>(
-  ({ loading, loadMoreLogs, deduplicatedRows = [], range, ...rest }: LogRowsComponentProps, ref) => {
+  (
+    {
+      loading,
+      loadMoreLogs,
+      deduplicatedRows = [],
+      range,
+      scrollIntoView: scrollIntoViewProp,
+      ...rest
+    }: LogRowsComponentProps,
+    ref
+  ) => {
     const {
       app,
       dedupStrategy,
@@ -136,6 +154,22 @@ const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps
       return config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows;
     }, [ref]);
 
+    const scrollIntoView = useCallback(
+      (element: HTMLElement) => {
+        if (scrollIntoViewProp) {
+          scrollIntoViewProp(element);
+          return;
+        }
+        if (scrollElementRef.current) {
+          scrollElementRef.current.scroll({
+            behavior: 'smooth',
+            top: scrollElementRef.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+          });
+        }
+      },
+      [scrollIntoViewProp]
+    );
+
     return (
       <div className={styles.logRowsContainer}>
         <LogListControls eventBus={eventBus} />
@@ -159,6 +193,7 @@ const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps
               logsSortOrder={sortOrder}
               scrollElement={scrollElementRef.current}
               prettifyLogMessage={Boolean(prettifyJSON)}
+              scrollIntoView={scrollIntoView}
               showLabels={Boolean(showUniqueLabels)}
               showTime={showTime}
               wrapLogMessage={wrapLogMessage}
@@ -184,7 +219,7 @@ const styles = {
   scrollableLogRows: css({
     overflowY: 'auto',
     width: '100%',
-    maxHeight: '75vh',
+    maxHeight: '80vh',
   }),
   forwardedScrollableLogRows: css({
     overflowY: 'auto',

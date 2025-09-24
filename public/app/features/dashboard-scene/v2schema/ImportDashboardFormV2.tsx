@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { Controller, FieldErrors, UseFormReturn } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { t, Trans } from 'app/core/internationalization';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { DashboardInputs, DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
@@ -97,7 +97,7 @@ export const ImportDashboardFormV2 = ({
 
           return (
             <Field
-              label={input.label}
+              label={input.pluginId}
               description={input.description}
               key={input.pluginId}
               invalid={!!errors[dataSourceOption]}
@@ -120,6 +120,7 @@ export const ImportDashboardFormV2 = ({
                         [input.pluginId]: {
                           uid: ds.uid,
                           type: ds.type,
+                          name: ds.name,
                         },
                       }));
                     }}

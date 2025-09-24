@@ -22,6 +22,7 @@ import (
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/httpclient"
 )
 
 type AzureBlobUploader struct {
@@ -175,7 +176,7 @@ func (c *StorageClient) transport() http.RoundTripper {
 	if c.Transport != nil {
 		return c.Transport
 	}
-	return http.DefaultTransport
+	return httpclient.NewHTTPTransport()
 }
 
 func NewStorageClient(account, accessKey string) *StorageClient {

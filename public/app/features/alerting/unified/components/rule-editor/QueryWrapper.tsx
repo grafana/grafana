@@ -16,10 +16,10 @@ import {
   getDefaultRelativeTimeRange,
   rangeUtil,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
@@ -27,6 +27,7 @@ import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 import { RuleFormValues } from '../../types/rule-form';
 import { msToSingleUnitDuration } from '../../utils/time';
 import { ExpressionStatusIndicator } from '../expressions/ExpressionStatusIndicator';
+import { AlertingRuleQueryExtensionPoint } from '../extensions/AlertingRuleQueryExtensionPoint';
 
 import { QueryOptions } from './QueryOptions';
 import { VizWrapper } from './VizWrapper';
@@ -169,6 +170,7 @@ export const QueryWrapper = ({
     return (
       <Stack direction="row" alignItems="center" gap={1}>
         <SelectingDataSourceTooltip />
+        <AlertingRuleQueryExtensionPoint query={Object.assign({}, query.model)} extensionsToShow="queryless" />
         <QueryOptions
           onChangeTimeRange={onChangeTimeRange}
           query={query}

@@ -481,12 +481,15 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 
 		query := &datasources.GetDataSourceQuery{
 			ID:    cmd.ID,
+			UID:   cmd.UID,
 			OrgID: cmd.OrgID,
 		}
 		dataSource, err = s.SQLStore.GetDataSource(ctx, query)
 		if err != nil {
 			return err
 		}
+		cmd.UID = dataSource.UID
+		cmd.ID = dataSource.ID
 
 		// Validate the command
 		jd, err := cmd.JsonData.ToDB()

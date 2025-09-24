@@ -14,7 +14,7 @@
   "queryOptions": {
     "maxDataPoints": true
   },
-
+  "executable": "gpx_loki",
   "info": {
     "description": "Like Prometheus but for logs. OSS logging solution from Grafana Labs",
     "author": {
@@ -42,6 +42,11 @@
         "name": "Documentation",
         "url": "https://grafana.com/docs/grafana/latest/datasources/loki/"
       }
-    ]
+    ],
+    "version": "%VERSION%"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=10.4.0",
+    "plugins": []
   }
 }

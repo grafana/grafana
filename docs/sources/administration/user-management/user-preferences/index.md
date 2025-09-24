@@ -26,9 +26,9 @@ You can also view important information about your account, such as the organiza
 
 You can change your Grafana password at any time.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If your Grafana instance uses an external authentication provider, then you might not be able to change your password in Grafana. Contact your Grafana administrator for more information.
-{{% /admonition %}}
+{{< /admonition >}}
 
 **To change your password**:
 

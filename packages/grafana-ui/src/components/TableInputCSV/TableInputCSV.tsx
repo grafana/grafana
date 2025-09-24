@@ -4,10 +4,11 @@ import { PureComponent } from 'react';
 import * as React from 'react';
 
 import { DataFrame, CSVConfig, readCSV, GrafanaTheme2 } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 
-import { stylesFactory, withTheme2 } from '../../themes';
+import { withTheme2 } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes/stylesFactory';
 import { Themeable2 } from '../../types/theme';
-import { t, Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { TextArea } from '../TextArea/TextArea';
 
@@ -100,6 +101,7 @@ export class UnThemedTableInputCSV extends PureComponent<Props, State> {
   }
 }
 
+/** @deprecated */
 export const TableInputCSV = withTheme2(UnThemedTableInputCSV);
 TableInputCSV.displayName = 'TableInputCSV';
 
@@ -116,8 +118,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       position: 'absolute',
       bottom: '15px',
       right: '15px',
-      border: '1px solid #222',
+      border: `1px solid ${theme.colors.success.border}`,
       background: theme.colors.success.main,
+      color: theme.colors.success.contrastText,
       padding: `1px ${theme.spacing(0.5)}`,
       fontSize: '80%',
     }),

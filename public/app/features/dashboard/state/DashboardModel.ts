@@ -27,8 +27,13 @@ import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
-import { CoreEvents, DashboardMeta } from 'app/types';
-import { DashboardMetaChangedEvent, DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
+import { DashboardMeta } from 'app/types/dashboard';
+import {
+  DashboardMetaChangedEvent,
+  DashboardPanelsChangedEvent,
+  RenderEvent,
+  templateVariableValueUpdated,
+} from 'app/types/events';
 
 import { appEvents } from '../../../core/core';
 import { dispatch } from '../../../store/store';
@@ -133,6 +138,8 @@ export class DashboardModel implements TimeModel {
     options?: {
       // By default this uses variables from redux state
       getVariablesFromState?: GetVariables;
+      // Target schema version for migration (defaults to latest)
+      targetSchemaVersion?: number;
     }
   ) {
     this.getVariablesFromState = options?.getVariablesFromState ?? getVariablesByKey;
@@ -172,7 +179,7 @@ export class DashboardModel implements TimeModel {
     this.formatDate = this.formatDate.bind(this);
 
     this.initMeta(meta);
-    this.updateSchema(data);
+    this.updateSchema(data, options?.targetSchemaVersion);
 
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
@@ -1115,9 +1122,9 @@ export class DashboardModel implements TimeModel {
     return this.timezone ? this.timezone : contextSrv?.user?.timezone;
   }
 
-  private updateSchema(old: any) {
+  private updateSchema(old: any, targetVersion?: number) {
     const migrator = new DashboardMigrator(this);
-    migrator.updateSchema(old);
+    migrator.updateSchema(old, targetVersion);
   }
 
   hasTimeChanged() {
@@ -1155,7 +1162,7 @@ export class DashboardModel implements TimeModel {
 
   templateVariableValueUpdated() {
     this.processRepeats();
-    this.events.emit(CoreEvents.templateVariableValueUpdated);
+    this.events.emit(templateVariableValueUpdated);
   }
 
   getPanelByUrlId(panelUrlId: string) {
@@ -1260,6 +1267,10 @@ export class DashboardModel implements TimeModel {
 
   canEditDashboard() {
     return Boolean(this.meta.canEdit || this.meta.canMakeEditable);
+  }
+
+  canExecuteActions() {
+    return this.canEditDashboard();
   }
 
   shouldUpdateDashboardPanelFromJSON(updatedPanel: PanelModel, panel: PanelModel) {

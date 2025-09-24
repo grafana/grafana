@@ -1,5 +1,5 @@
+import { t } from '@grafana/i18n';
 import { CellProps } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { ResourceTableItem } from './types';
 

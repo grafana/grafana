@@ -1,4 +1,5 @@
 import { DataFrame, PanelOptionsEditorBuilder } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { OptionsWithTooltip, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
 /** @internal */
@@ -16,28 +17,28 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
   setProximity = false,
   defaultOptions?: Partial<OptionsWithTooltip>
 ) {
-  const category = ['Tooltip'];
+  const category = [t('grafana-ui.builder.tooltip.category', 'Tooltip')];
   const modeOptions = singleOnly
     ? [
-        { value: TooltipDisplayMode.Single, label: 'Single' },
-        { value: TooltipDisplayMode.None, label: 'Hidden' },
+        { value: TooltipDisplayMode.Single, label: t('grafana-ui.builder.tooltip.modeOptions.label-single', 'Single') },
+        { value: TooltipDisplayMode.None, label: t('grafana-ui.builder.tooltip.modeOptions.label-hidden', 'Hidden') },
       ]
     : [
-        { value: TooltipDisplayMode.Single, label: 'Single' },
-        { value: TooltipDisplayMode.Multi, label: 'All' },
-        { value: TooltipDisplayMode.None, label: 'Hidden' },
+        { value: TooltipDisplayMode.Single, label: t('grafana-ui.builder.tooltip.modeOptions.label-single', 'Single') },
+        { value: TooltipDisplayMode.Multi, label: t('grafana-ui.builder.tooltip.modeOptions.label-all', 'All') },
+        { value: TooltipDisplayMode.None, label: t('grafana-ui.builder.tooltip.modeOptions.label-hidden', 'Hidden') },
       ];
 
   const sortOptions = [
-    { value: SortOrder.None, label: 'None' },
-    { value: SortOrder.Ascending, label: 'Ascending' },
-    { value: SortOrder.Descending, label: 'Descending' },
+    { value: SortOrder.None, label: t('grafana-ui.builder.tooltip.sortOptions.label-none', 'None') },
+    { value: SortOrder.Ascending, label: t('grafana-ui.builder.tooltip.sortOptions.label-ascending', 'Ascending') },
+    { value: SortOrder.Descending, label: t('grafana-ui.builder.tooltip.sortOptions.label-descending', 'Descending') },
   ];
 
   builder
     .addRadio({
       path: 'tooltip.mode',
-      name: 'Tooltip mode',
+      name: t('grafana-ui.builder.tooltip.name-tooltip-mode', 'Tooltip mode'),
       category,
       defaultValue: defaultOptions?.tooltip?.mode ?? TooltipDisplayMode.Single,
       settings: {
@@ -46,7 +47,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
     })
     .addRadio({
       path: 'tooltip.sort',
-      name: 'Values sort order',
+      name: t('grafana-ui.builder.tooltip.name-values-sort-order', 'Values sort order'),
       category,
       defaultValue: defaultOptions?.tooltip?.sort ?? SortOrder.None,
       showIf: (options: T) => options.tooltip?.mode === TooltipDisplayMode.Multi,
@@ -56,7 +57,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
     })
     .addBooleanSwitch({
       path: 'tooltip.hideZeros',
-      name: 'Hide zeros',
+      name: t('grafana-ui.builder.tooltip.name-hide-zeros', 'Hide zeros'),
       category,
       defaultValue: false,
       showIf: (options: T) =>
@@ -66,8 +67,11 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
   if (setProximity) {
     builder.addNumberInput({
       path: 'tooltip.hoverProximity',
-      name: 'Hover proximity',
-      description: 'How close the cursor must be to a point to trigger the tooltip, in pixels',
+      name: t('grafana-ui.builder.tooltip.name-hover-proximity', 'Hover proximity'),
+      description: t(
+        'grafana-ui.builder.tooltip.description-hover-proximity',
+        'How close the cursor must be to a point to trigger the tooltip, in pixels'
+      ),
       category,
       settings: {
         integer: true,
@@ -79,7 +83,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
   builder
     .addNumberInput({
       path: 'tooltip.maxWidth',
-      name: 'Max width',
+      name: t('grafana-ui.builder.tooltip.name-max-width', 'Max width'),
       category,
       settings: {
         integer: true,
@@ -88,7 +92,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
     })
     .addNumberInput({
       path: 'tooltip.maxHeight',
-      name: 'Max height',
+      name: t('grafana-ui.builder.tooltip.name-max-height', 'Max height'),
       category,
       defaultValue: undefined,
       settings: {

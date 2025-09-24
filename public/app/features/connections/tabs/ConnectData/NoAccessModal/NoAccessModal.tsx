@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useStyles2, Modal, Icon, Button, TextLink } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { type CardGridItem } from '../CardGrid';
 
@@ -87,7 +87,7 @@ export function NoAccessModal({ item, isOpen, onDismiss }: NoAccessModalProps) {
             <p>
               <Trans i18nKey="connections.no-access-modal.editor-warning">
                 Editors cannot add new connections. You may check to see if it is already configured in{' '}
-                <a href="/connections/datasources">Data sources</a>.
+                <TextLink href="/connections/datasources">Data sources</TextLink>.
               </Trans>
             </p>
             <p>

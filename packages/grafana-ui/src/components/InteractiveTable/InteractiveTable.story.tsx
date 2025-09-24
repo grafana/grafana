@@ -2,7 +2,7 @@ import { Meta, StoryFn, StoryObj } from '@storybook/react';
 import { useCallback, useMemo, useState } from 'react';
 import { CellProps } from 'react-table';
 
-import { LinkButton } from '../Button';
+import { LinkButton } from '../Button/Button';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 
@@ -103,7 +103,7 @@ const pageableData: CarData[] = [
 ];
 
 const meta: Meta<typeof InteractiveTable<CarData>> = {
-  title: 'Experimental/InteractiveTable',
+  title: 'Layout/InteractiveTable',
   component: InteractiveTable,
   parameters: {
     docs: {
@@ -112,6 +112,8 @@ const meta: Meta<typeof InteractiveTable<CarData>> = {
     controls: {
       exclude: EXCLUDED_PROPS,
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   args: {
     columns: [

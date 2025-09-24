@@ -35,6 +35,7 @@ export interface AzureMonitorQuery extends common.DataQuery {
    * @deprecated Legacy template variable support.
    */
   grafanaTemplateVariableFn?: GrafanaTemplateVariableQuery;
+  keepCookies?: Array<string>;
   /**
    * Namespace used in template variable queries
    */
@@ -64,9 +65,14 @@ export interface AzureMonitorQuery extends common.DataQuery {
    * Subscriptions to be queried via Azure Resource Graph.
    */
   subscriptions?: Array<string>;
+  /**
+   * Used to configure the HTTP request timeout
+   */
+  timeout?: number;
 }
 
 export const defaultAzureMonitorQuery: Partial<AzureMonitorQuery> = {
+  keepCookies: [],
   subscriptions: [],
 };
 
@@ -446,6 +452,11 @@ export interface BuilderQueryExpression {
   where?: BuilderQueryEditorWhereExpressionArray;
 }
 
+export enum ARGScope {
+  Directory = 'directory',
+  Subscription = 'subscription',
+}
+
 export interface AzureResourceGraphQuery {
   /**
    * Azure Resource Graph KQL query to be executed.
@@ -455,6 +466,10 @@ export interface AzureResourceGraphQuery {
    * Specifies the format results should be returned as. Defaults to table.
    */
   resultFormat?: string;
+  /**
+   * Specifies the scope of the query. Defaults to subscription.
+   */
+  scope?: ARGScope;
 }
 
 export interface AzureMonitorResource {

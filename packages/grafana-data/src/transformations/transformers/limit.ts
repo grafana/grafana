@@ -37,6 +37,12 @@ export const limitTransformer: DataTransformerInfo<LimitTransformerOptions> = {
               fields: frame.fields.map((f) => {
                 return {
                   ...f,
+                  // Clear cached field calculations since applying a limit changes the dataset
+                  // and previously computed stats (min, max, mean, etc.) are no longer valid
+                  state: {
+                    ...f.state,
+                    calcs: undefined,
+                  },
                   values:
                     limit >= 0 ? f.values.slice(0, limit) : f.values.slice(f.values.length + limit, f.values.length),
                 };

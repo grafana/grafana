@@ -75,6 +75,7 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any 
 		"client_secret":                 section.Key("client_secret").Value(),
 		"managed_identity_client_id":    section.Key("managed_identity_client_id").Value(),
 		"federated_credential_audience": section.Key("federated_credential_audience").Value(),
+		"workload_identity_token_file":  section.Key("workload_identity_token_file").Value(),
 		"scopes":                        section.Key("scopes").Value(),
 		"empty_scopes":                  section.Key("empty_scopes").MustBool(false),
 		"auth_style":                    section.Key("auth_style").Value(),
@@ -107,6 +108,7 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any 
 		"signout_redirect_url":          section.Key("signout_redirect_url").Value(),
 		"org_mapping":                   section.Key("org_mapping").Value(),
 		"org_attribute_path":            section.Key("org_attribute_path").Value(),
+		"login_prompt":                  section.Key("login_prompt").Value(),
 	}
 
 	extraKeys := extraKeysByProvider[provider]

@@ -15,7 +15,7 @@ import {
   mockPromAlertingRule,
 } from 'app/features/alerting/unified/mocks';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { setupDataSources } from '../../testSetup/datasources';

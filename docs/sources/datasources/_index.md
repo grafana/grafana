@@ -24,6 +24,8 @@ refs:
   grafana-enterprise:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
   organization-roles:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles
@@ -84,9 +86,9 @@ For details on data source management, including instructions on how configure u
 
 Before you can create your first dashboard, you need to add your data source.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Only users with the organization admin role can add data sources.
-{{% /admonition %}}
+{{< /admonition >}}
 
 **To add a data source:**
 

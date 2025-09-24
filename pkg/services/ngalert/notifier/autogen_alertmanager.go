@@ -146,13 +146,14 @@ func generateRouteFromSettings(defaultReceiver string, settings map[data.Fingerp
 			ObjectMatchers: definitions.ObjectMatchers{settingMatcher},
 			Continue:       false, // Only a single setting-specific route should match.
 
-			GroupByStr:        normalized,
-			GroupBy:           groupBy,
-			GroupByAll:        groupByAll,
-			MuteTimeIntervals: s.MuteTimeIntervals,
-			GroupWait:         s.GroupWait,
-			GroupInterval:     s.GroupInterval,
-			RepeatInterval:    s.RepeatInterval,
+			GroupByStr:          normalized,
+			GroupBy:             groupBy,
+			GroupByAll:          groupByAll,
+			MuteTimeIntervals:   s.MuteTimeIntervals,
+			ActiveTimeIntervals: s.ActiveTimeIntervals,
+			GroupWait:           s.GroupWait,
+			GroupInterval:       s.GroupInterval,
+			RepeatInterval:      s.RepeatInterval,
 		})
 	}
 

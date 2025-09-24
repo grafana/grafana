@@ -94,6 +94,16 @@ String to interpolate: '${servers:glob}'
 Interpolation result: '{test1,test2}'
 ```
 
+### Join
+
+Formats multi-valued variables with a custom delimiter. If no delimiter argument is supplied, they will be combined with `,`.
+
+```bash
+servers = ["test1", "test2"]
+String to interpolate: '${servers:join:&}'
+Interpolation result: "test1&test2"
+```
+
 ### JSON
 
 Formats variables with multiple values as a comma-separated string.
@@ -134,14 +144,43 @@ String to interpolate: '${servers:pipe}'
 Interpolation result: 'test1.|test2'
 ```
 
-### Raw
+### Query parameters
 
-The raw format for a data source variable returns the UID (unique identifier) of the data source, rather than its name.
+Formats single- and multi-valued variables into their query parameter representation. Example: `var-foo=value1&var-foo=value2`
 
 ```bash
-datasourceVariable = 'd7bbe725-9e48-4af8-a0cb-6cb255d873a3'
-String to interpolate: '${datasourceVariable:raw}'
-Interpolation result: 'd7bbe725-9e48-4af8-a0cb-6cb255d873a3'
+servers = ["test1", "test2"]
+String to interpolate: '${servers:queryparam}'
+Interpolation result: "var-servers=test1&var-servers=test2"
+```
+
+Use the `customqueryparam` formatter to customize how the query parameters are formatted. It accepts two optional arguments to specify the parameter name, and a value prefix.
+
+```bash
+servers = ["test1", "test2"]
+String to interpolate: '${servers:customqueryparam:v-servers:x-}'
+Interpolation result: "v-servers=x-test1&v-servers=x-test2"
+```
+
+### Raw
+
+Doesn't apply any data source-specific formatting to the variable.
+
+For example, in this case, there's a dashboard with a Prometheus data source and a multi-value variable.
+Grafana typically converts the variable values as follows to accommodate Prometheus:
+
+```bash
+servers = ['test1.', 'test2']
+String to interpolate: '${servers}'
+Interpolation result: '(test1 | test2)'
+```
+
+Using the raw format, the values are returned without that formatting:
+
+```bash
+servers = ['test1.', 'test2']
+String to interpolate: '${servers:raw}'
+Interpolation result: 'test1,test2'
 ```
 
 ### Regex
@@ -182,14 +221,4 @@ Formats single- and multi-valued variables into their text representation. For a
 servers = ["test1", "test2"]
 String to interpolate: '${servers:text}'
 Interpolation result: "test1 + test2"
-```
-
-### Query parameters
-
-Formats single- and multi-valued variables into their query parameter representation. Example: `var-foo=value1&var-foo=value2`
-
-```bash
-servers = ["test1", "test2"]
-String to interpolate: '${servers:queryparam}'
-Interpolation result: "var-servers=test1&var-servers=test2"
 ```

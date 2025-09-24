@@ -2,10 +2,10 @@ import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
-import { getTagColorsFromName } from '../../utils';
-import { t } from '../../utils/i18n';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { getTagColorsFromName } from '../../utils/tags';
 import { IconButton } from '../IconButton/IconButton';
 
 interface Props {

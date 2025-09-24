@@ -1,7 +1,8 @@
 import { autoUpdate, autoPlacement, size, useFloating } from '@floating-ui/react';
 import { useMemo, useRef, useState } from 'react';
 
-import { measureText } from '../../utils';
+import { BOUNDARY_ELEMENT_ID } from '../../utils/floating';
+import { measureText } from '../../utils/measureText';
 
 import {
   MENU_ITEM_FONT_SIZE,
@@ -36,7 +37,7 @@ export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, 
     autoPlacement({
       // see https://floating-ui.com/docs/autoplacement
       allowedPlacements: ['bottom-start', 'bottom-end', 'top-start', 'top-end'],
-      boundary: document.body,
+      boundary: document.getElementById(BOUNDARY_ELEMENT_ID) ?? undefined,
       crossAxis: true,
     }),
     size({

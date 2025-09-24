@@ -62,7 +62,7 @@ The following guides will help you get started with Loki:
 
 This data source supports these versions of Loki:
 
-- v2.8+
+- v2.9+
 
 ## Adding a data source
 
@@ -72,9 +72,9 @@ Administrators can also [configure the data source via YAML](#provision-the-data
 
 Once you've added the Loki data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards), use [Explore](ref:explore), and [annotate visualizations](query-editor/#apply-annotations).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 To troubleshoot configuration and other issues, check the log file located at `/var/log/grafana/grafana.log` on Unix systems, or in `<grafana_install_dir>/data/log` on other platforms and manual installations.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Provision the data source
 

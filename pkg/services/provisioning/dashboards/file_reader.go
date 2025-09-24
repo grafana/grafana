@@ -40,6 +40,7 @@ type FileReader struct {
 	dashboardStore               utils.DashboardStore
 	FoldersFromFilesStructure    bool
 	folderService                folder.Service
+	foldersInUnified             bool
 
 	mux                     sync.RWMutex
 	usageTracker            *usageTracker
@@ -101,7 +102,7 @@ func (fr *FileReader) walkDisk(ctx context.Context) error {
 		return err
 	}
 
-	provisionedDashboardRefs, err := getProvisionedDashboardsByPath(ctx, fr.dashboardProvisioningService, fr.Cfg.Name)
+	provisionedDashboardRefs, err := fr.getProvisionedDashboardsByPath(ctx, fr.dashboardProvisioningService, fr.Cfg.Name)
 	if err != nil {
 		return err
 	}
@@ -326,7 +327,7 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 	return provisioningMetadata, nil
 }
 
-func getProvisionedDashboardsByPath(ctx context.Context, service dashboards.DashboardProvisioningService, name string) (
+func (fr *FileReader) getProvisionedDashboardsByPath(ctx context.Context, service dashboards.DashboardProvisioningService, name string) (
 	map[string]*dashboards.DashboardProvisioning, error) {
 	arr, err := service.GetProvisionedDashboardData(ctx, name)
 	if err != nil {
@@ -335,6 +336,13 @@ func getProvisionedDashboardsByPath(ctx context.Context, service dashboards.Dash
 
 	byPath := map[string]*dashboards.DashboardProvisioning{}
 	for _, pd := range arr {
+		// as a part of the migration of dashboards to unified storage, the dashboard provisiong data will be stored as
+		// an annotation on the dashboard. in modes 0-2, that will only return the relative path. however, we will be comparing
+		// that to the data stored in the dashboard_provisioning table, so we need to change it into the resolved path
+		if !strings.HasPrefix(pd.ExternalID, fr.resolvedPath()) {
+			pd.ExternalID = fr.resolvedPath() + "/" + pd.ExternalID
+		}
+
 		byPath[pd.ExternalID] = pd
 	}
 
@@ -375,6 +383,14 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 		return 0, "", dashboards.ErrFolderInvalidUID
 	}
 
+	// When we expect folders in unified storage, they should have a manager indicated
+	if err == nil && result != nil && result.ManagedBy == "" && fr.foldersInUnified {
+		result, err = service.UpdateFolderWithManagedByAnnotation(ctx, result, fr.Cfg.Name)
+		if err != nil {
+			return 0, "", fmt.Errorf("unable to update provisioned folder")
+		}
+	}
+
 	// dashboard folder not found. create one.
 	if errors.Is(err, dashboards.ErrFolderNotFound) {
 		createCmd := &folder.CreateFolderCommand{
@@ -384,7 +400,7 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 			SignedInUser: user,
 		}
 
-		f, err := service.SaveFolderForProvisionedDashboards(ctx, createCmd)
+		f, err := service.SaveFolderForProvisionedDashboards(ctx, createCmd, fr.Cfg.Name)
 		if err != nil {
 			return 0, "", err
 		}

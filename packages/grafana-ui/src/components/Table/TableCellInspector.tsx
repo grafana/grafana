@@ -1,12 +1,14 @@
 import { isString } from 'lodash';
 import { useState } from 'react';
 
-import { t, Trans } from '../../utils/i18n';
+import { t, Trans } from '@grafana/i18n';
+
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import { Drawer } from '../Drawer/Drawer';
 import { Stack } from '../Layout/Stack/Stack';
 import { CodeEditor } from '../Monaco/CodeEditor';
-import { Tab, TabsBar } from '../Tabs';
+import { Tab } from '../Tabs/Tab';
+import { TabsBar } from '../Tabs/TabsBar';
 
 export enum TableCellInspectorMode {
   code = 'code',

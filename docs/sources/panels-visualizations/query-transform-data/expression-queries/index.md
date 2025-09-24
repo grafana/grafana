@@ -48,15 +48,15 @@ Server-side expressions allow you to manipulate data returned from queries with 
 
 Expressions are most commonly used for [Grafana Alerting](ref:grafana-alerting). The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Expressions do not work with legacy dashboard alerts.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Expressions are meant to augment data sources by enabling queries from different data sources to be combined or by providing operations unavailable in a data source.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 When possible, you should do data processing inside the data source. Copying data from storage to the Grafana server for processing is inefficient, so expressions are targeted at lightweight data processing.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Expressions work with data source queries that return time series or number data. They also operate on [multiple-dimensional data](ref:multiple-dimensional-data). For example, a query that returns multiple series, where each series is identified by labels or tags.
 
@@ -142,9 +142,9 @@ abs returns the absolute value of its argument which can be a number or a series
 
 is_inf takes a number or a series and returns `1` for `Inf` values (negative or positive) and `0` for other values. For example `is_inf($A)`.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you need to specifically check for negative infinity for example, you can do a comparison like `$A == infn()`.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ###### is_nan
 

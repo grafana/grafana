@@ -55,6 +55,10 @@ export interface TempoQuery extends common.DataQuery {
    */
   serviceMapQuery?: (string | Array<string>);
   /**
+   * Whether to use native histograms for service map queries
+   */
+  serviceMapUseNativeHistograms?: boolean;
+  /**
    * @deprecated Query traces by service name
    */
   serviceName?: string;
@@ -125,6 +129,10 @@ export interface TraceqlFilter {
    * Uniquely identify the filter, will not be used in the query generation
    */
   id: string;
+  /**
+   * Whether the value is a custom value typed by the user
+   */
+  isCustomValue?: boolean;
   /**
    * The operator that connects the tag to the value, for example: =, >, !=, =~
    */

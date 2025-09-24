@@ -10,6 +10,7 @@ import {
   PluginSignatureStatus,
   PluginType,
 } from '@grafana/data';
+import iconGaugeSvg from 'app/plugins/panel/gauge/img/icon_gauge.svg';
 
 import { reportInteraction } from '../utils';
 
@@ -249,8 +250,8 @@ function createPluginMetaInfo(info: Partial<PluginMetaInfo> = {}): PluginMetaInf
     description: 'Standard gauge visualization',
     links: [],
     logos: {
-      large: 'public/app/plugins/panel/gauge/img/icon_gauge.svg',
-      small: 'public/app/plugins/panel/gauge/img/icon_gauge.svg',
+      large: iconGaugeSvg,
+      small: iconGaugeSvg,
     },
     screenshots: [],
     updated: '',

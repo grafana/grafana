@@ -10,14 +10,14 @@ on:
       - "v*.*.*"
       - "release-*"
 
-permissions:
-  id-token: write
+permissions: {}
 
 # This is run after the pull request has been merged, so we'll run against the target branch
 jobs:
   dispatch-job:
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
       contents: read
       actions: write
     env:

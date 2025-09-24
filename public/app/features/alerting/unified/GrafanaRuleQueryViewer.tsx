@@ -2,12 +2,12 @@ import { css, cx } from '@emotion/css';
 import { keyBy, startCase, uniqueId } from 'lodash';
 import * as React from 'react';
 
-import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, rangeUtil, urlUtil } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { Preview } from '@grafana/sql/src/components/visual-query-builder/Preview';
 import { Alert, Badge, ErrorBoundaryAlert, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { AlertDataQuery, AlertQuery } from '../../../types/unified-alerting-dto';
@@ -25,6 +25,7 @@ import {
 import alertDef, { EvalFunction } from '../state/alertDef';
 
 import { Spacer } from './components/Spacer';
+import { TimeRangeLabel } from './components/TimeRangeLabel';
 import { WithReturnButton } from './components/WithReturnButton';
 import { ExpressionResult } from './components/expressions/Expression';
 import { ThresholdDefinition, getThresholdsForQueries } from './components/rule-editor/util';
@@ -123,12 +124,7 @@ export function QueryPreview({
   if (relativeTimeRange) {
     headerItems.push(
       <Text color="secondary" key="timerange">
-        <Trans
-          i18nKey="alerting.query-preview.relative-time-range"
-          values={{ from: rangeUtil.secondsToHms(relativeTimeRange.from) }}
-        >
-          <code>{'{{from}}'}</code> to now
-        </Trans>
+        <TimeRangeLabel relativeTimeRange={relativeTimeRange} />
       </Text>
     );
   }

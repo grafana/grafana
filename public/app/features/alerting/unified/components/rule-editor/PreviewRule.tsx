@@ -6,9 +6,9 @@ import { useMountedState } from 'react-use';
 import { takeWhile } from 'rxjs/operators';
 
 import { GrafanaTheme2, LoadingState, dateTimeFormatISO } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { previewAlertRule } from '../../api/preview';
 import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';

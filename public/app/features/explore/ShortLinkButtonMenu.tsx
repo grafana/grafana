@@ -1,12 +1,12 @@
 import { useState } from 'react';
 
 import { IconName } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction, config } from '@grafana/runtime';
 import { Dropdown, Menu, MenuGroup, ButtonGroup, Button } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
 import { selectPanes } from './state/selectors';
 import { constructAbsoluteUrl } from './utils/links';

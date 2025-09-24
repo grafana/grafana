@@ -1,4 +1,5 @@
-import { t } from '../../../utils/i18n';
+import { t } from '@grafana/i18n';
+
 import { Icon } from '../../Icon/Icon';
 import { GrafanaTableRow } from '../types';
 

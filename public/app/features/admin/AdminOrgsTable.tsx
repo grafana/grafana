@@ -3,11 +3,12 @@ import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
-import { AccessControlAction, Organization } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { Organization } from 'app/types/organization';
 
 interface Props {
   orgs: Organization[];
@@ -32,6 +33,7 @@ function AdminOrgsTableComponent({ orgs, onDelete }: Props) {
   const canDeleteOrgs = contextSrv.hasPermission(AccessControlAction.OrgsDelete);
 
   const [deleteOrg, setDeleteOrg] = useState<Organization>();
+
   const deleteOrgName = deleteOrg?.name;
   return (
     <table className="filter-table form-inline filter-table--hover">
@@ -71,7 +73,7 @@ function AdminOrgsTableComponent({ orgs, onDelete }: Props) {
               </Trans>
             </div>
           }
-          confirmText="Delete"
+          confirmText={t('admin.admin-orgs-table.confirmText-delete', 'Delete')}
           onDismiss={() => setDeleteOrg(undefined)}
           onConfirm={() => {
             onDelete(deleteOrg.id);

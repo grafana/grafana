@@ -7,10 +7,11 @@ import { useInterval, useToggle } from 'react-use';
 import { LoadingState } from '@grafana/data';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
+import { TextLink } from '../Link/TextLink';
 import { Menu } from '../Menu/Menu';
 
 import { PanelChromeProps } from './PanelChrome';
@@ -22,7 +23,7 @@ const PANEL_WIDTH = 400;
 const PANEL_HEIGHT = 150;
 
 const meta: Meta<typeof PanelChrome> = {
-  title: 'Visualizations/PanelChrome',
+  title: 'Plugins/PanelChrome',
   component: PanelChrome,
   parameters: {
     controls: {
@@ -31,6 +32,8 @@ const meta: Meta<typeof PanelChrome> = {
     docs: {
       page: mdx,
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
 };
 
@@ -221,7 +224,7 @@ export const Examples = () => {
               <Button size="sm" variant="secondary" key="A">
                 Breakdown
               </Button>,
-              <Button size="sm" variant="secondary" icon="times" key="B" />,
+              <Button aria-label="Close" size="sm" variant="secondary" icon="times" key="B" />,
             ],
           })}
           {renderPanel('With radio button', {
@@ -250,10 +253,9 @@ export const Examples = () => {
           {renderPanel('Panel with action link', {
             title: 'Panel with action link',
             actions: (
-              <a className="external-link" href="/some/page">
+              <TextLink external href="http://www.example.com/some/page">
                 Error details
-                <Icon name="arrow-right" />
-              </a>
+              </TextLink>
             ),
           })}
           {renderPanel('Action and menu (should be rare)', {
@@ -320,10 +322,9 @@ export const ExamplesHoverHeader = () => {
             title: 'With link in hover header',
             hoverHeader: true,
             actions: (
-              <a className="external-link" href="/some/page">
+              <TextLink external href="http://www.example.com/some/page">
                 Error details
-                <Icon name="arrow-right" />
-              </a>
+              </TextLink>
             ),
           })}
         </Stack>

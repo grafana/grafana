@@ -2,9 +2,8 @@ import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
-
-import { t } from '../../internationalization';
 
 import { LayerName } from './LayerName';
 import { LayerElement } from './types';
@@ -67,7 +66,13 @@ export const LayerDragDropList = <T extends LayerElement>({
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
-                        onMouseDown={() => onSelect(element)}
+                        onClick={() => onSelect(element)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onSelect(element);
+                          }
+                        }}
                         role="button"
                         tabIndex={0}
                       >

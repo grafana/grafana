@@ -2,13 +2,12 @@ package datasourcecheck
 
 import (
 	"context"
-	"errors"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -26,14 +25,18 @@ func runChecks(check *check) ([]advisor.CheckReportFailure, error) {
 	}
 
 	failures := []advisor.CheckReportFailure{}
+	err = check.Init(ctx)
+	if err != nil {
+		return nil, err
+	}
 	for _, step := range check.Steps() {
 		for _, item := range items {
-			stepFailures, err := step.Run(ctx, &advisor.CheckSpec{}, item)
+			stepFailures, err := step.Run(ctx, logging.DefaultLogger, &advisor.CheckSpec{}, item)
 			if err != nil {
 				return nil, err
 			}
-			if stepFailures != nil {
-				failures = append(failures, *stepFailures)
+			if len(stepFailures) > 0 {
+				failures = append(failures, stepFailures...)
 			}
 		}
 	}
@@ -51,7 +54,10 @@ func TestCheck_Run(t *testing.T) {
 		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
 		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusOk}}
-		mockPluginRepo := &MockPluginRepo{exists: true}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+			{ID: 2, Slug: "mysql", Status: "active"},
+		}}
 		mockPluginStore := &MockPluginStore{exists: true}
 
 		check := &check{
@@ -60,7 +66,6 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 			PluginRepo:            mockPluginRepo,
 			PluginStore:           mockPluginStore,
-			log:                   log.New("advisor.datasourcecheck"),
 		}
 
 		failures, err := runChecks(check)
@@ -76,7 +81,9 @@ func TestCheck_Run(t *testing.T) {
 		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
 		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusOk}}
-		mockPluginRepo := &MockPluginRepo{exists: true}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+		}}
 		mockPluginStore := &MockPluginStore{exists: true}
 
 		check := &check{
@@ -85,7 +92,6 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 			PluginRepo:            mockPluginRepo,
 			PluginStore:           mockPluginStore,
-			log:                   log.New("advisor.datasourcecheck"),
 		}
 
 		failures, err := runChecks(check)
@@ -101,8 +107,10 @@ func TestCheck_Run(t *testing.T) {
 
 		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
-		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusError}}
-		mockPluginRepo := &MockPluginRepo{exists: true}
+		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: "test message"}}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+		}}
 		mockPluginStore := &MockPluginStore{exists: true}
 
 		check := &check{
@@ -111,13 +119,13 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 			PluginRepo:            mockPluginRepo,
 			PluginStore:           mockPluginStore,
-			log:                   log.New("advisor.datasourcecheck"),
 		}
 
 		failures, err := runChecks(check)
 		assert.NoError(t, err)
 		assert.Len(t, failures, 1)
 		assert.Equal(t, "health-check", failures[0].StepID)
+		assert.Contains(t, *failures[0].MoreInfo, "test message")
 	})
 
 	t.Run("should skip health check when plugin does not support backend health checks", func(t *testing.T) {
@@ -127,7 +135,9 @@ func TestCheck_Run(t *testing.T) {
 		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
 		mockPluginClient := &MockPluginClient{err: plugins.ErrMethodNotImplemented}
-		mockPluginRepo := &MockPluginRepo{exists: true}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+		}}
 		mockPluginStore := &MockPluginStore{exists: true}
 
 		check := &check{
@@ -136,7 +146,6 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 			PluginRepo:            mockPluginRepo,
 			PluginStore:           mockPluginStore,
-			log:                   log.New("advisor.datasourcecheck"),
 		}
 
 		failures, err := runChecks(check)
@@ -151,7 +160,9 @@ func TestCheck_Run(t *testing.T) {
 		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
 		mockPluginClient := &MockPluginClient{err: plugins.ErrPluginNotRegistered}
-		mockPluginRepo := &MockPluginRepo{exists: true}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+		}}
 		mockPluginStore := &MockPluginStore{exists: true}
 
 		check := &check{
@@ -160,7 +171,6 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 			PluginRepo:            mockPluginRepo,
 			PluginStore:           mockPluginStore,
-			log:                   log.New("advisor.datasourcecheck"),
 		}
 
 		failures, err := runChecks(check)
@@ -176,7 +186,9 @@ func TestCheck_Run(t *testing.T) {
 		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
 		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusOk}}
-		mockPluginRepo := &MockPluginRepo{exists: true}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+		}}
 		mockPluginStore := &MockPluginStore{exists: false}
 
 		check := &check{
@@ -185,7 +197,6 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 			PluginRepo:            mockPluginRepo,
 			PluginStore:           mockPluginStore,
-			log:                   log.New("advisor.datasourcecheck"),
 		}
 
 		failures, err := runChecks(check)
@@ -202,7 +213,7 @@ func TestCheck_Run(t *testing.T) {
 		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
 		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusOk}}
-		mockPluginRepo := &MockPluginRepo{exists: false}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{}}
 		mockPluginStore := &MockPluginStore{exists: false}
 
 		check := &check{
@@ -211,7 +222,6 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 			PluginRepo:            mockPluginRepo,
 			PluginStore:           mockPluginStore,
-			log:                   log.New("advisor.datasourcecheck"),
 		}
 
 		failures, err := runChecks(check)
@@ -219,6 +229,19 @@ func TestCheck_Run(t *testing.T) {
 		assert.Len(t, failures, 1)
 		assert.Equal(t, MissingPluginStepID, failures[0].StepID)
 		assert.Len(t, failures[0].Links, 1)
+	})
+}
+
+func TestCheck_Item(t *testing.T) {
+	t.Run("should return nil when datasource is not found", func(t *testing.T) {
+		mockDatasourceSvc := &MockDatasourceSvc{dss: []*datasources.DataSource{}}
+		check := &check{
+			DatasourceSvc: mockDatasourceSvc,
+		}
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
+		item, err := check.Item(ctx, "invalid-uid")
+		assert.NoError(t, err)
+		assert.Nil(t, item)
 	})
 }
 
@@ -230,6 +253,13 @@ type MockDatasourceSvc struct {
 
 func (m *MockDatasourceSvc) GetAllDataSources(context.Context, *datasources.GetAllDataSourcesQuery) ([]*datasources.DataSource, error) {
 	return m.dss, nil
+}
+
+func (m *MockDatasourceSvc) GetDataSource(context.Context, *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	if len(m.dss) == 0 {
+		return nil, datasources.ErrDataSourceNotFound
+	}
+	return m.dss[0], nil
 }
 
 type MockPluginContextProvider struct {
@@ -264,12 +294,9 @@ func (m *MockPluginStore) Plugin(context.Context, string) (pluginstore.Plugin, b
 type MockPluginRepo struct {
 	repo.Service
 
-	exists bool
+	plugins []repo.PluginInfo
 }
 
-func (m *MockPluginRepo) PluginInfo(context.Context, string) (*repo.PluginInfo, error) {
-	if !m.exists {
-		return nil, errors.New("plugin not found")
-	}
-	return &repo.PluginInfo{}, nil
+func (m *MockPluginRepo) GetPluginsInfo(context.Context, repo.GetPluginsInfoOptions, repo.CompatOpts) ([]repo.PluginInfo, error) {
+	return m.plugins, nil
 }

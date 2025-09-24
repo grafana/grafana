@@ -1,6 +1,7 @@
 package cloudmigrationimpl
 
 import (
+	"bytes"
 	"context"
 	cryptoRand "crypto/rand"
 	"encoding/json"
@@ -562,7 +563,7 @@ func (s *Service) buildSnapshot(
 
 	// Use GMS public key + the grafana generated private key to encrypt snapshot files.
 	snapshotWriter, err := snapshot.NewSnapshotWriter(contracts.AssymetricKeys{
-		Public:  snapshotMeta.EncryptionKey,
+		Public:  snapshotMeta.GMSPublicKey,
 		Private: privateKey[:],
 	},
 		crypto.NewNacl(),
@@ -605,6 +606,56 @@ func (s *Service) buildSnapshot(
 		}
 	}
 
+	switch s.cfg.CloudMigration.ResourceStorageType {
+	case cloudmigration.ResourceStorageTypeDb:
+		if err := s.buildSnapshotWithDBStorage(ctx, snapshotMeta.UID, snapshotWriter, resourcesGroupedByType, maxItemsPerPartition); err != nil {
+			return fmt.Errorf("building snapshot with database storage: %w", err)
+		}
+		s.log.Debug(fmt.Sprintf("buildSnapshot: wrote data partitions with database storage in %d ms", time.Since(start).Milliseconds()))
+
+	case cloudmigration.ResourceStorageTypeFs:
+		if err := s.buildSnapshotWithFSStorage(publicKey[:], metadata, snapshotWriter, resourcesGroupedByType, maxItemsPerPartition); err != nil {
+			return fmt.Errorf("building snapshot with file system storage: %w", err)
+		}
+		s.log.Debug(fmt.Sprintf("buildSnapshot: wrote data partitions with file system storage in %d ms", time.Since(start).Milliseconds()))
+
+	default:
+		return fmt.Errorf("unknown resource storage type, check your configuration and try again: %q", s.cfg.CloudMigration.ResourceStorageType)
+	}
+
+	// update snapshot status to pending upload with retries
+	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
+		UID:                    snapshotMeta.UID,
+		SessionID:              snapshotMeta.SessionUID,
+		Status:                 cloudmigration.SnapshotStatusPendingUpload,
+		LocalResourcesToCreate: localSnapshotResource,
+		PublicKey:              publicKey[:],
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) buildSnapshotWithDBStorage(ctx context.Context, snapshotUID string, snapshotWriter *snapshot.SnapshotWriter, resourcesGroupedByType map[cloudmigration.MigrateDataType][]snapshot.MigrateDataRequestItemDTO, maxItemsPerPartition uint32) error {
+	for _, resourceType := range currentMigrationTypes {
+		i := 0
+		for chunk := range slices.Chunk(resourcesGroupedByType[resourceType], int(maxItemsPerPartition)) {
+			encoded, err := snapshotWriter.EncodePartition(chunk)
+			if err != nil {
+				return fmt.Errorf("encoding snapshot partition: %w", err)
+			}
+			if err := s.store.StorePartition(ctx, snapshotUID, string(resourceType), i, encoded); err != nil {
+				return fmt.Errorf("storing partition into database: %w", err)
+			}
+			i += 1
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) buildSnapshotWithFSStorage(publicKey, metadata []byte, snapshotWriter *snapshot.SnapshotWriter, resourcesGroupedByType map[cloudmigration.MigrateDataType][]snapshot.MigrateDataRequestItemDTO, maxItemsPerPartition uint32) error {
 	for _, resourceType := range currentMigrationTypes {
 		for chunk := range slices.Chunk(resourcesGroupedByType[resourceType], int(maxItemsPerPartition)) {
 			if err := snapshotWriter.Write(string(resourceType), chunk); err != nil {
@@ -612,8 +663,6 @@ func (s *Service) buildSnapshot(
 			}
 		}
 	}
-
-	s.log.Debug(fmt.Sprintf("buildSnapshot: wrote data files in %d ms", time.Since(start).Milliseconds()))
 
 	// Add the grafana generated public key to the index file so gms can use it to decrypt the snapshot files later.
 	// This works because the snapshot files are being encrypted with
@@ -623,18 +672,6 @@ func (s *Service) buildSnapshot(
 		Metadata:        metadata,
 	}); err != nil {
 		return fmt.Errorf("finishing writing snapshot files and generating index file: %w", err)
-	}
-
-	s.log.Debug(fmt.Sprintf("buildSnapshot: finished snapshot in %d ms", time.Since(start).Milliseconds()))
-
-	// update snapshot status to pending upload with retries
-	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:                    snapshotMeta.UID,
-		SessionID:              snapshotMeta.SessionUID,
-		Status:                 cloudmigration.SnapshotStatusPendingUpload,
-		LocalResourcesToCreate: localSnapshotResource,
-	}); err != nil {
-		return err
 	}
 
 	return nil
@@ -654,12 +691,94 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 		s.log.Debug(fmt.Sprintf("uploadSnapshot: method completed in %d ms", time.Since(start).Milliseconds()))
 	}()
 
+	switch s.cfg.CloudMigration.ResourceStorageType {
+	case cloudmigration.ResourceStorageTypeDb:
+		if err := s.uploadSnapshotWithDBStorage(ctx, session, snapshotMeta, uploadUrl); err != nil {
+			return fmt.Errorf("uploading snapshot with database storage: %w", err)
+		}
+
+	case cloudmigration.ResourceStorageTypeFs:
+		if err := s.uploadSnapshotWithFSStorage(ctx, session, snapshotMeta, uploadUrl); err != nil {
+			return fmt.Errorf("uploading snapshot with file system storage: %w", err)
+		}
+
+	default:
+		return fmt.Errorf("unknown resource storage type, check your configuration and try again: %q", s.cfg.CloudMigration.ResourceStorageType)
+	}
+
+	s.log.Info("successfully uploaded snapshot", "snapshotUid", snapshotMeta.UID, "cloud_snapshotUid", snapshotMeta.GMSSnapshotUID)
+
+	// update snapshot status to processing with retries
+	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
+		UID:       snapshotMeta.UID,
+		SessionID: snapshotMeta.SessionUID,
+		Status:    cloudmigration.SnapshotStatusProcessing,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) uploadSnapshotWithDBStorage(ctx context.Context, session *cloudmigration.CloudMigrationSession, snapshotMeta *cloudmigration.CloudMigrationSnapshot, uploadUrl string) error {
+	index, err := s.store.GetIndex(ctx, session.OrgID, snapshotMeta.SessionUID, snapshotMeta.UID)
+	if err != nil {
+		return fmt.Errorf("fetching index from database: %w", err)
+	}
+
+	snapshotIndex := snapshot.Index{
+		Version:        1,
+		EncryptionAlgo: index.EncryptionAlgo,
+		PublicKey:      index.PublicKey,
+		Metadata:       index.Metadata,
+		Items:          make(map[string][]string),
+	}
+
+	var partitionToFileName = func(resourceType string, partitionNumber int) string {
+		return fmt.Sprintf("%+v_%+v", resourceType, partitionNumber)
+	}
+
+	for resourceType, partitionsNumbers := range index.Items {
+		for _, partitionNumber := range partitionsNumbers {
+			fileName := partitionToFileName(resourceType, partitionNumber)
+			snapshotIndex.Items[resourceType] = append(snapshotIndex.Items[resourceType], fileName)
+
+			key := fmt.Sprintf("%d/snapshots/%s/%+v", session.StackID, snapshotMeta.GMSSnapshotUID, fileName)
+
+			partition, err := s.store.GetPartition(ctx, snapshotMeta.UID, resourceType, partitionNumber)
+			if err != nil {
+				return fmt.Errorf("fetching partition from database: %w", err)
+			}
+			if err = s.objectStorage.PresignedURLUpload(ctx, uploadUrl, key, bytes.NewReader(partition.Data)); err != nil {
+				return fmt.Errorf("uploading file using presigned url: %w", err)
+			}
+		}
+	}
+
+	key := fmt.Sprintf("%d/snapshots/%s/%s", session.StackID, snapshotMeta.GMSSnapshotUID, "index.json")
+
+	buffer, err := snapshot.EncodeIndex(snapshotIndex)
+
+	if err != nil {
+		return fmt.Errorf("encoding snapshot index for upload: %w", err)
+	}
+
+	if err = s.objectStorage.PresignedURLUpload(ctx, uploadUrl, key, bytes.NewReader(buffer)); err != nil {
+		return fmt.Errorf("uploading index file using presigned url: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) uploadSnapshotWithFSStorage(ctx context.Context, session *cloudmigration.CloudMigrationSession, snapshotMeta *cloudmigration.CloudMigrationSnapshot, uploadUrl string) error {
 	indexFilePath := filepath.Join(snapshotMeta.LocalDir, "index.json")
+
+	start := time.Now()
 	// LocalDir can be set in the configuration, therefore the file path can be set to any path.
 	// nolint:gosec
 	indexFile, err := os.Open(indexFilePath)
 	if err != nil {
-		return fmt.Errorf("opening index files: %w", err)
+		return fmt.Errorf("opening index files: %w. If you are running Grafana in a highly-available setup, try setting cloud_migration.resource_storage_type to 'db' or scaling down to one replica", err)
 	}
 	defer func() {
 		if closeErr := indexFile.Close(); closeErr != nil {
@@ -677,8 +796,6 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 		return fmt.Errorf("reading index from file: %w", err)
 	}
 	readIndexSpan.End()
-
-	s.log.Debug(fmt.Sprintf("uploadSnapshot: read index file in %d ms", time.Since(start).Milliseconds()))
 
 	uploadCtx, uploadSpan := s.tracer.Start(ctx, "CloudMigrationService.uploadSnapshot.uploadDataFiles")
 	// Upload the data files.
@@ -723,16 +840,6 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 	uploadSpan.End()
 
 	s.log.Debug(fmt.Sprintf("uploadSnapshot: uploaded index file in %d ms", time.Since(start).Milliseconds()))
-	s.log.Info("successfully uploaded snapshot", "snapshotUid", snapshotMeta.UID, "cloud_snapshotUid", snapshotMeta.GMSSnapshotUID)
-
-	// update snapshot status to processing with retries
-	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:       snapshotMeta.UID,
-		SessionID: snapshotMeta.SessionUID,
-		Status:    cloudmigration.SnapshotStatusProcessing,
-	}); err != nil {
-		return err
-	}
 
 	return nil
 }

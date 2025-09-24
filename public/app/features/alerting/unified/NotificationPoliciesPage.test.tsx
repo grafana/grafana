@@ -29,7 +29,7 @@ import {
   MatcherOperator,
   RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import NotificationPolicies from './NotificationPoliciesPage';
 import { findRoutesMatchingFilters } from './components/notification-policies/NotificationPoliciesList';
@@ -140,6 +140,22 @@ const getRootRoute = async () => {
 };
 
 describe('NotificationPolicies', () => {
+  // combobox hack :/
+  beforeAll(() => {
+    const mockGetBoundingClientRect = jest.fn(() => ({
+      width: 120,
+      height: 120,
+      top: 0,
+      left: 0,
+      bottom: 0,
+      right: 0,
+    }));
+
+    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+      value: mockGetBoundingClientRect,
+    });
+  });
+
   beforeEach(() => {
     setupDataSources(...Object.values(dataSources));
     grantUserPermissions([
@@ -202,11 +218,9 @@ describe('NotificationPolicies', () => {
 
     await openDefaultPolicyEditModal();
 
-    // configure receiver & group by
-    const receiverSelect = await ui.receiverSelect.find();
-
     // The contact points are fetched from the k8s API, which we aren't overriding here
     // when we use a different
+    const receiverSelect = ui.receiverSelect.get();
     await clickSelectOption(receiverSelect, 'lotsa-emails');
 
     const groupSelect = ui.groupSelect.get();
@@ -284,7 +298,7 @@ describe('NotificationPolicies', () => {
 
     renderNotificationPolicies();
     const alert = await screen.findByRole('alert', { name: /error loading alertmanager config/i });
-    expect(await within(alert).findByText(errMessage)).toBeInTheDocument();
+    expect(await within(alert).findByText(new RegExp(errMessage))).toBeInTheDocument();
     expect(ui.rootRouteContainer.query()).not.toBeInTheDocument();
   });
 

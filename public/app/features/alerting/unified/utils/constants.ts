@@ -8,6 +8,8 @@ export const SILENCES_POLL_INTERVAL_MS = 20000;
 export const NOTIFICATIONS_POLL_INTERVAL_MS = 20000;
 export const CONTACT_POINTS_STATE_INTERVAL_MS = 20000;
 
+export const DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP = 100;
+
 export const TIMESERIES = 'timeseries';
 export const TABLE = 'table';
 export const STAT = 'stat';

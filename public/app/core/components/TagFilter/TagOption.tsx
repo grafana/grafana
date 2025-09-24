@@ -2,9 +2,8 @@ import { css, cx } from '@emotion/css';
 import { OptionProps } from 'react-select';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
-
-import { t } from '../../internationalization';
 
 import { TagBadge } from './TagBadge';
 

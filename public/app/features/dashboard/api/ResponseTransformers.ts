@@ -37,9 +37,11 @@ import {
   GroupByVariableKind,
   LibraryPanelKind,
   PanelKind,
-  GridLayoutRowKind,
   GridLayoutItemKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+  defaultDataQueryKind,
+  RowsLayoutRowKind,
+  GridLayoutKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
 import {
@@ -54,7 +56,9 @@ import {
   DeprecatedInternalId,
   ObjectMeta,
 } from 'app/features/apiserver/types';
+import { transformV2ToV1AnnotationQuery } from 'app/features/dashboard-scene/serialization/annotations';
 import { GRID_ROW_HEIGHT } from 'app/features/dashboard-scene/serialization/const';
+import { validateFiltersOrigin } from 'app/features/dashboard-scene/serialization/sceneVariablesSetToVariables';
 import { TypedVariableModelV2 } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
 import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import {
@@ -71,10 +75,10 @@ import {
   transformVariableHideToEnum,
   transformVariableRefreshToEnum,
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
-import { DashboardDataDTO, DashboardDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { DashboardWithAccessInfo } from './types';
-import { isDashboardResource, isDashboardV0Spec, isDashboardV2Resource } from './utils';
+import { isDashboardResource, isDashboardV0Spec, isDashboardV2Resource, isDashboardV2Spec } from './utils';
 
 export function ensureV2Response(
   dto: DashboardDTO | DashboardWithAccessInfo<DashboardDataDTO> | DashboardWithAccessInfo<DashboardV2Spec>
@@ -89,14 +93,6 @@ export function ensureV2Response(
   } else {
     dashboard = dto.dashboard;
   }
-
-  const timeSettingsDefaults = defaultTimeSettingsSpec();
-  const dashboardDefaults = defaultDashboardV2Spec();
-  const [elements, layout] = getElementsFromPanels(dashboard.panels || []);
-  // @ts-expect-error - dashboard.templating.list is VariableModel[] and we need TypedVariableModel[] here
-  // that would allow accessing unique properties for each variable type that the API returns
-  const variables = getVariables(dashboard.templating?.list || []);
-  const annotations = getAnnotations(dashboard.annotations?.list || []);
 
   let accessMeta: DashboardWithAccessInfo<DashboardV2Spec>['access'];
   let annotationsMeta: DashboardWithAccessInfo<DashboardV2Spec>['metadata']['annotations'];
@@ -131,9 +127,15 @@ export function ensureV2Response(
       [AnnoKeyUpdatedTimestamp]: dto.meta.updated,
       [AnnoKeyFolder]: dto.meta.folderUid,
       [AnnoKeySlug]: dto.meta.slug,
-      [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
-      [AnnoKeyDashboardIsSnapshot]: dto.meta.isSnapshot,
     };
+    if (dashboard.gnetId) {
+      annotationsMeta[AnnoKeyDashboardGnetId] = dashboard.gnetId;
+    }
+    if (dto.meta.isSnapshot) {
+      // FIXME -- lets not put non-annotation data in annotations!
+      annotationsMeta[AnnoKeyDashboardIsSnapshot] = 'true';
+    }
+
     creationTimestamp = dto.meta.created;
     labelsMeta = {
       [DeprecatedInternalId]: dashboard.id?.toString() ?? undefined,
@@ -143,6 +145,36 @@ export function ensureV2Response(
   if (annotationsMeta?.[AnnoKeyDashboardIsSnapshot]) {
     annotationsMeta[AnnoKeyDashboardSnapshotOriginalUrl] = dashboard.snapshot?.originalUrl;
   }
+
+  const metadata = {
+    creationTimestamp: creationTimestamp || '', // TODO verify this empty string is valid
+    name: dashboard.uid,
+    resourceVersion: dashboard.version?.toString() || '0',
+    annotations: annotationsMeta,
+    labels: labelsMeta,
+  };
+
+  if (!isDashboardResource(dto)) {
+    if (isDashboardV2Spec(dto.dashboard)) {
+      // sometimes we can have a v2 spec returned through legacy api like public dashboard
+      // in that case we need to return dashboard as it is, since the conversion is not needed
+      return {
+        apiVersion: 'v2beta1',
+        kind: 'DashboardWithAccessInfo',
+        metadata,
+        spec: dto.dashboard,
+        access: accessMeta,
+      };
+    }
+  }
+
+  const timeSettingsDefaults = defaultTimeSettingsSpec();
+  const dashboardDefaults = defaultDashboardV2Spec();
+  const [elements, layout] = getElementsFromPanels(dashboard.panels || []);
+  // @ts-expect-error - dashboard.templating.list is VariableModel[] and we need TypedVariableModel[] here
+  // that would allow accessing unique properties for each variable type that the API returns
+  const variables = getVariables(dashboard.templating?.list || []);
+  const annotations = getAnnotations(dashboard.annotations?.list || []);
 
   const spec: DashboardV2Spec = {
     title: dashboard.title,
@@ -173,15 +205,9 @@ export function ensureV2Response(
   };
 
   return {
-    apiVersion: 'v2alpha1',
+    apiVersion: 'v2beta1',
     kind: 'DashboardWithAccessInfo',
-    metadata: {
-      creationTimestamp: creationTimestamp || '', // TODO verify this empty string is valid
-      name: dashboard.uid,
-      resourceVersion: dashboard.version?.toString() || '0',
-      annotations: annotationsMeta,
-      labels: labelsMeta,
-    },
+    metadata,
     spec,
     access: accessMeta,
   };
@@ -253,22 +279,49 @@ function getElementsFromPanels(
     return [elements, layout];
   }
 
-  let currentRow: GridLayoutRowKind | null = null;
+  if (panels.some(isRowPanel)) {
+    return convertToRowsLayout(panels);
+  }
 
   // iterate over panels
   for (const p of panels) {
+    const [element, elementName] = buildElement(p);
+
+    elements[elementName] = element;
+
+    layout.spec.items.push(buildGridItemKind(p, elementName));
+  }
+
+  return [elements, layout];
+}
+
+function convertToRowsLayout(
+  panels: Array<Panel | RowPanel>
+): [DashboardV2Spec['elements'], DashboardV2Spec['layout']] {
+  let currentRow: RowsLayoutRowKind | null = null;
+  let legacyRowY = 0;
+  const elements: DashboardV2Spec['elements'] = {};
+  const layout: DashboardV2Spec['layout'] = {
+    kind: 'RowsLayout',
+    spec: {
+      rows: [],
+    },
+  };
+
+  for (const p of panels) {
     if (isRowPanel(p)) {
+      legacyRowY = p.gridPos!.y;
       if (currentRow) {
         // Flush current row to layout before we create a new one
-        layout.spec.items.push(currentRow);
+        layout.spec.rows.push(currentRow);
       }
 
+      // If the row is collapsed it will have panels
       const rowElements = [];
-
       for (const panel of p.panels || []) {
         const [element, name] = buildElement(panel);
         elements[name] = element;
-        rowElements.push(buildGridItemKind(panel, name, yOffsetInRows(panel, p.gridPos!.y)));
+        rowElements.push(buildGridItemKind(panel, name, yOffsetInRows(panel, legacyRowY)));
       }
 
       currentRow = buildRowKind(p, rowElements);
@@ -279,18 +332,41 @@ function getElementsFromPanels(
 
       if (currentRow) {
         // Collect panels to current layout row
-        currentRow.spec.elements.push(buildGridItemKind(p, elementName, yOffsetInRows(p, currentRow.spec.y)));
+        if (currentRow.spec.layout.kind === 'GridLayout') {
+          currentRow.spec.layout.spec.items.push(buildGridItemKind(p, elementName, yOffsetInRows(p, legacyRowY)));
+        } else {
+          throw new Error('RowsLayoutRow from legacy row must have a GridLayout');
+        }
       } else {
-        layout.spec.items.push(buildGridItemKind(p, elementName));
+        // This is the first row. In V1 these items could live outside of a row. In V2 they will be in a row with header hidden so that it will look similar to V1.
+        const grid: GridLayoutKind = {
+          kind: 'GridLayout',
+          spec: {
+            items: [buildGridItemKind(p, elementName)],
+          },
+        };
+
+        // Since this row does not exist in V1, we simulate it being outside of the grid above the first panel
+        // The Y position does not matter for the rows layout, but it's used to calculate the position of the panels in the grid layout in the row.
+        legacyRowY = -1;
+
+        currentRow = {
+          kind: 'RowsLayoutRow',
+          spec: {
+            collapse: false,
+            title: '',
+            hideHeader: true,
+            layout: grid,
+          },
+        };
       }
     }
   }
 
   if (currentRow) {
     // Flush last row to layout
-    layout.spec.items.push(currentRow);
+    layout.spec.rows.push(currentRow);
   }
-
   return [elements, layout];
 }
 
@@ -305,15 +381,19 @@ function getWeekStart(weekStart?: string, defaultWeekStart?: WeekStart): WeekSta
   return weekStart;
 }
 
-function buildRowKind(p: RowPanel, elements: GridLayoutItemKind[]): GridLayoutRowKind {
+function buildRowKind(p: RowPanel, elements: GridLayoutItemKind[]): RowsLayoutRowKind {
   return {
-    kind: 'GridLayoutRow',
+    kind: 'RowsLayoutRow',
     spec: {
-      collapsed: p.collapsed,
+      collapse: p.collapsed,
       title: p.title ?? '',
       repeat: p.repeat ? { value: p.repeat, mode: 'variable' } : undefined,
-      y: p.gridPos?.y ?? 0,
-      elements,
+      layout: {
+        kind: 'GridLayout',
+        spec: {
+          items: elements,
+        },
+      },
     },
   };
 }
@@ -361,52 +441,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
     return [panelKind, element_identifier];
   } else {
     // PanelKind
-
-    const queries = getPanelQueries(
-      (p.targets as unknown as DataQuery[]) || [],
-      p.datasource || getDefaultDatasource()
-    );
-
-    const transformations = getPanelTransformations(p.transformations || []);
-
-    const panelKind: PanelKind = {
-      kind: 'Panel',
-      spec: {
-        title: p.title || '',
-        description: p.description || '',
-        vizConfig: {
-          kind: p.type,
-          spec: {
-            fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
-            options: p.options as any,
-            pluginVersion: p.pluginVersion!,
-          },
-        },
-        links:
-          p.links?.map<DataLink>((l) => ({
-            title: l.title,
-            url: l.url || '',
-            targetBlank: l.targetBlank,
-          })) || [],
-        id: p.id!,
-        data: {
-          kind: 'QueryGroup',
-          spec: {
-            queries,
-            transformations,
-            queryOptions: {
-              cacheTimeout: p.cacheTimeout,
-              maxDataPoints: p.maxDataPoints,
-              interval: p.interval,
-              hideTimeOverride: p.hideTimeOverride,
-              queryCachingTTL: p.queryCachingTTL,
-              timeFrom: p.timeFrom,
-              timeShift: p.timeShift,
-            },
-          },
-        },
-      },
-    };
+    const panelKind = buildPanelKind(p);
     return [panelKind, element_identifier];
   }
 }
@@ -421,7 +456,7 @@ export function getDefaultDatasource(): DataSourceRef {
 
   if (configDefaultDS.uid && !configDefaultDS.apiVersion) {
     // get api version from config
-    const dsInstance = config.bootData.settings.datasources[configDefaultDS.uid];
+    const dsInstance = config.datasources[configDefaultDS.uid];
     configDefaultDS.apiVersion = dsInstance.apiVersion ?? undefined;
   }
 
@@ -440,9 +475,13 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
       spec: {
         refId: t.refId,
         hidden: t.hide ?? false,
-        datasource: t.datasource ? t.datasource : panelDatasource,
         query: {
-          kind: t.datasource?.type || panelDatasource.type!,
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: t.datasource?.type || panelDatasource.type!,
+          datasource: {
+            name: t.datasource?.uid || panelDatasource.uid!,
+          },
           spec: {
             ...query,
           },
@@ -451,6 +490,53 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
     };
     return q;
   });
+}
+
+export function buildPanelKind(p: Panel): PanelKind {
+  const queries = getPanelQueries((p.targets as unknown as DataQuery[]) || [], p.datasource || getDefaultDatasource());
+
+  const transformations = getPanelTransformations(p.transformations || []);
+
+  const panelKind: PanelKind = {
+    kind: 'Panel',
+    spec: {
+      title: p.title || '',
+      description: p.description || '',
+      vizConfig: {
+        kind: 'VizConfig',
+        group: p.type,
+        version: p.pluginVersion!,
+        spec: {
+          fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
+          options: p.options as any,
+        },
+      },
+      links:
+        p.links?.map<DataLink>((l) => ({
+          title: l.title,
+          url: l.url || '',
+          targetBlank: l.targetBlank,
+        })) || [],
+      id: p.id!,
+      data: {
+        kind: 'QueryGroup',
+        spec: {
+          queries,
+          transformations,
+          queryOptions: {
+            cacheTimeout: p.cacheTimeout,
+            maxDataPoints: p.maxDataPoints,
+            interval: p.interval,
+            hideTimeOverride: p.hideTimeOverride,
+            queryCachingTTL: p.queryCachingTTL,
+            timeFrom: p.timeFrom,
+            timeShift: p.timeShift,
+          },
+        },
+      },
+    },
+  };
+  return panelKind;
 }
 
 function getPanelTransformations(transformations: DataTransformerConfig[]): TransformationKind[] {
@@ -475,6 +561,9 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
       skipUrlSync: Boolean(v.skipUrlSync),
       hide: transformVariableHideToEnum(v.hide),
     };
+
+    let ds: DataSourceRef | undefined;
+    let dsType: string | undefined;
 
     switch (v.type) {
       case 'query':
@@ -506,9 +595,15 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             regex: v.regex || '',
             sort: transformSortVariableToEnum(v.sort),
             query: {
-              kind: v.datasource?.type || getDefaultDatasourceType(),
+              kind: 'DataQuery',
+              version: defaultDataQueryKind().version,
+              group: v.datasource?.type ?? getDefaultDatasourceType(),
+              datasource: {
+                name: v.datasource?.uid,
+              },
               spec: query,
             },
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
         variables.push(qv);
@@ -535,6 +630,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             refresh: transformVariableRefreshToEnum(v.refresh),
             pluginId,
             regex: v.regex || '',
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
         variables.push(dv);
@@ -553,21 +649,33 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             multi: v.multi,
             includeAll: v.includeAll,
             ...(v.allValue && { allValue: v.allValue }),
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
         variables.push(cv);
         break;
       case 'adhoc':
+        ds = v.datasource || getDefaultDatasource();
+        dsType = ds.type ?? getDefaultDatasourceType();
+
         const av: AdhocVariableKind = {
           kind: 'AdhocVariable',
+          group: dsType,
           spec: {
             ...commonProperties,
-            datasource: v.datasource || getDefaultDatasource(),
-            baseFilters: v.baseFilters || [],
-            filters: v.filters || [],
+            baseFilters: validateFiltersOrigin(v.baseFilters) || [],
+            filters: validateFiltersOrigin(v.filters) || [],
             defaultKeys: v.defaultKeys || [],
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
+
+        if (ds.uid) {
+          av.datasource = {
+            name: ds.uid,
+          };
+        }
+
         variables.push(av);
         break;
       case 'constant':
@@ -621,11 +729,14 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
         variables.push(tx);
         break;
       case 'groupby':
+        ds = v.datasource || getDefaultDatasource();
+        dsType = ds.type ?? getDefaultDatasourceType();
+
         const gb: GroupByVariableKind = {
           kind: 'GroupByVariable',
+          group: dsType,
           spec: {
             ...commonProperties,
-            datasource: v.datasource || getDefaultDatasource(),
             options: v.options,
             current: {
               value: v.current.value,
@@ -634,6 +745,13 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             multi: v.multi,
           },
         };
+
+        if (ds.uid) {
+          gb.datasource = {
+            name: ds.uid,
+          };
+        }
+
         variables.push(gb);
         break;
       default:
@@ -656,7 +774,12 @@ function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annota
         iconColor: a.iconColor,
         builtIn: Boolean(a.builtIn),
         query: {
-          kind: a.datasource?.type || getDefaultDatasourceType(),
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: a.datasource?.type || getDefaultDatasourceType(),
+          datasource: {
+            name: a.datasource?.uid,
+          },
           spec: {
             ...a.target,
           },
@@ -691,7 +814,10 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
             LEGACY_STRING_VALUE_KEY in v.spec.query.spec
               ? v.spec.query.spec[LEGACY_STRING_VALUE_KEY]
               : v.spec.query.spec,
-          datasource: v.spec.datasource,
+          datasource: {
+            type: v.spec.query?.spec.group,
+            uid: v.spec.query?.spec.datasource?.name,
+          },
           sort: transformSortVariableToEnumV1(v.spec.sort),
           refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
           regex: v.spec.regex,
@@ -783,7 +909,10 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
       case 'GroupByVariable':
         const gv: VariableModel = {
           ...commonProperties,
-          datasource: v.spec.datasource,
+          datasource: {
+            uid: v.datasource?.name,
+            type: v.group,
+          },
           current: v.spec.current,
           options: v.spec.options,
         };
@@ -792,7 +921,10 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
       case 'AdhocVariable':
         const av: VariableModel = {
           ...commonProperties,
-          datasource: v.spec.datasource,
+          datasource: {
+            uid: v.datasource?.name,
+            type: v.group,
+          },
           // @ts-expect-error
           baseFilters: v.spec.baseFilters,
           filters: v.spec.filters,
@@ -806,22 +938,6 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
     }
   }
   return variables;
-}
-
-function getAnnotationsV1(annotations: DashboardV2Spec['annotations']): AnnotationQuery[] {
-  // @ts-expect-error - target v2 query is not compatible with v1 target
-  return annotations.map((a) => {
-    return {
-      name: a.spec.name,
-      datasource: a.spec.datasource,
-      enable: a.spec.enable,
-      hide: a.spec.hide,
-      iconColor: a.spec.iconColor,
-      builtIn: a.spec.builtIn ? 1 : 0,
-      target: a.spec.query?.spec,
-      filter: a.spec.filter,
-    };
-  });
 }
 
 interface LibraryPanelDTO extends Pick<Panel, 'libraryPanel' | 'id' | 'title' | 'gridPos' | 'type'> {}
@@ -839,46 +955,11 @@ function getPanelsV1(
   }
 
   for (const item of layout.spec.items) {
-    if (item.kind === 'GridLayoutItem') {
-      const panel = panels[item.spec.element.name];
-      const v1Panel = transformV2PanelToV1Panel(panel, item);
-      panelsV1.push(v1Panel);
-      if (v1Panel.id ?? 0 > maxPanelId) {
-        maxPanelId = v1Panel.id ?? 0;
-      }
-    } else if (item.kind === 'GridLayoutRow') {
-      const row: RowPanel = {
-        id: -1, // Temporarily set to -1, updated later to be unique
-        type: 'row',
-        title: item.spec.title,
-        collapsed: item.spec.collapsed,
-        repeat: item.spec.repeat ? item.spec.repeat.value : undefined,
-        gridPos: {
-          x: 0,
-          y: item.spec.y,
-          w: 24,
-          h: GRID_ROW_HEIGHT,
-        },
-        panels: [],
-      };
-
-      const rowPanels = [];
-      for (const panel of item.spec.elements) {
-        const panelElement = panels[panel.spec.element.name];
-        const v1Panel = transformV2PanelToV1Panel(panelElement, panel, item.spec.y + GRID_ROW_HEIGHT + panel.spec.y);
-        rowPanels.push(v1Panel);
-        if (v1Panel.id ?? 0 > maxPanelId) {
-          maxPanelId = v1Panel.id ?? 0;
-        }
-      }
-      if (item.spec.collapsed) {
-        // When a row is collapsed, panels inside it are stored in the panels property.
-        row.panels = rowPanels;
-        panelsV1.push(row);
-      } else {
-        panelsV1.push(row);
-        panelsV1.push(...rowPanels);
-      }
+    const panel = panels[item.spec.element.name];
+    const v1Panel = transformV2PanelToV1Panel(panel, item);
+    panelsV1.push(v1Panel);
+    if (v1Panel.id ?? 0 > maxPanelId) {
+      maxPanelId = v1Panel.id ?? 0;
     }
   }
 
@@ -902,12 +983,12 @@ function transformV2PanelToV1Panel(
     const panel = p.spec;
     return {
       id: panel.id,
-      type: panel.vizConfig.kind,
+      type: panel.vizConfig.group,
       title: panel.title,
       description: panel.description,
       fieldConfig: transformMappingsToV1(panel.vizConfig.spec.fieldConfig),
       options: panel.vizConfig.spec.options,
-      pluginVersion: panel.vizConfig.spec.pluginVersion,
+      pluginVersion: panel.vizConfig.version,
       links:
         // @ts-expect-error - Panel link is wrongly typed as DashboardLink
         panel.links?.map<DashboardLink>((l) => ({
@@ -919,7 +1000,10 @@ function transformV2PanelToV1Panel(
         return {
           refId: q.spec.refId,
           hide: q.spec.hidden,
-          datasource: q.spec.datasource,
+          datasource: {
+            uid: q.spec.query.spec.datasource?.uid,
+            type: q.spec.query.spec.group,
+          },
           ...q.spec.query.spec,
         };
       }),
@@ -1103,7 +1187,8 @@ function transformToV1VariableTypes(variable: TypedVariableModelV2): VariableTyp
 }
 
 export function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: ObjectMeta): DashboardDataDTO {
-  const annotations = getAnnotationsV1(spec.annotations);
+  const annotations = spec.annotations.map(transformV2ToV1AnnotationQuery);
+
   const variables = getVariablesV1(spec.variables);
   const panels = getPanelsV1(spec.elements, spec.layout);
   return {

@@ -2,8 +2,8 @@ import { memo, useCallback } from 'react';
 import * as React from 'react';
 
 import { FieldMatcherID, fieldMatchers } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { t } from '../../utils/i18n';
 import { Input } from '../Input/Input';
 
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
@@ -28,11 +28,14 @@ export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props
 });
 FieldNameByRegexMatcherEditor.displayName = 'FieldNameByRegexMatcherEditor';
 
-export const fieldNameByRegexMatcherItem: FieldMatcherUIRegistryItem<string> = {
+export const getFieldNameByRegexMatcherItem: () => FieldMatcherUIRegistryItem<string> = () => ({
   id: FieldMatcherID.byRegexp,
   component: FieldNameByRegexMatcherEditor,
   matcher: fieldMatchers.get(FieldMatcherID.byRegexp),
-  name: 'Fields with name matching regex',
-  description: 'Set properties for fields with names matching a regex',
+  name: t('grafana-ui.matchers-ui.name-field-name-by-regex-matcher', 'Fields with name matching regex'),
+  description: t(
+    'grafana-ui.matchers-ui.description-field-name-by-regex-matcher',
+    'Set properties for fields with names matching a regex'
+  ),
   optionsToLabel: (options) => options,
-};
+});

@@ -1,4 +1,6 @@
-import { Trans } from '../../../../../../core/internationalization';
+import { Trans } from '@grafana/i18n';
+import mimirLogoSvg from 'img/alerting/mimir_logo.svg';
+
 import { RuleFormType } from '../../../types/rule-form';
 
 import { DisabledTooltip } from './DisabledTooltip';
@@ -22,7 +24,7 @@ const MimirFlavoredType = ({ selected = false, disabled = false, onClick }: Prop
             </Trans>
           </span>
         }
-        image="public/img/alerting/mimir_logo.svg"
+        image={mimirLogoSvg}
         selected={selected}
         disabled={disabled}
         value={RuleFormType.cloudAlerting}

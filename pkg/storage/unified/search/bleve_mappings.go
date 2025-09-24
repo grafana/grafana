@@ -9,10 +9,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func GetBleveMappings(fields resource.SearchableDocumentFields) (mapping.IndexMapping, error) {
+func GetBleveMappings(fields resource.SearchableDocumentFields, useFullNgram bool) (mapping.IndexMapping, error) {
 	mapper := bleve.NewIndexMapping()
 
-	err := RegisterCustomAnalyzers(mapper)
+	err := RegisterCustomAnalyzers(mapper, useFullNgram)
 	if err != nil {
 		return nil, err
 	}
@@ -136,6 +136,10 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 		IncludeTermVectors: false,
 		IncludeInAll:       false,
 	})
+
+	referenceMapper := bleve.NewDocumentMapping()
+	referenceMapper.DefaultAnalyzer = keyword.Name
+	mapper.AddSubDocumentMapping("reference", referenceMapper)
 
 	labelMapper := bleve.NewDocumentMapping()
 	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)

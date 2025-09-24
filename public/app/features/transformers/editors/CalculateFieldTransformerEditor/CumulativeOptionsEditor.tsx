@@ -1,7 +1,7 @@
 import { ReducerID, SelectableValue } from '@grafana/data';
 import { CalculateFieldMode, CalculateFieldTransformerOptions, CumulativeOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { InlineField, Select, StatsPicker } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { LABEL_WIDTH } from './constants';
 

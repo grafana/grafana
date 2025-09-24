@@ -54,7 +54,7 @@ export interface FieldConfig<TOptions = any> {
   description?: string;
 
   /**
-   * An explict path to the field in the datasource.  When the frame meta includes a path,
+   * An explicit path to the field in the datasource.  When the frame meta includes a path,
    * This will default to `${frame.meta.path}/${field.name}
    *
    * When defined, this value can be used as an identifier within the datasource scope, and
@@ -158,7 +158,7 @@ export interface Field<T = any> {
 
   /**
    * When type === FieldType.Time, this can optionally store
-   * the nanosecond-precison fractions as integers between
+   * the nanosecond-precision fractions as integers between
    * 0 and 999999.
    */
   nanos?: number[];

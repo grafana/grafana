@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -29,9 +30,7 @@ func TestMain(m *testing.M) {
 
 // TestIntegrationIndexView tests the Grafana index view.
 func TestIntegrationIndexView(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("CSP enabled", func(t *testing.T) {
 		grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -127,9 +126,7 @@ func loginUser(t *testing.T, addr, username, password string) *http.Cookie {
 
 // TestIntegrationIndexViewAnalytics tests the Grafana index view has the analytics identifiers.
 func TestIntegrationIndexViewAnalytics(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	testCases := []struct {
 		name           string
@@ -149,7 +146,7 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 			name:           "okta only and last",
 			authModule:     login.OktaAuthModule,
 			setID:          "uuid-1234-5678-9101",
-			wantIdentifier: "admin@grafana.com@http://localhost:3000/",
+			wantIdentifier: "test@grafana.com@http://localhost:3000/",
 		},
 		{
 			name:           "gcom last",
@@ -167,9 +164,9 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 			addr, env := testinfra.StartGrafanaEnv(t, grafDir, cfgPath)
 			store := env.SQLStore
 			createdUser := testinfra.CreateUser(t, store, env.Cfg, user.CreateUserCommand{
-				Login:    "admin",
-				Password: "admin",
-				Email:    "admin@grafana.com",
+				Login:    "test",
+				Password: "test",
+				Email:    "test@grafana.com",
 				OrgID:    1,
 			})
 
@@ -195,7 +192,7 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 			}
 
 			// perform login
-			session := loginUser(t, addr, "admin", "admin")
+			session := loginUser(t, addr, "test", "test")
 
 			// nolint:bodyclose
 			response, html := makeRequest(t, addr, session)

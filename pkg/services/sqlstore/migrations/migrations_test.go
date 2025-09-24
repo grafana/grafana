@@ -14,11 +14,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMigrations(t *testing.T) {
@@ -72,13 +73,11 @@ func TestMigrations(t *testing.T) {
 }
 
 func TestIntegrationMigrationLock(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	dbType := sqlutil.GetTestDBType()
-	// skip for SQLite and Spanner since there is no database locking (only migrator locking)
-	if dbType == SQLite || dbType == Spanner {
+	// skip for SQLite since there is no database locking (only migrator locking)
+	if dbType == SQLite {
 		t.Skip()
 	}
 
@@ -235,8 +234,8 @@ func TestMigratorLocking(t *testing.T) {
 func TestDatabaseLocking(t *testing.T) {
 	dbType := sqlutil.GetTestDBType()
 
-	// skip for SQLite and Spanner since there is no database locking (only migrator locking)
-	if dbType == SQLite || dbType == Spanner {
+	// skip for SQLite since there is no database locking (only migrator locking)
+	if dbType == SQLite {
 		t.Skip()
 	}
 

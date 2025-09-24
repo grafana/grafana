@@ -1,9 +1,8 @@
 import { useForm } from 'react-hook-form';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Field, Modal } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
-import { Trans } from '../../../core/internationalization';
 import { ServerDiscoveryFormData } from '../types';
 import { isUrlValid } from '../utils/url';
 

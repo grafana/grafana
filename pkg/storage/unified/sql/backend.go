@@ -5,24 +5,26 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"iter"
 	"math"
 	"sync"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
-	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/grafana/grafana/pkg/util/sqlite"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -36,7 +38,7 @@ const defaultPrunerHistoryLimit = 20
 
 type Backend interface {
 	resource.StorageBackend
-	resource.DiagnosticsServer
+	resourcepb.DiagnosticsServer
 	resource.LifecycleHooks
 }
 
@@ -89,29 +91,6 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	}, nil
 }
 
-// pruningKey is a comparable key for pruning history.
-type pruningKey struct {
-	namespace string
-	group     string
-	resource  string
-	name      string
-}
-
-// Small abstraction to allow for different pruner implementations.
-// This can be removed once the debouncer is deployed.
-type pruner interface {
-	Add(key pruningKey) error
-	Start(ctx context.Context)
-}
-
-type noopPruner struct{}
-
-func (p *noopPruner) Add(key pruningKey) error {
-	return nil
-}
-
-func (p *noopPruner) Start(ctx context.Context) {}
-
 type backend struct {
 	//general
 	isHA bool
@@ -146,7 +125,7 @@ type backend struct {
 	// testing
 	simulatedNetworkLatency time.Duration
 
-	historyPruner pruner
+	historyPruner resource.Pruner
 	withPruner    bool
 }
 
@@ -203,26 +182,26 @@ func (b *backend) initLocked(ctx context.Context) error {
 func (b *backend) initPruner(ctx context.Context) error {
 	if !b.withPruner {
 		b.log.Debug("using noop history pruner")
-		b.historyPruner = &noopPruner{}
+		b.historyPruner = &resource.NoopPruner{}
 		return nil
 	}
 	b.log.Debug("using debounced history pruner")
 	// Initialize history pruner.
-	pruner, err := debouncer.NewGroup(debouncer.DebouncerOpts[pruningKey]{
+	pruner, err := debouncer.NewGroup(debouncer.DebouncerOpts[resource.PruningKey]{
 		Name:       "history_pruner",
 		BufferSize: 1000,
 		MinWait:    time.Second * 30,
 		MaxWait:    time.Minute * 5,
-		ProcessHandler: func(ctx context.Context, key pruningKey) error {
+		ProcessHandler: func(ctx context.Context, key resource.PruningKey) error {
 			return b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 				res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, &sqlPruneHistoryRequest{
 					SQLTemplate:  sqltemplate.New(b.dialect),
 					HistoryLimit: defaultPrunerHistoryLimit,
-					Key: &resource.ResourceKey{
-						Namespace: key.namespace,
-						Group:     key.group,
-						Resource:  key.resource,
-						Name:      key.name,
+					Key: &resourcepb.ResourceKey{
+						Namespace: key.Namespace,
+						Group:     key.Group,
+						Resource:  key.Resource,
+						Name:      key.Name,
 					},
 				})
 				if err != nil {
@@ -233,20 +212,20 @@ func (b *backend) initPruner(ctx context.Context) error {
 					return fmt.Errorf("failed to get rows affected: %w", err)
 				}
 				b.log.Debug("pruned history successfully",
-					"namespace", key.namespace,
-					"group", key.group,
-					"resource", key.resource,
-					"name", key.name,
+					"namespace", key.Namespace,
+					"group", key.Group,
+					"resource", key.Resource,
+					"name", key.Name,
 					"rows", rows)
 				return nil
 			})
 		},
-		ErrorHandler: func(key pruningKey, err error) {
+		ErrorHandler: func(key resource.PruningKey, err error) {
 			b.log.Error("failed to prune history",
-				"namespace", key.namespace,
-				"group", key.group,
-				"resource", key.resource,
-				"name", key.name,
+				"namespace", key.Namespace,
+				"group", key.Group,
+				"resource", key.Resource,
+				"name", key.Name,
 				"error", err)
 		},
 		Reg: b.reg,
@@ -260,14 +239,14 @@ func (b *backend) initPruner(ctx context.Context) error {
 	return nil
 }
 
-func (b *backend) IsHealthy(ctx context.Context, r *resource.HealthCheckRequest) (*resource.HealthCheckResponse, error) {
+func (b *backend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
 	// ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "isHealthy"}))
 
 	if err := b.db.PingContext(ctx); err != nil {
 		return nil, err
 	}
 
-	return &resource.HealthCheckResponse{Status: resource.HealthCheckResponse_SERVING}, nil
+	return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_SERVING}, nil
 }
 
 func (b *backend) Stop(_ context.Context) error {
@@ -277,7 +256,7 @@ func (b *backend) Stop(_ context.Context) error {
 
 // GetResourceStats implements Backend.
 func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+".GetResourceStats")
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceStats")
 	defer span.End()
 
 	req := &sqlStatsRequest{
@@ -300,6 +279,8 @@ func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCou
 			}
 			if row.Count > int64(minCount) {
 				res = append(res, row)
+			} else {
+				b.log.Debug("skipping stats for resource with count less than min count", "namespace", row.Namespace, "group", row.Group, "resource", row.Resource, "count", row.Count, "minCount", minCount)
 			}
 		}
 		return err
@@ -313,11 +294,11 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 	defer span.End()
 	// TODO: validate key ?
 	switch event.Type {
-	case resource.WatchEvent_ADDED:
+	case resourcepb.WatchEvent_ADDED:
 		return b.create(ctx, event)
-	case resource.WatchEvent_MODIFIED:
+	case resourcepb.WatchEvent_MODIFIED:
 		return b.update(ctx, event)
-	case resource.WatchEvent_DELETED:
+	case resourcepb.WatchEvent_DELETED:
 		return b.delete(ctx, event)
 	default:
 		return 0, fmt.Errorf("unsupported event type")
@@ -328,7 +309,6 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"Create")
 	defer span.End()
 
-	guid := uuid.New().String()
 	folder := ""
 	if event.Object != nil {
 		folder = event.Object.GetFolder()
@@ -340,12 +320,12 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
-			GUID:        guid,
+			GUID:        event.GUID,
 		}); err != nil {
-			if isRowAlreadyExistsError(err) {
-				return guid, resource.ErrResourceAlreadyExists
+			if IsRowAlreadyExistsError(err) {
+				return event.GUID, resource.ErrResourceAlreadyExists
 			}
-			return guid, fmt.Errorf("insert into resource: %w", err)
+			return event.GUID, fmt.Errorf("insert into resource: %w", err)
 		}
 
 		// 2. Insert into resource history
@@ -354,20 +334,20 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			WriteEvent:  event,
 			Folder:      folder,
 			Generation:  event.Object.GetGeneration(),
-			GUID:        guid,
+			GUID:        event.GUID,
 		}); err != nil {
-			return guid, fmt.Errorf("insert into resource history: %w", err)
+			return event.GUID, fmt.Errorf("insert into resource history: %w", err)
 		}
-		_ = b.historyPruner.Add(pruningKey{
-			namespace: event.Key.Namespace,
-			group:     event.Key.Group,
-			resource:  event.Key.Resource,
-			name:      event.Key.Name,
+		_ = b.historyPruner.Add(resource.PruningKey{
+			Namespace: event.Key.Namespace,
+			Group:     event.Key.Group,
+			Resource:  event.Key.Resource,
+			Name:      event.Key.Name,
 		})
 		if b.simulatedNetworkLatency > 0 {
 			time.Sleep(b.simulatedNetworkLatency)
 		}
-		return guid, nil
+		return event.GUID, nil
 	})
 
 	if err != nil {
@@ -386,11 +366,10 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 	return rv, nil
 }
 
-// isRowAlreadyExistsError checks if the error is the result of the row inserted already existing.
-func isRowAlreadyExistsError(err error) bool {
-	var sqlite sqlite3.Error
-	if errors.As(err, &sqlite) {
-		return sqlite.ExtendedCode == sqlite3.ErrConstraintUnique
+// IsRowAlreadyExistsError checks if the error is the result of the row inserted already existing.
+func IsRowAlreadyExistsError(err error) bool {
+	if sqlite.IsUniqueConstraintViolation(err) {
+		return true
 	}
 
 	var pg *pgconn.PgError
@@ -417,7 +396,7 @@ func isRowAlreadyExistsError(err error) bool {
 func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"Update")
 	defer span.End()
-	guid := uuid.New().String()
+
 	folder := ""
 	if event.Object != nil {
 		folder = event.Object.GetFolder()
@@ -430,10 +409,10 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
-			GUID:        guid,
+			GUID:        event.GUID,
 		})
 		if err != nil {
-			return guid, fmt.Errorf("resource update: %w", err)
+			return event.GUID, fmt.Errorf("resource update: %w", err)
 		}
 
 		// 2. Insert into resource history
@@ -441,18 +420,18 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
-			GUID:        guid,
+			GUID:        event.GUID,
 			Generation:  event.Object.GetGeneration(),
 		}); err != nil {
-			return guid, fmt.Errorf("insert into resource history: %w", err)
+			return event.GUID, fmt.Errorf("insert into resource history: %w", err)
 		}
-		_ = b.historyPruner.Add(pruningKey{
-			namespace: event.Key.Namespace,
-			group:     event.Key.Group,
-			resource:  event.Key.Resource,
-			name:      event.Key.Name,
+		_ = b.historyPruner.Add(resource.PruningKey{
+			Namespace: event.Key.Namespace,
+			Group:     event.Key.Group,
+			Resource:  event.Key.Resource,
+			Name:      event.Key.Name,
 		})
-		return guid, nil
+		return event.GUID, nil
 	})
 
 	if err != nil {
@@ -474,7 +453,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"Delete")
 	defer span.End()
-	guid := uuid.New().String()
+
 	folder := ""
 	if event.Object != nil {
 		folder = event.Object.GetFolder()
@@ -484,10 +463,10 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		_, err := dbutil.Exec(ctx, tx, sqlResourceDelete, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
-			GUID:        guid,
+			GUID:        event.GUID,
 		})
 		if err != nil {
-			return guid, fmt.Errorf("delete resource: %w", err)
+			return event.GUID, fmt.Errorf("delete resource: %w", err)
 		}
 
 		// 2. Add event to resource history
@@ -495,18 +474,18 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
-			GUID:        guid,
+			GUID:        event.GUID,
 			Generation:  0, // object does not exist
 		}); err != nil {
-			return guid, fmt.Errorf("insert into resource history: %w", err)
+			return event.GUID, fmt.Errorf("insert into resource history: %w", err)
 		}
-		_ = b.historyPruner.Add(pruningKey{
-			namespace: event.Key.Namespace,
-			group:     event.Key.Group,
-			resource:  event.Key.Resource,
-			name:      event.Key.Name,
+		_ = b.historyPruner.Add(resource.PruningKey{
+			Namespace: event.Key.Namespace,
+			Group:     event.Key.Group,
+			Resource:  event.Key.Resource,
+			Name:      event.Key.Name,
 		})
-		return guid, nil
+		return event.GUID, nil
 	})
 
 	if err != nil {
@@ -525,7 +504,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	return rv, nil
 }
 
-func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.BackendReadResponse {
+func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
 	_, span := b.tracer.Start(ctx, tracePrefix+".Read")
 	defer span.End()
 
@@ -558,7 +537,7 @@ func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *
 	return res
 }
 
-func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+func (b *backend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"List")
 	defer span.End()
 
@@ -568,10 +547,6 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 
 	if req.Options == nil || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
 		return 0, fmt.Errorf("missing group or resource")
-	}
-
-	if req.Source != resource.ListRequest_STORE {
-		return b.getHistory(ctx, req, cb)
 	}
 
 	// TODO: think about how to handler VersionMatch. We should be able to use latest for the first page (only).
@@ -584,75 +559,15 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 	return b.listLatest(ctx, req, cb)
 }
 
-type listIter struct {
-	rows    db.Rows
-	offset  int64
-	listRV  int64
-	sortAsc bool
+func (b *backend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"ListHistory")
+	defer span.End()
 
-	// any error
-	err error
-
-	// The row
-	guid      string
-	rv        int64
-	value     []byte
-	namespace string
-	resource  string
-	group     string
-	name      string
-	folder    string
+	return b.getHistory(ctx, req, cb)
 }
-
-// ContinueToken implements resource.ListIterator.
-func (l *listIter) ContinueToken() string {
-	return resource.ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
-}
-
-func (l *listIter) ContinueTokenWithCurrentRV() string {
-	return resource.ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
-}
-
-func (l *listIter) Error() error {
-	return l.err
-}
-
-func (l *listIter) Name() string {
-	return l.name
-}
-
-func (l *listIter) Namespace() string {
-	return l.namespace
-}
-
-func (l *listIter) Folder() string {
-	return l.folder
-}
-
-// ResourceVersion implements resource.ListIterator.
-func (l *listIter) ResourceVersion() int64 {
-	return l.rv
-}
-
-// Value implements resource.ListIterator.
-func (l *listIter) Value() []byte {
-	return l.value
-}
-
-// Next implements resource.ListIterator.
-func (l *listIter) Next() bool {
-	if l.rows.Next() {
-		l.offset++
-		l.err = l.rows.Scan(&l.guid, &l.rv, &l.namespace, &l.resource, &l.group, &l.name, &l.folder, &l.value)
-		return true
-	}
-	return false
-}
-
-var _ resource.ListIterator = (*listIter)(nil)
 
 // listLatest fetches the resources from the resource table.
-func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"listLatest")
 	defer span.End()
 
@@ -673,9 +588,9 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 
 		listReq := sqlResourceListRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
-			Request:     new(resource.ListRequest),
+			Request:     new(resourcepb.ListRequest),
 		}
-		listReq.Request = proto.Clone(req).(*resource.ListRequest)
+		listReq.Request = proto.Clone(req).(*resourcepb.ListRequest)
 
 		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceList, listReq)
 		if rows != nil {
@@ -695,8 +610,78 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 	return iter.listRV, err
 }
 
+// ListModifiedSince will return all resources that have changed since the given resource version.
+// If a resource has changes, only the latest change will be returned.
+func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+	// We don't use an explicit transaction for fetching LatestRV and subsequent fetching of resources.
+	// To guarantee that we don't include events with RV > LatestRV, we include the check in SQL query.
+
+	// Fetch latest RV.
+	latestRv, err := b.fetchLatestRV(ctx, b.db, b.dialect, key.Group, key.Resource)
+	if err != nil {
+		return 0, func(yield func(*resource.ModifiedResource, error) bool) {
+			yield(nil, err)
+		}
+	}
+
+	// If latest RV is the same as request RV, there's nothing to report, and we can avoid running another query.
+	if latestRv == sinceRv {
+		return latestRv, func(yield func(*resource.ModifiedResource, error) bool) { /* nothing to return */ }
+	}
+
+	// since results are sorted by name ASC and rv DESC, we can get away with tracking the last seen
+	lastSeen := ""
+
+	seq := func(yield func(*resource.ModifiedResource, error) bool) {
+		query := sqlResourceListModifiedSinceRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Namespace:   key.Namespace,
+			Group:       key.Group,
+			Resource:    key.Resource,
+			SinceRv:     sinceRv,
+			LatestRv:    latestRv,
+		}
+
+		rows, err := dbutil.QueryRows(ctx, b.db, sqlResourceHistoryListModifiedSince, query)
+		if err != nil {
+			yield(nil, err)
+			return
+		}
+		if rows != nil {
+			defer func() {
+				if cerr := rows.Close(); cerr != nil {
+					b.log.Warn("listSinceModified error closing rows", "error", cerr)
+				}
+			}()
+		}
+
+		for rows.Next() {
+			mr := &resource.ModifiedResource{}
+			if err := rows.Scan(&mr.Key.Namespace, &mr.Key.Group, &mr.Key.Resource, &mr.Key.Name, &mr.ResourceVersion, &mr.Action, &mr.Value); err != nil {
+				if !yield(nil, err) {
+					return
+				}
+				continue
+			}
+
+			// Deduplicate by name (namespace, group, and resource are always the same in the result set)
+			if mr.Key.Name == lastSeen {
+				continue
+			}
+
+			lastSeen = mr.Key.Name
+
+			if !yield(mr, nil) {
+				return
+			}
+		}
+	}
+
+	return latestRv, seq
+}
+
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
-func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"listAtRevision")
 	defer span.End()
 
@@ -705,7 +690,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 	if req.NextPageToken != "" {
 		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, fmt.Errorf("get continue token: %w", err)
+			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
 		iter.listRV = continueToken.ResourceVersion
 		iter.offset = continueToken.StartOffset
@@ -756,7 +741,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 }
 
 // readHistory fetches the resource history from the resource_history table.
-func (b *backend) readHistory(ctx context.Context, key *resource.ResourceKey, rv int64) *resource.BackendReadResponse {
+func (b *backend) readHistory(ctx context.Context, key *resourcepb.ResourceKey, rv int64) *resource.BackendReadResponse {
 	_, span := b.tracer.Start(ctx, tracePrefix+".ReadHistory")
 	defer span.End()
 
@@ -787,25 +772,27 @@ func (b *backend) readHistory(ctx context.Context, key *resource.ResourceKey, rv
 }
 
 // getHistory fetches the resource history from the resource_history table.
-func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"getHistory")
 	defer span.End()
 	listReq := sqlGetHistoryRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Key:         req.Options.Key,
-		Trash:       req.Source == resource.ListRequest_TRASH,
+		Trash:       req.Source == resourcepb.ListRequest_TRASH,
 	}
 
 	// We are assuming that users want history in ascending order
 	// when they are using NotOlderThan matching, and descending order
 	// for Unset (default) and Exact matching.
-	listReq.SortAscending = req.GetVersionMatchV2() == resource.ResourceVersionMatchV2_NotOlderThan
+	listReq.SortAscending = req.GetVersionMatchV2() == resourcepb.ResourceVersionMatchV2_NotOlderThan
 
-	iter := &listIter{}
+	iter := &listIter{
+		useCurrentRV: true, // use the current RV for the continue token instead of the listRV
+	}
 	if req.NextPageToken != "" {
 		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, fmt.Errorf("get continue token: %w", err)
+			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
 		listReq.StartRV = continueToken.ResourceVersion
 		listReq.SortAscending = continueToken.SortAscending
@@ -813,7 +800,7 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 	iter.sortAsc = listReq.SortAscending
 
 	// Set ExactRV when using Exact matching
-	if req.VersionMatchV2 == resource.ResourceVersionMatchV2_Exact {
+	if req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_Exact {
 		if req.ResourceVersion <= 0 {
 			return 0, fmt.Errorf("expecting an explicit resource version query when using Exact matching")
 		}
@@ -821,12 +808,12 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 	}
 
 	// Set MinRV when using NotOlderThan matching to filter at the database level
-	if req.ResourceVersion > 0 && req.VersionMatchV2 == resource.ResourceVersionMatchV2_NotOlderThan {
+	if req.ResourceVersion > 0 && req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_NotOlderThan {
 		listReq.MinRV = req.ResourceVersion
 	}
 
 	// Ignore last deleted history record when listing the trash, using exact matching or not older than matching with a specific RV
-	useLatestDeletionAsMinRV := listReq.MinRV == 0 && !listReq.Trash && req.VersionMatchV2 != resource.ResourceVersionMatchV2_Exact
+	useLatestDeletionAsMinRV := listReq.MinRV == 0 && !listReq.Trash && req.VersionMatchV2 != resourcepb.ResourceVersionMatchV2_Exact
 
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
@@ -836,14 +823,21 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 		}
 
 		if useLatestDeletionAsMinRV {
-			latestDeletedRV, err := b.fetchLatestHistoryRV(ctx, tx, b.dialect, req.Options.Key, resource.WatchEvent_DELETED)
+			latestDeletedRV, err := b.fetchLatestHistoryRV(ctx, tx, b.dialect, req.Options.Key, resourcepb.WatchEvent_DELETED)
 			if err != nil {
 				return err
 			}
 			listReq.MinRV = latestDeletedRV + 1
 		}
 
-		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceHistoryGet, listReq)
+		var rows db.Rows
+		if listReq.Trash {
+			// unlike history, trash will not return an object if an object of the same name is live
+			// (i.e. in the resource table)
+			rows, err = dbutil.QueryRows(ctx, tx, sqlResourceTrash, listReq)
+		} else {
+			rows, err = dbutil.QueryRows(ctx, tx, sqlResourceHistoryGet, listReq)
+		}
 		if rows != nil {
 			defer func() {
 				if err := rows.Close(); err != nil {
@@ -914,7 +908,7 @@ func (b *backend) fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqlte
 }
 
 // fetchLatestHistoryRV returns the current maximum RV in the resource_history table
-func (b *backend) fetchLatestHistoryRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resource.ResourceKey, eventType resource.WatchEvent_Type) (int64, error) {
+func (b *backend) fetchLatestHistoryRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resourcepb.ResourceKey, eventType resourcepb.WatchEvent_Type) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"fetchLatestHistoryRV")
 	defer span.End()
 	res, err := dbutil.QueryRow(ctx, x, sqlResourceHistoryReadLatestRV, sqlResourceHistoryReadLatestRVRequest{

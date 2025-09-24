@@ -8,7 +8,9 @@ import (
 	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
@@ -20,7 +22,40 @@ type RemotePrimaryForkedAlertmanager struct {
 	remote   remoteAlertmanager
 }
 
-func NewRemotePrimaryForkedAlertmanager(log log.Logger, internal notifier.Alertmanager, remote remoteAlertmanager) *RemotePrimaryForkedAlertmanager {
+// NewRemotePrimaryFactory returns a function to override the default AM factory in the multi-org Alertmanager.
+func NewRemotePrimaryFactory(
+	cfg AlertmanagerConfig,
+	store stateStore,
+	crypto Crypto,
+	autogenFn AutogenFn,
+	m *metrics.RemoteAlertmanager,
+	t tracing.Tracer,
+) func(notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
+	return func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
+		return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+			// Create the internal Alertmanager.
+			internalAM, err := factoryFn(ctx, orgID)
+			if err != nil {
+				return nil, err
+			}
+
+			// Create the remote Alertmanager.
+			cfg.OrgID = orgID
+			cfg.PromoteConfig = true
+			l := log.New("ngalert.forked-alertmanager.remote-primary")
+			remoteAM, err := NewAlertmanager(ctx, cfg, store, crypto, autogenFn, m, t)
+			if err != nil {
+				l.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
+				return internalAM, nil
+			}
+
+			// Use both implementations in the forked Alertmanager.
+			return newRemotePrimaryForkedAlertmanager(l, internalAM, remoteAM), nil
+		}
+	}
+}
+
+func newRemotePrimaryForkedAlertmanager(log log.Logger, internal notifier.Alertmanager, remote remoteAlertmanager) *RemotePrimaryForkedAlertmanager {
 	return &RemotePrimaryForkedAlertmanager{
 		log:      log,
 		internal: internal,

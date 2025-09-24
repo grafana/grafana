@@ -1,5 +1,5 @@
+import { Trans } from '@grafana/i18n';
 import { Stack, TextLink } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 interface Props {
   feedbackUrl: string;

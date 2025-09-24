@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { IconButton, Text, Stack, Card } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export interface Props {
   step: string;
@@ -49,6 +49,7 @@ export const SidebarItem = ({ step, index, currentStep, onStepClick, styles }: P
 
   return (
     <Card
+      noMargin
       className={`${styles.stepItem} ${isCurrent ? styles.activeStep : ''} ${styles.plainCard}`}
       onClick={handleClick}
     >

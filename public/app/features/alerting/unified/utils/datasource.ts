@@ -8,7 +8,7 @@ import {
   AlertManagerImplementation,
   AlertmanagerChoice,
 } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import {
   DataSourceRulesSourceIdentifier as DataSourceRulesSourceIdentifier,
   GrafanaRulesSourceIdentifier,
@@ -18,6 +18,7 @@ import {
   RulesSourceIdentifier,
   RulesSourceUid,
 } from 'app/types/unified-alerting';
+import grafanaIconSvg from 'img/grafana_icon.svg';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { PERMISSIONS_CONTACT_POINTS } from '../components/contact-points/permissions';
@@ -26,6 +27,7 @@ import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
 import { instancesPermissions, notificationsPermissions, silencesPermissions } from './access-control';
+import { isExtraConfig } from './alertmanager/extraConfigs';
 import { getAllDataSources } from './config';
 import { isGrafanaRuleIdentifier } from './rules';
 
@@ -51,6 +53,7 @@ export enum DataSourceType {
 
 export interface AlertManagerDataSource {
   name: string;
+  displayName?: string;
   imgUrl: string;
   meta?: DataSourceInstanceSettings['meta'];
   hasConfigurationAPI?: boolean;
@@ -112,7 +115,7 @@ export function isAlertmanagerDataSourceInterestedInAlerts(
 
 const grafanaAlertManagerDataSource: AlertManagerDataSource = {
   name: GRAFANA_RULES_SOURCE_NAME,
-  imgUrl: 'public/img/grafana_icon.svg',
+  imgUrl: grafanaIconSvg,
   hasConfigurationAPI: true,
 };
 
@@ -299,6 +302,11 @@ export function getDatasourceAPIUid(dataSourceName: string) {
   if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
     return GRAFANA_RULES_SOURCE_NAME;
   }
+
+  if (isExtraConfig(dataSourceName)) {
+    return dataSourceName;
+  }
+
   const ds = getDataSourceByName(dataSourceName);
   if (!ds) {
     throw new Error(`Datasource "${dataSourceName}" not found`);
@@ -335,6 +343,10 @@ export function getDefaultOrFirstCompatibleDataSource(): DataSourceInstanceSetti
 
 export function isDataSourceManagingAlerts(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
   return ds.jsonData.manageAlerts !== false; //if this prop is undefined it defaults to true
+}
+
+export function isDataSourceAllowedAsRecordingRulesTarget(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
+  return ds.jsonData.allowAsRecordingRulesTarget !== false; // if this prop is undefined it defaults to true
 }
 
 export function ruleIdentifierToRuleSourceIdentifier(ruleIdentifier: RuleIdentifier): RulesSourceIdentifier {
@@ -388,3 +400,7 @@ export const SUPPORTED_RULE_SOURCE_TYPES = [
   GRAFANA_RULES_SOURCE_NAME,
   ...SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES,
 ] as const satisfies string[];
+
+export function isValidRecordingRulesTarget(ds: DataSourceInstanceSettings<DataSourceJsonData>): boolean {
+  return isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type) && isDataSourceAllowedAsRecordingRulesTarget(ds);
+}

@@ -1,6 +1,5 @@
 import PackageJson from '@npmcli/package-json';
 import { mkdir } from 'node:fs/promises';
-import { join, dirname } from 'node:path';
 
 const cwd = process.cwd();
 
@@ -8,18 +7,17 @@ try {
   const pkgJson = await PackageJson.load(cwd);
   const cjsIndex = pkgJson.content.publishConfig?.main ?? pkgJson.content.main;
   const esmIndex = pkgJson.content.publishConfig?.module ?? pkgJson.content.module;
-  const cjsTypes = pkgJson.content.publishConfig?.types ?? pkgJson.content.types;
-  const esmTypes = `./${join(dirname(esmIndex), 'index.d.mts')}`;
+  const typesIndex = pkgJson.content.publishConfig?.types ?? pkgJson.content.types;
 
   const exports = {
     './package.json': './package.json',
     '.': {
       import: {
-        types: esmTypes,
+        types: typesIndex,
         default: esmIndex,
       },
       require: {
-        types: cjsTypes,
+        types: typesIndex,
         default: cjsIndex,
       },
     },
@@ -33,9 +31,17 @@ try {
     };
   }
 
+  // Fix for @grafana/i18n so eslint-plugin can be imported by consumers
+  if (pkgJson.content.name === '@grafana/i18n') {
+    exports['./eslint-plugin'] = {
+      import: './dist/eslint/index.cjs',
+      require: './dist/eslint/index.cjs',
+    };
+  }
+
   pkgJson.update({
     main: cjsIndex,
-    types: cjsTypes,
+    types: typesIndex,
     module: esmIndex,
     exports,
   });
@@ -46,25 +52,34 @@ try {
   // then generate an additional "nested" package.json for typescript resolution that
   // doesn't use the exports property in package.json.
   if (process.env.ALIAS_PACKAGE_NAME) {
-    const aliasName = process.env.ALIAS_PACKAGE_NAME;
+    const aliasNames = process.env.ALIAS_PACKAGE_NAME.split(',');
+
+    const additionalExports = aliasNames.reduce((acc, alias) => {
+      acc[`./${alias}`] = {
+        import: {
+          types: typesIndex.replace('index', alias),
+          default: esmIndex.replace('index', alias),
+        },
+        require: {
+          types: typesIndex.replace('index', alias),
+          default: cjsIndex.replace('index', alias),
+        },
+      };
+      return acc;
+    }, {});
+
     pkgJson.update({
       exports: {
         ...pkgJson.content.exports,
-        [`./${aliasName}`]: {
-          import: {
-            types: esmTypes.replace('index', aliasName),
-            default: esmIndex.replace('index', aliasName),
-          },
-          require: {
-            types: cjsTypes.replace('index', aliasName),
-            default: cjsIndex.replace('index', aliasName),
-          },
-        },
+        ...additionalExports,
       },
-      files: [...pkgJson.content.files, aliasName],
+      files: [...pkgJson.content.files, ...aliasNames],
     });
     await pkgJson.save();
-    await createAliasPackageJsonFiles(pkgJson.content, aliasName);
+
+    for await (const aliasName of aliasNames) {
+      await createAliasPackageJsonFiles(pkgJson.content, aliasName);
+    }
   }
 } catch (e) {
   console.error(e);
@@ -80,7 +95,7 @@ async function createAliasPackageJsonFiles(packageJsonContent, aliasName) {
     const pkgJson = await PackageJson.create(pkgJsonPath, {
       data: {
         name: pkgName,
-        types: `../dist/cjs/${aliasName}.d.cts`,
+        types: `../dist/types/${aliasName}.d.ts`,
         main: `../dist/cjs/${aliasName}.cjs`,
         module: `../dist/esm/${aliasName}.mjs`,
       },

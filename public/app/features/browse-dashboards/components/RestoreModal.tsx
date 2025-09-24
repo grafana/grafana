@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, Space, Text } from '@grafana/ui';
 
 import { FolderPicker } from '../../../core/components/Select/FolderPicker';
-import { Trans, t } from '../../../core/internationalization';
 
 export interface RestoreModalProps {
   isOpen: boolean;
@@ -30,6 +30,7 @@ export const RestoreModal = ({
       ? dashboardOrigin[0]
       : undefined;
   });
+
   const numberOfDashboards = selectedDashboards.length;
 
   const onRestore = async () => {
@@ -62,7 +63,6 @@ export const RestoreModal = ({
           <Space v={1} />
           <FolderPicker onChange={setRestoreTarget} value={restoreTarget} />
         </>
-        // TODO: replace by list of dashboards (list up to 5 dashboards) or number (from 6 dashboards)?
       }
       confirmText={
         isLoading
@@ -73,7 +73,7 @@ export const RestoreModal = ({
       onDismiss={onDismiss}
       onConfirm={onRestore}
       title={t('recently-deleted.restore-modal.title', 'Restore Dashboards')}
-      disabled={restoreTarget === undefined}
+      disabled={restoreTarget === undefined || isLoading}
       {...props}
     />
   );

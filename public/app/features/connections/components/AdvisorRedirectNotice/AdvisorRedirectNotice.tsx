@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
 import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   alertContent: css({
@@ -27,6 +27,7 @@ export function AdvisorRedirectNotice() {
   const styles = useStyles2(getStyles);
   const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
   const [showNotice, setShowNotice] = useState(false);
+
   const canUseAdvisor = hasAdminRights && config.featureToggles.grafanaAdvisor && !!config.apps['grafana-advisor-app'];
 
   useEffect(() => {

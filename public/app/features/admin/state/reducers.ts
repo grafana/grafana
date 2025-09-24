@@ -1,22 +1,18 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+import { LdapState, LdapConnectionInfo, LdapError, SyncInfo, LdapUser } from 'app/types/ldap';
 import {
-  LdapConnectionInfo,
-  LdapError,
-  LdapState,
-  LdapUser,
-  SyncInfo,
-  UserAdminError,
   UserAdminState,
   UserDTO,
   UserOrg,
   UserSession,
+  UserAdminError,
   UserListAdminState,
   UserFilter,
   UserListAnonymousDevicesState,
   UserAnonymousDeviceDTO,
   AnonUserFilter,
-} from 'app/types';
+} from 'app/types/user';
 
 const initialLdapState: LdapState = {
   connectionInfo: [],

@@ -554,8 +554,8 @@ func TestDiff(t *testing.T) {
 		if rule1.MissingSeriesEvalsToResolve != rule2.MissingSeriesEvalsToResolve {
 			diff := diffs.GetDiffsForField("MissingSeriesEvalsToResolve")
 			assert.Len(t, diff, 1)
-			assert.Equal(t, *rule1.MissingSeriesEvalsToResolve, int(diff[0].Left.Int()))
-			assert.Equal(t, *rule2.MissingSeriesEvalsToResolve, int(diff[0].Right.Int()))
+			assert.Equal(t, *rule1.MissingSeriesEvalsToResolve, diff[0].Left.Int())
+			assert.Equal(t, *rule2.MissingSeriesEvalsToResolve, diff[0].Right.Int())
 			difCnt++
 		}
 
@@ -850,6 +850,22 @@ func TestDiff(t *testing.T) {
 					},
 				},
 			},
+			{
+				name:                 "should detect changes in ActiveTimeIntervals",
+				notificationSettings: CopyNotificationSettings(baseSettings, NSMuts.WithActiveTimeIntervals(baseSettings.ActiveTimeIntervals[0]+"-modified", baseSettings.ActiveTimeIntervals[1]+"-modified")),
+				diffs: []cmputil.Diff{
+					{
+						Path:  "NotificationSettings[0].ActiveTimeIntervals[0]",
+						Left:  reflect.ValueOf(baseSettings.ActiveTimeIntervals[0]),
+						Right: reflect.ValueOf(baseSettings.ActiveTimeIntervals[0] + "-modified"),
+					},
+					{
+						Path:  "NotificationSettings[0].ActiveTimeIntervals[1]",
+						Left:  reflect.ValueOf(baseSettings.ActiveTimeIntervals[1]),
+						Right: reflect.ValueOf(baseSettings.ActiveTimeIntervals[1] + "-modified"),
+					},
+				},
+			},
 		}
 
 		for _, tt := range testCases {
@@ -985,14 +1001,14 @@ func TestAlertRuleGetMissingSeriesEvalsToResolve(t *testing.T) {
 	t.Run("should return the default 2 if MissingSeriesEvalsToResolve is nil", func(t *testing.T) {
 		rule := RuleGen.GenerateRef()
 		rule.MissingSeriesEvalsToResolve = nil
-		require.Equal(t, 2, rule.GetMissingSeriesEvalsToResolve())
+		require.Equal(t, int64(2), rule.GetMissingSeriesEvalsToResolve())
 	})
 
 	t.Run("should return the correct value", func(t *testing.T) {
 		rule := RuleGen.With(
 			RuleMuts.WithMissingSeriesEvalsToResolve(3),
 		).GenerateRef()
-		require.Equal(t, 3, rule.GetMissingSeriesEvalsToResolve())
+		require.Equal(t, int64(3), rule.GetMissingSeriesEvalsToResolve())
 	})
 }
 
@@ -1011,6 +1027,13 @@ func TestAlertRuleCopy(t *testing.T) {
 		}})).GenerateRef()
 		copied := rule.Copy()
 		require.NotSame(t, rule.Metadata.PrometheusStyleRule, copied.Metadata.PrometheusStyleRule)
+	})
+	t.Run("should return an exact copy of recording rule", func(t *testing.T) {
+		for i := 0; i < 100; i++ {
+			rule := RuleGen.With(RuleGen.WithAllRecordingRules()).GenerateRef()
+			copied := rule.Copy()
+			require.Empty(t, rule.Diff(copied))
+		}
 	})
 }
 
@@ -1033,6 +1056,48 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 
 	for i := 0; i < 1000; i++ {
 		rule := RuleGen.Generate()
+		v := reflect.ValueOf(rule)
+
+		for j := 0; j < tpe.NumField(); j++ {
+			field := tpe.Field(j)
+			value := v.Field(j)
+			if !value.IsValid() || value.Kind() == reflect.Ptr && value.IsNil() || value.IsZero() {
+				continue
+			}
+			delete(fields, field.Name)
+			if len(fields) == 0 {
+				return
+			}
+		}
+	}
+
+	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", maps.Keys(fields))
+}
+
+func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
+	ignoredFields := map[string]struct{}{
+		"ID":                          {},
+		"IsPaused":                    {},
+		"NoDataState":                 {},
+		"ExecErrState":                {},
+		"Condition":                   {},
+		"KeepFiringFor":               {},
+		"MissingSeriesEvalsToResolve": {},
+		"For":                         {},
+		"NotificationSettings":        {},
+	}
+
+	tpe := reflect.TypeOf(AlertRule{})
+	fields := make(map[string]struct{}, tpe.NumField())
+	for i := 0; i < tpe.NumField(); i++ {
+		if _, ok := ignoredFields[tpe.Field(i).Name]; ok {
+			continue
+		}
+		fields[tpe.Field(i).Name] = struct{}{}
+	}
+
+	for i := 0; i < 1000; i++ {
+		rule := RuleGen.With(RuleGen.WithAllRecordingRules()).Generate()
 		v := reflect.ValueOf(rule)
 
 		for j := 0; j < tpe.NumField(); j++ {
@@ -1097,7 +1162,7 @@ func TestValidateAlertRule(t *testing.T) {
 	t.Run("missingSeriesEvalsToResolve", func(t *testing.T) {
 		testCases := []struct {
 			name                        string
-			missingSeriesEvalsToResolve *int
+			missingSeriesEvalsToResolve *int64
 			expectedErrorContains       string
 		}{
 			{
@@ -1106,17 +1171,17 @@ func TestValidateAlertRule(t *testing.T) {
 			},
 			{
 				name:                        "should reject negative value",
-				missingSeriesEvalsToResolve: util.Pointer(-1),
+				missingSeriesEvalsToResolve: util.Pointer[int64](-1),
 				expectedErrorContains:       "field `missing_series_evals_to_resolve` must be greater than 0",
 			},
 			{
 				name:                        "should reject 0",
-				missingSeriesEvalsToResolve: util.Pointer(0),
+				missingSeriesEvalsToResolve: util.Pointer[int64](0),
 				expectedErrorContains:       "field `missing_series_evals_to_resolve` must be greater than 0",
 			},
 			{
 				name:                        "should accept positive value",
-				missingSeriesEvalsToResolve: util.Pointer(2),
+				missingSeriesEvalsToResolve: util.Pointer[int64](2),
 			},
 		}
 
@@ -1243,7 +1308,7 @@ func TestAlertRule_PrometheusRuleDefinition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := tt.rule.PrometheusRuleDefinition()
-			isPrometheusRule := tt.rule.ImportedFromPrometheus()
+			isPrometheusRule := tt.rule.HasPrometheusRuleDefinition()
 
 			if tt.expectedErrorMsg != "" {
 				require.Error(t, err)
@@ -1254,6 +1319,132 @@ func TestAlertRule_PrometheusRuleDefinition(t *testing.T) {
 				require.Equal(t, tt.expectedResult, result)
 				require.True(t, isPrometheusRule)
 			}
+		})
+	}
+}
+
+func TestAlertRule_ImportedPrometheusRule(t *testing.T) {
+	tests := []struct {
+		name     string
+		rule     AlertRule
+		expected bool
+	}{
+		{
+			name: "rule with prometheus definition",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "some rule definition",
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "rule with converted prometheus rule label",
+			rule: AlertRule{
+				Labels: map[string]string{
+					ConvertedPrometheusRuleLabel: "true",
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "rule with both prometheus definition and converted label",
+			rule: AlertRule{
+				Labels: map[string]string{
+					ConvertedPrometheusRuleLabel: "true",
+				},
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "some rule definition",
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "rule with empty prometheus definition",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "",
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "rule with nil prometheus style rule",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: nil,
+				},
+			},
+			expected: false,
+		},
+		{
+			name:     "rule with empty metadata",
+			rule:     AlertRule{},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.rule.ImportedPrometheusRule()
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestWithoutPrivateLabels(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    map[string]string
+		expected map[string]string
+	}{
+		{
+			name:     "nil map",
+			input:    nil,
+			expected: nil,
+		},
+		{
+			name:     "empty map",
+			input:    map[string]string{},
+			expected: map[string]string{},
+		},
+		{
+			name: "removes only specific private labels",
+			input: map[string]string{
+				ConvertedPrometheusRuleLabel:        "removed",
+				AutogeneratedRouteLabel:             "removed",
+				AutogeneratedRouteReceiverNameLabel: "removed",
+				AutogeneratedRouteSettingsHashLabel: "removed",
+				DashboardUIDAnnotation:              "kept",
+				PanelIDAnnotation:                   "kept",
+				"__custom_label__":                  "kept", // User-defined labels with __ are kept
+				"normal_label":                      "kept",
+				"another_label":                     "kept",
+			},
+			expected: map[string]string{
+				"__custom_label__":     "kept",
+				"normal_label":         "kept",
+				"another_label":        "kept",
+				DashboardUIDAnnotation: "kept",
+				PanelIDAnnotation:      "kept",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			inputCopy := maps.Clone(tt.input)
+
+			result := WithoutPrivateLabels(tt.input)
+
+			require.Equal(t, tt.expected, result)
+			require.Equal(t, inputCopy, tt.input, "input map should not be modified")
 		})
 	}
 }

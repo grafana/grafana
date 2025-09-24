@@ -5,7 +5,7 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { clearButtonStyles } from '../Button';
+import { clearButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 
 const getStyles = (theme: GrafanaTheme2) => ({

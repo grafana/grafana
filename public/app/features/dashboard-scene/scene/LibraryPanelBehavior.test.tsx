@@ -2,14 +2,22 @@ import { of } from 'rxjs';
 
 import { FieldType, LoadingState, PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
-import { SceneCanvasText, sceneGraph, SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import {
+  SceneCanvasText,
+  SceneDataTransformer,
+  sceneGraph,
+  SceneGridLayout,
+  SceneQueryRunner,
+  VizPanel,
+} from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
 import * as libpanels from 'app/features/library-panels/state/api';
 
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree } from '../utils/test-utils';
+import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -141,6 +149,21 @@ describe('LibraryPanelBehavior', () => {
     expect(behavior.state._loadedPanel?.uid).toBe('111');
   });
 
+  it('should set the title to the library panel title if the feature toggle is enabled', async () => {
+    config.featureToggles.preferLibraryPanelTitle = true;
+    const { gridItem } = await buildTestSceneWithLibraryPanel();
+
+    expect(gridItem.state.body.state.title).toBe('LibraryPanel A title');
+    config.featureToggles.preferLibraryPanelTitle = false;
+  });
+
+  it('should set the title to the panel title if the feature toggle is disabled', async () => {
+    config.featureToggles.preferLibraryPanelTitle = false;
+    const { gridItem } = await buildTestSceneWithLibraryPanel();
+
+    expect(gridItem.state.body.state.title).toBe('Panel A');
+  });
+
   it('should not update panel if behavior not part of a vizPanel', async () => {
     const { gridItem } = await buildTestSceneWithLibraryPanel();
 
@@ -163,6 +186,24 @@ describe('LibraryPanelBehavior', () => {
 
     expect(behaviorClone.state._loadedPanel?.name).toBe('LibraryPanel A');
     expect(behaviorClone.state._loadedPanel?.uid).toBe('111');
+  });
+
+  it('should use dashboard panel ID for data provider filtering', async () => {
+    const { gridItem } = await buildTestSceneWithLibraryPanel();
+
+    const vizPanel = gridItem.state.body;
+
+    // Get the dashboard panel ID from the VizPanel key
+    const dashboardPanelId = getPanelIdForVizPanel(vizPanel);
+    expect(dashboardPanelId).toBe(1); // Based on key 'panel-1'
+
+    // Verify the data provider uses the dashboard panel ID for filtering
+    const dataProvider = vizPanel.state.$data as SceneDataTransformer;
+    expect(dataProvider).toBeDefined();
+
+    // Access the SceneQueryRunner through the SceneDataTransformer
+    const queryRunner = dataProvider.state?.$data as SceneQueryRunner;
+    expect(queryRunner?.state?.dataLayerFilter?.panelId).toBe(dashboardPanelId);
   });
 });
 

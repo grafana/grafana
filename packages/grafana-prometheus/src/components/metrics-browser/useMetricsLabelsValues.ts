@@ -1,16 +1,20 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { useDebounce } from 'react-use';
 
 import { TimeRange } from '@grafana/data';
 
-import PromQlLanguageProvider from '../../language_provider';
+import { EMPTY_SELECTOR, LAST_USED_LABELS_KEY, METRIC_LABEL } from '../../constants';
+import { PrometheusLanguageProviderInterface } from '../../language_provider';
 
+import { Metric } from './MetricsBrowserContext';
 import { buildSelector } from './selectorBuilder';
-import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, LAST_USED_LABELS_KEY, Metric, METRIC_LABEL } from './types';
 
-export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: PromQlLanguageProvider) => {
+export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: PrometheusLanguageProviderInterface) => {
   const timeRangeRef = useRef<TimeRange>(timeRange);
+  const lastSeriesLimitRef = useRef(languageProvider.datasource.seriesLimit);
+  const isInitializedRef = useRef(false);
 
-  const [seriesLimit, setSeriesLimit] = useState(DEFAULT_SERIES_LIMIT);
+  const [seriesLimit, setSeriesLimit] = useState(languageProvider.datasource.seriesLimit);
   const [err, setErr] = useState('');
   const [status, setStatus] = useState('Ready');
   const [validationStatus, setValidationStatus] = useState('');
@@ -22,6 +26,11 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   const [lastSelectedLabelKey, setLastSelectedLabelKey] = useState('');
   const [labelValues, setLabelValues] = useState<Record<string, string[]>>({});
   const [selectedLabelValues, setSelectedLabelValues] = useState<Record<string, string[]>>({});
+  const [isLoadingLabelKeys, setIsLoadingLabelKeys] = useState(false);
+  const [isLoadingLabelValues, setIsLoadingLabelValues] = useState(false);
+
+  // Memoize the effective series limit to use the default when seriesLimit is empty
+  const effectiveLimit = useMemo(() => seriesLimit, [seriesLimit]);
 
   // We don't want to trigger fetching for small amount of time changes.
   // When MetricsBrowser re-renders for any reason we might receive a new timerange.
@@ -35,7 +44,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     }
   }, [timeRange]);
 
-  //Handler for error processing - logs the error and updates UI state
+  // Handler for error processing - logs the error and updates UI state
   const handleError = useCallback((e: unknown, msg: string) => {
     if (e instanceof Error) {
       setErr(`${msg}: ${e.message}`);
@@ -48,10 +57,10 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   // Get metadata details for a metric if available
   const getMetricDetails = useCallback(
     (metricName: string) => {
-      const meta = languageProvider.metricsMetadata;
+      const meta = languageProvider.retrieveMetricsMetadata();
       return meta && meta[metricName] ? `(${meta[metricName].type}) ${meta[metricName].help}` : undefined;
     },
-    [languageProvider.metricsMetadata]
+    [languageProvider]
   );
 
   // Builds a safe selector string from metric name and label values
@@ -83,12 +92,11 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   const fetchMetrics = useCallback(
     async (safeSelector?: string) => {
       try {
-        const fetchedMetrics = await languageProvider.fetchSeriesValuesWithMatch(
+        const fetchedMetrics = await languageProvider.queryLabelValues(
           timeRangeRef.current,
           METRIC_LABEL,
           safeSelector,
-          'MetricsBrowser_M',
-          seriesLimit
+          effectiveLimit
         );
         return fetchedMetrics.map((m) => ({
           name: m,
@@ -99,7 +107,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
         return [];
       }
     },
-    [getMetricDetails, handleError, languageProvider, seriesLimit]
+    [getMetricDetails, handleError, languageProvider, effectiveLimit]
   );
 
   // Fetches label keys based on an optional selector
@@ -107,19 +115,15 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   const fetchLabelKeys = useCallback(
     async (safeSelector?: string) => {
       try {
-        if (safeSelector) {
-          return Object.keys(
-            await languageProvider.fetchSeriesLabelsMatch(timeRangeRef.current, safeSelector, seriesLimit)
-          );
-        } else {
-          return (await languageProvider.fetchLabels(timeRangeRef.current, undefined, seriesLimit)) || [];
-        }
+        return (
+          (await languageProvider.queryLabelKeys(timeRangeRef.current, safeSelector || undefined, effectiveLimit)) ?? []
+        );
       } catch (e) {
         handleError(e, 'Error fetching labels');
         return [];
       }
     },
-    [handleError, languageProvider, seriesLimit]
+    [handleError, languageProvider, effectiveLimit]
   );
 
   // Fetches values for multiple label keys and also prepares selected values
@@ -129,24 +133,25 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
       const newSelectedLabelValues: Record<string, string[]> = {};
       for (const lk of labelKeys) {
         try {
-          const values = await languageProvider.fetchSeriesValuesWithMatch(
+          const values = await languageProvider.queryLabelValues(
             timeRangeRef.current,
             lk,
             safeSelector,
-            `MetricsBrowser_LV_${lk}`,
-            seriesLimit
+            effectiveLimit
           );
           transformedLabelValues[lk] = values;
           if (selectedLabelValues[lk]) {
             newSelectedLabelValues[lk] = [...selectedLabelValues[lk]];
           }
+
+          setErr('');
         } catch (e) {
           handleError(e, 'Error fetching label values');
         }
       }
       return [transformedLabelValues, newSelectedLabelValues];
     },
-    [handleError, languageProvider, selectedLabelValues, seriesLimit]
+    [handleError, languageProvider, selectedLabelValues, effectiveLimit]
   );
 
   // Initial set up of the Metrics Browser
@@ -160,6 +165,8 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
       const transformedMetrics: Metric[] = await fetchMetrics(safeSelector);
 
       // Labels
+      setIsLoadingLabelKeys(true);
+      setIsLoadingLabelValues(true);
       const transformedLabelKeys: string[] = await fetchLabelKeys(safeSelector);
 
       // Selected Labels
@@ -170,8 +177,10 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
 
       setMetrics(transformedMetrics);
       setLabelKeys(transformedLabelKeys);
+      setIsLoadingLabelKeys(false);
       setSelectedLabelKeys(labelKeysInLocalStorage);
       setLabelValues(transformedLabelValues);
+      setIsLoadingLabelValues(false);
     },
     [fetchLabelKeys, fetchLabelValues, fetchMetrics, loadSelectedLabelsFromStorage]
   );
@@ -179,8 +188,22 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   // Initialize the hook
   useEffect(() => {
     initialize(selectedMetric, selectedLabelValues);
+    isInitializedRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // We use debounce here to prevent fetching data on every keystroke
+  // We also track the seriesLimit change to prevent fetching twice right after the initialization
+  useDebounce(
+    () => {
+      if (isInitializedRef.current && lastSeriesLimitRef.current !== seriesLimit) {
+        initialize(selectedMetric, selectedLabelValues);
+        lastSeriesLimitRef.current = seriesLimit;
+      }
+    },
+    300,
+    [seriesLimit]
+  );
 
   // Handles metric selection changes.
   // If a metric selected it fetches the labels of that metric
@@ -192,8 +215,11 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     const selector = buildSafeSelector(newSelectedMetric, selectedLabelValues);
     try {
       const fetchedMetrics = await fetchMetrics(selector);
+      setIsLoadingLabelKeys(true);
       const fetchedLabelKeys = await fetchLabelKeys(selector);
       const newSelectedLabelKeys = selectedLabelKeys.filter((slk) => fetchedLabelKeys.includes(slk));
+
+      setIsLoadingLabelValues(true);
       const [transformedLabelValues, newSelectedLabelValues] = await fetchLabelValues(
         newSelectedLabelKeys,
         newSelectedMetric === '' ? undefined : selector
@@ -202,8 +228,10 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
       setMetrics(fetchedMetrics);
       setSelectedMetric(newSelectedMetric);
       setLabelKeys(fetchedLabelKeys);
+      setIsLoadingLabelKeys(false);
       setSelectedLabelKeys(newSelectedLabelKeys);
       setLabelValues(transformedLabelValues);
+      setIsLoadingLabelValues(false);
       setSelectedLabelValues(newSelectedLabelValues);
     } catch (e: unknown) {
       handleError(e, 'Error fetching labels');
@@ -223,6 +251,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
       // Label key is not in the selectedLabelKeys. Let's add it.
       newSelectedLabelKeys.push(labelKey);
       const safeSelector = buildSafeSelector(selectedMetric, selectedLabelValues);
+      setIsLoadingLabelValues(true);
       const [values] = await fetchLabelValues([labelKey], safeSelector);
       newLabelValues[labelKey] = values[labelKey];
     } else {
@@ -235,6 +264,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     localStorage.setItem(LAST_USED_LABELS_KEY, JSON.stringify(newSelectedLabelKeys));
     setSelectedLabelKeys(newSelectedLabelKeys);
     setLabelValues(newLabelValues);
+    setIsLoadingLabelValues(false);
     setSelectedLabelValues(newSelectedLabelValues);
   };
 
@@ -272,14 +302,14 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     // Fetch new values
     let newLabelValues: Record<string, string[]> = {};
     if (selectedLabelKeys.length !== 0) {
+      setIsLoadingLabelValues(true);
       for (const lk of selectedLabelKeys) {
         try {
-          const fetchedLabelValues = await languageProvider.fetchSeriesValuesWithMatch(
+          const fetchedLabelValues = await languageProvider.queryLabelValues(
             timeRange,
             lk,
             safeSelector,
-            `MetricsBrowser_LV_${lk}`,
-            seriesLimit
+            effectiveLimit
           );
 
           // We don't want to discard values from last selected list.
@@ -294,6 +324,8 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
               fetchedLabelValues.includes(item)
             );
           }
+
+          setErr('');
         } catch (e: unknown) {
           handleError(e, 'Error fetching label values');
         }
@@ -308,6 +340,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
 
     // Fetch label keys
     // If there is no metric or label value selected fetch all the keys instead of creating a selector
+    setIsLoadingLabelKeys(true);
     let newLabelKeys: string[] = [];
     if (!safeSelector) {
       newLabelKeys = await fetchLabelKeys(undefined);
@@ -319,9 +352,11 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
 
     setMetrics(newMetrics);
     setLabelKeys(newLabelKeys);
+    setIsLoadingLabelKeys(false);
     setSelectedLabelKeys(newSelectedLabelKeys);
     setLastSelectedLabelKey(newLastSelectedLabelKey);
     setLabelValues(newLabelValues);
+    setIsLoadingLabelValues(false);
     setSelectedLabelValues(newSelectedLabelValues);
   };
 
@@ -332,7 +367,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     setErr('');
 
     try {
-      const results = await languageProvider.fetchLabelsWithMatch(timeRangeRef.current, selector);
+      const results = await languageProvider.queryLabelKeys(timeRangeRef.current, selector, effectiveLimit);
       setValidationStatus(`Selector is valid (${Object.keys(results).length} labels found)`);
     } catch (e) {
       handleError(e, 'Validation failed');
@@ -366,6 +401,8 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     metrics,
     labelKeys,
     labelValues,
+    isLoadingLabelKeys,
+    isLoadingLabelValues,
     selectedMetric,
     selectedLabelKeys,
     selectedLabelValues,

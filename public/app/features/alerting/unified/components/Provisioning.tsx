@@ -1,14 +1,15 @@
 import { ComponentPropsWithoutRef } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Tooltip } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 export enum ProvisionedResource {
   ContactPoint = 'contact point',
   Template = 'template',
-  MuteTiming = 'mute timing',
+  MuteTiming = 'time interval',
   AlertRule = 'alert rule',
   RootNotificationPolicy = 'root notification policy',
+  AlertEnrichment = 'alert enrichment',
 }
 
 // we'll omit the props we don't want consumers to overwrite and forward the others to the alert component

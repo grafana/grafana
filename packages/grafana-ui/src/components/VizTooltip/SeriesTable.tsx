@@ -2,9 +2,9 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2, GraphSeriesValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { SeriesIcon } from '../VizLegend/SeriesIcon';
 
 /**

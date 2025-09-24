@@ -17,7 +17,7 @@ jest.mock('../utils');
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createDataFrame, DataSourceInstanceSettings } from '@grafana/data';
+import { createDataFrame, DataSourceInstanceSettings, dateTime } from '@grafana/data';
 import { data } from '@grafana/flamegraph';
 import { DataSourceSrv, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
 
@@ -71,11 +71,15 @@ describe('<SpanDetail>', () => {
     traceFlameGraphs: { [span.spanID]: createDataFrame(data) },
     setRedrawListView: jest.fn(),
     timeRange: {
+      from: dateTime(0),
+      to: dateTime(1000000000000),
       raw: {
         from: 0,
         to: 1000000000000,
       },
     },
+    datasourceType: 'tempo',
+    datasourceUid: 'grafanacloud-traces',
   };
 
   span.tags = [
@@ -248,7 +252,7 @@ describe('<SpanDetail>', () => {
 
   it('renders deep link URL', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
-    expect(screen.getByText('test-spanID')).toBeInTheDocument();
+    expect(screen.getByTestId('share-span-button')).toBeInTheDocument();
   });
 
   it('renders the flame graph', async () => {
@@ -257,5 +261,30 @@ describe('<SpanDetail>', () => {
       expect(screen.getByText(/16.5 Bil/)).toBeInTheDocument();
       expect(screen.getByText(/(Count)/)).toBeInTheDocument();
     });
+  });
+
+  it('should load plugin links for resource attributes', () => {
+    const usePluginLinksMock = jest.fn().mockReturnValue({ links: [] });
+    setPluginLinksHook(usePluginLinksMock);
+    jest.requireMock('@grafana/runtime').usePluginLinks = usePluginLinksMock;
+
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+    expect(usePluginLinksMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        context: expect.objectContaining({
+          attributes: expect.objectContaining({
+            'http.url': expect.arrayContaining([expect.any(String)]),
+          }),
+          timeRange: {
+            from: 0,
+            to: 1000000000000,
+          },
+          datasource: {
+            type: 'tempo',
+            uid: 'grafanacloud-traces',
+          },
+        }),
+      })
+    );
   });
 });

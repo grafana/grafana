@@ -4,13 +4,20 @@ on:
     branches: ["main"]
     paths: ["docs/sources/**"]
   workflow_dispatch:
+
+permissions: {}
+
 jobs:
   vale:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      security-events: write
     container:
-      image: grafana/vale:latest
+      image: grafana/vale:latest # zizmor: ignore[unpinned-images]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - uses: grafana/writers-toolkit/vale-action@vale-action/v1 # zizmor: ignore[unpinned-uses]

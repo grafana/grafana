@@ -141,6 +141,15 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         top: 0,
       },
     }),
+    optionInfo: css({
+      label: 'combobox-option-info',
+      color: theme.colors.text.disabled,
+      cursor: 'not-allowed',
+      pointerEvents: 'none',
+      '&:hover': {
+        background: 'transparent',
+      },
+    }),
     clear: css({
       label: 'combobox-clear',
       cursor: 'pointer',
@@ -161,8 +170,8 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         cursor: 'text',
       },
     }),
-    addaptToParent: css({
-      label: 'combobox-addapt-to-parent',
+    adaptToParent: css({
+      label: 'combobox-adapt-to-parent',
       maxWidth: '100%',
       '[class*="input-wrapper-combobox-input"]': {
         maxWidth: '100%',

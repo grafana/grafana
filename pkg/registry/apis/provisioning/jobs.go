@@ -11,14 +11,26 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
+type JobQueueGetter interface {
+	GetJobQueue() jobs.Queue
+}
+
 type jobsConnector struct {
 	repoGetter RepoGetter
-	jobs       jobs.Queue
-	historic   jobs.History
+	jobs       JobQueueGetter
+	historic   jobs.HistoryReader
+}
+
+func NewJobsConnector(repoGetter RepoGetter, jobs JobQueueGetter, historic jobs.HistoryReader) *jobsConnector {
+	return &jobsConnector{
+		repoGetter: repoGetter,
+		jobs:       jobs,
+		historic:   historic,
+	}
 }
 
 func (*jobsConnector) New() runtime.Object {
@@ -49,20 +61,20 @@ func (c *jobsConnector) Connect(
 	opts runtime.Object,
 	responder rest.Responder,
 ) (http.Handler, error) {
-	repo, err := c.repoGetter.GetHealthyRepository(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-	cfg := repo.Config()
-
-	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx = r.Context()
+	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		prefix := fmt.Sprintf("/%s/jobs/", name)
 		idx := strings.Index(r.URL.Path, prefix)
 		if r.Method == http.MethodGet {
+			// GET operations: allow even for unhealthy repositories
+			repo, err := c.repoGetter.GetRepository(ctx, name)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+			cfg := repo.Config()
 			if idx > 0 {
 				jobUID := r.URL.Path[idx+len(prefix):]
-				if !validBlobID(jobUID) {
+				if !ValidUUID(jobUID) {
 					responder.Error(apierrors.NewBadRequest(fmt.Sprintf("invalid job uid: %s", jobUID)))
 					return
 				}
@@ -82,6 +94,15 @@ func (c *jobsConnector) Connect(
 			responder.Object(http.StatusOK, recent)
 			return
 		}
+
+		// POST operations: require healthy repository
+		repo, err := c.repoGetter.GetHealthyRepository(ctx, name)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+		cfg := repo.Config()
+
 		if idx > 0 {
 			responder.Error(apierrors.NewBadRequest("can not post to a job UID"))
 			return
@@ -94,7 +115,7 @@ func (c *jobsConnector) Connect(
 		}
 		spec.Repository = name
 
-		job, err := c.jobs.Insert(ctx, cfg.Namespace, spec)
+		job, err := c.jobs.GetJobQueue().Insert(ctx, cfg.Namespace, spec)
 		if err != nil {
 			responder.Error(err)
 			return
@@ -108,3 +129,19 @@ var (
 	_ rest.Storage         = (*jobsConnector)(nil)
 	_ rest.StorageMetadata = (*jobsConnector)(nil)
 )
+
+// ValidUUID ensures the ID is valid for a blob.
+// The ID is always a UUID. As such, this checks for something that can resemble a UUID.
+// This does not check for the ID to be an actual UUID, as the blob store may change their ID format, which we do not wish to stand in the way of.
+func ValidUUID(id string) bool {
+	for _, c := range id {
+		// [a-zA-Z0-9\-] are valid characters.
+		az := c >= 'a' && c <= 'z'
+		AZ := c >= 'A' && c <= 'Z'
+		digit := c >= '0' && c <= '9'
+		if !az && !AZ && !digit && c != '-' {
+			return false
+		}
+	}
+	return true
+}

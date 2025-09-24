@@ -69,8 +69,6 @@ The following list contains role-based access control actions.
 | `annotations:delete`                  | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                      | Delete annotations.                                                                                                                                                                                                       |
 | `annotations:read`                    | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                      | Read annotations and annotation tags.                                                                                                                                                                                     |
 | `annotations:write`                   | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                      | Update annotations.                                                                                                                                                                                                       |
-| `apikeys:read`                        | <ul><li>`apikeys:*`</li><li>`apikeys:id:*`</li></ul>                                                                | Read API keys.                                                                                                                                                                                                            |
-| `apikeys:delete`                      | <ul><li>`apikeys:*`</li><li>`apikeys:id:*`</li></ul>                                                                | Delete API keys.                                                                                                                                                                                                          |
 | `banners:write`                       | None                                                                                                                | Create [announcement banners](/docs/grafana-cloud/whats-new/2024-09-10-announcement-banner/).                                                                                                                             |
 | `dashboards:create`                   | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Create dashboards in one or more folders and their subfolders.                                                                                                                                                            |
 | `dashboards:delete`                   | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul>             | Delete one or more dashboards.                                                                                                                                                                                            |
@@ -238,6 +236,28 @@ For more information on Cloud Access Policies and how to use them, see [Access p
 | `alert.notifications.routes:read`            | None                               | Read notification policies.                                                                                 |
 | `alert.notifications.routes:write`           | None                               | Create new, update or delete notification policies                                                          |
 
+### Grafana Synthetic Monitoring action definitions
+
+The following list contains role-based access control actions used by Grafana Synthetic Monitoring.
+
+| Action                                                 | Applicable scopes | Description                                                 |
+| ------------------------------------------------------ | ----------------- | ----------------------------------------------------------- |
+| `grafana-synthetic-monitoring-app:read`                | None              | Read synthetic monitoring app.                              |
+| `grafana-synthetic-monitoring-app:write`               | None              | Write synthetic monitoring app.                             |
+| `grafana-synthetic-monitoring-app.checks:read`         | None              | Read checks in the Synthetic Monitoring app.                |
+| `grafana-synthetic-monitoring-app.checks:write`        | None              | Create and edit checks in the Synthetic Monitoring app.     |
+| `grafana-synthetic-monitoring-app.checks:delete`       | None              | Delete checks in the Synthetic Monitoring app.              |
+| `grafana-synthetic-monitoring-app.probes:read`         | None              | Read probes in the Synthetic Monitoring app.                |
+| `grafana-synthetic-monitoring-app.probes:write`        | None              | Create and edit probes in the Synthetic Monitoring app.     |
+| `grafana-synthetic-monitoring-app.probes:delete`       | None              | Delete probes in the Synthetic Monitoring app.              |
+| `grafana-synthetic-monitoring-app.alerts:read`         | None              | Read alerts in the Synthetic Monitoring app.                |
+| `grafana-synthetic-monitoring-app.alerts:write`        | None              | Create and edit alerts in the Synthetic Monitoring app.     |
+| `grafana-synthetic-monitoring-app.alerts:delete`       | None              | Delete alerts in the Synthetic Monitoring app.              |
+| `grafana-synthetic-monitoring-app.thresholds:read`     | None              | Read thresholds in the Synthetic Monitoring app.            |
+| `grafana-synthetic-monitoring-app.thresholds:write`    | None              | Create and edit thresholds in the Synthetic Monitoring app. |
+| `grafana-synthetic-monitoring-app.thresholds:delete`   | None              | Delete thresholds in the Synthetic Monitoring app.          |
+| `grafana-synthetic-monitoring-app.access-tokens:write` | None              | Create and delete synthetic monitoring access tokens.       |
+
 ## Scope definitions
 
 The following list contains role-based access control scopes.
@@ -246,7 +266,6 @@ The following list contains role-based access control scopes.
 | Scopes                                                               | Descriptions                                                                                                                                                                                                                                       |
 | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li></ul>       | Restrict an action to a set of annotations. For example, `annotations:*` matches any annotation, `annotations:type:dashboard` matches annotations associated with dashboards and `annotations:type:organization` matches organization annotations. |
-| <ul><li>`apikeys:*`</li><li>`apikeys:id:*`</li></ul>                 | Restrict an action to a set of API keys. For example, `apikeys:*` matches any API key, `apikey:id:1` matches the API key whose id is `1`.                                                                                                          |
 | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li></ul>          | Restrict an action to a set of dashboards. For example, `dashboards:*` matches any dashboard, and `dashboards:uid:1` matches the dashboard whose UID is `1`.                                                                                       |
 | <ul><li>`datasources:*`</li><li>`datasources:uid:*`</li></ul>        | Restrict an action to a set of data sources. For example, `datasources:*` matches any data source, and `datasources:uid:1` matches the data source whose UID is `1`.                                                                               |
 | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                | Restrict an action to a set of folders. For example, `folders:*` matches any folder, and `folders:uid:1` matches the folder whose UID is `1`. Note that permissions granted to a folder cascade down to subfolders located under it.               |

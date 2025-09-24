@@ -1,11 +1,12 @@
 import { connect, ConnectedProps } from 'react-redux';
 
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { RadioButtonGroup, LinkButton, FilterInput, InlineField } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
-import { AccessControlAction, StoreState } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { StoreState } from 'app/types/store';
 
 import { selectTotal } from '../invites/state/selectors';
 
@@ -45,7 +46,7 @@ export const UsersActionBarUnconnected = ({
   showInvites,
 }: Props): JSX.Element => {
   const options = [
-    { label: 'Users', value: 'users' },
+    { label: t('users.users-action-bar-unconnected.options.label.users', 'Users'), value: 'users' },
     { label: `Pending Invites (${pendingInvitesCount})`, value: 'invites' },
   ];
   const canAddToOrg: boolean = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd);

@@ -5,7 +5,7 @@ import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineLabel } from '../Forms/InlineLabel';
 
 import { SegmentSelect } from './SegmentSelect';

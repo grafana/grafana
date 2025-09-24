@@ -33,15 +33,26 @@ export const assertQueryLibraryTemplateExists = async (datasource: string, descr
   });
 };
 
+export const assertQueryLibraryTemplateDoesNotExists = async (description: string) => {
+  const selector = withinQueryLibrary();
+  await waitFor(() => {
+    const cell = selector.queryByRole('radio', {
+      name: description,
+    });
+
+    expect(cell).not.toBeInTheDocument();
+  });
+};
+
 export const assertAddToQueryLibraryButtonExists = async (value = true) => {
   await waitFor(() => {
     // ensures buttons for the card have been loaded to avoid false positives
     expect(withinQueryHistory().getByRole('button', { name: /run query/i })).toBeInTheDocument();
 
     if (value) {
-      expect(withinQueryHistory().queryByRole('button', { name: /add to library/i })).toBeInTheDocument();
+      expect(withinQueryHistory().queryByRole('button', { name: /Save query/i })).toBeInTheDocument();
     } else {
-      expect(withinQueryHistory().queryByRole('button', { name: /add to library/i })).not.toBeInTheDocument();
+      expect(withinQueryHistory().queryByRole('button', { name: /Save query/i })).not.toBeInTheDocument();
     }
   });
 };

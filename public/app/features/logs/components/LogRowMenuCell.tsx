@@ -11,9 +11,9 @@ import {
 } from 'react';
 
 import { LogRowContextOptions, LogRowModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
 import { ClipboardButton, IconButton, PopoverContent } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { handleOpenLogsContextClick } from '../utils';
 
@@ -194,7 +194,6 @@ function addClickListenersToNode(nodes: ReactNode[], row: LogRowModel) {
         return node;
       }
       return cloneElement(node, {
-        // @ts-expect-error
         onClick: (event: MouseEvent<HTMLElement>) => {
           onClick(event, row);
         },

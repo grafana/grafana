@@ -5,9 +5,9 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
-import { t } from 'app/core/internationalization';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 interface Props {
@@ -35,6 +35,7 @@ const PanelTypeCardComponent = ({
   children,
 }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
+
   const isDisabled = disabled || plugin.state === PluginState.deprecated;
   const cssClass = cx({
     [styles.item]: true,

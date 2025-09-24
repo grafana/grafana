@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
 import { useCallback, useState } from 'react';
 
-import { Button, ClipboardButton, HorizontalGroup, TextArea, Stack, TextLink } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans } from '@grafana/i18n';
+import { Button, ClipboardButton, TextArea, Stack, TextLink } from '@grafana/ui';
 
 import { SaveDashboardFormProps } from '../types';
 
@@ -55,7 +55,7 @@ export const SaveProvisionedDashboardForm = ({ dashboard, onCancel }: Omit<SaveD
           }}
           className={styles.json}
         />
-        <HorizontalGroup>
+        <Stack>
           <Button variant="secondary" onClick={onCancel} fill="outline">
             <Trans i18nKey="dashboard.save-provisioned-dashboard-form.cancel">Cancel</Trans>
           </Button>
@@ -67,7 +67,7 @@ export const SaveProvisionedDashboardForm = ({ dashboard, onCancel }: Omit<SaveD
           <Button type="submit" onClick={saveToFile}>
             <Trans i18nKey="dashboard.save-provisioned-dashboard-form.save-json-to-file">Save JSON to file</Trans>
           </Button>
-        </HorizontalGroup>
+        </Stack>
       </Stack>
     </>
   );

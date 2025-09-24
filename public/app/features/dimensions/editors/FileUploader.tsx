@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { Dispatch, SetStateAction, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { FileDropzone, useStyles2, Button, DropzoneFile, Field } from '@grafana/ui';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
-import { Trans, t } from 'app/core/internationalization';
 
 import { MediaType } from '../types';
 

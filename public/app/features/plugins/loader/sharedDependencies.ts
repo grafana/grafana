@@ -11,6 +11,7 @@ import 'vendor/flot/jquery.flot.gauge';
 
 import * as grafanaData from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
+// eslint-disable-next-line no-restricted-imports
 import * as grafanaUIraw from '@grafana/ui';
 import TableModel from 'app/core/TableModel';
 import config from 'app/core/config';
@@ -88,7 +89,7 @@ export const sharedDependenciesMap = {
   d3: () => import('d3'),
   emotion: () => import('@emotion/css'),
   // bundling grafana-ui in plugins requires sharing i18next state
-  i18next: () => import('i18next'),
+  i18next: () => import('@grafana/i18n/internal').then((module) => module.getI18nInstance()),
   jquery: {
     default: jquery,
     __useDefault: true,

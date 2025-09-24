@@ -2,9 +2,9 @@ import { isEmpty } from 'lodash';
 import { ReactElement, useMemo } from 'react';
 
 import { DataFrame, MatcherConfig, SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { SceneDataProvider } from '@grafana/scenes';
 import { InlineField, InlineFieldRow, MultiSelect } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export type LogFilter = {
   pluginIds?: Set<string>;

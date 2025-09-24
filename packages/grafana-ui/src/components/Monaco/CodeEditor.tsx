@@ -5,8 +5,8 @@ import { PureComponent } from 'react';
 import { GrafanaTheme2, monacoLanguageRegistry } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { withTheme2 } from '../../themes';
-import { Themeable2 } from '../../types';
+import { withTheme2 } from '../../themes/ThemeContext';
+import { Themeable2 } from '../../types/theme';
 
 import { ReactMonacoEditorLazy } from './ReactMonacoEditorLazy';
 import { registerSuggestions } from './suggestions';

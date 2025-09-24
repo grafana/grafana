@@ -1,13 +1,18 @@
 import { useMemo, useState } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Alert, ConfirmModal, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
-import { useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
+import {
+  useDeletecollectionRepositoryMutation,
+  useGetFrontendSettingsQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
-import { t, Trans } from 'app/core/internationalization';
 
 import GettingStarted from './GettingStarted/GettingStarted';
 import GettingStartedPage from './GettingStarted/GettingStartedPage';
+import { ConnectRepositoryButton } from './Shared/ConnectRepositoryButton';
 import { RepositoryList } from './Shared/RepositoryList';
+import { InlineSecureValueWarning } from './components/InlineSecureValueWarning';
 import { useRepositoryList } from './hooks/useRepositoryList';
 
 enum TabSelection {
@@ -63,6 +68,7 @@ export default function HomePage() {
     <Page
       navId="provisioning"
       subTitle={t('provisioning.home-page.subtitle', 'View and manage your configured repositories')}
+      actions={activeTab === TabSelection.Repositories && <ConnectRepositoryButton items={items} />}
     >
       <Page.Contents isLoading={isLoading}>
         {settings.data?.legacyStorage && (
@@ -83,6 +89,7 @@ export default function HomePage() {
             </Trans>
           </Alert>
         )}
+        <InlineSecureValueWarning items={items} />
         <ConfirmModal
           isOpen={showDeleteModal}
           title={t(

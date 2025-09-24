@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal } from '@grafana/ui';
-import { Repository, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning';
-import { Trans, t } from 'app/core/internationalization';
+import { Repository, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 
 import { PROVISIONING_URL } from '../constants';
+import { useGetActiveJob } from '../useGetActiveJob';
 
 interface Props {
   repository: Repository;
@@ -16,6 +17,7 @@ export function SyncRepository({ repository }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
   const name = repository.metadata?.name;
+  const activeJob = useGetActiveJob(name);
 
   const onClick = () => {
     if (!name) {
@@ -44,7 +46,7 @@ export function SyncRepository({ repository }: Props) {
             ? undefined
             : t('provisioning.sync-repository.tooltip-unhealthy-repository', 'Unable to pull an unhealthy repository')
         }
-        disabled={jobQuery.isLoading || !name || !isHealthy}
+        disabled={jobQuery.isLoading || activeJob?.status?.state === 'working' || !name || !isHealthy}
         onClick={onClick}
       >
         <Trans i18nKey="provisioning.sync-repository.pull">Pull</Trans>

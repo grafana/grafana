@@ -4,7 +4,7 @@ import {
   GridLayoutItemKind,
   RowsLayoutRowKind,
   TabsLayoutTabKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { LS_PANEL_COPY_KEY, LS_ROW_COPY_KEY, LS_TAB_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
 

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 
 export interface Props {
   children?: React.ReactNode;

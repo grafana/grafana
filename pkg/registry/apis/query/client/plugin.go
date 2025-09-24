@@ -64,7 +64,7 @@ var k8sNotFoundError error = &apierrors.StatusError{
 }
 
 // NewQueryClientForPluginClient creates a client that delegates to the internal plugins.Client stack
-func NewQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider, accessControl accesscontrol.AccessControl) clientapi.QueryDataClient {
+func newQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider, accessControl accesscontrol.AccessControl) clientapi.QueryDataClient {
 	return &pluginClient{
 		pluginClient: p,
 		pCtxProvider: ctx,
@@ -109,7 +109,6 @@ func getGrafanaDataSourceSettings(ctx context.Context) (*backend.DataSourceInsta
 	return adapters.ModelToInstanceSettings(ds, decryptFunc)
 }
 
-// ExecuteQueryData implements QueryHelper.
 func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	queries, dsRef, err := data.ToDataSourceQueries(req)
 	if err != nil {

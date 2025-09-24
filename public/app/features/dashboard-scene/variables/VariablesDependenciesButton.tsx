@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { NetworkGraphModal } from 'app/features/variables/inspect/NetworkGraphModal';
 
 import { createDependencyEdges, createDependencyNodes, filterNodesWithDependencies } from './utils';

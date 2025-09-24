@@ -5,14 +5,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -46,6 +45,13 @@ type xormRepositoryImpl struct {
 }
 
 func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Service) *xormRepositoryImpl {
+	// populate dashboard_uid at startup, to ensure safe downgrades & upgrades after
+	// the initial migration occurs
+	err := migrations.RunDashboardUIDMigrations(db.GetEngine().NewSession(), db.GetEngine().DriverName())
+	if err != nil {
+		l.Error("failed to populate dashboard_uid for annotations", "error", err)
+	}
+
 	return &xormRepositoryImpl{
 		cfg:        cfg,
 		db:         db,
@@ -255,6 +261,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 				annotation.id,
 				annotation.epoch as time,
 				annotation.epoch_end as time_end,
+				annotation.dashboard_uid,
 				annotation.dashboard_id,
 				annotation.panel_id,
 				annotation.new_state,
@@ -292,9 +299,13 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			params = append(params, query.AlertUID, query.OrgID)
 		}
 
-		if query.DashboardID != 0 {
+		// note: orgID is already required above
+		if query.DashboardUID != "" {
+			sql.WriteString(` AND a.dashboard_uid = ?`)
+			params = append(params, query.DashboardUID)
+		} else if query.DashboardID != 0 { // nolint: staticcheck
 			sql.WriteString(` AND a.dashboard_id = ?`)
-			params = append(params, query.DashboardID)
+			params = append(params, query.DashboardID) // nolint: staticcheck
 		}
 
 		if query.PanelID != 0 {
@@ -334,7 +345,6 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			}
 
 			if len(tags) > 0 {
-				// "at" is a keyword in Spanner and needs to be quoted.
 				tagsSubQuery := fmt.Sprintf(`
 			SELECT SUM(1) FROM annotation_tag `+r.db.Quote("at")+`
 			INNER JOIN tag on tag.id = `+r.db.Quote("at")+`.tag_id
@@ -352,13 +362,11 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			}
 		}
 
-		acFilter, err := r.getAccessControlFilter(query.SignedInUser, accessResources)
-		if err != nil {
-			return err
-		}
+		acFilter, acParams := r.getAccessControlFilter(accessResources, query.DashboardUID)
 		if acFilter != "" {
 			sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter))
 		}
+		params = append(params, acParams...)
 
 		// order of ORDER BY arguments match the order of a sql index for performance
 		orderBy := " ORDER BY a.org_id, a.epoch_end DESC, a.epoch DESC"
@@ -378,41 +386,35 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 	return items, err
 }
 
-func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester, accessResources *accesscontrol.AccessResources) (string, error) {
+func (r *xormRepositoryImpl) getAccessControlFilter(accessResources *accesscontrol.AccessResources, dashboardUID string) (string, []any) {
 	if accessResources.SkipAccessControlFilter {
 		return "", nil
 	}
 
 	var filters []string
+	var params []any
 
 	if accessResources.CanAccessOrgAnnotations {
 		filters = append(filters, "a.dashboard_id = 0")
 	}
 
 	if accessResources.CanAccessDashAnnotations {
-		var dashboardIDs []int64
-		for _, id := range accessResources.Dashboards {
-			dashboardIDs = append(dashboardIDs, id)
-		}
-
-		var inClause string
-		if len(dashboardIDs) == 0 {
-			inClause = "SELECT * FROM (SELECT 0 LIMIT 0) tt" // empty set
+		if len(accessResources.Dashboards) == 0 {
+			filters = append(filters, "1=0") // empty set
 		} else {
-			b := make([]byte, 0, 3*len(dashboardIDs))
-
-			b = strconv.AppendInt(b, dashboardIDs[0], 10)
-			for _, num := range dashboardIDs[1:] {
-				b = append(b, ',')
-				b = strconv.AppendInt(b, num, 10)
+			if dashboardUID != "" {
+				filters = append(filters, "a.dashboard_uid = ?")
+				params = append(params, dashboardUID)
+			} else {
+				filters = append(filters, fmt.Sprintf("a.dashboard_uid IN (%s)", strings.Repeat("?,", len(accessResources.Dashboards)-1)+"?"))
+				for uid := range accessResources.Dashboards {
+					params = append(params, uid)
+				}
 			}
-
-			inClause = string(b)
 		}
-		filters = append(filters, fmt.Sprintf("a.dashboard_id IN (%s)", inClause))
 	}
 
-	return strings.Join(filters, " OR "), nil
+	return strings.Join(filters, " OR "), params
 }
 
 func (r *xormRepositoryImpl) Delete(ctx context.Context, params *annotations.DeleteParams) error {
@@ -434,14 +436,27 @@ func (r *xormRepositoryImpl) Delete(ctx context.Context, params *annotations.Del
 			if _, err := sess.Exec(sql, params.ID, params.OrgID); err != nil {
 				return err
 			}
+		} else if params.DashboardUID != "" {
+			annoTagSQL = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE dashboard_uid = ? AND panel_id = ? AND org_id = ?)"
+			sql = "DELETE FROM annotation WHERE dashboard_uid = ? AND panel_id = ? AND org_id = ?"
+
+			if _, err := sess.Exec(annoTagSQL, params.DashboardUID, params.PanelID, params.OrgID); err != nil {
+				return err
+			}
+
+			if _, err := sess.Exec(sql, params.DashboardUID, params.PanelID, params.OrgID); err != nil {
+				return err
+			}
 		} else {
 			annoTagSQL = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE dashboard_id = ? AND panel_id = ? AND org_id = ?)"
 			sql = "DELETE FROM annotation WHERE dashboard_id = ? AND panel_id = ? AND org_id = ?"
 
+			// nolint: staticcheck
 			if _, err := sess.Exec(annoTagSQL, params.DashboardID, params.PanelID, params.OrgID); err != nil {
 				return err
 			}
 
+			// nolint: staticcheck
 			if _, err := sess.Exec(sql, params.DashboardID, params.PanelID, params.OrgID); err != nil {
 				return err
 			}
@@ -476,8 +491,16 @@ func (r *xormRepositoryImpl) GetTags(ctx context.Context, query annotations.Tags
 		sql.WriteString(`WHERE annotation.org_id = ?`)
 		params = append(params, query.OrgID)
 
-		sql.WriteString(` AND (` + tagKey + ` ` + r.db.GetDialect().LikeStr() + ` ? OR ` + tagValue + ` ` + r.db.GetDialect().LikeStr() + ` ?)`)
-		params = append(params, `%`+query.Tag+`%`, `%`+query.Tag+`%`)
+		sql.WriteString(` AND (`)
+		s, p := r.db.GetDialect().LikeOperator(tagKey, true, query.Tag, true)
+		sql.WriteString(s)
+		params = append(params, p)
+		sql.WriteString(" OR ")
+
+		s, p = r.db.GetDialect().LikeOperator(tagValue, true, query.Tag, true)
+		sql.WriteString(s)
+		params = append(params, p)
+		sql.WriteString(")")
 
 		sql.WriteString(` GROUP BY ` + tagKey + `,` + tagValue)
 		sql.WriteString(` ORDER BY ` + tagKey + `,` + tagValue)

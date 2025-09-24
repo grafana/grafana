@@ -74,6 +74,7 @@ describe('SearchField', () => {
     });
     const filter: TraceqlFilter = {
       id: 'test1',
+      isCustomValue: false,
       valueType: 'string',
       tag: 'test-tag',
     };
@@ -260,6 +261,66 @@ describe('SearchField', () => {
       });
     }
   });
+
+  it('should create custom option with single value when filter value is not an array', async () => {
+    const updateFilter = jest.fn((val) => {
+      return val;
+    });
+    const filter: TraceqlFilter = {
+      id: 'test1',
+      valueType: 'string',
+      tag: 'test-tag',
+      value: 'existing-value',
+    };
+
+    const { container } = renderSearchField(updateFilter, filter, [], false, undefined, false);
+
+    const select = container.querySelector(`input[aria-label="select test1 value"]`);
+    expect(select).not.toBeNull();
+    expect(select).toBeInTheDocument();
+
+    if (select) {
+      await user.type(select, 'custom-value');
+      await user.keyboard('{Enter}');
+
+      expect(updateFilter).toHaveBeenCalledWith({
+        ...filter,
+        value: 'custom-value',
+        valueType: 'string',
+        isCustomValue: true,
+      });
+    }
+  });
+
+  it('should create custom option with array value when filter value is an array', async () => {
+    const updateFilter = jest.fn((val) => {
+      return val;
+    });
+    const filter: TraceqlFilter = {
+      id: 'test1',
+      valueType: 'string',
+      tag: 'test-tag',
+      value: ['existing-value1', 'existing-value2'],
+    };
+
+    const { container } = renderSearchField(updateFilter, filter, [], false, undefined, true);
+
+    const select = container.querySelector(`input[aria-label="select test1 value"]`);
+    expect(select).not.toBeNull();
+    expect(select).toBeInTheDocument();
+
+    if (select) {
+      await user.type(select, 'custom-value');
+      await user.keyboard('{Enter}');
+
+      expect(updateFilter).toHaveBeenCalledWith({
+        ...filter,
+        value: ['existing-value1', 'existing-value2', 'custom-value'],
+        valueType: 'string',
+        isCustomValue: true,
+      });
+    }
+  });
 });
 
 const renderSearchField = (
@@ -267,7 +328,8 @@ const renderSearchField = (
   filter: TraceqlFilter,
   tags?: string[],
   hideTag?: boolean,
-  lp?: LanguageProvider
+  lp?: LanguageProvider,
+  isMulti?: boolean
 ) => {
   const languageProvider =
     lp ||
@@ -313,6 +375,7 @@ const renderSearchField = (
       hideTag={hideTag}
       query={'{}'}
       addVariablesToOptions={true}
+      isMulti={isMulti}
     />
   );
 };

@@ -118,7 +118,7 @@ If set to `true`, the Grafana server hides the running version number for unauth
 Example:
 
 ```toml
-[anonymous.auth]
+[auth.anonymous]
 # mask the Grafana version number for unauthenticated users
 hide_version = true
 ```
@@ -143,7 +143,7 @@ If set to `true`, the Grafana server redirects requests that have a Host-header 
 Example:
 
 ```toml
-[sever]
+[server]
 # Redirect to correct domain if host header does not match domain
 # Prevents DNS rebinding attacks
 enforce_domain = true

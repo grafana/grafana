@@ -1,7 +1,7 @@
 import { Permissions } from 'app/core/components/AccessControl';
 import { contextSrv } from 'app/core/services/context_srv';
-
-import { AccessControlAction, Team } from '../../types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { Team } from 'app/types/teams';
 
 type TeamPermissionsProps = {
   team: Team;

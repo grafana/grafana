@@ -3,6 +3,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import {
   SceneComponentProps,
   SceneDataTransformer,
@@ -17,7 +18,6 @@ import {
 } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema/';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -166,48 +166,50 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
     return dashboard.state.meta.canEdit;
   }
 
-  static Component = ({ model }: SceneComponentProps<InspectJsonTab>) => {
-    const { source: show, jsonText } = model.useState();
-    const styles = useStyles2(getPanelInspectorStyles2);
-    const options = model.getOptions();
+  static Component = InspectJsonTabComponent;
+}
 
-    return (
-      <div className={styles.wrap}>
-        <div className={styles.toolbar} data-testid={selectors.components.PanelInspector.Json.content}>
-          <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1">
-            <Select
-              inputId="select-source-dropdown"
-              options={options}
-              value={options.find((v) => v.value === show) ?? options[0].value}
-              onChange={model.onChangeSource}
-            />
-          </Field>
-          {model.isEditable() && (
-            <Button className={styles.toolbarItem} onClick={model.onApplyChange}>
-              <Trans i18nKey="dashboard-scene.inspect-json-tab.apply">Apply</Trans>
-            </Button>
-          )}
-        </div>
+function InspectJsonTabComponent({ model }: SceneComponentProps<InspectJsonTab>) {
+  const { source: show, jsonText } = model.useState();
+  const styles = useStyles2(getPanelInspectorStyles2);
+  const options = model.getOptions();
 
-        <div className={styles.content}>
-          <AutoSizer disableWidth>
-            {({ height }) => (
-              <CodeEditor
-                width="100%"
-                height={height}
-                language="json"
-                showLineNumbers={true}
-                showMiniMap={jsonText.length > 100}
-                value={jsonText}
-                readOnly={!model.isEditable()}
-                onBlur={model.onCodeEditorBlur}
-              />
-            )}
-          </AutoSizer>
-        </div>
+  return (
+    <div className={styles.wrap}>
+      <div className={styles.toolbar} data-testid={selectors.components.PanelInspector.Json.content}>
+        <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1">
+          <Select
+            inputId="select-source-dropdown"
+            options={options}
+            value={options.find((v) => v.value === show) ?? options[0].value}
+            onChange={model.onChangeSource}
+          />
+        </Field>
+        {model.isEditable() && (
+          <Button className={styles.toolbarItem} onClick={model.onApplyChange}>
+            <Trans i18nKey="dashboard-scene.inspect-json-tab.apply">Apply</Trans>
+          </Button>
+        )}
       </div>
-    );
-  };
+
+      <div className={styles.content}>
+        <AutoSizer disableWidth>
+          {({ height }) => (
+            <CodeEditor
+              width="100%"
+              height={height}
+              language="json"
+              showLineNumbers={true}
+              showMiniMap={jsonText.length > 100}
+              value={jsonText}
+              readOnly={!model.isEditable()}
+              onBlur={model.onCodeEditorBlur}
+            />
+          )}
+        </AutoSizer>
+      </div>
+    </div>
+  );
 }
 
 function getJsonText(show: ShowContent, panel: VizPanel): string {

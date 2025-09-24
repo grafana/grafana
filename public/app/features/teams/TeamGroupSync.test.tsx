@@ -1,10 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { TeamGroup } from '../../types';
+import { TeamGroup } from 'app/types/teams';
 
 import { Props, TeamGroupSync } from './TeamGroupSync';
-import { getMockTeamGroups } from './__mocks__/teamMocks';
+import { getMockTeamGroups } from './mocks/teamMocks';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

@@ -18,7 +18,8 @@ type GrafanaAuthorizer struct {
 	auth authorizer.Authorizer
 }
 
-// NewGrafanaAuthorizer returns an authorizer configured for a grafana instance.
+// NewGrafanaBuiltInSTAuthorizer returns an authorizer configured for a grafana instance.
+// should not be used anywhere except for ST builtin Grafana
 // This authorizer is a chain of smaller authorizers that together form the decision if
 // access should be granted.
 //  1. We deny all impersonate request.
@@ -28,7 +29,7 @@ type GrafanaAuthorizer struct {
 //  4. We check authorizer that is configured speficially for an api.
 //  5. As a last fallback we check Role, this will only happen if an api have not configured
 //     an authorizer or return authorizer.DecisionNoOpinion
-func NewGrafanaAuthorizer(cfg *setting.Cfg) *GrafanaAuthorizer {
+func NewGrafanaBuiltInSTAuthorizer(cfg *setting.Cfg) *GrafanaAuthorizer {
 	authorizers := []authorizer.Authorizer{
 		newImpersonationAuthorizer(),
 		authorizerfactory.NewPrivilegedGroups(k8suser.SystemPrivilegedGroup),

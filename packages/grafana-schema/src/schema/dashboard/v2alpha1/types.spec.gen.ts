@@ -20,7 +20,7 @@ export interface AnnotationQuerySpec {
 	builtIn?: boolean;
 	filter?: AnnotationPanelFilter;
 	// Catch-all field for datasource-specific properties
-	options?: Record<string, any>;
+	legacyOptions?: Record<string, any>;
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
@@ -318,6 +318,8 @@ export interface FieldConfig {
 	color?: FieldColor;
 	// The behavior when clicking on a result
 	links?: any[];
+	// Define interactive HTTP requests that can be triggered from data visualizations.
+	actions?: Action[];
 	// Alternative to empty string
 	noValue?: string;
 	// custom is specified by the FieldConfig field
@@ -505,6 +507,81 @@ export type FieldColorSeriesByMode = "min" | "max" | "last";
 
 export const defaultFieldColorSeriesByMode = (): FieldColorSeriesByMode => ("min");
 
+export interface Action {
+	type: ActionType;
+	title: string;
+	fetch?: FetchOptions;
+	infinity?: InfinityOptions;
+	confirmation?: string;
+	oneClick?: boolean;
+	variables?: ActionVariable[];
+	style?: {
+		backgroundColor?: string;
+	};
+}
+
+export const defaultAction = (): Action => ({
+	type: "fetch",
+	title: "",
+});
+
+export type ActionType = "fetch" | "infinity";
+
+export const defaultActionType = (): ActionType => ("fetch");
+
+export interface FetchOptions {
+	method: HttpRequestMethod;
+	url: string;
+	body?: string;
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	queryParams?: string[][];
+	headers?: string[][];
+}
+
+export const defaultFetchOptions = (): FetchOptions => ({
+	method: "GET",
+	url: "",
+});
+
+export type HttpRequestMethod = "GET" | "PUT" | "POST" | "DELETE" | "PATCH";
+
+export const defaultHttpRequestMethod = (): HttpRequestMethod => ("GET");
+
+export interface InfinityOptions {
+	method: HttpRequestMethod;
+	url: string;
+	body?: string;
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	queryParams?: string[][];
+	datasourceUid: string;
+	headers?: string[][];
+}
+
+export const defaultInfinityOptions = (): InfinityOptions => ({
+	method: "GET",
+	url: "",
+	datasourceUid: "",
+});
+
+export interface ActionVariable {
+	key: string;
+	name: string;
+	type: "string";
+}
+
+export const defaultActionVariable = (): ActionVariable => ({
+	key: "",
+	name: "",
+	type: ActionVariableType,
+});
+
+// Action variable type
+export const ActionVariableType = "string";
+
 export interface DynamicConfigValue {
 	id: string;
 	value?: any;
@@ -564,7 +641,7 @@ export const defaultGridLayoutKind = (): GridLayoutKind => ({
 });
 
 export interface GridLayoutSpec {
-	items: (GridLayoutItemKind | GridLayoutRowKind)[];
+	items: GridLayoutItemKind[];
 }
 
 export const defaultGridLayoutSpec = (): GridLayoutSpec => ({
@@ -623,42 +700,6 @@ export const defaultRepeatOptions = (): RepeatOptions => ({
 
 // other repeat modes will be added in the future: label, frame
 export const RepeatMode = "variable";
-
-export interface GridLayoutRowKind {
-	kind: "GridLayoutRow";
-	spec: GridLayoutRowSpec;
-}
-
-export const defaultGridLayoutRowKind = (): GridLayoutRowKind => ({
-	kind: "GridLayoutRow",
-	spec: defaultGridLayoutRowSpec(),
-});
-
-export interface GridLayoutRowSpec {
-	y: number;
-	collapsed: boolean;
-	title: string;
-	// Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
-	elements: GridLayoutItemKind[];
-	repeat?: RowRepeatOptions;
-}
-
-export const defaultGridLayoutRowSpec = (): GridLayoutRowSpec => ({
-	y: 0,
-	collapsed: false,
-	title: "",
-	elements: [],
-});
-
-export interface RowRepeatOptions {
-	mode: "variable";
-	value: string;
-}
-
-export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
-	mode: RepeatMode,
-	value: "",
-});
 
 export interface RowsLayoutKind {
 	kind: "RowsLayout";
@@ -736,7 +777,7 @@ export const defaultConditionalRenderingVariableKind = (): ConditionalRenderingV
 
 export interface ConditionalRenderingVariableSpec {
 	variable: string;
-	operator: "equals" | "notEquals";
+	operator: "equals" | "notEquals" | "matches" | "notMatches";
 	value: string;
 }
 
@@ -779,6 +820,16 @@ export interface ConditionalRenderingTimeRangeSizeSpec {
 }
 
 export const defaultConditionalRenderingTimeRangeSizeSpec = (): ConditionalRenderingTimeRangeSizeSpec => ({
+	value: "",
+});
+
+export interface RowRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
+	mode: RepeatMode,
 	value: "",
 });
 
@@ -1030,6 +1081,9 @@ export interface QueryVariableSpec {
 	includeAll: boolean;
 	allValue?: string;
 	placeholder?: string;
+	allowCustomValue: boolean;
+	staticOptions?: VariableOption[];
+	staticOptionsOrder?: "before" | "after" | "sorted";
 }
 
 export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
@@ -1044,6 +1098,7 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	options: [],
 	multi: false,
 	includeAll: false,
+	allowCustomValue: true,
 });
 
 // Variable option specification
@@ -1177,6 +1232,7 @@ export interface DatasourceVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	allowCustomValue: boolean;
 }
 
 export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
@@ -1190,6 +1246,7 @@ export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
 	includeAll: false,
 	hide: "dontHide",
 	skipUrlSync: false,
+	allowCustomValue: true,
 });
 
 // Interval variable kind
@@ -1256,6 +1313,7 @@ export interface CustomVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	allowCustomValue: boolean;
 }
 
 export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
@@ -1267,6 +1325,7 @@ export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
 	includeAll: false,
 	hide: "dontHide",
 	skipUrlSync: false,
+	allowCustomValue: true,
 });
 
 // Group variable kind
@@ -1284,6 +1343,7 @@ export const defaultGroupByVariableKind = (): GroupByVariableKind => ({
 export interface GroupByVariableSpec {
 	name: string;
 	datasource?: DataSourceRef;
+	defaultValue?: VariableOption;
 	current: VariableOption;
 	options: VariableOption[];
 	multi: boolean;
@@ -1324,6 +1384,7 @@ export interface AdhocVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	allowCustomValue: boolean;
 }
 
 export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
@@ -1333,6 +1394,7 @@ export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
 	defaultKeys: [],
 	hide: "dontHide",
 	skipUrlSync: false,
+	allowCustomValue: true,
 });
 
 // Define the AdHocFilterWithLabels type
@@ -1344,7 +1406,7 @@ export interface AdHocFilterWithLabels {
 	keyLabel?: string;
 	valueLabels?: string[];
 	forceEdit?: boolean;
-	origin?: FilterOrigin;
+	origin?: "dashboard";
 	// @deprecated
 	condition?: string;
 }
@@ -1356,10 +1418,7 @@ export const defaultAdHocFilterWithLabels = (): AdHocFilterWithLabels => ({
 });
 
 // Determine the origin of the adhoc variable filter
-// Accepted values are `dashboard` (filter originated from dashboard), or `scope` (filter originated from scope).
-export type FilterOrigin = "dashboard" | "scope";
-
-export const defaultFilterOrigin = (): FilterOrigin => ("dashboard");
+export const FilterOrigin = "dashboard";
 
 // Define the MetricFindValue type
 export interface MetricFindValue {

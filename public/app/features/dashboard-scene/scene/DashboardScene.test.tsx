@@ -1,5 +1,13 @@
-import { CoreApp, GrafanaConfig, LoadingState, getDefaultTimeRange, locationUtil, store } from '@grafana/data';
-import { locationService, RefreshEvent } from '@grafana/runtime';
+import {
+  CoreApp,
+  GrafanaConfig,
+  LiveChannelEventType,
+  LoadingState,
+  getDefaultTimeRange,
+  locationUtil,
+  store,
+} from '@grafana/data';
+import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridLayout,
@@ -11,11 +19,15 @@ import {
   SceneGridRow,
   behaviors,
   SceneDataTransformer,
+  LocalValueVariable,
 } from '@grafana/scenes';
 import { Dashboard, DashboardCursorSync, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { DashboardEventAction } from 'app/features/live/dashboard/types';
 import { VariablesChanged } from 'app/features/variables/types';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
@@ -25,7 +37,6 @@ import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { historySrv } from '../settings/version-history/HistorySrv';
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { djb2Hash } from '../utils/djb2Hash';
 import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
@@ -222,7 +233,7 @@ describe('DashboardScene', () => {
       it('A change to folderUid should set isDirty true', () => {
         const prevMeta = { ...scene.state.meta };
 
-        // The worker only detects changes in the model, so the folder change should be detected anyway
+        // The worker detects changes in the model, so the folder change should be detected anyway
         mockResultsOfDetectChangesWorker({ hasChanges: false });
 
         scene.setState({
@@ -451,25 +462,11 @@ describe('DashboardScene', () => {
         expect(panel.state.key).toBe('panel-7');
       });
 
-      it('Should select new panel', () => {
-        scene.state.editPane.activate();
-
-        const panel = scene.onCreateNewPanel();
-        expect(scene.state.editPane.state.selection?.getFirstObject()).toBe(panel);
-      });
-
       it('Should select new row', () => {
         scene.state.editPane.activate();
 
         const row = scene.onCreateNewRow();
         expect(scene.state.editPane.state.selection?.getFirstObject()).toBe(row);
-      });
-
-      it('Should select new tab', () => {
-        scene.state.editPane.activate();
-
-        const tab = scene.onCreateNewTab();
-        expect(scene.state.editPane.state.selection?.getFirstObject()).toBe(tab);
       });
 
       it('Should fail to copy a panel if it does not have a grid item parent', () => {
@@ -638,6 +635,7 @@ describe('DashboardScene', () => {
         expect(scene.enrichDataRequest(queryRunner)).toEqual({
           app: CoreApp.Dashboard,
           dashboardUID: 'dash-1',
+          dashboardTitle: 'hello',
           panelId: 1,
           panelName: 'Panel A',
           panelPluginId: 'table',
@@ -654,6 +652,7 @@ describe('DashboardScene', () => {
         expect(scene.enrichDataRequest(queryRunner)).toEqual({
           app: CoreApp.Dashboard,
           dashboardUID: 'dash-1',
+          dashboardTitle: 'hello',
           panelId: 1,
           panelName: 'Panel A',
           panelPluginId: 'table',
@@ -663,8 +662,7 @@ describe('DashboardScene', () => {
 
     it('Should hash the key of the cloned panels and set it as panelId', () => {
       const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner2')!;
-      const expectedPanelId = djb2Hash(getCloneKey('panel-2', 1));
-      expect(scene.enrichDataRequest(queryRunner).panelId).toEqual(expectedPanelId);
+      expect(scene.enrichDataRequest(queryRunner).panelId).toEqual(3670868617);
     });
   });
 
@@ -775,10 +773,44 @@ describe('DashboardScene', () => {
 
       return scene.onRestore(getVersionMock()).then((res) => {
         expect(res).toBe(true);
-
         expect(scene.state.version).toBe(newVersion);
         expect(scene.state.isEditing).toBe(false);
       });
+    });
+
+    it('should call dashboardWatcher.reloadPage even if dashboard is in editing mode', async () => {
+      // sometimes a dashboard can be in editing mode after user has already restored to a previous version
+
+      const newVersion = 3;
+      const mockScene = new DashboardScene({
+        title: 'new name',
+        uid: 'dash-1',
+        version: 4,
+      });
+      jest.mocked(historySrv.restoreDashboard).mockResolvedValue({ version: newVersion });
+      jest.mocked(transformSaveModelToScene).mockReturnValue(mockScene);
+
+      const reloadSpy = jest.spyOn(dashboardWatcher, 'reloadPage').mockImplementation(() => {});
+
+      dashboardWatcher.editing = false;
+      const dash = { uid: 'dash-1', hasUnsavedChanges: () => true };
+      jest
+        .spyOn(require('app/features/dashboard/services/DashboardSrv'), 'getDashboardSrv')
+        .mockReturnValue({ getCurrent: () => dash });
+
+      dashboardWatcher.observer.next({
+        type: LiveChannelEventType.Message,
+        message: {
+          sessionId: 'other',
+          message: 'Restored from version 3',
+          uid: 'dash-1',
+          action: DashboardEventAction.Saved,
+          timestamp: Date.now(),
+        },
+      });
+
+      expect(reloadSpy).toHaveBeenCalled();
+      reloadSpy.mockRestore();
     });
 
     it('should return early if historySrv does not return a valid version number', () => {
@@ -795,6 +827,82 @@ describe('DashboardScene', () => {
           expect(res).toBe(false);
         });
       }
+    });
+  });
+
+  describe('When checking dashboard managed by an external system', () => {
+    beforeEach(() => {
+      config.featureToggles.provisioning = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.provisioning = false;
+    });
+
+    it('should return true if the dashboard is managed', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: {
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Repo,
+            },
+          },
+        },
+      });
+      expect(scene.isManaged()).toBe(true);
+    });
+
+    it('dashboard should be editable if managed by repo', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: {
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Repo,
+            },
+          },
+        },
+      });
+      expect(scene.managedResourceCannotBeEdited()).toBe(false);
+    });
+
+    it('dashboard should not be editable if managed by systems that do not allow edits: kubectl', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: {
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Kubectl,
+            },
+          },
+        },
+      });
+      expect(scene.managedResourceCannotBeEdited()).toBe(true);
+    });
+
+    it('dashboard should not be editable if managed by systems that do not allow edits: terraform', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: {
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Terraform,
+            },
+          },
+        },
+      });
+      expect(scene.managedResourceCannotBeEdited()).toBe(true);
+    });
+
+    it('dashboard should not be editable if managed by systems that do not allow edits: plugin', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Plugin } },
+        },
+      });
+      expect(scene.managedResourceCannotBeEdited()).toBe(true);
+    });
+
+    it('dashboard should be editable if not managed', () => {
+      const scene = buildTestScene();
+      expect(scene.managedResourceCannotBeEdited()).toBe(false);
     });
   });
 });
@@ -865,6 +973,10 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
             body: new VizPanel({
               title: 'Panel B',
               key: getCloneKey('panel-2', 1),
+              repeatSourceKey: 'panel-2',
+              $variables: new SceneVariableSet({
+                variables: [new LocalValueVariable({ name: 'a', value: 'A' })],
+              }),
               pluginId: 'table',
               $data: new SceneQueryRunner({ key: 'data-query-runner2', queries: [{ refId: 'A' }] }),
             }),

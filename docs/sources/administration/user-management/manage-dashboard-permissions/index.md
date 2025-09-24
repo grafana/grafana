@@ -41,9 +41,9 @@ When you grant folder permissions, that setting applies to all dashboards and su
 
 For example, if a user with the viewer organization role requires editor (or admin) access to a dashboard, you can assign those elevated permissions on an individual basis.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you have assigned a user dashboard folder permissions, you cannot also assign the user permission to dashboards contained in the folder.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Grant dashboard permissions when you want to restrict or enhance dashboard access for users who do not have permissions defined in the associated folder.
 

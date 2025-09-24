@@ -2,6 +2,7 @@ import { useCallback, ChangeEvent, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   CollapsableSection,
@@ -17,7 +18,6 @@ import {
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { t, Trans } from 'app/core/internationalization';
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
 
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
@@ -29,12 +29,6 @@ import { SettingsPageProps } from './types';
 
 export type Props = SettingsPageProps & ConnectedProps<typeof connector>;
 
-const GRAPH_TOOLTIP_OPTIONS = [
-  { value: 0, label: 'Default' },
-  { value: 1, label: 'Shared crosshair' },
-  { value: 2, label: 'Shared Tooltip' },
-];
-
 export function GeneralSettingsUnconnected({
   dashboard,
   updateTimeZone,
@@ -44,6 +38,21 @@ export function GeneralSettingsUnconnected({
   const [renderCounter, setRenderCounter] = useState(0);
   const [dashboardTitle, setDashboardTitle] = useState(dashboard.title);
   const [dashboardDescription, setDashboardDescription] = useState(dashboard.description);
+  const GRAPH_TOOLTIP_OPTIONS = [
+    { value: 0, label: t('dashboard.general-settings-unconnected.graph_tooltip_options.label.default', 'Default') },
+    {
+      value: 1,
+      label: t(
+        'dashboard.general-settings-unconnected.graph_tooltip_options.label.shared-crosshair',
+        'Shared crosshair'
+      ),
+    },
+    {
+      value: 2,
+      label: t('dashboard.general-settings-unconnected.graph_tooltip_options.label.shared-tooltip', 'Shared tooltip'),
+    },
+  ];
+
   const pageNav = sectionNav.node.parentItem;
 
   const onFolderChange = (newUID: string | undefined, newTitle: string | undefined) => {
@@ -115,8 +124,8 @@ export function GeneralSettingsUnconnected({
   };
 
   const editableOptions = [
-    { label: 'Editable', value: true },
-    { label: 'Read-only', value: false },
+    { label: t('dashboard.general-settings-unconnected.editable-options.label.editable', 'Editable'), value: true },
+    { label: t('dashboard.general-settings-unconnected.editable-options.label.readonly', 'Read-only'), value: false },
   ];
 
   return (
@@ -164,16 +173,7 @@ export function GeneralSettingsUnconnected({
           </Field>
 
           <Field label={t('dashboard-settings.general.folder-label', 'Folder')}>
-            <FolderPicker
-              value={dashboard.meta.folderUid}
-              onChange={onFolderChange}
-              // TODO deprecated props that can be removed once NestedFolderPicker is enabled by default
-              initialTitle={dashboard.meta.folderTitle}
-              inputId="dashboard-folder-input"
-              enableCreateNew
-              dashboardId={dashboard.id}
-              skipInitialLoad
-            />
+            <FolderPicker value={dashboard.meta.folderUid} onChange={onFolderChange} />
           </Field>
 
           <Field

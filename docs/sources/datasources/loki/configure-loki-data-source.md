@@ -61,9 +61,9 @@ The first option to configure is the name of your connection:
 
 There are several authentication methods you can choose in the Authentication section.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Use TLS (Transport Layer Security) for an additional layer of security when working with Loki. For information on setting up TLS encryption with Loki see [Grafana Loki configuration parameters](/docs/loki/latest/configuration/).
-{{% /admonition %}}
+{{< /admonition >}}
 
 - **Basic authentication** - The most common authentication method. Use your `data source` user name and `data source` password to connect.
 
@@ -91,9 +91,9 @@ Use TLS (Transport Layer Security) for an additional layer of security when work
 
 - **Maximum lines** - Sets the maximum number of log lines returned by Loki. Increase the limit to have a bigger results set for ad-hoc analysis. Decrease the limit if your browser is sluggish when displaying log results. The default is `1000`.
 
-<!-- {{% admonition type="note" %}}
+<!-- {{< admonition type="note" >}}
 To troubleshoot configuration and other issues, check the log file located at `/var/log/grafana/grafana.log` on Unix systems, or in `<grafana_install_dir>/data/log` on other platforms and manual installations.
-{{% /admonition %}} -->
+{{< /admonition >}} -->
 
 ### Derived fields
 
@@ -104,9 +104,9 @@ These links appear in the [log details](ref:log-details).
 
 You can add multiple derived fields.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you use Grafana Cloud, you can request modifications to this feature by clicking **Open a Support Ticket** from the Grafana Cloud Portal.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Each derived field consists of the following:
 
@@ -114,9 +114,9 @@ Each derived field consists of the following:
 
 - **Type** - Defines the type of the derived field. It can be either:
 
-{{% admonition type="caution" %}}
+{{< admonition type="caution" >}}
 Using complex regular expressions in either type can impact browser performance when processing large volumes of logs. Consider using simpler patterns when possible.
-{{% /admonition %}}
+{{< /admonition >}}
 
 - **Regex**: A regular expression to parse a part of the log message and capture it as the value of the new field. Can contain only one capture group.
 

@@ -69,7 +69,9 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -150,8 +152,7 @@
         {
           "alias": "server = $server, pod id = $pod ",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -198,23 +199,14 @@
   ],
   "refresh": "",
   "schemaVersion": 38,
-  "tags": [
-    "templating",
-    "gdev"
-  ],
+  "tags": ["templating", "gdev"],
   "templating": {
     "list": [
       {
         "current": {
           "selected": true,
-          "text": [
-            "A",
-            "B"
-          ],
-          "value": [
-            "A",
-            "B"
-          ]
+          "text": ["A", "B"],
+          "value": ["A", "B"]
         },
         "hide": 0,
         "includeAll": true,
@@ -300,14 +292,8 @@
       {
         "current": {
           "selected": true,
-          "text": [
-            "Bob",
-            "Rob"
-          ],
-          "value": [
-            "1",
-            "2"
-          ]
+          "text": ["Bob", "Rob"],
+          "value": ["1", "2"]
         },
         "hide": 0,
         "includeAll": true,

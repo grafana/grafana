@@ -1,0 +1,91 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "uid": "${DS_GDEV-TESTDATA}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "content": "# variable: ${text}\n         ",
+        "mode": "markdown"
+      },
+      "pluginVersion": "7.4.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_GDEV-TESTDATA}"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "text"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 42,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "default value",
+          "value": "default value"
+        },
+        "hide": 0,
+        "name": "text",
+        "options": [
+          {
+            "selected": true,
+            "text": "default value",
+            "value": "default value"
+          }
+        ],
+        "query": "default value",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Templating - Textbox e2e scenarios",
+  "uid": "AejrN1AMz",
+  "weekStart": ""
+}

@@ -4,31 +4,39 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	claims "github.com/grafana/authlib/types"
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
 func TestSimpleServer(t *testing.T) {
 	testUserA := &identity.StaticRequester{
-		Type:           claims.TypeUser,
+		Type:           authlib.TypeUser,
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
 		OrgRole:        identity.RoleAdmin,
 		IsGrafanaAdmin: true, // can do anything
 	}
-	ctx := claims.WithAuthInfo(context.Background(), testUserA)
+	ctx := authlib.WithAuthInfo(context.Background(), testUserA)
 
 	bucket := memblob.OpenBucket(nil)
 	if false {
@@ -78,7 +86,7 @@ func TestSimpleServer(t *testing.T) {
 			}
 		}`)
 
-		key := &ResourceKey{
+		key := &resourcepb.ResourceKey{
 			Group:     "playlist.grafana.app",
 			Resource:  "rrrr", // can be anything :(
 			Namespace: "default",
@@ -86,8 +94,8 @@ func TestSimpleServer(t *testing.T) {
 		}
 
 		// Should be empty when we start
-		all, err := server.List(ctx, &ListRequest{Options: &ListOptions{
-			Key: &ResourceKey{
+		all, err := server.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
 				Group:    key.Group,
 				Resource: key.Resource,
 			},
@@ -96,12 +104,12 @@ func TestSimpleServer(t *testing.T) {
 		require.Len(t, all.Items, 0)
 
 		// should return 404 if not found
-		found, err := server.Read(ctx, &ReadRequest{Key: key})
+		found, err := server.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
 		require.NotNil(t, found.Error)
 		require.Equal(t, int32(http.StatusNotFound), found.Error.Code)
 
-		created, err := server.Create(ctx, &CreateRequest{
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{
 			Value: raw,
 			Key:   key,
 		})
@@ -110,7 +118,7 @@ func TestSimpleServer(t *testing.T) {
 		require.True(t, created.ResourceVersion > 0)
 
 		// The key does not include resource version
-		found, err = server.Read(ctx, &ReadRequest{Key: key})
+		found, err = server.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
 		require.Nil(t, found.Error)
 		require.Equal(t, created.ResourceVersion, found.ResourceVersion)
@@ -131,7 +139,7 @@ func TestSimpleServer(t *testing.T) {
 		})
 		raw, err = json.Marshal(tmp)
 		require.NoError(t, err)
-		updated, err := server.Update(ctx, &UpdateRequest{
+		updated, err := server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
@@ -142,7 +150,7 @@ func TestSimpleServer(t *testing.T) {
 		obj.SetLabels(nil)
 		raw, err = json.Marshal(tmp)
 		require.NoError(t, err)
-		updated, err = server.Update(ctx, &UpdateRequest{
+		updated, err = server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
@@ -151,13 +159,13 @@ func TestSimpleServer(t *testing.T) {
 		require.True(t, updated.ResourceVersion > created.ResourceVersion)
 
 		// We should still get the latest
-		found, err = server.Read(ctx, &ReadRequest{Key: key})
+		found, err = server.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
 		require.Nil(t, found.Error)
 		require.Equal(t, updated.ResourceVersion, found.ResourceVersion)
 
-		all, err = server.List(ctx, &ListRequest{Options: &ListOptions{
-			Key: &ResourceKey{
+		all, err = server.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
 				Group:    key.Group,
 				Resource: key.Resource,
 			},
@@ -166,19 +174,19 @@ func TestSimpleServer(t *testing.T) {
 		require.Len(t, all.Items, 1)
 		require.Equal(t, updated.ResourceVersion, all.Items[0].ResourceVersion)
 
-		deleted, err := server.Delete(ctx, &DeleteRequest{Key: key, ResourceVersion: updated.ResourceVersion})
+		deleted, err := server.Delete(ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: updated.ResourceVersion})
 		require.NoError(t, err)
 		require.True(t, deleted.ResourceVersion > updated.ResourceVersion)
 
 		// We should get not found status when trying to read the latest value
-		found, err = server.Read(ctx, &ReadRequest{Key: key})
+		found, err = server.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
 		require.NotNil(t, found.Error)
 		require.Equal(t, int32(404), found.Error.Code)
 
 		// And the deleted value should not be in the results
-		all, err = server.List(ctx, &ListRequest{Options: &ListOptions{
-			Key: &ResourceKey{
+		all, err = server.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
 				Group:    key.Group,
 				Resource: key.Resource,
 			},
@@ -213,14 +221,14 @@ func TestSimpleServer(t *testing.T) {
 			}
 		}`)
 
-		key := &ResourceKey{
+		key := &resourcepb.ResourceKey{
 			Group:     "playlist.grafana.app",
 			Resource:  "rrrr", // can be anything :(
 			Namespace: "default",
 			Name:      "fdgsv37qslr0ga",
 		}
 
-		created, err := server.Create(ctx, &CreateRequest{
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{
 			Value: raw,
 			Key:   key,
 		})
@@ -228,16 +236,118 @@ func TestSimpleServer(t *testing.T) {
 
 		// Update should return an ErrOptimisticLockingFailed the second time
 
-		_, err = server.Update(ctx, &UpdateRequest{
+		_, err = server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
 
-		_, err = server.Update(ctx, &UpdateRequest{
+		_, err = server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
 		require.ErrorIs(t, err, ErrOptimisticLockingFailed)
 	})
+}
+
+func TestRunInQueue(t *testing.T) {
+	const testTenantID = "test-tenant"
+	t.Run("should execute successfully when queue has capacity", func(t *testing.T) {
+		s, _ := newTestServerWithQueue(t, 1, 1)
+		executed := make(chan bool, 1)
+
+		runnable := func(ctx context.Context) {
+			executed <- true
+		}
+
+		err := s.runInQueue(context.Background(), testTenantID, runnable)
+		require.NoError(t, err)
+		assert.True(t, <-executed, "runnable should have been executed")
+	})
+
+	t.Run("should time out if a task is sitting in the queue beyond the timeout", func(t *testing.T) {
+		s, _ := newTestServerWithQueue(t, 1, 1)
+		executed := make(chan struct{}, 1)
+		runnable := func(ctx context.Context) {
+			time.Sleep(1 * time.Second)
+			executed <- struct{}{}
+		}
+
+		err := s.runInQueue(context.Background(), testTenantID, runnable)
+		require.Error(t, err)
+		assert.Equal(t, context.DeadlineExceeded, err)
+		<-executed
+	})
+
+	t.Run("should return an error if queue is consistently full after retrying", func(t *testing.T) {
+		s, q := newTestServerWithQueue(t, 1, 1)
+		// Task 1: This will be picked up by the worker and block it.
+		blocker := make(chan struct{})
+		defer close(blocker)
+		blockingRunnable := func() {
+			<-blocker
+		}
+		err := q.Enqueue(context.Background(), testTenantID, blockingRunnable)
+		require.NoError(t, err)
+		for q.Len() > 0 {
+			time.Sleep(100 * time.Millisecond)
+		}
+		err = q.Enqueue(context.Background(), testTenantID, blockingRunnable)
+		require.NoError(t, err)
+
+		// Task 2: This runnable should never execute because the queue is full.
+		mu := sync.Mutex{}
+		executed := false
+		runnable := func(ctx context.Context) {
+			mu.Lock()
+			defer mu.Unlock()
+			executed = true
+		}
+
+		err = s.runInQueue(context.Background(), testTenantID, runnable)
+		require.Error(t, err)
+		require.ErrorIs(t, err, scheduler.ErrTenantQueueFull)
+		require.False(t, executed, "runnable should not have been executed")
+	})
+}
+
+// newTestServerWithQueue creates a server with a real scheduler.Queue for testing.
+// It also sets up a worker to consume items from the queue.
+func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) (*server, *scheduler.Queue) {
+	t.Helper()
+	q := scheduler.NewQueue(&scheduler.QueueOptions{
+		MaxSizePerTenant: maxSizePerTenant,
+		Registerer:       prometheus.NewRegistry(),
+		Logger:           log.NewNopLogger(),
+	})
+	err := services.StartAndAwaitRunning(context.Background(), q)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		err := services.StopAndAwaitTerminated(context.Background(), q)
+		require.NoError(t, err)
+	})
+
+	// Create a worker to consume from the queue
+	worker, err := scheduler.NewScheduler(q, &scheduler.Config{
+		Logger:     log.NewNopLogger(),
+		NumWorkers: numWorkers,
+	})
+	require.NoError(t, err)
+	err = services.StartAndAwaitRunning(context.Background(), worker)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		err := services.StopAndAwaitTerminated(context.Background(), worker)
+		require.NoError(t, err)
+	})
+
+	s := &server{
+		queue: q,
+		queueConfig: QueueConfig{
+			Timeout:    500 * time.Millisecond,
+			MaxRetries: 2,
+			MinBackoff: 10 * time.Millisecond,
+		},
+		log: slog.Default(),
+	}
+	return s, q
 }

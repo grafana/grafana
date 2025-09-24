@@ -6,16 +6,17 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var _ resource.BulkResourceWriter = (*legacyResourceResourceMigrator)(nil)
@@ -159,12 +160,12 @@ func (r *legacyResourceResourceMigrator) Close() error {
 }
 
 // CloseWithResults implements resource.BulkResourceWriter.
-func (r *legacyResourceResourceMigrator) CloseWithResults() (*resource.BulkResponse, error) {
-	return &resource.BulkResponse{}, nil
+func (r *legacyResourceResourceMigrator) CloseWithResults() (*resourcepb.BulkResponse, error) {
+	return &resourcepb.BulkResponse{}, nil
 }
 
 // Write implements resource.BulkResourceWriter.
-func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
+func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourcepb.ResourceKey, value []byte) error {
 	// Reuse the same parse+cleanup logic
 	parsed, err := r.parser.Parse(ctx, &repository.FileInfo{
 		Path: "", // empty path to ignore file system
@@ -207,8 +208,11 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 		Resource: r.kind.Resource,
 		Group:    r.kind.Group,
 		Action:   repository.FileActionCreated,
-		Error:    err,
 		Path:     fileName,
+	}
+
+	if err != nil {
+		result.Error = fmt.Errorf("writing resource %s/%s %s to file %s: %w", r.kind.Group, r.kind.Resource, parsed.Meta.GetName(), fileName, err)
 	}
 
 	r.progress.Record(ctx, result)

@@ -3,8 +3,8 @@ import { useMemo, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 
@@ -203,8 +203,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: `1px solid ${theme.components.panel.borderColor}`,
     borderTop: 'none',
     flexGrow: 1,
-  }),
-  angularDeprecationWrapper: css({
-    padding: theme.spacing(1),
   }),
 });

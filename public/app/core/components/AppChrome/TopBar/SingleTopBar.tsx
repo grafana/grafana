@@ -4,6 +4,7 @@ import { memo } from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { ScopesContextValue } from '@grafana/runtime';
 import { Dropdown, Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -11,9 +12,8 @@ import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/core';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
-import { t } from 'app/core/internationalization';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
 import { Branding } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
@@ -24,6 +24,7 @@ import { enrichHelpItem } from '../MegaMenu/utils';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 
+import { InviteUserButton } from './InviteUserButton';
 import { ProfileButton } from './ProfileButton';
 import { SignInLink } from './SignInLink';
 import { SingleTopBarActions } from './SingleTopBarActions';
@@ -103,9 +104,10 @@ export const SingleTopBar = memo(function SingleTopBar({
             </Dropdown>
           )}
           <NavToolbarSeparator />
-          {config.featureToggles.extensionSidebar && !isSmallScreen && <ExtensionToolbarItem />}
+          {!isSmallScreen && <ExtensionToolbarItem compact={isSmallScreen} />}
           {!showToolbarLevel && actions}
           {!contextSrv.user.isSignedIn && <SignInLink />}
+          <InviteUserButton />
           {profileNode && <ProfileButton profileNode={profileNode} onToggleKioskMode={onToggleKioskMode} />}
         </Stack>
       </div>

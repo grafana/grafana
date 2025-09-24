@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import * as React from 'react';
-import useDebounce from 'react-use/lib/useDebounce';
-import usePrevious from 'react-use/lib/usePrevious';
+import { useDebounce, usePrevious } from 'react-use';
 
+import { ChatContextItem, OpenAssistantButton } from '@grafana/assistant';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, ButtonGroup, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
@@ -31,6 +31,8 @@ type Props = {
   collapsedMap: CollapsedMap;
 
   extraHeaderElements?: React.ReactNode;
+
+  assistantContext?: ChatContextItem[];
 };
 
 const FlameGraphHeader = ({
@@ -51,6 +53,7 @@ const FlameGraphHeader = ({
   isDiffMode,
   setCollapsedMap,
   collapsedMap,
+  assistantContext,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
@@ -85,6 +88,11 @@ const FlameGraphHeader = ({
       </div>
 
       <div className={styles.rightContainer}>
+        {!!assistantContext?.length && (
+          <div className={styles.buttonSpacing}>
+            <OpenAssistantButton origin="grafana/flame-graph" prompt="Analyze Flame Graph" context={assistantContext} />
+          </div>
+        )}
         {showResetButton && (
           <Button
             variant={'secondary'}
@@ -302,8 +310,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'inline-block',
     width: '10px',
     height: '10px',
-    // eslint-disable-next-line @grafana/no-border-radius-literal
-    borderRadius: '50%',
+    borderRadius: theme.shape.radius.circle,
   }),
   colorDotDiff: css({
     label: 'colorDotDiff',

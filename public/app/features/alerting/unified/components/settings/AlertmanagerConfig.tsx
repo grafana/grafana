@@ -4,8 +4,8 @@ import { useForm } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, CodeEditor, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { reportFormErrors } from '../../Analytics';
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
@@ -79,7 +79,10 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
   // manually register the config field with validation
   // @TODO sometimes the value doesn't get registered – find out why
   register('configJSON', {
-    required: { value: true, message: 'Configuration cannot be empty' },
+    required: {
+      value: true,
+      message: t('alerting.alertmanager-config.message.configuration-cannot-be-empty', 'Configuration cannot be empty'),
+    },
     validate: (value: string) => {
       try {
         JSON.parse(value);
@@ -206,7 +209,7 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
           'Reset Alertmanager configuration'
         )}
         body={confirmationText}
-        confirmText="Yes, reset configuration"
+        confirmText={t('alerting.alertmanager-config.confirmText-yes-reset-configuration', 'Yes, reset configuration')}
         onConfirm={() => {
           onReset(alertmanagerName);
           setShowResetConfirmation(false);

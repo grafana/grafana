@@ -29,7 +29,8 @@ Both spanB and spanC will be dropped.    |
 span A is on critical path(+++++)        |
 */
 
-import { TraceResponse, transformTraceData } from '../../index';
+import transformTraceData from '../../model/transform-trace-data';
+import { TraceResponse } from '../../types/trace';
 
 const trace: TraceResponse = {
   traceID: 'trace-abc',

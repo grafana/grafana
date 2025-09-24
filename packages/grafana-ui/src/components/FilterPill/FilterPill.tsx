@@ -3,9 +3,9 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
-import { IconName } from '../../types';
-import { clearButtonStyles } from '../Button';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { IconName } from '../../types/icon';
+import { clearButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 
 export interface FilterPillProps {
@@ -21,7 +21,7 @@ export const FilterPill = ({ label, selected, onClick, icon = 'check' }: FilterP
   return (
     <button type="button" className={cx(clearButton, styles.wrapper, selected && styles.selected)} onClick={onClick}>
       <span>{label}</span>
-      {selected && <Icon name={icon} className={styles.icon} />}
+      {selected && <Icon name={icon} className={styles.icon} data-testid="filter-pill-icon" />}
     </button>
   );
 };

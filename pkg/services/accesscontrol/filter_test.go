@@ -15,6 +15,7 @@ import (
 	dsService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 type filterDatasourcesTestCase struct {
@@ -32,7 +33,9 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestFilter_Datasources(t *testing.T) {
+func TestIntegrationFilter_Datasources(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []filterDatasourcesTestCase{
 		{
 			desc:    "expect all data sources to be returned",

@@ -206,6 +206,7 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 				LastEvaluationString: "",
 				StartsAt:             entry.CurrentStateSince,
 				EndsAt:               entry.CurrentStateEnd,
+				FiredAt:              entry.FiredAt,
 				LastEvaluationTime:   entry.LastEvalTime,
 				Annotations:          annotations,
 				ResultFingerprint:    resultFp,
@@ -351,13 +352,13 @@ func (st *Manager) ProcessEvalResults(
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
 	states := st.setNextStateForRule(ctx, alertRule, results, extraLabels, logger, fn, evaluatedAt)
 
-	staleStates := st.deleteStaleStatesFromCache(logger, evaluatedAt, alertRule, fn)
+	missingSeriesStates, staleCount := st.processMissingSeriesStates(logger, evaluatedAt, alertRule, states, fn)
 	span.AddEvent("results processed", trace.WithAttributes(
 		attribute.Int64("state_transitions", int64(len(states))),
-		attribute.Int64("stale_states", int64(len(staleStates))),
+		attribute.Int64("stale_states", staleCount),
 	))
 
-	allChanges := StateTransitions(append(states, staleStates...))
+	allChanges := StateTransitions(append(states, missingSeriesStates...))
 
 	// It's important that this is done *before* we sync the states to the persister. Otherwise, we will not persist
 	// the LastSentAt field to the store.
@@ -385,7 +386,7 @@ func (st *Manager) ProcessEvalResults(
 func (st *Manager) updateLastSentAt(states StateTransitions, evaluatedAt time.Time) StateTransitions {
 	var result StateTransitions
 	for _, t := range states {
-		if t.NeedsSending(st.ResendDelay, st.ResolvedRetention) {
+		if t.NeedsSending(evaluatedAt, st.ResendDelay, st.ResolvedRetention) {
 			t.LastSentAt = &evaluatedAt
 			result = append(result, t)
 		}
@@ -516,31 +517,59 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-func (st *Manager) deleteStaleStatesFromCache(logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, takeImageFn takeImageFn) []StateTransition {
-	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
-	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
-	staleStates := st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
-		return stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds, alertRule.GetMissingSeriesEvalsToResolve())
-	})
-	resolvedStates := make([]StateTransition, 0, len(staleStates))
+// processMissingSeriesStates receives the updated state transitions
+// that we got from the alert rule, and checks the cache for any states
+// that are not in the current evaluation. The missing states are
+// for series that are no longer present in the current evaluation.
+// For each missing state, we check if it is stale, and if so, we resolve it.
+// At the end we return the missing states so that later they can be sent
+// to the alertmanager if needed.
+func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, evalTransitions []StateTransition, takeImageFn takeImageFn) ([]StateTransition, int64) {
+	missingTransitions := []StateTransition{}
+	var staleStatesCount int64 = 0
 
-	for _, s := range staleStates {
-		logger.Info("Detected stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
+	st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
+		// We need only states that are not present in the current evaluation, so
+		// skip the state if it was just evaluated.
+		if s.LastEvaluationTime.Equal(evaluatedAt) {
+			return false
+		}
+		// After this point, we know that the state is not in the current evaluation.
+		// Now we need check if it's stale, and if so, we need to resolve it.
 		oldState := s.State
 		oldReason := s.StateReason
 
-		s.State = eval.Normal
-		s.StateReason = ngModels.StateReasonMissingSeries
-		s.EndsAt = evaluatedAt
-		s.LastEvaluationTime = evaluatedAt
+		missingEvalsToResolve := alertRule.GetMissingSeriesEvalsToResolve()
+		// Error state should be resolved after 1 missing evaluation instead of waiting
+		// for the configured missing series evaluations. This ensures resolved notifications are sent
+		// immediately when the alert transitions from these states.
+		if s.State == eval.Error || s.State == eval.NoData {
+			missingEvalsToResolve = 1
+		}
+		isStale := stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds, missingEvalsToResolve)
 
-		// By setting ResolvedAt we trigger the scheduler to send a resolved notification to the Alertmanager.
-		if s.ShouldBeResolved(oldState) {
-			s.ResolvedAt = &evaluatedAt
-			image := takeImageFn("stale state")
-			if image != nil {
-				s.Image = image
+		if isStale {
+			logger.Info("Detected stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
+
+			s.State = eval.Normal
+			s.StateReason = ngModels.StateReasonMissingSeries
+			s.LastEvaluationTime = evaluatedAt
+			s.EndsAt = evaluatedAt
+
+			// By setting ResolvedAt we trigger the scheduler to send a resolved notification to the Alertmanager.
+			if s.ShouldBeResolved(oldState) {
+				s.ResolvedAt = &evaluatedAt
+				image := takeImageFn("stale state")
+				if image != nil {
+					s.Image = image
+				}
 			}
+
+			staleStatesCount++
+		} else if s.State == eval.Alerting {
+			// We need to update EndsAt for the state so that it will not be resolved by the
+			// Alertmanager automatically.
+			s.Maintain(alertRule.IntervalSeconds, evaluatedAt)
 		}
 
 		record := StateTransition{
@@ -548,20 +577,23 @@ func (st *Manager) deleteStaleStatesFromCache(logger log.Logger, evaluatedAt tim
 			PreviousState:       oldState,
 			PreviousStateReason: oldReason,
 		}
-		resolvedStates = append(resolvedStates, record)
-	}
-	return resolvedStates
+		missingTransitions = append(missingTransitions, record)
+
+		return isStale
+	})
+
+	return missingTransitions, staleStatesCount
 }
 
 // stateIsStale determines whether the evaluation state is considered stale.
 // A state is considered stale if the data has been missing for at least missingSeriesEvalsToResolve evaluation intervals.
-func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64, missingSeriesEvalsToResolve int) bool {
+func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64, missingSeriesEvalsToResolve int64) bool {
 	// If the last evaluation time equals the current evaluation time, the state is not stale.
 	if evaluatedAt.Equal(lastEval) {
 		return false
 	}
 
-	resolveIfMissingDuration := time.Duration(int64(missingSeriesEvalsToResolve)*intervalSeconds) * time.Second
+	resolveIfMissingDuration := time.Duration(missingSeriesEvalsToResolve*intervalSeconds) * time.Second
 
 	// timeSinceLastEval >= resolveIfMissingDuration
 	return evaluatedAt.Sub(lastEval) >= resolveIfMissingDuration
