@@ -40,7 +40,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -350,7 +349,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 						return authorizer.DecisionDeny, "editor role is required", nil
 					}
 				case "status":
-					if id.GetOrgRole().Includes(identity.RoleViewer) && a.GetVerb() == utils.VerbGet {
+					if id.GetOrgRole().Includes(identity.RoleViewer) && a.GetVerb() == apiutils.VerbGet {
 						return authorizer.DecisionAllow, "", nil
 					}
 					return authorizer.DecisionDeny, "users cannot update the status of a repository", nil
