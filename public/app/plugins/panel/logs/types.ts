@@ -4,8 +4,6 @@ import { CoreApp, DataFrame, Field, LinkModel, ScopedVars } from '@grafana/data'
 import { LogLineMenuCustomItem } from 'app/features/logs/components/panel/LogLineMenu';
 import { LogListOptions } from 'app/features/logs/components/panel/LogList';
 
-export type { Options } from './panelcfg.gen';
-
 type onClickFilterLabelType = (key: string, value: string, frame?: DataFrame) => void;
 type onClickFilterOutLabelType = (key: string, value: string, frame?: DataFrame) => void;
 type onClickFilterValueType = (value: string, refId?: string) => void;

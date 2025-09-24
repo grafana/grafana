@@ -47,6 +47,7 @@ import { LogLabels } from '../../../features/logs/components/LogLabels';
 import { LogRows } from '../../../features/logs/components/LogRows';
 import { COMMON_LABELS, dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
 
+import type { Options } from './panelcfg.gen';
 import {
   GetFieldLinksFn,
   isCoreApp,
@@ -63,7 +64,6 @@ import {
   isReactNodeArray,
   isSetDisplayedFields,
   onNewLogsReceivedType,
-  Options,
 } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
 

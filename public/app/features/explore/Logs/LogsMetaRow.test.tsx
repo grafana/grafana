@@ -27,6 +27,7 @@ const defaultProps: LogsMetaRowProps = {
   displayedFields: [],
   logRows: [],
   clearDisplayedFields: jest.fn(),
+  defaultDisplayedFields: [],
 };
 
 const setup = (propOverrides?: object, disableDownload = false) => {
