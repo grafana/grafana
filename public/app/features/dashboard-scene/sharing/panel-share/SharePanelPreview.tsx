@@ -199,9 +199,10 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
               <ClipboardButton
                 icon="link"
                 variant="secondary"
-                disabled={disabled || loading || !isValid}
-                aria-describedby={!image && !loading ? 'copy-image-link-disabled-help' : undefined}
+                disabled={disabled || !isValid}
+                aria-describedby={disabled || !isValid ? 'copy-image-link-disabled-help' : undefined}
                 getText={() => imageUrl}
+                onClipboardCopy={() => DashboardInteractions.copyImageUrlClicked()}
               >
                 <Trans i18nKey="link.share-panel.copy-image-link">Copy image link</Trans>
               </ClipboardButton>
