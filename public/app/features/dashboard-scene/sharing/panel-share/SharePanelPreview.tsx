@@ -202,7 +202,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
                 disabled={disabled || !isValid}
                 aria-describedby={disabled || !isValid ? 'copy-image-link-disabled-help' : undefined}
                 getText={() => imageUrl}
-                onClipboardCopy={() => DashboardInteractions.copyImageUrlClicked()}
+                onClipboardCopy={() => DashboardInteractions.copyImageUrlClicked({ shareResource: 'panel' })}
               >
                 <Trans i18nKey="link.share-panel.copy-image-link">Copy image link</Trans>
               </ClipboardButton>
