@@ -70,7 +70,6 @@ Content-Type: application/json
     {
         "id": 1124,
         "alertId": 0,
-        "dashboardId": 468,
         "dashboardUID": "uGlb_lG7z",
         "panelId": 2,
         "userId": 1,
@@ -89,7 +88,6 @@ Content-Type: application/json
     {
         "id": 1123,
         "alertId": 0,
-        "dashboardId": 468,
         "dashboardUID": "jcIIG-07z",
         "panelId": 2,
         "userId": 1,
