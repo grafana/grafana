@@ -203,14 +203,6 @@ export function convertRoutingTreeToRoute(routingTree: RoutingTree): Route {
     return routes.map(
       (route): Route => ({
         ...route,
-        matchers: route.matchers?.map(
-          (matcher): LabelMatcher => ({
-            ...matcher,
-            // sadly we use type narrowing for this on Route but the codegen has it as a string
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            type: matcher.type as LabelMatcher['type'],
-          })
-        ),
         routes: route.routes ? convertRoutingTreeRoutes(route.routes) : [],
       })
     );

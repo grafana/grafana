@@ -254,12 +254,11 @@ function matcherToOperator(matcher: Matcher): MatcherOperator {
 }
 
 export function convertObjectMatcherToAlertingPackageMatcher(matcher: ObjectMatcher): LabelMatcher {
-  const [label, operator, value] = matcher;
+  const [label, type, value] = matcher;
 
   return {
     label,
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    type: operator as LabelMatcher['type'],
+    type,
     value,
   };
 }
