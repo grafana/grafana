@@ -1,16 +1,16 @@
 import { Token } from 'prismjs';
+import { memo } from 'react';
 
-import { LogListModel } from './processing';
-
-export const HighlightedLogRenderer = ({ log }: { log: LogListModel }) => {
+export const HighlightedLogRenderer = memo(({ tokens }: { tokens: Array<string | Token> }) => {
   return (
     <>
-      {log.highlightedBodyTokens.map((token, i) => (
+      {tokens.map((token, i) => (
         <LogToken token={token} key={i} />
       ))}
     </>
   );
-};
+});
+HighlightedLogRenderer.displayName = 'HighlightedLogRenderer';
 
 const LogToken = ({ token }: { token: Token | string }) => {
   if (typeof token === 'string') {

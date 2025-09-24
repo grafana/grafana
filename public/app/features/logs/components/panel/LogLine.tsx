@@ -444,7 +444,7 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
 
   return (
     <span className="field log-syntax-highlight">
-      <HighlightedLogRenderer log={log} />
+      <HighlightedLogRenderer tokens={log.highlightedBodyTokens} />
     </span>
   );
 };
