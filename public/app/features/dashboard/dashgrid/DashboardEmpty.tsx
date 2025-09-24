@@ -14,14 +14,11 @@ import {
   onCreateNewPanel,
   onImportDashboard,
 } from 'app/features/dashboard/utils/dashboard';
-import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { buildPanelEditScene } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { dispatch } from 'app/store/store';
-import { DashboardDTO } from 'app/types/dashboard';
 import { PluginDashboard } from 'app/types/plugins';
 import { useDispatch, useSelector } from 'app/types/store';
 
@@ -178,54 +175,17 @@ const ProvisionedDashboardsSection = () => {
   }, [initialDatasource]);
 
   const onImportDashboardClick = async (dashboard: PluginDashboard) => {
-    const data = {
-      pluginId: dashboard.pluginId,
-      path: dashboard.path,
-      overwrite: true,
-      inputs: [
-        {
-          name: '*',
-          type: 'datasource',
-          pluginId: dashboard.pluginId,
-          value: initialDatasource,
-        },
-      ],
-    };
-
     try {
-      const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
-      const dashboardDTO: DashboardDTO = {
-        dashboard: {
-          ...interpolatedDashboard,
-          // necessary to ensure the dashboard is saved as a new dashboard and correct form is displayed
-          uid: '',
-          version: 0,
-          id: null,
-        },
-        meta: {
-          canSave: true,
-          canEdit: true,
-          canStar: false,
-          canShare: false,
-          canDelete: false,
-          isNew: true,
-          folderUid: '',
-        },
-      };
+      const templateUrl =
+        `/dashboard/template?` +
+        `datasource=${encodeURIComponent(initialDatasource || '')}&` +
+        `title=${encodeURIComponent(dashboard.title || 'Template')}&` +
+        `pluginId=${encodeURIComponent(dashboard.pluginId)}&` +
+        `path=${encodeURIComponent(dashboard.path)}`;
 
-      const dashboardScene = transformSaveModelToScene(dashboardDTO);
-      dashboardScene.setInitialSaveModel(dashboardDTO.dashboard, dashboardDTO.meta);
-      dashboardScene.onEnterEditMode();
-
-      // mark the dashboard as dirty to ensure it shows the "Save As" form
-      dashboardScene.setState({ isDirty: true });
-
-      const stateManager = getDashboardScenePageStateManager();
-      stateManager.setState({ dashboard: dashboardScene, isLoading: false });
-
-      dispatch(notifyApp(createSuccessNotification('Provisioned dashboard loaded', dashboard.title)));
+      locationService.push(templateUrl);
     } catch (error) {
-      console.error('Error importing dashboard:', error);
+      console.error('Error navigating to templated dashboard:', error);
       dispatch(notifyApp(createSuccessNotification('Failed to load dashboard', '')));
     }
   };
