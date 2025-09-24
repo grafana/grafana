@@ -55,7 +55,6 @@ func TestBleveBackend(t *testing.T) {
 		UseFullNgram:  false,
 	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
-	t.Cleanup(backend.Stop)
 
 	testBleveBackend(t, backend)
 }
@@ -70,7 +69,6 @@ func TestBleveBackendFullNgramEnabled(t *testing.T) {
 		UseFullNgram:  true,
 	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
-	t.Cleanup(backend.Stop)
 
 	testBleveBackend(t, backend)
 }
@@ -86,14 +84,6 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		Group:     "folder.grafana.app",
 		Resource:  "folders",
 	}
-	tmpdir, err := os.MkdirTemp("", "grafana-bleve-test")
-	require.NoError(t, err)
-
-	backend, err := NewBleveBackend(BleveOptions{
-		Root:          tmpdir,
-		FileThreshold: 5, // with more than 5 items we create a file on disk
-	}, tracing.NewNoopTracerService(), nil)
-	require.NoError(t, err)
 
 	t.Cleanup(backend.Stop)
 
