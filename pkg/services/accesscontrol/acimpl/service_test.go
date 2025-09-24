@@ -927,8 +927,14 @@ func TestIntegrationService_SaveExternalServiceRole(t *testing.T) {
 				// Check that the permissions and assignment are stored correctly
 				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: r.cmd.AssignmentOrgID, UserID: 2}, accesscontrol.Options{})
 				require.NoError(t, errGetPerms)
+
+				// Only compare action and scope
+				expPerms := make([]accesscontrol.Permission, len(r.cmd.Permissions))
+				for i, p := range r.cmd.Permissions {
+					expPerms[i] = accesscontrol.Permission{Action: p.Action, Scope: p.Scope}
+				}
 				// shared with me is added by default for all users in pkg/services/accesscontrol/acimpl/service.go
-				assert.Equal(t, append([]accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:sharedwithme"}}, r.cmd.Permissions...), perms)
+				assert.Equal(t, append([]accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:sharedwithme"}}, expPerms...), perms)
 			}
 		})
 	}
