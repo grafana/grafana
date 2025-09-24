@@ -455,7 +455,7 @@ func (s *Service) getUserPermissions(ctx context.Context, ns types.NamespaceInfo
 		if err != nil {
 			return nil, err
 		}
-		scopeMap := getScopeMap(permissions)
+		scopeMap := s.getScopeMap(permissions)
 
 		scopeMap, err = s.resolveScopeMap(ctx, ns, scopeMap)
 		if err != nil {
@@ -485,7 +485,7 @@ func (s *Service) getAnonymousPermissions(ctx context.Context, ns types.Namespac
 		if err != nil {
 			return nil, err
 		}
-		scopeMap := getScopeMap(permissions)
+		scopeMap := s.getScopeMap(permissions)
 		s.permCache.Set(ctx, anonPermKey, scopeMap)
 		return scopeMap, nil
 	})
@@ -637,9 +637,15 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 	return s.checkInheritedPermissions(ctx, scopeMap, req)
 }
 
-func getScopeMap(permissions []accesscontrol.Permission) map[string]bool {
+func (s *Service) getScopeMap(permissions []accesscontrol.Permission) map[string]bool {
 	permMap := make(map[string]bool, len(permissions))
 	for _, perm := range permissions {
+		// We've had cases where the scope wasn't split properly,
+		// failing wildcard checks. This is a recovery mechanism.
+		if perm.Kind == "" && perm.Scope != "" {
+			s.logger.Warn("found unsplit permission scope", "scope", perm.Scope)
+			perm.Kind, perm.Attribute, perm.Identifier = accesscontrol.SplitScope(perm.Scope)
+		}
 		// If has any wildcard, return immediately
 		if perm.Kind == "*" || perm.Attribute == "*" || perm.Identifier == "*" {
 			return map[string]bool{"*": true}
