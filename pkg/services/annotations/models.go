@@ -116,24 +116,21 @@ type ItemDTO struct {
 	AlertName string `json:"alertName,omitempty"`
 	// Deprecated: Use DashboardUID and OrgID instead
 	DashboardID  int64            `json:"dashboardId,omitempty" xorm:"dashboard_id"`
-	DashboardUID *string          `json:"dashboardUID" xorm:"dashboard_uid"`
+	DashboardUID *string          `json:"dashboardUID,omitempty" xorm:"dashboard_uid"`
 	PanelID      int64            `json:"panelId,omitempty" xorm:"panel_id"`
 	UserID       int64            `json:"userId,omitempty" xorm:"user_id"`
 	NewState     string           `json:"newState,omitempty"`
 	PrevState    string           `json:"prevState,omitempty"`
 	Created      int64            `json:"created,omitempty"`
 	Updated      int64            `json:"updated,omitempty"`
-	Time         int64            `json:"time"`
+	Time         int64            `json:"time,omitempty"`
 	TimeEnd      int64            `json:"timeEnd,omitempty"`
-	Text         string           `json:"text"`
-	Tags         []string         `json:"tags"`
+	Text         string           `json:"text,omitempty"`
+	Tags         []string         `json:"tags,omitempty"`
 	Login        string           `json:"login,omitempty"`
 	Email        string           `json:"email,omitempty"`
 	AvatarURL    string           `json:"avatarUrl,omitempty" xorm:"avatar_url"`
 	Data         *simplejson.Json `json:"data,omitempty"`
-
-	// for namespace conversions
-	OrgID int64 `json:"-" xorm:"org_id"`
 }
 
 type SortedItems []*ItemDTO

@@ -39,7 +39,7 @@ class LegacyAnnotationServer implements AnnotationServer {
   }
 
   async tags() {
-    const response = await getBackendSrv().get<AnnotationTagsResponse>('/api/annotations/tags');
+    const response = await getBackendSrv().get<AnnotationTagsResponse>('/api/annotations/tags?limit=1000');
     return response.result.tags.map(({ tag, count }) => ({
       term: tag,
       count,
