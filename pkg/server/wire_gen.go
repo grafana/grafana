@@ -765,7 +765,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	annotationsAppInstaller, err := annotations.RegisterAppInstaller(cfg, featureToggles)
+	annotationsAppInstaller, err := annotations.RegisterAppInstaller(cfg, featureToggles, repositoryImpl)
 	if err != nil {
 		return nil, err
 	}
@@ -1373,7 +1373,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	annotationsAppInstaller, err := annotations.RegisterAppInstaller(cfg, featureToggles)
+	annotationsAppInstaller, err := annotations.RegisterAppInstaller(cfg, featureToggles, repositoryImpl)
 	if err != nil {
 		return nil, err
 	}
