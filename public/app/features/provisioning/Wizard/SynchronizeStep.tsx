@@ -46,7 +46,6 @@ export const SynchronizeStep = memo(function SynchronizeStep({
   } = repositoryStatusQuery?.data?.status?.health || {};
 
   const hasError = repositoryStatusQuery.isError;
-  const isLoading = repositoryStatusQuery.isLoading || repositoryStatusQuery.isFetching;
   const isButtonDisabled = hasError || (checked !== undefined && isRepositoryHealthy === false);
 
   const startSynchronization = async () => {
@@ -152,7 +151,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({
       )}
 
       <Field noMargin>
-        {hasError || (checked !== undefined && isRepositoryHealthy === false) ? (
+        {hasError || isRepositoryHealthy === false ? (
           <Button variant="destructive" onClick={() => onCancel?.(repoName)} disabled={isCancelling}>
             {isCancelling ? (
               <Trans i18nKey="provisioning.wizard.button-cancelling">Cancelling...</Trans>
