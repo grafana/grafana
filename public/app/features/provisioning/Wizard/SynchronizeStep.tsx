@@ -40,8 +40,8 @@ export function SynchronizeStep({ isLegacyStorage, onCancel, isCancelling }: Syn
     message: repositoryHealthMessages,
     checked,
   } = repositoryStatusQuery?.data?.status?.health || {};
-  
-  const hasError = repositoryStatusQuery.isError;  
+
+  const hasError = repositoryStatusQuery.isError;
   const isButtonDisabled = hasError || (checked !== undefined && isRepositoryHealthy === false);
 
   const startSynchronization = async () => {
@@ -70,10 +70,7 @@ export function SynchronizeStep({ isLegacyStorage, onCancel, isCancelling }: Syn
       {hasError && (
         <ProvisioningAlert
           error={{
-            title: t(
-              'provisioning.synchronize-step.repository-error',
-              'Repository error'
-            ),
+            title: t('provisioning.synchronize-step.repository-error', 'Repository error'),
             message: t(
               'provisioning.synchronize-step.repository-error-message',
               'Unable to check repository status. Please verify the repository configuration and try again.'
