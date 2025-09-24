@@ -1,7 +1,7 @@
 import { groupBy, isArray, pick, reduce, uniqueId } from 'lodash';
 
 import { RoutingTree, RoutingTreeRoute } from '../api/v0alpha1/api.gen';
-import { Label, LabelMatcher } from '../matchers/types';
+import { Label } from '../matchers/types';
 import { LabelMatchDetails, matchLabels } from '../matchers/utils';
 
 import { Route, RouteWithID } from './types';
