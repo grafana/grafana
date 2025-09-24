@@ -25,7 +25,7 @@ func TestBleveSearchBackend(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, backend)
 
-		t.Cleanup(backend.closeAllIndexes)
+		t.Cleanup(backend.Stop)
 
 		return backend
 	}, &unitest.TestOptions{
@@ -73,7 +73,7 @@ func TestSearchBackendBenchmark(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 
-	t.Cleanup(backend.closeAllIndexes)
+	t.Cleanup(backend.Stop)
 
 	unitest.BenchmarkSearchBackend(t, backend, opts)
 }
