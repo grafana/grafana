@@ -8,7 +8,7 @@ import { lastValueFrom } from 'rxjs';
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { Button, Field, FieldSet, Icon, Input, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, ClipboardButton, Field, FieldSet, Icon, Input, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { DashboardInteractions } from '../../utils/interactions';
 import { ImagePreview } from '../components/ImagePreview';
@@ -196,6 +196,16 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
               >
                 <Trans i18nKey="link.share-panel.download-image">Download image</Trans>
               </Button>
+              <ClipboardButton
+                icon="link"
+                variant="secondary"
+                disabled={disabled || !isValid}
+                aria-describedby={disabled || !isValid ? 'copy-image-link-disabled-help' : undefined}
+                getText={() => imageUrl}
+                onClipboardCopy={() => DashboardInteractions.copyImageUrlClicked({ shareResource: 'panel' })}
+              >
+                <Trans i18nKey="link.share-panel.copy-image-link">Copy image link</Trans>
+              </ClipboardButton>
             </Stack>
             {disabled && (
               <Text variant="bodySmall" color="secondary" id="generate-button-disabled-help">
