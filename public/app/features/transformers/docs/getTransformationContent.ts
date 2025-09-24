@@ -2,7 +2,6 @@ import { FALLBACK_DOCS_LINK } from './constants';
 import { transformationDocsContent, ImageRenderType } from './content';
 
 export function getTransformationContent(id: string): { name: string; helperDocs: string } {
-  console.log('getTransformationContent', id);
   if (id in transformationDocsContent) {
     const { name, getHelperDocs, links } = transformationDocsContent[id];
 
