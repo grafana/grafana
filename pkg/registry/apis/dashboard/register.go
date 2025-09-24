@@ -675,17 +675,33 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderIds ...string) error {
-	scopes := []string{}
-	for _, folderId := range folderIds {
-		scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderId))
-	}
-	ok, err := b.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, scopes...))
-	if err != nil {
-		return err
+	folderClient := b.folderClient
+	orgID := user.GetOrgID()
+
+	if b.folderClient == nil && b.folderClientProvider != nil {
+		ns, err := request.NamespaceInfoFrom(ctx, false)
+		if err != nil {
+			return err
+		}
+		folderClient = b.folderClientProvider.GetOrCreateHandler(ns.Value)
+		orgID = ns.OrgID
 	}
 
-	if !ok {
-		return dashboards.ErrFolderAccessDenied
+	for _, folderId := range folderIds {
+		resp, err := folderClient.Get(ctx, folderId, orgID, metav1.GetOptions{}, "access")
+		if err != nil {
+			return dashboards.ErrFolderAccessDenied
+		}
+		var accessInfo folders.FolderAccessInfo
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(resp.Object, &accessInfo)
+		if err != nil {
+			b.log.Error("Failed to convert folder access response", "error", err)
+			return dashboards.ErrFolderAccessDenied
+		}
+
+		if !accessInfo.CanEdit {
+			return dashboards.ErrFolderAccessDenied
+		}
 	}
 
 	return nil
