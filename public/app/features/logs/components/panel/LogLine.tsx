@@ -375,6 +375,7 @@ const DisplayedFields = ({
   styles: LogLineStyles;
 }) => {
   const { matchingUids, search } = useLogListSearchContext();
+  const { syntaxHighlighting } = useLogListContext();
 
   const searchWords = useMemo(() => {
     const searchWords = log.searchWords && log.searchWords[0] ? log.searchWords.slice() : [];
@@ -391,7 +392,7 @@ const DisplayedFields = ({
     if (field === LOG_LINE_BODY_FIELD_NAME) {
       return <LogLineBody log={log} key={field} styles={styles} />;
     }
-    if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME) {
+    if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME && syntaxHighlighting) {
       return (
         <span className="field log-syntax-highlight" title={getNormalizedFieldName(field)} key={field}>
           <HighlightedLogRenderer tokens={log.highlightedLogAttributesTokens} />
