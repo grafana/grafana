@@ -154,7 +154,7 @@ func newClient(opts options.StorageOptions,
 		return client, nil
 
 	default:
-		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, indexMetrics)
+		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, indexMetrics, nil)
 		if err != nil {
 			return nil, err
 		}

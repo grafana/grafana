@@ -1,3 +1,4 @@
+import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 import { RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
 
 import { createReturnTo } from '../hooks/useReturnTo';
@@ -88,4 +89,13 @@ export const rulesNav = {
       params,
       { skipSubPath: options?.skipSubPath }
     ),
+};
+
+export const notificationPolicies = {
+  viewLink: (matchers: ObjectMatcher[], alertmanagerSourceName?: string) => {
+    return createRelativeUrl('/alerting/routes', {
+      queryString: matchers.map((matcher) => matcher.join('')).join(','),
+      alertmanager: alertmanagerSourceName ?? 'grafana',
+    });
+  },
 };
