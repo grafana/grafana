@@ -27,7 +27,7 @@ func NewServiceAuthorizer() authorizer.Authorizer {
 
 			res := authzlib.CheckServicePermissions(ident, attr.GetAPIGroup(), attr.GetResource(), attr.GetVerb())
 			if !res.Allowed {
-				log := logging.FromContext(context.Background())
+				log := logging.FromContext(ctx)
 				log.Info("calling service lacks required permissions",
 					"isServiceCall", res.ServiceCall,
 					"apiGroup", attr.GetAPIGroup(),
