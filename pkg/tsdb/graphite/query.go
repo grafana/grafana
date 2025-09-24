@@ -26,10 +26,13 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		req      *http.Request
 		formData url.Values
 	}{}
+	result := backend.NewQueryDataResponse()
+
 	for _, query := range req.Queries {
 		graphiteReq, formData, emptyQuery, err := s.createGraphiteRequest(ctx, query, dsInfo)
 		if err != nil {
-			return nil, err
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+			return result, nil
 		}
 
 		if emptyQuery != nil {
@@ -46,7 +49,6 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		}
 	}
 
-	var result = backend.QueryDataResponse{}
 	if len(emptyQueries) != 0 {
 		s.logger.Warn("Found query models without targets", "models without targets", strings.Join(emptyQueries, "\n"))
 		// If no queries had a valid target, return an error; otherwise, attempt with the targets we have
@@ -56,9 +58,9 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 			}
 			// marking this downstream error as it is a user error, but arguably this is a plugin error
 			// since the plugin should have frontend validation that prevents us from getting into this state
-			missingQueryResponse := backend.ErrDataResponseWithSource(400, backend.ErrorSourceDownstream, "no query target found for the alert rule")
+			missingQueryResponse := backend.ErrDataResponseWithSource(400, backend.ErrorSourceDownstream, "no query target found")
 			result.Responses["A"] = missingQueryResponse
-			return &result, nil
+			return result, nil
 		}
 	}
 
@@ -83,7 +85,8 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
-			return &result, err
+			result.Responses[refId] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(err))
+			return result, nil
 		}
 
 		defer func() {
@@ -97,14 +100,11 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
-			return &result, err
+			result.Responses[refId] = backend.ErrorResponseWithErrorSource(err)
+			return result, nil
 		}
 
 		frames = append(frames, queryFrames...)
-	}
-
-	result = backend.QueryDataResponse{
-		Responses: make(backend.Responses),
 	}
 
 	for _, f := range frames {
@@ -118,7 +118,7 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		}
 	}
 
-	return &result, nil
+	return result, nil
 }
 
 // processQuery converts a Graphite data source query to a Graphite query target. It returns the target,
