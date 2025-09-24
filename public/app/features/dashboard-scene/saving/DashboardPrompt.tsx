@@ -100,8 +100,10 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
           reportInteraction('grafana_dashboard_prompt_discard_template_dashboard', {
             datasource: new URLSearchParams(originalLocation.search).get('pluginId'),
           });
+          moveToBlockedLocationAfterReactStateUpdate(location, true);
+        } else {
+          moveToBlockedLocationAfterReactStateUpdate(location);
         }
-        moveToBlockedLocationAfterReactStateUpdate(location);
       },
       onDismiss: hideModal,
     });
@@ -114,9 +116,9 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
 
 DashboardPrompt.displayName = 'DashboardPrompt';
 
-function moveToBlockedLocationAfterReactStateUpdate(location?: H.Location | null) {
+function moveToBlockedLocationAfterReactStateUpdate(location?: H.Location | null, replace = false) {
   if (location) {
-    setTimeout(() => locationService.push(location), 10);
+    setTimeout(() => (replace ? locationService.replace(location) : locationService.push(location)), 10);
   }
 }
 
