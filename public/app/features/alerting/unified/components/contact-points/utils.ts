@@ -1,6 +1,7 @@
 import { difference, groupBy, take, trim, upperFirst } from 'lodash';
 import { ReactNode } from 'react';
 
+import { computeInheritedTree } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
 import { NotifierDTO, NotifierStatus, ReceiversStateDTO } from 'app/features/alerting/unified/types/alerting';
 import { canAdminEntity, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
@@ -14,8 +15,8 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { OnCallIntegrationDTO } from '../../api/onCallApi';
-import { computeInheritedTree } from '../../utils/notification-policies';
 import { extractReceivers } from '../../utils/receivers';
+import { routeAdapter } from '../../utils/routeAdapter';
 import { ReceiverTypes } from '../receivers/grafanaAppReceivers/onCall/onCall';
 import { ReceiverPluginMetadata, getOnCallMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
 
@@ -132,8 +133,10 @@ export function enhanceContactPointsWithMetadata({
   alertmanagerConfiguration,
 }: EnhanceContactPointsArgs): ContactPointWithMetadata[] {
   // compute the entire inherited tree before finding what notification policies are using a particular contact point
-  const fullyInheritedTree = computeInheritedTree(alertmanagerConfiguration?.alertmanager_config?.route ?? {});
-  const usedContactPoints = getUsedContactPoints(fullyInheritedTree);
+  const fullyInheritedTree = computeInheritedTree(
+    routeAdapter.toPackage(alertmanagerConfiguration?.alertmanager_config?.route ?? {})
+  );
+  const usedContactPoints = getUsedContactPoints(routeAdapter.fromPackage(fullyInheritedTree));
   const usedContactPointsByName = groupBy(usedContactPoints, 'receiver');
 
   const enhanced = contactPoints.map((contactPoint) => {
