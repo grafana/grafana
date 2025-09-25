@@ -1,6 +1,8 @@
 import {
   type ScenePerformanceObserver,
-  type PerformanceEventData,
+  type DashboardInteractionStartData,
+  type DashboardInteractionMilestoneData,
+  type DashboardInteractionCompleteData,
   type PanelPerformanceData,
   type QueryPerformanceData,
   getScenePerformanceTracker,
@@ -67,7 +69,7 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
   }
 
   // Dashboard-level events
-  onDashboardInteractionStart(data: PerformanceEventData): void {
+  onDashboardInteractionStart(data: DashboardInteractionStartData): void {
     // Create standardized dashboard performance mark
     const dashboardStartMark = PERFORMANCE_MARKS.DASHBOARD_INTERACTION_START(data.operationId);
     createPerformanceMark(dashboardStartMark, data.timestamp);
@@ -82,7 +84,7 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     });
   }
 
-  onDashboardInteractionMilestone(data: PerformanceEventData): void {
+  onDashboardInteractionMilestone(data: DashboardInteractionMilestoneData): void {
     // Create standardized dashboard milestone mark
     const milestone = data.milestone || 'unknown';
     const dashboardMilestoneMark = PERFORMANCE_MARKS.DASHBOARD_MILESTONE(data.operationId, milestone);
@@ -97,7 +99,7 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     });
   }
 
-  onDashboardInteractionComplete(data: PerformanceEventData): void {
+  onDashboardInteractionComplete(data: DashboardInteractionCompleteData): void {
     // Create standardized dashboard performance marks and measure
     const dashboardEndMark = PERFORMANCE_MARKS.DASHBOARD_INTERACTION_END(data.operationId);
     const dashboardStartMark = PERFORMANCE_MARKS.DASHBOARD_INTERACTION_START(data.operationId);
@@ -261,7 +263,7 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
 
       case 'transform':
         // For transforms, we need the transformation ID from metadata
-        const transformationId = metadata?.transformationId || 'unknown';
+        const transformationId = typeof metadata?.transformationId === 'string' ? metadata.transformationId : 'unknown';
         if (phase === 'start') {
           createPerformanceMark(
             PERFORMANCE_MARKS.PANEL_TRANSFORM_START(panelKey, transformationId, operationId),
@@ -317,7 +319,7 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
         break;
 
       case 'transform':
-        const transformationId = metadata?.transformationId || 'unknown';
+        const transformationId = typeof metadata?.transformationId === 'string' ? metadata.transformationId : 'unknown';
         const transformStartMark = PERFORMANCE_MARKS.PANEL_TRANSFORM_START(panelKey, transformationId, operationId);
 
         // Use the appropriate end mark (normal end or error)

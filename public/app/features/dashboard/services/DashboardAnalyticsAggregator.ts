@@ -1,7 +1,9 @@
 import { logMeasurement, reportInteraction } from '@grafana/runtime';
 import {
   type ScenePerformanceObserver,
-  type PerformanceEventData,
+  type DashboardInteractionStartData,
+  type DashboardInteractionMilestoneData,
+  type DashboardInteractionCompleteData,
   type PanelPerformanceData,
   type QueryPerformanceData,
   writePerformanceLog,
@@ -101,16 +103,16 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   }
 
   // Dashboard-level events (we don't need to track these for panel analytics)
-  onDashboardInteractionStart(data: PerformanceEventData): void {
+  onDashboardInteractionStart(data: DashboardInteractionStartData): void {
     // Clear metrics when new dashboard interaction starts
     this.clearMetrics();
   }
 
-  onDashboardInteractionMilestone(data: PerformanceEventData): void {
+  onDashboardInteractionMilestone(data: DashboardInteractionMilestoneData): void {
     // No action needed for milestones in analytics
   }
 
-  onDashboardInteractionComplete(data: PerformanceEventData): void {
+  onDashboardInteractionComplete(data: DashboardInteractionCompleteData): void {
     // Replicate the logic from getDashboardInteractionCallback
     this.sendAnalyticsReport(data);
   }
@@ -276,7 +278,7 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   /**
    * Send analytics report - replicates the logic from getDashboardInteractionCallback
    */
-  private sendAnalyticsReport(data: PerformanceEventData): void {
+  private sendAnalyticsReport(data: DashboardInteractionCompleteData): void {
     const payload = {
       duration: data.duration || 0,
       networkDuration: data.networkDuration || 0, // TODO: Calculate network duration from data
@@ -316,7 +318,7 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
    * Log dashboard analytics event with panel metrics and performance insights
    */
   private logDashboardAnalyticsEvent(
-    data: PerformanceEventData,
+    data: DashboardInteractionCompleteData,
     payload: Record<string, unknown>,
     panelMetrics: PanelAnalyticsMetrics[] | null
   ): void {
