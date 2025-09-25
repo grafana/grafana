@@ -1919,9 +1919,6 @@
       "title-remove": "Remover",
       "tooltip-remove-time-range": "Remover intervalo de tempo"
     },
-    "namespace": {
-      "title-alert-rules": "Regras de alerta"
-    },
     "namespace-and-group-filter": {
       "select-group": "Selecionar o grupo",
       "select-namespace": "Selecionar nomenclatura "
@@ -2039,7 +2036,9 @@
       "recipient-notification-fires": "Selecione quem deve receber uma notificação quando uma regra de alerta for acionada."
     },
     "option-customfield": {
-      "label-custom-template": "Modelo personalizado"
+      "label-custom-template": "Modelo personalizado",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "O Alertmanager selecionado não existe mais ou talvez você não tenha permissão para acessá-lo. Você pode selecionar um Alertmanager diferente no menu suspenso.",
@@ -5350,7 +5349,6 @@
             "json": "Exportar como JSON"
           }
         },
-        "mark-favorite": "Marcar como favorito",
         "more-save-options": "Mais opções de salvamento",
         "playlist-next": "Ir para o próximo painel de controle",
         "playlist-previous": "Ir para o painel de controle anterior",
@@ -5379,8 +5377,7 @@
             "yesText": "Salvar"
           }
         },
-        "unlink-library-panel": "Desvincular painel de biblioteca",
-        "unmark-favorite": "Desmarcar como favorito"
+        "unlink-library-panel": "Desvincular painel de biblioteca"
       },
       "open-original": "Abrir painel de controle original",
       "playlist-next": "Ir para o próximo painel de controle",
@@ -5401,6 +5398,10 @@
       "save-library-panel": "Salvar painel da biblioteca",
       "settings": "Configurações do painel de controle",
       "share-button": "Compartilhar",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Desvincular painel de biblioteca",
       "unmark-favorite": "Desmarcar como favorito"
     },

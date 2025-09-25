@@ -1194,6 +1194,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "unifiedStorageUseFullNgram",
+			Description:       "Use full n-gram indexing instead of edge n-gram for unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:              "managedDualWriter",
 			Description:       "Pick the dual write mode from database configs",
 			Stage:             FeatureStageExperimental,
@@ -1737,6 +1745,14 @@ var (
 		{
 			Name:              "kubernetesAuthzApis",
 			Description:       "Registers AuthZ /apis endpoint",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
+			Name:              "kubernetesAuthZHandlerRedirect",
+			Description:       "Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
 			HideFromAdminPage: true,

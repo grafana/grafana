@@ -631,6 +631,10 @@ const (
 	// Enable sprinkles on unified storage search
 	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
 
+	// FlagUnifiedStorageUseFullNgram
+	// Use full n-gram indexing instead of edge n-gram for unified storage search
+	FlagUnifiedStorageUseFullNgram = "unifiedStorageUseFullNgram"
+
 	// FlagManagedDualWriter
 	// Pick the dual write mode from database configs
 	FlagManagedDualWriter = "managedDualWriter"
@@ -914,6 +918,10 @@ const (
 	// FlagKubernetesAuthzApis
 	// Registers AuthZ /apis endpoint
 	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
+
+	// FlagKubernetesAuthZHandlerRedirect
+	// Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints
+	FlagKubernetesAuthZHandlerRedirect = "kubernetesAuthZHandlerRedirect"
 
 	// FlagKubernetesAuthzResourcePermissionApis
 	// Registers AuthZ resource permission /apis endpoints

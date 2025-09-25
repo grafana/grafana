@@ -1771,11 +1771,45 @@
             }
           },
           {
+            "name": "type",
+            "in": "query",
+            "description": "search dashboards or folders.  When empty, this will search both",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "folder",
+                "dashboard"
+              ]
+            }
+          },
+          {
             "name": "folder",
             "in": "query",
             "description": "search/list within a folder (not recursive)",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "facet",
+            "in": "query",
+            "description": "count distinct terms for selected fields",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "description": "tag query filter",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           {
@@ -1797,6 +1831,23 @@
                 "summary": "title ascending",
                 "value": "title"
               }
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "number of results to return",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "explain",
+            "in": "query",
+            "description": "add debugging info that may help explain why the result matched",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
