@@ -11522,6 +11522,14 @@
         "subtitle": "Use this option if you want to sync and manage your entire Grafana instance through external storage."
       }
     },
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "Repository connection failed",
+          "repository-request-failed": "Repository request failed"
+        }
+      }
+    },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "recent-jobs": {
@@ -11674,6 +11682,8 @@
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
+      "repository-error": "Repository error",
+      "repository-error-message": "Unable to check repository status. Please verify the repository configuration and try again.",
       "repository-unhealthy": "The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below.",
       "synchronization-description": "Include commits for each historical value",
       "synchronization-options": "Synchronization options"

@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
@@ -20,7 +20,11 @@ export interface SynchronizeStepProps {
   isCancelling?: boolean;
 }
 
-export function SynchronizeStep({ isLegacyStorage, onCancel, isCancelling }: SynchronizeStepProps) {
+export const SynchronizeStep = memo(function SynchronizeStep({
+  isLegacyStorage,
+  onCancel,
+  isCancelling,
+}: SynchronizeStepProps) {
   const { getValues, register, watch } = useFormContext<WizardFormData>();
   const { setStepStatusInfo } = useStepStatus();
   const [repoName = '', repoType] = watch(['repositoryName', 'repository.type']);
@@ -40,7 +44,9 @@ export function SynchronizeStep({ isLegacyStorage, onCancel, isCancelling }: Syn
     message: repositoryHealthMessages,
     checked,
   } = repositoryStatusQuery?.data?.status?.health || {};
-  const isButtonDisabled = checked !== undefined && isRepositoryHealthy === false;
+
+  const hasError = repositoryStatusQuery.isError;
+  const isButtonDisabled = hasError || (checked !== undefined && isRepositoryHealthy === false);
 
   const startSynchronization = async () => {
     const [history] = getValues(['migrate.history']);
@@ -65,7 +71,18 @@ export function SynchronizeStep({ isLegacyStorage, onCancel, isCancelling }: Syn
           to the repository and provisioned back into the instance.
         </Trans>
       </Text>
-      {repositoryHealthMessages && !isRepositoryHealthy && (
+      {hasError && (
+        <ProvisioningAlert
+          error={{
+            title: t('provisioning.synchronize-step.repository-error', 'Repository error'),
+            message: t(
+              'provisioning.synchronize-step.repository-error-message',
+              'Unable to check repository status. Please verify the repository configuration and try again.'
+            ),
+          }}
+        />
+      )}
+      {repositoryHealthMessages && !isRepositoryHealthy && !hasError && (
         <ProvisioningAlert
           error={{
             title: t(
@@ -134,7 +151,7 @@ export function SynchronizeStep({ isLegacyStorage, onCancel, isCancelling }: Syn
       )}
 
       <Field noMargin>
-        {isRepositoryHealthy === false ? (
+        {hasError || isRepositoryHealthy === false ? (
           <Button variant="destructive" onClick={() => onCancel?.(repoName)} disabled={isCancelling}>
             {isCancelling ? (
               <Trans i18nKey="provisioning.wizard.button-cancelling">Cancelling...</Trans>
@@ -150,4 +167,4 @@ export function SynchronizeStep({ isLegacyStorage, onCancel, isCancelling }: Syn
       </Field>
     </Stack>
   );
-}
+});
