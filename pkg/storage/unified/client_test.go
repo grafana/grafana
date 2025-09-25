@@ -36,7 +36,7 @@ func TestUnifiedStorageClient(t *testing.T) {
 					StorageType: options.StorageTypeUnifiedGrpc,
 					Address:     resourceServerAddress,
 				},
-				&setting.Cfg{},
+				nil, // triggers using NewChannelResourceClientForTests (&setting.Cfg{})
 				featuremgmt.WithFeatures(),
 				nil,
 				nil,

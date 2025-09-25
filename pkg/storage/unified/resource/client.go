@@ -22,6 +22,7 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	authnGrpcUtils "github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/setting"
@@ -50,6 +51,11 @@ type resourceClient struct {
 }
 
 func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cfg, tracer trace.Tracer) (ResourceClient, error) {
+	if cfg == nil {
+		logging.DefaultLogger.Info("using direct channel client for testing")
+		return NewChannelResourceClientForTests(conn, indexConn), nil
+	}
+
 	clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
 
 	return NewRemoteResourceClient(tracer, conn, indexConn, RemoteResourceClientConfig{
