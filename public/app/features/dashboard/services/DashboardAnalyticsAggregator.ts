@@ -10,7 +10,7 @@ import {
 } from '@grafana/scenes';
 
 /**
- * Panel metrics structure for analytics (matching existing SceneInteractionProfileEvent format)
+ * Panel metrics structure for analytics
  */
 interface PanelAnalyticsMetrics {
   panelId: string;
@@ -109,7 +109,7 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   }
 
   onDashboardInteractionComplete(data: DashboardInteractionCompleteData): void {
-    // Replicate the logic from getDashboardInteractionCallback
+    // Send analytics report for dashboard interaction completion
     this.sendAnalyticsReport(data);
   }
 
@@ -231,13 +231,12 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   }
 
   /**
-   * Send analytics report - replicates the logic from getDashboardInteractionCallback
+   * Send analytics report for dashboard interactions
    */
   private sendAnalyticsReport(data: DashboardInteractionCompleteData): void {
     const payload = {
       duration: data.duration || 0,
       networkDuration: data.networkDuration || 0, // TODO: Calculate network duration from data
-      processingTime: data.duration || 0,
       startTs: data.timestamp,
       endTs: data.timestamp + (data.duration || 0),
       totalJSHeapSize: performance.memory?.totalJSHeapSize || 0,

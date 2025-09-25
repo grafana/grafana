@@ -25,7 +25,7 @@ import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
 import {
   getDashboardSceneProfilerWithMetadata,
   enablePanelProfilingForDashboard,
-  getDashboardInteractionCallback,
+  getDashboardComponentInteractionCallback,
 } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -311,7 +311,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     {
       enableInteractionTracking:
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
-      onInteractionComplete: getDashboardInteractionCallback(oldModel.uid, oldModel.title),
+      onInteractionComplete: getDashboardComponentInteractionCallback(oldModel.uid, oldModel.title),
     },
     getDashboardSceneProfilerWithMetadata(oldModel.uid, oldModel.title, oldModel.panels.length)
   );

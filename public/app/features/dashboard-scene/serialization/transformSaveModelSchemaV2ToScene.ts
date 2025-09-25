@@ -55,7 +55,7 @@ import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
   getDashboardSceneProfilerWithMetadata,
   enablePanelProfilingForDashboard,
-  getDashboardInteractionCallback,
+  getDashboardComponentInteractionCallback,
 } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardMeta } from 'app/types/dashboard';
 
@@ -181,7 +181,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     {
       enableInteractionTracking:
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
-      onInteractionComplete: getDashboardInteractionCallback(metadata.name, dashboard.title),
+      onInteractionComplete: getDashboardComponentInteractionCallback(metadata.name, dashboard.title),
     },
     getDashboardSceneProfilerWithMetadata(
       metadata.name,
