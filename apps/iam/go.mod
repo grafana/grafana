@@ -21,7 +21,7 @@ replace github.com/grafana/grafana/pkg/aggregator => ../../pkg/aggregator
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250911094103-5456b6e45604
 
 require (
-	github.com/grafana/authlib v0.0.0-20250917093142-83a502239781
+	github.com/grafana/authlib v0.0.0-20250924100039-ea07223cdb6c
 	github.com/grafana/grafana v6.1.6+incompatible
 	github.com/grafana/grafana-app-sdk v0.45.0
 	github.com/grafana/grafana-app-sdk/logging v0.45.0

@@ -64,7 +64,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       delete obj.metadata.annotations[AnnoKeyMessage];
     }
 
-    if (options.folderUid) {
+    if (options.folderUid !== undefined) {
       obj.metadata.annotations = {
         ...obj.metadata.annotations,
         [AnnoKeyFolder]: options.folderUid,
