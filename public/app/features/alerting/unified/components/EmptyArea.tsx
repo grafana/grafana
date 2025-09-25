@@ -13,6 +13,7 @@ export const EmptyArea = ({ children }: React.PropsWithChildren<{}>) => {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
+      borderRadius: theme.shape.radius.lg,
       backgroundColor: theme.colors.background.secondary,
       color: theme.colors.text.secondary,
       padding: theme.spacing(4),
