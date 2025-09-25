@@ -943,6 +943,35 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}
 	}
 
+	// Fast path for getting single value in a list
+	if req.Source == resourcepb.ListRequest_STORE {
+		for _, v := range req.Options.Fields {
+			if v.Key == "metadata.name" && v.Operator == `=` {
+				if len(v.Values) == 1 {
+					read := &resourcepb.ReadRequest{
+						Key:             req.Options.Key,
+						ResourceVersion: req.ResourceVersion,
+					}
+					read.Key.Name = v.Values[0]
+					found, err := s.Read(ctx, read)
+					if err != nil {
+						return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
+					}
+
+					// Return a value when it exists
+					rsp := &resourcepb.ListResponse{}
+					if len(found.Value) > 0 {
+						rsp.Items = []*resourcepb.ResourceWrapper{{
+							Value:           found.Value,
+							ResourceVersion: found.ResourceVersion,
+						}}
+					}
+					return rsp, nil
+				}
+			}
+		}
+	}
+
 	if req.Limit < 1 {
 		req.Limit = 500 // default max 500 items in a page
 	}
