@@ -4,7 +4,6 @@ import { useState } from 'react';
 
 import {
   DataTransformerConfig,
-  DataTransformerID,
   getTransformationLegacyRefId,
   getNextRefId,
   GrafanaTheme2,
@@ -187,9 +186,8 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
   // populate refIds for any transformations that don't have them
   const refLessTransformations = transformations.filter((transformation) => transformation.refId === undefined);
   refLessTransformations.forEach((transformation) => {
-    const transformationId: DataTransformerID = transformation.id as DataTransformerID;
-    if (refIDDependentIDs.includes(transformationId)) {
-      transformation.refId = getTransformationLegacyRefId(transformationId, data.series);
+    if (refIDDependentIDs.includes(transformation.id)) {
+      transformation.refId = getTransformationLegacyRefId(transformation.id, data.series);
     } else {
       transformation.refId = getNextRefId(transformations, 'T-');
     }

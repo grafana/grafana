@@ -45,7 +45,7 @@ export enum DataTransformerID {
   groupToNestedTable = 'groupToNestedTable',
 }
 
-export const refIDDependentIDs = [
+export const refIDDependentIDs: string[] = [
   DataTransformerID.joinByField,
   DataTransformerID.merge,
   DataTransformerID.reduce,
