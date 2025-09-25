@@ -133,17 +133,18 @@ type Cfg struct {
 	ProvisioningPath           string
 	PermittedProvisioningPaths []string
 	// Provisioning config
-	ProvisioningDisableControllers bool
-	ProvisioningAllowedTargets     []string
-	ProvisioningRepositoryTypes    []string
-	ProvisioningLokiURL            string
-	ProvisioningLokiUser           string
-	ProvisioningLokiPassword       string
-	ProvisioningLokiTenantID       string
-	DataPath                       string
-	LogsPath                       string
-	PluginsPath                    string
-	EnterpriseLicensePath          string
+	ProvisioningDisableControllers  bool
+	ProvisioningAllowedTargets      []string
+	ProvisioningAllowImageRendering bool
+	ProvisioningRepositoryTypes     []string
+	ProvisioningLokiURL             string
+	ProvisioningLokiUser            string
+	ProvisioningLokiPassword        string
+	ProvisioningLokiTenantID        string
+	DataPath                        string
+	LogsPath                        string
+	PluginsPath                     string
+	EnterpriseLicensePath           string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -2124,6 +2125,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
 		cfg.ProvisioningAllowedTargets = []string{"instance", "folder"}
 	}
+	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")
