@@ -647,12 +647,9 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 	})
 
 	t.Run("Dashboard refresh interval validations", func(t *testing.T) {
-		// Store original settings to restore after test
-		origCfg := ctx.Helper.GetEnv().Cfg
-		origMinRefreshInterval := origCfg.MinRefreshInterval
-
-		// Set a fixed min_refresh_interval for all tests to make them predictable
-		ctx.Helper.GetEnv().Cfg.MinRefreshInterval = "10s"
+		// Test infrastructure is configured with
+		// [dashboards]
+		// min_refresh_interval = 10s
 
 		testCases := []struct {
 			name          string
@@ -720,9 +717,6 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 				}
 			})
 		}
-
-		// Restore original settings
-		ctx.Helper.GetEnv().Cfg.MinRefreshInterval = origMinRefreshInterval
 	})
 
 	t.Run("Dashboard size limit validations", func(t *testing.T) {
