@@ -1804,7 +1804,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 			Type:        "sns",
 			Name:        "AWS SNS",
 			Description: "Sends notifications to AWS Simple Notification Service",
-			Heading:     "Webex settings",
+			Heading:     "AWS SNS settings",
 			Options: []NotifierOption{
 				{
 					Label:        "The Amazon SNS API URL",
