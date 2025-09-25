@@ -25,7 +25,7 @@ export function HelpDropdownButton({ helpNode }: Props) {
   const { dockedComponentId, isOpen: isSidebarOpen } = useExtensionSidebarContext();
 
   const { links, isLoading } = usePluginLinks({
-    extensionPointId: PluginExtensionPoints.TopBarHelpButtonV1,
+    extensionPointId: PluginExtensionPoints.TopbarHelpV1,
     context,
   });
 
