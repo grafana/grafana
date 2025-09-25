@@ -6,14 +6,12 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"slices"
 	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -21,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	clientrest "k8s.io/client-go/rest"
@@ -478,7 +475,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, b.repoFactory, b)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
@@ -622,7 +619,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	}
 
 	// Exit early if we have already found errors
-	targetError := b.verifyAgainstExistingRepositories(cfg)
+	targetError := b.VerifyAgainstExistingRepositories(ctx, cfg)
 	if targetError != nil {
 		return invalidRepositoryError(a.GetName(), field.ErrorList{targetError})
 	}
@@ -636,105 +633,8 @@ func invalidRepositoryError(name string, list field.ErrorList) error {
 		name, list)
 }
 
-func (b *APIBuilder) getRepositoriesInNamespace(ctx context.Context) ([]provisioning.Repository, error) {
-	var allRepositories []provisioning.Repository
-	continueToken := ""
-
-	for {
-		obj, err := b.store.List(ctx, &internalversion.ListOptions{
-			Limit:    100,
-			Continue: continueToken,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		repositoryList, ok := obj.(*provisioning.RepositoryList)
-		if !ok {
-			return nil, fmt.Errorf("expected repository list")
-		}
-
-		allRepositories = append(allRepositories, repositoryList.Items...)
-
-		continueToken = repositoryList.GetContinue()
-		if continueToken == "" {
-			break
-		}
-	}
-
-	return allRepositories, nil
-}
-
-// TODO: move this to a more appropriate place. Probably controller/validation.go
-func (b *APIBuilder) verifyAgainstExistingRepositories(cfg *provisioning.Repository) *field.Error {
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), cfg.Namespace)
-	if err != nil {
-		return &field.Error{Type: field.ErrorTypeInternal, Detail: err.Error()}
-	}
-	all, err := b.getRepositoriesInNamespace(request.WithNamespace(ctx, cfg.Namespace))
-	if err != nil {
-		return field.Forbidden(field.NewPath("spec"),
-			"Unable to verify root target: "+err.Error())
-	}
-
-	if cfg.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
-		// Instance sync can only be created if NO other repositories exist
-		for _, v := range all {
-			if v.Name != cfg.Name {
-				return field.Forbidden(field.NewPath("spec", "sync", "target"),
-					"Instance repository can only be created when no other repositories exist. Found: "+v.Name)
-			}
-		}
-	} else {
-		// Folder sync cannot be created if an instance repository exists
-		for _, v := range all {
-			if v.Spec.Sync.Target == provisioning.SyncTargetTypeInstance && v.Name != cfg.Name {
-				return field.Forbidden(field.NewPath("spec", "sync", "target"),
-					"Cannot create folder repository when instance repository exists: "+v.Name)
-			}
-		}
-	}
-
-	// If repo is git, ensure no other repository is defined with a child path
-	if cfg.Spec.Type.IsGit() {
-		for _, v := range all {
-			// skip itself
-			if cfg.Name == v.Name {
-				continue
-			}
-			if v.URL() == cfg.URL() {
-				if v.Path() == cfg.Path() {
-					return field.Forbidden(field.NewPath("spec", string(cfg.Spec.Type), "path"),
-						fmt.Sprintf("%s: %s", ErrRepositoryDuplicatePath.Error(), v.Name))
-				}
-
-				relPath, err := filepath.Rel(v.Path(), cfg.Path())
-				if err != nil {
-					return field.Forbidden(field.NewPath("spec", string(cfg.Spec.Type), "path"), "failed to evaluate path: "+err.Error())
-				}
-				// https://pkg.go.dev/path/filepath#Rel
-				// Rel will return "../" if the relative paths are not related
-				if !strings.HasPrefix(relPath, "../") {
-					return field.Forbidden(field.NewPath("spec", string(cfg.Spec.Type), "path"),
-						fmt.Sprintf("%s: %s", ErrRepositoryParentFolderConflict.Error(), v.Name))
-				}
-			}
-		}
-	}
-
-	// Count repositories excluding the current one being created/updated
-	count := 0
-	for _, v := range all {
-		if v.Name != cfg.Name {
-			count++
-		}
-	}
-	if count >= 10 {
-		return field.Forbidden(field.NewPath("spec"),
-			"Maximum number of 10 repositories reached")
-	}
-
-	return nil
+func (b *APIBuilder) VerifyAgainstExistingRepositories(ctx context.Context, cfg *provisioning.Repository) *field.Error {
+	return VerifyAgainstExistingRepositories(ctx, b.store, cfg)
 }
 
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
@@ -786,7 +686,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			// Create the repository resources factory
-			usageMetricCollector := usage.MetricCollector(b.tracer, b.getRepositoriesInNamespace, b.unified)
+			repositoryListerWrapper := func(ctx context.Context) ([]provisioning.Repository, error) {
+				return GetRepositoriesInNamespace(ctx, b.store)
+			}
+			usageMetricCollector := usage.MetricCollector(b.tracer, repositoryListerWrapper, b.unified)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
 			metrics := jobs.RegisterJobMetrics(b.registry)
@@ -1371,6 +1274,10 @@ func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository
 		return nil, err
 	}
 	return b.asRepository(ctx, obj, nil)
+}
+
+func (b *APIBuilder) GetRepoFactory() repository.Factory {
+	return b.repoFactory
 }
 
 func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (repository.Repository, error) {

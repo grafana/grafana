@@ -267,7 +267,6 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 
 				if test.expectError != nil {
 					require.Error(t, err, "Expected error for repository with path: %s", test.path)
-
 					require.ErrorContains(t, err, test.expectError.Error(), "Error should contain expected message for path: %s", test.path)
 					var statusError *apierrors.StatusError
 					if errors.As(err, &statusError) {

@@ -22,7 +22,9 @@ func TestIntegrationHealth(t *testing.T) {
 	ctx := context.Background()
 	repo := "test-repo-health"
 	helper.CreateRepo(t, TestRepo{
-		Name: repo,
+		Name:            repo,
+		Target:          "folder",
+		ExpectedFolders: 1,
 	})
 
 	// Verify the health status before calling the endpoint
