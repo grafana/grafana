@@ -30,10 +30,8 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     this.onDashboardInteractionStart = this.onDashboardInteractionStart.bind(this);
     this.onDashboardInteractionMilestone = this.onDashboardInteractionMilestone.bind(this);
     this.onDashboardInteractionComplete = this.onDashboardInteractionComplete.bind(this);
-    this.onPanelLifecycleStart = this.onPanelLifecycleStart.bind(this);
     this.onPanelOperationStart = this.onPanelOperationStart.bind(this);
     this.onPanelOperationComplete = this.onPanelOperationComplete.bind(this);
-    this.onPanelLifecycleComplete = this.onPanelLifecycleComplete.bind(this);
     this.onQueryStart = this.onQueryStart.bind(this);
     this.onQueryComplete = this.onQueryComplete.bind(this);
   }
@@ -120,21 +118,6 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
   }
 
   // Panel-level events
-  onPanelLifecycleStart(data: PanelPerformanceData): void {
-    // Create standardized performance marks for lifecycle operations (like render)
-    this.createStandardizedPanelMark(data, 'start');
-
-    const operationIcon = this.getOperationIcon(data.operation);
-    writePerformanceLog('ScenePerformanceService', `${operationIcon} Panel Lifecycle Started [${data.operation}]:`, {
-      panelId: data.panelId,
-      panelKey: data.panelKey,
-      pluginId: data.pluginId,
-      operation: data.operation,
-      timestamp: data.timestamp,
-      operationId: data.operationId,
-    });
-  }
-
   onPanelOperationStart(data: PanelPerformanceData): void {
     // Create standardized performance marks based on operation type
     this.createStandardizedPanelMark(data, 'start');
@@ -169,64 +152,45 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     });
   }
 
-  onPanelLifecycleComplete(data: PanelPerformanceData): void {
-    // Create standardized performance marks and measures for lifecycle operations (like render)
-    this.createStandardizedPanelMark(data, 'end');
-    this.createStandardizedPanelMeasure(data);
-
-    const operationIcon = this.getOperationIcon(data.operation);
-    writePerformanceLog('ScenePerformanceService', `${operationIcon} Panel Lifecycle Complete [${data.operation}]:`, {
-      panelId: data.panelId,
-      panelKey: data.panelKey,
-      pluginId: data.pluginId,
-      operation: data.operation,
-      duration: data.duration,
-      timestamp: data.timestamp,
-      operationId: data.operationId,
-    });
-  }
-
   // Query-level events
   onQueryStart(data: QueryPerformanceData): void {
-    // Create standardized query performance mark
-    const queryStartMark = PERFORMANCE_MARKS.QUERY_START(data.panelId, data.queryId);
+    // Create standardized query performance mark for non-panel queries
+    const queryStartMark = PERFORMANCE_MARKS.QUERY_START(data.origin, data.queryId);
     createPerformanceMark(queryStartMark, data.timestamp);
 
-    writePerformanceLog('ScenePerformanceService', '🔍 Query Started:', {
-      panelId: data.panelId,
+    writePerformanceLog('ScenePerformanceService', '📊 Non-Panel Query Started:', {
       queryId: data.queryId,
       queryType: data.queryType,
-      datasource: data.datasource,
+      querySource: data.querySource,
+      origin: data.origin,
       timestamp: data.timestamp,
       operationId: data.operationId,
     });
   }
 
   onQueryComplete(data: QueryPerformanceData): void {
-    // Create standardized query performance marks and measure
-    const queryEndMark = PERFORMANCE_MARKS.QUERY_END(data.panelId, data.queryId);
-    const queryStartMark = PERFORMANCE_MARKS.QUERY_START(data.panelId, data.queryId);
-    const queryMeasureName = PERFORMANCE_MEASURES.QUERY(data.panelId, data.queryId);
+    // Create standardized query performance marks and measure for non-panel queries
+    const queryEndMark = PERFORMANCE_MARKS.QUERY_END(data.origin, data.queryId);
+    const queryStartMark = PERFORMANCE_MARKS.QUERY_START(data.origin, data.queryId);
+    const queryMeasureName = PERFORMANCE_MEASURES.QUERY(data.origin, data.queryId);
 
     createPerformanceMark(queryEndMark, data.timestamp);
     createPerformanceMeasure(queryMeasureName, queryStartMark, queryEndMark);
 
-    writePerformanceLog('ScenePerformanceService', '🔍 Query Complete:', {
-      panelId: data.panelId,
+    writePerformanceLog('ScenePerformanceService', '📊 Non-Panel Query Complete:', {
       queryId: data.queryId,
       queryType: data.queryType,
-      datasource: data.datasource,
+      querySource: data.querySource,
+      origin: data.origin,
       duration: data.duration,
-      seriesCount: data.seriesCount,
-      dataPointsCount: data.dataPointsCount,
       timestamp: data.timestamp,
       operationId: data.operationId,
     });
   }
 
-  // Standardized performance mark creation methods
+  // Standardized performance mark creation methods - now with full type safety!
   private createStandardizedPanelMark(data: PanelPerformanceData, phase: 'start' | 'end'): void {
-    const { operation, panelKey, metadata, operationId } = data;
+    const { operation, panelKey, operationId } = data;
 
     switch (operation) {
       case 'query':
@@ -237,7 +201,7 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
         createPerformanceMark(markName, data.timestamp);
         break;
 
-      case 'lifecycle': // Plugin loading is part of lifecycle operations
+      case 'plugin-load':
         const pluginMarkName =
           phase === 'start'
             ? PERFORMANCE_MARKS.PANEL_PLUGIN_LOAD_START(panelKey, operationId)
@@ -262,16 +226,17 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
         break;
 
       case 'transform':
-        // For transforms, we need the transformation ID from metadata
-        const transformationId = typeof metadata?.transformationId === 'string' ? metadata.transformationId : 'unknown';
+        // ✅ TypeScript now knows this is PanelTransformPerformanceData!
+        // ✅ No manual type guards needed - metadata.transformationId is guaranteed to be string!
+        const transformationId = data.metadata.transformationId;
         if (phase === 'start') {
           createPerformanceMark(
             PERFORMANCE_MARKS.PANEL_TRANSFORM_START(panelKey, transformationId, operationId),
             data.timestamp
           );
         } else {
-          // Check if this was an error completion
-          const isError = metadata?.error || metadata?.success === false;
+          // ✅ TypeScript knows metadata has success, error, etc. properties
+          const isError = data.metadata.error || data.metadata.success === false;
           const transformEndMarkName = isError
             ? PERFORMANCE_MARKS.PANEL_TRANSFORM_ERROR(panelKey, transformationId, operationId)
             : PERFORMANCE_MARKS.PANEL_TRANSFORM_END(panelKey, transformationId, operationId);
@@ -280,14 +245,12 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
         break;
 
       default:
-        // For unknown operations, create a generic mark
-        createPerformanceMark(`scenes.panel.${operation}.${phase}.${panelKey}`, data.timestamp);
         break;
     }
   }
 
   private createStandardizedPanelMeasure(data: PanelPerformanceData): void {
-    const { operation, panelKey, metadata, operationId } = data;
+    const { operation, panelKey, operationId } = data;
 
     switch (operation) {
       case 'query':
@@ -297,7 +260,7 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
         createPerformanceMeasure(measureName, startMark, endMark);
         break;
 
-      case 'lifecycle': // Plugin loading is part of lifecycle operations
+      case 'plugin-load':
         const pluginStartMark = PERFORMANCE_MARKS.PANEL_PLUGIN_LOAD_START(panelKey, operationId);
         const pluginEndMark = PERFORMANCE_MARKS.PANEL_PLUGIN_LOAD_END(panelKey, operationId);
         const pluginMeasureName = PERFORMANCE_MEASURES.PANEL_PLUGIN_LOAD(panelKey, operationId);
@@ -319,11 +282,13 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
         break;
 
       case 'transform':
-        const transformationId = typeof metadata?.transformationId === 'string' ? metadata.transformationId : 'unknown';
+        // ✅ TypeScript now knows this is PanelTransformPerformanceData!
+        // ✅ No manual type guards needed - metadata.transformationId is guaranteed to be string!
+        const transformationId = data.metadata.transformationId;
         const transformStartMark = PERFORMANCE_MARKS.PANEL_TRANSFORM_START(panelKey, transformationId, operationId);
 
-        // Use the appropriate end mark (normal end or error)
-        const isError = metadata?.error || metadata?.success === false;
+        // ✅ TypeScript knows metadata has success, error, etc. properties
+        const isError = data.metadata.error || data.metadata.success === false;
         const transformEndMark = isError
           ? PERFORMANCE_MARKS.PANEL_TRANSFORM_ERROR(panelKey, transformationId, operationId)
           : PERFORMANCE_MARKS.PANEL_TRANSFORM_END(panelKey, transformationId, operationId);
@@ -333,11 +298,6 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
         break;
 
       default:
-        // For unknown operations, create a generic measure
-        const genericStartMark = `scenes.panel.${operation}.start.${panelKey}`;
-        const genericEndMark = `scenes.panel.${operation}.end.${panelKey}`;
-        const genericMeasureName = `scenes.panel.${operation}.duration.${panelKey}`;
-        createPerformanceMeasure(genericMeasureName, genericStartMark, genericEndMark);
         break;
     }
   }
@@ -353,7 +313,7 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
         return '🔧';
       case 'render':
         return '🎨';
-      case 'lifecycle':
+      case 'plugin-load':
         return '⚡';
       default:
         return '⚡';

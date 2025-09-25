@@ -32,8 +32,6 @@ interface PanelAnalyticsMetrics {
   fieldConfigOperations: Array<{
     duration: number;
     timestamp: number;
-    dataPointsCount?: number;
-    seriesCount?: number;
   }>;
   transformationOperations: Array<{
     duration: number;
@@ -63,10 +61,8 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
     this.onDashboardInteractionStart = this.onDashboardInteractionStart.bind(this);
     this.onDashboardInteractionMilestone = this.onDashboardInteractionMilestone.bind(this);
     this.onDashboardInteractionComplete = this.onDashboardInteractionComplete.bind(this);
-    this.onPanelLifecycleStart = this.onPanelLifecycleStart.bind(this);
     this.onPanelOperationStart = this.onPanelOperationStart.bind(this);
     this.onPanelOperationComplete = this.onPanelOperationComplete.bind(this);
-    this.onPanelLifecycleComplete = this.onPanelLifecycleComplete.bind(this);
     this.onQueryStart = this.onQueryStart.bind(this);
     this.onQueryComplete = this.onQueryComplete.bind(this);
   }
@@ -118,10 +114,6 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   }
 
   // Panel-level events
-  onPanelLifecycleStart(data: PanelPerformanceData): void {
-    this.ensurePanelExists(data.panelKey, data.panelId, data.pluginId, data.pluginVersion);
-  }
-
   onPanelOperationStart(data: PanelPerformanceData): void {
     // Start events don't need aggregation, just ensure panel exists
     this.ensurePanelExists(data.panelKey, data.panelId, data.pluginId, data.pluginVersion);
@@ -144,9 +136,6 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
         panel.fieldConfigOperations.push({
           duration,
           timestamp: data.timestamp,
-          dataPointsCount:
-            typeof data.metadata?.dataPointsCount === 'number' ? data.metadata.dataPointsCount : undefined,
-          seriesCount: typeof data.metadata?.seriesCount === 'number' ? data.metadata.seriesCount : undefined,
         });
         break;
 
@@ -155,11 +144,17 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
         panel.transformationOperations.push({
           duration,
           timestamp: data.timestamp,
-          transformationId:
-            typeof data.metadata?.transformationId === 'string' ? data.metadata.transformationId : undefined,
-          success: typeof data.metadata?.success === 'boolean' ? data.metadata.success : undefined,
-          outputSeriesCount:
-            typeof data.metadata?.outputSeriesCount === 'number' ? data.metadata.outputSeriesCount : undefined,
+          transformationId: data.metadata.transformationId,
+          success: data.metadata.success,
+        });
+        break;
+
+      case 'query':
+        panel.totalQueryTime += duration;
+        panel.queryOperations.push({
+          duration,
+          timestamp: data.timestamp,
+          queryType: data.metadata.queryType,
         });
         break;
 
@@ -170,66 +165,38 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
           timestamp: data.timestamp,
         });
         break;
-    }
-  }
 
-  onPanelLifecycleComplete(data: PanelPerformanceData): void {
-    writePerformanceLog('DashboardAnalyticsAggregator', '🔍 onPanelLifecycleComplete called with:', data);
-
-    // Ensure panel exists even if it never went through queries (cached renders)
-    this.ensurePanelExists(data.panelKey, data.panelId, data.pluginId, data.pluginVersion);
-
-    const panel = this.panelMetrics.get(data.panelKey);
-    // writePerformanceLog(
-    //   'DashboardAnalyticsAggregator',
-    //   '🔍 Panel found in metrics:',
-    //   panel ? 'YES' : 'NO',
-    //   'operation:',
-    //   data.operation
-    // );
-
-    if (panel && data.operation === 'render') {
-      panel.totalRenderTime += data.duration || 0;
-      panel.renderOperations.push({
-        duration: data.duration || 0,
-        timestamp: data.timestamp,
-      });
-      writePerformanceLog(
-        'DashboardAnalyticsAggregator',
-        '🔍 Recorded render operation, totalRenderTime now:',
-        panel.totalRenderTime
-      );
+      case 'plugin-load':
+        panel.pluginLoadTime += duration;
+        break;
     }
   }
 
   // Query-level events
   onQueryStart(data: QueryPerformanceData): void {
-    // Start events don't need aggregation, but ensure panel exists
-    // Note: Query events don't have panelKey, need to find panel by panelId
-    const panel = this.findPanelByPanelId(data.panelId);
-    if (!panel) {
-      console.warn('Panel not found for query start:', data.panelId);
-    }
+    // Non-panel queries (annotations, variables, plugins, datasources) don't need aggregation
+    // These are infrastructure queries that don't belong to specific panels
+    writePerformanceLog('DashboardAnalyticsAggregator', '📊 Non-Panel Query Started:', {
+      queryId: data.queryId,
+      queryType: data.queryType,
+      querySource: data.querySource,
+      origin: data.origin,
+    });
   }
 
   onQueryComplete(data: QueryPerformanceData): void {
-    writePerformanceLog('DashboardAnalyticsAggregator', '🔍 onQueryComplete called with:', data);
-    // Find the panel this query belongs to (queries have panelId but not panelKey)
-    const panel = this.findPanelByPanelId(data.panelId);
-    if (!panel) {
-      // Query completed before panel was tracked, skip
-      return;
-    }
-
-    const duration = data.duration || 0;
-    panel.totalQueryTime += duration;
-    panel.queryOperations.push({
-      duration,
-      timestamp: data.timestamp,
+    // Non-panel queries (annotations, variables, plugins, datasources) don't need panel aggregation
+    // These are infrastructure queries that don't belong to specific panels
+    writePerformanceLog('DashboardAnalyticsAggregator', '📊 Non-Panel Query Complete:', {
+      queryId: data.queryId,
       queryType: data.queryType,
-      seriesCount: data.seriesCount,
-      dataPointsCount: data.dataPointsCount,
+      querySource: data.querySource,
+      origin: data.origin,
+      duration: data.duration,
     });
+
+    // Could track infrastructure query metrics separately in the future if needed
+    // For now, just log for observability
   }
 
   /**
@@ -261,18 +228,6 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
       this.panelMetrics.set(panelKey, panel);
     }
     return panel;
-  }
-
-  /**
-   * Find panel by panelId (used for queries which don't have panelKey)
-   */
-  private findPanelByPanelId(panelId: string): PanelAnalyticsMetrics | undefined {
-    for (const panel of this.panelMetrics.values()) {
-      if (panel.panelId === panelId) {
-        return panel;
-      }
-    }
-    return undefined;
   }
 
   /**
