@@ -452,26 +452,22 @@ func assignReceiverConfigsUIDs(c []*definitions.PostableApiReceiver) error {
 	seenUIDs := make(map[string]struct{})
 	// encrypt secure settings for storing them in DB
 	for _, r := range c {
-		switch r.Type() {
-		case definitions.GrafanaReceiverType:
-			for _, gr := range r.GrafanaManagedReceivers {
-				if gr.UID == "" {
-					retries := 5
-					for i := 0; i < retries; i++ {
-						gen := util.GenerateShortUID()
-						_, ok := seenUIDs[gen]
-						if !ok {
-							gr.UID = gen
-							break
-						}
-					}
-					if gr.UID == "" {
-						return fmt.Errorf("all %d attempts to generate UID for receiver have failed; please retry", retries)
+		for _, gr := range r.GrafanaManagedReceivers {
+			if gr.UID == "" {
+				retries := 5
+				for i := 0; i < retries; i++ {
+					gen := util.GenerateShortUID()
+					_, ok := seenUIDs[gen]
+					if !ok {
+						gr.UID = gen
+						break
 					}
 				}
-				seenUIDs[gr.UID] = struct{}{}
+				if gr.UID == "" {
+					return fmt.Errorf("all %d attempts to generate UID for receiver have failed; please retry", retries)
+				}
 			}
-		default:
+			seenUIDs[gr.UID] = struct{}{}
 		}
 	}
 	return nil

@@ -206,8 +206,10 @@ func (f *AlertmanagerApiHandler) handleRoutePostAlertingConfig(ctx *contextmodel
 	if err != nil {
 		return errorToResponse(err)
 	}
-	if !body.AlertmanagerConfig.ReceiverType().Can(apimodels.AlertmanagerReceiverType) {
-		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.AlertmanagerBackend, body.AlertmanagerConfig.ReceiverType().String()))
+	for _, p := range body.AlertmanagerConfig.Receivers {
+		if p.HasGrafanaIntegrations() {
+			return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.AlertmanagerBackend, apimodels.GrafanaBackend.String()))
+		}
 	}
 	return s.RoutePostAlertingConfig(ctx, body)
 }

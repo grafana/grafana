@@ -87,81 +87,77 @@ func EncryptReceiverConfigSettings(c []*definitions.PostableApiReceiver, encrypt
 func encryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt definitions.EncryptFn, encryptExisting bool) error {
 	// encrypt secure settings for storing them in DB
 	for _, r := range c {
-		switch r.Type() {
-		case definitions.GrafanaReceiverType:
-			for _, gr := range r.GrafanaManagedReceivers {
-				if encryptExisting {
-					for k, v := range gr.SecureSettings {
-						encryptedData, err := encrypt(context.Background(), []byte(v))
+		for _, gr := range r.GrafanaManagedReceivers {
+			if encryptExisting {
+				for k, v := range gr.SecureSettings {
+					encryptedData, err := encrypt(context.Background(), []byte(v))
+					if err != nil {
+						return fmt.Errorf("failed to encrypt secure settings: %w", err)
+					}
+					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
+				}
+			}
+
+			if len(gr.Settings) > 0 {
+				// We need to parse the settings to check for secret keys. If we find any, we encrypt them and
+				// store them in SecureSettings. This can happen from incorrect configuration or when an integration
+				// definition is updated to make a field secure.
+				settings := make(map[string]any)
+				if err := json.Unmarshal(gr.Settings, &settings); err != nil {
+					return fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", gr.Type, gr.Name, err)
+				}
+
+				secretKeys, err := channels_config.GetSecretKeysForContactPointType(gr.Type, channels_config.V1)
+				if err != nil {
+					return fmt.Errorf("failed to get secret keys for contact point type %s: %w", gr.Type, err)
+				}
+
+				secureSettings := gr.SecureSettings
+				if secureSettings == nil {
+					secureSettings = make(map[string]string)
+				}
+
+				settingsChanged := false
+				secureSettingsChanged := false
+				for _, secretKey := range secretKeys {
+					settingsValue, ok := settings[secretKey]
+					if !ok {
+						continue
+					}
+
+					// Secrets should not be stored in settings regardless.
+					delete(settings, secretKey)
+					settingsChanged = true
+
+					// If the secret is already encrypted, we don't need to encrypt it again.
+					if _, ok := secureSettings[secretKey]; ok {
+						continue
+					}
+
+					if strVal, isString := settingsValue.(string); isString {
+						encrypted, err := encrypt(context.Background(), []byte(strVal))
 						if err != nil {
 							return fmt.Errorf("failed to encrypt secure settings: %w", err)
 						}
-						gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
+						secureSettings[secretKey] = base64.StdEncoding.EncodeToString(encrypted)
+						secureSettingsChanged = true
 					}
 				}
 
-				if len(gr.Settings) > 0 {
-					// We need to parse the settings to check for secret keys. If we find any, we encrypt them and
-					// store them in SecureSettings. This can happen from incorrect configuration or when an integration
-					// definition is updated to make a field secure.
-					settings := make(map[string]any)
-					if err := json.Unmarshal(gr.Settings, &settings); err != nil {
-						return fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", gr.Type, gr.Name, err)
-					}
-
-					secretKeys, err := channels_config.GetSecretKeysForContactPointType(gr.Type, channels_config.V1)
+				// Defensive checks to limit the risk of unintentional edge case changes in this legacy API.
+				if settingsChanged {
+					// If we removed any secret keys from settings, we need to save the updated settings.
+					jsonBytes, err := json.Marshal(settings)
 					if err != nil {
-						return fmt.Errorf("failed to get secret keys for contact point type %s: %w", gr.Type, err)
+						return err
 					}
-
-					secureSettings := gr.SecureSettings
-					if secureSettings == nil {
-						secureSettings = make(map[string]string)
-					}
-
-					settingsChanged := false
-					secureSettingsChanged := false
-					for _, secretKey := range secretKeys {
-						settingsValue, ok := settings[secretKey]
-						if !ok {
-							continue
-						}
-
-						// Secrets should not be stored in settings regardless.
-						delete(settings, secretKey)
-						settingsChanged = true
-
-						// If the secret is already encrypted, we don't need to encrypt it again.
-						if _, ok := secureSettings[secretKey]; ok {
-							continue
-						}
-
-						if strVal, isString := settingsValue.(string); isString {
-							encrypted, err := encrypt(context.Background(), []byte(strVal))
-							if err != nil {
-								return fmt.Errorf("failed to encrypt secure settings: %w", err)
-							}
-							secureSettings[secretKey] = base64.StdEncoding.EncodeToString(encrypted)
-							secureSettingsChanged = true
-						}
-					}
-
-					// Defensive checks to limit the risk of unintentional edge case changes in this legacy API.
-					if settingsChanged {
-						// If we removed any secret keys from settings, we need to save the updated settings.
-						jsonBytes, err := json.Marshal(settings)
-						if err != nil {
-							return err
-						}
-						gr.Settings = jsonBytes
-					}
-					if secureSettingsChanged {
-						// If we added any secure settings, we need to save the updated secure settings.
-						gr.SecureSettings = secureSettings
-					}
+					gr.Settings = jsonBytes
+				}
+				if secureSettingsChanged {
+					// If we added any secure settings, we need to save the updated secure settings.
+					gr.SecureSettings = secureSettings
 				}
 			}
-		default:
 		}
 	}
 	return nil
