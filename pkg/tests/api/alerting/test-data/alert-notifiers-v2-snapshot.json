@@ -8143,7 +8143,7 @@
     "type": "sns",
     "currentVersion": "v1",
     "name": "AWS SNS",
-    "heading": "Webex settings",
+    "heading": "AWS SNS settings",
     "description": "Sends notifications to AWS Simple Notification Service",
     "versions": [
       {
