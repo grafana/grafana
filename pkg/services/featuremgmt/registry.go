@@ -1751,8 +1751,8 @@ var (
 			HideFromDocs:      true,
 		},
 		{
-			Name:              "kubernetesAuthzEndpoints",
-			Description:       "Enables K8s AuthZ endpoints",
+			Name:              "kubernetesAuthZHandlerRedirect",
+			Description:       "Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
 			HideFromAdminPage: true,

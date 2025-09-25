@@ -1988,6 +1988,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthZHandlerRedirect",
+        "resourceVersion": "1758820248165",
+        "creationTimestamp": "2025-09-25T17:10:48Z"
+      },
+      "spec": {
+        "description": "Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthnMutation",
         "resourceVersion": "1753454405614",
         "creationTimestamp": "2025-07-25T15:05:32Z",
@@ -2021,7 +2035,8 @@
       "metadata": {
         "name": "kubernetesAuthzEndpoints",
         "resourceVersion": "1758779666607",
-        "creationTimestamp": "2025-09-25T05:54:26Z"
+        "creationTimestamp": "2025-09-25T05:54:26Z",
+        "deletionTimestamp": "2025-09-25T17:10:48Z"
       },
       "spec": {
         "description": "Enables K8s AuthZ endpoints",
@@ -3724,6 +3739,20 @@
       },
       "spec": {
         "description": "Enable unified storage search UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageUseFullNgram",
+        "resourceVersion": "1758820248165",
+        "creationTimestamp": "2025-09-25T17:10:48Z"
+      },
+      "spec": {
+        "description": "Use full n-gram indexing instead of edge n-gram for unified storage search",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,

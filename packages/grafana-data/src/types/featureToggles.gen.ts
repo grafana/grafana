@@ -1013,9 +1013,9 @@ export interface FeatureToggles {
   */
   kubernetesAuthzApis?: boolean;
   /**
-  * Enables K8s AuthZ endpoints
+  * Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints
   */
-  kubernetesAuthzEndpoints?: boolean;
+  kubernetesAuthZHandlerRedirect?: boolean;
   /**
   * Registers AuthZ resource permission /apis endpoints
   */
