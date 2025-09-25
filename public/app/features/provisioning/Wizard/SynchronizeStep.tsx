@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
@@ -20,7 +20,11 @@ export interface SynchronizeStepProps {
   isCancelling?: boolean;
 }
 
-export function SynchronizeStep({ isLegacyStorage, onCancel, isCancelling }: SynchronizeStepProps) {
+export const SynchronizeStep = memo(function SynchronizeStep({
+  isLegacyStorage,
+  onCancel,
+  isCancelling,
+}: SynchronizeStepProps) {
   const { getValues, register, watch } = useFormContext<WizardFormData>();
   const { setStepStatusInfo } = useStepStatus();
   const [repoName = '', repoType] = watch(['repositoryName', 'repository.type']);
@@ -163,4 +167,4 @@ export function SynchronizeStep({ isLegacyStorage, onCancel, isCancelling }: Syn
       </Field>
     </Stack>
   );
-}
+});

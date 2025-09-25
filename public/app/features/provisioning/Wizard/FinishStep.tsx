@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
@@ -11,7 +11,7 @@ import { isGitProvider } from '../utils/repositoryTypes';
 import { getGitProviderFields } from './fields';
 import { WizardFormData } from './types';
 
-export function FinishStep() {
+export const FinishStep = memo(function FinishStep() {
   const { register, watch, setValue } = useFormContext<WizardFormData>();
   const settings = useGetFrontendSettingsQuery();
 
@@ -115,4 +115,4 @@ export function FinishStep() {
       )}
     </Stack>
   );
-}
+});

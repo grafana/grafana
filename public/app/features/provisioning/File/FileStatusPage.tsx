@@ -6,12 +6,12 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, CodeEditor, LinkButton, Button, Stack, Tab, TabContent, TabsBar, DeleteButton } from '@grafana/ui';
+import { Alert, Button, CodeEditor, DeleteButton, LinkButton, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import {
-  useGetRepositoryFilesWithPathQuery,
   ResourceWrapper,
-  useReplaceRepositoryFilesWithPathMutation,
   useDeleteRepositoryFilesWithPathMutation,
+  useGetRepositoryFilesWithPathQuery,
+  useReplaceRepositoryFilesWithPathMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -28,7 +28,6 @@ export default function FileStatusPage() {
   const path = params['*'] ?? '';
   const file = useGetRepositoryFilesWithPathQuery({ name, path, ref });
   const { isReadOnlyRepo } = useGetResourceRepositoryView({ name });
-  console.log('isReadOnlyRepo', isReadOnlyRepo);
 
   return (
     <Page

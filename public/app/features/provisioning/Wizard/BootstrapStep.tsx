@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -20,7 +20,7 @@ export interface Props {
   repoName: string;
 }
 
-export function BootstrapStep({ settingsData, repoName }: Props) {
+export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoName }: Props) {
   const { setStepStatusInfo } = useStepStatus();
   const {
     register,
@@ -139,7 +139,7 @@ export function BootstrapStep({ settingsData, repoName }: Props) {
       </Stack>
     </Stack>
   );
-}
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   divider: css({
