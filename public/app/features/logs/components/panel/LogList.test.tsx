@@ -242,10 +242,16 @@ describe('LogList', () => {
     test('Reports the default displayed fields for non-OTel logs', () => {
       config.featureToggles.otelLogsFormatting = true;
       const onLogOptionsChange = jest.fn();
+      const setDisplayedFields = jest.fn();
 
-      render(<LogList {...defaultProps} onLogOptionsChange={onLogOptionsChange} />);
+      render(
+        <LogList {...defaultProps} onLogOptionsChange={onLogOptionsChange} setDisplayedFields={setDisplayedFields} />
+      );
       expect(screen.getByText('log message 1')).toBeInTheDocument();
       expect(onLogOptionsChange).toHaveBeenCalledWith('defaultDisplayedFields', []);
+
+      // No fields to display, no call
+      expect(setDisplayedFields).not.toHaveBeenCalled();
 
       config.featureToggles.otelLogsFormatting = originalState;
     });
@@ -253,14 +259,24 @@ describe('LogList', () => {
     test('Reports the default OTel displayed fields', () => {
       config.featureToggles.otelLogsFormatting = true;
       const onLogOptionsChange = jest.fn();
+      const setDisplayedFields = jest.fn();
+
       const logs = [createLogRow({ uid: '1', labels: { [OTEL_PROBE_FIELD]: '1' } })];
 
-      render(<LogList {...defaultProps} logs={logs} onLogOptionsChange={onLogOptionsChange} />);
+      render(
+        <LogList
+          {...defaultProps}
+          logs={logs}
+          onLogOptionsChange={onLogOptionsChange}
+          setDisplayedFields={setDisplayedFields}
+        />
+      );
       expect(screen.getByText('log message 1')).toBeInTheDocument();
       expect(onLogOptionsChange).toHaveBeenCalledWith('defaultDisplayedFields', [
         LOG_LINE_BODY_FIELD_NAME,
         OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME,
       ]);
+      expect(setDisplayedFields).toHaveBeenCalledWith([LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]);
 
       config.featureToggles.otelLogsFormatting = originalState;
     });
