@@ -190,6 +190,9 @@ export class LogListModel implements LogRowModel {
   get highlightedLogAttributesTokens() {
     if (this._highlightedLogAttributesTokens === undefined) {
       const attributes = this.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME] ?? '';
+      if (!attributes) {
+        return [];
+      }
       this._grammar = this._grammar ?? generateLogGrammar(this);
       const extraGrammar = generateTextMatchGrammar(this.searchWords, this._currentSearch);
       this._highlightedLogAttributesTokens = Prism.tokenize(attributes, { ...extraGrammar, ...this._grammar });
