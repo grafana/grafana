@@ -76,34 +76,13 @@ func (f *FakeInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key 
 	return nil
 }
 
-func (f *FakeInstanceStore) FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int) error {
+func (f *FakeInstanceStore) FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int, jitterFunc func(int) time.Duration) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = []any{}
 	for _, instance := range instances {
 		f.recordedOps = append(f.recordedOps, instance)
 	}
-	return nil
-}
-
-func (f *FakeInstanceStore) FullSyncWithJitter(ctx context.Context, instances []models.AlertInstance, jitterFunc func(int) time.Duration, batchSize int) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-
-	// Basic call recording (consistent with other fake methods)
-	f.recordedOps = []any{FakeInstanceStoreOp{
-		Name: "FullSyncWithJitter",
-		Args: []any{
-			len(instances),
-			batchSize,
-		},
-	}}
-
-	// Record instances (same as FullSync)
-	for _, instance := range instances {
-		f.recordedOps = append(f.recordedOps, instance)
-	}
-
 	return nil
 }
 

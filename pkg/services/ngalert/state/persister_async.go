@@ -62,13 +62,12 @@ func (a *AsyncStatePersister) fullSync(ctx context.Context, instancesProvider Al
 	a.log.Debug("Full state sync start")
 	instances := instancesProvider.GetAlertInstances()
 
-	var err error
+	var jitterFunc func(int) time.Duration
 	if a.jitterEnabled {
-		err = a.fullSyncWithJitter(ctx, instances)
-	} else {
-		err = a.store.FullSync(ctx, instances, a.batchSize)
+		jitterFunc = a.createJitterFunc(instances)
 	}
 
+	err := a.store.FullSync(ctx, instances, a.batchSize, jitterFunc)
 	if err != nil {
 		a.log.Error("Full state sync failed", "duration", time.Since(startTime), "instances", len(instances))
 		return err
@@ -92,24 +91,17 @@ func (a *AsyncStatePersister) calculateBatchJitterDelay(batchIndex, totalBatches
 	return delay
 }
 
-func (a *AsyncStatePersister) fullSyncWithJitter(ctx context.Context, instances []models.AlertInstance) error {
+// createJitterFunc creates a jitter function for the given instances
+func (a *AsyncStatePersister) createJitterFunc(instances []models.AlertInstance) func(int) time.Duration {
 	safetyRatio := 0.85
 	availableWindow := time.Duration(float64(a.interval) * safetyRatio)
-
 	totalBatches := (len(instances) + a.batchSize - 1) / a.batchSize
 
-	jitterFunc := func(batchIndex int) time.Duration {
+	a.log.Debug("Creating jitter function", "instances", len(instances), "batches", totalBatches, "window", availableWindow)
+
+	return func(batchIndex int) time.Duration {
 		return a.calculateBatchJitterDelay(batchIndex, totalBatches, availableWindow)
 	}
-
-	err := a.store.FullSyncWithJitter(ctx, instances, jitterFunc, a.batchSize)
-	if err != nil {
-		a.log.Error("Full state sync with jitter failed", "err", err)
-		return err
-	}
-
-	a.log.Debug("Full state sync with jitter completed", "instances", len(instances), "batches", totalBatches, "window", availableWindow)
-	return nil
 }
 
 func (a *AsyncStatePersister) Sync(_ context.Context, _ trace.Span, _ models.AlertRuleKeyWithGroup, _ StateTransitions) {

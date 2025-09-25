@@ -247,7 +247,10 @@ func (st InstanceDBStore) DeleteAlertInstancesByRule(ctx context.Context, key mo
 //
 // The batchSize parameter controls how many instances are inserted per batch. Increasing batchSize can improve
 // performance for large datasets, but can also increase load on the database.
-func (st InstanceDBStore) FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int) error {
+//
+// If jitterFunc is provided, applies jitter delays between batches to distribute database load over time.
+// If jitterFunc is nil, executes batches without delays for standard behavior.
+func (st InstanceDBStore) FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int, jitterFunc func(int) time.Duration) error {
 	if len(instances) == 0 {
 		return nil
 	}
@@ -256,6 +259,12 @@ func (st InstanceDBStore) FullSync(ctx context.Context, instances []models.Alert
 		batchSize = 1
 	}
 
+	// If jitter is enabled, use the jittered approach
+	if jitterFunc != nil {
+		return st.fullSyncWithJitter(ctx, instances, batchSize, jitterFunc)
+	}
+
+	// Otherwise, use the standard approach without jitter
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// First we delete all records from the table
 		if _, err := sess.Exec("DELETE FROM alert_instance"); err != nil {
@@ -276,25 +285,18 @@ func (st InstanceDBStore) FullSync(ctx context.Context, instances []models.Alert
 			}
 		}
 
-		if err := sess.Commit(); err != nil {
-			return fmt.Errorf("failed to commit alert_instance table: %w", err)
-		}
-
 		return nil
 	})
 }
 
-// FullSyncWithJitter performs a full synchronization with jitter delays between batches.
+// fullSyncWithJitter performs a full synchronization with jitter delays between batches.
 //
 // This method maintains atomicity by performing all operations within a single transaction,
 // while distributing the INSERT operations over time to reduce database load spikes.
 //
-// Unlike the rule-based approach, this method splits all instances into batches of the specified
-// size and applies jitter delays between each batch, making it consistent with the regular FullSync behavior.
-//
 // The instances parameter should be a flat list of all alert instances.
 // The jitterFunc should return the delay duration for a given batch index.
-func (st InstanceDBStore) FullSyncWithJitter(ctx context.Context, instances []models.AlertInstance, jitterFunc func(int) time.Duration, batchSize int) error {
+func (st InstanceDBStore) fullSyncWithJitter(ctx context.Context, instances []models.AlertInstance, batchSize int, jitterFunc func(int) time.Duration) error {
 	if len(instances) == 0 {
 		return nil
 	}
