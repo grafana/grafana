@@ -189,7 +189,6 @@ export class LogListModel implements LogRowModel {
 
   get highlightedLogAttributesTokens() {
     if (this._highlightedLogAttributesTokens === undefined) {
-      // Body is accessed first to trigger the getter code before generateLogGrammar()
       const attributes = this.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME] ?? '';
       this._grammar = this._grammar ?? generateLogGrammar(this);
       const extraGrammar = generateTextMatchGrammar(this.searchWords, this._currentSearch);
