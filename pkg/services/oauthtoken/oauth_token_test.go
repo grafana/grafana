@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
-	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -318,8 +317,13 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 				featuremgmt.WithFeatures(),
 			)
 
+			tokenRefreshMetadata := &TokenRefreshMetadata{ExternalSessionID: 1}
+			if tt.identity != nil {
+				tokenRefreshMetadata.AuthModule = tt.identity.GetAuthenticatedBy()
+			}
+
 			// token refresh
-			actualToken, err := env.service.TryTokenRefresh(context.Background(), tt.identity, &usertoken.UserToken{ExternalSessionId: 1})
+			actualToken, err := env.service.TryTokenRefresh(context.Background(), tt.identity, tokenRefreshMetadata)
 
 			if tt.expectedErr != nil {
 				assert.ErrorIs(t, err, tt.expectedErr)
@@ -595,8 +599,13 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 				featuremgmt.WithFeatures(featuremgmt.FlagImprovedExternalSessionHandling),
 			)
 
+			tokenRefreshMetadata := &TokenRefreshMetadata{ExternalSessionID: 1}
+			if tt.identity != nil {
+				tokenRefreshMetadata.AuthModule = tt.identity.GetAuthenticatedBy()
+			}
+
 			// token refresh
-			actualToken, err := env.service.TryTokenRefresh(context.Background(), tt.identity, &usertoken.UserToken{ExternalSessionId: 1})
+			actualToken, err := env.service.TryTokenRefresh(context.Background(), tt.identity, tokenRefreshMetadata)
 
 			if tt.expectedErr != nil {
 				assert.ErrorIs(t, err, tt.expectedErr)
