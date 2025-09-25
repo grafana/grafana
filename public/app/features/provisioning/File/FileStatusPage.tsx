@@ -28,7 +28,6 @@ export default function FileStatusPage() {
   const path = params['*'] ?? '';
   const file = useGetRepositoryFilesWithPathQuery({ name, path, ref });
   const { isReadOnlyRepo } = useGetResourceRepositoryView({ name });
-  console.log('isReadOnlyRepo', isReadOnlyRepo);
 
   return (
     <Page
