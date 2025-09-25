@@ -29,9 +29,7 @@ func (a *authorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 
 	// Check if the request includes explicit permissions
 	res := authz.CheckServicePermissions(user, attr.GetAPIGroup(), attr.GetResource(), attr.GetVerb())
-	if res.Allowed {
-		return authorizer.DecisionAllow, "", nil
-	} else if res.ServiceCall {
+	if !res.Allowed {
 		log := logging.FromContext(ctx)
 		log.Info("calling service lacks required permissions",
 			"isServiceCall", res.ServiceCall,
