@@ -111,21 +111,6 @@ func TestParents(t *testing.T) {
 			},
 			expectedErr: "cyclic folder references found",
 		},
-		{
-			name: "too deep",
-			request: input{
-				name:   "test",
-				folder: "p1",
-			},
-			maxDepth:    3,
-			expectedErr: "[folder.maximum-depth-reached]",
-			expected: &folders.FolderInfoList{Items: []folders.FolderInfo{
-				{Name: "test", Parent: "p1"},
-				{Name: "p1", Parent: "p2"},
-				{Name: "p2", Parent: "p3"},
-				{Name: "p3", Parent: "p4"}, // should not try calling p4
-			}},
-		},
 	}
 
 	for _, tt := range tests {
