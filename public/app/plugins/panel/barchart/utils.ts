@@ -73,10 +73,10 @@ export function prepSeries(
   decoupleHideFromState(frames, fieldConfig);
 
   let frame: DataFrame | undefined = { ...frames[0] };
-  const groupByFieldIdx = getFieldIdx(frames, groupByField)
 
   if (clusteredStacking !== StackingMode.None) {
-    const clusters = getClustersFromArray(Array.from(frames[0].fields[groupByFieldIdx === -1 ? 0 : groupByFieldIdx].values), groupByField);
+    const fieldValues = frame.fields.find((field) => field.state?.displayName === groupByField || field.name === groupByField)?.values
+    const clusters = getClustersFromArray(fieldValues, groupByField);
     prepareClusterData(frames, clusters, groupByField);
     frame = { ...frames[0] };
   }
@@ -91,6 +91,7 @@ export function prepSeries(
   
   const xField =
     // TODO: use matcher
+    frame.fields.find((field) => field.state?.displayName === groupByField || field.name === groupByField) ??
     frame.fields.find((field) => field.state?.displayName === xFieldName || field.name === xFieldName) ??
     frame.fields.find((field) => field.type === FieldType.string) ??
     frame.fields[timeFieldIdx];
@@ -306,7 +307,6 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     hoverMulti: tooltip.mode === TooltipDisplayMode.Multi,
   };
 
-  // const clusters = getClustersFromField(series, groupByField);
   const groupByFieldIdx = getFieldIdx(series, groupByField)
 
   const config = getConfig(opts, theme, groupByFieldIdx);
@@ -559,7 +559,7 @@ export function prepareClusterData(frames: DataFrame[], clusters: number[], grou
       const v = yVals[rowIdx + k];
 
       const field: Field = {
-        name: `${clusterLabel}_${k}`,
+        name: `${clusterLabel}_${xVals[rowIdx + k]}`,
         type: FieldType.number,
         config: yField ? yField.config : {},
         values: Array(clusters.length).fill(0),
@@ -578,13 +578,14 @@ export function prepareClusterData(frames: DataFrame[], clusters: number[], grou
   xField.values = newX;
   catField.values = newCat;
   yField.values = newY;
+  frame.length = clusters.length;
 
   frame.fields.push(...newFields);
 }
 
 
 // returns an array of ints, where each number n represents the size of the nth cluster
-export function getClustersFromArray(fieldValues: any[], groupByField: string | undefined): number[] {
+export function getClustersFromArray(fieldValues: any[] | undefined, groupByField: string | undefined): number[] {
   if (!fieldValues) { return []; }
   const fallbackClusters = Array(fieldValues.length).fill(1); // cluster for each group
   if (!groupByField) { return fallbackClusters; }

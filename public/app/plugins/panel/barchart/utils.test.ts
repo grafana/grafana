@@ -7,6 +7,7 @@ import {
   MutableDataFrame,
   VizOrientation,
   FieldConfigSource,
+  createDataFrame,
 } from '@grafana/data';
 import {
   LegendDisplayMode,
@@ -19,7 +20,7 @@ import {
 } from '@grafana/schema';
 
 import { FieldConfig as PanelFieldConfig } from './panelcfg.gen';
-import { prepSeries, prepConfig, PrepConfigOpts, getClustersFromArray } from './utils';
+import { prepSeries, prepConfig, PrepConfigOpts, getClustersFromArray, prepareClusterData } from './utils';
 
 const fieldConfig: FieldConfigSource = {
   defaults: {},
@@ -287,6 +288,56 @@ describe('BarChart utils', () => {
       expect(actualOutput).toEqual(expectedOutput);
     });
   })
+  describe('prepareClusterData', () => {
+    it('should change the dataframe correctly', () => {
+      const inputDataFrame = createDataFrame({
+        fields: [
+          { name: 'X', values: [1,2,3,4]},
+          { name: 'Cat', values: ['A', 'A', 'B', 'C']},
+          { name: 'Y', values: [10,5,4,8]},
+        ],
+      });
+      const expectedDataFrame = createDataFrame({
+        fields: [
+          { name: 'X', values: [1,3,4]},
+          { name: 'Cat', values: ['A', 'B', 'C']},
+          { name: 'Y', values: [10,4,8]},
+          { name: 'A_2', values: [5,0,0], display: undefined}
+        ],
+      });
+      const clusters = [2,1,1];
+
+      inputDataFrame.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+      expectedDataFrame.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+    
+      prepareClusterData([inputDataFrame], clusters, 'Cat');
+      expect(inputDataFrame).toEqual(expectedDataFrame);
+    });
+
+    it('should leave the dataframe intact if no clusters bigger than 1', () => {
+      const inputDataFrame = createDataFrame({
+        fields: [
+          { name: 'X', values: [1,2,3,4]},
+          { name: 'Cat', values: ['A', 'B', 'C', 'D']},
+          { name: 'Y', values: [10,5,4,8]},
+        ],
+      });
+      const expectedDataFrame = createDataFrame({
+        fields: [
+          { name: 'X', values: [1,2,3,4]},
+          { name: 'Cat', values: ['A', 'B', 'C', 'D']},
+          { name: 'Y', values: [10,5,4,8]},
+        ],
+      });
+      const clusters = [1,1,1,1];
+
+      inputDataFrame.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+      expectedDataFrame.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+    
+      prepareClusterData([inputDataFrame], clusters, 'Cat');
+      expect(inputDataFrame).toEqual(expectedDataFrame);
+    });
+  });
 });
 
 
