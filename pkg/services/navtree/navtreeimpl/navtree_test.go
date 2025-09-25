@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -234,6 +235,7 @@ func TestBuildDataConnectionsNavLink(t *testing.T) {
 	t.Run("Should return nil when no access and no plugin items", func(t *testing.T) {
 		accessControl := actest.FakeAccessControl{}
 		service := ServiceImpl{
+			cfg:           &setting.Cfg{AppSubURL: ""},
 			accessControl: &accessControl,
 		}
 
@@ -248,6 +250,7 @@ func TestBuildDataConnectionsNavLink(t *testing.T) {
 			ExpectedEvaluate: true,
 		}
 		service := ServiceImpl{
+			cfg:           &setting.Cfg{AppSubURL: ""},
 			accessControl: &accessControl,
 		}
 
@@ -265,6 +268,7 @@ func TestBuildDataConnectionsNavLink(t *testing.T) {
 			ExpectedEvaluate: false, // No datasources access
 		}
 		service := ServiceImpl{
+			cfg:           &setting.Cfg{AppSubURL: ""},
 			accessControl: &accessControl,
 		}
 
