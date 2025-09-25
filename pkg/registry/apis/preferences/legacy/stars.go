@@ -18,6 +18,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -91,8 +92,18 @@ func (s *DashboardStarsStorage) List(ctx context.Context, options *internalversi
 		return nil, fmt.Errorf("cross cluster listing is not supported")
 	}
 
+	userInfo, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	user := userInfo.GetUID()
+	if userInfo.GetIsGrafanaAdmin() || userInfo.GetIdentityType() == authlib.TypeAccessPolicy {
+		user = "" // can see everything
+	}
+
 	list := &preferences.StarsList{}
-	found, rv, err := s.sql.GetStars(ctx, ns.OrgID, "")
+	found, rv, err := s.sql.GetStars(ctx, ns.OrgID, user)
 	if err != nil {
 		return nil, err
 	}

@@ -6,55 +6,93 @@ import (
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	authzlib "github.com/grafana/authlib/authz"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 )
 
-func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return authorizer.AuthorizerFunc(
-		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-			user, err := identity.GetRequester(ctx)
-			if err != nil {
-				return authorizer.DecisionDeny, "valid user is required", err
-			}
+type authorizeFromName struct {
+	teams    utils.TeamService
+	resource map[string][]utils.ResourceOwner // may include unknown
+}
 
-			if !attr.IsResourceRequest() || user.GetIsGrafanaAdmin() || attr.GetName() == "" {
-				return authorizer.DecisionAllow, "", nil
-			}
+func (a *authorizeFromName) Authorize(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return authorizer.DecisionDeny, "valid user is required", err
+	}
 
-			name, found := utils.ParseOwnerFromName(attr.GetName())
-			if !found {
-				return authorizer.DecisionDeny, "invalid name", nil
-			}
+	if !attr.IsResourceRequest() || user.GetIsGrafanaAdmin() {
+		return authorizer.DecisionAllow, "", nil
+	}
 
-			if attr.GetResource() == "stars" && name.Owner != utils.UserResourceOwner {
-				return authorizer.DecisionDeny, "stars only support users", nil
-			}
+	// Check if the request includes explicit permissions
+	res := authzlib.CheckServicePermissions(user, attr.GetAPIGroup(), attr.GetResource(), attr.GetVerb())
+	if res.Allowed {
+		return authorizer.DecisionAllow, "", nil
+	} else if res.ServiceCall {
+		log := logging.FromContext(ctx)
+		log.Info("calling service lacks required permissions",
+			"isServiceCall", res.ServiceCall,
+			"apiGroup", attr.GetAPIGroup(),
+			"resource", attr.GetResource(),
+			"verb", attr.GetVerb(),
+			"permissions", len(res.Permissions),
+		)
+		return authorizer.DecisionDeny, "calling service lacks required permissions", nil
+	}
 
-			switch name.Owner {
-			case utils.NamespaceResourceOwner:
-				return authorizer.DecisionAllow, "", nil
+	owners, ok := a.resource[attr.GetResource()]
+	if !ok {
+		return authorizer.DecisionDeny, "unknown resource", nil
+	}
 
-			case utils.UserResourceOwner:
-				if user.GetUID() == name.Name {
-					return authorizer.DecisionAllow, "", nil
-				}
-				return authorizer.DecisionDeny, "you may only fetch your own preferences", nil
+	if attr.GetName() == "" {
+		if attr.IsReadOnly() {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "mutating request without a name", nil
+	}
 
-			case utils.TeamResourceOwner:
-				admin := !attr.IsReadOnly() // we need admin to for non read only commands
-				teams, err := b.teams(ctx, user.GetOrgID(), user.GetUID(), admin)
-				if err != nil {
-					return authorizer.DecisionDeny, "error fetching teams", err
-				}
-				if slices.Contains(teams, name.Name) {
-					return authorizer.DecisionAllow, "", nil
-				}
-				return authorizer.DecisionDeny, "not a team member", nil
+	name, _ := utils.ParseOwnerFromName(attr.GetName())
+	if !slices.Contains(owners, name.Owner) {
+		return authorizer.DecisionDeny, "unsupported owner name", nil
+	}
 
-			default:
-			}
+	switch name.Owner {
+	case utils.NamespaceResourceOwner:
+		if attr.IsReadOnly() {
+			// Everyone can see the namespace
+			return authorizer.DecisionAllow, "", nil
+		}
+		if user.GetOrgRole() == identity.RoleAdmin {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "must be an org admin to edit", nil
 
-			return authorizer.DecisionDeny, "invalid name", nil
-		})
+	case utils.UserResourceOwner:
+		if user.GetUID() == name.Name {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "your identify must match the selected resource", nil
+
+	case utils.TeamResourceOwner:
+		if a.teams == nil {
+			return authorizer.DecisionDeny, "team checker not configured", err
+		}
+		ok, err := a.teams.InTeam(ctx, user, !attr.IsReadOnly())
+		if err != nil {
+			return authorizer.DecisionDeny, "error fetching teams", err
+		}
+		if ok {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "not a team member", nil
+
+	default:
+	}
+
+	return authorizer.DecisionDeny, "invalid name", nil
+
 }

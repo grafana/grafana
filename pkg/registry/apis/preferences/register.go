@@ -1,12 +1,12 @@
 package preferences
 
 import (
-	"context"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
@@ -18,6 +18,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -31,10 +32,10 @@ import (
 var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
 
 type APIBuilder struct {
+	authorizer  authorizer.Authorizer
 	legacyStars *legacy.DashboardStarsStorage
 	legacyPrefs rest.Storage
 
-	teams  func(ctx context.Context, orgId int64, user string, admin bool) ([]string, error)
 	merger *merger // joins all preferences
 }
 
@@ -55,7 +56,17 @@ func RegisterAPIService(
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
 		merger: newMerger(cfg, sql),
-		teams:  sql.GetTeams,
+		authorizer: &authorizeFromName{
+			teams: sql, // should be from the IAM service
+			resource: map[string][]utils.ResourceOwner{
+				"stars": {utils.UserResourceOwner},
+				"preferences": {
+					utils.NamespaceResourceOwner,
+					utils.TeamResourceOwner,
+					utils.UserResourceOwner,
+				},
+			},
+		},
 	}
 
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -115,6 +126,10 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	apiGroupInfo.VersionedResourcesStorageMap[preferences.APIVersion] = storage
 	return nil
+}
+
+func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
+	return b.authorizer
 }
 
 func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {

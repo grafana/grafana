@@ -3,7 +3,6 @@ package legacy
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -85,33 +84,18 @@ func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav
 	if err != nil {
 		return nil, err
 	}
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
 	owner, ok := utils.ParseOwnerFromName(name)
 	if !ok {
 		return nil, preferences.PreferencesResourceInfo.NewNotFound(name)
 	}
 
+	// NOTE: the authorizer already checked if this request is allowed
 	found, _, err := s.sql.listPreferences(ctx, ns.Value, ns.OrgID, func(req *preferencesQuery) (bool, error) {
 		switch owner.Owner {
 		case utils.UserResourceOwner:
-			if !user.GetIsGrafanaAdmin() && name != user.GetUID() {
-				return false, fmt.Errorf("you may only fetch your own preferences")
-			}
 			req.UserUID = owner.Name
 			return false, nil
 		case utils.TeamResourceOwner:
-			if !user.GetIsGrafanaAdmin() {
-				teams, err := s.sql.GetTeams(ctx, ns.OrgID, user.GetRawIdentifier(), false)
-				if err != nil {
-					return false, err
-				}
-				if !slices.Contains(teams, owner.Name) {
-					return false, fmt.Errorf("you may only fetch teams you belong to")
-				}
-			}
 			req.TeamUID = owner.Name
 			return false, nil
 		case utils.NamespaceResourceOwner:
