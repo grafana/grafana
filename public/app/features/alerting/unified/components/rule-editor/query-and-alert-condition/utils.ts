@@ -1,10 +1,9 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
-import { DataSourceJsonData } from '@grafana/schema/dist/esm/index';
 import { contextSrv } from 'app/core/core';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { useHasDataSourceRuler } from '../../../hooks/useHasDataSourceRuler';
 import { RuleFormType } from '../../../types/rule-form';
 
 export const onlyOneDSInQueries = (queries: AlertQuery[]) => {
@@ -27,12 +26,10 @@ function getAvailableRuleTypes() {
   return { enabledRuleTypes, defaultRuleType };
 }
 
-export const getCanSwitch = ({
+export const useGetCanSwitch = ({
   queries,
   ruleFormType,
-  rulesSourcesWithRuler,
 }: {
-  rulesSourcesWithRuler: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
   queries: AlertQuery[];
   ruleFormType: RuleFormType | undefined;
 }) => {
@@ -43,12 +40,10 @@ export const getCanSwitch = ({
   const onlyOneDS = onlyOneDSInQueries(queries);
   const dataSourceIdFromQueries = queries[0]?.datasourceUid ?? '';
   const isRecordingRuleType = ruleFormType === RuleFormType.cloudRecording;
+  const { hasRuler } = useHasDataSourceRuler(dataSourceIdFromQueries);
 
   //let's check if we switch to cloud type
-  const canSwitchToCloudRule =
-    !isRecordingRuleType &&
-    onlyOneDS &&
-    rulesSourcesWithRuler.some((dsJsonData) => dsJsonData.uid === dataSourceIdFromQueries);
+  const canSwitchToCloudRule = !isRecordingRuleType && onlyOneDS && hasRuler;
 
   const canSwitchToGrafanaRule = !isRecordingRuleType;
   // check for enabled types
