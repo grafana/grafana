@@ -66,6 +66,15 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
 
+  const repositoryRequestFailed = t(
+    'provisioning.provisioning-wizard.on-submit.title.repository-request-failed',
+    'Repository request failed'
+  );
+  const repositoryConnectionFailed = t(
+    'provisioning.provisioning-wizard.on-submit.title.repository-connection-failed',
+    'Repository connection failed'
+  );
+
   const { stepStatusInfo, setStepStatusInfo, isStepSuccess, isStepRunning, hasStepError, hasStepWarning } =
     useStepStatus();
 
@@ -283,10 +292,20 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         const spec = dataToSpec(formData.repository);
         const rsp = await submitData(spec, formData.repository.token);
         if (rsp.error) {
-          setStepStatusInfo({
-            status: 'error',
-            error: 'Repository request failed',
-          });
+          if (isFetchError(rsp.error)) {
+            setStepStatusInfo({
+              status: 'error',
+              error: {
+                title: repositoryRequestFailed,
+                message: rsp.error.data.message,
+              },
+            });
+          } else {
+            setStepStatusInfo({
+              status: 'error',
+              error: repositoryRequestFailed,
+            });
+          }
           return;
         }
 
@@ -304,11 +323,19 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
           const [field, errorMessage] = getFormErrors(error.data.errors);
           if (field && errorMessage) {
             setError(field, errorMessage);
+          } else {
+            setStepStatusInfo({
+              status: 'error',
+              error: {
+                title: repositoryConnectionFailed,
+                message: error.data.message,
+              },
+            });
           }
         } else {
           setStepStatusInfo({
             status: 'error',
-            error: 'Repository connection failed',
+            error: repositoryConnectionFailed,
           });
         }
       } finally {
