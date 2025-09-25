@@ -6,7 +6,7 @@ import (
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
-	authzlib "github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/authz"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
@@ -28,7 +28,7 @@ func (a *authorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 	}
 
 	// Check if the request includes explicit permissions
-	res := authzlib.CheckServicePermissions(user, attr.GetAPIGroup(), attr.GetResource(), attr.GetVerb())
+	res := authz.CheckServicePermissions(user, attr.GetAPIGroup(), attr.GetResource(), attr.GetVerb())
 	if res.Allowed {
 		return authorizer.DecisionAllow, "", nil
 	} else if res.ServiceCall {
@@ -94,5 +94,4 @@ func (a *authorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 	}
 
 	return authorizer.DecisionDeny, "invalid name", nil
-
 }
