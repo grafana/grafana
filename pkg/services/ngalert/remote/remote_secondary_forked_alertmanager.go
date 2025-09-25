@@ -8,6 +8,7 @@ import (
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -65,7 +66,7 @@ func (c *RemoteSecondaryConfig) Validate() error {
 // NewRemoteSecondaryFactory returns a function to override the default AM factory in the multi-org Alertmanager.
 func NewRemoteSecondaryFactory(
 	cfg AlertmanagerConfig,
-	stateStore stateStore,
+	store kvstore.KVStore,
 	cfgStore configStore,
 	syncInterval time.Duration,
 	crypto Crypto,
@@ -79,7 +80,7 @@ func NewRemoteSecondaryFactory(
 			// Create the remote Alertmanager first so we don't need to unregister internal AM metrics if this fails.
 			cfg.OrgID = orgID
 			l := log.New("ngalert.forked-alertmanager.remote-secondary")
-			remoteAM, err := NewAlertmanager(ctx, cfg, stateStore, crypto, autogenFn, m, t)
+			remoteAM, err := NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, store), crypto, autogenFn, m, t)
 			if err != nil && withRemoteState {
 				// We can't start the internal Alertmanager without the remote state.
 				return nil, fmt.Errorf("failed to create remote Alertmanager, can't start the internal Alertmanager without the remote state: %w", err)
