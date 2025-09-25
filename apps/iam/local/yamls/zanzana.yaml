@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: postgres:15.7
+          image: postgres:15
           env:
             - name: POSTGRES_USER
               value: grafana
@@ -32,13 +32,6 @@ spec:
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql/data
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
           readinessProbe:
             exec:
               command:
@@ -165,7 +158,7 @@ spec:
           env:
             - name: GF_PATHS_CONFIG
               value: /etc/grafana-config/grafana.ini
-          image: grafana/grafana-dev:12.2.0-257970
+          image: grafana/grafana-dev:12.3.0-17863745596
           imagePullPolicy: IfNotPresent
           name: zanzana
           ports:
