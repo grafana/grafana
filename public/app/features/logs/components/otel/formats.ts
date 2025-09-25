@@ -8,7 +8,8 @@ import { LogListModel, NEWLINES_REGEX } from '../panel/processing';
  */
 export const OTEL_PROBE_FIELD = 'severity_number';
 const OTEL_LANGUAGE_UNKNOWN = 'unknown';
-export function identifyOTelLanguages(logs: LogListModel[] | LogRowModel[]): string[] {
+
+function identifyOTelLanguages(logs: LogListModel[] | LogRowModel[]): string[] {
   const languagesSet = new Set<string>();
   logs.forEach((log) => {
     const lang = identifyOTelLanguage(log);
@@ -28,7 +29,7 @@ export function identifyOTelLanguage(log: LogListModel | LogRowModel): string | 
     : undefined;
 }
 
-export function getDisplayedFieldsForLanguages(logs: LogListModel[] | LogRowModel[], languages: string[]) {
+function getDisplayedFieldsForLanguages(logs: LogListModel[] | LogRowModel[], languages: string[]) {
   const displayedFields: string[] = [];
 
   languages.forEach((language) => {
