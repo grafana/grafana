@@ -1773,17 +1773,13 @@
           {
             "name": "type",
             "in": "query",
-            "description": "the request type",
+            "description": "search dashboards or folders.  When empty, this will search both",
             "schema": {
-              "type": "array",
-              "maxItems": 2,
-              "items": {
-                "type": "string",
-                "enum": [
-                  "folder",
-                  "dashboard"
-                ]
-              }
+              "type": "string",
+              "enum": [
+                "folder",
+                "dashboard"
+              ]
             }
           },
           {

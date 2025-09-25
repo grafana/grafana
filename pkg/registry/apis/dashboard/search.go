@@ -89,9 +89,9 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 									ParameterProps: spec3.ParameterProps{
 										Name:        "type",
 										In:          "query",
-										Description: "the request type",
+										Description: "search dashboards or folders.  When empty, this will search both",
 										Required:    false,
-										Schema:      spec.ArrayProperty(spec.StringProperty().WithEnum("folder", "dashboard")).WithMaxItems(2),
+										Schema:      spec.StringProperty().WithEnum("folder", "dashboard"),
 									},
 								},
 								{
@@ -302,32 +302,24 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	searchRequest.Fields = fields
 
-	types := queryParams["type"]
-	var federate *resourcepb.ResourceKey
-	switch len(types) {
-	case 0:
-		// When no type specified, search for dashboards
+	// Search dashboards or folders (or both)
+	switch queryParams.Get("type") {
+	case "folder":
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), folders.RESOURCE)
+	case "dashboard":
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
-		// Currently a search query is across folders and dashboards
-		if err == nil {
-			federate, err = asResourceKey(user.GetNamespace(), folders.RESOURCE)
-		}
-	case 1:
-		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
-	case 2:
-		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
-		if err == nil {
-			federate, err = asResourceKey(user.GetNamespace(), types[1])
-		}
 	default:
-		err = apierrors.NewBadRequest("too many type requests")
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
+		if err == nil {
+			federate, _ := asResourceKey(user.GetNamespace(), folders.RESOURCE)
+			if federate != nil {
+				searchRequest.Federated = []*resourcepb.ResourceKey{federate}
+			}
+		}
 	}
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
-	}
-	if federate != nil {
-		searchRequest.Federated = []*resourcepb.ResourceKey{federate}
 	}
 
 	// Add sorting

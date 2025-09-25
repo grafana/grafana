@@ -51,8 +51,8 @@ export type GetSearchApiResponse = /** status 200 undefined */ {
 export type GetSearchApiArg = {
   /** user query string */
   query?: string;
-  /** the request type */
-  type?: ('folder' | 'dashboard')[];
+  /** search dashboards or folders.  When empty, this will search both */
+  type?: 'folder' | 'dashboard';
   /** search/list within a folder (not recursive) */
   folder?: string;
   /** count distinct terms for selected fields */
