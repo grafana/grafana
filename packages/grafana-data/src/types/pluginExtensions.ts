@@ -5,6 +5,7 @@ import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 import { ScopedVars } from './ScopedVars';
 import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
 import { IconName } from './icon';
+import { NavModelItem } from './navModel';
 import { PanelData } from './panel';
 import { AbsoluteTimeRange, RawTimeRange, TimeZone } from './time';
 
@@ -322,4 +323,8 @@ type Dashboard = {
   uid: string;
   title: string;
   tags: string[];
+};
+
+export type PluginExtensionTopbarHelpV1Context = {
+  helpNode: NavModelItem;
 };

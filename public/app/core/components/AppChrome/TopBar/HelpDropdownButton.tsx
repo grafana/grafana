@@ -1,7 +1,13 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2, NavModelItem, PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
+import {
+  GrafanaTheme2,
+  NavModelItem,
+  PluginExtensionLink,
+  PluginExtensionPoints,
+  PluginExtensionTopbarHelpV1Context,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
@@ -21,7 +27,7 @@ const allowedPluginId = 'grafana-grafanadocsplugin-app';
 
 export function HelpDropdownButton({ helpNode }: Props) {
   const styles = useStyles2(getStyles);
-  const context = useMemo(() => ({ helpNode }), [helpNode]);
+  const context = useMemo<PluginExtensionTopbarHelpV1Context>(() => ({ helpNode }), [helpNode]);
   const { dockedComponentId, isOpen: isSidebarOpen } = useExtensionSidebarContext();
 
   const { links, isLoading } = usePluginLinks({
