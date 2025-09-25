@@ -33,6 +33,9 @@ const matrixTheme: NewThemeOptions = {
       brandHorizontal: 'linear-gradient(90deg, #008910 0%, #00ff41 100%)',
     },
   },
+  shape: {
+    borderRadius: 0,
+  },
   typography: {
     fontFamily: 'monospace',
   },
