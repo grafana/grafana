@@ -6,7 +6,16 @@ import { useDispatch, useSelector } from 'app/types/store';
 import { sortPlugins, Sorters, isPluginUpdatable } from '../helpers';
 import { CatalogPlugin, PluginStatus } from '../types';
 
-import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall, fetchAllLocal, unsetInstall } from './actions';
+import {
+  fetchAll,
+  fetchDetails,
+  fetchRemotePlugins,
+  install,
+  uninstall,
+  fetchAllLocal,
+  unsetInstall,
+  fetchPluginInsights,
+} from './actions';
 import {
   selectPlugins,
   selectById,
@@ -47,6 +56,7 @@ export const useGetUpdatable = () => {
 export const useGetSingle = (id: string): CatalogPlugin | undefined => {
   useFetchAll();
   useFetchDetails(id);
+  useFetchPluginInsights(id);
 
   return useSelector((state) => selectById(state, id));
 };
@@ -150,6 +160,17 @@ export const useFetchDetails = (id: string) => {
 
   useEffect(() => {
     shouldFetch && dispatch(fetchDetails(id));
+  }, [plugin]); // eslint-disable-line
+};
+
+export const useFetchPluginInsights = (id: string) => {
+  const dispatch = useDispatch();
+  const plugin = useSelector((state) => selectById(state, id));
+  const isNotFetching = !useSelector(selectIsRequestPending(fetchPluginInsights.typePrefix));
+  const shouldFetch = isNotFetching && plugin && !plugin.insights;
+
+  useEffect(() => {
+    shouldFetch && dispatch(fetchPluginInsights(id));
   }, [plugin]); // eslint-disable-line
 };
 

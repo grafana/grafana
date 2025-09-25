@@ -55,6 +55,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   updatedAt: string;
   installedVersion?: string;
   details?: CatalogPluginDetails;
+  insights?: CatalogPluginInsights;
   error?: PluginErrorCode;
   angularDetected?: boolean;
   // instance plugins may not be fully installed, which means a new instance
@@ -88,6 +89,59 @@ export interface CatalogPluginDetails {
   signatureType?: PluginSignatureType;
   signature?: PluginSignatureStatus;
   screenshots?: Screenshots[] | null;
+}
+
+export type InsightLevel = 'ok' | 'warning' | 'danger' | 'good' | 'info';
+
+export type ScoreLevel = 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Critical';
+
+export const INSIGHT_CATEGORIES = {
+  SECURITY: 'security',
+  QUALITY: 'quality',
+  PERFORMANCE: 'performance',
+} as const;
+
+export const INSIGHT_LEVELS = {
+  GOOD: 'good',
+  OK: 'ok',
+  WARNING: 'warning',
+  DANGER: 'danger',
+  INFO: 'info',
+} as const;
+
+export type InsightItems = {
+  [INSIGHT_CATEGORIES.SECURITY]: 'signature_verified' | 'unsafe_js';
+  [INSIGHT_CATEGORIES.QUALITY]: 'screenshots_available';
+};
+
+type ItemsForCategory<T extends keyof InsightItems> = Array<{
+  id: InsightItems[T];
+  name: string;
+  description?: string;
+  level: InsightLevel;
+  link?: string;
+}>;
+
+export type InsightCategory<T extends keyof InsightItems = keyof InsightItems> = {
+  name: T;
+  items: ItemsForCategory<T>;
+  scoreValue: number;
+  scoreLevel: ScoreLevel;
+};
+
+export interface InsightItem {
+  id: string;
+  name: string;
+  description?: string;
+  level: InsightLevel;
+  link?: string;
+}
+
+export interface CatalogPluginInsights {
+  id: number;
+  name: string;
+  version: string;
+  insights: InsightCategory[];
 }
 
 export interface CatalogPluginInfo {
@@ -276,7 +330,7 @@ export type RemotePluginResponse = { plugins: RemotePlugin[]; error?: Error };
 export type RequestInfo = {
   status: RequestStatus;
   // The whole error object
-  error?: any;
+  error?: Error;
   // An optional error message
   errorMessage?: string;
 };
