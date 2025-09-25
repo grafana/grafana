@@ -197,7 +197,7 @@ Use this workflow to locate dashboards using a deprecated API version and mark t
    playlist.grafana.app                v1        playlist
    ```
 
-1. Find dashboards that are still using an old API version:
+1. Find dashboards that are still using a deprecated API version:
 
    ```bash
    grafanactl resources get dashboards.v1.dashboard.grafana.app
