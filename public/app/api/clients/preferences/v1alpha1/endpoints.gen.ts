@@ -29,7 +29,7 @@ const injectedRtkApi = api
         }),
         providesTags: ['Preferences'],
       }),
-      currentPreferences: build.query<CurrentPreferencesApiResponse, CurrentPreferencesApiArg>({
+      mergedPreferences: build.query<MergedPreferencesApiResponse, MergedPreferencesApiArg>({
         query: () => ({ url: `/preferences/merged` }),
         providesTags: ['Preferences'],
       }),
@@ -216,8 +216,8 @@ export type ListPreferencesApiArg = {
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
   watch?: boolean;
 };
-export type CurrentPreferencesApiResponse = /** status 200 undefined */ any;
-export type CurrentPreferencesApiArg = void;
+export type MergedPreferencesApiResponse = /** status 200 undefined */ any;
+export type MergedPreferencesApiArg = void;
 export type GetPreferencesApiResponse = /** status 200 OK */ Preferences;
 export type GetPreferencesApiArg = {
   /** name of the Preferences */
@@ -705,7 +705,7 @@ export type Patch = object;
 export const {
   useGetApiResourcesQuery,
   useListPreferencesQuery,
-  useCurrentPreferencesQuery,
+  useMergedPreferencesQuery,
   useGetPreferencesQuery,
   useListStarsQuery,
   useCreateStarsMutation,

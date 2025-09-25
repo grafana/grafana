@@ -45,7 +45,7 @@ func (s *merger) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
-							OperationId: "currentPreferences",
+							OperationId: "mergedPreferences",
 							Tags:        []string{"Preferences"},
 							Description: "Get preferences for requester.  This combines the user preferences with the team and global defaults",
 							Parameters: []*spec3.Parameter{

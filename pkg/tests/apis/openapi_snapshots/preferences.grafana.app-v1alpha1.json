@@ -200,7 +200,7 @@
           "Preferences"
         ],
         "description": "Get preferences for requester.  This combines the user preferences with the team and global defaults",
-        "operationId": "currentPreferences",
+        "operationId": "mergedPreferences",
         "parameters": [
           {
             "name": "namespace",
