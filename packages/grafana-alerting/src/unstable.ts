@@ -10,14 +10,15 @@ export { getContactPointDescription } from './grafana/contactPoints/utils';
 
 // Notification Policies
 export {
-  useMatchAlertInstancesToNotificationPolicies,
+  useMatchInstancesToRouteTrees,
+  matchInstancesToRouteTrees,
   type RouteMatch,
   type InstanceMatchResult,
 } from './grafana/notificationPolicies/hooks/useMatchPolicies';
 export {
   type TreeMatch,
   type RouteMatchResult,
-  matchAlertInstancesToPolicyTree,
+  matchInstancesToRoute,
   findMatchingRoutes,
   getInheritedProperties,
   computeInheritedTree,
