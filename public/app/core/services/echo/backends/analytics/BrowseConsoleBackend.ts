@@ -12,9 +12,7 @@ export class BrowserConsoleBackend implements EchoBackend<PageviewEchoEvent, unk
   options = {};
   supportedEvents = [EchoEventType.Pageview, EchoEventType.Interaction, EchoEventType.ExperimentView];
 
-  constructor() {
-    throw new Error('omg!!!!');
-  }
+  constructor() {}
 
   addEvent = (e: PageviewEchoEvent) => {
     if (isPageviewEvent(e)) {
