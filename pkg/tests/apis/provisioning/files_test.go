@@ -7,10 +7,12 @@ import (
 	"io"
 	"net/http"
 	"path"
+	"sync"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,19 +36,37 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 			"testdata/timeline-demo.json": "folder/nested/dashboard3.json",
 			"testdata/.keep":              "folder/nested/.keep",
 		},
-		ExpectedDashboards: 3,
-		ExpectedFolders:    2,
+		SkipResourceAssertions: true, // tested below
 	})
 
-	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, 3, len(dashboards.Items))
+	var dashboards *unstructured.UnstructuredList
+	var folders *unstructured.UnstructuredList
+	var err error
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		dashboards, err = helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if err != nil {
+			collect.Errorf("could not list dashboards error: %s", err.Error())
+			return
+		}
+		if len(dashboards.Items) != 3 {
+			collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), 2)
+			return
+		}
+		folders, err = helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if err != nil {
+			collect.Errorf("could not list folders: error: %s", err.Error())
+			return
+		}
+		if len(folders.Items) != 2 {
+			collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", len(folders.Items), 2)
+			return
+		}
+
+		assert.Len(collect, dashboards.Items, 3)
+		assert.Len(collect, folders.Items, 2)
+	}, waitTimeoutDefault, waitIntervalDefault, "should have the expected dashboards and folders after sync")
 
 	helper.validateManagedDashboardsFolderMetadata(t, ctx, repo, dashboards.Items)
-
-	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, 2, len(folders.Items))
 
 	t.Run("delete individual dashboard file, should delete from repo and grafana", func(t *testing.T) {
 		result := helper.AdminREST.Delete().
@@ -404,32 +424,64 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 
+	// create both repos concurrently to reduce duration of this test
 	// Create first repository targeting "folder-1" with its own subdirectory
 	const repo1 = "ownership-repo-1"
-	helper.CreateRepo(t, TestRepo{
-		Name:   repo1,
-		Path:   path.Join(helper.ProvisioningPath, "repo1"),
-		Target: "folder",
-		Copies: map[string]string{
-			"testdata/all-panels.json": "dashboard1.json",
-		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    1,
-	})
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		helper.CreateRepo(t, TestRepo{
+			Name:   repo1,
+			Path:   path.Join(helper.ProvisioningPath, "repo1"),
+			Target: "folder",
+			Copies: map[string]string{
+				"testdata/all-panels.json": "dashboard1.json",
+			},
+			SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
+		})
+	}()
 
 	// Create second repository targeting "folder-2" with its own subdirectory
 	const repo2 = "ownership-repo-2"
 	path2 := path.Join(helper.ProvisioningPath, "repo2")
-	helper.CreateRepo(t, TestRepo{
-		Name:   repo2,
-		Path:   path2,
-		Target: "folder",
-		Copies: map[string]string{
-			"testdata/timeline-demo.json": "dashboard2.json",
-		},
-		ExpectedDashboards: 2, // Total across both repos
-		ExpectedFolders:    2, // Total across both repos
-	})
+	go func() {
+		defer wg.Done()
+		helper.CreateRepo(t, TestRepo{
+			Name:   repo2,
+			Path:   path2,
+			Target: "folder",
+			Copies: map[string]string{
+				"testdata/timeline-demo.json": "dashboard2.json",
+			},
+			SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
+		})
+	}()
+	wg.Wait()
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if err != nil {
+			collect.Errorf("could not list dashboards error: %s", err.Error())
+			return
+		}
+		if len(dashboards.Items) != 2 {
+			collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), 2)
+			return
+		}
+		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if err != nil {
+			collect.Errorf("could not list folders: error: %s", err.Error())
+			return
+		}
+		if len(folders.Items) != 2 {
+			collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", len(folders.Items), 2)
+			return
+		}
+
+		assert.Len(collect, dashboards.Items, 2)
+		assert.Len(collect, folders.Items, 2)
+	}, waitTimeoutDefault, waitIntervalDefault, "should have the expected dashboards and folders after sync")
 
 	allDashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err)

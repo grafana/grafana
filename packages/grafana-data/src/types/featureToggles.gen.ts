@@ -111,6 +111,10 @@ export interface FeatureToggles {
   */
   influxdbBackendMigration?: boolean;
   /**
+  * populate star status from apiserver
+  */
+  starsFromAPIServer?: boolean;
+  /**
   * Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
   */
   influxqlStreamingParser?: boolean;
@@ -290,6 +294,10 @@ export interface FeatureToggles {
   * Adds support for Kubernetes alerting and recording rules
   */
   kubernetesAlertingRules?: boolean;
+  /**
+  * Adds support for Kubernetes correlations
+  */
+  kubernetesCorrelations?: boolean;
   /**
   * Disable schema validation for dashboards/v1
   */
@@ -684,6 +692,10 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchSprinkles?: boolean;
   /**
+  * Use full n-gram indexing instead of edge n-gram for unified storage search
+  */
+  unifiedStorageUseFullNgram?: boolean;
+  /**
   * Pick the dual write mode from database configs
   */
   managedDualWriter?: boolean;
@@ -1001,6 +1013,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthzApis?: boolean;
   /**
+  * Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints
+  */
+  kubernetesAuthZHandlerRedirect?: boolean;
+  /**
   * Registers AuthZ resource permission /apis endpoints
   */
   kubernetesAuthzResourcePermissionApis?: boolean;
@@ -1166,6 +1182,11 @@ export interface FeatureToggles {
   * @default false
   */
   pluginContainers?: boolean;
+  /**
+  * Run search queries through the tempo backend
+  * @default false
+  */
+  tempoSearchBackendMigration?: boolean;
   /**
   * Filter out bots from collecting data for Frontend Observability
   * @default false
