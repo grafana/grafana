@@ -190,7 +190,7 @@ func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDat
 func (e *DataSourceHandler) handleQueryError(frameErr string, err error, query string, source backend.ErrorSource, ch chan DBDataResponse, queryResult DBDataResponse) {
 	var emptyFrame data.Frame
 	emptyFrame.SetMeta(&data.FrameMeta{ExecutedQueryString: query})
-	if backend.IsDownstreamError(err) {
+	if isDownstreamError(err) {
 		source = backend.ErrorSourceDownstream
 	}
 	queryResult.dataResponse.Error = fmt.Errorf("%s: %w", frameErr, err)
