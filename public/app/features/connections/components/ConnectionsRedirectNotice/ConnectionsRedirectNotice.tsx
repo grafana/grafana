@@ -27,10 +27,7 @@ export function ConnectionsRedirectNotice() {
   const styles = useStyles2(getStyles);
   const canAccessDataSources =
     contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) ||
-    contextSrv.hasPermission(AccessControlAction.DataSourcesWrite) ||
-    contextSrv.hasPermission('grafana-pdc-app.private-networks:read') ||
-    contextSrv.hasPermission('grafana-pdc-app.private-networks:write') ||
-    contextSrv.hasPermission('grafana-collector-app:admin');
+    contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
   const [showNotice, setShowNotice] = useState(canAccessDataSources);
 
   return showNotice ? (
