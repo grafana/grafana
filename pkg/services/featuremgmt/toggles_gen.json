@@ -2019,6 +2019,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzEndpoints",
+        "resourceVersion": "1758779666607",
+        "creationTimestamp": "2025-09-25T05:54:26Z"
+      },
+      "spec": {
+        "description": "Enables K8s AuthZ endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthzResourcePermissionApis",
         "resourceVersion": "1754668670559",
         "creationTimestamp": "2025-08-11T08:54:36Z"

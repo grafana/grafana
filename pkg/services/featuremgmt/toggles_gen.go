@@ -919,6 +919,10 @@ const (
 	// Registers AuthZ /apis endpoint
 	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
 
+	// FlagKubernetesAuthzEndpoints
+	// Enables K8s AuthZ endpoints
+	FlagKubernetesAuthzEndpoints = "kubernetesAuthzEndpoints"
+
 	// FlagKubernetesAuthzResourcePermissionApis
 	// Registers AuthZ resource permission /apis endpoints
 	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"

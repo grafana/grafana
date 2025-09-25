@@ -1013,6 +1013,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthzApis?: boolean;
   /**
+  * Enables K8s AuthZ endpoints
+  */
+  kubernetesAuthzEndpoints?: boolean;
+  /**
   * Registers AuthZ resource permission /apis endpoints
   */
   kubernetesAuthzResourcePermissionApis?: boolean;

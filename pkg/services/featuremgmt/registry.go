@@ -1751,6 +1751,14 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:              "kubernetesAuthzEndpoints",
+			Description:       "Enables K8s AuthZ endpoints",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:              "kubernetesAuthzResourcePermissionApis",
 			Description:       "Registers AuthZ resource permission /apis endpoints",
 			Stage:             FeatureStageExperimental,
