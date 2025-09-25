@@ -11,7 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// "Almost nobody should use this hook" but we do because we need ctx and AfterCreate doesn't have it.
+// K8S docs say "Almost nobody should use this hook" about the "begin" hooks, but we do because we only need to
+// propagate if unistore write is successful.  It also allows us to be a bit smarter about when to propagate, e.g.
+// skipping root-level folders, skipping updates that don't change parent, etc.
+
 func (b *FolderAPIBuilder) beginCreate(ctx context.Context, obj runtime.Object, _ *metav1.CreateOptions) (registry.FinishFunc, error) {
 	log := logging.FromContext(ctx)
 	meta, err := utils.MetaAccessor(obj)
@@ -36,7 +39,6 @@ func (b *FolderAPIBuilder) beginCreate(ctx context.Context, obj runtime.Object, 
 	}, nil
 }
 
-// "Almost nobody should use this hook" but we do because we need ctx and AfterUpdate doesn't have it.
 func (b *FolderAPIBuilder) beginUpdate(ctx context.Context, obj runtime.Object, old runtime.Object, _ *metav1.UpdateOptions) (registry.FinishFunc, error) {
 	log := logging.FromContext(ctx)
 	updatedMeta, err := utils.MetaAccessor(obj)
@@ -64,6 +66,22 @@ func (b *FolderAPIBuilder) beginUpdate(ctx context.Context, obj runtime.Object, 
 			log.Info("Got success=false in folder update hook", "folder", oldMeta.GetName())
 		}
 	}, nil
+}
+
+func (b *FolderAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptions) {
+	ctx := context.Background()
+	log := logging.FromContext(ctx)
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		log.Error("Failed to access deleted folder object metadata", "error", err)
+		return
+	}
+
+	log.Info("Propagating deleted folder to Zanzana", "folder", meta.GetName(), "parent", meta.GetFolder())
+	err = b.permissionStore.DeleteFolderParents(ctx, meta.GetNamespace(), meta.GetName())
+	if err != nil {
+		logging.FromContext(ctx).Warn("failed to propagate folder to zanzana", "err", err)
+	}
 }
 
 func (b *FolderAPIBuilder) writeFolderToZanzana(ctx context.Context, folder utils.GrafanaMetaAccessor) {
