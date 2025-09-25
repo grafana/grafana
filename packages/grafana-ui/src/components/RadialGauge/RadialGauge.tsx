@@ -1,4 +1,12 @@
-import { DataFrame, getFieldDisplayValues } from '@grafana/data';
+import {
+  DataFrame,
+  DisplayValue,
+  FieldDisplay,
+  getFieldColorMode,
+  getFieldDisplayValues,
+  GrafanaTheme2,
+} from '@grafana/data';
+import { GraphGradientMode } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
@@ -6,13 +14,23 @@ export interface RadialGaugeProps {
   frames: DataFrame[];
   size?: number;
   startAngle?: number;
-  fullAngle?: number;
+  endAngle?: number;
+  gradientMode?: GraphGradientMode;
+  barWidth?: number;
 }
 
-export function RadialGauge({ frames, size = 256, startAngle = 0, fullAngle = 360 }: RadialGaugeProps) {
+export function RadialGauge(props: RadialGaugeProps) {
+  const {
+    frames,
+    size = 256,
+    startAngle = 0,
+    endAngle = 360,
+    gradientMode = GraphGradientMode.None,
+    barWidth = 10,
+  } = props;
   const theme = useTheme2();
-  const width = size * 1.2;
-  const height = size * 1.2;
+  const width = size;
+  const height = size;
 
   const values = getFieldDisplayValues({
     fieldConfig: { overrides: [], defaults: {} },
@@ -24,21 +42,30 @@ export function RadialGauge({ frames, size = 256, startAngle = 0, fullAngle = 36
 
   return (
     <svg width={width} height={height}>
+      <defs>
+        {gradientMode !== GraphGradientMode.None &&
+          values.map((displayValue, barIndex) => (
+            <GradientDef key={barIndex} fieldDisplay={displayValue} index={barIndex} theme={theme} />
+          ))}
+      </defs>
       <g>
-        {values.map((displayValue, i) => {
+        {values.map((displayValue, barIndex) => {
           const value = displayValue.display.numeric;
           const min = displayValue.field.min ?? 0;
           const max = displayValue.field.max ?? 100;
+          const barColor = getColorForBar(displayValue.display, barIndex, gradientMode);
 
           return (
             <RadialBar
-              key={i}
+              key={barIndex}
               value={value}
               min={min}
               max={max}
               startAngle={startAngle}
-              fullAngle={fullAngle}
-              size={130}
+              endAngle={endAngle}
+              size={size}
+              color={barColor}
+              barWidth={barWidth}
             />
           );
         })}
@@ -47,20 +74,61 @@ export function RadialGauge({ frames, size = 256, startAngle = 0, fullAngle = 36
   );
 }
 
+function getColorForBar(displayValue: DisplayValue, barIndex: number, gradientMode: GraphGradientMode) {
+  if (gradientMode === GraphGradientMode.None) {
+    return displayValue.color ?? 'gray';
+  }
+
+  return `url(#gradient-${barIndex})`;
+}
+
+interface GradientDefProps {
+  fieldDisplay: FieldDisplay;
+  index: number;
+  theme: GrafanaTheme2;
+}
+
+function GradientDef({ fieldDisplay, index, theme }: GradientDefProps) {
+  const colorModeId = fieldDisplay.field.color?.mode;
+  const colorMode = getFieldColorMode(colorModeId);
+
+  function renderStops() {
+    if (colorMode.getColors) {
+      const colors = colorMode.getColors(theme);
+      const count = colors.length;
+
+      return colors.map((stopColor, i) => (
+        <stop key={i} offset={`${(i / (count - 1)).toFixed(2)}`} stopColor={stopColor} stopOpacity={1}></stop>
+      ));
+    }
+
+    return null;
+  }
+
+  return (
+    <linearGradient x1="0" y1="1" x2="1" y2="1" id={`gradient-${index}`}>
+      {renderStops()}
+    </linearGradient>
+  );
+}
+
 export interface RadialBarProps {
   value: number;
   min: number;
   max: number;
-  size?: number;
+  size: number;
   startAngle?: number;
-  fullAngle?: number;
+  endAngle?: number;
+  color: string;
+  barWidth: number;
 }
 
-export function RadialBar({ value, min, max, startAngle = 0, size, fullAngle = 360 }: RadialBarProps) {
+export function RadialBar({ value, min, max, startAngle = 0, size, endAngle = 360, color, barWidth }: RadialBarProps) {
   const theme = useTheme2();
-  const angle = ((value - min) / (max - min)) * fullAngle;
-  const trackStart = angle;
-  const trackLength = fullAngle - trackStart;
+  const range = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
+  const angle = ((value - min) / (max - min)) * range;
+  const trackStart = startAngle + angle;
+  const trackLength = range - angle;
 
   return (
     <>
@@ -68,10 +136,18 @@ export function RadialBar({ value, min, max, startAngle = 0, size, fullAngle = 3
         angle={trackLength}
         size={size}
         startAngle={trackStart}
-        fullAngle={fullAngle}
+        fullAngle={endAngle}
         color={theme.colors.action.hover}
+        barWidth={barWidth}
       />
-      <RadialArcPath angle={angle} size={size} startAngle={startAngle} fullAngle={fullAngle} />
+      <RadialArcPath
+        angle={angle}
+        size={size}
+        startAngle={startAngle}
+        fullAngle={endAngle}
+        color={color}
+        barWidth={barWidth}
+      />
     </>
   );
 }
@@ -79,18 +155,20 @@ export function RadialBar({ value, min, max, startAngle = 0, size, fullAngle = 3
 export interface RadialArcPathProps {
   angle: number;
   startAngle?: number;
-  size?: number;
+  size: number;
   fullAngle?: number;
-  color?: string;
+  color: string;
+  barWidth: number;
 }
 
-export function RadialArcPath({ startAngle, angle, size, fullAngle, color }: RadialArcPathProps) {
+export function RadialArcPath({ startAngle, angle, size, fullAngle, color, barWidth }: RadialArcPathProps) {
+  const arcSize = size - barWidth;
   const path = buildArcPath({
-    centerX: 175,
-    centerY: 175,
+    centerX: size / 2,
+    centerY: size / 2,
     startAngle: startAngle ?? 0,
     angle,
-    size: size ?? 130,
+    size: arcSize / 2,
     fullAngle: fullAngle ?? 360,
   });
 
@@ -99,13 +177,13 @@ export function RadialArcPath({ startAngle, angle, size, fullAngle, color }: Rad
       d={path}
       fill="none"
       fillOpacity="0.85"
-      stroke={color ?? '#11d1c1ff'}
+      stroke={color}
       strokeOpacity="1"
-      strokeLinecap="butt"
-      strokeWidth="15"
+      //strokeLinecap="butt"
+      strokeLinecap="round"
+      strokeWidth={barWidth}
       strokeDasharray="0"
-      filter="url(#SvgjsFilter1005)"
-    ></path>
+    />
   );
 }
 
@@ -123,9 +201,9 @@ function buildArcPath({ centerX, centerY, startAngle, angle, size, fullAngle }: 
   let startRadians = (Math.PI * (startDeg - 90)) / 180;
   let endDeg = angle + startAngle;
 
-  if (Math.ceil(endDeg) > fullAngle) {
-    endDeg -= fullAngle;
-  }
+  //   if (Math.ceil(endDeg) > fullAngle) {
+  //     endDeg -= fullAngle;
+  //   }
 
   let endRadians = (Math.PI * (endDeg - 90)) / 180;
 
