@@ -301,7 +301,7 @@ func TestAddAppLinks(t *testing.T) {
 
 		// Build nav-tree and check if the "Connections" page is there
 		treeRoot := navtree.NavTreeRoot{}
-		treeRoot.AddSection(service.buildDataConnectionsNavLink(reqCtx))
+		treeRoot.AddSection(service.buildDataConnectionsNavLink(reqCtx, &treeRoot))
 		connectionsNode := treeRoot.FindById("connections")
 		require.NotNil(t, connectionsNode)
 		require.Equal(t, "Connections", connectionsNode.Text)
@@ -336,7 +336,7 @@ func TestAddAppLinks(t *testing.T) {
 		service.navigationAppPathConfig = map[string]NavigationAppConfig{} // We don't configure it as a standalone plugin page
 
 		treeRoot := navtree.NavTreeRoot{}
-		treeRoot.AddSection(service.buildDataConnectionsNavLink(reqCtx))
+		treeRoot.AddSection(service.buildDataConnectionsNavLink(reqCtx, &treeRoot))
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
 
