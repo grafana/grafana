@@ -1,4 +1,4 @@
-package sqleng
+package pgx
 
 import (
 	"context"
@@ -10,11 +10,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 	"github.com/lib/pq"
 )
 
 func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	err := e.Ping()
+	err := e.Ping(ctx)
 	if err != nil {
 		logCheckHealthError(ctx, e.dsInfo, err)
 		if strings.EqualFold(req.PluginContext.User.Role, "Admin") {
@@ -96,7 +97,7 @@ func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 	return res, nil
 }
 
-func logCheckHealthError(ctx context.Context, dsInfo DataSourceInfo, err error) {
+func logCheckHealthError(ctx context.Context, dsInfo sqleng.DataSourceInfo, err error) {
 	logger := log.DefaultLogger.FromContext(ctx)
 	configSummary := map[string]any{
 		"config_url_length":                 len(dsInfo.URL),

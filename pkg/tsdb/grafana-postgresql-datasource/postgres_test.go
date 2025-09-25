@@ -146,10 +146,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
-			svc := Service{
-				tlsManager: &tlsTestManager{settings: tt.tlsSettings},
-				logger:     backend.NewLoggerWith("logger", "tsdb.postgres"),
-			}
+			logger := backend.NewLoggerWith("logger", "tsdb.postgres")
 
 			ds := sqleng.DataSourceInfo{
 				URL:                     tt.host,
@@ -159,7 +156,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 				UID:                     tt.uid,
 			}
 
-			connStr, err := svc.generateConnectionString(ds, tt.tlsSettings, false)
+			connStr, err := generateConnectionString(ds, tt.tlsSettings, false, logger)
 
 			if tt.expErr == "" {
 				require.NoError(t, err, tt.desc)
@@ -1383,14 +1380,6 @@ func genTimeRangeByInterval(from time.Time, duration time.Duration, interval tim
 	}
 
 	return timeRange
-}
-
-type tlsTestManager struct {
-	settings tlsSettings
-}
-
-func (m *tlsTestManager) getTLSSettings(dsInfo sqleng.DataSourceInfo) (tlsSettings, error) {
-	return m.settings, nil
 }
 
 func isTestDbPostgres() bool {
