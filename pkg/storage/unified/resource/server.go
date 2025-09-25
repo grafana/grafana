@@ -944,7 +944,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	}
 
 	// Fast path for getting single value in a list
-	if req.Source == resourcepb.ListRequest_STORE {
+	if req.Source == resourcepb.ListRequest_STORE && req.Options.Key.Namespace != "" {
 		for _, v := range req.Options.Fields {
 			if v.Key == "metadata.name" && v.Operator == `=` {
 				if len(v.Values) == 1 {
