@@ -552,28 +552,25 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext, tr
 	// Check if there are any plugin items already added to the Connections section
 	hasPluginItems := s.hasConnectionsPluginItems(treeRoot)
 
-	// Show Connections section if user has datasources access OR if there are plugin items
-	if hasDatasourcesAccess || hasPluginItems {
-		// Add new connection (only if user has datasources access)
-		if hasDatasourcesAccess {
-			children = append(children, &navtree.NavLink{
-				Id:       "connections-add-new-connection",
-				Text:     "Add new connection",
-				SubTitle: "Browse and create new connections",
-				Url:      baseUrl + "/add-new-connection",
-				Children: []*navtree.NavLink{},
-				Keywords: []string{"csv", "graphite", "json", "loki", "prometheus", "sql", "tempo"},
-			})
+	// Add datasources items if user has datasources access
+	if hasDatasourcesAccess {
+		children = append(children, &navtree.NavLink{
+			Id:       "connections-add-new-connection",
+			Text:     "Add new connection",
+			SubTitle: "Browse and create new connections",
+			Url:      baseUrl + "/add-new-connection",
+			Children: []*navtree.NavLink{},
+			Keywords: []string{"csv", "graphite", "json", "loki", "prometheus", "sql", "tempo"},
+		})
 
-			// Data sources
-			children = append(children, &navtree.NavLink{
-				Id:       "connections-datasources",
-				Text:     "Data sources",
-				SubTitle: "View and manage your connected data source connections",
-				Url:      baseUrl + "/datasources",
-				Children: []*navtree.NavLink{},
-			})
-		}
+		// Data sources
+		children = append(children, &navtree.NavLink{
+			Id:       "connections-datasources",
+			Text:     "Data sources",
+			SubTitle: "View and manage your connected data source connections",
+			Url:      baseUrl + "/datasources",
+			Children: []*navtree.NavLink{},
+		})
 	}
 
 	if len(children) > 0 || hasPluginItems {
@@ -597,7 +594,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext, tr
 func (s *ServiceImpl) hasConnectionsPluginItems(treeRoot *navtree.NavTreeRoot) bool {
 	// Look for any standalone plugin pages that are configured to be under the Connections section
 	// These would have IDs like "standalone-plugin-page-/connections/..."
-	for _, section := range treeRoot.Sections {
+	for _, section := range treeRoot.Children {
 		for _, child := range section.Children {
 			if child.Id != "" &&
 				(strings.HasPrefix(child.Id, "standalone-plugin-page-/connections/") ||
