@@ -3,8 +3,10 @@ import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { useHasDataSourceRuler } from '../../../hooks/useHasDataSourceRuler';
+import { useHasRulerV2 } from '../../../hooks/useHasRuler';
 import { RuleFormType } from '../../../types/rule-form';
+import { ruleIdentifierToRuleSourceIdentifier } from '../../../utils/datasource';
+import { useAlertRule } from '../../rule-viewer/RuleContext';
 
 export const onlyOneDSInQueries = (queries: AlertQuery[]) => {
   return queries.filter((q) => q.datasourceUid !== ExpressionDatasourceUID).length === 1;
@@ -38,9 +40,9 @@ export const useGetCanSwitch = ({
 
   // check if we have only one query in queries and if it's a cloud datasource
   const onlyOneDS = onlyOneDSInQueries(queries);
-  const dataSourceIdFromQueries = queries[0]?.datasourceUid ?? '';
   const isRecordingRuleType = ruleFormType === RuleFormType.cloudRecording;
-  const { hasRuler } = useHasDataSourceRuler(dataSourceIdFromQueries);
+  const { identifier } = useAlertRule();
+  const { hasRuler } = useHasRulerV2(ruleIdentifierToRuleSourceIdentifier(identifier));
 
   //let's check if we switch to cloud type
   const canSwitchToCloudRule = !isRecordingRuleType && onlyOneDS && hasRuler;
