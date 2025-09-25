@@ -29,8 +29,11 @@ func validateName(name string) *resourcepb.ErrorResult {
 	return nil
 }
 
-func validateQualifiedName(value string) *resourcepb.ErrorResult {
+func validateQualifiedName(value string, allowEmpty bool) *resourcepb.ErrorResult {
 	if len(value) == 0 {
+		if allowEmpty {
+			return nil
+		}
 		return NewBadRequestError("value is too short")
 	}
 	if len(value) > MaxQualifiedNameLength {

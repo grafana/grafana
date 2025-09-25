@@ -408,6 +408,11 @@ func TestSimpleServer(t *testing.T) {
 
 		// namespace
 		for _, invalidNamespace := range invalidQualifiedNames {
+			if invalidNamespace == "" {
+				// empty namespace is allowed
+				continue
+			}
+
 			key = &resourcepb.ResourceKey{
 				Group:     "playlist.grafana.app",
 				Resource:  "rrrr", // can be anything :(
