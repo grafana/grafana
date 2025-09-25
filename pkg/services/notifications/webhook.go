@@ -52,7 +52,7 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 		webhook.HttpMethod = http.MethodPost
 	}
 
-	ns.log.Debug("Sending webhook", "url", webhook.Url, "http method", webhook.HttpMethod)
+	ns.log.Debug("Sending webhook", "url", webhook.Url, "http method", webhook.HttpMethod, "body", webhook.Body)
 
 	if webhook.HttpMethod != http.MethodPost && webhook.HttpMethod != http.MethodPut {
 		return fmt.Errorf("webhook only supports HTTP methods PUT or POST")
