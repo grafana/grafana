@@ -99,6 +99,67 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
   };
 
+  // Path starts with root node and goes down
+  private insertPathNodesIntoTree = (path: ScopeNode[]) => {
+    const stringPath = path.map((n) => n.metadata.name);
+    stringPath.unshift('');
+
+    let newTree = this.state.tree!;
+
+    // Go down the tree, don't iterate over the last node
+    for (let index = 0; index < stringPath.length - 1; index++) {
+      const childNodeName = stringPath[index + 1];
+      // Path up to iteration point
+      const pathSlice = stringPath.slice(0, index + 1);
+      console.log('inserting path nodes into tree', pathSlice, childNodeName);
+      newTree = modifyTreeNodeAtPath(newTree, pathSlice, (treeNode) => {
+        treeNode.children = { ...treeNode.children };
+        if (!childNodeName) {
+          return treeNode;
+        }
+        treeNode.children[childNodeName] = {
+          expanded: false,
+          scopeNodeId: childNodeName,
+          query: '',
+          children: undefined,
+        };
+        console.log('result treeNode', treeNode);
+        return treeNode;
+      });
+    }
+    this.updateState({ tree: newTree });
+    console.log('newTree', newTree);
+  };
+
+  // Resolves the path to the root node for a given scope node. Used on inital load with parent node from URL. This is used to display the correct expanded tree in the selector.
+  public resolvePathToRoot = async (scopeNodeId: string): Promise<ScopeNode[]> => {
+    return this.resolvePathToRootInternal(scopeNodeId, true);
+  };
+
+  private resolvePathToRootInternal = async (scopeNodeId: string, isOriginalCall = false): Promise<ScopeNode[]> => {
+    const node = await this.getScopeNode(scopeNodeId);
+
+    if (!node) {
+      return [];
+    }
+
+    // Build the path by recursively getting parent path and adding current node
+    const parentPath =
+      node.spec.parentName && node.spec.parentName !== ''
+        ? await this.resolvePathToRootInternal(node.spec.parentName, false)
+        : [];
+
+    const totalPath = [...parentPath, node];
+
+    // Insert into tree only when we're at the original call with the complete path
+    if (isOriginalCall) {
+      console.log('inserting path nodes into tree', totalPath);
+      this.insertPathNodesIntoTree(totalPath);
+    }
+
+    return totalPath;
+  };
+
   private expandOrFilterNode = async (scopeNodeId: string, query?: string) => {
     this.interactionProfiler?.startInteraction('scopeNodeDiscovery');
 
@@ -171,7 +232,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       }
     });
 
+    // TODO: we might not want to update the tree as a side effect of this function
     this.updateState({ tree: newTree, nodes: newNodes, loadingNodeName: undefined });
+    return { newTree };
   };
 
   /**
@@ -365,12 +428,19 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // First close all nodes
     let newTree = closeNodes(this.state.tree!);
 
-    if (this.state.selectedScopes.length && this.state.selectedScopes[0].scopeNodeId) {
-      let path = getPathOfNode(this.state.selectedScopes[0].scopeNodeId, this.state.nodes);
-      // we want to expand the nodes parent not the node itself
-      path = path.slice(0, path.length - 1);
+    if (this.state.selectedScopes.length && this.state.selectedScopes[0].parentNodeId) {
+      let path = getPathOfNode(this.state.selectedScopes[0].parentNodeId, this.state.nodes);
 
-      // Expand the nodes to the selected scope
+      // Get node at path, and request it's children if they don't exist yet
+      const nodeAtPath = treeNodeAtPath(newTree, path);
+      console.log('nodeAtPath', nodeAtPath);
+      if (nodeAtPath && !nodeAtPath.children) {
+        // This will update the tree with the children
+        const { newTree: newTreeWithChildren } = await this.loadNodeChildren(path, nodeAtPath, '');
+        newTree = newTreeWithChildren;
+      }
+
+      // Expand the nodes to the selected scope - must be done after loading children
       newTree = expandNodes(newTree, path);
     }
 
