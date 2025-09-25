@@ -1771,6 +1771,22 @@
             }
           },
           {
+            "name": "type",
+            "in": "query",
+            "description": "the request type",
+            "schema": {
+              "type": "array",
+              "maxItems": 2,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "folder",
+                  "dashboard"
+                ]
+              }
+            }
+          },
+          {
             "name": "folder",
             "in": "query",
             "description": "search/list within a folder (not recursive)",

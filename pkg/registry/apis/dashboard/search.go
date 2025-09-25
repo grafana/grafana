@@ -87,6 +87,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "type",
+										In:          "query",
+										Description: "the request type",
+										Required:    false,
+										Schema:      spec.ArrayProperty(spec.StringProperty().WithEnum("folder", "dashboard")).WithMaxItems(2),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "folder",
 										In:          "query",
 										Description: "search/list within a folder (not recursive)",

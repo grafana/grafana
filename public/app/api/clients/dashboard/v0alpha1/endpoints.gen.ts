@@ -11,6 +11,7 @@ const injectedRtkApi = api
           url: `/search`,
           params: {
             query: queryArg.query,
+            type: queryArg['type'],
             folder: queryArg.folder,
             facet: queryArg.facet,
             tags: queryArg.tags,
@@ -50,6 +51,8 @@ export type GetSearchApiResponse = /** status 200 undefined */ {
 export type GetSearchApiArg = {
   /** user query string */
   query?: string;
+  /** the request type */
+  type?: ('folder' | 'dashboard')[];
   /** search/list within a folder (not recursive) */
   folder?: string;
   /** count distinct terms for selected fields */
