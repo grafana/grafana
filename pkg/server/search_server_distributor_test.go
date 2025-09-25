@@ -284,7 +284,7 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 	require.NoError(t, err)
 
 	server := initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
-	server.resourceClient = resource.NewChannelResourceClientForTests(conn, conn)
+	server.resourceClient = resource.NewChannelInterceptResourceClient(conn, conn)
 
 	return server
 }

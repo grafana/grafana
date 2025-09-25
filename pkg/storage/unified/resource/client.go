@@ -53,7 +53,7 @@ type resourceClient struct {
 func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cfg, tracer trace.Tracer) (ResourceClient, error) {
 	if cfg == nil {
 		logging.DefaultLogger.Info("using direct channel client for testing")
-		return NewChannelResourceClientForTests(conn, indexConn), nil
+		return NewChannelInterceptResourceClient(conn, indexConn), nil
 	}
 
 	clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
@@ -82,7 +82,8 @@ func NewAuthlessResourceClient(cc grpc.ClientConnInterface) ResourceClient {
 	return newResourceClient(cc, cc)
 }
 
-func NewChannelResourceClientForTests(channel grpc.ClientConnInterface, indexChannel grpc.ClientConnInterface) ResourceClient {
+// Connects GRPC over local channel
+func NewChannelInterceptResourceClient(channel grpc.ClientConnInterface, indexChannel grpc.ClientConnInterface) ResourceClient {
 	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
 	cci := grpchan.InterceptClientConn(indexChannel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
 	return newResourceClient(cc, cci)

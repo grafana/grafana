@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -36,7 +35,7 @@ func TestUnifiedStorageClient(t *testing.T) {
 					StorageType: options.StorageTypeUnifiedGrpc,
 					Address:     resourceServerAddress,
 				},
-				nil, // triggers using NewChannelResourceClientForTests (&setting.Cfg{})
+				nil, // triggers using NewChannelInterceptResourceClient (&setting.Cfg{})
 				featuremgmt.WithFeatures(),
 				nil,
 				nil,
@@ -70,7 +69,7 @@ func TestUnifiedStorageClient(t *testing.T) {
 					Address:             resourceServerAddress,
 					SearchServerAddress: indexServerAddress,
 				},
-				&setting.Cfg{},
+				nil, // triggers using NewChannelInterceptResourceClient (&setting.Cfg{})
 				featuremgmt.WithFeatures(),
 				nil,
 				nil,
