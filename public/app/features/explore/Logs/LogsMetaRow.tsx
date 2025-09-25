@@ -39,7 +39,7 @@ export type Props = {
   dedupCount: number;
   displayedFields: string[];
   logRows: LogRowModel[];
-  clearDisplayedFields: (fields?: string[]) => void;
+  clearDisplayedFields: () => void;
   defaultDisplayedFields: string[];
 };
 
@@ -76,7 +76,7 @@ export const LogsMetaRow = memo(
         {
           label: '',
           value: (
-            <Button variant="primary" fill="outline" size="sm" onClick={() => clearDisplayedFields()}>
+            <Button variant="primary" fill="outline" size="sm" onClick={clearDisplayedFields}>
               {t('explore.logs-meta-row.show-original-line', 'Show original line')}
             </Button>
           ),

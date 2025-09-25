@@ -571,16 +571,13 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [displayedFields, panelState?.logs, updatePanelState]
   );
 
-  const clearDisplayedFields = useCallback(
-    (fields: string[] = []) => {
-      updatePanelState({
-        ...panelState?.logs,
-        displayedFields: fields,
-      });
-      setDisplayedFields(fields);
-    },
-    [panelState?.logs, updatePanelState]
-  );
+  const clearDisplayedFields = useCallback(() => {
+    updatePanelState({
+      ...panelState?.logs,
+      displayedFields: [],
+    });
+    setDisplayedFields([]);
+  }, [panelState?.logs, updatePanelState]);
 
   const onCloseCallbackRef = useRef<() => void>(() => {});
 
