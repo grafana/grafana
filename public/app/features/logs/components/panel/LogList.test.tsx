@@ -231,10 +231,12 @@ describe('LogList', () => {
     test('Does not perform OTel-related actions when the flag is disabled', () => {
       config.featureToggles.otelLogsFormatting = false;
       const onLogOptionsChange = jest.fn();
+      const setDisplayedFields = jest.fn();
 
-      render(<LogList {...defaultProps} onLogOptionsChange={onLogOptionsChange} />);
+      render(<LogList {...defaultProps} onLogOptionsChange={onLogOptionsChange} setDisplayedFields={setDisplayedFields} />);
       expect(screen.getByText('log message 1')).toBeInTheDocument();
       expect(onLogOptionsChange).not.toHaveBeenCalled();
+      expect(setDisplayedFields).not.toHaveBeenCalled();
 
       config.featureToggles.otelLogsFormatting = originalState;
     });
