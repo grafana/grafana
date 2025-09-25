@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import tinycolor from 'tinycolor2';
 
 import {
   DataFrame,
@@ -17,9 +18,11 @@ export interface RadialGaugeProps {
   size?: number;
   startAngle?: number;
   endAngle?: number;
-  gradientMode?: GraphGradientMode;
+  gradientMode?: RadialGradientMode;
   barWidth?: number;
 }
+
+export type RadialGradientMode = 'none' | 'scheme' | 'hue';
 
 export function RadialGauge(props: RadialGaugeProps) {
   const {
@@ -46,10 +49,16 @@ export function RadialGauge(props: RadialGaugeProps) {
   return (
     <svg width={width} height={height}>
       <defs>
-        {gradientMode !== GraphGradientMode.None &&
-          values.map((displayValue, barIndex) => (
-            <GradientDef key={barIndex} fieldDisplay={displayValue} index={barIndex} theme={theme} gaugeId={gaugeId} />
-          ))}
+        {values.map((displayValue, barIndex) => (
+          <GradientDef
+            key={barIndex}
+            fieldDisplay={displayValue}
+            index={barIndex}
+            theme={theme}
+            gaugeId={gaugeId}
+            gradientMode={gradientMode}
+          />
+        ))}
       </defs>
       <g>
         {values.map((displayValue, barIndex) => {
@@ -73,6 +82,7 @@ export function RadialGauge(props: RadialGaugeProps) {
           );
         })}
       </g>
+      <g>{values.length === 1 && <RadialText displayValue={values[0].display} size={size} theme={theme} />}</g>
     </svg>
   );
 }
@@ -80,10 +90,10 @@ export function RadialGauge(props: RadialGaugeProps) {
 function getColorForBar(
   displayValue: DisplayValue,
   barIndex: number,
-  gradientMode: GraphGradientMode,
+  gradientMode: RadialGradientMode,
   gaugeId: string
 ) {
-  if (gradientMode === GraphGradientMode.None) {
+  if (gradientMode === 'none') {
     return displayValue.color ?? 'gray';
   }
 
@@ -95,32 +105,54 @@ interface GradientDefProps {
   index: number;
   theme: GrafanaTheme2;
   gaugeId: string;
+  gradientMode: RadialGradientMode;
 }
 
-function GradientDef({ fieldDisplay, index, theme, gaugeId }: GradientDefProps) {
+function GradientDef({ fieldDisplay, index, theme, gaugeId, gradientMode }: GradientDefProps) {
   const colorModeId = fieldDisplay.field.color?.mode;
   const valuePercent = fieldDisplay.display.percent ?? 0;
   const colorMode = getFieldColorMode(colorModeId);
 
-  function renderStops() {
-    if (colorMode.getColors) {
-      const colors = colorMode.getColors(theme);
-      const count = colors.length;
-
-      return colors.map((stopColor, i) => (
-        <stop key={i} offset={`${(i / (count - 1)).toFixed(2)}`} stopColor={stopColor} stopOpacity={1}></stop>
-      ));
-    }
-
-    return null;
+  if (gradientMode === 'none') {
+    return;
   }
 
-  console.log('valuePercent', valuePercent);
-  return (
-    <linearGradient x1="0" y1="1" x2={1 / valuePercent} y2="1" id={getGradientId(gaugeId, index)}>
-      {renderStops()}
-    </linearGradient>
-  );
+  if (gradientMode === 'hue') {
+    const color = fieldDisplay.display.color ?? 'gray';
+    const color1 = tinycolor(color).spin(-25).darken(5);
+    const color2 = tinycolor(color).saturate(20).spin(20).brighten(10);
+
+    return (
+      <linearGradient x1="0" y1="1" x2="1" y2="1" id={getGradientId(gaugeId, index)}>
+        {theme.isDark ? (
+          <>
+            <stop offset="0%" stopColor={color2.lighten(10).toString()} stopOpacity={1} />
+            <stop offset="100%" stopColor={color1.darken(10).toString()} stopOpacity={1} />
+          </>
+        ) : (
+          <>
+            <stop offset="0%" stopColor={color2.lighten(10).toString()} stopOpacity={1} />
+            <stop offset="100%" stopColor={color1.toString()} stopOpacity={1} />
+          </>
+        )}
+      </linearGradient>
+    );
+  }
+
+  if (colorMode.isContinuous && colorMode.getColors) {
+    const colors = colorMode.getColors(theme);
+    const count = colors.length;
+
+    return (
+      <linearGradient x1="0" y1="1" x2={1 / valuePercent} y2="1" id={getGradientId(gaugeId, index)}>
+        {colors.map((stopColor, i) => (
+          <stop key={i} offset={`${(i / (count - 1)).toFixed(2)}`} stopColor={stopColor} stopOpacity={1}></stop>
+        ))}
+      </linearGradient>
+    );
+  }
+
+  return null;
 }
 
 function getGradientId(gaugeId: string, index: number) {
@@ -216,10 +248,6 @@ function buildArcPath({ centerX, centerY, startAngle, angle, size, fullAngle }: 
   let startRadians = (Math.PI * (startDeg - 90)) / 180;
   let endDeg = angle + startAngle;
 
-  //   if (Math.ceil(endDeg) > fullAngle) {
-  //     endDeg -= fullAngle;
-  //   }
-
   let endRadians = (Math.PI * (endDeg - 90)) / 180;
 
   let x1 = centerX + size * Math.cos(startRadians);
@@ -240,3 +268,31 @@ function buildArcPath({ centerX, centerY, startAngle, angle, size, fullAngle }: 
 //     y: centerY + radius * Math.sin(radian),
 //   };
 // }
+
+interface RadialTextProps {
+  displayValue: DisplayValue;
+  theme: GrafanaTheme2;
+  size: number;
+}
+
+function RadialText({ displayValue, theme, size }: RadialTextProps) {
+  const centerX = size / 2;
+  const centerY = size / 2;
+  const height = 14 * theme.typography.body.lineHeight;
+  const titleSpacing = 4;
+  const titleY = centerY - height / 2 - titleSpacing;
+  const valueY = centerY + height / 2 + titleSpacing;
+
+  return (
+    <g>
+      <text x={centerX} y={titleY} textAnchor="middle" dominantBaseline="middle" fill={theme.colors.text.primary}>
+        {displayValue.prefix ?? ''}
+        {displayValue.text}
+        {displayValue.suffix ?? ''}
+      </text>
+      <text x={centerX} y={valueY} textAnchor="middle" dominantBaseline="middle" fill={theme.colors.text.primary}>
+        {displayValue.title}
+      </text>
+    </g>
+  );
+}

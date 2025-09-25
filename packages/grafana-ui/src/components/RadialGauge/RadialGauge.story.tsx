@@ -4,10 +4,9 @@ import { applyFieldOverrides, FieldType, toDataFrame } from '@grafana/data';
 import { FieldColorModeId, GraphGradientMode } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { StoryExample } from '../../utils/storybook/StoryExample';
 import { Stack } from '../Layout/Stack/Stack';
 
-import { RadialBar, RadialGauge } from './RadialGauge';
+import { RadialBar, RadialGauge, RadialGradientMode } from './RadialGauge';
 
 const meta: Meta<typeof RadialBar> = {
   title: 'Plugins/RadialGauge',
@@ -19,11 +18,13 @@ const meta: Meta<typeof RadialBar> = {
 
 export const Examples: StoryFn<typeof RadialBar> = (args) => {
   return (
-    <Stack direction={'column'}>
-      <RadialBarExample title="value: 70" value={70} />
-      <Stack>
+    <Stack direction={'column'} gap={3}>
+      <RadialBarExample value={70} />
+      <div>Gradient: Hue</div>
+      <RadialBarExample value={70} gradientMode="hue" />
+      <div>Gradient: Scheme, startAngle: 240° endAngle: 120°</div>
+      <Stack direction="row" alignItems="center" gap={3}>
         <RadialBarExample
-          title="value: 40%, gradient: Scheme, 240° -> 120°"
           colorMode={FieldColorModeId.ContinuousGrYlRd}
           gradientMode={GraphGradientMode.Scheme}
           value={40}
@@ -31,7 +32,6 @@ export const Examples: StoryFn<typeof RadialBar> = (args) => {
           endAngle={120}
         />
         <RadialBarExample
-          title="value: 100, gradient: Scheme"
           colorMode={FieldColorModeId.ContinuousGrYlRd}
           gradientMode={GraphGradientMode.Scheme}
           value={100}
@@ -44,9 +44,8 @@ export const Examples: StoryFn<typeof RadialBar> = (args) => {
 };
 
 interface ExampleProps {
-  title: string;
   colorMode?: FieldColorModeId;
-  gradientMode?: GraphGradientMode;
+  gradientMode?: RadialGradientMode;
   color?: string;
   value?: number;
   startAngle?: number;
@@ -56,9 +55,8 @@ interface ExampleProps {
 }
 
 function RadialBarExample({
-  title,
   colorMode = FieldColorModeId.Fixed,
-  gradientMode = GraphGradientMode.None,
+  gradientMode = 'none',
   color = 'blue',
   value = 70,
   startAngle,
@@ -79,6 +77,7 @@ function RadialBarExample({
         config: {
           min: min,
           max: max,
+          unit: 'percent',
           color: { mode: colorMode, fixedColor: theme.visualization.getColorByName(color) },
         },
         // Add state and getLinks
@@ -100,16 +99,14 @@ function RadialBarExample({
   });
 
   return (
-    <StoryExample name={title}>
-      <RadialGauge
-        frames={data}
-        size={200}
-        barWidth={17}
-        gradientMode={gradientMode}
-        startAngle={startAngle}
-        endAngle={endAngle}
-      />
-    </StoryExample>
+    <RadialGauge
+      frames={data}
+      size={200}
+      barWidth={17}
+      gradientMode={gradientMode}
+      startAngle={startAngle}
+      endAngle={endAngle}
+    />
   );
 }
 
