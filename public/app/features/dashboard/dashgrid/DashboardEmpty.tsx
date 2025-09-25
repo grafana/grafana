@@ -209,7 +209,7 @@ const TemplateDashboardsSection = () => {
     <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
       <Stack direction="column" alignItems="center" gap={2}>
         <Text element="h3" textAlignment="center" weight="medium">
-          <Trans i18nKey="dashboard.empty.import-a-dashboard-heasfaader">Start with suggested dashboards</Trans>
+          <Trans i18nKey="dashboard.empty.start-with-suggested-dashboards">Start with suggested dashboards</Trans>
         </Text>
         {isProvisionedLoading ? (
           <Spinner />
@@ -259,7 +259,7 @@ const TemplateDashboardBox = ({
           {dashboard.title}
         </Text>
         <Button fill="outline" onClick={() => onImportClick(dashboard)}>
-          <Trans i18nKey="dashboard.empty.import-dashboaasard-button">Use template</Trans>
+          <Trans i18nKey="dashboard.empty.use-template-button">Use template</Trans>
         </Button>
       </div>
     </div>
