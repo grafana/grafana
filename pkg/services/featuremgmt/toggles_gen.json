@@ -2976,16 +2976,16 @@
     {
       "metadata": {
         "name": "queryLibrary",
-        "resourceVersion": "1755721444487",
+        "resourceVersion": "1758208636622",
         "creationTimestamp": "2022-10-07T18:31:45Z",
         "deletionTimestamp": "2023-03-20T16:00:14Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-08-20 20:24:04.487598 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-09-18 15:17:16.622111 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Renamed feature toggle, enables Saved queries feature",
-        "stage": "privatePreview",
+        "description": "Enables Saved queries (query library) feature",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad"
       }
     },
@@ -3186,6 +3186,7 @@
         "name": "savedQueries",
         "resourceVersion": "1756920131554",
         "creationTimestamp": "2025-08-25T21:22:09Z",
+        "deletionTimestamp": "2025-09-18T12:07:31Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-09-03 17:22:11.554759 +0000 UTC"
         }

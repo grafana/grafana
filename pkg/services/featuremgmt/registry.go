@@ -942,15 +942,7 @@ var (
 		},
 		{
 			Name:           "queryLibrary",
-			Description:    "Renamed feature toggle, enables Saved queries feature",
-			Stage:          FeatureStagePrivatePreview,
-			Owner:          grafanaSharingSquad,
-			FrontendOnly:   false,
-			AllowSelfServe: false,
-		},
-		{
-			Name:           "savedQueries",
-			Description:    "Enables Saved Queries feature",
+			Description:    "Enables Saved queries (query library) feature",
 			Stage:          FeatureStagePublicPreview,
 			Owner:          grafanaSharingSquad,
 			FrontendOnly:   false,
