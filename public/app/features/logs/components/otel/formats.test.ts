@@ -78,6 +78,28 @@ describe('getOtelAttributesField', () => {
     expect(getOtelAttributesField(log, true)).toEqual('vcs_ref_head_name=main field=value');
   });
 
+  test('Correctly matches excluded labels', () => {
+    const log = createLogLine({
+      labels: {
+        aws_something: 'nope',
+        k8s_something: 'nope',
+        cluster: 'nope',
+        namespace: 'nope',
+        pod: 'nope',
+        cluster_1: 'yes',
+        namespace_2: 'yes',
+        pod_3: 'yes',
+        vcs_ref_head_name: 'main',
+        field: 'value',
+      },
+      entry: `place="luna" 1ms 3 KB`,
+    });
+
+    expect(getOtelAttributesField(log, true)).toEqual(
+      'cluster_1=yes namespace_2=yes pod_3=yes vcs_ref_head_name=main field=value'
+    );
+  });
+
   test('Removes new lines when wrapping is disabled', () => {
     const log = createLogLine({
       labels: {
