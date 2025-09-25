@@ -22,6 +22,7 @@ import {
 
 import { reportInteraction } from '../analytics/utils';
 import { config } from '../config';
+import { evaluateBooleanFlag } from '../internal/openFeature';
 import {
   BackendSrvRequest,
   FetchResponse,
@@ -221,8 +222,7 @@ class DataSourceWithBackend<
       }
     }
 
-    // Use the new query service
-    if (config.featureToggles.queryServiceFromUI) {
+    if (evaluateBooleanFlag('queryServiceFromUI')) {
       if (!(config.featureToggles.queryService || config.featureToggles.grafanaAPIServerWithExperimentalAPIs)) {
         console.warn('feature toggle queryServiceFromUI also requires the queryService to be running');
       } else {
