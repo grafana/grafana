@@ -98,6 +98,17 @@ To add the Azure Monitor data source, complete the following steps:
 
 Grafana takes you to the **Settings** tab, where you will set up your Azure Monitor configuration.
 
+
+
+
+
+Authentication:
+
+Managed identity is the default.
+
+Click **Load Subscriptions** to populate the drop-down with available subscriptions. Select the subscription that contains the Azure resources you want to monitor. This becomes the primary subscription for querying metrics, logs, and other monitoring data. For additional information refer to [Configure Managed Identity](#configure-managed-identity).
+
+
 ### Configure Azure Active Directory (AD) authentication
 
 You must create an app registration and service principal in Azure AD to authenticate the data source.
