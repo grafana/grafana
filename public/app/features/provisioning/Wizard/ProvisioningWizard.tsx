@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -7,7 +7,7 @@ import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents, isFetchError } from '@grafana/runtime';
 import { Box, Button, ConfirmModal, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { RepositoryViewList, useDeleteRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { getDefaultValues } from '../Config/defaults';
@@ -58,7 +58,13 @@ const getSteps = (): Array<Step<WizardStep>> => {
   ];
 };
 
-export function ProvisioningWizard({ type }: { type: RepoType }) {
+export const ProvisioningWizard = memo(function ProvisioningWizard({
+  type,
+  settingsData,
+}: {
+  type: RepoType;
+  settingsData?: RepositoryViewList;
+}) {
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
 
@@ -83,14 +89,13 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     activeStep === 'finish' && (isStepSuccess || completedSteps.includes('synchronize'));
   const shouldUseCancelBehavior = activeStep === 'connection' || isSyncCompleted || isFinishWithSyncCompleted;
 
-  const { data } = useGetFrontendSettingsQuery();
-  const isLegacyStorage = Boolean(data?.legacyStorage);
+  const isLegacyStorage = Boolean(settingsData?.legacyStorage);
   const navigate = useNavigate();
 
   const steps = getSteps();
   const styles = useStyles2(getStyles);
 
-  const values = getDefaultValues();
+  const values = getDefaultValues({ allowedTargets: settingsData?.allowedTargets });
   const methods = useForm<WizardFormData>({
     defaultValues: {
       repository: { ...values, type },
@@ -133,7 +138,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
   // A different repository is marked with instance target -- nothing will succeed
   useEffect(() => {
-    if (data?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
+    if (settingsData?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: [
@@ -143,7 +148,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
       navigate(PROVISIONING_URL);
     }
-  }, [navigate, repoName, data?.items]);
+  }, [navigate, repoName, settingsData?.items]);
 
   const handleRepositoryDeletion = async (name: string) => {
     setIsCancelling(true);
@@ -384,7 +389,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
             <div className={styles.content}>
               {activeStep === 'connection' && <ConnectStep />}
-              {activeStep === 'bootstrap' && <BootstrapStep settingsData={data} repoName={repoName} />}
+              {activeStep === 'bootstrap' && <BootstrapStep settingsData={settingsData} repoName={repoName} />}
               {activeStep === 'synchronize' && (
                 <SynchronizeStep
                   isLegacyStorage={isLegacyStorage}
@@ -426,7 +431,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       />
     </FormProvider>
   );
-}
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   form: css({
