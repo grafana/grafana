@@ -6,10 +6,10 @@ import (
 	"maps"
 	"strings"
 
-	"github.com/grafana/alerting/receivers/jira"
-	alertingMqtt "github.com/grafana/alerting/receivers/mqtt"
-	alertingOpsgenie "github.com/grafana/alerting/receivers/opsgenie"
-	alertingPagerduty "github.com/grafana/alerting/receivers/pagerduty"
+	jira "github.com/grafana/alerting/receivers/jira/v1"
+	alertingMqtt "github.com/grafana/alerting/receivers/mqtt/v1"
+	alertingOpsgenie "github.com/grafana/alerting/receivers/opsgenie/v1"
+	alertingPagerduty "github.com/grafana/alerting/receivers/pagerduty/v1"
 	alertingTemplates "github.com/grafana/alerting/templates"
 )
 
