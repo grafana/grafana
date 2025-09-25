@@ -233,7 +233,9 @@ describe('LogList', () => {
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
-      render(<LogList {...defaultProps} onLogOptionsChange={onLogOptionsChange} setDisplayedFields={setDisplayedFields} />);
+      render(
+        <LogList {...defaultProps} onLogOptionsChange={onLogOptionsChange} setDisplayedFields={setDisplayedFields} />
+      );
       expect(screen.getByText('log message 1')).toBeInTheDocument();
       expect(onLogOptionsChange).not.toHaveBeenCalled();
       expect(setDisplayedFields).not.toHaveBeenCalled();
