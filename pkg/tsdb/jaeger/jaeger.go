@@ -11,6 +11,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+	api_v2 "github.com/jaegertracing/jaeger-idl/proto-gen/api_v2"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var logger = backend.NewLoggerWith("logger", "tsdb.jaeger")
@@ -27,6 +30,7 @@ func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 
 type datasourceInfo struct {
 	JaegerClient JaegerClient
+	GrpcClient   api_v2.QueryServiceClient
 }
 
 type datasourceJSONData struct {
@@ -59,7 +63,16 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 
 		logger := logger.FromContext(ctx)
 		jaegerClient, err := New(httpClient, logger, settings)
-		return &datasourceInfo{JaegerClient: jaegerClient}, err
+		if err != nil {
+			return nil, fmt.Errorf("error creating jaeger client: %w", err)
+		}
+		// TODO: Ask about these credentials and what to use
+		conn, err := grpc.NewClient(settings.URL, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return nil, fmt.Errorf("error creating grpc client: %w", err)
+		}
+		grpcJaegerClient := api_v2.NewQueryServiceClient(conn)
+		return &datasourceInfo{JaegerClient: jaegerClient, GrpcClient: grpcJaegerClient}, err
 	}
 }
 
