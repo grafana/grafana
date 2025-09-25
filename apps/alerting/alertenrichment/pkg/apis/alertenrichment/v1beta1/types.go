@@ -224,10 +224,10 @@ type AssertsEnricher struct {
 
 // ExplainEnricher uses LLM to generate explanations for alerts.
 type ExplainEnricher struct {
-	Annotation string `json:"annotation" yaml:"annotation" jsonschema:"description=Annotation name to set the explanation in, by default 'ai_explanation'"`
+	Annotation string `json:"annotation" yaml:"annotation" jsonschema:"description=Annotation name to set the explanation in, by default '__enriched_ai_explanation'"`
 }
 
 // LoopEnricher configures an enricher which calls into Loop.
 type LoopEnricher struct {
-	// In the future, there may be configuration options.
+	Annotation string `json:"annotation" yaml:"annotation" jsonschema:"description=Annotation name to add the investigation link to, by default '__enriched_assistant_investigation_link'"`
 }

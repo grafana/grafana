@@ -611,6 +611,16 @@ func schema_pkg_apis_alertenrichment_v1beta1_LoopEnricher(ref common.ReferenceCa
 			SchemaProps: spec.SchemaProps{
 				Description: "LoopEnricher configures an enricher which calls into Loop.",
 				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"annotation": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"annotation"},
 			},
 		},
 	}
