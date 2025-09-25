@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2, NavModelItem, PluginExtensionPoints } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem, PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
@@ -17,6 +17,8 @@ interface Props {
   helpNode: NavModelItem;
 }
 
+const allowedPluginId = 'grafana-grafanadocsplugin-app';
+
 export function HelpDropdownButton({ helpNode }: Props) {
   const styles = useStyles2(getStyles);
   const context = useMemo(() => ({ helpNode }), [helpNode]);
@@ -27,22 +29,22 @@ export function HelpDropdownButton({ helpNode }: Props) {
     context,
   });
 
-  const pathfinderLink = useMemo(() => {
-    return links.find((link) => link.pluginId === 'grafana-grafanadocsplugin-app');
+  const link = useMemo(() => {
+    return links.find((link) => link.pluginId === allowedPluginId);
   }, [links]);
 
   if (isLoading) {
     return null;
   }
 
-  if (pathfinderLink) {
+  if (link) {
     return (
       <ToolbarButton
         iconOnly
         icon="question-circle"
         aria-label={t('navigation.help.aria-label', 'Help')}
-        onClick={pathfinderLink.onClick}
-        className={isOpenInSidebar(dockedComponentId, isSidebarOpen) ? styles.helpButtonActive : undefined}
+        onClick={link.onClick}
+        className={isOpenInSidebar(dockedComponentId, isSidebarOpen, link) ? styles.helpButtonActive : undefined}
       />
     );
   }
@@ -65,18 +67,20 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-function isOpenInSidebar(dockedComponentId: string | undefined, isSidebarOpen: boolean): boolean {
+function isOpenInSidebar(
+  dockedComponentId: string | undefined,
+  isSidebarOpen: boolean,
+  link: PluginExtensionLink
+): boolean {
   if (!isSidebarOpen) {
     return false;
   }
   if (!dockedComponentId) {
     return false;
   }
-  const componentMeta = getComponentMetaFromComponentId(dockedComponentId);
-  if (!componentMeta) {
+  const meta = getComponentMetaFromComponentId(dockedComponentId);
+  if (!meta) {
     return false;
   }
-  return (
-    componentMeta.pluginId === 'grafana-grafanadocsplugin-app' && componentMeta.componentTitle === 'Grafana Pathfinder'
-  );
+  return meta.pluginId === link.pluginId && meta.componentTitle === link.title;
 }
