@@ -52,9 +52,12 @@ export function PluginDetailsPage({
   const isNarrowScreen = useMedia('(max-width: 600px)');
   const { navModel, activePageId } = usePluginDetailsTabs(
     plugin,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     queryParams.get('page') as PluginTabIds,
     isNarrowScreen
   );
+  console.log('plugin', plugin);
+  console.log('insights', plugin?.insights);
   const { actions, info, subtitle } = usePluginPageExtensions(plugin);
   const { isLoading: isFetchLoading } = useFetchStatus();
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();

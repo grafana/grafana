@@ -13,6 +13,7 @@ import {
   getPluginErrors,
   getLocalPlugins,
   getPluginDetails,
+  getPluginInsights,
   installPlugin,
   uninstallPlugin,
   getInstancePlugins,
@@ -165,6 +166,22 @@ export const fetchDetails = createAsyncThunk<Update<CatalogPlugin, string>, stri
   }
 );
 
+export const fetchPluginInsights = createAsyncThunk<Update<CatalogPlugin, string>, string>(
+  `${STATE_PREFIX}/fetchPluginInsights`,
+  async (id, thunkApi) => {
+    try {
+      const insights = await getPluginInsights(id);
+
+      return {
+        id,
+        changes: { insights },
+      };
+    } catch (e) {
+      return thunkApi.rejectWithValue('Unknown error.');
+    }
+  }
+);
+
 export const addPlugins = createAction<CatalogPlugin[]>(`${STATE_PREFIX}/addPlugins`);
 
 // 1. gets remote equivalents from the store (if there are any)
@@ -249,7 +266,7 @@ export const uninstall = createAsyncThunk<Update<CatalogPlugin, string>, string>
 // (Originally in "public/app/features/plugins/state/actions.ts")
 // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
 export const loadPluginDashboards = createAsyncThunk(`${STATE_PREFIX}/loadPluginDashboards`, async (_, thunkApi) => {
-  const state = thunkApi.getState() as StoreState;
+  const state = thunkApi.getState();
   const dataSourceType = state.dataSources.dataSource.type;
   const url = `api/plugins/${dataSourceType}/dashboards`;
 
@@ -265,7 +282,8 @@ export const panelPluginLoaded = createAction<PanelPlugin>(`${STATE_PREFIX}/pane
 // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
 export const loadPanelPlugin = (id: string): ThunkResult<Promise<PanelPlugin>> => {
   return async (dispatch, getStore) => {
-    let plugin = getStore().plugins.panels[id];
+    const state = getStore();
+    let plugin = state.plugins.panels[id];
 
     if (!plugin) {
       plugin = await importPanelPlugin(id);
