@@ -43,7 +43,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 			case utils.TeamResourceOwner:
 				admin := !attr.IsReadOnly() // we need admin to for non read only commands
-				teams, err := b.sql.GetTeams(ctx, user.GetOrgID(), user.GetUID(), admin)
+				teams, err := b.teams(ctx, user.GetOrgID(), user.GetUID(), admin)
 				if err != nil {
 					return authorizer.DecisionDeny, "error fetching teams", err
 				}

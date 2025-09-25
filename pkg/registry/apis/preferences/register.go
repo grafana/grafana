@@ -1,6 +1,7 @@
 package preferences
 
 import (
+	"context"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,13 +31,11 @@ import (
 var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
 
 type APIBuilder struct {
-	namespacer request.NamespaceMapper
-	sql        *legacy.LegacySQL
+	legacyStars *legacy.DashboardStarsStorage
+	legacyPrefs rest.Storage
 
-	stars      star.Service
-	prefs      pref.Service
-	users      user.Service
-	calculator *calculator // joins all preferences
+	teams  func(ctx context.Context, orgId int64, user string, admin bool) ([]string, error)
+	merger *merger // joins all preferences
 }
 
 func RegisterAPIService(
@@ -55,13 +54,18 @@ func RegisterAPIService(
 
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		prefs:      prefs, // for writing
-		stars:      stars, // for writing
-		users:      users, // for writing
-		namespacer: request.GetNamespaceMapper(cfg),
-		sql:        sql,
-		calculator: newCalculator(cfg, sql),
+		merger: newMerger(cfg, sql),
+		teams:  sql.GetTeams,
 	}
+
+	namespacer := request.GetNamespaceMapper(cfg)
+	if prefs != nil {
+		builder.legacyPrefs = legacy.NewPreferencesStorage(namespacer, sql)
+	}
+	if stars != nil {
+		builder.legacyStars = legacy.NewDashboardStarsStorage(stars, users, namespacer, sql)
+	}
+
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -92,26 +96,22 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// Configure Stars Dual writer
 	resource := preferences.StarsResourceInfo
 	var stars grafanarest.Storage
-	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, resource, opts.OptsGetter)
+	stars, err := grafanaregistry.NewRegistryStore(opts.Scheme, resource, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
-	stars = unified
-	if b.stars != nil && opts.DualWriteBuilder != nil {
-		legacy := legacy.NewDashboardStarsStorage(b.stars, b.users, b.namespacer, b.sql)
-		stars, err = opts.DualWriteBuilder(resource.GroupResource(), legacy, unified)
+	if b.legacyStars != nil && opts.DualWriteBuilder != nil {
+		stars, err = opts.DualWriteBuilder(resource.GroupResource(), b.legacyStars, stars)
 		if err != nil {
 			return err
 		}
 	}
 	storage[resource.StoragePath()] = stars
-	storage[resource.StoragePath("write")] = &starsREST{
-		store: stars,
-	}
+	storage[resource.StoragePath("update")] = &starsREST{store: stars}
 
 	// Configure Preferences
 	prefs := preferences.PreferencesResourceInfo
-	storage[prefs.StoragePath()] = legacy.NewPreferencesStorage(b.namespacer, b.sql)
+	storage[prefs.StoragePath()] = b.legacyPrefs
 
 	apiGroupInfo.VersionedResourcesStorageMap[preferences.APIVersion] = storage
 	return nil
@@ -123,18 +123,18 @@ func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 
 func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	return b.calculator.GetAPIRoutes(defs)
+	return b.merger.GetAPIRoutes(defs)
 }
 
 func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	oas.Info.Description = "Grafana preferences"
 
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
-	writeKey := root + "namespaces/{namespace}/stars/{name}/write"
-	delete(oas.Paths.Paths, writeKey)
+	updateKey := root + "namespaces/{namespace}/stars/{name}/update"
+	delete(oas.Paths.Paths, updateKey)
 
 	// Add the group/kind/id properties to the path
-	stars, ok := oas.Paths.Paths[writeKey+"/{path}"]
+	stars, ok := oas.Paths.Paths[updateKey+"/{path}"]
 	if !ok || stars == nil {
 		return nil, fmt.Errorf("unable to find write path")
 	}
@@ -175,8 +175,8 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	stars.Delete.Description = "Remove a starred item"
 	stars.Delete.OperationId = "removeStar"
 
-	delete(oas.Paths.Paths, writeKey+"/{path}")
-	oas.Paths.Paths[writeKey+"/{group}/{kind}/{id}"] = stars
+	delete(oas.Paths.Paths, updateKey+"/{path}")
+	oas.Paths.Paths[updateKey+"/{group}/{kind}/{id}"] = stars
 
 	return oas, nil
 }

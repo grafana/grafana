@@ -18,13 +18,13 @@ import (
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
-type calculator struct {
+type merger struct {
 	defaults preferences.PreferencesSpec
 	sql      *legacy.LegacySQL
 }
 
-func newCalculator(cfg *setting.Cfg, sql *legacy.LegacySQL) *calculator {
-	return &calculator{
+func newMerger(cfg *setting.Cfg, sql *legacy.LegacySQL) *merger {
+	return &merger{
 		sql: sql,
 		defaults: preferences.PreferencesSpec{
 			Theme:     &cfg.DefaultTheme,
@@ -35,13 +35,13 @@ func newCalculator(cfg *setting.Cfg, sql *legacy.LegacySQL) *calculator {
 	}
 }
 
-func (s *calculator) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
+func (s *merger) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
 	schema := defs["github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.Preference"].Schema
 
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
-				Path: "current", // calculate?
+				Path: "preferences/merged",
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
@@ -87,7 +87,7 @@ func (s *calculator) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *bui
 	}
 }
 
-func (s *calculator) Current(w http.ResponseWriter, r *http.Request) {
+func (s *merger) Current(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -115,15 +115,18 @@ func (s *calculator) Current(w http.ResponseWriter, r *http.Request) {
 // items should be in ascending order of importance
 func merge(defaults preferences.PreferencesSpec, items []preferences.Preferences) (*preferences.Preferences, error) {
 	p := &preferences.Preferences{
-		TypeMeta: preferences.PreferencesResourceInfo.TypeMeta(),
-		ObjectMeta: v1.ObjectMeta{
-			CreationTimestamp: v1.Now(),
-		},
-		Spec: defaults,
+		TypeMeta:   preferences.PreferencesResourceInfo.TypeMeta(),
+		ObjectMeta: v1.ObjectMeta{},
+		Spec:       defaults,
 	}
 
 	// Iterate in reverse order (least relevant to most relevant)
 	for _, v := range items {
+		// Set the time from the most recent change
+		if p.CreationTimestamp.IsZero() || v.CreationTimestamp.After(p.CreationTimestamp.Time) {
+			p.CreationTimestamp = v.CreationTimestamp
+		}
+
 		if err := mergo.Merge(&p.Spec, &v.Spec, mergo.WithOverride); err != nil {
 			return nil, err
 		}
