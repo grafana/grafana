@@ -15,12 +15,11 @@ export interface Radii {
   default: string;
   /**
    * Use for most things (inputs, buttons, cards, panels, etc)
-   * Same as `md`
+   * Same as `default`
    */
   md: string;
   /**
    * Use for smaller things like chips, tags and badges
-   * Same as `default`
    */
   sm: string;
   /**
