@@ -78,6 +78,12 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	deleteTeam := func(q *DeleteTeamCommand) sqltemplate.SQLTemplate {
+		v := newDeleteTeam(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	listUserTeams := func(q *ListUserTeamsQuery) sqltemplate.SQLTemplate {
 		v := newListUserTeams(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -384,6 +390,14 @@ func TestIdentityQueries(t *testing.T) {
 						OrgID:         1,
 						Created:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
 						Updated:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+					}),
+				},
+			},
+			sqlDeleteTeamTemplate: {
+				{
+					Name: "delete_team_basic",
+					Data: deleteTeam(&DeleteTeamCommand{
+						UID: "team-1",
 					}),
 				},
 			},

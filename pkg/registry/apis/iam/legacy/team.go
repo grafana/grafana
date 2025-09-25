@@ -265,6 +265,69 @@ func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo
 	return &CreateTeamResult{Team: createdTeam}, nil
 }
 
+type DeleteTeamCommand struct {
+	UID string
+}
+
+var sqlDeleteTeamTemplate = mustTemplate("delete_team.sql")
+
+func newDeleteTeam(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteTeamCommand) deleteTeamQuery {
+	return deleteTeamQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		TeamTable:   sql.Table("team"),
+		Command:     cmd,
+	}
+}
+
+type deleteTeamQuery struct {
+	sqltemplate.SQLTemplate
+	TeamTable string
+	Command   *DeleteTeamCommand
+}
+
+func (r deleteTeamQuery) Validate() error {
+	return nil
+}
+
+func (s *legacySQLStore) DeleteTeam(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteTeamCommand) error {
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return err
+	}
+
+	req := newDeleteTeam(sql, &cmd)
+	if err := req.Validate(); err != nil {
+		return err
+	}
+
+	return sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		_, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{
+			OrgID: ns.OrgID,
+			UID:   cmd.UID,
+		})
+		if err != nil {
+			return err
+		}
+
+		teamDeleteReq := newDeleteTeam(sql, &cmd)
+		if err := teamDeleteReq.Validate(); err != nil {
+			return err
+		}
+
+		teamDeleteQuery, err := sqltemplate.Execute(sqlDeleteTeamTemplate, teamDeleteReq)
+		if err != nil {
+			return fmt.Errorf("error executing team delete template: %w", err)
+		}
+
+		_, err = st.Exec(ctx, teamDeleteQuery, teamDeleteReq.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to delete team: %w", err)
+		}
+
+		return nil
+	})
+}
+
 type ListTeamBindingsQuery struct {
 	// UID is team uid to list bindings for. If not set store should list bindings for all teams
 	UID        string
