@@ -37,7 +37,7 @@ Use these steps to migrate resources between environments:
 
 {{< admonition type="note" >}}
 Resources are pulled and pushed from the `./resources` directory by default.
-This directory can be configured with the `--directory`/`-d` flags.
+This directory can be configured with the `-p, --path` strings          #Paths on disk from which to read the resources to push (default [./resources])
 {{< /admonition >}}
 
 1. Make changes to dashboards and other resources using the Grafana UI in your **development instance**.
