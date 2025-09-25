@@ -13,11 +13,11 @@ import {
 import { config, reportInteraction } from '@grafana/runtime';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
+import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogRow } from '../mocks/logRow';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME, OTEL_PROBE_FIELD } from '../otel/formats';
 
 import { LogList, Props } from './LogList';
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME, OTEL_PROBE_FIELD } from '../otel/formats';
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
