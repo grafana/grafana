@@ -214,7 +214,6 @@ func NewInstanceSettings(logger log.Logger, features featuremgmt.FeatureToggles,
 			pqlogger.Debug("Successfully connected to Postgres")
 			return handler, nil
 		}
-
 	}
 }
 
