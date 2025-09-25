@@ -393,6 +393,14 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 			},
+			sqlDeleteTeamTemplate: {
+				{
+					Name: "delete_team_basic",
+					Data: deleteTeam(&DeleteTeamCommand{
+						UID: "team-1",
+					}),
+				},
+			},
 			sqlCreateOrgUserTemplate: {
 				{
 					Name: "create_org_user_basic",
