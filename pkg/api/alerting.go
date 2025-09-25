@@ -18,6 +18,10 @@ func (hs *HTTPServer) GetAlertNotifiers() func(*contextmodel.ReqContext) respons
 			})
 			return response.JSON(http.StatusOK, v2)
 		}
-		return response.JSON(http.StatusOK, channels_config.GetAvailableNotifiers())
+		channels := channels_config.GetAvailableNotifiers()
+		slices.SortFunc(channels, func(a, b *channels_config.NotifierPlugin) int {
+			return strings.Compare(a.Type, b.Type)
+		})
+		return response.JSON(http.StatusOK, channels)
 	}
 }
