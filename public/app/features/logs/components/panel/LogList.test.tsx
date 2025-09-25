@@ -16,6 +16,8 @@ import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '..
 import { createLogRow } from '../mocks/logRow';
 
 import { LogList, Props } from './LogList';
+import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME, OTEL_PROBE_FIELD } from '../otel/formats';
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
@@ -221,6 +223,47 @@ describe('LogList', () => {
 
     expect(screen.queryByText('info')).not.toBeInTheDocument();
     expect(screen.getByText('debug')).toBeInTheDocument();
+  });
+
+  describe('OTel log lines', () => {
+    const originalState = config.featureToggles.otelLogsFormatting;
+
+    test('Does not perform OTel-related actions when the flag is disabled', () => {
+      config.featureToggles.otelLogsFormatting = false;
+      const onLogOptionsChange = jest.fn();
+
+      render(<LogList {...defaultProps} onLogOptionsChange={onLogOptionsChange} />);
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(onLogOptionsChange).not.toHaveBeenCalled();
+
+      config.featureToggles.otelLogsFormatting = originalState;
+    });
+
+    test('Reports the default displayed fields for non-OTel logs', () => {
+      config.featureToggles.otelLogsFormatting = true;
+      const onLogOptionsChange = jest.fn();
+
+      render(<LogList {...defaultProps} onLogOptionsChange={onLogOptionsChange} />);
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(onLogOptionsChange).toHaveBeenCalledWith('defaultDisplayedFields', []);
+
+      config.featureToggles.otelLogsFormatting = originalState;
+    });
+
+    test('Reports the default OTel displayed fields', () => {
+      config.featureToggles.otelLogsFormatting = true;
+      const onLogOptionsChange = jest.fn();
+      const logs = [createLogRow({ uid: '1', labels: { [OTEL_PROBE_FIELD]: '1' } })];
+
+      render(<LogList {...defaultProps} logs={logs} onLogOptionsChange={onLogOptionsChange} />);
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(onLogOptionsChange).toHaveBeenCalledWith('defaultDisplayedFields', [
+        LOG_LINE_BODY_FIELD_NAME,
+        OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME,
+      ]);
+
+      config.featureToggles.otelLogsFormatting = originalState;
+    });
   });
 
   describe('Popover menu', () => {
