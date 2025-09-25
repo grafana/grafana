@@ -323,6 +323,7 @@ export const CandlestickPanel = ({
               />
             )}
             <AnnotationsPlugin2
+              annotationsConfig={options.annotations}
               annotations={data.annotations ?? []}
               config={uplotConfig}
               timeZone={timeZone}

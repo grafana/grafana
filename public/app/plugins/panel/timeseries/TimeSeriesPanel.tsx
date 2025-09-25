@@ -193,6 +193,7 @@ export const TimeSeriesPanel = ({
             {!isVerticallyOriented && (
               <>
                 <AnnotationsPlugin2
+                  annotationsConfig={options.annotations}
                   annotations={data.annotations ?? []}
                   config={uplotConfig}
                   timeZone={timeZone}
