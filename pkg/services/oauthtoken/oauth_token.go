@@ -271,13 +271,6 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 
 	ctxLogger = ctxLogger.New("userID", userID)
 
-	// // get the token's auth provider (f.e. azuread)
-	// currAuthenticator := usr.GetAuthenticatedBy()
-	// if !strings.HasPrefix(currAuthenticator, "oauth") {
-	// 	ctxLogger.Warn("The specified user's auth provider is not OAuth", "authmodule", currAuthenticator)
-	// 	return nil, nil
-	// }
-
 	provider := strings.TrimPrefix(tokenRefreshMetadata.AuthModule, "oauth_")
 	currentOAuthInfo := o.SocialService.GetOAuthInfoProvider(provider)
 	if currentOAuthInfo == nil {
