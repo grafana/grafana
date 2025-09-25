@@ -599,10 +599,6 @@ const (
 	// Used in Logs Drilldown to limit the time range
 	FlagExploreLogsLimitedTimeRange = "exploreLogsLimitedTimeRange"
 
-	// FlagAppPlatformGrpcClientAuth
-	// Enables the gRPC client to authenticate with the App Platform by using ID &amp; access tokens
-	FlagAppPlatformGrpcClientAuth = "appPlatformGrpcClientAuth"
-
 	// FlagGroupAttributeSync
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"

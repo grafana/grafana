@@ -1134,14 +1134,6 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:              "appPlatformGrpcClientAuth",
-			Description:       "Enables the gRPC client to authenticate with the App Platform by using ID & access tokens",
-			Stage:             FeatureStageExperimental,
-			Owner:             identityAccessTeam,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:         "groupAttributeSync",
 			Description:  "Enable the groupsync extension for managing Group Attribute Sync feature",
 			Stage:        FeatureStagePrivatePreview,
