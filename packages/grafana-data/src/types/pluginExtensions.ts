@@ -167,6 +167,7 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: PluginExtensionOpenModalOptions) => void;
+  openInSidebar: (exposedComponentId: string, props?: Record<string, unknown>) => void;
   /**
    * @internal
    * Opens the extension sidebar with the registered component.
@@ -206,6 +207,7 @@ export enum PluginExtensionPoints {
   LogsViewResourceAttributes = 'grafana/logsview/resource-attributes',
   AppChrome = 'grafana/app/chrome/v1',
   ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
+  TopBarHelpButtonV1 = 'grafana/topbar/help-button/v1',
 }
 
 // Don't use directly in a plugin!
