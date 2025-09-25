@@ -519,7 +519,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
   };
 };
 
-
+// creates new fields and drops unnecessary ones for stacking clusters.
 export function prepareClusterData(frames: DataFrame[], clusters: number[], groupByField: string | undefined): void {
   if (!frames.length || !groupByField) {
     return;
@@ -528,9 +528,9 @@ export function prepareClusterData(frames: DataFrame[], clusters: number[], grou
   const frame = frames[0];
 
   // TODO should work for other field names
-  const xField = frame.fields.find(f => f.name === 'X');
-  const catField = frame.fields.find(f => f.name === groupByField);
-  const yField = frame.fields.find(f => f.name === 'Y');
+  const catField = frame.fields.find((field) => field.name === groupByField);
+  const xField = frame.fields.find((field) => field.type === FieldType.string && field !== catField);
+  const yField = frame.fields.find((field) => field.type === FieldType.number);
   
   if (!xField || !catField || !yField) {
     return;
@@ -562,12 +562,12 @@ export function prepareClusterData(frames: DataFrame[], clusters: number[], grou
         name: `${clusterLabel}_${xVals[rowIdx + k]}`,
         type: FieldType.number,
         config: yField ? yField.config : {},
-        values: Array(clusters.length).fill(0),
+        values: Array(clusters.length).fill(undefined),
         display: yField.display,
       };
 
       // place absorbed value into this cluster’s slot
-      field.values[newX.length - 1] = v ?? 0;
+      field.values[newX.length - 1] = v ?? undefined;
 
       newFields.push(field);
     }

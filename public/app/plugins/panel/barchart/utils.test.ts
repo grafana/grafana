@@ -292,17 +292,17 @@ describe('BarChart utils', () => {
     it('should change the dataframe correctly', () => {
       const inputDataFrame = createDataFrame({
         fields: [
-          { name: 'X', values: [1,2,3,4]},
+          { name: 'X', values: [1,2,3,4], type: FieldType.string},
           { name: 'Cat', values: ['A', 'A', 'B', 'C']},
           { name: 'Y', values: [10,5,4,8]},
         ],
       });
       const expectedDataFrame = createDataFrame({
         fields: [
-          { name: 'X', values: [1,3,4]},
+          { name: 'X', values: [1,3,4], type: FieldType.string},
           { name: 'Cat', values: ['A', 'B', 'C']},
           { name: 'Y', values: [10,4,8]},
-          { name: 'A_2', values: [5,0,0], display: undefined}
+          { name: 'A_2', values: [5,undefined, undefined], display: undefined}
         ],
       });
       const clusters = [2,1,1];
@@ -317,14 +317,14 @@ describe('BarChart utils', () => {
     it('should leave the dataframe intact if no clusters bigger than 1', () => {
       const inputDataFrame = createDataFrame({
         fields: [
-          { name: 'X', values: [1,2,3,4]},
+          { name: 'X', values: [1,2,3,4], type: FieldType.string},
           { name: 'Cat', values: ['A', 'B', 'C', 'D']},
           { name: 'Y', values: [10,5,4,8]},
         ],
       });
       const expectedDataFrame = createDataFrame({
         fields: [
-          { name: 'X', values: [1,2,3,4]},
+          { name: 'X', values: [1,2,3,4], type: FieldType.string},
           { name: 'Cat', values: ['A', 'B', 'C', 'D']},
           { name: 'Y', values: [10,5,4,8]},
         ],
