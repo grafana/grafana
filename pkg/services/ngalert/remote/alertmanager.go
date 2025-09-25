@@ -414,6 +414,7 @@ func (am *Alertmanager) SendState(ctx context.Context) error {
 		am.metrics.StateSyncErrorsTotal.Inc()
 		return err
 	}
+	am.log.Debug("Uploading state to remote Alertmanager", "state", state)
 
 	if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, state); err != nil {
 		am.metrics.StateSyncErrorsTotal.Inc()
