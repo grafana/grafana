@@ -59,7 +59,7 @@ This directory can be configured with the `-p, --path` strings          #Paths o
 
    ```bash
    grafanactl config use-context YOUR_CONTEXT  # for example "prod"
-   grafanactl resources push -d ./resources/
+   grafanactl resources push -p ./resources/
    ```
 
 ## Back up Grafana resources
@@ -88,7 +88,7 @@ This workflow helps you back up all Grafana resources from one instance and late
 
    ```bash
    grafanactl config use-context YOUR_CONTEXT  # for example "prod"
-   grafanactl resources push -d ./resources/
+   grafanactl resources push -p ./resources/
    ```
 
 ## Manage dashboards as code
@@ -114,7 +114,7 @@ With this workflow, you can define and manage dashboards as code, saving them to
 
    ```bash
    grafanactl config use-context YOUR_CONTEXT  # for example "dev"
-   grafanactl resources push -d ./resources/
+   grafanactl resources push -p ./resources/
    ```
 
 ## Explore and modify resources from the terminal
