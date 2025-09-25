@@ -88,6 +88,7 @@ grafana::codegen:run pkg/apimachinery
 grafana::codegen:run pkg/aggregator
 grafana::codegen:run apps/dashboard/pkg
 grafana::codegen:run apps/provisioning/pkg
+grafana::codegen:run apps/annotations/pkg
 grafana::codegen:run apps/folder/pkg
 grafana::codegen:run apps/preferences/pkg
 grafana::codegen:run apps/alerting/alertenrichment/pkg

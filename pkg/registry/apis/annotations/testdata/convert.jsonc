@@ -1,0 +1,139 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: 
+//  Dimensions: 9 Fields by 2 Rows
+//  +----------------+----------------+-----------------------------------+-----------------------------------+--------------------+----------------+----------------+-----------------+--------------------------+
+//  | Name: id       | Name: text     | Name: time                        | Name: timeEnd                     | Name: dashboardUID | Name: panelId  | Name: alertId  | Name: newState  | Name: tags               |
+//  | Labels:        | Labels:        | Labels:                           | Labels:                           | Labels:            | Labels:        | Labels:        | Labels:         | Labels:                  |
+//  | Type: []string | Type: []string | Type: []time.Time                 | Type: []*time.Time                | Type: []*string    | Type: []*int64 | Type: []*int64 | Type: []*string | Type: []*json.RawMessage |
+//  +----------------+----------------+-----------------------------------+-----------------------------------+--------------------+----------------+----------------+-----------------+--------------------------+
+//  | a10            | hello          | 1970-01-01 03:00:01.234 +0300 EAT | 1970-01-01 03:00:05.678 +0300 EAT | dash-uid           | 3              | 55             | null            | ["tag1","tag2"]          |
+//  | a11            | empty data     | 0001-01-01 00:00:00 +0000 UTC     | null                              | null               | null           | 66             | alerting        | null                     |
+//  +----------------+----------------+-----------------------------------+-----------------------------------+--------------------+----------------+----------------+-----------------+--------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "text",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "timeEnd",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "dashboardUID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "panelId",
+            "type": "number",
+            "typeInfo": {
+              "frame": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "alertId",
+            "type": "number",
+            "typeInfo": {
+              "frame": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "newState",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "tags",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage",
+              "nullable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "a10",
+            "a11"
+          ],
+          [
+            "hello",
+            "empty data"
+          ],
+          [
+            1234,
+            -62135596800000
+          ],
+          [
+            5678,
+            null
+          ],
+          [
+            "dash-uid",
+            null
+          ],
+          [
+            3,
+            null
+          ],
+          [
+            55,
+            66
+          ],
+          [
+            null,
+            "alerting"
+          ],
+          [
+            [
+              "tag1",
+              "tag2"
+            ],
+            null
+          ]
+        ]
+      }
+    }
+  ]
+}

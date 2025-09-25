@@ -3,6 +3,7 @@ package apiregistry
 import (
 	"github.com/google/wire"
 
+	"github.com/grafana/grafana/pkg/registry/apis/annotations"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -59,6 +60,7 @@ var WireSet = wire.NewSet(
 	folders.RegisterAPIService,
 	iam.RegisterAPIService,
 	provisioning.RegisterAPIService,
+	annotations.RegisterAPIService,
 	service.RegisterAPIService,
 	query.RegisterAPIService,
 	preferences.RegisterAPIService,
