@@ -2,7 +2,8 @@ import { OFREPWebProvider } from '@openfeature/ofrep-web-provider';
 import { OpenFeature } from '@openfeature/web-sdk';
 
 import { FeatureToggles } from '@grafana/data';
-import { config } from '@grafana/runtime';
+
+import { config } from '../../config';
 
 export type FeatureFlagName = keyof FeatureToggles;
 
@@ -17,8 +18,6 @@ export async function initOpenFeature() {
     targetingKey: config.namespace,
     namespace: config.namespace,
   });
-
-  return true;
 }
 
 export function getOpenFeatureClient() {
