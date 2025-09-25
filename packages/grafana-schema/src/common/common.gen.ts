@@ -503,6 +503,13 @@ export enum VizOrientation {
 }
 
 /**
+ * Breaks out each annotation frame into multiple lanes on the x-axis
+ */
+export interface VizAnnotations {
+  multiLane?: boolean;
+}
+
+/**
  * TODO docs
  */
 export interface OptionsWithTooltip {

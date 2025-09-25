@@ -11,6 +11,7 @@
 import * as ui from '@grafana/schema';
 
 export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones {
+  annotations?: ui.VizAnnotations;
   /**
    * Controls the column width
    */

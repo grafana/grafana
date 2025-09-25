@@ -64,6 +64,7 @@ export const defaultCandlestickColors: Partial<CandlestickColors> = {
 };
 
 export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
+  annotations?: common.VizAnnotations;
   /**
    * Sets the style of the candlesticks
    */
