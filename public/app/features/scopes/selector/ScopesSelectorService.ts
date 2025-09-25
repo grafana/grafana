@@ -111,10 +111,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       const childNodeName = stringPath[index + 1];
       // Path up to iteration point
       const pathSlice = stringPath.slice(0, index + 1);
-      console.log('inserting path nodes into tree', pathSlice, childNodeName);
       newTree = modifyTreeNodeAtPath(newTree, pathSlice, (treeNode) => {
         treeNode.children = { ...treeNode.children };
         if (!childNodeName) {
+          console.warn('Failed to insert full path into tree. Did not find child to' + stringPath[index]);
           return treeNode;
         }
         treeNode.children[childNodeName] = {
@@ -123,12 +123,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
           query: '',
           children: undefined,
         };
-        console.log('result treeNode', treeNode);
         return treeNode;
       });
     }
     this.updateState({ tree: newTree });
-    console.log('newTree', newTree);
   };
 
   // Resolves the path to the root node for a given scope node. Used on inital load with parent node from URL. This is used to display the correct expanded tree in the selector.
@@ -153,7 +151,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     // Insert into tree only when we're at the original call with the complete path
     if (isOriginalCall) {
-      console.log('inserting path nodes into tree', totalPath);
       this.insertPathNodesIntoTree(totalPath);
     }
 
@@ -433,7 +430,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
       // Get node at path, and request it's children if they don't exist yet
       const nodeAtPath = treeNodeAtPath(newTree, path);
-      console.log('nodeAtPath', nodeAtPath);
       if (nodeAtPath && !nodeAtPath.children) {
         // This will update the tree with the children
         const { newTree: newTreeWithChildren } = await this.loadNodeChildren(path, nodeAtPath, '');
