@@ -1,6 +1,53 @@
+import { DataFrame, getFieldDisplayValues } from '@grafana/data';
+
 import { useTheme2 } from '../../themes/ThemeContext';
 
-export interface Props {
+export interface RadialGaugeProps {
+  frames: DataFrame[];
+  size?: number;
+  startAngle?: number;
+  fullAngle?: number;
+}
+
+export function RadialGauge({ frames, size = 256, startAngle = 0, fullAngle = 360 }: RadialGaugeProps) {
+  const theme = useTheme2();
+  const width = size * 1.2;
+  const height = size * 1.2;
+
+  const values = getFieldDisplayValues({
+    fieldConfig: { overrides: [], defaults: {} },
+    reduceOptions: { calcs: ['last'] },
+    replaceVariables: (value) => value,
+    theme: theme,
+    data: frames,
+  });
+
+  return (
+    <svg width={width} height={height}>
+      <g>
+        {values.map((displayValue, i) => {
+          const value = displayValue.display.numeric;
+          const min = displayValue.field.min ?? 0;
+          const max = displayValue.field.max ?? 100;
+
+          return (
+            <RadialBar
+              key={i}
+              value={value}
+              min={min}
+              max={max}
+              startAngle={startAngle}
+              fullAngle={fullAngle}
+              size={130}
+            />
+          );
+        })}
+      </g>
+    </svg>
+  );
+}
+
+export interface RadialBarProps {
   value: number;
   min: number;
   max: number;
@@ -9,25 +56,23 @@ export interface Props {
   fullAngle?: number;
 }
 
-export function RadialGauge({ value, min, max, startAngle = 0, size, fullAngle = 360 }: Props) {
+export function RadialBar({ value, min, max, startAngle = 0, size, fullAngle = 360 }: RadialBarProps) {
   const theme = useTheme2();
   const angle = ((value - min) / (max - min)) * fullAngle;
   const trackStart = angle;
   const trackLength = fullAngle - trackStart;
 
   return (
-    <svg width={500} height={500}>
-      <g>
-        <RadialArcPath
-          angle={trackLength}
-          size={size}
-          startAngle={trackStart}
-          fullAngle={fullAngle}
-          color={theme.colors.action.hover}
-        />
-        <RadialArcPath angle={angle} size={size} startAngle={startAngle} fullAngle={fullAngle} />
-      </g>
-    </svg>
+    <>
+      <RadialArcPath
+        angle={trackLength}
+        size={size}
+        startAngle={trackStart}
+        fullAngle={fullAngle}
+        color={theme.colors.action.hover}
+      />
+      <RadialArcPath angle={angle} size={size} startAngle={startAngle} fullAngle={fullAngle} />
+    </>
   );
 }
 
@@ -54,7 +99,7 @@ export function RadialArcPath({ startAngle, angle, size, fullAngle, color }: Rad
       d={path}
       fill="none"
       fillOpacity="0.85"
-      stroke={color ?? 'rgba(0,143,251,0.85)'}
+      stroke={color ?? '#11d1c1ff'}
       strokeOpacity="1"
       strokeLinecap="butt"
       strokeWidth="15"
