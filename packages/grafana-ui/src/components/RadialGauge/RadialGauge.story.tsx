@@ -1,9 +1,10 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { applyFieldOverrides, DataFrame, FieldType, toDataFrame } from '@grafana/data';
+import { applyFieldOverrides, FieldType, toDataFrame } from '@grafana/data';
 import { FieldColorModeId, GraphGradientMode } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { StoryExample } from '../../utils/storybook/StoryExample';
 import { Stack } from '../Layout/Stack/Stack';
 
 import { RadialBar, RadialGauge } from './RadialGauge';
@@ -17,33 +18,54 @@ const meta: Meta<typeof RadialBar> = {
 };
 
 export const Examples: StoryFn<typeof RadialBar> = (args) => {
-  const data1 = useRadialData({ value: 70 });
-  const data2 = useRadialData({ value: 50, colorMode: FieldColorModeId.ContinuousGrYlRd });
-
   return (
     <Stack direction={'column'}>
-      <div>startAngle = 0, endAngle = 360, value: 70 (min: 0, max: 100)</div>
-      <RadialGauge frames={data1} size={250} barWidth={17} />
-      <div>startAngle = 240, endAngle = 120</div>
-      <RadialGauge
-        frames={data2}
-        size={250}
-        barWidth={17}
-        gradientMode={GraphGradientMode.Scheme}
-        startAngle={240}
-        endAngle={120}
-      />
+      <RadialBarExample title="value: 70" value={70} />
+      <Stack>
+        <RadialBarExample
+          title="value: 40%, gradient: Scheme, 240° -> 120°"
+          colorMode={FieldColorModeId.ContinuousGrYlRd}
+          gradientMode={GraphGradientMode.Scheme}
+          value={40}
+          startAngle={240}
+          endAngle={120}
+        />
+        <RadialBarExample
+          title="value: 100, gradient: Scheme"
+          colorMode={FieldColorModeId.ContinuousGrYlRd}
+          gradientMode={GraphGradientMode.Scheme}
+          value={100}
+          startAngle={240}
+          endAngle={120}
+        />
+      </Stack>
     </Stack>
   );
 };
 
-interface DataOptions {
+interface ExampleProps {
+  title: string;
   colorMode?: FieldColorModeId;
+  gradientMode?: GraphGradientMode;
   color?: string;
   value?: number;
+  startAngle?: number;
+  endAngle?: number;
+  min?: number;
+  max?: number;
 }
 
-function useRadialData({ colorMode = FieldColorModeId.Fixed, color = 'blue', value = 70 }: DataOptions): DataFrame[] {
+function RadialBarExample({
+  title,
+  colorMode = FieldColorModeId.Fixed,
+  gradientMode = GraphGradientMode.None,
+  color = 'blue',
+  value = 70,
+  startAngle,
+  endAngle,
+  min = 0,
+  max = 100,
+}: ExampleProps) {
   const theme = useTheme2();
 
   const frame = toDataFrame({
@@ -55,29 +77,18 @@ function useRadialData({ colorMode = FieldColorModeId.Fixed, color = 'blue', val
         type: FieldType.number,
         values: [value],
         config: {
-          min: 0,
-          max: 100,
+          min: min,
+          max: max,
           color: { mode: colorMode, fixedColor: theme.visualization.getColorByName(color) },
         },
         // Add state and getLinks
         state: {},
         getLinks: () => [],
       },
-      // {
-      //   name: 'Column B',
-      //   type: FieldType.number,
-      //   values: [1, 2, 3],
-      //   config: {
-      //     custom: {},
-      //   },
-      //   // Add state and getLinks
-      //   state: {},
-      //   getLinks: () => [],
-      // },
     ],
   });
 
-  return applyFieldOverrides({
+  const data = applyFieldOverrides({
     data: [frame],
     fieldConfig: {
       defaults: {},
@@ -87,6 +98,19 @@ function useRadialData({ colorMode = FieldColorModeId.Fixed, color = 'blue', val
     timeZone: 'utc',
     theme,
   });
+
+  return (
+    <StoryExample name={title}>
+      <RadialGauge
+        frames={data}
+        size={200}
+        barWidth={17}
+        gradientMode={gradientMode}
+        startAngle={startAngle}
+        endAngle={endAngle}
+      />
+    </StoryExample>
+  );
 }
 
 export default meta;

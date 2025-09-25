@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 import {
   DataFrame,
   DisplayValue,
@@ -29,6 +31,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     barWidth = 10,
   } = props;
   const theme = useTheme2();
+  const gaugeId = useId();
   const width = size;
   const height = size;
 
@@ -45,7 +48,7 @@ export function RadialGauge(props: RadialGaugeProps) {
       <defs>
         {gradientMode !== GraphGradientMode.None &&
           values.map((displayValue, barIndex) => (
-            <GradientDef key={barIndex} fieldDisplay={displayValue} index={barIndex} theme={theme} />
+            <GradientDef key={barIndex} fieldDisplay={displayValue} index={barIndex} theme={theme} gaugeId={gaugeId} />
           ))}
       </defs>
       <g>
@@ -53,7 +56,7 @@ export function RadialGauge(props: RadialGaugeProps) {
           const value = displayValue.display.numeric;
           const min = displayValue.field.min ?? 0;
           const max = displayValue.field.max ?? 100;
-          const barColor = getColorForBar(displayValue.display, barIndex, gradientMode);
+          const barColor = getColorForBar(displayValue.display, barIndex, gradientMode, gaugeId);
 
           return (
             <RadialBar
@@ -74,22 +77,29 @@ export function RadialGauge(props: RadialGaugeProps) {
   );
 }
 
-function getColorForBar(displayValue: DisplayValue, barIndex: number, gradientMode: GraphGradientMode) {
+function getColorForBar(
+  displayValue: DisplayValue,
+  barIndex: number,
+  gradientMode: GraphGradientMode,
+  gaugeId: string
+) {
   if (gradientMode === GraphGradientMode.None) {
     return displayValue.color ?? 'gray';
   }
 
-  return `url(#gradient-${barIndex})`;
+  return `url(#${getGradientId(gaugeId, barIndex)})`;
 }
 
 interface GradientDefProps {
   fieldDisplay: FieldDisplay;
   index: number;
   theme: GrafanaTheme2;
+  gaugeId: string;
 }
 
-function GradientDef({ fieldDisplay, index, theme }: GradientDefProps) {
+function GradientDef({ fieldDisplay, index, theme, gaugeId }: GradientDefProps) {
   const colorModeId = fieldDisplay.field.color?.mode;
+  const valuePercent = fieldDisplay.display.percent ?? 0;
   const colorMode = getFieldColorMode(colorModeId);
 
   function renderStops() {
@@ -105,11 +115,16 @@ function GradientDef({ fieldDisplay, index, theme }: GradientDefProps) {
     return null;
   }
 
+  console.log('valuePercent', valuePercent);
   return (
-    <linearGradient x1="0" y1="1" x2="1" y2="1" id={`gradient-${index}`}>
+    <linearGradient x1="0" y1="1" x2={1 / valuePercent} y2="1" id={getGradientId(gaugeId, index)}>
       {renderStops()}
     </linearGradient>
   );
+}
+
+function getGradientId(gaugeId: string, index: number) {
+  return `radial-gauge-${gaugeId}-${index}`;
 }
 
 export interface RadialBarProps {
