@@ -36,6 +36,7 @@ func ProvideAppInstallers(
 	shorturlAppInstaller *shorturl.ShortURLAppInstaller,
 	rulesAppInstaller *rules.AlertingRulesAppInstaller,
 	correlationsAppInstaller *correlations.CorrelationsAppInstaller,
+	alertingNotificationAppInstaller *notifications.AlertingNotificationsAppInstaller,
 	exampleAppInstaller *example.ExampleAppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	installers := []appsdkapiserver.AppInstaller{
@@ -51,6 +52,9 @@ func ProvideAppInstallers(
 	}
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesCorrelations) {
 		installers = append(installers, correlationsAppInstaller)
+	}
+	if alertingNotificationAppInstaller != nil {
+		installers = append(installers, alertingNotificationAppInstaller)
 	}
 	return installers
 }
@@ -72,7 +76,6 @@ func ProvideBuilderRunners(
 	features featuremgmt.FeatureToggles,
 	investigationAppProvider *investigations.InvestigationsAppProvider,
 	advisorAppProvider *advisor.AdvisorAppProvider,
-	alertingNotificationsAppProvider *notifications.AlertingNotificationsAppProvider,
 	grafanaCfg *setting.Cfg,
 ) (*Service, error) {
 	cfgWrapper := func(ctx context.Context) (*rest.Config, error) {
@@ -99,9 +102,6 @@ func ProvideBuilderRunners(
 	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) &&
 		!slices.Contains(grafanaCfg.DisablePlugins, "grafana-advisor-app") {
 		providers = append(providers, advisorAppProvider)
-	}
-	if alertingNotificationsAppProvider != nil {
-		providers = append(providers, alertingNotificationsAppProvider)
 	}
 	apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, providers...)
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/types"
 
@@ -188,6 +189,20 @@ func setupTestRoles(t *testing.T, store db.DB) {
 		`INSERT INTO builtin_role (org_id, role, role_id, created, updated)
 	VALUES (?, ?, ?, ?, ?)`,
 		1, "Editor", 4, "2025-09-02 00:00:00", "2025-09-02 00:00:00", // Builtin Editor -> managed:builtins:editor:permissions
+	)
+	require.NoError(t, err)
+}
+
+func setupFineGrainedPermissions(t *testing.T, store db.DB) {
+	sess := store.GetSqlxSession()
+
+	// Permissions
+	_, err := sess.Exec(context.Background(),
+		`INSERT INTO permission (role_id, action, scope, created, updated)
+		VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)`,
+		// Permissions for managed:users:2:permissions
+		2, "folders:read", "folders:uid:fold1", "2025-09-02", "2025-09-02",
+		2, "folders:create", "folders:uid:fold1", "2025-09-02", "2025-09-02",
 	)
 	require.NoError(t, err)
 }
@@ -505,6 +520,7 @@ func TestIntegration_ResourcePermSqlBackend_UpdateResourcePermission(t *testing.
 	sql, err := backend.dbProvider(ctx)
 	require.NoError(t, err)
 	setupTestRoles(t, sql.DB)
+	setupFineGrainedPermissions(t, sql.DB)
 
 	t.Run("should fail to update resource permission for a resource that doesn't have any permissions yet", func(t *testing.T) {
 		resourcePerm := &v0alpha1.ResourcePermission{
@@ -652,4 +668,182 @@ func (f *fakeIdentityStore) GetUserInternalID(ctx context.Context, ns types.Name
 		return nil, errors.New("not found")
 	}
 	return &legacy.GetUserInternalIDResult{ID: id}, nil
+}
+
+func TestValidateCreateAndUpdateInput(t *testing.T) {
+	grn := &groupResourceName{
+		Group:    "dashboard.grafana.app",
+		Resource: "dashboards",
+		Name:     "test-dashboard",
+	}
+
+	t.Run("Should pass validation with valid permissions", func(t *testing.T) {
+		resourcePerm := &v0alpha1.ResourcePermission{
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "dashboard.grafana.app",
+					Resource: "dashboards",
+					Name:     "test-dashboard",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Editor",
+						Verb: "edit",
+					},
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Viewer", // Different entity name - should be allowed
+						Verb: "view",
+					},
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
+						Name: "user-1",
+						Verb: "edit", // Different kind - should be allowed
+					},
+				},
+			},
+		}
+
+		err := validateCreateAndUpdateInput(resourcePerm, grn)
+		require.NoError(t, err)
+	})
+
+	t.Run("Should fail validation with duplicate entities", func(t *testing.T) {
+		resourcePerm := &v0alpha1.ResourcePermission{
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "dashboard.grafana.app",
+					Resource: "dashboards",
+					Name:     "test-dashboard",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Editor",
+						Verb: "edit",
+					},
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Editor",
+						Verb: "view", // Same entity, different verb - should fail
+					},
+				},
+			},
+		}
+
+		err := validateCreateAndUpdateInput(resourcePerm, grn)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "duplicate entity found")
+		require.Contains(t, err.Error(), "kind=BasicRole")
+		require.Contains(t, err.Error(), "name=Editor")
+		require.Contains(t, err.Error(), "each entity can only appear once per resource")
+	})
+
+	t.Run("Should pass validation with same name but different kinds", func(t *testing.T) {
+		resourcePerm := &v0alpha1.ResourcePermission{
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "dashboard.grafana.app",
+					Resource: "dashboards",
+					Name:     "test-dashboard",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
+						Name: "editor", // Same name but different kind
+						Verb: "edit",
+					},
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "editor", // Same name but different kind
+						Verb: "view",
+					},
+				},
+			},
+		}
+
+		err := validateCreateAndUpdateInput(resourcePerm, grn)
+		require.NoError(t, err)
+	})
+}
+
+func TestIntegration_UpdateResourcePermission_VerbChange(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	backend := setupBackend(t)
+	backend.identityStore = NewFakeIdentityStore(t)
+	ctx := context.Background()
+	sql, err := backend.dbProvider(ctx)
+	require.NoError(t, err)
+	setupTestRoles(t, sql.DB)
+
+	mapper := backend.mappers[schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}]
+	grn := &groupResourceName{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "test-dash"}
+
+	t.Run("should allow changing verb for same entity", func(t *testing.T) {
+		//Create initial permission with BasicRole Editor having "edit" verb
+		initialResourcePerm := &v0alpha1.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "dashboard.grafana.app-dashboards-test-dash",
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "dashboard.grafana.app",
+					Resource: "dashboards",
+					Name:     "test-dash",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Editor",
+						Verb: "edit",
+					},
+				},
+			},
+		}
+
+		rv, err := backend.createResourcePermission(ctx, sql, types.NamespaceInfo{Value: "default", OrgID: 1}, mapper, grn, initialResourcePerm)
+		require.NoError(t, err)
+		require.Greater(t, rv, int64(0))
+
+		//Update the same entity (BasicRole Editor) to have "view" verb instead
+		updatedResourcePerm := &v0alpha1.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "dashboard.grafana.app-dashboards-test-dash",
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "dashboard.grafana.app",
+					Resource: "dashboards",
+					Name:     "test-dash",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Editor",
+						Verb: "view",
+					},
+				},
+			},
+		}
+
+		rv, err = backend.updateResourcePermission(ctx, sql, types.NamespaceInfo{Value: "default", OrgID: 1}, mapper, grn, updatedResourcePerm)
+		require.NoError(t, err)
+		require.Greater(t, rv, int64(0))
+
+		//Verify the update worked by reading back the permission
+		err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+			finalResourcePerm, err := backend.getResourcePermission(ctx, sql, tx, types.NamespaceInfo{Value: "default", OrgID: 1}, grn.string())
+			require.NoError(t, err)
+			require.Len(t, finalResourcePerm.Spec.Permissions, 1)
+			require.Equal(t, v0alpha1.ResourcePermissionSpecPermissionKindBasicRole, finalResourcePerm.Spec.Permissions[0].Kind)
+			require.Equal(t, "Editor", finalResourcePerm.Spec.Permissions[0].Name)
+			require.Equal(t, "view", finalResourcePerm.Spec.Permissions[0].Verb)
+			return nil
+		})
+		require.NoError(t, err)
+	})
 }
