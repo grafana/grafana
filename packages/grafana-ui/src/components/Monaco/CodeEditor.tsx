@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 import { PureComponent } from 'react';
 
@@ -136,7 +136,7 @@ class UnthemedCodeEditor extends PureComponent<Props> {
     const value = this.props.value ?? '';
     const longText = value.length > 100;
 
-    const containerStyles = this.props.containerStyles ?? getStyles(theme).container;
+    const containerStyles = cx(getStyles(theme).container, this.props.containerStyles);
 
     const options: MonacoOptions = {
       wordWrap: wordWrap ? 'on' : 'off',
