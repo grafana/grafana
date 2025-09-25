@@ -81,7 +81,7 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
     wrapper: css({
       display: 'inline-flex',
       padding: '1px 4px',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.sm,
       background: bgColor,
       border: `1px solid ${borderColor}`,
       color: textColor,

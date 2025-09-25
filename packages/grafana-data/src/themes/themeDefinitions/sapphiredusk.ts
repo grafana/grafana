@@ -74,9 +74,6 @@ const sapphireDuskTheme: NewThemeOptions = {
     hoverFactor: 0.03,
     tonalOffset: 0.15,
   },
-  shape: {
-    borderRadius: 5,
-  },
 };
 
 export default sapphireDuskTheme;
