@@ -213,7 +213,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 		InitMinCount:  1, // set min count to default for this test
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil, nil)
+	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -274,7 +274,7 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 	}
 
 	// Enable searchAfterWrite
-	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil, nil)
+	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -325,7 +325,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 		InitMinCount:  1, // set min count to default for this test
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil, nil)
+	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 

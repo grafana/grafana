@@ -14,6 +14,7 @@ import {
 import { buildPanelEditScene } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { setInitialDatasource } from '../state/reducers';
@@ -27,6 +28,11 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
+
+  // Get repository information to check if it's read-only
+  const { isReadOnlyRepo } = useGetResourceRepositoryView({
+    folderName: dashboard instanceof DashboardScene ? dashboard.state.meta.folderUid : dashboard.meta.folderUid,
+  });
 
   const onAddVisualization = () => {
     let id;
@@ -77,7 +83,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 icon="plus"
                 data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
                 onClick={onAddVisualization}
-                disabled={!canCreate}
+                disabled={!canCreate || isReadOnlyRepo}
               >
                 <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
               </Button>
@@ -101,7 +107,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                   fill="outline"
                   data-testid={selectors.pages.AddDashboard.itemButton('Add a panel from the panel library button')}
                   onClick={onAddLibraryPanel}
-                  disabled={!canCreate || isProvisioned}
+                  disabled={!canCreate || isProvisioned || isReadOnlyRepo}
                 >
                   <Trans i18nKey="dashboard.empty.add-library-panel-button">Add library panel</Trans>
                 </Button>
@@ -131,7 +137,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                     DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_dashboard' });
                     onImportDashboard();
                   }}
-                  disabled={!canCreate}
+                  disabled={!canCreate || isReadOnlyRepo}
                 >
                   <Trans i18nKey="dashboard.empty.import-dashboard-button">Import dashboard</Trans>
                 </Button>
