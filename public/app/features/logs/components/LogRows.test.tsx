@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { mockTimeRange } from '@grafana/plugin-ui';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../utils';
 
@@ -46,6 +47,7 @@ describe('LogRows', () => {
         onClickHideField={() => {}}
         onClickShowField={() => {}}
         scrollElement={null}
+        timeRange={mockTimeRange()}
       />
     );
 
@@ -75,6 +77,7 @@ describe('LogRows', () => {
         onClickHideField={() => {}}
         onClickShowField={() => {}}
         scrollElement={null}
+        timeRange={mockTimeRange()}
       />
     );
     expect(screen.queryAllByRole('row')).toHaveLength(2);
@@ -105,6 +108,7 @@ describe('LogRows', () => {
         onClickHideField={() => {}}
         onClickShowField={() => {}}
         scrollElement={null}
+        timeRange={mockTimeRange()}
       />
     );
 
@@ -135,6 +139,7 @@ describe('LogRows', () => {
         onClickHideField={() => {}}
         onClickShowField={() => {}}
         scrollElement={null}
+        timeRange={mockTimeRange()}
       />
     );
 
@@ -162,6 +167,7 @@ describe('Popover menu', () => {
         onClickFilterOutString={() => {}}
         onClickFilterString={() => {}}
         scrollElement={null}
+        timeRange={mockTimeRange()}
         {...overrides}
       />
     );
