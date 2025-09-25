@@ -10,7 +10,6 @@ export function getSelectableThemes() {
     allowedExtraThemes.push('sapphiredusk');
     allowedExtraThemes.push('tron');
     allowedExtraThemes.push('gloom');
-    allowedExtraThemes.push('matrix');
   }
 
   return getBuiltInThemes(allowedExtraThemes);
