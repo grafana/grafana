@@ -75,9 +75,11 @@ export function prepSeries(
   let frame: DataFrame | undefined = { ...frames[0] };
 
   if (isClusteredStacked && groupByField) {
-    const fieldValues = frame.fields.find((field) => field.state?.displayName === groupByField || field.name === groupByField)?.values
+    const fieldValues = frame.fields.find((field) => field.state?.displayName === groupByField || field.name === groupByField)?.values;
     const clusters = getClustersFromArray(fieldValues, groupByField);
-    prepareClusterData(frames, clusters, groupByField);
+    const newFrames = prepareClusterData(frames, clusters, groupByField);
+    frame = { ...newFrames[0] };
+  } else {
     frame = { ...frames[0] };
   }
 
@@ -520,9 +522,9 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
 };
 
 // creates new fields and drops unnecessary ones for stacking clusters.
-export function prepareClusterData(frames: DataFrame[], clusters: number[], groupByField: string | undefined): void {
+export function prepareClusterData(frames: DataFrame[], clusters: number[], groupByField: string | undefined): DataFrame[] {
   if (!frames.length || !groupByField) {
-    return;
+    return frames;
   }
 
   const frame = frames[0];
@@ -532,7 +534,7 @@ export function prepareClusterData(frames: DataFrame[], clusters: number[], grou
   const yField = frame.fields.find((field) => field.type === FieldType.number);
   
   if (!xField || !catField || !yField) {
-    return;
+    return frames;
   }
 
   const xVals = xField.values;
@@ -573,13 +575,28 @@ export function prepareClusterData(frames: DataFrame[], clusters: number[], grou
 
     rowIdx += clusterSize;
   });
-
-  xField.values = newX;
-  catField.values = newCat;
-  yField.values = newY;
-  frame.length = clusters.length;
-
-  frame.fields.push(...newFields);
+  
+  const newFrame: DataFrame = {
+    ...frame,
+    length: clusters.length,
+    fields: [
+      {
+        ...xField,
+        values: newX,
+      },
+      {
+        ...catField,
+        values: newCat,
+      },
+      {
+        ...yField,
+        values: newY,
+      },
+      ...newFields,
+    ],
+  };
+  
+  return [newFrame];
 }
 
 

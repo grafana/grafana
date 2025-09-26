@@ -310,8 +310,8 @@ describe('BarChart utils', () => {
       inputDataFrame.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
       expectedDataFrame.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
     
-      prepareClusterData([inputDataFrame], clusters, 'Cat');
-      expect(inputDataFrame).toEqual(expectedDataFrame);
+      const outputDataFrame = prepareClusterData([inputDataFrame], clusters, 'Cat');
+      expect(outputDataFrame).toEqual([expectedDataFrame]);
     });
 
     it('should leave the dataframe intact if no clusters bigger than 1', () => {
@@ -334,8 +334,8 @@ describe('BarChart utils', () => {
       inputDataFrame.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
       expectedDataFrame.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
     
-      prepareClusterData([inputDataFrame], clusters, 'Cat');
-      expect(inputDataFrame).toEqual(expectedDataFrame);
+      const outputDataFrame = prepareClusterData([inputDataFrame], clusters, 'Cat');
+      expect(outputDataFrame).toEqual([expectedDataFrame]);
     });
   });
 });
