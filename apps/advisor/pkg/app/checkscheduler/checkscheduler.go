@@ -19,7 +19,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const defaultEvaluationInterval = 7 * 24 * time.Hour // 7 days
 const defaultMaxHistory = 10
 
 var (
@@ -49,7 +48,7 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 		return nil, fmt.Errorf("invalid config type")
 	}
 	checkRegistry := specificConfig.CheckRegistry
-	evalInterval, err := getEvaluationInterval(specificConfig.PluginConfig)
+	evalInterval, err := checks.GetDefaultEvaluationInterval(specificConfig.PluginConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -90,6 +89,15 @@ func (r *Runner) Run(ctx context.Context) error {
 	// We still need the context to eventually be cancelled to exit this function
 	// but we don't want the requests to fail because of it
 	ctxWithoutCancel := context.WithoutCancel(ctx)
+
+	// List check types
+	checkTypes, err := r.listCheckTypes(ctxWithoutCancel, logger)
+	if err != nil {
+		logger.Error("Error listing check types", "error", err)
+		return err
+	}
+
+	// Get the last created check
 	lastCreated, err := r.checkLastCreated(ctxWithoutCancel, logger)
 	if err != nil {
 		logger.Error("Error getting last check creation time", "error", err)
@@ -104,7 +112,7 @@ func (r *Runner) Run(ctx context.Context) error {
 		}
 	}
 
-	nextEvalTime, _ := r.getNextEvalTime(r.defaultEvalInterval, lastCreated)
+	nextEvalTime, _ := r.getNextEvalTime(checkTypes, r.defaultEvalInterval, lastCreated, logger)
 	ticker := time.NewTicker(nextEvalTime)
 	defer ticker.Stop()
 
@@ -117,11 +125,18 @@ func (r *Runner) Run(ctx context.Context) error {
 				return err
 			}
 
+			// Refresh check types in case there are changes in the schedule
+			checkTypes, err = r.listCheckTypes(ctxWithoutCancel, logger)
+			if err != nil {
+				logger.Error("Error listing check types", "error", err)
+				return err
+			}
+
 			// Get the next evaluation time and if we should write checks
-			nextEvalTime, shouldCreate := r.getNextEvalTime(r.defaultEvalInterval, lastCreated)
+			nextEvalTime, shouldCreate := r.getNextEvalTime(checkTypes, r.defaultEvalInterval, lastCreated, logger)
 
 			if shouldCreate {
-				err = r.createChecks(ctxWithoutCancel, logger)
+				err = r.createChecks(ctxWithoutCancel, checkTypes)
 				if err != nil {
 					logger.Error("Error creating new check reports", "error", err)
 				}
@@ -188,12 +203,11 @@ func (r *Runner) checkLastCreated(ctx context.Context, log logging.Logger) (time
 	return lastCreated, nil
 }
 
-// createChecks creates a new check for each check type in the registry.
-func (r *Runner) createChecks(ctx context.Context, logger logging.Logger) error {
+func (r *Runner) listCheckTypes(ctx context.Context, logger logging.Logger) ([]resource.Object, error) {
 	// List existing CheckType objects
 	list, err := r.typesClient.List(ctx, r.namespace, resource.ListOptions{})
 	if err != nil {
-		return fmt.Errorf("error listing check types: %w", err)
+		return nil, fmt.Errorf("error listing check types: %w", err)
 	}
 	// This may be run before the check types are registered, so we need to wait for them to be registered.
 	allChecksRegistered := len(list.GetItems()) == len(r.checkRegistry.Checks())
@@ -203,14 +217,19 @@ func (r *Runner) createChecks(ctx context.Context, logger logging.Logger) error 
 		time.Sleep(waitInterval)
 		list, err = r.typesClient.List(ctx, r.namespace, resource.ListOptions{})
 		if err != nil {
-			return fmt.Errorf("error listing check types: %w", err)
+			return nil, fmt.Errorf("error listing check types: %w", err)
 		}
 		allChecksRegistered = len(list.GetItems()) == len(r.checkRegistry.Checks())
 		retryCount++
 	}
 
+	return list.GetItems(), nil
+}
+
+// createChecks creates a new check for each check type in the registry.
+func (r *Runner) createChecks(ctx context.Context, checkTypes []resource.Object) error {
 	// Create checks for each CheckType
-	for _, item := range list.GetItems() {
+	for _, item := range checkTypes {
 		checkType, ok := item.(*advisorv0alpha1.CheckType)
 		if !ok {
 			continue
@@ -282,22 +301,27 @@ func (r *Runner) cleanupChecks(ctx context.Context, logger logging.Logger) error
 	return nil
 }
 
-func getEvaluationInterval(pluginConfig map[string]string) (time.Duration, error) {
-	evaluationInterval := defaultEvaluationInterval
-	configEvaluationInterval, ok := pluginConfig["evaluation_interval"]
-	if ok {
-		var err error
-		evaluationInterval, err = gtime.ParseDuration(configEvaluationInterval)
-		if err != nil {
-			return 0, fmt.Errorf("invalid evaluation interval: %w", err)
-		}
-	}
-	return evaluationInterval, nil
-}
-
-func (r *Runner) getNextEvalTime(defaultEvaluationInterval time.Duration, lastCreated time.Time) (time.Duration, bool) {
+func (r *Runner) getNextEvalTime(checkTypes []resource.Object, defaultEvaluationInterval time.Duration, lastCreated time.Time, logger logging.Logger) (time.Duration, bool) {
 	nextEvalTime := defaultEvaluationInterval
 	shouldCreate := true
+
+	// Get the evaluation interval from the check types
+	if len(checkTypes) > 0 {
+		intervalAnnotation := checkTypes[0].GetAnnotations()[checks.EvaluationIntervalAnnotation]
+		if intervalAnnotation != "" {
+			if intervalAnnotation == "0" {
+				// If the evaluation interval is 0, we don't need to create any checks
+				shouldCreate = false
+				return nextEvalTime, shouldCreate
+			}
+			parsedEvaluationInterval, err := gtime.ParseDuration(intervalAnnotation)
+			if err != nil {
+				logger.Error("Error parsing evaluation interval", "error", err)
+			} else {
+				nextEvalTime = parsedEvaluationInterval
+			}
+		}
+	}
 
 	baseTime := lastCreated
 	if lastCreated.IsZero() {
