@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 )
 
@@ -53,7 +54,7 @@ type PermissionsFilter interface {
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the dashboardaccess.PermissionType and query type
 // The filter is configured to use the new permissions filter (without subqueries) if the feature flag is enabled
 // The filter is configured to use the old permissions filter (with subqueries) if the feature flag is disabled
-func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissionLevel dashboardaccess.PermissionType, queryType string, features featuremgmt.FeatureToggles, recursiveQueriesAreSupported bool) PermissionsFilter {
+func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissionLevel dashboardaccess.PermissionType, queryType string, features featuremgmt.FeatureToggles, recursiveQueriesAreSupported bool, dialect migrator.Dialect) PermissionsFilter {
 	needEdit := permissionLevel > dashboardaccess.PERMISSION_VIEW
 
 	var folderAction string
