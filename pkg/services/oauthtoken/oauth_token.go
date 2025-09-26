@@ -115,83 +115,51 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 		ExternalSessionID: 0,
 	}
 	var persistedToken *oauth2.Token
-	if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-		var externalSession *auth.ExternalSession
-		if usr.GetAuthenticatedBy() == login.RenderModule {
-			// When using render module, we don't have the session token ID, so we need to fetch the most recent session
-			// entry for the user
-			externalSessions, err := o.sessionService.FindExternalSessions(ctx, &auth.ListExternalSessionQuery{UserID: userID})
-			if err != nil {
-				ctxLogger.Error("Failed to fetch external sessions for user", "userID", userID, "error", err)
-				return nil
-			}
+	externalSession, err := o.getExternalSession(ctx, usr, userID, sessionToken)
+	if err != nil && !errors.Is(err, auth.ErrExternalSessionNotFound) {
+		ctxLogger.Error("Failed to get external session", "error", err)
+		return nil
+	}
 
-			if len(externalSessions) == 0 || externalSessions[0] == nil {
-				ctxLogger.Error("No external sessions found for user", "userID", userID)
-				return nil
-			}
+	if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) && (externalSession == nil || errors.Is(err, auth.ErrExternalSessionNotFound)) {
+		ctxLogger.Error("No external session found for user", "userID", userID)
+		return nil
+	}
 
-			externalSession = externalSessions[0]
-		} else {
-			// For regular users, we use the session token ID to fetch the external session
-			externalSession, err = o.sessionService.GetExternalSession(ctx, sessionToken.ExternalSessionId)
-			if err != nil {
-				if errors.Is(err, auth.ErrExternalSessionNotFound) {
-					return nil
-				}
-				ctxLogger.Error("Failed to fetch external session", "error", err)
-				return nil
-			}
-		}
-
+	if externalSession != nil {
 		tokenRefreshMetadata.ExternalSessionID = externalSession.ID
-		tokenRefreshMetadata.AuthModule = externalSession.AuthModule
+	}
 
-		if !strings.HasPrefix(tokenRefreshMetadata.AuthModule, "oauth_") {
-			ctxLogger.Warn("The specified user's auth provider is not oauth",
-				"authmodule", tokenRefreshMetadata.AuthModule)
+	authInfo, err := o.AuthInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{
+		UserId: userID,
+	})
+	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			ctxLogger.Warn("No oauth token found for user", "userID", userID)
 			return nil
 		}
 
-		authInfo, err := o.AuthInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{
-			UserId:     userID,
-			AuthModule: tokenRefreshMetadata.AuthModule,
-		})
-		if err != nil {
-			if errors.Is(err, user.ErrUserNotFound) {
-				ctxLogger.Warn("No oauth token found for user", "userID", userID)
-				return nil
-			}
+		ctxLogger.Error("Failed to fetch oauth token for user", "userID", userID, "error", err)
+		return nil
+	}
 
-			ctxLogger.Error("Failed to fetch oauth token for user", "userID", userID, "error", err)
-			return nil
-		}
+	tokenRefreshMetadata.AuthID = authInfo.AuthId
+	tokenRefreshMetadata.AuthModule = authInfo.AuthModule
 
-		tokenRefreshMetadata.AuthID = authInfo.AuthId
+	if !strings.HasPrefix(tokenRefreshMetadata.AuthModule, "oauth_") {
+		ctxLogger.Warn("The specified user's auth provider is not oauth",
+			"authmodule", tokenRefreshMetadata.AuthModule)
+		return nil
+	}
 
+	if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 		persistedToken = buildOAuthTokenFromExternalSession(externalSession)
-
-		if persistedToken.RefreshToken == "" {
-			return persistedToken
-		}
 	} else {
-		authInfo, ok, _ := o.hasOAuthEntry(ctx, usr)
-		if !ok {
-			return nil
-		}
-
-		tokenRefreshMetadata.AuthModule = authInfo.AuthModule
-		tokenRefreshMetadata.AuthID = authInfo.AuthId
-
-		if err := checkOAuthRefreshToken(authInfo); err != nil {
-			if errors.Is(err, ErrNoRefreshTokenFound) {
-				return buildOAuthTokenFromAuthInfo(authInfo)
-			}
-
-			return nil
-		}
-
 		persistedToken = buildOAuthTokenFromAuthInfo(authInfo)
+	}
+
+	if persistedToken.RefreshToken == "" {
+		return persistedToken
 	}
 
 	refreshNeeded := needTokenRefresh(ctx, persistedToken)
@@ -645,4 +613,28 @@ func getExpiryWithSkew(expiry time.Time) (adjustedExpiry time.Time, hasTokenExpi
 	adjustedExpiry = expiry.Round(0).Add(-ExpiryDelta)
 	hasTokenExpired = adjustedExpiry.Before(time.Now())
 	return
+}
+
+// getExternalSession fetches the external session based on the user and session token.
+// When using the render module, it fetches the most recent external session for the user
+// since the session token ID is not available.
+// For regular users, it uses the session token ID to fetch the external session.
+func (o *Service) getExternalSession(ctx context.Context, usr identity.Requester, userID int64, sessionToken *auth.UserToken) (*auth.ExternalSession, error) {
+	if usr.GetAuthenticatedBy() == login.RenderModule {
+		// When using render module, we don't have the session token ID, so we need to fetch the most recent session
+		// entry for the user
+		externalSessions, err := o.sessionService.FindExternalSessions(ctx, &auth.ListExternalSessionQuery{UserID: userID})
+		if err != nil {
+			return nil, err
+		}
+
+		if len(externalSessions) == 0 || externalSessions[0] == nil {
+			return nil, auth.ErrExternalSessionNotFound
+		}
+
+		return externalSessions[0], nil
+	}
+
+	// For regular users, we use the session token ID to fetch the external session
+	return o.sessionService.GetExternalSession(ctx, sessionToken.ExternalSessionId)
 }
