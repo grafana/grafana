@@ -70,7 +70,6 @@ export interface PromOptions extends DataSourceJsonData {
   disableRecordingRules?: boolean;
   sigV4Auth?: boolean;
   oauthPassThru?: boolean;
-  seriesEndpoint?: boolean;
 }
 
 export type ExemplarTraceIdDestination = {
