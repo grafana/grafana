@@ -483,40 +483,46 @@ func (srv *CleanUpService) getLBACRulesForTeamsStillExisting(ctx context.Context
 	cleanedHeaders := &datasources.TeamHTTPHeaders{Headers: make(map[string][]datasources.TeamHTTPHeader)}
 	removedCount := 0
 
+	allTeams, err := srv.teamService.SearchTeams(ctx, &team.SearchTeamsQuery{
+		OrgID: orgID,
+	})
+	if err != nil {
+		logger.Error("Failed to get teams for LBAC cleanup", "error", err)
+		return nil, removedCount
+	}
+
+	teamUIDs := make(map[string]bool)
+	for _, team := range allTeams.Teams {
+		teamUIDs[team.UID] = true
+	}
+	teamIDs := make(map[int64]bool)
+	for _, team := range allTeams.Teams {
+		teamIDs[team.ID] = true
+	}
+
 	for teamIdentifier, headers := range teamHeaders.Headers {
 		// Determine if this is a UID or ID
-		var teamUID string
 		teamID, err := strconv.ParseInt(teamIdentifier, 10, 64)
 
 		if err != nil {
 			// It's a UID
-			teamUID = teamIdentifier
+			if _, ok := teamUIDs[teamIdentifier]; !ok {
+				logger.Debug("Team UID no longer exists, removing LBAC rules",
+					"teamUID", teamIdentifier, "orgID", orgID)
+				removedCount++
+				continue
+			}
 		} else {
-			// It's an ID, need to resolve to UID
-			teamByID, err := srv.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
-				OrgID: orgID,
-				ID:    teamID,
-			})
-			if err != nil {
+			if _, ok := teamIDs[teamID]; !ok {
 				logger.Debug("Team ID no longer exists, removing LBAC rules",
 					"teamID", teamIdentifier, "orgID", orgID)
 				removedCount++
 				continue
 			}
-			teamUID = teamByID.UID
-		}
-
-		// Check if team still exists by UID
-		_, err = srv.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
-			OrgID: orgID,
-			UID:   teamUID,
-		})
-
-		if err != nil {
-			logger.Debug("Team UID no longer exists, removing LBAC rules",
-				"teamUID", teamUID, "orgID", orgID)
-			removedCount++
-			continue
+			// team exists in lbac and exists in teams
+			// lbac rule has team.ID and team exists
+			// update the rule with the UID instead
+			// TODO: we could replace the ID for the UID here we want
 		}
 
 		// Team exists, keep the rules
