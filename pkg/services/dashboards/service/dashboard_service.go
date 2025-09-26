@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -14,7 +15,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -990,6 +990,27 @@ func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 	return f, nil
 }
 
+// UpdateFolderWithManagedByAnnotation implements dashboards.DashboardProvisioningService.
+func (dr *DashboardServiceImpl) UpdateFolderWithManagedByAnnotation(ctx context.Context, f *folder.Folder, readerName string) (*folder.Folder, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.service.UpdateFolderWithManagedByAnnotation")
+	defer span.End()
+
+	ctx, ident := identity.WithServiceIdentity(ctx, f.OrgID)
+	updated, err := dr.folderService.Update(ctx, &folder.UpdateFolderCommand{
+		UID:                  f.UID,
+		OrgID:                f.OrgID,
+		SignedInUser:         ident,
+		ManagerKindClassicFP: readerName, // nolint:staticcheck
+		Overwrite:            true,
+		Version:              f.Version,
+	})
+	if err != nil {
+		dr.log.Error("failed to update folder for provisioned dashboards", "folder", f.Title, "org", f.OrgID, "err", err)
+		return nil, err
+	}
+	return updated, nil
+}
+
 func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO,
 	allowUiUpdate bool) (*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.SaveDashboard")
@@ -1447,6 +1468,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 			OrgID:       query.OrgId,
 			Title:       hit.Title,
 			Slug:        slugify.Slugify(hit.Title),
+			Description: hit.Description,
 			IsFolder:    false,
 			FolderUID:   hit.Folder,
 			FolderTitle: folderTitle,
@@ -1548,6 +1570,7 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 			FolderUID:   item.FolderUID,
 			FolderTitle: item.FolderTitle,
 			Tags:        []string{},
+			Description: item.Description,
 		}
 
 		if item.Tags != nil {

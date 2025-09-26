@@ -76,7 +76,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		Text:     "General",
 		SubTitle: "Manage default preferences and settings across Grafana",
 		Id:       navtree.NavIDCfgGeneral,
-		Url:      "/admin/general",
+		Url:      s.cfg.AppSubURL + "/admin/general",
 		Icon:     "shield",
 		Children: generalNodeLinks,
 	}
@@ -121,7 +121,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		Text:     "Plugins and data",
 		SubTitle: "Install plugins and define the relationships between data",
 		Id:       navtree.NavIDCfgPlugins,
-		Url:      "/admin/plugins",
+		Url:      s.cfg.AppSubURL + "/admin/plugins",
 		Icon:     "shield",
 		Children: pluginsNodeLinks,
 	}
@@ -174,7 +174,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		Text:     "Users and access",
 		SubTitle: "Configure access for individual users, teams, and service accounts",
 		Id:       navtree.NavIDCfgAccess,
-		Url:      "/admin/access",
+		Url:      s.cfg.AppSubURL + "/admin/access",
 		Icon:     "shield",
 		Children: accessNodeLinks,
 	}
@@ -201,7 +201,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		Icon:       "cog",
 		SortWeight: navtree.WeightConfig,
 		Children:   configNodes,
-		Url:        "/admin",
+		Url:        s.cfg.AppSubURL + "/admin",
 	}
 
 	return configNode, nil

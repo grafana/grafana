@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -300,16 +299,13 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			params = append(params, query.AlertUID, query.OrgID)
 		}
 
-		// nolint: staticcheck
-		if query.DashboardID != 0 {
-			sql.WriteString(` AND a.dashboard_id = ?`)
-			params = append(params, query.DashboardID)
-		}
-
 		// note: orgID is already required above
 		if query.DashboardUID != "" {
 			sql.WriteString(` AND a.dashboard_uid = ?`)
 			params = append(params, query.DashboardUID)
+		} else if query.DashboardID != 0 { // nolint: staticcheck
+			sql.WriteString(` AND a.dashboard_id = ?`)
+			params = append(params, query.DashboardID) // nolint: staticcheck
 		}
 
 		if query.PanelID != 0 {
@@ -366,7 +362,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			}
 		}
 
-		acFilter, acParams := r.getAccessControlFilter(query.SignedInUser, accessResources)
+		acFilter, acParams := r.getAccessControlFilter(accessResources, query.DashboardUID)
 		if acFilter != "" {
 			sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter))
 		}
@@ -390,7 +386,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 	return items, err
 }
 
-func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester, accessResources *accesscontrol.AccessResources) (string, []any) {
+func (r *xormRepositoryImpl) getAccessControlFilter(accessResources *accesscontrol.AccessResources, dashboardUID string) (string, []any) {
 	if accessResources.SkipAccessControlFilter {
 		return "", nil
 	}
@@ -406,9 +402,14 @@ func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester, acc
 		if len(accessResources.Dashboards) == 0 {
 			filters = append(filters, "1=0") // empty set
 		} else {
-			filters = append(filters, fmt.Sprintf("a.dashboard_uid IN (%s)", strings.Repeat("?,", len(accessResources.Dashboards)-1)+"?"))
-			for uid := range accessResources.Dashboards {
-				params = append(params, uid)
+			if dashboardUID != "" {
+				filters = append(filters, "a.dashboard_uid = ?")
+				params = append(params, dashboardUID)
+			} else {
+				filters = append(filters, fmt.Sprintf("a.dashboard_uid IN (%s)", strings.Repeat("?,", len(accessResources.Dashboards)-1)+"?"))
+				for uid := range accessResources.Dashboards {
+					params = append(params, uid)
+				}
 			}
 		}
 	}

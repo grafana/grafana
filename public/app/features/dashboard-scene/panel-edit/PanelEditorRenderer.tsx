@@ -216,6 +216,7 @@ function getStyles(theme: GrafanaTheme2) {
         gridTemplateColumns: 'minmax(470px, 1fr) 330px',
         gridTemplateRows: '1fr',
         gap: theme.spacing(1),
+        position: 'static',
         width: '100%',
       },
     }),
