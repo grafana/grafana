@@ -30,7 +30,6 @@ export interface RadialGaugeProps {
   /** Adds a white spotlight for the end position */
   spotlight?: boolean;
   glow?: boolean;
-  centerShadow?: boolean;
   centerGlow?: boolean;
   sparkline?: boolean;
 }
@@ -49,7 +48,6 @@ export function RadialGauge(props: RadialGaugeProps) {
     clockwise = false,
     spotlight = false,
     glow = false,
-    centerShadow = false,
     centerGlow = false,
     sparkline = false,
   } = props;
@@ -97,7 +95,7 @@ export function RadialGauge(props: RadialGaugeProps) {
           {glow && <GlowGradient gaugeId={gaugeId} size={size} />}
           {centerGlow && (
             <radialGradient id={`circle-glow-${gaugeId}`} r={'50%'} fr={'0%'}>
-              <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+              <stop offset="0%" stopColor={color} stopOpacity={0.2} />
               <stop offset="90%" stopColor={color} stopOpacity={0} />
             </radialGradient>
           )}
@@ -131,22 +129,21 @@ export function RadialGauge(props: RadialGaugeProps) {
           })}
         </g>
         <g>
-          {centerShadow && (
-            <MiddleCircle
-              barWidth={barWidth}
-              fill={theme.colors.background.primary}
-              size={size}
-              margin={margin}
-              className={styles.innerShadow}
-            />
-          )}
           {centerGlow && (
             <MiddleCircle barWidth={barWidth} fill={`url(#circle-glow-${gaugeId})`} size={size} margin={margin} />
           )}
           {values.length === 1 && <RadialText displayValue={values[0].display} size={size} theme={theme} />}
         </g>
       </svg>
-      {sparkline && <RadialSparkline sparkline={values[0]?.sparkline} size={size} theme={theme} barWidth={barWidth} />}
+      {sparkline && (
+        <RadialSparkline
+          sparkline={values[0]?.sparkline}
+          size={size}
+          theme={theme}
+          barWidth={barWidth}
+          margin={margin}
+        />
+      )}
     </div>
   );
 }
@@ -157,7 +154,7 @@ interface GlowGradientProps {
 }
 
 function GlowGradient({ gaugeId, size }: GlowGradientProps) {
-  const glowSize = 0.03 * size;
+  const glowSize = 0.025 * size;
 
   return (
     <filter id={`glow-${gaugeId}`} filterUnits="userSpaceOnUse">
@@ -177,8 +174,7 @@ function calculateMargin(
   barWidth: number
 ): number {
   if (glow) {
-    const glowSize = 0.03 * size;
-    return glowSize + 4;
+    return 0.035 * size;
   }
 
   if (spotlight) {
@@ -449,15 +445,16 @@ interface RadialSparklineProps {
   size: number;
   theme: GrafanaTheme2;
   barWidth: number;
+  margin: number;
 }
 
-function RadialSparkline({ sparkline, size, theme, barWidth }: RadialSparklineProps) {
+function RadialSparkline({ sparkline, size, theme, barWidth, margin }: RadialSparklineProps) {
   if (!sparkline) {
     return null;
   }
 
   const height = size / 5;
-  const width = size / 1.5 - barWidth * 1.2;
+  const width = size / 1.5 - barWidth * 1.2 - margin * 2;
   const styles = css({
     position: 'absolute',
     left: (size - width) / 2,
