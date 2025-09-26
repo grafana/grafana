@@ -838,6 +838,33 @@
     },
     {
       "metadata": {
+        "name": "cdnPluginsLoadFirst",
+        "resourceVersion": "1758882341746",
+        "creationTimestamp": "2025-09-26T10:25:41Z"
+      },
+      "spec": {
+        "description": "Prioritize loading plugins from the CDN before other sources",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "cdnPluginsLoadedFirst",
+        "resourceVersion": "1758881920003",
+        "creationTimestamp": "2025-09-26T10:18:40Z",
+        "deletionTimestamp": "2025-09-26T10:25:41Z"
+      },
+      "spec": {
+        "description": "Prioritize loading plugins from the CDN before other sources",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "cloudRBACRoles",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-01-10T13:19:01Z"

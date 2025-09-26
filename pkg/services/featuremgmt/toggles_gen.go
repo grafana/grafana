@@ -1066,4 +1066,8 @@ const (
 	// FlagFilterOutBotsFromFrontendLogs
 	// Filter out bots from collecting data for Frontend Observability
 	FlagFilterOutBotsFromFrontendLogs = "filterOutBotsFromFrontendLogs"
+
+	// FlagCdnPluginsLoadFirst
+	// Prioritize loading plugins from the CDN before other sources
+	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"
 )
