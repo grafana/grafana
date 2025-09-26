@@ -35,7 +35,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         id: 'Resource',
         header: 'Resource Type',
         cell: ({ row: { original } }: StatCell<'resource'>) => {
-          return <span>{original.resource}</span>;
+          return <span>{original.kind}</span>;
         },
         size: 'auto',
       },

@@ -7,9 +7,11 @@ package v0alpha1
 // ResourceCountApplyConfiguration represents a declarative configuration of the ResourceCount type for use
 // with apply.
 type ResourceCountApplyConfiguration struct {
-	Group    *string `json:"group,omitempty"`
-	Resource *string `json:"resource,omitempty"`
-	Count    *int64  `json:"count,omitempty"`
+	Group        *string `json:"group,omitempty"`
+	Resource     *string `json:"resource,omitempty"`
+	Kind         *string `json:"kind,omitempty"`
+	SingularName *string `json:"singularName,omitempty"`
+	Count        *int64  `json:"count,omitempty"`
 }
 
 // ResourceCountApplyConfiguration constructs a declarative configuration of the ResourceCount type for use with
@@ -31,6 +33,22 @@ func (b *ResourceCountApplyConfiguration) WithGroup(value string) *ResourceCount
 // If called multiple times, the Resource field is set to the value of the last call.
 func (b *ResourceCountApplyConfiguration) WithResource(value string) *ResourceCountApplyConfiguration {
 	b.Resource = &value
+	return b
+}
+
+// WithKind sets the Kind field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Kind field is set to the value of the last call.
+func (b *ResourceCountApplyConfiguration) WithKind(value string) *ResourceCountApplyConfiguration {
+	b.Kind = &value
+	return b
+}
+
+// WithSingularName sets the SingularName field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the SingularName field is set to the value of the last call.
+func (b *ResourceCountApplyConfiguration) WithSingularName(value string) *ResourceCountApplyConfiguration {
+	b.SingularName = &value
 	return b
 }
 

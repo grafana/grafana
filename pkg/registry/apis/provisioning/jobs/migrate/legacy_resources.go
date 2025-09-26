@@ -204,7 +204,8 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 	}
 
 	result := jobs.JobResourceResult{
-		Name:     parsed.Meta.GetName(),
+		Name: parsed.Meta.GetName(),
+		// TODO: need to return Kind here
 		Resource: r.kind.Resource,
 		Group:    r.kind.Group,
 		Action:   repository.FileActionCreated,

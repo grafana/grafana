@@ -45,11 +45,12 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 	progress.SetMessage(ctx, "write folders to repository")
 	err := repositoryResources.EnsureFolderTreeExists(ctx, options.Branch, options.Path, tree, func(folder resources.Folder, created bool, err error) error {
 		result := jobs.JobResourceResult{
-			Action:   repository.FileActionCreated,
-			Name:     folder.ID,
-			Resource: resources.FolderGVK.Kind,
-			Group:    resources.FolderResource.Group,
-			Path:     folder.Path,
+			Action:       repository.FileActionCreated,
+			Name:         folder.ID,
+			Resource:     resources.FolderResourceInfo.GroupVersionKind().Kind,
+			Group:        resources.FolderResource.Group,
+			SingularName: resources.FolderResourceInfo.GetSingularName(),
+			Path:         folder.Path,
 		}
 
 		if err != nil {

@@ -514,12 +514,14 @@ type ResourceList struct {
 }
 
 type ResourceListItem struct {
-	Path     string `json:"path"`
-	Group    string `json:"group"`
-	Resource string `json:"resource"`
-	Name     string `json:"name"` // the k8s identifier
-	Hash     string `json:"hash"`
-	Time     int64  `json:"time,omitempty"`
+	Path         string `json:"path"`
+	Group        string `json:"group"`
+	Resource     string `json:"resource"`
+	Kind         string `json:"kind"`
+	SingularName string `json:"singularName"`
+	Name         string `json:"name"` // the k8s identifier
+	Hash         string `json:"hash"`
+	Time         int64  `json:"time,omitempty"`
 
 	Title  string `json:"title,omitempty"`
 	Folder string `json:"folder,omitempty"`
@@ -558,9 +560,11 @@ type ManagerStats struct {
 }
 
 type ResourceCount struct {
-	Group    string `json:"group"`
-	Resource string `json:"resource"`
-	Count    int64  `json:"count"`
+	Group        string `json:"group"`
+	Resource     string `json:"resource"`
+	Kind         string `json:"kind"`
+	SingularName string `json:"singularName"`
+	Count        int64  `json:"count"`
 }
 
 // HistoryList is a list of versions of a resource

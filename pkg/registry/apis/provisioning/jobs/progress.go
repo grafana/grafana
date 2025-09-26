@@ -35,12 +35,14 @@ func maybeNotifyProgress(threshold time.Duration, fn ProgressFn) ProgressFn {
 
 // FIXME: ProgressRecorder should be initialized in the queue
 type JobResourceResult struct {
-	Name     string
-	Resource string
-	Group    string
-	Path     string
-	Action   repository.FileAction
-	Error    error
+	Name         string
+	Resource     string
+	SingularName string
+	Kind         string
+	Group        string
+	Path         string
+	Action       repository.FileAction
+	Error        error
 }
 
 type jobProgressRecorder struct {
@@ -177,7 +179,8 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 	summary, exists := r.summaries[key]
 	if !exists {
 		summary = &provisioning.JobResourceSummary{
-			Resource: result.Resource,
+			// TODO: should we add Kind and SingularName to JobResourceSummary as well - so far its on JobResourceResult
+			Resource: result.Kind,
 			Group:    result.Group,
 		}
 		r.summaries[key] = summary
