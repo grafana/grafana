@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -110,11 +109,11 @@ func encryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt defini
 					return fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", gr.Type, gr.Name, err)
 				}
 
-				secretKeys, err := channels_config.GetSecretKeysForContactPointType(gr.Type, channels_config.V1)
-				if err != nil {
-					return fmt.Errorf("failed to get secret keys for contact point type %s: %w", gr.Type, err)
+				typeSchema, ok := alertingNotify.GetSchemaVersionForIntegration(schema.IntegrationType(gr.Type), schema.V1)
+				if !ok {
+					return fmt.Errorf("failed to get secret keys for contact point type %s", gr.Type)
 				}
-
+				secretKeys := typeSchema.GetSecretFieldsPaths()
 				secureSettings := gr.SecureSettings
 				if secureSettings == nil {
 					secureSettings = make(map[string]string)
