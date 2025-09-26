@@ -223,7 +223,11 @@ func (r *Runner) update(ctx context.Context, log logging.Logger, obj resource.Ob
 	}
 	annotations := obj.GetAnnotations()
 	// If the evaluation interval is not set, set it to the default
-	annotations[checks.EvaluationIntervalAnnotation] = r.defaultEvaluationInterval.String()
+	if currentAnnotations[checks.EvaluationIntervalAnnotation] == "" {
+		annotations[checks.EvaluationIntervalAnnotation] = r.defaultEvaluationInterval.String()
+	} else {
+		delete(annotations, checks.EvaluationIntervalAnnotation)
+	}
 	maps.Copy(currentAnnotations, annotations)
 	obj.SetAnnotations(currentAnnotations) // This will update the annotations in the object
 
