@@ -44,7 +44,7 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
         const fieldIndexByName: Record<string, Record<number, number>> = {};
         const fieldNamesForKey: string[] = [];
         const dataFrame = new MutableDataFrame({
-          refId: `${DataTransformerID.merge}-${data.map((frame) => frame.refId).join('-')}`,
+          refId: `${DataTransformerID.merge}-${[...new Set(data.map((frame) => frame.refId))].join('-')}`,
           fields: [],
         });
 
