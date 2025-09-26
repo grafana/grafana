@@ -45,13 +45,9 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	simpleConfig := simple.AppConfig{
-		Name:       "advisor",
-		KubeConfig: cfg.KubeConfig,
-		InformerConfig: simple.AppInformerConfig{
-			ErrorHandler: func(ctx context.Context, err error) {
-				log.WithContext(ctx).Error("Informer processing error", "error", err)
-			},
-		},
+		Name:           "advisor",
+		KubeConfig:     cfg.KubeConfig,
+		InformerConfig: simple.AppInformerConfig{},
 		ManagedKinds: []simple.AppManagedKind{
 			{
 				Kind: advisorv0alpha1.CheckKind(),

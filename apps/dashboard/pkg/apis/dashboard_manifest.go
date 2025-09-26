@@ -20,9 +20,12 @@ import (
 	v2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 )
 
+var ()
+
 var appManifestData = app.ManifestData{
-	AppName: "dashboard",
-	Group:   "dashboard.grafana.app",
+	AppName:          "dashboard",
+	Group:            "dashboard.grafana.app",
+	PreferredVersion: "v1beta1",
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v0alpha1",

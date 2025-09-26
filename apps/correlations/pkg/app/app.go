@@ -1,10 +1,7 @@
 package app
 
 import (
-	"context"
-
 	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -14,13 +11,9 @@ import (
 
 func New(cfg app.Config) (app.App, error) {
 	simpleConfig := simple.AppConfig{
-		Name:       "correlation",
-		KubeConfig: cfg.KubeConfig,
-		InformerConfig: simple.AppInformerConfig{
-			ErrorHandler: func(ctx context.Context, err error) {
-				logging.FromContext(ctx).Error("Informer processing error", "error", err)
-			},
-		},
+		Name:           "correlation",
+		KubeConfig:     cfg.KubeConfig,
+		InformerConfig: simple.AppInformerConfig{},
 		ManagedKinds: []simple.AppManagedKind{
 			{
 				Kind: correlationsv0alpha1.CorrelationKind(),

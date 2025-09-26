@@ -48,6 +48,9 @@ export const createShortLink = async function (path: string) {
       const result = await dispatch(
         generatedAPI.endpoints.createShortUrl.initiate({
           shortUrl: {
+            apiVersion: '',
+            kind: 'ShortUrl',
+            metadata: {},
             spec: {
               path: getRelativeURLPath(path),
             },

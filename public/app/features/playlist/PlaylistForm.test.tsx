@@ -12,6 +12,8 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
 }));
 
 const mockPlaylist: Playlist = {
+  kind: 'Playlist',
+  apiVersion: '',
   spec: {
     title: 'A test playlist',
     interval: '10m',
@@ -28,6 +30,8 @@ const mockPlaylist: Playlist = {
 };
 
 const mockEmptyPlaylist: Playlist = {
+  kind: 'Playlist',
+  apiVersion: '',
   spec: {
     title: 'A test playlist',
     interval: '10m',

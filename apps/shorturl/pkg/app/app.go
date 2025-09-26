@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
@@ -36,13 +35,9 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	simpleConfig := simple.AppConfig{
-		Name:       "shorturl",
-		KubeConfig: cfg.KubeConfig,
-		InformerConfig: simple.AppInformerConfig{
-			ErrorHandler: func(ctx context.Context, err error) {
-				klog.ErrorS(err, "Informer processing error")
-			},
-		},
+		Name:           "shorturl",
+		KubeConfig:     cfg.KubeConfig,
+		InformerConfig: simple.AppInformerConfig{},
 		ManagedKinds: []simple.AppManagedKind{
 			{
 				Kind: shorturlv1alpha1.ShortURLKind(),

@@ -1,13 +1,10 @@
 package app
 
 import (
-	"context"
-
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/klog/v2"
 
 	pluginsapi "github.com/grafana/grafana/apps/plugins/pkg/apis"
 )
@@ -23,14 +20,10 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	simpleConfig := simple.AppConfig{
-		Name:       "plugins",
-		KubeConfig: cfg.KubeConfig,
-		InformerConfig: simple.AppInformerConfig{
-			ErrorHandler: func(ctx context.Context, err error) {
-				klog.ErrorS(err, "Informer processing error")
-			},
-		},
-		ManagedKinds: managedKinds,
+		Name:           "plugins",
+		KubeConfig:     cfg.KubeConfig,
+		InformerConfig: simple.AppInformerConfig{},
+		ManagedKinds:   managedKinds,
 	}
 
 	a, err := simple.NewApp(simpleConfig)
