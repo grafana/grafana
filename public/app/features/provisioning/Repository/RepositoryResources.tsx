@@ -49,7 +49,7 @@ export function RepositoryResources({ repo }: RepoProps) {
         header: 'Type',
         sortType: 'string',
         cell: ({ row: { original } }: ResourceCell<'resource'>) => {
-          return <span style={{ textTransform: 'capitalize' }}>{original.resource}</span>;
+          return <span>{original.kind}</span>;
         },
       },
       {
