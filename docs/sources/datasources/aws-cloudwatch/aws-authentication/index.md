@@ -92,28 +92,6 @@ To assume a role in another account created with an external ID, specify the ext
 
 For more information, refer to the [AWS documentation on external ID](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html).
 
-When you select Grafana Assume Role as the authentication method, Grafana provides and manages the external ID. This ID appears on the data source configuration page and is unique to your account. When creating an IAM role for `Grafana Assume Role`, you must set a condition that allows the Grafana AWS account to assume your IAM role only when it provides the specific external ID:
-
-```
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": {Grafana's AWS Account}
-            },
-            "Action": "sts:AssumeRole",
-            "Condition": {
-                "StringEquals": {
-                    "sts:ExternalId": {External ID unique to your account}
-                }
-            }
-        }
-    ]
-}
-```
-
 ## Use a custom endpoint
 
 Use the **Endpoint** field to specify a custom endpoint URL that overrides the default AWS service API endpoint. Leave this field blank to use the default generated endpoint.
@@ -201,6 +179,25 @@ To use the Grafana Assume Role:
 }
 ```
 
-## CloudWatch Logs data protection
+When you select Grafana Assume Role as the authentication method, Grafana provides and manages the external ID. This ID appears on the data source configuration page and is unique to your account. When creating an IAM role for `Grafana Assume Role`, you must set a condition that allows the Grafana AWS account to assume your IAM role only when it provides the specific external ID:
 
-CloudWatch Logs can protect data by applying log group data protection policies. When data protection is enabled for a log group, any sensitive data that matches the identifiers you select is automatically masked. To view masked data, your IAM role or user must have the `logs:Unmask` permission. For more details, refer to [the AWS guide](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data.html) on masking sensitive log data.
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": {Grafana's AWS Account}
+            },
+            "Action": "sts:AssumeRole",
+            "Condition": {
+                "StringEquals": {
+                    "sts:ExternalId": {External ID unique to your account}
+                }
+            }
+        }
+    ]
+}
+```
+

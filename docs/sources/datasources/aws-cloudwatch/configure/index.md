@@ -325,6 +325,11 @@ Cross-account observability lets you retrieve metrics and logs across different 
 
 For more information on configuring authentication, refer to [Configure AWS authentication](ref:CloudWatch-aws-authentication).
 
+### CloudWatch Logs data protection
+
+CloudWatch Logs can protect data by applying log group data protection policies. When data protection is enabled for a log group, any sensitive data that matches the identifiers you select is automatically masked. To view masked data, your IAM role or user must have the `logs:Unmask` permission. For more details, refer to [the AWS guide](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data.html) on masking sensitive log data.
+
+
 ### Configure the data source with grafana.ini
 
 The Grafana [configuration file](ref:configure-grafana-aws) includes an `AWS` section where you can configure data source options:

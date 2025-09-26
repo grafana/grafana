@@ -148,7 +148,7 @@ The data source returns up to 100 metrics matching your filter criteria.
 
 Enhance metric queries using template variables to create dynamic, reusable dashboards.
 
-### Create dynamic queries with dimension wildcards
+#### Create dynamic queries with dimension wildcards
 
 Use the asterisk (`*`) wildcard for dimension values to create dynamic queries that automatically monitor changing sets of AWS resources.
 
@@ -193,6 +193,17 @@ If you use the expression field to reference another query, such as `queryA * 2`
 
 If you use a CloudWatch [`SEARCH`](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) expression, consider using the `$__period_auto` macro rather than specifying a period explicitly. The `$__period_auto` macro will resolve to a [CloudWatch period](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html) that is suitable for the chosen time range.
 
+### Deep-link Grafana panels to the CloudWatch console
+
+Left-clicking a time series in the panel displays a context menu with a link to `View in CloudWatch console`.
+Clicking the link opens a new tab that takes you to the CloudWatch console and displays all metrics for that query.
+If you're not logged in to the CloudWatch console, the link forwards you to the login page.
+The link provided is valid for any account but displays the expected metrics only if you're logged in to the account that corresponds to the selected data source in Grafana.
+
+{{< figure src="/media/docs/cloudwatch/cloudwatch-deep-link-v12.1.png" caption="CloudWatch deep linking" >}}
+
+This feature is not available for metrics based on [metric math expressions](#metric-math-expressions).
+
 ## Create queries for alerting
 
 Alerting requires queries that return numeric data, which CloudWatch Logs supports.
@@ -212,28 +223,7 @@ If you receive an error like `input data must be a wide series but got ...` when
 
 For more information on Grafana alerts, refer to [Alerting](ref:alerting).
 
-### Deep-link Grafana panels to the CloudWatch console
-
-Left-clicking a time series in the panel displays a context menu with a link to `View in CloudWatch console`.
-Clicking the link opens a new tab that takes you to the CloudWatch console and displays all metrics for that query.
-If you're not logged in to the CloudWatch console, the link forwards you to the login page.
-The link provided is valid for any account but displays the expected metrics only if you're logged in to the account that corresponds to the selected data source in Grafana.
-
-{{< figure src="/media/docs/cloudwatch/cloudwatch-deep-link-v12.1.png" caption="CloudWatch deep linking" >}}
-
-This feature is not available for metrics based on [metric math expressions](#metric-math-expressions).
-
-### Metric Insights queries
-
-The Metrics Query option in the CloudWatch data source is referred to as **Metric Insights** in the AWS console.
-It's a fast, flexible, SQL-based query engine that you can use to identify trends and patterns across millions of operational metrics in real time.
-
-The metrics query editor's Metrics Query option has two editing modes:
-
-- [Builder mode](#use-builder-mode), which provides a visual query-building interface.
-- [Code mode](#use-code-mode), which provides a code editor for writing queries.
-
-#### Use Metric Insights syntax
+### Use Metric Insights syntax
 
 Metric Insights uses a dialect of SQL and this query syntax:
 
@@ -252,7 +242,7 @@ For information about Metrics Insights limits, refer to the [AWS feature documen
 
 You can also augment queries by using [template variables](ref:add-template-variables).
 
-#### Use Metrics Insights keywords
+### Use Metrics Insights keywords
 
 This table summarizes common Metrics Insights query keywords:
 
@@ -267,24 +257,6 @@ This table summarizes common Metrics Insights query keywords:
 | `ORDER BY`   | Optional. Specifies the order in which time series are returned. Options are `ASC`, `DESC`.                                                                                                                  |
 | `LIMIT`      | Optional. Limits the number of time series returned.                                                                                                                                                         |
 
-#### Use Metric Insights syntax
-
-Metric Insights uses a dialect of SQL and this query syntax:
-
-```sql
-SELECT FUNCTION(MetricName)
-FROM Namespace | SCHEMA(...)
-[ WHERE labelKey OPERATOR labelValue [AND|...]]
-[ GROUP BY labelKey [, ...]]
-[ ORDER BY FUNCTION() [DESC | ASC] ]
-[ LIMIT number]
-```
-
-For details about the Metrics Insights syntax, refer to the [AWS reference documentation](https://docs.aws.amazon.com/console/cloudwatch/metricsinsights-syntax).
-
-For information about Metrics Insights limits, refer to the [AWS feature documentation](https://docs.aws.amazon.com/console/cloudwatch/metricsinsights).
-
-You can also augment queries by using [template variables](../template-variables/).
 
 ## Query CloudWatch Logs
 

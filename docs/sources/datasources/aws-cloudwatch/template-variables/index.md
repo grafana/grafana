@@ -77,8 +77,6 @@ The `ec2_instance_attribute` function in template variables allows Grafana to re
 
 ### Filters
 
-The `ec2_instance_attribute` query takes `filters` as a filter name and a comma-separated list of values.
-
 The `ec2_instance_attribute` query takes a `filters` parameter, where each key is a filter name (such as a tag or instance property), and each value is a comma-separated list of matching values.
 
 You can specify [pre-defined filters of ec2:DescribeInstances](http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html).
