@@ -23,10 +23,6 @@ interface AnnoBoxProps {
   portalRoot: HTMLElement;
 }
 
-const STATE_DEFAULT = 0;
-const STATE_EDITING = 1;
-const STATE_HOVERED = 2;
-
 export const AnnotationMarker2 = ({
   annoVals,
   annoIdx,
@@ -39,7 +35,8 @@ export const AnnotationMarker2 = ({
   const styles = useStyles2(getStyles);
   const placement = 'bottom';
 
-  const [state, setState] = useState(exitWipEdit != null ? STATE_EDITING : STATE_DEFAULT);
+  const [editing, setEditing] = useState(exitWipEdit != null);
+  const [active, setActive] = useState(false);
   const { refs, floatingStyles } = useFloating({
     open: true,
     placement,
@@ -49,32 +46,28 @@ export const AnnotationMarker2 = ({
   });
 
   const contents =
-    state === STATE_HOVERED ? (
-      <AnnotationTooltip2
-        annoIdx={annoIdx}
-        annoVals={annoVals}
-        timeZone={timeZone}
-        onEdit={() => setState(STATE_EDITING)}
-      />
-    ) : state === STATE_EDITING ? (
+    active && !editing ? (
+      <AnnotationTooltip2 annoIdx={annoIdx} annoVals={annoVals} timeZone={timeZone} onEdit={() => setEditing(true)} />
+    ) : editing ? (
       <AnnotationEditor2
         annoIdx={annoIdx}
         annoVals={annoVals}
         timeZone={timeZone}
         dismiss={() => {
           exitWipEdit?.();
-          setState(STATE_DEFAULT);
+          setEditing(false);
         }}
       />
     ) : null;
 
   return (
-    <div
+    <button
       ref={refs.setReference}
       className={className}
       style={style!}
-      onMouseEnter={() => state !== STATE_EDITING && setState(STATE_HOVERED)}
-      onMouseLeave={() => state !== STATE_EDITING && setState(STATE_DEFAULT)}
+      onFocus={() => setActive(true)}
+      onBlur={() => setActive(false)}
+      onClick={() => setActive(!active)}
       data-testid={selectors.pages.Dashboard.Annotations.marker}
     >
       {contents &&
@@ -84,7 +77,7 @@ export const AnnotationMarker2 = ({
           </div>,
           portalRoot
         )}
-    </div>
+    </button>
   );
 };
 
