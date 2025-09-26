@@ -549,13 +549,9 @@ export interface FeatureToggles {
   */
   grafanaManagedRecordingRules?: boolean;
   /**
-  * Renamed feature toggle, enables Saved queries feature
+  * Enables Saved queries (query library) feature
   */
   queryLibrary?: boolean;
-  /**
-  * Enables Saved Queries feature
-  */
-  savedQueries?: boolean;
   /**
   * Sets the logs table as default visualisation in logs explore
   */
@@ -1012,6 +1008,10 @@ export interface FeatureToggles {
   * Registers AuthZ /apis endpoint
   */
   kubernetesAuthzApis?: boolean;
+  /**
+  * Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints
+  */
+  kubernetesAuthZHandlerRedirect?: boolean;
   /**
   * Registers AuthZ resource permission /apis endpoints
   */
