@@ -1,6 +1,7 @@
 import { locationUtil, urlUtil } from '@grafana/data';
 import { locationService, navigationLogger } from '@grafana/runtime';
-import { config } from 'app/core/config';
+
+import { contextSrv } from '../../services/context_srv';
 
 export function interceptLinkClicks(e: MouseEvent) {
   const anchor = e.target instanceof Element && getParentAnchor(e.target);
@@ -16,7 +17,7 @@ export function interceptLinkClicks(e: MouseEvent) {
 
     if (href && !target) {
       const params = urlUtil.parseKeyValue(href.split('?')[1]);
-      const orgIdChange = params.orgId && Number(params.orgId) !== config.bootData.user.orgId;
+      const orgIdChange = params.orgId && Number(params.orgId) !== contextSrv.user.orgId;
       navigationLogger('utils', false, 'intercepting link click', e);
       e.preventDefault();
 

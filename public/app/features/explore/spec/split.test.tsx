@@ -15,6 +15,7 @@ const testEventBus = new EventBusSrv();
 jest.mock('app/core/core', () => {
   return {
     contextSrv: {
+      ...jest.requireActual('app/core/core').contextSrv,
       hasPermission: () => true,
       getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
     },

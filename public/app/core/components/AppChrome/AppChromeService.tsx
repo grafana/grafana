@@ -177,9 +177,9 @@ export class AppChromeService {
     return useObservable(this.state, this.state.getValue());
   }
 
-  public setMegaMenuOpen = (newOpenState: boolean) => {
+  public setMegaMenuOpen = (newOpenState: boolean, updatePersistedState = true) => {
     const { megaMenuDocked } = this.state.getValue();
-    if (megaMenuDocked) {
+    if (megaMenuDocked && updatePersistedState) {
       store.set(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, newOpenState);
     }
     reportInteraction('grafana_mega_menu_open', {

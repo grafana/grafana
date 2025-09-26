@@ -34,7 +34,10 @@ export const BottomLegend: StoryFn = ({ height, width, legendItems }) => {
   const legend = (
     <VizLayout.Legend placement="bottom" maxHeight="30%">
       {items.map((_, index) => (
-        <div style={{ height: '30px', width: '100%', background: 'lightblue', marginBottom: '2px' }} key={index}>
+        <div
+          style={{ height: '30px', width: '100%', background: 'lightblue', color: 'black', marginBottom: '2px' }}
+          key={index}
+        >
           Legend item {index}
         </div>
       ))}
@@ -65,7 +68,13 @@ export const RightLegend: StoryFn = ({ height, width, legendItems, legendWidth }
     <VizLayout.Legend placement="right" maxWidth="50%">
       {items.map((_, index) => (
         <div
-          style={{ height: '30px', width: `${legendWidth}px`, background: 'lightblue', marginBottom: '2px' }}
+          style={{
+            height: '30px',
+            width: `${legendWidth}px`,
+            background: 'lightblue',
+            color: 'black',
+            marginBottom: '2px',
+          }}
           key={index}
         >
           Legend item {index}

@@ -7,6 +7,7 @@ import { setEchoSrv, setTemplateSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 
 import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
+import { contextSrv } from '../../../../core/services/context_srv';
 import { Echo } from '../../../../core/services/echo/Echo';
 import { variableAdapters } from '../../../variables/adapters';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
@@ -79,7 +80,7 @@ describe('ShareModal', () => {
     });
     mockLocationHref('http://server/#!/test');
     config.rendererAvailable = true;
-    config.bootData.user.orgId = 1;
+    contextSrv.user.orgId = 1;
     props = {
       panel: new PanelModel({ id: 22, options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
       dashboard: createDashboardModelFixture({
@@ -186,7 +187,7 @@ describe('when appUrl is set in the grafana config', () => {
     originalBootData = config.bootData;
     config.appUrl = 'http://dashboards.grafana.com/';
     config.rendererAvailable = true;
-    config.bootData.user.orgId = 1;
+    contextSrv.user.orgId = 1;
   });
 
   afterAll(() => {

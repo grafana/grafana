@@ -54,6 +54,7 @@ export const standardTransformers = {
   renameByRegexTransformer,
   histogramTransformer,
   convertFieldTypeTransformer,
+  convertFrameTypeTransformer,
   groupingToMatrixTransformer,
   limitTransformer,
   groupToNestedTable,

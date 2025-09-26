@@ -58,4 +58,37 @@ Counter.args = {
   value: 10,
 };
 
+export const WithDisabled: StoryFn = () => {
+  const [state, updateState] = useState([
+    { label: 'Enabled Tab', key: 'first', active: true },
+    { label: 'Disabled Tab', key: 'second', active: false, disabled: true },
+    { label: 'Another Tab', key: 'third', active: false },
+  ]);
+
+  return (
+    <DashboardStoryCanvas>
+      <TabsBar>
+        {state.map((tab, index) => {
+          return (
+            <Tab
+              key={index}
+              label={tab.label}
+              active={tab.active}
+              disabled={tab.disabled}
+              onChangeTab={() =>
+                !tab.disabled && updateState(state.map((tab, idx) => ({ ...tab, active: idx === index })))
+              }
+            />
+          );
+        })}
+      </TabsBar>
+      <TabContent>
+        {state[0].active && <div>First tab content</div>}
+        {state[1].active && <div>Second tab content (disabled)</div>}
+        {state[2].active && <div>Third tab content</div>}
+      </TabContent>
+    </DashboardStoryCanvas>
+  );
+};
+
 export default meta;

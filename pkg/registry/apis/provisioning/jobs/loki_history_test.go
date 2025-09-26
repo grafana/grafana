@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/loki"
+	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

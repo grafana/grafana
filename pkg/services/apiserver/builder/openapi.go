@@ -34,7 +34,9 @@ func GetOpenAPIDefinitions(builders []APIGroupBuilder, additionalGetters ...open
 				return bytes.Equal(aa, bb)
 			},
 		)
-		logging.DefaultLogger.Error("error initializing DataQuery apiequality", "err", err)
+		if err != nil {
+			logging.DefaultLogger.Error("error initializing DataQuery apiequality", "err", err)
+		}
 	})
 
 	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {

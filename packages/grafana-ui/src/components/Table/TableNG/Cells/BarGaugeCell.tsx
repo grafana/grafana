@@ -2,7 +2,7 @@ import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMin
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../../../BarGauge/BarGauge';
-import { MaybeWrapWithLink } from '../MaybeWrapWithLink';
+import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { TABLE } from '../constants';
 import { BarGaugeCellProps } from '../types';
 import { getCellOptions, getAlignmentFactor } from '../utils';

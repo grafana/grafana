@@ -5,7 +5,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import {
-  findOriginalVizPanelByKey,
+  findVizPanelByKey,
   getDashboardSceneFor,
   getLibraryPanelBehavior,
   getQueryRunnerFor,
@@ -54,7 +54,7 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
     const panelId = dashboardQuery.panelId;
     const vizKey = getVizPanelKeyForPanelId(panelId);
     // We're trying to find the original panel, not a cloned one, since `panelId` alone cannot resolve clones
-    const sourcePanel = findOriginalVizPanelByKey(dashboard, vizKey);
+    const sourcePanel = findVizPanelByKey(dashboard, vizKey);
 
     if (!(sourcePanel instanceof VizPanel)) {
       return;

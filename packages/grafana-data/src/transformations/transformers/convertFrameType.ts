@@ -15,7 +15,9 @@ import { DataTransformerID } from './ids';
     }
   },
 */
+
 // ResultType?
+
 export enum FrameType {
   Exemplar = 'exemplar',
   TimeRegion = 'timeRegion',
@@ -26,15 +28,18 @@ export interface ConvertFrameTypeTransformerOptions {
   targetType?: FrameType;
 }
 
+/** @alpha */
 export const convertFrameTypeTransformer: DataTransformerInfo<ConvertFrameTypeTransformerOptions> = {
   id: DataTransformerID.convertFrameType,
   name: 'Convert frame type',
   description: 'Convert data frame(s) to another type.',
 
-  operator: (options, ctx) => (source) => source.pipe(map((data) => {
-    console.log(data);
-    return convertFrameTypes(options, data);
-  })),
+  operator: (options) => (source) =>
+    source.pipe(
+      map((data) => {
+        return convertFrameType(options, data);
+      })
+    ),
 };
 
 /**

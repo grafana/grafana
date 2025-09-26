@@ -140,9 +140,9 @@ func (_m *FakeDashboardProvisioning) GetProvisionedDashboardDataByDashboardUID(c
 	return r0, r1
 }
 
-// SaveFolderForProvisionedDashboards provides a mock function with given fields: _a0, _a1
-func (_m *FakeDashboardProvisioning) SaveFolderForProvisionedDashboards(_a0 context.Context, _a1 *folder.CreateFolderCommand) (*folder.Folder, error) {
-	ret := _m.Called(_a0, _a1)
+// SaveFolderForProvisionedDashboards provides a mock function with given fields: ctx, cmd, readerName
+func (_m *FakeDashboardProvisioning) SaveFolderForProvisionedDashboards(ctx context.Context, cmd *folder.CreateFolderCommand, readerName string) (*folder.Folder, error) {
+	ret := _m.Called(ctx, cmd, readerName)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SaveFolderForProvisionedDashboards")
@@ -150,19 +150,19 @@ func (_m *FakeDashboardProvisioning) SaveFolderForProvisionedDashboards(_a0 cont
 
 	var r0 *folder.Folder
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *folder.CreateFolderCommand) (*folder.Folder, error)); ok {
-		return rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, *folder.CreateFolderCommand, string) (*folder.Folder, error)); ok {
+		return rf(ctx, cmd, readerName)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *folder.CreateFolderCommand) *folder.Folder); ok {
-		r0 = rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, *folder.CreateFolderCommand, string) *folder.Folder); ok {
+		r0 = rf(ctx, cmd, readerName)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*folder.Folder)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *folder.CreateFolderCommand) error); ok {
-		r1 = rf(_a0, _a1)
+	if rf, ok := ret.Get(1).(func(context.Context, *folder.CreateFolderCommand, string) error); ok {
+		r1 = rf(ctx, cmd, readerName)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -216,6 +216,36 @@ func (_m *FakeDashboardProvisioning) UnprovisionDashboard(ctx context.Context, d
 	}
 
 	return r0
+}
+
+// UpdateFolderWithManagedByAnnotation provides a mock function with given fields: ctx, _a1, readerName
+func (_m *FakeDashboardProvisioning) UpdateFolderWithManagedByAnnotation(ctx context.Context, _a1 *folder.Folder, readerName string) (*folder.Folder, error) {
+	ret := _m.Called(ctx, _a1, readerName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateFolderWithManagedByAnnotation")
+	}
+
+	var r0 *folder.Folder
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *folder.Folder, string) (*folder.Folder, error)); ok {
+		return rf(ctx, _a1, readerName)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *folder.Folder, string) *folder.Folder); ok {
+		r0 = rf(ctx, _a1, readerName)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*folder.Folder)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *folder.Folder, string) error); ok {
+		r1 = rf(ctx, _a1, readerName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // NewFakeDashboardProvisioning creates a new instance of FakeDashboardProvisioning. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

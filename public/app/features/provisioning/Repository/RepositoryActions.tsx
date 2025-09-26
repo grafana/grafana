@@ -25,7 +25,7 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
   const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
 
   return (
-    <Stack>
+    <Stack wrap="wrap">
       {isReadOnlyRepo && <Badge color="darkgrey" text={t('folder-repo.read-only-badge', 'Read only')} />}
       <StatusBadge repo={repository} />
       {repoHref && (
@@ -37,7 +37,7 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
       <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
         <Trans i18nKey="provisioning.repository-actions.settings">Settings</Trans>
       </LinkButton>
-      <DeleteRepositoryButton name={name} redirectTo={PROVISIONING_URL} />
+      <DeleteRepositoryButton name={name} repository={repository} redirectTo={PROVISIONING_URL} />
     </Stack>
   );
 }

@@ -1,6 +1,7 @@
 package schemaversion
 
 import (
+	"context"
 	"regexp"
 	"strings"
 )
@@ -36,7 +37,7 @@ import (
 //	    ]
 //	  }
 //	]
-func V19(dashboard map[string]interface{}) error {
+func V19(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 19
 
 	panels, ok := dashboard["panels"].([]interface{})
@@ -83,9 +84,14 @@ func upgradePanelLink(link map[string]interface{}) map[string]interface{} {
 	url := buildPanelLinkURL(link)
 
 	result := map[string]interface{}{
-		"url":         url,
-		"title":       getStringValue(link, "title"),
-		"targetBlank": getBoolValue(link, "targetBlank"),
+		"url":   url,
+		"title": GetStringValue(link, "title"),
+	}
+
+	// Only add targetBlank if it's explicitly set to true (matches frontend behavior)
+	// Frontend filters out targetBlank: false as a default, so we shouldn't add it
+	if GetBoolValue(link, "targetBlank") {
+		result["targetBlank"] = true
 	}
 
 	return result
@@ -96,12 +102,12 @@ func buildPanelLinkURL(link map[string]interface{}) string {
 	var url string
 
 	// Check for existing URL first
-	if existingURL, ok := link["url"].(string); ok && existingURL != "" {
+	if existingURL := GetStringValue(link, "url"); existingURL != "" {
 		url = existingURL
-	} else if dashboard, ok := link["dashboard"].(string); ok && dashboard != "" {
+	} else if dashboard := GetStringValue(link, "dashboard"); dashboard != "" {
 		// Convert dashboard name to slugified URL
 		url = "dashboard/db/" + slugifyForURL(dashboard)
-	} else if dashUri, ok := link["dashUri"].(string); ok && dashUri != "" {
+	} else if dashUri := GetStringValue(link, "dashUri"); dashUri != "" {
 		url = "dashboard/" + dashUri
 	} else {
 		// Default fallback
@@ -111,15 +117,15 @@ func buildPanelLinkURL(link map[string]interface{}) string {
 	// Add query parameters
 	params := []string{}
 
-	if getBoolValue(link, "keepTime") {
+	if GetBoolValue(link, "keepTime") {
 		params = append(params, "$__url_time_range")
 	}
 
-	if getBoolValue(link, "includeVars") {
+	if GetBoolValue(link, "includeVars") {
 		params = append(params, "$__all_variables")
 	}
 
-	if customParams, ok := link["params"].(string); ok && customParams != "" {
+	if customParams := GetStringValue(link, "params"); customParams != "" {
 		params = append(params, customParams)
 	}
 
@@ -149,18 +155,4 @@ func slugifyForURL(name string) string {
 	name = reNonWordOrSpace.ReplaceAllString(name, "")
 	name = reSpaces.ReplaceAllString(name, "-")
 	return name
-}
-
-func getStringValue(m map[string]interface{}, key string) string {
-	if v, ok := m[key].(string); ok {
-		return v
-	}
-	return ""
-}
-
-func getBoolValue(m map[string]interface{}, key string) bool {
-	if v, ok := m[key].(bool); ok {
-		return v
-	}
-	return false
 }

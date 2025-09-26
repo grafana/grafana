@@ -792,20 +792,6 @@ The following example limits access to the backend of a single plugin:
 
 `actions_allow_post_url=/api/plugins/grafana-special-app`
 
-<hr />
-
-#### `angular_support_enabled`
-
-This is set to false by default, meaning that the angular framework and support components aren't be loaded.
-This means that all [plugins](../../developers/angular_deprecation/angular-plugins/) and core features that depend on angular support won't work.
-
-The core features that depend on angular are:
-
-- Old graph panel
-- Old table panel
-
-These features each have supported alternatives, and we recommend using them.
-
 #### `csrf_trusted_origins`
 
 List of additional allowed URLs to pass by the CSRF check. Suggested when authentication comes from an IdP.
@@ -2858,15 +2844,19 @@ Set this to `false` to disable expressions and hide them in the Grafana UI. Defa
 
 #### `sql_expression_cell_limit`
 
-Set the maximum number of cells that can be passed to a SQL expression. Default is `100000`.
+Set the maximum number of cells that can be passed to a SQL expression. Default is `100000`. A setting of `0` means no limit.
 
 #### `sql_expression_output_cell_limit`
 
-Set the maximum number of cells that can be returned from a SQL expression. Default is `100000`.
+Set the maximum number of cells that can be returned from a SQL expression. Default is `100000`. A setting of `0` means no limit.
+
+### `sql_expression_query_length_limit`
+
+Set the maximum length of a SQL query that can be used in a SQL expression. Default is `10000` characters. A setting of `0` means no limit.
 
 #### `sql_expression_timeout`
 
-The duration a SQL expression will run before being cancelled. The default is `10s`.
+The duration a SQL expression will run before being cancelled. The default is `10s`. A setting of `0s` means no limit.
 
 ### `[geomap]`
 

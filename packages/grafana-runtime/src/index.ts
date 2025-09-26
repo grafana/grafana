@@ -51,6 +51,7 @@ export {
 } from './analytics/plugins/eventProperties';
 export { usePluginInteractionReporter } from './analytics/plugins/usePluginInteractionReporter';
 export { setReturnToPreviousHook, useReturnToPrevious } from './utils/returnToPrevious';
+export { setMegaMenuOpenHook, useMegaMenuOpen } from './utils/megaMenuOpen';
 export { setChromeHeaderHeightHook, useChromeHeaderHeight } from './utils/chromeHeaderHeight';
 export { type EmbeddedDashboardProps, EmbeddedDashboard, setEmbeddedDashboard } from './components/EmbeddedDashboard';
 export { hasPermission, hasPermissionInMetadata, hasAllPermissions, hasAnyPermission } from './utils/rbac';

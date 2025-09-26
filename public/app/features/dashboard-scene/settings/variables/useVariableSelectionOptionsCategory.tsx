@@ -1,5 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { useCallback, useId, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 import { MultiValueVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
@@ -8,6 +7,11 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 export function useVariableSelectionOptionsCategory(variable: MultiValueVariable): OptionsPaneCategoryDescriptor {
+  const multiValueId = useId();
+  const includeAllId = useId();
+  const customAllValueId = useId();
+  const allowCustomId = useId();
+
   return useMemo(() => {
     return new OptionsPaneCategoryDescriptor({
       title: t('dashboard.edit-pane.variable.selection-options.category', 'Selection options'),
@@ -17,14 +21,14 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.edit-pane.variable.selection-options.multi-value', 'Multi-value'),
-          id: uuidv4(),
+          id: multiValueId,
           render: (descriptor) => <MultiValueSwitch id={descriptor.props.id} variable={variable} />,
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.edit-pane.variable.selection-options.include-all', 'Include All value'),
-          id: uuidv4(),
+          id: includeAllId,
           description: t(
             'dashboard.edit-pane.variable.selection-options.include-all-description',
             'Enables a single option that represent all values'
@@ -35,7 +39,7 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.edit-pane.variable.selection-options.custom-all-value', 'Custom all value'),
-          id: uuidv4(),
+          id: customAllValueId,
           description: t(
             'dashboard.edit-pane.variable.selection-options.custom-all-value-description',
             'A wildcard regex or other value to represent All'
@@ -49,7 +53,7 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.edit-pane.variable.selection-options.allow-custom-values', 'Allow custom values'),
-          id: uuidv4(),
+          id: allowCustomId,
           description: t(
             'dashboard.edit-pane.variable.selection-options.allow-custom-values-description',
             'Enables users to enter values'
@@ -57,7 +61,7 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
           render: (descriptor) => <AllowCustomSwitch id={descriptor.props.id} variable={variable} />,
         })
       );
-  }, [variable]);
+  }, [allowCustomId, customAllValueId, includeAllId, multiValueId, variable]);
 }
 
 interface InputProps {

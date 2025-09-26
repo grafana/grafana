@@ -7,10 +7,10 @@ import { ListFolderQueryArgs, browseDashboardsAPI } from 'app/features/browse-da
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from 'app/features/browse-dashboards/state/utils';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { PermissionLevelString } from 'app/types/acl';
 import { FolderListItemDTO } from 'app/types/folders';
 import { useDispatch, useSelector } from 'app/types/store';
 
+import { UseFoldersQueryProps } from './useFoldersQuery';
 import { getRootFolderItem } from './utils';
 
 type ListFoldersQuery = ReturnType<ReturnType<typeof browseDashboardsAPI.endpoints.listFolders.select>>;
@@ -45,11 +45,14 @@ function getPagesLoadStatus(pages: ListFoldersQuery[]): [boolean, number | undef
 /**
  * Returns a loaded folder hierarchy as a flat list and a function to load more pages.
  */
-export function useFoldersQueryLegacy(
-  isBrowsing: boolean,
-  openFolders: Record<string, boolean>,
-  permission?: PermissionLevelString
-) {
+export function useFoldersQueryLegacy({
+  isBrowsing,
+  openFolders,
+  permission,
+  /* rootFolderUID: configure which folder to start browsing from */
+  rootFolderUID,
+  rootFolderItem,
+}: UseFoldersQueryProps) {
   const dispatch = useDispatch();
 
   // Keep a list of all request subscriptions so we can unsubscribe from them when the component is unmounted
@@ -157,6 +160,7 @@ export function useFoldersQueryLegacy(
               title: item.title,
               uid: item.uid,
               managedBy: item.managedBy,
+              parentUID: item.parentUid,
             },
           };
 
@@ -178,11 +182,13 @@ export function useFoldersQueryLegacy(
       return flatList;
     }
 
-    const rootFlatTree = createFlatList(undefined, state.rootPages, 1);
-    rootFlatTree.unshift(getRootFolderItem());
+    const startingPages = rootFolderUID ? state.pagesByParent[rootFolderUID] : state.rootPages;
+
+    const rootFlatTree = createFlatList(rootFolderUID ?? undefined, startingPages ?? [], 1);
+    rootFlatTree.unshift(rootFolderItem || getRootFolderItem());
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders]);
+  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
 
   return {
     items: treeList,

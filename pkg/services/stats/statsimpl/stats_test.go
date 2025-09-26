@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/correlations/correlationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -26,7 +27,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -34,9 +38,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationStatsDataAccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	db, cfg := db.InitTestDBWithCfg(t)
 	orgSvc := populateDB(t, db, cfg)
 	dashSvc := &dashboards.FakeDashboardService{}
@@ -49,13 +52,19 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 
 	folderService := &foldertest.FakeService{}
 	folderService.ExpectedFolders = []*folder.Folder{{ID: 1}, {ID: 2}, {ID: 3}}
+	unifiedStorage := new(resource.MockResourceClient)
+	unifiedStorage.On("GetStats", mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{
+		Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 5}},
+	}, nil)
 
 	statsService := &sqlStatsService{
-		db:        db,
-		dashSvc:   dashSvc,
-		orgSvc:    orgSvc,
-		folderSvc: folderService,
-		features:  featuremgmt.WithFeatures(),
+		db:             db,
+		dashSvc:        dashSvc,
+		orgSvc:         orgSvc,
+		folderSvc:      folderService,
+		features:       featuremgmt.WithFeatures(),
+		namespacer:     request.GetNamespaceMapper(cfg),
+		unifiedStorage: unifiedStorage,
 	}
 
 	t.Run("Get system stats should not results in error", func(t *testing.T) {
@@ -108,6 +117,15 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		assert.Equal(t, int64(1), stats.Tags)
 		assert.Equal(t, int64(3), stats.Dashboards)
 		assert.Equal(t, int64(3), stats.Orgs)
+	})
+
+	t.Run("Get repository count", func(t *testing.T) {
+		orgs := []*org.OrgDTO{
+			{ID: 1}, {ID: 2}, {ID: 3},
+		}
+		count, err := statsService.getRepositoryCount(context.Background(), orgs)
+		require.NoError(t, err)
+		assert.Equal(t, int64(15), count)
 	})
 }
 
