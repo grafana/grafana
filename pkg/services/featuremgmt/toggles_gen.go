@@ -503,6 +503,10 @@ const (
 	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
 
+	// FlagDashboardLibrary
+	// Enable suggested dashboards when creating new dashboards
+	FlagDashboardLibrary = "dashboardLibrary"
+
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
 	FlagLogsExploreTableDefaultVisualization = "logsExploreTableDefaultVisualization"
