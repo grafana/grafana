@@ -294,7 +294,6 @@ const getStyles = () => ({
     zIndex: 1,
     padding: 0,
     background: 'none',
-    '&:hover': {},
   }),
   annoRegion: css({
     border: 'none',
