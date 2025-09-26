@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { ReactNode } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
+import { Trans } from '@grafana/i18n';
+import { Icon, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
 import { CloudEnterpriseBadge } from 'app/core/components/Branding/CloudEnterpriseBadge';
 import { Page } from 'app/core/components/Page/Page';
 import { DataSourceTitle } from 'app/features/datasources/components/DataSourceTitle';
@@ -11,17 +11,14 @@ import { EditDataSourceActions } from 'app/features/datasources/components/EditD
 import { useDataSourceInfo } from 'app/features/datasources/components/useDataSourceInfo';
 import { useInitDataSourceSettings } from 'app/features/datasources/state/hooks';
 
-import { useDataSourceTabNav } from '../../hooks/useDataSourceTabNav';
+import { useDataSourceTabNav } from '../hooks/useDataSourceTabNav';
 
 type FeatureHighlightsTabPageProps = {
   pageName: string;
   title: string;
   header: string;
-  footer: ReactNode;
   items: string[];
-  linkButtonLabel: string;
   buttonLink: string;
-  footNote?: ReactNode;
   screenshotPath: string;
 };
 
@@ -30,11 +27,8 @@ export function FeatureHighlightsTabPage({
   title,
   header,
   items,
-  linkButtonLabel,
   buttonLink,
-  footNote,
   screenshotPath,
-  footer,
 }: FeatureHighlightsTabPageProps) {
   const { uid = '' } = useParams<{ uid: string }>();
   useInitDataSourceSettings(uid);
@@ -71,12 +65,31 @@ export function FeatureHighlightsTabPage({
                 </div>
               ))}
             </div>
-            {footer && <div className={styles.footer}>{footer}</div>}
+            <div className={styles.footer}>
+              <Trans i18nKey="connections.feature-highlight-page.footer">
+                Create a Grafana Cloud Free account to start using data source permissions. This feature is also
+                available with a Grafana Enterprise license.
+              </Trans>
+              <div>
+                <TextLink href="https://grafana.com/products/enterprise/grafana/">
+                  <Icon name="external-link-alt" />
+                  <Trans i18nKey="connections.feature-highlight-page.footer-link">Learn about Enterprise</Trans>
+                </TextLink>
+              </div>
+            </div>
             <LinkButton className={styles.linkButton} href={buttonLink}>
               <Icon name="external-link-alt" className={styles.buttonIcon} />
-              <span>{linkButtonLabel}</span>
+              <Trans i18nKey="connections.feature-highlight-page.link-button-label">Create account</Trans>
             </LinkButton>
-            {footNote && <p>{footNote}</p>}
+            <p className={styles.footNote}>
+              <Trans i18nKey="connections.feature-highlight-page.foot-note">
+                After creating an account, you can easily{' '}
+                <TextLink href="https://grafana.com/docs/grafana/latest/administration/migration-guide/cloud-migration-assistant/">
+                  migrate this instance to Grafana Cloud
+                </TextLink>{' '}
+                with our Migration Assistant.
+              </Trans>
+            </p>
           </div>
           <div className={styles.imageContainer}>
             <img className={styles.image} src={screenshotPath} alt={`${pageName} screenshot`} />
@@ -151,5 +164,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   icon: css({
     marginRight: theme.spacing(1),
     color: theme.colors.success.main,
+  }),
+  footNote: css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
   }),
 });

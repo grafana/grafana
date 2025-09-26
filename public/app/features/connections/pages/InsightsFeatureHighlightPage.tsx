@@ -1,7 +1,7 @@
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import insightsScreenshot from 'img/insights-screenshot.png';
 
-import { FeatureHighlightsTabPage } from '../components/FeatureHighlightsTabPage/FeatureHighlightsTabPage';
+import { FeatureHighlightsTabPage } from '../components/FeatureHighlightsTabPage';
 
 export function InsightsFeatureHighlightPage() {
   return (
@@ -33,19 +33,7 @@ export function InsightsFeatureHighlightPage() {
           'Review individual data source usage insights at a glance in the UI, sort search results by usage and errors, or dig into detailed usage logs'
         ),
       ]}
-      footer={
-        <div>
-          <Trans i18nKey="connections.insights-feature-highlight-page.footer">
-            Grafana Enterprise offers you not only usage insights but many more advanced features like Enterprise
-            plugins, dashboard search and reporting.
-          </Trans>
-        </div>
-      }
-      linkButtonLabel={t(
-        'connections.insights-feature-highlight-page.link-button-label',
-        'Learn about Grafana Enterprise'
-      )}
-      buttonLink={'https://grafana.com/products/enterprise/grafana/'}
+      buttonLink={'https://grafana.com/auth/sign-up/create-user?src=oss-grafana&cnt=datasource-insights'}
       screenshotPath={insightsScreenshot}
     />
   );

@@ -1,9 +1,7 @@
 import { t } from '@grafana/i18n';
 import permissionsScreenshot from 'img/permissions-screenshot.png';
 
-import { FeatureHighlightsTabPage } from '../components/FeatureHighlightsTabPage/FeatureHighlightsTabPage';
-import { Footer } from '../components/FeatureHighlightsTabPage/Footer';
-import { Footnote } from '../components/FeatureHighlightsTabPage/Footnote';
+import { FeatureHighlightsTabPage } from '../components/FeatureHighlightsTabPage';
 
 export function PermissionsFeatureHighlightPage() {
   return (
@@ -31,10 +29,7 @@ export function PermissionsFeatureHighlightPage() {
           'Share Grafana access more freely, knowing that users will not unwittingly see sensitive data'
         ),
       ]}
-      footer={<Footer />}
-      linkButtonLabel={t('connections.permissions-feature-highlight-page.link-button-label', 'Create account')}
       buttonLink={'https://grafana.com/auth/sign-up/create-user?src=oss-grafana&cnt=datasource-permissions'}
-      footNote={<Footnote />}
       screenshotPath={permissionsScreenshot}
     />
   );
