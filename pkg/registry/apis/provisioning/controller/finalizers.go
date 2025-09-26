@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -41,6 +42,10 @@ func (f *finalizer) process(ctx context.Context,
 		repository.RemoveOrphanResourcesFinalizer}
 
 	for _, finalizer := range orderedFinalizers {
+		if !slices.Contains(finalizers, finalizer) {
+			continue
+		}
+		logger.Info("running finalizer", "finalizer", finalizer)
 		var err error
 		var count int
 		start := time.Now()
@@ -49,6 +54,7 @@ func (f *finalizer) process(ctx context.Context,
 		switch finalizer {
 		case repository.CleanFinalizer:
 			// NOTE: the controller loop will never get run unless a finalizer is set
+			logger.Info("running cleanup finalizer")
 			hooks, ok := repo.(repository.Hooks)
 			if ok {
 				if err = hooks.OnDelete(ctx); err != nil {
@@ -58,6 +64,7 @@ func (f *finalizer) process(ctx context.Context,
 			}
 
 		case repository.ReleaseOrphanResourcesFinalizer:
+			logger.Info("releasing orphan resources")
 			count, err = f.processExistingItems(ctx, repo.Config(), f.releaseResources(ctx, logger))
 			if err != nil {
 				outcome = metricutils.ErrorOutcome
@@ -65,6 +72,7 @@ func (f *finalizer) process(ctx context.Context,
 			}
 
 		case repository.RemoveOrphanResourcesFinalizer:
+			logger.Info("removing orphan resources")
 			count, err = f.processExistingItems(ctx, repo.Config(), f.removeResources(ctx, logger))
 			if err != nil {
 				outcome = metricutils.ErrorOutcome

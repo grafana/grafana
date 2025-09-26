@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -525,9 +526,11 @@ func TestFinalizer_process(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			metrics := registerFinalizerMetrics(prometheus.NewRegistry())
 			f := &finalizer{
 				lister:        tc.lister,
 				clientFactory: tc.clientFactory,
+				metrics:       &metrics,
 			}
 			err := f.process(context.Background(), tc.repo, tc.finalizers)
 			if tc.expectedErr == "" {

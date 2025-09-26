@@ -233,6 +233,9 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 
 		err = rc.finalizer.process(ctx, repo, obj.Finalizers)
 		if err != nil {
+			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("remove finalizers: %w", err)); statusErr != nil {
+				logger.Error("failed to update repository status after finalizer removal error", "error", statusErr)
+			}
 			return fmt.Errorf("process finalizers: %w", err)
 		}
 
@@ -252,6 +255,16 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 	}
 
 	return nil
+}
+
+func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *provisioning.Repository, err error) error {
+	logger := logging.FromContext(ctx)
+	logger.Info("updating repository status with deletion error", "error", err.Error())
+	return rc.statusPatcher.Patch(ctx, obj, map[string]interface{}{
+		"op":    "replace",
+		"path":  "/status/deleteError",
+		"value": err.Error(),
+	})
 }
 
 func (rc *RepositoryController) shouldResync(obj *provisioning.Repository) bool {
