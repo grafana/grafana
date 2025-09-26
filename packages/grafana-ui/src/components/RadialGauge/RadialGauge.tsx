@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { useId } from 'react';
 import tinycolor from 'tinycolor2';
 
@@ -11,7 +12,7 @@ import {
 } from '@grafana/data';
 import { GraphGradientMode } from '@grafana/schema';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 
 import { RadialText } from './RadialText';
 
@@ -27,6 +28,8 @@ export interface RadialGaugeProps {
   /** Adds a white spotlight for the end position */
   spotlight?: boolean;
   glow?: boolean;
+  centerShadow?: boolean;
+  centerGlow?: boolean;
 }
 
 export type RadialGradientMode = 'none' | 'scheme' | 'hue' | 'radial' | 'shade';
@@ -43,11 +46,14 @@ export function RadialGauge(props: RadialGaugeProps) {
     clockwise = false,
     spotlight = false,
     glow = false,
+    centerShadow = false,
+    centerGlow = false,
   } = props;
   const theme = useTheme2();
   const gaugeId = useId();
   const width = size;
   const height = size;
+  const styles = useStyles2(getStyles);
 
   const values = getFieldDisplayValues({
     fieldConfig: { overrides: [], defaults: {} },
@@ -57,7 +63,8 @@ export function RadialGauge(props: RadialGaugeProps) {
     data: frames,
   });
 
-  const margin = calculateMargin(size, glow);
+  const margin = calculateMargin(size, glow, spotlight, barWidth);
+  const color = values[0]?.display.color ?? theme.colors.primary.main;
 
   return (
     <svg width={width} height={height}>
@@ -82,6 +89,12 @@ export function RadialGauge(props: RadialGaugeProps) {
           </radialGradient>
         )}
         {glow && <GlowGradient gaugeId={gaugeId} size={size} />}
+        {centerGlow && (
+          <radialGradient id={`circle-glow-${gaugeId}`} r={'50%'} fr={'0%'}>
+            <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+            <stop offset="90%" stopColor={color} stopOpacity={0} />
+          </radialGradient>
+        )}
       </defs>
       <g>
         {values.map((displayValue, barIndex) => {
@@ -111,7 +124,21 @@ export function RadialGauge(props: RadialGaugeProps) {
           );
         })}
       </g>
-      <g>{values.length === 1 && <RadialText displayValue={values[0].display} size={size} theme={theme} />}</g>
+      <g>
+        {centerShadow && (
+          <MiddleCircle
+            barWidth={barWidth}
+            fill={theme.colors.background.primary}
+            size={size}
+            margin={margin}
+            className={styles.innerShadow}
+          />
+        )}
+        {centerGlow && (
+          <MiddleCircle barWidth={barWidth} fill={`url(#circle-glow-${gaugeId})`} size={size} margin={margin} />
+        )}
+        {values.length === 1 && <RadialText displayValue={values[0].display} size={size} theme={theme} />}
+      </g>
     </svg>
   );
 }
@@ -135,10 +162,19 @@ function GlowGradient({ gaugeId, size }: GlowGradientProps) {
   );
 }
 
-function calculateMargin(size: number, glow: boolean | undefined): number {
+function calculateMargin(
+  size: number,
+  glow: boolean | undefined,
+  spotlight: boolean | undefined,
+  barWidth: number
+): number {
   if (glow) {
     const glowSize = 0.03 * size;
     return glowSize + 4;
+  }
+
+  if (spotlight) {
+    return barWidth / 4;
   }
 
   return 0;
@@ -366,18 +402,42 @@ export function RadialArcPath({
         fillOpacity="0.85"
         stroke={color}
         strokeOpacity="1"
-        //strokeLinecap="butt"
         strokeLinecap={roundedBars ? 'round' : 'butt'}
         strokeWidth={barWidth}
         strokeDasharray="0"
         filter={glow ? `url(#glow-${gaugeId})` : undefined}
       />
-      {clockwise && spotlight && angle > 5 && (
-        <circle r={barWidth * 1} cx={x2} cy={y2} fill={`url(#spotlight-${gaugeId})`} />
-      )}
-      {!clockwise && spotlight && angle > 5 && (
-        <circle r={barWidth * 1} cx={x1} cy={y1} fill={`url(#spotlight-${gaugeId})`} />
+      {spotlight && angle > 5 && (
+        <circle
+          r={barWidth * 1}
+          cx={clockwise ? x2 : x1}
+          cy={clockwise ? y2 : y1}
+          fill={`url(#spotlight-${gaugeId})`}
+        />
       )}
     </>
   );
+}
+
+export interface MiddleCircleProps {
+  size: number;
+  barWidth: number;
+  margin: number;
+  fill?: string;
+  className?: string;
+}
+
+export function MiddleCircle({ size, barWidth, margin, fill, className }: MiddleCircleProps) {
+  const center = size / 2;
+  const radius = (size - barWidth * 2) / 2 - margin;
+
+  return <circle cx={center} cy={center} r={radius} fill={fill} className={className} />;
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    innerShadow: css({
+      filter: `drop-shadow(0px 0px 5px black);`,
+    }),
+  };
 }

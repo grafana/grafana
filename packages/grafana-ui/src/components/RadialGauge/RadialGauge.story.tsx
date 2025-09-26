@@ -31,15 +31,27 @@ export const Effects: StoryFn<typeof RadialBar> = (args) => {
       <Stack direction="row" alignItems="center" gap={3}>
         <RadialBarExample value={70} gradientMode="hue" spotlight />
         <RadialBarExample seriesName="Clockwise" gradientMode="hue" value={70} clockwise spotlight />
-        <RadialBarExample gradientMode="hue" value={70} clockwise spotlight color="green" />
-        <RadialBarExample gradientMode="hue" value={70} clockwise spotlight color="red" />
+        <RadialBarExample gradientMode="hue" value={70} spotlight color="green" />
+        <RadialBarExample gradientMode="hue" value={70} spotlight color="red" />
       </Stack>
       <div>Spotlight + Glow</div>
       <Stack direction="row" alignItems="center" gap={3}>
         <RadialBarExample value={70} gradientMode="hue" spotlight glow />
         <RadialBarExample seriesName="Clockwise" gradientMode="hue" value={70} clockwise spotlight glow />
-        <RadialBarExample gradientMode="hue" value={70} clockwise spotlight color="green" glow />
-        <RadialBarExample gradientMode="hue" value={70} clockwise spotlight color="red" glow />
+        <RadialBarExample gradientMode="hue" value={70} spotlight color="green" glow />
+        <RadialBarExample gradientMode="hue" value={70} spotlight color="red" glow />
+      </Stack>
+      <div>Spotlight + Glow + centerGlow</div>
+      <Stack direction="row" alignItems="center" gap={3}>
+        <RadialBarExample value={70} gradientMode="hue" spotlight glow centerGlow />
+        <RadialBarExample seriesName="Clockwise" gradientMode="hue" value={70} clockwise spotlight glow centerGlow />
+        <RadialBarExample gradientMode="hue" value={70} spotlight color="green" glow centerGlow />
+        <RadialBarExample gradientMode="hue" value={70} spotlight color="red" glow centerGlow />
+      </Stack>
+      <div>Center shadow</div>
+      <Stack direction="row" alignItems="center" gap={3}>
+        <RadialBarExample gradientMode="hue" value={70} centerShadow color="green" barWidth={30} size={250} />
+        <RadialBarExample gradientMode="hue" value={70} centerShadow color="red" barWidth={30} size={250} />
       </Stack>
     </Stack>
   );
@@ -74,6 +86,7 @@ export const Examples: StoryFn<typeof RadialBar> = (args) => {
           value={40}
           startAngle={240}
           endAngle={120}
+          clockwise
         />
         <RadialBarExample
           colorMode={FieldColorModeId.ContinuousGrYlRd}
@@ -81,6 +94,7 @@ export const Examples: StoryFn<typeof RadialBar> = (args) => {
           value={100}
           startAngle={240}
           endAngle={120}
+          clockwise
         />
       </Stack>
       <div>Gradient: Radial</div>
@@ -103,6 +117,9 @@ interface ExampleProps {
   size?: number;
   spotlight?: boolean;
   glow?: boolean;
+  centerShadow?: boolean;
+  centerGlow?: boolean;
+  barWidth?: number;
 }
 
 function RadialBarExample({
@@ -119,6 +136,9 @@ function RadialBarExample({
   size = 200,
   spotlight = false,
   glow = false,
+  centerShadow = false,
+  centerGlow = false,
+  barWidth = 20,
 }: ExampleProps) {
   const theme = useTheme2();
 
@@ -158,13 +178,15 @@ function RadialBarExample({
     <RadialGauge
       frames={data}
       size={size}
-      barWidth={17}
+      barWidth={barWidth}
       gradientMode={gradientMode}
       startAngle={startAngle}
       endAngle={endAngle}
       clockwise={clockwise}
       spotlight={spotlight}
       glow={glow}
+      centerShadow={centerShadow}
+      centerGlow={centerGlow}
     />
   );
 }
