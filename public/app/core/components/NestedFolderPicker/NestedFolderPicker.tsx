@@ -234,6 +234,7 @@ export function NestedFolderPicker({
             title: item.title,
             uid: item.uid,
             parentUID: item.parentUID,
+            parentTitle: item.parentTitle,
           },
         })) ?? [];
     }
