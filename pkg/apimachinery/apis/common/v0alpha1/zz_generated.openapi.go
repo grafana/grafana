@@ -248,6 +248,12 @@ func schema_apimachinery_apis_common_v0alpha1_ScopeSpec(ref common.ReferenceCall
 							Format:  "",
 						},
 					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"defaultPath": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
