@@ -1760,7 +1760,7 @@ var (
 		},
 		{
 			Name:              "kubernetesAuthzZanzanaSync",
-			Description:       "Populate Zanzana on AuthZ CRDs creation or update",
+			Description:       "Enable sync of Zanzana authorization store on AuthZ CRD mutations",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
 			HideFromAdminPage: true,

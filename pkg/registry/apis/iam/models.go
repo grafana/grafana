@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -58,11 +59,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	sso ssosettings.Service
 
 	// Toggle for enabling authz management apis
-	enableAuthZApis              bool
-	enableResourcePermissionApis bool
-
-	// Toggle for enabling authn mutation
-	enableAuthnMutation bool
+	features featuremgmt.FeatureToggles
 
 	// Toggle for enabling dual writer
 	enableDualWriter bool

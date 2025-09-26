@@ -62,22 +62,23 @@ func RegisterAPIService(
 	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient)
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		store:                        store,
-		coreRolesStorage:             coreRolesStorage,
-		rolesStorage:                 rolesStorage,
-		resourcePermissionsStorage:   resourcepermission.ProvideStorageBackend(dbProvider),
-		sso:                          ssoService,
-		authorizer:                   authorizer,
-		legacyAccessClient:           legacyAccessClient,
-		accessClient:                 accessClient,
-		zClient:                      zClient,
-		display:                      user.NewLegacyDisplayREST(store),
-		reg:                          reg,
-		logger:                       log.New("iam.apis"),
-		enableAuthZApis:              features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
-		enableResourcePermissionApis: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis),
-		enableAuthnMutation:          features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
-		enableDualWriter:             true,
+		store:                      store,
+		coreRolesStorage:           coreRolesStorage,
+		rolesStorage:               rolesStorage,
+		resourcePermissionsStorage: resourcepermission.ProvideStorageBackend(dbProvider),
+		sso:                        ssoService,
+		authorizer:                 authorizer,
+		legacyAccessClient:         legacyAccessClient,
+		accessClient:               accessClient,
+		zClient:                    zClient,
+		display:                    user.NewLegacyDisplayREST(store),
+		reg:                        reg,
+		logger:                     log.New("iam.apis"),
+		features:                   features,
+		// enableAuthZApis:              features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
+		// enableResourcePermissionApis: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis),
+		// enableAuthnMutation:          features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
+		enableDualWriter: true,
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -88,17 +89,17 @@ func RegisterAPIService(
 func NewAPIService(
 	accessClient types.AccessClient,
 	dbProvider legacysql.LegacyDatabaseProvider,
-	enabledApis map[string]bool,
+	features featuremgmt.FeatureToggles,
 ) *IdentityAccessManagementAPIBuilder {
 	store := legacy.NewLegacySQLStores(dbProvider)
 	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider)
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	return &IdentityAccessManagementAPIBuilder{
-		store:                        store,
-		display:                      user.NewLegacyDisplayREST(store),
-		resourcePermissionsStorage:   resourcePermissionsStorage,
-		logger:                       log.New("iam.apis"),
-		enableResourcePermissionApis: enabledApis["resourcepermissions"],
+		store:                      store,
+		display:                    user.NewLegacyDisplayREST(store),
+		resourcePermissionsStorage: resourcePermissionsStorage,
+		logger:                     log.New("iam.apis"),
+		features:                   features,
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				// For now only authorize resourcepermissions resource
@@ -123,12 +124,12 @@ func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersi
 }
 
 func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	if b.enableAuthZApis {
+	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis) {
 		if err := iamv0.AddAuthZKnownTypes(scheme); err != nil {
 			return err
 		}
 	}
-	if b.enableResourcePermissionApis {
+	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
 		if err := iamv0.AddResourcePermissionKnownTypes(scheme, iamv0.SchemeGroupVersion); err != nil {
 			return err
 		}
@@ -155,9 +156,11 @@ func (b *IdentityAccessManagementAPIBuilder) AllowedV0Alpha1Resources() []string
 
 func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
+	enableAuthnMutation := b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation)
+	enableZanzanaSync := b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzZanzanaSync)
 
 	teamResource := iamv0.TeamResourceInfo
-	teamLegacyStore := team.NewLegacyStore(b.store, b.legacyAccessClient, b.enableAuthnMutation)
+	teamLegacyStore := team.NewLegacyStore(b.store, b.legacyAccessClient, enableAuthnMutation)
 	storage[teamResource.StoragePath()] = teamLegacyStore
 	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
 
@@ -180,7 +183,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	// User store registration
 	userResource := iamv0.UserResourceInfo
-	legacyStore := user.NewLegacyStore(b.store, b.accessClient, b.enableAuthnMutation)
+	legacyStore := user.NewLegacyStore(b.store, b.accessClient, enableAuthnMutation)
 	storage[userResource.StoragePath()] = legacyStore
 
 	if b.enableDualWriter {
@@ -201,7 +204,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	// Service Accounts store registration
 	serviceAccountResource := iamv0.ServiceAccountResourceInfo
-	saLegacyStore := serviceaccount.NewLegacyStore(b.store, b.accessClient, b.enableAuthnMutation)
+	saLegacyStore := serviceaccount.NewLegacyStore(b.store, b.accessClient, enableAuthnMutation)
 	storage[serviceAccountResource.StoragePath()] = saLegacyStore
 
 	if b.enableDualWriter {
@@ -225,7 +228,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.sso)
 	}
 
-	if b.enableAuthZApis {
+	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis) {
 		// v0alpha1
 		coreRoleStore, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
 		if err != nil {
@@ -240,12 +243,15 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		storage[iamv0.RoleInfo.StoragePath()] = roleStore
 	}
 
-	if b.enableResourcePermissionApis {
+	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
 		resourcePermissionStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
 		if err != nil {
 			return err
 		}
-		resourcePermissionStore.AfterCreate = b.AfterResourcePermissionCreate
+		if enableZanzanaSync {
+			b.logger.Info("Enabling AfterCreate hook for ResourcePermission to sync to Zanzana")
+			resourcePermissionStore.AfterCreate = b.AfterResourcePermissionCreate
+		}
 		storage[iamv0.ResourcePermissionInfo.StoragePath()] = resourcePermissionStore
 	}
 

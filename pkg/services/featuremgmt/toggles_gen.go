@@ -924,7 +924,7 @@ const (
 	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"
 
 	// FlagKubernetesAuthzZanzanaSync
-	// Populate Zanzana on AuthZ CRDs creation or update
+	// Enable sync of Zanzana authorization store on AuthZ CRD mutations
 	FlagKubernetesAuthzZanzanaSync = "kubernetesAuthzZanzanaSync"
 
 	// FlagKubernetesAuthnMutation
