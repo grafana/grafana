@@ -45,6 +45,7 @@ describe('dashboard tracking', () => {
       trackDashboardSceneCreatedOrSaved('created', scene, { name: 'new dashboard', url: 'new-url' });
       expect(reportInteraction).toHaveBeenCalledWith('dashboards_created', {
         isDynamicDashboard: true,
+        uid: 'dashboard-test',
         name: 'new dashboard',
         url: 'new-url',
         numPanels: 6,

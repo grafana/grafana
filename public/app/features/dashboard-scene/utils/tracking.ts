@@ -228,6 +228,7 @@ export function trackDashboardSceneCreatedOrSaved(
 ) {
   const trackingInformation = dashboard.getTrackingInformation();
   const v2TrackingFields = {
+    uid: dashboard.state.uid,
     numPanels: trackingInformation?.panels_count,
     conditionalRenderRules: trackingInformation?.conditionalRenderRulesCount,
     autoLayoutCount: trackingInformation?.autoLayoutCount,
