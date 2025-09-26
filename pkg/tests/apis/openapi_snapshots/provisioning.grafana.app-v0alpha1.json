@@ -3706,12 +3706,18 @@
           "group": {
             "type": "string"
           },
+          "kind": {
+            "type": "string"
+          },
           "noop": {
             "description": "No action required (useful for sync)",
             "type": "integer",
             "format": "int64"
           },
           "resource": {
+            "type": "string"
+          },
+          "singularName": {
             "type": "string"
           },
           "total": {
@@ -4419,6 +4425,8 @@
         "required": [
           "group",
           "resource",
+          "kind",
+          "singularName",
           "count"
         ],
         "properties": {
@@ -4431,7 +4439,15 @@
             "type": "string",
             "default": ""
           },
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
           "resource": {
+            "type": "string",
+            "default": ""
+          },
+          "singularName": {
             "type": "string",
             "default": ""
           }
@@ -4487,6 +4503,8 @@
           "path",
           "group",
           "resource",
+          "kind",
+          "singularName",
           "name",
           "hash"
         ],
@@ -4503,6 +4521,10 @@
             "type": "string",
             "default": ""
           },
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
           "name": {
             "type": "string",
             "default": ""
@@ -4512,6 +4534,10 @@
             "default": ""
           },
           "resource": {
+            "type": "string",
+            "default": ""
+          },
+          "singularName": {
             "type": "string",
             "default": ""
           },
