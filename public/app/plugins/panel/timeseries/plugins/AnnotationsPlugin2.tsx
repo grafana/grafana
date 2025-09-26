@@ -283,6 +283,8 @@ const getStyles = () => ({
     transform: 'translateX(-50%)',
     cursor: 'pointer',
     zIndex: 1,
+    padding: 0,
+    background: 'none',
   }),
   annoRegion: css({
     position: 'absolute',
