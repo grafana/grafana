@@ -29,7 +29,7 @@ SAML authentication integration allows your Grafana users to log in by using an 
 
 You can configure SAML authentication in Grafana through one of the following methods:
 
-- Configure SAML using the [Grafana configuration file](#configure-saml-using-the-grafana-config-file)
+- Configure SAML using the [Grafana configuration file](#configure-saml-using-the-grafana-configuration-file)
 - Configure SAML using the [SSO Settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/sso-settings/)
 - Configure SAML using the [SAML user interface](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/saml-ui/)
 - Configure SAML using the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/<GRAFANA_VERSION>/docs/resources/sso_settings)
@@ -238,7 +238,7 @@ To allow Grafana to initiate a POST request to the IdP, update the `content_secu
 For Grafana Cloud instances, please contact Grafana Support to update the `content_security_policy_template` and `content_security_policy_report_only_template` settings of your Grafana instance. Please provide the metadata URL/file of your IdP.
 {{< /admonition >}}
 
-## IdP-initiated login
+## IdP-initiated Single Sign-On (SSO)
 
 By default, Grafana allows only service provider (SP) initiated logins (when the user logs in with SAML via the login page in Grafana). If you want users to log in into Grafana directly from your identity provider (IdP), set the `allow_idp_initiated` configuration option to `true` and configure `relay_state` with the same value specified in the IdP configuration.
 
