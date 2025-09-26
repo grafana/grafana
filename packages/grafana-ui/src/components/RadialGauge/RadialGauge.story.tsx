@@ -16,6 +16,26 @@ const meta: Meta<typeof RadialBar> = {
   },
 };
 
+export const Basic: StoryFn<typeof RadialBar> = (args) => {
+  return (
+    <Stack direction={'column'} gap={3}>
+      <RadialBarExample value={70} size={500} clockwise />
+    </Stack>
+  );
+};
+
+export const Effects: StoryFn<typeof RadialBar> = (args) => {
+  return (
+    <Stack direction={'column'} gap={3}>
+      <div>Spotlight</div>
+      <Stack direction="row" alignItems="center" gap={3}>
+        <RadialBarExample value={70} spotlight />
+        <RadialBarExample seriesName="Clockwise" value={70} clockwise spotlight />
+      </Stack>
+    </Stack>
+  );
+};
+
 export const Examples: StoryFn<typeof RadialBar> = (args) => {
   return (
     <Stack direction={'column'} gap={3}>
@@ -71,6 +91,8 @@ interface ExampleProps {
   min?: number;
   max?: number;
   clockwise?: boolean;
+  size?: number;
+  spotlight?: boolean;
 }
 
 function RadialBarExample({
@@ -84,6 +106,8 @@ function RadialBarExample({
   min = 0,
   max = 100,
   clockwise = false,
+  size = 200,
+  spotlight = false,
 }: ExampleProps) {
   const theme = useTheme2();
 
@@ -122,12 +146,13 @@ function RadialBarExample({
   return (
     <RadialGauge
       frames={data}
-      size={200}
+      size={size}
       barWidth={17}
       gradientMode={gradientMode}
       startAngle={startAngle}
       endAngle={endAngle}
       clockwise={clockwise}
+      spotlight={spotlight}
     />
   );
 }

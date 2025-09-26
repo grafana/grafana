@@ -13,6 +13,8 @@ import { GraphGradientMode } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
+import { RadialText } from './RadialText';
+
 export interface RadialGaugeProps {
   frames: DataFrame[];
   size?: number;
@@ -22,6 +24,8 @@ export interface RadialGaugeProps {
   barWidth?: number;
   roundedBars?: boolean;
   clockwise?: boolean;
+  /** Adds a white spotlight for the end position */
+  spotlight?: boolean;
 }
 
 export type RadialGradientMode = 'none' | 'scheme' | 'hue' | 'radial' | 'shade';
@@ -36,6 +40,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     barWidth = 10,
     roundedBars = true,
     clockwise = false,
+    spotlight = false,
   } = props;
   const theme = useTheme2();
   const gaugeId = useId();
@@ -63,6 +68,15 @@ export function RadialGauge(props: RadialGaugeProps) {
             gradientMode={gradientMode}
           />
         ))}
+        {spotlight && (
+          <radialGradient id={`spotlight-${gaugeId}`}>
+            <stop offset="0%" stopColor="white" stopOpacity={1} />
+            <stop offset="10%" stopColor="white" stopOpacity={1} />
+            <stop offset="35%" stopColor="white" stopOpacity={0.5} />
+            <stop offset="80%" stopColor="white" stopOpacity={0.1} />
+            <stop offset="100%" stopColor="white" stopOpacity={0} />
+          </radialGradient>
+        )}
       </defs>
       <g>
         {values.map((displayValue, barIndex) => {
@@ -74,6 +88,7 @@ export function RadialGauge(props: RadialGaugeProps) {
           return (
             <RadialBar
               key={barIndex}
+              gaugeId={gaugeId}
               value={value}
               min={min}
               max={max}
@@ -84,6 +99,7 @@ export function RadialGauge(props: RadialGaugeProps) {
               barWidth={barWidth}
               roundedBars={roundedBars}
               clockwise={clockwise}
+              spotlight={spotlight}
             />
           );
         })}
@@ -189,6 +205,7 @@ function getGradientId(gaugeId: string, index: number) {
 }
 
 export interface RadialBarProps {
+  gaugeId: string;
   value: number;
   min: number;
   max: number;
@@ -199,9 +216,11 @@ export interface RadialBarProps {
   barWidth: number;
   roundedBars?: boolean;
   clockwise: boolean;
+  spotlight?: boolean;
 }
 
 export function RadialBar({
+  gaugeId,
   value,
   min,
   max,
@@ -212,6 +231,7 @@ export function RadialBar({
   barWidth,
   roundedBars,
   clockwise,
+  spotlight,
 }: RadialBarProps) {
   const theme = useTheme2();
   const range = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
@@ -227,123 +247,90 @@ export function RadialBar({
   return (
     <>
       <RadialArcPath
+        gaugeId={gaugeId}
         angle={trackLength}
         size={size}
         startAngle={trackStart}
         color={theme.colors.action.hover}
         barWidth={barWidth}
         roundedBars={roundedBars}
+        clockwise={clockwise}
       />
       <RadialArcPath
+        gaugeId={gaugeId}
         angle={angle}
         size={size}
         startAngle={startAngle}
         color={color}
         barWidth={barWidth}
         roundedBars={roundedBars}
+        clockwise={clockwise}
+        spotlight={spotlight}
       />
     </>
   );
 }
 
 export interface RadialArcPathProps {
+  gaugeId: string;
   angle: number;
-  startAngle?: number;
+  startAngle: number;
   size: number;
   color: string;
   barWidth: number;
   roundedBars?: boolean;
+  clockwise?: boolean;
+  spotlight?: boolean;
 }
 
-export function RadialArcPath({ startAngle, angle, size, color, barWidth, roundedBars }: RadialArcPathProps) {
+export function RadialArcPath({
+  gaugeId,
+  startAngle,
+  angle,
+  size,
+  color,
+  barWidth,
+  roundedBars,
+  clockwise,
+  spotlight,
+}: RadialArcPathProps) {
+  const center = size / 2;
   const arcSize = size - barWidth;
-  const path = buildArcPath({
-    centerX: size / 2,
-    centerY: size / 2,
-    startAngle: startAngle ?? 0,
-    angle,
-    size: arcSize / 2,
-  });
+  const radius = arcSize / 2;
 
-  return (
-    <path
-      d={path}
-      fill="none"
-      fillOpacity="0.85"
-      stroke={color}
-      strokeOpacity="1"
-      //strokeLinecap="butt"
-      strokeLinecap={roundedBars ? 'round' : 'butt'}
-      strokeWidth={barWidth}
-      strokeDasharray="0"
-    />
-  );
-}
-
-interface ArcPathOptions {
-  centerX: number;
-  centerY: number;
-  startAngle: number;
-  angle: number;
-  size: number;
-}
-
-function buildArcPath({ centerX, centerY, startAngle, angle, size }: ArcPathOptions) {
   let startDeg = startAngle;
   let startRadians = (Math.PI * (startDeg - 90)) / 180;
   let endDeg = angle + startAngle;
   let endRadians = (Math.PI * (endDeg - 90)) / 180;
 
-  let x1 = centerX + size * Math.cos(startRadians);
-  let y1 = centerY + size * Math.sin(startRadians);
-  let x2 = centerX + size * Math.cos(endRadians);
-  let y2 = centerY + size * Math.sin(endRadians);
+  let x1 = center + radius * Math.cos(startRadians);
+  let y1 = center + radius * Math.sin(startRadians);
+  let x2 = center + radius * Math.cos(endRadians);
+  let y2 = center + radius * Math.sin(endRadians);
 
   let largeArc = angle > 180 ? 1 : 0;
 
-  return ['M', x1, y1, 'A', size, size, 0, largeArc, 1, x2, y2].join(' ');
-}
-
-// function toCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
-//   let radian = ((angleInDegrees - 90) * Math.PI) / 180.0;
-
-//   return {
-//     x: centerX + radius * Math.cos(radian),
-//     y: centerY + radius * Math.sin(radian),
-//   };
-// }
-
-interface RadialTextProps {
-  displayValue: DisplayValue;
-  theme: GrafanaTheme2;
-  size: number;
-}
-
-function RadialText({ displayValue, theme, size }: RadialTextProps) {
-  const centerX = size / 2;
-  const centerY = size / 2;
-  const height = 14 * theme.typography.body.lineHeight;
-  const titleSpacing = 4;
-  const titleY = centerY - height / 2 - titleSpacing;
-  const valueY = centerY + height / 2 + titleSpacing;
+  const path = ['M', x1, y1, 'A', radius, radius, 0, largeArc, 1, x2, y2].join(' ');
 
   return (
-    <g>
-      <text
-        x={centerX}
-        y={titleY}
-        fontSize={'20'}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fill={theme.colors.text.primary}
-      >
-        {displayValue.prefix ?? ''}
-        {displayValue.text}
-        {displayValue.suffix ?? ''}
-      </text>
-      <text x={centerX} y={valueY} textAnchor="middle" dominantBaseline="middle" fill={theme.colors.text.secondary}>
-        {displayValue.title}
-      </text>
-    </g>
+    <>
+      <path
+        d={path}
+        fill="none"
+        fillOpacity="0.85"
+        stroke={color}
+        strokeOpacity="1"
+        //strokeLinecap="butt"
+        strokeLinecap={roundedBars ? 'round' : 'butt'}
+        strokeWidth={barWidth}
+        strokeDasharray="0"
+      />
+      {clockwise && spotlight && angle > 5 && (
+        <circle r={barWidth * 1} cx={x2} cy={y2} fill={`url(#spotlight-${gaugeId})`} />
+      )}
+      {!clockwise && spotlight && angle > 5 && (
+        <circle r={barWidth * 1} cx={x1} cy={y1} fill={`url(#spotlight-${gaugeId})`} />
+      )}
+    </>
   );
 }
