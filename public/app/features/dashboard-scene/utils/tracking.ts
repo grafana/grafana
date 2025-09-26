@@ -77,17 +77,24 @@ interface LayoutStats {
   maxDepth: number;
   layoutTypesCount: Record<DashboardV2Spec['layout']['kind'], number>;
 }
-export function getLayoutStatsForDashboard(layout: DashboardV2Spec['layout']): LayoutStats {
+interface PanelStats {
+  countByDatasourceType: Record<string, number>;
+}
+
+export function getStatsForDashboard(dashboard: DashboardV2Spec): { layoutStats: LayoutStats; panelStats: PanelStats } {
+  const { layout, elements } = dashboard;
+
   const layoutTypesCount: Record<DashboardV2Spec['layout']['kind'], number> = {
     AutoGridLayout: 0,
     GridLayout: 0,
     RowsLayout: 0,
     TabsLayout: 0,
   };
+
   let tabCount = 0;
   let maxDepth = 0;
 
-  const recursivelygetLayoutStats = (layout: DashboardV2Spec['layout'], depth: number) => {
+  const recursivelyGetLayoutStats = (layout: DashboardV2Spec['layout'], depth: number) => {
     const l = castLayoutKind(layout);
     if (depth > maxDepth) {
       maxDepth = depth;
@@ -103,7 +110,7 @@ export function getLayoutStatsForDashboard(layout: DashboardV2Spec['layout']): L
         layoutTypesCount.RowsLayout++;
         l.spec.rows.forEach((row) => {
           if (row.spec.layout) {
-            recursivelygetLayoutStats(row.spec.layout, depth + 1);
+            recursivelyGetLayoutStats(row.spec.layout, depth + 1);
           }
         });
         break;
@@ -112,7 +119,7 @@ export function getLayoutStatsForDashboard(layout: DashboardV2Spec['layout']): L
         tabCount += l.spec.tabs.length;
         l.spec.tabs.forEach((tab) => {
           if (tab.spec.layout) {
-            recursivelygetLayoutStats(tab.spec.layout, depth + 1);
+            recursivelyGetLayoutStats(tab.spec.layout, depth + 1);
           }
         });
         break;
@@ -120,9 +127,32 @@ export function getLayoutStatsForDashboard(layout: DashboardV2Spec['layout']): L
         break;
     }
   };
-  recursivelygetLayoutStats(layout, 0);
 
-  return { layoutTypesCount, tabCount, maxDepth };
+  recursivelyGetLayoutStats(layout, 0);
+
+  const countByDatasourceType: PanelStats['countByDatasourceType'] = {};
+  const panels = Object.values(elements).filter((e) => e.kind === 'Panel');
+
+  for (const panel of panels) {
+    for (const query of panel.spec.data.spec.queries) {
+      const { datasource, group: datasourceType } = query.spec.query;
+      if (datasource) {
+        countByDatasourceType[datasourceType] = countByDatasourceType[datasourceType] || 0;
+        countByDatasourceType[datasourceType]++;
+      }
+    }
+  }
+
+  return {
+    layoutStats: {
+      layoutTypesCount,
+      tabCount,
+      maxDepth,
+    },
+    panelStats: {
+      countByDatasourceType,
+    },
+  };
 }
 
 // type guard for layout kinds
@@ -201,6 +231,7 @@ export function trackDashboardSceneCreatedOrSaved(
     conditionalRenderRules: trackingInformation?.conditionalRenderRulesCount,
     autoLayoutCount: trackingInformation?.autoLayoutCount,
     customGridLayoutCount: trackingInformation?.customGridLayoutCount,
+    panelsByDatasourceType: trackingInformation?.panelsByDatasourceType,
   };
 
   DashboardInteractions.dashboardCreatedOrSaved(name, {
