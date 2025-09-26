@@ -1068,6 +1068,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardUndoRedo",
+        "resourceVersion": "1757940426210",
+        "creationTimestamp": "2025-09-15T12:47:06Z"
+      },
+      "spec": {
+        "description": "Enables undo/redo in dynamic dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashgpt",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2023-08-30T20:22:05Z"
@@ -1521,13 +1534,16 @@
     {
       "metadata": {
         "name": "featureToggleAdminPage",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-07-18T20:43:32Z"
+        "resourceVersion": "1758022099771",
+        "creationTimestamp": "2023-07-18T20:43:32Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-16 11:28:19.771156 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "codeowner": "@grafana/grafana-backend-services-squad",
         "requiresRestart": true,
         "hideFromDocs": true
       }
@@ -1557,6 +1573,20 @@
         "codeowner": "@grafana/alerting-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "filterOutBotsFromFrontendLogs",
+        "resourceVersion": "1758000919535",
+        "creationTimestamp": "2025-09-16T05:35:19Z"
+      },
+      "spec": {
+        "description": "Filter out bots from collecting data for Frontend Observability",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -1958,6 +1988,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthZHandlerRedirect",
+        "resourceVersion": "1758820248165",
+        "creationTimestamp": "2025-09-25T17:10:48Z"
+      },
+      "spec": {
+        "description": "Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthnMutation",
         "resourceVersion": "1753454405614",
         "creationTimestamp": "2025-07-25T15:05:32Z",
@@ -1989,6 +2033,21 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzEndpoints",
+        "resourceVersion": "1758779666607",
+        "creationTimestamp": "2025-09-25T05:54:26Z",
+        "deletionTimestamp": "2025-09-25T17:10:48Z"
+      },
+      "spec": {
+        "description": "Enables K8s AuthZ endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthzResourcePermissionApis",
         "resourceVersion": "1754668670559",
         "creationTimestamp": "2025-08-11T08:54:36Z"
@@ -1999,6 +2058,19 @@
         "codeowner": "@grafana/identity-access-team",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesCorrelations",
+        "resourceVersion": "1757513374180",
+        "creationTimestamp": "2025-09-10T14:09:34Z"
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes correlations",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "requiresRestart": true
       }
     },
     {
@@ -2380,7 +2452,8 @@
       "metadata": {
         "name": "newDashboardSharingComponent",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-05-03T15:02:18Z"
+        "creationTimestamp": "2024-05-03T15:02:18Z",
+        "deletionTimestamp": "2025-09-12T17:27:39Z"
       },
       "spec": {
         "description": "Enables the new sharing drawer design",
@@ -2903,16 +2976,16 @@
     {
       "metadata": {
         "name": "queryLibrary",
-        "resourceVersion": "1755721444487",
+        "resourceVersion": "1758208636622",
         "creationTimestamp": "2022-10-07T18:31:45Z",
         "deletionTimestamp": "2023-03-20T16:00:14Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-08-20 20:24:04.487598 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-09-18 15:17:16.622111 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Renamed feature toggle, enables Saved queries feature",
-        "stage": "privatePreview",
+        "description": "Enables Saved queries (query library) feature",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad"
       }
     },
@@ -3113,6 +3186,7 @@
         "name": "savedQueries",
         "resourceVersion": "1756920131554",
         "creationTimestamp": "2025-08-25T21:22:09Z",
+        "deletionTimestamp": "2025-09-18T12:07:31Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-09-03 17:22:11.554759 +0000 UTC"
         }
@@ -3314,6 +3388,20 @@
     },
     {
       "metadata": {
+        "name": "starsFromAPIServer",
+        "resourceVersion": "1758276055065",
+        "creationTimestamp": "2025-09-19T10:00:55Z"
+      },
+      "spec": {
+        "description": "populate star status from apiserver",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "storage",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2022-03-17T17:19:23Z"
@@ -3428,6 +3516,23 @@
         "stage": "experimental",
         "codeowner": "@grafana/observability-traces-and-profiling",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "tempoSearchBackendMigration",
+        "resourceVersion": "1758029567165",
+        "creationTimestamp": "2025-09-16T11:18:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-16 13:32:47.165146 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Run search queries through the tempo backend",
+        "stage": "GA",
+        "codeowner": "@grafana/oss-big-tent",
+        "requiresRestart": true,
+        "expression": "false"
       }
     },
     {
@@ -3635,6 +3740,20 @@
       },
       "spec": {
         "description": "Enable unified storage search UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageUseFullNgram",
+        "resourceVersion": "1758820248165",
+        "creationTimestamp": "2025-09-25T17:10:48Z"
+      },
+      "spec": {
+        "description": "Use full n-gram indexing instead of edge n-gram for unified storage search",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,

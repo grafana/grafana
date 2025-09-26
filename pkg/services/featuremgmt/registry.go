@@ -172,6 +172,15 @@ var (
 			AllowSelfServe: false,
 		},
 		{
+			Name:           "starsFromAPIServer",
+			Description:    "populate star status from apiserver",
+			Stage:          FeatureStageExperimental,
+			FrontendOnly:   true,
+			Owner:          grafanaFrontendPlatformSquad,
+			AllowSelfServe: false,
+			HideFromDocs:   true,
+		},
+		{
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
@@ -328,7 +337,7 @@ var (
 			Description:     "Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.",
 			Stage:           FeatureStageExperimental,
 			FrontendOnly:    false,
-			Owner:           grafanaOperatorExperienceSquad,
+			Owner:           grafanaBackendServicesSquad,
 			RequiresRestart: true,
 			HideFromDocs:    true,
 		},
@@ -484,6 +493,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesCorrelations",
+			Description:     "Adds support for Kubernetes correlations",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDataProSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,
@@ -625,6 +641,13 @@ var (
 		{
 			Name:         "dashboardNewLayouts",
 			Description:  "Enables experimental new dashboard layouts",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "dashboardUndoRedo",
+			Description:  "Enables undo/redo in dynamic dashboards",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
@@ -919,15 +942,7 @@ var (
 		},
 		{
 			Name:           "queryLibrary",
-			Description:    "Renamed feature toggle, enables Saved queries feature",
-			Stage:          FeatureStagePrivatePreview,
-			Owner:          grafanaSharingSquad,
-			FrontendOnly:   false,
-			AllowSelfServe: false,
-		},
-		{
-			Name:           "savedQueries",
-			Description:    "Enables Saved Queries feature",
+			Description:    "Enables Saved queries (query library) feature",
 			Stage:          FeatureStagePublicPreview,
 			Owner:          grafanaSharingSquad,
 			FrontendOnly:   false,
@@ -939,14 +954,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityLogsSquad,
 			FrontendOnly: true,
-		},
-		{
-			Name:         "newDashboardSharingComponent",
-			Description:  "Enables the new sharing drawer design",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaSharingSquad,
-			FrontendOnly: true,
-			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "alertingListViewV2",
@@ -1173,6 +1180,14 @@ var (
 		{
 			Name:              "unifiedStorageSearchSprinkles",
 			Description:       "Enable sprinkles on unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "unifiedStorageUseFullNgram",
+			Description:       "Use full n-gram indexing instead of edge n-gram for unified storage search",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromDocs:      true,
@@ -1728,6 +1743,14 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:              "kubernetesAuthZHandlerRedirect",
+			Description:       "Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:              "kubernetesAuthzResourcePermissionApis",
 			Description:       "Registers AuthZ resource permission /apis endpoints",
 			Stage:             FeatureStageExperimental,
@@ -2021,6 +2044,22 @@ var (
 			Owner:           grafanaPluginsPlatformSquad,
 			Expression:      "false",
 			RequiresRestart: true,
+		},
+		{
+			Name:            "tempoSearchBackendMigration",
+			Description:     "Run search queries through the tempo backend",
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaOSSBigTent,
+			Expression:      "false",
+			RequiresRestart: true,
+		},
+		{
+			Name:         "filterOutBotsFromFrontendLogs",
+			Description:  "Filter out bots from collecting data for Frontend Observability",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
 		},
 	}
 )

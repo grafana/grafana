@@ -4,9 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"slices"
 	"sort"
 	"strings"
+	"time"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -14,15 +19,13 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
+	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
 type finalizer struct {
 	lister        resources.ResourceLister
 	clientFactory resources.ClientFactory
+	metrics       *finalizerMetrics
 }
 
 func (f *finalizer) process(ctx context.Context,
@@ -32,33 +35,98 @@ func (f *finalizer) process(ctx context.Context,
 	logger := logging.FromContext(ctx)
 	logger.Info("process finalizers", "finalizers", finalizers)
 
-	if slices.Contains(finalizers, repository.CleanFinalizer) {
-		logger.Info("execute deletion hooks")
-		hooks, ok := repo.(repository.Hooks)
-		if ok {
-			if err := hooks.OnDelete(ctx); err != nil {
-				return fmt.Errorf("execute deletion hooks: %w", err)
+	orderedFinalizers := [3]string{
+		repository.CleanFinalizer,
+		repository.ReleaseOrphanResourcesFinalizer,
+		repository.RemoveOrphanResourcesFinalizer}
+
+	for _, finalizer := range orderedFinalizers {
+		var err error
+		var count int
+		start := time.Now()
+		outcome := metricutils.SuccessOutcome
+
+		switch finalizer {
+		case repository.CleanFinalizer:
+			// NOTE: the controller loop will never get run unless a finalizer is set
+			hooks, ok := repo.(repository.Hooks)
+			if ok {
+				if err = hooks.OnDelete(ctx); err != nil {
+					logger.Warn("Error running deletion hooks", "err", err)
+					outcome = metricutils.ErrorOutcome
+				}
 			}
-		}
-	}
 
-	if slices.Contains(finalizers, repository.ReleaseOrphanResourcesFinalizer) {
-		logger.Info("release orphan resources")
-		err := f.processExistingItems(ctx, repo.Config(), f.releaseResources(ctx, logger))
+		case repository.ReleaseOrphanResourcesFinalizer:
+			count, err = f.processExistingItems(ctx, repo.Config(), f.releaseResources(ctx, logger))
+			if err != nil {
+				outcome = metricutils.ErrorOutcome
+				logger.Warn("Error processing release orphan resources finalizer", "err", err)
+			}
+
+		case repository.RemoveOrphanResourcesFinalizer:
+			count, err = f.processExistingItems(ctx, repo.Config(), f.removeResources(ctx, logger))
+			if err != nil {
+				outcome = metricutils.ErrorOutcome
+				logger.Warn("Error processing remove orphan resources finalizer", "err", err)
+			}
+
+		default:
+			logger.Warn("skipping unknown finalizer", "finalizer", finalizer)
+			continue
+		}
+
+		f.metrics.RecordFinalizer(finalizer, outcome, count, time.Since(start).Seconds())
+
 		if err != nil {
-			return fmt.Errorf("release resources: %w", err)
+			return err
 		}
 	}
-
-	if slices.Contains(finalizers, repository.RemoveOrphanResourcesFinalizer) {
-		logger.Info("remove orphan resources")
-		err := f.processExistingItems(ctx, repo.Config(), f.removeResources(ctx, logger))
-		if err != nil {
-			return fmt.Errorf("remove resources: %w", err)
-		}
-	}
-
 	return nil
+}
+
+// internal iterator to walk the existing items
+func (f *finalizer) processExistingItems(
+	ctx context.Context,
+	repo *provisioning.Repository,
+	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
+) (int, error) {
+	logger := logging.FromContext(ctx)
+	clients, err := f.clientFactory.Clients(ctx, repo.Namespace)
+	if err != nil {
+		return 0, err
+	}
+
+	items, err := f.lister.List(ctx, repo.Namespace, repo.Name)
+	if err != nil {
+		logger.Warn("error listing resources", "error", err)
+		return 0, err
+	}
+
+	// Safe deletion order
+	sortResourceListForDeletion(items)
+	count := 0
+	errors := 0
+
+	for _, item := range items.Items {
+		res, _, err := clients.ForResource(ctx, schema.GroupVersionResource{
+			Group:    item.Group,
+			Resource: item.Resource,
+		})
+		if err != nil {
+			return count, err
+		}
+
+		err = cb(res, &item)
+		if err != nil {
+			logger.Error("error processing item", "name", item.Name, "error", err)
+			errors++
+		} else {
+			count++
+		}
+	}
+	logger.Info("processed orphan items", "items", count, "errors", errors)
+	return count, nil
 }
 
 func (f *finalizer) releaseResources(
@@ -97,51 +165,6 @@ func (f *finalizer) removeResources(
 		)
 		return client.Delete(ctx, item.Name, v1.DeleteOptions{})
 	}
-}
-
-// internal iterator to walk the existing items
-func (f *finalizer) processExistingItems(
-	ctx context.Context,
-	repo *provisioning.Repository,
-	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
-) error {
-	logger := logging.FromContext(ctx)
-	clients, err := f.clientFactory.Clients(ctx, repo.Namespace)
-	if err != nil {
-		return err
-	}
-
-	items, err := f.lister.List(ctx, repo.Namespace, repo.Name)
-	if err != nil {
-		logger.Error("error listing resources", "error", err)
-		return err
-	}
-
-	// Safe deletion order
-	sortResourceListForDeletion(items)
-	count := 0
-
-	for _, item := range items.Items {
-		res, _, err := clients.ForResource(ctx, schema.GroupVersionResource{
-			Group:    item.Group,
-			Resource: item.Resource,
-		})
-		if err != nil {
-			logger.Warn("error getting client for resource", "resource", item.Resource, "error", err)
-			return err
-		}
-
-		err = cb(res, &item)
-		if err != nil {
-			logger.Error("error processing item", "name", item.Name, "error", err)
-			return fmt.Errorf("processing item: %w", err)
-		} else {
-			count++
-		}
-	}
-
-	logger.Info("processed orphan items", "items", count)
-	return nil
 }
 
 type jsonPatchOperation struct {
