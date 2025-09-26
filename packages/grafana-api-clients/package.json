@@ -1,0 +1,51 @@
+{
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
+  "name": "@grafana/api-clients",
+  "version": "12.3.0-pre",
+  "description": "Grafana API client utilities",
+  "keywords": [
+    "grafana",
+    "typescript"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-api-clients"
+  },
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": "./src/index.ts",
+      "require": "./src/index.ts"
+    }
+  },
+  "publishConfig": {
+    "main": "./dist/cjs/index.cjs",
+    "module": "./dist/esm/index.mjs",
+    "types": "./dist/types/index.d.ts",
+    "access": "public"
+  },
+  "files": [
+    "./dist",
+    "./README.md",
+    "./CHANGELOG.md",
+    "./LICENSE_APACHE2"
+  ],
+  "scripts": {
+    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
+    "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
+    "clean": "rimraf ./dist ./compiled ./package.tgz",
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
+    "postpack": "mv package.json.bak package.json"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "rollup": "^4.22.4"
+  }
+}

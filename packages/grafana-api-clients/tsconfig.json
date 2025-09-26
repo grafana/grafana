@@ -1,0 +1,13 @@
+{
+  "extends": "../../scripts/tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "declaration": true,
+    "declarationDir": "./dist/types",
+    "emitDeclarationOnly": true,
+    "isolatedModules": true,
+    "rootDirs": ["."]
+  },
+  "exclude": ["dist/**/*"],
+  "include": ["src/**/*.ts*"]
+}
