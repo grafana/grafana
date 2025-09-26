@@ -277,7 +277,7 @@ func waitForItem(ctx context.Context, log logging.Logger, client resource.Client
 	retries := 0
 	if err != nil && k8serrors.IsNotFound(err) {
 		for retries < 5 {
-			log.Info("Waiting for item to be persisted", "check", obj.GetName(), "retries", retries)
+			log.Debug("Waiting for item to be persisted", "check", obj.GetName(), "retries", retries)
 			time.Sleep(retryAnnotationPollingInterval)
 			retries++
 			_, err = client.Get(ctx, resource.Identifier{
