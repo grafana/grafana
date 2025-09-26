@@ -70,7 +70,7 @@ func (b *FolderAPIBuilder) beginUpdate(ctx context.Context, obj runtime.Object, 
 
 func (b *FolderAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptions) {
 	ctx := context.Background()
-	log := logging.FromContext(ctx)
+	log := logging.DefaultLogger
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
 		log.Error("Failed to access deleted folder object metadata", "error", err)
@@ -80,7 +80,7 @@ func (b *FolderAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptio
 	log.Info("Propagating deleted folder to Zanzana", "folder", meta.GetName(), "parent", meta.GetFolder())
 	err = b.permissionStore.DeleteFolderParents(ctx, meta.GetNamespace(), meta.GetName())
 	if err != nil {
-		logging.FromContext(ctx).Warn("failed to propagate folder to zanzana", "err", err)
+		log.Warn("failed to propagate folder to zanzana", "err", err)
 	}
 }
 
