@@ -42,10 +42,16 @@
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json"
+    "postpack": "mv package.json.bak package.json",
+    "process-specs": "node --experimental-strip-types src/scripts/process-specs.ts",
+    "generate-apis": "yarn process-specs && rtk-query-codegen-openapi ./src/scripts/generate-rtk-apis.ts",
+    "generate:api-client": "NODE_OPTIONS='--experimental-strip-types --disable-warning=ExperimentalWarning' plop --plopfile src/generator/plopfile.ts"
   },
   "dependencies": {},
   "devDependencies": {
+    "@rtk-query/codegen-openapi": "^2.0.0",
+    "openapi-types": "^12.1.3",
+    "plop": "^4.0.1",
     "rollup": "^4.22.4"
   }
 }
