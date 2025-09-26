@@ -16,9 +16,9 @@
     "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-e2e-selectors"
   },
-  "main": "src/index.ts",
-  "types": "src/index.ts",
-  "module": "src/index.ts",
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.mjs",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -35,9 +35,6 @@
     }
   },
   "publishConfig": {
-    "main": "./dist/cjs/index.cjs",
-    "module": "./dist/esm/index.mjs",
-    "types": "./dist/types/index.d.ts",
     "access": "public"
   },
   "files": [
