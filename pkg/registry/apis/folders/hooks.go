@@ -82,10 +82,35 @@ func (b *FolderAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptio
 		return
 	}
 
-	log.Info("Propagating deleted folder to Zanzana", "folder", meta.GetName(), "parent", meta.GetFolder())
-	err = b.permissionStore.DeleteFolderParents(ctx, meta.GetNamespace(), meta.GetName())
-	if err != nil {
-		log.Warn("failed to propagate folder to zanzana", "err", err)
+	if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		log.Info("Propagating deleted folder to Zanzana", "folder", meta.GetName(), "parent", meta.GetFolder())
+		err = b.permissionStore.DeleteFolderParents(ctx, meta.GetNamespace(), meta.GetName())
+		if err != nil {
+			log.Warn("failed to propagate folder to zanzana", "err", err)
+		}
+	}
+
+	if b.resourcePermissionsSvc != nil {
+		log.Debug("deleting folder permissions", "uid", meta.GetName(), "namespace", meta.GetNamespace())
+		client := (*b.resourcePermissionsSvc).Namespace(meta.GetNamespace())
+		err := client.Delete(ctx, fmt.Sprintf("%s-%s-%s", folders.FolderResourceInfo.GroupVersionResource().Group, folders.FolderResourceInfo.GroupVersionResource().Resource, meta.GetName()), metav1.DeleteOptions{})
+		if err != nil {
+			log.Error("failed to delete folder permissions", "error", err)
+		}
+		return
+	}
+
+	// TODO: once the feature flag kubernetesAuthzResourcePermissionApis is removed, we should initialize resourcePermissionsSvc
+	// in the RegisterAPIService function and the below should be removed
+	if !util.IsInterfaceNil(b.folderPermissionsSvc) {
+		ns, err := claims.ParseNamespace(meta.GetNamespace())
+		if err != nil {
+			log.Error("failed to parse namespace", "error", err)
+			return
+		}
+		if accessErr := b.folderPermissionsSvc.DeleteResourcePermissions(ctx, ns.OrgID, meta.GetName()); accessErr != nil {
+			log.Warn("failed to delete folder permission after successfully deleting folder resource", "folder", meta.GetName(), "error", accessErr)
+		}
 	}
 }
 
