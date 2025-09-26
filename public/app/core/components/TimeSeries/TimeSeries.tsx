@@ -21,6 +21,8 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
   ) => {
     const { theme, timeZone, options, renderers, tweakAxis, tweakScale } = this.props;
 
+    console.log('options', options);
+
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       theme,
@@ -32,8 +34,8 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
       tweakAxis,
       hoverProximity: options?.tooltip?.hoverProximity,
       orientation: options?.orientation,
-      xAxis: {
-        ...calculateAnnotationLaneSizes(annotationLanes),
+      xAxisConfig: {
+        ...calculateAnnotationLaneSizes(annotationLanes, options?.annotations),
       },
     });
   };
