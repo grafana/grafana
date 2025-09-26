@@ -20,9 +20,11 @@ export interface RadialGaugeProps {
   endAngle?: number;
   gradientMode?: RadialGradientMode;
   barWidth?: number;
+  roundedBars?: boolean;
+  clockwise?: boolean;
 }
 
-export type RadialGradientMode = 'none' | 'scheme' | 'hue';
+export type RadialGradientMode = 'none' | 'scheme' | 'hue' | 'radial' | 'shade';
 
 export function RadialGauge(props: RadialGaugeProps) {
   const {
@@ -32,6 +34,8 @@ export function RadialGauge(props: RadialGaugeProps) {
     endAngle = 360,
     gradientMode = GraphGradientMode.None,
     barWidth = 10,
+    roundedBars = true,
+    clockwise = false,
   } = props;
   const theme = useTheme2();
   const gaugeId = useId();
@@ -78,6 +82,8 @@ export function RadialGauge(props: RadialGaugeProps) {
               size={size}
               color={barColor}
               barWidth={barWidth}
+              roundedBars={roundedBars}
+              clockwise={clockwise}
             />
           );
         })}
@@ -113,43 +119,66 @@ function GradientDef({ fieldDisplay, index, theme, gaugeId, gradientMode }: Grad
   const valuePercent = fieldDisplay.display.percent ?? 0;
   const colorMode = getFieldColorMode(colorModeId);
 
-  if (gradientMode === 'none') {
-    return;
-  }
+  switch (gradientMode) {
+    // Still not working
+    case 'radial': {
+      return (
+        <radialGradient fr="45%" cx="50%" cy="50%" r="60%" id={getGradientId(gaugeId, index)}>
+          <stop offset="0%" stopColor={'red'} stopOpacity={1} />
+          <stop offset="100%" stopColor={'blue'} stopOpacity={1} />
+        </radialGradient>
+      );
+    }
+    case 'shade': {
+      const color = fieldDisplay.display.color ?? 'gray';
+      const color1 = tinycolor(color).darken(5);
 
-  if (gradientMode === 'hue') {
-    const color = fieldDisplay.display.color ?? 'gray';
-    const color1 = tinycolor(color).spin(-25).darken(5);
-    const color2 = tinycolor(color).saturate(20).spin(20).brighten(10);
+      return (
+        <linearGradient x1="0" y1="1" x2="1" y2="1" id={getGradientId(gaugeId, index)}>
+          <stop offset="0%" stopColor={color1.toString()} stopOpacity={1} />
+          <stop offset="50%" stopColor={tinycolor(color).lighten(15).toString()} stopOpacity={1} />
+          <stop offset="53%" stopColor={tinycolor(color).lighten(15).toString()} stopOpacity={1} />
+          <stop offset="90%" stopColor={color} stopOpacity={1} />
+        </linearGradient>
+      );
+    }
+    case 'scheme': {
+      if (colorMode.isContinuous && colorMode.getColors) {
+        const colors = colorMode.getColors(theme);
+        const count = colors.length;
 
-    return (
-      <linearGradient x1="0" y1="1" x2="1" y2="1" id={getGradientId(gaugeId, index)}>
-        {theme.isDark ? (
-          <>
-            <stop offset="0%" stopColor={color2.lighten(10).toString()} stopOpacity={1} />
-            <stop offset="100%" stopColor={color1.darken(10).toString()} stopOpacity={1} />
-          </>
-        ) : (
-          <>
-            <stop offset="0%" stopColor={color2.lighten(10).toString()} stopOpacity={1} />
-            <stop offset="100%" stopColor={color1.toString()} stopOpacity={1} />
-          </>
-        )}
-      </linearGradient>
-    );
-  }
+        return (
+          <linearGradient x1="0" y1="1" x2={1 / valuePercent} y2="1" id={getGradientId(gaugeId, index)}>
+            {colors.map((stopColor, i) => (
+              <stop key={i} offset={`${(i / (count - 1)).toFixed(2)}`} stopColor={stopColor} stopOpacity={1}></stop>
+            ))}
+          </linearGradient>
+        );
+      }
 
-  if (colorMode.isContinuous && colorMode.getColors) {
-    const colors = colorMode.getColors(theme);
-    const count = colors.length;
+      return null;
+    }
+    case 'hue': {
+      const color = fieldDisplay.display.color ?? 'gray';
+      const color1 = tinycolor(color).spin(-20).darken(5);
+      const color2 = tinycolor(color).saturate(20).spin(20).brighten(10);
 
-    return (
-      <linearGradient x1="0" y1="1" x2={1 / valuePercent} y2="1" id={getGradientId(gaugeId, index)}>
-        {colors.map((stopColor, i) => (
-          <stop key={i} offset={`${(i / (count - 1)).toFixed(2)}`} stopColor={stopColor} stopOpacity={1}></stop>
-        ))}
-      </linearGradient>
-    );
+      return (
+        <linearGradient x1="0" y1="1" x2="1" y2="1" id={getGradientId(gaugeId, index)}>
+          {theme.isDark ? (
+            <>
+              <stop offset="0%" stopColor={color2.lighten(10).toString()} stopOpacity={1} />
+              <stop offset="100%" stopColor={color1.darken(10).toString()} stopOpacity={1} />
+            </>
+          ) : (
+            <>
+              <stop offset="0%" stopColor={color2.lighten(10).toString()} stopOpacity={1} />
+              <stop offset="100%" stopColor={color1.toString()} stopOpacity={1} />
+            </>
+          )}
+        </linearGradient>
+      );
+    }
   }
 
   return null;
@@ -164,16 +193,34 @@ export interface RadialBarProps {
   min: number;
   max: number;
   size: number;
-  startAngle?: number;
-  endAngle?: number;
+  startAngle: number;
+  endAngle: number;
   color: string;
   barWidth: number;
+  roundedBars?: boolean;
+  clockwise: boolean;
 }
 
-export function RadialBar({ value, min, max, startAngle = 0, size, endAngle = 360, color, barWidth }: RadialBarProps) {
+export function RadialBar({
+  value,
+  min,
+  max,
+  startAngle,
+  size,
+  endAngle,
+  color,
+  barWidth,
+  roundedBars,
+  clockwise,
+}: RadialBarProps) {
   const theme = useTheme2();
   const range = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
   const angle = ((value - min) / (max - min)) * range;
+
+  if (!clockwise) {
+    startAngle = endAngle - angle;
+  }
+
   const trackStart = startAngle + angle;
   const trackLength = range - angle;
 
@@ -183,17 +230,17 @@ export function RadialBar({ value, min, max, startAngle = 0, size, endAngle = 36
         angle={trackLength}
         size={size}
         startAngle={trackStart}
-        fullAngle={endAngle}
         color={theme.colors.action.hover}
         barWidth={barWidth}
+        roundedBars={roundedBars}
       />
       <RadialArcPath
         angle={angle}
         size={size}
         startAngle={startAngle}
-        fullAngle={endAngle}
         color={color}
         barWidth={barWidth}
+        roundedBars={roundedBars}
       />
     </>
   );
@@ -203,12 +250,12 @@ export interface RadialArcPathProps {
   angle: number;
   startAngle?: number;
   size: number;
-  fullAngle?: number;
   color: string;
   barWidth: number;
+  roundedBars?: boolean;
 }
 
-export function RadialArcPath({ startAngle, angle, size, fullAngle, color, barWidth }: RadialArcPathProps) {
+export function RadialArcPath({ startAngle, angle, size, color, barWidth, roundedBars }: RadialArcPathProps) {
   const arcSize = size - barWidth;
   const path = buildArcPath({
     centerX: size / 2,
@@ -216,7 +263,6 @@ export function RadialArcPath({ startAngle, angle, size, fullAngle, color, barWi
     startAngle: startAngle ?? 0,
     angle,
     size: arcSize / 2,
-    fullAngle: fullAngle ?? 360,
   });
 
   return (
@@ -227,7 +273,7 @@ export function RadialArcPath({ startAngle, angle, size, fullAngle, color, barWi
       stroke={color}
       strokeOpacity="1"
       //strokeLinecap="butt"
-      strokeLinecap="round"
+      strokeLinecap={roundedBars ? 'round' : 'butt'}
       strokeWidth={barWidth}
       strokeDasharray="0"
     />
@@ -240,14 +286,12 @@ interface ArcPathOptions {
   startAngle: number;
   angle: number;
   size: number;
-  fullAngle: number;
 }
 
-function buildArcPath({ centerX, centerY, startAngle, angle, size, fullAngle }: ArcPathOptions) {
+function buildArcPath({ centerX, centerY, startAngle, angle, size }: ArcPathOptions) {
   let startDeg = startAngle;
   let startRadians = (Math.PI * (startDeg - 90)) / 180;
   let endDeg = angle + startAngle;
-
   let endRadians = (Math.PI * (endDeg - 90)) / 180;
 
   let x1 = centerX + size * Math.cos(startRadians);
@@ -285,12 +329,19 @@ function RadialText({ displayValue, theme, size }: RadialTextProps) {
 
   return (
     <g>
-      <text x={centerX} y={titleY} textAnchor="middle" dominantBaseline="middle" fill={theme.colors.text.primary}>
+      <text
+        x={centerX}
+        y={titleY}
+        fontSize={'20'}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fill={theme.colors.text.primary}
+      >
         {displayValue.prefix ?? ''}
         {displayValue.text}
         {displayValue.suffix ?? ''}
       </text>
-      <text x={centerX} y={valueY} textAnchor="middle" dominantBaseline="middle" fill={theme.colors.text.primary}>
+      <text x={centerX} y={valueY} textAnchor="middle" dominantBaseline="middle" fill={theme.colors.text.secondary}>
         {displayValue.title}
       </text>
     </g>

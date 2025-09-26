@@ -19,9 +19,24 @@ const meta: Meta<typeof RadialBar> = {
 export const Examples: StoryFn<typeof RadialBar> = (args) => {
   return (
     <Stack direction={'column'} gap={3}>
-      <RadialBarExample value={70} />
+      <Stack direction="row" alignItems="center" gap={3}>
+        <RadialBarExample value={70} />
+        <RadialBarExample value={70} seriesName="Clockwise" clockwise />
+      </Stack>
       <div>Gradient: Hue</div>
-      <RadialBarExample value={70} gradientMode="hue" />
+      <Stack direction="row" alignItems="center" gap={3}>
+        <RadialBarExample value={30} gradientMode="hue" color="blue" />
+        <RadialBarExample value={50} gradientMode="hue" color="green" />
+        <RadialBarExample value={60} gradientMode="hue" color="red" />
+        <RadialBarExample value={90} gradientMode="hue" color="purple" />
+      </Stack>
+      <div>Gradient: Shade</div>
+      <Stack direction="row" alignItems="center" gap={3}>
+        <RadialBarExample value={30} gradientMode="shade" color="blue" />
+        <RadialBarExample value={40} gradientMode="shade" color="green" />
+        <RadialBarExample value={60} gradientMode="shade" color="red" />
+        <RadialBarExample value={70} gradientMode="shade" color="purple" />
+      </Stack>
       <div>Gradient: Scheme, startAngle: 240° endAngle: 120°</div>
       <Stack direction="row" alignItems="center" gap={3}>
         <RadialBarExample
@@ -39,6 +54,8 @@ export const Examples: StoryFn<typeof RadialBar> = (args) => {
           endAngle={120}
         />
       </Stack>
+      <div>Gradient: Radial</div>
+      <RadialBarExample value={70} gradientMode="radial" color="purple" />
     </Stack>
   );
 };
@@ -47,22 +64,26 @@ interface ExampleProps {
   colorMode?: FieldColorModeId;
   gradientMode?: RadialGradientMode;
   color?: string;
+  seriesName?: string;
   value?: number;
   startAngle?: number;
   endAngle?: number;
   min?: number;
   max?: number;
+  clockwise?: boolean;
 }
 
 function RadialBarExample({
   colorMode = FieldColorModeId.Fixed,
   gradientMode = 'none',
   color = 'blue',
+  seriesName = 'Server A',
   value = 70,
   startAngle,
   endAngle,
   min = 0,
   max = 100,
+  clockwise = false,
 }: ExampleProps) {
   const theme = useTheme2();
 
@@ -71,7 +92,7 @@ function RadialBarExample({
     length: 1,
     fields: [
       {
-        name: 'Server A',
+        name: seriesName,
         type: FieldType.number,
         values: [value],
         config: {
@@ -106,6 +127,7 @@ function RadialBarExample({
       gradientMode={gradientMode}
       startAngle={startAngle}
       endAngle={endAngle}
+      clockwise={clockwise}
     />
   );
 }
