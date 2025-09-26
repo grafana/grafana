@@ -21,23 +21,21 @@ import (
 const MaxNumberOfFolders = 10000
 
 type FolderManager struct {
-	repo             repository.ReaderWriter
-	tree             FolderTree
-	folderClient     dynamic.ResourceInterface
-	permissionClient ResourcePermissionsClient
+	repo   repository.ReaderWriter
+	tree   FolderTree
+	client dynamic.ResourceInterface
 }
 
-func NewFolderManager(repo repository.ReaderWriter, folderClient dynamic.ResourceInterface, permissionClient ResourcePermissionsClient, lookup FolderTree) *FolderManager {
+func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree) *FolderManager {
 	return &FolderManager{
-		repo:             repo,
-		tree:             lookup,
-		folderClient:     folderClient,
-		permissionClient: permissionClient,
+		repo:   repo,
+		tree:   lookup,
+		client: client,
 	}
 }
 
 func (fm *FolderManager) Client() dynamic.ResourceInterface {
-	return fm.folderClient
+	return fm.client
 }
 
 func (fm *FolderManager) Tree() FolderTree {
@@ -95,7 +93,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 // - it will error if the folder is not owned by this repository
 func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, parent string) error {
 	cfg := fm.repo.Config()
-	obj, err := fm.folderClient.Get(ctx, folder.ID, metav1.GetOptions{})
+	obj, err := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
 	if err == nil {
 		current, ok := obj.GetAnnotations()[utils.AnnoKeyManagerIdentity]
 		if !ok {
@@ -134,6 +132,8 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 
 	if parent != "" {
 		meta.SetFolder(parent)
+	} else {
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
 	}
 	meta.SetManagerProperties(utils.ManagerProperties{
 		Kind:     utils.ManagerKindRepo,
@@ -143,12 +143,12 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		Path: folder.Path,
 	})
 
-	if _, err := fm.folderClient.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
+	if _, err := fm.client.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
 		// there is a potential race here where two syncs can be triggered
 		// if we try to create and there is an error, check if it is from another sync
 		// job for this repo that created it
 		if apierrors.IsAlreadyExists(err) || err.Error() == dashboards.ErrFolderVersionMismatch.Error() {
-			obj, err2 := fm.folderClient.Get(ctx, folder.ID, metav1.GetOptions{})
+			obj, err2 := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
 			if err2 != nil {
 				return fmt.Errorf("failed to get folder: %w", err2)
 			} else if obj == nil {
@@ -168,22 +168,11 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 
 		return fmt.Errorf("failed to create folder: %w", err)
 	}
-
-	// for root level folders, we want to create default permissions.
-	// this will be removed when either we support ResourcePermissions in git sync, or we
-	// have changed the folder structure to always
-	if meta.GetFolder() == "" {
-		err := fm.permissionClient.createRootPermissions(ctx, folders.FolderResourceInfo.GroupVersionResource(), folder.ID, cfg.GetNamespace())
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
 func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructured.Unstructured, error) {
-	return fm.folderClient.Get(ctx, name, metav1.GetOptions{})
+	return fm.client.Get(ctx, name, metav1.GetOptions{})
 }
 
 // ReplicateTree replicates the folder tree to the repository.

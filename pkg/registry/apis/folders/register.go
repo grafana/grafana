@@ -14,6 +14,7 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
@@ -54,10 +55,11 @@ type FolderAPIBuilder struct {
 	permissionsOnCreate bool
 
 	// Legacy services -- these will not exist in the MT environment
-	folderSvc            folder.LegacyService
-	folderPermissionsSvc accesscontrol.FolderPermissionsService
-	acService            accesscontrol.Service
-	ac                   accesscontrol.AccessControl
+	folderSvc              folder.LegacyService
+	resourcePermissionsSvc *dynamic.NamespaceableResourceInterface
+	folderPermissionsSvc   accesscontrol.FolderPermissionsService // TODO: Remove this once kubernetesAuthzResourcePermissionApis is removed
+	acService              accesscontrol.Service
+	ac                     accesscontrol.AccessControl
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
@@ -88,12 +90,13 @@ func RegisterAPIService(cfg *setting.Cfg,
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client) *FolderAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
-		features:        features,
-		accessClient:    ac,
-		searcher:        searcher,
-		permissionStore: reconcilers.NewZanzanaPermissionStore(zanzanaClient),
+		features:               features,
+		accessClient:           ac,
+		searcher:               searcher,
+		permissionStore:        reconcilers.NewZanzanaPermissionStore(zanzanaClient),
+		resourcePermissionsSvc: resourcePermissionsSvc,
 	}
 }
 
@@ -158,11 +161,12 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 			return err
 		}
 		b.storage = &folderStorage{
-			tableConverter:       resourceInfo.TableConverter(),
-			folderPermissionsSvc: b.folderPermissionsSvc,
-			acService:            b.acService,
-			permissionsOnCreate:  b.permissionsOnCreate,
-			store:                dw,
+			tableConverter:         resourceInfo.TableConverter(),
+			folderPermissionsSvc:   b.folderPermissionsSvc,
+			resourcePermissionsSvc: b.resourcePermissionsSvc,
+			acService:              b.acService,
+			permissionsOnCreate:    b.permissionsOnCreate,
+			store:                  dw,
 		}
 	}
 

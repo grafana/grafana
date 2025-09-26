@@ -12,7 +12,6 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -105,16 +104,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			responder.Error(fmt.Errorf("failed to get folder client: %w", err))
 			return
 		}
-
-		// if the feature flag kubernetesAuthzResourcePermissionApis is not enabled, we wont be able to have this client
-		// note that when running in one binary, default permissions are already being created
-		var resourcePermissionsClient resources.ResourcePermissionsClient
-		permissionClient, _, err := clients.ForResource(ctx, iam.ResourcePermissionInfo.GroupVersionResource())
-		if err == nil {
-			resourcePermissionsClient = resources.NewResourcePermissionsClient(&permissionClient)
-		}
-
-		folders := resources.NewFolderManager(readWriter, folderClient, resourcePermissionsClient, resources.NewEmptyFolderTree())
+		folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree())
 		dualReadWriter := resources.NewDualReadWriter(readWriter, parser, folders, c.access)
 		query := r.URL.Query()
 		opts := resources.DualWriteOptions{
