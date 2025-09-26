@@ -11,7 +11,7 @@ interface UseScopesHighlightingParams {
   treeQuery: string;
   scopeNodes: NodesMap;
   selectedScopes: SelectedScope[];
-  onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
+  toggleExpandedNode: (scopeNodeId: string) => void;
   selectScope: (scopeNodeId: string) => void;
   deselectScope: (scopeNodeId: string) => void;
 }
@@ -22,7 +22,7 @@ export function useScopesHighlighting({
   treeQuery,
   scopeNodes,
   selectedScopes,
-  onNodeUpdate,
+  toggleExpandedNode,
   selectScope,
   deselectScope,
 }: UseScopesHighlightingParams) {
@@ -47,7 +47,7 @@ export function useScopesHighlighting({
         isNodeExpandable(scopeNodes[nodeId]);
 
       if (isExpanding || isSelectingAndExpandable) {
-        onNodeUpdate(nodeId, true, treeQuery);
+        toggleExpandedNode(nodeId);
         setHighlightEnabled(false);
         return;
       }

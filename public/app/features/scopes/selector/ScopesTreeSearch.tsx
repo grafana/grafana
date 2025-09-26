@@ -12,7 +12,7 @@ export interface ScopesTreeSearchProps {
   anyChildExpanded: boolean;
   searchArea: string;
   treeNode: TreeNode;
-  onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
+  filterNode: (scopeNodeId: string, query: string) => void;
   onFocus: () => void;
   onBlur: () => void;
   'aria-controls': string;
@@ -22,7 +22,7 @@ export interface ScopesTreeSearchProps {
 export function ScopesTreeSearch({
   anyChildExpanded,
   treeNode,
-  onNodeUpdate,
+  filterNode,
   searchArea,
   onFocus,
   onBlur,
@@ -45,7 +45,7 @@ export function ScopesTreeSearch({
   useDebounce(
     () => {
       if (inputState.dirty) {
-        onNodeUpdate(treeNode.scopeNodeId, true, inputState.value);
+        filterNode(treeNode.scopeNodeId, inputState.value);
       }
     },
     500,
