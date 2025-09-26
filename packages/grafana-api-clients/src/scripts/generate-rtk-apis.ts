@@ -101,6 +101,12 @@ const config: ConfigFile = {
       tag: true,
       hooks: true,
     },
+    '../clients/dashboard/v0alpha1/endpoints.gen.ts': {
+      apiFile: '../clients/dashboard/v0alpha1/baseAPI.ts',
+      schemaFile: path.join(basePath, 'data/openapi/dashboard.grafana.app-v1alpha1.json'),
+      filterEndpoints: ['getSearch'],
+      tag: true,
+    },
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };

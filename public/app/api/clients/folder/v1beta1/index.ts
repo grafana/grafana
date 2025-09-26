@@ -1,6 +1,6 @@
 import { DescendantCount } from 'app/types/folders';
 
-import { generatedAPI } from './endpoints.gen';
+import { folderAPIv1beta1Generated as generatedAPI } from '@grafana/api-clients';
 import { getParsedCounts } from './utils';
 
 export const folderAPIv1beta1 = generatedAPI
@@ -98,4 +98,4 @@ export const {
 } = folderAPIv1beta1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export { type Folder, type FolderList, type CreateFolderApiArg, type ReplaceFolderApiArg } from './endpoints.gen';
+export { type Folder, type FolderList, type CreateFolderApiArg, type ReplaceFolderApiArg } from '@grafana/api-clients';

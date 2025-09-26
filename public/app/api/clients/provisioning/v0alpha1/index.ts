@@ -10,14 +10,14 @@ import { refetchChildren } from '../../../../features/browse-dashboards/state/ac
 import { createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
 
 import {
-  generatedAPI,
+  provisioningAPIv0alpha1Generated as generatedAPI,
   JobSpec,
   JobStatus,
   RepositorySpec,
   RepositoryStatus,
   ErrorDetails,
   Status,
-} from './endpoints.gen';
+} from '@grafana/api-clients';
 
 export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {

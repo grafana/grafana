@@ -5,7 +5,7 @@ import { createSuccessNotification } from '../../../../core/copy/appNotification
 import { contextSrv } from '../../../../core/services/context_srv';
 import { handleError } from '../../../utils';
 
-import { generatedAPI, Playlist, PlaylistSpec } from './endpoints.gen';
+import { playlistAPIv0alpha1Generated as generatedAPI, Playlist, PlaylistSpec } from '@grafana/api-clients';
 
 export const playlistAPIv0alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
@@ -87,4 +87,4 @@ export const {
 } = playlistAPIv0alpha1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export type { Playlist, PlaylistSpec } from './endpoints.gen';
+export type { Playlist, PlaylistSpec } from '@grafana/api-clients';
