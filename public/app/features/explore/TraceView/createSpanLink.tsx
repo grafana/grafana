@@ -70,13 +70,13 @@ export function createSpanLinkFactory({
     splitOpenFn,
     // We need this to make the types happy but for this branch of code it does not matter which field we supply.
     dataFrame.fields[0],
+    app,
     traceToLogsOptions,
     traceToMetricsOptions,
     createFocusSpanLink,
     scopedVars,
     dataFrame,
-    dataLinkPostProcessor,
-    app
+    dataLinkPostProcessor
   );
 
   return function SpanLink(span: TraceSpan): SpanLinkDef[] | undefined {
@@ -153,13 +153,13 @@ export const feO11yTagKey = 'gf.feo11y.app.id';
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
   field: Field,
+  app: CoreApp,
   traceToLogsOptions?: TraceToLogsOptionsV2,
   traceToMetricsOptions?: TraceToMetricsOptions,
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>,
   scopedVars?: ScopedVars,
   dataFrame?: DataFrame,
-  dataLinkPostProcessor?: DataLinkPostProcessor,
-  app?: CoreApp
+  dataLinkPostProcessor?: DataLinkPostProcessor
 ) {
   let logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
   if (traceToLogsOptions?.datasourceUid) {

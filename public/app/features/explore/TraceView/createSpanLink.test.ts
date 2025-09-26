@@ -1,11 +1,12 @@
 import {
-  DataSourceInstanceSettings,
-  LinkModel,
+  CoreApp,
   createDataFrame,
-  SupportedTransformationType,
-  DataLinkConfigOrigin,
-  FieldType,
   DataFrame,
+  DataLinkConfigOrigin,
+  DataSourceInstanceSettings,
+  FieldType,
+  LinkModel,
+  SupportedTransformationType,
 } from '@grafana/data';
 import { TraceToLogsOptionsV2, TraceToMetricsOptions } from '@grafana/o11y-ds-frontend';
 import { DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
@@ -70,6 +71,7 @@ describe('createSpanLinkFactory', () => {
       splitOpenFn: splitOpenFn,
       trace: dummyTraceData,
       dataFrame: dummyDataFrame,
+      app: CoreApp.Explore,
     });
     const links = createLink!(createTraceSpan());
     expect(links).toBeDefined();
@@ -223,6 +225,7 @@ describe('createSpanLinkFactory', () => {
           ],
         }),
         trace: dummyTraceData,
+        app: CoreApp.Explore,
       });
       expect(createLink).toBeDefined();
       const links = createLink!(createTraceSpan());
@@ -494,6 +497,7 @@ describe('createSpanLinkFactory', () => {
         },
         trace: dummyTraceData,
         dataFrame: dummyDataFrame,
+        app: CoreApp.Explore,
       });
       expect(createLink).toBeDefined();
 
@@ -517,6 +521,7 @@ describe('createSpanLinkFactory', () => {
         } as TraceToMetricsOptions,
         trace: dummyTraceData,
         dataFrame: dummyDataFrame,
+        app: CoreApp.Explore,
       });
       expect(createLink).toBeDefined();
 
@@ -539,6 +544,7 @@ describe('createSpanLinkFactory', () => {
         },
         trace: dummyTraceData,
         dataFrame: dummyDataFrame,
+        app: CoreApp.Explore,
       });
       expect(createLink).toBeDefined();
 
@@ -589,6 +595,7 @@ describe('createSpanLinkFactory', () => {
         },
         trace: dummyTraceData,
         dataFrame: dummyDataFrame,
+        app: CoreApp.Explore,
       });
       expect(createLink).toBeDefined();
 
@@ -618,6 +625,7 @@ describe('createSpanLinkFactory', () => {
       },
       trace: dummyTraceData,
       dataFrame: dummyDataFrame,
+      app: CoreApp.Explore,
     });
     expect(createLink).toBeDefined();
 
@@ -1421,6 +1429,7 @@ describe('createSpanLinkFactory', () => {
             },
           ],
         }),
+        app: CoreApp.Explore,
         trace: dummyTraceData,
       });
       expect(createLink).toBeDefined();
@@ -1620,6 +1629,7 @@ describe('dataFrame links', () => {
     const createLink = createSpanLinkFactory({
       splitOpenFn,
       dataFrame: multiLinkDataFrame,
+      app: CoreApp.Explore,
       trace: dummyTraceData,
     });
 
@@ -1666,6 +1676,7 @@ function setupSpanLinkFactory(
         href: `${traceId}-${spanId}`,
       } as unknown as LinkModel;
     },
+    app: CoreApp.Explore,
     trace: dummyTraceData,
     dataFrame: dummyDataFrameForProfiles ? dummyDataFrameForProfiles : dummyDataFrame,
   });
