@@ -33,9 +33,13 @@ on:
         type: string
         required: false
         default: github-prerelease-writer@grafanalabs-workload-identity.iam.gserviceaccount.com
+      runs-on:
+        type: string
+        required: false
+        default: github-hosted-ubuntu-x64-small
 jobs:
   publish:
-    runs-on: github-hosted-ubuntu-x64-small
+    runs-on: ${{ inputs.runs-on }}
     name: Publish
     permissions:
       id-token: write
