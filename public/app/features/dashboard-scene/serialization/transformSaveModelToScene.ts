@@ -23,6 +23,7 @@ import {
 import { isWeekStart } from '@grafana/ui';
 import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
 import {
+  getDashboardComponentInteractionCallback,
   getDashboardInteractionCallback,
   getDashboardSceneProfiler,
 } from 'app/features/dashboard/services/DashboardProfiler';
@@ -309,7 +310,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     {
       enableInteractionTracking:
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
-      onInteractionComplete: getDashboardInteractionCallback(oldModel.uid, oldModel.title),
+      onInteractionComplete: getDashboardComponentInteractionCallback(oldModel.uid, oldModel.title),
     },
     getDashboardSceneProfiler()
   );
