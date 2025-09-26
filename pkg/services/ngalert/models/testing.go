@@ -13,6 +13,8 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers/schema"
+	"github.com/grafana/alerting/receivers/webex"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -1209,7 +1211,7 @@ func (n ReceiverMutators) WithProvenance(provenance Provenance) Mutator[Receiver
 	}
 }
 
-func (n ReceiverMutators) WithValidIntegration(integrationType string) Mutator[Receiver] {
+func (n ReceiverMutators) WithValidIntegration(integrationType schema.IntegrationType) Mutator[Receiver] {
 	return func(r *Receiver) {
 		// TODO add support for v0
 		integration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
@@ -1217,7 +1219,7 @@ func (n ReceiverMutators) WithValidIntegration(integrationType string) Mutator[R
 	}
 }
 
-func (n ReceiverMutators) WithInvalidIntegration(integrationType string) Mutator[Receiver] {
+func (n ReceiverMutators) WithInvalidIntegration(integrationType schema.IntegrationType) Mutator[Receiver] {
 	return func(r *Receiver) {
 		// TODO add support for v0
 		integration := IntegrationGen(IntegrationMuts.WithInvalidConfig(integrationType))()
@@ -1278,7 +1280,7 @@ func IntegrationGen(mutators ...Mutator[Integration]) func() Integration {
 			SecureSettings:        make(map[string]string),
 		}
 
-		IntegrationMuts.WithValidConfig(randomIntegrationType)(&c)
+		IntegrationMuts.WithValidConfig(schema.IntegrationType(randomIntegrationType))(&c)
 
 		for _, mutator := range mutators {
 			mutator(&c)
@@ -1312,11 +1314,12 @@ func (n IntegrationMutators) WithName(name string) Mutator[Integration] {
 	}
 }
 
-func (n IntegrationMutators) WithValidConfig(integrationType string) Mutator[Integration] {
+func (n IntegrationMutators) WithValidConfig(integrationType schema.IntegrationType) Mutator[Integration] {
 	return func(c *Integration) {
 		// TODO add support for v0 integrations
-		config := alertingNotify.AllKnownConfigsForTesting[integrationType].GetRawNotifierConfig(c.Name)
-		integrationConfig, _ := IntegrationConfigFromType(integrationType, nil)
+		config := alertingNotify.AllKnownConfigsForTesting[string(integrationType)].GetRawNotifierConfig(c.Name)
+		typeSchema, _ := alertingNotify.GetSchemaForIntegration(integrationType)
+		integrationConfig, _ := IntegrationConfigFromSchema(typeSchema, schema.V1)
 		c.Config = integrationConfig
 
 		var settings map[string]any
@@ -1332,13 +1335,13 @@ func (n IntegrationMutators) WithValidConfig(integrationType string) Mutator[Int
 	}
 }
 
-func (n IntegrationMutators) WithInvalidConfig(integrationType string) Mutator[Integration] {
+func (n IntegrationMutators) WithInvalidConfig(integrationType schema.IntegrationType) Mutator[Integration] {
 	return func(c *Integration) {
-		integrationConfig, _ := IntegrationConfigFromType(integrationType, nil)
-		c.Config = integrationConfig
+		typeSchema, _ := alertingNotify.GetSchemaForIntegration(integrationType)
+		c.Config, _ = IntegrationConfigFromSchema(typeSchema, schema.V1)
 		c.Settings = map[string]interface{}{}
 		c.SecureSettings = map[string]string{}
-		if integrationType == "webex" {
+		if integrationType == webex.Type {
 			// Webex passes validation without any settings but should fail with an unparsable URL.
 			c.Settings["api_url"] = "(*^$*^%!@#$*()"
 		}
