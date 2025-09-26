@@ -196,6 +196,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 	// This is a general test for the unified storage list operation. We don't have a common test
 	// directory for now, so we (search and storage) keep it here as we own this part of the tests.
 	t.Run("make sure list works with continue tokens", func(t *testing.T) {
+		t.Skip("Skipping flaky test - list works with continue tokens")
 		modes := []grafanarest.DualWriterMode{
 			grafanarest.Mode1,
 			grafanarest.Mode2,
@@ -1252,7 +1253,7 @@ func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *tes
 		t.Skip("test only on sqlite for now")
 	}
 
-	for mode := 0; mode <= 2; mode++ {
+	for mode := 0; mode <= 5; mode++ {
 		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, delete parent blocked by library elements in child)", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 

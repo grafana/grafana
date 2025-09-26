@@ -106,6 +106,7 @@ func TestTemplates(t *testing.T) {
 			PermissionTable:    nodb.Table("permission"),
 			RoleTable:          nodb.Table("role"),
 			ManagedRolePattern: "managed:%",
+			RoleName:           q.RoleName,
 		}
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
@@ -198,6 +199,14 @@ func TestTemplates(t *testing.T) {
 					Data: getDeleteResourcePermissionsQuery(&DeleteResourcePermissionsQuery{
 						Scope: "dash_123",
 						OrgID: 3,
+					}),
+				},
+				{
+					Name: "specific_role_cleanup_query",
+					Data: getDeleteResourcePermissionsQuery(&DeleteResourcePermissionsQuery{
+						Scope:    "dash_123",
+						OrgID:    3,
+						RoleName: "managed:users:1:permissions",
 					}),
 				},
 			},

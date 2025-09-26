@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/types"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -191,6 +193,20 @@ func setupTestRoles(t *testing.T, store db.DB) {
 	require.NoError(t, err)
 }
 
+func setupFineGrainedPermissions(t *testing.T, store db.DB) {
+	sess := store.GetSqlxSession()
+
+	// Permissions
+	_, err := sess.Exec(context.Background(),
+		`INSERT INTO permission (role_id, action, scope, created, updated)
+		VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)`,
+		// Permissions for managed:users:2:permissions
+		2, "folders:read", "folders:uid:fold1", "2025-09-02", "2025-09-02",
+		2, "folders:create", "folders:uid:fold1", "2025-09-02", "2025-09-02",
+	)
+	require.NoError(t, err)
+}
+
 func TestIntegration_ResourcePermSqlBackend_newRoleIterator(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -297,10 +313,15 @@ func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) 
 			ns := types.NamespaceInfo{
 				OrgID: tt.orgID,
 			}
-			got, err := backend.getResourcePermission(context.Background(), sql, ns, tt.resource)
+			var got *v0alpha1.ResourcePermission
+			err = sql.DB.GetSqlxSession().WithTransaction(context.Background(), func(tx *session.SessionTx) error {
+				got, err = backend.getResourcePermission(context.Background(), sql, tx, ns, tt.resource)
+				return err
+			})
+
 			if tt.err != nil {
 				require.Error(t, err)
-				require.ErrorIs(t, err, tt.err)
+				require.ErrorAs(t, err, &tt.err)
 				return
 			}
 			require.NoError(t, err)
@@ -369,7 +390,10 @@ func TestIntegration_ResourcePermSqlBackend_deleteResourcePermission(t *testing.
 			require.NoError(t, err)
 
 			// check that the resource has been deleted
-			_, err = backend.getResourcePermission(context.Background(), sql, ns, tt.resource)
+			err = sql.DB.GetSqlxSession().WithTransaction(context.Background(), func(tx *session.SessionTx) error {
+				_, err = backend.getResourcePermission(context.Background(), sql, tx, ns, tt.resource)
+				return err
+			})
 			require.Error(t, err)
 		})
 	}
@@ -426,7 +450,10 @@ func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.
 		sqlHelper, _ := backend.dbProvider(ctx)
 		backend.identityStore = NewFakeIdentityStore(t)
 
-		mapper, grn, err := backend.splitResourceName(resourcePerm.Name)
+		grn, err := splitResourceName(resourcePerm.Name)
+		require.NoError(t, err)
+
+		mapper, err := backend.getResourceMapper(grn.Group, grn.Resource)
 		require.NoError(t, err)
 
 		rv, err := backend.createResourcePermission(ctx, sqlHelper, types.NamespaceInfo{Value: "default", OrgID: 1}, mapper, grn, resourcePerm)
@@ -487,6 +514,119 @@ func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.
 	})
 }
 
+func TestIntegration_ResourcePermSqlBackend_UpdateResourcePermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	backend := setupBackend(t)
+	backend.identityStore = NewFakeIdentityStore(t)
+	ctx := context.Background()
+	sql, err := backend.dbProvider(ctx)
+	require.NoError(t, err)
+	setupTestRoles(t, sql.DB)
+	setupFineGrainedPermissions(t, sql.DB)
+
+	t.Run("should fail to update resource permission for a resource that doesn't have any permissions yet", func(t *testing.T) {
+		resourcePerm := &v0alpha1.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "folder.grafana.app-folders-newfold",
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "folder.grafana.app",
+					Resource: "folders",
+					Name:     "newfold",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Viewer",
+						Verb: "view",
+					},
+				},
+			},
+		}
+
+		grn, err := splitResourceName(resourcePerm.Name)
+		require.NoError(t, err)
+
+		mapper, err := backend.getResourceMapper(grn.Group, grn.Resource)
+		require.NoError(t, err)
+
+		_, err = backend.updateResourcePermission(ctx, sql, types.NamespaceInfo{Value: "default", OrgID: 1}, mapper, grn, resourcePerm)
+		require.Error(t, err)
+	})
+
+	t.Run("should update resource permission", func(t *testing.T) {
+		resourcePerm := &v0alpha1.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "folder.grafana.app-folders-fold1",
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "folder.grafana.app",
+					Resource: "folders",
+					Name:     "fold1",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Editor",
+						Verb: "view",
+					},
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
+						Name: "user-1",
+						Verb: "view",
+					},
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount,
+						Name: "sa-1",
+						Verb: "admin",
+					},
+				},
+			},
+		}
+
+		grn, err := splitResourceName(resourcePerm.Name)
+		require.NoError(t, err)
+
+		mapper, err := backend.getResourceMapper(grn.Group, grn.Resource)
+		require.NoError(t, err)
+
+		rv, err := backend.updateResourcePermission(ctx, sql, types.NamespaceInfo{Value: "default", OrgID: 1}, mapper, grn, resourcePerm)
+		require.NoError(t, err)
+		require.Equal(t, timeNow().UnixMilli(), rv)
+
+		var permission accesscontrol.Permission
+		sess := sql.DB.GetSqlxSession()
+
+		// Check that the right permissions exist and that the old ones have been removed
+		// User-1 should still have view access to fold1
+		// User-2 should no longer have edit on fold1
+		// Service account should now have admin on fold1
+		// Builtin Editor should now have view access to fold1
+
+		err = sess.Get(ctx, &permission, "SELECT action FROM permission WHERE scope = ? AND role_id = (SELECT role_id FROM user_role WHERE org_id = ? AND user_id = ?)", "folders:uid:fold1", 1, "1")
+		require.NoError(t, err)
+		require.Equal(t, "folders:view", permission.Action)
+
+		count := 0
+		err = sess.Get(ctx, &count, "SELECT COUNT(*) FROM permission WHERE role_id = (SELECT role_id FROM user_role WHERE org_id = ? AND user_id = ?)", 1, "2")
+		require.NoError(t, err)
+		require.Equal(t, 0, count)
+
+		err = sess.Get(ctx, &permission, "SELECT action FROM permission WHERE scope = ? AND role_id = (SELECT role_id FROM user_role WHERE org_id = ? AND user_id = ?)", "folders:uid:fold1", 1, "3")
+		require.NoError(t, err)
+		require.Equal(t, "folders:admin", permission.Action)
+
+		err = sess.Get(ctx, &permission, "SELECT action FROM permission WHERE scope = ? AND role_id = (SELECT role_id FROM builtin_role WHERE org_id = ? AND role = ?)", "folders:uid:fold1", 1, "Editor")
+		require.NoError(t, err)
+		require.Equal(t, "folders:view", permission.Action)
+	})
+}
+
 type fakeIdentityStore struct {
 	t *testing.T
 
@@ -499,8 +639,8 @@ type fakeIdentityStore struct {
 func NewFakeIdentityStore(t *testing.T) *fakeIdentityStore {
 	return &fakeIdentityStore{
 		t:               t,
-		users:           map[string]int64{"captain": 101},
-		serviceAccounts: map[string]int64{"robot": 201},
+		users:           map[string]int64{"captain": 101, "user-1": 1, "user-2": 2},
+		serviceAccounts: map[string]int64{"robot": 201, "sa-1": 3},
 		teams:           map[string]int64{"devs": 301},
 		expectedNs:      types.NamespaceInfo{Value: "default"},
 	}
@@ -537,4 +677,84 @@ func (f *fakeIdentityStore) GetUserInternalID(ctx context.Context, ns types.Name
 		return nil, errors.New("not found")
 	}
 	return &legacy.GetUserInternalIDResult{ID: id}, nil
+}
+
+func TestIntegration_UpdateResourcePermission_VerbChange(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	backend := setupBackend(t)
+	backend.identityStore = NewFakeIdentityStore(t)
+	ctx := context.Background()
+	sql, err := backend.dbProvider(ctx)
+	require.NoError(t, err)
+	setupTestRoles(t, sql.DB)
+
+	mapper := backend.mappers[schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}]
+	grn := &groupResourceName{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "test-dash"}
+
+	t.Run("should allow changing verb for same entity", func(t *testing.T) {
+		//Create initial permission with BasicRole Editor having "edit" verb
+		initialResourcePerm := &v0alpha1.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "dashboard.grafana.app-dashboards-test-dash",
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "dashboard.grafana.app",
+					Resource: "dashboards",
+					Name:     "test-dash",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Editor",
+						Verb: "edit",
+					},
+				},
+			},
+		}
+
+		rv, err := backend.createResourcePermission(ctx, sql, types.NamespaceInfo{Value: "default", OrgID: 1}, mapper, grn, initialResourcePerm)
+		require.NoError(t, err)
+		require.Greater(t, rv, int64(0))
+
+		//Update the same entity (BasicRole Editor) to have "view" verb instead
+		updatedResourcePerm := &v0alpha1.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "dashboard.grafana.app-dashboards-test-dash",
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "dashboard.grafana.app",
+					Resource: "dashboards",
+					Name:     "test-dash",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Editor",
+						Verb: "view",
+					},
+				},
+			},
+		}
+
+		rv, err = backend.updateResourcePermission(ctx, sql, types.NamespaceInfo{Value: "default", OrgID: 1}, mapper, grn, updatedResourcePerm)
+		require.NoError(t, err)
+		require.Greater(t, rv, int64(0))
+
+		//Verify the update worked by reading back the permission
+		err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+			finalResourcePerm, err := backend.getResourcePermission(ctx, sql, tx, types.NamespaceInfo{Value: "default", OrgID: 1}, grn.string())
+			require.NoError(t, err)
+			require.Len(t, finalResourcePerm.Spec.Permissions, 1)
+			require.Equal(t, v0alpha1.ResourcePermissionSpecPermissionKindBasicRole, finalResourcePerm.Spec.Permissions[0].Kind)
+			require.Equal(t, "Editor", finalResourcePerm.Spec.Permissions[0].Name)
+			require.Equal(t, "view", finalResourcePerm.Spec.Permissions[0].Verb)
+			return nil
+		})
+		require.NoError(t, err)
+	})
 }

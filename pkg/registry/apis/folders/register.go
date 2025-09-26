@@ -2,7 +2,6 @@ package folders
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -12,18 +11,21 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
+
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -40,26 +42,22 @@ var _ builder.APIGroupValidation = (*FolderAPIBuilder)(nil)
 
 var resourceInfo = folders.FolderResourceInfo
 
-var errNoUser = errors.New("valid user is required")
-var errNoResource = errors.New("resource name is required")
-
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
-	features             featuremgmt.FeatureToggles
-	namespacer           request.NamespaceMapper
+	features            featuremgmt.FeatureToggles
+	namespacer          request.NamespaceMapper
+	storage             grafanarest.Storage
+	permissionStore     reconcilers.PermissionStore
+	accessClient        authlib.AccessClient
+	parents             parentsGetter
+	searcher            resourcepb.ResourceIndexClient
+	permissionsOnCreate bool
+
+	// Legacy services -- these will not exist in the MT environment
 	folderSvc            folder.LegacyService
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
 	acService            accesscontrol.Service
 	ac                   accesscontrol.AccessControl
-	storage              grafanarest.Storage
-	permissionStore      reconcilers.PermissionStore
-
-	authorizer authorizer.Authorizer
-	parents    parentsGetter
-
-	searcher            resourcepb.ResourceIndexClient
-	permissionsOnCreate bool
-	ignoreLegacy        bool // skip legacy storage and only use unified storage
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
@@ -81,8 +79,8 @@ func RegisterAPIService(cfg *setting.Cfg,
 		folderPermissionsSvc: folderPermissionsSvc,
 		acService:            acService,
 		ac:                   accessControl,
+		accessClient:         accessClient,
 		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
-		authorizer:           newLegacyAuthorizer(accessControl),
 		searcher:             unified,
 		permissionStore:      reconcilers.NewZanzanaPermissionStore(zanzanaClient),
 	}
@@ -90,10 +88,12 @@ func RegisterAPIService(cfg *setting.Cfg,
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient) *FolderAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
-		authorizer:   newMultiTenantAuthorizer(ac),
-		ignoreLegacy: true,
+		features:        features,
+		accessClient:    ac,
+		searcher:        searcher,
+		permissionStore: reconcilers.NewZanzanaPermissionStore(zanzanaClient),
 	}
 }
 
@@ -136,75 +136,74 @@ func (b *FolderAPIBuilder) AllowedV0Alpha1Resources() []string {
 }
 
 func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	scheme := opts.Scheme
-	optsGetter := opts.OptsGetter
-	dualWriteBuilder := opts.DualWriteBuilder
-	storage := map[string]rest.Storage{}
-
-	if b.ignoreLegacy {
-		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
-		if err != nil {
-			return err
-		}
-		storage[resourceInfo.StoragePath()] = store
-		apiGroupInfo.VersionedResourcesStorageMap[folders.VERSION] = storage
-		b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
-		return nil
-	}
-
-	legacyStore := &legacyStorage{
-		service:        b.folderSvc,
-		namespacer:     b.namespacer,
-		tableConverter: resourceInfo.TableConverter(),
-	}
-
 	opts.StorageOptsRegister(resourceInfo.GroupResource(), apistore.StorageOptions{
 		EnableFolderSupport:         true,
 		RequireDeprecatedInternalID: true})
 
-	folderStore := &folderStorage{
-		tableConverter:       resourceInfo.TableConverter(),
-		folderPermissionsSvc: b.folderPermissionsSvc,
-		acService:            b.acService,
-		permissionsOnCreate:  b.permissionsOnCreate,
+	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
+	if err != nil {
+		return err
 	}
+	b.registerPermissionHooks(unified)
+	b.storage = unified
 
-	if optsGetter != nil && dualWriteBuilder != nil {
-		store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
+	if b.folderSvc != nil {
+		legacyStore := &legacyStorage{
+			service:        b.folderSvc,
+			namespacer:     b.namespacer,
+			tableConverter: resourceInfo.TableConverter(),
+		}
+		dw, err := opts.DualWriteBuilder(resourceInfo.GroupResource(), legacyStore, unified)
 		if err != nil {
 			return err
 		}
-
-		if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-			store.BeginCreate = b.beginCreate
-			store.BeginUpdate = b.beginUpdate
+		b.storage = &folderStorage{
+			tableConverter:       resourceInfo.TableConverter(),
+			folderPermissionsSvc: b.folderPermissionsSvc,
+			acService:            b.acService,
+			permissionsOnCreate:  b.permissionsOnCreate,
+			store:                dw,
 		}
-
-		dw, err := dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
-		if err != nil {
-			return err
-		}
-
-		folderStore.store = dw
 	}
-	storage[resourceInfo.StoragePath()] = folderStore
 
-	b.parents = newParentsGetter(folderStore, folder.MaxNestedFolderDepth) // used for validation
+	storage := map[string]rest.Storage{}
+	storage[resourceInfo.StoragePath()] = b.storage
+
+	b.parents = newParentsGetter(b.storage, folder.MaxNestedFolderDepth) // used for validation
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{
-		getter:  folderStore,
+		getter:  b.storage,
 		parents: b.parents,
 	}
-	storage[resourceInfo.StoragePath("counts")] = &subCountREST{searcher: b.searcher}
-	storage[resourceInfo.StoragePath("access")] = &subAccessREST{folderStore, b.ac}
+	storage[resourceInfo.StoragePath("counts")] = &subCountREST{
+		getter:   b.storage,
+		searcher: b.searcher,
+	}
+	storage[resourceInfo.StoragePath("access")] = &subAccessREST{
+		getter:       b.storage,
+		accessClient: b.accessClient,
+	}
 
 	// Adds a path to return children of a given folder
 	storage[resourceInfo.StoragePath("children")] = &subChildrenREST{
-		lister: storage[resourceInfo.StoragePath()].(rest.Lister),
+		getter: b.storage,
+		lister: b.storage,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[folders.VERSION] = storage
-	b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
 	return nil
+}
+
+func (b *FolderAPIBuilder) registerPermissionHooks(store *genericregistry.Store) {
+	log := logging.FromContext(context.Background())
+
+	if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		log.Info("Enabling Zanzana folder propagation hooks")
+		store.BeginCreate = b.beginCreate
+		store.BeginUpdate = b.beginUpdate
+		store.AfterDelete = b.afterDelete
+	} else {
+		log.Info("Zanzana is not enabled; skipping folder propagation hooks")
+	}
 }
 
 func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
@@ -216,13 +215,9 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 	return oas, nil
 }
 
-type authorizerParams struct {
-	user      identity.Requester
-	evaluator accesscontrol.Evaluator
-}
-
+// The default authorizer is fine because authorization happens in storage where we know the parent folder
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return b.authorizer
+	return grafanaauthorizer.NewServiceAuthorizer()
 }
 
 func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
@@ -240,9 +235,21 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 }
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
-	obj := a.GetObject()
-	if obj == nil || a.GetOperation() == admission.Connect {
-		return nil // This is normal for sub-resource
+	var obj runtime.Object
+	verb := a.GetOperation()
+
+	switch verb {
+	case admission.Create, admission.Update:
+		obj = a.GetObject()
+	case admission.Delete:
+		obj = a.GetOldObject()
+		if obj == nil {
+			return fmt.Errorf("old object is nil for delete request")
+		}
+	case admission.Connect:
+		return nil
+	default:
+		obj = a.GetObject()
 	}
 
 	f, ok := obj.(*folders.Folder)

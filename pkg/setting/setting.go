@@ -133,16 +133,18 @@ type Cfg struct {
 	ProvisioningPath           string
 	PermittedProvisioningPaths []string
 	// Provisioning config
-	ProvisioningDisableControllers bool
-	ProvisioningRepositoryTypes    []string
-	ProvisioningLokiURL            string
-	ProvisioningLokiUser           string
-	ProvisioningLokiPassword       string
-	ProvisioningLokiTenantID       string
-	DataPath                       string
-	LogsPath                       string
-	PluginsPath                    string
-	EnterpriseLicensePath          string
+	ProvisioningDisableControllers  bool
+	ProvisioningAllowedTargets      []string
+	ProvisioningAllowImageRendering bool
+	ProvisioningRepositoryTypes     []string
+	ProvisioningLokiURL             string
+	ProvisioningLokiUser            string
+	ProvisioningLokiPassword        string
+	ProvisioningLokiTenantID        string
+	DataPath                        string
+	LogsPath                        string
+	PluginsPath                     string
+	EnterpriseLicensePath           string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -577,9 +579,10 @@ type Cfg struct {
 	IndexMaxBatchSize                          int
 	IndexFileThreshold                         int
 	IndexMinCount                              int
-	IndexMaxCount                              int
 	IndexRebuildInterval                       time.Duration
 	IndexCacheTTL                              time.Duration
+	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will not be reused between restarts.
+	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will not be reused between restarts.
 	EnableSharding                             bool
 	QOSEnabled                                 bool
 	QOSNumberWorker                            int
@@ -768,7 +771,7 @@ func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
 		labelName := model.LabelName(key.Name())
 		labelValue := model.LabelValue(key.Value())
 
-		if !labelName.IsValid() {
+		if !labelName.IsValid() { // nolint:staticcheck
 			return fmt.Errorf("invalid label name in [metrics.environment_info] configuration. name %q", labelName)
 		}
 
@@ -2118,6 +2121,11 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	}
 
 	cfg.ProvisioningDisableControllers = iniFile.Section("provisioning").Key("disable_controllers").MustBool(false)
+	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
+	if len(cfg.ProvisioningAllowedTargets) == 0 {
+		cfg.ProvisioningAllowedTargets = []string{"instance", "folder"}
+	}
+	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

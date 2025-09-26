@@ -11,6 +11,7 @@ import {
 } from '@grafana/data';
 import { NestedValueAccess, isNestedPanelOptions, PanelOptionsSupplier } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
 import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
@@ -226,6 +227,14 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
   const access: NestedValueAccess = {
     getValue: (path) => lodashGet(currentOptions, path),
     onChange: (path, value) => {
+      if (path === 'timeCompare') {
+        reportInteraction('panel_setting_interaction', {
+          viz_type: plugin.meta.id,
+          feature_type: 'time_comparison',
+          option_type: value ? 'toggle_enabled' : 'toggle_disabled',
+        });
+      }
+
       const newOptions = setOptionImmutably(currentOptions, path, value);
       panel.onOptionsChange(newOptions);
     },
