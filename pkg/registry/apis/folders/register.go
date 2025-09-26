@@ -205,6 +205,7 @@ func (b *FolderAPIBuilder) registerPermissionHooks(store *genericregistry.Store)
 		log.Info("Enabling Zanzana folder propagation hooks")
 		store.BeginCreate = b.beginCreate
 		store.BeginUpdate = b.beginUpdate
+		store.AfterDelete = b.afterDelete
 	} else {
 		log.Info("Zanzana is not enabled; skipping folder propagation hooks")
 	}
