@@ -33,7 +33,7 @@ Grafana provides OAuth2 integrations for the following auth providers:
 
 If your OAuth2 provider is not listed, you can use Generic OAuth authentication.
 
-This topic describes how to configure Generic OAuth authentication using different methods and includes [examples of setting up Generic OAuth](#examples-of-setting-up-generic-oauth2) with specific OAuth2 providers.
+This topic describes how to configure Generic OAuth authentication using different methods and includes [examples of setting up Generic OAuth](#examples-of-setting-up-generic-oauth) with specific OAuth2 providers.
 
 ## Before you begin
 
