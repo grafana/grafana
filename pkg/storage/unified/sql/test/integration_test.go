@@ -2,7 +2,6 @@ package test
 
 import (
 	"context"
-	"os"
 	"sync"
 	"testing"
 	"time"
@@ -98,18 +97,13 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 
 	ctx := context.Background()
 
-	tempDir := t.TempDir()
-	t.Cleanup(func() {
-		_ = os.RemoveAll(tempDir)
-	})
 	// Create a new bleve backend
 	search, err := search.NewBleveBackend(search.BleveOptions{
 		FileThreshold: 0,
-		Root:          tempDir,
+		Root:          t.TempDir(),
 	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, search)
-
 	t.Cleanup(search.Stop)
 
 	// Create a new resource backend
