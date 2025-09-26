@@ -12,10 +12,10 @@ import { getModKey } from 'app/core/utils/browser';
 
 import { useScopesServices } from '../ScopesContextProvider';
 
+import { RecentScopes } from './RecentScopes';
 import { ScopesInput } from './ScopesInput';
 import { ScopesSelectorServiceState } from './ScopesSelectorService';
 import { ScopesTree } from './ScopesTree';
-import { RecentScopes } from './RecentScopes';
 
 export const ScopesSelector = () => {
   const { chrome } = useGrafana();
