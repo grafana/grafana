@@ -329,10 +329,14 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 			return serviceaccount.ValidateOnCreate(ctx, typedObj)
 		case *iamv0.Team:
 			return team.ValidateOnCreate(ctx, typedObj)
+		case *iamv0.ResourcePermission:
+			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
 		}
 		return nil
 	case admission.Update:
 		switch typedObj := a.GetObject().(type) {
+		case *iamv0.ResourcePermission:
+			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
 		case *iamv0.Team:
 			oldTeamObj, ok := a.GetOldObject().(*iamv0.Team)
 			if !ok {
