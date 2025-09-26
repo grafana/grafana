@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.4.0
 // - protoc             (unknown)
-// source: decrypt.proto
+// source: decrypt/v1beta1/decrypt.proto
 
 package decryptv1beta1
 
@@ -106,5 +106,5 @@ var SecureValueDecrypter_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "decrypt.proto",
+	Metadata: "decrypt/v1beta1/decrypt.proto",
 }

@@ -45,18 +45,6 @@ export const PluginSubtitle = ({ plugin }: Props) => {
       <Stack direction="row" justifyContent="space-between">
         <div>
           {plugin?.description && <div>{plugin?.description}</div>}
-          {!!plugin?.details?.links?.length && (
-            <span>
-              {plugin.details.links.map((link, index) => (
-                <Fragment key={index}>
-                  {index > 0 && ' | '}
-                  <a href={link.url} className="external-link">
-                    {link.name}
-                  </a>
-                </Fragment>
-              ))}
-            </span>
-          )}
           {hasInstallControlWarning(plugin, isRemotePluginsAvailable, latestCompatibleVersion) && (
             <InstallControlsWarning
               plugin={plugin}
@@ -74,11 +62,5 @@ export const PluginSubtitle = ({ plugin }: Props) => {
 };
 
 export const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    subtitle: css({
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(1),
-    }),
-  };
+  return { subtitle: css({ display: 'flex', flexDirection: 'column', gap: theme.spacing(1) }) };
 };

@@ -1,21 +1,44 @@
 package builder
 
 import (
+	"bytes"
+	"encoding/json"
 	"maps"
 	"strings"
+	"sync"
 
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	openapi "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	secret "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
+var (
+	equalityInit sync.Once
+)
+
 // This should eventually live in grafana-app-sdk
 func GetOpenAPIDefinitions(builders []APIGroupBuilder, additionalGetters ...openapi.GetOpenAPIDefinitions) openapi.GetOpenAPIDefinitions {
+	equalityInit.Do(func() {
+		// DataQuery has private variables, so it needs an explicit equality helper
+		err := apiequality.Semantic.AddFunc(
+			func(a, b data.DataQuery) bool {
+				aa, _ := json.Marshal(a)
+				bb, _ := json.Marshal(b)
+				return bytes.Equal(aa, bb)
+			},
+		)
+		if err != nil {
+			logging.DefaultLogger.Error("error initializing DataQuery apiequality", "err", err)
+		}
+	})
+
 	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
 		defs := common.GetOpenAPIDefinitions(ref) // common grafana apis
 		maps.Copy(defs, data.GetOpenAPIDefinitions(ref))

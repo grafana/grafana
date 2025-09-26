@@ -112,6 +112,7 @@ func RunServer(opts standalone.BuildInfo, cli *cli.Context) error {
 	}
 
 	s, err := server.Initialize(
+		cli.Context,
 		cfg,
 		server.Options{
 			PidFile:     PidFile,
@@ -125,8 +126,7 @@ func RunServer(opts standalone.BuildInfo, cli *cli.Context) error {
 		return err
 	}
 
-	ctx := context.Background()
-	go listenToSystemSignals(ctx, s)
+	go listenToSystemSignals(cli.Context, s)
 	return s.Run()
 }
 

@@ -4,11 +4,16 @@ test.use({
   featureToggles: {
     kubernetesDashboards: true,
     dashboardNewLayouts: true,
+    dashboardUndoRedo: true,
     groupByVariable: true,
   },
 });
 
 const PAGE_UNDER_TEST = 'edediimbjhdz4b/a-tall-dashboard';
+
+test.use({
+  viewport: { width: 1920, height: 1080 },
+});
 
 test.describe(
   'Dashboard panels',

@@ -8,6 +8,7 @@ import {
   getTimeZones,
   VariableOrigin,
   VariableSuggestion,
+  SpecialValue,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -117,4 +118,34 @@ export function getVariableSuggestions(): VariableSuggestion[] {
   return getTemplateSrv()
     .getVariables()
     .map((v) => ({ value: v.name, label: v.label || v.name, origin: VariableOrigin.Template }));
+}
+
+export function getEmptyOptions(): Array<SelectableValue<SpecialValue>> {
+  return [
+    {
+      label: t('transformers.utils.special-value-options.label.null-value', 'Null'),
+      description: t('transformers.utils.special-value-options.description.null-value', 'Null value'),
+      value: SpecialValue.Null,
+    },
+    {
+      label: t('transformers.utils.special-value-options.label.boolean-true', 'True'),
+      description: t('transformers.utils.special-value-options.description.boolean-true', 'Boolean true value'),
+      value: SpecialValue.True,
+    },
+    {
+      label: t('transformers.utils.special-value-options.label.boolean-false', 'False'),
+      description: t('transformers.utils.special-value-options.description.boolean-false', 'Boolean false value'),
+      value: SpecialValue.False,
+    },
+    {
+      label: t('transformers.utils.special-value-options.label.number-value', 'Zero'),
+      description: t('transformers.utils.special-value-options.description.number-value', 'Number 0 value'),
+      value: SpecialValue.Zero,
+    },
+    {
+      label: t('transformers.utils.special-value-options.label.empty-string', 'Empty'),
+      description: t('transformers.utils.special-value-options.description.empty-string', 'Empty String'),
+      value: SpecialValue.Empty,
+    },
+  ];
 }

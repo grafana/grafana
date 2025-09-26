@@ -423,6 +423,36 @@ describe('changeQueries', () => {
       expect(actions.changeQueriesAction).toHaveBeenCalled();
       expect(actions.importQueries).not.toHaveBeenCalled();
     });
+
+    it('should not import queries when skipAutoImport is true', async () => {
+      jest.spyOn(actions, 'importQueries');
+      jest.spyOn(actions, 'changeQueriesAction');
+
+      const { dispatch } = configureStore({
+        ...defaultInitialState,
+        explore: {
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              datasourceInstance: datasources[0],
+              queries: [{ refId: 'A', datasource: datasources[0].getRef() }],
+            },
+          },
+        },
+      } as unknown as Partial<StoreState>);
+
+      await dispatch(
+        changeQueries({
+          queries: [{ refId: 'A', datasource: datasources[0].getRef(), queryType: 'someValue' }],
+          exploreId: 'left',
+          options: {
+            skipAutoImport: true,
+          },
+        })
+      );
+      expect(actions.changeQueriesAction).toHaveBeenCalled();
+      expect(actions.importQueries).not.toHaveBeenCalled();
+    });
   });
 
   describe('correctly modifies the state', () => {

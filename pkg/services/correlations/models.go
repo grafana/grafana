@@ -20,7 +20,7 @@ var (
 	ErrTransformationRegexReqExp     = errors.New("regex transformations require expression")
 	ErrCorrelationsQuotaFailed       = errors.New("error getting correlations quota")
 	ErrCorrelationsQuotaReached      = errors.New("correlations quota reached")
-	ErrInvalidConfigType             = errors.New("correlation contains non default value in config.type")
+	ErrConfigTypeDeprecated          = errors.New("config.type is deprecated; please move type to be sibling of config")
 )
 
 const (

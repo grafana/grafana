@@ -189,7 +189,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 			}
 
 			// This will be called for each request -- with the folder ID
-			runner.checker[NSGR(k)], err = s.access.Compile(ctx, user, authlib.ListRequest{
+			runner.checker[NSGR(k)], _, err = s.access.Compile(ctx, user, authlib.ListRequest{
 				Namespace: k.Namespace,
 				Group:     k.Group,
 				Resource:  k.Resource,
@@ -240,11 +240,11 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 	if rsp.Error == nil && s.search != nil {
 		// Rebuild any changed indexes
 		for _, summary := range rsp.Summary {
-			_, _, err := s.search.build(ctx, NamespacedResource{
+			_, err := s.search.build(ctx, NamespacedResource{
 				Namespace: summary.Namespace,
 				Group:     summary.Group,
 				Resource:  summary.Resource,
-			}, summary.Count, summary.ResourceVersion, "rebuildAfterBatchLoad")
+			}, summary.Count, "rebuildAfterBatchLoad", true)
 			if err != nil {
 				s.log.Warn("error building search index after batch load", "err", err)
 				rsp.Error = &resourcepb.ErrorResult{

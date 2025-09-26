@@ -56,8 +56,8 @@
       "query-header": {
         "content-invalid-query": "Váš dotaz je neplatný. Podrobnosti najdete níže. <1></1>Tento dotaz však můžete stále spustit.",
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Nástroj pro tvorbu",
+          "label-code": "Kód"
         },
         "label-dataset": "Soubor dat",
         "label-filter": "Filtrovat",

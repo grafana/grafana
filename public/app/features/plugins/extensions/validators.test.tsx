@@ -211,12 +211,14 @@ describe('Plugin Extension Validators', () => {
       ['plugins/grafana-oncall-app/alert-group/action', 'grafana-oncall-app'],
       ['plugins/grafana-oncall-app/alert-group/action/v1', 'grafana-oncall-app'],
       ['plugins/grafana-oncall-app/alert-group/action/v1.0.0', 'grafana-oncall-app'],
+      ['grafana/dynamic/nav-landing-page/nav-id-observability/v1', 'grafana'], // this a dynamic (runtime evaluated) extension point id
     ])('should return TRUE if the extension point id is valid ("%s", "%s")', (extensionPointId, pluginId) => {
       expect(
         isExtensionPointIdValid({
           extensionPointId,
           pluginId,
           isInsidePlugin: pluginId !== 'grafana' && pluginId !== '',
+          isCoreGrafanaPlugin: false,
           log: createLogMock(),
         })
       ).toBe(true);
@@ -244,9 +246,22 @@ describe('Plugin Extension Validators', () => {
           extensionPointId,
           pluginId,
           isInsidePlugin: pluginId !== 'grafana' && pluginId !== '',
+          isCoreGrafanaPlugin: false,
           log: createLogMock(),
         })
       ).toBe(false);
+    });
+
+    it('should return FALSE true if the extension point id is set by a core plugin', () => {
+      expect(
+        isExtensionPointIdValid({
+          extensionPointId: 'traces',
+          pluginId: 'traces',
+          isInsidePlugin: true,
+          isCoreGrafanaPlugin: true,
+          log: createLogMock(),
+        })
+      ).toBe(true);
     });
   });
 

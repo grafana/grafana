@@ -51,7 +51,7 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
 
 export async function getSearchResultActions(searchQuery: string): Promise<CommandPaletteAction[]> {
   // Empty strings should not come through to here
-  if (searchQuery.length === 0 || (!contextSrv.user.isSignedIn && !config.bootData.settings.anonymousEnabled)) {
+  if (searchQuery.length === 0 || (!contextSrv.user.isSignedIn && !config.anonymousEnabled)) {
     return [];
   }
 

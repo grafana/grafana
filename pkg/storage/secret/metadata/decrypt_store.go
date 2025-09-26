@@ -3,16 +3,16 @@ package metadata
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
-	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/metadata"
+
+	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -88,14 +88,12 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		} else {
 			span.SetStatus(codes.Error, "Decrypt failed")
 			span.RecordError(decryptErr)
-			args = append(args, "operation", "decrypt_secret_error", "error", decryptErr.Error())
+			args = append(args, "operation", "decrypt_secret_error", "error", decryptErr.Error(), "result", metrics.DecryptResultLabel(decryptErr))
 		}
 
 		logging.FromContext(ctx).Info("Secrets Audit Log", args...)
 
-		success := decryptErr == nil
-		s.metrics.DecryptDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
-		s.metrics.DecryptRequestCount.WithLabelValues(strconv.FormatBool(success)).Inc()
+		s.metrics.DecryptDuration.WithLabelValues(metrics.DecryptResultLabel(decryptErr)).Observe(time.Since(start).Seconds())
 	}()
 
 	// Basic authn check before reading a secure value metadata, it is here on purpose.
@@ -111,7 +109,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", contracts.ErrDecryptNotFound
 	}
 
-	decrypterIdentity, authorized := s.decryptAuthorizer.Authorize(ctx, name, sv.Spec.Decrypters)
+	decrypterIdentity, authorized := s.decryptAuthorizer.Authorize(ctx, namespace, name, sv.Spec.Decrypters, sv.OwnerReferences)
 	if !authorized {
 		return "", contracts.ErrDecryptNotAuthorized
 	}

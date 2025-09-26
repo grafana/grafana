@@ -64,7 +64,7 @@ func runTestSearchBackendBuildIndex(t *testing.T, backend resource.SearchBackend
 	require.Nil(t, index)
 
 	// Build the index
-	index, err = backend.BuildIndex(ctx, ns, 0, 0, nil, "test", func(index resource.ResourceIndex) (int64, error) {
+	index, err = backend.BuildIndex(ctx, ns, 0, nil, "test", func(index resource.ResourceIndex) (int64, error) {
 		// Write a test document
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
@@ -86,7 +86,7 @@ func runTestSearchBackendBuildIndex(t *testing.T, backend resource.SearchBackend
 			return 0, err
 		}
 		return 1, nil
-	})
+	}, nil, false)
 	require.NoError(t, err)
 	require.NotNil(t, index)
 
@@ -111,7 +111,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 	}
 
 	// Build initial index with some test documents
-	index, err := backend.BuildIndex(ctx, ns, 3, 0, nil, "test", func(index resource.ResourceIndex) (int64, error) {
+	index, err := backend.BuildIndex(ctx, ns, 3, nil, "test", func(index resource.ResourceIndex) (int64, error) {
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				{
@@ -152,7 +152,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 		})
 		require.NoError(t, err)
 		return int64(2), nil
-	})
+	}, nil, false)
 	require.NoError(t, err)
 	require.NotNil(t, index)
 
@@ -235,7 +235,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 
 	t.Run("Search by LibraryPanel reference", func(t *testing.T) {
 		// Build index with dashboards that have LibraryPanel references
-		index, err := backend.BuildIndex(ctx, ns, 3, 0, nil, "test", func(index resource.ResourceIndex) (int64, error) {
+		index, err := backend.BuildIndex(ctx, ns, 3, nil, "test", func(index resource.ResourceIndex) (int64, error) {
 			err := index.BulkIndex(&resource.BulkIndexRequest{
 				Items: []*resource.BulkIndexItem{
 					{
@@ -294,7 +294,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 			})
 			require.NoError(t, err)
 			return int64(3), nil
-		})
+		}, nil, false)
 		require.NoError(t, err)
 		require.NotNil(t, index)
 

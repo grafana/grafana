@@ -1,30 +1,22 @@
-import { render as rtlRender, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { HttpResponse, http } from 'msw';
-import { setupServer, SetupServer } from 'msw/node';
 import { ComponentProps } from 'react';
-import * as React from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render as testRender, screen, waitFor } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { config, setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import BrowseDashboardsPage from './BrowseDashboardsPage';
-import { wellFormedTree } from './fixtures/dashboardsTreeItem.fixture';
 import * as permissions from './permissions';
-const [mockTree, { dashbdD, folderA, folderA_folderA }] = wellFormedTree();
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => backendSrv,
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    unifiedAlertingEnabled: true,
-  },
-}));
+setBackendSrv(backendSrv);
+setupMockServer();
+
+const [_, { dashbdD, folderA, folderA_folderA }] = getFolderFixtures();
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
@@ -49,69 +41,13 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useParams: jest.fn().mockReturnValue({}),
 }));
 
-function render(...[ui, options]: Parameters<typeof rtlRender>) {
-  const { rerender } = rtlRender(
-    <TestProvider
-      storeState={{
-        navIndex: {
-          'dashboards/browse': {
-            text: 'Dashboards',
-            id: 'dashboards/browse',
-          },
-        },
-      }}
-    >
-      {ui}
-    </TestProvider>,
-    options
-  );
-
-  const wrappedRerender = (ui: React.ReactElement) => {
-    rerender(
-      <TestProvider
-        storeState={{
-          navIndex: {
-            'dashboards/browse': {
-              text: 'Dashboards',
-              id: 'dashboards/browse',
-            },
-          },
-        }}
-      >
-        {ui}
-      </TestProvider>
-    );
-  };
-  return {
-    rerender: wrappedRerender,
-  };
+function render(ui: Parameters<typeof testRender>[0]) {
+  return testRender(ui, {
+    preloadedState: { navIndex: { 'dashboards/browse': { text: 'Dashboards', id: 'dashboards/browse' } } },
+  });
 }
 
-jest.mock('app/features/browse-dashboards/api/services', () => {
-  const orig = jest.requireActual('app/features/browse-dashboards/api/services');
-
-  return {
-    ...orig,
-    listFolders(parentUID?: string) {
-      const childrenForUID = mockTree
-        .filter((v) => v.item.kind === 'folder' && v.item.parentUID === parentUID)
-        .map((v) => v.item);
-
-      return Promise.resolve(childrenForUID);
-    },
-
-    listDashboards(parentUID?: string) {
-      const childrenForUID = mockTree
-        .filter((v) => v.item.kind === 'dashboard' && v.item.parentUID === parentUID)
-        .map((v) => v.item);
-
-      return Promise.resolve(childrenForUID);
-    },
-  };
-});
-
 describe('browse-dashboards BrowseDashboardsPage', () => {
-  let server: SetupServer;
   const mockPermissions = {
     canCreateDashboards: true,
     canEditDashboards: true,
@@ -123,36 +59,8 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     canDeleteDashboards: true,
   };
 
-  beforeAll(() => {
-    server = setupServer(
-      http.get('/api/folders/:uid', () => {
-        return HttpResponse.json({
-          title: folderA.item.title,
-          uid: folderA.item.uid,
-        });
-      }),
-      http.get('/api/search', () => {
-        return HttpResponse.json({});
-      }),
-      http.get('/api/search/sorting', () => {
-        return HttpResponse.json({
-          sortOptions: [],
-        });
-      }),
-      http.get('/apis/provisioning.grafana.app/v0alpha1/namespaces/default/settings', () => {
-        return HttpResponse.json({
-          items: [],
-        });
-      })
-    );
-    server.listen();
-  });
-
-  afterAll(() => {
-    server.close();
-  });
-
   beforeEach(() => {
+    config.unifiedAlertingEnabled = true;
     jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => mockPermissions);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
@@ -170,7 +78,6 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       canDeleteDashboards: true,
     });
     jest.restoreAllMocks();
-    server.resetHandlers();
   });
 
   describe('at the root level', () => {
@@ -230,10 +137,10 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('selecting an item hides the filters and shows the actions instead', async () => {
-      render(<BrowseDashboardsPage queryParams={{}} />);
+      const { user } = render(<BrowseDashboardsPage queryParams={{}} />);
 
       const checkbox = await screen.findByTestId(selectors.pages.BrowseDashboards.table.checkbox(dashbdD.item.uid));
-      await userEvent.click(checkbox);
+      await user.click(checkbox);
 
       // Check the filters are now hidden
       expect(screen.queryByText('Filter by tag')).not.toBeInTheDocument();
@@ -245,10 +152,10 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('navigating into a child item resets the selected state', async () => {
-      const { rerender } = render(<BrowseDashboardsPage queryParams={{}} />);
+      const { rerender, user } = render(<BrowseDashboardsPage queryParams={{}} />);
 
       const checkbox = await screen.findByTestId(selectors.pages.BrowseDashboards.table.checkbox(folderA.item.uid));
-      await userEvent.click(checkbox);
+      await user.click(checkbox);
 
       // Check the actions are now visible
       expect(screen.getByRole('button', { name: 'Move' })).toBeInTheDocument();
@@ -346,12 +253,12 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('selecting an item hides the filters and shows the actions instead', async () => {
-      render(<BrowseDashboardsPage queryParams={{}} />);
+      const { user } = render(<BrowseDashboardsPage queryParams={{}} />);
 
       const checkbox = await screen.findByTestId(
         selectors.pages.BrowseDashboards.table.checkbox(folderA_folderA.item.uid)
       );
-      await userEvent.click(checkbox);
+      await user.click(checkbox);
 
       // Check the filters are now hidden
       expect(screen.queryByText('Filter by tag')).not.toBeInTheDocument();

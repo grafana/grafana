@@ -1,8 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, getDefaultTimeRange, LogRowModel, LogsDedupStrategy, LogsSortOrder, store } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import {
+  CoreApp,
+  getDefaultTimeRange,
+  LogLevel,
+  LogRowModel,
+  LogsDedupStrategy,
+  LogsSortOrder,
+  store,
+} from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
 import { createLogRow } from '../mocks/logRow';
@@ -35,6 +43,14 @@ jest.mock('../../utils', () => ({
   disablePopoverMenu: jest.fn(),
   enablePopoverMenu: jest.fn(),
 }));
+
+const originalFlagValue = config.featureToggles.newLogsPanel;
+beforeAll(() => {
+  config.featureToggles.newLogsPanel = true;
+});
+afterAll(() => {
+  config.featureToggles.newLogsPanel = originalFlagValue;
+});
 
 describe('LogList', () => {
   let logs: LogRowModel[], defaultProps: Props;
@@ -185,6 +201,26 @@ describe('LogList', () => {
     expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
 
     spy.mockRestore();
+  });
+
+  test('Shows controls with level filters based on the displayed logs', async () => {
+    logs = [createLogRow({ uid: '1', logLevel: LogLevel.info }), createLogRow({ uid: '2', logLevel: LogLevel.debug })];
+
+    render(<LogList {...defaultProps} showControls logs={logs} />);
+
+    expect(screen.getByText('info')).toBeInTheDocument();
+    expect(screen.getByText('debug')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Filter levels'));
+
+    expect(await screen.findByText('All levels')).toBeVisible();
+    expect(screen.getByText('Info')).toBeVisible();
+    expect(screen.getByText('Debug')).toBeVisible();
+
+    await userEvent.click(screen.getByText('Debug'));
+
+    expect(screen.queryByText('info')).not.toBeInTheDocument();
+    expect(screen.getByText('debug')).toBeInTheDocument();
   });
 
   describe('Popover menu', () => {
@@ -343,6 +379,24 @@ describe('LogList', () => {
 
       expect(screen.getByText('log message 1')).toBeInTheDocument();
       expect(screen.getByText('some text')).toBeInTheDocument();
+    });
+
+    test('Allows to toggle between ms and ns precision timestamps', async () => {
+      logs = [createLogRow({ uid: '1', timeEpochMs: 1754472919504, timeEpochNs: '1754472919504133766' })];
+
+      render(<LogList {...defaultProps} showTime showControls logs={logs} />);
+
+      expect(screen.getByText('2025-08-06 03:35:19.504')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Log timestamps'));
+      await userEvent.click(screen.getByText('Show nanosecond timestamps'));
+
+      expect(screen.getByText('2025-08-06 03:35:19.504133766')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Log timestamps'));
+      await userEvent.click(screen.getByText('Hide timestamps'));
+
+      expect(screen.queryByText(/2025-08-06 03:35:19/)).not.toBeInTheDocument();
     });
   });
   describe('Interactions', () => {

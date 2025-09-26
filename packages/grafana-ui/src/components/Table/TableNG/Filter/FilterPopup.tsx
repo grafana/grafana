@@ -102,6 +102,7 @@ export const FilterPopup = ({
     [setFilter, onClose] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
+  const filterInputPlaceholder = t('grafana-ui.table.filter-popup-input-placeholder', 'Filter values');
   const clearFilterVisible = useMemo(() => filterValue !== undefined, [filterValue]);
   const styles = useStyles2(getStyles);
 
@@ -130,11 +131,13 @@ export const FilterPopup = ({
 
           <Stack gap={1}>
             <FilterInput
-              placeholder={t('grafana-ui.table.filter-popup-input-placeholder', 'Filter values')}
+              placeholder={filterInputPlaceholder}
+              title={filterInputPlaceholder}
               onChange={setSearchFilter}
               value={searchFilter}
             />
             <Button
+              tooltip={t('grafana-ui.table.filter-popup-aria-label-match-case', 'Match case')}
               variant="secondary"
               style={{ color: matchCase ? theme.colors.text.link : theme.colors.text.disabled }}
               onClick={() => {

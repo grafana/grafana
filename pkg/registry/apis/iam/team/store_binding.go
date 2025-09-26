@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 )
 
-var bindingResource = iamv0.TeamBindingResourceInfo
+var bindingResource = iamv0alpha1.TeamBindingResourceInfo
 
 var (
 	_ rest.Storage              = (*LegacyBindingStore)(nil)

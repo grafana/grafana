@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/alerting/templates"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -200,7 +200,8 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 }
 
 func (s *legacyStorage) defaultTemplate() (definitions.NotificationTemplate, error) {
-	defaultTemplate, err := templates.DefaultTemplate()
+	// Omit some templates that we do not want to use to see.
+	defaultTemplate, err := templates.DefaultTemplate(templates.DefaultTemplatesToOmit)
 	if err != nil {
 		return definitions.NotificationTemplate{}, err
 	}

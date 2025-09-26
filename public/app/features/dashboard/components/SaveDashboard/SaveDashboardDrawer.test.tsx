@@ -11,11 +11,6 @@ import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 
 const saveDashboardMutationMock = jest.fn();
 
-jest.mock('app/core/core', () => ({
-  ...jest.requireActual('app/core/core'),
-  contextSrv: {},
-}));
-
 jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
   ...jest.requireActual('app/features/browse-dashboards/api/browseDashboardsAPI'),
   useSaveDashboardMutation: () => [saveDashboardMutationMock],

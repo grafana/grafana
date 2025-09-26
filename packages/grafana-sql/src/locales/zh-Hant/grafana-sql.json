@@ -56,8 +56,8 @@
       "query-header": {
         "content-invalid-query": "您的查詢無效。請參閱下方詳細資訊。<1></1>不過，您仍然可以執行此查詢。",
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "建立器",
+          "label-code": "代碼"
         },
         "label-dataset": "資料集",
         "label-filter": "篩選",

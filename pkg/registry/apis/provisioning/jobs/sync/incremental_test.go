@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -29,7 +30,7 @@ func TestIncrementalSync_ContextCancelled(t *testing.T) {
 	progress.On("SetTotal", mock.Anything, 1).Return()
 	progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
 
-	err := IncrementalSync(ctx, repo, "old-ref", "new-ref", repoResources, progress)
+	err := IncrementalSync(ctx, repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService())
 	require.EqualError(t, err, "context canceled")
 }
 
@@ -305,14 +306,15 @@ func TestIncrementalSync(t *testing.T) {
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("write failed"))
 
 				// Mock progress recording with error
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action:   repository.FileActionCreated,
-					Path:     "dashboards/test.json",
-					Name:     "test-dashboard",
-					Resource: "Dashboard",
-					Group:    "dashboards",
-					Error:    fmt.Errorf("write failed"),
-				}).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action == repository.FileActionCreated &&
+						result.Path == "dashboards/test.json" &&
+						result.Name == "test-dashboard" &&
+						result.Resource == "Dashboard" &&
+						result.Group == "dashboards" &&
+						result.Error != nil &&
+						result.Error.Error() == "writing resource from file dashboards/test.json: write failed"
+				})).Return()
 
 				progress.On("TooManyErrors").Return(nil)
 			},
@@ -340,14 +342,15 @@ func TestIncrementalSync(t *testing.T) {
 					Return("old-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("delete failed"))
 
 				// Mock progress recording with error
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action:   repository.FileActionDeleted,
-					Path:     "dashboards/old.json",
-					Name:     "old-dashboard",
-					Resource: "Dashboard",
-					Group:    "dashboards",
-					Error:    fmt.Errorf("delete failed"),
-				}).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action == repository.FileActionDeleted &&
+						result.Path == "dashboards/old.json" &&
+						result.Name == "old-dashboard" &&
+						result.Resource == "Dashboard" &&
+						result.Group == "dashboards" &&
+						result.Error != nil &&
+						result.Error.Error() == "removing resource from file dashboards/old.json: delete failed"
+				})).Return()
 				progress.On("TooManyErrors").Return(nil)
 			},
 			previousRef:   "old-ref",
@@ -384,7 +387,7 @@ func TestIncrementalSync(t *testing.T) {
 
 			tt.setupMocks(repo, repoResources, progress)
 
-			err := IncrementalSync(context.Background(), repo, tt.previousRef, tt.currentRef, repoResources, progress)
+			err := IncrementalSync(context.Background(), repo, tt.previousRef, tt.currentRef, repoResources, progress, tracing.NewNoopTracerService())
 
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)

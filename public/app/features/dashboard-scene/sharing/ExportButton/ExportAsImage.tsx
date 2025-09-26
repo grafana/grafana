@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
-import { Alert, Button, useStyles2 } from '@grafana/ui';
+import { Alert, Button, TextLink, useStyles2 } from '@grafana/ui';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
@@ -152,14 +152,9 @@ function RendererAlert() {
       <div>
         <Trans i18nKey="share-modal.link.render-instructions">
           To render an image, you must install the{' '}
-          <a
-            href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="external-link"
-          >
+          <TextLink href="https://grafana.com/grafana/plugins/grafana-image-renderer" external>
             Grafana image renderer plugin
-          </a>
+          </TextLink>
           . Please contact your Grafana administrator to install the plugin.
         </Trans>
       </div>

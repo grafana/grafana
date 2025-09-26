@@ -6,12 +6,12 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
@@ -208,8 +208,11 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 		Resource: r.kind.Resource,
 		Group:    r.kind.Group,
 		Action:   repository.FileActionCreated,
-		Error:    err,
 		Path:     fileName,
+	}
+
+	if err != nil {
+		result.Error = fmt.Errorf("writing resource %s/%s %s to file %s: %w", r.kind.Group, r.kind.Resource, parsed.Meta.GetName(), fileName, err)
 	}
 
 	r.progress.Record(ctx, result)

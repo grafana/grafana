@@ -128,7 +128,9 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -221,7 +223,9 @@
           "text": "A",
           "value": ["A"]
         },
-        "datasource": "gdev-testdata",
+        "datasource": {
+          "type": "grafana-testdata-datasource"
+        },
         "definition": "*",
         "hide": 0,
         "includeAll": true,
@@ -246,7 +250,9 @@
           "text": "AA",
           "value": ["AA"]
         },
-        "datasource": "gdev-testdata",
+        "datasource": {
+          "type": "grafana-testdata-datasource"
+        },
         "definition": "$datacenter.*",
         "hide": 0,
         "includeAll": true,
@@ -271,7 +277,9 @@
           "text": "All",
           "value": ["$__all"]
         },
-        "datasource": "gdev-testdata",
+        "datasource": {
+          "type": "grafana-testdata-datasource"
+        },
         "definition": "$datacenter.$server.*",
         "hide": 0,
         "includeAll": true,

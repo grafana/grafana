@@ -78,11 +78,6 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
   const [labelFilters, setLabelFilters] = useState<QueryBuilderLabelFilter[]>([]);
 
   useEffect(() => {
-    datasource.languageProvider.start(range);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
     if (!query) {
       return;
     }

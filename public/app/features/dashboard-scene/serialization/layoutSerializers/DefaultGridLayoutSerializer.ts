@@ -9,10 +9,10 @@ import {
   PanelKind,
   LibraryPanelKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { contextSrv } from 'app/core/core';
 
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
+import { getIsLazy } from '../../scene/layouts-shared/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { calculateGridItemDimensions, isLibraryPanel } from '../../utils/utils';
 
@@ -41,7 +41,7 @@ export function deserializeDefaultGridLayout(
   }
   return new DefaultGridLayoutManager({
     grid: new SceneGridLayout({
-      isLazy: !(preload || contextSrv.user.authenticatedBy === 'render'),
+      isLazy: getIsLazy(preload),
       children: createSceneGridLayoutForItems(layout, elements, panelIdGenerator),
     }),
   });

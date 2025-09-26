@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,11 +27,13 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -52,35 +53,52 @@ func RegisterAPIService(
 	coreRolesStorage CoreRoleStorageBackend,
 	rolesStorage RoleStorageBackend,
 ) (*IdentityAccessManagementAPIBuilder, error) {
-	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
+	dbProvider := legacysql.NewDatabaseProvider(sql)
+	store := legacy.NewLegacySQLStores(dbProvider)
 	legacyAccessClient := newLegacyAccessClient(ac, store)
 	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient)
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		store:               store,
-		coreRolesStorage:    coreRolesStorage,
-		rolesStorage:        rolesStorage,
-		sso:                 ssoService,
-		authorizer:          authorizer,
-		legacyAccessClient:  legacyAccessClient,
-		accessClient:        accessClient,
-		display:             user.NewLegacyDisplayREST(store),
-		reg:                 reg,
-		enableAuthZApis:     features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
-		enableAuthnMutation: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
-		enableDualWriter:    true,
+		store:                        store,
+		coreRolesStorage:             coreRolesStorage,
+		rolesStorage:                 rolesStorage,
+		resourcePermissionsStorage:   resourcepermission.ProvideStorageBackend(dbProvider),
+		sso:                          ssoService,
+		authorizer:                   authorizer,
+		legacyAccessClient:           legacyAccessClient,
+		accessClient:                 accessClient,
+		display:                      user.NewLegacyDisplayREST(store),
+		reg:                          reg,
+		enableAuthZApis:              features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
+		enableResourcePermissionApis: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis),
+		enableAuthnMutation:          features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
+		enableDualWriter:             true,
 	}
 	apiregistration.RegisterAPI(builder)
 
 	return builder, nil
 }
 
-func NewAPIService(store legacy.LegacyIdentityStore) *IdentityAccessManagementAPIBuilder {
+func NewAPIService(
+	accessClient types.AccessClient,
+	dbProvider legacysql.LegacyDatabaseProvider,
+	enabledApis map[string]bool,
+) *IdentityAccessManagementAPIBuilder {
+	store := legacy.NewLegacySQLStores(dbProvider)
+	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider)
+	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	return &IdentityAccessManagementAPIBuilder{
-		store:   store,
-		display: user.NewLegacyDisplayREST(store),
+		store:                        store,
+		display:                      user.NewLegacyDisplayREST(store),
+		resourcePermissionsStorage:   resourcePermissionsStorage,
+		enableResourcePermissionApis: enabledApis["resourcepermissions"],
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
+				// For now only authorize resourcepermissions resource
+				if a.GetResource() == "resourcepermissions" {
+					return resourceAuthorizer.Authorize(ctx, a)
+				}
+
 				user, err := identity.GetRequester(ctx)
 				if err != nil {
 					return authorizer.DecisionDeny, "no identity found", err
@@ -99,9 +117,18 @@ func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersi
 
 func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	if b.enableAuthZApis {
-		if err := iamv0.AddToScheme(scheme); err != nil {
+		if err := iamv0.AddAuthZKnownTypes(scheme); err != nil {
 			return err
 		}
+	}
+	if b.enableResourcePermissionApis {
+		if err := iamv0.AddResourcePermissionKnownTypes(scheme, iamv0.SchemeGroupVersion); err != nil {
+			return err
+		}
+	}
+
+	if err := iamv0.AddAuthNKnownTypes(scheme); err != nil {
+		return err
 	}
 
 	legacyiamv0.AddKnownTypes(scheme, legacyiamv0.VERSION)
@@ -111,8 +138,8 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 	// "no kind is registered for the type"
 	legacyiamv0.AddKnownTypes(scheme, runtime.APIVersionInternal)
 
-	metav1.AddToGroupVersion(scheme, legacyiamv0.SchemeGroupVersion)
-	return scheme.SetVersionPriority(legacyiamv0.SchemeGroupVersion)
+	metav1.AddToGroupVersion(scheme, iamv0.SchemeGroupVersion)
+	return scheme.SetVersionPriority(iamv0.SchemeGroupVersion)
 }
 
 func (b *IdentityAccessManagementAPIBuilder) AllowedV0Alpha1Resources() []string {
@@ -122,15 +149,31 @@ func (b *IdentityAccessManagementAPIBuilder) AllowedV0Alpha1Resources() []string
 func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
-	teamResource := legacyiamv0.TeamResourceInfo
-	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.store, b.legacyAccessClient)
+	teamResource := iamv0.TeamResourceInfo
+	teamLegacyStore := team.NewLegacyStore(b.store, b.legacyAccessClient, b.enableAuthnMutation)
+	storage[teamResource.StoragePath()] = teamLegacyStore
 	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
 
-	teamBindingResource := legacyiamv0.TeamBindingResourceInfo
+	if b.enableDualWriter {
+		teamStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamResource, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+
+		teamDW, err := opts.DualWriteBuilder(teamResource.GroupResource(), teamLegacyStore, teamStore)
+		if err != nil {
+			return err
+		}
+
+		storage[teamResource.StoragePath()] = teamDW
+	}
+
+	teamBindingResource := iamv0.TeamBindingResourceInfo
 	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
 
-	userResource := legacyiamv0.UserResourceInfo
-	legacyStore := user.NewLegacyStore(b.store, b.legacyAccessClient, b.enableAuthnMutation)
+	// User store registration
+	userResource := iamv0.UserResourceInfo
+	legacyStore := user.NewLegacyStore(b.store, b.accessClient, b.enableAuthnMutation)
 	storage[userResource.StoragePath()] = legacyStore
 
 	if b.enableDualWriter {
@@ -148,8 +191,26 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
-	serviceAccountResource := legacyiamv0.ServiceAccountResourceInfo
-	storage[serviceAccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store, b.legacyAccessClient)
+
+	// Service Accounts store registration
+	serviceAccountResource := iamv0.ServiceAccountResourceInfo
+	saLegacyStore := serviceaccount.NewLegacyStore(b.store, b.accessClient, b.enableAuthnMutation)
+	storage[serviceAccountResource.StoragePath()] = saLegacyStore
+
+	if b.enableDualWriter {
+		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, serviceAccountResource, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+
+		dw, err := opts.DualWriteBuilder(serviceAccountResource.GroupResource(), saLegacyStore, store)
+		if err != nil {
+			return err
+		}
+
+		storage[serviceAccountResource.StoragePath()] = dw
+	}
+
 	storage[serviceAccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
 
 	if b.sso != nil {
@@ -170,6 +231,14 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			return err
 		}
 		storage[iamv0.RoleInfo.StoragePath()] = roleStore
+	}
+
+	if b.enableResourcePermissionApis {
+		resourcePermissionStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
+		if err != nil {
+			return err
+		}
+		storage[iamv0.ResourcePermissionInfo.StoragePath()] = resourcePermissionStore
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[legacyiamv0.VERSION] = storage
@@ -252,26 +321,21 @@ func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authoriz
 func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	switch a.GetOperation() {
 	case admission.Create:
-		if a.GetKind() == legacyiamv0.UserResourceInfo.GroupVersionKind() {
-			return b.validateCreateUser(ctx, a, o)
+		switch typedObj := a.GetObject().(type) {
+		case *iamv0.User:
+			return user.ValidateOnCreate(ctx, typedObj)
+		case *iamv0.ServiceAccount:
+			return serviceaccount.ValidateOnCreate(ctx, typedObj)
+		case *iamv0.Team:
+			return team.ValidateOnCreate(ctx, typedObj)
 		}
 		return nil
-	case admission.Connect:
-	case admission.Delete:
 	case admission.Update:
 		return nil
-	}
-	return nil
-}
-
-func (b *IdentityAccessManagementAPIBuilder) validateCreateUser(_ context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
-	userObj, ok := a.GetObject().(*iamv0.User)
-	if !ok {
+	case admission.Delete:
 		return nil
-	}
-
-	if userObj.Spec.Login == "" && userObj.Spec.Email == "" {
-		return apierrors.NewBadRequest("user must have either login or email")
+	case admission.Connect:
+		return nil
 	}
 
 	return nil
@@ -283,35 +347,18 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreateUser(_ context.Contex
 func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	switch a.GetOperation() {
 	case admission.Create:
-		if a.GetKind() == legacyiamv0.UserResourceInfo.GroupVersionKind() {
-			return b.mutateUser(ctx, a, o)
+		switch typedObj := a.GetObject().(type) {
+		case *iamv0.User:
+			return user.MutateOnCreate(ctx, typedObj)
+		case *iamv0.ServiceAccount:
+			return serviceaccount.MutateOnCreate(ctx, typedObj)
 		}
-		return nil
 	case admission.Update:
 		return nil
 	case admission.Delete:
 		return nil
 	case admission.Connect:
 		return nil
-	}
-
-	return nil
-}
-
-func (b *IdentityAccessManagementAPIBuilder) mutateUser(_ context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
-	userObj, ok := a.GetObject().(*iamv0.User)
-	if !ok {
-		return nil
-	}
-
-	userObj.Spec.Email = strings.ToLower(userObj.Spec.Email)
-	userObj.Spec.Login = strings.ToLower(userObj.Spec.Login)
-
-	if userObj.Spec.Login == "" {
-		userObj.Spec.Login = userObj.Spec.Email
-	}
-	if userObj.Spec.Email == "" {
-		userObj.Spec.Email = userObj.Spec.Login
 	}
 
 	return nil
@@ -333,7 +380,7 @@ func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defa
 	}
 
 	client := resource.NewLocalResourceClient(server)
-	optsGetter := apistore.NewRESTOptionsGetterForClient(client, defaultOpts.StorageConfig.Config, nil)
+	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil, defaultOpts.StorageConfig.Config, nil)
 
 	store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
 	return store, err

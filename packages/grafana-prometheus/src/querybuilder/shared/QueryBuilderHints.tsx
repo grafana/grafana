@@ -38,7 +38,7 @@ export const QueryBuilderHints = ({
   }, [datasource, visualQuery, data, queryModeller]);
 
   return (
-    <>
+    <div className={styles.root}>
       {hints.length > 0 && (
         <div className={styles.container}>
           {hints.map((hint) => {
@@ -75,7 +75,7 @@ export const QueryBuilderHints = ({
           })}
         </div>
       )}
-    </>
+    </div>
   );
 };
 
@@ -83,12 +83,16 @@ QueryBuilderHints.displayName = 'QueryBuilderHints';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    root: css({
+      padding: theme.spacing(0.5),
+    }),
     container: css({
       display: 'flex',
       alignItems: 'start',
     }),
     hint: css({
       marginRight: theme.spacing(1),
+      marginBottom: theme.spacing(1),
     }),
   };
 };

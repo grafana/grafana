@@ -1,0 +1,21 @@
+apiVersion: 1
+
+providers:
+  - name: 'gdev dashboards'
+    folder: 'gdev dashboards'
+    folderUid: ''
+    type: file
+    allowUiUpdates: false
+    updateIntervalSeconds: 3600
+    options:
+      # This path is relative to the WORKDIR in the docker container. It is mounted
+      # in the docker-compose.yml file.
+      path: conf/dev-dashboards
+  - name: 'frontend-service dashboards'
+    folder: 'frontend-service dashboards'
+    folderUid: ''
+    type: file
+    allowUiUpdates: false
+    updateIntervalSeconds: 3600
+    options:
+      path: conf/provisioning/dashboards/dashboards

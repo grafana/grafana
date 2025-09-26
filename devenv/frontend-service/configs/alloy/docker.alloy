@@ -1,0 +1,44 @@
+discovery.docker "tilt" {
+	host = "unix:///var/run/docker.sock"
+
+	filter {
+		name   = "label"
+		values = ["alloy.logs=true"]
+	}
+
+	// Exposes output
+}
+
+discovery.relabel "tilt" {
+	// Read from
+	targets = discovery.docker.tilt.targets
+
+	rule {
+		action        = "replace"
+		source_labels = ["__meta_docker_container_name"]
+		regex         = "/(.*)"
+		replacement   = "$1"
+		target_label  = "docker_container_name"
+	}
+
+	rule {
+		action        = "replace"
+		source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+		target_label  = "docker_compose_project"
+	}
+
+	rule {
+		action        = "replace"
+		source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+		target_label  = "service_name"
+	}
+
+	// Exposes output
+}
+
+loki.source.docker "default" {
+	targets    = discovery.relabel.tilt.output
+	host       = "unix:///var/run/docker.sock"
+	labels     = {"job" = "docker"}
+	forward_to = [loki.relabel.publish_logs.receiver]
+}

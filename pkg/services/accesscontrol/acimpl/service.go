@@ -73,11 +73,8 @@ func ProvideService(
 		return nil, err
 	}
 
-	// Migrating scopes that haven't been split yet to have kind, attribute and identifier in the DB
-	// This will be removed once we've:
-	// 1) removed the feature toggle and
-	// 2) have released enough versions not to support a version without split scopes
-	if err := migrator.MigrateScopeSplit(db, service.log); err != nil {
+	// Migrating to remove deprecated permissions from the database
+	if err := migrator.MigrateRemoveDeprecatedPermissions(db, service.log); err != nil {
 		return nil, err
 	}
 
@@ -147,10 +144,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 			permissions = append(permissions, basicRole.Permissions...)
 		}
 	}
-
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		permissions = append(permissions, SharedWithMeFolderPermission)
-	}
+	permissions = append(permissions, SharedWithMeFolderPermission)
 
 	// we don't care about the error here, if this fails we get 0 and no
 	// permission assigned to user will be returned, only for org role.
@@ -232,9 +226,7 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 	}
 
 	permissions = s.actionResolver.ExpandActionSets(permissions)
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		permissions = append(permissions, SharedWithMeFolderPermission)
-	}
+	permissions = append(permissions, SharedWithMeFolderPermission)
 
 	return permissions, nil
 }
@@ -435,6 +427,11 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 		for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
 			if basicRole, ok := s.roles[br]; ok {
 				for _, p := range registration.Role.Permissions {
+					if registration.Role.IsPlugin() && p.Action == pluginaccesscontrol.ActionAppAccess {
+						s.log.Debug("Plugin is attempting to grant access permission, but this permission is already granted by default and will be ignored",
+							"role", registration.Role.Name, "permission", p.Action, "scope", p.Scope)
+						continue
+					}
 					perm := accesscontrol.Permission{
 						Action: p.Action,
 						Scope:  p.Scope,
@@ -699,7 +696,7 @@ func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchO
 	if searchOptions.Scope != "" {
 		// Permissions including the scope should also match
 		scopes := append(searchOptions.Wildcards(), searchOptions.Scope)
-		if !slices.Contains[[]string, string](scopes, permission.Scope) {
+		if !slices.Contains(scopes, permission.Scope) {
 			return false
 		}
 	}

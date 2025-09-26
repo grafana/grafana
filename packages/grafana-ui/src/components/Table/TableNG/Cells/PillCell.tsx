@@ -4,49 +4,41 @@ import { useMemo } from 'react';
 import {
   GrafanaTheme2,
   classicColors,
-  colorManipulator,
   Field,
   getColorByStringHash,
   FALLBACK_COLOR,
+  fieldColorModeRegistry,
 } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
-import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
-import { TableCellRendererProps } from '../types';
+import { getActiveCellSelector } from '../styles';
+import { PillCellProps, TableCellStyles, TableCellValue } from '../types';
 
-interface Pill {
-  value: string;
-  key: string;
-  bgColor: string;
-  color: string;
-}
-
-function createPills(pillValues: string[], field: Field, theme: GrafanaTheme2): Pill[] {
-  return pillValues.map((pill, index) => {
-    const bgColor = getPillColor(pill, field, theme);
-    const textColor = colorManipulator.getContrastRatio('#FFFFFF', bgColor) >= 4.5 ? '#FFFFFF' : '#000000';
-    return {
-      value: pill,
-      key: `${pill}-${index}`,
-      bgColor,
-      color: textColor,
-    };
-  });
-}
-
-export function PillCell({ value, field }: TableCellRendererProps) {
-  const styles = useStyles2(getStyles);
-  const theme = useTheme2();
-
+export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: PillCellProps) {
+  const value = field.values[rowIdx];
   const pills: Pill[] = useMemo(() => {
-    const pillValues = inferPills(String(value));
-    return createPills(pillValues, field, theme);
-  }, [value, field, theme]);
+    const pillValues = inferPills(value);
+    return pillValues.length > 0
+      ? pillValues.map((pill, index) => {
+          const bgColor = getPillColor(pill, field, theme);
+          const textColor = getTextColorForBackground(bgColor);
+          return {
+            value: String(pill),
+            key: `${pill}-${index}`,
+            bgColor,
+            color: textColor,
+          };
+        })
+      : [];
+  }, [value, field, theme, getTextColorForBackground]);
+
+  if (pills.length === 0) {
+    return null;
+  }
 
   return pills.map((pill) => (
     <span
       key={pill.key}
-      className={styles.pill}
       style={{
         backgroundColor: pill.bgColor,
         color: pill.color,
@@ -58,13 +50,22 @@ export function PillCell({ value, field }: TableCellRendererProps) {
   ));
 }
 
+interface Pill {
+  value: string;
+  key: string;
+  bgColor: string;
+  color: string;
+}
+
 const SPLIT_RE = /\s*,\s*/;
 const TRANSPARENT = 'rgba(0,0,0,0)';
 
-export function inferPills(value: string): string[] {
-  if (value === '') {
+export function inferPills(rawValue: TableCellValue): unknown[] {
+  if (rawValue === '' || rawValue == null) {
     return [];
   }
+
+  const value = String(rawValue);
 
   if (value[0] === '[') {
     try {
@@ -77,7 +78,8 @@ export function inferPills(value: string): string[] {
   return value.trim().split(SPLIT_RE);
 }
 
-function getPillColor(value: string, field: Field, theme: GrafanaTheme2): string {
+// FIXME: this does not yet support "shades of a color"
+function getPillColor(value: unknown, field: Field, theme: GrafanaTheme2): string {
   const cfg = field.config;
 
   if (cfg.mappings?.length ?? 0 > 0) {
@@ -88,19 +90,36 @@ function getPillColor(value: string, field: Field, theme: GrafanaTheme2): string
     return theme.visualization.getColorByName(cfg.color?.fixedColor ?? FALLBACK_COLOR);
   }
 
-  // TODO: instead of classicColors we need to pull colors from theme, same way as FieldColorModeId.PaletteClassicByName (see fieldColor.ts)
-  return getColorByStringHash(classicColors, value);
+  let colors = classicColors;
+  const configuredColor = cfg.color;
+  if (configuredColor) {
+    const mode = fieldColorModeRegistry.get(configuredColor.mode);
+    if (typeof mode?.getColors === 'function') {
+      colors = mode.getColors(theme);
+    }
+  }
+
+  return getColorByStringHash(colors, String(value));
 }
 
-export const getStyles = (theme: GrafanaTheme2) => ({
-  pill: css({
-    display: 'inline-block',
-    padding: theme.spacing(0.25, 0.75),
-    marginInlineEnd: theme.spacing(0.5),
-    marginBlock: theme.spacing(0.5),
-    borderRadius: theme.shape.radius.default,
-    fontSize: theme.typography.bodySmall.fontSize,
-    lineHeight: theme.typography.bodySmall.lineHeight,
-    whiteSpace: 'nowrap',
-  }),
-});
+export const getStyles: TableCellStyles = (theme, { textWrap, shouldOverflow, maxHeight }) =>
+  css({
+    display: 'inline-flex',
+    gap: theme.spacing(0.5),
+    flexWrap: textWrap ? 'wrap' : 'nowrap',
+
+    ...(shouldOverflow && {
+      [getActiveCellSelector(Boolean(maxHeight))]: {
+        flexWrap: 'wrap',
+      },
+    }),
+
+    '> span': {
+      display: 'flex',
+      padding: theme.spacing(0.25, 0.75),
+      borderRadius: theme.shape.radius.default,
+      fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      whiteSpace: 'nowrap',
+    },
+  });

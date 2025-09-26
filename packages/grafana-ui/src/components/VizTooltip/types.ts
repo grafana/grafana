@@ -27,6 +27,7 @@ export interface VizTooltipItem {
   colorPlacement?: ColorPlacement;
   isActive?: boolean;
   lineStyle?: LineStyle;
+  isHiddenFromViz?: boolean;
 
   // internal/tmp for sorting
   numeric?: number;

@@ -87,7 +87,7 @@ export function NoAccessModal({ item, isOpen, onDismiss }: NoAccessModalProps) {
             <p>
               <Trans i18nKey="connections.no-access-modal.editor-warning">
                 Editors cannot add new connections. You may check to see if it is already configured in{' '}
-                <a href="/connections/datasources">Data sources</a>.
+                <TextLink href="/connections/datasources">Data sources</TextLink>.
               </Trans>
             </p>
             <p>

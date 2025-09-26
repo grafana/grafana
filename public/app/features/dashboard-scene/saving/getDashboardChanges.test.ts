@@ -326,6 +326,64 @@ describe('getDashboardChanges', () => {
     expect(result).toEqual(expectedChanges);
   });
 
+  it('should not see any changes on modified textbox var when we do not update variable values', () => {
+    const newDashboard: Dashboard = {
+      ...initial,
+      templating: {
+        list: [
+          {
+            name: 'var1',
+            type: 'textbox',
+            query: '',
+            current: {
+              value: 'value1',
+              text: 'text1',
+            },
+            options: [],
+          },
+        ],
+      },
+    };
+
+    const changedDashboard: Dashboard = {
+      ...newDashboard,
+      templating: {
+        list: [
+          {
+            name: 'var1',
+            type: 'textbox',
+            query: 'query',
+            current: {
+              value: 'value1',
+              text: 'text1',
+            },
+            options: [],
+          },
+        ],
+      },
+    };
+
+    const expectedChanges = {
+      initialSaveModel: {
+        ...newDashboard,
+      },
+      changedSaveModel: {
+        ...changedDashboard,
+      },
+      diffs: {},
+      diffCount: 0,
+      hasChanges: false,
+      hasTimeChanges: false,
+      isNew: false,
+      hasVariableValueChanges: false,
+      hasRefreshChange: false,
+    };
+
+    const result = getRawDashboardChanges(newDashboard, changedDashboard, false, false, false);
+
+    expect(result).toEqual(expectedChanges);
+  });
+
   it('should return the correct result when the variable value changes', () => {
     const changed = {
       ...initial,

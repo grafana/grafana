@@ -37,6 +37,8 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 		return false
 	}
 
+	enabledAccessibleAppPluginMap := make(map[string]*pluginstore.Plugin)
+
 	for _, plugin := range s.pluginStore.Plugins(c.Req.Context(), plugins.TypeApp) {
 		if !isPluginEnabled(plugin) {
 			continue
@@ -46,8 +48,17 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 			continue
 		}
 
+		enabledAccessibleAppPluginMap[plugin.ID] = &plugin
 		if appNode := s.processAppPlugin(plugin, c, treeRoot); appNode != nil {
 			appLinks = append(appLinks, appNode)
+		}
+	}
+
+	if adaptiveTelemetryPlugin := enabledAccessibleAppPluginMap["grafana-adaptivetelemetry-app"]; adaptiveTelemetryPlugin != nil {
+		if adaptiveTelemetrySection := treeRoot.FindById(navtree.NavIDAdaptiveTelemetry); adaptiveTelemetrySection != nil {
+			// If the adaptivetelemetry app is enabled, and the adaptiveTelemetrySection exists, then update the section to point to the plugin
+			adaptiveTelemetrySection.Url = s.cfg.AppSubURL + "/a/" + adaptiveTelemetryPlugin.ID
+			adaptiveTelemetrySection.PluginID = adaptiveTelemetryPlugin.ID
 		}
 	}
 
@@ -62,6 +73,35 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	}
 
 	return nil
+}
+
+// shouldIncludeInvestigations checks if the investigations feature should be included for the assistant app
+// see https://github.com/grafana/grafana-assistant-app/issues/2007 for more details
+func (s *ServiceImpl) shouldIncludeInvestigations(plugin pluginstore.Plugin, include *plugins.Includes, c *contextmodel.ReqContext) bool {
+	if plugin.ID != "grafana-assistant-app" || include.Name != "Investigations" {
+		return true
+	}
+
+	ps, err := s.pluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
+		PluginID: plugin.ID,
+		OrgID:    c.GetOrgID(),
+	})
+	if err != nil {
+		return false
+	}
+
+	loopData, exists := ps.JSONData["loop"]
+	if !exists {
+		return false
+	}
+
+	loopConfig, ok := loopData.(map[string]any)
+	if !ok {
+		return false
+	}
+
+	enabled, ok := loopConfig["enabled"].(bool)
+	return ok && enabled
 }
 
 func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
@@ -79,6 +119,10 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 
 	for _, include := range plugin.Includes {
 		if !hasAccessToInclude(include) {
+			continue
+		}
+
+		if !s.shouldIncludeInvestigations(plugin, include, c) {
 			continue
 		}
 
@@ -103,6 +147,10 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 				if sectionForPage := treeRoot.FindById(pathConfig.SectionID); sectionForPage != nil {
 					link.Id = "standalone-plugin-page-" + include.Path
 					link.SortWeight = pathConfig.SortWeight
+
+					if len(pathConfig.SubTitle) > 0 {
+						link.SubTitle = pathConfig.SubTitle
+					}
 
 					// Check if the section already has a page with the same URL, and in that case override it
 					// (This only happens if it is explicitly set by `navigation.app_standalone_pages` in the INI config)
@@ -232,7 +280,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 			treeRoot.AddSection(&navtree.NavLink{
 				Text:       "Observability",
 				Id:         navtree.NavIDObservability,
-				SubTitle:   "Opinionated observability across applications, services, and infrastructure",
+				SubTitle:   "Monitor infrastructure and applications in real time with Grafana Cloud's fully managed observability suite",
 				Icon:       "heart-rate",
 				SortWeight: navtree.WeightObservability,
 				Children:   []*navtree.NavLink{appLink},
@@ -287,6 +335,19 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Children:   []*navtree.NavLink{appLink},
 				Url:        s.cfg.AppSubURL + "/testing-and-synthetics",
 			})
+		case navtree.NavIDAdaptiveTelemetry:
+			treeRoot.AddSection(&navtree.NavLink{
+				Text:       "Adaptive Telemetry",
+				Id:         navtree.NavIDAdaptiveTelemetry,
+				SubTitle:   "Reduce noise, cut costs, and accelerate troubleshooting by intelligently ingesting only the telemetry data that matters most.",
+				Icon:       "adaptive-telemetry",
+				SortWeight: navtree.WeightAIAndML + 1, // Place under "AI & Machine Learning"
+				Children:   []*navtree.NavLink{appLink},
+				Url:        "adaptive-telemetry",
+				// Use the icon URL from the first "Adaptive Telemetry" plugin in the list (they will all be the same)
+				Img:   s.cfg.AppSubURL + plugin.Info.Logos.Large,
+				IsNew: true,
+			})
 		default:
 			s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", sectionID)
 		}
@@ -324,13 +385,15 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-irm-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "IRM"},
 		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 4, Text: "OnCall"},
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 5, Text: "Incident"},
-		"grafana-ml-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "AI & machine learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
+		"grafana-assistant-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAssistant, Text: "Assistant", SubTitle: "AI-powered assistant for Grafana", Icon: "ai-sparkle", IsNew: true},
+		"grafana-ml-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "Machine Learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
 		"grafana-slo-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 7},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
 		"grafana-costmanagementui-app":     {SectionID: navtree.NavIDCfg, Text: "Cost management"},
-		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDCfg, Text: "Adaptive Metrics"},
-		"grafana-adaptivelogs-app":         {SectionID: navtree.NavIDCfg, Text: "Adaptive Logs"},
-		"grafana-adaptivetraces-app":       {SectionID: navtree.NavIDCfg, Text: "Adaptive Traces"},
+		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 1, Text: "Adaptive Metrics", SubTitle: "Analyzes and reduces unused metrics and cardinality to help you focus on your most valuable performance data."},
+		"grafana-adaptivelogs-app":         {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 2, Text: "Adaptive Logs", SubTitle: "Analyzes log patterns to drop repetitive lines and accelerate troubleshooting."},
+		"grafana-adaptivetraces-app":       {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 3, Text: "Adaptive Traces", SubTitle: "Analyzes and retains the most valuable traces, providing the performance insights needed to resolve issues faster."},
+		"grafana-adaptiveprofiles-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 4, Text: "Adaptive Profiles", SubTitle: "Analyzes application profiles to pinpoint the root cause of performance issues and accelerate resolution."},
 		"grafana-attributions-app":         {SectionID: navtree.NavIDCfg, Text: "Attributions"},
 		"grafana-logvolumeexplorer-app":    {SectionID: navtree.NavIDCfg, Text: "Log Volume Explorer"},
 		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
@@ -347,7 +410,11 @@ func (s *ServiceImpl) readNavigationSettings() {
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{
-		"/a/grafana-auth-app": {SectionID: navtree.NavIDCfgAccess, SortWeight: 2},
+		"/a/grafana-auth-app": {
+			SectionID:  navtree.NavIDCfgAccess,
+			SortWeight: 2,
+			SubTitle:   "Use policies to control automated access to metrics, logs, traces, and other Grafana Cloud services",
+		},
 	}
 
 	appSections := s.cfg.Raw.Section("navigation.app_sections")

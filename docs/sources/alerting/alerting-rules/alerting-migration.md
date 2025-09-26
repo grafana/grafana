@@ -281,12 +281,13 @@ The `POST` endpoints can be used to import data source–managed alert rules. Th
 | POST     | `/convert/prometheus/config/v1/rules`                 | [Create or update multiple rule groups](#create-or-update-multiple-rule-groups) across multiple namespaces. Requires [`X-Grafana-Alerting-Datasource-UID`](#x-grafana-alerting-datasource-uid). | None                                                                     |
 | POST     | `/convert/prometheus/config/v1/rules/:namespaceTitle` | Create or update a single rule group in a namespace. Requires [`X-Grafana-Alerting-Datasource-UID`](#x-grafana-alerting-datasource-uid).                                                        | [Set rule group](/docs/mimir/latest/references/http-api/#set-rule-group) |
 
-The `GET` and `DELETE` endpoints work only with provisioned and imported alert rules.
+The `GET` and `DELETE` endpoints work only with provisioned and imported alert rules. All `GET` endpoints support both JSON and YAML response formats based on the `Accept` header: use `application/json` for JSON responses, or `application/yaml` for YAML responses. YAML is the default format when no `Accept` header is specified.
 
 | Endpoint | Method                                                       | Summary                                             | Mimir equivalent                                                                                     |
 | -------- | ------------------------------------------------------------ | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | GET      | `/convert/prometheus/config/v1/rules`                        | Get all imported rule groups across all namespaces. | [List rule groups](/docs/mimir/latest/references/http-api/#list-rule-groups)                         |
 | GET      | `/convert/prometheus/config/v1/rules/:namespaceTitle`        | Get imported rule groups in a specific namespace.   | [Get rule groups by namespace](/docs/mimir/latest/references/http-api/#get-rule-groups-by-namespace) |
+| GET      | `/convert/prometheus/config/v1/rules/:namespaceTitle/:group` | Get imported rule group in a specific namespace.    | [Get rule group](/docs/mimir/latest/references/http-api/#get-rule-group)                             |
 | DELETE   | `/convert/prometheus/config/v1/rules/:namespaceTitle`        | Delete all imported alert rules in a namespace.     | [Delete namespace](/docs/mimir/latest/references/http-api/#delete-namespace)                         |
 | DELETE   | `/convert/prometheus/config/v1/rules/:namespaceTitle/:group` | Delete a specific imported rule group.              | [Delete rule group](/docs/mimir/latest/references/http-api/#delete-rule-group)                       |
 

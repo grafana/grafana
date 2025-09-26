@@ -1,9 +1,8 @@
-import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 export function isGrafanaAdmin(): boolean {
-  return config.bootData.user.isGrafanaAdmin;
+  return contextSrv.user.isGrafanaAdmin;
 }
 
 export function isOrgAdmin() {

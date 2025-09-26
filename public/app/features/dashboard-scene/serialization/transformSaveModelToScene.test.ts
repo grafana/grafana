@@ -999,6 +999,9 @@ describe('transformSaveModelToScene', () => {
                 config: {},
               },
             ],
+            scopedVars: {
+              var1: { value: 'value1', text: 'text1' },
+            },
           },
         ],
       }) as Panel;
@@ -1020,6 +1023,30 @@ describe('transformSaveModelToScene', () => {
         { config: {}, name: 'Field 1', type: 'time' },
         { config: {}, name: 'Field 2', type: 'number' },
       ]);
+    });
+
+    it('should translate scopedVars to local variable value', () => {
+      const panel = createPanelSaveModel({
+        title: 'test',
+        gridPos: { x: 1, y: 0, w: 12, h: 8 },
+        targets: [
+          {
+            queryType: 'snapshot',
+          },
+        ],
+        // @ts-ignore
+        scopedVars: {
+          var1: { value: 'value1', text: 'text1' },
+        },
+      }) as Panel;
+
+      const oldPanelModel = new PanelModel(panel);
+      const scenePanel = buildGridItemForPanel(oldPanelModel);
+      const vizPanel = scenePanel.state.body;
+
+      expect(vizPanel.state.$variables?.state.variables[0].state.name).toBe('var1');
+      expect(vizPanel.state.$variables?.state.variables[0].getValue()).toBe('value1');
+      expect(vizPanel.state.$variables?.state.variables[0].getValueText?.()).toBe('text1');
     });
   });
 });

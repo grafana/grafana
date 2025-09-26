@@ -1,4 +1,7 @@
-import { Scope, store as storeImpl } from '@grafana/data';
+import { Scope, ScopeNode, store as storeImpl } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { SceneRenderProfiler } from '@grafana/scenes';
+import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
@@ -13,7 +16,7 @@ import {
   modifyTreeNodeAtPath,
   treeNodeAtPath,
 } from './scopesTreeUtils';
-import { NodesMap, ScopesMap, SelectedScope, TreeNode } from './types';
+import { NodesMap, RecentScope, RecentScopeSchema, ScopeSchema, ScopesMap, SelectedScope, TreeNode } from './types';
 
 export const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
 
@@ -49,7 +52,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   constructor(
     private apiClient: ScopesApiClient,
     private dashboardsService: ScopesDashboardsService,
-    private store = storeImpl
+    private store = storeImpl,
+    private interactionProfiler: SceneRenderProfiler | undefined = config.dashboardPerformanceMetrics.length
+      ? getDashboardSceneProfiler()
+      : undefined
   ) {
     super({
       loading: false,
@@ -69,28 +75,59 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         children: undefined,
       },
     });
+
+    // Load nodes from recent scopes so they are readily available
+    const parentNodes = this.getNodesFromRecentScopes();
+    this.updateState({ nodes: { ...this.state.nodes, ...parentNodes } });
   }
 
+  // Loads a node from the API and adds it to the nodes cache
+  public getScopeNode = async (scopeNodeId: string) => {
+    if (this.state.nodes[scopeNodeId]) {
+      return this.state.nodes[scopeNodeId];
+    }
+
+    try {
+      const node = await this.apiClient.fetchScopeNode(scopeNodeId);
+      if (node) {
+        this.updateState({ nodes: { ...this.state.nodes, [node.metadata.name]: node } });
+      }
+      return node;
+    } catch (error) {
+      console.error('Failed to load node', error);
+      return undefined;
+    }
+  };
+
   private expandOrFilterNode = async (scopeNodeId: string, query?: string) => {
+    this.interactionProfiler?.startInteraction('scopeNodeDiscovery');
+
     const path = getPathOfNode(scopeNodeId, this.state.nodes);
 
     const nodeToExpand = treeNodeAtPath(this.state.tree!, path);
 
-    if (nodeToExpand) {
-      if (nodeToExpand.scopeNodeId === '' || isNodeExpandable(this.state.nodes[nodeToExpand.scopeNodeId])) {
-        if (!nodeToExpand.expanded || nodeToExpand.query !== query) {
-          const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
-            treeNode.expanded = true;
-            treeNode.query = query || '';
-          });
-          this.updateState({ tree: newTree });
-          await this.loadNodeChildren(path, nodeToExpand, query);
-        }
-      } else {
+    try {
+      if (!nodeToExpand) {
+        throw new Error(`Node ${scopeNodeId} not found in tree`);
+      }
+
+      if (nodeToExpand.scopeNodeId !== '' && !isNodeExpandable(this.state.nodes[nodeToExpand.scopeNodeId])) {
         throw new Error(`Trying to expand node at id ${scopeNodeId} that is not expandable`);
       }
-    } else {
-      throw new Error(`Trying to expand node at id ${scopeNodeId} not found`);
+
+      if (!nodeToExpand.expanded || nodeToExpand.query !== query) {
+        const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+          treeNode.expanded = true;
+          treeNode.query = query || '';
+        });
+        this.updateState({ tree: newTree });
+
+        await this.loadNodeChildren(path, nodeToExpand, query);
+      }
+    } catch (error) {
+      throw error;
+    } finally {
+      this.interactionProfiler?.stopInteraction();
     }
   };
 
@@ -112,7 +149,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   private loadNodeChildren = async (path: string[], treeNode: TreeNode, query?: string) => {
     this.updateState({ loadingNodeName: treeNode.scopeNodeId });
 
-    // We are expanding node that wasn't yet expanded so we don't have any query to filter by yet.
     const childNodes = await this.apiClient.fetchNodes({ parent: treeNode.scopeNodeId, query });
 
     const newNodes = { ...this.state.nodes };
@@ -122,11 +158,13 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
 
     const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+      // Set parent query only when filtering within existing children
       treeNode.children = {};
       for (const node of childNodes) {
         treeNode.children[node.metadata.name] = {
           expanded: false,
           scopeNodeId: node.metadata.name,
+          // Only set query on tree nodes if parent already has children (filtering vs first expansion). This is used for saerch highlighting.
           query: '',
           children: undefined,
         };
@@ -160,11 +198,15 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       }
     });
 
-    // TODO: if we do global search we may not have a prent node loaded. We have the ID but there is not an API that
+    // TODO: if we do global search we may not have a parent node loaded. We have the ID but there is not an API that
     //   would allow us to load scopeNode by ID right now so this can be undefined which means we skip the
     //   disableMultiSelect check.
     const parentNode = this.state.nodes[scopeNode.spec.parentName!];
-    const selectedScope = { scopeId: scopeNode.spec.linkId, scopeNodeId: scopeNode.metadata.name };
+    const selectedScope = {
+      scopeId: scopeNode.spec.linkId,
+      scopeNodeId: scopeNode.metadata.name,
+      parentNodeId: parentNode?.metadata.name,
+    };
 
     // if something is selected we look at parent and see if we are selecting in the same category or not. As we
     // cannot select in multiple categories we only need to check the first selected node. It is possible we have
@@ -207,6 +249,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.updateState({ selectedScopes: newSelectedScopes });
   };
 
+  // TODO: We should split this into two functions: expandNode and filterNode.
+  // @deprecated
   public updateNode = async (scopeNodeId: string, expanded: boolean, query: string) => {
     if (expanded) {
       return this.expandOrFilterNode(scopeNodeId, query);
@@ -214,8 +258,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     return this.collapseNode(scopeNodeId);
   };
 
-  changeScopes = (scopeNames: string[]) => {
-    return this.applyScopes(scopeNames.map((id) => ({ scopeId: id })));
+  changeScopes = (scopeNames: string[], parentNodeId?: string) => {
+    return this.applyScopes(scopeNames.map((id) => ({ scopeId: id, parentNodeId })));
   };
 
   /**
@@ -244,22 +288,37 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       for (const scope of fetchedScopes) {
         newScopesState[scope.metadata.name] = scope;
       }
-      this.addRecentScopes(fetchedScopes);
+
+      const scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
+
+      // If parentNodeId is provided, use it directly as the parent node
+      // If not provided, try to get the parent from the scope node
+      // When selected from recent scopes, we don't have access to the scope node (if it hasn't been loaded), but we do have access to the parent node from local storage.
+      const parentNodeId = scopes[0]?.parentNodeId || scopeNode?.spec.parentName;
+      const parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
+
+      this.addRecentScopes(fetchedScopes, parentNode);
       this.updateState({ scopes: newScopesState, loading: false });
     }
   };
 
   public removeAllScopes = () => this.applyScopes([]);
 
-  private addRecentScopes = (scopes: Scope[]) => {
+  private addRecentScopes = (scopes: Scope[], parentNode?: ScopeNode) => {
     if (scopes.length === 0) {
       return;
+    }
+
+    const newScopes: RecentScope[] = structuredClone(scopes);
+    // Set parent node for the first scope. We don't currently support multiple parent nodes being displayed, hence we only add for the first one
+    if (parentNode) {
+      newScopes[0].parentNode = parentNode;
     }
 
     const RECENT_SCOPES_MAX_LENGTH = 5;
 
     const recentScopes = this.getRecentScopes();
-    recentScopes.unshift(scopes);
+    recentScopes.unshift(newScopes);
     this.store.set(RECENT_SCOPES_KEY, JSON.stringify(recentScopes.slice(0, RECENT_SCOPES_MAX_LENGTH - 1)));
   };
 
@@ -267,18 +326,32 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
    * Returns recent scopes from local storage. It is array of array cause each item can represent application of
    * multiple different scopes.
    */
-  public getRecentScopes = (): Scope[][] => {
+  public getRecentScopes = (): RecentScope[][] => {
     const content: string | undefined = this.store.get(RECENT_SCOPES_KEY);
     const recentScopes = parseScopesFromLocalStorage(content);
 
     // Filter out the current selection from recent scopes to avoid duplicates
-    return recentScopes.filter((scopes: Scope[]) => {
+    return recentScopes.filter((scopes: RecentScope[]) => {
       if (scopes.length !== this.state.appliedScopes.length) {
         return true;
       }
       const scopeSet = new Set(scopes.map((s) => s.metadata.name));
       return !this.state.appliedScopes.every((s) => scopeSet.has(s.scopeId));
     });
+  };
+
+  private getNodesFromRecentScopes = (): Record<string, ScopeNode> => {
+    const content: string | undefined = this.store.get(RECENT_SCOPES_KEY);
+    const recentScopes = parseScopesFromLocalStorage(content);
+
+    // Load parent nodes for recent scopes
+    const parentNodes = Object.fromEntries(
+      recentScopes
+        .map((scopes) => [scopes[0]?.parentNode?.metadata?.name, scopes[0]?.parentNode])
+        .filter(([key, parentNode]) => parentNode !== undefined && key !== undefined)
+    );
+
+    return parentNodes;
   };
 
   /**
@@ -339,18 +412,14 @@ function isScopeLocalStorageV1(obj: unknown): obj is { scope: Scope } {
 }
 
 function isScopeObj(obj: unknown): obj is Scope {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'metadata' in obj &&
-    typeof obj['metadata'] === 'object' &&
-    obj['metadata'] !== null &&
-    'name' in obj['metadata'] &&
-    'spec' in obj
-  );
+  return ScopeSchema.safeParse(obj).success;
 }
 
-function parseScopesFromLocalStorage(content: string | undefined): Scope[][] {
+function hasValidScopeParentNode(obj: unknown): obj is RecentScope {
+  return RecentScopeSchema.safeParse(obj).success;
+}
+
+function parseScopesFromLocalStorage(content: string | undefined): RecentScope[][] {
   let recentScopes;
   try {
     recentScopes = JSON.parse(content || '[]');
@@ -367,6 +436,15 @@ function parseScopesFromLocalStorage(content: string | undefined): Scope[][] {
     recentScopes = recentScopes.map((s: Array<{ scope: Scope }>) => s.map((scope) => scope.scope));
   } else if (!isScopeObj(recentScopes[0]?.[0])) {
     return [];
+  }
+
+  // Verify the structure of the parent node for all recent scope sets, and remove it if it is not valid
+  for (const scopeSet of recentScopes) {
+    if (scopeSet[0]?.parentNode) {
+      if (!hasValidScopeParentNode(scopeSet[0])) {
+        scopeSet[0].parentNode = undefined;
+      }
+    }
   }
 
   return recentScopes;

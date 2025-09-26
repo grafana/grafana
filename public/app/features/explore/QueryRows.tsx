@@ -11,7 +11,9 @@ import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
+import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
 import { changeDatasource } from './state/datasource';
+import { updateQueryLibraryRefAction } from './state/explorePane';
 import { changeQueries, runQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
@@ -32,29 +34,36 @@ const makeSelectors = (exploreId: string) => {
       exploreItemSelector,
       (s: ExploreItemState | undefined) => getDatasourceSrv().getInstanceSettings(s!.datasourceInstance?.uid)!
     ),
+    getQueryLibraryRef: createSelector(exploreItemSelector, (s) => s!.queryLibraryRef),
   };
 };
 
 export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
   const dispatch = useDispatch();
-  const { getQueries, getDatasourceInstanceSettings, getQueryResponse, getHistory, getEventBridge } = useMemo(
-    () => makeSelectors(exploreId),
-    [exploreId]
-  );
+  const { openDrawer } = useQueryLibraryContext();
+  const {
+    getQueries,
+    getDatasourceInstanceSettings,
+    getQueryResponse,
+    getHistory,
+    getEventBridge,
+    getQueryLibraryRef,
+  } = useMemo(() => makeSelectors(exploreId), [exploreId]);
 
   const queries = useSelector(getQueries);
   const dsSettings = useSelector(getDatasourceInstanceSettings);
   const queryResponse = useSelector(getQueryResponse);
   const history = useSelector(getHistory);
   const eventBridge = useSelector(getEventBridge);
+  const queryLibraryRef = useSelector(getQueryLibraryRef);
 
   const onRunQueries = useCallback(() => {
     dispatch(runQueries({ exploreId }));
   }, [dispatch, exploreId]);
 
   const onChange = useCallback(
-    (newQueries: DataQuery[]) => {
-      dispatch(changeQueries({ exploreId, queries: newQueries }));
+    (newQueries: DataQuery[], options?: { skipAutoImport?: boolean }) => {
+      dispatch(changeQueries({ exploreId, queries: newQueries, options }));
     },
     [dispatch, exploreId]
   );
@@ -89,6 +98,25 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
     reportInteraction('grafana_query_row_toggle', queryStatus === undefined ? {} : { queryEnabled: queryStatus });
   };
 
+  const onCancelQueryLibraryEdit = () => {
+    // Store the current queryLibraryRef before clearing it
+    const originalQueryRef = queryLibraryRef;
+
+    // Clear the queryLibraryRef to exit editing mode
+    dispatch(updateQueryLibraryRefAction({ exploreId, queryLibraryRef: undefined }));
+
+    // Open drawer with the original query highlighted
+    if (originalQueryRef) {
+      openDrawer({
+        datasourceFilters: [],
+        options: {
+          context: 'explore',
+          highlightQuery: originalQueryRef,
+        },
+      });
+    }
+  };
+
   const onQueryOpenChanged = () => {
     // Disables compact mode when query is opened.
     // Compact mode can also be disabled by opening Content Outline.
@@ -112,6 +140,8 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
       app={CoreApp.Explore}
       history={history}
       eventBus={eventBridge}
+      queryLibraryRef={queryLibraryRef}
+      onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
       isOpen={isOpen}
       queryRowWrapper={(children, refId) => (
         <ContentOutlineItem

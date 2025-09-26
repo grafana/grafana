@@ -3,6 +3,7 @@
 ## Devenv setup oauth
 
 To launch the block, use the oauth source. Ex:
+
 ```bash
 make devenv sources="auth/oauth"
 ```
@@ -67,7 +68,6 @@ curl --request POST \
   --data password=grafana
 ```
 
-
 Grafana call example:
 
 ```sh
@@ -112,9 +112,9 @@ docker-compose exec -T oauthkeycloakdb bash -c "pg_dump -U keycloak keycloak" > 
 
 ## Connecting to keycloak:
 
-- keycloak admin:                     http://localhost:8087
-- keycloak admin login:               admin:admin
-- grafana oauth viewer login:         oauth-viewer:grafana
-- grafana oauth editor login:         oauth-editor:grafana
-- grafana oauth admin login:          oauth-admin:grafana
-- grafana oauth server admin login:   oauth-grafanaadmin:grafana
+- keycloak admin: http://localhost:8087
+- keycloak admin login: admin:admin
+- grafana oauth viewer login: oauth-viewer:grafana
+- grafana oauth editor login: oauth-editor:grafana
+- grafana oauth admin login: oauth-admin:grafana
+- grafana oauth server admin login: oauth-grafanaadmin:grafana

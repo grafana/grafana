@@ -1,31 +1,48 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import { useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { SceneComponentProps } from '@grafana/scenes';
-import { Button, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
+import { Button, TabsBar, useStyles2 } from '@grafana/ui';
 
-import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
+import { useSoloPanelContext } from '../SoloPanelContext';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
+import { TabItem } from './TabItem';
+import { TabItemLayoutRenderer } from './TabItemRenderer';
+import { TabItemRepeater } from './TabItemRepeater';
 import { TabsLayoutManager } from './TabsLayoutManager';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
   const styles = useStyles2(getStyles);
   const { tabs, key } = model.useState();
   const currentTab = model.getCurrentTab();
-  const { layout } = currentTab.useState();
   const dashboard = getDashboardSceneFor(model);
   const { isEditing } = dashboard.useState();
   const { hasCopiedTab } = useClipboardState();
-  const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(currentTab);
+  const isNestedInTab = useMemo(() => model.parent instanceof TabItem, [model.parent]);
+  const soloPanelContext = useSoloPanelContext();
+
+  useEffect(() => {
+    if (currentTab && currentTab.getSlug() !== model.state.currentTabSlug) {
+      model.setState({ currentTabSlug: currentTab.getSlug() });
+    }
+  }, [currentTab, model]);
+
+  if (soloPanelContext) {
+    return tabs.map((tab) => <TabWrapper tab={tab} manager={model} key={tab.state.key!} />);
+  }
+
+  const isClone = isRepeatCloneOrChildOf(model);
 
   return (
-    <div className={styles.tabLayoutContainer}>
+    <div className={cx(styles.tabLayoutContainer, { [styles.nestedTabsMargin]: isNestedInTab })}>
       <TabsBar className={styles.tabsBar}>
         <DragDropContext
           onBeforeDragStart={(start) => model.forceSelectTab(start.draggableId)}
@@ -46,14 +63,14 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
               {(dropProvided) => (
                 <div className={styles.tabsContainer} ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
                   {tabs.map((tab) => (
-                    <tab.Component model={tab} key={tab.state.key!} />
+                    <TabWrapper tab={tab} manager={model} key={tab.state.key!} />
                   ))}
 
                   {dropProvided.placeholder}
                 </div>
               )}
             </Droppable>
-            {isEditing && (
+            {isEditing && !isClone && (
               <div className="dashboard-canvas-add-button">
                 <Button
                   icon="plus"
@@ -81,20 +98,22 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
         </DragDropContext>
       </TabsBar>
 
-      {isEditing && (
-        <TabContent className={cx(styles.tabContentContainer, conditionalRenderingClass)}>
-          {currentTab && <layout.Component model={layout} />}
-          {conditionalRenderingOverlay}
-        </TabContent>
-      )}
-
-      {!isEditing && (
-        <TabContent className={styles.tabContentContainer}>
-          {currentTab && <layout.Component model={layout} />}
-        </TabContent>
-      )}
+      {currentTab && <TabItemLayoutRenderer tab={currentTab} isEditing={isEditing} />}
     </div>
   );
+}
+
+function TabWrapper({ tab, manager }: { tab: TabItem; manager: TabsLayoutManager }) {
+  const { repeatByVariable } = useSceneObjectState(tab, { shouldActivateOrKeepAlive: true });
+
+  if (repeatByVariable) {
+    const variable = sceneGraph.lookupVariable(repeatByVariable, manager);
+
+    if (variable instanceof MultiValueVariable) {
+      return <TabItemRepeater tab={tab} key={tab.state.key!} manager={manager} variable={variable} />;
+    }
+  }
+  return <tab.Component model={tab} key={tab.state.key!} />;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -118,16 +137,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     paddingInline: theme.spacing(0.125),
     paddingTop: '1px',
   }),
-  tabContentContainer: css({
-    backgroundColor: 'transparent',
-    position: 'relative',
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    // Without this min height, the custom grid (SceneGridLayout) wont render
-    // Should be bigger than paddingTop value
-    // consist of paddingTop + 0.125 = 9px
-    minHeight: theme.spacing(1 + 0.125),
-    paddingTop: theme.spacing(1),
+  nestedTabsMargin: css({
+    marginLeft: theme.spacing(2),
   }),
 });

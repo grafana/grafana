@@ -1,6 +1,7 @@
 import { FieldConfigProperty, PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 
 import { CanvasPanel, InstanceState } from './CanvasPanel';
@@ -12,7 +13,7 @@ import { canvasMigrationHandler } from './migrations';
 import { Options } from './panelcfg.gen';
 
 export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilder<Options>) => {
-  const category = [t('canvas.category-canvas', 'Canvas')];
+  let category = [t('canvas.category-canvas', 'Canvas')];
   builder.addBooleanSwitch({
     path: 'inlineEditing',
     name: t('canvas.name-inline-editing', 'Inline editing'),
@@ -35,7 +36,7 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     category,
     description: t('canvas.description-pan-zoom', 'Enable pan and zoom'),
     defaultValue: false,
-    showIf: (opts) => config.featureToggles.canvasPanelPanZoom,
+    showIf: () => config.featureToggles.canvasPanelPanZoom,
   });
   builder.addCustomEditor({
     id: 'panZoomHelp',
@@ -46,15 +47,40 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     showIf: (opts) => config.featureToggles.canvasPanelPanZoom && opts.panZoom,
   });
   builder.addBooleanSwitch({
-    path: 'infinitePan',
-    name: t('canvas.name-infinite-panning', 'Infinite panning'),
-    category,
-    description: t(
-      'canvas.description-infinite-panning',
-      'Enable infinite panning - useful for expansive canvases. Warning: this is an experimental feature and currently only works well with elements that are top / left constrained'
-    ),
+    path: 'zoomToContent',
+    name: 'Zoom to content',
+    description: 'Automatically zoom to fit content',
     defaultValue: false,
-    showIf: (opts) => config.featureToggles.canvasPanelPanZoom && opts.panZoom,
+    showIf: () => config.featureToggles.canvasPanelPanZoom,
+  });
+
+  category = [t('canvas.category-tooltip', 'Tooltip')];
+
+  builder.addRadio({
+    path: 'tooltip.mode',
+    name: t('canvas.tooltip-options.name-tooltip-mode', 'Tooltip mode'),
+    category,
+    defaultValue: TooltipDisplayMode.Single,
+    settings: {
+      options: [
+        {
+          value: TooltipDisplayMode.Single,
+          label: t('canvas.tooltip-options.tooltip-mode-options.label-enabled', 'Enabled'),
+        },
+        {
+          value: TooltipDisplayMode.None,
+          label: t('canvas.tooltip-options.tooltip-mode-options.label-disabled', 'Disabled'),
+        },
+      ],
+    },
+  });
+
+  builder.addBooleanSwitch({
+    path: 'tooltip.disableForOneClick',
+    name: t('canvas.tooltip-options.label-disable-one-click', 'Disable for one-click elements'),
+    category,
+    defaultValue: false,
+    showIf: (options) => options.tooltip?.mode !== TooltipDisplayMode.None,
   });
 };
 
@@ -79,7 +105,10 @@ export const plugin = new PanelPlugin<Options>(CanvasPanel)
       },
     },
   })
-  .setMigrationHandler(canvasMigrationHandler)
+  .setMigrationHandler(canvasMigrationHandler, (panel) => {
+    const pluginVersion = panel?.pluginVersion ?? '';
+    return parseFloat(pluginVersion) <= 12.2;
+  })
   .setPanelOptions((builder, context) => {
     const state: InstanceState = context.instanceState;
 

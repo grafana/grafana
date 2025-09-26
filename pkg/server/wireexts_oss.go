@@ -7,6 +7,7 @@ package server
 import (
 	"github.com/google/wire"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -14,11 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	apisregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	gsmKMSProviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
+	secretService "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/usagestatssvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -66,8 +67,11 @@ import (
 )
 
 var provisioningExtras = wire.NewSet(
-	webhooks.ProvideWebhooks,
-	extras.ProvideProvisioningOSSExtras,
+	extras.ProvideProvisioningOSSRepositoryExtras,
+)
+
+var configProviderExtras = wire.NewSet(
+	configprovider.ProvideService,
 )
 
 var wireExtsBasicSet = wire.NewSet(
@@ -108,6 +112,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
 	secretkeeper.ProvideService,
 	wire.Bind(new(contracts.KeeperService), new(*secretkeeper.OSSKeeperService)),
+	secretService.ProvideConsolidationService,
 	ldap.ProvideGroupsService,
 	wire.Bind(new(ldap.Groups), new(*ldap.OSSGroups)),
 	guardian.ProvideGuardian,
@@ -142,6 +147,7 @@ var wireExtsBasicSet = wire.NewSet(
 	gsmKMSProviders.ProvideOSSKMSProviders,
 	secret.ProvideSecureValueClient,
 	provisioningExtras,
+	configProviderExtras,
 )
 
 var wireExtsSet = wire.NewSet(
@@ -171,6 +177,7 @@ var wireExtsBaseCLISet = wire.NewSet(
 	hooks.ProvideService,
 	setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	licensing.ProvideService, wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
+	configProviderExtras,
 )
 
 // wireModuleServerSet is a wire set for the ModuleServer.

@@ -1559,7 +1559,7 @@ ${buildImageContent(
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
 Use this transformation to pivot the data frame, converting rows into columns and columns into rows. This transformation is particularly useful when you want to switch the orientation of your data to better suit your visualization needs.
-If you have multiple types it will default to string type.
+If you have multiple types, it will default to string type. You can select how empty cells should be represented.
 
 **Before Transformation:**
 
@@ -1609,14 +1609,6 @@ ${buildImageContent(
     },
   },
 };
-
-export function getLinkToDocs(): string {
-  return `
-  Go to the <a href="https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana" target="_blank" rel="noreferrer">
-  transformation documentation
-  </a> for more general documentation.
-  `;
-}
 
 function buildImageContent(source: string, imageRenderType: ImageRenderType, imageAltText: string) {
   return imageRenderType === 'shortcodeFigure'

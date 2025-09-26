@@ -5,7 +5,6 @@ package dashboards
 import (
 	context "context"
 
-	quota "github.com/grafana/grafana/pkg/services/quota"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -30,36 +29,6 @@ func (_m *FakeDashboardStore) CleanupAfterDelete(ctx context.Context, cmd *Delet
 	}
 
 	return r0
-}
-
-// Count provides a mock function with given fields: _a0, _a1
-func (_m *FakeDashboardStore) Count(_a0 context.Context, _a1 *quota.ScopeParameters) (*quota.Map, error) {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Count")
-	}
-
-	var r0 *quota.Map
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *quota.ScopeParameters) (*quota.Map, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *quota.ScopeParameters) *quota.Map); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*quota.Map)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *quota.ScopeParameters) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // CountInOrg provides a mock function with given fields: ctx, orgID, isFolder
@@ -89,7 +58,6 @@ func (_m *FakeDashboardStore) CountInOrg(ctx context.Context, orgID int64, isFol
 
 	return r0, r1
 }
-
 
 // DeleteDashboard provides a mock function with given fields: ctx, cmd
 func (_m *FakeDashboardStore) DeleteDashboard(ctx context.Context, cmd *DeleteDashboardCommand) error {
@@ -126,7 +94,6 @@ func (_m *FakeDashboardStore) DeleteDashboardsInFolders(ctx context.Context, req
 
 	return r0
 }
-
 
 // FindDashboards provides a mock function with given fields: ctx, query
 func (_m *FakeDashboardStore) FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {

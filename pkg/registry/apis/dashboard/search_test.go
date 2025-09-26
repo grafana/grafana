@@ -213,7 +213,7 @@ func TestSearchHandler(t *testing.T) {
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
 		}
-		expectedFields := []string{"title", "folder", "tags", "field1", "field2", "field3"}
+		expectedFields := []string{"title", "folder", "tags", "description", "field1", "field2", "field3"}
 		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
 			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
 		}
@@ -242,7 +242,7 @@ func TestSearchHandler(t *testing.T) {
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
 		}
-		expectedFields := []string{"title", "folder", "tags", "field1"}
+		expectedFields := []string{"title", "folder", "tags", "description", "field1"}
 		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
 			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
 		}
@@ -271,7 +271,7 @@ func TestSearchHandler(t *testing.T) {
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
 		}
-		expectedFields := []string{"title", "folder", "tags"}
+		expectedFields := []string{"title", "folder", "tags", "description"}
 		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
 			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
 		}
@@ -341,30 +341,10 @@ func TestSearchHandler(t *testing.T) {
 }
 
 func TestSearchHandlerSharedDashboards(t *testing.T) {
-	t.Run("should bail out if FlagUnifiedStorageSearchPermissionFiltering is not enabled globally", func(t *testing.T) {
-		mockClient := &MockClient{}
-
-		features := featuremgmt.WithFeatures()
-		searchHandler := SearchHandler{
-			log:      log.New("test", "test"),
-			client:   mockClient,
-			tracer:   tracing.NewNoopTracerService(),
-			features: features,
-		}
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search?folder=sharedwithme", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		assert.Equal(t, mockClient.CallCount, 0)
-	})
-
 	t.Run("should return empty result without searching if user does not have shared dashboards", func(t *testing.T) {
 		mockClient := &MockClient{}
 
-		features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering)
+		features := featuremgmt.WithFeatures()
 		searchHandler := SearchHandler{
 			log:      log.New("test", "test"),
 			client:   mockClient,
@@ -451,7 +431,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse1, mockResponse2},
 		}
 
-		features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering)
+		features := featuremgmt.WithFeatures()
 		searchHandler := SearchHandler{
 			log:      log.New("test", "test"),
 			client:   mockClient,
@@ -571,7 +551,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse1, mockResponse2, mockResponse3},
 		}
 
-		features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering)
+		features := featuremgmt.WithFeatures()
 		searchHandler := SearchHandler{
 			log:      log.New("test", "test"),
 			client:   mockClient,
@@ -710,4 +690,7 @@ func (m *MockClient) IsHealthy(ctx context.Context, in *resourcepb.HealthCheckRe
 }
 func (m *MockClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (resourcepb.BulkStore_BulkProcessClient, error) {
 	return nil, nil
+}
+func (m *MockClient) UpdateIndex(ctx context.Context, reason string) error {
+	return nil
 }

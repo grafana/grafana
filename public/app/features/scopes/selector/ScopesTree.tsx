@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useId } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2, Scope } from '@grafana/data';
@@ -9,6 +10,7 @@ import { ScopesTreeHeadline } from './ScopesTreeHeadline';
 import { ScopesTreeItemList } from './ScopesTreeItemList';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
 import { NodesMap, SelectedScope, TreeNode } from './types';
+import { useScopesHighlighting } from './useScopesHighlighting';
 
 export interface ScopesTreeProps {
   tree: TreeNode;
@@ -23,7 +25,7 @@ export interface ScopesTreeProps {
 
   // Recent scopes are only shown at the root node
   recentScopes?: Scope[][];
-  onRecentScopesSelect?: (scopeIds: string[]) => void;
+  onRecentScopesSelect?: (scopeIds: string[], parentNodeId?: string) => void;
 }
 
 export function ScopesTree({
@@ -38,6 +40,10 @@ export function ScopesTree({
   deselectScope,
 }: ScopesTreeProps) {
   const styles = useStyles2(getStyles);
+
+  // Used for a11y reference
+  const selectedNodesToShowId = useId();
+  const childrenArrayId = useId();
 
   const nodeLoading = loadingNodeName === tree.scopeNodeId;
 
@@ -63,11 +69,35 @@ export function ScopesTree({
     }
   }
 
+  const { highlightedId, ariaActiveDescendant, enableHighlighting, disableHighlighting } = useScopesHighlighting({
+    selectedNodes: selectedNodesToShow,
+    resultNodes: childrenArray,
+    treeQuery: tree.query,
+    scopeNodes,
+    selectedScopes,
+    onNodeUpdate,
+    selectScope,
+    deselectScope,
+  });
+
+  // Used as a label and placeholder for search field
+  const nodeTitle = scopeNodes[tree.scopeNodeId]?.spec?.title || '';
+  const searchArea = tree.scopeNodeId === '' ? '' : nodeTitle;
+
   const lastExpandedNode = !anyChildExpanded && tree.expanded;
 
   return (
     <>
-      <ScopesTreeSearch anyChildExpanded={anyChildExpanded} onNodeUpdate={onNodeUpdate} treeNode={tree} />
+      <ScopesTreeSearch
+        anyChildExpanded={anyChildExpanded}
+        searchArea={searchArea}
+        onNodeUpdate={onNodeUpdate}
+        treeNode={tree}
+        aria-controls={`${selectedNodesToShowId} ${childrenArrayId}`}
+        aria-activedescendant={ariaActiveDescendant}
+        onFocus={enableHighlighting}
+        onBlur={disableHighlighting}
+      />
       {tree.scopeNodeId === '' &&
         !anyChildExpanded &&
         recentScopes &&
@@ -90,6 +120,8 @@ export function ScopesTree({
             selectScope={selectScope}
             deselectScope={deselectScope}
             maxHeight={`${Math.min(5, selectedNodesToShow.length) * 30}px`}
+            highlightedId={highlightedId}
+            id={selectedNodesToShowId}
           />
 
           <ScopesTreeHeadline
@@ -110,6 +142,8 @@ export function ScopesTree({
             selectScope={selectScope}
             deselectScope={deselectScope}
             maxHeight={'100%'}
+            highlightedId={highlightedId}
+            id={childrenArrayId}
           />
         </>
       )}

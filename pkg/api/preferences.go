@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/kinds/preferences"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -63,7 +63,7 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 	return response.Success("Home dashboard set")
 }
 
-// swagger:route GET /user/preferences user_preferences getUserPreferences
+// swagger:route GET /user/preferences signed_in_user preferences getUserPreferences
 //
 // Get user preferences.
 //
@@ -80,7 +80,7 @@ func (hs *HTTPServer) GetUserPreferences(c *contextmodel.ReqContext) response.Re
 	return prefapi.GetPreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), userID, 0)
 }
 
-// swagger:route PUT /user/preferences user_preferences updateUserPreferences
+// swagger:route PUT /user/preferences signed_in_user preferences updateUserPreferences
 //
 // Update user preferences.
 //
@@ -106,7 +106,7 @@ func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response
 		hs.preferenceService, hs.Features, c.GetOrgID(), userID, 0, &dtoCmd)
 }
 
-// swagger:route PATCH /user/preferences user_preferences patchUserPreferences
+// swagger:route PATCH /user/preferences signed_in_user preferences patchUserPreferences
 //
 // Patch user preferences.
 //
@@ -185,7 +185,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 	return response.Success("Preferences updated")
 }
 
-// swagger:route GET /org/preferences org_preferences getOrgPreferences
+// swagger:route GET /org/preferences org preferences getOrgPreferences
 //
 // Get Current Org Prefs.
 //
@@ -198,7 +198,7 @@ func (hs *HTTPServer) GetOrgPreferences(c *contextmodel.ReqContext) response.Res
 	return prefapi.GetPreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0)
 }
 
-// swagger:route PUT /org/preferences org_preferences updateOrgPreferences
+// swagger:route PUT /org/preferences org preferences updateOrgPreferences
 //
 // Update Current Org Prefs.
 //
@@ -217,7 +217,7 @@ func (hs *HTTPServer) UpdateOrgPreferences(c *contextmodel.ReqContext) response.
 	return prefapi.UpdatePreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0, &dtoCmd)
 }
 
-// swagger:route PATCH /org/preferences org_preferences patchOrgPreferences
+// swagger:route PATCH /org/preferences org preferences patchOrgPreferences
 //
 // Patch Current Org Prefs.
 //
@@ -252,7 +252,7 @@ type UpdateOrgPreferencesParams struct {
 // swagger:response getPreferencesResponse
 type GetPreferencesResponse struct {
 	// in:body
-	Body preferences.Spec `json:"body"`
+	Body preferences.PreferencesSpec `json:"body"`
 }
 
 // swagger:parameters patchUserPreferences

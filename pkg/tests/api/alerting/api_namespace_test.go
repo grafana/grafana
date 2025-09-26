@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,20 +11,19 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"bytes"
-
+	"github.com/grafana/grafana/pkg/configprovider"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegration_NamespacingForRules(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -180,7 +180,9 @@ func TestIntegration_NamespacingForRules(t *testing.T) {
 	})
 
 	t.Run("org separation", func(t *testing.T) {
-		orgService, err := orgimpl.ProvideService(store, cfg, quotaimpl.ProvideService(store, cfg))
+		cfgProvider, err := configprovider.ProvideService(cfg)
+		require.NoError(t, err)
+		orgService, err := orgimpl.ProvideService(store, cfg, quotaimpl.ProvideService(context.Background(), store, cfgProvider))
 		require.NoError(t, err)
 		newOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "Test Org 2"})
 		require.NoError(t, err)
@@ -216,9 +218,8 @@ func TestIntegration_NamespacingForRules(t *testing.T) {
 }
 
 func TestIntegration_NamespacingForPrometheusRules(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -386,7 +387,9 @@ func TestIntegration_NamespacingForPrometheusRules(t *testing.T) {
 	})
 
 	t.Run("should maintain org separation for Prometheus rules", func(t *testing.T) {
-		orgService, err := orgimpl.ProvideService(store, cfg, quotaimpl.ProvideService(store, cfg))
+		cfgProvider, err := configprovider.ProvideService(cfg)
+		require.NoError(t, err)
+		orgService, err := orgimpl.ProvideService(store, cfg, quotaimpl.ProvideService(context.Background(), store, cfgProvider))
 		require.NoError(t, err)
 		newOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "Prometheus Test Org 2"})
 		require.NoError(t, err)

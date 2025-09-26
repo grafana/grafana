@@ -1,3 +1,6 @@
+import { PluginExtensionExposedComponents } from '@grafana/data';
+import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
+
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
 import { AddedComponentsRegistry } from './AddedComponentsRegistry';
@@ -17,8 +20,21 @@ export const pluginExtensionRegistries: PluginExtensionRegistries = {
   addedFunctionsRegistry,
 };
 
-// Registering core extensions
+// Registering core extension links
 addedLinksRegistry.register({
   pluginId: 'grafana',
   configs: getCoreExtensionConfigurations(),
+});
+
+// Registering core exposed components
+exposedComponentsRegistry.register({
+  pluginId: 'grafana',
+  configs: [
+    {
+      id: PluginExtensionExposedComponents.CentralAlertHistorySceneV1,
+      title: 'Central alert history scene',
+      description: 'Central alert history scene',
+      component: CentralAlertHistorySceneExposedComponent,
+    },
+  ],
 });

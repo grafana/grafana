@@ -761,7 +761,8 @@ describe('Query imports', () => {
           maxLines: DEFAULT_MAX_LINES_SAMPLE,
           refId: 'data-samples',
         },
-        languageProvider.getDefaultTimeRange()
+        // We are not interested in the time range here
+        expect.any(Object)
       );
     });
 
@@ -782,7 +783,8 @@ describe('Query imports', () => {
           maxLines: 5,
           refId: 'data-samples',
         },
-        languageProvider.getDefaultTimeRange()
+        // We are not interested in the time range here
+        expect.any(Object)
       );
     });
 
