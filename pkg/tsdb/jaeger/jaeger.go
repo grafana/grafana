@@ -67,11 +67,13 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			return nil, fmt.Errorf("error creating jaeger client: %w", err)
 		}
 		// TODO: Ask about these credentials and what to use
-		conn, err := grpc.NewClient(settings.URL, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient("dns:jaeger-eks:16686", grpc.WithTransportCredentials(insecure.NewCredentials()))
+		backend.Logger.Warn("gRPC connection established", "url", conn.Target())
 		if err != nil {
 			return nil, fmt.Errorf("error creating grpc client: %w", err)
 		}
 		grpcJaegerClient := api_v2.NewQueryServiceClient(conn)
+		backend.Logger.Warn("gRPC client created", "client", grpcJaegerClient)
 		return &datasourceInfo{JaegerClient: jaegerClient, GrpcClient: grpcJaegerClient}, err
 	}
 }
