@@ -13,14 +13,9 @@
     "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-schema"
   },
-  "main": "src/index.ts",
-  "types": "src/index.ts",
-  "publishConfig": {
-    "main": "./dist/cjs/index.cjs",
-    "module": "./dist/esm/index.mjs",
-    "types": "./dist/types/index.d.ts",
-    "access": "public"
-  },
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.mjs",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -39,6 +34,9 @@
       "types": "./dist/*",
       "default": "./dist/*"
     }
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "files": [
     "dist",
