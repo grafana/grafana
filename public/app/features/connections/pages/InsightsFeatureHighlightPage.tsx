@@ -9,7 +9,7 @@ export function InsightsFeatureHighlightPage() {
       pageName="insights"
       title={t(
         'connections.insights-feature-highlight-page.title',
-        'Get started with data source usage insights in Grafana Enterprise'
+        'Understand usage of your data sources with Grafana Cloud'
       )}
       header={t(
         'connections.insights-feature-highlight-page.header',

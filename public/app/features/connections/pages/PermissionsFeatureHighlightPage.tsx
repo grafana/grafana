@@ -11,7 +11,7 @@ export function PermissionsFeatureHighlightPage() {
       pageName="permissions"
       title={t(
         'connections.permissions-feature-highlight-page.title',
-        'Get started with data source permissions in Grafana Cloud'
+        'Secure access to data with data source permissions in Grafana Cloud'
       )}
       header={t(
         'connections.permissions-feature-highlight-page.header',
@@ -33,7 +33,7 @@ export function PermissionsFeatureHighlightPage() {
       ]}
       footer={<Footer />}
       linkButtonLabel={t('connections.permissions-feature-highlight-page.link-button-label', 'Create account')}
-      buttonLink={'https://grafana.com/auth/sign-up/create-user'}
+      buttonLink={'https://grafana.com/auth/sign-up/create-user?src=oss-grafana&cnt=datasource-permissions'}
       footNote={<Footnote />}
       screenshotPath={permissionsScreenshot}
     />

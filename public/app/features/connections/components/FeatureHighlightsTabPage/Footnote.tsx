@@ -9,11 +9,11 @@ export function Footnote() {
   return (
     <div className={styles.footNote}>
       <Trans i18nKey="connections.feature-highlight-page.foot-note">
-        After creating an account, you can have Grafana{' '}
-        <TextLink href="https://grafana.com/products/bring-your-own-cloud-byoc/">
+        After creating an account, you can easily {' '}
+        <TextLink href="https://grafana.com/docs/grafana/latest/administration/migration-guide/cloud-migration-assistant/">
           migrate this instance to Grafana Cloud
         </TextLink>{' '}
-        with minimal effort.
+        with our Migration Assistant.
       </Trans>
     </div>
   );
