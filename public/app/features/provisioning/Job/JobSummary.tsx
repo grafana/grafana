@@ -11,7 +11,7 @@ const getSummaryColumns = () => [
   {
     id: 'resource',
     header: 'Resource',
-    cell: ({ row: { original: item } }: SummaryCell) => item.resource,
+    cell: ({ row: { original: item } }: SummaryCell) => item.kind,
   },
   {
     id: 'created',

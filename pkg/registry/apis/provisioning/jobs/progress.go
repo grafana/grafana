@@ -179,9 +179,10 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 	summary, exists := r.summaries[key]
 	if !exists {
 		summary = &provisioning.JobResourceSummary{
-			// TODO: should we add Kind and SingularName to JobResourceSummary as well - so far its on JobResourceResult
-			Resource: result.Kind,
-			Group:    result.Group,
+			Resource:     result.Resource,
+			Kind:         result.Kind,
+			SingularName: result.SingularName,
+			Group:        result.Group,
 		}
 		r.summaries[key] = summary
 	}
