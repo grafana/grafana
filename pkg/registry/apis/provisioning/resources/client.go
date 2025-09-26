@@ -15,13 +15,14 @@ import (
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
 
 var (
-	FolderGVK    = folders.FolderResourceInfo.GroupVersionKind()
-	DashboardGVK = dashboardV1.DashboardResourceInfo.GroupVersionKind()
+	FolderResourceInfo    = folders.FolderResourceInfo
+	DashboardResourceInfo = dashboardV1.DashboardResourceInfo
 
 	UserResource              = iam.UserResourceInfo.GroupVersionResource()
 	FolderResource            = folders.FolderResourceInfo.GroupVersionResource()
@@ -35,6 +36,16 @@ var (
 	// SupportsFolderAnnotation is the list of resources that can be saved in a folder
 	SupportsFolderAnnotation = []schema.GroupResource{FolderResource.GroupResource(), DashboardResource.GroupResource()}
 )
+
+var GroupResourceToResourceInfoLookup = map[string]utils.ResourceInfo{
+	FolderResource.Group + "/" + FolderResource.Resource:       FolderResourceInfo,
+	DashboardResource.Group + "/" + DashboardResource.Resource: DashboardResourceInfo,
+}
+
+var GroupKindToResourceInfoLookup = map[string]utils.ResourceInfo{
+	FolderResource.Group + "/" + FolderResourceInfo.GroupVersionKind().Kind:       FolderResourceInfo,
+	DashboardResource.Group + "/" + DashboardResourceInfo.GroupVersionKind().Kind: DashboardResourceInfo,
+}
 
 // ClientFactory is a factory for creating clients for a given namespace
 //

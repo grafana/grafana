@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -14,11 +15,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
-
-var resourceToKindLookup = map[string]string{
-	resources.FolderGVK.Group + "/" + resources.FolderResource.Resource:       resources.FolderGVK.Kind,
-	resources.DashboardGVK.Group + "/" + resources.DashboardResource.Resource: resources.DashboardGVK.Kind,
-}
 
 func FullSync(
 	ctx context.Context,
@@ -98,8 +94,19 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 				continue
 			}
 
+			info, ok := resources.GroupResourceToResourceInfoLookup[change.Existing.Group+"/"+change.Existing.Resource]
+			if !ok {
+				result.Error = fmt.Errorf("unknown resource %s/%s", change.Existing.Group, change.Existing.Resource)
+				progress.Record(deleteCtx, result)
+				deleteSpan.RecordError(result.Error)
+				deleteSpan.End()
+				continue
+			}
+
 			result.Name = change.Existing.Name
-			result.Resource = resourceToKindLookup[change.Existing.Group+"/"+change.Existing.Resource]
+			result.Resource = change.Existing.Resource
+			result.SingularName = info.GetSingularName()
+			result.Kind = info.GroupVersionKind().Kind
 			result.Group = change.Existing.Group
 
 			versionlessGVR := schema.GroupVersionResource{
@@ -127,10 +134,12 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 		if safepath.IsDir(change.Path) {
 			ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.ensure_folder_exists")
 			result := jobs.JobResourceResult{
-				Path:     change.Path,
-				Action:   change.Action,
-				Resource: resources.FolderGVK.Kind,
-				Group:    resources.FolderResource.Group,
+				Path:         change.Path,
+				Action:       change.Action,
+				Kind:         resources.FolderResourceInfo.GroupVersionKind().Kind,
+				Resource:     resources.FolderResource.Resource,
+				SingularName: resources.FolderResourceInfo.GetSingularName(),
+				Group:        resources.FolderResource.Group,
 			}
 
 			folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path)
@@ -151,12 +160,25 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 
 		writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.write_resource_from_file")
 		name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, "")
+		info, ok := resources.GroupKindToResourceInfoLookup[gvk.Group+"/"+gvk.Kind]
+		if !ok {
+			result := jobs.JobResourceResult{
+				Error: fmt.Errorf("unknown group kind %s/%s", gvk.Group, gvk.Kind),
+			}
+			progress.Record(writeCtx, result)
+			writeSpan.RecordError(result.Error)
+			writeSpan.End()
+			continue
+		}
+
 		result := jobs.JobResourceResult{
-			Path:     change.Path,
-			Action:   change.Action,
-			Name:     name,
-			Resource: gvk.Kind,
-			Group:    gvk.Group,
+			Path:         change.Path,
+			Action:       change.Action,
+			Name:         name,
+			Resource:     info.GroupResource().Resource,
+			SingularName: info.GetSingularName(),
+			Kind:         gvk.Kind,
+			Group:        gvk.Group,
 		}
 
 		if err != nil {

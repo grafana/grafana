@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	resources "github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
@@ -178,8 +178,8 @@ func (w *Worker) constructTargetPath(jobTargetPath, sourcePath string) string {
 }
 
 // resolveResourcesToPaths converts ResourceRef entries to file paths, recording errors for individual resources
-func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.ReaderWriter, progress jobs.JobProgressRecorder, resources []provisioning.ResourceRef) ([]string, error) {
-	if len(resources) == 0 {
+func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.ReaderWriter, progress jobs.JobProgressRecorder, resolveResources []provisioning.ResourceRef) ([]string, error) {
+	if len(resolveResources) == 0 {
 		return nil, nil
 	}
 
@@ -189,8 +189,8 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 		return nil, fmt.Errorf("create repository resources client: %w", err)
 	}
 
-	resolvedPaths := make([]string, 0, len(resources))
-	for _, resource := range resources {
+	resolvedPaths := make([]string, 0, len(resolveResources))
+	for _, resource := range resolveResources {
 		result := jobs.JobResourceResult{
 			Name:   resource.Name,
 			Group:  resource.Group,
@@ -216,6 +216,20 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 		}
 
 		result.Path = resourcePath
+		info, ok := resources.GroupKindToResourceInfoLookup[resource.Group+"/"+resource.Kind]
+		if !ok {
+			result.Error = fmt.Errorf("unknown group kind %s/%s", resource.Group, resource.Kind)
+			progress.Record(ctx, result)
+			// Continue with next resource instead of failing fast
+			if err := progress.TooManyErrors(); err != nil {
+				return resolvedPaths, err
+			}
+			continue
+		}
+		result.Resource = info.GroupResource().Resource
+		result.SingularName = info.GetSingularName()
+		result.Kind = info.GroupVersionKind().Kind
+		result.Group = info.GroupVersionKind().Group
 		resolvedPaths = append(resolvedPaths, resourcePath)
 	}
 

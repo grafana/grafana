@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -33,7 +34,6 @@ type ResourceListerFromSearch struct {
 	store          ResourceStore
 	legacyMigrator legacy.LegacyMigrator
 	storageStatus  dualwrite.Service
-	kindLookup     map[string]string // to show Kind in resoure listing, we need this as unistore doesn't return Kinds in Counts or List
 }
 
 func NewResourceLister(store ResourceStore) ResourceLister {
@@ -46,15 +46,10 @@ func NewResourceListerForMigrations(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 ) ResourceLister {
-	kindLookup := make(map[string]string)
-	kindLookup[dashboard.GROUP+"/"+dashboard.DASHBOARD_RESOURCE] = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
-	kindLookup[folders.GROUP+"/"+folders.RESOURCE] = folders.FolderResourceInfo.GroupVersionKind().Kind
-
 	return &ResourceListerFromSearch{
 		store:          store,
 		legacyMigrator: legacyMigrator,
 		storageStatus:  storageStatus,
-		kindLookup:     kindLookup,
 	}
 }
 
@@ -74,15 +69,22 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 
 	list := &provisioning.ResourceList{}
 	for _, v := range objects.Items {
+		info, ok := GroupResourceToResourceInfoLookup[v.Object.Group+"/"+v.Object.Resource]
+		if !ok {
+			return nil, fmt.Errorf("unknown resource %s/%s", v.Object.Group, v.Object.Resource)
+		}
+
 		list.Items = append(list.Items, provisioning.ResourceListItem{
-			Path:     v.Path,
-			Group:    v.Object.Group,
-			Resource: o.kindLookup[v.Object.Group+"/"+v.Object.Resource],
-			Name:     v.Object.Name,
-			Hash:     v.Hash,
-			Time:     v.Time,
-			Title:    v.Title,
-			Folder:   v.Folder,
+			Path:         v.Path,
+			Group:        v.Object.Group,
+			Resource:     v.Object.Resource,
+			Kind:         info.GroupVersionKind().Kind,
+			SingularName: info.GetSingularName(),
+			Name:         v.Object.Name,
+			Hash:         v.Hash,
+			Time:         v.Time,
+			Title:        v.Title,
+			Folder:       v.Folder,
 		})
 	}
 	return list, nil
@@ -117,10 +119,18 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 			}
 			lookup[key] = m
 		}
+
+		info, ok := GroupResourceToResourceInfoLookup[v.Group+"/"+v.Resource]
+		if !ok {
+			return nil, fmt.Errorf("unknown resource %s/%s", v.Group, v.Resource)
+		}
+
 		m.Stats = append(m.Stats, provisioning.ResourceCount{
-			Group:    v.Group,
-			Resource: o.kindLookup[v.Group+"/"+v.Resource],
-			Count:    v.Count,
+			Group:        v.Group,
+			Kind:         info.GroupVersionKind().Kind,
+			Resource:     v.Resource,
+			SingularName: info.GetSingularName(),
+			Count:        v.Count,
 		})
 	}
 	stats := &provisioning.ResourceStats{
@@ -154,16 +164,25 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 			return nil, err
 		}
 		for _, v := range rsp.Summary {
+			info, ok := GroupResourceToResourceInfoLookup[v.Group+"/"+v.Resource]
+			if !ok {
+				return nil, fmt.Errorf("unknown resource %s/%s", v.Group, v.Resource)
+			}
+
 			stats.Instance = append(stats.Instance, provisioning.ResourceCount{
-				Group:    v.Group,
-				Resource: o.kindLookup[v.Group+"/"+v.Resource],
-				Count:    v.Count,
+				Group:        v.Group,
+				Kind:         info.GroupVersionKind().Kind,
+				Resource:     v.Resource,
+				SingularName: info.GetSingularName(),
+				Count:        v.Count,
 			})
 			// Everything is unmanaged in legacy storage
 			stats.Unmanaged = append(stats.Unmanaged, provisioning.ResourceCount{
-				Group:    v.Group,
-				Resource: v.Resource,
-				Count:    v.Count,
+				Group:        v.Group,
+				Resource:     v.Resource,
+				SingularName: info.GetSingularName(),
+				Kind:         info.GroupVersionKind().Kind,
+				Count:        v.Count,
 			})
 		}
 		return stats, nil
@@ -187,10 +206,17 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 	}
 
 	for _, v := range info.Stats {
+		info, ok := GroupResourceToResourceInfoLookup[v.Group+"/"+v.Resource]
+		if !ok {
+			return nil, fmt.Errorf("unknown resource %s/%s", v.Group, v.Resource)
+		}
+
 		stats.Instance = append(stats.Instance, provisioning.ResourceCount{
-			Group:    v.Group,
-			Resource: v.Resource,
-			Count:    v.Count,
+			Group:        v.Group,
+			Resource:     v.Resource,
+			Kind:         info.GroupVersionKind().Kind,
+			SingularName: info.GetSingularName(),
+			Count:        v.Count,
 		})
 
 		// Calculate unmanaged count: total - managed
@@ -200,9 +226,11 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 
 		if unmanagedCount > 0 {
 			stats.Unmanaged = append(stats.Unmanaged, provisioning.ResourceCount{
-				Group:    v.Group,
-				Resource: v.Resource,
-				Count:    unmanagedCount,
+				Group:        v.Group,
+				Resource:     v.Resource,
+				Kind:         info.GroupVersionKind().Kind,
+				SingularName: info.GetSingularName(),
+				Count:        unmanagedCount,
 			})
 		}
 	}

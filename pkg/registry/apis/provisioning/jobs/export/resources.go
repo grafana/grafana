@@ -98,7 +98,8 @@ func exportResource(ctx context.Context,
 	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) (err error) {
 		gvk := item.GroupVersionKind()
 		result := jobs.JobResourceResult{
-			Name:     item.GetName(),
+			Name: item.GetName(),
+			// TODO: need to return Kind here
 			Resource: resource,
 			Group:    gvk.Group,
 			Action:   repository.FileActionCreated,
