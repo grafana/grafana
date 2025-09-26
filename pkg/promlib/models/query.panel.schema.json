@@ -188,18 +188,14 @@
               "type": "object",
               "required": [
                 "name",
-                "title",
-                "type",
-                "description",
-                "category",
-                "filters"
+                "title"
               ],
               "properties": {
-                "category": {
-                  "type": "string"
-                },
-                "description": {
-                  "type": "string"
+                "defaultPath": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
                 },
                 "filters": {
                   "type": "array",
@@ -237,9 +233,6 @@
                   "type": "string"
                 },
                 "title": {
-                  "type": "string"
-                },
-                "type": {
                   "type": "string"
                 }
               },
