@@ -11,13 +11,12 @@
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "http://github.com/grafana/grafana.git",
+    "url": "https://github.com/grafana/grafana.git",
     "directory": "packages/grafana-api-clients"
   },
   "main": "src/index.ts",
   "module": "src/index.ts",
   "types": "src/index.ts",
-  "type": "module",
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -48,7 +47,6 @@
     "generate-apis": "yarn process-specs && rtk-query-codegen-openapi ./src/scripts/generate-rtk-apis.ts",
     "generate:api-client": "NODE_OPTIONS='--experimental-strip-types --disable-warning=ExperimentalWarning' plop --plopfile src/generator/plopfile.ts"
   },
-  "dependencies": {},
   "devDependencies": {
     "@rtk-query/codegen-openapi": "^2.0.0",
     "openapi-types": "^12.1.3",

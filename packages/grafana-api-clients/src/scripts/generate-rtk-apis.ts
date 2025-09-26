@@ -1,5 +1,9 @@
 // Generates Redux Toolkit API slices for certain APIs from the OpenAPI spec
 import type { ConfigFile } from '@rtk-query/codegen-openapi';
+import path from 'path';
+
+// Grafana root path - navigate up from this script's directory
+const basePath = path.resolve(__dirname, '../../../..');
 
 const config: ConfigFile = {
   schemaFile: '', // leave this empty, and instead populate the outputFiles object below
@@ -8,7 +12,7 @@ const config: ConfigFile = {
 
   outputFiles: {
     '../clients/migrate-to-cloud/endpoints.gen.ts': {
-      schemaFile: '../../../public/openapi3.json',
+      schemaFile: path.join(basePath, 'public/openapi3.json'),
       apiFile: '../clients/migrate-to-cloud/baseAPI.ts',
       apiImport: 'baseAPI',
       hooks: true,
@@ -35,33 +39,33 @@ const config: ConfigFile = {
       ],
     },
     '../clients/preferences/user/endpoints.gen.ts': {
-      schemaFile: '../../../public/openapi3.json',
+      schemaFile: path.join(basePath, 'public/openapi3.json'),
       hooks: true,
       apiFile: '../clients/preferences/user/baseAPI.ts',
       apiImport: 'baseAPI',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
     '../clients/iam/v0alpha1/endpoints.gen.ts': {
-      schemaFile: '../../../data/openapi/iam.grafana.app-v0alpha1.json',
+      schemaFile: path.join(basePath, 'data/openapi/iam.grafana.app-v0alpha1.json'),
       apiFile: '../clients/iam/v0alpha1/baseAPI.ts',
       filterEndpoints: ['getDisplayMapping'],
       tag: true,
     },
     '../clients/provisioning/v0alpha1/endpoints.gen.ts': {
       apiFile: '../clients/provisioning/v0alpha1/baseAPI.ts',
-      schemaFile: '../../../data/openapi/provisioning.grafana.app-v0alpha1.json',
+      schemaFile: path.join(basePath, 'data/openapi/provisioning.grafana.app-v0alpha1.json'),
       filterEndpoints,
       tag: true,
       hooks: true,
     },
     '../clients/folder/v1beta1/endpoints.gen.ts': {
       apiFile: '../clients/folder/v1beta1/baseAPI.ts',
-      schemaFile: '../../../data/openapi/folder.grafana.app-v1beta1.json',
+      schemaFile: path.join(basePath, 'data/openapi/folder.grafana.app-v1beta1.json'),
       tag: true,
     },
     '../clients/advisor/v0alpha1/endpoints.gen.ts': {
       apiFile: '../clients/advisor/v0alpha1/baseAPI.ts',
-      schemaFile: '../../../data/openapi/advisor.grafana.app-v0alpha1.json',
+      schemaFile: path.join(basePath, 'data/openapi/advisor.grafana.app-v0alpha1.json'),
       filterEndpoints: [
         'createCheck',
         'getCheck',
@@ -75,34 +79,23 @@ const config: ConfigFile = {
     },
     '../clients/playlist/v0alpha1/endpoints.gen.ts': {
       apiFile: '../clients/playlist/v0alpha1/baseAPI.ts',
-      schemaFile: '../../../data/openapi/playlist.grafana.app-v0alpha1.json',
+      schemaFile: path.join(basePath, 'data/openapi/playlist.grafana.app-v0alpha1.json'),
       filterEndpoints: ['listPlaylist', 'getPlaylist', 'createPlaylist', 'deletePlaylist', 'replacePlaylist'],
       tag: true,
     },
-    '../clients/dashboard/v0alpha1/endpoints.gen.ts': {
-      apiFile: '../clients/dashboard/v0alpha1/baseAPI.ts',
-      schemaFile: '../../../data/openapi/dashboard.grafana.app-v0alpha1.json',
-      filterEndpoints: [
-        // Do not use any other endpoints from this version
-        // If other endpoints are required, they must be used from a newer version of the dashboard API
-        'getSearch',
-      ],
-      tag: true,
-    },
-
     '../clients/shorturl/v1alpha1/endpoints.gen.ts': {
       apiFile: '../clients/shorturl/v1alpha1/baseAPI.ts',
-      schemaFile: '../../../data/openapi/shorturl.grafana.app-v1alpha1.json',
+      schemaFile: path.join(basePath, 'data/openapi/shorturl.grafana.app-v1alpha1.json'),
       tag: true,
     },
     '../clients/rules/v0alpha1/endpoints.gen.ts': {
       apiFile: '../clients/rules/v0alpha1/baseAPI.ts',
-      schemaFile: '../../../data/openapi/rules.alerting.grafana.app-v0alpha1.json',
+      schemaFile: path.join(basePath, 'data/openapi/rules.alerting.grafana.app-v0alpha1.json'),
       tag: true,
     },
     '../clients/preferences/v1alpha1/endpoints.gen.ts': {
       apiFile: '../clients/preferences/v1alpha1/baseAPI.ts',
-      schemaFile: '../../../data/openapi/preferences.grafana.app-v1alpha1.json',
+      schemaFile: path.join(basePath, 'data/openapi/preferences.grafana.app-v1alpha1.json'),
       tag: true,
       hooks: true,
     },

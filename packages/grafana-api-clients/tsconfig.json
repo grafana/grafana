@@ -6,7 +6,8 @@
     "declarationDir": "./dist/types",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
-    "rootDirs": ["."]
+    "rootDirs": ["."],
+    "allowImportingTsExtensions": true
   },
   "exclude": ["dist/**/*"],
   "include": ["src/**/*.ts*"]
