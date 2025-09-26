@@ -5,14 +5,16 @@ import tinycolor from 'tinycolor2';
 import {
   DataFrame,
   DisplayValue,
+  FieldConfig,
   FieldDisplay,
   getFieldColorMode,
   getFieldDisplayValues,
   GrafanaTheme2,
 } from '@grafana/data';
-import { GraphGradientMode } from '@grafana/schema';
+import { GraphFieldConfig, GraphGradientMode, LineInterpolation } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { Sparkline } from '../Sparkline/Sparkline';
 
 import { RadialText } from './RadialText';
 
@@ -30,9 +32,10 @@ export interface RadialGaugeProps {
   glow?: boolean;
   centerShadow?: boolean;
   centerGlow?: boolean;
+  sparkline?: boolean;
 }
 
-export type RadialGradientMode = 'none' | 'scheme' | 'hue' | 'radial' | 'shade';
+export type RadialGradientMode = 'none' | 'scheme' | 'hue' | 'shade';
 
 export function RadialGauge(props: RadialGaugeProps) {
   const {
@@ -48,6 +51,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     glow = false,
     centerShadow = false,
     centerGlow = false,
+    sparkline = false,
   } = props;
   const theme = useTheme2();
   const gaugeId = useId();
@@ -61,85 +65,89 @@ export function RadialGauge(props: RadialGaugeProps) {
     replaceVariables: (value) => value,
     theme: theme,
     data: frames,
+    sparkline,
   });
 
   const margin = calculateMargin(size, glow, spotlight, barWidth);
   const color = values[0]?.display.color ?? theme.colors.primary.main;
 
   return (
-    <svg width={width} height={height}>
-      <defs>
-        {values.map((displayValue, barIndex) => (
-          <GradientDef
-            key={barIndex}
-            fieldDisplay={displayValue}
-            index={barIndex}
-            theme={theme}
-            gaugeId={gaugeId}
-            gradientMode={gradientMode}
-          />
-        ))}
-        {spotlight && (
-          <radialGradient id={`spotlight-${gaugeId}`}>
-            <stop offset="0%" stopColor="white" stopOpacity={1} />
-            <stop offset="10%" stopColor="white" stopOpacity={1} />
-            <stop offset="35%" stopColor="white" stopOpacity={0.5} />
-            <stop offset="80%" stopColor="white" stopOpacity={0.1} />
-            <stop offset="100%" stopColor="white" stopOpacity={0} />
-          </radialGradient>
-        )}
-        {glow && <GlowGradient gaugeId={gaugeId} size={size} />}
-        {centerGlow && (
-          <radialGradient id={`circle-glow-${gaugeId}`} r={'50%'} fr={'0%'}>
-            <stop offset="0%" stopColor={color} stopOpacity={0.3} />
-            <stop offset="90%" stopColor={color} stopOpacity={0} />
-          </radialGradient>
-        )}
-      </defs>
-      <g>
-        {values.map((displayValue, barIndex) => {
-          const value = displayValue.display.numeric;
-          const min = displayValue.field.min ?? 0;
-          const max = displayValue.field.max ?? 100;
-          const barColor = getColorForBar(displayValue.display, barIndex, gradientMode, gaugeId);
-
-          return (
-            <RadialBar
-              margin={margin}
+    <div className={styles.vizWrapper}>
+      <svg width={width} height={height}>
+        <defs>
+          {values.map((displayValue, barIndex) => (
+            <GradientDef
               key={barIndex}
+              fieldDisplay={displayValue}
+              index={barIndex}
+              theme={theme}
               gaugeId={gaugeId}
-              value={value}
-              min={min}
-              max={max}
-              startAngle={startAngle}
-              endAngle={endAngle}
-              size={size}
-              color={barColor}
-              barWidth={barWidth}
-              roundedBars={roundedBars}
-              clockwise={clockwise}
-              spotlight={spotlight}
-              glow={glow}
+              gradientMode={gradientMode}
             />
-          );
-        })}
-      </g>
-      <g>
-        {centerShadow && (
-          <MiddleCircle
-            barWidth={barWidth}
-            fill={theme.colors.background.primary}
-            size={size}
-            margin={margin}
-            className={styles.innerShadow}
-          />
-        )}
-        {centerGlow && (
-          <MiddleCircle barWidth={barWidth} fill={`url(#circle-glow-${gaugeId})`} size={size} margin={margin} />
-        )}
-        {values.length === 1 && <RadialText displayValue={values[0].display} size={size} theme={theme} />}
-      </g>
-    </svg>
+          ))}
+          {spotlight && (
+            <radialGradient id={`spotlight-${gaugeId}`}>
+              <stop offset="0%" stopColor="white" stopOpacity={1} />
+              <stop offset="10%" stopColor="white" stopOpacity={1} />
+              <stop offset="35%" stopColor="white" stopOpacity={0.5} />
+              <stop offset="80%" stopColor="white" stopOpacity={0.1} />
+              <stop offset="100%" stopColor="white" stopOpacity={0} />
+            </radialGradient>
+          )}
+          {glow && <GlowGradient gaugeId={gaugeId} size={size} />}
+          {centerGlow && (
+            <radialGradient id={`circle-glow-${gaugeId}`} r={'50%'} fr={'0%'}>
+              <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+              <stop offset="90%" stopColor={color} stopOpacity={0} />
+            </radialGradient>
+          )}
+        </defs>
+        <g>
+          {values.map((displayValue, barIndex) => {
+            const value = displayValue.display.numeric;
+            const min = displayValue.field.min ?? 0;
+            const max = displayValue.field.max ?? 100;
+            const barColor = getColorForBar(displayValue.display, barIndex, gradientMode, gaugeId);
+
+            return (
+              <RadialBar
+                margin={margin}
+                key={barIndex}
+                gaugeId={gaugeId}
+                value={value}
+                min={min}
+                max={max}
+                startAngle={startAngle}
+                endAngle={endAngle}
+                size={size}
+                color={barColor}
+                barWidth={barWidth}
+                roundedBars={roundedBars}
+                clockwise={clockwise}
+                spotlight={spotlight}
+                glow={glow}
+              />
+            );
+          })}
+        </g>
+        <g>
+          {centerShadow && (
+            <MiddleCircle
+              barWidth={barWidth}
+              fill={theme.colors.background.primary}
+              size={size}
+              margin={margin}
+              className={styles.innerShadow}
+            />
+          )}
+          {centerGlow && (
+            <MiddleCircle barWidth={barWidth} fill={`url(#circle-glow-${gaugeId})`} size={size} margin={margin} />
+          )}
+          {values.length === 1 && <RadialText displayValue={values[0].display} size={size} theme={theme} />}
+        </g>
+      </svg>
+      {sparkline && <RadialSparkline sparkline={values[0]?.sparkline} size={size} theme={theme} barWidth={barWidth} />}
+    </div>
   );
 }
 
@@ -207,15 +215,6 @@ function GradientDef({ fieldDisplay, index, theme, gaugeId, gradientMode }: Grad
   const colorMode = getFieldColorMode(colorModeId);
 
   switch (gradientMode) {
-    // Still not working
-    case 'radial': {
-      return (
-        <radialGradient fr="45%" cx="50%" cy="50%" r="60%" id={getGradientId(gaugeId, index)}>
-          <stop offset="0%" stopColor={'red'} stopOpacity={1} />
-          <stop offset="100%" stopColor={'blue'} stopOpacity={1} />
-        </radialGradient>
-      );
-    }
     case 'shade': {
       const color = fieldDisplay.display.color ?? 'gray';
       const color1 = tinycolor(color).darken(5);
@@ -436,8 +435,46 @@ export function MiddleCircle({ size, barWidth, margin, fill, className }: Middle
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    vizWrapper: css({
+      position: 'relative',
+    }),
     innerShadow: css({
       filter: `drop-shadow(0px 0px 5px black);`,
     }),
   };
+}
+
+interface RadialSparklineProps {
+  sparkline: FieldDisplay['sparkline'];
+  size: number;
+  theme: GrafanaTheme2;
+  barWidth: number;
+}
+
+function RadialSparkline({ sparkline, size, theme, barWidth }: RadialSparklineProps) {
+  if (!sparkline) {
+    return null;
+  }
+
+  const height = size / 5;
+  const width = size / 1.5 - barWidth * 1.2;
+  const styles = css({
+    position: 'absolute',
+    left: (size - width) / 2,
+    bottom: height,
+  });
+
+  const config: FieldConfig<GraphFieldConfig> = {
+    custom: {
+      gradientMode: GraphGradientMode.Opacity,
+      fillOpacity: 50,
+      lineInterpolation: LineInterpolation.Smooth,
+    },
+  };
+
+  return (
+    <div className={styles}>
+      <Sparkline height={50} width={width} sparkline={sparkline} theme={theme} config={config} />
+    </div>
+  );
 }

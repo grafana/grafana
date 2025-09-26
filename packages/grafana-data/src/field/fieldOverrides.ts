@@ -257,6 +257,12 @@ function calculateRange(
   globalRange: NumericRange | undefined,
   data: DataFrame[]
 ): { range?: { min?: number | null; max?: number | null; delta: number }; newGlobalRange: NumericRange | undefined } {
+  // If range is defined with min/max, use it
+  if (isNumber(config.min) && isNumber(config.max)) {
+    const range = { min: config.min, max: config.max, delta: config.max - config.min };
+    return { range, newGlobalRange: globalRange ?? range };
+  }
+
   // Only calculate ranges when the field is a number and one of min/max is set to auto.
   if (field.type !== FieldType.number || (isNumber(config.min) && isNumber(config.max))) {
     return { newGlobalRange: globalRange };

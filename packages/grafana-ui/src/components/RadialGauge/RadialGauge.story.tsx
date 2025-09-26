@@ -6,25 +6,49 @@ import { FieldColorModeId, GraphGradientMode } from '@grafana/schema';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Stack } from '../Layout/Stack/Stack';
 
-import { RadialBar, RadialGauge, RadialGradientMode } from './RadialGauge';
+import { RadialGauge, RadialGradientMode } from './RadialGauge';
 
-const meta: Meta<typeof RadialBar> = {
+const meta: Meta<typeof RadialGauge> = {
   title: 'Plugins/RadialGauge',
-  component: RadialBar,
+  component: RadialGauge,
   parameters: {
-    controls: {},
+    controls: {
+      exclude: ['theme', 'startAngle', 'endAngle', 'clockwise', 'gradientMode', 'frames'],
+    },
+  },
+  args: {
+    barWidth: 20,
+    size: 200,
+    spotlight: false,
+    glow: false,
+    centerGlow: false,
+    sparkline: false,
+  },
+  argTypes: {
+    barWidth: { control: { type: 'range', min: 5, max: 100 } },
+    size: { control: { type: 'range', min: 50, max: 400 } },
+    spotlight: { control: 'boolean' },
+    sparkline: { control: 'boolean' },
   },
 };
 
-export const Basic: StoryFn<typeof RadialBar> = (args) => {
+export const Basic: StoryFn<typeof RadialGauge> = (args) => {
   return (
     <Stack direction={'column'} gap={3}>
-      <RadialBarExample value={70} size={500} clockwise />
+      <RadialBarExample
+        value={70}
+        size={500}
+        clockwise
+        barWidth={args.barWidth}
+        spotlight={args.spotlight}
+        glow={args.glow}
+        centerGlow={args.centerGlow}
+      />
     </Stack>
   );
 };
 
-export const Effects: StoryFn<typeof RadialBar> = (args) => {
+export const Effects: StoryFn = (args) => {
   return (
     <Stack direction={'column'} gap={3}>
       <div>Spotlight</div>
@@ -57,26 +81,26 @@ export const Effects: StoryFn<typeof RadialBar> = (args) => {
   );
 };
 
-export const Examples: StoryFn<typeof RadialBar> = (args) => {
+export const Examples: StoryFn = (args) => {
   return (
     <Stack direction={'column'} gap={3}>
       <Stack direction="row" alignItems="center" gap={3}>
-        <RadialBarExample value={70} />
-        <RadialBarExample value={70} seriesName="Clockwise" clockwise />
+        <RadialBarExample value={70} barWidth={args.barWidth} />
+        <RadialBarExample value={70} seriesName="Clockwise" clockwise {...args} />
       </Stack>
       <div>Gradient: Hue</div>
       <Stack direction="row" alignItems="center" gap={3}>
-        <RadialBarExample value={30} gradientMode="hue" color="blue" />
-        <RadialBarExample value={50} gradientMode="hue" color="green" />
-        <RadialBarExample value={60} gradientMode="hue" color="red" />
-        <RadialBarExample value={90} gradientMode="hue" color="purple" />
+        <RadialBarExample value={30} gradientMode="hue" color="blue" {...args} />
+        <RadialBarExample value={50} gradientMode="hue" color="green" {...args} />
+        <RadialBarExample value={60} gradientMode="hue" color="red" {...args} />
+        <RadialBarExample value={90} gradientMode="hue" color="purple" {...args} />
       </Stack>
       <div>Gradient: Shade</div>
       <Stack direction="row" alignItems="center" gap={3}>
-        <RadialBarExample value={30} gradientMode="shade" color="blue" />
-        <RadialBarExample value={40} gradientMode="shade" color="green" />
-        <RadialBarExample value={60} gradientMode="shade" color="red" />
-        <RadialBarExample value={70} gradientMode="shade" color="purple" />
+        <RadialBarExample value={30} gradientMode="shade" color="blue" {...args} />
+        <RadialBarExample value={40} gradientMode="shade" color="green" {...args} />
+        <RadialBarExample value={60} gradientMode="shade" color="red" {...args} />
+        <RadialBarExample value={70} gradientMode="shade" color="purple" {...args} />
       </Stack>
       <div>Gradient: Scheme, startAngle: 240° endAngle: 120°</div>
       <Stack direction="row" alignItems="center" gap={3}>
@@ -87,6 +111,7 @@ export const Examples: StoryFn<typeof RadialBar> = (args) => {
           startAngle={240}
           endAngle={120}
           clockwise
+          {...args}
         />
         <RadialBarExample
           colorMode={FieldColorModeId.ContinuousGrYlRd}
@@ -95,10 +120,52 @@ export const Examples: StoryFn<typeof RadialBar> = (args) => {
           startAngle={240}
           endAngle={120}
           clockwise
+          {...args}
         />
       </Stack>
-      <div>Gradient: Radial</div>
-      <RadialBarExample value={70} gradientMode="radial" color="purple" />
+    </Stack>
+  );
+};
+
+export const Sparklines: StoryFn<typeof RadialGauge> = (args) => {
+  return (
+    <Stack direction={'row'} gap={3}>
+      <RadialBarExample
+        value={70}
+        size={300}
+        sparkline={true}
+        spotlight
+        gradientMode="hue"
+        color="blue"
+        clockwise
+        startAngle={240}
+        endAngle={120}
+        barWidth={args.barWidth}
+      />
+      <RadialBarExample
+        value={30}
+        size={300}
+        sparkline={true}
+        spotlight
+        gradientMode="hue"
+        color="green"
+        clockwise
+        startAngle={240}
+        endAngle={120}
+        barWidth={args.barWidth}
+      />
+      <RadialBarExample
+        value={50}
+        size={300}
+        sparkline={true}
+        spotlight
+        gradientMode="hue"
+        color="red"
+        clockwise
+        startAngle={240}
+        endAngle={120}
+        barWidth={args.barWidth}
+      />
     </Stack>
   );
 };
@@ -120,6 +187,7 @@ interface ExampleProps {
   centerShadow?: boolean;
   centerGlow?: boolean;
   barWidth?: number;
+  sparkline?: boolean;
 }
 
 function RadialBarExample({
@@ -139,21 +207,31 @@ function RadialBarExample({
   centerShadow = false,
   centerGlow = false,
   barWidth = 20,
+  sparkline = false,
 }: ExampleProps) {
   const theme = useTheme2();
 
   const frame = toDataFrame({
     name: 'TestData',
-    length: 1,
+    length: 18,
     fields: [
+      {
+        name: 'Time',
+        type: FieldType.time,
+        values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
+        config: {
+          min: 0,
+          max: 4,
+        },
+      },
       {
         name: seriesName,
         type: FieldType.number,
-        values: [value],
+        values: [40, 45, 20, 25, 30, 28, 27, 30, 31, 26, 50, 55, 52, 20, 25, 30, 60, value],
         config: {
           min: min,
           max: max,
-          unit: 'percent',
+
           color: { mode: colorMode, fixedColor: theme.visualization.getColorByName(color) },
         },
         // Add state and getLinks
@@ -187,6 +265,7 @@ function RadialBarExample({
       glow={glow}
       centerShadow={centerShadow}
       centerGlow={centerGlow}
+      sparkline={sparkline}
     />
   );
 }
