@@ -20,6 +20,9 @@ import (
 )
 
 var (
+	FolderGVK    = folders.FolderResourceInfo.GroupVersionKind()
+	DashboardGVK = dashboardV1.DashboardResourceInfo.GroupVersionKind()
+
 	UserResource              = iam.UserResourceInfo.GroupVersionResource()
 	FolderResource            = folders.FolderResourceInfo.GroupVersionResource()
 	DashboardResource         = dashboardV1.DashboardResourceInfo.GroupVersionResource()

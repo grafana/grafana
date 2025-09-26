@@ -33,6 +33,7 @@ type ResourceListerFromSearch struct {
 	store          ResourceStore
 	legacyMigrator legacy.LegacyMigrator
 	storageStatus  dualwrite.Service
+	kindLookup     map[string]string // to show Kind in resoure listing, we need this as unistore doesn't return Kinds in Counts or List
 }
 
 func NewResourceLister(store ResourceStore) ResourceLister {
@@ -45,10 +46,15 @@ func NewResourceListerForMigrations(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 ) ResourceLister {
+	kindLookup := make(map[string]string)
+	kindLookup[dashboard.GROUP+"/"+dashboard.DASHBOARD_RESOURCE] = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
+	kindLookup[folders.GROUP+"/"+folders.RESOURCE] = folders.FolderResourceInfo.GroupVersionKind().Kind
+
 	return &ResourceListerFromSearch{
 		store:          store,
 		legacyMigrator: legacyMigrator,
 		storageStatus:  storageStatus,
+		kindLookup:     kindLookup,
 	}
 }
 
@@ -71,7 +77,7 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 		list.Items = append(list.Items, provisioning.ResourceListItem{
 			Path:     v.Path,
 			Group:    v.Object.Group,
-			Resource: v.Object.Resource,
+			Resource: o.kindLookup[v.Object.Group+"/"+v.Object.Resource],
 			Name:     v.Object.Name,
 			Hash:     v.Hash,
 			Time:     v.Time,
@@ -150,7 +156,7 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 		for _, v := range rsp.Summary {
 			stats.Instance = append(stats.Instance, provisioning.ResourceCount{
 				Group:    v.Group,
-				Resource: v.Resource,
+				Resource: o.kindLookup[v.Group+"/"+v.Resource],
 				Count:    v.Count,
 			})
 			// Everything is unmanaged in legacy storage

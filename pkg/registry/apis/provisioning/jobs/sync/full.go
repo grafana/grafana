@@ -15,6 +15,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+var resourceToKindLookup = map[string]string{
+	resources.FolderGVK.Group + "/" + resources.FolderResource.Resource:       resources.FolderGVK.Kind,
+	resources.DashboardGVK.Group + "/" + resources.DashboardResource.Resource: resources.DashboardGVK.Kind,
+}
+
 func FullSync(
 	ctx context.Context,
 	repo repository.Reader,
@@ -94,7 +99,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 			}
 
 			result.Name = change.Existing.Name
-			result.Resource = change.Existing.Resource
+			result.Resource = resourceToKindLookup[change.Existing.Group+"/"+change.Existing.Resource]
 			result.Group = change.Existing.Group
 
 			versionlessGVR := schema.GroupVersionResource{
@@ -124,7 +129,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 			result := jobs.JobResourceResult{
 				Path:     change.Path,
 				Action:   change.Action,
-				Resource: resources.FolderResource.Resource,
+				Resource: resources.FolderGVK.Kind,
 				Group:    resources.FolderResource.Group,
 			}
 
