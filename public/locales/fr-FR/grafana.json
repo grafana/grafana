@@ -1671,6 +1671,10 @@
     "inspector-yaml-tab": {
       "apply": "Appliquer"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "Comment se connecter à IRM",
       "disabled-description": "Activer IRM via une intégration Webhook",
@@ -1812,6 +1816,10 @@
           "use-notification-policy": "Utiliser la politique de notification"
         }
       }
+    },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
     },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Filtrer les alertes à l'aide de la méthode de recherche d'étiquettes sans accolades, par exemple :",
@@ -1975,8 +1983,10 @@
       "label-notification-policies": "Politiques de notification",
       "label-time-intervals": "Intervalles de temps"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "Politique par défaut",
       "no-matchers": "Aucun correspondant"
     },
     "notification-preview": {
@@ -1993,22 +2003,12 @@
     },
     "notification-route": {
       "no-labels": "Pas d’étiquettes",
-      "no-matching-labels": "Pas d’étiquettes correspondantes"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Vos instances d’alerte sont acheminées comme suit.",
-      "close": "Fermer",
-      "contact-point": "Point de contact",
-      "default-policy": "Politique par défaut",
-      "notification-policy-path": "Chemin de la politique de notification",
-      "see-details-link": "Afficher les détails",
-      "title-routing-details": "Détails de l’acheminement"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Développer le chemin de la politique",
-      "delivered-to": "@ Livré à",
-      "notification-policy": "Politique de notification",
-      "see-details": "Afficher les détails"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2136,10 +2136,6 @@
       "label-new-child-policy": "Nouvelle politique enfant",
       "label-new-sibling-above": "Nouvel élément frère au-dessus",
       "label-new-sibling-below": "Nouvel élément frère au-dessous"
-    },
-    "policy-path": {
-      "default-policy": "Politique par défaut",
-      "no-matchers": "Aucun correspondant"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Impossible d'afficher l'aperçu de la requête. Certaines des sources de données utilisées dans les requêtes ne sont pas disponibles.",
@@ -9347,6 +9343,7 @@
     },
     "share-panel": {
       "config-description": "Créez un lien direct personnalisé pour partager votre panneau au sein de votre organisation, avec les paramètres de personnalisation suivants :",
+      "copy-image-link": "",
       "download-image": "Télécharger l'image",
       "render-image": "Générer l'image"
     }
@@ -10651,6 +10648,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11327,6 +11332,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Configurer les basculements de fonctionnalité requis"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Gérez les tableaux de bord as code sur Git et approvisionnez automatiquement les mises à jour",
       "manage-your-dashboards-with-remote-provisioning": "Commencer avec Git Sync",
       "store-dashboards-in-version-controlled-storage": "Stockez les tableaux de bord dans un espace de stockage à gestion des versions pour une meilleure organisation et un meilleur suivi de l’historique"
@@ -11516,8 +11522,16 @@
         "subtitle": "Utilisez cette option si vous souhaitez synchroniser et gérer l’ensemble de votre instance Grafana via un stockage externe."
       }
     },
-    "read-only-local-tooltip": "Ce dossier est en lecture seule et provisionné via des fichiers. Pour apporter des modifications dans le dossier, mettez à jour le référentiel de fichiers connecté. Pour modifier les paramètres du dossier, accédez à Administration > Provisionnement > Référentiels.",
-    "read-only-remote-tooltip": "Ce dossier est en lecture seule et provisionné via Git. Pour apporter des modifications dans le dossier, mettez à jour le référentiel connecté. Pour modifier les paramètres du dossier, accédez à Administration > Provisionnement > Référentiels.",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "missions actives",
       "column-action": "Action",
@@ -11631,6 +11645,7 @@
         "removed-from-repo-test-ui": "supprimé de l’interface utilisateur de test de référentiel",
         "updated-from-repo-test-ui": "mis à jour à partir de l’interface utilisateur de test de référentiel"
       },
+      "read-only-repo-tooltip": "",
       "repository": "Référentiel",
       "tab-info": {
         "label": {
@@ -11667,6 +11682,8 @@
       "tooltip-unhealthy-repository": "Impossible de fusionner un référentiel en mauvais état"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "Inclure les commits pour chaque valeur historique",
       "synchronization-options": "Options de synchronisation"
