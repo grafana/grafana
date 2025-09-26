@@ -21,6 +21,25 @@
     "types": "./dist/types/index.d.ts",
     "access": "public"
   },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "@grafana-app/source": "./src/index.ts",
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/esm/index.mjs"
+      },
+      "require": {
+        "@grafana-app/source": "./src/index.ts",
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/cjs/index.cjs"
+      }
+    },
+    "./dist/*": {
+      "types": "./dist/*",
+      "default": "./dist/*"
+    }
+  },
   "files": [
     "dist",
     "./README.md",
