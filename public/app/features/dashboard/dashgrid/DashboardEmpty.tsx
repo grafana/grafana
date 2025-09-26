@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { getBackendSrv, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, useStyles2, Text, Box, Stack, TextLink, Divider, Spinner } from '@grafana/ui';
+import { locationService } from '@grafana/runtime';
+import { Button, useStyles2, Text, Box, Stack, TextLink } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
   onAddLibraryPanel as onAddLibraryPanelImpl,
@@ -16,13 +15,11 @@ import { buildPanelEditScene } from 'app/features/dashboard-scene/panel-edit/Pan
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { PluginDashboard } from 'app/types/plugins';
 import { useDispatch, useSelector } from 'app/types/store';
-import templateDashboard1 from 'img/template-dashboards/template_dashboard_1.png';
-import templateDashboard2 from 'img/template-dashboards/template_dashboard_2.png';
-import templateDashboard3 from 'img/template-dashboards/template_dashboard_3.png';
 
 import { setInitialDatasource } from '../state/reducers';
+
+import { DashboardLibrarySection } from './DashboardLibrarySection';
 
 export interface Props {
   dashboard: DashboardModel | DashboardScene;
@@ -94,7 +91,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               </Button>
             </Stack>
           </Box>
-          <TemplateDashboardsSection />
+          <DashboardLibrarySection />
           <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
             <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
               <Stack direction="column" alignItems="center" gap={1}>
@@ -158,114 +155,6 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
 
 export default DashboardEmpty;
 
-const TemplateDashboardsSection = () => {
-  const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
-
-  const { value: provisionedDashboards, loading: isProvisionedLoading } = useAsync(async (): Promise<
-    PluginDashboard[]
-  > => {
-    if (!initialDatasource) {
-      return [];
-    }
-
-    const ds = getDataSourceSrv().getInstanceSettings(initialDatasource);
-    if (!ds) {
-      return [];
-    }
-
-    const dashboards = await getBackendSrv().get(`api/plugins/${ds.type}/dashboards`);
-    if (dashboards.length > 0) {
-      reportInteraction('grafana_dashboard_empty_page_template_dashboards_loaded', {
-        count: dashboards.length,
-        datasource: ds.type,
-      });
-    }
-
-    return dashboards;
-  }, [initialDatasource]);
-
-  const onImportDashboardClick = async (dashboard: PluginDashboard) => {
-    reportInteraction('grafana_dashboard_empty_page_template_dashboard_clicked', {
-      id: dashboard.uid,
-      title: dashboard.title,
-      datasource: dashboard.pluginId,
-    });
-
-    const templateUrl =
-      `/dashboard/template?` +
-      `datasource=${encodeURIComponent(initialDatasource || '')}&` +
-      `title=${encodeURIComponent(dashboard.title || 'Template')}&` +
-      `pluginId=${encodeURIComponent(dashboard.pluginId)}&` +
-      `path=${encodeURIComponent(dashboard.path)}`;
-
-    locationService.push(templateUrl);
-  };
-
-  if (!provisionedDashboards?.length && !isProvisionedLoading) {
-    return null;
-  }
-
-  return (
-    <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
-      <Stack direction="column" alignItems="center" gap={2}>
-        <Text element="h3" textAlignment="center" weight="medium">
-          <Trans i18nKey="dashboard.empty.start-with-suggested-dashboards">Start with suggested dashboards</Trans>
-        </Text>
-        {isProvisionedLoading ? (
-          <Spinner />
-        ) : (
-          <Stack gap={2} justifyContent="space-between">
-            {provisionedDashboards?.map((dashboard, index) => (
-              <TemplateDashboardBox
-                key={dashboard.uid}
-                index={index}
-                dashboard={dashboard}
-                onImportClick={onImportDashboardClick}
-              />
-            ))}
-          </Stack>
-        )}
-      </Stack>
-    </Box>
-  );
-};
-
-const TemplateDashboardBox = ({
-  dashboard,
-  onImportClick,
-  index,
-}: {
-  dashboard: PluginDashboard;
-  onImportClick: (d: PluginDashboard) => void;
-  index: number;
-}) => {
-  const templateDashboardImages = [templateDashboard1, templateDashboard2, templateDashboard3];
-
-  const styles = useStyles2(getStyles);
-  return (
-    <div className={styles.provisionedDashboardBox}>
-      <img
-        src={
-          index <= 2 ? templateDashboardImages[index] : templateDashboardImages[index % templateDashboardImages.length]
-        }
-        width={190}
-        height={160}
-        alt={dashboard.title}
-        className={styles.templateDashboardImage}
-      />
-      <Divider spacing={0} />
-      <div className={styles.privisionedDashboardSection}>
-        <Text element="p" textAlignment="center" color="secondary">
-          {dashboard.title}
-        </Text>
-        <Button fill="outline" onClick={() => onImportClick(dashboard)}>
-          <Trans i18nKey="dashboard.empty.use-template-button">Use template</Trans>
-        </Button>
-      </div>
-    </div>
-  );
-};
-
 function getStyles(theme: GrafanaTheme2) {
   return {
     wrapper: css({
@@ -278,24 +167,6 @@ function getStyles(theme: GrafanaTheme2) {
       [theme.breakpoints.up('sm')]: {
         paddingTop: theme.spacing(12),
       },
-    }),
-    privisionedDashboardSection: css({
-      margin: 'auto',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(1),
-      alignItems: 'center',
-    }),
-    provisionedDashboardBox: css({
-      display: 'flex',
-      paddingBottom: theme.spacing(1),
-      border: `1px solid ${theme.colors.border.strong}`,
-      borderRadius: theme.shape.radius.default,
-      flexDirection: 'column',
-      gap: theme.spacing(1),
-    }),
-    templateDashboardImage: css({
-      objectFit: 'cover',
     }),
   };
 }
