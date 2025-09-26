@@ -692,6 +692,7 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
 
   // Creates a function that converts a DataFrame into an array of TableRows
   // Uses new Function() for performance as it's faster than creating rows using loops
+  /* eslint-disable-next-line @typescript-eslint/consistent-type-assertions */
   const convert = new Function('frame', fnBody) as FrameToRowsConverter;
   return convert(frame);
 };
