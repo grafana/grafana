@@ -1681,6 +1681,10 @@
     "inspector-yaml-tab": {
       "apply": "Zastosuj"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "Jak połączyć się z usługą IRM",
       "disabled-description": "Włącz usługę IRM za pomocą integracji przez webhook",
@@ -1824,6 +1828,10 @@
           "use-notification-policy": "Używaj zasad dotyczących powiadomień"
         }
       }
+    },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
     },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Filtruj alerty za pomocą zapytania o etykiety bez nawiasów klamrowych, np.:",
@@ -1987,8 +1995,10 @@
       "label-notification-policies": "Zasady dotyczące powiadomień",
       "label-time-intervals": "Odstępy czasu"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "Domyślne zasady",
       "no-matchers": "Brak dopasowań"
     },
     "notification-preview": {
@@ -2005,22 +2015,12 @@
     },
     "notification-route": {
       "no-labels": "Brak etykiet",
-      "no-matching-labels": "Brak pasujących etykiet"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Instancje alertów są kierowane w następujący sposób.",
-      "close": "Zamknij",
-      "contact-point": "Punkt kontaktowy",
-      "default-policy": "Domyślne zasady",
-      "notification-policy-path": "Ścieżka zasad dotyczących powiadomień",
-      "see-details-link": "Zobacz szczegóły",
-      "title-routing-details": "Szczegóły tras"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Rozwiń trasę zasad",
-      "delivered-to": "@ Dostarczane do",
-      "notification-policy": "Zasady dotyczące powiadomień",
-      "see-details": "Zobacz szczegóły"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2152,10 +2152,6 @@
       "label-new-child-policy": "Nowe zasady pochodne",
       "label-new-sibling-above": "Nowy element pokrewny powyżej",
       "label-new-sibling-below": "Nowy element pokrewny poniżej"
-    },
-    "policy-path": {
-      "default-policy": "Domyślne zasady",
-      "no-matchers": "Brak dopasowań"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Nie można wyświetlić podglądu zapytania. Niektóre źródła danych używane w zapytaniach są niedostępne.",
@@ -9403,6 +9399,7 @@
     },
     "share-panel": {
       "config-description": "Utwórz spersonalizowany, bezpośredni link, aby udostępnić panel w swojej organizacji z następującymi ustawieniami dostosowywania:",
+      "copy-image-link": "",
       "download-image": "Pobierz obraz",
       "render-image": "Wygeneruj obraz"
     }
@@ -10719,6 +10716,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11403,6 +11408,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Skonfiguruj wymagane przełączniki funkcji"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Zarządzaj pulpitami jako kodem w usłudze Git i automatycznie aprowizuj aktualizacje",
       "manage-your-dashboards-with-remote-provisioning": "Rozpocznij pracę z synchronizacją z usługą Git",
       "store-dashboards-in-version-controlled-storage": "Przechowuj pulpity nawigacyjne w pamięci z kontrolą wersji, aby zapewnić lepszą organizację i śledzenie historii zmian"
@@ -11596,8 +11602,16 @@
         "subtitle": "Użyj tej opcji, jeśli chcesz synchronizować całą instancję usługi Grafana i zarządzać nią za pośrednictwem zewnętrznej pamięci masowej."
       }
     },
-    "read-only-local-tooltip": "Ten folder jest tylko do odczytu i jest udostępniany poprzez aprowizację plików. Aby wprowadzić zmiany w folderze, zaktualizuj połączone repozytorium plików. Aby zmienić ustawienia folderu, przejdź do sekcji Administracja > Udostępnianie > Repozytoria.",
-    "read-only-remote-tooltip": "Ten folder jest tylko do odczytu i jest udostępniany przez Git. Aby wprowadzić zmiany w folderze, zaktualizuj połączone repozytorium. Aby zmienić ustawienia folderu, przejdź do sekcji Administracja > Udostępnianie > Repozytoria.",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "aktywne zadania",
       "column-action": "Działanie",
@@ -11711,6 +11725,7 @@
         "removed-from-repo-test-ui": "usunięto z interfejsu testowego repozytorium",
         "updated-from-repo-test-ui": "zaktualizowano z interfejsu testowego repozytorium"
       },
+      "read-only-repo-tooltip": "",
       "repository": "Repozytorium",
       "tab-info": {
         "label": {
@@ -11747,6 +11762,8 @@
       "tooltip-unhealthy-repository": "Nie można pobrać danych z niesprawnego repozytorium"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "Uwzględnij zatwierdzenia dla każdej wartości historycznej",
       "synchronization-options": "Opcje synchronizacji"
