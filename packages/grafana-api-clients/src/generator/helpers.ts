@@ -34,8 +34,12 @@ export const formatEndpoints = () => (endpointsInput: string | string[]) => {
 
 // List of created or modified files
 export const getFilesToFormat = (groupName: string, version: string, isEnterprise = false) => {
-  const apiClientBasePath = isEnterprise ? 'public/app/extensions/api/clients' : 'public/app/api/clients';
-  const generateScriptPath = isEnterprise ? 'local/generate-enterprise-apis.ts' : 'scripts/generate-rtk-apis.ts';
+  const apiClientBasePath = isEnterprise
+    ? 'public/app/extensions/api/clients'
+    : 'packages/grafana-api-clients/src/clients';
+  const generateScriptPath = isEnterprise
+    ? 'local/generate-enterprise-apis.ts'
+    : 'packages/grafana-api-clients/src/scripts/generate-rtk-apis.ts';
 
   return [
     `${apiClientBasePath}/${groupName}/${version}/baseAPI.ts`,
@@ -55,7 +59,7 @@ export const runGenerateApis =
       if (isEnterprise) {
         command = 'yarn process-specs && npx rtk-query-codegen-openapi ./local/generate-enterprise-apis.ts';
       } else {
-        command = 'yarn generate-apis';
+        command = 'cd packages/grafana-api-clients && yarn generate-apis';
       }
 
       console.log(`⏳ Running ${command} to generate endpoints...`);

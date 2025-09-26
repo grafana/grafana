@@ -17,6 +17,7 @@
   "main": "src/index.ts",
   "module": "src/index.ts",
   "types": "src/index.ts",
+  "type": "module",
   "exports": {
     "./package.json": "./package.json",
     ".": {

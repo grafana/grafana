@@ -3,21 +3,18 @@ import type { NodePlopAPI, PlopGeneratorConfig } from 'plop';
 
 import {
   formatEndpoints,
-  validateGroup,
-  validateVersion,
+  formatFiles,
   getFilesToFormat,
   runGenerateApis,
-  formatFiles,
-  // The file extension is necessary to make the imports
-  // work with the '--experimental-strip-types' flag
-  // @ts-ignore
-} from './helpers.ts';
+  validateGroup,
+  validateVersion,
+} from './helpers';
 // @ts-ignore
 import { type ActionConfig, type PlopData, isPlopData } from './types.ts';
 
 export default function plopGenerator(plop: NodePlopAPI) {
   // Grafana root path
-  const basePath = path.resolve(import.meta.dirname, '../..');
+  const basePath = path.resolve(import.meta.dirname, '../../../..');
 
   // Register custom action types
   plop.setActionType('runGenerateApis', runGenerateApis(basePath));
@@ -29,13 +26,17 @@ export default function plopGenerator(plop: NodePlopAPI) {
   const generateRtkApiActions = (data: PlopData) => {
     const { reducerPath, groupName, version, isEnterprise } = data;
 
-    const apiClientBasePath = isEnterprise ? 'public/app/extensions/api/clients' : 'public/app/api/clients';
-    const generateScriptPath = isEnterprise ? 'local/generate-enterprise-apis.ts' : 'scripts/generate-rtk-apis.ts';
+    const apiClientBasePath = isEnterprise
+      ? 'public/app/extensions/api/clients'
+      : 'packages/grafana-api-clients/src/clients';
+    const generateScriptPath = isEnterprise
+      ? 'local/generate-enterprise-apis.ts'
+      : 'packages/grafana-api-clients/src/scripts/generate-rtk-apis.ts';
 
     // Using app path, so the imports work on any file level
-    const clientImportPath = isEnterprise ? '../extensions/api/clients' : 'app/api/clients';
+    const clientImportPath = isEnterprise ? '../extensions/api/clients' : '@grafana/api-clients/src/clients';
 
-    const apiPathPrefix = isEnterprise ? '../public/app/extensions/api/clients' : '../public/app/api/clients';
+    const apiPathPrefix = isEnterprise ? '../public/app/extensions/api/clients' : '../clients';
 
     const templateData = {
       ...data,
