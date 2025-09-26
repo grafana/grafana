@@ -108,21 +108,15 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// Configure Stars Dual writer
 	resource := preferences.StarsResourceInfo
 	var stars grafanarest.Storage
-	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, resource, opts.OptsGetter)
+	stars, err := grafanaregistry.NewRegistryStore(opts.Scheme, resource, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
-	stars = unified
-	if b.stars != nil && opts.DualWriteBuilder != nil {
-		legacy := legacy.NewDashboardStarsStorage(b.stars, b.users, b.namespacer, b.sql)
-		stars, err = opts.DualWriteBuilder(resource.GroupResource(), legacy, unified)
+	if b.legacyStars != nil && opts.DualWriteBuilder != nil {
+		stars, err = opts.DualWriteBuilder(resource.GroupResource(), b.legacyStars, stars)
 		if err != nil {
 			return err
 		}
-	}
-	storage[resource.StoragePath()] = stars
-	storage[resource.StoragePath("write")] = &starsREST{
-		store: stars,
 	}
 	storage[resource.StoragePath()] = stars
 	storage[resource.StoragePath("update")] = &starsREST{store: stars}

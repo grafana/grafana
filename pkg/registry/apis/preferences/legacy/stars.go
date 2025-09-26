@@ -137,7 +137,7 @@ func (s *DashboardStarsStorage) Get(ctx context.Context, name string, options *m
 		return nil, err
 	}
 
-	found, _, err := s.sql.GetStars(ctx, ns.OrgID, owner.Name)
+	found, _, err := s.sql.GetStars(ctx, ns.OrgID, owner.Identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func (s *DashboardStarsStorage) write(ctx context.Context, obj *preferences.Star
 		}}, err
 	}
 
-	current, _, err := s.sql.GetStars(ctx, ns.OrgID, owner.Name)
+	current, _, err := s.sql.GetStars(ctx, ns.OrgID, owner.Identifier)
 	if err != nil {
 		return nil, err
 	}
