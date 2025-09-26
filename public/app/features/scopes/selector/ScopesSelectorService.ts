@@ -168,25 +168,22 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       throw new Error(`Trying to expand node at id ${scopeNodeId} that is not expandable`);
     }
 
-    // Collapse if expanded
-    if (nodeToToggle.expanded) {
-      const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
-        treeNode.expanded = false;
-        // Resets query when collapsing
-        treeNode.query = '';
-      });
-      this.updateState({ tree: newTree });
-      return;
-    }
-
-    // Expand if collapsed
     const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
-      treeNode.expanded = true;
+      treeNode.expanded = !nodeToToggle.expanded;
       treeNode.query = '';
     });
-    this.updateState({ tree: newTree });
 
-    await this.loadNodeChildren(path, nodeToToggle);
+    this.updateState({ tree: newTree });
+    // If we are collapsing, we need to make sure that all the parent's children are avilable
+    if (nodeToToggle.expanded === true) {
+      const parentPath = path.slice(0, -1);
+      const parentNode = treeNodeAtPath(this.state.tree!, parentPath);
+      if (parentNode) {
+        await this.loadNodeChildren(parentPath, parentNode, parentNode.query);
+      }
+    } else {
+      await this.loadNodeChildren(path, nodeToToggle);
+    }
   };
 
   public filterNode = async (scopeNodeId: string, query: string) => {
