@@ -263,8 +263,13 @@ func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identit
 	return list, nil
 }
 
-func (s *LegacySQL) InTeam(ctx context.Context, id authlib.AuthInfo, admin bool) (bool, error) {
-	return false, nil
+func (s *LegacySQL) InTeam(ctx context.Context, id authlib.AuthInfo, team string, admin bool) (bool, error) {
+	// Could be faster, but find for now
+	teams, err := s.GetTeams(ctx, id, admin)
+	if err != nil {
+		return false, err
+	}
+	return slices.Contains(teams, team), nil
 }
 
 func (s *LegacySQL) GetTeams(ctx context.Context, id authlib.AuthInfo, admin bool) ([]string, error) {

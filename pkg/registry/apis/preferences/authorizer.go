@@ -19,12 +19,20 @@ type authorizeFromName struct {
 
 func (a *authorizeFromName) Authorize(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 	user, err := identity.GetRequester(ctx)
-	if err != nil {
+	if err != nil || user == nil {
 		return authorizer.DecisionDeny, "valid user is required", err
 	}
 
-	if !attr.IsResourceRequest() || user.GetIsGrafanaAdmin() {
+	if user.GetIsGrafanaAdmin() {
 		return authorizer.DecisionAllow, "", nil
+	}
+	if !attr.IsResourceRequest() {
+		return authorizer.DecisionNoOpinion, "", nil
+	}
+
+	owners, ok := a.resource[attr.GetResource()]
+	if !ok {
+		return authorizer.DecisionDeny, "unknown resource", nil
 	}
 
 	// Check if the request includes explicit permissions
@@ -41,11 +49,6 @@ func (a *authorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 		return authorizer.DecisionDeny, "calling service lacks required permissions", nil
 	}
 
-	owners, ok := a.resource[attr.GetResource()]
-	if !ok {
-		return authorizer.DecisionDeny, "unknown resource", nil
-	}
-
 	if attr.GetName() == "" {
 		if attr.IsReadOnly() {
 			return authorizer.DecisionAllow, "", nil
@@ -55,7 +58,7 @@ func (a *authorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 
 	name, _ := utils.ParseOwnerFromName(attr.GetName())
 	if !slices.Contains(owners, name.Owner) {
-		return authorizer.DecisionDeny, "unsupported owner name", nil
+		return authorizer.DecisionDeny, "unsupported owner type", nil
 	}
 
 	switch name.Owner {
@@ -70,7 +73,7 @@ func (a *authorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 		return authorizer.DecisionDeny, "must be an org admin to edit", nil
 
 	case utils.UserResourceOwner:
-		if user.GetUID() == name.Name {
+		if user.GetIdentifier() == name.Identifier {
 			return authorizer.DecisionAllow, "", nil
 		}
 		return authorizer.DecisionDeny, "your identify must match the selected resource", nil
@@ -79,7 +82,7 @@ func (a *authorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 		if a.teams == nil {
 			return authorizer.DecisionDeny, "team checker not configured", err
 		}
-		ok, err := a.teams.InTeam(ctx, user, !attr.IsReadOnly())
+		ok, err := a.teams.InTeam(ctx, user, name.Identifier, !attr.IsReadOnly())
 		if err != nil {
 			return authorizer.DecisionDeny, "error fetching teams", err
 		}
@@ -88,8 +91,9 @@ func (a *authorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 		}
 		return authorizer.DecisionDeny, "not a team member", nil
 
-	default:
+	case utils.UnknownResourceOwner:
 	}
 
-	return authorizer.DecisionDeny, "invalid name", nil
+	// the owner was explicitly allowed
+	return authorizer.DecisionAllow, "", nil
 }

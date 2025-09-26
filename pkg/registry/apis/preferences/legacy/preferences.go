@@ -93,10 +93,10 @@ func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav
 	found, _, err := s.sql.listPreferences(ctx, ns.Value, ns.OrgID, func(req *preferencesQuery) (bool, error) {
 		switch owner.Owner {
 		case utils.UserResourceOwner:
-			req.UserUID = owner.Name
+			req.UserUID = owner.Identifier
 			return false, nil
 		case utils.TeamResourceOwner:
-			req.TeamUID = owner.Name
+			req.TeamUID = owner.Identifier
 			return false, nil
 		case utils.NamespaceResourceOwner:
 			return false, nil
@@ -120,13 +120,13 @@ func asPreferencesResource(ns string, p *preferenceModel) preferences.Preference
 	owner := utils.OwnerReference{}
 	if p.TeamUID.Valid {
 		owner.Owner = utils.TeamResourceOwner
-		owner.Name = p.TeamUID.String
+		owner.Identifier = p.TeamUID.String
 	} else if p.UserUID.Valid {
 		owner.Owner = utils.UserResourceOwner
-		owner.Name = p.UserUID.String
+		owner.Identifier = p.UserUID.String
 	} else {
 		owner.Owner = utils.NamespaceResourceOwner
-		owner.Name = ""
+		owner.Identifier = ""
 	}
 	obj := preferences.Preferences{
 		ObjectMeta: metav1.ObjectMeta{
