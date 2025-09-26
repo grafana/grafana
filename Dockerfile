@@ -99,6 +99,7 @@ COPY apps/correlations apps/correlations
 COPY apps/preferences apps/preferences
 COPY apps/provisioning apps/provisioning
 COPY apps/secret apps/secret
+COPY apps/scope apps/scope
 COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
 COPY apps/dashboard apps/dashboard
