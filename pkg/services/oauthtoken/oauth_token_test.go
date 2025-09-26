@@ -2,7 +2,6 @@ package oauthtoken
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -37,32 +36,6 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-type FakeAuthInfoStore struct {
-	login.Store
-	ExpectedError error
-	ExpectedOAuth *login.UserAuth
-}
-
-func (f *FakeAuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
-	return f.ExpectedOAuth, f.ExpectedError
-}
-
-func (f *FakeAuthInfoStore) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
-	return f.ExpectedError
-}
-
-func (f *FakeAuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
-	f.ExpectedOAuth.OAuthAccessToken = cmd.OAuthToken.AccessToken
-	f.ExpectedOAuth.OAuthExpiry = cmd.OAuthToken.Expiry
-	f.ExpectedOAuth.OAuthTokenType = cmd.OAuthToken.TokenType
-	f.ExpectedOAuth.OAuthRefreshToken = cmd.OAuthToken.RefreshToken
-	return f.ExpectedError
-}
-
-func (f *FakeAuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *login.DeleteAuthInfoCommand) error {
-	return f.ExpectedError
-}
-
 func TestIntegration_TryTokenRefresh(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -85,7 +58,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 
 	type environment struct {
 		sessionService  *authtest.MockUserAuthTokenService
-		authInfoService *authinfotest.FakeService
+		authInfoService *authinfotest.MockAuthInfoService
 		serverLock      *serverlock.ServerLockService
 		socialConnector *socialtest.MockSocialConnector
 		socialService   *socialtest.FakeSocialService
@@ -95,11 +68,12 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 	}
 
 	type testCase struct {
-		desc          string
-		identity      identity.Requester
-		setup         func(env *environment)
-		expectedToken *oauth2.Token
-		expectedErr   error
+		desc            string
+		identity        identity.Requester
+		refreshMetadata *TokenRefreshMetadata
+		setup           func(env *environment)
+		expectedToken   *oauth2.Token
+		expectedErr     error
 	}
 
 	userIdentity := &authn.Identity{
@@ -121,53 +95,32 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			identity: &authn.Identity{ID: "invalid", Type: claims.TypeUser},
 		},
 		{
-			desc:     "should skip token refresh if there's an unexpected error while looking up the user oauth entry, additionally, no error should be returned",
-			identity: userIdentity,
-			setup: func(env *environment) {
-				env.authInfoService.ExpectedError = errors.New("some error")
-			},
+			desc:            "should skip token refresh when no oauth provider was found",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.SAMLAuthModule},
 		},
 		{
-			desc:     "should skip token refresh if the user doesn't have an oauth entry",
-			identity: userIdentity,
+			desc:            "should skip token refresh when oauth provider token handling is disabled (UseRefreshToken is false)",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
-				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
-					AuthModule: login.SAMLAuthModule,
-				}
-			},
-		},
-		{
-			desc:     "should skip token refresh when no oauth provider was found",
-			identity: userIdentity,
-			setup: func(env *environment) {
-				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
-					AuthModule: login.GenericOAuthModule,
-				}
-			},
-		},
-		{
-			desc:     "should skip token refresh when oauth provider token handling is disabled (UseRefreshToken is false)",
-			identity: userIdentity,
-			setup: func(env *environment) {
-				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
-					AuthModule: login.GenericOAuthModule,
-				}
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: false,
 				}
 			},
 		},
 		{
-			desc:     "should skip token refresh when the token is still valid and no id token is present",
-			identity: userIdentity,
+			desc:            "should skip token refresh when the token is still valid and no id token is present",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
-				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
+				env.authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(&login.UserAuth{
 					AuthModule:        login.GenericOAuthModule,
 					OAuthAccessToken:  unexpiredTokenWithIDToken.AccessToken,
 					OAuthRefreshToken: unexpiredTokenWithIDToken.RefreshToken,
 					OAuthExpiry:       unexpiredTokenWithIDToken.Expiry,
 					OAuthTokenType:    unexpiredTokenWithIDToken.TokenType,
-				}
+				}, nil)
 
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: true,
@@ -176,17 +129,18 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			expectedToken: unexpiredToken,
 		},
 		{
-			desc:     "should not refresh the tokens if access token or id token have not expired yet",
-			identity: userIdentity,
+			desc:            "should not refresh the tokens if access token or id token have not expired yet",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
-				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
+				env.authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(&login.UserAuth{
 					AuthModule:        login.GenericOAuthModule,
 					OAuthIdToken:      UNEXPIRED_ID_TOKEN,
 					OAuthAccessToken:  unexpiredTokenWithIDToken.AccessToken,
 					OAuthRefreshToken: unexpiredTokenWithIDToken.RefreshToken,
 					OAuthExpiry:       unexpiredTokenWithIDToken.Expiry,
 					OAuthTokenType:    unexpiredTokenWithIDToken.TokenType,
-				}
+				}, nil)
 
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: true,
@@ -195,15 +149,17 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			expectedToken: unexpiredTokenWithIDToken,
 		},
 		{
-			desc:     "should skip token refresh when there is no refresh token",
-			identity: userIdentity,
+			desc:            "should skip token refresh when there is no refresh token",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
-				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
+				env.authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(&login.UserAuth{
 					AuthModule:        login.GenericOAuthModule,
 					OAuthAccessToken:  unexpiredTokenWithIDToken.AccessToken,
 					OAuthRefreshToken: "",
 					OAuthExpiry:       unexpiredTokenWithIDToken.Expiry,
-				}
+				}, nil)
+
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: true,
 				}
@@ -215,13 +171,14 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			},
 		},
 		{
-			desc:     "should do token refresh when the token is expired",
-			identity: userIdentity,
+			desc:            "should do token refresh when the token is expired",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: true,
 				}
-				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
+				env.authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(&login.UserAuth{
 					AuthModule:        login.GenericOAuthModule,
 					AuthId:            "subject",
 					UserId:            1,
@@ -230,7 +187,16 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 					OAuthExpiry:       expiredToken.Expiry,
 					OAuthTokenType:    expiredToken.TokenType,
 					OAuthIdToken:      EXPIRED_ID_TOKEN,
-				}
+				}, nil)
+
+				env.authInfoService.On("UpdateAuthInfo", mock.Anything, mock.MatchedBy(func(cmd *login.UpdateAuthInfoCommand) bool {
+					return cmd.UserId == 1234 && cmd.AuthModule == login.GenericOAuthModule &&
+						cmd.OAuthToken.AccessToken == unexpiredTokenWithIDToken.AccessToken &&
+						cmd.OAuthToken.RefreshToken == unexpiredTokenWithIDToken.RefreshToken &&
+						cmd.OAuthToken.Expiry.Equal(unexpiredTokenWithIDToken.Expiry) &&
+						cmd.OAuthToken.TokenType == unexpiredTokenWithIDToken.TokenType
+				})).Return(nil).Once()
+
 				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
 
 				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(unexpiredTokenWithIDToken)).Once()
@@ -238,13 +204,14 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			expectedToken: unexpiredTokenWithIDToken,
 		},
 		{
-			desc:     "should refresh token when the id token is expired",
-			identity: &authn.Identity{ID: "1234", Type: claims.TypeUser, AuthenticatedBy: login.GenericOAuthModule},
+			desc:            "should refresh token when the id token is expired",
+			identity:        &authn.Identity{ID: "1234", Type: claims.TypeUser, AuthenticatedBy: login.GenericOAuthModule},
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: true,
 				}
-				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
+				env.authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(&login.UserAuth{
 					AuthModule:        login.GenericOAuthModule,
 					AuthId:            "subject",
 					UserId:            1,
@@ -253,7 +220,16 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 					OAuthExpiry:       unexpiredTokenWithIDToken.Expiry,
 					OAuthTokenType:    unexpiredTokenWithIDToken.TokenType,
 					OAuthIdToken:      EXPIRED_ID_TOKEN,
-				}
+				}, nil)
+
+				env.authInfoService.On("UpdateAuthInfo", mock.Anything, mock.MatchedBy(func(cmd *login.UpdateAuthInfoCommand) bool {
+					return cmd.UserId == 1234 && cmd.AuthModule == login.GenericOAuthModule &&
+						cmd.OAuthToken.AccessToken == unexpiredTokenWithIDToken.AccessToken &&
+						cmd.OAuthToken.RefreshToken == unexpiredTokenWithIDToken.RefreshToken &&
+						cmd.OAuthToken.Expiry.Equal(unexpiredTokenWithIDToken.Expiry) &&
+						cmd.OAuthToken.TokenType == unexpiredTokenWithIDToken.TokenType
+				})).Return(nil).Once()
+
 				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
 
 				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(unexpiredTokenWithIDToken)).Once()
@@ -261,28 +237,57 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			expectedToken: unexpiredTokenWithIDToken,
 		},
 		{
-			desc:     "should return ErrRetriesExhausted when lock cannot be acquired",
-			identity: &authn.Identity{ID: "1234", Type: claims.TypeUser, AuthenticatedBy: login.GenericOAuthModule},
+			desc:            "should return ErrRetriesExhausted when lock cannot be acquired",
+			identity:        &authn.Identity{ID: "1234", Type: claims.TypeUser, AuthenticatedBy: login.GenericOAuthModule},
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: true,
 				}
-				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
-					AuthModule:        login.GenericOAuthModule,
-					AuthId:            "subject",
-					UserId:            1234,
-					OAuthAccessToken:  unexpiredTokenWithIDToken.AccessToken,
-					OAuthRefreshToken: unexpiredTokenWithIDToken.RefreshToken,
-					OAuthExpiry:       unexpiredTokenWithIDToken.Expiry,
-					OAuthTokenType:    unexpiredTokenWithIDToken.TokenType,
-					OAuthIdToken:      EXPIRED_ID_TOKEN,
-				}
+
 				_ = env.store.WithDbSession(context.Background(), func(sess *db.Session) error {
 					_, err := sess.Exec(`INSERT INTO server_lock (operation_uid, last_execution, version) VALUES (?, ?, ?)`, "oauth-refresh-token-1234", time.Now().Add(2*time.Second).Unix(), 0)
 					return err
 				})
 			},
 			expectedErr: ErrRetriesExhausted,
+		},
+		{
+			desc: "should be able to refresh token when the caller is render service and the access token is expired",
+			identity: &authn.Identity{
+				AuthenticatedBy: login.RenderModule,
+				ID:              "1",
+				Type:            claims.TypeUser,
+			},
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
+			setup: func(env *environment) {
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: true,
+				}
+				env.authInfoService.On("GetAuthInfo", mock.Anything, mock.MatchedBy(func(query *login.GetAuthInfoQuery) bool {
+					return query.UserId == 1
+				})).Return(&login.UserAuth{
+					AuthModule:        login.GenericOAuthModule,
+					AuthId:            "subject",
+					UserId:            1,
+					OAuthAccessToken:  expiredToken.AccessToken,
+					OAuthRefreshToken: expiredToken.RefreshToken,
+					OAuthExpiry:       expiredToken.Expiry,
+					OAuthTokenType:    expiredToken.TokenType,
+					OAuthIdToken:      EXPIRED_ID_TOKEN,
+				}, nil).Once()
+				env.authInfoService.On("UpdateAuthInfo", mock.Anything, mock.MatchedBy(func(cmd *login.UpdateAuthInfoCommand) bool {
+					return cmd.UserId == 1 && cmd.AuthModule == login.GenericOAuthModule &&
+						cmd.OAuthToken.AccessToken == unexpiredTokenWithIDToken.AccessToken &&
+						cmd.OAuthToken.RefreshToken == unexpiredTokenWithIDToken.RefreshToken &&
+						cmd.OAuthToken.Expiry.Equal(unexpiredTokenWithIDToken.Expiry) &&
+						cmd.OAuthToken.TokenType == unexpiredTokenWithIDToken.TokenType
+				})).Return(nil).Once()
+				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
+				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(unexpiredTokenWithIDToken)).Once()
+
+			},
+			expectedToken: unexpiredTokenWithIDToken,
 		},
 	}
 	for _, tt := range tests {
@@ -293,7 +298,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 
 			env := environment{
 				sessionService:  authtest.NewMockUserAuthTokenService(t),
-				authInfoService: &authinfotest.FakeService{},
+				authInfoService: authinfotest.NewMockAuthInfoService(t),
 				serverLock:      serverlock.ProvideService(store, tracing.InitializeTracerForTest()),
 				socialConnector: socialConnector,
 				socialService: &socialtest.FakeSocialService{
@@ -317,13 +322,8 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 				featuremgmt.WithFeatures(),
 			)
 
-			tokenRefreshMetadata := &TokenRefreshMetadata{ExternalSessionID: 1}
-			if tt.identity != nil {
-				tokenRefreshMetadata.AuthModule = tt.identity.GetAuthenticatedBy()
-			}
-
 			// token refresh
-			actualToken, err := env.service.TryTokenRefresh(context.Background(), tt.identity, tokenRefreshMetadata)
+			actualToken, err := env.service.TryTokenRefresh(context.Background(), tt.identity, tt.refreshMetadata)
 
 			if tt.expectedErr != nil {
 				assert.ErrorIs(t, err, tt.expectedErr)
@@ -376,6 +376,7 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 
 	type environment struct {
 		sessionService  *authtest.MockUserAuthTokenService
+		authInfoService *authinfotest.MockAuthInfoService
 		serverLock      *serverlock.ServerLockService
 		socialConnector *socialtest.MockSocialConnector
 		socialService   *socialtest.FakeSocialService
@@ -385,11 +386,12 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 	}
 
 	type testCase struct {
-		desc          string
-		identity      identity.Requester
-		setup         func(env *environment)
-		expectedToken *oauth2.Token
-		expectedErr   error
+		desc            string
+		identity        identity.Requester
+		refreshMetadata *TokenRefreshMetadata
+		setup           func(env *environment)
+		expectedToken   *oauth2.Token
+		expectedErr     error
 	}
 
 	tests := []testCase{
@@ -405,8 +407,9 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 			identity: &authn.Identity{ID: "invalid", Type: claims.TypeUser},
 		},
 		{
-			desc:     "should skip token refresh if there's an unexpected error while looking up the user oauth entry, additionally, no error should be returned",
-			identity: userIdentity,
+			desc:            "should skip token refresh if there's an unexpected error while looking up the user oauth entry, additionally, no error should be returned",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1},
 			setup: func(env *environment) {
 				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(nil, assert.AnError).Once()
 
@@ -417,8 +420,9 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 		},
 		// Kinda impossible to happen, can only happen after the feature is enabled and logged in users don't have their external sessions set
 		{
-			desc:     "should skip token refresh if the user doesn't have an external session",
-			identity: userIdentity,
+			desc:            "should skip token refresh if the user doesn't have an external session",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1},
 			setup: func(env *environment) {
 				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(nil, auth.ErrExternalSessionNotFound).Once()
 
@@ -428,15 +432,17 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 			},
 		},
 		{
-			desc:     "should skip token refresh when no oauth provider was found",
-			identity: userIdentity,
+			desc:            "should skip token refresh when no oauth provider was found",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
 				env.socialService.ExpectedAuthInfoProvider = nil
 			},
 		},
 		{
-			desc:     "should skip token refresh when oauth provider token handling is disabled (UseRefreshToken is false)",
-			identity: userIdentity,
+			desc:            "should skip token refresh when oauth provider token handling is disabled (UseRefreshToken is false)",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: false,
@@ -444,8 +450,9 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 			},
 		},
 		{
-			desc:     "should skip token refresh when the token is still valid and no id token is present",
-			identity: userIdentity,
+			desc:            "should skip token refresh when the token is still valid and no id token is present",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
 				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
 					ID:           1,
@@ -462,8 +469,9 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 			expectedToken: unexpiredToken,
 		},
 		{
-			desc:     "should not do token refresh if access token or id token have not expired yet",
-			identity: userIdentity,
+			desc:            "should not do token refresh if access token or id token have not expired yet",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
 				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
 					ID:           1,
@@ -481,8 +489,9 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 			expectedToken: unexpiredTokenWithIDToken,
 		},
 		{
-			desc:     "should skip token refresh when there is no refresh token",
-			identity: userIdentity,
+			desc:            "should skip token refresh when there is no refresh token",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
 				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
 					ID:           1,
@@ -503,20 +512,17 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 			},
 		},
 		{
-			desc: "should refresh token when the access token is expired",
-			identity: &authn.Identity{
-				AuthenticatedBy: login.GenericOAuthModule,
-				ID:              "1",
-				Type:            claims.TypeUser,
-			},
+			desc:            "should refresh token when the access token is expired",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
 				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
 					ID:           1,
 					UserID:       1,
 					AccessToken:  expiredToken.AccessToken,
-					IDToken:      UNEXPIRED_ID_TOKEN,
 					RefreshToken: expiredToken.RefreshToken,
 					ExpiresAt:    expiredToken.Expiry,
+					IDToken:      UNEXPIRED_ID_TOKEN,
 				}, nil).Once()
 
 				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
@@ -530,12 +536,13 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 			expectedToken: unexpiredTokenWithIDToken,
 		},
 		{
-			desc:     "should refresh token when the id token is expired",
-			identity: userIdentity,
+			desc:            "should refresh token when the id token is expired",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
 				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
 					ID:           1,
-					UserID:       1,
+					UserID:       1234,
 					AccessToken:  unexpiredTokenWithIDToken.AccessToken,
 					RefreshToken: unexpiredTokenWithIDToken.RefreshToken,
 					ExpiresAt:    unexpiredTokenWithIDToken.Expiry,
@@ -553,8 +560,38 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 			expectedToken: unexpiredTokenWithIDToken,
 		},
 		{
-			desc:     "should return ErrRetriesExhausted when lock cannot be acquired",
-			identity: &authn.Identity{ID: "1234", Type: claims.TypeUser, AuthenticatedBy: login.GenericOAuthModule},
+			desc:            "should be able to refresh token when the caller is render service and the access token is expired",
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.RenderModule,
+				ID:              "1",
+				Type:            claims.TypeUser,
+			},
+			setup: func(env *environment) {
+				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
+					ID:           1,
+					UserID:       1,
+					AuthModule:   login.RenderModule,
+					AccessToken:  expiredToken.AccessToken,
+					RefreshToken: expiredToken.RefreshToken,
+					ExpiresAt:    expiredToken.Expiry,
+					IDToken:      UNEXPIRED_ID_TOKEN,
+				}, nil).Once()
+
+				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
+
+				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(unexpiredTokenWithIDToken)).Once()
+
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: true,
+				}
+			},
+			expectedToken: unexpiredTokenWithIDToken,
+		},
+		{
+			desc:            "should return ErrRetriesExhausted when lock cannot be acquired",
+			identity:        &authn.Identity{ID: "1234", Type: claims.TypeUser, AuthenticatedBy: login.GenericOAuthModule},
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: true,
@@ -576,6 +613,7 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 
 			env := environment{
 				sessionService:  authtest.NewMockUserAuthTokenService(t),
+				authInfoService: authinfotest.NewMockAuthInfoService(t),
 				serverLock:      serverlock.ProvideService(store, tracing.InitializeTracerForTest()),
 				socialConnector: socialConnector,
 				socialService: &socialtest.FakeSocialService{
@@ -590,7 +628,7 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 
 			env.service = ProvideService(
 				env.socialService,
-				nil,
+				env.authInfoService,
 				setting.NewCfg(),
 				prometheus.NewRegistry(),
 				env.serverLock,
@@ -599,13 +637,8 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 				featuremgmt.WithFeatures(featuremgmt.FlagImprovedExternalSessionHandling),
 			)
 
-			tokenRefreshMetadata := &TokenRefreshMetadata{ExternalSessionID: 1}
-			if tt.identity != nil {
-				tokenRefreshMetadata.AuthModule = tt.identity.GetAuthenticatedBy()
-			}
-
 			// token refresh
-			actualToken, err := env.service.TryTokenRefresh(context.Background(), tt.identity, tokenRefreshMetadata)
+			actualToken, err := env.service.TryTokenRefresh(context.Background(), tt.identity, tt.refreshMetadata)
 
 			if tt.expectedErr != nil {
 				assert.ErrorIs(t, err, tt.expectedErr)

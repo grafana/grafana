@@ -62,8 +62,12 @@ type OAuthTokenService interface {
 }
 
 type TokenRefreshMetadata struct {
+	// Only used when the `improvedExternalSessionHandling` feature flag is enabled
 	ExternalSessionID int64
 	AuthModule        string
+	// Required for being backward compatible when (in case the improvedExternalSessionHandling feature flag gets disabled)
+	// Should not be required when the old flow is completely removed
+	AuthID string
 }
 
 func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer,
@@ -149,6 +153,22 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 			return nil
 		}
 
+		authInfo, err := o.AuthInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{
+			UserId:     userID,
+			AuthModule: tokenRefreshMetadata.AuthModule,
+		})
+		if err != nil {
+			if errors.Is(err, user.ErrUserNotFound) {
+				ctxLogger.Warn("No oauth token found for user", "userID", userID)
+				return nil
+			}
+
+			ctxLogger.Error("Failed to fetch oauth token for user", "userID", userID, "error", err)
+			return nil
+		}
+
+		tokenRefreshMetadata.AuthID = authInfo.AuthId
+
 		persistedToken = buildOAuthTokenFromExternalSession(externalSession)
 
 		if persistedToken.RefreshToken == "" {
@@ -161,6 +181,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 		}
 
 		tokenRefreshMetadata.AuthModule = authInfo.AuthModule
+		tokenRefreshMetadata.AuthID = authInfo.AuthId
 
 		if err := checkOAuthRefreshToken(authInfo); err != nil {
 			if errors.Is(err, ErrNoRefreshTokenFound) {
@@ -383,8 +404,8 @@ func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr identity.Reques
 
 	return o.AuthInfoService.UpdateAuthInfo(ctx, &login.UpdateAuthInfoCommand{
 		UserId:     userID,
-		AuthModule: usr.GetAuthenticatedBy(),
-		AuthId:     tokenRefreshMetadata.AuthModule,
+		AuthModule: tokenRefreshMetadata.AuthModule,
+		AuthId:     tokenRefreshMetadata.AuthID,
 		OAuthToken: &oauth2.Token{
 			AccessToken:  "",
 			RefreshToken: "",
@@ -443,7 +464,7 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 
 		// token refresh failed, invalidate the old token
 		if err := o.InvalidateOAuthTokens(ctx, usr, tokenRefreshMetadata); err != nil {
-			ctxLogger.Warn("Failed to invalidate OAuth tokens", "authID", usr.GetAuthID(), "error", err)
+			ctxLogger.Warn("Failed to invalidate OAuth tokens", "authID", tokenRefreshMetadata.AuthID, "error", err)
 		}
 
 		return nil, err
@@ -455,8 +476,8 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 	if !tokensEq(persistedToken, token) {
 		updateAuthCommand := &login.UpdateAuthInfoCommand{
 			UserId:     userID,
-			AuthModule: usr.GetAuthenticatedBy(),
-			AuthId:     usr.GetAuthID(),
+			AuthModule: tokenRefreshMetadata.AuthModule,
+			AuthId:     tokenRefreshMetadata.AuthID,
 			OAuthToken: token,
 		}
 
@@ -471,7 +492,7 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 
 		if !o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 			if err := o.AuthInfoService.UpdateAuthInfo(ctx, updateAuthCommand); err != nil {
-				ctxLogger.Error("Failed to update auth info during token refresh", "authID", usr.GetAuthID(), "error", err)
+				ctxLogger.Error("Failed to update auth info during token refresh", "authID", tokenRefreshMetadata.AuthID, "error", err)
 				return nil, err
 			}
 		}
