@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 )
 
@@ -37,6 +38,8 @@ type accessControlDashboardPermissionFilter struct {
 	// any recursive CTE queries (if supported)
 	recQueries                   []clause
 	recursiveQueriesAreSupported bool
+
+	dialect migrator.Dialect
 }
 
 type PermissionsFilter interface {
@@ -51,7 +54,7 @@ type PermissionsFilter interface {
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the dashboardaccess.PermissionType and query type
 // The filter is configured to use the new permissions filter (without subqueries) if the feature flag is enabled
 // The filter is configured to use the old permissions filter (with subqueries) if the feature flag is disabled
-func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissionLevel dashboardaccess.PermissionType, queryType string, features featuremgmt.FeatureToggles, recursiveQueriesAreSupported bool) PermissionsFilter {
+func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissionLevel dashboardaccess.PermissionType, queryType string, features featuremgmt.FeatureToggles, recursiveQueriesAreSupported bool, dialect migrator.Dialect) PermissionsFilter {
 	needEdit := permissionLevel > dashboardaccess.PERMISSION_VIEW
 
 	var folderAction string
@@ -121,12 +124,12 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 		f = &accessControlDashboardPermissionFilterNoFolderSubquery{
 			accessControlDashboardPermissionFilter: accessControlDashboardPermissionFilter{
 				user: user, folderAction: folderAction, folderActionSets: folderActionSets, dashboardAction: dashboardAction, dashboardActionSets: dashboardActionSets,
-				features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported,
+				features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported, dialect: dialect,
 			},
 		}
 	} else {
 		f = &accessControlDashboardPermissionFilter{user: user, folderAction: folderAction, folderActionSets: folderActionSets, dashboardAction: dashboardAction, dashboardActionSets: dashboardActionSets,
-			features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported,
+			features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported, dialect: dialect,
 		}
 	}
 	f.buildClauses()
@@ -372,6 +375,11 @@ func (f *accessControlDashboardPermissionFilter) With() (string, []any) {
 }
 
 func (f *accessControlDashboardPermissionFilter) addRecQry(queryName string, whereUIDSelect string, whereParams []any, orgID int64) {
+	forceIndex := ""
+	if f.dialect.DriverName() == migrator.MySQL {
+		forceIndex = " FORCE INDEX (IDX_folder_org_id_parent_uid) "
+	}
+
 	if f.recQueries == nil {
 		f.recQueries = make([]clause, 0, maximumRecursiveQueries)
 	}
@@ -382,8 +390,8 @@ func (f *accessControlDashboardPermissionFilter) addRecQry(queryName string, whe
 		// covered by UQE_folder_org_id_uid and UQE_folder_org_id_parent_uid_title
 		string: fmt.Sprintf(`%s AS (
 			SELECT uid, parent_uid, org_id FROM folder WHERE org_id = ? AND uid IN %s
-			UNION ALL SELECT f.uid, f.parent_uid, f.org_id FROM folder f INNER JOIN %s r ON f.parent_uid = r.uid and f.org_id = r.org_id
-		)`, queryName, whereUIDSelect, queryName),
+			UNION ALL SELECT f.uid, f.parent_uid, f.org_id FROM folder f %s INNER JOIN %s r ON f.parent_uid = r.uid and f.org_id = r.org_id
+		)`, queryName, whereUIDSelect, forceIndex, queryName),
 		params: c,
 	})
 }
