@@ -1,8 +1,7 @@
-import { css } from '@emotion/css';
+import { memo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Text, useStyles2 } from '@grafana/ui';
+import { Box, Text } from '@grafana/ui';
 
 import { useGetFolderQueryFacade } from '../../../api/clients/folder/v1beta1/hooks';
 import { DashboardsTreeItem } from '../../../features/browse-dashboards/types';
@@ -12,23 +11,16 @@ interface ParentTextProps {
 }
 
 function ParentText({ folder }: ParentTextProps) {
-  const styles = useStyles2(getStyles);
   return (
-    <span className={styles.parentText}>
+    <Box marginLeft={1}>
       <Text variant={'bodySmall'} color={'secondary'} truncate>
         /{folder}
       </Text>
-    </span>
+    </Box>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  parentText: css({
-    marginLeft: theme.spacing(1),
-  }),
-});
-
-export function FolderParent({ item }: { item: DashboardsTreeItem }) {
+export const FolderParent = memo(function FolderParent({ item }: { item: DashboardsTreeItem }) {
   if (item.item.kind !== 'folder') {
     return null;
   }
@@ -37,12 +29,14 @@ export function FolderParent({ item }: { item: DashboardsTreeItem }) {
     return <ParentText folder={item.item.parentTitle} />;
   }
 
-  if (item.item.parentUID || item.parentUID) {
-    return <NetworkFolderParent uid={(item.item.parentUID || item.parentUID)!} />;
+  const parentUID = item.item.parentUID || item.parentUID;
+
+  if (parentUID) {
+    return <NetworkFolderParent uid={parentUID} />;
   }
 
   return null;
-}
+});
 
 function NetworkFolderParent({ uid }: { uid: string }) {
   const result = useGetFolderQueryFacade(uid);
