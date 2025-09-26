@@ -3,7 +3,6 @@ package legacy
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -85,34 +84,19 @@ func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav
 	if err != nil {
 		return nil, err
 	}
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
 	owner, ok := utils.ParseOwnerFromName(name)
 	if !ok {
 		return nil, preferences.PreferencesResourceInfo.NewNotFound(name)
 	}
 
+	// NOTE: the authorizer already checked if this request is allowed
 	found, _, err := s.sql.listPreferences(ctx, ns.Value, ns.OrgID, func(req *preferencesQuery) (bool, error) {
 		switch owner.Owner {
 		case utils.UserResourceOwner:
-			if !user.GetIsGrafanaAdmin() && name != user.GetUID() {
-				return false, fmt.Errorf("you may only fetch your own preferences")
-			}
-			req.UserUID = owner.Name
+			req.UserUID = owner.Identifier
 			return false, nil
 		case utils.TeamResourceOwner:
-			if !user.GetIsGrafanaAdmin() {
-				teams, err := s.sql.GetTeams(ctx, ns.OrgID, user.GetRawIdentifier(), false)
-				if err != nil {
-					return false, err
-				}
-				if !slices.Contains(teams, owner.Name) {
-					return false, fmt.Errorf("you may only fetch teams you belong to")
-				}
-			}
-			req.TeamUID = owner.Name
+			req.TeamUID = owner.Identifier
 			return false, nil
 		case utils.NamespaceResourceOwner:
 			return false, nil
@@ -136,13 +120,13 @@ func asPreferencesResource(ns string, p *preferenceModel) preferences.Preference
 	owner := utils.OwnerReference{}
 	if p.TeamUID.Valid {
 		owner.Owner = utils.TeamResourceOwner
-		owner.Name = p.TeamUID.String
+		owner.Identifier = p.TeamUID.String
 	} else if p.UserUID.Valid {
 		owner.Owner = utils.UserResourceOwner
-		owner.Name = p.UserUID.String
+		owner.Identifier = p.UserUID.String
 	} else {
 		owner.Owner = utils.NamespaceResourceOwner
-		owner.Name = ""
+		owner.Identifier = ""
 	}
 	obj := preferences.Preferences{
 		ObjectMeta: metav1.ObjectMeta{
