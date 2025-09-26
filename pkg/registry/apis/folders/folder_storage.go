@@ -6,10 +6,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/client-go/dynamic"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -18,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -41,10 +38,9 @@ type folderStorage struct {
 	store          grafanarest.Storage
 	tableConverter rest.TableConvertor
 
-	permissionsOnCreate    bool // cfg.RBAC.PermissionsOnCreation("folder")
-	folderPermissionsSvc   accesscontrol.FolderPermissionsService
-	resourcePermissionsSvc *dynamic.NamespaceableResourceInterface
-	acService              accesscontrol.Service
+	permissionsOnCreate  bool // cfg.RBAC.PermissionsOnCreation("folder")
+	folderPermissionsSvc accesscontrol.FolderPermissionsService
+	acService            accesscontrol.Service
 }
 
 func (s *folderStorage) New() runtime.Object {
@@ -115,7 +111,11 @@ func (s *folderStorage) Create(ctx context.Context,
 
 	parentUid := accessor.GetFolder()
 
-	err = s.setDefaultFolderPermissions(ctx, info.OrgID, user, p.Name, parentUid, p.Namespace)
+	// TODO: once the feature flag kubernetesAuthzResourcePermissionApis is removed AND the frontend is calling
+	// /apis directly (to set AnnoKeyGrantPermissions on root level folders), the below should be removed
+	// and we should instead initialize resourcePermissionsSvc in the RegisterAPIService function
+	// and rely on StorageOptions.Permissions.
+	err = s.setDefaultFolderPermissions(ctx, info.OrgID, user, p.Name, parentUid)
 	if err != nil {
 		return nil, err
 	}
@@ -136,20 +136,9 @@ func (s *folderStorage) Update(ctx context.Context,
 
 // GracefulDeleter
 func (s *folderStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	info, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, false, err
-	}
-
 	obj, async, err := s.store.Delete(ctx, name, deleteValidation, options)
 	if err != nil {
 		return obj, async, err
-	}
-
-	if accessErr := s.folderPermissionsSvc.DeleteResourcePermissions(ctx, info.OrgID, name); accessErr != nil {
-		// TODO: add a proper logger to this struct.
-		logger := log.New().FromContext(ctx)
-		logger.Warn("failed to delete folder permission after successfully deleting folder resource", "folder", name, "error", accessErr)
 	}
 
 	return obj, async, err
@@ -160,78 +149,7 @@ func (s *folderStorage) DeleteCollection(ctx context.Context, deleteValidation r
 	return nil, fmt.Errorf("DeleteCollection for folders not implemented")
 }
 
-var defaultPermissions = []map[string]any{
-	{
-		"kind": "BasicRole",
-		"name": "Admin",
-		"verb": "admin",
-	},
-	{
-		"kind": "BasicRole",
-		"name": "Editor",
-		"verb": "edit",
-	},
-	{
-		"kind": "BasicRole",
-		"name": "Viewer",
-		"verb": "view",
-	},
-}
-
-func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid, parentUID, namespace string) error {
-	if s.resourcePermissionsSvc != nil {
-		client := (*s.resourcePermissionsSvc).Namespace(namespace)
-		name := fmt.Sprintf("%s-%s-%s", folders.FolderResourceInfo.GroupVersionResource().Group, folders.FolderResourceInfo.GroupVersionResource().Resource, uid)
-
-		// the resource permission will likely already exist with admin can admin, so we will need to update it
-		if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
-			_, err := client.Update(ctx, &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"metadata": map[string]any{
-						"name":      name,
-						"namespace": namespace,
-					},
-					"spec": map[string]any{
-						"resource": map[string]any{
-							"apiGroup": folders.FolderResourceInfo.GroupVersionResource().Group,
-							"resource": folders.FolderResourceInfo.GroupVersionResource().Resource,
-							"name":     uid,
-						},
-						"permissions": defaultPermissions,
-					},
-				},
-			}, metav1.UpdateOptions{})
-			if err != nil {
-				return fmt.Errorf("update root permissions: %w", err)
-			}
-
-			return nil
-		}
-
-		_, err := client.Create(ctx, &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]any{
-					"name":      name,
-					"namespace": namespace,
-				},
-				"spec": map[string]any{
-					"resource": map[string]any{
-						"apiGroup": folders.FolderResourceInfo.GroupVersionResource().Group,
-						"resource": folders.FolderResourceInfo.GroupVersionResource().Resource,
-						"name":     uid,
-					},
-					"permissions": defaultPermissions,
-				},
-			},
-		}, metav1.CreateOptions{})
-		if err != nil {
-			return fmt.Errorf("create root permissions: %w", err)
-		}
-		return nil
-	}
-
-	// once the feature flag kubernetesAuthzResourcePermissionApis is removed, the below should be removed and we should solely depend on those apis
-	// rather than the folder permissions service
+func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid, parentUID string) error {
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
 	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
@@ -251,7 +169,6 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 		}...)
 	}
-
 	_, err := s.folderPermissionsSvc.SetPermissions(ctx, orgID, uid, permissions...)
 	if err != nil {
 		return err
