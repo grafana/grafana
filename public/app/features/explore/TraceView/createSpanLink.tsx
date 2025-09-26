@@ -1,4 +1,5 @@
 import {
+  CoreApp,
   DataFrame,
   DataLink,
   DataLinkPostProcessor,
@@ -46,6 +47,7 @@ export function createSpanLinkFactory({
   createFocusSpanLink,
   trace,
   dataLinkPostProcessor,
+  app,
 }: {
   splitOpenFn: SplitOpen;
   traceToLogsOptions?: TraceToLogsOptionsV2;
@@ -55,6 +57,7 @@ export function createSpanLinkFactory({
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
   trace: Trace;
   dataLinkPostProcessor?: DataLinkPostProcessor;
+  app: CoreApp;
 }): SpanLinkFunc | undefined {
   if (!dataFrame) {
     return undefined;
@@ -72,7 +75,8 @@ export function createSpanLinkFactory({
     createFocusSpanLink,
     scopedVars,
     dataFrame,
-    dataLinkPostProcessor
+    dataLinkPostProcessor,
+    app
   );
 
   return function SpanLink(span: TraceSpan): SpanLinkDef[] | undefined {
@@ -154,7 +158,8 @@ function legacyCreateSpanLinkFactory(
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>,
   scopedVars?: ScopedVars,
   dataFrame?: DataFrame,
-  dataLinkPostProcessor?: DataLinkPostProcessor
+  dataLinkPostProcessor?: DataLinkPostProcessor,
+  app?: CoreApp
 ) {
   let logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
   if (traceToLogsOptions?.datasourceUid) {
@@ -257,18 +262,24 @@ function legacyCreateSpanLinkFactory(
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
 
-          link =
-            (dataFrame &&
-              dataLinkPostProcessor?.({
-                frame: dataFrame,
-                field: field,
-                dataLinkScopedVars: scopedVars,
-                replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-                config: {},
-                link: dataLink,
-                linkModel: link,
-              })) ||
-            link;
+          // Until we refactor legacy data links (#110685) and make it possible to define dynamic time ranges
+          // and scoped vars inside the default post-processor we need to skip post-processing for Explore to
+          // not override the time range set above with (mapInternalLinkToExplore). Eventually we will not need
+          // this special handling and calling mapInternalLinkToExplore.
+          if (app !== CoreApp.Explore) {
+            link =
+              (dataFrame &&
+                dataLinkPostProcessor?.({
+                  frame: dataFrame,
+                  field: field,
+                  dataLinkScopedVars: scopedVars,
+                  replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+                  config: {},
+                  link: dataLink,
+                  linkModel: link,
+                })) ||
+              link;
+          }
 
           links.push({
             href: link.href,
