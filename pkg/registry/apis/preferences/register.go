@@ -57,7 +57,8 @@ func RegisterAPIService(
 	builder := &APIBuilder{
 		merger: newMerger(cfg, sql),
 		authorizer: &authorizeFromName{
-			teams: sql, // should be from the IAM service
+			oknames: []string{"merged"},
+			teams:   sql, // should be from the IAM service
 			resource: map[string][]utils.ResourceOwner{
 				"stars": {utils.UserResourceOwner},
 				"preferences": {

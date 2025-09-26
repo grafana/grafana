@@ -14,6 +14,7 @@ import (
 
 type authorizeFromName struct {
 	teams    utils.TeamService
+	oknames  []string
 	resource map[string][]utils.ResourceOwner // may include unknown
 }
 
@@ -51,6 +52,11 @@ func (a *authorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 			return authorizer.DecisionAllow, "", nil
 		}
 		return authorizer.DecisionDeny, "mutating request without a name", nil
+	}
+
+	// the pseudo sub-resource
+	if a.oknames != nil && slices.Contains(a.oknames, attr.GetName()) {
+		return authorizer.DecisionAllow, "", nil
 	}
 
 	info, _ := utils.ParseOwnerFromName(attr.GetName())
