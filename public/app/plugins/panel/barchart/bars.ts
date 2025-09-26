@@ -139,7 +139,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
   const isStacked = opts.stacking !== StackingMode.None;
-  const pctStacked = opts.stacking === StackingMode.Percent;
+  const pctStacked = opts.stacking === StackingMode.Percent || opts.clusteredStacking === StackingMode.Percent;
   const isClusteredStacked = opts.clusteredStacking !== StackingMode.None;
   let { clusterWidth, groupWidth, barWidth, barRadius = 0 } = opts;
 

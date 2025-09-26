@@ -74,7 +74,7 @@ export function prepSeries(
 
   let frame: DataFrame | undefined = { ...frames[0] };
 
-  if (clusteredStacking !== StackingMode.None) {
+  if (clusteredStacking !== StackingMode.None && groupByField) {
     const fieldValues = frame.fields.find((field) => field.state?.displayName === groupByField || field.name === groupByField)?.values
     const clusters = getClustersFromArray(fieldValues, groupByField);
     prepareClusterData(frames, clusters, groupByField);
@@ -201,7 +201,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
   const builder = new UPlotConfigBuilder();
 
   const formatters = frame.fields.map((f, i) => {
-    if (stacking === StackingMode.Percent) {
+    if (stacking === StackingMode.Percent || clusteredStacking === StackingMode.Percent) {
       return getDisplayProcessor({
         field: {
           ...f,

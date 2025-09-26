@@ -231,6 +231,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
           options: getGraphFieldOptions().stacking,
         },
         defaultValue: defaultOptions.stacking,
+        // showIf: (c) => {
+        //   return c.groupByField === "" || c.groupByField === undefined; // only show if no group field is selected
+        // },
       })
       .addSliderInput({
         path: 'groupWidth',
