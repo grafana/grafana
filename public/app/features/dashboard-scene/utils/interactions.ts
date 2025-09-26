@@ -19,7 +19,7 @@ export const DashboardInteractions = {
 
   // grafana_dashboards_edit_button_clicked
   // when a user clicks the ‘edit’ or ‘make editable’ button in a dashboard view mode
-  editButtonClicked: (properties: { outlineExpanded: boolean }) => {
+  editButtonClicked: (properties: { outlineExpanded: boolean; dashboardUid?: string }) => {
     reportDashboardInteraction('edit_button_clicked', properties);
   },
 

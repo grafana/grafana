@@ -207,10 +207,11 @@ function getStructure(layout: DashboardV2Spec['layout']): StructureNode[] {
   }
 }
 
-export const trackDashboardSceneEditButtonClicked = () => {
+export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
   const outlineExpandedByDefault = !store.getBool('grafana.dashboard.edit-pane.outline.collapsed', true);
   DashboardInteractions.editButtonClicked({
     outlineExpanded: outlineExpandedByDefault,
+    dashboardUid,
   });
 };
 
