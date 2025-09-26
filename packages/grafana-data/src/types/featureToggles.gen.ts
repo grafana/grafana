@@ -1017,6 +1017,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthzResourcePermissionApis?: boolean;
   /**
+  * Populate Zanzana on AuthZ CRDs creation or update
+  */
+  kubernetesAuthzZanzanaSync?: boolean;
+  /**
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
   kubernetesAuthnMutation?: boolean;

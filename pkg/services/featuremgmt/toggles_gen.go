@@ -923,6 +923,10 @@ const (
 	// Registers AuthZ resource permission /apis endpoints
 	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"
 
+	// FlagKubernetesAuthzZanzanaSync
+	// Populate Zanzana on AuthZ CRDs creation or update
+	FlagKubernetesAuthzZanzanaSync = "kubernetesAuthzZanzanaSync"
+
 	// FlagKubernetesAuthnMutation
 	// Enables create, delete, and update mutations for resources owned by IAM identity
 	FlagKubernetesAuthnMutation = "kubernetesAuthnMutation"
