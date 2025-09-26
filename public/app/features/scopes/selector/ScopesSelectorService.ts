@@ -155,6 +155,61 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     return { path: nodePath, tree: newTree };
   };
 
+  // Resets query and toggles expanded state of a node
+  public toggleExpandedNode = async (scopeNodeId: string) => {
+    const path = getPathOfNode(scopeNodeId, this.state.nodes);
+    const nodeToToggle = treeNodeAtPath(this.state.tree!, path);
+
+    if (!nodeToToggle) {
+      throw new Error(`Node ${scopeNodeId} not found in tree`);
+    }
+
+    if (nodeToToggle.scopeNodeId !== '' && !isNodeExpandable(this.state.nodes[nodeToToggle.scopeNodeId])) {
+      throw new Error(`Trying to expand node at id ${scopeNodeId} that is not expandable`);
+    }
+
+    // Collapse if expanded
+    if (nodeToToggle.expanded) {
+      const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+        treeNode.expanded = false;
+        // Resets query when collapsing
+        treeNode.query = '';
+      });
+      this.updateState({ tree: newTree });
+      return;
+    }
+
+    // Expand if collapsed
+    const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+      treeNode.expanded = true;
+      treeNode.query = '';
+    });
+    this.updateState({ tree: newTree });
+
+    await this.loadNodeChildren(path, nodeToToggle);
+  };
+
+  public filterNode = async (scopeNodeId: string, query: string) => {
+    const path = getPathOfNode(scopeNodeId, this.state.nodes);
+    const nodeToFilter = treeNodeAtPath(this.state.tree!, path);
+
+    if (!nodeToFilter) {
+      throw new Error(`Trying to filter node at path or id ${scopeNodeId} not found`);
+    }
+
+    if (nodeToFilter.scopeNodeId !== '' && !isNodeExpandable(this.state.nodes[nodeToFilter.scopeNodeId])) {
+      throw new Error(`Trying to filter node at id ${scopeNodeId} that is not expandable`);
+    }
+
+    const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+      treeNode.expanded = true;
+      treeNode.query = query;
+    });
+    this.updateState({ tree: newTree });
+
+    await this.loadNodeChildren(path, nodeToFilter, query);
+  };
+
   private expandOrFilterNode = async (scopeNodeId: string, query?: string) => {
     this.interactionProfiler?.startInteraction('scopeNodeDiscovery');
 
@@ -191,15 +246,16 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     const path = getPathOfNode(scopeNodeId, this.state.nodes);
 
     const nodeToCollapse = treeNodeAtPath(this.state.tree!, path);
-    if (nodeToCollapse) {
-      const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
-        treeNode.expanded = false;
-        treeNode.query = '';
-      });
-      this.updateState({ tree: newTree });
-    } else {
+
+    if (!nodeToCollapse) {
       throw new Error(`Trying to collapse node at path or id ${scopeNodeId} not found`);
     }
+
+    const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+      treeNode.expanded = false;
+      treeNode.query = '';
+    });
+    this.updateState({ tree: newTree });
   };
 
   private loadNodeChildren = async (path: string[], treeNode: TreeNode, query?: string) => {
@@ -221,7 +277,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
           expanded: false,
           scopeNodeId: node.metadata.name,
           // Only set query on tree nodes if parent already has children (filtering vs first expansion). This is used for saerch highlighting.
-          query: '',
+          query: query || '',
           children: undefined,
         };
       }
@@ -307,7 +363,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.updateState({ selectedScopes: newSelectedScopes });
   };
 
-  // TODO: We should split this into two functions: expandNode and filterNode.
+  // TODO: Replace all usage of this function with expandNode and filterNode.
   // @deprecated
   public updateNode = async (scopeNodeId: string, expanded: boolean, query: string) => {
     if (expanded) {
