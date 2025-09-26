@@ -100,11 +100,11 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   };
 
   // Path starts with root node and goes down
-  private insertPathNodesIntoTree = (path: ScopeNode[]) => {
+  private insertPathNodesIntoTree = (tree: TreeNode, path: ScopeNode[]) => {
     const stringPath = path.map((n) => n.metadata.name);
     stringPath.unshift('');
 
-    let newTree = this.state.tree!;
+    let newTree = tree;
 
     // Go down the tree, don't iterate over the last node
     for (let index = 0; index < stringPath.length - 1; index++) {
@@ -126,35 +126,33 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         return treeNode;
       });
     }
-    this.updateState({ tree: newTree });
+    return newTree;
   };
 
-  // Resolves the path to the root node for a given scope node. Used on inital load with parent node from URL. This is used to display the correct expanded tree in the selector.
-  public resolvePathToRoot = async (scopeNodeId: string): Promise<ScopeNode[]> => {
-    return this.resolvePathToRootInternal(scopeNodeId, true);
-  };
-
-  private resolvePathToRootInternal = async (scopeNodeId: string, isOriginalCall = false): Promise<ScopeNode[]> => {
+  private getNodePath = async (scopeNodeId: string): Promise<ScopeNode[]> => {
     const node = await this.getScopeNode(scopeNodeId);
-
     if (!node) {
       return [];
     }
-
-    // Build the path by recursively getting parent path and adding current node
     const parentPath =
-      node.spec.parentName && node.spec.parentName !== ''
-        ? await this.resolvePathToRootInternal(node.spec.parentName, false)
-        : [];
+      node.spec.parentName && node.spec.parentName !== '' ? await this.getNodePath(node.spec.parentName) : [];
 
-    const totalPath = [...parentPath, node];
+    return [...parentPath, node];
+  };
 
-    // Insert into tree only when we're at the original call with the complete path
-    if (isOriginalCall) {
-      this.insertPathNodesIntoTree(totalPath);
+  public resolvePathToRoot = async (
+    scopeNodeId: string,
+    tree: TreeNode
+  ): Promise<{ path: ScopeNode[]; tree: TreeNode }> => {
+    if (!tree) {
+      throw new Error('Tree is required');
     }
+    const nodePath = await this.getNodePath(scopeNodeId);
+    const newTree = this.insertPathNodesIntoTree(tree, nodePath);
 
-    return totalPath;
+    this.updateState({ tree: newTree });
+
+    return { path: nodePath, tree: newTree };
   };
 
   private expandOrFilterNode = async (scopeNodeId: string, query?: string) => {
@@ -429,7 +427,18 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       let path = getPathOfNode(this.state.selectedScopes[0].parentNodeId, this.state.nodes);
 
       // Get node at path, and request it's children if they don't exist yet
-      const nodeAtPath = treeNodeAtPath(newTree, path);
+      let nodeAtPath = treeNodeAtPath(newTree, path);
+
+      // In the cases where nodes are not in the tree yet
+      if (!nodeAtPath) {
+        try {
+          newTree = (await this.resolvePathToRoot(this.state.selectedScopes[0].parentNodeId, newTree)).tree;
+          nodeAtPath = treeNodeAtPath(newTree, path);
+        } catch (error) {
+          console.error('Failed to resolve path to root', error);
+        }
+      }
+
       if (nodeAtPath && !nodeAtPath.children) {
         // This will update the tree with the children
         const { newTree: newTreeWithChildren } = await this.loadNodeChildren(path, nodeAtPath, '');
@@ -437,7 +446,11 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       }
 
       // Expand the nodes to the selected scope - must be done after loading children
-      newTree = expandNodes(newTree, path);
+      try {
+        newTree = expandNodes(newTree, path);
+      } catch (error) {
+        console.error('Failed to expand nodes', error);
+      }
     }
 
     this.resetSelection();

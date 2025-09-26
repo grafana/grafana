@@ -79,7 +79,7 @@ export class ScopesService implements ScopesContextValue {
       // this.selectorService.getScopeNode(parentNodeId).catch((error) => {
       //   console.error('Failed to pre-load parent node', error);
       // });
-      this.selectorService.resolvePathToRoot(parentNodeId).catch((error) => {
+      this.selectorService.resolvePathToRoot(parentNodeId, this.selectorService.state.tree!).catch((error) => {
         console.error('Failed to pre-load parent node path', error);
       });
     }
