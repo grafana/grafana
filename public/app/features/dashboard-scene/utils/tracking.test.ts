@@ -51,6 +51,10 @@ describe('dashboard tracking', () => {
         conditionalRenderRules: 3,
         autoLayoutCount: 3,
         customGridLayoutCount: 2,
+        panelsByDatasourceType: {
+          cloudwatch: 5,
+          datasource: 1,
+        },
       });
     });
   });

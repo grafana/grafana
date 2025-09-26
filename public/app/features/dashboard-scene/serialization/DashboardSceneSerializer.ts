@@ -19,7 +19,7 @@ import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
 import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
-import { getLayoutStatsForDashboard, getSanitizedLayout, getNoOfConditionalRulesInDashboard } from '../utils/tracking';
+import { getNoOfConditionalRulesInDashboard, getSanitizedLayout, getStatsForDashboard } from '../utils/tracking';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
@@ -77,6 +77,7 @@ export interface DashboardV2TrackingInfo {
   autoLayoutCount: number;
   customGridLayoutCount: number;
   dashStructure: string;
+  panelsByDatasourceType: Record<string, number>;
 }
 
 export interface DSReferencesMapping {
@@ -481,7 +482,7 @@ export function getDashboardSceneSerializer(
 }
 
 function getDashboardV2TrackingFields(dashboard: DashboardV2Spec): DashboardV2TrackingInfo {
-  const layoutStats = getLayoutStatsForDashboard(dashboard.layout);
+  const { layoutStats, panelStats } = getStatsForDashboard(dashboard);
   return {
     tabCount: layoutStats.tabCount,
     templateVariableCount: dashboard.variables ? dashboard.variables.length : 0,
@@ -490,5 +491,6 @@ function getDashboardV2TrackingFields(dashboard: DashboardV2Spec): DashboardV2Tr
     conditionalRenderRulesCount: getNoOfConditionalRulesInDashboard(dashboard.layout),
     autoLayoutCount: layoutStats.layoutTypesCount.AutoGridLayout,
     customGridLayoutCount: layoutStats.layoutTypesCount.GridLayout,
+    panelsByDatasourceType: panelStats.countByDatasourceType,
   };
 }
