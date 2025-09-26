@@ -11,9 +11,10 @@ const config: ConfigFile = {
   exportName: 'generatedAPI',
 
   outputFiles: {
-    '../clients/migrate-to-cloud/endpoints.gen.ts': {
+    [path.join(basePath, 'public/app/features/migrate-to-cloud/api/endpoints.gen.ts')]: {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
-      apiFile: '../clients/migrate-to-cloud/baseAPI.ts',
+      apiFile: 'baseAPI',
+      // TODO this import doesn't seem to work correctly - ends up as import { baseAPI } from 'baseAPI'
       apiImport: 'baseAPI',
       hooks: true,
       filterEndpoints: [
@@ -38,10 +39,11 @@ const config: ConfigFile = {
         'getResourceDependencies',
       ],
     },
-    '../clients/preferences/user/endpoints.gen.ts': {
+    [path.join(basePath, 'public/app/features/preferences/api/user/endpoints.gen.ts')]: {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
       hooks: true,
-      apiFile: '../clients/preferences/user/baseAPI.ts',
+      apiFile: 'baseAPI',
+      // TODO this import doesn't seem to work correctly - ends up as import { baseAPI } from 'baseAPI'
       apiImport: 'baseAPI',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },

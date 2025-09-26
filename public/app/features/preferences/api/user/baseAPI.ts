@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
-import { createBaseQuery } from 'app/api/createBaseQuery';
+import { createBaseQuery } from '@grafana/api-clients';
 
 export const baseAPI = createApi({
   reducerPath: 'userPreferencesAPI',

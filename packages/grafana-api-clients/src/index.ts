@@ -1,1 +1,2 @@
-export const grafanaApiClientsVersion = '0.0.0';
+export { createBaseQuery, type RequestOptions } from './utils/createBaseQuery';
+export { getAPINamespace } from './utils/utils';

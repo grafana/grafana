@@ -3,7 +3,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { BackendSrvRequest, getBackendSrv, isFetchError } from '@grafana/runtime';
 
-interface RequestOptions extends BackendSrvRequest {
+export interface RequestOptions extends BackendSrvRequest {
   manageError?: (err: unknown) => { error: unknown };
   body?: BackendSrvRequest['data'];
 }
