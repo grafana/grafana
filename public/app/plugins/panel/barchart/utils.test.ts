@@ -77,7 +77,7 @@ function mockDataFrame() {
   df1.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
   df2.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
-  const info = prepSeries([df1], fieldConfig, StackingMode.None, StackingMode.None, createTheme());
+  const info = prepSeries([df1], fieldConfig, StackingMode.None, false, createTheme());
 
   if (info.series.length === 0) {
     throw new Error('Bar chart not prepared correctly');
@@ -116,7 +116,7 @@ describe('BarChart utils', () => {
         xTickLabelRotation: 0,
         xTickLabelMaxLength: 20,
         stacking: StackingMode.None,
-        clusteredStacking: StackingMode.None,
+        isClusteredStacked: false,
         tooltip: {
           mode: TooltipDisplayMode.None,
           sort: SortOrder.None,
@@ -170,7 +170,7 @@ describe('BarChart utils', () => {
 
   describe('prepareGraphableFrames', () => {
     it('will return empty string when there are no frames in the response', () => {
-      const info = prepSeries([], fieldConfig, StackingMode.None, StackingMode.None,createTheme());
+      const info = prepSeries([], fieldConfig, StackingMode.None, false,createTheme());
 
       expect(info.warn).toBe('');
       expect(info.series).toHaveLength(0);
@@ -186,7 +186,7 @@ describe('BarChart utils', () => {
         ],
         fieldConfig,
         StackingMode.None,
-        StackingMode.None,
+        false,
         createTheme()
       );
 
@@ -203,7 +203,7 @@ describe('BarChart utils', () => {
       });
       df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
-      const info = prepSeries([df], fieldConfig, StackingMode.None, StackingMode.None,createTheme());
+      const info = prepSeries([df], fieldConfig, StackingMode.None, false,createTheme());
       const warning = assertIsDefined('warn' in info ? info : null);
       expect(warning.warn).toEqual('Bar charts require a string or time field');
     });
@@ -217,7 +217,7 @@ describe('BarChart utils', () => {
       });
       df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
-      const info = prepSeries([df], fieldConfig, StackingMode.None,StackingMode.None, createTheme());
+      const info = prepSeries([df], fieldConfig, StackingMode.None,false, createTheme());
       const warning = assertIsDefined('warn' in info ? info : null);
       expect(warning.warn).toEqual('No numeric fields found');
     });
@@ -231,7 +231,7 @@ describe('BarChart utils', () => {
       });
       df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
-      const info = prepSeries([df], fieldConfig, StackingMode.None,StackingMode.None, createTheme());
+      const info = prepSeries([df], fieldConfig, StackingMode.None,false, createTheme());
 
       const field = info.series[0].fields[1];
       expect(field.values).toMatchInlineSnapshot(`
@@ -256,7 +256,7 @@ describe('BarChart utils', () => {
       });
       df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
-      const info = prepSeries([df], fieldConfig, StackingMode.Percent,StackingMode.None, createTheme());
+      const info = prepSeries([df], fieldConfig, StackingMode.Percent,false, createTheme());
 
       expect(info.series[0].fields[0].config.unit).toBeUndefined();
       expect(info.series[0].fields[1].config.unit).toBeUndefined();

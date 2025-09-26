@@ -26,10 +26,6 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    */
   clusterWidth: number;
   /**
-   * Controls whether clusters are stacked or not
-   */
-  clusteredStacking: common.StackingMode;
-  /**
    * Use the color value for a sibling field to color each bar value.
    */
   colorByField?: string;
@@ -46,6 +42,10 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    * Controls the width of groups. 1 = max with, 0 = min width.
    */
   groupWidth: number;
+  /**
+   * Controls whether clusters are stacked or not
+   */
+  isClusteredStacked: boolean;
   /**
    * Controls the orientation of the bar chart, either vertical or horizontal.
    */
@@ -81,10 +81,10 @@ export const defaultOptions: Partial<Options> = {
   barRadius: 0,
   barWidth: 0.97,
   clusterWidth: 0.7,
-  clusteredStacking: common.StackingMode.None,
   fullHighlight: false,
   groupByField: '',
   groupWidth: 0.7,
+  isClusteredStacked: false,
   orientation: common.VizOrientation.Auto,
   showValue: common.VisibilityMode.Auto,
   stacking: common.StackingMode.None,

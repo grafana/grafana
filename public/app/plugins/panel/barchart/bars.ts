@@ -50,7 +50,7 @@ export interface BarsOptions {
   barRadius: number;
   showValue: VisibilityMode;
   stacking: StackingMode;
-  clusteredStacking: StackingMode;
+  isClusteredStacked: boolean;
   groupByField?: string;
   rawValue: (seriesIdx: number, valueIdx: number) => number | null;
   getColor?: (seriesIdx: number, valueIdx: number, value: unknown) => string | null;
@@ -139,11 +139,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
   const isStacked = opts.stacking !== StackingMode.None;
-  const pctStacked = opts.stacking === StackingMode.Percent || opts.clusteredStacking === StackingMode.Percent;
-  const isClusteredStacked = opts.clusteredStacking !== StackingMode.None;
+  const pctStacked = opts.stacking === StackingMode.Percent;
+  const isClusteredStacked = opts.isClusteredStacked;
   let { clusterWidth, groupWidth, barWidth, barRadius = 0 } = opts;
 
-  if (isStacked) {
+  if (isStacked || isClusteredStacked) {
     [groupWidth, barWidth] = [barWidth, groupWidth];
   }
 

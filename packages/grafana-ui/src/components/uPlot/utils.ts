@@ -112,11 +112,9 @@ export function getStackingGroups(frame: DataFrame) {
     }
 
     let { mode: stackingMode, group: stackingGroup } = stacking;
-
-    let {mode: clusteredStackingMode} = clusteredStacking;
     
     // not stacking
-    if (stackingMode === StackingMode.None && clusteredStackingMode === StackingMode.None) {
+    if (stackingMode === StackingMode.None && !clusteredStacking) {
       return;
     }
 
@@ -228,10 +226,9 @@ export function preparePlotData2(
     }
 
     let stackingMode = custom.stacking?.mode;
-    let clusteredStackingMode = custom.clusteredStacking?.mode;
+    let clusteredStacking = custom.clusteredStacking;
 
-
-    if ((!stackingMode || stackingMode === StackingMode.None) && (!clusteredStackingMode || clusteredStackingMode === StackingMode.None)) {
+    if ((!stackingMode || stackingMode === StackingMode.None) && !clusteredStacking) {
       data[i] = vals;
     } else {
       let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);

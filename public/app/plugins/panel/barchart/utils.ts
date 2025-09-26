@@ -54,7 +54,7 @@ export function prepSeries(
   frames: DataFrame[],
   fieldConfig: FieldConfigSource,
   stacking: StackingMode,
-  clusteredStacking: StackingMode,
+  isClusteredStacked: boolean,
   theme: GrafanaTheme2,
   xFieldName?: string,
   colorFieldName?: string,
@@ -74,7 +74,7 @@ export function prepSeries(
 
   let frame: DataFrame | undefined = { ...frames[0] };
 
-  if (clusteredStacking !== StackingMode.None && groupByField) {
+  if (isClusteredStacked && groupByField) {
     const fieldValues = frame.fields.find((field) => field.state?.displayName === groupByField || field.name === groupByField)?.values
     const clusters = getClustersFromArray(fieldValues, groupByField);
     prepareClusterData(frames, clusters, groupByField);
@@ -125,7 +125,7 @@ export function prepSeries(
                 },
                 clusteredStacking: {
                   cluster: '_',
-                  mode: clusteredStacking,
+                  mode: isClusteredStacked,
                 }
               },
             },
@@ -185,7 +185,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     barWidth,
     barRadius = 0,
     stacking,
-    clusteredStacking,
+    isClusteredStacked,
     text,
     tooltip,
     xTickLabelRotation,
@@ -201,7 +201,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
   const builder = new UPlotConfigBuilder();
 
   const formatters = frame.fields.map((f, i) => {
-    if (stacking === StackingMode.Percent || clusteredStacking === StackingMode.Percent) {
+    if (stacking === StackingMode.Percent) {
       return getDisplayProcessor({
         field: {
           ...f,
@@ -289,7 +289,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     barWidth,
     barRadius,
     stacking,
-    clusteredStacking,
+    isClusteredStacked,
     groupByField,
     rawValue,
     getColor,
@@ -527,7 +527,6 @@ export function prepareClusterData(frames: DataFrame[], clusters: number[], grou
 
   const frame = frames[0];
 
-  // TODO should work for other field names
   const catField = frame.fields.find((field) => field.name === groupByField);
   const xField = frame.fields.find((field) => field.type === FieldType.string && field !== catField);
   const yField = frame.fields.find((field) => field.type === FieldType.number);

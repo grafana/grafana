@@ -200,13 +200,11 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         description: 'Select field to group by, this will create clusters based on the selected field.',
         defaultValue: defaultOptions.groupByField,
       })
-      .addRadio({
-        path: 'clusteredStacking',
+      .addBooleanSwitch({
+        path: 'isClusteredStacked',
         name: 'Stack clusters',
-        settings: {
-          options: getGraphFieldOptions().stacking
-        },
-        defaultValue: StackingMode.None,
+        description: 'If switched on will generate new field in order to stack multiple rows together.',
+        defaultValue: defaultOptions.isClusteredStacked,
         showIf: (c) => {
           return c.groupByField !== "" && c.groupByField !== undefined; // only show if no group field is selected
         },
@@ -231,9 +229,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
           options: getGraphFieldOptions().stacking,
         },
         defaultValue: defaultOptions.stacking,
-        // showIf: (c) => {
-        //   return c.groupByField === "" || c.groupByField === undefined; // only show if no group field is selected
-        // },
       })
       .addSliderInput({
         path: 'groupWidth',
