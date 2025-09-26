@@ -27,6 +27,14 @@ export const ConvertFrameTypeTransformerEditor = ({
         'Convert to Exemplar frame(s)'
       ),
     },
+    {
+      label: t('transformers.convert-frame-type-transformer-editor.label.annotation', 'Annotation'),
+      value: FrameType.Annotation,
+      description: t(
+        'transformers.convert-frame-type-transformer-editor.label.annotation-description',
+        'Convert to Annotation frame(s)'
+      ),
+    },
   ];
 
   const onSelectDataTopic = useCallback(

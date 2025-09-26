@@ -47,6 +47,8 @@ export const convertFrameTypeTransformer: DataTransformerInfo<ConvertFrameTypeTr
  * @param options - frame type conversion options
  * @param frames - dataframe(s) to convert
  * @returns dataframe(s) with converted frame types
+ *
+ * @todo convertSeriesToAnnotation not working with regions
  */
 export function convertFrameTypes(options: ConvertFrameTypeTransformerOptions, frames: DataFrame[]): DataFrame[] {
   const { targetType } = options;
