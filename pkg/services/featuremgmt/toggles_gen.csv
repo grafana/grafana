@@ -264,3 +264,4 @@ dskitBackgroundServices,experimental,@grafana/plugins-platform-backend,false,tru
 pluginContainers,privatePreview,@grafana/plugins-platform-backend,false,true,false
 tempoSearchBackendMigration,GA,@grafana/oss-big-tent,false,true,false
 filterOutBotsFromFrontendLogs,experimental,@grafana/plugins-platform-backend,false,false,true
+cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,false
