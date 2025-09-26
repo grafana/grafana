@@ -174,6 +174,39 @@ func TestSimpleServer(t *testing.T) {
 		require.Len(t, all.Items, 1)
 		require.Equal(t, updated.ResourceVersion, all.Items[0].ResourceVersion)
 
+		// Try again with a direct query
+		all, err = server.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Fields: []*resourcepb.Requirement{{
+				Key:      "metadata.name",
+				Operator: "=",
+				Values:   []string{"not-matching"},
+			}},
+		}})
+		require.NoError(t, err)
+		require.Len(t, all.Items, 0)
+
+		// This time matching
+		all, err = server.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Fields: []*resourcepb.Requirement{{
+				Key:      "metadata.name",
+				Operator: "=",
+				Values:   []string{"fdgsv37qslr0ga"},
+			}},
+		}})
+		require.NoError(t, err)
+		require.Len(t, all.Items, 1)
+		require.Equal(t, raw, all.Items[0].Value)
+
 		deleted, err := server.Delete(ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: updated.ResourceVersion})
 		require.NoError(t, err)
 		require.True(t, deleted.ResourceVersion > updated.ResourceVersion)

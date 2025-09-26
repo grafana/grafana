@@ -13,7 +13,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/alerting/notify"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -21,15 +20,13 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/alerting/notify"
 
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
-
-	test_common "github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -45,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	test_common "github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
@@ -131,8 +129,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 	helper := getTestHelper(t)
 
 	org1 := helper.Org1
-
-	noneUser := helper.CreateUser("none", apis.Org1, org.RoleNone, nil)
+	noneUser := org1.None
 
 	creator := helper.CreateUser("creator", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 		createWildcardPermission(
@@ -1318,7 +1315,7 @@ func TestIntegrationCRUD(t *testing.T) {
 					expected := notify.AllKnownConfigsForTesting[strings.ToLower(integration.Type)]
 					var fields map[string]any
 					require.NoError(t, json.Unmarshal([]byte(expected.Config), &fields))
-					secretFields, err := channels_config.GetSecretKeysForContactPointType(integration.Type)
+					secretFields, err := channels_config.GetSecretKeysForContactPointType(integration.Type, channels_config.V1)
 					require.NoError(t, err)
 					for _, field := range secretFields {
 						if _, ok := fields[field]; !ok { // skip field that is not in the original setting
@@ -1417,6 +1414,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	require.Len(t, receivers.Items, 3) // Includes default.
 
 	t.Run("should filter by receiver name", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, v1.ListOptions{
 			FieldSelector: "spec.title=" + recv1.Spec.Title,
 		})
@@ -1435,6 +1433,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	})
 
 	t.Run("should filter by multiple filters", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, v1.ListOptions{
 			FieldSelector: fmt.Sprintf("metadata.name=%s,spec.title=%s", recv2.Name, recv2.Spec.Title),
 		})

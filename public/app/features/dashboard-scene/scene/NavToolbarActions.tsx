@@ -21,9 +21,11 @@ import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/Na
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/core';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { trackDashboardSceneEditButtonClicked } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
+import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { useSelector } from 'app/types/store';
 
 import { selectFolderRepository } from '../../provisioning/utils/selectors';
@@ -99,21 +101,12 @@ export function ToolbarActions({ dashboard }: Props) {
     group: 'icon-actions',
     condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
     render: () => {
-      let desc = meta.isStarred
-        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
-        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
       return (
-        <ToolbarButton
-          tooltip={desc}
-          icon={
-            <Icon name={meta.isStarred ? 'favorite' : 'star'} size="lg" type={meta.isStarred ? 'mono' : 'default'} />
-          }
+        <StarToolbarButton
           key="star-dashboard-button"
-          data-testid={selectors.components.NavToolbar.markAsFavorite}
-          onClick={() => {
-            DashboardInteractions.toolbarFavoritesClick();
-            dashboard.onStarDashboard();
-          }}
+          group="dashboard.grafana.app"
+          kind="Dashboard"
+          dashboard={dashboard}
         />
       );
     },
@@ -328,6 +321,7 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={() => {
+          trackDashboardSceneEditButtonClicked();
           dashboard.onEnterEditMode();
         }}
         tooltip={
@@ -353,6 +347,7 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={() => {
+          trackDashboardSceneEditButtonClicked();
           dashboard.onEnterEditMode();
           dashboard.setState({ editable: true, meta: { ...meta, canEdit: true } });
         }}
@@ -405,7 +400,10 @@ export function ToolbarActions({ dashboard }: Props) {
     condition: isEditing && !isNew && isShowingDashboard,
     render: () => (
       <Button
-        onClick={() => dashboard.exitEditMode({ skipConfirm: false })}
+        onClick={() => {
+          DashboardInteractions.exitEditButtonClicked();
+          dashboard.exitEditMode({ skipConfirm: false });
+        }}
         tooltip={t('dashboard.toolbar.exit-edit-mode.tooltip', 'Exits edit mode and discards unsaved changes')}
         size="sm"
         key="discard"

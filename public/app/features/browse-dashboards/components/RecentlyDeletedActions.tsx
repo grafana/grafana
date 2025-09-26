@@ -128,9 +128,7 @@ export function RecentlyDeletedActions() {
 
     results.forEach((result, index) => {
       const dashboardUid = selectedDashboards[index];
-      if (result.status === 'rejected') {
-        failed.push(dashboardUid);
-      } else if (result.value.error) {
+      if (result.status === 'rejected' || result.value.error) {
         failed.push(dashboardUid);
       } else if ('data' in result.value && result.value.data?.name) {
         successful.push(result.value.data.name);

@@ -81,6 +81,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
 | `dashboardDsAdHocFiltering`            | Enables adhoc filtering support for the dashboard datasource                                                                                                  | Yes                |
 | `adhocFiltersInTooltips`               | Enable adhoc filter buttons in visualization tooltips                                                                                                         | Yes                |
+| `tempoSearchBackendMigration`          | Run search queries through the tempo backend                                                                                                                  |                    |
 
 ## Public preview feature toggles
 
@@ -102,7 +103,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `regressionTransformation`      | Enables regression analysis transformation                                                             |
 | `alertingSaveStateCompressed`   | Enables the compressed protobuf-based alert state storage                                              |
 | `sqlExpressions`                | Enables SQL Expressions, which can execute SQL queries against data source results.                    |
-| `savedQueries`                  | Enables Saved Queries feature                                                                          |
+| `queryLibrary`                  | Enables Saved queries (query library) feature                                                          |
 | `enableSCIM`                    | Enables SCIM support for user and group management                                                     |
 | `alertRuleRestore`              | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor` | Enables the logs builder mode for the Azure Monitor data source                                        |
