@@ -299,16 +299,13 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			params = append(params, query.AlertUID, query.OrgID)
 		}
 
-		// nolint: staticcheck
-		if query.DashboardID != 0 {
-			sql.WriteString(` AND a.dashboard_id = ?`)
-			params = append(params, query.DashboardID)
-		}
-
 		// note: orgID is already required above
 		if query.DashboardUID != "" {
 			sql.WriteString(` AND a.dashboard_uid = ?`)
 			params = append(params, query.DashboardUID)
+		} else if query.DashboardID != 0 { // nolint: staticcheck
+			sql.WriteString(` AND a.dashboard_id = ?`)
+			params = append(params, query.DashboardID) // nolint: staticcheck
 		}
 
 		if query.PanelID != 0 {

@@ -481,6 +481,8 @@ function usePageNav(rule: CombinedRule) {
           setActiveTab(ActiveTab.Details);
         },
       },
+      // Enterprise extensions (e.g. Alert enrichment) should appear after Details
+      ...useRuleViewExtensionsNav(activeTab, setActiveTabFromString),
       {
         text: t('alerting.use-page-nav.page-nav.text.versions', 'Versions'),
         active: activeTab === ActiveTab.VersionHistory,
@@ -489,8 +491,6 @@ function usePageNav(rule: CombinedRule) {
         },
         hideFromTabs: !isGrafanaAlertRule && !isGrafanaRecordingRule,
       },
-      // Enterprise extensions can append additional tabs here
-      ...useRuleViewExtensionsNav(activeTab, setActiveTabFromString),
     ],
     parentItem: {
       text: groupName,

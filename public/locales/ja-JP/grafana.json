@@ -1666,6 +1666,10 @@
     "inspector-yaml-tab": {
       "apply": "適用"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "IRMへの接続方法",
       "disabled-description": "Webhook連携を通じてIRMを有効化",
@@ -1807,6 +1811,10 @@
         }
       }
     },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
+    },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "ブレースなしのラベルクエリを使用してアラートをフィルタします。例：",
       "filter-alerts-using-label-querying-without-spaces": "スペースなしのラベルクエリでアラートを絞り込みます。例：",
@@ -1913,9 +1921,6 @@
       "title-remove": "削除",
       "tooltip-remove-time-range": "時間範囲を削除"
     },
-    "namespace": {
-      "title-alert-rules": "アラートルール"
-    },
     "namespace-and-group-filter": {
       "select-group": "グループを選択",
       "select-namespace": "名前空間を選択"
@@ -1972,8 +1977,10 @@
       "label-notification-policies": "通知ポリシー",
       "label-time-intervals": "時間間隔"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "デフォルトのポリシー",
       "no-matchers": "マッチャーなし"
     },
     "notification-preview": {
@@ -1990,22 +1997,12 @@
     },
     "notification-route": {
       "no-labels": "ラベルなし",
-      "no-matching-labels": "一致するラベルがありません"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "アラートインスタンスは次のようにルーティングされます。",
-      "close": "閉じる",
-      "contact-point": "コンタクトポイント",
-      "default-policy": "デフォルトのポリシー",
-      "notification-policy-path": "通知ポリシーパス",
-      "see-details-link": "詳細を見る",
-      "title-routing-details": "ルーティング詳細"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "ポリシールートを展開",
-      "delivered-to": "配信先：",
-      "notification-policy": "通知ポリシー",
-      "see-details": "詳細を見る"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2033,7 +2030,9 @@
       "recipient-notification-fires": "アラートルールの発生時に通知を受け取る相手を選択してください。"
     },
     "option-customfield": {
-      "label-custom-template": "カスタムテンプレート"
+      "label-custom-template": "カスタムテンプレート",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "選択したAlertmanagerは存在しないか、アクセス権限がない可能性があります。ドロップダウンから別のAlertmanagerを選択できます。",
@@ -2129,10 +2128,6 @@
       "label-new-child-policy": "新しい子ポリシー",
       "label-new-sibling-above": "上に新しい兄弟ポリシーを追加",
       "label-new-sibling-below": "下に新しい兄弟ポリシーを追加"
-    },
-    "policy-path": {
-      "default-policy": "デフォルトのポリシー",
-      "no-matchers": "マッチャーなし"
     },
     "preview-rule": {
       "body-preview-is-not-available": "クエリプレビューを表示できません。クエリで使用されているデータソースの一部が利用できません。",
@@ -5329,7 +5324,6 @@
             "json": "JSON形式でエクスポート"
           }
         },
-        "mark-favorite": "お気に入りに登録",
         "more-save-options": "その他の保存オプション",
         "playlist-next": "次のダッシュボードへ",
         "playlist-previous": "前のダッシュボードへ",
@@ -5358,8 +5352,7 @@
             "yesText": "保存"
           }
         },
-        "unlink-library-panel": "ライブラリパネルのリンクを解除",
-        "unmark-favorite": "お気に入りから削除"
+        "unlink-library-panel": "ライブラリパネルのリンクを解除"
       },
       "open-original": "元のダッシュボードを開く",
       "playlist-next": "次のダッシュボードに移動",
@@ -5380,6 +5373,10 @@
       "save-library-panel": "ライブラリパネルを保存",
       "settings": "ダッシュボードの設定",
       "share-button": "共有",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "ライブラリパネルのリンクを解除",
       "unmark-favorite": "お気に入りを解除"
     },
@@ -9318,6 +9315,7 @@
     },
     "share-panel": {
       "config-description": "次のカスタマイズ設定を使用して、組織内でパネルを共有するためのパーソナライズされた直接リンクを作成します。",
+      "copy-image-link": "",
       "download-image": "画像をダウンロード",
       "render-image": "画像を生成する"
     }
@@ -10616,6 +10614,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11288,6 +11294,7 @@
       "actions": {
         "set-up-required-feature-toggles": "必要な機能切り替えを設定"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Gitでコードとしてダッシュボードを管理し、更新を自動的にプロビジョニング",
       "manage-your-dashboards-with-remote-provisioning": "Git Sync を使ってみる",
       "store-dashboards-in-version-controlled-storage": "バージョン管理されたストレージにダッシュボードを保存して、整理と履歴追跡を改善"
@@ -11475,8 +11482,16 @@
         "subtitle": "外部ストレージを通じてGrafanaインスタンス全体を同期・管理したい場合は、このオプションを使用してください。"
       }
     },
-    "read-only-local-tooltip": "このフォルダは読み取り専用であり、ファイルのプロビジョニングを通じてプロビジョニングされます。フォルダに変更を加えるには、接続されたファイルリポジトリを更新します。フォルダ設定を変更するには、[管理] > [プロビジョニング] > [リポジトリ]の順で移動します。",
-    "read-only-remote-tooltip": "このフォルダは読み取り専用であり、Gitを介してプロビジョニングされます。フォルダに変更を加えるには、接続されているリポジトリを更新します。フォルダ設定を変更するには、[管理] > [プロビジョニング] > [リポジトリ]の順に移動します。",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "アクティブなジョブ",
       "column-action": "操作",
@@ -11590,6 +11605,7 @@
         "removed-from-repo-test-ui": "リポジトリテストUIから削除されました",
         "updated-from-repo-test-ui": "リポジトリテストUIから更新されました"
       },
+      "read-only-repo-tooltip": "",
       "repository": "レポジトリ",
       "tab-info": {
         "label": {
@@ -11626,6 +11642,8 @@
       "tooltip-unhealthy-repository": "問題のあるリポジトリをプルできません"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "各履歴値のコミットを含める",
       "synchronization-options": "同期オプション"
