@@ -119,7 +119,7 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 		}
 		m.Stats = append(m.Stats, provisioning.ResourceCount{
 			Group:    v.Group,
-			Resource: v.Resource,
+			Resource: o.kindLookup[v.Group+"/"+v.Resource],
 			Count:    v.Count,
 		})
 	}
