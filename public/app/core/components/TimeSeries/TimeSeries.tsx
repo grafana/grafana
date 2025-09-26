@@ -21,8 +21,6 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
   ) => {
     const { theme, timeZone, options, renderers, tweakAxis, tweakScale } = this.props;
 
-    console.log('options', options);
-
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       theme,
