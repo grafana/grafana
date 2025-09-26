@@ -60,6 +60,7 @@ for (let i = 0; i < BIN_INCRS.length; i++) {
   BIN_INCRS[i] = 2 ** i;
 }
 
+import * as common from '@grafana/schema/dist/esm/index';
 import { DrawStyle } from '@grafana/ui';
 import {
   UPlotConfigBuilder,
@@ -97,7 +98,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
   tweakAxis = (opts) => opts,
   hoverProximity,
   orientation = VizOrientation.Horizontal,
-  xAxis,
+  xAxisConfig,
 }) => {
   // we want the Auto and Horizontal orientation to default to Horizontal
   const isHorizontal = orientation !== VizOrientation.Vertical;
@@ -164,7 +165,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
         theme,
         grid: { show: i === 0 && xField.config.custom?.axisGridShow },
         filter: filterTicks,
-        ...xAxis,
+        ...xAxisConfig,
       });
     }
 
@@ -716,20 +717,27 @@ function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<str
   return originNames;
 }
 
-export function calculateAnnotationLaneSizes(annotationLanes = 0): Pick<AxisProps, 'size' | 'gap' | 'ticks'> {
-  const annotationLanesSize = annotationLanes * ANNOTATION_LANE_SIZE;
-  // Add an extra lane's worth of height below the annotation lanes in order to show the gridlines through the annotation lanes
-  const axisSize = annotationLanes > 0 ? annotationLanesSize + UPLOT_DEFAULT_AXIS_GAP : 0;
-  // Consistent gap between gridlines and x-axis labels
-  const gap = UPLOT_DEFAULT_AXIS_GAP;
-  // Axis size is: default size + gap size + annotationLaneSize
-  const size = annotationLanes > 0 ? UPLOT_DEFAULT_AXIS_SIZE + gap + annotationLanesSize : UPLOT_DEFAULT_AXIS_SIZE;
+export function calculateAnnotationLaneSizes(
+  annotationLanes = 0,
+  annotationConfig?: common.VizAnnotations
+): Pick<AxisProps, 'size' | 'gap' | 'ticks'> {
+  if (annotationConfig?.multiLane) {
+    const annotationLanesSize = annotationLanes * ANNOTATION_LANE_SIZE;
+    // Add an extra lane's worth of height below the annotation lanes in order to show the gridlines through the annotation lanes
+    const axisSize = annotationLanes > 0 ? annotationLanesSize + UPLOT_DEFAULT_AXIS_GAP : 0;
+    // Consistent gap between gridlines and x-axis labels
+    const gap = UPLOT_DEFAULT_AXIS_GAP;
+    // Axis size is: default size + gap size + annotationLaneSize
+    const size = annotationLanes > 0 ? UPLOT_DEFAULT_AXIS_SIZE + gap + annotationLanesSize : UPLOT_DEFAULT_AXIS_SIZE;
 
-  return {
-    size,
-    gap,
-    ticks: {
-      size: axisSize,
-    },
-  };
+    return {
+      size,
+      gap,
+      ticks: {
+        size: axisSize,
+      },
+    };
+  }
+
+  return {};
 }

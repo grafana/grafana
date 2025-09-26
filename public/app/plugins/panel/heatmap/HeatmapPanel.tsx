@@ -128,7 +128,7 @@ export const HeatmapPanel = ({
       yAxisConfig: options.yAxis,
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
       selectionMode: options.selectionMode,
-      xAxisConfig: calculateAnnotationLaneSizes(annotationsLength),
+      xAxisConfig: calculateAnnotationLaneSizes(annotationsLength, options.annotations),
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps

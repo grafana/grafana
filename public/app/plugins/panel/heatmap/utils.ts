@@ -52,7 +52,7 @@ interface PrepConfigOpts {
   yAxisConfig: YAxisConfig;
   ySizeDivisor?: number;
   selectionMode?: HeatmapSelectionMode;
-  xAxisConfig?: Parameters<UPlotConfigPrepFn>[0]['xAxis'];
+  xAxisConfig?: Parameters<UPlotConfigPrepFn>[0]['xAxisConfig'];
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
