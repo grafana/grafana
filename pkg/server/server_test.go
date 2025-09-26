@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
+	"github.com/grafana/grafana/pkg/registry/backgroundsvcs/adapter"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -52,6 +53,10 @@ func testServer(t *testing.T, services ...registry.BackgroundService) *Server {
 	t.Helper()
 	s, err := newServer(Options{}, setting.NewCfg(), nil, &acimpl.Service{}, nil, backgroundsvcs.NewBackgroundServiceRegistry(services...), tracing.NewNoopTracerService(), prometheus.NewRegistry())
 	require.NoError(t, err)
+	s.managerAdapter.WithDependencies(map[string][]string{
+		adapter.Core:               {},
+		adapter.BackgroundServices: {adapter.Core},
+	})
 	// Required to skip configuration initialization that causes
 	// DI errors in this test.
 	s.isInitialized = true
@@ -62,33 +67,28 @@ func TestServer_Run_Error(t *testing.T) {
 	testErr := errors.New("boom")
 	s := testServer(t, newTestService(nil, false), newTestService(testErr, false))
 	err := s.Run()
-	require.ErrorIs(t, err, testErr)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), testErr.Error())
 }
 
 func TestServer_Shutdown(t *testing.T) {
-	ctx := context.Background()
+	t.Run("successful shutdown", func(t *testing.T) {
+		ctx := context.Background()
+		s := testServer(t, newTestService(nil, false), newTestService(nil, true))
+		ch := make(chan error)
+		go func() {
+			defer close(ch)
+			err := s.managerAdapter.AwaitRunning(ctx)
+			require.NoError(t, err)
+			ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+			defer cancel()
+			err = s.Shutdown(ctx, "test interrupt")
+			ch <- err
+		}()
+		err := s.Run()
+		require.NoError(t, err)
 
-	s := testServer(t, newTestService(nil, false), newTestService(nil, true))
-
-	ch := make(chan error)
-
-	go func() {
-		defer close(ch)
-
-		// Wait until all services launched.
-		for _, svc := range s.backgroundServiceRegistry.GetServices() {
-			if !svc.(*testService).isDisabled {
-				<-svc.(*testService).started
-			}
-		}
-		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
-		defer cancel()
-		err := s.Shutdown(ctx, "test interrupt")
-		ch <- err
-	}()
-	err := s.Run()
-	require.NoError(t, err)
-
-	err = <-ch
-	require.NoError(t, err)
+		err = <-ch
+		require.NoError(t, err)
+	})
 }
