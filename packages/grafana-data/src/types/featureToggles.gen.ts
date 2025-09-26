@@ -1188,4 +1188,9 @@ export interface FeatureToggles {
   * @default false
   */
   filterOutBotsFromFrontendLogs?: boolean;
+  /**
+  * Prioritize loading plugins from the CDN before other sources
+  * @default false
+  */
+  cdnPluginsLoadFirst?: boolean;
 }
