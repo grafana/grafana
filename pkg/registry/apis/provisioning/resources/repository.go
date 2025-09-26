@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -116,7 +117,15 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 		return nil, fmt.Errorf("create parser: %w", err)
 	}
 
-	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree())
+	// if the feature flag kubernetesAuthzResourcePermissionApis is not enabled, we wont be able to have this client
+	// note that when running in one binary, default permissions are already being created
+	var resourcePermissionsClient ResourcePermissionsClient
+	permissionClient, _, err := clients.ForResource(ctx, iam.ResourcePermissionInfo.GroupVersionResource())
+	if err == nil {
+		resourcePermissionsClient = NewResourcePermissionsClient(&permissionClient)
+	}
+
+	folders := NewFolderManager(repo, folderClient, resourcePermissionsClient, NewEmptyFolderTree())
 	resources := NewResourcesManager(repo, folders, parser, clients)
 
 	return &repositoryResources{

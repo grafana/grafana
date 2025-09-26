@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
+	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
@@ -156,11 +157,16 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 	if foldersServerURL == "" {
 		return nil, fmt.Errorf("folders_server_url is required in [operator] section")
 	}
+	iamServerURL := operatorSec.Key("iam_server_url").String()
+	if iamServerURL == "" {
+		return nil, fmt.Errorf("iam_server_url is required in [operator] section")
+	}
 
 	apiServerURLs := map[string]string{
 		resources.DashboardResource.Group: dashboardsServerURL,
 		resources.FolderResource.Group:    foldersServerURL,
 		provisioning.GROUP:                provisioningServerURL,
+		iam.GROUP:                         iamServerURL,
 	}
 	configProviders := make(map[string]apiserver.RestConfigProvider)
 
