@@ -13,7 +13,7 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
 
 const mockPlaylist: Playlist = {
   kind: 'Playlist',
-  apiVersion: '',
+  apiVersion: 'v0alpha1',
   spec: {
     title: 'A test playlist',
     interval: '10m',
@@ -31,7 +31,7 @@ const mockPlaylist: Playlist = {
 
 const mockEmptyPlaylist: Playlist = {
   kind: 'Playlist',
-  apiVersion: '',
+  apiVersion: 'v0alpha1',
   spec: {
     title: 'A test playlist',
     interval: '10m',
@@ -107,7 +107,7 @@ describe('PlaylistForm', () => {
       expect(onSubmitMock).toHaveBeenCalledTimes(1);
       expect(onSubmitMock).toHaveBeenCalledWith({
         kind: 'Playlist',
-        apiVersion: '',
+        apiVersion: 'v0alpha1',
         spec: {
           title: 'A test playlist',
           interval: '10m',
