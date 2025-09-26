@@ -26,6 +26,7 @@ export interface RadialGaugeProps {
   clockwise?: boolean;
   /** Adds a white spotlight for the end position */
   spotlight?: boolean;
+  glow?: boolean;
 }
 
 export type RadialGradientMode = 'none' | 'scheme' | 'hue' | 'radial' | 'shade';
@@ -41,6 +42,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     roundedBars = true,
     clockwise = false,
     spotlight = false,
+    glow = false,
   } = props;
   const theme = useTheme2();
   const gaugeId = useId();
@@ -54,6 +56,8 @@ export function RadialGauge(props: RadialGaugeProps) {
     theme: theme,
     data: frames,
   });
+
+  const margin = calculateMargin(size, glow);
 
   return (
     <svg width={width} height={height}>
@@ -77,6 +81,7 @@ export function RadialGauge(props: RadialGaugeProps) {
             <stop offset="100%" stopColor="white" stopOpacity={0} />
           </radialGradient>
         )}
+        {glow && <GlowGradient gaugeId={gaugeId} size={size} />}
       </defs>
       <g>
         {values.map((displayValue, barIndex) => {
@@ -87,6 +92,7 @@ export function RadialGauge(props: RadialGaugeProps) {
 
           return (
             <RadialBar
+              margin={margin}
               key={barIndex}
               gaugeId={gaugeId}
               value={value}
@@ -100,6 +106,7 @@ export function RadialGauge(props: RadialGaugeProps) {
               roundedBars={roundedBars}
               clockwise={clockwise}
               spotlight={spotlight}
+              glow={glow}
             />
           );
         })}
@@ -107,6 +114,34 @@ export function RadialGauge(props: RadialGaugeProps) {
       <g>{values.length === 1 && <RadialText displayValue={values[0].display} size={size} theme={theme} />}</g>
     </svg>
   );
+}
+
+interface GlowGradientProps {
+  gaugeId: string;
+  size: number;
+}
+
+function GlowGradient({ gaugeId, size }: GlowGradientProps) {
+  const glowSize = 0.03 * size;
+
+  return (
+    <filter id={`glow-${gaugeId}`} filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation={glowSize} />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="1" />
+      </feComponentTransfer>
+      <feBlend in2="SourceGraphic" />
+    </filter>
+  );
+}
+
+function calculateMargin(size: number, glow: boolean | undefined): number {
+  if (glow) {
+    const glowSize = 0.03 * size;
+    return glowSize + 4;
+  }
+
+  return 0;
 }
 
 function getColorForBar(
@@ -217,6 +252,8 @@ export interface RadialBarProps {
   roundedBars?: boolean;
   clockwise: boolean;
   spotlight?: boolean;
+  margin: number;
+  glow?: boolean;
 }
 
 export function RadialBar({
@@ -232,6 +269,8 @@ export function RadialBar({
   roundedBars,
   clockwise,
   spotlight,
+  margin,
+  glow,
 }: RadialBarProps) {
   const theme = useTheme2();
   const range = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
@@ -255,6 +294,7 @@ export function RadialBar({
         barWidth={barWidth}
         roundedBars={roundedBars}
         clockwise={clockwise}
+        margin={margin}
       />
       <RadialArcPath
         gaugeId={gaugeId}
@@ -266,6 +306,8 @@ export function RadialBar({
         roundedBars={roundedBars}
         clockwise={clockwise}
         spotlight={spotlight}
+        glow={glow}
+        margin={margin}
       />
     </>
   );
@@ -281,6 +323,8 @@ export interface RadialArcPathProps {
   roundedBars?: boolean;
   clockwise?: boolean;
   spotlight?: boolean;
+  glow?: boolean;
+  margin: number;
 }
 
 export function RadialArcPath({
@@ -293,10 +337,12 @@ export function RadialArcPath({
   roundedBars,
   clockwise,
   spotlight,
+  glow,
+  margin,
 }: RadialArcPathProps) {
   const center = size / 2;
   const arcSize = size - barWidth;
-  const radius = arcSize / 2;
+  const radius = arcSize / 2 - margin;
 
   let startDeg = startAngle;
   let startRadians = (Math.PI * (startDeg - 90)) / 180;
@@ -324,6 +370,7 @@ export function RadialArcPath({
         strokeLinecap={roundedBars ? 'round' : 'butt'}
         strokeWidth={barWidth}
         strokeDasharray="0"
+        filter={glow ? `url(#glow-${gaugeId})` : undefined}
       />
       {clockwise && spotlight && angle > 5 && (
         <circle r={barWidth * 1} cx={x2} cy={y2} fill={`url(#spotlight-${gaugeId})`} />

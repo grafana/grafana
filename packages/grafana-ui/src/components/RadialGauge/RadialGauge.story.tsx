@@ -29,8 +29,17 @@ export const Effects: StoryFn<typeof RadialBar> = (args) => {
     <Stack direction={'column'} gap={3}>
       <div>Spotlight</div>
       <Stack direction="row" alignItems="center" gap={3}>
-        <RadialBarExample value={70} spotlight />
-        <RadialBarExample seriesName="Clockwise" value={70} clockwise spotlight />
+        <RadialBarExample value={70} gradientMode="hue" spotlight />
+        <RadialBarExample seriesName="Clockwise" gradientMode="hue" value={70} clockwise spotlight />
+        <RadialBarExample gradientMode="hue" value={70} clockwise spotlight color="green" />
+        <RadialBarExample gradientMode="hue" value={70} clockwise spotlight color="red" />
+      </Stack>
+      <div>Spotlight + Glow</div>
+      <Stack direction="row" alignItems="center" gap={3}>
+        <RadialBarExample value={70} gradientMode="hue" spotlight glow />
+        <RadialBarExample seriesName="Clockwise" gradientMode="hue" value={70} clockwise spotlight glow />
+        <RadialBarExample gradientMode="hue" value={70} clockwise spotlight color="green" glow />
+        <RadialBarExample gradientMode="hue" value={70} clockwise spotlight color="red" glow />
       </Stack>
     </Stack>
   );
@@ -93,6 +102,7 @@ interface ExampleProps {
   clockwise?: boolean;
   size?: number;
   spotlight?: boolean;
+  glow?: boolean;
 }
 
 function RadialBarExample({
@@ -108,6 +118,7 @@ function RadialBarExample({
   clockwise = false,
   size = 200,
   spotlight = false,
+  glow = false,
 }: ExampleProps) {
   const theme = useTheme2();
 
@@ -153,6 +164,7 @@ function RadialBarExample({
       endAngle={endAngle}
       clockwise={clockwise}
       spotlight={spotlight}
+      glow={glow}
     />
   );
 }
