@@ -553,6 +553,10 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
+  * Enables template dashboards suggestions when creating new dashboards
+  */
+  templateDashboards?: boolean;
+  /**
   * Sets the logs table as default visualisation in logs explore
   */
   logsExploreTableDefaultVisualization?: boolean;

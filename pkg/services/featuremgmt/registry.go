@@ -949,6 +949,13 @@ var (
 			AllowSelfServe: false,
 		},
 		{
+			Name:         "templateDashboards",
+			Description:  "Enables template dashboards suggestions when creating new dashboards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "logsExploreTableDefaultVisualization",
 			Description:  "Sets the logs table as default visualisation in logs explore",
 			Stage:        FeatureStageExperimental,
