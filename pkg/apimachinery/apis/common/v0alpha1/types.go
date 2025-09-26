@@ -52,8 +52,7 @@ type Scope struct {
 }
 
 type ScopeSpec struct {
-	Title       string `json:"title"`
-	Description string `json:"description,omitempty"`
+	Title string `json:"title"`
 	// Provides a default path for the scope. This refers to a list of nodes in the selector. This is used to display the title next to the selected scope and expand the selector to the proper path.
 	// This will override whichever is selected from in the selector.
 	// The path is a list of node ids, starting at the direct parent of the selected node towards the root.
