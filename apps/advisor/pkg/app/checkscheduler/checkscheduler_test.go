@@ -41,6 +41,19 @@ func TestRunner_Run(t *testing.T) {
 		err := runner.Run(ctx)
 		assert.ErrorAs(t, err, &context.DeadlineExceeded)
 	})
+
+	t.Run("handles check types list error", func(t *testing.T) {
+		mockTypesClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				return nil, errors.New("list check types error")
+			},
+		}
+
+		runner := createTestRunner(&MockClient{}, mockTypesClient)
+		err := runner.Run(context.Background())
+		assert.ErrorContains(t, err, "list check types error")
+	})
+
 	t.Run("handles check list error gracefully", func(t *testing.T) {
 		mockClient := &MockClient{
 			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
@@ -242,6 +255,7 @@ func TestRunner_Run_UnprocessedChecks(t *testing.T) {
 func TestRunner_Run_Pagination(t *testing.T) {
 	t.Run("handles paginated check lists", func(t *testing.T) {
 		callCount := 0
+		secondPageRequested := false
 
 		mockClient := &MockClient{
 			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
@@ -253,6 +267,9 @@ func TestRunner_Run_Pagination(t *testing.T) {
 							{ObjectMeta: metav1.ObjectMeta{Name: "check-1"}},
 						},
 					}, nil
+				}
+				if options.Continue == "continue-token" {
+					secondPageRequested = true
 				}
 				return &advisorv0alpha1.CheckList{
 					Items: []advisorv0alpha1.Check{
@@ -273,7 +290,153 @@ func TestRunner_Run_Pagination(t *testing.T) {
 		err := runAndTimeout(runner)
 		assert.ErrorAs(t, err, &context.DeadlineExceeded)
 		// Should handle pagination correctly
-		assert.Equal(t, 2, callCount)
+		assert.Greater(t, callCount, 1)
+		assert.True(t, secondPageRequested)
+	})
+}
+
+// TestRunner_Run_EvaluationInterval tests evaluation interval handling
+func TestRunner_Run_EvaluationInterval(t *testing.T) {
+	t.Run("uses custom evaluation interval from annotation", func(t *testing.T) {
+		checksCreated := []string{}
+
+		mockClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				return &advisorv0alpha1.CheckList{Items: []advisorv0alpha1.Check{}}, nil
+			},
+			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+				checksCreated = append(checksCreated, id.Name)
+				return obj, nil
+			},
+		}
+
+		mockTypesClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				return &advisorv0alpha1.CheckTypeList{
+					Items: []advisorv0alpha1.CheckType{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "test-check",
+								Annotations: map[string]string{
+									checks.EvaluationIntervalAnnotation: "30m",
+								},
+							},
+							Spec: advisorv0alpha1.CheckTypeSpec{
+								Name: "test-check",
+							},
+						},
+					},
+				}, nil
+			},
+		}
+
+		// Create a mock check service with one check to match the check type
+		mockCheckService := &MockCheckService{checks: []checks.Check{&mockCheck{id: "test-check"}}}
+		runner := createTestRunnerWithRegistry(mockClient, mockTypesClient, mockCheckService)
+
+		err := runAndTimeout(runner)
+		assert.ErrorAs(t, err, &context.DeadlineExceeded)
+		// Should not have had time to create the check
+		assert.Empty(t, checksCreated)
+	})
+
+	t.Run("skips check creation when evaluation interval is 0", func(t *testing.T) {
+		checksCreated := []string{}
+
+		mockClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				return &advisorv0alpha1.CheckList{Items: []advisorv0alpha1.Check{}}, nil
+			},
+			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+				checksCreated = append(checksCreated, id.Name)
+				return obj, nil
+			},
+		}
+
+		mockTypesClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				return &advisorv0alpha1.CheckTypeList{
+					Items: []advisorv0alpha1.CheckType{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "test-check",
+								Annotations: map[string]string{
+									checks.EvaluationIntervalAnnotation: "0",
+								},
+							},
+							Spec: advisorv0alpha1.CheckTypeSpec{
+								Name: "test-check",
+							},
+						},
+					},
+				}, nil
+			},
+		}
+
+		// Create a mock check service with one check to match the check type
+		mockCheckService := &MockCheckService{checks: []checks.Check{&mockCheck{id: "test-check"}}}
+		runner := createTestRunnerWithRegistry(mockClient, mockTypesClient, mockCheckService)
+
+		err := runAndTimeout(runner)
+		assert.ErrorAs(t, err, &context.DeadlineExceeded)
+		// Should not create any checks when interval is 0
+		assert.Empty(t, checksCreated)
+	})
+
+	t.Run("handles invalid evaluation interval gracefully", func(t *testing.T) {
+		checksCreated := []string{}
+
+		mockClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				// Return a check that was created long ago (past the evaluation interval)
+				return &advisorv0alpha1.CheckList{
+					Items: []advisorv0alpha1.Check{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name:              "old-check",
+								CreationTimestamp: metav1.NewTime(time.Now().Add(-3 * time.Hour)), // 3 hours ago
+								Annotations: map[string]string{
+									checks.StatusAnnotation: checks.StatusAnnotationProcessed,
+								},
+							},
+						},
+					},
+				}, nil
+			},
+			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+				checksCreated = append(checksCreated, id.Name)
+				return obj, nil
+			},
+		}
+
+		mockTypesClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				return &advisorv0alpha1.CheckTypeList{
+					Items: []advisorv0alpha1.CheckType{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "test-check",
+								Annotations: map[string]string{
+									checks.EvaluationIntervalAnnotation: "invalid-duration", // 1 hour interval
+								},
+							},
+							Spec: advisorv0alpha1.CheckTypeSpec{
+								Name: "test-check",
+							},
+						},
+					},
+				}, nil
+			},
+		}
+
+		// Create a mock check service with one check to match the check type
+		mockCheckService := &MockCheckService{checks: []checks.Check{&mockCheck{id: "test-check"}}}
+		runner := createTestRunnerWithRegistry(mockClient, mockTypesClient, mockCheckService)
+
+		err := runAndTimeout(runner)
+		assert.ErrorAs(t, err, &context.DeadlineExceeded)
+		// Ignores the invalid interval and uses the default
+		assert.Greater(t, len(checksCreated), 0)
 	})
 }
 

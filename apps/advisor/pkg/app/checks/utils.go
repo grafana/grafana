@@ -5,22 +5,26 @@ import (
 	"fmt"
 	"maps"
 	"strconv"
+	"time"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
-	TypeLabel                 = "advisor.grafana.app/type"
-	StatusAnnotation          = "advisor.grafana.app/status"
-	RetryAnnotation           = "advisor.grafana.app/retry"
-	IgnoreStepsAnnotation     = "advisor.grafana.app/ignore-steps"
-	IgnoreStepsAnnotationList = "advisor.grafana.app/ignore-steps-list"
-	NameAnnotation            = "advisor.grafana.app/checktype-name"
-	StatusAnnotationError     = "error"
-	StatusAnnotationProcessed = "processed"
+	TypeLabel                    = "advisor.grafana.app/type"
+	StatusAnnotation             = "advisor.grafana.app/status"
+	RetryAnnotation              = "advisor.grafana.app/retry"
+	IgnoreStepsAnnotation        = "advisor.grafana.app/ignore-steps"
+	IgnoreStepsAnnotationList    = "advisor.grafana.app/ignore-steps-list"
+	NameAnnotation               = "advisor.grafana.app/checktype-name"
+	EvaluationIntervalAnnotation = "advisor.grafana.app/evaluation-interval"
+	StatusAnnotationError        = "error"
+	StatusAnnotationProcessed    = "processed"
+	defaultEvaluationInterval    = 7 * 24 * time.Hour // 7 days
 )
 
 func NewCheckReportFailure(
@@ -127,4 +131,17 @@ func SetStatus(ctx context.Context, client resource.Client, obj resource.Object,
 	}, resource.PatchOptions{
 		Subresource: "status",
 	}, obj)
+}
+
+func GetDefaultEvaluationInterval(pluginConfig map[string]string) (time.Duration, error) {
+	evaluationInterval := defaultEvaluationInterval
+	configEvaluationInterval, ok := pluginConfig["evaluation_interval"]
+	if ok {
+		var err error
+		evaluationInterval, err = gtime.ParseDuration(configEvaluationInterval)
+		if err != nil {
+			return 0, fmt.Errorf("invalid evaluation interval: %w", err)
+		}
+	}
+	return evaluationInterval, nil
 }
