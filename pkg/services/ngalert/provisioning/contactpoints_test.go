@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers/schema"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -441,15 +441,14 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 	keys := maps.Keys(configs)
 	slices.Sort(keys)
 	for _, integrationType := range keys {
-		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(integrationType))()
+		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(schema.IntegrationType(integrationType)))()
 		if f, ok := overrides[integrationType]; ok {
 			f(integration.Settings)
 		}
 		settingsRaw, err := json.Marshal(integration.Settings)
 		require.NoError(t, err)
-
-		expectedFields, err := channels_config.GetSecretKeysForContactPointType(integrationType, channels_config.V1)
-		require.NoError(t, err)
+		typeSchema, _ := notify.GetSchemaVersionForIntegration(schema.IntegrationType(integrationType), schema.V1)
+		expectedFields := typeSchema.GetSecretFieldsPaths()
 
 		t.Run(integrationType, func(t *testing.T) {
 			cp := definitions.EmbeddedContactPoint{

@@ -1671,6 +1671,10 @@
     "inspector-yaml-tab": {
       "apply": "Tillämpa"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "Så här ansluter du till IRM",
       "disabled-description": "Aktivera IRM via en Webhook-integration",
@@ -1812,6 +1816,10 @@
           "use-notification-policy": "Använd aviseringspolicy"
         }
       }
+    },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
     },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Filtrera varningar med etikettförfrågan utan klamrar, t.ex.:",
@@ -1975,8 +1983,10 @@
       "label-notification-policies": "Aviseringspolicyer",
       "label-time-intervals": "Tidsintervall"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "Standardpolicy",
       "no-matchers": "Inga matchare"
     },
     "notification-preview": {
@@ -1993,22 +2003,12 @@
     },
     "notification-route": {
       "no-labels": "Inga etiketter",
-      "no-matching-labels": "Inga matchande etiketter"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Dina larminstanser dirigeras enligt följande.",
-      "close": "Stäng",
-      "contact-point": "Kontaktpunkt",
-      "default-policy": "Standardpolicy",
-      "notification-policy-path": "Sökväg för aviseringspolicy",
-      "see-details-link": "Se detaljer",
-      "title-routing-details": "Routningsdetaljer"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Visa policyväg",
-      "delivered-to": "@ Levereras till",
-      "notification-policy": "Aviseringspolicy",
-      "see-details": "Se detaljer"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2136,10 +2136,6 @@
       "label-new-child-policy": "Ny underordnad policy",
       "label-new-sibling-above": "Nytt syskon ovanför",
       "label-new-sibling-below": "Nytt syskon nedanför"
-    },
-    "policy-path": {
-      "default-policy": "Standardpolicy",
-      "no-matchers": "Inga matchare"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Det går inte att visa förhandsgranskningen av frågan. Vissa av de datakällor som används i frågorna är inte tillgängliga.",
@@ -9347,6 +9343,7 @@
     },
     "share-panel": {
       "config-description": "Skapa en personlig direktlänk för att dela din panel inom din organisation, med följande anpassningsinställningar:",
+      "copy-image-link": "",
       "download-image": "Ladda ner bild",
       "render-image": "Generera bild"
     }
@@ -10651,6 +10648,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11327,6 +11332,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Konfigurera obligatoriska funktionsväxlare"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Hantera kontrollpaneler som kod i Git och provisionering av uppdateringar automatiskt",
       "manage-your-dashboards-with-remote-provisioning": "Kom igång med Git Sync",
       "store-dashboards-in-version-controlled-storage": "Lagra instrumentpaneler med versionsstyrd lagring för bättre organisering och historikspårning"
@@ -11516,8 +11522,16 @@
         "subtitle": "Använd det här alternativet om du vill synkronisera och hantera hela din Grafana-instans via extern lagring."
       }
     },
-    "read-only-local-tooltip": "Denna mapp är skrivskyddad och provisionerad via filprovisionering. Om du behöver göra ändringar i mappen måste du uppdatera den anslutna fillagringsplatsen. Ändra mappinställningarna genom att gå till Administration > Provisionering > Lagringsplatser.",
-    "read-only-remote-tooltip": "Den här mappen är skrivskyddad och provisionerad via Git. Om du behöver göra ändringar i mappen måste du uppdatera det anslutna arkivet. Ändra mappinställningarna genom att gå till Administration > Provisionering > Lagringsplatser.",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "aktiva jobb",
       "column-action": "Åtgärd",
@@ -11631,6 +11645,7 @@
         "removed-from-repo-test-ui": "borttagen från arkivets testgränssnitt",
         "updated-from-repo-test-ui": "uppdaterat från arkivets testgränssnitt"
       },
+      "read-only-repo-tooltip": "",
       "repository": "Databas",
       "tab-info": {
         "label": {
@@ -11667,6 +11682,8 @@
       "tooltip-unhealthy-repository": "Det gick inte att hämta en ohälsosam lagringsplats"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "Inkludera åtaganden för varje historiskt värde",
       "synchronization-options": "Synkroniseringsalternativ"
