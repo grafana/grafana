@@ -275,16 +275,14 @@ func waitForItem(ctx context.Context, log logging.Logger, client resource.Client
 		Name:      obj.GetName(),
 	})
 	retries := 0
-	if err != nil && k8serrors.IsNotFound(err) {
-		for err != nil && k8serrors.IsNotFound(err) && retries < 5 {
-			log.Debug("Waiting for item to be persisted", "check", obj.GetName(), "retries", retries)
-			time.Sleep(retryAnnotationPollingInterval)
-			retries++
-			_, err = client.Get(ctx, resource.Identifier{
-				Namespace: obj.GetNamespace(),
-				Name:      obj.GetName(),
-			})
-		}
+	for err != nil && k8serrors.IsNotFound(err) && retries < 5 {
+		log.Debug("Waiting for item to be persisted", "check", obj.GetName(), "retries", retries)
+		time.Sleep(retryAnnotationPollingInterval)
+		retries++
+		_, err = client.Get(ctx, resource.Identifier{
+			Namespace: obj.GetNamespace(),
+			Name:      obj.GetName(),
+		})
 	}
 	return err
 }
