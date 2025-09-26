@@ -13,7 +13,9 @@ import (
 
 // Read stats from legacy SQL
 type LegacyStatsGetter struct {
-	SQL legacysql.LegacyDatabaseProvider
+	SQL                          legacysql.LegacyDatabaseProvider
+	DisableSQLFallbackDashboards bool
+	DisableSQLFallbackFolders    bool
 }
 
 func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
@@ -64,15 +66,19 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		}
 
 		// Legacy dashboard table
-		err = fn("dashboard", "org_id=? AND folder_uid=? AND is_folder=false", group, "dashboards", true)
-		if err != nil {
-			return err
+		if !s.DisableSQLFallbackDashboards {
+			err = fn("dashboard", "org_id=? AND folder_uid=? AND is_folder=false", group, "dashboards", true)
+			if err != nil {
+				return err
+			}
 		}
 
 		// Legacy folder table
-		err = fn("folder", "org_id=? AND parent_uid=?", group, "folders", true)
-		if err != nil {
-			return err
+		if !s.DisableSQLFallbackFolders {
+			err = fn("folder", "org_id=? AND parent_uid=?", group, "folders", true)
+			if err != nil {
+				return err
+			}
 		}
 
 		// Legacy library_elements table
