@@ -949,8 +949,8 @@ var (
 			AllowSelfServe: false,
 		},
 		{
-			Name:         "templateDashboards",
-			Description:  "Enables template dashboards suggestions when creating new dashboards",
+			Name:         "dashboardLibrary",
+			Description:  "Enable suggested dashboards when creating new dashboards",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
