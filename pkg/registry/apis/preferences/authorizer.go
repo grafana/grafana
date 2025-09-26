@@ -23,16 +23,13 @@ func (a *authorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 		return authorizer.DecisionDeny, "valid user is required", err
 	}
 
-	if user.GetIsGrafanaAdmin() {
-		return authorizer.DecisionAllow, "", nil
-	}
 	if !attr.IsResourceRequest() {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 
 	owners, ok := a.resource[attr.GetResource()]
 	if !ok {
-		return authorizer.DecisionDeny, "unknown resource", nil
+		return authorizer.DecisionDeny, "missing resource name", nil
 	}
 
 	// Check if the request includes explicit permissions
@@ -56,12 +53,12 @@ func (a *authorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 		return authorizer.DecisionDeny, "mutating request without a name", nil
 	}
 
-	name, _ := utils.ParseOwnerFromName(attr.GetName())
-	if !slices.Contains(owners, name.Owner) {
+	info, _ := utils.ParseOwnerFromName(attr.GetName())
+	if !slices.Contains(owners, info.Owner) {
 		return authorizer.DecisionDeny, "unsupported owner type", nil
 	}
 
-	switch name.Owner {
+	switch info.Owner {
 	case utils.NamespaceResourceOwner:
 		if attr.IsReadOnly() {
 			// Everyone can see the namespace
@@ -73,27 +70,28 @@ func (a *authorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 		return authorizer.DecisionDeny, "must be an org admin to edit", nil
 
 	case utils.UserResourceOwner:
-		if user.GetIdentifier() == name.Identifier {
+		if user.GetIdentifier() == info.Identifier {
 			return authorizer.DecisionAllow, "", nil
 		}
-		return authorizer.DecisionDeny, "your identify must match the selected resource", nil
+		return authorizer.DecisionDeny, "your are not the owner of the resource", nil
 
 	case utils.TeamResourceOwner:
 		if a.teams == nil {
 			return authorizer.DecisionDeny, "team checker not configured", err
 		}
-		ok, err := a.teams.InTeam(ctx, user, name.Identifier, !attr.IsReadOnly())
+		ok, err := a.teams.InTeam(ctx, user, info.Identifier, !attr.IsReadOnly())
 		if err != nil {
 			return authorizer.DecisionDeny, "error fetching teams", err
 		}
 		if ok {
 			return authorizer.DecisionAllow, "", nil
 		}
-		return authorizer.DecisionDeny, "not a team member", nil
+		return authorizer.DecisionDeny, "you are not a member of the referenced team", nil
 
 	case utils.UnknownResourceOwner:
+		return authorizer.DecisionAllow, "", nil
 	}
 
-	// the owner was explicitly allowed
-	return authorizer.DecisionAllow, "", nil
+	// the owner was not explicitly allowed
+	return authorizer.DecisionDeny, "", nil
 }

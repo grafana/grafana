@@ -75,7 +75,7 @@ func TestAuthorizer_Authorize(t *testing.T) {
 				},
 				expect: expect{
 					decision: authorizer.DecisionDeny,
-					reason:   "your identify must match the selected resource",
+					reason:   "your are not the owner of the resource",
 				},
 			}},
 		}, {
@@ -90,12 +90,6 @@ func TestAuthorizer_Authorize(t *testing.T) {
 				expect: expect{
 					decision: authorizer.DecisionDeny,
 					err:      "a Requester was not found in the context",
-				},
-			}, {
-				name: "grafana admin",
-				user: &identity.StaticRequester{IsGrafanaAdmin: true},
-				expect: expect{
-					decision: authorizer.DecisionAllow,
 				},
 			}, {
 				name: "not a resource",
@@ -115,7 +109,7 @@ func TestAuthorizer_Authorize(t *testing.T) {
 				},
 				expect: expect{
 					decision: authorizer.DecisionDeny,
-					reason:   "unknown resource",
+					reason:   "missing resource name",
 				},
 			}, {
 				name: "missing service permissions",
@@ -301,7 +295,7 @@ func TestAuthorizer_Authorize(t *testing.T) {
 				},
 				expect: expect{
 					decision: authorizer.DecisionDeny,
-					reason:   "not a team member",
+					reason:   "you are not a member of the referenced team",
 				},
 			}, {
 				name: "team error",
