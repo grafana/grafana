@@ -694,6 +694,10 @@ describe('DashboardSceneSerializer', () => {
           conditionalRenderRulesCount: 3,
           autoLayoutCount: 3,
           customGridLayoutCount: 2,
+          panelsByDatasourceType: {
+            cloudwatch: 5,
+            datasource: 1,
+          },
         });
       });
     });
