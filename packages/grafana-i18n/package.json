@@ -20,16 +20,23 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./src/index.ts",
-      "require": "./src/index.ts"
+      "import": {
+        "@grafana-app/source": "./src/index.ts",
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/esm/index.mjs"
+      },
+      "require": {
+        "@grafana-app/source": "./src/index.ts",
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/cjs/index.cjs"
+      }
     },
     "./internal": {
-      "import": "./src/internal/index.ts",
-      "require": "./src/internal/index.ts"
+      "@grafana-app/source": "./src/internal/index.ts"
     },
     "./eslint-plugin": {
-      "import": "./src/eslint/index.cjs",
-      "require": "./src/eslint/index.cjs"
+      "@grafana-app/source": "./src/eslint/index.cjs",
+      "default": "./dist/eslint/index.cjs"
     }
   },
   "publishConfig": {
