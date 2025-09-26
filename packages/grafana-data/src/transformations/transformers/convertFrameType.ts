@@ -37,7 +37,7 @@ export const convertFrameTypeTransformer: DataTransformerInfo<ConvertFrameTypeTr
   operator: (options) => (source) =>
     source.pipe(
       map((data) => {
-        return convertFrameType(options, data);
+        return convertFrameTypes(options, data);
       })
     ),
 };
@@ -50,7 +50,13 @@ export const convertFrameTypeTransformer: DataTransformerInfo<ConvertFrameTypeTr
  */
 export function convertFrameTypes(options: ConvertFrameTypeTransformerOptions, frames: DataFrame[]): DataFrame[] {
   const { targetType } = options;
-  return targetType === FrameType.Exemplar ? frames.map(convertSeriesToExemplar) : frames;
+  if (targetType === FrameType.Exemplar) {
+    return frames.map(convertSeriesToExemplar);
+  }
+  if (targetType === FrameType.Annotation) {
+    return frames.map(convertSeriesToAnnotation);
+  }
+  return frames;
 }
 
 /**
@@ -72,6 +78,19 @@ function convertSeriesToExemplar(frame: DataFrame): DataFrame {
         ...frame.meta?.custom,
         resultType: 'exemplar',
       },
+    },
+  };
+}
+
+function convertSeriesToAnnotation(frame: DataFrame): DataFrame {
+  // TODO: ensure time field
+  // TODO: ensure value field
+
+  return {
+    ...frame,
+    meta: {
+      ...frame.meta,
+      dataTopic: DataTopic.Annotations,
     },
   };
 }
