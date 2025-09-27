@@ -14,11 +14,9 @@ export interface RadialGaugeProps {
   values: FieldDisplay[];
   width: number;
   height: number;
-  startAngle?: number;
-  endAngle?: number;
+  semicircle?: boolean;
   gradient?: RadialGradientMode;
   barWidth?: number;
-  roundedBars?: boolean;
   clockwise?: boolean;
   /** Adds a white spotlight for the end position */
   spotlight?: boolean;
@@ -32,12 +30,10 @@ export function RadialGauge(props: RadialGaugeProps) {
   const {
     width = 256,
     height = 256,
-    startAngle = 0,
-    endAngle = 360,
+    semicircle = false,
     gradient = 'none',
     barWidth = 10,
-    roundedBars = true,
-    clockwise = false,
+    clockwise = true,
     spotlight = false,
     glow = false,
     centerGlow = false,
@@ -47,6 +43,9 @@ export function RadialGauge(props: RadialGaugeProps) {
   const gaugeId = useId();
   const styles = useStyles2(getStyles);
   const size = Math.min(width, height);
+
+  let startAngle = semicircle ? 240 : 0;
+  let endAngle = semicircle ? 120 : 360;
 
   const margin = calculateMargin(size, glow, spotlight, barWidth);
   const color = values[0]?.display.color ?? theme.colors.primary.main;
@@ -106,7 +105,7 @@ export function RadialGauge(props: RadialGaugeProps) {
                 size={barSize}
                 color={barColor}
                 barWidth={barWidth}
-                roundedBars={roundedBars}
+                roundedBars={true}
                 clockwise={clockwise}
                 spotlight={spotlight}
                 glow={glow}
@@ -288,7 +287,11 @@ function RadialBar({
 }: RadialBarProps) {
   const theme = useTheme2();
   const range = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
-  const angle = ((value - min) / (max - min)) * range;
+  let angle = ((value - min) / (max - min)) * range;
+
+  if (angle > range) {
+    angle = range;
+  }
 
   if (!clockwise) {
     startAngle = endAngle - angle;
@@ -299,6 +302,7 @@ function RadialBar({
 
   return (
     <>
+      {/** Track */}
       <RadialArcPath
         gaugeId={gaugeId}
         angle={trackLength}
@@ -311,6 +315,7 @@ function RadialBar({
         clockwise={clockwise}
         margin={margin}
       />
+      {/** The colored bar */}
       <RadialArcPath
         gaugeId={gaugeId}
         angle={angle}
@@ -362,8 +367,13 @@ export function RadialArcPath({
   const radius = arcSize / 2 - margin;
 
   let startDeg = startAngle;
-  let startRadians = (Math.PI * (startDeg - 90)) / 180;
   let endDeg = angle + startAngle;
+
+  if (endDeg - startDeg === 360) {
+    startDeg += 0.01;
+  }
+
+  let startRadians = (Math.PI * (startDeg - 90)) / 180;
   let endRadians = (Math.PI * (endDeg - 90)) / 180;
 
   let x1 = center + radius * Math.cos(startRadians);
@@ -442,12 +452,11 @@ function RadialSparkline({ sparkline, size, theme, barWidth, margin }: RadialSpa
     return null;
   }
 
-  const height = size / 5;
+  const height = size / 8;
   const width = size / 1.5 - barWidth * 1.2 - margin * 2;
   const styles = css({
     position: 'absolute',
-    left: (size - width) / 2,
-    bottom: height,
+    marginTop: size / 2 - barWidth * 1.5 + height / 3,
   });
 
   const config: FieldConfig<GraphFieldConfig> = {
@@ -460,7 +469,7 @@ function RadialSparkline({ sparkline, size, theme, barWidth, margin }: RadialSpa
 
   return (
     <div className={styles}>
-      <Sparkline height={50} width={width} sparkline={sparkline} theme={theme} config={config} />
+      <Sparkline height={height} width={width} sparkline={sparkline} theme={theme} config={config} />
     </div>
   );
 }

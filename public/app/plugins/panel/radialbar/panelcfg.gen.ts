@@ -14,7 +14,8 @@ export interface Options extends common.SingleStatBaseOptions {
   barWidth: number; 
   gradient: 'none' | 'hue' | 'shade' | 'scheme';
   glow: 'none' | 'bar' | 'center' | 'both';
-  spotlight: boolean; 
+  spotlight?: boolean; 
+  sparkline?: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {
@@ -22,4 +23,5 @@ export const defaultOptions: Partial<Options> = {
   gradient: 'hue',
   glow: 'center',
   spotlight: true,
+  sparkline: true
 };

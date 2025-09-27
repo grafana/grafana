@@ -57,6 +57,7 @@ export function RadialBarPanel({
       replaceVariables,
       theme: config.theme2,
       data: data.series,
+      sparkline: options.sparkline,
       timeZone,
     });
   }

@@ -19,6 +19,7 @@ interface StoryProps extends RadialGaugeProps {
   value: number;
   seriesCount: number;
   sparkline: boolean;
+  size: number;
 }
 
 const meta: Meta<StoryProps> = {
@@ -40,13 +41,15 @@ const meta: Meta<StoryProps> = {
     clockwise: true,
     gradient: 'hue',
     seriesCount: 1,
+    semicircle: false,
   },
   argTypes: {
     barWidth: { control: { type: 'range', min: 5, max: 100 } },
     size: { control: { type: 'range', min: 50, max: 400 } },
-    value: { control: { type: 'range', min: 0, max: 100 } },
+    value: { control: { type: 'range', min: 0, max: 110 } },
     spotlight: { control: 'boolean' },
     sparkline: { control: 'boolean' },
+    semicircle: { control: 'boolean' },
     gradient: { control: { type: 'radio', options: ['none', 'hue', 'shade', 'scheme'] } },
     seriesCount: { control: { type: 'range', min: 1, max: 20 } },
   },
@@ -123,8 +126,7 @@ export const Examples: StoryFn = (args) => {
           colorMode={FieldColorModeId.ContinuousGrYlRd}
           gradient={GraphGradientMode.Scheme}
           value={40}
-          startAngle={240}
-          endAngle={120}
+          semicircle
           clockwise
           barWidth={args.barWidth}
         />
@@ -132,8 +134,7 @@ export const Examples: StoryFn = (args) => {
           colorMode={FieldColorModeId.ContinuousGrYlRd}
           gradient={GraphGradientMode.Scheme}
           value={100}
-          startAngle={240}
-          endAngle={120}
+          semicircle
           clockwise
           barWidth={args.barWidth}
         />
@@ -145,8 +146,7 @@ export const Examples: StoryFn = (args) => {
           gradient="hue"
           color="blue"
           clockwise
-          startAngle={240}
-          endAngle={120}
+          semicircle
           {...args}
           sparkline={true}
           spotlight
@@ -156,8 +156,7 @@ export const Examples: StoryFn = (args) => {
           gradient="hue"
           color="green"
           clockwise
-          startAngle={240}
-          endAngle={120}
+          semicircle
           {...args}
           sparkline={true}
           spotlight
@@ -167,8 +166,7 @@ export const Examples: StoryFn = (args) => {
           gradient="hue"
           color="red"
           clockwise
-          startAngle={240}
-          endAngle={120}
+          semicircle
           {...args}
           sparkline={true}
           spotlight
@@ -192,7 +190,6 @@ export const MultiSeries: StoryFn<StoryProps> = (args) => {
 
 MultiSeries.args = {
   barWidth: 10,
-  size: 300,
 };
 
 interface ExampleProps {
@@ -201,8 +198,7 @@ interface ExampleProps {
   color?: string;
   seriesName?: string;
   value?: number;
-  startAngle?: number;
-  endAngle?: number;
+  semicircle?: boolean;
   min?: number;
   max?: number;
   clockwise?: boolean;
@@ -221,11 +217,10 @@ function RadialBarExample({
   color = 'blue',
   seriesName = 'Server A',
   value = 70,
-  startAngle,
-  endAngle,
+  semicircle,
   min = 0,
   max = 100,
-  clockwise = false,
+  clockwise = true,
   size = 200,
   spotlight = false,
   glow = false,
@@ -294,8 +289,7 @@ function RadialBarExample({
       height={size}
       barWidth={barWidth}
       gradient={gradient}
-      startAngle={startAngle}
-      endAngle={endAngle}
+      semicircle={semicircle}
       clockwise={clockwise}
       spotlight={spotlight}
       glow={glow}

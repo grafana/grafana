@@ -63,5 +63,12 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
         ],
       },
     });
+
+    builder.addBooleanSwitch({
+      path: 'sparkline',
+      name: t('radialbar.config.sparkline', 'Sparkline'),
+      category,
+      defaultValue: defaultOptions.sparkline,
+    });
   })
   .setSuggestionsSupplier(new GaugeSuggestionsSupplier());
