@@ -78,8 +78,21 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
         // reduce will only emit when all observables are completed
         // scan will emit when any observable is completed
         // choosing reduce to minimize re-renders
-        acc.annotations = acc.annotations.concat(value.annotations);
-        acc.alertStates = acc.alertStates.concat(value.alertStates);
+        
+        // Limit accumulation to prevent memory issues with large datasets
+        const maxAnnotations = 1000;
+        const maxAlertStates = 100;
+        
+        const newAnnotations = acc.annotations.concat(value.annotations);
+        const newAlertStates = acc.alertStates.concat(value.alertStates);
+        
+        acc.annotations = newAnnotations.length > maxAnnotations 
+          ? newAnnotations.slice(-maxAnnotations) 
+          : newAnnotations;
+        acc.alertStates = newAlertStates.length > maxAlertStates 
+          ? newAlertStates.slice(-maxAlertStates) 
+          : newAlertStates;
+        
         return acc;
       }),
       finalize(() => {
