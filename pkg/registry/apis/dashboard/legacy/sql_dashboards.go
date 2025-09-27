@@ -165,6 +165,10 @@ func (a *dashboardSqlAccess) GetResourceStats(ctx context.Context, namespace str
 	return nil, fmt.Errorf("not implemented")
 }
 
+func (a *dashboardSqlAccess) GetResourceStatsSingleResource(ctx context.Context, res resource.NamespacedResource) (resource.ResourceStats, error) {
+	return resource.ResourceStats{}, fmt.Errorf("not implemented")
+}
+
 func (r *rowsWrapper) Close() error {
 	if r.rows == nil {
 		return nil

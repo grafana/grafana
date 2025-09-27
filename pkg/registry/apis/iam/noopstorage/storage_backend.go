@@ -27,6 +27,10 @@ func (c *StorageBackendImpl) GetResourceStats(ctx context.Context, namespace str
 	return []resource.ResourceStats{}, errNoopStorage
 }
 
+func (c *StorageBackendImpl) GetResourceStatsSingleResource(ctx context.Context, res resource.NamespacedResource) (resource.ResourceStats, error) {
+	return resource.ResourceStats{}, errNoopStorage
+}
+
 // ListHistory implements resource.StorageBackend.
 func (c *StorageBackendImpl) ListHistory(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {
 	return 0, errNoopStorage
