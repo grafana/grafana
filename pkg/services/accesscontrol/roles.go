@@ -275,6 +275,14 @@ var (
 			},
 			{
 				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsOAuth("radius"),
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  ScopeSettingsOAuth("radius"),
+			},
+			{
+				Action: ActionSettingsRead,
 				Scope:  ScopeSettingsSCIM,
 			},
 			{

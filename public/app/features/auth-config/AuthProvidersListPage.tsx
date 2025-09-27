@@ -67,6 +67,15 @@ export const AuthConfigPageUnconnected = ({
         },
       };
     }
+    if (p.provider === 'radius') {
+      return {
+        ...p,
+        settings: {
+          ...p.settings,
+          type: 'RADIUS',
+        },
+      };
+    }
     return p;
   });
 

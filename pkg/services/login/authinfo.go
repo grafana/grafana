@@ -28,6 +28,7 @@ const (
 	APIKeyAuthModule       = "apikey"
 	SAMLAuthModule         = "auth.saml"
 	LDAPAuthModule         = "ldap"
+	RADIUSAuthModule       = "radius"
 	AuthProxyAuthModule    = "authproxy"
 	JWTModule              = "jwt"
 	ExtendedJWTModule      = "extendedjwt"
@@ -43,9 +44,10 @@ const (
 	OktaAuthModule       = "oauth_okta"
 
 	// labels
-	SAMLLabel = "SAML"
-	LDAPLabel = "LDAP"
-	JWTLabel  = "JWT"
+	SAMLLabel   = "SAML"
+	LDAPLabel   = "LDAP"
+	RADIUSLabel = "RADIUS"
+	JWTLabel    = "JWT"
 	// OAuth provider labels
 	AuthProxyLabel    = "Auth Proxy"
 	AzureADLabel      = "AzureAD"
@@ -77,6 +79,8 @@ func GetAuthProviderLabel(authModule string) string {
 		return SAMLLabel
 	case LDAPAuthModule, "": // FIXME: verify this situation doesn't exist anymore
 		return LDAPLabel
+	case RADIUSAuthModule:
+		return RADIUSLabel
 	case JWTModule:
 		return JWTLabel
 	case AuthProxyAuthModule:

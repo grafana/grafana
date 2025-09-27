@@ -66,6 +66,15 @@ export function initAuthConfig() {
     configPath: 'ldap',
   };
   registerAuthProvider(ldapAuthProvider, getConfigHookLDAP);
+
+  const radiusAuthProvider: AuthProviderInfo = {
+    id: 'radius',
+    type: 'RADIUS',
+    protocol: 'RADIUS',
+    displayName: 'RADIUS',
+    configPath: 'radius',
+  };
+  registerAuthProvider(radiusAuthProvider, getConfigHookRADIUS);
 }
 
 async function getConfigHookLDAP(): Promise<AuthProviderStatus> {
@@ -76,6 +85,20 @@ async function getConfigHookLDAP(): Promise<AuthProviderStatus> {
       configured: ldapSettings['enabled'] === 'true',
       enabled: ldapSettings['enabled'] === 'true',
       hide: ldapSettings['enabled'] !== 'true',
+    };
+  }
+
+  return { configured: false, enabled: false };
+}
+
+async function getConfigHookRADIUS(): Promise<AuthProviderStatus> {
+  if (contextSrv.hasPermission(AccessControlAction.SettingsRead)) {
+    const result = await getBackendSrv().get('/api/admin/settings');
+    const radiusSettings = result!['auth.radius'] || {};
+    return {
+      configured: radiusSettings['enabled'] === 'true',
+      enabled: radiusSettings['enabled'] === 'true',
+      hide: radiusSettings['enabled'] !== 'true',
     };
   }
 

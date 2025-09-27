@@ -134,6 +134,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/radius"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -277,6 +278,7 @@ var wireBasicSet = wire.NewSet(
 	contexthandler.ProvideService,
 	ldapservice.ProvideService,
 	wire.Bind(new(ldapservice.LDAP), new(*ldapservice.LDAPImpl)),
+	radius.New,
 	jwt.ProvideService,
 	wire.Bind(new(jwt.JWTService), new(*jwt.AuthService)),
 	ngstore.ProvideDBStore,

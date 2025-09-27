@@ -300,6 +300,24 @@ export const getSectionFields = (): Section => {
         ],
       },
     ],
+    radius: [
+      {
+        name: generalSettingsLabel,
+        id: 'general',
+        fields: [
+          'radiusServer',
+          'radiusPort',
+          'radiusSecret',
+          'allowSignUp',
+          'skipOrgRoleSync',
+        ],
+      },
+      {
+        name: userMappingLabel,
+        id: 'user',
+        fields: ['classMappings', 'allowAssignGrafanaAdmin'],
+      },
+    ],
   };
 };
 
@@ -934,6 +952,69 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         { value: 'select_account', label: t('auth-config.fields.login-prompt-select-account', 'Select account') },
       ],
       defaultValue: { value: '', label: '' },
+    },
+    radiusServer: {
+      label: t('auth-config.fields.radius-server-label', 'RADIUS server'),
+      type: 'text',
+      description: t(
+        'auth-config.fields.radius-server-description',
+        'The hostname or IP address of your RADIUS server.'
+      ),
+      validation: {
+        required: true,
+        message: t('auth-config.fields.required', 'This field is required'),
+      },
+    },
+    radiusPort: {
+      label: t('auth-config.fields.radius-port-label', 'RADIUS port'),
+      type: 'number',
+      description: t(
+        'auth-config.fields.radius-port-description',
+        'The port number of your RADIUS server. Default is 1812.'
+      ),
+      validation: {
+        required: true,
+        validate: (value) => {
+          // Ensure value is a string or number
+          if (typeof value !== 'string' && typeof value !== 'number') {
+            return false;
+          }
+          const stringValue = value.toString();
+          const num = parseInt(stringValue, 10);
+          // Check if parseInt result matches original string (ensures it's an integer)
+          // and that it's within valid port range
+          return !isNaN(num) && num.toString() === stringValue && num > 0 && num <= 65535;
+        },
+        message: t('auth-config.fields.radius-port-invalid', 'Port must be a number between 1 and 65535'),
+      },
+    },
+    radiusSecret: {
+      label: t('auth-config.fields.radius-secret-label', 'RADIUS secret'),
+      type: 'secret',
+      description: t(
+        'auth-config.fields.radius-secret-description',
+        'The shared secret used to authenticate with your RADIUS server.'
+      ),
+      validation: {
+        required: true,
+        message: t('auth-config.fields.required', 'This field is required'),
+      },
+    },
+    classMappings: {
+      label: t('auth-config.fields.class-mappings-label', 'Class mappings'),
+      description: t(
+        'auth-config.fields.class-mappings-description',
+        'List of "<Class>:<OrgId>:<Role>:<IsGrafanaAdmin>" mappings. Maps RADIUS Class attributes to Grafana organization roles.'
+      ),
+      type: 'select',
+      hidden: !contextSrv.isGrafanaAdmin,
+      multi: true,
+      allowCustomValue: true,
+      options: [],
+      placeholder: t(
+        'auth-config.fields.class-mappings-placeholder',
+        'Enter mappings (admin:1:Admin:true...) and press Enter to add'
+      ),
     },
   };
 }
