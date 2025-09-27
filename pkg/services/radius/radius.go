@@ -190,31 +190,10 @@ func (s *serviceImpl) Login(query *login.LoginUserQuery) (*login.ExternalUserInf
 		return extUser, nil
 	}
 
-	// Map classes to organization roles. If multiple mappings target the same OrgId,
-	// choose the role with highest precedence (Admin > Editor > Viewer).
-	for _, class := range classes {
-		for _, mapping := range s.cfg.ClassMappings {
-			if mapping.Class != class {
-				continue
-			}
-
-			// if no role set yet for this org, set it
-			existing, ok := extUser.OrgRoles[mapping.OrgId]
-			if !ok {
-				extUser.OrgRoles[mapping.OrgId] = mapping.OrgRole
-			} else {
-				// choose the higher-precedence role
-				// use RoleType Includes semantics: existing.Includes(mapping.OrgRole) means existing >= mapping
-				if !existing.Includes(mapping.OrgRole) && mapping.OrgRole.Includes(existing) {
-					extUser.OrgRoles[mapping.OrgId] = mapping.OrgRole
-				}
-			}
-
-			if mapping.IsGrafanaAdmin != nil && *mapping.IsGrafanaAdmin {
-				isAdmin := true
-				extUser.IsGrafanaAdmin = &isAdmin
-			}
-		}
+	// Map classes to organization roles using helper to make behavior testable.
+	extUser.OrgRoles = map[int64]org.RoleType{}
+	for _, c := range classes {
+		s.applyClassMapping(extUser, c)
 	}
 
 	// Default role if no mappings found
@@ -389,6 +368,30 @@ func resolveClassMappings(input any) ([]*ClassToOrgRole, error) {
 	}
 
 	return mappings, nil
+}
+
+// applyClassMapping applies a single class value to the ExternalUserInfo's OrgRoles
+// It chooses the highest-precedence role when multiple mappings target the same OrgId.
+func (s *serviceImpl) applyClassMapping(extUser *login.ExternalUserInfo, class string) {
+	for _, mapping := range s.cfg.ClassMappings {
+		if mapping.Class != class {
+			continue
+		}
+
+		existing, ok := extUser.OrgRoles[mapping.OrgId]
+		if !ok {
+			extUser.OrgRoles[mapping.OrgId] = mapping.OrgRole
+		} else {
+			if !existing.Includes(mapping.OrgRole) && mapping.OrgRole.Includes(existing) {
+				extUser.OrgRoles[mapping.OrgId] = mapping.OrgRole
+			}
+		}
+
+		if mapping.IsGrafanaAdmin != nil && *mapping.IsGrafanaAdmin {
+			isAdmin := true
+			extUser.IsGrafanaAdmin = &isAdmin
+		}
+	}
 }
 
 // parseClassMappingStrings parses strings in format "class:orgId:role:isGrafanaAdmin"
