@@ -15,6 +15,7 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
    * Controls value alignment on the timelines
    */
   alignValue?: ui.TimelineValueAlignment;
+  annotations?: ui.VizAnnotations;
   /**
    * Merge equal consecutive values
    */

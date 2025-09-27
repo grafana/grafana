@@ -27,6 +27,7 @@ composableKinds: PanelCfg: lineage: {
 				tooltip:      common.VizTooltipOptions
 				timeCompare?: common.TimeCompareOptions
 				orientation?: common.VizOrientation
+				annotations?: common.VizAnnotations
 			} @cuetsy(kind="interface")
 
 			FieldConfig: common.GraphFieldConfig & {} @cuetsy(kind="interface")
