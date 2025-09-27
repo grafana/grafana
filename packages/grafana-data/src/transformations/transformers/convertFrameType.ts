@@ -37,16 +37,35 @@ export const convertFrameTypeTransformer: DataTransformerInfo<ConvertFrameTypeTr
   operator: (options) => (source) =>
     source.pipe(
       map((data) => {
-        return convertFrameType(options, data);
+        return convertFrameTypes(options, data);
       })
     ),
 };
 
-function convertFrameType(options: ConvertFrameTypeTransformerOptions, frames: DataFrame[]): DataFrame[] {
+/**
+ * Convert frame data topics for dataframe(s)
+ * @param options - frame type conversion options
+ * @param frames - dataframe(s) to convert
+ * @returns dataframe(s) with converted frame types
+ *
+ * @todo convertSeriesToAnnotation not working with regions
+ */
+export function convertFrameTypes(options: ConvertFrameTypeTransformerOptions, frames: DataFrame[]): DataFrame[] {
   const { targetType } = options;
-  return targetType === FrameType.Exemplar ? frames.map(convertSeriesToExemplar) : frames;
+  if (targetType === FrameType.Exemplar) {
+    return frames.map(convertSeriesToExemplar);
+  }
+  if (targetType === FrameType.Annotation) {
+    return frames.map(convertSeriesToAnnotation);
+  }
+  return frames;
 }
 
+/**
+ * Convert a series DataFrame to annotations format suitable for exemplars
+ * @param frame - series DataFrame to convert
+ * @returns DataFrame formatted as annotations/exemplars
+ */
 function convertSeriesToExemplar(frame: DataFrame): DataFrame {
   // TODO: ensure time field
   // TODO: ensure value field
@@ -61,6 +80,19 @@ function convertSeriesToExemplar(frame: DataFrame): DataFrame {
         ...frame.meta?.custom,
         resultType: 'exemplar',
       },
+    },
+  };
+}
+
+function convertSeriesToAnnotation(frame: DataFrame): DataFrame {
+  // TODO: ensure time field
+  // TODO: ensure value field
+
+  return {
+    ...frame,
+    meta: {
+      ...frame.meta,
+      dataTopic: DataTopic.Annotations,
     },
   };
 }

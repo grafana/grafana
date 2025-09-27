@@ -29,6 +29,8 @@ composableKinds: PanelCfg: {
 					ui.OptionsWithTooltip
 					ui.OptionsWithTimezones
 
+					annotations?: ui.VizAnnotations
+
 					//Show timeline values on chart
 					showValue: ui.VisibilityMode & (*"auto" | _)
 					//Controls the row height
