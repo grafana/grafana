@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState, useMemo } from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { PluginExtensionPoints, store, type ExtensionInfo } from '@grafana/data';
+import { PluginExtensionPoints, store } from '@grafana/data';
 import { getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent } from 'app/types/events';
@@ -225,8 +225,8 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   );
 };
 
-export function getComponentIdFromComponentMeta(pluginId: string, component: ExtensionInfo) {
-  return JSON.stringify({ pluginId, componentTitle: component.title });
+export function getComponentIdFromComponentMeta(pluginId: string, componentTitle: string) {
+  return JSON.stringify({ pluginId, componentTitle });
 }
 
 export function getComponentMetaFromComponentId(
