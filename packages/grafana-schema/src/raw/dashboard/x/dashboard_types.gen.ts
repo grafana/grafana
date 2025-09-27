@@ -730,6 +730,10 @@ export interface ValueMappingResult {
  */
 export interface DataTransformerConfig {
   /**
+   * Whether the transformation is collapsed or not
+   */
+  collapsed?: boolean;
+  /**
    * Disabled transformations are skipped
    */
   disabled?: boolean;
