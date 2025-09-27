@@ -544,7 +544,15 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 
 	baseUrl := s.cfg.AppSubURL + "/connections"
 
-	if hasAccess(datasources.ConfigurationPageAccess) {
+	// Create a combined evaluator that includes both datasources permissions and plugin permissions
+	connectionsAccess := ac.EvalAny(
+		datasources.ConfigurationPageAccess,
+		ac.EvalPermission("grafana-pdc-app.private-networks:read"),
+		ac.EvalPermission("grafana-pdc-app.private-networks:write"),
+		ac.EvalPermission("grafana-collector-app:admin"),
+	)
+
+	if hasAccess(connectionsAccess) {
 		// Add new connection
 		children = append(children, &navtree.NavLink{
 			Id:       "connections-add-new-connection",
