@@ -15,6 +15,12 @@ import (
 
 var ErrNotFound = errors.New("key not found")
 
+// KeyValue represents a key-value pair returned by BatchGet
+type KeyValue struct {
+	Key   string
+	Value io.ReadCloser
+}
+
 type SortOrder int
 
 const (
@@ -35,6 +41,11 @@ type KV interface {
 
 	// Get retrieves the value for a key from the store
 	Get(ctx context.Context, section string, key string) (io.ReadCloser, error)
+
+	// BatchGet retrieves multiple values for the given keys from the store.
+	// Non-existent entries will not appear in the result.
+	// The order of the keys is retained in the result.
+	BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[KeyValue, error]
 
 	// Save a new value - returns a WriteCloser to write the value to
 	Save(ctx context.Context, section string, key string) (io.WriteCloser, error)
@@ -90,6 +101,56 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string) (io.Read
 	}
 
 	return io.NopCloser(bytes.NewReader(value)), nil
+}
+
+func (k *badgerKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[KeyValue, error] {
+	if k.db.IsClosed() {
+		return func(yield func(KeyValue, error) bool) {
+			yield(KeyValue{}, fmt.Errorf("database is closed"))
+		}
+	}
+
+	if section == "" {
+		return func(yield func(KeyValue, error) bool) {
+			yield(KeyValue{}, fmt.Errorf("section is required"))
+		}
+	}
+
+	return func(yield func(KeyValue, error) bool) {
+		txn := k.db.NewTransaction(false)
+		defer txn.Discard()
+
+		for _, key := range keys {
+			keyWithSection := section + "/" + key
+
+			item, err := txn.Get([]byte(keyWithSection))
+			if err != nil {
+				if errors.Is(err, badger.ErrKeyNotFound) {
+					// Skip non-existent keys as per the requirement
+					continue
+				}
+				// For other errors, yield the error and stop
+				yield(KeyValue{}, err)
+				return
+			}
+
+			// Get the value and create a reader from it
+			value, err := item.ValueCopy(nil)
+			if err != nil {
+				yield(KeyValue{}, err)
+				return
+			}
+
+			kv := KeyValue{
+				Key:   key,
+				Value: io.NopCloser(bytes.NewReader(value)),
+			}
+
+			if !yield(kv, nil) {
+				return
+			}
+		}
+	}
 }
 
 // badgerWriteCloser implements io.WriteCloser for badgerKV
