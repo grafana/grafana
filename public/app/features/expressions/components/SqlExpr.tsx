@@ -6,6 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { SQLEditor, CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/plugin-ui';
+import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema/dist/esm/index';
 import { formatSQL } from '@grafana/sql';
 import { useStyles2, Stack, Button, Modal } from '@grafana/ui';
@@ -148,6 +149,16 @@ LIMIT
   }, [metadata?.data]);
 
   const onEditorChange = (expression: string) => {
+    if (expression !== initialQuery) {
+      reportInteraction('dashboards_expression_interaction', {
+        action: 'edit_expression',
+        expression_type: 'sql',
+        expressionRef: query.refId,
+        content: expression,
+        context: 'expression_editor',
+      });
+    }
+
     onChange({
       ...query,
       expression,
@@ -163,9 +174,16 @@ LIMIT
 
   const executeQuery = useCallback(() => {
     if (query.expression && onRunQuery) {
+      reportInteraction('dashboards_expression_interaction', {
+        action: 'execute_expression',
+        expression_type: 'sql',
+        expressionRef: query.refId,
+        context: 'expression_editor',
+      });
+
       onRunQuery();
     }
-  }, [query.expression, onRunQuery]);
+  }, [query.expression, query.refId, onRunQuery]);
 
   // Set up resize observer to handle container resizing
   useEffect(() => {
