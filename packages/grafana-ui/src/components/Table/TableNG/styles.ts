@@ -50,15 +50,16 @@ export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, 
       // add a box shadow on hover and selection for all body cells
       '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
         [getActiveCellSelector()]: { boxShadow: theme.shadows.z2 },
-        // selected cells should appear below hovered cells.
-        '&:hover': { zIndex: theme.zIndex.tooltip - 7 },
+        // TODO: Uncomment CSS 1/2, below is a workaround for Safari layout issues
+        // '&:hover': { zIndex: theme.zIndex.tooltip - 7 },
         '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 6 },
       },
 
       '.rdg-cell.rdg-cell-frozen': {
-        backgroundColor: '--rdg-row-background-color',
+        backgroundColor: 'var(--rdg-row-background-color)',
         zIndex: theme.zIndex.tooltip - 4,
-        '&:hover': { zIndex: theme.zIndex.tooltip - 2 },
+        // TODO: Uncomment CSS 2/2, below is a workaround for Safari layout issues
+        // '&:hover': { zIndex: theme.zIndex.tooltip - 2 },
         '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 3 },
       },
 
