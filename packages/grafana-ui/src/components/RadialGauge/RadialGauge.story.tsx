@@ -1,6 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { applyFieldOverrides, FieldType, toDataFrame } from '@grafana/data';
+import { applyFieldOverrides, Field, FieldType, GrafanaTheme2, toDataFrame } from '@grafana/data';
 import { FieldColorModeId, GraphGradientMode } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';
@@ -10,6 +10,7 @@ import { RadialGauge, RadialGaugeProps, RadialGradientMode } from './RadialGauge
 
 interface StoryProps extends RadialGaugeProps {
   value: number;
+  seriesCount: number;
 }
 
 const meta: Meta<StoryProps> = {
@@ -17,17 +18,20 @@ const meta: Meta<StoryProps> = {
   component: RadialGauge,
   parameters: {
     controls: {
-      exclude: ['theme', 'startAngle', 'endAngle', 'clockwise', 'gradientMode', 'frames'],
+      exclude: ['theme', 'startAngle', 'endAngle', 'clockwise', 'frames'],
     },
   },
   args: {
-    barWidth: 20,
-    size: 200,
+    barWidth: 15,
+    size: 250,
     spotlight: false,
     glow: false,
     centerGlow: false,
     sparkline: false,
     value: undefined,
+    clockwise: true,
+    gradient: 'hue',
+    seriesCount: 1,
   },
   argTypes: {
     barWidth: { control: { type: 'range', min: 5, max: 100 } },
@@ -35,148 +39,157 @@ const meta: Meta<StoryProps> = {
     value: { control: { type: 'range', min: 0, max: 100 } },
     spotlight: { control: 'boolean' },
     sparkline: { control: 'boolean' },
+    gradient: { control: { type: 'radio', options: ['none', 'hue', 'shade', 'scheme'] } },
+    seriesCount: { control: { type: 'range', min: 1, max: 20 } },
   },
 };
 
 export const Basic: StoryFn<StoryProps> = (args) => {
-  return (
-    <Stack direction={'column'} gap={3}>
-      <RadialBarExample {...args} />
-    </Stack>
-  );
-};
+  const visualizations: React.ReactNode[] = [];
+  const colors = ['blue', 'green', 'red', 'purple', 'orange', 'yellow', 'dark-red', 'dark-blue', 'dark-green'];
 
-Basic.args = {
-  value: 70,
-  size: 400,
-};
+  for (let i = 0; i < args.seriesCount; i++) {
+    visualizations.push(<RadialBarExample {...args} key={i} color={colors[i % colors.length]} seriesCount={0} />);
+  }
 
-export const Effects: StoryFn = (args) => {
   return (
-    <Stack direction={'column'} gap={3}>
-      <div>Spotlight</div>
-      <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
-        <RadialBarExample value={70} gradientMode="hue" {...args} spotlight />
-        <RadialBarExample seriesName="Clockwise" gradientMode="hue" value={70} clockwise {...args} spotlight />
-        <RadialBarExample gradientMode="hue" value={70} {...args} spotlight color="green" />
-        <RadialBarExample gradientMode="hue" value={70} {...args} spotlight color="red" />
-      </Stack>
-      <div>Spotlight + Glow</div>
-      <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
-        <RadialBarExample value={70} gradientMode="hue" {...args} spotlight glow />
-        <RadialBarExample seriesName="Clockwise" gradientMode="hue" value={70} clockwise {...args} spotlight glow />
-        <RadialBarExample gradientMode="hue" value={70} {...args} spotlight color="green" glow />
-        <RadialBarExample gradientMode="hue" value={70} {...args} spotlight color="red" glow />
-      </Stack>
-      <div>Spotlight + Glow + centerGlow</div>
-      <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
-        <RadialBarExample value={70} gradientMode="hue" {...args} spotlight glow centerGlow />
-        <RadialBarExample
-          seriesName="Clockwise"
-          gradientMode="hue"
-          value={70}
-          clockwise
-          {...args}
-          spotlight
-          glow
-          centerGlow
-        />
-        <RadialBarExample gradientMode="hue" value={70} {...args} spotlight color="green" glow centerGlow />
-        <RadialBarExample gradientMode="hue" value={70} {...args} spotlight color="red" glow centerGlow />
-      </Stack>
+    <Stack direction={'row'} gap={3} wrap="wrap">
+      {visualizations}
     </Stack>
   );
 };
 
 export const Examples: StoryFn = (args) => {
+  delete args.seriesCount;
+
   return (
     <Stack direction={'column'} gap={3} wrap="wrap">
-      <Stack direction="row" alignItems="center" gap={3}>
-        <RadialBarExample value={70} barWidth={args.barWidth} />
-        <RadialBarExample value={70} seriesName="Clockwise" clockwise {...args} />
+      <div>Bar width</div>
+      <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
+        <RadialBarExample seriesName="5" value={60} gradient="hue" color="blue" barWidth={5} />
+        <RadialBarExample seriesName="10" value={60} gradient="hue" color="green" barWidth={10} />
+        <RadialBarExample seriesName="20" value={60} gradient="hue" color="red" barWidth={20} />
+        <RadialBarExample seriesName="30" value={60} gradient="hue" color="purple" barWidth={30} />
       </Stack>
+
       <div>Gradient: Hue</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
-        <RadialBarExample value={30} gradientMode="hue" color="blue" {...args} />
-        <RadialBarExample value={50} gradientMode="hue" color="green" {...args} />
-        <RadialBarExample value={60} gradientMode="hue" color="red" {...args} />
-        <RadialBarExample value={90} gradientMode="hue" color="purple" {...args} />
+        <RadialBarExample value={30} gradient="hue" color="blue" barWidth={args.barWidth} />
+        <RadialBarExample value={50} gradient="hue" color="green" barWidth={args.barWidth} />
+        <RadialBarExample value={60} gradient="hue" color="red" barWidth={args.barWidth} />
+        <RadialBarExample value={90} gradient="hue" color="purple" barWidth={args.barWidth} />
       </Stack>
       <div>Gradient: Shade</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
-        <RadialBarExample value={30} gradientMode="shade" color="blue" {...args} />
-        <RadialBarExample value={40} gradientMode="shade" color="green" {...args} />
-        <RadialBarExample value={60} gradientMode="shade" color="red" {...args} />
-        <RadialBarExample value={70} gradientMode="shade" color="purple" {...args} />
+        <RadialBarExample value={30} gradient="shade" color="blue" barWidth={args.barWidth} />
+        <RadialBarExample value={40} gradient="shade" color="green" barWidth={args.barWidth} />
+        <RadialBarExample value={60} gradient="shade" color="red" barWidth={args.barWidth} />
+        <RadialBarExample value={70} gradient="shade" color="purple" barWidth={args.barWidth} />
+      </Stack>
+      <div>Spotlight + glow + centerGlow</div>
+      <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
+        <RadialBarExample value={30} gradient="shade" spotlight glow centerGlow color="blue" barWidth={args.barWidth} />
+        <RadialBarExample
+          value={40}
+          gradient="shade"
+          spotlight
+          glow
+          centerGlow
+          color="green"
+          barWidth={args.barWidth}
+        />
+        <RadialBarExample value={60} gradient="shade" spotlight glow centerGlow color="red" barWidth={args.barWidth} />
+        <RadialBarExample
+          value={70}
+          gradient="shade"
+          spotlight
+          glow
+          centerGlow
+          color="purple"
+          barWidth={args.barWidth}
+        />
       </Stack>
       <div>Gradient: Scheme, startAngle: 240° endAngle: 120°</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
         <RadialBarExample
           colorMode={FieldColorModeId.ContinuousGrYlRd}
-          gradientMode={GraphGradientMode.Scheme}
+          gradient={GraphGradientMode.Scheme}
           value={40}
           startAngle={240}
           endAngle={120}
           clockwise
-          {...args}
+          barWidth={args.barWidth}
         />
         <RadialBarExample
           colorMode={FieldColorModeId.ContinuousGrYlRd}
-          gradientMode={GraphGradientMode.Scheme}
+          gradient={GraphGradientMode.Scheme}
           value={100}
           startAngle={240}
           endAngle={120}
           clockwise
+          barWidth={args.barWidth}
+        />
+      </Stack>
+      <div>Sparklines</div>
+      <Stack direction={'row'} gap={3}>
+        <RadialBarExample
+          value={70}
+          gradient="hue"
+          color="blue"
+          clockwise
+          startAngle={240}
+          endAngle={120}
           {...args}
+          sparkline={true}
+          spotlight
+        />
+        <RadialBarExample
+          value={30}
+          gradient="hue"
+          color="green"
+          clockwise
+          startAngle={240}
+          endAngle={120}
+          {...args}
+          sparkline={true}
+          spotlight
+        />
+        <RadialBarExample
+          value={50}
+          gradient="hue"
+          color="red"
+          clockwise
+          startAngle={240}
+          endAngle={120}
+          {...args}
+          sparkline={true}
+          spotlight
         />
       </Stack>
     </Stack>
   );
 };
 
-export const Sparklines: StoryFn<typeof RadialGauge> = (args) => {
+Examples.parameters = {
+  controls: { include: ['barWidth'] },
+};
+
+export const MultiSeries: StoryFn<StoryProps> = (args) => {
   return (
-    <Stack direction={'row'} gap={3}>
-      <RadialBarExample
-        value={70}
-        size={300}
-        gradientMode="hue"
-        color="blue"
-        clockwise
-        startAngle={240}
-        endAngle={120}
-        {...args}
-        sparkline={true}
-      />
-      <RadialBarExample
-        value={30}
-        size={300}
-        gradientMode="hue"
-        color="green"
-        clockwise
-        startAngle={240}
-        endAngle={120}
-        {...args}
-        sparkline={true}
-      />
-      <RadialBarExample
-        value={50}
-        size={300}
-        gradientMode="hue"
-        color="red"
-        clockwise
-        startAngle={240}
-        endAngle={120}
-        {...args}
-        sparkline={true}
-      />
+    <Stack direction={'column'} gap={3}>
+      <RadialBarExample gradient="hue" color="red" {...args} />
     </Stack>
   );
 };
 
+MultiSeries.args = {
+  barWidth: 10,
+  size: 300,
+};
+
 interface ExampleProps {
   colorMode?: FieldColorModeId;
-  gradientMode?: RadialGradientMode;
+  gradient?: RadialGradientMode;
   color?: string;
   seriesName?: string;
   value?: number;
@@ -191,11 +204,12 @@ interface ExampleProps {
   centerGlow?: boolean;
   barWidth?: number;
   sparkline?: boolean;
+  seriesCount?: number;
 }
 
 function RadialBarExample({
   colorMode = FieldColorModeId.Fixed,
-  gradientMode = 'none',
+  gradient = 'none',
   color = 'blue',
   seriesName = 'Server A',
   value = 70,
@@ -210,6 +224,7 @@ function RadialBarExample({
   centerGlow = false,
   barWidth = 20,
   sparkline = false,
+  seriesCount = 0,
 }: ExampleProps) {
   const theme = useTheme2();
 
@@ -240,6 +255,7 @@ function RadialBarExample({
         state: {},
         getLinks: () => [],
       },
+      ...getExtraSeries(seriesCount, colorMode, theme),
     ],
   });
 
@@ -259,7 +275,7 @@ function RadialBarExample({
       frames={data}
       size={size}
       barWidth={barWidth}
-      gradientMode={gradientMode}
+      gradient={gradient}
       startAngle={startAngle}
       endAngle={endAngle}
       clockwise={clockwise}
@@ -269,6 +285,30 @@ function RadialBarExample({
       sparkline={sparkline}
     />
   );
+}
+
+function getExtraSeries(seriesCount: number, colorMode: FieldColorModeId, theme: GrafanaTheme2) {
+  const fields: Field[] = [];
+  const colors = ['blue', 'green', 'purple', 'orange', 'yellow'];
+
+  for (let i = 0; i < seriesCount; i++) {
+    fields.push({
+      name: `Series ${i + 1}`,
+      type: FieldType.number,
+      values: [40, 45, 20, 25, 30, 28, 27, 30, 31, 26, 50, 55, 52, 20, 25, 30, 60, 20 * (i + 1)],
+      config: {
+        min: 0,
+        max: 100,
+        unit: 'percent',
+        color: { mode: colorMode, fixedColor: theme.visualization.getColorByName(colors[i % colors.length]) },
+      },
+      // Add state and getLinks
+      state: {},
+      getLinks: () => [],
+    });
+  }
+
+  return fields;
 }
 
 export default meta;

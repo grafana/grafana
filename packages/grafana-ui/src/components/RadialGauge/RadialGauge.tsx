@@ -23,7 +23,7 @@ export interface RadialGaugeProps {
   size?: number;
   startAngle?: number;
   endAngle?: number;
-  gradientMode?: RadialGradientMode;
+  gradient?: RadialGradientMode;
   barWidth?: number;
   roundedBars?: boolean;
   clockwise?: boolean;
@@ -42,7 +42,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     size = 256,
     startAngle = 0,
     endAngle = 360,
-    gradientMode = GraphGradientMode.None,
+    gradient = 'none',
     barWidth = 10,
     roundedBars = true,
     clockwise = false,
@@ -80,7 +80,7 @@ export function RadialGauge(props: RadialGaugeProps) {
               index={barIndex}
               theme={theme}
               gaugeId={gaugeId}
-              gradientMode={gradientMode}
+              gradient={gradient}
             />
           ))}
           {spotlight && (
@@ -105,19 +105,22 @@ export function RadialGauge(props: RadialGaugeProps) {
             const value = displayValue.display.numeric;
             const min = displayValue.field.min ?? 0;
             const max = displayValue.field.max ?? 100;
-            const barColor = getColorForBar(displayValue.display, barIndex, gradientMode, gaugeId);
+            const barColor = getColorForBar(displayValue.display, barIndex, gradient, gaugeId);
+            const barSize = size - (barWidth * 2 + 8) * barIndex;
+            const center = size / 2;
 
             return (
               <RadialBar
                 margin={margin}
                 key={barIndex}
+                center={center}
                 gaugeId={gaugeId}
                 value={value}
                 min={min}
                 max={max}
                 startAngle={startAngle}
                 endAngle={endAngle}
-                size={size}
+                size={barSize}
                 color={barColor}
                 barWidth={barWidth}
                 roundedBars={roundedBars}
@@ -184,13 +187,8 @@ function calculateMargin(
   return 0;
 }
 
-function getColorForBar(
-  displayValue: DisplayValue,
-  barIndex: number,
-  gradientMode: RadialGradientMode,
-  gaugeId: string
-) {
-  if (gradientMode === 'none') {
+function getColorForBar(displayValue: DisplayValue, barIndex: number, gradient: RadialGradientMode, gaugeId: string) {
+  if (gradient === 'none') {
     return displayValue.color ?? 'gray';
   }
 
@@ -202,15 +200,15 @@ interface GradientDefProps {
   index: number;
   theme: GrafanaTheme2;
   gaugeId: string;
-  gradientMode: RadialGradientMode;
+  gradient: RadialGradientMode;
 }
 
-function GradientDef({ fieldDisplay, index, theme, gaugeId, gradientMode }: GradientDefProps) {
+function GradientDef({ fieldDisplay, index, theme, gaugeId, gradient }: GradientDefProps) {
   const colorModeId = fieldDisplay.field.color?.mode;
   const valuePercent = fieldDisplay.display.percent ?? 0;
   const colorMode = getFieldColorMode(colorModeId);
 
-  switch (gradientMode) {
+  switch (gradient) {
     case 'shade': {
       const color = fieldDisplay.display.color ?? 'gray';
       const color1 = tinycolor(color).darken(5);
@@ -273,6 +271,7 @@ function getGradientId(gaugeId: string, index: number) {
 export interface RadialBarProps {
   gaugeId: string;
   value: number;
+  center: number;
   min: number;
   max: number;
   size: number;
@@ -288,6 +287,7 @@ export interface RadialBarProps {
 }
 
 export function RadialBar({
+  center,
   gaugeId,
   value,
   min,
@@ -319,6 +319,7 @@ export function RadialBar({
       <RadialArcPath
         gaugeId={gaugeId}
         angle={trackLength}
+        center={center}
         size={size}
         startAngle={trackStart}
         color={theme.colors.action.hover}
@@ -330,6 +331,7 @@ export function RadialBar({
       <RadialArcPath
         gaugeId={gaugeId}
         angle={angle}
+        center={center}
         size={size}
         startAngle={startAngle}
         color={color}
@@ -348,6 +350,7 @@ export interface RadialArcPathProps {
   gaugeId: string;
   angle: number;
   startAngle: number;
+  center: number;
   size: number;
   color: string;
   barWidth: number;
@@ -361,6 +364,7 @@ export interface RadialArcPathProps {
 export function RadialArcPath({
   gaugeId,
   startAngle,
+  center,
   angle,
   size,
   color,
@@ -371,7 +375,6 @@ export function RadialArcPath({
   glow,
   margin,
 }: RadialArcPathProps) {
-  const center = size / 2;
   const arcSize = size - barWidth;
   const radius = arcSize / 2 - margin;
 
