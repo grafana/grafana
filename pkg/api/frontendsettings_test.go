@@ -22,7 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
@@ -95,7 +96,8 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		SettingsProvider:      setting.ProvideProvider(cfg),
 		pluginStore:           pluginStore,
 		grafanaUpdateChecker:  &updatemanager.GrafanaService{},
-		AccessControl:         accesscontrolmock.New(),
+		accesscontrolService:  &actest.FakeService{},
+		AccessControl:         acimpl.ProvideAccessControl(features),
 		PluginSettings:        pluginsSettings,
 		pluginsCDNService:     pluginsCDN,
 		pluginAssets:          pluginsAssets,

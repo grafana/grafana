@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"testing"
@@ -14,7 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -145,9 +146,10 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 		}
 
 		t.Run("should return Forbidden if user cannot access folder", func(t *testing.T) {
-			ac := acMock.New().WithPermissions([]ac.Permission{
+			permissions := []ac.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceAllScope()},
-			})
+			}
+			rc.Permissions = map[int64]map[string][]string{rc.OrgID: ac.GroupScopesByActionContext(context.Background(), permissions)}
 
 			ruleStore := fakes2.NewRuleStore(t)
 			ruleStore.Hook = func(cmd any) error {
@@ -161,7 +163,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				return nil
 			}
 
-			srv := createTestingApiSrv(t, nil, ac, eval_mocks.NewEvaluatorFactory(&eval_mocks.ConditionEvaluatorMock{}), featuremgmt.WithFeatures(), ruleStore)
+			srv := createTestingApiSrv(t, nil, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), eval_mocks.NewEvaluatorFactory(&eval_mocks.ConditionEvaluatorMock{}), featuremgmt.WithFeatures(), ruleStore)
 
 			rule := validRule()
 
@@ -179,14 +181,15 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			data1 := gen.GenerateQuery()
 			data2 := gen.GenerateQuery()
 
-			ac := acMock.New().WithPermissions([]ac.Permission{
+			permissions := []ac.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
-			})
+			}
+			rc.Permissions = map[int64]map[string][]string{rc.SignedInUser.OrgID: ac.GroupScopesByActionContext(context.Background(), permissions)}
 
 			f := randFolder()
 			ruleStore := fakes2.NewRuleStore(t)
 			ruleStore.Folders[rc.OrgID] = []*folder.Folder{f}
-			srv := createTestingApiSrv(t, nil, ac, eval_mocks.NewEvaluatorFactory(&eval_mocks.ConditionEvaluatorMock{}), featuremgmt.WithFeatures(), ruleStore)
+			srv := createTestingApiSrv(t, nil, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), eval_mocks.NewEvaluatorFactory(&eval_mocks.ConditionEvaluatorMock{}), featuremgmt.WithFeatures(), ruleStore)
 
 			rule := validRule()
 			rule.GrafanaManagedAlert.Data = ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2})
@@ -206,10 +209,11 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			data1 := gen.GenerateQuery()
 			data2 := gen.GenerateQuery()
 
-			ac := acMock.New().WithPermissions([]ac.Permission{
+			permissions := []ac.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data2.DatasourceUID)},
-			})
+			}
+			rc.Permissions = map[int64]map[string][]string{rc.SignedInUser.OrgID: ac.GroupScopesByActionContext(context.Background(), permissions)}
 
 			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
 				{UID: data1.DatasourceUID},
@@ -226,7 +230,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			ruleStore := fakes2.NewRuleStore(t)
 			ruleStore.Folders[rc.OrgID] = []*folder.Folder{f}
 
-			srv := createTestingApiSrv(t, ds, ac, evalFactory, featuremgmt.WithFeatures(), ruleStore)
+			srv := createTestingApiSrv(t, ds, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), evalFactory, featuremgmt.WithFeatures(), ruleStore)
 
 			rule := validRule()
 			rule.GrafanaManagedAlert.Data = ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2})
@@ -260,10 +264,10 @@ func TestRouteEvalQueries(t *testing.T) {
 			data1 := g.GenerateQuery()
 			data2 := g.GenerateQuery()
 
+			rc.Permissions = map[int64]map[string][]string{rc.SignedInUser.OrgID: ac.GroupScopesByActionContext(context.Background(), []ac.Permission{{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)}})}
+
 			srv := &TestingApiSrv{
-				authz: accesscontrol.NewRuleService(acMock.New().WithPermissions([]ac.Permission{
-					{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
-				})),
+				authz:  accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 				tracer: tracing.InitializeTracerForTest(),
 			}
 
@@ -281,10 +285,11 @@ func TestRouteEvalQueries(t *testing.T) {
 
 			currentTime := time.Now()
 
-			ac := acMock.New().WithPermissions([]ac.Permission{
+			permissions := []ac.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data2.DatasourceUID)},
-			})
+			}
+			rc.Permissions = map[int64]map[string][]string{rc.SignedInUser.OrgID: ac.GroupScopesByActionContext(context.Background(), permissions)}
 
 			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
 				{UID: data1.DatasourceUID},
@@ -304,7 +309,7 @@ func TestRouteEvalQueries(t *testing.T) {
 
 			ruleStore := fakes2.NewRuleStore(t)
 
-			srv := createTestingApiSrv(t, ds, ac, eval_mocks.NewEvaluatorFactory(evaluator), featuremgmt.WithFeatures(), ruleStore)
+			srv := createTestingApiSrv(t, ds, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), eval_mocks.NewEvaluatorFactory(evaluator), featuremgmt.WithFeatures(), ruleStore)
 
 			response := srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
 				Data: ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2}),
@@ -337,9 +342,10 @@ func TestRouteEvalQueries(t *testing.T) {
 
 			currentTime := time.Now()
 
-			ac := acMock.New().WithPermissions([]ac.Permission{
+			permissions := []ac.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(queries[0].DatasourceUID)},
-			})
+			}
+			rc.Permissions = map[int64]map[string][]string{rc.SignedInUser.OrgID: ac.GroupScopesByActionContext(context.Background(), permissions)}
 
 			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
 				{UID: queries[0].DatasourceUID},
@@ -366,7 +372,7 @@ func TestRouteEvalQueries(t *testing.T) {
 
 			ruleStore := fakes2.NewRuleStore(t)
 
-			srv := createTestingApiSrv(t, ds, ac, eval_mocks.NewEvaluatorFactory(evaluator), featuremgmt.WithManager(featuremgmt.FlagAlertingQueryOptimization), ruleStore)
+			srv := createTestingApiSrv(t, ds, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), eval_mocks.NewEvaluatorFactory(evaluator), featuremgmt.WithManager(featuremgmt.FlagAlertingQueryOptimization), ruleStore)
 
 			response := srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
 				Data: ApiAlertQueriesFromAlertQueries(queries),
@@ -392,14 +398,14 @@ func TestRouteEvalQueries(t *testing.T) {
 	})
 }
 
-func createTestingApiSrv(t *testing.T, ds *fakes.FakeCacheService, ac *acMock.Mock, evaluator eval.EvaluatorFactory, featureManager featuremgmt.FeatureToggles, ruleStore RuleStore) *TestingApiSrv {
-	if ac == nil {
-		ac = acMock.New()
+func createTestingApiSrv(t *testing.T, ds *fakes.FakeCacheService, acSvc ac.AccessControl, evaluator eval.EvaluatorFactory, featureManager featuremgmt.FeatureToggles, ruleStore RuleStore) *TestingApiSrv {
+	if acSvc == nil {
+		acSvc = acimpl.ProvideAccessControl(featureManager)
 	}
 
 	return &TestingApiSrv{
 		DatasourceCache: ds,
-		authz:           accesscontrol.NewRuleService(ac),
+		authz:           accesscontrol.NewRuleService(acSvc),
 		evaluator:       evaluator,
 		cfg:             config(t),
 		tracer:          tracing.InitializeTracerForTest(),

@@ -30,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -462,19 +462,21 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 	rule := createRule(t, store, nil)
 
 	t.Run("should not be able to delete folder without permissions to delete rules", func(t *testing.T) {
-		store.AccessControl = acmock.New()
+		store.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 		err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
 		require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
 	})
 
 	t.Run("should be able to delete folder with permissions to delete rules", func(t *testing.T) {
-		store.AccessControl = acmock.New().WithPermissions([]accesscontrol.Permission{
+		store.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+		u := &user.SignedInUser{OrgID: rule.OrgID}
+		u.Permissions = map[int64]map[string][]string{u.OrgID: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: dashboards.ScopeFoldersAll},
-		})
-		err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
+		})}
+		err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, u)
 		require.NoError(t, err)
 
-		c, err := store.CountInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
+		c, err := store.CountInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, u)
 		require.NoError(t, err)
 		require.Equal(t, int64(0), c)
 	})

@@ -1,6 +1,7 @@
 package navtreeimpl
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -32,6 +32,12 @@ func TestAddAppLinks(t *testing.T) {
 		{Action: pluginaccesscontrol.ActionInstall, Scope: "*"},
 		{Action: datasources.ActionCreate, Scope: "*"},
 		{Action: datasources.ActionRead, Scope: "*"},
+	}
+
+	// Use real access control evaluator and pre-populate user's org-scoped permissions
+	reqCtx.SignedInUser.OrgID = 1
+	reqCtx.SignedInUser.Permissions = map[int64]map[string][]string{
+		1: ac.GroupScopesByActionContext(context.Background(), permissions),
 	}
 
 	testApp1 := pluginstore.Plugin{
@@ -112,7 +118,7 @@ func TestAddAppLinks(t *testing.T) {
 	service := ServiceImpl{
 		log:            log.New("navtree"),
 		cfg:            setting.NewCfg(),
-		accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+		accessControl:  acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		pluginSettings: &pluginSettings,
 		features:       featuremgmt.WithFeatures(),
 		pluginStore: &pluginstore.FakePluginStore{
