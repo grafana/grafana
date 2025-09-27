@@ -845,6 +845,7 @@ func NewVariableModel() *VariableModel {
 // `textbox`: Display a free text input field with an optional default value.
 // `custom`: Define the variable options manually using a comma-separated list.
 // `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
+// `switch`: Boolean variables rendered as a switch
 type VariableType string
 
 const (
@@ -858,6 +859,7 @@ const (
 	VariableTypeCustom     VariableType = "custom"
 	VariableTypeSystem     VariableType = "system"
 	VariableTypeSnapshot   VariableType = "snapshot"
+	VariableTypeSwitch     VariableType = "switch"
 )
 
 // Determine if the variable shows on dashboard

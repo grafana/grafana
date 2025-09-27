@@ -364,8 +364,9 @@ lineage: schemas: [{
 		// `textbox`: Display a free text input field with an optional default value.
 		// `custom`: Define the variable options manually using a comma-separated list.
 		// `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
+		// `switch`: Boolean variables rendered as a switch
 		#VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" |
-			"system" | "snapshot" @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
+			"system" | "snapshot" | "switch" @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
 
 		// Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
 		// Continuous color interpolates a color using the percentage of a value relative to min and max.
