@@ -10,9 +10,9 @@ import { FieldMatcherUIRegistryItem } from './types';
 
 export const fieldMatchersUI = new Registry<FieldMatcherUIRegistryItem<any>>(() => [
   getFieldNameMatcherItem(),
+  getFieldNamesMatcherItem(),
   getFieldNameByRegexMatcherItem(),
   getFieldTypeMatcherItem(),
   getFieldsByFrameRefIdItem(),
-  getFieldNamesMatcherItem(),
   getFieldValueMatcherItem(),
 ]);

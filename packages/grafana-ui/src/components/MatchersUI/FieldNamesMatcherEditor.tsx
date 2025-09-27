@@ -48,8 +48,7 @@ export const getFieldNamesMatcherItem: () => FieldMatcherUIRegistryItem<ByNamesM
   id: FieldMatcherID.byNames,
   component: FieldNamesMatcherEditor,
   matcher: fieldMatchers.get(FieldMatcherID.byNames),
-  name: t('grafana-ui.matchers-ui.name-fields-with-name', 'Fields with name'),
-  description: t('grafana-ui.matchers-ui.description-fields-with-name', 'Set properties for a specific field'),
+  name: t('grafana-ui.matchers-ui.name-fields-with-names', 'Fields with names'),
+  description: t('grafana-ui.matchers-ui.description-fields-with-names', 'Set properties for multiple specific fields'),
   optionsToLabel: (options) => (options.names ?? []).join(', '),
-  excludeFromPicker: true,
 });
