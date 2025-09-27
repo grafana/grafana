@@ -1,13 +1,17 @@
-import { FormEvent } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
+import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
-import { CustomVariable, SceneVariable } from '@grafana/scenes';
-import { TextArea } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { CustomVariable, SceneVariable, VariableValueOption } from '@grafana/scenes';
+import { Box, Button, Modal, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { CustomVariableForm } from '../components/CustomVariableForm';
+import { VariableStaticOptionsForm } from '../components/VariableStaticOptionsForm';
+import { VariableValuesPreview } from '../components/VariableValuesPreview';
+import { hasVariableOptions } from '../utils';
 
 interface CustomVariableEditorProps {
   variable: CustomVariable;
@@ -59,9 +63,121 @@ export function getCustomVariableOptions(variable: SceneVariable): OptionsPaneIt
     new OptionsPaneItemDescriptor({
       title: t('dashboard.edit-pane.variable.custom-options.values', 'Values separated by comma'),
       id: 'custom-variable-values',
-      render: ({ props }) => <ValuesTextField id={props.id} variable={variable} />,
+      render: ({ props }) => <ModalEditor id={props.id} variable={variable} />,
     }),
   ];
+}
+
+export function ModalEditor({ variable, id }: { variable: CustomVariable; id?: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <Box display="flex" direction="column" paddingBottom={1}>
+        <Button
+          tooltip={t(
+            'dashboard.edit-pane.variable.open-editor-tooltip',
+            'For more variable options open variable editor'
+          )}
+          onClick={() => setIsOpen(true)}
+          size="sm"
+          fullWidth
+          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.optionsOpenButton}
+        >
+          <Trans i18nKey="dashboard.edit-pane.variable.open-editor">Open variable editor</Trans>
+        </Button>
+      </Box>
+      <Modal
+        title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom Variable')}
+        isOpen={isOpen}
+        onDismiss={() => setIsOpen(false)}
+      >
+        <Editor variable={variable} id={id} />
+        <Modal.ButtonRow>
+          <Button
+            variant="secondary"
+            fill="outline"
+            onClick={() => setIsOpen(false)}
+            data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.closeButton}
+          >
+            <Trans i18nKey="dashboard.edit-pane.variable.custom-options.close">Close</Trans>
+          </Button>
+        </Modal.ButtonRow>
+      </Modal>
+    </>
+  );
+}
+
+function Editor({ variable, id }: { variable: CustomVariable; id?: string }) {
+  // Workaround to toggle a component refresh when values change so that the preview is updated
+  variable.useState();
+
+  const [editorType, setEditorType] = useState<'builder' | 'static'>('builder');
+
+  const editorTypeOptions: Array<SelectableValue<'builder' | 'static'>> = useMemo(
+    () => [
+      { label: t('dashboard.edit-pane.variable.custom-options.editor-type.builder', 'Builder'), value: 'builder' },
+      { label: t('dashboard.edit-pane.variable.custom-options.editor-type.static', 'Static'), value: 'static' },
+    ],
+    []
+  );
+
+  const isHasVariableOptions = hasVariableOptions(variable);
+
+  return (
+    <Stack direction="column" gap={2}>
+      <RadioButtonGroup
+        value={editorType}
+        options={editorTypeOptions}
+        fullWidth
+        onChange={(value) => setEditorType(value)}
+      />
+      {editorType === 'builder' ? (
+        <ValuesBuilder variable={variable} />
+      ) : (
+        <ValuesTextField variable={variable} id={id} />
+      )}
+      {isHasVariableOptions && <VariableValuesPreview options={variable.getOptionsForSelect(false)} />}
+    </Stack>
+  );
+}
+
+function ValuesBuilder({ variable }: { variable: CustomVariable }) {
+  const { query } = variable.useState();
+  const match = useMemo(() => query.match(/(?:\\,|[^,])+/g) ?? [], [query]);
+  const options = useMemo<VariableValueOption[]>(
+    () =>
+      match.map((text) => {
+        text = text.replace(/\\,/g, ',');
+        const textMatch = /^\s*(.+)\s:\s(.+)$/g.exec(text) ?? [];
+
+        if (textMatch.length === 3) {
+          const [, label, value] = textMatch;
+          return { label: label.trim(), value: value.trim() };
+        }
+
+        text = text.trim();
+        return { label: '', value: text };
+      }),
+    [match]
+  );
+
+  const handleOptionsChange = async (options: VariableValueOption[]) => {
+    variable.setState({
+      query: options
+        .map((option) => {
+          if (!option.label || option.label === option.value) {
+            return String(option.value).replaceAll(',', '\\,');
+          }
+
+          return `${option.label.replaceAll(',', '\\,')} : ${String(option.value).replaceAll(',', '\\,')}`;
+        })
+        .join(', '),
+    });
+    await lastValueFrom(variable.validateAndUpdate!());
+  };
+
+  return <VariableStaticOptionsForm options={options} onChange={handleOptionsChange} />;
 }
 
 function ValuesTextField({ variable, id }: { variable: CustomVariable; id?: string }) {
