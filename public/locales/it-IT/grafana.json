@@ -2129,8 +2129,8 @@
         "suffix": "Aggiorna la pagina e riprova.",
         "title": "Impossibile aggiungere o aggiornare i criteri di notifica"
       },
-      "n-more-policies_one": "{{count}} criterio aggiuntivo",
-      "n-more-policies_other": "{{count}} criteri aggiuntivi"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Nuova politica per i bambini",
@@ -11971,10 +11971,10 @@
       "restore-button": "Ripristina",
       "restore-loading": "Ripristino in corso...",
       "title": "Ripristina dashboard",
-      "folder-picker-text_one": "Scegli una cartella in cui verrà ripristinato il dashboard.",
-      "folder-picker-text_other": "Scegli una cartella in cui verranno ripristinati i dashboard.",
-      "text_one": "Questa azione ripristinerà {{numberOfDashboards}} dashboard.",
-      "text_other": "Questa azione ripristinerà {{numberOfDashboards}} dashboard."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {
