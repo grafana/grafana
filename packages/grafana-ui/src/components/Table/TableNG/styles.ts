@@ -237,5 +237,16 @@ export const getTooltipStyles = (theme: GrafanaTheme2, textAlign: TextAlign) => 
   }),
 });
 
-export const getActiveCellSelector = (isNested?: boolean) =>
-  isNested ? '.rdg-cell:hover &, [aria-selected=true] &' : '&:hover, &[aria-selected=true]';
+export const getActiveCellSelector = (isNested?: boolean) => {
+  // Safari-specific: Disable hover styles to prevent layout overflow bugs
+  // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+  const isSafari = typeof navigator !== 'undefined' && /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  if (isSafari) {
+    // For Safari, only use selection (no hover) to prevent layout issues
+    return isNested ? '[aria-selected=true] &' : '&[aria-selected=true]';
+  }
+
+  // For other browsers, use normal hover + selection
+  return isNested ? '.rdg-cell:hover &, [aria-selected=true] &' : '&:hover, &[aria-selected=true]';
+};
