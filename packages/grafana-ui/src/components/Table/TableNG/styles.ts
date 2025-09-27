@@ -50,15 +50,16 @@ export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, 
       // add a box shadow on hover and selection for all body cells
       '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
         [getActiveCellSelector()]: { boxShadow: theme.shadows.z2 },
-        // selected cells should appear below hovered cells.
-        '&:hover': { zIndex: theme.zIndex.tooltip - 7 },
+        // TODO: Uncomment CSS 1/2, below is a workaround for Safari layout issues
+        // '&:hover': { zIndex: theme.zIndex.tooltip - 7 },
         '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 6 },
       },
 
       '.rdg-cell.rdg-cell-frozen': {
-        backgroundColor: '--rdg-row-background-color',
+        backgroundColor: 'var(--rdg-row-background-color)',
         zIndex: theme.zIndex.tooltip - 4,
-        '&:hover': { zIndex: theme.zIndex.tooltip - 2 },
+        // TODO: Uncomment CSS 2/2, below is a workaround for Safari layout issues
+        // '&:hover': { zIndex: theme.zIndex.tooltip - 2 },
         '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 3 },
       },
 
@@ -137,24 +138,28 @@ export const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Proper
     '&:last-child': { borderInlineEnd: 'none' },
   });
 
-export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, shouldOverflow, maxHeight }) =>
-  css({
+export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, shouldOverflow, maxHeight }) => {
+  const isSafari = typeof navigator !== 'undefined' && /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  const safeShouldOverflow = shouldOverflow && !isSafari;
+
+  return css({
     display: 'flex',
     alignItems: 'center',
     textAlign,
     justifyContent: Boolean(maxHeight) ? 'flex-start' : getJustifyContent(textAlign),
     ...(maxHeight && { overflowY: 'hidden' }),
-    ...(shouldOverflow && { minHeight: '100%' }),
+    ...(safeShouldOverflow && { minHeight: '100%' }),
 
     [getActiveCellSelector()]: {
       '.table-cell-actions': { display: 'flex' },
-      ...(shouldOverflow && {
+      ...(safeShouldOverflow && {
         zIndex: theme.zIndex.tooltip - 2,
         height: 'fit-content',
         minWidth: 'fit-content',
       }),
     },
   });
+};
 
 export const getMaxHeightCellStyles: TableCellStyles = (_theme, { textAlign, maxHeight }) =>
   css({
@@ -232,5 +237,16 @@ export const getTooltipStyles = (theme: GrafanaTheme2, textAlign: TextAlign) => 
   }),
 });
 
-export const getActiveCellSelector = (isNested?: boolean) =>
-  isNested ? '.rdg-cell:hover &, [aria-selected=true] &' : '&:hover, &[aria-selected=true]';
+export const getActiveCellSelector = (isNested?: boolean) => {
+  // Safari-specific: Disable hover styles to prevent layout overflow bugs
+  // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+  const isSafari = typeof navigator !== 'undefined' && /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  if (isSafari) {
+    // For Safari, only use selection (no hover) to prevent layout issues
+    return isNested ? '[aria-selected=true] &' : '&[aria-selected=true]';
+  }
+
+  // For other browsers, use normal hover + selection
+  return isNested ? '.rdg-cell:hover &, [aria-selected=true] &' : '&:hover, &[aria-selected=true]';
+};

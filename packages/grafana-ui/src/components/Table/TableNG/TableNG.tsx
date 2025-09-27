@@ -108,7 +108,8 @@ export function TableNG(props: TableNGProps) {
     disableSanitizeHtml,
     enablePagination = false,
     enableSharedCrosshair = false,
-    enableVirtualization,
+    // TODO: Uncomment 1/3
+    // enableVirtualization,
     frozenColumns = 0,
     getActions = () => [],
     height,
@@ -287,7 +288,10 @@ export function TableNG(props: TableNGProps) {
   const commonDataGridProps = useMemo(
     () =>
       ({
-        enableVirtualization: enableVirtualization !== false && rowHeight !== 'auto',
+        // NOTE: Disable virtualization for tables with footers to prevent boundary calculation issues in Safari
+        enableVirtualization: false,
+        // TODO: Uncomment 2/3, above isn't a real fix, just trying to narrow down root cause.
+        // enableVirtualization: enableVirtualization !== false && rowHeight !== 'auto',
         defaultColumnOptions: {
           minWidth: 50,
           resizable: true,
@@ -312,7 +316,8 @@ export function TableNG(props: TableNGProps) {
         headerRowHeight: noHeader ? 0 : TABLE.HEADER_ROW_HEIGHT,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
     [
-      enableVirtualization,
+      // TODO: Uncomment 3/3
+      // enableVirtualization,
       hasFooter,
       resizeHandler,
       sortColumns,

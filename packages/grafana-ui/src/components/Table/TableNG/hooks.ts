@@ -563,26 +563,25 @@ export const useReducerEntries = (
       return [];
     }
 
-    // Create a new state object that matches the original behavior exactly
-    const newState: FooterFieldState = {
+    // Create a local state object without mutating the field
+    const localState: FooterFieldState = {
       lastProcessedRowCount: 0,
       ...(field.state || {}), // Preserve any existing state properties
     };
 
-    // Assign back to field
-    field.state = newState;
+    // DO NOT assign back to field to avoid persistent mutations
 
     const currentRowCount = rows.length;
-    const lastRowCount = newState.lastProcessedRowCount;
+    const lastRowCount = localState.lastProcessedRowCount;
 
     // Check if we need to invalidate the cache
     if (lastRowCount !== currentRowCount) {
       // Cache should be invalidated as row count has changed
-      if (newState.calcs) {
-        delete newState.calcs;
+      if (localState.calcs) {
+        delete localState.calcs;
       }
       // Update the row count tracker
-      newState.lastProcessedRowCount = currentRowCount;
+      localState.lastProcessedRowCount = currentRowCount;
     }
 
     // Calculate all specified reducers
