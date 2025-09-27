@@ -203,6 +203,50 @@ func TestValidateUpdate(t *testing.T) {
 			expectedErr: "k6 project may not be moved",
 		},
 		{
+			name: "allow to move to general folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
+			},
+		},
+		{
+			name: "allow to move to general folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: folder.GeneralFolderUID,
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
+			},
+		},
+		{
 			name: "no error when moving to max depth",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{

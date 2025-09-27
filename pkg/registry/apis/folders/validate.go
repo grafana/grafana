@@ -99,6 +99,11 @@ func validateOnUpdate(ctx context.Context,
 		return fmt.Errorf("k6 project may not be moved")
 	}
 
+	// moving to the root folder
+	if newParent == "" || newParent == folder.GeneralFolderUID {
+		return nil
+	}
+
 	parentObj, err := getter.Get(ctx, newParent, &metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("move target not found %w", err)
