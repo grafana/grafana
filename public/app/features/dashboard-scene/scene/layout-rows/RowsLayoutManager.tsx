@@ -9,17 +9,24 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Modal, Button } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
+import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getDashboardSceneFor } from '../../utils/utils';
+import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
+import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
+import { layoutRegistry } from '../layouts-shared/layoutRegistry';
 import { getRowFromClipboard } from '../layouts-shared/paste';
 import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { isLayoutParent } from '../types/LayoutParent';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { RowItem } from './RowItem';
@@ -27,6 +34,67 @@ import { RowLayoutManagerRenderer } from './RowsLayoutManagerRenderer';
 
 interface RowsLayoutManagerState extends SceneObjectState {
   rows: RowItem[];
+}
+
+enum GridLayoutType {
+  AutoGridLayout = 'AutoGridLayout',
+  GridLayout = 'GridLayout',
+}
+
+function mapIdToGridLayoutType(id?: string): GridLayoutType | undefined {
+  switch (id) {
+    case GridLayoutType.AutoGridLayout:
+      return GridLayoutType.AutoGridLayout;
+    case GridLayoutType.GridLayout:
+      return GridLayoutType.GridLayout;
+    default:
+      return undefined;
+  }
+}
+
+function ConvertMixedGridsModal({
+  availableIds,
+  onSelect,
+  onDismiss,
+}: {
+  availableIds: Set<string>;
+  onSelect: (id: string) => void;
+  onDismiss: () => void;
+}) {
+  const options = layoutRegistry.list(Array.from(availableIds));
+
+  return (
+    <Modal
+      isOpen={true}
+      title={t('dashboard.rows-layout.ungroup-convert-title', 'Convert mixed grids?')}
+      onDismiss={onDismiss}
+    >
+      <p>
+        {t(
+          'dashboard.rows-layout.ungroup-convert-text',
+          'All grids must be converted to the same type and positions will be lost.'
+        )}
+      </p>
+      <Modal.ButtonRow>
+        <Button variant="secondary" fill="outline" onClick={onDismiss}>
+          {t('dashboard.rows-layout.cancel', 'Cancel')}
+        </Button>
+        {options.map((opt) => (
+          <Button
+            icon={opt.icon}
+            key={opt.id}
+            variant="primary"
+            onClick={() => {
+              onSelect(opt.id);
+              onDismiss();
+            }}
+          >
+            {t('dashboard.rows-layout.convert-to', 'Convert to {{name}}', { name: opt.name })}
+          </Button>
+        ))}
+      </Modal.ButtonRow>
+    </Modal>
+  );
 }
 
 export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> implements DashboardLayoutManager {
@@ -128,25 +196,154 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return outlineChildren;
   }
 
-  public removeRow(row: RowItem) {
+  public merge(other: DashboardLayoutManager) {
+    throw new Error('Not implemented');
+  }
+
+  public convertAllRowsLayouts(gridLayoutType: GridLayoutType) {
+    for (const row of this.state.rows) {
+      switch (gridLayoutType) {
+        case GridLayoutType.AutoGridLayout:
+          if (!(row.getLayout() instanceof AutoGridLayoutManager)) {
+            row.switchLayout(AutoGridLayoutManager.createFromLayout(row.getLayout()));
+          }
+          break;
+        case GridLayoutType.GridLayout:
+          if (!(row.getLayout() instanceof DefaultGridLayoutManager)) {
+            row.switchLayout(DefaultGridLayoutManager.createFromLayout(row.getLayout()));
+          }
+          break;
+      }
+    }
+  }
+
+  public ungroupRows() {
+    const hasNonGridLayout = this.state.rows.some((row) => !row.getLayout().descriptor.isGridLayout);
+    const gridTypes = new Set(findAllGridTypes(this));
+
+    if (hasNonGridLayout) {
+      appEvents.publish(
+        new ShowConfirmModalEvent({
+          title: t('dashboard.rows-layout.ungroup-nested-title', 'Ungroup nested groups?'),
+          text: t('dashboard.rows-layout.ungroup-nested-text', 'This will ungroup all nested groups.'),
+          yesText: t('dashboard.rows-layout.continue', 'Continue'),
+          noText: t('dashboard.rows-layout.cancel', 'Cancel'),
+          onConfirm: () => {
+            if (gridTypes.size > 1) {
+              requestAnimationFrame(() => {
+                this._confirmConvertMixedGrids(gridTypes);
+              });
+            } else {
+              this.wrapUngroupRowsInEdit(mapIdToGridLayoutType(gridTypes.values().next().value)!);
+            }
+          },
+        })
+      );
+      return;
+    }
+
+    if (gridTypes.size > 1) {
+      this._confirmConvertMixedGrids(gridTypes);
+      return;
+    } else {
+      this.wrapUngroupRowsInEdit(mapIdToGridLayoutType(gridTypes.values().next().value)!);
+    }
+  }
+
+  private _confirmConvertMixedGrids(availableIds: Set<string>) {
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: ConvertMixedGridsModal,
+        props: {
+          availableIds,
+          onSelect: (id: string) => {
+            const selected = mapIdToGridLayoutType(id);
+            if (selected) {
+              this.wrapUngroupRowsInEdit(selected);
+            }
+          },
+        },
+      })
+    );
+  }
+
+  private wrapUngroupRowsInEdit(gridLayoutType: GridLayoutType) {
+    const parent = this.parent;
+    if (!parent || !isLayoutParent(parent)) {
+      throw new Error('Ungroup rows failed: parent is not a layout container');
+    }
+
+    const previousLayout = this.clone({});
+    const scene = getDashboardSceneFor(this);
+
+    dashboardEditActions.edit({
+      description: t('dashboard.rows-layout.edit.ungroup-rows', 'Ungroup rows'),
+      source: scene,
+      perform: () => {
+        this._ungroupRows(gridLayoutType);
+      },
+      undo: () => {
+        parent.switchLayout(previousLayout);
+      },
+    });
+  }
+
+  private _ungroupRows(gridLayoutType: GridLayoutType) {
+    const hasNonGridLayout = this.state.rows.some((row) => !row.getLayout().descriptor.isGridLayout);
+
+    if (hasNonGridLayout) {
+      for (const row of this.state.rows) {
+        const layout = row.getLayout();
+        if (!layout.descriptor.isGridLayout) {
+          if (layout instanceof RowsLayoutManager) {
+            layout._ungroupRows(gridLayoutType);
+          } else {
+            throw new Error('Not implemented');
+          }
+        }
+      }
+    }
+
+    this.convertAllRowsLayouts(gridLayoutType);
+
+    const firstRow = this.state.rows[0];
+    const firstRowLayout = firstRow.getLayout();
+    const otherRows = this.state.rows.slice(1);
+
+    for (const row of otherRows) {
+      firstRowLayout.merge(row.getLayout());
+    }
+
+    this.setState({ rows: [firstRow] });
+    this.removeRow(firstRow, true);
+  }
+
+  public removeRow(row: RowItem, skipUndo?: boolean) {
     // When removing last row replace ourselves with the inner row layout
     if (this.shouldUngroup()) {
-      ungroupLayout(this, row.state.layout);
+      ungroupLayout(this, row.state.layout, skipUndo);
       return;
     }
 
     const indexOfRowToRemove = this.state.rows.findIndex((r) => r === row);
 
-    dashboardEditActions.removeElement({
-      removedObject: row,
-      source: this,
-      perform: () => this.setState({ rows: this.state.rows.filter((r) => r !== row) }),
-      undo: () => {
-        const rows = [...this.state.rows];
-        rows.splice(indexOfRowToRemove, 0, row);
-        this.setState({ rows });
-      },
-    });
+    const perform = () => this.setState({ rows: this.state.rows.filter((r) => r !== row) });
+    const undo = () => {
+      const rows = [...this.state.rows];
+      rows.splice(indexOfRowToRemove, 0, row);
+      this.setState({ rows });
+    };
+
+    if (skipUndo) {
+      perform();
+    } else {
+      dashboardEditActions.removeElement({
+        removedObject: row,
+        source: this,
+        perform,
+        undo,
+      });
+    }
   }
 
   public moveRow(_rowKey: string, fromIndex: number, toIndex: number) {

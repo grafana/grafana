@@ -15,7 +15,7 @@ export interface LayoutParent extends SceneObject {
    * Switches the inner layout manager
    * @param newLayout
    */
-  switchLayout(newLayout: DashboardLayoutManager): void;
+  switchLayout(newLayout: DashboardLayoutManager, skipUndo?: boolean): void;
 }
 
 export function isLayoutParent(obj: SceneObject): obj is LayoutParent {

@@ -69,11 +69,11 @@ export function generateUniqueTitle(title: string | undefined, existingTitles: S
   return baseTitle;
 }
 
-export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: DashboardLayoutManager) {
+export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: DashboardLayoutManager, skipUndo?: boolean) {
   const layoutParent = layout.parent!;
   if (isLayoutParent(layoutParent)) {
     innerLayout.clearParent();
-    layoutParent.switchLayout(innerLayout);
+    layoutParent.switchLayout(innerLayout, skipUndo);
   }
 }
 
