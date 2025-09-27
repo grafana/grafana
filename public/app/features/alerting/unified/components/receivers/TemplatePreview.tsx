@@ -10,7 +10,7 @@ import { Alert, Box, Button, CodeEditor, useStyles2 } from '@grafana/ui';
 import { TemplatePreviewErrors, TemplatePreviewResponse, TemplatePreviewResult } from '../../api/templateApi';
 import { AIFeedbackButtonComponent } from '../../enterprise-components/AI/addAIFeedbackButton';
 import { stringifyErrorLike } from '../../utils/misc';
-import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
+import { EditorColumnHeader } from '../EditorColumnHeader';
 
 import { usePreviewTemplate } from './usePreviewTemplate';
 
