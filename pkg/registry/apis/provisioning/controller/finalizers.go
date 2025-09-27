@@ -3,6 +3,8 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -32,8 +34,18 @@ func (f *finalizer) process(ctx context.Context,
 	finalizers []string,
 ) error {
 	logger := logging.FromContext(ctx)
+	logger.Info("process finalizers", "finalizers", finalizers)
 
-	for _, finalizer := range finalizers {
+	orderedFinalizers := [3]string{
+		repository.CleanFinalizer,
+		repository.ReleaseOrphanResourcesFinalizer,
+		repository.RemoveOrphanResourcesFinalizer}
+
+	for _, finalizer := range orderedFinalizers {
+		if !slices.Contains(finalizers, finalizer) {
+			continue
+		}
+		logger.Info("running finalizer", "finalizer", finalizer)
 		var err error
 		var count int
 		start := time.Now()
@@ -42,6 +54,7 @@ func (f *finalizer) process(ctx context.Context,
 		switch finalizer {
 		case repository.CleanFinalizer:
 			// NOTE: the controller loop will never get run unless a finalizer is set
+			logger.Info("running cleanup finalizer")
 			hooks, ok := repo.(repository.Hooks)
 			if ok {
 				if err = hooks.OnDelete(ctx); err != nil {
@@ -51,28 +64,16 @@ func (f *finalizer) process(ctx context.Context,
 			}
 
 		case repository.ReleaseOrphanResourcesFinalizer:
-			count, err = f.processExistingItems(ctx, repo.Config(),
-				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
-					patchAnnotations, err := getPatchedAnnotations(item)
-					if err != nil {
-						return err
-					}
-
-					_, err = client.Patch(
-						ctx, item.Name, types.JSONPatchType, patchAnnotations, v1.PatchOptions{},
-					)
-					return err
-				})
+			logger.Info("releasing orphan resources")
+			count, err = f.processExistingItems(ctx, repo.Config(), f.releaseResources(ctx, logger))
 			if err != nil {
 				outcome = metricutils.ErrorOutcome
 				logger.Warn("Error processing release orphan resources finalizer", "err", err)
 			}
 
 		case repository.RemoveOrphanResourcesFinalizer:
-			count, err = f.processExistingItems(ctx, repo.Config(),
-				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
-					return client.Delete(ctx, item.Name, v1.DeleteOptions{})
-				})
+			logger.Info("removing orphan resources")
+			count, err = f.processExistingItems(ctx, repo.Config(), f.removeResources(ctx, logger))
 			if err != nil {
 				outcome = metricutils.ErrorOutcome
 				logger.Warn("Error processing remove orphan resources finalizer", "err", err)
@@ -126,7 +127,7 @@ func (f *finalizer) processExistingItems(
 
 		err = cb(res, &item)
 		if err != nil {
-			logger.Warn("error processing item", "name", item.Name, "error", err)
+			logger.Error("error processing item", "name", item.Name, "error", err)
 			errors++
 		} else {
 			count++
@@ -134,6 +135,44 @@ func (f *finalizer) processExistingItems(
 	}
 	logger.Info("processed orphan items", "items", count, "errors", errors)
 	return count, nil
+}
+
+func (f *finalizer) releaseResources(
+	ctx context.Context, logger logging.Logger,
+) func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
+	return func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
+		logger.Info("release resource",
+			"name", item.Name,
+			"group", item.Group,
+			"resource", item.Resource,
+		)
+
+		patchAnnotations, err := getPatchedAnnotations(item)
+		if err != nil {
+			return fmt.Errorf("get patched annotations: %w", err)
+		}
+
+		_, err = client.Patch(
+			ctx, item.Name, types.JSONPatchType, patchAnnotations, v1.PatchOptions{},
+		)
+		if err != nil {
+			return fmt.Errorf("patch resource to release ownership: %w", err)
+		}
+		return nil
+	}
+}
+
+func (f *finalizer) removeResources(
+	ctx context.Context, logger logging.Logger,
+) func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
+	return func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
+		logger.Info("remove resource",
+			"name", item.Name,
+			"group", item.Group,
+			"resource", item.Resource,
+		)
+		return client.Delete(ctx, item.Name, v1.DeleteOptions{})
+	}
 }
 
 type jsonPatchOperation struct {

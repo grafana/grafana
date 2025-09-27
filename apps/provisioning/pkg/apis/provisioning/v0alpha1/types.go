@@ -310,6 +310,9 @@ type RepositoryStatus struct {
 
 	// Webhook Information (if applicable)
 	Webhook *WebhookStatus `json:"webhook"`
+
+	// Error information during repository deletion (if any)
+	DeleteError string `json:"deleteError,omitempty"`
 }
 
 // HealthFailureType represents different types of repository failures

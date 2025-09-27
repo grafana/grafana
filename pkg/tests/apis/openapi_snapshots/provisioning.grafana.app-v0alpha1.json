@@ -4218,6 +4218,10 @@
           "webhook"
         ],
         "properties": {
+          "deleteError": {
+            "description": "Error information during repository deletion (if any)",
+            "type": "string"
+          },
           "health": {
             "description": "This will get updated with the current health status (and updated periodically)",
             "default": {},

@@ -8,3 +8,9 @@ const ReleaseOrphanResourcesFinalizer = "release-orphan-resources"
 
 // CleanFinalizer calls the "OnDelete" function for resource
 const CleanFinalizer = "cleanup"
+
+var SupportedFinalizers = []string{
+	RemoveOrphanResourcesFinalizer,
+	ReleaseOrphanResourcesFinalizer,
+	CleanFinalizer,
+}

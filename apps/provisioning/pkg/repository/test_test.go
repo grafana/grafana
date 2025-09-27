@@ -257,6 +257,28 @@ func TestValidateRepository(t *testing.T) {
 				require.Contains(t, errors.ToAggregate().Error(), "cannot have both remove and release orphan resources finalizers")
 			},
 		},
+		{
+			name: "invalid finalizer in the list",
+			repository: func() *MockRepository {
+				m := NewMockRepository(t)
+				m.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer, "invalid-finalizer", RemoveOrphanResourcesFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:     "Test Repo",
+						Type:      provisioning.GitHubRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					},
+				})
+				m.On("Validate").Return(field.ErrorList{})
+				return m
+			}(),
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errors field.ErrorList) {
+				require.Contains(t, errors.ToAggregate().Error(), "unknown finalizer: invalid-finalizer")
+			},
+		},
 	}
 
 	for _, tt := range tests {
