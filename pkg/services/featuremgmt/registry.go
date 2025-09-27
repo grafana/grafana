@@ -1923,14 +1923,6 @@ var (
 			HideFromDocs:      true,
 		},
 		{
-			Name:         "dashboardDsAdHocFiltering",
-			Description:  "Enables adhoc filtering support for the dashboard datasource",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaDataProSquad,
-			FrontendOnly: true,
-			Expression:   "true",
-		},
-		{
 			Name:         "dashboardLevelTimeMacros",
 			Description:  "Supports __from and __to macros that always use the dashboard level time range",
 			Stage:        FeatureStageExperimental,

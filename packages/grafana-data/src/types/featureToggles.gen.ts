@@ -1108,11 +1108,6 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchDualReaderEnabled?: boolean;
   /**
-  * Enables adhoc filtering support for the dashboard datasource
-  * @default true
-  */
-  dashboardDsAdHocFiltering?: boolean;
-  /**
   * Supports __from and __to macros that always use the dashboard level time range
   */
   dashboardLevelTimeMacros?: boolean;
