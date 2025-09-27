@@ -220,6 +220,35 @@ func TestIntegrationContactPointService(t *testing.T) {
 		assert.Equal(t, models.ProvenanceAPI, svc.Calls[0].Args[5])
 	})
 
+	t.Run("update does not re-encrypt secure settings with the same value", func(t *testing.T) {
+		cfg := createEncryptedConfig(t, secretsService)
+		store := fakes.NewFakeAlertmanagerConfigStore(cfg)
+		sut := createContactPointServiceSutWithConfigStore(t, secretsService, store)
+
+		// manually create a contact point to ensure we know what constitutes a secure setting and control the value
+		settings, _ := simplejson.NewJson([]byte(`{"recipient":"value_recipient","token":"value_token"}`))
+		newCp := definitions.EmbeddedContactPoint{
+			Name:     "test-contact-point",
+			Type:     "slack",
+			Settings: settings,
+		}
+		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		oldCfg, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(store.LastSaveCommand.AlertmanagerConfiguration))
+		require.NoError(t, err)
+
+		// ensure case-insensitive settings are handled correctly
+		newSettings, _ := simplejson.NewJson([]byte(`{"recipient":"value_recipient","Token":"value_token"}`))
+		newCp.Settings = newSettings
+		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		newCfg, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(store.LastSaveCommand.AlertmanagerConfiguration))
+		require.NoError(t, err)
+		require.ElementsMatch(t, oldCfg.AlertmanagerConfig.Receivers, newCfg.AlertmanagerConfig.Receivers)
+	})
+
 	t.Run("default provenance of contact points is none", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 
