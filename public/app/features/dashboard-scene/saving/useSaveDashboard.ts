@@ -55,6 +55,15 @@ export function useSaveDashboard(isCopy = false) {
           throw result.error;
         }
 
+        // TODO: use slug from response once implemented
+        // reuse existing slug to avoid "Unsaved changes" modal after save
+        //   due to slugify logic difference between frontend and backend
+        if (!result.data.slug && scene.state.meta.slug) {
+          const slug = scene.state.meta.slug;
+          result.data.slug = slug;
+          result.data.url = `${result.data.url}/${slug}`;
+        }
+
         const resultData = result.data;
         scene.saveCompleted(saveModel, resultData, options.folderUid);
 
