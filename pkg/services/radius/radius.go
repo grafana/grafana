@@ -149,11 +149,29 @@ func (s *serviceImpl) Login(query *login.LoginUserQuery) (*login.ExternalUserInf
 
 	s.log.Debug("RADIUS authentication successful", "username", query.Username)
 
-	// Extract class attributes from response
+	// Extract all Class attributes from response
+	// rfc4372 "Additionally - there could be multiple class attributes in a RADIUS packet"
 	var classes []string
-	if classAttr := response.Get(rfc2865.Class_Type); classAttr != nil {
-		classes = append(classes, string(classAttr))
+	for _, attr := range response.Attributes {
+		if attr.Type == rfc2865.Class_Type {
+			// AVP embeds Attribute; use radius.String to convert Attribute to string
+			val := strings.TrimSpace(radius.String(attr.Attribute))
+			if val != "" {
+				classes = append(classes, val)
+			}
+		}
 	}
+	// dedupe classes while preserving order
+	seen := make(map[string]struct{})
+	deduped := make([]string, 0, len(classes))
+	for _, c := range classes {
+		if _, ok := seen[c]; ok {
+			continue
+		}
+		seen[c] = struct{}{}
+		deduped = append(deduped, c)
+	}
+	classes = deduped
 
 	// Create external user info
 	extUser := &login.ExternalUserInfo{
@@ -172,15 +190,29 @@ func (s *serviceImpl) Login(query *login.LoginUserQuery) (*login.ExternalUserInf
 		return extUser, nil
 	}
 
-	// Map classes to organization roles
+	// Map classes to organization roles. If multiple mappings target the same OrgId,
+	// choose the role with highest precedence (Admin > Editor > Viewer).
 	for _, class := range classes {
 		for _, mapping := range s.cfg.ClassMappings {
-			if mapping.Class == class {
+			if mapping.Class != class {
+				continue
+			}
+
+			// if no role set yet for this org, set it
+			existing, ok := extUser.OrgRoles[mapping.OrgId]
+			if !ok {
 				extUser.OrgRoles[mapping.OrgId] = mapping.OrgRole
-				if mapping.IsGrafanaAdmin != nil && *mapping.IsGrafanaAdmin {
-					isAdmin := true
-					extUser.IsGrafanaAdmin = &isAdmin
+			} else {
+				// choose the higher-precedence role
+				// use RoleType Includes semantics: existing.Includes(mapping.OrgRole) means existing >= mapping
+				if !existing.Includes(mapping.OrgRole) && mapping.OrgRole.Includes(existing) {
+					extUser.OrgRoles[mapping.OrgId] = mapping.OrgRole
 				}
+			}
+
+			if mapping.IsGrafanaAdmin != nil && *mapping.IsGrafanaAdmin {
+				isAdmin := true
+				extUser.IsGrafanaAdmin = &isAdmin
 			}
 		}
 	}
