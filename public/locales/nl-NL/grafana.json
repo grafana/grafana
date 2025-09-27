@@ -2129,8 +2129,8 @@
         "suffix": "Vernieuw de pagina en probeer het opnieuw.",
         "title": "Kan meldingsbeleid niet toevoegen of bijwerken"
       },
-      "n-more-policies_one": "{{count}} aanvullend beleid",
-      "n-more-policies_other": "{{count}} aanvullend beleid"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Nieuw onderliggend beleid",
@@ -11971,10 +11971,10 @@
       "restore-button": "Herstellen",
       "restore-loading": "Bezig met herstellen ...",
       "title": "Dashboards herstellen",
-      "folder-picker-text_one": "Kies een map waarin je dashboards worden hersteld.",
-      "folder-picker-text_other": "Kies een map waarin je dashboards worden hersteld.",
-      "text_one": "Met deze actie worden {{numberOfDashboards}} dashboards hersteld.",
-      "text_other": "Met deze actie worden {{numberOfDashboards}} dashboards hersteld."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {

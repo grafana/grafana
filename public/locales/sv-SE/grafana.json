@@ -2129,8 +2129,8 @@
         "suffix": "Uppdatera sidan och försök igen.",
         "title": "Det gick inte att lägga till eller uppdatera aviseringspolicy"
       },
-      "n-more-policies_one": "{{count}} ytterligare policyer",
-      "n-more-policies_other": "{{count}} ytterligare policyer"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Ny underordnad policy",
@@ -11971,10 +11971,10 @@
       "restore-button": "Återställ",
       "restore-loading": "Återställer ...",
       "title": "Återställ instrumentpaneler",
-      "folder-picker-text_one": "Välj en mapp där dina instrumentpaneler kommer att återställas.",
-      "folder-picker-text_other": "Välj en mapp där dina instrumentpaneler kommer att återställas.",
-      "text_one": "Denna åtgärd återställer {{numberOfDashboards}} instrumentpanel.",
-      "text_other": "Denna åtgärd återställer {{numberOfDashboards}} instrumentpanel."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {

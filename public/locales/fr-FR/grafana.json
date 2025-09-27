@@ -2129,8 +2129,8 @@
         "suffix": "Actualisez la page, puis réessayez.",
         "title": "Échec lors de l’ajout ou de la mise à jour de la politique de notification"
       },
-      "n-more-policies_one": "{{count}} politiques supplémentaires",
-      "n-more-policies_other": "{{count}} politiques supplémentaires"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Nouvelle politique enfant",
@@ -11971,10 +11971,10 @@
       "restore-button": "Restaurer",
       "restore-loading": "Restauration...",
       "title": "Restaurer les tableaux de bord",
-      "folder-picker-text_one": "Veuillez choisir un dossier dans lequel vos tableaux de bord seront restaurés.",
-      "folder-picker-text_other": "Veuillez choisir un dossier dans lequel vos tableaux de bord seront restaurés.",
-      "text_one": "Cette action restaurera {{numberOfDashboards}} tableaux de bord.",
-      "text_other": "Cette action restaurera {{numberOfDashboards}} tableaux de bord."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {

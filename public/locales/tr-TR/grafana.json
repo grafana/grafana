@@ -2129,8 +2129,8 @@
         "suffix": "Lütfen sayfayı yenileyin ve tekrar deneyin.",
         "title": "Bildirim politikası eklenemedi veya güncellenemedi"
       },
-      "n-more-policies_one": "{{count}} ek politika",
-      "n-more-policies_other": "{{count}} ek politika"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Çocuklara ilişkin yeni politika",
@@ -11971,10 +11971,10 @@
       "restore-button": "Geri yükle",
       "restore-loading": "Geri yükleniyor…",
       "title": "Panoları Geri Yükleme",
-      "folder-picker-text_one": "Lütfen panolarınızın geri yükleneceği bir klasör seçin.",
-      "folder-picker-text_other": "Lütfen panolarınızın geri yükleneceği bir klasör seçin.",
-      "text_one": "Bu işlem {{numberOfDashboards}} panoyu geri yükleyecektir.",
-      "text_other": "Bu işlem {{numberOfDashboards}} panoyu geri yükleyecektir."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {

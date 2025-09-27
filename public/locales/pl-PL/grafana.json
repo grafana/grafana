@@ -2143,10 +2143,10 @@
         "suffix": "Odśwież stronę i spróbuj ponownie.",
         "title": "Nie udało się dodać lub zaktualizować zasad dotyczących powiadomień"
       },
-      "n-more-policies_one": "{{count}} dodatkowy zbiór zasad",
-      "n-more-policies_few": "{{count}} dodatkowe zbiory zasad",
-      "n-more-policies_many": "{{count}} dodatkowych zbiorów zasad",
-      "n-more-policies_other": "{{count}} dodatkowego zbioru zasad"
+      "n-more-policies_one": "",
+      "n-more-policies_few": "",
+      "n-more-policies_many": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Nowe zasady pochodne",
@@ -12053,14 +12053,14 @@
       "restore-button": "Przywróć",
       "restore-loading": "Przywracanie…",
       "title": "Przywróć pulpity",
-      "folder-picker-text_one": "Wybierz folder, w którym zostanie przywrócony pulpit.",
-      "folder-picker-text_few": "Wybierz folder, w którym zostaną przywrócone pulpity.",
-      "folder-picker-text_many": "Wybierz folder, w którym zostaną przywrócone pulpity.",
-      "folder-picker-text_other": "Wybierz folder, w którym zostaną przywrócone pulpity.",
-      "text_one": "To działanie spowoduje przywrócenie {{numberOfDashboards}} pulpitu.",
-      "text_few": "To działanie spowoduje przywrócenie {{numberOfDashboards}} pulpitów.",
-      "text_many": "To działanie spowoduje przywrócenie {{numberOfDashboards}} pulpitów.",
-      "text_other": "To działanie spowoduje przywrócenie {{numberOfDashboards}} pulpitu."
+      "folder-picker-text_one": "",
+      "folder-picker-text_few": "",
+      "folder-picker-text_many": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_few": "",
+      "text_many": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {
