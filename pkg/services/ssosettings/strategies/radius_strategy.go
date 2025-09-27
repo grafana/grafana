@@ -34,6 +34,7 @@ func (s *RADIUSStrategy) GetProviderConfig(_ context.Context, _ string) (map[str
 		"secretConfigured":   section.Key("secret").Value() != "",
 		"allow_sign_up":      section.Key("allow_sign_up").MustBool(false),
 		"skip_org_role_sync": section.Key("skip_org_role_sync").MustBool(false),
+		"class_mappings":     section.Key("class_mappings").Value(),
 	}
 
 	return result, nil

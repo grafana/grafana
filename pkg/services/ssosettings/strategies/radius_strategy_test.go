@@ -29,6 +29,7 @@ var (
 		"secretConfigured":   true,
 		"allow_sign_up":      true,
 		"skip_org_role_sync": false,
+		"class_mappings":     `[{"class":"admin","orgId":1,"orgRole":"Admin","isGrafanaAdmin":true},{"class":"users","orgId":1,"orgRole":"Viewer","isGrafanaAdmin":false}]`,
 	}
 
 	expectedRADIUSConfigEmpty = map[string]interface{}{
@@ -38,6 +39,7 @@ var (
 		"secretConfigured":   false,
 		"allow_sign_up":      false,
 		"skip_org_role_sync": false,
+		"class_mappings":     "",
 	}
 )
 
