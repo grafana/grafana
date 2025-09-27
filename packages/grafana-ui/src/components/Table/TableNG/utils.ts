@@ -852,8 +852,17 @@ export const calculateFooterHeight = (fields: Field[]): number => {
     maxReducerCount = Math.max(maxReducerCount, field.config.custom?.footer?.reducers?.length ?? 0);
   }
 
+  if (maxReducerCount === 0) {
+    return 0;
+  }
+
   // Base height (+ padding) + height per reducer
-  return maxReducerCount > 0 ? maxReducerCount * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2 : 0;
+  const baseHeight = maxReducerCount * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
+
+  // Safari-specific: Reduce footer height slightly to prevent virtualization double-accounting
+  // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+  const isSafari = typeof navigator !== 'undefined' && /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  return isSafari ? Math.max(baseHeight - TABLE.CELL_PADDING, TABLE.LINE_HEIGHT) : baseHeight;
 };
 
 /**
