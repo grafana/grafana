@@ -2181,7 +2181,6 @@
       "body-queries-expressions-configured": "Create at least one query or expression to be alerted on",
       "confirmText-deactivate": "Deactivate",
       "expressions": "Expressions",
-      "loading-data-sources": "Loading data sources...",
       "manipulate-returned-queries-other-operations": "Manipulate data returned from queries with math and other operations.",
       "message": {
         "a-valid-expression-is-required": "A valid expression is required"
