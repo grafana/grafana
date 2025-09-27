@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { applyFieldOverrides, SplitOpen, DataFrame, LoadingState, FieldType } from '@grafana/data';
+import { applyFieldOverrides, SplitOpen, DataFrame, LoadingState, FieldType, DataLinksContext } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, PanelRenderer } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { Table, AdHocFilterItem, PanelChrome, withTheme2, Themeable2 } from '@grafana/ui';
+import { PanelChrome, withTheme2, Themeable2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import {
   hasDeprecatedParentRowIndex,
@@ -23,11 +23,9 @@ import { exploreDataLinkPostProcessorFactory } from '../utils/links';
 const MAX_NUMBER_OF_COLUMNS = 20;
 
 interface TableContainerProps extends Themeable2 {
-  ariaLabel?: string;
   exploreId: string;
   width: number;
   timeZone: TimeZone;
-  onCellFilterAdded?: (filter: AdHocFilterItem) => void;
   splitOpenFn: SplitOpen;
 }
 
@@ -79,8 +77,7 @@ export class TableContainer extends PureComponent<Props, State> {
   }
 
   render() {
-    const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone, theme } =
-      this.props;
+    const { loading, tableResult, width, splitOpenFn, range, timeZone, theme } = this.props;
 
     const { showAll } = this.state;
 
@@ -153,13 +150,20 @@ export class TableContainer extends PureComponent<Props, State> {
                 loadingState={loading ? LoadingState.Loading : undefined}
               >
                 {(innerWidth, innerHeight) => (
-                  <Table
-                    ariaLabel={ariaLabel}
-                    data={data}
-                    width={innerWidth}
-                    height={innerHeight}
-                    onCellFilterAdded={onCellFilterAdded}
-                  />
+                  <DataLinksContext.Provider value={{ dataLinkPostProcessor }}>
+                    <PanelRenderer
+                      data={{
+                        series: [data],
+                        state: loading ? LoadingState.Loading : LoadingState.Done,
+                        timeRange: range,
+                      }}
+                      pluginId={'core:plugin/table'}
+                      title=""
+                      width={innerWidth}
+                      height={innerHeight}
+                      timeZone={timeZone}
+                    />
+                  </DataLinksContext.Provider>
                 )}
               </PanelChrome>
             ))}
