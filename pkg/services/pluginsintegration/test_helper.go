@@ -1,6 +1,7 @@
 package pluginsintegration
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -67,7 +68,10 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 		Terminator:   term,
 	})
 
-	ps, err := pluginstore.ProvideService(reg, sources.ProvideService(cfg, pCfg), l)
+	ps := pluginstore.ProvideService(reg, sources.ProvideService(cfg, pCfg), l)
+	err = ps.StartAsync(context.Background())
+	require.NoError(t, err)
+	err = ps.AwaitRunning(context.Background())
 	require.NoError(t, err)
 
 	return &IntegrationTestCtx{
