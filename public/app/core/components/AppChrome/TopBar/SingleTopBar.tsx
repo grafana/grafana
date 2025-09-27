@@ -6,7 +6,7 @@ import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { ScopesContextValue } from '@grafana/runtime';
-import { Dropdown, Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -24,11 +24,11 @@ import { enrichHelpItem } from '../MegaMenu/utils';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 
+import { HelpDropdownButton } from './HelpDropdownButton';
 import { InviteUserButton } from './InviteUserButton';
 import { ProfileButton } from './ProfileButton';
 import { SignInLink } from './SignInLink';
 import { SingleTopBarActions } from './SingleTopBarActions';
-import { TopNavBarMenu } from './TopNavBarMenu';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
 import { getChromeHeaderLevelHeight } from './useChromeHeaderHeight';
 
@@ -98,11 +98,7 @@ export const SingleTopBar = memo(function SingleTopBar({
           <TopSearchBarCommandPaletteTrigger />
           {unifiedHistoryEnabled && !isSmallScreen && <HistoryContainer />}
           {!isSmallScreen && <QuickAdd />}
-          {enrichedHelpNode && (
-            <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
-              <ToolbarButton iconOnly icon="question-circle" aria-label={t('navigation.help.aria-label', 'Help')} />
-            </Dropdown>
-          )}
+          {enrichedHelpNode && <HelpDropdownButton helpNode={enrichedHelpNode} />}
           <NavToolbarSeparator />
           {!isSmallScreen && <ExtensionToolbarItem compact={isSmallScreen} />}
           {!showToolbarLevel && actions}

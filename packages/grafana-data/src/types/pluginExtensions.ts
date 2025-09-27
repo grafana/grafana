@@ -5,6 +5,7 @@ import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 import { ScopedVars } from './ScopedVars';
 import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
 import { IconName } from './icon';
+import { NavModelItem } from './navModel';
 import { PanelData } from './panel';
 import { AbsoluteTimeRange, RawTimeRange, TimeZone } from './time';
 
@@ -206,6 +207,7 @@ export enum PluginExtensionPoints {
   LogsViewResourceAttributes = 'grafana/logsview/resource-attributes',
   AppChrome = 'grafana/app/chrome/v1',
   ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
+  TopbarHelpV1 = 'grafana/app/topbar/help/v1',
 }
 
 // Don't use directly in a plugin!
@@ -321,4 +323,8 @@ type Dashboard = {
   uid: string;
   title: string;
   tags: string[];
+};
+
+export type PluginExtensionTopbarHelpV1Context = {
+  helpNode: NavModelItem;
 };
