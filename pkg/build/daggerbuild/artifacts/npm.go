@@ -26,14 +26,17 @@ var NPMPackagesInitializer = Initializer{
 }
 
 type NPMPackages struct {
-	Src       *dagger.Directory
-	YarnCache *dagger.CacheVolume
-	Version   string
+	Src         *dagger.Directory
+	YarnCache   *dagger.CacheVolume
+	Version     string
+	NodeModules *pipeline.Artifact
 }
 
 // The frontend does not have any artifact dependencies.
 func (f *NPMPackages) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error) {
-	return nil, nil
+	return []*pipeline.Artifact{
+		f.NodeModules,
+	}, nil
 }
 
 // Builder will return a node.js alpine container that matches the .nvmrc in the Grafana source repository
@@ -46,7 +49,11 @@ func (f *NPMPackages) BuildFile(ctx context.Context, builder *dagger.Container, 
 }
 
 func (f *NPMPackages) BuildDir(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.Directory, error) {
-	return frontend.NPMPackages(builder, opts.Client, opts.Log, f.Src, strings.TrimPrefix(f.Version, "v"))
+	nodeModules, err := opts.Store.Directory(ctx, f.NodeModules)
+	if err != nil {
+		return nil, err
+	}
+	return frontend.NPMPackages(builder, opts.Client, opts.Log, f.Src, strings.TrimPrefix(f.Version, "v"), nodeModules)
 }
 
 func (f *NPMPackages) Publisher(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
@@ -69,6 +76,10 @@ func (f *NPMPackages) VerifyFile(ctx context.Context, client *dagger.Client, fil
 func (f *NPMPackages) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
 	// Nothing to verify (yet?)
 	return nil
+}
+
+func (f *NPMPackages) String() string {
+	return "npm"
 }
 
 // Filename should return a deterministic file or folder name that this build will produce.
@@ -101,14 +112,19 @@ func NewNPMPackagesFromString(ctx context.Context, log *slog.Logger, artifact st
 }
 
 func NewNPMPackages(ctx context.Context, log *slog.Logger, artifact string, src *dagger.Directory, version string, cache *dagger.CacheVolume) (*pipeline.Artifact, error) {
+	nodeModules, err := NewNodeModules(ctx, log, artifact, src, version, cache)
+	if err != nil {
+		return nil, err
+	}
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
 		ArtifactString: artifact,
 		Type:           pipeline.ArtifactTypeDirectory,
 		Flags:          NPMPackagesFlags,
 		Handler: &NPMPackages{
-			Src:       src,
-			YarnCache: cache,
-			Version:   version,
+			NodeModules: nodeModules,
+			Src:         src,
+			YarnCache:   cache,
+			Version:     version,
 		},
 	})
 }

@@ -31,6 +31,14 @@ func ArtifactFlags(r Registerer) []cli.Flag {
 		Usage: "If true, then the artifacts that are built will be verified with e2e tests or similar after being exported, depending on the artifact",
 		Value: false,
 	}
+	cacheBuildersFlag := &cli.BoolFlag{
+		Name:  "cache-builders",
+		Value: false,
+	}
+	cacheBuildersRegistryFlag := &cli.StringFlag{
+		Name:  "cache-builders-registry",
+		Value: "us-docker.pkg.dev/grafanalabs-dev/docker-grafana-dev",
+	}
 
 	flags := flags.Join(
 		[]cli.Flag{
@@ -39,6 +47,8 @@ func ArtifactFlags(r Registerer) []cli.Flag {
 			publishFlag,
 			verifyFlag,
 			flags.Platform,
+			cacheBuildersFlag,
+			cacheBuildersRegistryFlag,
 		},
 		flags.PublishFlags,
 		flags.ConcurrencyFlags,

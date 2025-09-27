@@ -88,6 +88,10 @@ func (d *MSI) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *d
 	panic("not implemented") // TODO: Implement
 }
 
+func (d *MSI) String() string {
+	return "msi"
+}
+
 func NewMSIFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
 	targz, err := NewTarballFromString(ctx, log, artifact, state)
 	if err != nil {
