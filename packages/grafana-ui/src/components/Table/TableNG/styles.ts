@@ -138,24 +138,28 @@ export const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Proper
     '&:last-child': { borderInlineEnd: 'none' },
   });
 
-export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, shouldOverflow, maxHeight }) =>
-  css({
+export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, shouldOverflow, maxHeight }) => {
+  const isSafari = typeof navigator !== 'undefined' && /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  const safeShouldOverflow = shouldOverflow && !isSafari;
+
+  return css({
     display: 'flex',
     alignItems: 'center',
     textAlign,
     justifyContent: Boolean(maxHeight) ? 'flex-start' : getJustifyContent(textAlign),
     ...(maxHeight && { overflowY: 'hidden' }),
-    ...(shouldOverflow && { minHeight: '100%' }),
+    ...(safeShouldOverflow && { minHeight: '100%' }),
 
     [getActiveCellSelector()]: {
       '.table-cell-actions': { display: 'flex' },
-      ...(shouldOverflow && {
+      ...(safeShouldOverflow && {
         zIndex: theme.zIndex.tooltip - 2,
         height: 'fit-content',
         minWidth: 'fit-content',
       }),
     },
   });
+};
 
 export const getMaxHeightCellStyles: TableCellStyles = (_theme, { textAlign, maxHeight }) =>
   css({
