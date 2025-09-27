@@ -22,7 +22,7 @@ Sign up for Grafana Cloud Git Sync early access using [this form](https://forms.
 
 {{< /admonition >}}
 
-File provisioning in Grafana lets you include resources, including folders and dashboard JSON files, that are stored in a local file system.
+Use local file provisioning to include in your Grafana instance resources (such as folders and dashboard JSON files) that are stored in a local file system.
 
 This page explains how to set up local file provisioning.
 
