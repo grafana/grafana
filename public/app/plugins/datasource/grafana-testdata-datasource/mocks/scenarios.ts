@@ -76,6 +76,12 @@ export const scenarios = [
   },
   {
     description: '',
+    id: TestDataQueryType.QueryMeta,
+    name: 'Query Metadata',
+    stringInput: '',
+  },
+  {
+    description: '',
     id: TestDataQueryType.RandomWalk,
     name: 'Random Walk',
     stringInput: '',

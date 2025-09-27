@@ -159,6 +159,12 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	s.registerScenario(&Scenario{
+		ID:      kinds.TestDataQueryTypeQueryMeta,
+		Name:    "Query Metadata",
+		handler: s.handleQueryMetaScenario,
+	})
+
+	s.registerScenario(&Scenario{
 		// Is no longer strictly a _server_ error scenario, but ID is kept for legacy :)
 		ID:          kinds.TestDataQueryTypeServerError500,
 		Name:        "Conditional Error",
@@ -387,6 +393,31 @@ func (s *Service) handleCSVMetricValuesScenario(ctx context.Context, req *backen
 		resp.Responses[q.RefID] = respD
 	}
 
+	return resp, nil
+}
+
+func (s *Service) handleQueryMetaScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	if len(req.Queries) == 0 {
+		return nil, errors.New("no queries")
+	}
+
+	refId := req.Queries[0].RefID
+
+	username := req.PluginContext.User.Name
+
+	keys := []string{"username"}
+	values := []string{username}
+
+	frame := data.NewFrame("",
+		data.NewField("keys", nil, keys),
+		data.NewField("values", nil, values),
+	)
+	r := backend.DataResponse{}
+	r.Frames = data.Frames{frame}
+
+	resp.Responses[refId] = r
 	return resp, nil
 }
 
