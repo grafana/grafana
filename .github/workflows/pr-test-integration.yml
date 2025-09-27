@@ -130,7 +130,12 @@ jobs:
           MYSQL_DATABASE: grafana_tests
           MYSQL_USER: grafana
           MYSQL_PASSWORD: password
-        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
+        options: >-
+          --health-cmd="mysqladmin ping --silent" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=3
+          --mount type=bind,source=${{ github.workspace }}/.github/mysql/custom.cnf,target=/etc/mysql/conf.d/custom.cnf
         ports:
           - 3306:3306
     steps:
@@ -145,6 +150,15 @@ jobs:
           cache: true
       - name: Setup MySQL devenv
         run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
+
+      - name: Prepare MySQL config
+        run: |
+          mkdir -p /opt/actions-runner/config/mysql
+          cp .github/mysql/custom.cnf /opt/actions-runner/config/mysql/custom.cnf
+      - name: Prepare Postgres config
+        run: |
+          mkdir -p /opt/actions-runner/config/postgres
+          cp .github/postgres/postgresql.conf /opt/actions-runner/config/postgres/postgresql.conf
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -180,6 +194,12 @@ jobs:
           POSTGRES_USER: grafanatest
           POSTGRES_PASSWORD: grafanatest
           POSTGRES_DB: grafanatest
+        options: >-
+          --health-cmd="pg_isready -U grafanatest"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+          --mount type=bind,source=${{ github.workspace }}/.github/postgresql/postgresql.conf,target=/etc/postgresql/postgresql.conf
         ports:
           - 5432:5432
     steps:
