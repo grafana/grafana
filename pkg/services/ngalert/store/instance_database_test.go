@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/golang/snappy"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
@@ -17,7 +18,6 @@ import (
 	pb "github.com/grafana/grafana/pkg/services/ngalert/store/proto/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const baseIntervalSeconds = 10
@@ -316,7 +316,7 @@ func TestIntegrationFullSync(t *testing.T) {
 	}
 
 	t.Run("Should do a proper full sync", func(t *testing.T) {
-		err := ng.InstanceStore.FullSync(ctx, instances, batchSize)
+		err := ng.InstanceStore.FullSync(ctx, instances, batchSize, nil)
 		require.NoError(t, err)
 
 		res, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
@@ -339,7 +339,7 @@ func TestIntegrationFullSync(t *testing.T) {
 	})
 
 	t.Run("Should remove non existing entries on sync", func(t *testing.T) {
-		err := ng.InstanceStore.FullSync(ctx, instances[1:], batchSize)
+		err := ng.InstanceStore.FullSync(ctx, instances[1:], batchSize, nil)
 		require.NoError(t, err)
 
 		res, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
@@ -356,7 +356,7 @@ func TestIntegrationFullSync(t *testing.T) {
 
 	t.Run("Should add new entries on sync", func(t *testing.T) {
 		newRuleUID := "y"
-		err := ng.InstanceStore.FullSync(ctx, append(instances, generateTestAlertInstance(orgID, newRuleUID)), batchSize)
+		err := ng.InstanceStore.FullSync(ctx, append(instances, generateTestAlertInstance(orgID, newRuleUID)), batchSize, nil)
 		require.NoError(t, err)
 
 		res, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
@@ -381,7 +381,7 @@ func TestIntegrationFullSync(t *testing.T) {
 	t.Run("Should save all instances when batch size is bigger than 1", func(t *testing.T) {
 		batchSize = 2
 		newRuleUID := "y"
-		err := ng.InstanceStore.FullSync(ctx, append(instances, generateTestAlertInstance(orgID, newRuleUID)), batchSize)
+		err := ng.InstanceStore.FullSync(ctx, append(instances, generateTestAlertInstance(orgID, newRuleUID)), batchSize, nil)
 		require.NoError(t, err)
 
 		res, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
@@ -409,12 +409,12 @@ func TestIntegrationFullSync(t *testing.T) {
 			generateTestAlertInstance(orgID, "preexisting-1"),
 			generateTestAlertInstance(orgID, "preexisting-2"),
 		}
-		err := ng.InstanceStore.FullSync(ctx, initialInstances, 5)
+		err := ng.InstanceStore.FullSync(ctx, initialInstances, 5, nil)
 		require.NoError(t, err)
 
 		// Now call FullSync with no instances. According to the code, this should return nil
 		// and should not delete anything in the table.
-		err = ng.InstanceStore.FullSync(ctx, []models.AlertInstance{}, 5)
+		err = ng.InstanceStore.FullSync(ctx, []models.AlertInstance{}, 5, nil)
 		require.NoError(t, err)
 
 		// Check that the previously inserted instances are still present.
@@ -445,7 +445,7 @@ func TestIntegrationFullSync(t *testing.T) {
 		// Make the invalid instance actually invalid
 		invalidInstance.RuleUID = ""
 
-		err := ng.InstanceStore.FullSync(ctx, []models.AlertInstance{validInstance, invalidInstance}, 2)
+		err := ng.InstanceStore.FullSync(ctx, []models.AlertInstance{validInstance, invalidInstance}, 2, nil)
 		require.NoError(t, err)
 
 		// Only the valid instance should be saved.
@@ -464,7 +464,7 @@ func TestIntegrationFullSync(t *testing.T) {
 			generateTestAlertInstance(orgID, "batch-test2"),
 		}
 
-		err := ng.InstanceStore.FullSync(ctx, smallSet, 100)
+		err := ng.InstanceStore.FullSync(ctx, smallSet, 100, nil)
 		require.NoError(t, err)
 
 		res, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
@@ -487,7 +487,7 @@ func TestIntegrationFullSync(t *testing.T) {
 
 	t.Run("Should handle a large set of instances with a moderate batchSize", func(t *testing.T) {
 		// Clear everything first.
-		err := ng.InstanceStore.FullSync(ctx, []models.AlertInstance{}, 1)
+		err := ng.InstanceStore.FullSync(ctx, []models.AlertInstance{}, 1, nil)
 		require.NoError(t, err)
 
 		largeCount := 300
@@ -496,7 +496,7 @@ func TestIntegrationFullSync(t *testing.T) {
 			largeSet[i] = generateTestAlertInstance(orgID, fmt.Sprintf("large-%d", i))
 		}
 
-		err = ng.InstanceStore.FullSync(ctx, largeSet, 50)
+		err = ng.InstanceStore.FullSync(ctx, largeSet, 50, nil)
 		require.NoError(t, err)
 
 		res, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
@@ -504,6 +504,135 @@ func TestIntegrationFullSync(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Len(t, res, largeCount)
+	})
+}
+
+func TestIntegrationFullSyncWithJitter(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	batchSize := 2
+
+	ctx := context.Background()
+	ng, _ := tests.SetupTestEnv(t, baseIntervalSeconds)
+
+	orgID := int64(1)
+	ruleUIDs := []string{"j1", "j2", "j3", "j4", "j5"}
+
+	instances := make([]models.AlertInstance, len(ruleUIDs))
+	for i, ruleUID := range ruleUIDs {
+		instances[i] = generateTestAlertInstance(orgID, ruleUID)
+	}
+
+	// Simple jitter function for testing
+	jitterFunc := func(batchIndex int) time.Duration {
+		return time.Duration(batchIndex*100) * time.Millisecond
+	}
+
+	t.Run("Should do a proper full sync with jitter", func(t *testing.T) {
+		err := ng.InstanceStore.FullSync(ctx, instances, batchSize, jitterFunc)
+		require.NoError(t, err)
+
+		res, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
+			RuleOrgID: orgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, res, len(instances))
+
+		// Verify all instances were saved
+		for _, ruleUID := range ruleUIDs {
+			found := false
+			for _, instance := range res {
+				if instance.RuleUID == ruleUID {
+					found = true
+					break
+				}
+			}
+			require.True(t, found, "Instance with RuleUID '%s' not found", ruleUID)
+		}
+	})
+
+	t.Run("Should handle empty instances with jitter", func(t *testing.T) {
+		err := ng.InstanceStore.FullSync(ctx, []models.AlertInstance{}, batchSize, jitterFunc)
+		require.NoError(t, err)
+
+		res, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
+			RuleOrgID: orgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, res, len(instances), "Empty sync should not delete existing instances")
+	})
+
+	t.Run("Should handle zero delays (immediate execution)", func(t *testing.T) {
+		testInstances := make([]models.AlertInstance, 2)
+		for i := 0; i < 2; i++ {
+			testInstances[i] = generateTestAlertInstance(orgID, fmt.Sprintf("immediate-%d", i))
+		}
+
+		// Function that returns zero delays
+		immediateJitterFunc := func(batchIndex int) time.Duration {
+			return 0 * time.Second
+		}
+
+		start := time.Now()
+		err := ng.InstanceStore.FullSync(ctx, testInstances, 1, immediateJitterFunc)
+		elapsed := time.Since(start)
+		require.NoError(t, err)
+
+		// Should complete quickly since all delays are zero
+		require.Less(t, elapsed, 500*time.Millisecond, "Zero delays should execute immediately")
+
+		// Verify data was saved
+		res, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
+			RuleOrgID: orgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, res, 2)
+	})
+
+	t.Run("Should execute jitter delays correctly and save data", func(t *testing.T) {
+		testInstances := make([]models.AlertInstance, 4)
+		for i := 0; i < 4; i++ {
+			testInstances[i] = generateTestAlertInstance(orgID, fmt.Sprintf("jitter-test-%d", i))
+		}
+
+		// Track jitter function calls
+		jitterCalls := []int{}
+		realJitterFunc := func(batchIndex int) time.Duration {
+			jitterCalls = append(jitterCalls, batchIndex)
+			return time.Duration(batchIndex*200) * time.Millisecond // 0ms, 200ms delays
+		}
+
+		start := time.Now()
+		err := ng.InstanceStore.FullSync(ctx, testInstances, 2, realJitterFunc)
+		elapsed := time.Since(start)
+		require.NoError(t, err)
+
+		// Should take at least the maximum delay (200ms for batch 1)
+		require.GreaterOrEqual(t, elapsed, 200*time.Millisecond, "Should wait for jitter delays")
+		require.Less(t, elapsed, 1*time.Second, "Should not take too long")
+
+		// Verify jitter function was called for each batch
+		require.Equal(t, []int{0, 1}, jitterCalls, "Should call jitter function for each batch")
+
+		// Verify all data was saved correctly
+		res, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
+			RuleOrgID: orgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, res, 4)
+
+		// Verify specific instances were saved
+		for i := 0; i < 4; i++ {
+			expectedUID := fmt.Sprintf("jitter-test-%d", i)
+			found := false
+			for _, instance := range res {
+				if instance.RuleUID == expectedUID {
+					found = true
+					break
+				}
+			}
+			require.True(t, found, "Instance with RuleUID '%s' not found", expectedUID)
+		}
 	})
 }
 

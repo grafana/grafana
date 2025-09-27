@@ -77,6 +77,35 @@ By default, it saves the states every 5 minutes to the database and on each shut
 can also be configured using the `state_periodic_save_interval` configuration flag. During this process, Grafana deletes all existing alert instances from the database and then writes the entire current set of instances back in batches in a single transaction.
 Configure the size of each batch using the `state_periodic_save_batch_size` configuration option.
 
+#### Jitter for periodic saves
+
+To further distribute database load, you can enable jitter for periodic state saves by setting `state_periodic_save_jitter_enabled = true`. When jitter is enabled, instead of saving all batches simultaneously, Grafana spreads the batch writes across a calculated time window of 85% of the save interval.
+
+**How jitter works:**
+
+- Calculates delays for each batch: `delay = (batchIndex * timeWindow) / (totalBatches - 1)`
+- Time window uses 85% of save interval for safety margin
+- Batches are evenly distributed across the time window
+- All operations occur within a single database transaction
+
+**Configuration example:**
+
+```ini
+[unified_alerting]
+state_periodic_save_jitter_enabled = true
+state_periodic_save_interval = 1m
+state_periodic_save_batch_size = 100
+```
+
+**Performance impact:**
+For 2000 alert instances with 1-minute interval and 100 batch size:
+
+- Creates 20 batches (2000 ÷ 100)
+- Spreads writes across 51 seconds (85% of 60s)
+- Batch writes occur every ~2.68 seconds
+
+This helps reduce database load spikes in environments with high alert cardinality by distributing writes over time rather than concentrating them at the beginning of each save cycle.
+
 The time it takes to write to the database periodically can be monitored using the `state_full_sync_duration_seconds` metric
 that is exposed by Grafana.
 
