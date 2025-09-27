@@ -16,6 +16,7 @@ export interface RuleEditorSectionProps {
     isAdvancedMode: boolean;
     setAdvancedMode: (isAdvanced: boolean) => void;
   };
+  simpleModeActions?: ReactElement;
 }
 
 export const RuleEditorSection = ({
@@ -25,6 +26,7 @@ export const RuleEditorSection = ({
   fullWidth = false,
   description,
   switchMode,
+  simpleModeActions,
 }: React.PropsWithChildren<RuleEditorSectionProps>) => {
   const styles = useStyles2(getStyles);
 
@@ -38,21 +40,24 @@ export const RuleEditorSection = ({
             <Text variant="h3">
               {stepNo}. {title}
             </Text>
-            {switchMode && (
-              <Text variant="bodySmall">
-                <InlineSwitch
-                  data-testid={AlertRuleSelectors.stepAdvancedModeSwitch(stepNo.toString())}
-                  value={switchMode.isAdvancedMode}
-                  onChange={(event) => {
-                    switchMode.setAdvancedMode(event.currentTarget.checked);
-                  }}
-                  label={t('alerting.rule-editor-section.label-advanced-options', 'Advanced options')}
-                  showLabel
-                  transparent
-                  className={styles.reverse}
-                />
-              </Text>
-            )}
+            <Stack direction="row" alignItems="center" gap={2}>
+              {switchMode && !switchMode.isAdvancedMode && simpleModeActions}
+              {switchMode && (
+                <Text variant="bodySmall">
+                  <InlineSwitch
+                    data-testid={AlertRuleSelectors.stepAdvancedModeSwitch(stepNo.toString())}
+                    value={switchMode.isAdvancedMode}
+                    onChange={(event) => {
+                      switchMode.setAdvancedMode(event.currentTarget.checked);
+                    }}
+                    label={t('alerting.rule-editor-section.label-advanced-options', 'Advanced options')}
+                    showLabel
+                    transparent
+                    className={styles.reverse}
+                  />
+                </Text>
+              )}
+            </Stack>
           </Stack>
         }
       >
