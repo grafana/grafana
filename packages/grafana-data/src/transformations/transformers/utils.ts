@@ -33,3 +33,7 @@ export function getSpecialValue(specialValue: SpecialValue) {
       return '';
   }
 }
+
+export const getTransformationLegacyRefId = (transformationId: string, data: DataFrame[]) => {
+  return `${transformationId}-${data.map((frame) => frame.refId).join('-')}`;
+};

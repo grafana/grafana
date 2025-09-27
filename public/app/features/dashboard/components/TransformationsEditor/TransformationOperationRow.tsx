@@ -26,6 +26,7 @@ import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo
 import { TransformationEditor } from './TransformationEditor';
 import { TransformationEditorHelpDisplay } from './TransformationEditorHelpDisplay';
 import { TransformationFilter } from './TransformationFilter';
+import { TransformationOperationRowHeader } from './TransformationOperationRowHeader';
 import { TransformationData } from './TransformationsEditor';
 import { TransformationsEditorTransformation } from './types';
 
@@ -157,6 +158,19 @@ export const TransformationOperationRow = ({
     };
   }, [index, data, configs]);
 
+  const renderHeader = () => {
+    return (
+      <TransformationOperationRowHeader
+        index={index}
+        transformation={configs[index].transformation}
+        transformations={configs.map((config) => config.transformation)}
+        transformationTypeName={`${index + 1} - ${uiConfig.name}`}
+        disabled
+        onChange={onChange}
+      />
+    );
+  };
+
   const renderActions = () => {
     return (
       <>
@@ -228,10 +242,9 @@ export const TransformationOperationRow = ({
       <QueryOperationRow
         id={id}
         index={index}
-        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        title={`${index + 1} - ${uiConfig.name}`}
         draggable
         actions={renderActions}
+        headerElement={renderHeader}
         disabled={disabled}
         expanderMessages={{
           close: 'Collapse transformation row',
@@ -247,7 +260,6 @@ export const TransformationOperationRow = ({
             onChange={onChange}
           />
         )}
-
         <TransformationEditor
           input={input}
           output={output}
