@@ -71,6 +71,8 @@ export async function loadDashboards(items: PlaylistItemUI[]): Promise<PlaylistI
 
 export function getDefaultPlaylist(): Playlist {
   return {
+    kind: 'Playlist',
+    apiVersion: 'v0alpha1',
     spec: {
       items: [],
       interval: '5m',

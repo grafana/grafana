@@ -882,6 +882,7 @@ github.com/elastic/lunes v0.1.0 h1:amRtLPjwkWtzDF/RKzcEPMvSsSseLDLW+bnhfNSLRe4=
 github.com/elastic/lunes v0.1.0/go.mod h1:xGphYIt3XdZRtyWosHQTErsQTd4OP1p9wsbVoHelrd4=
 github.com/emicklei/go-restful v0.0.0-20170410110728-ff4f55a20633 h1:H2pdYOb3KQ1/YsqVWoWNLQO+fusocsw354rqGTZtAgw=
 github.com/emicklei/go-restful/v3 v3.11.0/go.mod h1:6n3XBCmQQb25CM2LCACGz8ukIrRry+4bhvbpWn3mrbc=
+github.com/emicklei/go-restful/v3 v3.12.2/go.mod h1:6n3XBCmQQb25CM2LCACGz8ukIrRry+4bhvbpWn3mrbc=
 github.com/emicklei/proto v1.10.0/go.mod h1:rn1FgRS/FANiZdD2djyH7TMA9jdRDcYQ9IEN9yvjX0A=
 github.com/envoyproxy/go-control-plane v0.13.1/go.mod h1:X45hY0mufo6Fd0KW3rqsGvQMw58jvjymeCzBU3mWyHw=
 github.com/envoyproxy/go-control-plane/envoy v1.32.3/go.mod h1:F6hWupPfh75TBXGKA++MCT/CZHFq5r9/uwt/kQYkZfE=
@@ -1042,8 +1043,6 @@ github.com/grafana/alerting v0.0.0-20250709204613-c5c6f9c1653d/go.mod h1:gtR7agm
 github.com/grafana/alerting v0.0.0-20250911172908-2b26ef8f17eb/go.mod h1:XWqj/rlsy4OV/E9XNNyFn+a7U4GNsSugPb2rDBj9+58=
 github.com/grafana/alerting v0.0.0-20250923203439-adb598e7d509 h1:8JMtYCClxrxRXsF5jc64GTURZFHJHFK/kzC7joRNTtI=
 github.com/grafana/alerting v0.0.0-20250923203439-adb598e7d509/go.mod h1:T5sitas9VhVj8/S9LeRLy6H75kTBdh/sCCqHo7gaQI8=
-github.com/grafana/alerting v0.0.0-20250925193206-bd061d3d9185 h1:R494uXJOz7glN76hJXKjbwu+VBYFsT0CFprsXmdHla0=
-github.com/grafana/alerting v0.0.0-20250925193206-bd061d3d9185/go.mod h1:T5sitas9VhVj8/S9LeRLy6H75kTBdh/sCCqHo7gaQI8=
 github.com/grafana/authlib v0.0.0-20250123104008-e99947858901/go.mod h1:/gYfphsNu9v1qYWXxpv1NSvMEMSwvdf8qb8YlgwIRl8=
 github.com/grafana/authlib v0.0.0-20250909101823-1b466dbd19a1/go.mod h1:C6CmTG6vfiqebjJswKsc6zes+1F/OtTCi6aAtL5Um6A=
 github.com/grafana/authlib/types v0.0.0-20250120144156-d6737a7dc8f5/go.mod h1:qYjSd1tmJiuVoSICp7Py9/zD54O9uQQA3wuM6Gg4DFM=

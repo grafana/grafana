@@ -22,6 +22,8 @@ jest.mock('./utils', () => ({
 }));
 
 const mockPlaylist: Playlist = {
+  kind: 'Playlist',
+  apiVersion: 'v0alpha1',
   spec: {
     interval: '1s',
     title: 'The display',

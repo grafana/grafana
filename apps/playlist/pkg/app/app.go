@@ -47,13 +47,9 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	simpleConfig := simple.AppConfig{
-		Name:       "playlist",
-		KubeConfig: cfg.KubeConfig,
-		InformerConfig: simple.AppInformerConfig{
-			ErrorHandler: func(ctx context.Context, err error) {
-				klog.ErrorS(err, "Informer processing error")
-			},
-		},
+		Name:           "playlist",
+		KubeConfig:     cfg.KubeConfig,
+		InformerConfig: simple.AppInformerConfig{},
 		ManagedKinds: []simple.AppManagedKind{
 			{
 				Kind:       playlistv0alpha1.PlaylistKind(),

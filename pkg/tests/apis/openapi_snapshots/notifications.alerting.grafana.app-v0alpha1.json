@@ -4520,6 +4520,12 @@
     "schemas": {
       "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver": {
         "type": "object",
+        "required": [
+          "kind",
+          "apiVersion",
+          "metadata",
+          "spec"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -4708,6 +4714,12 @@
       },
       "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree": {
         "type": "object",
+        "required": [
+          "kind",
+          "apiVersion",
+          "metadata",
+          "spec"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -4967,6 +4979,12 @@
       },
       "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup": {
         "type": "object",
+        "required": [
+          "kind",
+          "apiVersion",
+          "metadata",
+          "spec"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -5116,6 +5134,12 @@
       },
       "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval": {
         "type": "object",
+        "required": [
+          "kind",
+          "apiVersion",
+          "metadata",
+          "spec"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
