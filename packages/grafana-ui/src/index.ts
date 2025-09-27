@@ -465,7 +465,7 @@ export { RunnerPlugin } from './slate-plugins/runner';
 export { SelectionShortcutsPlugin } from './slate-plugins/selection_shortcuts';
 export { SlatePrism, type Token } from './slate-plugins/slate-prism';
 export { SuggestionsPlugin } from './slate-plugins/suggestions';
-export { RadialBar as RadialGauge } from './components/RadialGauge/RadialGauge';
+export { RadialGauge } from './components/RadialGauge/RadialGauge';
 
 // @deprecated import from @grafana/schema
 export {

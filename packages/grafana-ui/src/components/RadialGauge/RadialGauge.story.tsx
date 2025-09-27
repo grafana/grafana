@@ -1,6 +1,13 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { applyFieldOverrides, Field, FieldType, GrafanaTheme2, toDataFrame } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  Field,
+  FieldType,
+  getFieldDisplayValues,
+  GrafanaTheme2,
+  toDataFrame,
+} from '@grafana/data';
 import { FieldColorModeId, GraphGradientMode } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';
@@ -11,6 +18,7 @@ import { RadialGauge, RadialGaugeProps, RadialGradientMode } from './RadialGauge
 interface StoryProps extends RadialGaugeProps {
   value: number;
   seriesCount: number;
+  sparkline: boolean;
 }
 
 const meta: Meta<StoryProps> = {
@@ -270,10 +278,20 @@ function RadialBarExample({
     theme,
   });
 
+  const values = getFieldDisplayValues({
+    fieldConfig: { overrides: [], defaults: {} },
+    reduceOptions: { calcs: ['last'] },
+    replaceVariables: (value) => value,
+    theme: theme,
+    data,
+    sparkline,
+  });
+
   return (
     <RadialGauge
-      frames={data}
-      size={size}
+      values={values}
+      width={size}
+      height={size}
       barWidth={barWidth}
       gradient={gradient}
       startAngle={startAngle}
@@ -282,7 +300,6 @@ function RadialBarExample({
       spotlight={spotlight}
       glow={glow}
       centerGlow={centerGlow}
-      sparkline={sparkline}
     />
   );
 }

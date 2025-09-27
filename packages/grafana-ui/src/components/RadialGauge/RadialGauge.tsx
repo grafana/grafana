@@ -2,15 +2,7 @@ import { css } from '@emotion/css';
 import { useId } from 'react';
 import tinycolor from 'tinycolor2';
 
-import {
-  DataFrame,
-  DisplayValue,
-  FieldConfig,
-  FieldDisplay,
-  getFieldColorMode,
-  getFieldDisplayValues,
-  GrafanaTheme2,
-} from '@grafana/data';
+import { DisplayValue, FieldConfig, FieldDisplay, getFieldColorMode, GrafanaTheme2 } from '@grafana/data';
 import { GraphFieldConfig, GraphGradientMode, LineInterpolation } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -19,8 +11,9 @@ import { Sparkline } from '../Sparkline/Sparkline';
 import { RadialText } from './RadialText';
 
 export interface RadialGaugeProps {
-  frames: DataFrame[];
-  size?: number;
+  values: FieldDisplay[];
+  width: number;
+  height: number;
   startAngle?: number;
   endAngle?: number;
   gradient?: RadialGradientMode;
@@ -31,15 +24,14 @@ export interface RadialGaugeProps {
   spotlight?: boolean;
   glow?: boolean;
   centerGlow?: boolean;
-  sparkline?: boolean;
 }
 
 export type RadialGradientMode = 'none' | 'scheme' | 'hue' | 'shade';
 
 export function RadialGauge(props: RadialGaugeProps) {
   const {
-    frames,
-    size = 256,
+    width = 256,
+    height = 256,
     startAngle = 0,
     endAngle = 360,
     gradient = 'none',
@@ -49,29 +41,20 @@ export function RadialGauge(props: RadialGaugeProps) {
     spotlight = false,
     glow = false,
     centerGlow = false,
-    sparkline = false,
+    values,
   } = props;
   const theme = useTheme2();
   const gaugeId = useId();
-  const width = size;
-  const height = size;
   const styles = useStyles2(getStyles);
-
-  const values = getFieldDisplayValues({
-    fieldConfig: { overrides: [], defaults: {} },
-    reduceOptions: { calcs: ['last'] },
-    replaceVariables: (value) => value,
-    theme: theme,
-    data: frames,
-    sparkline,
-  });
+  const size = Math.min(width, height);
 
   const margin = calculateMargin(size, glow, spotlight, barWidth);
   const color = values[0]?.display.color ?? theme.colors.primary.main;
+  const primaryValue = values[0];
 
   return (
-    <div className={styles.vizWrapper}>
-      <svg width={width} height={height}>
+    <div className={styles.vizWrapper} style={{ width, height }}>
+      <svg width={size} height={size}>
         <defs>
           {values.map((displayValue, barIndex) => (
             <GradientDef
@@ -135,12 +118,12 @@ export function RadialGauge(props: RadialGaugeProps) {
           {centerGlow && (
             <MiddleCircle barWidth={barWidth} fill={`url(#circle-glow-${gaugeId})`} size={size} margin={margin} />
           )}
-          {values.length === 1 && <RadialText displayValue={values[0].display} size={size} theme={theme} />}
+          {primaryValue && <RadialText displayValue={primaryValue.display} size={size} theme={theme} />}
         </g>
       </svg>
-      {sparkline && (
+      {primaryValue && primaryValue.sparkline && (
         <RadialSparkline
-          sparkline={values[0]?.sparkline}
+          sparkline={primaryValue.sparkline}
           size={size}
           theme={theme}
           barWidth={barWidth}
@@ -286,7 +269,7 @@ export interface RadialBarProps {
   glow?: boolean;
 }
 
-export function RadialBar({
+function RadialBar({
   center,
   gaugeId,
   value,
@@ -436,6 +419,9 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     vizWrapper: css({
       position: 'relative',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
     }),
     innerShadow: css({
       filter: `drop-shadow(0px 0px 5px black);`,
