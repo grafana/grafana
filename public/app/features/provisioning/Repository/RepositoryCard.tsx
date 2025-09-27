@@ -83,7 +83,7 @@ export function RepositoryCard({ repository }: Props) {
                   variant="secondary"
                   href={getListURL(repository, stat)}
                 >
-                  {stat.count} {stat.resource}
+                  {stat.count} {stat.count === 1 ? stat.singularName : stat.resource}
                 </LinkButton>
               ))}
             </Stack>

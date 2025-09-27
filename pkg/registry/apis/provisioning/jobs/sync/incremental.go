@@ -63,11 +63,13 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 				}
 
 				progress.Record(ensureFolderCtx, jobs.JobResourceResult{
-					Path:     safeSegment,
-					Action:   repository.FileActionCreated,
-					Resource: resources.FolderResource.Resource,
-					Group:    resources.FolderResource.Group,
-					Name:     folder,
+					Path:         safeSegment,
+					Action:       repository.FileActionCreated,
+					Resource:     resources.FolderResource.Resource,
+					Group:        resources.FolderResource.Group,
+					SingularName: resources.FolderResourceInfo.GetSingularName(),
+					Kind:         resources.FolderResourceInfo.GroupVersionKind().Kind,
+					Name:         folder,
 				})
 				ensureFolderSpan.End()
 				continue
