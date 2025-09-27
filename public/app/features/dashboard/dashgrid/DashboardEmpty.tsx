@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack, TextLink } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
@@ -18,6 +18,8 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { setInitialDatasource } from '../state/reducers';
+
+import { DashboardLibrarySection } from './DashboardLibrarySection';
 
 export interface Props {
   dashboard: DashboardModel | DashboardScene;
@@ -89,6 +91,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               </Button>
             </Stack>
           </Box>
+          {config.featureToggles.dashboardLibrary && <DashboardLibrarySection />}
           <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
             <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
               <Stack direction="column" alignItems="center" gap={1}>

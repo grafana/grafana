@@ -43,7 +43,30 @@ func (api *ImportDashboardAPI) RegisterAPIEndpoints(routeRegister routing.RouteR
 			authorize(accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate)),
 			routing.Wrap(api.ImportDashboard),
 		)
+		route.Post(
+			"/interpolate",
+			authorize(accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate)),
+			routing.Wrap(api.InterpolateDashboard),
+		)
 	}, middleware.ReqSignedIn)
+}
+
+func (api *ImportDashboardAPI) InterpolateDashboard(c *contextmodel.ReqContext) response.Response {
+	req := dashboardimport.ImportDashboardRequest{}
+	if err := web.Bind(c.Req, &req); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	resp, err := api.dashboardImportService.InterpolateDashboard(c.Req.Context(), &req)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to interpolate dashboard", err)
+	}
+
+	resp.Del("__elements")
+	resp.Del("__inputs")
+	resp.Del("__requires")
+
+	return response.JSON(http.StatusOK, resp)
 }
 
 // swagger:route POST /dashboards/import dashboards importDashboard
