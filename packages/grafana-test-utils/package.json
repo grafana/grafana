@@ -53,7 +53,7 @@
     "test:ci": "jest --maxWorkers 4"
   },
   "dependencies": {
-    "msw": "2.10.4"
+    "msw": "2.11.3"
   },
   "devDependencies": {
     "@swc/core": "1.13.3",
