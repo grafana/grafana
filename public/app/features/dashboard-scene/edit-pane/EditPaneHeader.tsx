@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Menu, Stack, Text, useStyles2, Dropdown, Icon, IconButton } from '@grafana/ui';
-import { trackDeleteDashboardElement } from 'app/features/dashboard/utils/tracking';
+import { trackDeleteDashboardElement } from 'app/features/dashboard-scene/utils/tracking';
 
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 
