@@ -1,0 +1,22 @@
+name: Update Schema Types
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - docs/sources/developers/plugins/plugin.schema.json
+  workflow_dispatch:
+
+# These permissions are needed to assume roles from Github's OIDC.
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  bundle-schema-types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: grafana/plugin-actions/bundle-schema-types@main
