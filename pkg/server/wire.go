@@ -278,7 +278,7 @@ var wireBasicSet = wire.NewSet(
 	contexthandler.ProvideService,
 	ldapservice.ProvideService,
 	wire.Bind(new(ldapservice.LDAP), new(*ldapservice.LDAPImpl)),
-	radius.New,
+	radius.ProvideService,
 	jwt.ProvideService,
 	wire.Bind(new(jwt.JWTService), new(*jwt.AuthService)),
 	ngstore.ProvideDBStore,

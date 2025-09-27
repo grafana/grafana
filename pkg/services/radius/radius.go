@@ -62,8 +62,8 @@ type serviceImpl struct {
 	log log.Logger
 }
 
-// New creates a new RADIUS service
-func New(cfg *setting.Cfg, ssoSettings ssosettings.Service) Service {
+// ProvideService creates a new RADIUS service instance.
+func ProvideService(cfg *setting.Cfg, ssoSettings ssosettings.Service) Service {
 	// Convert setting.RADIUSClassToOrgRole to radius.ClassToOrgRole
 	classMappings := make([]*ClassToOrgRole, len(cfg.RADIUSClassMappings))
 	for i, mapping := range cfg.RADIUSClassMappings {
