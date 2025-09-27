@@ -44,10 +44,10 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
   }
 
   if (
-    currentToken?.is(LogsTokenTypes.Delimiter, ')') ||
-    (currentToken?.isWhiteSpace() && previousNonWhiteSpace?.is(LogsTokenTypes.Delimiter, ')'))
+    currentToken?.is(LogsTokenTypes.Parenthesis, ')') ||
+    (currentToken?.isWhiteSpace() && previousNonWhiteSpace?.is(LogsTokenTypes.Parenthesis, ')'))
   ) {
-    const openingParenthesis = currentToken?.getPreviousOfType(LogsTokenTypes.Delimiter, '(');
+    const openingParenthesis = currentToken?.getPreviousOfType(LogsTokenTypes.Parenthesis, '(');
     const normalizedNonWhitespacePreceedingOpeningParenthesis = openingParenthesis
       ?.getPreviousNonWhiteSpaceToken()
       ?.value?.toLowerCase();
