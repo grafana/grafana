@@ -46,6 +46,7 @@ type Config struct {
 	SkipOrgRoleSync bool
 	AllowSignUp     bool
 	ClassMappings   []*ClassToOrgRole
+	TimeoutSeconds  int
 }
 
 // ClassToOrgRole maps RADIUS class attributes to Grafana organization roles
@@ -83,6 +84,7 @@ func ProvideService(cfg *setting.Cfg, ssoSettings ssosettings.Service) Service {
 		SkipOrgRoleSync: cfg.RADIUSSkipOrgRoleSync,
 		AllowSignUp:     cfg.RADIUSAllowSignup,
 		ClassMappings:   classMappings,
+		TimeoutSeconds:  cfg.RADIUSTimeoutSeconds,
 	}
 
 	svc := &serviceImpl{
@@ -132,7 +134,12 @@ func (s *serviceImpl) Login(query *login.LoginUserQuery) (*login.ExternalUserInf
 	s.log.Debug("Attempting RADIUS authentication", "server", host, "username", query.Username)
 
 	// Send the request with context
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// Default to 10s if not configured or invalid (defensive fallback)
+	timeout := s.cfg.TimeoutSeconds
+	if timeout <= 0 {
+		timeout = 10
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
 
 	response, err := client.Exchange(ctx, packet, host)
@@ -239,6 +246,10 @@ func (s *serviceImpl) Reload(ctx context.Context, settings models.SSOSettings) e
 	cfg.Server = resolveString(settings.Settings["radius_server"], "")
 	cfg.Port = resolveInt(settings.Settings["radius_port"], 1812)
 	cfg.Secret = resolveString(settings.Settings["radius_secret"], "")
+	cfg.TimeoutSeconds = resolveInt(settings.Settings["radius_timeout_seconds"], 10)
+	if cfg.TimeoutSeconds <= 0 || cfg.TimeoutSeconds > 300 {
+		cfg.TimeoutSeconds = 10
+	}
 
 	classMappings, err := resolveClassMappings(settings.Settings["class_mappings"])
 	if err != nil {
@@ -272,6 +283,11 @@ func (s *serviceImpl) Validate(ctx context.Context, settings models.SSOSettings,
 	port := resolveInt(settings.Settings["radius_port"], 1812)
 	if port <= 0 || port > 65535 {
 		return fmt.Errorf("RADIUS port must be between 1 and 65535")
+	}
+
+	timeoutSeconds := resolveInt(settings.Settings["radius_timeout_seconds"], 10)
+	if timeoutSeconds <= 0 || timeoutSeconds > 300 { // realistically nobody needs more than a 5 minute timeout
+		return fmt.Errorf("RADIUS timeout must be between 1 and 300 seconds")
 	}
 
 	_, err := resolveClassMappings(settings.Settings["class_mappings"])

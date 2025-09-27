@@ -47,6 +47,7 @@ export const emptySettings: SSOProviderDTO = {
   type: '',
   usePkce: false,
   useRefreshToken: false,
+  radiusTimeoutSeconds: 10,
 };
 
 const strToValue = (val: string | string[]): SelectableValue[] => {

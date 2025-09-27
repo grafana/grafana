@@ -23,23 +23,25 @@ class_mappings = [{"class":"admin","orgId":1,"orgRole":"Admin","isGrafanaAdmin":
 
 var (
 	expectedRADIUSConfig = map[string]interface{}{
-		"enabled":            true,
-		"server":             "192.168.1.100",
-		"port":               1812,
-		"secretConfigured":   true,
-		"allow_sign_up":      true,
-		"skip_org_role_sync": false,
-		"class_mappings":     `[{"class":"admin","orgId":1,"orgRole":"Admin","isGrafanaAdmin":true},{"class":"users","orgId":1,"orgRole":"Viewer","isGrafanaAdmin":false}]`,
+		"enabled":                true,
+		"server":                 "192.168.1.100",
+		"port":                   1812,
+		"secretConfigured":       true,
+		"allow_sign_up":          true,
+		"skip_org_role_sync":     false,
+		"class_mappings":         `[{"class":"admin","orgId":1,"orgRole":"Admin","isGrafanaAdmin":true},{"class":"users","orgId":1,"orgRole":"Viewer","isGrafanaAdmin":false}]`,
+		"radius_timeout_seconds": 10,
 	}
 
 	expectedRADIUSConfigEmpty = map[string]interface{}{
-		"enabled":            false,
-		"server":             "",
-		"port":               1812,
-		"secretConfigured":   false,
-		"allow_sign_up":      false,
-		"skip_org_role_sync": false,
-		"class_mappings":     "",
+		"enabled":                false,
+		"server":                 "",
+		"port":                   1812,
+		"secretConfigured":       false,
+		"allow_sign_up":          false,
+		"skip_org_role_sync":     false,
+		"class_mappings":         "",
+		"radius_timeout_seconds": 10,
 	}
 )
 

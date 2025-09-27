@@ -68,6 +68,7 @@ export type SSOProviderSettingsBase = {
   radiusServer?: string;
   radiusPort?: number;
   radiusSecret?: string;
+  radiusTimeoutSeconds?: number;
   classMappings?: Array<{
     class: string;
     orgId: number;

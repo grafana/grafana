@@ -422,6 +422,7 @@ type Cfg struct {
 	RADIUSSecret          string
 	RADIUSSkipOrgRoleSync bool
 	RADIUSAllowSignup     bool
+	RADIUSTimeoutSeconds  int
 	RADIUSClassMappings   []*RADIUSClassToOrgRole
 
 	DefaultTheme    string
@@ -1495,6 +1496,14 @@ func (cfg *Cfg) readRADIUSConfig() {
 	cfg.RADIUSAuthEnabled = radiusSec.Key("enabled").MustBool(false)
 	cfg.RADIUSSkipOrgRoleSync = radiusSec.Key("skip_org_role_sync").MustBool(false)
 	cfg.RADIUSAllowSignup = radiusSec.Key("allow_sign_up").MustBool(true)
+	cfg.RADIUSTimeoutSeconds = radiusSec.Key("timeout_seconds").MustInt(10)
+	if cfg.RADIUSTimeoutSeconds <= 0 { // defensive default
+		cfg.RADIUSTimeoutSeconds = 10
+	}
+	if cfg.RADIUSTimeoutSeconds > 300 { // apply safety cap matching validation logic
+		cfg.Logger.Warn("auth.radius.timeout_seconds capped at 300s", "configured", cfg.RADIUSTimeoutSeconds)
+		cfg.RADIUSTimeoutSeconds = 300
+	}
 
 	// Parse class mappings from JSON
 	// Reset mappings first to ensure empty config clears existing mappings

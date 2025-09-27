@@ -28,13 +28,14 @@ func (s *RADIUSStrategy) GetProviderConfig(_ context.Context, _ string) (map[str
 	section := s.cfg.Raw.Section("auth.radius")
 
 	result := map[string]any{
-		"enabled":            section.Key("enabled").MustBool(false),
-		"server":             section.Key("server").Value(),
-		"port":               section.Key("port").MustInt(1812),
-		"secretConfigured":   section.Key("secret").Value() != "",
-		"allow_sign_up":      section.Key("allow_sign_up").MustBool(false),
-		"skip_org_role_sync": section.Key("skip_org_role_sync").MustBool(false),
-		"class_mappings":     section.Key("class_mappings").Value(),
+		"enabled":                section.Key("enabled").MustBool(false),
+		"server":                 section.Key("server").Value(),
+		"port":                   section.Key("port").MustInt(1812),
+		"secretConfigured":       section.Key("secret").Value() != "",
+		"allow_sign_up":          section.Key("allow_sign_up").MustBool(false),
+		"skip_org_role_sync":     section.Key("skip_org_role_sync").MustBool(false),
+		"class_mappings":         section.Key("class_mappings").Value(),
+		"radius_timeout_seconds": section.Key("timeout_seconds").MustInt(10),
 	}
 
 	return result, nil

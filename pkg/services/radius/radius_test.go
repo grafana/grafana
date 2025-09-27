@@ -1,10 +1,15 @@
 package radius
 
 import (
+	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 )
 
 // Helper to build config and call applyClassMapping
@@ -59,4 +64,42 @@ func TestApplyClassMapping_MultipleOrgs(t *testing.T) {
 	if ext.OrgRoles[2] != org.RoleViewer {
 		t.Fatalf("expected org 2 viewer, got %v", ext.OrgRoles[2])
 	}
+}
+
+func TestService_ValidateTimeout(t *testing.T) {
+	svc := &serviceImpl{cfg: &Config{}, log: log.New("radius-test")}
+	settings := models.SSOSettings{Settings: map[string]any{
+		"enabled":       true,
+		"radius_server": "localhost",
+		"radius_port":   1812,
+		"radius_secret": "secret",
+	}}
+	require.NoError(t, svc.Validate(context.Background(), settings, models.SSOSettings{}, nil))
+
+	settings.Settings["radius_timeout_seconds"] = 120
+	require.NoError(t, svc.Validate(context.Background(), settings, models.SSOSettings{}, nil))
+
+	settings.Settings["radius_timeout_seconds"] = 0
+	require.Error(t, svc.Validate(context.Background(), settings, models.SSOSettings{}, nil))
+
+	settings.Settings["radius_timeout_seconds"] = 301
+	require.Error(t, svc.Validate(context.Background(), settings, models.SSOSettings{}, nil))
+}
+
+func TestService_ReloadTimeout(t *testing.T) {
+	svc := &serviceImpl{cfg: &Config{}, log: log.New("radius-test")}
+	settings := models.SSOSettings{Settings: map[string]any{
+		"enabled":                true,
+		"radius_server":          "localhost",
+		"radius_port":            1812,
+		"radius_secret":          "secret",
+		"radius_timeout_seconds": 55,
+	}}
+	require.NoError(t, svc.Reload(context.Background(), settings))
+	require.Equal(t, 55, svc.cfg.TimeoutSeconds)
+
+	// reload with invalid value -> default
+	settings.Settings["radius_timeout_seconds"] = -5
+	require.NoError(t, svc.Reload(context.Background(), settings))
+	require.Equal(t, 10, svc.cfg.TimeoutSeconds)
 }

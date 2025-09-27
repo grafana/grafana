@@ -308,6 +308,7 @@ export const getSectionFields = (): Section => {
           'radiusServer',
           'radiusPort',
           'radiusSecret',
+          'radiusTimeoutSeconds',
           'allowSignUp',
           'skipOrgRoleSync',
         ],
@@ -967,10 +968,10 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     },
     radiusPort: {
       label: t('auth-config.fields.radius-port-label', 'RADIUS port'),
-      type: 'number',
+      type: 'text',
       description: t(
         'auth-config.fields.radius-port-description',
-        'The port number of your RADIUS server. Default is 1812.'
+        'The authentication port of your RADIUS server. Default is 1812.'
       ),
       validation: {
         required: true,
@@ -998,6 +999,26 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       validation: {
         required: true,
         message: t('auth-config.fields.required', 'This field is required'),
+      },
+    },
+    radiusTimeoutSeconds: {
+      label: t('auth-config.fields.radius-timeout-seconds-label', 'RADIUS timeout (seconds)'),
+      type: 'text',
+      description: t(
+        'auth-config.fields.radius-timeout-seconds-description',
+        'Maximum time to wait for a response from the RADIUS server for a single authentication attempt. Defaults to 10 seconds (max 300).' 
+      ),
+      validation: {
+        required: true,
+        validate: (value) => {
+          if (typeof value !== 'string' && typeof value !== 'number') {
+            return false;
+          }
+          const stringValue = value.toString();
+            const num = parseInt(stringValue, 10);
+            return !isNaN(num) && num.toString() === stringValue && num > 0 && num <= 300;
+        },
+        message: t('auth-config.fields.radius-timeout-seconds-invalid', 'Timeout must be an integer between 1 and 300 seconds'),
       },
     },
     classMappings: {
