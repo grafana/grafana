@@ -6,7 +6,11 @@ import { getAppEvents, reportInteraction, usePluginLinks, locationService } from
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent } from 'app/types/events';
 
-import { DEFAULT_EXTENSION_SIDEBAR_WIDTH, MAX_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
+import {
+  DEFAULT_EXTENSION_SIDEBAR_WIDTH,
+  MAX_EXTENSION_SIDEBAR_WIDTH,
+  MIN_EXTENSION_SIDEBAR_WIDTH,
+} from './ExtensionSidebar';
 
 export const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDocked';
 export const EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarWidth';
@@ -42,6 +46,14 @@ export type ExtensionSidebarContextType = {
    * Set the width of the extension sidebar.
    */
   setExtensionSidebarWidth: (width: number) => void;
+  /**
+   * The minimum width for the currently docked component.
+   */
+  currentComponentMinWidth: number;
+  /**
+   * The initial width for the currently docked component.
+   */
+  currentComponentInitialWidth: number;
 
   props?: Record<string, unknown>;
 };
@@ -53,6 +65,8 @@ export const ExtensionSidebarContext = createContext<ExtensionSidebarContextType
   availableComponents: new Map(),
   extensionSidebarWidth: DEFAULT_EXTENSION_SIDEBAR_WIDTH,
   setExtensionSidebarWidth: () => {},
+  currentComponentMinWidth: MIN_EXTENSION_SIDEBAR_WIDTH,
+  currentComponentInitialWidth: DEFAULT_EXTENSION_SIDEBAR_WIDTH,
 });
 
 export function useExtensionSidebarContext() {
@@ -205,6 +219,47 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     }
   }, [dockedComponentId, isLoading]);
 
+  // Helper to get the current docked component
+  const getCurrentComponent = useCallback(() => {
+    if (!dockedComponentId) {
+      return null;
+    }
+
+    const dockedMeta = getComponentMetaFromComponentId(dockedComponentId);
+    if (!dockedMeta) {
+      return null;
+    }
+
+    const pluginMeta = availableComponents.get(dockedMeta.pluginId);
+    return pluginMeta?.addedComponents.find((c) => c.title === dockedMeta.componentTitle) ?? null;
+  }, [dockedComponentId, availableComponents]);
+
+  // Helper to parse width values (string or number) to pixels
+  const parseWidth = useCallback((width: number | string | undefined, fallback: number): number => {
+    if (!width) {
+      return fallback;
+    }
+    if (typeof width === 'number') {
+      return width;
+    }
+
+    const parsed = parseInt(width, 10);
+    return isNaN(parsed) ? fallback : parsed;
+  }, []);
+
+  // Calculate component-specific widths
+  const currentComponentMinWidth = useMemo(() => {
+    const component = getCurrentComponent();
+    const parsed = parseWidth(component?.minWidth, MIN_EXTENSION_SIDEBAR_WIDTH);
+    return Math.max(parsed, MIN_EXTENSION_SIDEBAR_WIDTH);
+  }, [getCurrentComponent, parseWidth]);
+
+  const currentComponentInitialWidth = useMemo(() => {
+    const component = getCurrentComponent();
+    const defaultWidth = extensionSidebarWidth ?? DEFAULT_EXTENSION_SIDEBAR_WIDTH;
+    return parseWidth(component?.initialWidth, defaultWidth);
+  }, [getCurrentComponent, parseWidth, extensionSidebarWidth]);
+
   return (
     <ExtensionSidebarContext.Provider
       value={{
@@ -217,6 +272,8 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
           MAX_EXTENSION_SIDEBAR_WIDTH
         ),
         setExtensionSidebarWidth,
+        currentComponentMinWidth,
+        currentComponentInitialWidth,
         props,
       }}
     >
