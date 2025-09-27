@@ -21134,7 +21134,7 @@
       }
     },
     "/org/invites/{invitation_code}/revoke": {
-      "delete": {
+      "patch": {
         "operationId": "revokeInvite",
         "parameters": [
           {

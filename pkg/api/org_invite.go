@@ -184,7 +184,7 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *contextmodel.ReqContext, user *
 	})
 }
 
-// swagger:route DELETE /org/invites/{invitation_code}/revoke org invites revokeInvite
+// swagger:route PATCH /org/invites/{invitation_code}/revoke org invites revokeInvite
 //
 // Revoke invite.
 //
