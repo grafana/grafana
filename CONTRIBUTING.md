@@ -21,7 +21,8 @@ Interact and be heard:
 
 We welcome your technical contributions! Here are some examples:
 
-- Contribute to the Grafana codebase- check out these [help-wanted issues](<(https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22)>)
+- Contribute to the Grafana codebase- check out these [help wanted issues](https://github.com/grafana/grafana/labels/help%20wanted)
+
 - Develop community [plugins](https://grafana.com/developers/plugin-tools)
 - Report [bugs](https://github.com/grafana/grafana/issues/new?template=0-bug-report.yaml)
 - [Triage issues](https://github.com/grafana/grafana/blob/4414b92e93440cc9ed0f281989ee71dc16216a15/contribute/triage-issues.md)
