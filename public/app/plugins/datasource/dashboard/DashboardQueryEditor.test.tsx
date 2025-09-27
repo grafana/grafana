@@ -30,9 +30,6 @@ jest.mock('app/core/config', () => ({
       },
     },
   },
-  featureToggles: {
-    dashboardDsAdHocFiltering: false, // Default to false, can be overridden in tests
-  },
 }));
 
 setupDataSources(mockDataSource({ isDefault: true }));
@@ -179,11 +176,7 @@ describe('DashboardQueryEditor', () => {
       jest.spyOn(getDashboardSrv(), 'getCurrent').mockImplementation(() => mockDashboard);
     });
 
-    it('shows the AdHoc Filters toggle when feature toggle is enabled', async () => {
-      await act(async () => {
-        config.featureToggles.dashboardDsAdHocFiltering = true;
-      });
-
+    it('shows the AdHoc Filters toggle', async () => {
       const query: DashboardQuery = { refId: 'A', panelId: 1, adHocFiltersEnabled: false };
 
       await act(async () => {
@@ -202,29 +195,5 @@ describe('DashboardQueryEditor', () => {
       expect(adhocFiltersToggle).toBeInTheDocument();
     });
 
-    it('does not show the AdHoc Filters toggle when feature toggle is disabled', async () => {
-      await act(async () => {
-        config.featureToggles.dashboardDsAdHocFiltering = false;
-      });
-
-      const query: DashboardQuery = { refId: 'A', panelId: 1, adHocFiltersEnabled: false };
-
-      await act(async () => {
-        render(
-          <DashboardQueryEditor
-            datasource={{} as DashboardDatasource}
-            query={query}
-            data={mockPanelData}
-            onChange={mockOnChange}
-            onRunQuery={mockOnRunQueries}
-          />
-        );
-      });
-
-      // Wait for any async operations to complete
-      await waitFor(() => {
-        expect(screen.queryByText('AdHoc Filters')).not.toBeInTheDocument();
-      });
-    });
   });
 });
