@@ -25,9 +25,6 @@ import (
 var (
 	// ErrInvalidCredentials is returned if username and password do not match
 	ErrInvalidCredentials = errors.New("invalid username or password")
-
-	// ErrCouldNotFindUser is returned when username hasn't been found
-	ErrCouldNotFindUser = errors.New("can't find user in RADIUS")
 )
 
 // Service is the interface for the RADIUS service.

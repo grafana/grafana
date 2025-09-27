@@ -595,6 +595,9 @@ func TestService_List(t *testing.T) {
 					"grafana_com": {
 						"enabled": false,
 					},
+					"radius": {
+						"enabled": false,
+					},
 				}
 			},
 			want: []*models.SSOSettings{
@@ -641,6 +644,11 @@ func TestService_List(t *testing.T) {
 				},
 				{
 					Provider: "grafana_com",
+					Settings: map[string]any{"enabled": false},
+					Source:   models.System,
+				},
+				{
+					Provider: "radius",
 					Settings: map[string]any{"enabled": false},
 					Source:   models.System,
 				},
@@ -762,6 +770,9 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 						"client_secret": "client_secret",
 						"client_id":     "client_id",
 					},
+					"radius": {
+						"enabled": false,
+					},
 				}
 			},
 			want: []*models.SSOSettings{
@@ -826,6 +837,13 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 					},
 					Source: models.System,
 				},
+				{
+					Provider: "radius",
+					Settings: map[string]any{
+						"enabled": false,
+					},
+					Source: models.System,
+				},
 			},
 			wantErr: false,
 		},
@@ -882,6 +900,9 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 						"secret":        "secret",
 						"client_secret": "client_secret",
 						"client_id":     "client_id",
+					},
+					"radius": {
+						"enabled": false,
 					},
 				}
 			},
@@ -943,6 +964,13 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 						"secret":        "*********",
 						"client_secret": "*********",
 						"client_id":     "client_id",
+					},
+					Source: models.System,
+				},
+				{
+					Provider: "radius",
+					Settings: map[string]any{
+						"enabled": false,
 					},
 					Source: models.System,
 				},
@@ -1837,8 +1865,9 @@ func Test_ProviderService(t *testing.T) {
 				"grafana_com",
 				"azuread",
 				"okta",
+				"radius",
 			},
-			strategiesLength: 2,
+			strategiesLength: 3,
 		},
 		{
 			name:             "should return all fallback strategies and it should return all OAuth providers and SAML because the licensing feature is enabled and the provider is setup",
@@ -1851,9 +1880,10 @@ func Test_ProviderService(t *testing.T) {
 				"grafana_com",
 				"azuread",
 				"okta",
+				"radius",
 				"saml",
 			},
-			strategiesLength: 3,
+			strategiesLength: 4,
 		},
 	}
 	for _, tc := range tests {
