@@ -25,6 +25,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 )
 
@@ -89,7 +90,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			)
 
 			service := &oauthtokentest.MockOauthTokenService{
-				TryTokenRefreshFunc: func(ctx context.Context, usr identity.Requester, _ *auth.UserToken) (*oauth2.Token, error) {
+				TryTokenRefreshFunc: func(ctx context.Context, usr identity.Requester, _ *oauthtoken.TokenRefreshMetadata) (*oauth2.Token, error) {
 					tryRefreshCalled = true
 					return nil, tt.expectedTryRefreshErr
 				},

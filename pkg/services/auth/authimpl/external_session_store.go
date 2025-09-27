@@ -65,6 +65,10 @@ func (s *store) List(ctx context.Context, query *auth.ListExternalSessionQuery) 
 		externalSession.ID = query.ID
 	}
 
+	if query.UserID != 0 {
+		externalSession.UserID = query.UserID
+	}
+
 	hash := sha256.New()
 
 	if query.SessionID != "" {
@@ -80,7 +84,7 @@ func (s *store) List(ctx context.Context, query *auth.ListExternalSessionQuery) 
 
 	queryResult := make([]*auth.ExternalSession, 0)
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Find(&queryResult, externalSession)
+		return sess.Desc("id").Find(&queryResult, externalSession)
 	})
 	if err != nil {
 		return nil, err

@@ -93,7 +93,11 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 		updateCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
 		defer cancel()
 
-		token, refreshErr := s.service.TryTokenRefresh(updateCtx, id, id.SessionToken)
+		token, refreshErr := s.service.TryTokenRefresh(updateCtx, id, &oauthtoken.TokenRefreshMetadata{
+			ExternalSessionID: id.SessionToken.ExternalSessionId,
+			AuthModule:        id.GetAuthenticatedBy(),
+			AuthID:            id.GetAuthID(),
+		})
 		if refreshErr != nil {
 			if errors.Is(refreshErr, context.Canceled) {
 				return nil, nil
