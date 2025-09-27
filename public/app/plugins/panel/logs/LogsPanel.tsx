@@ -47,6 +47,7 @@ import { LogLabels } from '../../../features/logs/components/LogLabels';
 import { LogRows } from '../../../features/logs/components/LogRows';
 import { COMMON_LABELS, dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
 
+import type { Options } from './panelcfg.gen';
 import {
   GetFieldLinksFn,
   isCoreApp,
@@ -63,7 +64,6 @@ import {
   isReactNodeArray,
   isSetDisplayedFields,
   onNewLogsReceivedType,
-  Options,
 } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
 
@@ -114,7 +114,7 @@ interface LogsPanelProps extends PanelProps<Options> {
    * controlsStorageKey?: string
    *
    * If controls are enabled, this function is called when a change is made in one of the options from the controls.
-   * onLogOptionsChange?: (option: LogListControlOptions, value: string | boolean | string[]) => void;
+   * onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
    *
    * When the feature toggle newLogsPanel is enabled, you can pass extra options to the LogLineMenu component.
    * These options are an array of items with { label, onClick } or { divider: true } for dividers.
