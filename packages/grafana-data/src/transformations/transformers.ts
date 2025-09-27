@@ -59,4 +59,5 @@ export const standardTransformers = {
   limitTransformer,
   groupToNestedTable,
   transposeTransformer,
+  convertFrameTypeTransformer,
 };
