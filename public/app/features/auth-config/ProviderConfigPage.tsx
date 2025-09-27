@@ -28,9 +28,16 @@ const getPageNav = (config?: SSOProvider): NavModelItem => {
 
   const providerDisplayName = UIMap[config.provider][1] || config.provider.toUpperCase();
 
+  let subTitle: string;
+  if (config.provider === 'radius') {
+    subTitle = `Configure RADIUS authentication settings for your Grafana instance.`;
+  } else {
+    subTitle = `To configure ${providerDisplayName} OAuth2 you must register your application with ${providerDisplayName}. The provider will generate a Client ID and Client Secret for you to use.`;
+  }
+
   return {
     text: providerDisplayName || '',
-    subTitle: `To configure ${providerDisplayName} OAuth2 you must register your application with ${providerDisplayName}. The provider will generate a Client ID and Client Secret for you to use.`,
+    subTitle,
     icon: config.settings.icon || 'shield',
     id: config.provider,
   };

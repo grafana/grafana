@@ -64,6 +64,17 @@ export type SSOProviderSettingsBase = {
   loginPrompt?: string;
   // For Google
   validateHd?: boolean;
+  // For RADIUS
+  radiusServer?: string;
+  radiusPort?: number;
+  radiusSecret?: string;
+  radiusTimeoutSeconds?: number;
+  classMappings?: Array<{
+    class: string;
+    orgId: number;
+    orgRole: string;
+    isGrafanaAdmin?: boolean;
+  }>;
 };
 
 // SSO data received from the API and sent to it

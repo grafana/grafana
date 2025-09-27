@@ -52,6 +52,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	fbStrategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),
 		strategies.NewLDAPStrategy(cfg),
+		strategies.NewRADIUSStrategy(cfg),
 	}
 
 	configurableProviders := make(map[string]bool)
@@ -65,6 +66,10 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 		providersList = append(providersList, social.LDAPProviderName)
 		configurableProviders[social.LDAPProviderName] = true
 	}
+
+	// Add RADIUS provider
+	providersList = append(providersList, social.RADIUSProviderName)
+	configurableProviders[social.RADIUSProviderName] = true
 
 	if licensing.FeatureEnabled(social.SAMLProviderName) {
 		fbStrategies = append(fbStrategies, strategies.NewSAMLStrategy(settingsProvider))

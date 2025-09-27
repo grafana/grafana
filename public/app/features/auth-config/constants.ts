@@ -12,4 +12,5 @@ export const UIMap: Record<string, [IconName, string]> = {
   azuread: ['microsoft', 'Azure AD'],
   okta: ['okta', 'Okta'],
   scim: ['scim', 'SCIM'],
+  radius: ['lock', 'RADIUS'],
 };
