@@ -4,6 +4,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // +k8s:deepcopy-gen=true
@@ -69,12 +70,23 @@ type DashboardHit struct {
 	Tags []string `json:"tags,omitempty"`
 	// The k8s name (eg, grafana UID) for the parent folder
 	Folder string `json:"folder,omitempty"`
+	// The resource is managed
+	ManagedBy ManagedBy `json:"managedBy,omitzero,omitempty"`
 	// Stick untyped extra fields in this object (including the sort value)
 	Field *common.Unstructured `json:"field,omitzero,omitempty"`
 	// When using "real" search, this is the score
 	Score float64 `json:"score,omitempty"`
 	// Explain the score (if possible)
 	Explain *common.Unstructured `json:"explain,omitzero,omitempty"`
+}
+
+type ManagedBy struct {
+	Kind utils.ManagerKind `json:"kind"`
+	ID   string            `json:"id,omitempty"`
+}
+
+func (m ManagedBy) IsZero() bool {
+	return m.Kind == "" && m.ID == ""
 }
 
 // +k8s:deepcopy-gen=true

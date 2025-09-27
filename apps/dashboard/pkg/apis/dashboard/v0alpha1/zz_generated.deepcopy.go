@@ -76,6 +76,7 @@ func (in *DashboardHit) DeepCopyInto(out *DashboardHit) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	out.ManagedBy = in.ManagedBy
 	if in.Field != nil {
 		in, out := &in.Field, &out.Field
 		*out = (*in).DeepCopy()
