@@ -1,6 +1,8 @@
 import {
+  CoreApp,
   DataFrame,
   DataLink,
+  DataLinkPostProcessor,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   dateTime,
@@ -44,6 +46,8 @@ export function createSpanLinkFactory({
   dataFrame,
   createFocusSpanLink,
   trace,
+  dataLinkPostProcessor,
+  app,
 }: {
   splitOpenFn: SplitOpen;
   traceToLogsOptions?: TraceToLogsOptionsV2;
@@ -52,6 +56,8 @@ export function createSpanLinkFactory({
   dataFrame?: DataFrame;
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
   trace: Trace;
+  dataLinkPostProcessor?: DataLinkPostProcessor;
+  app: CoreApp;
 }): SpanLinkFunc | undefined {
   if (!dataFrame) {
     return undefined;
@@ -64,10 +70,13 @@ export function createSpanLinkFactory({
     splitOpenFn,
     // We need this to make the types happy but for this branch of code it does not matter which field we supply.
     dataFrame.fields[0],
+    app,
     traceToLogsOptions,
     traceToMetricsOptions,
     createFocusSpanLink,
-    scopedVars
+    scopedVars,
+    dataFrame,
+    dataLinkPostProcessor
   );
 
   return function SpanLink(span: TraceSpan): SpanLinkDef[] | undefined {
@@ -144,10 +153,13 @@ export const feO11yTagKey = 'gf.feo11y.app.id';
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
   field: Field,
+  app: CoreApp,
   traceToLogsOptions?: TraceToLogsOptionsV2,
   traceToMetricsOptions?: TraceToMetricsOptions,
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>,
-  scopedVars?: ScopedVars
+  scopedVars?: ScopedVars,
+  dataFrame?: DataFrame,
+  dataLinkPostProcessor?: DataLinkPostProcessor
 ) {
   let logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
   if (traceToLogsOptions?.datasourceUid) {
@@ -229,7 +241,7 @@ function legacyCreateSpanLinkFactory(
         // Check if all variables are defined and don't show if they aren't. This is usually handled by the
         // getQueryFor* functions but this is for case of custom query supplied by the user.
         if (getVariableUsageInfo(dataLink.internal!.query, scopedVars).allVariablesDefined) {
-          const link = mapInternalLinkToExplore({
+          let link = mapInternalLinkToExplore({
             link: dataLink,
             internalLink: dataLink.internal!,
             scopedVars: scopedVars,
@@ -250,8 +262,28 @@ function legacyCreateSpanLinkFactory(
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
 
+          // Until we refactor legacy data links (#110685) and make it possible to define dynamic time ranges
+          // and scoped vars inside the default post-processor we need to skip post-processing for Explore to
+          // not override the time range set above with (mapInternalLinkToExplore). Eventually we will not need
+          // this special handling and calling mapInternalLinkToExplore.
+          if (app !== CoreApp.Explore) {
+            link =
+              (dataFrame &&
+                dataLinkPostProcessor?.({
+                  frame: dataFrame,
+                  field: field,
+                  dataLinkScopedVars: scopedVars,
+                  replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+                  config: {},
+                  link: dataLink,
+                  linkModel: link,
+                })) ||
+              link;
+          }
+
           links.push({
             href: link.href,
+            linkModel: link,
             title: t('explore.legacy-create-span-link-factory.title.related-logs', 'Related logs'),
             onClick: link.onClick,
             content: (
@@ -351,6 +383,7 @@ function legacyCreateSpanLinkFactory(
 
         links!.push({
           href: link.href,
+          linkModel: link,
           title,
           content: <Icon name="link" title={title} />,
           onClick: link.onClick,
