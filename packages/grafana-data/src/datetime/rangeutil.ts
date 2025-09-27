@@ -229,7 +229,14 @@ export const convertRawToRange = (
   format?: string
 ): TimeRange => {
   const from = dateTimeParse(raw.from, { roundUp: false, timeZone, fiscalYearStartMonth, format });
-  const to = dateTimeParse(raw.to, { roundUp: true, timeZone, fiscalYearStartMonth, format });
+
+  // For the 'to' field, only apply roundUp if the expression doesn't contain addition/subtraction operations
+  // This prevents expressions like 'now/d+17h' from being rounded to the end of the day
+  const toExpression = typeof raw.to === 'string' ? raw.to : '';
+  const hasAdditionOrSubtraction = toExpression.includes('+') || toExpression.includes('-');
+  const toRoundUp = !hasAdditionOrSubtraction;
+
+  const to = dateTimeParse(raw.to, { roundUp: toRoundUp, timeZone, fiscalYearStartMonth, format });
 
   return {
     from,

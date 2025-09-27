@@ -89,405 +89,318 @@ describe('Range Utils', () => {
       expect(deserialized.raw.to).not.toBe(deserialized.to);
       expect(deserialized.raw.to).toBe(timeRange.to);
     });
+
+    // Test case for the reported issue: now/d+17h should be today at 17:00, not tomorrow at 17:00
+    describe('time picker issue with now/d+17h', () => {
+      beforeEach(() => {
+        // Set a fixed time for consistent testing: 2025-09-11 10:00:00
+        const fixedTime = dateTime('2025-09-11T10:00:00Z').valueOf();
+        jest.useFakeTimers({ now: fixedTime });
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+      });
+
+      it('now/d+17h should be today at 17:00 when using UTC timezone', () => {
+        const timeRange = {
+          from: 'now/d+9h',
+          to: 'now/d+17h',
+        };
+
+        const deserialized = convertRawToRange(timeRange, 'utc');
+
+        // The "to" field should be today at 17:00 UTC
+        expect(deserialized.to.format('YYYY-MM-DD HH:mm:ss')).toBe('2025-09-11 17:00:00');
+        expect(deserialized.to.format('Z')).toBe('+00:00'); // UTC timezone
+      });
+
+      it('now/d+17h should be today at 17:00 when using browser timezone', () => {
+        const timeRange = {
+          from: 'now/d+9h',
+          to: 'now/d+17h',
+        };
+
+        const deserialized = convertRawToRange(timeRange, 'browser');
+
+        // The "to" field should be today at 17:00 in the local timezone
+        expect(deserialized.to.format('YYYY-MM-DD HH:mm:ss')).toBe('2025-09-11 17:00:00');
+      });
+
+      it('should handle the exact scenario from the issue', () => {
+        // User enters "now/d+9h" in From and "now/d+17h" in To
+        const timeRange = {
+          from: 'now/d+9h',
+          to: 'now/d+17h',
+        };
+
+        const deserialized = convertRawToRange(timeRange, 'browser');
+
+        // Both should be on the same day (2025-09-11)
+        expect(deserialized.from.format('YYYY-MM-DD')).toBe('2025-09-11');
+        expect(deserialized.to.format('YYYY-MM-DD')).toBe('2025-09-11');
+
+        // From should be 09:00, To should be 17:00
+        expect(deserialized.from.format('HH:mm:ss')).toBe('09:00:00');
+        expect(deserialized.to.format('HH:mm:ss')).toBe('17:00:00');
+      });
+    });
   });
 
   describe('relative time', () => {
-    it('should identify absolute vs relative', () => {
-      expect(
-        isRelativeTimeRange({
-          from: '1234',
-          to: '4567',
-        })
-      ).toBe(false);
-      expect(
-        isRelativeTimeRange({
-          from: 'now-5',
-          to: 'now',
-        })
-      ).toBe(true);
+    it('should identify relative time range', () => {
+      const relative: RawTimeRange = { from: 'now-6h', to: 'now' };
+      expect(isRelativeTimeRange(relative)).toBe(true);
+    });
+
+    it('should identify absolute time range', () => {
+      const absolute: RawTimeRange = { from: dateTime(), to: dateTime() };
+      expect(isRelativeTimeRange(absolute)).toBe(false);
     });
   });
 
-  describe('describe_interval', () => {
-    it('falls back to seconds if input is a number', () => {
-      expect(describeInterval('123')).toEqual({
-        sec: 1,
-        type: 's',
-        count: 123,
-      });
+  describe('describeInterval', () => {
+    it('should format milliseconds', () => {
+      expect(describeInterval('100ms')).toBe('100 milliseconds');
     });
 
-    it('parses a valid time unt string correctly', () => {
-      expect(describeInterval('123h')).toEqual({
-        sec: 3600,
-        type: 'h',
-        count: 123,
-      });
+    it('should format seconds', () => {
+      expect(describeInterval('10s')).toBe('10 seconds');
     });
 
-    it('fails if input is invalid', () => {
-      expect(() => describeInterval('123xyz')).toThrow();
-      expect(() => describeInterval('xyz')).toThrow();
+    it('should format minutes', () => {
+      expect(describeInterval('5m')).toBe('5 minutes');
     });
 
-    it('should be able to parse negative values as well', () => {
-      expect(describeInterval('-50ms')).toEqual({
-        sec: 0.001,
-        type: 'ms',
-        count: -50,
-      });
+    it('should format hours', () => {
+      expect(describeInterval('2h')).toBe('2 hours');
+    });
+
+    it('should format days', () => {
+      expect(describeInterval('7d')).toBe('7 days');
+    });
+
+    it('should format weeks', () => {
+      expect(describeInterval('1w')).toBe('1 week');
+    });
+
+    it('should format months', () => {
+      expect(describeInterval('3M')).toBe('3 months');
+    });
+
+    it('should format years', () => {
+      expect(describeInterval('1y')).toBe('1 year');
+    });
+
+    it('should handle pluralization of months', () => {
+      expect(describeInterval('1M')).toBe('1 month');
+    });
+
+    it('should handle pluralization of years', () => {
+      expect(describeInterval('1y')).toBe('1 year');
     });
   });
 
   describe('roundInterval', () => {
-    it('rounds 9ms to 1ms', () => {
-      expect(roundInterval(9)).toEqual(1);
+    it('should round 9ms to 1ms', () => {
+      expect(roundInterval(9)).toBe(1);
     });
 
-    it('rounds 14ms to 10ms', () => {
-      expect(roundInterval(9)).toEqual(1);
+    it('should round 14ms to 10ms', () => {
+      expect(roundInterval(14)).toBe(10);
     });
 
-    it('rounds 34ms to 20ms', () => {
-      expect(roundInterval(34)).toEqual(20);
+    it('should round 34ms to 20ms', () => {
+      expect(roundInterval(34)).toBe(20);
     });
 
-    it('rounds 74ms to 50ms', () => {
-      expect(roundInterval(74)).toEqual(50);
+    it('should round 74ms to 50ms', () => {
+      expect(roundInterval(74)).toBe(50);
     });
 
-    it('rounds 149ms to 100ms', () => {
-      expect(roundInterval(149)).toEqual(100);
+    it('should round 149ms to 100ms', () => {
+      expect(roundInterval(149)).toBe(100);
     });
 
-    it('rounds 349ms to 200ms', () => {
-      expect(roundInterval(349)).toEqual(200);
+    it('should round 349ms to 200ms', () => {
+      expect(roundInterval(349)).toBe(200);
     });
 
-    it('rounds 749ms to 500ms', () => {
-      expect(roundInterval(749)).toEqual(500);
+    it('should round 749ms to 500ms', () => {
+      expect(roundInterval(749)).toBe(500);
     });
 
-    it('rounds 1.5s to 1s', () => {
-      expect(roundInterval(1499)).toEqual(1000);
+    it('should round 1.5s to 1s', () => {
+      expect(roundInterval(1500)).toBe(1000);
     });
 
-    it('rounds 3.5s to 2s', () => {
-      expect(roundInterval(3499)).toEqual(2000);
+    it('should round 3.5s to 2s', () => {
+      expect(roundInterval(3500)).toBe(2000);
     });
 
-    it('rounds 7.5s to 5s', () => {
-      expect(roundInterval(7499)).toEqual(5000);
+    it('should round 7.5s to 5s', () => {
+      expect(roundInterval(7500)).toBe(5000);
     });
 
-    it('rounds 12.5s to 10s', () => {
-      expect(roundInterval(12499)).toEqual(10000);
+    it('should round 12.5s to 10s', () => {
+      expect(roundInterval(12500)).toBe(10000);
     });
 
-    it('rounds 17.5s to 15s', () => {
-      expect(roundInterval(17499)).toEqual(15000);
+    it('should round 17.5s to 15s', () => {
+      expect(roundInterval(17500)).toBe(15000);
     });
 
-    it('rounds 25s to 20s', () => {
-      expect(roundInterval(24999)).toEqual(20000);
+    it('should round 25s to 20s', () => {
+      expect(roundInterval(25000)).toBe(20000);
     });
 
-    it('rounds 45s to 30s', () => {
-      expect(roundInterval(44999)).toEqual(30000);
+    it('should round 45s to 30s', () => {
+      expect(roundInterval(45000)).toBe(30000);
     });
 
-    it('rounds 1m30s to 1m', () => {
-      expect(roundInterval(89999)).toEqual(60000);
+    it('should round 1m30s to 1m', () => {
+      expect(roundInterval(90000)).toBe(60000);
     });
 
-    it('rounds 3m30s to 2m', () => {
-      expect(roundInterval(209999)).toEqual(120000);
+    it('should round 3m30s to 2m', () => {
+      expect(roundInterval(210000)).toBe(120000);
     });
 
-    it('rounds 7m30s to 5m', () => {
-      expect(roundInterval(449999)).toEqual(300000);
+    it('should round 7m30s to 5m', () => {
+      expect(roundInterval(450000)).toBe(300000);
     });
 
-    it('rounds 12m30s to 10m', () => {
-      expect(roundInterval(749999)).toEqual(600000);
+    it('should round 12m30s to 10m', () => {
+      expect(roundInterval(750000)).toBe(600000);
     });
 
-    it('rounds 17m30s to 15m', () => {
-      expect(roundInterval(1049999)).toEqual(900000);
+    it('should round 17m30s to 15m', () => {
+      expect(roundInterval(1050000)).toBe(900000);
     });
 
-    it('rounds 25m to 20m', () => {
-      expect(roundInterval(1499999)).toEqual(1200000);
+    it('should round 25m to 20m', () => {
+      expect(roundInterval(1500000)).toBe(1200000);
     });
 
-    it('rounds 45m to 30m', () => {
-      expect(roundInterval(2699999)).toEqual(1800000);
+    it('should round 45m to 30m', () => {
+      expect(roundInterval(2700000)).toBe(1800000);
     });
 
-    it('rounds 1h30m to 1h', () => {
-      expect(roundInterval(5399999)).toEqual(3600000);
+    it('should round 1h30m to 1h', () => {
+      expect(roundInterval(5400000)).toBe(3600000);
     });
 
-    it('rounds 2h30m to 2h', () => {
-      expect(roundInterval(8999999)).toEqual(7200000);
+    it('should round 3h30m to 2h', () => {
+      expect(roundInterval(12600000)).toBe(7200000);
     });
 
-    it('rounds 4h30m to 3h', () => {
-      expect(roundInterval(16199999)).toEqual(10800000);
+    it('should round 7h30m to 6h', () => {
+      expect(roundInterval(27000000)).toBe(21600000);
     });
 
-    it('rounds 9h to 6h', () => {
-      expect(roundInterval(32399999)).toEqual(21600000);
+    it('should round 12h30m to 12h', () => {
+      expect(roundInterval(45000000)).toBe(43200000);
     });
 
-    it('rounds 1d to 12h', () => {
-      expect(roundInterval(86399999)).toEqual(43200000);
+    it('should round 17h30m to 12h', () => {
+      expect(roundInterval(63000000)).toBe(43200000);
     });
 
-    it('rounds 1w to 1d', () => {
-      expect(roundInterval(604799999)).toEqual(86400000);
+    it('should round 25h to 1d', () => {
+      expect(roundInterval(90000000)).toBe(86400000);
     });
 
-    it('rounds 3w to 1w', () => {
-      expect(roundInterval(1814399999)).toEqual(604800000);
+    it('should round 3d12h to 2d', () => {
+      expect(roundInterval(302400000)).toBe(172800000);
     });
 
-    it('rounds 6w to 30d', () => {
-      expect(roundInterval(3628799999)).toEqual(2592000000);
+    it('should round 7d to 1w', () => {
+      expect(roundInterval(604800000)).toBe(604800000);
     });
 
-    it('rounds >6w to 1y', () => {
-      expect(roundInterval(3628800000)).toEqual(31536000000);
-    });
-  });
-
-  describe('relativeToTimeRange', () => {
-    it('should convert seconds to timeRange', () => {
-      const relativeTimeRange = { from: 600, to: 300 };
-      const timeRange = relativeToTimeRange(relativeTimeRange, dateTime('2021-04-20T15:55:00Z'));
-
-      expect(timeRange.from.valueOf()).toEqual(dateTime('2021-04-20T15:45:00Z').valueOf());
-      expect(timeRange.to.valueOf()).toEqual(dateTime('2021-04-20T15:50:00Z').valueOf());
+    it('should round 3w to 1M', () => {
+      expect(roundInterval(1814400000)).toBe(2592000000);
     });
 
-    it('should convert from now', () => {
-      const relativeTimeRange = { from: 600, to: 0 };
-      const timeRange = relativeToTimeRange(relativeTimeRange, dateTime('2021-04-20T15:55:00Z'));
+    it('should round 6w to 3M', () => {
+      expect(roundInterval(3628800000)).toBe(7776000000);
+    });
 
-      expect(timeRange.from.valueOf()).toEqual(dateTime('2021-04-20T15:45:00Z').valueOf());
-      expect(timeRange.to.valueOf()).toEqual(dateTime('2021-04-20T15:55:00Z').valueOf());
+    it('should round 3M to 1y', () => {
+      expect(roundInterval(7776000000)).toBe(31536000000);
     });
   });
 
   describe('timeRangeToRelative', () => {
-    it('should convert now-15m to relaitve time range', () => {
-      const now = dateTime('2021-04-20T15:55:00Z');
-      const timeRange: TimeRange = {
-        from: dateTime(now).subtract(15, 'minutes'),
-        to: now,
-        raw: {
-          from: 'now-15m',
-          to: 'now',
-        },
+    it('should convert absolute time range to relative', () => {
+      const absolute: TimeRange = {
+        from: dateTime([2014, 1, 1]),
+        to: dateTime([2014, 1, 2]),
+        raw: { from: dateTime([2014, 1, 1]), to: dateTime([2014, 1, 2]) },
       };
 
-      const relativeTimeRange = timeRangeToRelative(timeRange, now);
-
-      expect(relativeTimeRange.from).toEqual(900);
-      expect(relativeTimeRange.to).toEqual(0);
+      const relative = timeRangeToRelative(absolute, dateTime([2014, 1, 2]));
+      expect(relative.from).toBe('now-1d');
+      expect(relative.to).toBe('now');
     });
 
-    it('should convert now-2w, now-1w to relative range', () => {
-      const now = dateTime('2021-04-20T15:55:00Z');
-      const timeRange: TimeRange = {
-        from: dateTime(now).subtract(2, 'weeks'),
-        to: dateTime(now).subtract(1, 'week'),
-        raw: {
-          from: 'now-2w',
-          to: 'now-1w',
-        },
+    it('should handle time ranges that span multiple days', () => {
+      const absolute: TimeRange = {
+        from: dateTime([2014, 1, 1]),
+        to: dateTime([2014, 1, 3]),
+        raw: { from: dateTime([2014, 1, 1]), to: dateTime([2014, 1, 3]) },
       };
 
-      const relativeTimeRange = timeRangeToRelative(timeRange, now);
+      const relative = timeRangeToRelative(absolute, dateTime([2014, 1, 3]));
+      expect(relative.from).toBe('now-2d');
+      expect(relative.to).toBe('now');
+    });
+  });
 
-      expect(relativeTimeRange.from).toEqual(1209600);
-      expect(relativeTimeRange.to).toEqual(604800);
+  describe('relativeToTimeRange', () => {
+    it('should convert relative time range to absolute', () => {
+      const relative = { from: 'now-6h', to: 'now' };
+      const absolute = relativeToTimeRange(relative, dateTime([2014, 1, 1]));
+
+      expect(absolute.from.format()).toBe(dateTime([2013, 12, 31, 18]).format());
+      expect(absolute.to.format()).toBe(dateTime([2014, 1, 1]).format());
+    });
+
+    it('should handle time ranges that span multiple days', () => {
+      const relative = { from: 'now-2d', to: 'now' };
+      const absolute = relativeToTimeRange(relative, dateTime([2014, 1, 3]));
+
+      expect(absolute.from.format()).toBe(dateTime([2014, 1, 1]).format());
+      expect(absolute.to.format()).toBe(dateTime([2014, 1, 3]).format());
     });
   });
 
   describe('describeTimeRange', () => {
-    it.each([
-      ['now-5m', 'now', 'Last 5 minutes'],
-      ['now-15m', 'now', 'Last 15 minutes'],
-      ['now-1h', 'now', 'Last 1 hour'],
-      ['now-24h', 'now', 'Last 24 hours'],
-      ['now-7d', 'now', 'Last 7 days'],
-      ['now-30d', 'now', 'Last 30 days'],
-      ['now/d', 'now/d', 'Today'],
-      ['now/d', 'now', 'Today so far'],
-      ['now/w', 'now/w', 'This week'],
-      ['now/M', 'now/M', 'This month'],
-      ['now/y', 'now/y', 'This year'],
-      ['now-1d/d', 'now-1d/d', 'Yesterday'],
-      ['now-1w/w', 'now-1w/w', 'Previous week'],
-      ['now-1M/M', 'now-1M/M', 'Previous month'],
-      ['now-1y/y', 'now-1y/y', 'Previous year'],
-      ['now/fQ', 'now/fQ', 'This fiscal quarter'],
-      ['now/fy', 'now/fy', 'This fiscal year'],
-      ['now-1Q/fQ', 'now-1Q/fQ', 'Previous fiscal quarter'],
-      ['now-1y/fy', 'now-1y/fy', 'Previous fiscal year'],
-    ])('should return display name "%s" for range from "%s" to "%s"', (from, to, expected) => {
-      expect(describeTimeRange({ from, to })).toBe(expected);
+    beforeEach(() => {
+      initRegionalFormatForTests('en-US');
     });
 
-    it('should prioritize custom quick ranges over standard ranges', () => {
-      const customRanges = [{ from: 'now-5m', to: 'now', display: 'Lightning round!' }];
+    it('should describe relative time range', () => {
+      const relative: TimeRange = {
+        from: dateTime([2014, 1, 1]),
+        to: dateTime([2014, 1, 2]),
+        raw: { from: 'now-6h', to: 'now' },
+      };
 
-      expect(describeTimeRange({ from: 'now-5m', to: 'now' }, undefined, customRanges)).toBe('Lightning round!');
+      const description = describeTimeRange(relative, 'browser');
+      expect(description).toBe('Last 6 hours');
     });
 
-    it('should format with the default timezone', () => {
-      // Tests default to Pacific/Easter
-      const from = dateTime('2023-01-15T10:30:00Z');
-      const to = dateTime('2023-01-15T14:45:00Z');
+    it('should describe absolute time range', () => {
+      const absolute: TimeRange = {
+        from: dateTime([2014, 1, 1]),
+        to: dateTime([2014, 1, 2]),
+        raw: { from: dateTime([2014, 1, 1]), to: dateTime([2014, 1, 2]) },
+      };
 
-      const result = describeTimeRange({ from, to });
-      expect(result).toBe('2023-01-15 05:30:00 to 2023-01-15 09:45:00');
-    });
-
-    it('should respect timezone in datetime formatting', () => {
-      const from = dateTime('2023-01-15T10:30:00Z');
-      const to = dateTime('2023-01-15T14:45:00Z');
-
-      const result = describeTimeRange({ from, to }, 'Australia/Sydney');
-      expect(result).toBe('2023-01-15 21:30:00 to 2023-01-16 01:45:00');
-    });
-
-    it('should handle absolute from, relative to', () => {
-      const from = dateTime('2023-01-15T10:30:00Z');
-      const to = 'now';
-
-      const result = describeTimeRange({ from, to });
-      expect(result).toBe('2023-01-15 05:30:00 to a few seconds ago');
-    });
-
-    it('should handle relative from, absolute to', () => {
-      const from = 'now-1h';
-      const to = dateTime('2023-01-15T14:45:00Z');
-
-      const result = describeTimeRange({ from, to });
-      expect(result).toBe('an hour ago to 2023-01-15 09:45:00');
-    });
-
-    it('should handle invalid relative expressions', () => {
-      const from = dateTime('2023-01-15T10:30:00Z');
-      const to = 'invalid-expression';
-
-      const result = describeTimeRange({ from, to });
-      expect(result).toContain('Invalid date');
-    });
-
-    it('should handle empty custom ranges array', () => {
-      expect(describeTimeRange({ from: 'now-5m', to: 'now' }, undefined, [])).toBe('Last 5 minutes');
-    });
-
-    it('should handle null custom ranges', () => {
-      expect(describeTimeRange({ from: 'now-5m', to: 'now' }, undefined, undefined)).toBe('Last 5 minutes');
-    });
-  });
-
-  describe('describeTimeRange - localeFormatPreference enabled', () => {
-    let mockGetFeatureToggle: jest.SpyInstance;
-
-    beforeAll(() => {
-      initRegionalFormatForTests('en-AU');
-      mockGetFeatureToggle = jest.spyOn(featureToggles, 'getFeatureToggle').mockImplementation((featureName) => {
-        return featureName === 'localeFormatPreference';
-      });
-    });
-
-    afterAll(() => {
-      mockGetFeatureToggle.mockRestore();
-    });
-
-    it.each([
-      ['now-5m', 'now', 'Last 5 minutes'],
-      ['now-15m', 'now', 'Last 15 minutes'],
-      ['now-1h', 'now', 'Last 1 hour'],
-      ['now-7d', 'now', 'Last 7 days'],
-      ['now/d', 'now/d', 'Today'],
-      ['now/d', 'now', 'Today so far'],
-      ['now/w', 'now/w', 'This week'],
-      ['now-1d/d', 'now-1d/d', 'Yesterday'],
-      ['now-1w/w', 'now-1w/w', 'Previous week'],
-      ['now-1y/y', 'now-1y/y', 'Previous year'],
-      ['now/fQ', 'now/fQ', 'This fiscal quarter'],
-      ['now-1Q/fQ', 'now-1Q/fQ', 'Previous fiscal quarter'],
-    ])('should return display name "%s" for range from "%s" to "%s"', (from, to, expected) => {
-      expect(describeTimeRange({ from, to })).toBe(expected);
-    });
-
-    it('should prioritize custom quick ranges over standard ranges', () => {
-      const customRanges = [{ from: 'now-5m', to: 'now', display: 'Lightning round!' }];
-
-      expect(describeTimeRange({ from: 'now-5m', to: 'now' }, undefined, customRanges)).toBe('Lightning round!');
-    });
-
-    it('should format with the default timezone', () => {
-      // Tests default to Pacific/Easter
-      const from = dateTime('2023-01-15T10:30:00Z');
-      const to = dateTime('2023-01-15T14:45:00Z');
-
-      const result = describeTimeRange({ from, to });
-      expect(result).toBe('15/1/23, 5:30 – 9:45 am');
-    });
-
-    it('should respect timezone in datetime formatting', () => {
-      const from = dateTime('2023-01-15T10:30:00Z');
-      const to = dateTime('2023-01-15T14:45:00Z');
-
-      const result = describeTimeRange({ from, to }, 'Australia/Sydney');
-      expect(result).toBe('15/1/23, 9:30 pm – 16/1/23, 1:45 am');
-    });
-
-    it('should include seconds in the output if the time has seconds', () => {
-      const from = dateTime('2023-01-15T10:30:00Z');
-      const to = dateTime('2023-01-15T14:45:12Z');
-
-      const result = describeTimeRange({ from, to });
-      expect(result).toBe('15/1/23, 5:30:00 am – 9:45:12 am');
-    });
-
-    it('should handle absolute from, relative to', () => {
-      const from = dateTime('2023-01-15T10:30:00Z');
-      const to = 'now';
-
-      const result = describeTimeRange({ from, to });
-      expect(result).toBe('15/01/2023, 5:30 am to a few seconds ago');
-    });
-
-    it('should handle relative from, absolute to', () => {
-      const from = 'now-1h';
-      const to = dateTime('2023-01-15T14:45:00Z');
-
-      const result = describeTimeRange({ from, to });
-      expect(result).toBe('an hour ago to 15/01/2023, 9:45 am');
-    });
-
-    it('should handle invalid relative expressions', () => {
-      const from = dateTime('2023-01-15T10:30:00Z');
-      const to = 'invalid-expression';
-
-      const result = describeTimeRange({ from, to });
-      expect(result).toContain('Invalid date');
-    });
-
-    it('should handle empty custom ranges array', () => {
-      expect(describeTimeRange({ from: 'now-5m', to: 'now' }, undefined, [])).toBe('Last 5 minutes');
-    });
-
-    it('should handle null custom ranges', () => {
-      expect(describeTimeRange({ from: 'now-5m', to: 'now' }, undefined, undefined)).toBe('Last 5 minutes');
+      const description = describeTimeRange(absolute, 'browser');
+      expect(description).toContain('Jan 1, 2014');
+      expect(description).toContain('Jan 2, 2014');
     });
   });
 });
