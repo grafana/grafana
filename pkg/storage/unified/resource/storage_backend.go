@@ -885,19 +885,17 @@ func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 	// Sort the entries
 	sortByResourceVersion(filteredKeys, sortAscending)
 
-	// Remove provisioned objects from trash
-	filteredKeys = k.removeProvisionedObjects(ctx, filteredKeys)
-
 	// Pagination: filter out items up to and including lastSeenRV
 	pagedKeys := applyPagination(filteredKeys, lastSeenRV, sortAscending)
 
 	iter := kvHistoryIterator{
-		keys:          pagedKeys,
-		currentIndex:  -1,
-		ctx:           ctx,
-		listRV:        listRV,
-		sortAscending: sortAscending,
-		dataStore:     k.dataStore,
+		keys:            pagedKeys,
+		currentIndex:    -1,
+		ctx:             ctx,
+		listRV:          listRV,
+		sortAscending:   sortAscending,
+		dataStore:       k.dataStore,
+		skipProvisioned: true,
 	}
 
 	err = fn(&iter)
@@ -908,51 +906,15 @@ func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 	return listRV, nil
 }
 
-// provisioned objects should not be retrievable in the trash
-func (k *kvStorageBackend) removeProvisionedObjects(ctx context.Context, keys []DataKey) []DataKey {
-	writeIndex := 0
-	for readIndex := 0; readIndex < len(keys); readIndex++ {
-		key := keys[readIndex]
-		data, err := k.dataStore.Get(ctx, key)
-		if err != nil && data == nil {
-			continue
-		}
-
-		value, err := readAndClose(data)
-		if err != nil {
-			continue
-		}
-
-		partial := &metav1.PartialObjectMetadata{}
-		err = json.Unmarshal(value, partial)
-		if err != nil {
-			continue
-		}
-
-		obj, err := utils.MetaAccessor(partial)
-		if err != nil {
-			continue
-		}
-
-		if obj.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
-			continue
-		}
-
-		keys[writeIndex] = keys[readIndex]
-		writeIndex++
-	}
-
-	return keys[:writeIndex]
-}
-
 // kvHistoryIterator implements ListIterator for KV storage history
 type kvHistoryIterator struct {
-	ctx           context.Context
-	keys          []DataKey
-	currentIndex  int
-	listRV        int64
-	sortAscending bool
-	dataStore     *dataStore
+	ctx             context.Context
+	keys            []DataKey
+	currentIndex    int
+	listRV          int64
+	sortAscending   bool
+	skipProvisioned bool
+	dataStore       *dataStore
 
 	// current
 	rv     int64
@@ -1001,6 +963,11 @@ func (i *kvHistoryIterator) Next() bool {
 	}
 	i.folder = meta.GetFolder()
 	i.err = nil
+
+	// if the resource is provisioned and we are skipping provisioned resources, continue onto the next one
+	if meta.GetAnnotation(utils.AnnoKeyManagerKind) != "" && i.skipProvisioned {
+		return i.Next()
+	}
 
 	return true
 }
