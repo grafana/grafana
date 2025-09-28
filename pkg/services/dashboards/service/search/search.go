@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	excludedFields = map[string]string{
+	standardFields = map[string]string{
 		resource.SEARCH_FIELD_EXPLAIN:     "",
 		resource.SEARCH_FIELD_SCORE:       "",
 		resource.SEARCH_FIELD_TITLE:       "",
@@ -91,7 +91,7 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 
 		fields := &common.Unstructured{}
 		for colIndex, col := range result.Results.Columns {
-			if _, ok := excludedFields[col.Name]; !ok {
+			if _, ok := standardFields[col.Name]; !ok {
 				val, err := resource.DecodeCell(col, colIndex, row.Cells[colIndex])
 				if err != nil {
 					return v0alpha1.SearchResults{}, err

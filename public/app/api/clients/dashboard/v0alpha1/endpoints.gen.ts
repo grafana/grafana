@@ -45,6 +45,18 @@ export type GetSearchApiArg = {
   /** add debugging info that may help explain why the result matched */
   explain?: boolean;
 };
+export type TermFacet = {
+  count?: number;
+  term?: string;
+};
+export type FacetResult = {
+  field?: string;
+  /** The number of documents that do *not* have this field */
+  missing?: number;
+  terms?: TermFacet[];
+  /** The distinct terms */
+  total?: number;
+};
 export type ManagedBy = {
   id?: string;
   kind: string;
@@ -70,12 +82,15 @@ export type DashboardHit = {
   /** The display name */
   title: string;
 };
+export type SortBy = {
+  desc?: boolean;
+  field: string;
+};
 export type SearchResults = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  /** Facet results */
   facets?: {
-    [key: string]: any;
+    [key: string]: FacetResult;
   };
   hits: DashboardHit[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
@@ -86,8 +101,7 @@ export type SearchResults = {
   offset?: number;
   /** Cost of running the query */
   queryCost?: number;
-  /** How are the results sorted */
-  sortBy?: any;
+  sortBy?: SortBy;
   /** The number of matching results */
   totalHits: number;
 };

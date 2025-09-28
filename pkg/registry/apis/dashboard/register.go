@@ -648,7 +648,7 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		defsBase := "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1."
 		refsBase := "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1."
 
-		kinds := []string{"SearchResults", "DashboardHit", "ManagedBy", "FacetResult", "TermFacet"}
+		kinds := []string{"SearchResults", "DashboardHit", "ManagedBy", "FacetResult", "TermFacet", "SortBy"}
 
 		// Add any missing definitions
 		//-----------------------------
@@ -658,12 +658,20 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 			if oas.Components.Schemas[clean] == nil {
 				switch k {
 				case "SearchResults":
+					v.Schema.Properties["sortBy"] = *spec.RefProperty("#/components/schemas/SortBy")
 					v.Schema.Properties["hits"] = *spec.ArrayProperty(
 						spec.RefProperty("#/components/schemas/DashboardHit"),
+					)
+					v.Schema.Properties["facets"] = *spec.MapProperty(
+						spec.RefProperty("#/components/schemas/FacetResult"),
 					)
 				case "DashboardHit":
 					v.Schema.Properties["managedBy"] = *spec.ArrayProperty(
 						spec.RefProperty("#/components/schemas/ManagedBy"),
+					)
+				case "FacetResult":
+					v.Schema.Properties["terms"] = *spec.ArrayProperty(
+						spec.RefProperty("#/components/schemas/TermFacet"),
 					)
 				}
 				oas.Components.Schemas[clean] = &v.Schema
@@ -671,7 +679,7 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		}
 
 		p := oas.Paths.Paths["/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search"]
-		p.Get.Responses.ResponsesProps.StatusCodeResponses[200] = &spec3.Response{
+		p.Get.Responses.StatusCodeResponses[200] = &spec3.Response{
 			ResponseProps: spec3.ResponseProps{
 				Content: map[string]*spec3.MediaType{
 					"application/json": {

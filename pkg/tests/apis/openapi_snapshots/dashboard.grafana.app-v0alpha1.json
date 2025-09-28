@@ -1988,10 +1988,9 @@
             "format": "int64"
           },
           "terms": {
-            "description": "Term facets",
             "type": "array",
             "items": {
-              "default": {}
+              "$ref": "#/components/schemas/TermFacet"
             }
           },
           "total": {
@@ -2028,10 +2027,9 @@
             "type": "string"
           },
           "facets": {
-            "description": "Facet results",
             "type": "object",
             "additionalProperties": {
-              "default": {}
+              "$ref": "#/components/schemas/FacetResult"
             }
           },
           "hits": {
@@ -2060,13 +2058,28 @@
             "format": "double"
           },
           "sortBy": {
-            "description": "How are the results sorted"
+            "$ref": "#/components/schemas/SortBy"
           },
           "totalHits": {
             "description": "The number of matching results",
             "type": "integer",
             "format": "int64",
             "default": 0
+          }
+        }
+      },
+      "SortBy": {
+        "type": "object",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "desc": {
+            "type": "boolean"
+          },
+          "field": {
+            "type": "string",
+            "default": ""
           }
         }
       },
