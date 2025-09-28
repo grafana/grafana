@@ -17,7 +17,7 @@ export interface RadialGaugeProps {
   height: number;
   semicircle?: boolean;
   gradient?: RadialGradientMode;
-  barWidth?: number;
+  barWidthFactor?: number;
   clockwise?: boolean;
   /** Adds a white spotlight for the end position */
   spotlight?: boolean;
@@ -40,7 +40,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     height = 256,
     semicircle = false,
     gradient = 'none',
-    barWidth = 10,
+    barWidthFactor = 0.4,
     clockwise = true,
     spotlight = false,
     glowBar = false,
@@ -57,9 +57,10 @@ export function RadialGauge(props: RadialGaugeProps) {
   let startAngle = semicircle ? 240 : 0;
   let endAngle = semicircle ? 120 : 360;
 
-  const margin = calculateMargin(size, glowBar, spotlight, barWidth);
+  const margin = calculateMargin(size, glowBar, spotlight, barWidthFactor);
   const color = values[0]?.display.color ?? theme.colors.primary.main;
   const primaryValue = values[0];
+  const barWidth = Math.max(barWidthFactor * (size / 7), 2);
 
   return (
     <div className={styles.vizWrapper} style={{ width, height }}>

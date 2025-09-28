@@ -40,13 +40,14 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
     });
 
     builder.addSliderInput({
-      path: 'barWidth',
+      path: 'barWidthFactor',
       name: t('radialbar.config.bar-width', 'Bar width'),
       category,
-      defaultValue: defaultOptions.barWidth,
+      defaultValue: defaultOptions.barWidthFactor,
       settings: {
-        min: 2,
-        max: 40,
+        min: 0.1,
+        max: 1,
+        step: 0.01,
       },
     });
 

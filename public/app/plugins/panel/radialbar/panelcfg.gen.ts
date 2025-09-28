@@ -11,7 +11,11 @@
 import * as common from '@grafana/schema';
 
 export interface Options extends common.SingleStatBaseOptions {
-  barWidth: number; 
+  /**
+   * Width of bar from 0-1
+   * The final width depends on visualization size
+   **/
+  barWidthFactor: number; 
   gradient: 'none' | 'hue' | 'shade' | 'scheme';
   effects?: RadialBarEffects;
   sparkline?: boolean;
@@ -24,7 +28,7 @@ export interface RadialBarEffects {
 }
 
 export const defaultOptions: Partial<Options> = {
-  barWidth: 15,
+  barWidthFactor: 0.4,
   gradient: 'hue',
   effects: { spotlight: true, barGlow: false, centerGlow: true },
   sparkline: true,

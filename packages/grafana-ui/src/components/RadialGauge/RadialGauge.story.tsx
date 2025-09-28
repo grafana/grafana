@@ -31,7 +31,7 @@ const meta: Meta<StoryProps> = {
     },
   },
   args: {
-    barWidth: 15,
+    barWidthFactor: 0.2,
     size: 250,
     spotlight: false,
     glowBar: false,
@@ -44,7 +44,7 @@ const meta: Meta<StoryProps> = {
     semicircle: false,
   },
   argTypes: {
-    barWidth: { control: { type: 'range', min: 5, max: 100 } },
+    barWidthFactor: { control: { type: 'range', min: 0.1, max: 1, step: 0.01 } },
     size: { control: { type: 'range', min: 50, max: 400 } },
     value: { control: { type: 'range', min: 0, max: 110 } },
     spotlight: { control: 'boolean' },
@@ -85,25 +85,25 @@ export const Examples: StoryFn = (args) => {
     <Stack direction={'column'} gap={3} wrap="wrap">
       <div>Bar width</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
-        <RadialBarExample seriesName="5" value={60} gradient="hue" color="blue" barWidth={5} />
-        <RadialBarExample seriesName="10" value={60} gradient="hue" color="green" barWidth={10} />
-        <RadialBarExample seriesName="20" value={60} gradient="hue" color="red" barWidth={20} />
-        <RadialBarExample seriesName="30" value={60} gradient="hue" color="purple" barWidth={30} />
+        <RadialBarExample seriesName="5" value={60} gradient="hue" color="blue" barWidthFactor={5} />
+        <RadialBarExample seriesName="10" value={60} gradient="hue" color="green" barWidthFactor={10} />
+        <RadialBarExample seriesName="20" value={60} gradient="hue" color="red" barWidthFactor={20} />
+        <RadialBarExample seriesName="30" value={60} gradient="hue" color="purple" barWidthFactor={30} />
       </Stack>
 
       <div>Gradient: Hue</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
-        <RadialBarExample value={30} gradient="hue" color="blue" barWidth={args.barWidth} />
-        <RadialBarExample value={50} gradient="hue" color="green" barWidth={args.barWidth} />
-        <RadialBarExample value={60} gradient="hue" color="red" barWidth={args.barWidth} />
-        <RadialBarExample value={90} gradient="hue" color="purple" barWidth={args.barWidth} />
+        <RadialBarExample value={30} gradient="hue" color="blue" barWidthFactor={args.barWidth} />
+        <RadialBarExample value={50} gradient="hue" color="green" barWidthFactor={args.barWidth} />
+        <RadialBarExample value={60} gradient="hue" color="red" barWidthFactor={args.barWidth} />
+        <RadialBarExample value={90} gradient="hue" color="purple" barWidthFactor={args.barWidth} />
       </Stack>
       <div>Gradient: Shade</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
-        <RadialBarExample value={30} gradient="shade" color="blue" barWidth={args.barWidth} />
-        <RadialBarExample value={40} gradient="shade" color="green" barWidth={args.barWidth} />
-        <RadialBarExample value={60} gradient="shade" color="red" barWidth={args.barWidth} />
-        <RadialBarExample value={70} gradient="shade" color="purple" barWidth={args.barWidth} />
+        <RadialBarExample value={30} gradient="shade" color="blue" barWidthFactor={args.barWidth} />
+        <RadialBarExample value={40} gradient="shade" color="green" barWidthFactor={args.barWidth} />
+        <RadialBarExample value={60} gradient="shade" color="red" barWidthFactor={args.barWidth} />
+        <RadialBarExample value={70} gradient="shade" color="purple" barWidthFactor={args.barWidth} />
       </Stack>
       <div>Spotlight + glow + centerGlow</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
@@ -114,7 +114,7 @@ export const Examples: StoryFn = (args) => {
           glowBar
           glowCenter
           color="blue"
-          barWidth={args.barWidth}
+          barWidthFactor={args.barWidth}
         />
         <RadialBarExample
           value={40}
@@ -123,7 +123,7 @@ export const Examples: StoryFn = (args) => {
           glowBar
           glowCenter
           color="green"
-          barWidth={args.barWidth}
+          barWidthFactor={args.barWidth}
         />
         <RadialBarExample
           value={60}
@@ -132,7 +132,7 @@ export const Examples: StoryFn = (args) => {
           glowBar
           glowCenter
           color="red"
-          barWidth={args.barWidth}
+          barWidthFactor={args.barWidth}
         />
         <RadialBarExample
           value={70}
@@ -141,7 +141,7 @@ export const Examples: StoryFn = (args) => {
           glowBar
           glowCenter
           color="purple"
-          barWidth={args.barWidth}
+          barWidthFactor={args.barWidth}
         />
       </Stack>
       <div>Gradient: Scheme, startAngle: 240° endAngle: 120°</div>
@@ -152,7 +152,7 @@ export const Examples: StoryFn = (args) => {
           value={40}
           semicircle
           clockwise
-          barWidth={args.barWidth}
+          barWidthFactor={args.barWidth}
         />
         <RadialBarExample
           colorMode={FieldColorModeId.ContinuousGrYlRd}
@@ -160,7 +160,7 @@ export const Examples: StoryFn = (args) => {
           value={100}
           semicircle
           clockwise
-          barWidth={args.barWidth}
+          barWidthFactor={args.barWidth}
         />
       </Stack>
       <div>Sparklines</div>
@@ -213,7 +213,7 @@ export const MultiSeries: StoryFn<StoryProps> = (args) => {
 };
 
 MultiSeries.args = {
-  barWidth: 10,
+  barWidthFactor: 10,
 };
 
 interface ExampleProps {
@@ -230,7 +230,7 @@ interface ExampleProps {
   spotlight?: boolean;
   glowBar?: boolean;
   glowCenter?: boolean;
-  barWidth?: number;
+  barWidthFactor?: number;
   sparkline?: boolean;
   seriesCount?: number;
   vizCount?: number;
@@ -251,7 +251,7 @@ function RadialBarExample({
   spotlight = false,
   glowBar = false,
   glowCenter = false,
-  barWidth = 20,
+  barWidthFactor = 20,
   sparkline = false,
   seriesCount = 0,
   vizCount = 1,
@@ -315,7 +315,7 @@ function RadialBarExample({
       values={values}
       width={size}
       height={size}
-      barWidth={barWidth}
+      barWidthFactor={barWidthFactor}
       gradient={gradient}
       semicircle={semicircle}
       clockwise={clockwise}
