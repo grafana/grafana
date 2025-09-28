@@ -4,6 +4,8 @@ import { DisplayValue, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
+import { RadialTextMode } from './RadialGauge';
+
 // function toCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
 //   let radian = ((angleInDegrees - 90) * Math.PI) / 180.0;
 //   return {
@@ -11,40 +13,75 @@ import { useStyles2 } from '../../themes/ThemeContext';
 //     y: centerY + radius * Math.sin(radian),
 //   };
 // }
+
 interface RadialTextProps {
   displayValue: DisplayValue;
   theme: GrafanaTheme2;
   size: number;
+  textMode: RadialTextMode;
+  vizCount: number;
 }
-export function RadialText({ displayValue, theme, size }: RadialTextProps) {
+
+export function RadialText({ displayValue, theme, size, textMode, vizCount }: RadialTextProps) {
   const styles = useStyles2(getStyles);
+
+  if (textMode === 'none') {
+    return null;
+  }
+
+  if (textMode === 'auto') {
+    textMode = vizCount === 1 ? 'value' : 'value_and_name';
+  }
+
+  const showValue = textMode === 'value' || textMode === 'value_and_name';
+  const showName = textMode === 'name' || textMode === 'value_and_name';
 
   const centerX = size / 2;
   const centerY = size / 2;
-  const height = 25 * theme.typography.body.lineHeight;
-  const titleSpacing = 4;
-  const titleY = centerY - 25 / 4;
-  const valueY = titleY + height / 2 + titleSpacing;
+
+  const valueFontSize = Math.max(size / 7, 12);
+  const unitFontSize = Math.max(valueFontSize * 0.7, 12);
+  const nameFontSize = Math.max(valueFontSize * 0.55, 12);
+
+  const valueHeight = valueFontSize * 1.2;
+  const nameHeight = nameFontSize * 1.2;
+
+  const valueY = showName ? centerY - nameHeight / 2 : centerY;
+  const nameY = showValue ? valueY + valueHeight : centerY;
+  const nameColor = showValue ? theme.colors.text.secondary : theme.colors.text.primary;
+  const suffixShift = (valueFontSize - unitFontSize * 1.2) / 2;
 
   return (
     <g>
-      <text
-        x={centerX}
-        y={titleY}
-        fontSize={'25'}
-        fill={theme.colors.text.primary}
-        className={styles.text}
-        textAnchor="middle"
-      >
-        {displayValue.prefix ?? ''}
-        <tspan>{displayValue.text}</tspan>
-        <tspan className={styles.text} fontSize={17}>
-          {displayValue.suffix ?? ''}
-        </tspan>
-      </text>
-      <text x={centerX} y={valueY} textAnchor="middle" dominantBaseline="middle" fill={theme.colors.text.secondary}>
-        {displayValue.title}
-      </text>
+      {showValue && (
+        <text
+          x={centerX}
+          y={valueY}
+          fontSize={valueFontSize}
+          fill={theme.colors.text.primary}
+          className={styles.text}
+          textAnchor="middle"
+          dominantBaseline="middle"
+        >
+          <tspan fontSize={unitFontSize}>{displayValue.prefix ?? ''}</tspan>
+          <tspan>{displayValue.text}</tspan>
+          <tspan className={styles.text} fontSize={unitFontSize} dy={suffixShift}>
+            {displayValue.suffix ?? ''}
+          </tspan>
+        </text>
+      )}
+      {showName && (
+        <text
+          fontSize={nameFontSize}
+          x={centerX}
+          y={nameY}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill={nameColor}
+        >
+          {displayValue.title}
+        </text>
+      )}
     </g>
   );
 }

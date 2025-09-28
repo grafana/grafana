@@ -13,7 +13,7 @@ import { FieldColorModeId, GraphGradientMode } from '@grafana/schema';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Stack } from '../Layout/Stack/Stack';
 
-import { RadialGauge, RadialGaugeProps, RadialGradientMode } from './RadialGauge';
+import { RadialGauge, RadialGaugeProps, RadialGradientMode, RadialTextMode } from './RadialGauge';
 
 interface StoryProps extends RadialGaugeProps {
   value: number;
@@ -34,8 +34,8 @@ const meta: Meta<StoryProps> = {
     barWidth: 15,
     size: 250,
     spotlight: false,
-    glow: false,
-    centerGlow: false,
+    glowBar: false,
+    glowCenter: false,
     sparkline: false,
     value: undefined,
     clockwise: true,
@@ -60,7 +60,15 @@ export const Basic: StoryFn<StoryProps> = (args) => {
   const colors = ['blue', 'green', 'red', 'purple', 'orange', 'yellow', 'dark-red', 'dark-blue', 'dark-green'];
 
   for (let i = 0; i < args.seriesCount; i++) {
-    visualizations.push(<RadialBarExample {...args} key={i} color={colors[i % colors.length]} seriesCount={0} />);
+    visualizations.push(
+      <RadialBarExample
+        {...args}
+        key={i}
+        color={colors[i % colors.length]}
+        seriesCount={0}
+        vizCount={args.seriesCount}
+      />
+    );
   }
 
   return (
@@ -99,23 +107,39 @@ export const Examples: StoryFn = (args) => {
       </Stack>
       <div>Spotlight + glow + centerGlow</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
-        <RadialBarExample value={30} gradient="shade" spotlight glow centerGlow color="blue" barWidth={args.barWidth} />
+        <RadialBarExample
+          value={30}
+          gradient="shade"
+          spotlight
+          glowBar
+          glowCenter
+          color="blue"
+          barWidth={args.barWidth}
+        />
         <RadialBarExample
           value={40}
           gradient="shade"
           spotlight
-          glow
-          centerGlow
+          glowBar
+          glowCenter
           color="green"
           barWidth={args.barWidth}
         />
-        <RadialBarExample value={60} gradient="shade" spotlight glow centerGlow color="red" barWidth={args.barWidth} />
+        <RadialBarExample
+          value={60}
+          gradient="shade"
+          spotlight
+          glowBar
+          glowCenter
+          color="red"
+          barWidth={args.barWidth}
+        />
         <RadialBarExample
           value={70}
           gradient="shade"
           spotlight
-          glow
-          centerGlow
+          glowBar
+          glowCenter
           color="purple"
           barWidth={args.barWidth}
         />
@@ -204,11 +228,13 @@ interface ExampleProps {
   clockwise?: boolean;
   size?: number;
   spotlight?: boolean;
-  glow?: boolean;
-  centerGlow?: boolean;
+  glowBar?: boolean;
+  glowCenter?: boolean;
   barWidth?: number;
   sparkline?: boolean;
   seriesCount?: number;
+  vizCount?: number;
+  textMode?: RadialTextMode;
 }
 
 function RadialBarExample({
@@ -223,11 +249,13 @@ function RadialBarExample({
   clockwise = true,
   size = 200,
   spotlight = false,
-  glow = false,
-  centerGlow = false,
+  glowBar = false,
+  glowCenter = false,
   barWidth = 20,
   sparkline = false,
   seriesCount = 0,
+  vizCount = 1,
+  textMode = 'auto',
 }: ExampleProps) {
   const theme = useTheme2();
 
@@ -292,8 +320,10 @@ function RadialBarExample({
       semicircle={semicircle}
       clockwise={clockwise}
       spotlight={spotlight}
-      glow={glow}
-      centerGlow={centerGlow}
+      glowBar={glowBar}
+      glowCenter={glowCenter}
+      textMode={textMode}
+      vizCount={vizCount}
     />
   );
 }

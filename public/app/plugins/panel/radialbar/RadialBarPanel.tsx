@@ -26,9 +26,9 @@ export function RadialBarPanel({
         clockwise
         barWidth={options.barWidth}
         gradient={options.gradient}
-        spotlight={options.spotlight}
-        glow={options.glow === 'bar' || options.glow === 'both'}
-        centerGlow={options.glow === 'center' || options.glow === 'both'}
+        spotlight={options.effects?.spotlight}
+        glowBar={options.effects?.barGlow}
+        glowCenter={options.effects?.centerGlow}
       />
     );
   }

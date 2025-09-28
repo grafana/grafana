@@ -4,6 +4,7 @@ import { commonOptionsBuilder } from '@grafana/ui';
 
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
 
+import { EffectsEditor } from './EffectsEditor';
 import { RadialBarPanel } from './RadialBarPanel';
 import { defaultOptions, Options } from './panelcfg.gen';
 import { GaugeSuggestionsSupplier } from './suggestions';
@@ -15,6 +16,13 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
     addStandardDataReduceOptions(builder);
     addOrientationOption(builder, category);
     commonOptionsBuilder.addTextSizeOptions(builder);
+
+    builder.addBooleanSwitch({
+      path: 'sparkline',
+      name: t('radialbar.config.sparkline', 'Sparkline'),
+      category,
+      defaultValue: defaultOptions.sparkline,
+    });
 
     builder.addRadio({
       path: 'gradient',
@@ -42,33 +50,13 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       },
     });
 
-    builder.addBooleanSwitch({
-      path: 'spotlight',
-      name: t('radialbar.config.spotlight', 'Spotlight'),
-      category,
-      defaultValue: defaultOptions.spotlight,
-    });
-
-    builder.addRadio({
-      path: 'glow',
-      name: t('radialbar.config.glow', 'Glow'),
-      category,
-      defaultValue: defaultOptions.glow,
-      settings: {
-        options: [
-          { value: 'none', label: t('radialbar.config.glow-none', 'None') },
-          { value: 'bar', label: t('radialbar.config.glow-bar', 'Bar') },
-          { value: 'center', label: t('radialbar.config.glow-center', 'Center') },
-          { value: 'both', label: t('radialbar.config.glow-both', 'Both') },
-        ],
-      },
-    });
-
-    builder.addBooleanSwitch({
-      path: 'sparkline',
-      name: t('radialbar.config.sparkline', 'Sparkline'),
-      category,
-      defaultValue: defaultOptions.sparkline,
+    builder.addCustomEditor({
+      id: 'radialbar-effects',
+      path: 'effects',
+      name: 'Effects',
+      editor: EffectsEditor,
+      settings: {},
+      defaultValue: defaultOptions.effects,
     });
   })
   .setSuggestionsSupplier(new GaugeSuggestionsSupplier());

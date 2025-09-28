@@ -13,15 +13,19 @@ import * as common from '@grafana/schema';
 export interface Options extends common.SingleStatBaseOptions {
   barWidth: number; 
   gradient: 'none' | 'hue' | 'shade' | 'scheme';
-  glow: 'none' | 'bar' | 'center' | 'both';
-  spotlight?: boolean; 
+  effects?: RadialBarEffects;
   sparkline?: boolean;
+}
+
+export interface RadialBarEffects {
+  barGlow?: boolean;
+  centerGlow?: boolean;
+  spotlight?: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {
   barWidth: 15,
   gradient: 'hue',
-  glow: 'center',
-  spotlight: true,
-  sparkline: true
+  effects: { spotlight: true, barGlow: false, centerGlow: true },
+  sparkline: true,
 };

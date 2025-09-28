@@ -1,14 +1,15 @@
 import { css } from '@emotion/css';
 import { useId } from 'react';
-import tinycolor from 'tinycolor2';
 
-import { DisplayValue, FieldConfig, FieldDisplay, getFieldColorMode, GrafanaTheme2 } from '@grafana/data';
+import { DisplayValue, FieldConfig, FieldDisplay, GrafanaTheme2 } from '@grafana/data';
 import { GraphFieldConfig, GraphGradientMode, LineInterpolation } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { Sparkline } from '../Sparkline/Sparkline';
 
+import { GradientDef, getGradientId } from './GradientDef';
 import { RadialText } from './RadialText';
+import { CenterGlowGradient, GlowGradient, SpotlightGradient } from './effects';
 
 export interface RadialGaugeProps {
   values: FieldDisplay[];
@@ -20,11 +21,18 @@ export interface RadialGaugeProps {
   clockwise?: boolean;
   /** Adds a white spotlight for the end position */
   spotlight?: boolean;
-  glow?: boolean;
-  centerGlow?: boolean;
+  glowBar?: boolean;
+  glowCenter?: boolean;
+  textMode?: RadialTextMode;
+  /**
+   * If multiple is shown in a group (via VizRepeater).
+   * This impacts the auto textMode
+   */
+  vizCount?: number; // Not implemented yet
 }
 
 export type RadialGradientMode = 'none' | 'scheme' | 'hue' | 'shade';
+export type RadialTextMode = 'auto' | 'value_and_name' | 'value' | 'name' | 'none';
 
 export function RadialGauge(props: RadialGaugeProps) {
   const {
@@ -35,8 +43,10 @@ export function RadialGauge(props: RadialGaugeProps) {
     barWidth = 10,
     clockwise = true,
     spotlight = false,
-    glow = false,
-    centerGlow = false,
+    glowBar = false,
+    glowCenter = false,
+    textMode = 'auto',
+    vizCount = 1,
     values,
   } = props;
   const theme = useTheme2();
@@ -47,7 +57,7 @@ export function RadialGauge(props: RadialGaugeProps) {
   let startAngle = semicircle ? 240 : 0;
   let endAngle = semicircle ? 120 : 360;
 
-  const margin = calculateMargin(size, glow, spotlight, barWidth);
+  const margin = calculateMargin(size, glowBar, spotlight, barWidth);
   const color = values[0]?.display.color ?? theme.colors.primary.main;
   const primaryValue = values[0];
 
@@ -65,22 +75,9 @@ export function RadialGauge(props: RadialGaugeProps) {
               gradient={gradient}
             />
           ))}
-          {spotlight && (
-            <radialGradient id={`spotlight-${gaugeId}`}>
-              <stop offset="0%" stopColor="white" stopOpacity={1} />
-              <stop offset="10%" stopColor="white" stopOpacity={1} />
-              <stop offset="35%" stopColor="white" stopOpacity={0.5} />
-              <stop offset="80%" stopColor="white" stopOpacity={0.1} />
-              <stop offset="100%" stopColor="white" stopOpacity={0} />
-            </radialGradient>
-          )}
-          {glow && <GlowGradient gaugeId={gaugeId} size={size} />}
-          {centerGlow && (
-            <radialGradient id={`circle-glow-${gaugeId}`} r={'50%'} fr={'0%'}>
-              <stop offset="0%" stopColor={color} stopOpacity={0.2} />
-              <stop offset="90%" stopColor={color} stopOpacity={0} />
-            </radialGradient>
-          )}
+          {spotlight && <SpotlightGradient gaugeId={gaugeId} />}
+          {glowBar && <GlowGradient gaugeId={gaugeId} size={size} />}
+          {glowCenter && <CenterGlowGradient gaugeId={gaugeId} color={color} />}
         </defs>
         <g>
           {values.map((displayValue, barIndex) => {
@@ -108,16 +105,24 @@ export function RadialGauge(props: RadialGaugeProps) {
                 roundedBars={true}
                 clockwise={clockwise}
                 spotlight={spotlight}
-                glow={glow}
+                glow={glowBar}
               />
             );
           })}
         </g>
         <g>
-          {centerGlow && (
+          {glowCenter && (
             <MiddleCircle barWidth={barWidth} fill={`url(#circle-glow-${gaugeId})`} size={size} margin={margin} />
           )}
-          {primaryValue && <RadialText displayValue={primaryValue.display} size={size} theme={theme} />}
+          {primaryValue && (
+            <RadialText
+              vizCount={vizCount}
+              textMode={textMode}
+              displayValue={primaryValue.display}
+              size={size}
+              theme={theme}
+            />
+          )}
         </g>
       </svg>
       {primaryValue && primaryValue.sparkline && (
@@ -130,25 +135,6 @@ export function RadialGauge(props: RadialGaugeProps) {
         />
       )}
     </div>
-  );
-}
-
-interface GlowGradientProps {
-  gaugeId: string;
-  size: number;
-}
-
-function GlowGradient({ gaugeId, size }: GlowGradientProps) {
-  const glowSize = 0.025 * size;
-
-  return (
-    <filter id={`glow-${gaugeId}`} filterUnits="userSpaceOnUse">
-      <feGaussianBlur stdDeviation={glowSize} />
-      <feComponentTransfer>
-        <feFuncA type="linear" slope="1" />
-      </feComponentTransfer>
-      <feBlend in2="SourceGraphic" />
-    </filter>
   );
 }
 
@@ -175,79 +161,6 @@ function getColorForBar(displayValue: DisplayValue, barIndex: number, gradient: 
   }
 
   return `url(#${getGradientId(gaugeId, barIndex)})`;
-}
-
-interface GradientDefProps {
-  fieldDisplay: FieldDisplay;
-  index: number;
-  theme: GrafanaTheme2;
-  gaugeId: string;
-  gradient: RadialGradientMode;
-}
-
-function GradientDef({ fieldDisplay, index, theme, gaugeId, gradient }: GradientDefProps) {
-  const colorModeId = fieldDisplay.field.color?.mode;
-  const valuePercent = fieldDisplay.display.percent ?? 0;
-  const colorMode = getFieldColorMode(colorModeId);
-
-  switch (gradient) {
-    case 'shade': {
-      const color = fieldDisplay.display.color ?? 'gray';
-      const color1 = tinycolor(color).darken(5);
-
-      return (
-        <linearGradient x1="0" y1="1" x2="1" y2="1" id={getGradientId(gaugeId, index)}>
-          <stop offset="0%" stopColor={color1.toString()} stopOpacity={1} />
-          <stop offset="50%" stopColor={tinycolor(color).lighten(15).toString()} stopOpacity={1} />
-          <stop offset="53%" stopColor={tinycolor(color).lighten(15).toString()} stopOpacity={1} />
-          <stop offset="90%" stopColor={color} stopOpacity={1} />
-        </linearGradient>
-      );
-    }
-    case 'scheme': {
-      if (colorMode.isContinuous && colorMode.getColors) {
-        const colors = colorMode.getColors(theme);
-        const count = colors.length;
-
-        return (
-          <linearGradient x1="0" y1="1" x2={1 / valuePercent} y2="1" id={getGradientId(gaugeId, index)}>
-            {colors.map((stopColor, i) => (
-              <stop key={i} offset={`${(i / (count - 1)).toFixed(2)}`} stopColor={stopColor} stopOpacity={1}></stop>
-            ))}
-          </linearGradient>
-        );
-      }
-
-      return null;
-    }
-    case 'hue': {
-      const color = fieldDisplay.display.color ?? 'gray';
-      const color1 = tinycolor(color).spin(-20).darken(5);
-      const color2 = tinycolor(color).saturate(20).spin(20).brighten(10);
-
-      return (
-        <linearGradient x1="0" y1="1" x2="1" y2="1" id={getGradientId(gaugeId, index)}>
-          {theme.isDark ? (
-            <>
-              <stop offset="0%" stopColor={color2.lighten(10).toString()} stopOpacity={1} />
-              <stop offset="100%" stopColor={color1.darken(10).toString()} stopOpacity={1} />
-            </>
-          ) : (
-            <>
-              <stop offset="0%" stopColor={color2.lighten(10).toString()} stopOpacity={1} />
-              <stop offset="100%" stopColor={color1.toString()} stopOpacity={1} />
-            </>
-          )}
-        </linearGradient>
-      );
-    }
-  }
-
-  return null;
-}
-
-function getGradientId(gaugeId: string, index: number) {
-  return `radial-gauge-${gaugeId}-${index}`;
 }
 
 export interface RadialBarProps {
