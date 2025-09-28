@@ -1093,6 +1093,11 @@ func (s *server) isTrashItemAuthorized(ctx context.Context, iter ListIterator, t
 		return false
 	}
 
+	// provisioned objects should not be retrievable in the trash
+	if obj.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
+		return false
+	}
+
 	// Trash is only accessible to admins or the user who deleted the object
 	return obj.GetUpdatedBy() == user.GetUID() || trashChecker(iter.Name(), iter.Folder())
 }
