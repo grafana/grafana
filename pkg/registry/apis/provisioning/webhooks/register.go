@@ -102,7 +102,7 @@ func ProvideWebhooksWithImages(
 }
 
 func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer) *WebhookExtraBuilder {
-	urlProvider := func(_ string) string {
+	urlProvider := func(_ context.Context, _ string) string {
 		return provisioningURL
 	}
 
