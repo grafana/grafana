@@ -76,7 +76,7 @@ func (c *StarsClient) Patch(ctx context.Context, identifier resource.Identifier,
 	return c.client.Patch(ctx, identifier, req, opts)
 }
 
-func (c *StarsClient) UpdateStatus(ctx context.Context, newStatus StarsStatus, opts resource.UpdateOptions) (*Stars, error) {
+func (c *StarsClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus StarsStatus, opts resource.UpdateOptions) (*Stars, error) {
 	return c.client.Update(ctx, &Stars{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       StarsKind().Kind(),
@@ -84,6 +84,8 @@ func (c *StarsClient) UpdateStatus(ctx context.Context, newStatus StarsStatus, o
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			ResourceVersion: opts.ResourceVersion,
+			Namespace:       identifier.Namespace,
+			Name:            identifier.Name,
 		},
 		Status: newStatus,
 	}, resource.UpdateOptions{

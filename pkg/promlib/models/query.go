@@ -80,10 +80,8 @@ type PrometheusQueryProperties struct {
 type ScopeSpec struct {
 	Name        string        `json:"name"` // This is the identifier from metadata.name of the scope model.
 	Title       string        `json:"title"`
-	Type        string        `json:"type"`
-	Description string        `json:"description"`
-	Category    string        `json:"category"`
-	Filters     []ScopeFilter `json:"filters"`
+	DefaultPath []string      `json:"defaultPath,omitempty"`
+	Filters     []ScopeFilter `json:"filters,omitempty"`
 }
 
 // ScopeFilter is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go
