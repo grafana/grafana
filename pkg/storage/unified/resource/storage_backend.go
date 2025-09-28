@@ -965,7 +965,7 @@ func (i *kvHistoryIterator) Next() bool {
 	i.err = nil
 
 	// if the resource is provisioned and we are skipping provisioned resources, continue onto the next one
-	if meta.GetAnnotation(utils.AnnoKeyManagerKind) != "" && i.skipProvisioned {
+	if i.skipProvisioned && meta.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
 		return i.Next()
 	}
 
