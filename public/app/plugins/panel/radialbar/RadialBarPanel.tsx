@@ -30,6 +30,7 @@ export function RadialBarPanel({
         glowBar={options.effects?.barGlow}
         glowCenter={options.effects?.centerGlow}
         vizCount={valueProps.count}
+        shape={options.shape}
       />
     );
   }

@@ -41,6 +41,7 @@ const meta: Meta<StoryProps> = {
     clockwise: true,
     gradient: 'hue',
     seriesCount: 1,
+    segmentCount: undefined,
   },
   argTypes: {
     barWidthFactor: { control: { type: 'range', min: 0.1, max: 1, step: 0.01 } },
@@ -48,9 +49,9 @@ const meta: Meta<StoryProps> = {
     value: { control: { type: 'range', min: 0, max: 110 } },
     spotlight: { control: 'boolean' },
     sparkline: { control: 'boolean' },
-
     gradient: { control: { type: 'radio', options: ['none', 'hue', 'shade', 'scheme'] } },
     seriesCount: { control: { type: 'range', min: 1, max: 20 } },
+    segmentCount: { control: { type: 'range', min: 10, max: 100 } },
   },
 };
 
@@ -200,6 +201,7 @@ interface ExampleProps {
   seriesCount?: number;
   vizCount?: number;
   textMode?: RadialTextMode;
+  segmentCount?: number;
 }
 
 function RadialBarExample({
@@ -221,6 +223,7 @@ function RadialBarExample({
   seriesCount = 0,
   vizCount = 1,
   textMode = 'auto',
+  segmentCount = 0,
 }: ExampleProps) {
   const theme = useTheme2();
 
@@ -289,6 +292,7 @@ function RadialBarExample({
       glowCenter={glowCenter}
       textMode={textMode}
       vizCount={vizCount}
+      segmentCount={segmentCount}
     />
   );
 }

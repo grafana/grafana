@@ -33,4 +33,5 @@ export const defaultOptions: Partial<Options> = {
   gradient: 'hue',
   effects: { spotlight: true, barGlow: false, centerGlow: true },
   sparkline: true,
+  shape: 'circle'
 };

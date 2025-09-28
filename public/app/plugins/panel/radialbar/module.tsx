@@ -21,7 +21,7 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       path: 'shape',
       name: t('radialbar.config.shape', 'Shape'),
       category,
-      defaultValue: 'circle',
+      defaultValue: defaultOptions.shape,
       settings: {
         options: [
           { value: 'circle', label: t('radialbar.config.shape-circle', 'Circle') },
