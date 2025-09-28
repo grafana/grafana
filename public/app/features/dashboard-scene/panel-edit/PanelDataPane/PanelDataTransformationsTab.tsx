@@ -2,14 +2,7 @@ import { css } from '@emotion/css';
 import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
 import { useState } from 'react';
 
-import {
-  DataTransformerConfig,
-  getTransformationLegacyRefId,
-  getNextRefId,
-  GrafanaTheme2,
-  PanelData,
-  refIDDependentIDs,
-} from '@grafana/data';
+import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {

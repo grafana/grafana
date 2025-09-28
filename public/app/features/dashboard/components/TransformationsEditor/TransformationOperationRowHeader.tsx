@@ -5,7 +5,7 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2, DataTransformerConfig } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, Input, useStyles2 } from '@grafana/ui';
+import { FieldValidationMessage, Icon, Input, useStyles2 } from '@grafana/ui';
 
 export interface Props {
   index: number;
@@ -21,7 +21,7 @@ export const TransformationOperationRowHeader = (props: Props) => {
 
   const styles = useStyles2(getStyles);
   const [isRefIdEditing, toggleIsRefIdEditing] = useToggle(false);
-  const [isEdited, setIsEdited] = useState(false);
+  const [isStaticRefId, setIsStaticRefId] = useState(transformation.refId !== undefined);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const onEndEditRefId = (newRefId: string) => {
@@ -35,23 +35,26 @@ export const TransformationOperationRowHeader = (props: Props) => {
     }
 
     if (transformation.refId !== trimmedNewRefId && trimmedNewRefId !== '') {
-      setIsEdited(true);
+      setIsStaticRefId(true);
       onChange(index, {
         ...transformation,
         refId: trimmedNewRefId,
       });
-    } else {
-      setIsEdited(false);
+    } else if (trimmedNewRefId === '') {
+      // if it was previously custom and is now empty, it is being cleared out and we want to save it as undefined
+      if (isStaticRefId) {
+        onChange(index, {
+          ...transformation,
+          refId: undefined,
+        });
+      }
+      // either way, if it is empty, we want it to display as not static
+      setIsStaticRefId(false);
     }
   };
 
   const onInputChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
     const newRefId = event.currentTarget.value.trim();
-
-    if (newRefId.length === 0) {
-      setValidationError('An empty refId is not allowed');
-      return;
-    }
 
     for (const otherTransformation of transformations) {
       if (otherTransformation !== transformation && newRefId === otherTransformation.refId) {
@@ -92,7 +95,7 @@ export const TransformationOperationRowHeader = (props: Props) => {
           data-testid="query-name-div"
           type="button"
         >
-          <span className={cx(styles.refIdStyle, !isEdited && styles.placeholderText)}>
+          <span className={cx(styles.refIdStyle, !isStaticRefId && styles.placeholderText)}>
             {transformation.refId ||
               t(
                 'dashboard.transformation-operation-row.transformation-editor-row-header.edit-refId-placeholder',
@@ -117,6 +120,7 @@ export const TransformationOperationRowHeader = (props: Props) => {
             className={styles.refIdInput}
             data-testid="transformation-refid-input"
           />
+          {validationError && <FieldValidationMessage horizontal>{validationError}</FieldValidationMessage>}
         </>
       )}
       <div>
