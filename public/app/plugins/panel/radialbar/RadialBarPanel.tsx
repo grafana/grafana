@@ -29,6 +29,7 @@ export function RadialBarPanel({
         spotlight={options.effects?.spotlight}
         glowBar={options.effects?.barGlow}
         glowCenter={options.effects?.centerGlow}
+        vizCount={valueProps.count}
       />
     );
   }

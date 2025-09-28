@@ -17,11 +17,17 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
     addOrientationOption(builder, category);
     commonOptionsBuilder.addTextSizeOptions(builder);
 
-    builder.addBooleanSwitch({
-      path: 'sparkline',
-      name: t('radialbar.config.sparkline', 'Sparkline'),
+    builder.addRadio({
+      path: 'shape',
+      name: t('radialbar.config.shape', 'Shape'),
       category,
-      defaultValue: defaultOptions.sparkline,
+      defaultValue: 'circle',
+      settings: {
+        options: [
+          { value: 'circle', label: t('radialbar.config.shape-circle', 'Circle') },
+          { value: 'gauge', label: t('radialbar.config.shape-gauge', 'Gauge') },
+        ],
+      },
     });
 
     builder.addRadio({
@@ -37,6 +43,13 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
           { value: 'scheme', label: t('radialbar.config.gradient-scheme', 'Scheme') },
         ],
       },
+    });
+
+    builder.addBooleanSwitch({
+      path: 'sparkline',
+      name: t('radialbar.config.sparkline', 'Sparkline'),
+      category,
+      defaultValue: defaultOptions.sparkline,
     });
 
     builder.addSliderInput({

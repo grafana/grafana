@@ -15,7 +15,7 @@ export interface RadialGaugeProps {
   values: FieldDisplay[];
   width: number;
   height: number;
-  semicircle?: boolean;
+  shape?: RadialShape;
   gradient?: RadialGradientMode;
   barWidthFactor?: number;
   clockwise?: boolean;
@@ -33,12 +33,13 @@ export interface RadialGaugeProps {
 
 export type RadialGradientMode = 'none' | 'scheme' | 'hue' | 'shade';
 export type RadialTextMode = 'auto' | 'value_and_name' | 'value' | 'name' | 'none';
+export type RadialShape = 'circle' | 'gauge';
 
 export function RadialGauge(props: RadialGaugeProps) {
   const {
     width = 256,
     height = 256,
-    semicircle = false,
+    shape = 'circle',
     gradient = 'none',
     barWidthFactor = 0.4,
     clockwise = true,
@@ -54,8 +55,8 @@ export function RadialGauge(props: RadialGaugeProps) {
   const styles = useStyles2(getStyles);
   const size = Math.min(width, height);
 
-  let startAngle = semicircle ? 240 : 0;
-  let endAngle = semicircle ? 120 : 360;
+  let startAngle = shape === 'gauge' ? 240 : 0;
+  let endAngle = shape === 'gauge' ? 120 : 360;
 
   const margin = calculateMargin(size, glowBar, spotlight, barWidthFactor);
   const color = values[0]?.display.color ?? theme.colors.primary.main;

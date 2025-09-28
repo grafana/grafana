@@ -19,6 +19,7 @@ export interface Options extends common.SingleStatBaseOptions {
   gradient: 'none' | 'hue' | 'shade' | 'scheme';
   effects?: RadialBarEffects;
   sparkline?: boolean;
+  shape: 'circle' | 'gauge'; 
 }
 
 export interface RadialBarEffects {
