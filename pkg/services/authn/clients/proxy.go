@@ -36,9 +36,10 @@ const (
 var proxyFields = [...]string{proxyFieldName, proxyFieldEmail, proxyFieldLogin, proxyFieldRole, proxyFieldGroups}
 
 var (
-	errNotAcceptedIP      = errutil.Unauthorized("auth-proxy.invalid-ip")
-	errEmptyProxyHeader   = errutil.Unauthorized("auth-proxy.empty-header")
-	errInvalidProxyHeader = errutil.Internal("auth-proxy.invalid-proxy-header")
+	errNotAcceptedIP            = errutil.Unauthorized("auth-proxy.invalid-ip")
+	errEmptyProxyHeader         = errutil.Unauthorized("auth-proxy.empty-header")
+	errInvalidProxyHeader       = errutil.Internal("auth-proxy.invalid-proxy-header")
+	errFailedToExtractProxyRole = errutil.Internal("auth-proxy.failed-to-extract-role")
 )
 
 var (
@@ -87,6 +88,10 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 
 	additional := getAdditionalProxyHeaders(r, c.cfg)
 	cacheKey, ok := getProxyCacheKey(username, additional)
+
+	if err := c.extractRole(username, additional); err != nil {
+		return nil, err
+	}
 
 	if c.cfg.AuthProxy.SyncTTL != 0 && ok {
 		identity, errCache := c.retrieveIDFromCache(ctx, cacheKey, r)
@@ -143,6 +148,30 @@ func (c *Proxy) retrieveIDFromCache(ctx context.Context, cacheKey string, r *aut
 			SyncPermissions: true,
 		},
 	}, nil
+}
+
+func (c *Proxy) extractRole(username string, additional map[string]string) error {
+	if c.cfg.AuthProxy.RoleAttributePath == "" {
+		return nil
+	}
+	var email string
+	if c.cfg.AuthProxy.HeaderProperty == "email" {
+		email = username
+	}
+	if v, ok := additional[proxyFieldEmail]; ok {
+		email = v
+	}
+	data := map[string]any{"email": email}
+	role, err := util.SearchJSONForStringAttr(c.cfg.AuthProxy.RoleAttributePath, data)
+	if err != nil {
+		return errFailedToExtractProxyRole.Errorf("failed to extract role from role_attribute_path: %w", err)
+	}
+	if role != "" {
+		additional[proxyFieldRole] = role
+	} else if c.cfg.AuthProxy.RoleAttributeStrict {
+		return errFailedToExtractProxyRole.Errorf("no role provided by role_attribute_path and role_attribute_strict is set")
+	}
+	return nil
 }
 
 func (c *Proxy) Test(ctx context.Context, r *authn.Request) bool {

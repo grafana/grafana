@@ -20,14 +20,17 @@ import (
 
 func TestProxy_Authenticate(t *testing.T) {
 	type testCase struct {
-		desc               string
-		req                *authn.Request
-		ips                string
-		proxyHeader        string
-		proxyHeaders       map[string]string
-		expectedErr        error
-		expectedUsername   string
-		expectedAdditional map[string]string
+		desc                string
+		req                 *authn.Request
+		ips                 string
+		proxyHeader         string
+		proxyHeaderProperty string
+		proxyHeaders        map[string]string
+		roleAttributePath   string
+		roleAttributeStrict bool
+		expectedErr         error
+		expectedUsername    string
+		expectedAdditional  map[string]string
 	}
 
 	tests := []testCase{
@@ -97,14 +100,124 @@ func TestProxy_Authenticate(t *testing.T) {
 			ips:         "127.0.0.1",
 			expectedErr: errNotAcceptedIP,
 		},
+		{
+			desc: "should extract role from email using role_attribute_path with contains",
+			ips:  "127.0.0.1",
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{
+						"X-Username": {"admin@example.com"},
+						"X-Email":    {"admin@example.com"},
+					},
+					RemoteAddr: "127.0.0.1:333",
+				},
+			},
+			proxyHeader: "X-Username",
+			proxyHeaders: map[string]string{
+				proxyFieldEmail: "X-Email",
+			},
+			roleAttributePath: "contains(email, 'admin') && 'Admin' || contains(email, 'editor') && 'Editor' || 'Viewer'",
+			expectedUsername:  "admin@example.com",
+			expectedAdditional: map[string]string{
+				proxyFieldEmail: "admin@example.com",
+				proxyFieldRole:  "Admin",
+			},
+		},
+		{
+			desc: "should fail when role_attribute_strict is true and no role is extracted",
+			ips:  "127.0.0.1",
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{
+						"X-Username": {"user@example.com"},
+						"X-Email":    {"user@example.com"},
+					},
+					RemoteAddr: "127.0.0.1:333",
+				},
+			},
+			proxyHeader: "X-Username",
+			proxyHeaders: map[string]string{
+				proxyFieldEmail: "X-Email",
+			},
+			roleAttributePath:   "''",
+			roleAttributeStrict: true,
+			expectedErr:         errFailedToExtractProxyRole,
+		},
+		{
+			desc: "should override existing role header with extracted role",
+			ips:  "127.0.0.1",
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{
+						"X-Username": {"editor@example.com"},
+						"X-Email":    {"editor@example.com"},
+						"X-Role":     {"Viewer"},
+					},
+					RemoteAddr: "127.0.0.1:333",
+				},
+			},
+			proxyHeader: "X-Username",
+			proxyHeaders: map[string]string{
+				proxyFieldEmail: "X-Email",
+				proxyFieldRole:  "X-Role",
+			},
+			roleAttributePath: "contains(email, 'editor') && 'Editor' || 'Viewer'",
+			expectedUsername:  "editor@example.com",
+			expectedAdditional: map[string]string{
+				proxyFieldEmail: "editor@example.com",
+				proxyFieldRole:  "Editor",
+			},
+		},
+		{
+			desc: "should use email from header_property when configured",
+			ips:  "127.0.0.1",
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{
+						"X-Username": {"viewer@example.com"},
+					},
+					RemoteAddr: "127.0.0.1:333",
+				},
+			},
+			proxyHeader:         "X-Username",
+			proxyHeaderProperty: "email",
+			proxyHeaders:        map[string]string{},
+			roleAttributePath:   "contains(email, 'viewer') && 'Viewer' || 'Admin'",
+			expectedUsername:    "viewer@example.com",
+			expectedAdditional: map[string]string{
+				proxyFieldRole: "Viewer",
+			},
+		},
+		{
+			desc: "should fail when role_attribute_path contains invalid JMESPath expression",
+			ips:  "127.0.0.1",
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{
+						"X-Username": {"user@example.com"},
+						"X-Email":    {"user@example.com"},
+					},
+					RemoteAddr: "127.0.0.1:333",
+				},
+			},
+			proxyHeader: "X-Username",
+			proxyHeaders: map[string]string{
+				proxyFieldEmail: "X-Email",
+			},
+			roleAttributePath: "email[",
+			expectedErr:       errFailedToExtractProxyRole,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AuthProxy.HeaderName = "X-Username"
+			cfg.AuthProxy.HeaderProperty = tt.proxyHeaderProperty
 			cfg.AuthProxy.Headers = tt.proxyHeaders
 			cfg.AuthProxy.Whitelist = tt.ips
+			cfg.AuthProxy.RoleAttributePath = tt.roleAttributePath
+			cfg.AuthProxy.RoleAttributeStrict = tt.roleAttributeStrict
 
 			calledUsername := ""
 			var calledAdditional map[string]string

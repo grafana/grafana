@@ -8,15 +8,17 @@ import (
 
 type AuthProxySettings struct {
 	// Auth Proxy
-	Enabled          bool
-	HeaderName       string
-	HeaderProperty   string
-	AutoSignUp       bool
-	EnableLoginToken bool
-	Whitelist        string
-	Headers          map[string]string
-	HeadersEncoded   bool
-	SyncTTL          int
+	Enabled             bool
+	HeaderName          string
+	HeaderProperty      string
+	AutoSignUp          bool
+	EnableLoginToken    bool
+	Whitelist           string
+	Headers             map[string]string
+	HeadersEncoded      bool
+	RoleAttributePath   string
+	RoleAttributeStrict bool
+	SyncTTL             int
 }
 
 func (cfg *Cfg) readAuthProxySettings() {
@@ -27,6 +29,8 @@ func (cfg *Cfg) readAuthProxySettings() {
 	authProxySettings.HeaderProperty = valueAsString(authProxy, "header_property", "")
 	authProxySettings.AutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 	authProxySettings.EnableLoginToken = authProxy.Key("enable_login_token").MustBool(false)
+	authProxySettings.RoleAttributePath = valueAsString(authProxy, "role_attribute_path", "")
+	authProxySettings.RoleAttributeStrict = authProxy.Key("role_attribute_strict").MustBool(false)
 	authProxySettings.SyncTTL = authProxy.Key("sync_ttl").MustInt(15)
 	authProxySettings.Whitelist = valueAsString(authProxy, "whitelist", "")
 	authProxySettings.Headers = make(map[string]string)
