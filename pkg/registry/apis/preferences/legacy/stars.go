@@ -98,7 +98,7 @@ func (s *DashboardStarsStorage) List(ctx context.Context, options *internalversi
 	}
 
 	user := userInfo.GetUID()
-	if userInfo.GetIsGrafanaAdmin() || userInfo.GetIdentityType() == authlib.TypeAccessPolicy {
+	if userInfo.GetIdentityType() == authlib.TypeAccessPolicy {
 		user = "" // can see everything
 	}
 
