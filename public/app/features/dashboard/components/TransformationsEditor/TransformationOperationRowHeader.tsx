@@ -21,9 +21,11 @@ export const TransformationOperationRowHeader = (props: Props) => {
 
   const styles = useStyles2(getStyles);
   const [isRefIdEditing, toggleIsRefIdEditing] = useToggle(false);
+  const [isEdited, setIsEdited] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const onEndEditRefId = (newRefId: string) => {
+    const trimmedNewRefId = newRefId.trim();
     toggleIsRefIdEditing(false);
 
     // Ignore change if invalid
@@ -32,11 +34,14 @@ export const TransformationOperationRowHeader = (props: Props) => {
       return;
     }
 
-    if (transformation.refId !== newRefId) {
+    if (transformation.refId !== trimmedNewRefId && trimmedNewRefId !== '') {
+      setIsEdited(true);
       onChange(index, {
         ...transformation,
-        refId: newRefId,
+        refId: trimmedNewRefId,
       });
+    } else {
+      setIsEdited(false);
     }
   };
 
@@ -87,7 +92,13 @@ export const TransformationOperationRowHeader = (props: Props) => {
           data-testid="query-name-div"
           type="button"
         >
-          <span className={styles.refIdStyle}>{transformation.refId}</span>
+          <span className={cx(styles.refIdStyle, !isEdited && styles.placeholderText)}>
+            {transformation.refId ||
+              t(
+                'dashboard.transformation-operation-row.transformation-editor-row-header.edit-refId-placeholder',
+                '(Auto)'
+              )}
+          </span>
           <Icon name="pen" className={styles.refIdEditIcon} size="sm" />
         </button>
       )}
@@ -101,7 +112,7 @@ export const TransformationOperationRowHeader = (props: Props) => {
             autoFocus
             onKeyDown={onKeyDown}
             onFocus={onFocus}
-            //invalid={validationError !== null}
+            invalid={validationError !== null}
             onChange={onInputChange}
             className={styles.refIdInput}
             data-testid="transformation-refid-input"
@@ -121,7 +132,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'Wrapper',
       display: 'flex',
       alignItems: 'center',
-      marginLeft: theme.spacing(0.5),
       overflow: 'hidden',
     }),
     refIdWrapper: css({
@@ -130,7 +140,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: '1px solid transparent',
       borderRadius: theme.shape.radius.default,
       alignItems: 'center',
-      padding: theme.spacing(0, 0, 0, 0.5),
       margin: 0,
       background: 'transparent',
       overflow: 'hidden',
@@ -155,11 +164,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.primary.text,
       cursor: 'pointer',
       overflow: 'hidden',
-      marginLeft: theme.spacing(0.5),
     }),
     refIdEditIcon: cx(
       css({
-        marginLeft: theme.spacing(2),
+        marginLeft: theme.spacing(1),
         visibility: 'hidden',
       }),
       'query-name-edit-icon'
@@ -168,27 +176,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       maxWidth: '300px',
       margin: '-4px 0',
     }),
-    collapsedText: css({
+    placeholderText: css({
       fontWeight: theme.typography.fontWeightRegular,
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
-      paddingLeft: theme.spacing(1),
       alignItems: 'center',
-      overflow: 'hidden',
       fontStyle: 'italic',
-      whiteSpace: 'nowrap',
       textOverflow: 'ellipsis',
-    }),
-    contextInfo: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-      fontStyle: 'italic',
-      color: theme.colors.text.secondary,
-      paddingLeft: '10px',
-      paddingRight: '10px',
-    }),
-    itemWrapper: css({
-      display: 'flex',
-      marginLeft: '4px',
     }),
     title: css({
       fontWeight: theme.typography.fontWeightBold,

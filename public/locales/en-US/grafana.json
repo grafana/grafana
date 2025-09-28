@@ -5421,7 +5421,8 @@
       },
       "title-delete": "Delete {{name}}?",
       "transformation-editor-row-header": {
-        "edit-refId": "Edit transformation name"
+        "edit-refId": "Edit transformation name",
+        "edit-refId-placeholder": "(Auto)"
       }
     },
     "transformation-picker": {

@@ -183,16 +183,6 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
     model.onChangeTransformations(update.map((t) => t.transformation));
   };
 
-  // populate refIds for any transformations that don't have them
-  const refLessTransformations = transformations.filter((transformation) => transformation.refId === undefined);
-  refLessTransformations.forEach((transformation) => {
-    if (refIDDependentIDs.includes(transformation.id)) {
-      transformation.refId = getTransformationLegacyRefId(transformation.id, data.series);
-    } else {
-      transformation.refId = getNextRefId(transformations, 'T-');
-    }
-  });
-
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <Droppable droppableId="transformations-list" direction="vertical">
