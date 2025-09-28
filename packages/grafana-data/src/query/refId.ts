@@ -1,15 +1,12 @@
-import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
 
 /**
  * Finds the next available refId for a query
  */
-export const getNextRefId = (item: DataQuery[] | DataTransformerConfig[], prefix?: string): string => {
+export const getNextRefId = (queries: DataQuery[]): string => {
   for (let num = 0; ; num++) {
-    let refId = getRefId(num);
-    if (prefix !== undefined) {
-      refId = `${prefix}${refId}`;
-    }
-    if (!item.some((i) => i.refId === refId)) {
+    const refId = getRefId(num);
+    if (!queries.some((query) => query.refId === refId)) {
       return refId;
     }
   }

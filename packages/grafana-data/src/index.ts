@@ -278,7 +278,7 @@ export {
   getValueMatcher,
 } from './transformations/matchers';
 export { type FieldValueMatcherConfig } from './transformations/matchers/fieldValueMatcher';
-export { DataTransformerID, refIDDependentIDs } from './transformations/transformers/ids';
+export { DataTransformerID } from './transformations/transformers/ids';
 export { MatcherID, FieldMatcherID, FrameMatcherID, ValueMatcherID } from './transformations/matchers/ids';
 export {
   ReducerID,
