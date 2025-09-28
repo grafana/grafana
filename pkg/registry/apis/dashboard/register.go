@@ -658,7 +658,8 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 			if oas.Components.Schemas[clean] == nil {
 				switch k {
 				case "SearchResults":
-					v.Schema.Properties["sortBy"] = *spec.RefProperty("#/components/schemas/SortBy")
+					v.Schema.Properties["sortBy"] = *spec.RefProperty(
+						"#/components/schemas/SortBy")
 					v.Schema.Properties["hits"] = *spec.ArrayProperty(
 						spec.RefProperty("#/components/schemas/DashboardHit"),
 					)
@@ -666,9 +667,8 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 						spec.RefProperty("#/components/schemas/FacetResult"),
 					)
 				case "DashboardHit":
-					v.Schema.Properties["managedBy"] = *spec.ArrayProperty(
-						spec.RefProperty("#/components/schemas/ManagedBy"),
-					)
+					v.Schema.Properties["managedBy"] = *spec.RefProperty(
+						"#/components/schemas/ManagedBy")
 				case "FacetResult":
 					v.Schema.Properties["terms"] = *spec.ArrayProperty(
 						spec.RefProperty("#/components/schemas/TermFacet"),

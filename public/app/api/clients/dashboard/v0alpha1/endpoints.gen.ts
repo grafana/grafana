@@ -70,7 +70,7 @@ export type DashboardHit = {
   field?: any;
   /** The k8s name (eg, grafana UID) for the parent folder */
   folder?: string;
-  managedBy?: ManagedBy[];
+  managedBy?: ManagedBy;
   /** The k8s "name" (eg, grafana UID) */
   name: string;
   /** Dashboard or folder */

@@ -1941,10 +1941,7 @@
             "type": "string"
           },
           "managedBy": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ManagedBy"
-            }
+            "$ref": "#/components/schemas/ManagedBy"
           },
           "name": {
             "description": "The k8s \"name\" (eg, grafana UID)",
