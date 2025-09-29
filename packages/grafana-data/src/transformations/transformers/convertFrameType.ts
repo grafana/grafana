@@ -71,7 +71,7 @@ export function convertFrameTypes(options: ConvertFrameTypeTransformerOptions, f
     return frames.map(convertSeriesToExemplar);
   }
   if (targetType === FrameType.Annotation) {
-    return frames.map(convertSeriesToAnnotation);
+    return frames.map((frame) => convertSeriesToAnnotation(frame, options));
   }
   return frames;
 }
@@ -121,14 +121,45 @@ const createIsRegionField = (frame: DataFrame) => {
   };
 };
 
-function convertSeriesToAnnotation(frame: DataFrame): DataFrame {
+function mapSourceFieldNameToAnnoFieldName(
+  options: ConvertFrameTypeTransformerOptions,
+  sourceFieldName: string | undefined
+) {
+  const annotationFieldMappingValues = Object.values(options?.annotationFieldMapping ?? []);
+  const annotationFieldMappingKeys = Object.keys(options?.annotationFieldMapping ?? []);
+  const idx = annotationFieldMappingValues.findIndex((fieldName: AnnotationFieldMapping) => {
+    return sourceFieldName === fieldName;
+  });
+
+  if (idx !== -1) {
+    return annotationFieldMappingKeys[idx];
+  }
+
+  return undefined;
+}
+
+function convertSeriesToAnnotation(frame: DataFrame, options: ConvertFrameTypeTransformerOptions): DataFrame {
   // TODO: ensure time field
   // TODO: ensure value field
-  // @todo general mapping from source fields to anno fields?
+  const mappedFrame = {
+    ...frame,
+    fields: [
+      ...frame.fields.map((sourceField) => {
+        return {
+          ...sourceField,
+          name: mapSourceFieldNameToAnnoFieldName(options, sourceField.name) ?? sourceField.name,
+        };
+      }),
+    ],
+    meta: {
+      ...frame.meta,
+      dataTopic: DataTopic.Annotations,
+    },
+  };
 
   return {
-    ...frame,
-    fields: [...frame.fields, createIsRegionField(frame)],
+    ...mappedFrame,
+    fields: [...mappedFrame.fields, createIsRegionField(mappedFrame)],
     meta: {
       ...frame.meta,
       dataTopic: DataTopic.Annotations,
