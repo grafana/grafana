@@ -35,7 +35,6 @@ import { getFolderPermissions } from './permissions';
 import { useHasSelection } from './state/hooks';
 import { setAllSelection } from './state/slice';
 import HackathonBrowseDashboardsPage from './hackathon14/HackathonBrowseDashboardsPage';
-import SparkJoyToggle from 'app/core/components/SparkJoyToggle';
 
 // New Browse/Manage/Search Dashboards views for nested folders
 const BrowseDashboardsPageOld = memo(
@@ -44,13 +43,7 @@ const BrowseDashboardsPageOld = memo(
     const dispatch = useDispatch();
 
     const styles = useStyles2(getStyles);
-    const [sparkJoy, setSparkJoy] = useState<boolean>(() => getSparkJoyEnabled(true));
-    // const onToggleSparkJoy = () =>
-    //   setSparkJoy((current) => {
-    //     const next = !current;
-    //     setSparkJoyEnabled(next);
-    //     return next;
-    //   });
+    const [sparkJoy] = useState<boolean>(() => getSparkJoyEnabled(true));
     const [searchState, stateManager] = useSearchStateManager();
     const isSearching = stateManager.hasSearchFilters();
     const location = useLocation();
@@ -260,11 +253,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 const BrowseDashboardsPage = ({ queryParams }: { queryParams: Record<string, string> }) => {
-  const [sparkJoy, setSparkJoy] = useState(true);
+  const [sparkJoy, setSparkJoy] = useState<boolean>(() => getSparkJoyEnabled(true));
+  
+  const handleToggleSparkJoy = () => {
+    setSparkJoy((current) => {
+      const next = !current;
+      setSparkJoyEnabled(next);
+      return next;
+    });
+  };
+  
   if (sparkJoy) {
-    return <HackathonBrowseDashboardsPage queryParams={queryParams} onToggleSparkJoy={() => setSparkJoy(!sparkJoy)} />;
+    return <HackathonBrowseDashboardsPage queryParams={queryParams} onToggleSparkJoy={handleToggleSparkJoy} />;
   } else {
-    return <BrowseDashboardsPageOld queryParams={queryParams} onToggleSparkJoy={() => setSparkJoy(!sparkJoy)} />;
+    return <BrowseDashboardsPageOld queryParams={queryParams} onToggleSparkJoy={handleToggleSparkJoy} />;
   }
 };
 
