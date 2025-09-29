@@ -543,9 +543,6 @@ type Cfg struct {
 	// Cloud Migration
 	CloudMigration CloudMigrationSettings
 
-	// Feature Management Settings
-	FeatureManagement FeatureMgmtSettings
-
 	// Alerting
 	AlertingEvaluationTimeout   time.Duration
 	AlertingNotificationTimeout time.Duration
@@ -1429,7 +1426,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	logSection := iniFile.Section("log")
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
 
-	cfg.readFeatureManagementConfig()
 	cfg.readPublicDashboardsSettings()
 	cfg.readCloudMigrationSettings()
 	cfg.readSecretsManagerSettings()
