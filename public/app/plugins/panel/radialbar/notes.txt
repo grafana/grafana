@@ -3,3 +3,5 @@
 * dynamic font size based on text length
 * text alignment factors 
 * segmented gauge shape
+* thresholds
+* segment hue gradient 

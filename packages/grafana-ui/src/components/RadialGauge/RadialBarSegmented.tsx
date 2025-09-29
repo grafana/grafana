@@ -54,7 +54,6 @@ export function RadialBarSegmented({
   }
 
   const getColorForValue = (value: number) => {
-    console.log('scheme', gradient);
     if (gradient === 'scheme') {
       return displayProcessor(value).color ?? 'green';
     }
@@ -101,47 +100,6 @@ export interface RadialSegmentProps {
   margin: number;
   segmentWidth: number;
   arcLengthDeg: number;
-}
-
-export function RadialSegmentLine({
-  gaugeId,
-  center,
-  angle,
-  size,
-  color,
-  barWidth,
-  roundedBars,
-  glow,
-  margin,
-  segmentWidth,
-}: RadialSegmentProps) {
-  const arcSize = size - barWidth;
-  const radius = arcSize / 2 - margin;
-
-  const angleRad = (Math.PI * (angle - 90)) / 180;
-  const lineLength = radius - barWidth;
-
-  const x1 = center + radius * Math.cos(angleRad);
-  const y1 = center + radius * Math.sin(angleRad);
-  const x2 = center + lineLength * Math.cos(angleRad);
-  const y2 = center + lineLength * Math.sin(angleRad);
-
-  return (
-    <line
-      x1={x1}
-      y1={y1}
-      x2={x2}
-      y2={y2}
-      fill="none"
-      fillOpacity="0.85"
-      stroke={color}
-      strokeOpacity="1"
-      strokeLinecap={roundedBars ? 'round' : 'butt'}
-      strokeWidth={segmentWidth}
-      strokeDasharray="0"
-      filter={glow ? `url(#glow-${gaugeId})` : undefined}
-    />
-  );
 }
 
 export function RadialSegmentArcPath({
@@ -211,3 +169,44 @@ function getOptimalSegmentCount(
 
   return Math.min(maxSegments, segmentCount);
 }
+
+// export function RadialSegmentLine({
+//   gaugeId,
+//   center,
+//   angle,
+//   size,
+//   color,
+//   barWidth,
+//   roundedBars,
+//   glow,
+//   margin,
+//   segmentWidth,
+// }: RadialSegmentProps) {
+//   const arcSize = size - barWidth;
+//   const radius = arcSize / 2 - margin;
+
+//   const angleRad = (Math.PI * (angle - 90)) / 180;
+//   const lineLength = radius - barWidth;
+
+//   const x1 = center + radius * Math.cos(angleRad);
+//   const y1 = center + radius * Math.sin(angleRad);
+//   const x2 = center + lineLength * Math.cos(angleRad);
+//   const y2 = center + lineLength * Math.sin(angleRad);
+
+//   return (
+//     <line
+//       x1={x1}
+//       y1={y1}
+//       x2={x2}
+//       y2={y2}
+//       fill="none"
+//       fillOpacity="0.85"
+//       stroke={color}
+//       strokeOpacity="1"
+//       strokeLinecap={roundedBars ? 'round' : 'butt'}
+//       strokeWidth={segmentWidth}
+//       strokeDasharray="0"
+//       filter={glow ? `url(#glow-${gaugeId})` : undefined}
+//     />
+//   );
+// }

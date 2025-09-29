@@ -40,7 +40,7 @@ const meta: Meta<StoryProps> = {
     value: undefined,
     clockwise: true,
     gradient: 'hue',
-    seriesCount: 1,
+    seriesCount: 0,
     segmentCount: undefined,
     segmentSpacing: undefined,
   },
@@ -81,8 +81,6 @@ export const Basic: StoryFn<StoryProps> = (args) => {
 };
 
 export const Examples: StoryFn = (args) => {
-  delete args.seriesCount;
-
   return (
     <Stack direction={'column'} gap={3} wrap="wrap">
       <div>Bar width</div>
@@ -241,6 +239,14 @@ export const MultiSeries: StoryFn<StoryProps> = (args) => {
 
 MultiSeries.args = {
   barWidthFactor: 0.2,
+};
+
+export const Temp: StoryFn<StoryProps> = (args) => {
+  return (
+    <Stack direction={'column'} gap={3}>
+      <RadialBarExample gradient="scheme" colorMode={FieldColorModeId.ContinuousReds} color="red" {...args} />
+    </Stack>
+  );
 };
 
 interface ExampleProps {
