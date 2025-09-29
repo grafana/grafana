@@ -116,9 +116,24 @@ func migrateCloudWatchQueriesInPanel(panel map[string]interface{}) {
 			continue
 		}
 
-		// Add CloudWatch fields if missing (set to 0 if not present)
-		t["metricEditorMode"] = GetIntValue(t, "metricEditorMode", 0)
-		t["metricQueryType"] = GetIntValue(t, "metricQueryType", 0)
+		// Add CloudWatch fields if missing (matches frontend migrateCloudWatchQuery logic)
+		if _, hasMetricQueryType := t["metricQueryType"]; !hasMetricQueryType {
+			t["metricQueryType"] = 0 // MetricQueryType.Search
+		}
+
+		if _, hasMetricEditorMode := t["metricEditorMode"]; !hasMetricEditorMode {
+			metricQueryType := GetIntValue(t, "metricQueryType", 0)
+			if metricQueryType == 1 { // MetricQueryType.Insights
+				t["metricEditorMode"] = 1 // MetricEditorMode.Code
+			} else {
+				expression := GetStringValue(t, "expression")
+				if expression != "" {
+					t["metricEditorMode"] = 1 // MetricEditorMode.Code
+				} else {
+					t["metricEditorMode"] = 0 // MetricEditorMode.Builder
+				}
+			}
+		}
 
 		// Get valid statistics (including null and empty strings)
 		validStats, isEmpty := getValidStatistics(t["statistics"])
@@ -140,9 +155,10 @@ func migrateCloudWatchQueriesInPanel(panel map[string]interface{}) {
 			// No valid statistics - keep query as-is
 			newTargets = append(newTargets, t)
 		case 1:
-			// Single statistic - set statistic field if not null
-			if statString := GetStringValue(map[string]interface{}{"stat": validStats[0]}, "stat"); statString != "" {
-				t["statistic"] = statString
+			// Single statistic - set statistic field
+			// Frontend doesn't set statistic property for null values
+			if validStats[0] != nil {
+				t["statistic"] = validStats[0]
 			}
 			newTargets = append(newTargets, t)
 		default:
@@ -215,8 +231,9 @@ func migrateCloudWatchAnnotationQueries(dashboard map[string]interface{}) {
 		case 1:
 			// Single statistic - set statistic field (matches frontend behavior)
 			delete(a, "statistics")
-			if statString := GetStringValue(map[string]interface{}{"stat": validStats[0]}, "stat"); statString != "" {
-				a["statistic"] = statString
+			// Frontend doesn't set statistic property for null values
+			if validStats[0] != nil {
+				a["statistic"] = validStats[0]
 			}
 			annotationsList[i] = a
 		default:
