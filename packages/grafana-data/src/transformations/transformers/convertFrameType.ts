@@ -24,8 +24,23 @@ export enum FrameType {
   Annotation = 'annotation',
 }
 
+export interface RequiredAnnotationFields {
+  text?: string;
+  time?: string;
+}
+
+export interface OptionalAnnotationFields {
+  title?: string;
+  timeEnd?: string;
+  tags?: string;
+  id?: string;
+}
+
+export type AnnotationFieldMapping = OptionalAnnotationFields & RequiredAnnotationFields;
+
 export interface ConvertFrameTypeTransformerOptions {
   targetType?: FrameType;
+  annotationFieldMapping?: AnnotationFieldMapping;
 }
 
 /** @alpha */
