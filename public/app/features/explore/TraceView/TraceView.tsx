@@ -157,7 +157,6 @@ export function TraceView(props: Props) {
         createFocusSpanLink,
         trace: traceProp,
         dataLinkPostProcessor: dataLinksContext?.dataLinkPostProcessor,
-        app: props.exploreId ? CoreApp.Explore : CoreApp.Unknown,
       }),
     [
       props.splitOpenFn,
@@ -169,7 +168,6 @@ export function TraceView(props: Props) {
       traceProp,
       createSpanLinkFromProps,
       dataLinksContext?.dataLinkPostProcessor,
-      props.exploreId,
     ]
   );
   const timeZone = useSelector((state) => getTimeZone(state.user));

@@ -1,5 +1,4 @@
 import {
-  CoreApp,
   DataFrame,
   DataLink,
   DataLinkPostProcessor,
@@ -47,7 +46,6 @@ export function createSpanLinkFactory({
   createFocusSpanLink,
   trace,
   dataLinkPostProcessor,
-  app,
 }: {
   splitOpenFn: SplitOpen;
   traceToLogsOptions?: TraceToLogsOptionsV2;
@@ -57,7 +55,6 @@ export function createSpanLinkFactory({
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
   trace: Trace;
   dataLinkPostProcessor?: DataLinkPostProcessor;
-  app: CoreApp;
 }): SpanLinkFunc | undefined {
   if (!dataFrame) {
     return undefined;
@@ -70,7 +67,6 @@ export function createSpanLinkFactory({
     splitOpenFn,
     // We need this to make the types happy but for this branch of code it does not matter which field we supply.
     dataFrame.fields[0],
-    app,
     traceToLogsOptions,
     traceToMetricsOptions,
     createFocusSpanLink,
@@ -153,7 +149,6 @@ export const feO11yTagKey = 'gf.feo11y.app.id';
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
   field: Field,
-  app: CoreApp,
   traceToLogsOptions?: TraceToLogsOptionsV2,
   traceToMetricsOptions?: TraceToMetricsOptions,
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>,
