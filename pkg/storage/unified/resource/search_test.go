@@ -188,6 +188,10 @@ func (m *mockSearchBackend) TotalDocs() int64 {
 	return 0
 }
 
+func (m *mockSearchBackend) GetOpenIndexes() []NamespacedResource {
+	return nil
+}
+
 func TestSearchGetOrCreateIndex(t *testing.T) {
 	// Setup mock implementations
 	storage := &mockStorageBackend{
