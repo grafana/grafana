@@ -24,15 +24,6 @@ TBC
 
 After you have set up Git Sync, you can synchronize any changes you make in your existing dashboards with your configured GitHub repository. Similarly, if you push a change in your repository, those changes are mirrored in your Grafana instance.
 
-## Known limitations
-
-Git Sync is under development and the following limitations apply:
-
-- You can only authenticate using your GitHub token.
-- Support for native Git and other providers, such as GitLab or Bitbucket, is scheduled.
-- If you're using Git Sync in Grafana Cloud you can only sync specific folders for the moment. Git Sync will be available for your full instance soon. 
-- History functionality in the UI is limited and restoring resources is currently not possible. For a workaround, restore dashboards directly in your GitHub repo by raising a PR.  
-
 ## View current status of synchronization
 
 When you synchronize a repository, Git Sync also creates a dashboard that provides a summary of resources, health, pull status, webhook, sync jobs, resources, and files. 
@@ -68,6 +59,12 @@ To delete a repository, follow these steps.
 Refer to [Work with provisioned dashboards](../provisioned-dashboards) for information on removing provisioned files.
 
 ## Troubleshoot synchronization
+
+{{< admonition type="caution" >}}
+
+Before you proceed to troubleshoot, understand the [known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#known-limitations/).
+
+{{< /admonition >}}
 
 Monitor the **View** status page for synchronization issues and status updates. Common events include:
 

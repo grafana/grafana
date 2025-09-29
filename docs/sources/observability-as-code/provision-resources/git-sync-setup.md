@@ -51,7 +51,7 @@ Evaluate the performance impact, if any, in a non-production environment.
 
 {{< admonition type="caution" >}}
 
-See also [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/use-git-sync#known-limitations/).
+See also [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#known-limitations/).
 
 {{< /admonition >}}
 
@@ -124,31 +124,27 @@ To connect your GitHub repository, follow these steps:
 
 ### Choose what to synchronize
 
-You can choose to either use one repository for an entire organization or to a new Grafana folder (up to 10 connections).
-If you choose to sync all resources with external storage, then all of your dashboards are synced to that one repository.
-You won't have the option of setting up additional repositories to connect to.
-
-You can choose to synchronize all resources with GitHub or you can sync resources to a new Grafana folder.
-The options you have depend on the status of your GitHub repository. For example, if you are syncing with a new or empty repository, you won't have an option to migrate dashboards.
-
 {{< admonition type="caution" >}}
 
 If you're using Git Sync in Grafana Cloud you can only sync specific folders for the moment. Git Sync will be available for your full instance soon. 
 
 {{< /admonition >}}
 
-1. Select how resources should be handled in Grafana.
+You can choose to either sync your entire organization resources with external storage, or to sync certain resources to a new Grafana folder (with up to 10 connections).
 
-- Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. You can only have one provisioned connection with this selection.
+- Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. With this option, all of your dashboards are synced to that one repository. You can only have one provisioned connection with this selection, and you won't have the option of setting up additional repositories to connect to. 
+
 - Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections. - Enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
+
 <!--  - Select **Migrate instance to repository** to migrate the Grafana instance to the repository. This option is not available during the first time you set up remote provisioning. -->
 
-1. Select **Synchronize** to continue.
+Select any of the two options and click **Synchronize** to continue.
+
+The options depend on the status of your GitHub repository. The first time you connect Grafana with a GitHub repository, you need to synchronize with external storage. If you are syncing with a new or empty repository, you won't have an option to migrate dashboards.
 
 <!-- This is only relevant if we include the "Migrate instance to repository" option above. -->
 <!-- ### Synchronize with external storage
 
-The first time you connect Grafana with a GitHub repository, you need to synchronize with external storage.
 Future updates will be automatically saved to the repository and provisioned back to the instance.
 
 {{< admonition type="note">}}
@@ -175,8 +171,7 @@ Finally, you can set up how often your configured storage is polled for updates.
 
 To verify that your dashboards are available at the location that you specified, click **Dashboards**. The name of the dashboard is listed in the **Name** column.
 
-Now that your dashboards have been synced from a repository, you can customize the name, change the branch, and create a pull request (PR) for it.
-Refer to [Use Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/use-git-sync/) for more information.
+Now that your dashboards have been synced from a repository, you can customize the name, change the branch, and create a pull request (PR) for it. Refer to [Use Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/use-git-sync/) for more information.
 
 ## Configure webhooks and image rendering
 
