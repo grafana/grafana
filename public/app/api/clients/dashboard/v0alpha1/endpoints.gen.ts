@@ -105,21 +105,3 @@ export type SearchResults = {
   /** The number of matching results */
   totalHits: number;
 };
-export type GetSearchApiArg = {
-  /** user query string */
-  query?: string;
-  /** search dashboards or folders.  When empty, this will search both */
-  type?: 'folder' | 'dashboard';
-  /** search/list within a folder (not recursive) */
-  folder?: string;
-  /** count distinct terms for selected fields */
-  facet?: string[];
-  /** tag query filter */
-  tags?: string[];
-  /** sortable field */
-  sort?: string;
-  /** number of results to return */
-  limit?: number;
-  /** add debugging info that may help explain why the result matched */
-  explain?: boolean;
-};
