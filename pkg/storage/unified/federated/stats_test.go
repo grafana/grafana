@@ -78,9 +78,10 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 	require.NoError(t, err)
 
 	ruleStore := ngalertstore.SetupStoreForTesting(t, db)
+	dashboardUID := "test"
 	_, err = ruleStore.InsertAlertRules(context.Background(), ngmodels.NewUserUID(tempUser), []ngmodels.AlertRule{
 		{
-			DashboardUID: &folder2UID,
+			DashboardUID: &dashboardUID,
 			UID:          "test",
 			Title:        "test",
 			OrgID:        1,
@@ -97,7 +98,7 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 			},
 			Condition:       "ok",
 			Updated:         now,
-			NamespaceUID:    "test",
+			NamespaceUID:    folder2UID,
 			ExecErrState:    ngmodels.ExecutionErrorState(ngmodels.Alerting),
 			NoDataState:     ngmodels.Alerting,
 			IntervalSeconds: 60,

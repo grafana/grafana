@@ -60,7 +60,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		group := "sql-fallback"
 
 		// Legacy alert rule table
-		err = fn("alert_rule", "org_id=? AND dashboard_uid=?", group, "alertrules", false)
+		err = fn("alert_rule", "org_id=? AND namespace_uid=?", group, "alertrules", false)
 		if err != nil {
 			return err
 		}
