@@ -1028,6 +1028,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardLibrary",
+        "resourceVersion": "1758902532246",
+        "creationTimestamp": "2025-09-26T16:02:12Z"
+      },
+      "spec": {
+        "description": "Enable suggested dashboards when creating new dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardNewLayouts",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-10-23T08:55:45Z"
@@ -3518,6 +3531,20 @@
         "description": "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "templateDashboards",
+        "resourceVersion": "1758897202631",
+        "creationTimestamp": "2025-09-26T14:33:22Z",
+        "deletionTimestamp": "2025-09-26T16:02:12Z"
+      },
+      "spec": {
+        "description": "Enables template dashboards suggestions when creating new dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true
       }
     },
     {
