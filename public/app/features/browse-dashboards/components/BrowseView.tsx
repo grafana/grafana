@@ -8,6 +8,7 @@ import { CallToActionCard, EmptyState, LinkButton, TextLink } from '@grafana/ui'
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { contextSrv } from 'app/core/core';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
@@ -47,6 +48,8 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
   const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled || hasNoRole ? skipToken : undefined);
   const rootItems = useSelector(rootItemsSelector);
 
+  const [, stateManager] = useSearchStateManager();
+
   const excludeUIDs = useMemo(() => {
     if (isProvisionedInstance || !provisioningEnabled) {
       return [];
@@ -80,6 +83,13 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
       dispatch(setItemSelectionState({ item, isSelected }));
     },
     [dispatch]
+  );
+
+  const handleTagClick = useCallback(
+    (tag: string) => {
+      stateManager.onAddTag(tag);
+    },
+    [stateManager]
   );
 
   const isSelected = useCallback(
@@ -197,6 +207,7 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
       onItemSelectionChange={handleItemSelectionChange}
       isItemLoaded={isItemLoaded}
       requestLoadMore={handleLoadMore}
+      onTagClick={handleTagClick}
     />
   );
 }
