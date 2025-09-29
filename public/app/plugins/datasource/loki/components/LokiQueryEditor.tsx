@@ -295,7 +295,7 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps & { sparkJoy?: boolean 
       <Space v={0.5} />
       <EditorRows>
         {editorMode === QueryEditorMode.Code && (
-          <LokiQueryCodeEditor {...props} query={query} onChange={onChangeInternal} showExplain={explain} sparkJoy={sparkJoy} />
+          <LokiQueryCodeEditor {...props} query={query} onChange={onChangeInternal} showExplain={explain} />
         )}
         {editorMode === QueryEditorMode.Builder && (
           <LokiQueryBuilderContainer

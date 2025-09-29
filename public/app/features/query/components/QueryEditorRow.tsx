@@ -33,6 +33,8 @@ import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { getRichHistory, SortOrder } from 'app/core/utils/richHistory';
+import { RichHistoryQuery } from 'app/types/explore';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 
@@ -40,6 +42,7 @@ import { QueryActionComponent, RowActionComponents } from './QueryActionComponen
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
 import { QueryLibraryEditingContainer } from './QueryLibraryEditingContainer';
+import { SparkJoySection } from './SparkJoySection';
 
 export interface Props<TQuery extends DataQuery> {
   data: PanelData;
@@ -84,6 +87,8 @@ interface State<TQuery extends DataQuery> {
   data?: PanelData;
   isOpen?: boolean;
   showingHelp: boolean;
+  recentQueries: RichHistoryQuery[];
+  isLoadingHistory: boolean;
 }
 
 export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Props<TQuery>, State<TQuery>> {
@@ -95,6 +100,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     data: undefined,
     isOpen: true,
     showingHelp: false,
+    recentQueries: [],
+    isLoadingHistory: false,
   };
 
   componentDidMount() {
@@ -139,6 +146,37 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       datasource: datasource as unknown as DataSourceApi<TQuery>,
       queriedDataSourceIdentifier: interpolatedUID,
     });
+
+    // Load query history for this datasource
+    this.loadQueryHistory(datasource.uid);
+  }
+
+  async loadQueryHistory(datasourceUid: string) {
+    if (!this.props.sparkJoy) {
+      return;
+    }
+
+    this.setState({ isLoadingHistory: true });
+
+    try {
+      const history = await getRichHistory({
+        search: '',
+        datasourceFilters: [datasourceUid],
+        sortOrder: SortOrder.Descending,
+        starred: false,
+      });
+
+      this.setState({
+        recentQueries: history.richHistory,
+        isLoadingHistory: false,
+      });
+    } catch (error) {
+      console.error('Failed to load query history:', error);
+      this.setState({
+        recentQueries: [],
+        isLoadingHistory: false,
+      });
+    }
   }
 
   componentDidUpdate(prevProps: Props<TQuery>) {
@@ -560,6 +598,16 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
               </OperationRowHelp>
             )}
             {editor}
+            {this.props.sparkJoy && (
+              <SparkJoySection
+                datasource={datasource}
+                history={this.state.recentQueries}
+                onRunQuery={this.props.onRunQuery}
+                onChangeQuery={this.props.onChange}
+                timeRange={this.props.range}
+                isLoadingHistory={this.state.isLoadingHistory}
+              />
+            )}
           </ErrorBoundaryAlert>
           {error && <QueryErrorAlert error={error} />}
           {visualization}
@@ -568,6 +616,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     );
 
     return (
+      // eslint-disable-next-line @grafana/no-aria-label-selectors
       <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows}>
         {queryLibraryRef && (
           <MaybeQueryLibraryEditingHeader

@@ -2,13 +2,13 @@ import { useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Field, Label, Stack } from '@grafana/ui';
+import { Field, Icon, Label, Stack, Tooltip } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 
 import { Folder, RuleFormValues } from '../../types/rule-form';
 import { CreateNewFolder } from '../create-folder/CreateNewFolder';
 
-export function FolderSelector() {
+export function FolderSelector({ showHelpTooltip = false }: { showHelpTooltip?: boolean }) {
   const {
     formState: { errors },
     setValue,
@@ -38,7 +38,19 @@ export function FolderSelector() {
                 'Select a folder to store your rule in.'
               )}
             >
-              <Trans i18nKey="alerting.rule-form.folder.label">Folder</Trans>
+              <Stack direction="row" alignItems="center" gap={0.5}>
+                <Trans i18nKey="alerting.rule-form.folder.label">Folder</Trans>
+                {showHelpTooltip && (
+                  <Tooltip
+                    content={t(
+                      'alerting.rule-form.folders.help-info',
+                      'Folders are used for storing alert rules. You can extend the access provided by a role to alert rules and assign permissions to individual folders.'
+                    )}
+                  >
+                    <Icon name="info-circle" size="sm" />
+                  </Tooltip>
+                )}
+              </Stack>
             </Label>
           }
           error={errors.folder?.message}

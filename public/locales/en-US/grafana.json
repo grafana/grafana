@@ -541,6 +541,7 @@
       "metric-aria-label-metric": "metric",
       "metric-placeholder-recorded-metric": "Give the name of the new recorded metric",
       "placeholder-name": "Give your {{namePlaceholder}} a name",
+      "recording-rule-pattern": "Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.",
       "title-section": "Enter {{entityName}} name"
     },
     "alert-rules": {
@@ -1716,7 +1717,9 @@
       "edit-labels": "Edit labels",
       "labels": "Labels",
       "no-labels-selected": "No labels selected",
-      "title-labels": "Labels"
+      "title-labels": "Labels",
+      "tooltip-text": "Labels are used to differentiate an alert from all other alerts.You can use them for searching, silencing, and routing notifications.",
+      "tooltip-text-2": "The dropdown only displays labels that you have previously used for alerts. Select a label from the options below or type in a new one."
     },
     "labels-sub-form": {
       "description": "Select a label key/value from the options below, or type a new one and press Enter.",
@@ -2751,6 +2754,12 @@
     },
     "simpleCondition": {
       "alertCondition": "Alert condition"
+    },
+    "simplified": {
+      "condition-and-recipient": "Condition and Recipient",
+      "rule-definition": "Rule Definition",
+      "step-number-one": "1",
+      "step-number-two": "2"
     },
     "smart-alert-type-detector": {
       "data-source-managed": "Data source-managed",
@@ -6977,7 +6986,9 @@
       }
     },
     "explore-toolbar": {
+      "go-back-old-view": "Go back to old view",
       "outline": "Outline",
+      "spark-some-joy": "Spark Some Joy",
       "sparks-joy": "Sparks Joy",
       "tooltip-content-outline": "Content outline"
     },
