@@ -7,6 +7,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { SparkJoyToggle } from 'app/core/components/SparkJoyToggle';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
@@ -87,6 +89,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
   const { redirectToDetailsPage } = useRedirectToDetailsPage(uidFromParams);
   const [showEditYaml, setShowEditYaml] = useState(false);
+  const [sparkJoy, setSparkJoy] = useState(true);
 
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
   const [updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
@@ -109,6 +112,10 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
     return defaultFormValuesForRuleType(ruleType);
   }, [existing, prefill, ruleType]);
+
+  const onToggleSparkJoy = () => setSparkJoy((current) => !current);
+
+  const navBarActions = [<SparkJoyToggle key="sparks-joy-toggle" value={sparkJoy} onToggle={onToggleSparkJoy} />];
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
@@ -228,6 +235,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
   return (
     <FormProvider {...formAPI}>
+      <AppChromeUpdate actions={navBarActions} />
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <div className={styles.contentOuter}>
           {isManualRestore && (

@@ -16,9 +16,9 @@ import {
   ButtonGroup,
   useStyles2,
   Button,
-  Switch,
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { SparkJoyToggle } from 'app/core/components/SparkJoyToggle';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types/explore';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
@@ -69,7 +69,14 @@ interface Props {
   onToggleSparkJoy: () => void;
 }
 
-export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen, sparkJoy, onToggleSparkJoy }: Props) {
+export function ExploreToolbar({
+  exploreId,
+  onChangeTime,
+  onContentOutlineToogle,
+  isContentOutlineOpen,
+  sparkJoy,
+  onToggleSparkJoy,
+}: Props) {
   const dispatch = useDispatch();
   const splitted = useSelector(isSplit);
   const styles = useStyles2(getStyles, splitted);
@@ -205,7 +212,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
 
   const onChangeRefreshInterval = (refreshInterval: string) => {
     dispatch(changeRefreshInterval({ exploreId, refreshInterval }));
-    
+
     // If Live option is selected, we need to report the interaction for analytics
     if (refreshInterval === 'LIVE' && datasourceInstance) {
       reportInteraction('grafana_explore_logs_live_tailing_clicked', {
@@ -228,14 +235,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
         <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
       </Button>
     ),
-    <Switch
-      key="sparks-joy-toggle"
-      value={sparkJoy}
-      name='Spark joy'
-      onChange={onToggleSparkJoy}
-      aria-label={t('explore.explore-toolbar.sparks-joy', 'Sparks Joy')}
-      label={t('explore.explore-toolbar.sparks-joy', 'Sparks Joy')}
-    />,
+    <SparkJoyToggle key="sparks-joy-toggle" value={sparkJoy} onToggle={onToggleSparkJoy} />,
     !sparkJoy && <ShortLinkButtonMenu key="share" />,
   ];
 
