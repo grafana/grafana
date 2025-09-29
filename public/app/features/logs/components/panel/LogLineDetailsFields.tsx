@@ -419,7 +419,7 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     lineHeight: theme.typography.body.lineHeight,
     whiteSpace: 'pre-wrap',
-    wordBreak: 'break-all',
+    wordBreak: 'break-word',
     maxHeight: '50vh',
     overflow: 'auto',
   }),

@@ -121,6 +121,11 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 				continue
 			}
 
+			// Ignore file change for `.keep` folders
+			if strings.HasSuffix(file.Path, ".keep") {
+				continue
+			}
+
 			changes = append(changes, ResourceFileChange{
 				Action: repository.FileActionCreated, // or previously ignored/failed
 				Path:   safeSegment,

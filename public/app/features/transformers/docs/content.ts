@@ -1610,14 +1610,6 @@ ${buildImageContent(
   },
 };
 
-export function getLinkToDocs(): string {
-  return `
-  Go to the <a href="https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana" target="_blank" rel="noreferrer">
-  transformation documentation
-  </a> for more general documentation.
-  `;
-}
-
 function buildImageContent(source: string, imageRenderType: ImageRenderType, imageAltText: string) {
   return imageRenderType === 'shortcodeFigure'
     ? // This will build a Hugo Shortcode "figure" image template, which shares the same default class and max-width.

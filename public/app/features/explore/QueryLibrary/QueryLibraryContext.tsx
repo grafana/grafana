@@ -30,7 +30,7 @@ export type QueryLibraryContextType = {
    * @param newQuery New query to be added to the library.
    */
   openDrawer: (options: QueryLibraryDrawerOptions) => void;
-  closeDrawer: () => void;
+  closeDrawer: (isSelectingQuery?: boolean, isEditingQuery?: boolean) => void;
   isDrawerOpen: boolean;
   onSave?: () => void;
 

@@ -39,6 +39,8 @@ export function transformVariableHideToEnumV1(hide?: VariableHide): VariableHide
       return VariableHideV1.hideLabel;
     case 'hideVariable':
       return VariableHideV1.hideVariable;
+    case 'inControlsMenu':
+      return VariableHideV1.inControlsMenu;
     default:
       return VariableHideV1.dontHide;
   }
