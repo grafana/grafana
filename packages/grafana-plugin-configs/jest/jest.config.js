@@ -18,7 +18,7 @@ export default {
   setupFilesAfterEnv: ['<rootDir>/jest-setup.js'],
   testEnvironment: 'jsdom',
   testEnvironmentOptions: {
-    customExportConditions: ['@grafana-app/source'],
+    customExportConditions: ['@grafana-app/source', 'browser'],
   },
   testMatch: ['<rootDir>/**/__tests__/**/*.{js,jsx,ts,tsx}', '<rootDir>/**/*.{spec,test,jest}.{js,jsx,ts,tsx}'],
   transform: {
