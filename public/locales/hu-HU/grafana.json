@@ -2129,8 +2129,8 @@
         "suffix": "Kérjük, frissítse az oldalt, és próbálkozzon újra.",
         "title": "Nem sikerült értesítési szabályzatot hozzáadni vagy frissíteni"
       },
-      "n-more-policies_one": "{{count}} további házirend",
-      "n-more-policies_other": "{{count}} további házirend"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Új gyermekházirend",
@@ -11971,10 +11971,10 @@
       "restore-button": "Visszaállítás",
       "restore-loading": "Visszaállítás...",
       "title": "Irányítópultok visszaállítása",
-      "folder-picker-text_one": "Kérjük, válasszon egy mappát, ahová az irányítópultok vissza lesznek állítva.",
-      "folder-picker-text_other": "Kérjük, válasszon egy mappát, ahová az irányítópultok vissza lesznek állítva.",
-      "text_one": "Ez a művelet visszaállít {{numberOfDashboards}} irányítópultot.",
-      "text_other": "Ez a művelet visszaállít {{numberOfDashboards}} irányítópultot."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {
