@@ -108,17 +108,20 @@ After creating a Azure Monitor Managed Service for Prometheus data source:
 3. Configure based on your chosen method:
 
 ### App Registration authentication
-   | Setting | Description | Example |
-   |---------|-------------|---------|
-   | **Directory (tenant) ID** | Your Azure AD tenant ID | `12345678-1234-1234-1234-123456789012` |
-   | **Application (client) ID** | Your app registration client ID | `87654321-4321-4321-4321-210987654321` |
-   | **Client secret** | Your app registration secret | `your-client-secret` |
+
+| Setting                     | Description                     | Example                                |
+| --------------------------- | ------------------------------- | -------------------------------------- |
+| **Directory (tenant) ID**   | Your Azure AD tenant ID         | `12345678-1234-1234-1234-123456789012` |
+| **Application (client) ID** | Your app registration client ID | `87654321-4321-4321-4321-210987654321` |
+| **Client secret**           | Your app registration secret    | `your-client-secret`                   |
 
 ### Managed Identity authentication
-   - No additional configuration required if using system-assigned identity
-   - For user-assigned identity, provide the **Client ID**
+
+- No additional configuration required if using system-assigned identity
+- For user-assigned identity, provide the **Client ID**
 
 4. Set the **Prometheus server URL** to your Azure Monitor workspace endpoint:
+
    ```
    https://your-workspace.eastus2.prometheus.monitor.azure.com
    ```
@@ -167,7 +170,7 @@ For air-gapped Grafana installations:
 
 ## Migrate
 
-1. Enable the `prometheusTypeMigration` feature toggle. For more information on feature toggles, refer to [Manage feature toggles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#manage-feature-toggles). 
+1. Enable the `prometheusTypeMigration` feature toggle. For more information on feature toggles, refer to [Manage feature toggles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#manage-feature-toggles).
 2. Restart Grafana for the changes to take effect.
 
 **Note**: This feature toggle will be removed in Grafana 13, and the migration will be automatic.
@@ -191,16 +194,19 @@ The banner displays one of the following messages:
 ### Common migration issues
 
 **Migration banner not appearing**
+
 - Verify the `prometheusTypeMigration` feature toggle is enabled
 - Restart Grafana after enabling the feature toggle
 
 **Azure Monitor Managed Service for Prometheus is not installed**
+
 - Verify that Azure Monitor Managed Service for Prometheus is installed by going to **Connections** > **Add new connection** and search for "Azure Monitor Managed Service for Prometheus"
 - Install Azure Monitor Managed Service for Prometheus if not already installed
 
 **After migrating, my data source returns "401 Unauthorized"**
+
 - If you are using self-hosted Grafana, check your .ini for `grafana-azureprometheus-datasource` is included in `forward_settings_to_plugins` under the `[azure]` heading.
-- If you are using Grafana Cloud, contact Grafana support. 
+- If you are using Grafana Cloud, contact Grafana support.
 
 ### Rolling the migration back without a backup
 
@@ -208,7 +214,7 @@ If you do not have a backup of your Grafana instance before the migration, you c
 
 To revert the migration:
 
-1. Disable the `prometheusTypeMigration` feature toggle. For more information on feature toggles, refer to [Manage feature toggles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#manage-feature-toggles). 
+1. Disable the `prometheusTypeMigration` feature toggle. For more information on feature toggles, refer to [Manage feature toggles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#manage-feature-toggles).
 2. Obtain a bearer token that has `read` and `write` permissions for your Grafana data source API. For more information on the data source API, refer to [Data source API](/docs/grafana/<GRAFANA_VERSION>/developers/http_api/data_source/).
 3. Run the script below. Make sure to provide your Grafana URL and bearer token.
 4. (Optional) Report the issue you were experiencing on the [Grafana repo](https://github.com/grafana/grafana/issues). Tag the issue with "datasource/migrate-prometheus-type"
@@ -232,16 +238,16 @@ log_message() {
 update_data_source() {
     local uid="$1"
     local data="$2"
-    
+
     response=$(curl -s -w "\n%{http_code}" -X PUT \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $BEARER_TOKEN" \
         -d "$data" \
         "$GRAFANA_URL/api/datasources/uid/$uid")
-    
+
     http_code=$(echo "$response" | tail -n1)
     response_body=$(echo "$response" | sed '$d')
-    
+
     if [[ "$http_code" -ge 200 && "$http_code" -lt 300 ]]; then
         log_message "$uid successful"
     else
@@ -256,37 +262,37 @@ update_data_source_type() {
     local updated_count=0
     local readonly_count=0
     local skipped_count=0
-    
+
     # Use jq to parse and process JSON
     echo "$result" | jq -c '.[]' | while read -r data; do
         uid=$(echo "$data" | jq -r '.uid')
         prometheus_type_migration=$(echo "$data" | jq -r '.jsonData["prometheus-type-migration"] // false')
         data_type=$(echo "$data" | jq -r '.type')
         read_only=$(echo "$data" | jq -r '.readOnly // false')
-        
+
         processed_count=$((processed_count + 1))
-        
+
         # Check conditions
         if [[ "$prometheus_type_migration" != "true" ]] || [[ "$data_type" != "grafana-azureprometheus-datasource" ]]; then
             skipped_count=$((skipped_count + 1))
             continue
         fi
-        
+
         if [[ "$read_only" == "true" ]]; then
             readonly_count=$((readonly_count + 1))
             log_message "$uid is readOnly. If this data source is provisioned, edit the data source type to be \`prometheus\` in the provisioning file."
             continue
         fi
-        
+
         # Update the data
         updated_data=$(echo "$data" | jq '.type = "prometheus" | .jsonData["prometheus-type-migration"] = false')
         update_data_source "$uid" "$updated_data"
         updated_count=$((updated_count + 1))
-        
+
         # Log the raw data for debugging (optional - uncomment if needed)
         # log_message "DEBUG - Updated data for $uid: $updated_data"
     done
-    
+
     # Note: These counts won't work in the while loop due to subshell
     # Moving summary to the main function instead
 }
@@ -298,7 +304,7 @@ get_summary_stats() {
     local migration_candidates=$(echo "$result" | jq '[.[] | select(.jsonData["prometheus-type-migration"] == true and .type == "grafana-azureprometheus-datasource")] | length')
     local readonly_candidates=$(echo "$result" | jq '[.[] | select(.jsonData["prometheus-type-migration"] == true and .type == "grafana-azureprometheus-datasource" and .readOnly == true)] | length')
     local updateable_candidates=$(echo "$result" | jq '[.[] | select(.jsonData["prometheus-type-migration"] == true and .type == "grafana-azureprometheus-datasource" and (.readOnly == false or .readOnly == null))] | length')
-    
+
     log_message "=== MIGRATION SUMMARY ==="
     log_message "Total data sources found: $total_datasources"
     log_message "Migration candidates found: $migration_candidates"
@@ -312,15 +318,15 @@ remove_prometheus_type_migration() {
     log_message "Starting remove Azure Prometheus migration"
     log_message "Log file: $LOG_FILE"
     log_message "Grafana URL: $GRAFANA_URL"
-    
+
     response=$(curl -s -w "\n%{http_code}" -X GET \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $BEARER_TOKEN" \
         "$GRAFANA_URL/api/datasources/")
-    
+
     http_code=$(echo "$response" | tail -n1)
     response_body=$(echo "$response" | sed '$d')
-    
+
     if [[ "$http_code" -ge 200 && "$http_code" -lt 300 ]]; then
         log_message "Successfully fetched data sources"
         get_summary_stats "$response_body"
