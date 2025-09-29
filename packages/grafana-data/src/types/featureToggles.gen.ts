@@ -553,6 +553,10 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
+  * Enable suggested dashboards when creating new dashboards
+  */
+  dashboardLibrary?: boolean;
+  /**
   * Sets the logs table as default visualisation in logs explore
   */
   logsExploreTableDefaultVisualization?: boolean;
@@ -1168,11 +1172,6 @@ export interface FeatureToggles {
   * @default false
   */
   prometheusTypeMigration?: boolean;
-  /**
-  * Enables dskit background service wrapper
-  * @default false
-  */
-  dskitBackgroundServices?: boolean;
   /**
   * Enables running plugins in containers
   * @default false

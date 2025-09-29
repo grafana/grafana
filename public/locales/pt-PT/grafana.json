@@ -2129,8 +2129,8 @@
         "suffix": "Por favor, atualize a página e tente novamente.",
         "title": "Falha ao adicionar ou atualizar a política de notificação"
       },
-      "n-more-policies_one": "{{count}} políticas adicionais",
-      "n-more-policies_other": "{{count}} políticas adicionais"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Nova política secundária",
@@ -11971,10 +11971,10 @@
       "restore-button": "Restaurar",
       "restore-loading": "A restaurar...",
       "title": "Restaurar painéis de controlo",
-      "folder-picker-text_one": "Escolha uma pasta onde os seus painéis de controlo serão restaurados.",
-      "folder-picker-text_other": "Escolha uma pasta onde os seus painéis de controlo serão restaurados.",
-      "text_one": "Esta ação irá restaurar {{numberOfDashboards}} painéis de controlo.",
-      "text_other": "Esta ação irá restaurar {{numberOfDashboards}} painéis de controlo."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {

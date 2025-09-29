@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	authtypes "github.com/grafana/authlib/types"
 
@@ -38,20 +37,6 @@ func TestAfterCreatePermissionCreator(t *testing.T) {
 		require.Error(t, err)
 		require.Nil(t, creator)
 		require.Contains(t, err.Error(), "missing default permission creator")
-	})
-
-	t.Run("should error for managed resources", func(t *testing.T) {
-		obj := &v0alpha1.Dashboard{
-			ObjectMeta: metav1.ObjectMeta{
-				Annotations: map[string]string{
-					utils.AnnoKeyManagerKind: "test",
-				},
-			},
-		}
-		creator, err := afterCreatePermissionCreator(context.Background(), nil, utils.AnnoGrantPermissionsDefault, obj, mockSetter)
-		require.Error(t, err)
-		require.Nil(t, creator)
-		require.Contains(t, err.Error(), "managed resource may not grant permissions")
 	})
 
 	t.Run("should error when auth info is missing", func(t *testing.T) {
@@ -108,6 +93,29 @@ func TestAfterCreatePermissionCreator(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("should succeed for access policy identity", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+			Type:    authtypes.TypeAccessPolicy,
+			OrgID:   1,
+			OrgRole: "Admin",
+			UserID:  1,
+		})
+		obj := &v0alpha1.Dashboard{}
+		key := &resourcepb.ResourceKey{
+			Group:     "test",
+			Resource:  "test",
+			Namespace: "test",
+			Name:      "test",
+		}
+
+		creator, err := afterCreatePermissionCreator(ctx, key, utils.AnnoGrantPermissionsDefault, obj, mockSetter)
+		require.NoError(t, err)
+		require.NotNil(t, creator)
+
+		err = creator(ctx)
+		require.NoError(t, err)
+	})
+
 	t.Run("should error for non-user/non-service-account identity", func(t *testing.T) {
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Type: authtypes.TypeAnonymous,
@@ -117,6 +125,6 @@ func TestAfterCreatePermissionCreator(t *testing.T) {
 		creator, err := afterCreatePermissionCreator(ctx, nil, utils.AnnoGrantPermissionsDefault, obj, mockSetter)
 		require.Error(t, err)
 		require.Nil(t, creator)
-		require.Contains(t, err.Error(), "only users or service accounts may grant themselves permissions")
+		require.Contains(t, err.Error(), "only users, service accounts, and access policies may grant permissions")
 	})
 }
