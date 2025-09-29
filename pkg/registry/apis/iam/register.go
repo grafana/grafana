@@ -19,6 +19,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/authlib/types"
+
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -52,6 +53,7 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	coreRolesStorage CoreRoleStorageBackend,
 	rolesStorage RoleStorageBackend,
+	roleBindingsStorage RoleBindingStorageBackend,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
@@ -63,6 +65,7 @@ func RegisterAPIService(
 		coreRolesStorage:             coreRolesStorage,
 		rolesStorage:                 rolesStorage,
 		resourcePermissionsStorage:   resourcepermission.ProvideStorageBackend(dbProvider),
+		roleBindingsStorage:          roleBindingsStorage,
 		sso:                          ssoService,
 		authorizer:                   authorizer,
 		legacyAccessClient:           legacyAccessClient,
@@ -231,6 +234,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			return err
 		}
 		storage[iamv0.RoleInfo.StoragePath()] = roleStore
+
+		roleBindingStore, err := NewLocalStore(iamv0.RoleBindingInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.roleBindingsStorage)
+		if err != nil {
+			return err
+		}
+		storage[iamv0.RoleBindingInfo.StoragePath()] = roleBindingStore
 	}
 
 	if b.enableResourcePermissionApis {
