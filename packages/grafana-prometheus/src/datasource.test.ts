@@ -1308,6 +1308,13 @@ describe('PrometheusDatasource incremental query logic', () => {
     expect(mockCache.requestInfo).not.toHaveBeenCalled();
   });
 
+  it('should disable incremental query when public dashboards are being used', async () => {
+    config.publicDashboardAccessToken = 'token';
+    const request = createDataRequest([{ expr: 'rate(up[5m])', refId: 'A' }]);
+    await lastValueFrom(ds.query(request));
+    expect(mockCache.requestInfo).not.toHaveBeenCalled();
+  });
+
   it('should disable incremental query when any target contains $__range', async () => {
     const request = createDataRequest([
       { expr: 'up', refId: 'A' },
