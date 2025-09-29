@@ -22,16 +22,10 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": {
-        "@grafana-app/source": "./src/index.ts",
-        "types": "./dist/types/index.d.ts",
-        "default": "./dist/esm/index.mjs"
-      },
-      "require": {
-        "@grafana-app/source": "./src/index.ts",
-        "types": "./dist/types/index.d.ts",
-        "default": "./dist/cjs/index.cjs"
-      }
+      "@grafana-app/source": "./src/index.ts",
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.cjs"
     }
   },
   "publishConfig": {
