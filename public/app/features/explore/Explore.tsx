@@ -641,7 +641,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
         >
           <div className={styles.wrapper}>
             {contentOutlineVisible && !compact && (
-              <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} />
+              <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} sparkJoy={sparkJoy} />
             )}
             <ScrollContainer
               data-testid={selectors.pages.Explore.General.scrollView}

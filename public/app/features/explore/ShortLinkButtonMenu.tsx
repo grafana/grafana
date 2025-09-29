@@ -26,7 +26,7 @@ interface ShortLinkMenuItemData {
   absTime: boolean;
 }
 
-export function ShortLinkButtonMenu() {
+export function ShortLinkButtonMenu({ iconOnly = false }: { iconOnly?: boolean }) {
   const defaultMode: ShortLinkMenuItemData = {
     key: 'copy-link',
     label: t('explore.toolbar.copy-shortened-link', 'Copy shortened URL'),
@@ -128,6 +128,23 @@ export function ShortLinkButtonMenu() {
     </Menu>
   );
 
+  // when iconOnly is true, show just a simple button that copies absolute shortened URL
+  if (iconOnly) {
+    return (
+      <Button
+        tooltip={t('explore.toolbar.copy-shortened-link-abs-time', 'Copy absolute shortened URL')}
+        icon="share-alt"
+        size="md"
+        variant="secondary"
+        onClick={() => {
+          const url = constructAbsoluteUrl(panes);
+          onCopyLink(true, true, url); // shorten=true, absTime=true
+        }}
+        aria-label={t('explore.toolbar.copy-shortened-link-abs-time', 'Copy absolute shortened URL')}
+      />
+    );
+  }
+
   // we need the Toolbar button click to be an action separate from opening/closing the menu
   return (
     <ButtonGroup>
@@ -142,7 +159,7 @@ export function ShortLinkButtonMenu() {
         }}
         aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened URL')}
       >
-        <Trans i18nKey="explore.toolbar.copy-shortened-link-label">Share</Trans>
+        {!iconOnly && <Trans i18nKey="explore.toolbar.copy-shortened-link-label">Share</Trans>}
       </Button>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
         <Button

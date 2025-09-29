@@ -5,7 +5,7 @@ import { CoreApp, GrafanaTheme2, type PluginExtensionLink, PluginExtensionPoints
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction, usePluginLinks, config } from '@grafana/runtime';
-import { ToolbarButton, useTheme2, Dropdown, Menu, ButtonGroup } from '@grafana/ui';
+import { ToolbarButton, useTheme2, Dropdown, Menu, ButtonGroup, Icon } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
@@ -279,14 +279,17 @@ export function SecondaryActions({
             />
           }
         >
-          <ToolbarButton
-            variant="canvas"
-            aria-label={t('explore.secondary-actions.use-query-aria-label', 'Use query')}
-            disabled={!noQueriesInPane}
-            icon="external-link-alt"
-          >
-            <Trans i18nKey="explore.secondary-actions.use-query">Use query</Trans>
-          </ToolbarButton>
+            <ToolbarButton
+              variant="canvas"
+              aria-label={t('explore.secondary-actions.use-query-aria-label', 'Use query')}
+              disabled={!noQueriesInPane}
+              icon="external-link-alt"
+
+            >
+              <Trans i18nKey="explore.secondary-actions.use-query">Use queries</Trans>
+              <Icon name="angle-down" />
+            </ToolbarButton>
+
         </Dropdown>
       )}
       {!!selectedExtension && !!selectedExtension.path && (

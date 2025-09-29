@@ -22,6 +22,7 @@ describe('SecondaryActions', () => {
     render(
       <QueryLibraryContextProviderMock>
         <SecondaryActions
+          exploreId="test-explore"
           onClickAddQueryRowButton={noop}
           onClickQueryInspectorButton={noop}
           onSelectQueryFromLibrary={noop}
@@ -37,6 +38,7 @@ describe('SecondaryActions', () => {
     render(
       <QueriesDrawerContextProviderMock queryLibraryEnabled={false}>
         <SecondaryActions
+          exploreId="test-explore"
           addQueryRowButtonHidden={true}
           richHistoryRowButtonHidden={true}
           onClickAddQueryRowButton={noop}
@@ -53,6 +55,7 @@ describe('SecondaryActions', () => {
   it('should disable add row button if addQueryRowButtonDisabled=true', () => {
     render(
       <SecondaryActions
+        exploreId="test-explore"
         addQueryRowButtonDisabled={true}
         onClickAddQueryRowButton={noop}
         onClickQueryInspectorButton={noop}
@@ -68,6 +71,7 @@ describe('SecondaryActions', () => {
     render(
       <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
         <SecondaryActions
+          exploreId="test-explore"
           addQueryRowButtonDisabled={true}
           onClickAddQueryRowButton={noop}
           onClickQueryInspectorButton={noop}
@@ -91,6 +95,7 @@ describe('SecondaryActions', () => {
     render(
       <QueriesDrawerContextProviderMock setDrawerOpened={onClickHistory}>
         <SecondaryActions
+          exploreId="test-explore"
           onClickAddQueryRowButton={onClickAddRow}
           onClickQueryInspectorButton={onClickQueryInspector}
           onSelectQueryFromLibrary={noop}
@@ -109,6 +114,7 @@ describe('SecondaryActions', () => {
     render(
       <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
         <SecondaryActions
+          exploreId="test-explore"
           onClickAddQueryRowButton={noop}
           onClickQueryInspectorButton={noop}
           onSelectQueryFromLibrary={noop}
@@ -126,6 +132,7 @@ describe('SecondaryActions', () => {
           onClickAddQueryRowButton={noop}
           onClickQueryInspectorButton={noop}
           onSelectQueryFromLibrary={noop}
+          exploreId="test-explore"
         />
       </QueryLibraryContextProviderMock>
     );

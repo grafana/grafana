@@ -236,7 +236,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
       aria-label={t('explore.explore-toolbar.sparks-joy', 'Sparks Joy')}
       label={t('explore.explore-toolbar.sparks-joy', 'Sparks Joy')}
     />,
-    <ShortLinkButtonMenu key="share" />,
+    !sparkJoy && <ShortLinkButtonMenu key="share" />,
   ];
 
   return (
@@ -246,19 +246,21 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
       <PageToolbar
         aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
         leftItems={[
-          <ToolbarButton
-            key="content-outline"
-            variant="canvas"
-            tooltip={t('explore.explore-toolbar.tooltip-content-outline', 'Content outline')}
-            icon="list-ui-alt"
-            iconOnly={splitted}
-            onClick={onContentOutlineToogle}
-            aria-expanded={isContentOutlineOpen}
-            aria-controls={isContentOutlineOpen ? 'content-outline-container' : undefined}
-            className={styles.toolbarButton}
-          >
-            <Trans i18nKey="explore.explore-toolbar.outline">Outline</Trans>
-          </ToolbarButton>,
+          !sparkJoy && (
+            <ToolbarButton
+              key="content-outline"
+              variant="canvas"
+              tooltip={t('explore.explore-toolbar.tooltip-content-outline', 'Content outline')}
+              icon="list-ui-alt"
+              iconOnly={splitted}
+              onClick={onContentOutlineToogle}
+              aria-expanded={isContentOutlineOpen}
+              aria-controls={isContentOutlineOpen ? 'content-outline-container' : undefined}
+              className={styles.toolbarButton}
+            >
+              <Trans i18nKey="explore.explore-toolbar.outline">Outline</Trans>
+            </ToolbarButton>
+          ),
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}
             mixed={!isCorrelationsEditorMode}
@@ -352,6 +354,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             primary={true}
             width={(showSmallTimePicker ? 35 : 108) + 'px'}
           />,
+          sparkJoy && <ShortLinkButtonMenu key="share-toolbar" iconOnly />,
           datasourceInstance?.meta.streaming && !sparkJoy && (
             <LiveTailControls key="liveControls" exploreId={exploreId}>
               {(c) => {
