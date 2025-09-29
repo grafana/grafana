@@ -24,6 +24,7 @@ export interface Props {
   text?: string;
   noIntervalPicker?: boolean;
   showAutoInterval?: boolean;
+  showLiveOption?: boolean;
   width?: string;
   primary?: boolean;
   isOnCanvas?: boolean;
@@ -38,7 +39,7 @@ export class RefreshPicker extends PureComponent<Props> {
   static liveOption = {
     label: 'Live',
     value: 'LIVE',
-    ariaLabel: 'Turn on live streaming',
+    ariaLabel: 'Live streaming',
   };
   static autoOption = {
     label: 'Auto',
@@ -72,12 +73,12 @@ export class RefreshPicker extends PureComponent<Props> {
   }
 
   render() {
-    const { onRefresh, intervals, tooltip, value, text, isLoading, noIntervalPicker, width, showAutoInterval } =
+    const { onRefresh, intervals, tooltip, value, text, isLoading, noIntervalPicker, width, showAutoInterval, showLiveOption } =
       this.props;
 
     const currentValue = value || '';
     const variant = this.getVariant();
-    const options = intervalsToOptions({ intervals, showAutoInterval });
+    const options = intervalsToOptions({ intervals, showAutoInterval, showLiveOption });
     const option = options.find(({ value }) => value === currentValue);
     const translatedOffOption = translateOption(RefreshPicker.offOption.value);
     let selectedValue = option || translatedOffOption;
@@ -165,7 +166,8 @@ export function translateOption(option: string) {
 export function intervalsToOptions({
   intervals = defaultIntervals,
   showAutoInterval = false,
-}: { intervals?: string[]; showAutoInterval?: boolean } = {}): Array<SelectableValue<string>> {
+  showLiveOption = false,
+}: { intervals?: string[]; showAutoInterval?: boolean; showLiveOption?: boolean } = {}): Array<SelectableValue<string>> {
   const options: Array<SelectableValue<string>> = intervals.map((interval) => {
     const duration = parseDuration(interval);
     const ariaLabel = formatDuration(duration);
@@ -180,6 +182,11 @@ export function intervalsToOptions({
   if (showAutoInterval) {
     options.unshift(translateOption(RefreshPicker.autoOption.value));
   }
+  
+  if (showLiveOption) {
+    options.unshift(translateOption(RefreshPicker.liveOption.ariaLabel));
+  }
+  
   options.unshift(translateOption(RefreshPicker.offOption.value));
   return options;
 }
