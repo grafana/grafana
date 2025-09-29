@@ -10,7 +10,7 @@ export default [
   {
     input: entryPoint,
     plugins,
-    output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-i18n')],
+    output: [cjsOutput(pkg, 'grafana-i18n'), esmOutput(pkg, 'grafana-i18n')],
     treeshake: false,
   },
 ];

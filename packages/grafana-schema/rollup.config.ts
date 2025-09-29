@@ -15,7 +15,7 @@ export default [
   {
     input: entryPoint,
     plugins,
-    output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-schema')],
+    output: [cjsOutput(pkg, 'grafana-schema'), esmOutput(pkg, 'grafana-schema')],
     treeshake: false,
   },
   {
@@ -44,7 +44,7 @@ export default [
     ],
     output: {
       format: 'esm',
-      dir: path.dirname(pkg.publishConfig.module),
+      dir: path.dirname(pkg.module),
     },
     treeshake: false,
   },
