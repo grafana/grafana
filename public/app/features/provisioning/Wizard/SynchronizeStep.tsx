@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
@@ -20,7 +20,11 @@ export interface SynchronizeStepProps {
   isCancelling?: boolean;
 }
 
-export function SynchronizeStep({ isLegacyStorage, onCancel, isCancelling }: SynchronizeStepProps) {
+export const SynchronizeStep = memo(function SynchronizeStep({
+  isLegacyStorage,
+  onCancel,
+  isCancelling,
+}: SynchronizeStepProps) {
   const { getValues, register, watch } = useFormContext<WizardFormData>();
   const { setStepStatusInfo } = useStepStatus();
   const [repoName = '', repoType] = watch(['repositoryName', 'repository.type']);
@@ -42,6 +46,7 @@ export function SynchronizeStep({ isLegacyStorage, onCancel, isCancelling }: Syn
   } = repositoryStatusQuery?.data?.status?.health || {};
 
   const hasError = repositoryStatusQuery.isError;
+  const isLoading = repositoryStatusQuery.isLoading || repositoryStatusQuery.isFetching;
   const isButtonDisabled = hasError || (checked !== undefined && isRepositoryHealthy === false);
 
   const startSynchronization = async () => {
@@ -52,7 +57,7 @@ export function SynchronizeStep({ isLegacyStorage, onCancel, isCancelling }: Syn
     }
   };
 
-  if (repositoryStatusQuery.isFetching) {
+  if (isLoading) {
     return <Spinner />;
   }
   if (job) {
@@ -147,7 +152,7 @@ export function SynchronizeStep({ isLegacyStorage, onCancel, isCancelling }: Syn
       )}
 
       <Field noMargin>
-        {hasError || isRepositoryHealthy === false ? (
+        {hasError || (checked !== undefined && isRepositoryHealthy === false) ? (
           <Button variant="destructive" onClick={() => onCancel?.(repoName)} disabled={isCancelling}>
             {isCancelling ? (
               <Trans i18nKey="provisioning.wizard.button-cancelling">Cancelling...</Trans>
@@ -163,4 +168,4 @@ export function SynchronizeStep({ isLegacyStorage, onCancel, isCancelling }: Syn
       </Field>
     </Stack>
   );
-}
+});

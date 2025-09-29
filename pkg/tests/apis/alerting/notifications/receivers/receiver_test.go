@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/alerting/receivers/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -37,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
@@ -1311,12 +1311,14 @@ func TestIntegrationCRUD(t *testing.T) {
 		require.Equal(t, receiver, get)
 		t.Run("should return secrets in secureFields but not settings", func(t *testing.T) {
 			for _, integration := range get.Spec.Integrations {
+				integrationType := schema.IntegrationType(integration.Type)
 				t.Run(integration.Type, func(t *testing.T) {
 					expected := notify.AllKnownConfigsForTesting[strings.ToLower(integration.Type)]
 					var fields map[string]any
 					require.NoError(t, json.Unmarshal([]byte(expected.Config), &fields))
-					secretFields, err := channels_config.GetSecretKeysForContactPointType(integration.Type, channels_config.V1)
-					require.NoError(t, err)
+					typeSchema, ok := notify.GetSchemaVersionForIntegration(integrationType, schema.V1)
+					require.True(t, ok)
+					secretFields := typeSchema.GetSecretFieldsPaths()
 					for _, field := range secretFields {
 						if _, ok := fields[field]; !ok { // skip field that is not in the original setting
 							continue
