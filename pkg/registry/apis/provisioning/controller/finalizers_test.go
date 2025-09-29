@@ -406,7 +406,7 @@ func TestFinalizer_process(t *testing.T) {
 				repository.RemoveOrphanResourcesFinalizer,
 				repository.CleanFinalizer,
 			},
-			expectedErr: "errors occurred processing orphan items",
+			expectedErr: "remove resources",
 		},
 		{
 			name: "Error releasing items",
@@ -463,52 +463,12 @@ func TestFinalizer_process(t *testing.T) {
 				repository.ReleaseOrphanResourcesFinalizer,
 				repository.CleanFinalizer,
 			},
-			expectedErr: "errors occurred processing orphan items",
+			expectedErr: "release resources",
 		},
 		{
-			name: "Error deleting hooks",
-			lister: func() resources.ResourceLister {
-				resourceLister := resources.NewMockResourceLister(t)
-
-				resourceLister.
-					On("List", context.Background(), "default", "my-repo").
-					Once().
-					Return(&provisioning.ResourceList{
-						Items: []provisioning.ResourceListItem{
-							{
-								Group:    "dashboard.grafana.app",
-								Resource: "dashboards",
-								Name:     "my-dashboard",
-							},
-						},
-					}, nil)
-
-				return resourceLister
-			}(),
-			clientFactory: func() resources.ClientFactory {
-				clientFactory := resources.NewMockClientFactory(t)
-				clients := resources.NewMockResourceClients(t)
-				client := &mockDynamicClient{
-					deleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
-						return nil
-					},
-				}
-
-				clientFactory.
-					On("Clients", context.Background(), "default").
-					Once().
-					Return(clients, nil)
-
-				clients.
-					On("ForResource", context.Background(), schema.GroupVersionResource{
-						Group:    "dashboard.grafana.app",
-						Resource: "dashboards",
-					}).
-					Once().
-					Return(client, schema.GroupVersionKind{}, nil)
-
-				return clientFactory
-			}(),
+			name:          "Error deleting hooks",
+			lister:        nil,
+			clientFactory: nil,
 			repo: mockRepo{
 				name:      "my-repo",
 				namespace: "default",

@@ -58,7 +58,7 @@ func (f *finalizer) process(ctx context.Context,
 			hooks, ok := repo.(repository.Hooks)
 			if ok {
 				if err = hooks.OnDelete(ctx); err != nil {
-					logger.Warn("Error running deletion hooks", "err", err)
+					err = fmt.Errorf("execute deletion hooks: %w", err)
 					outcome = metricutils.ErrorOutcome
 				}
 			}
@@ -67,20 +67,20 @@ func (f *finalizer) process(ctx context.Context,
 			logger.Info("releasing orphan resources")
 			count, err = f.processExistingItems(ctx, repo.Config(), f.releaseResources(ctx, logger))
 			if err != nil {
+				err = fmt.Errorf("release resources: %w", err)
 				outcome = metricutils.ErrorOutcome
-				logger.Warn("Error processing release orphan resources finalizer", "err", err)
 			}
 
 		case repository.RemoveOrphanResourcesFinalizer:
 			logger.Info("removing orphan resources")
 			count, err = f.processExistingItems(ctx, repo.Config(), f.removeResources(ctx, logger))
 			if err != nil {
+				err = fmt.Errorf("remove resources: %w", err)
 				outcome = metricutils.ErrorOutcome
-				logger.Warn("Error processing remove orphan resources finalizer", "err", err)
 			}
 
 		default:
-			logger.Warn("skipping unknown finalizer", "finalizer", finalizer)
+			logger.Error("skipping unknown finalizer", "finalizer", finalizer)
 			continue
 		}
 
@@ -107,20 +107,20 @@ func (f *finalizer) processExistingItems(
 
 	items, err := f.lister.List(ctx, repo.Namespace, repo.Name)
 	if err != nil {
-		logger.Warn("error listing resources", "error", err)
+		logger.Error("error listing resources", "error", err)
 		return 0, err
 	}
 
 	// Safe deletion order
 	sortResourceListForDeletion(items)
 	count := 0
-	errors := 0
 
 	for _, item := range items.Items {
 		res, _, err := clients.ForResource(ctx, schema.GroupVersionResource{
 			Group:    item.Group,
 			Resource: item.Resource,
 		})
+		logger.Error("error getting client for resource", "resource", item.Resource, "error", err)
 		if err != nil {
 			return count, err
 		}
@@ -128,12 +128,12 @@ func (f *finalizer) processExistingItems(
 		err = cb(res, &item)
 		if err != nil {
 			logger.Error("error processing item", "name", item.Name, "error", err)
-			errors++
+			return count, fmt.Errorf("processing item: %w", err)
 		} else {
 			count++
 		}
 	}
-	logger.Info("processed orphan items", "items", count, "errors", errors)
+	logger.Info("processed orphan items", "items", count)
 	return count, nil
 }
 
