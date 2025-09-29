@@ -63,6 +63,17 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 			}}
 		}
 	}
+
+	// Cannot change the manager if already set
+	if okNew && okOld && managerNew != managerOld {
+		return &apierrors.StatusError{ErrStatus: metav1.Status{
+			Status:  metav1.StatusFailure,
+			Code:    http.StatusForbidden,
+			Reason:  metav1.StatusReasonForbidden,
+			Message: "Can not change resource manager",
+		}}
+	}
+
 	return nil
 }
 

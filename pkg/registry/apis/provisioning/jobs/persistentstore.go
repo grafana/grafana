@@ -10,6 +10,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -18,14 +19,11 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
-	// LabelJobClaim includes the timestamp when the job was claimed.
-	// The label must be formatted as milliseconds from Epoch. This grants a natural ordering, allowing for less-than operators in label selectors.
-	// The natural ordering would be broken if the number rolls over into 1 more digit. This won't happen before Nov, 2286.
-	LabelJobClaim = "provisioning.grafana.app/claim"
 	// LabelRepository contains the repository name as a label. This allows for label selectors to find the archived version of a job.
 	LabelRepository = "provisioning.grafana.app/repository"
 	// LabelJobOriginalUID contains the Job's original uid as a label. This allows for label selectors to find the archived version of a job.
@@ -100,13 +98,8 @@ func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry
 // If err is not nil, the job and rollback values are always nil.
 // The err may be ErrNoJobs if there are no jobs to claim.
 func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rollback func(), err error) {
-	requirement, err := labels.NewRequirement(LabelJobClaim, selection.DoesNotExist, nil)
-	if err != nil {
-		return nil, nil, apifmt.Errorf("could not create requirement: %w", err)
-	}
-
 	jobs, err := s.client.Jobs("").List(ctx, metav1.ListOptions{
-		LabelSelector: labels.NewSelector().Add(*requirement).String(),
+		FieldSelector: fields.OneTermNotEqualSelector(utils.AnnoKeyManagerKind, string(utils.ManagerKindRepo)).String(),
 		Limit:         16,
 	})
 	if err != nil {
@@ -121,7 +114,14 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 		if job.Labels == nil {
 			job.Labels = make(map[string]string)
 		}
-		job.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
+		meta, err := utils.MetaAccessor(job)
+		if err != nil {
+			return nil, nil, apifmt.Errorf("failed to get meta accessor for job: %w", err)
+		}
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: "job-driver-1", // TODO: actually pass in the job driver identity and use it here
+		})
 		s.queueMetrics.RecordWaitTime(string(job.Spec.Action), s.clock().Sub(job.CreationTimestamp.Time).Seconds())
 
 		// Set up the provisioning identity for this namespace
