@@ -17,8 +17,17 @@ export interface RadialGaugeProps {
   values: FieldDisplay[];
   width: number;
   height: number;
+  /**
+   * Circle or gauge (partial circle)
+   */
   shape?: RadialShape;
   gradient?: RadialGradientMode;
+  /**
+   * Bar width is always relative to size of the gauge.
+   * But this gives you control over the width relative to size.
+   * Range 0 - 1 (1 being the thickest)
+   * Defaults to 0.4
+   **/
   barWidthFactor?: number;
   clockwise?: boolean;
   /** Adds a white spotlight for the end position */
@@ -26,7 +35,12 @@ export interface RadialGaugeProps {
   glowBar?: boolean;
   glowCenter?: boolean;
   textMode?: RadialTextMode;
+  /**
+   * Number of segments depends on size of gauge but this
+   * factor 1-10 gives you relative control
+   **/
   segmentCount?: number;
+  segmentWidth?: number;
   /**
    * If multiple is shown in a group (via VizRepeater).
    * This impacts the auto textMode
@@ -52,6 +66,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     textMode = 'auto',
     vizCount = 1,
     segmentCount = 0,
+    segmentWidth = 4,
     values,
   } = props;
   const theme = useTheme2();
@@ -113,6 +128,7 @@ export function RadialGauge(props: RadialGaugeProps) {
                   spotlight={spotlight}
                   glow={glowBar}
                   segmentCount={segmentCount}
+                  segmentWidth={segmentWidth}
                 />
               );
             }
