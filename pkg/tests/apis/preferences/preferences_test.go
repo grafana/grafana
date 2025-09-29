@@ -117,7 +117,6 @@ func TestIntegrationPreferences(t *testing.T) {
 		require.NoError(t, err)
 		jj, err = json.MarshalIndent(obj.Object["spec"], "", "  ")
 		require.NoError(t, err)
-		fmt.Printf("%s\n", string(jj))
 		require.JSONEq(t, `{
 			"weekStart":      "saturday",
 			"regionalFormat": "dd/mm/yyyy"
