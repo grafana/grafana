@@ -256,8 +256,8 @@ func TestIntegrationFolderDeletionBlockedByAlertRules(t *testing.T) {
 		})
 
 		// Create a folder via legacy API so it is visible everywhere.
-		folderUID := fmt.Sprintf("alertrule-del-%d", mode)
-		legacyPayload := fmt.Sprintf(`{"title": "Folder With Alert Rule %d", "uid": "%s"}`, mode, folderUID)
+		folderUID := "alertrule-del-test"
+		legacyPayload := fmt.Sprintf(`{"title": "Folder With Alert Rule", "uid": "%s"}`, folderUID)
 		legacyCreate := apis.DoRequest(helper, apis.RequestParams{
 			User:   client.Args.User,
 			Method: http.MethodPost,
