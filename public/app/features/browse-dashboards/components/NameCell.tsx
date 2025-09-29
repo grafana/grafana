@@ -3,7 +3,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { getBackendSrv, reportInteraction } from '@grafana/runtime';
 import { Icon, IconButton, Link, Spinner, useStyles2, Text } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
 import { getIconForItem } from 'app/features/search/service/utils';
@@ -94,6 +94,12 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
             <Link
               onClick={() => {
                 reportInteraction('manage_dashboards_result_clicked');
+                // Record resource visit for analytics
+                if (item.kind === 'folder') {
+                  recordResourceVisit(item.uid, 'folder');
+                } else if (item.kind === 'dashboard') {
+                  recordResourceVisit(item.uid, 'dashboard');
+                }
               }}
               href={item.url}
               className={styles.link}
@@ -109,6 +115,16 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
       </div>
     </>
   );
+}
+
+// Record resource visit for analytics
+async function recordResourceVisit(resourceUid: string, resourceType: 'dashboard' | 'folder' | 'alert') {
+  try {
+    await getBackendSrv().post(`/api/resources/${resourceType}/${resourceUid}/visit`);
+  } catch (error) {
+    // Silently fail - visit tracking shouldn't break navigation
+    console.debug('Failed to record resource visit:', error);
+  }
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

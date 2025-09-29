@@ -10,9 +10,9 @@ interface HackathonSearchInputProps {
   placeholder?: string;
 }
 
-export const HackathonSearchInput = ({ 
-  onSearchChange, 
-  placeholder = "Search for dashboards and folders" 
+export const HackathonSearchInput = ({
+  onSearchChange,
+  placeholder = 'Search for dashboards and folders',
 }: HackathonSearchInputProps) => {
   const styles = useStyles2(getStyles);
   const [searchValue, setSearchValue] = useState('');
@@ -20,7 +20,7 @@ export const HackathonSearchInput = ({
     starred: false,
     ownedByMe: false,
     filterByTag: false,
-    moreFilters: false
+    moreFilters: false,
   });
 
   const handleSearchChange = (value: string) => {
@@ -29,9 +29,9 @@ export const HackathonSearchInput = ({
   };
 
   const toggleFilter = (filterKey: keyof typeof activeFilters) => {
-    setActiveFilters(prev => ({
+    setActiveFilters((prev) => ({
       ...prev,
-      [filterKey]: !prev[filterKey]
+      [filterKey]: !prev[filterKey],
     }));
   };
 
@@ -51,7 +51,7 @@ export const HackathonSearchInput = ({
       <div className={styles.filtersContainer}>
         <div className={styles.filtersRow}>
           <span className={styles.lookingForText}>I'm looking for:</span>
-          
+
           <Button
             variant={activeFilters.starred ? 'primary' : 'secondary'}
             size="sm"
@@ -110,7 +110,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
     maxWidth: '800px',
     height: '40px',
-    
+
     // Custom styling to match the image
     '& input': {
       fontSize: theme.typography.size.md,
@@ -119,12 +119,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
       borderRadius: theme.shape.radius.default,
       backgroundColor: theme.colors.background.primary,
       color: theme.colors.text.primary,
-      
+
       '&:focus': {
         borderColor: theme.colors.primary.main,
         boxShadow: `0 0 0 2px ${theme.colors.primary.main}25`,
       },
-      
+
       '&::placeholder': {
         color: theme.colors.text.secondary,
         opacity: 0.8,
@@ -144,7 +144,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(2),
     flexWrap: 'wrap',
     justifyContent: 'center',
-    
+
     [theme.breakpoints.down('md')]: {
       justifyContent: 'flex-start',
     },
@@ -162,7 +162,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(1),
     minHeight: theme.spacing(4),
-    
+
     '& svg': {
       width: '14px',
       height: '14px',

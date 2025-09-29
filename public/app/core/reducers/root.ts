@@ -13,6 +13,7 @@ import authConfigReducers from 'app/features/auth-config/state/reducers';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import browseDashboardsReducers from 'app/features/browse-dashboards/state/slice';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
+import { popularResourcesApi } from 'app/features/dashboard/api/popularResourcesApi';
 import panelEditorReducers from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import dashboardReducers from 'app/features/dashboard/state/reducers';
 import dataSourcesReducers from 'app/features/datasources/state/reducers';
@@ -67,6 +68,7 @@ const rootReducers = {
   [alertingApi.reducerPath]: alertingApi.reducer,
   [alertingPackageAPI.reducerPath]: alertingPackageAPI.reducer,
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
+  [popularResourcesApi.reducerPath]: popularResourcesApi.reducer,
   [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
   [cloudMigrationAPI.reducerPath]: cloudMigrationAPI.reducer,
   [iamAPIv0alpha1.reducerPath]: iamAPIv0alpha1.reducer,
