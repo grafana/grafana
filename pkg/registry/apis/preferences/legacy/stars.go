@@ -97,7 +97,7 @@ func (s *DashboardStarsStorage) List(ctx context.Context, options *internalversi
 		return nil, err
 	}
 
-	user := userInfo.GetUID()
+	user := userInfo.GetIdentifier()
 	if userInfo.GetIdentityType() == authlib.TypeAccessPolicy {
 		user = "" // can see everything
 	}

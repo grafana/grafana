@@ -229,7 +229,7 @@ func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identit
 	found, rv, err := s.listPreferences(ctx, ns, info.OrgID,
 		func(req *preferencesQuery) (bool, error) {
 			if user != nil {
-				req.UserUID = user.GetRawIdentifier()
+				req.UserUID = user.GetIdentifier()
 				teams, err = s.GetTeams(ctx, &identity.StaticRequester{
 					OrgID:   info.OrgID,
 					UserUID: req.UserUID,
@@ -243,7 +243,7 @@ func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identit
 				return true
 			}
 			if p.UserUID.String != "" {
-				return user.GetRawIdentifier() == p.UserUID.String
+				return user.GetIdentifier() == p.UserUID.String
 			}
 			if p.TeamUID.String != "" {
 				return slices.Contains(teams, p.TeamUID.String)
