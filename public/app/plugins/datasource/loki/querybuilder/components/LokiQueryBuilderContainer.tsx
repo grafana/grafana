@@ -55,6 +55,7 @@ export function LokiQueryBuilderContainer(props: Props) {
     onChange({ ...props.query, expr: expr });
   };
 
+
   if (!state.visQuery) {
     return null;
   }
