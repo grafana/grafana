@@ -106,10 +106,7 @@ refs:
    | **Secret Access Key** | Your AWS secret key (if using access key auth) | `wJalrXUtn...` |
    | **Assume Role ARN** | IAM role ARN (optional) | `arn:aws:iam::123456789:role/GrafanaRole` |
 
-4. Set the **HTTP URL** to your Amazon Managed Service for Prometheus workspace endpoint:
-   ```
-   https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-12345678-1234-1234-1234-123456789012/
-   ```
+4. Set the **HTTP URL** to your Amazon Managed Service for Prometheus workspace endpoint: `https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-12345678-1234-1234-1234-123456789012/`
 
 5. Click **Save & test** to verify the connection
 
@@ -119,14 +116,17 @@ refs:
 # Example provisioning configuration
 apiVersion: 1
 datasources:
-  - name: Amazon Managed Prometheus
-    type: grafana-amazonprometheus-datasource
-    access: proxy
-    url: https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-12345678-1234-1234-1234-123456789012/
+  - name: 'Amazon Managed Prometheus'
+    type: 'grafana-amazonprometheus-datasource'
+    url: 'https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-12345678-1234-1234-1234-123456789012/'
     jsonData:
+      httpMethod: 'POST'
       sigV4Auth: true
-      sigV4AuthType: default
-      sigV4Region: us-west-2
+      sigV4AuthType: 'keys'
+      sigV4Region: 'us-east-2'
+    secureJsonData:
+      sigV4AccessKey: '<access key>'
+      sigV4SecretKey: '<secret key>'
 ```
 
 # Migrate to Amazon Managed Service for Prometheus
@@ -182,6 +182,10 @@ The banner displays one of the following messages:
 - Verify that Amazon Managed Service for Prometheus is installed by going to **Connections** > **Add new connection** and search for "Amazon Managed Service for Prometheus"
 - Install Amazon Managed Service for Prometheus if not already installed
 
+**After migrating, my data source returns "401 Unauthorized"**
+- If you are using self-hosted Grafana, check your .ini for `grafana-amazonprometheus-datasource` is included in `forward_settings_to_plugins` under the `[aws]` heading.
+- If you are using Grafana Cloud, contact Grafana support. 
+
 ### Rolling the migration back without a backup
 
 If you do not have a backup of your Grafana instance before the migration, you can run the script below. It will find all the Amazon Managed Service for Prometheus data source instances that were migrated from core Prometheus and revert them back to core Prometheus.
@@ -191,85 +195,158 @@ To revert the migration:
 1. Disable the `prometheusTypeMigration` feature toggle. For more information on feature toggles, refer to [Manage feature toggles](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/#manage-feature-toggles). 
 2. Obtain a bearer token that has `read` and `write` permissions for your Grafana data source API. For more information on the data source API, refer to [Data source API](https://grafana.com/docs/grafana/latest/developers/http_api/data_source/).
 3. Run the script below. Make sure to provide your Grafana URL and bearer token.
-4. (Optional) Report the issue you were experiencing at [grafana/grafana](https://github.com/grafana/grafana/issues). Tag the issue with "datasource/migrate-prometheus-type"
+4. (Optional) Report the issue you were experiencing on the [Grafana repo](https://github.com/grafana/grafana/issues). Tag the issue with "datasource/migrate-prometheus-type"
+
 
 ```bash
 #!/bin/bash
 
+# Configuration
 GRAFANA_URL=""
 BEARER_TOKEN=""
+LOG_FILE="grafana_migration_$(date +%Y%m%d_%H%M%S).log"
+
+# Function to log messages to both console and file
+log_message() {
+    local message="$1"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    echo "[$timestamp] $message" | tee -a "$LOG_FILE"
+}
 
 # Function to update a data source
 update_data_source() {
     local uid="$1"
     local data="$2"
     
-    local response=$(curl -s -X PUT \
+    response=$(curl -s -w "\n%{http_code}" -X PUT \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $BEARER_TOKEN" \
         -d "$data" \
         "$GRAFANA_URL/api/datasources/uid/$uid")
     
-    echo "$response"
-    echo "$data"
+    http_code=$(echo "$response" | tail -n1)
+    response_body=$(echo "$response" | sed '$d')
+    
+    if [[ "$http_code" -ge 200 && "$http_code" -lt 300 ]]; then
+        log_message "$uid successful"
+    else
+        log_message "$uid error: HTTP $http_code - $response_body"
+    fi
 }
 
-# Function to update data source type
+# Function to process and update data source types
 update_data_source_type() {
     local result="$1"
+    local processed_count=0
+    local updated_count=0
+    local readonly_count=0
+    local skipped_count=0
     
-    # Process each data source in the JSON array
+    # Use jq to parse and process JSON
     echo "$result" | jq -c '.[]' | while read -r data; do
-        local uid=$(echo "$data" | jq -r '.uid')
-        local prometheus_migration=$(echo "$data" | jq -r '.jsonData["prometheus-type-migration"] // false')
-        local read_only=$(echo "$data" | jq -r '.readOnly // false')
+        uid=$(echo "$data" | jq -r '.uid')
+        prometheus_type_migration=$(echo "$data" | jq -r '.jsonData["prometheus-type-migration"] // false')
+        data_type=$(echo "$data" | jq -r '.type')
+        read_only=$(echo "$data" | jq -r '.readOnly // false')
         
-        # Skip if prometheus-type-migration is not true
-        if [ "$prometheus_migration" != "true" ]; then
+        processed_count=$((processed_count + 1))
+        
+        # Check conditions
+        if [[ "$prometheus_type_migration" != "true" ]] || [[ "$data_type" != "grafana-amazonprometheus-datasource" ]]; then
+            skipped_count=$((skipped_count + 1))
             continue
         fi
         
-        # Skip if read-only
-        if [ "$read_only" = "true" ]; then
-            echo "$uid is readOnly. If this data source is provisioned, edit the data source type to be 'prometheus' in the provisioning file."
+        if [[ "$read_only" == "true" ]]; then
+            readonly_count=$((readonly_count + 1))
+            log_message "$uid is readOnly. If this data source is provisioned, edit the data source type to be \`prometheus\` in the provisioning file."
             continue
         fi
         
-        # Update the data source
-        local updated_data=$(echo "$data" | jq '.type = "prometheus" | .jsonData["prometheus-type-migration"] = false')
+        # Update the data
+        updated_data=$(echo "$data" | jq '.type = "prometheus" | .jsonData["prometheus-type-migration"] = false')
         update_data_source "$uid" "$updated_data"
+        updated_count=$((updated_count + 1))
+        
+        # Log the raw data for debugging (optional - uncomment if needed)
+        # log_message "DEBUG - Updated data for $uid: $updated_data"
     done
+    
+    # Note: These counts won't work in the while loop due to subshell
+    # Moving summary to the main function instead
 }
 
-# Main function to remove prometheus type migration
+# Function to get summary statistics
+get_summary_stats() {
+    local result="$1"
+    local total_datasources=$(echo "$result" | jq '. | length')
+    local migration_candidates=$(echo "$result" | jq '[.[] | select(.jsonData["prometheus-type-migration"] == true and .type == "grafana-amazonprometheus-datasource")] | length')
+    local readonly_candidates=$(echo "$result" | jq '[.[] | select(.jsonData["prometheus-type-migration"] == true and .type == "grafana-amazonprometheus-datasource" and .readOnly == true)] | length')
+    local updateable_candidates=$(echo "$result" | jq '[.[] | select(.jsonData["prometheus-type-migration"] == true and .type == "grafana-amazonprometheus-datasource" and (.readOnly == false or .readOnly == null))] | length')
+    
+    log_message "=== MIGRATION SUMMARY ==="
+    log_message "Total data sources found: $total_datasources"
+    log_message "Migration candidates found: $migration_candidates"
+    log_message "Read-only candidates (will be skipped): $readonly_candidates"
+    log_message "Updateable candidates: $updateable_candidates"
+    log_message "=========================="
+}
+
+# Main function to remove Prometheus type migration
 remove_prometheus_type_migration() {
-    local response=$(curl -s -X GET \
+    log_message "Starting remove Azure Prometheus migration"
+    log_message "Log file: $LOG_FILE"
+    log_message "Grafana URL: $GRAFANA_URL"
+    
+    response=$(curl -s -w "\n%{http_code}" -X GET \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $BEARER_TOKEN" \
         "$GRAFANA_URL/api/datasources/")
     
-    if [ $? -eq 0 ]; then
-        update_data_source_type "$response"
+    http_code=$(echo "$response" | tail -n1)
+    response_body=$(echo "$response" | sed '$d')
+    
+    if [[ "$http_code" -ge 200 && "$http_code" -lt 300 ]]; then
+        log_message "Successfully fetched data sources"
+        get_summary_stats "$response_body"
+        update_data_source_type "$response_body"
+        log_message "Migration process completed"
     else
-        echo "Error: Failed to fetch data sources" >&2
-        exit 1
+        log_message "error fetching data sources: HTTP $http_code - $response_body"
     fi
 }
 
-# Check if required variables are set
-if [ -z "$GRAFANA_URL" ] || [ -z "$BEARER_TOKEN" ]; then
-    echo "Error: Please set GRAFANA_URL and BEARER_TOKEN variables" >&2
-    exit 1
-fi
+# Function to initialize log file
+initialize_log() {
+    echo "=== Grafana Azure Prometheus Migration Log ===" > "$LOG_FILE"
+    echo "Started at: $(date)" >> "$LOG_FILE"
+    echo "=============================================" >> "$LOG_FILE"
+    echo "" >> "$LOG_FILE"
+}
 
 # Check if jq is installed
 if ! command -v jq &> /dev/null; then
-    echo "Error: jq is required but not installed. Please install jq to run this script." >&2
+    echo "Error: jq is required but not installed. Please install jq to run this script."
     exit 1
 fi
 
-# Run the main function
+# Check if required variables are set
+if [[ -z "$GRAFANA_URL" || -z "$BEARER_TOKEN" ]]; then
+    echo "Error: Please set GRAFANA_URL and BEARER_TOKEN variables at the top of the script."
+    exit 1
+fi
+
+# Initialize log file
+initialize_log
+
+# Execute main function
+log_message "Script started"
 remove_prometheus_type_migration
+log_message "Script completed"
+
+# Final log message
+echo ""
+echo "Migration completed. Full log available at: $LOG_FILE"
 ```
 
 ### Getting help
