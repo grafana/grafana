@@ -142,6 +142,8 @@ export const Examples: StoryFn = (args) => {
           {...args}
           sparkline={true}
           spotlight
+          glowBar={true}
+          glowCenter={true}
         />
         <RadialBarExample
           value={30}
@@ -152,6 +154,9 @@ export const Examples: StoryFn = (args) => {
           {...args}
           sparkline={true}
           spotlight
+          glowBar={true}
+          glowCenter={true}
+          barWidthFactor={0.4}
         />
         <RadialBarExample
           value={50}
@@ -162,6 +167,68 @@ export const Examples: StoryFn = (args) => {
           {...args}
           sparkline={true}
           spotlight
+          glowBar={true}
+          glowCenter={true}
+          barWidthFactor={0.5}
+        />
+      </Stack>
+      <div>Segmented</div>
+      <Stack direction={'row'} gap={3}>
+        <RadialBarExample
+          value={70}
+          gradient="hue"
+          color="blue"
+          clockwise
+          shape="gauge"
+          {...args}
+          spotlight
+          glowBar={true}
+          glowCenter={true}
+          segmentCount={8}
+          barWidthFactor={0.4}
+        />
+        <RadialBarExample
+          value={30}
+          gradient="hue"
+          color="green"
+          clockwise
+          shape="gauge"
+          {...args}
+          segmentCount={20}
+          spotlight
+          glowBar={true}
+          glowCenter={true}
+          barWidthFactor={0.5}
+        />
+        <RadialBarExample
+          value={50}
+          gradient="hue"
+          color="red"
+          clockwise
+          shape="gauge"
+          {...args}
+          segmentCount={40}
+          spotlight
+          glowBar={true}
+          glowCenter={true}
+          barWidthFactor={0.4}
+          segmentWidth={0.2}
+        />
+      </Stack>
+      <div>Segmented color scale</div>
+      <Stack direction={'row'} gap={3}>
+        <RadialBarExample
+          value={70}
+          gradient="hue"
+          colorMode={FieldColorModeId.ContinuousGrYlRd}
+          clockwise
+          shape="gauge"
+          {...args}
+          spotlight
+          glowBar={true}
+          glowCenter={true}
+          segmentCount={20}
+          barWidthFactor={0.4}
         />
       </Stack>
     </Stack>
