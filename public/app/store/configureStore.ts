@@ -9,6 +9,7 @@ import { rulesAPIv0alpha1 } from 'app/api/clients/rules/v0alpha1';
 import { shortURLAPIv1alpha1 } from 'app/api/clients/shorturl/v1alpha1';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
+import { popularResourcesApi } from 'app/features/dashboard/api/popularResourcesApi';
 import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
 import { userPreferencesAPI } from 'app/features/preferences/api';
 import { StoreState } from 'app/types/store';
@@ -49,6 +50,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         alertingApi.middleware,
         alertingPackageAPI.middleware,
         publicDashboardApi.middleware,
+        popularResourcesApi.middleware,
         browseDashboardsAPI.middleware,
         cloudMigrationAPI.middleware,
         userPreferencesAPI.middleware,
