@@ -838,6 +838,33 @@
     },
     {
       "metadata": {
+        "name": "cdnPluginsLoadFirst",
+        "resourceVersion": "1758882341746",
+        "creationTimestamp": "2025-09-26T10:25:41Z"
+      },
+      "spec": {
+        "description": "Prioritize loading plugins from the CDN before other sources",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "cdnPluginsLoadedFirst",
+        "resourceVersion": "1758881920003",
+        "creationTimestamp": "2025-09-26T10:18:40Z",
+        "deletionTimestamp": "2025-09-26T10:25:41Z"
+      },
+      "spec": {
+        "description": "Prioritize loading plugins from the CDN before other sources",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "cloudRBACRoles",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-01-10T13:19:01Z"
@@ -996,6 +1023,19 @@
         "description": "Supports __from and __to macros that always use the dashboard level time range",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardLibrary",
+        "resourceVersion": "1758902532246",
+        "creationTimestamp": "2025-09-26T16:02:12Z"
+      },
+      "spec": {
+        "description": "Enable suggested dashboards when creating new dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
         "frontend": true
       }
     },
@@ -1218,6 +1258,7 @@
         "name": "dskitBackgroundServices",
         "resourceVersion": "1757339637779",
         "creationTimestamp": "2025-09-03T12:20:24Z",
+        "deletionTimestamp": "2025-09-17T12:19:32Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-09-08 13:53:57.77994 +0000 UTC"
         }
@@ -1988,6 +2029,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthZHandlerRedirect",
+        "resourceVersion": "1758820248165",
+        "creationTimestamp": "2025-09-25T17:10:48Z"
+      },
+      "spec": {
+        "description": "Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthnMutation",
         "resourceVersion": "1753454405614",
         "creationTimestamp": "2025-07-25T15:05:32Z",
@@ -2011,6 +2066,21 @@
       },
       "spec": {
         "description": "Registers AuthZ /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthzEndpoints",
+        "resourceVersion": "1758779666607",
+        "creationTimestamp": "2025-09-25T05:54:26Z",
+        "deletionTimestamp": "2025-09-25T17:10:48Z"
+      },
+      "spec": {
+        "description": "Enables K8s AuthZ endpoints",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromAdminPage": true,
@@ -2947,16 +3017,16 @@
     {
       "metadata": {
         "name": "queryLibrary",
-        "resourceVersion": "1755721444487",
+        "resourceVersion": "1758208636622",
         "creationTimestamp": "2022-10-07T18:31:45Z",
         "deletionTimestamp": "2023-03-20T16:00:14Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-08-20 20:24:04.487598 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-09-18 15:17:16.622111 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Renamed feature toggle, enables Saved queries feature",
-        "stage": "privatePreview",
+        "description": "Enables Saved queries (query library) feature",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad"
       }
     },
@@ -3157,6 +3227,7 @@
         "name": "savedQueries",
         "resourceVersion": "1756920131554",
         "creationTimestamp": "2025-08-25T21:22:09Z",
+        "deletionTimestamp": "2025-09-18T12:07:31Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-09-03 17:22:11.554759 +0000 UTC"
         }
@@ -3358,6 +3429,20 @@
     },
     {
       "metadata": {
+        "name": "starsFromAPIServer",
+        "resourceVersion": "1758276055065",
+        "creationTimestamp": "2025-09-19T10:00:55Z"
+      },
+      "spec": {
+        "description": "populate star status from apiserver",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "storage",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2022-03-17T17:19:23Z"
@@ -3446,6 +3531,20 @@
         "description": "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "templateDashboards",
+        "resourceVersion": "1758897202631",
+        "creationTimestamp": "2025-09-26T14:33:22Z",
+        "deletionTimestamp": "2025-09-26T16:02:12Z"
+      },
+      "spec": {
+        "description": "Enables template dashboards suggestions when creating new dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true
       }
     },
     {
@@ -3696,6 +3795,20 @@
       },
       "spec": {
         "description": "Enable unified storage search UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageUseFullNgram",
+        "resourceVersion": "1758820248165",
+        "creationTimestamp": "2025-09-25T17:10:48Z"
+      },
+      "spec": {
+        "description": "Use full n-gram indexing instead of edge n-gram for unified storage search",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,

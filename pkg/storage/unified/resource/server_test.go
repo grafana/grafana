@@ -175,6 +175,39 @@ func TestSimpleServer(t *testing.T) {
 		require.Len(t, all.Items, 1)
 		require.Equal(t, updated.ResourceVersion, all.Items[0].ResourceVersion)
 
+		// Try again with a direct query
+		all, err = server.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Fields: []*resourcepb.Requirement{{
+				Key:      "metadata.name",
+				Operator: "=",
+				Values:   []string{"not-matching"},
+			}},
+		}})
+		require.NoError(t, err)
+		require.Len(t, all.Items, 0)
+
+		// This time matching
+		all, err = server.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Fields: []*resourcepb.Requirement{{
+				Key:      "metadata.name",
+				Operator: "=",
+				Values:   []string{"fdgsv37qslr0ga"},
+			}},
+		}})
+		require.NoError(t, err)
+		require.Len(t, all.Items, 1)
+		require.Equal(t, raw, all.Items[0].Value)
+
 		deleted, err := server.Delete(ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: updated.ResourceVersion})
 		require.NoError(t, err)
 		require.True(t, deleted.ResourceVersion > updated.ResourceVersion)
@@ -331,8 +364,8 @@ func TestSimpleServer(t *testing.T) {
 		require.NotNil(t, created)
 
 		invalidQualifiedNames := []string{
-			"", // empty
-			strings.Repeat("1", MaxQualifiedNameLength+1), // too long
+			"",                                     // empty
+			strings.Repeat("1", MaxNameLength+1),   // too long
 			"    ",                                 // only spaces
 			"f8cc010c.ee72.4681;89d2+d46e1bd47d33", // invalid chars
 		}
@@ -375,6 +408,11 @@ func TestSimpleServer(t *testing.T) {
 
 		// namespace
 		for _, invalidNamespace := range invalidQualifiedNames {
+			if invalidNamespace == "" {
+				// empty namespace is allowed
+				continue
+			}
+
 			key = &resourcepb.ResourceKey{
 				Group:     "playlist.grafana.app",
 				Resource:  "rrrr", // can be anything :(

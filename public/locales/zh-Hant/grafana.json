@@ -1666,6 +1666,10 @@
     "inspector-yaml-tab": {
       "apply": "套用"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "如何連接到 IRM",
       "disabled-description": "透過 Webhook 整合啟用 IRM",
@@ -1807,6 +1811,10 @@
         }
       }
     },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
+    },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "使用不含大括號的標籤查詢來篩選警報，例如：",
       "filter-alerts-using-label-querying-without-spaces": "使用不含空格的標籤查詢來篩選警報，例如：",
@@ -1913,9 +1921,6 @@
       "title-remove": "移除",
       "tooltip-remove-time-range": "移除時間範圍"
     },
-    "namespace": {
-      "title-alert-rules": "警報規則"
-    },
     "namespace-and-group-filter": {
       "select-group": "選擇群組",
       "select-namespace": "選擇命名空間"
@@ -1972,8 +1977,10 @@
       "label-notification-policies": "通知政策",
       "label-time-intervals": "時間間隔"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "預設政策",
       "no-matchers": "沒有匹配條件"
     },
     "notification-preview": {
@@ -1990,22 +1997,12 @@
     },
     "notification-route": {
       "no-labels": "沒有標籤",
-      "no-matching-labels": "沒有匹配的標籤"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "您的警報執行個體依以下方式傳送。",
-      "close": "關閉",
-      "contact-point": "聯絡點",
-      "default-policy": "預設政策",
-      "notification-policy-path": "通知政策路徑",
-      "see-details-link": "查看詳情",
-      "title-routing-details": "路由詳細資料"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "展開政策路由",
-      "delivered-to": "@ 已傳送至",
-      "notification-policy": "通知政策",
-      "see-details": "查看詳情"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2033,7 +2030,9 @@
       "recipient-notification-fires": "選擇當警報規則觸發時應該收到通知的人。"
     },
     "option-customfield": {
-      "label-custom-template": "自訂範本"
+      "label-custom-template": "自訂範本",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "所選的 Alertmanager 不再存在，或者您可能沒有存取權限。您可以從下拉式選單中選擇其他的 Alertmanager。",
@@ -2129,10 +2128,6 @@
       "label-new-child-policy": "新的子級政策",
       "label-new-sibling-above": "上方的新同級項目",
       "label-new-sibling-below": "下方的新同級項目"
-    },
-    "policy-path": {
-      "default-policy": "預設政策",
-      "no-matchers": "沒有匹配條件"
     },
     "preview-rule": {
       "body-preview-is-not-available": "無法顯示查詢預覽。查詢中使用的某些資料來源不可用。",
@@ -5329,7 +5324,6 @@
             "json": "匯出為 JSON"
           }
         },
-        "mark-favorite": "標記為「我的最愛」",
         "more-save-options": "更多儲存選項",
         "playlist-next": "前往下一個儀表板",
         "playlist-previous": "前往上一個儀表板",
@@ -5358,8 +5352,7 @@
             "yesText": "儲存"
           }
         },
-        "unlink-library-panel": "取消連結資料庫面板",
-        "unmark-favorite": "取消標記為「我的最愛」"
+        "unlink-library-panel": "取消連結資料庫面板"
       },
       "open-original": "開啟原始儀表板",
       "playlist-next": "前往下一個儀表板",
@@ -5380,6 +5373,10 @@
       "save-library-panel": "儲存資料庫面板",
       "settings": "儀表板設定",
       "share-button": "分享",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "取消連結資料庫面板",
       "unmark-favorite": "取消標記為「我的最愛」"
     },
@@ -9318,6 +9315,7 @@
     },
     "share-panel": {
       "config-description": "使用以下自訂設定，建立個人化的直接連結，以便在組織內分享面板：",
+      "copy-image-link": "",
       "download-image": "下載圖片",
       "render-image": "產生圖片"
     }
@@ -10616,6 +10614,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11288,6 +11294,7 @@
       "actions": {
         "set-up-required-feature-toggles": "設定所需的功能切換"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "在 Git 中將儀表板作為代碼管理，並自動佈建更新",
       "manage-your-dashboards-with-remote-provisioning": "開始使用 Git Sync",
       "store-dashboards-in-version-controlled-storage": "將儀表板儲存在版本控制的儲存空間中，以便更好地組織和追蹤歷史紀錄"
@@ -11475,8 +11482,16 @@
         "subtitle": "若想透過外部儲存空間同步及管理整個 Grafana 執行個體，請使用此選項。"
       }
     },
-    "read-only-local-tooltip": "此資料夾為唯讀，並透過檔案佈建進行佈建。若要對資料夾進行任何變更，請更新連線的檔案儲存庫。如要修改資料夾設定，請依序前往「管理」>「佈建」>「儲存庫」。",
-    "read-only-remote-tooltip": "此資料夾為唯讀，並透過 Git 進行佈建。如要對資料夾進行任何變更，請更新連線的儲存庫。若要修改資料夾設定，請依序前往「管理」>「佈建」>「儲存庫」。",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "進行中的作業",
       "column-action": "動作",
@@ -11590,6 +11605,7 @@
         "removed-from-repo-test-ui": "已從資源庫測試使用者介面移除",
         "updated-from-repo-test-ui": "已從資源庫測試使用者介面更新"
       },
+      "read-only-repo-tooltip": "",
       "repository": "存放庫",
       "tab-info": {
         "label": {
@@ -11626,6 +11642,8 @@
       "tooltip-unhealthy-repository": "無法拉取狀態不佳的儲存庫"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "包含每個歷史數值的提交",
       "synchronization-options": "同步選項"

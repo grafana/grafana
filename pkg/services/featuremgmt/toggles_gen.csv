@@ -20,6 +20,7 @@ lokiShardSplitting,experimental,@grafana/observability-logs,false,false,true
 lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
 individualCookiePreferences,experimental,@grafana/grafana-backend-group,false,false,false
 influxdbBackendMigration,GA,@grafana/partner-datasources,false,false,true
+starsFromAPIServer,experimental,@grafana/grafana-frontend-platform,false,false,true
 influxqlStreamingParser,experimental,@grafana/partner-datasources,false,false,false
 influxdbRunQueriesInParallel,privatePreview,@grafana/partner-datasources,false,false,false
 lokiLogsDataplane,experimental,@grafana/observability-logs,false,false,false
@@ -121,8 +122,8 @@ newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,f
 cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false
 disableNumericMetricsSortingInExpressions,experimental,@grafana/oss-big-tent,false,true,false
 grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
-queryLibrary,privatePreview,@grafana/sharing-squad,false,false,false
-savedQueries,preview,@grafana/sharing-squad,false,false,false
+queryLibrary,preview,@grafana/sharing-squad,false,false,false
+dashboardLibrary,experimental,@grafana/sharing-squad,false,false,true
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
@@ -154,6 +155,7 @@ useSessionStorageForRedirection,GA,@grafana/identity-access-team,false,false,fal
 rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
 unifiedStorageSearch,experimental,@grafana/search-and-storage,false,false,false
 unifiedStorageSearchSprinkles,experimental,@grafana/search-and-storage,false,false,false
+unifiedStorageUseFullNgram,experimental,@grafana/search-and-storage,false,false,false
 managedDualWriter,experimental,@grafana/search-and-storage,false,false,false
 pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
 unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
@@ -225,6 +227,7 @@ alertingListViewV2PreviewToggle,privatePreview,@grafana/alerting-squad,false,fal
 alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,false
 alertingBulkActionsInUI,GA,@grafana/alerting-squad,false,false,true
 kubernetesAuthzApis,experimental,@grafana/identity-access-team,false,false,false
+kubernetesAuthZHandlerRedirect,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthzResourcePermissionApis,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthnMutation,experimental,@grafana/identity-access-team,false,false,false
 restoreDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false
@@ -258,7 +261,7 @@ alertingTriage,experimental,@grafana/alerting-squad,false,false,true
 graphiteBackendMode,privatePreview,@grafana/partner-datasources,false,false,false
 azureResourcePickerUpdates,preview,@grafana/partner-datasources,false,false,true
 prometheusTypeMigration,experimental,@grafana/partner-datasources,false,true,false
-dskitBackgroundServices,experimental,@grafana/plugins-platform-backend,false,true,false
 pluginContainers,privatePreview,@grafana/plugins-platform-backend,false,true,false
 tempoSearchBackendMigration,GA,@grafana/oss-big-tent,false,true,false
 filterOutBotsFromFrontendLogs,experimental,@grafana/plugins-platform-backend,false,false,true
+cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,false

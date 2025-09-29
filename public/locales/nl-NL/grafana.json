@@ -1671,6 +1671,10 @@
     "inspector-yaml-tab": {
       "apply": "Toepassen"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "Verbinding maken met IRM",
       "disabled-description": "Schakel IRM in via een Webhook-integratie",
@@ -1813,6 +1817,10 @@
         }
       }
     },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
+    },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Filter waarschuwingen met behulp van labelquery's zonder accolades, bijv.:",
       "filter-alerts-using-label-querying-without-spaces": "Filter waarschuwingen met behulp van labelquery's zonder spaties, bijv.:",
@@ -1919,9 +1927,6 @@
       "title-remove": "Verwijderen",
       "tooltip-remove-time-range": "Tijdsbereik verwijderen"
     },
-    "namespace": {
-      "title-alert-rules": "Waarschuwingsregels"
-    },
     "namespace-and-group-filter": {
       "select-group": "Groep selecteren",
       "select-namespace": "Namespace selecteren"
@@ -1978,8 +1983,10 @@
       "label-notification-policies": "Meldingsbeleid",
       "label-time-intervals": "Tijdsintervallen"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "Standaardbeleid",
       "no-matchers": "Geen matchers"
     },
     "notification-preview": {
@@ -1996,22 +2003,12 @@
     },
     "notification-route": {
       "no-labels": "Geen labels",
-      "no-matching-labels": "Geen overeenkomende labels"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Je waarschuwingsinstanties worden als volgt gerouteerd.",
-      "close": "Sluiten",
-      "contact-point": "Contactpunt",
-      "default-policy": "Standaardbeleid",
-      "notification-policy-path": "Meldingsbeleid-pad",
-      "see-details-link": "Bekijk details",
-      "title-routing-details": "Routereringsgegevens"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Beleidsroute uitvouwen",
-      "delivered-to": "@ Afgeleverd bij",
-      "notification-policy": "Meldingsbeleid",
-      "see-details": "Bekijk details"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2039,7 +2036,9 @@
       "recipient-notification-fires": "Selecteer wie een melding moet ontvangen wanneer een waarschuwingsregel geactiveerd wordt."
     },
     "option-customfield": {
-      "label-custom-template": "Aangepast sjabloon"
+      "label-custom-template": "Aangepast sjabloon",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "De geselecteerde waarschuwingsmanager bestaat niet meer of je hebt mogelijk geen toestemming om deze te openen. Je kunt een andere waarschuwingsmanager selecteren in de vervolgkeuzelijst.",
@@ -2130,17 +2129,13 @@
         "suffix": "Vernieuw de pagina en probeer het opnieuw.",
         "title": "Kan meldingsbeleid niet toevoegen of bijwerken"
       },
-      "n-more-policies_one": "{{count}} aanvullend beleid",
-      "n-more-policies_other": "{{count}} aanvullend beleid"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Nieuw onderliggend beleid",
       "label-new-sibling-above": "Nieuwe aanverwant boven",
       "label-new-sibling-below": "Nieuwe aanverwant onder"
-    },
-    "policy-path": {
-      "default-policy": "Standaardbeleid",
-      "no-matchers": "Geen matchers"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Kan het queryvoorbeeld niet weergeven. Sommige gegevensbronnen die in de query's worden gebruikt, zijn niet beschikbaar.",
@@ -5350,7 +5345,6 @@
             "json": "Exporteren als JSON"
           }
         },
-        "mark-favorite": "Markeren als favoriet",
         "more-save-options": "Meer opties voor opslaan",
         "playlist-next": "Naar het volgende dashboard",
         "playlist-previous": "Naar het vorige dashboard",
@@ -5379,8 +5373,7 @@
             "yesText": "Opslaan"
           }
         },
-        "unlink-library-panel": "Bibliotheekpaneel ontkoppelen",
-        "unmark-favorite": "Markering als favoriet ongedaan maken"
+        "unlink-library-panel": "Bibliotheekpaneel ontkoppelen"
       },
       "open-original": "Origineel dashboard openen",
       "playlist-next": "Naar het volgende dashboard",
@@ -5401,6 +5394,10 @@
       "save-library-panel": "Bibliotheekpaneel",
       "settings": "Dashboardinstellingen",
       "share-button": "Delen",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Bibliotheekpaneel ontkoppelen",
       "unmark-favorite": "Markering als favoriet ongedaan maken"
     },
@@ -9346,6 +9343,7 @@
     },
     "share-panel": {
       "config-description": "Maak een gepersonaliseerde, directe link om je dashboard binnen je organisatie te delen, met de volgende aanpassingsinstellingen:",
+      "copy-image-link": "",
       "download-image": "Afbeelding downloaden",
       "render-image": "Afbeelding genereren"
     }
@@ -10650,6 +10648,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11326,6 +11332,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Vereiste functieschakelaars instellen"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Beheer dashboards als code in GitHub en verstrek updates automatisch",
       "manage-your-dashboards-with-remote-provisioning": "Aan de slag met Git-synchronisatie",
       "store-dashboards-in-version-controlled-storage": "Sla dashboards op in versiegecontroleerde opslag voor betere organisatie en het bijhouden van de geschiedenis"
@@ -11515,8 +11522,16 @@
         "subtitle": "Gebruik deze optie als je je hele Grafana-instantie via externe opslag wilt synchroniseren en beheren."
       }
     },
-    "read-only-local-tooltip": "Deze map is alleen-lezen en wordt beheerd via bestandsvoorziening. Wil je iets wijzigen? Pas dan de gekoppelde bestandsrepository aan. Voor mapinstellingen ga je naar Beheer > Voorziening > Repositories.",
-    "read-only-remote-tooltip": "Deze map is alleen-lezen en wordt beheerd via Git. Wil je iets wijzigen? Pas dan de gekoppelde repository aan. Voor mapinstellingen ga je naar Beheer > Voorziening > Repositories.",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "actieve taken",
       "column-action": "Actie",
@@ -11630,6 +11645,7 @@
         "removed-from-repo-test-ui": "verwijderd uit repo-test-UI",
         "updated-from-repo-test-ui": "bijgewerkt vanuit repo-test-UI"
       },
+      "read-only-repo-tooltip": "",
       "repository": "Repository",
       "tab-info": {
         "label": {
@@ -11666,6 +11682,8 @@
       "tooltip-unhealthy-repository": "Kan geen ongezonde repository ophalen"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "Commits opnemen voor elke historische waarde",
       "synchronization-options": "Synchronisatie-opties"
@@ -11953,10 +11971,10 @@
       "restore-button": "Herstellen",
       "restore-loading": "Bezig met herstellen ...",
       "title": "Dashboards herstellen",
-      "folder-picker-text_one": "Kies een map waarin je dashboards worden hersteld.",
-      "folder-picker-text_other": "Kies een map waarin je dashboards worden hersteld.",
-      "text_one": "Met deze actie worden {{numberOfDashboards}} dashboards hersteld.",
-      "text_other": "Met deze actie worden {{numberOfDashboards}} dashboards hersteld."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {

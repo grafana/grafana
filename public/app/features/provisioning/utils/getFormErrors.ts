@@ -17,6 +17,7 @@ export const getFormErrors = (errors: ErrorDetails[]): FormErrorTuple => {
     'local.path',
     'github.branch',
     'github.url',
+    'github.path',
     'secure.token',
     'gitlab.branch',
     'gitlab.url',

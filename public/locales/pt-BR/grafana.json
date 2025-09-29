@@ -1671,6 +1671,10 @@
     "inspector-yaml-tab": {
       "apply": "Aplicar"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "Como se conectar ao IRM",
       "disabled-description": "Ativar IRM por meio de uma integração com Webhook",
@@ -1813,6 +1817,10 @@
         }
       }
     },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
+    },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Filtre os alertas usando a consulta por etiquetas sem colchetes, ex:",
       "filter-alerts-using-label-querying-without-spaces": "Filtre os alertas usando a consulta por rótulos sem espaços. Por exemplo:",
@@ -1919,9 +1927,6 @@
       "title-remove": "Remover",
       "tooltip-remove-time-range": "Remover intervalo de tempo"
     },
-    "namespace": {
-      "title-alert-rules": "Regras de alerta"
-    },
     "namespace-and-group-filter": {
       "select-group": "Selecionar o grupo",
       "select-namespace": "Selecionar nomenclatura "
@@ -1978,8 +1983,10 @@
       "label-notification-policies": "Políticas de notificação",
       "label-time-intervals": "Intervalos de tempo"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "Política padrão",
       "no-matchers": "Sem correspondências"
     },
     "notification-preview": {
@@ -1996,22 +2003,12 @@
     },
     "notification-route": {
       "no-labels": "Sem rótulos",
-      "no-matching-labels": "Sem rótulos correspondentes"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Suas instâncias de alerta são encaminhadas da seguinte maneira.",
-      "close": "Fechar",
-      "contact-point": "Ponto de contato",
-      "default-policy": "Política padrão",
-      "notification-policy-path": "Caminho da política de notificação",
-      "see-details-link": "Ver detalhes",
-      "title-routing-details": "Detalhes do encaminhamento"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Expandir rota da política",
-      "delivered-to": "@ Entregue para",
-      "notification-policy": "Política de notificação",
-      "see-details": "Ver detalhes"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2039,7 +2036,9 @@
       "recipient-notification-fires": "Selecione quem deve receber uma notificação quando uma regra de alerta for acionada."
     },
     "option-customfield": {
-      "label-custom-template": "Modelo personalizado"
+      "label-custom-template": "Modelo personalizado",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "O Alertmanager selecionado não existe mais ou talvez você não tenha permissão para acessá-lo. Você pode selecionar um Alertmanager diferente no menu suspenso.",
@@ -2130,17 +2129,13 @@
         "suffix": "Atualize a página e tente novamente.",
         "title": "Falha ao adicionar ou atualizar a política de notificação"
       },
-      "n-more-policies_one": "{{count}} política adicional",
-      "n-more-policies_other": "{{count}} políticas adicionais"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Nova política secundária",
       "label-new-sibling-above": "Novo elemento do mesmo nível acima",
       "label-new-sibling-below": "Novo elemento do mesmo nível abaixo"
-    },
-    "policy-path": {
-      "default-policy": "Política padrão",
-      "no-matchers": "Sem correspondências"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Não é possível exibir a visualização da consulta. Algumas das fontes de dados usadas nas consultas não estão disponíveis.",
@@ -5350,7 +5345,6 @@
             "json": "Exportar como JSON"
           }
         },
-        "mark-favorite": "Marcar como favorito",
         "more-save-options": "Mais opções de salvamento",
         "playlist-next": "Ir para o próximo painel de controle",
         "playlist-previous": "Ir para o painel de controle anterior",
@@ -5379,8 +5373,7 @@
             "yesText": "Salvar"
           }
         },
-        "unlink-library-panel": "Desvincular painel de biblioteca",
-        "unmark-favorite": "Desmarcar como favorito"
+        "unlink-library-panel": "Desvincular painel de biblioteca"
       },
       "open-original": "Abrir painel de controle original",
       "playlist-next": "Ir para o próximo painel de controle",
@@ -5401,6 +5394,10 @@
       "save-library-panel": "Salvar painel da biblioteca",
       "settings": "Configurações do painel de controle",
       "share-button": "Compartilhar",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Desvincular painel de biblioteca",
       "unmark-favorite": "Desmarcar como favorito"
     },
@@ -9346,6 +9343,7 @@
     },
     "share-panel": {
       "config-description": "Crie um link direto e personalizado para compartilhar seu painel dentro da sua organização com as seguintes configurações de personalização:",
+      "copy-image-link": "",
       "download-image": "Baixar imagem",
       "render-image": "Gerar imagem"
     }
@@ -10650,6 +10648,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11326,6 +11332,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Configure os botões de alternância de recursos necessários"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Gerencie painéis como código no Git e provisione atualizações automaticamente",
       "manage-your-dashboards-with-remote-provisioning": "Comece a usar o Git Sync",
       "store-dashboards-in-version-controlled-storage": "Armazene os painéis em um armazenamento com controle por versão para aprimorar a organização e o rastreamento de histórico"
@@ -11515,8 +11522,16 @@
         "subtitle": "Use esta opção se você quiser sincronizar e gerenciar toda a sua instância da Grafana por meio de armazenamento externo."
       }
     },
-    "read-only-local-tooltip": "Esta pasta está definida como de somente leitura e está provisionada por meio de provisionamento de arquivos. Para realizar qualquer alteração na pasta, atualize o repositório de arquivos conectado. Para modificar as configurações da pasta, acesse Administração > Provisionamento > Repositórios.",
-    "read-only-remote-tooltip": "Esta pasta está definida como de somente leitura e é provisionada por meio do Git. Para realizar qualquer alteração na pasta, atualize o repositório conectado. Para modificar as configurações da pasta, acesse Administração > Provisionamento > Repositórios.",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "tarefas ativas",
       "column-action": "Ação",
@@ -11630,6 +11645,7 @@
         "removed-from-repo-test-ui": "removido da interface de teste do repositório",
         "updated-from-repo-test-ui": "atualizado a partir da interface de teste do repositório"
       },
+      "read-only-repo-tooltip": "",
       "repository": "Repositório",
       "tab-info": {
         "label": {
@@ -11666,6 +11682,8 @@
       "tooltip-unhealthy-repository": "Não é possível fazer extração de um repositório instável"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "Incluir confirmações para cada valor histórico",
       "synchronization-options": "Opções de sincronização"
@@ -11953,10 +11971,10 @@
       "restore-button": "Restaurar",
       "restore-loading": "Restaurando…",
       "title": "Restaurar painéis de controle",
-      "folder-picker-text_one": "Escolha uma pasta para onde seu painel de controle será restaurado.",
-      "folder-picker-text_other": "Escolha uma pasta para onde seus painéis de controle serão restaurados.",
-      "text_one": "Esta ação restaurará {{numberOfDashboards}} painel de controle.",
-      "text_other": "Esta ação restaurará {{numberOfDashboards}} painéis de controle."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {

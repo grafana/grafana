@@ -235,8 +235,7 @@ type ResourceServerOptions struct {
 	QOSQueue  QOSEnqueuer
 	QOSConfig QueueConfig
 
-	Ring           *ring.Ring
-	RingLifecycler *ring.BasicLifecycler
+	OwnsIndexFn func(key NamespacedResource) (bool, error)
 }
 
 func NewResourceServer(opts ResourceServerOptions) (*server, error) {
@@ -334,7 +333,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.Ring, opts.RingLifecycler)
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.OwnsIndexFn)
 		if err != nil {
 			return nil, err
 		}
@@ -948,6 +947,11 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}
 	}
 
+	// Fast path for getting single value in a list
+	if rsp := s.tryFastPathList(ctx, req); rsp != nil {
+		return rsp, nil
+	}
+
 	if req.Limit < 1 {
 		req.Limit = 500 // default max 500 items in a page
 	}
@@ -1041,6 +1045,40 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	return rsp, err
 }
 
+// Some list queries can be calculated with simple reads
+func (s *server) tryFastPathList(ctx context.Context, req *resourcepb.ListRequest) *resourcepb.ListResponse {
+	if req.Source != resourcepb.ListRequest_STORE || req.Options.Key.Namespace == "" {
+		return nil
+	}
+
+	for _, v := range req.Options.Fields {
+		if v.Key == "metadata.name" && v.Operator == `=` {
+			if len(v.Values) == 1 {
+				read := &resourcepb.ReadRequest{
+					Key:             req.Options.Key,
+					ResourceVersion: req.ResourceVersion,
+				}
+				read.Key.Name = v.Values[0]
+				found, err := s.Read(ctx, read)
+				if err != nil {
+					return &resourcepb.ListResponse{Error: AsErrorResult(err)}
+				}
+
+				// Return a value when it exists
+				rsp := &resourcepb.ListResponse{}
+				if len(found.Value) > 0 {
+					rsp.Items = []*resourcepb.ResourceWrapper{{
+						Value:           found.Value,
+						ResourceVersion: found.ResourceVersion,
+					}}
+				}
+				return rsp
+			}
+		}
+	}
+	return nil
+}
+
 // isTrashItemAuthorized checks if the user has access to the trash item.
 func (s *server) isTrashItemAuthorized(ctx context.Context, iter ListIterator, trashChecker claims.ItemChecker) bool {
 	user, ok := claims.AuthInfoFrom(ctx)
@@ -1056,6 +1094,11 @@ func (s *server) isTrashItemAuthorized(ctx context.Context, iter ListIterator, t
 
 	obj, err := utils.MetaAccessor(partial)
 	if err != nil {
+		return false
+	}
+
+	// provisioned objects should not be retrievable in the trash
+	if obj.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
 		return false
 	}
 

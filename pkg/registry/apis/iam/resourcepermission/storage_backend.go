@@ -95,7 +95,7 @@ func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resource
 	}
 
 	pagination := &common.Pagination{
-		Limit:    limit,
+		Limit:    limit + 1, // fetch one more to determine if there is a next page
 		Continue: token.offset,
 	}
 
@@ -234,9 +234,14 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 		return 0, errDatabaseHelper
 	}
 
-	mapper, grn, err := s.splitResourceName(event.Key.Name)
+	grn, err := splitResourceName(event.Key.Name)
 	if err != nil {
 		return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid resource name %q: %v", event.Key.Name, err.Error()))
+	}
+
+	mapper, err := s.getResourceMapper(grn.Group, grn.Resource)
+	if err != nil {
+		return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid group/resource in resource name %q: %v", event.Key.Name, err.Error()))
 	}
 
 	if grn.Name == "" {

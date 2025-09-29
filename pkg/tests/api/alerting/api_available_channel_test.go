@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -54,10 +53,17 @@ func TestIntegrationAvailableChannels(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
-		expNotifiers := channels_config.GetAvailableNotifiers()
-		expJson, err := json.Marshal(expNotifiers)
+		expectedBytes, err := os.ReadFile(path.Join("test-data", "alert-notifiers-v1-snapshot.json"))
 		require.NoError(t, err)
-		require.Equal(t, string(expJson), string(b))
+
+		require.NoError(t, err)
+		if !assert.JSONEq(t, string(expectedBytes), string(b)) {
+			var prettyJSON bytes.Buffer
+			err := json.Indent(&prettyJSON, b, "", "  ")
+			require.NoError(t, err)
+			err = os.WriteFile(path.Join("test-data", "alert-notifiers-v1-snapshot.json"), prettyJSON.Bytes(), 0o644)
+			require.NoError(t, err)
+		}
 	})
 
 	t.Run("should return versioned notifiers", func(t *testing.T) {

@@ -176,7 +176,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	// User store registration
 	userResource := iamv0.UserResourceInfo
-	legacyStore := user.NewLegacyStore(b.store, b.legacyAccessClient, b.enableAuthnMutation)
+	legacyStore := user.NewLegacyStore(b.store, b.accessClient, b.enableAuthnMutation)
 	storage[userResource.StoragePath()] = legacyStore
 
 	if b.enableDualWriter {
@@ -197,7 +197,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	// Service Accounts store registration
 	serviceAccountResource := iamv0.ServiceAccountResourceInfo
-	saLegacyStore := serviceaccount.NewLegacyStore(b.store, b.legacyAccessClient, b.enableAuthnMutation)
+	saLegacyStore := serviceaccount.NewLegacyStore(b.store, b.accessClient, b.enableAuthnMutation)
 	storage[serviceAccountResource.StoragePath()] = saLegacyStore
 
 	if b.enableDualWriter {
@@ -337,9 +337,15 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 			return serviceaccount.ValidateOnCreate(ctx, typedObj)
 		case *iamv0.Team:
 			return team.ValidateOnCreate(ctx, typedObj)
+		case *iamv0.ResourcePermission:
+			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
 		}
 		return nil
 	case admission.Update:
+		switch typedObj := a.GetObject().(type) {
+		case *iamv0.ResourcePermission:
+			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
+		}
 		return nil
 	case admission.Delete:
 		return nil
