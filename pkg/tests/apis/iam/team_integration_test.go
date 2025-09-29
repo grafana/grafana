@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -38,6 +39,17 @@ func TestIntegrationTeams(t *testing.T) {
 					featuremgmt.FlagKubernetesAuthnMutation,
 				},
 			})
+
+			helper.SetPermissions(helper.Org1.Admin, []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"teams:create", "teams:read", "teams:write", "teams:delete"},
+					Resource:          "teams",
+					ResourceID:        "*",
+					ResourceAttribute: "id",
+					Permission:        "Admin",
+				},
+			})
+
 			doTeamCRUDTestsUsingTheNewAPIs(t, helper)
 
 			if mode < 3 {
