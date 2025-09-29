@@ -1,22 +1,33 @@
+import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
 import {
   DataTransformerID,
+  FieldNamePickerConfigSettings,
+  GrafanaTheme2,
   SelectableValue,
+  StandardEditorsRegistryItem,
   standardTransformers,
+  TransformerCategory,
   TransformerRegistryItem,
   TransformerUIProps,
-  TransformerCategory,
 } from '@grafana/data';
-import { ConvertFrameTypeTransformerOptions, FrameType } from '@grafana/data/internal';
+import { ConvertFrameTypeTransformerOptions, FrameType, AnnotationFieldMapping } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
+import { FieldNamePicker } from '@grafana/ui/internal';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+const fieldNamePickerSettings = {
+  settings: { width: 24, isClearable: true },
+} as StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings>;
 
 export const ConvertFrameTypeTransformerEditor = ({
   options,
   onChange,
+  input,
 }: TransformerUIProps<ConvertFrameTypeTransformerOptions>) => {
   const dataTopicOptions: Array<SelectableValue<FrameType>> = [
     {
@@ -47,6 +58,21 @@ export const ConvertFrameTypeTransformerEditor = ({
     [onChange, options]
   );
 
+  const onSelectAnnotationMapping = useCallback(
+    (label: keyof AnnotationFieldMapping, value?: string) => {
+      onChange({
+        ...options,
+        annotationFieldMapping: {
+          ...options.annotationFieldMapping,
+          [label]: value,
+        },
+      });
+    },
+    [onChange, options]
+  );
+
+  const styles = useStyles2(getStyles);
+
   return (
     <>
       <InlineFieldRow>
@@ -65,6 +91,86 @@ export const ConvertFrameTypeTransformerEditor = ({
           />
         </InlineField>
       </InlineFieldRow>
+      {/* @todo HoC */}
+      {options.targetType === FrameType.Annotation && (
+        <section className={styles.annotationOptions}>
+          <InlineFieldRow>
+            <InlineField
+              labelWidth={20}
+              label={t('transformers.annotation-transformer-editor.start-time', 'Start time')}
+            >
+              <FieldNamePicker
+                context={{ data: input }}
+                value={options.annotationFieldMapping?.time ?? ''}
+                onChange={(value) => {
+                  onSelectAnnotationMapping('time', value);
+                }}
+                item={fieldNamePickerSettings}
+              />
+            </InlineField>
+          </InlineFieldRow>
+          <InlineFieldRow>
+            <InlineField labelWidth={20} label={t('transformers.annotation-transformer-editor.timeEnd', 'End time')}>
+              <FieldNamePicker
+                context={{ data: input }}
+                value={options.annotationFieldMapping?.timeEnd ?? ''}
+                onChange={(value) => {
+                  onSelectAnnotationMapping('timeEnd', value);
+                }}
+                item={fieldNamePickerSettings}
+              />
+            </InlineField>
+          </InlineFieldRow>
+          <InlineFieldRow>
+            <InlineField labelWidth={20} label={t('transformers.annotation-transformer-editor.title', 'Title')}>
+              <FieldNamePicker
+                context={{ data: input }}
+                value={options.annotationFieldMapping?.title ?? ''}
+                onChange={(value) => {
+                  onSelectAnnotationMapping('title', value);
+                }}
+                item={fieldNamePickerSettings}
+              />
+            </InlineField>
+          </InlineFieldRow>
+          <InlineFieldRow>
+            <InlineField labelWidth={20} label={t('transformers.annotation-transformer-editor.text', 'Text')}>
+              <FieldNamePicker
+                context={{ data: input }}
+                value={options.annotationFieldMapping?.text ?? ''}
+                onChange={(value) => {
+                  onSelectAnnotationMapping('text', value);
+                }}
+                item={fieldNamePickerSettings}
+              />
+            </InlineField>
+          </InlineFieldRow>
+          <InlineFieldRow>
+            <InlineField labelWidth={20} label={t('transformers.annotation-transformer-editor.tags', 'Tags')}>
+              <FieldNamePicker
+                context={{ data: input }}
+                value={options.annotationFieldMapping?.tags ?? ''}
+                onChange={(value) => {
+                  onSelectAnnotationMapping('tags', value);
+                }}
+                item={fieldNamePickerSettings}
+              />
+            </InlineField>
+          </InlineFieldRow>
+          <InlineFieldRow>
+            <InlineField labelWidth={20} label={t('transformers.annotation-transformer-editor.id', 'Annotation ID')}>
+              <FieldNamePicker
+                context={{ data: input }}
+                value={options.annotationFieldMapping?.id ?? ''}
+                onChange={(value) => {
+                  onSelectAnnotationMapping('id', value);
+                }}
+                item={fieldNamePickerSettings}
+              />
+            </InlineField>
+          </InlineFieldRow>
+        </section>
+      )}
     </>
   );
 };
@@ -86,3 +192,11 @@ export const getConvertFrameTypeTransformRegistryItem: () => TransformerRegistry
     imageDark: '',
     imageLight: '',
   });
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    annotationOptions: css({
+      marginTop: theme.spacing(2),
+    }),
+  };
+};
