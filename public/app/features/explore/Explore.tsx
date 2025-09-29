@@ -31,6 +31,7 @@ import {
   withTheme2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
+import { SparkJoyWave } from 'app/core/components/SparkJoyWave';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { StoreState } from 'app/types/store';
@@ -639,9 +640,14 @@ export class Explore extends PureComponent<Props, ExploreState> {
             paddingLeft: theme.spacing(2),
           }}
         >
+          <SparkJoyWave active={sparkJoy} />
           <div className={styles.wrapper}>
             {contentOutlineVisible && !compact && (
-              <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} sparkJoy={sparkJoy} />
+              <ContentOutline
+                scroller={this.scrollElement}
+                panelId={`content-outline-container-${exploreId}`}
+                sparkJoy={sparkJoy}
+              />
             )}
             <ScrollContainer
               data-testid={selectors.pages.Explore.General.scrollView}

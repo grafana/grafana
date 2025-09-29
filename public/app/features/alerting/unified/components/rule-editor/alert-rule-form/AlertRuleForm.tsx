@@ -9,6 +9,7 @@ import { config, locationService } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { SparkJoyToggle } from 'app/core/components/SparkJoyToggle';
+import { SparkJoyWave } from 'app/core/components/SparkJoyWave';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
@@ -238,6 +239,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
       <AppChromeUpdate actions={navBarActions} />
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <div className={styles.contentOuter}>
+          <SparkJoyWave active={sparkJoy} />
           {isManualRestore && (
             <Alert
               severity="warning"
