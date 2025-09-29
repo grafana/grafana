@@ -8,7 +8,7 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, DataSourceHttpSettings, InlineField, Select, Field, Input, FieldSet, TextLink } from '@grafana/ui';
+import { Alert, DataSourceHttpSettings, InlineField, Select, Field, Input, FieldSet } from '@grafana/ui';
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../../../constants';
 import { InfluxOptions, InfluxOptionsV1, InfluxVersion } from '../../../types';
