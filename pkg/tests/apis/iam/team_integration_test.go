@@ -203,7 +203,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 }
 
 func doTeamCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper) {
-	t.Run("should create team using legacy APIs and get/delete it using the new APIs", func(t *testing.T) {
+	t.Run("should create team using legacy APIs and get/update/delete it using the new APIs", func(t *testing.T) {
 		ctx := context.Background()
 		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Admin,
@@ -243,6 +243,29 @@ func doTeamCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper)
 		require.Equal(t, rsp.Result.UID, team.GetName())
 		require.Equal(t, "default", team.GetNamespace())
 
+		// Update the team
+		team.Object["spec"].(map[string]interface{})["title"] = "Updated Test Team 2"
+		team.Object["spec"].(map[string]interface{})["email"] = "updated@example.com"
+
+		updatedTeam, err := teamClient.Resource.Update(ctx, team, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, updatedTeam)
+
+		updatedSpec := updatedTeam.Object["spec"].(map[string]interface{})
+		require.Equal(t, "Updated Test Team 2", updatedSpec["title"])
+		require.Equal(t, "updated@example.com", updatedSpec["email"])
+		require.Equal(t, false, updatedSpec["provisioned"])
+
+		verifiedTeam, err := teamClient.Resource.Get(ctx, rsp.Result.UID, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, verifiedTeam)
+
+		verifiedSpec := verifiedTeam.Object["spec"].(map[string]interface{})
+		require.Equal(t, "Updated Test Team 2", verifiedSpec["title"])
+		require.Equal(t, "updated@example.com", verifiedSpec["email"])
+		require.Equal(t, false, verifiedSpec["provisioned"])
+
+		// Delete the team
 		err = teamClient.Resource.Delete(ctx, rsp.Result.UID, metav1.DeleteOptions{})
 		require.NoError(t, err)
 
