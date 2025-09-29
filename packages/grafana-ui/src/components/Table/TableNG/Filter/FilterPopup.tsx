@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -65,6 +65,7 @@ export const FilterPopup = ({
   const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
   const [matchCase, setMatchCase] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const onCancel = useCallback((event?: React.MouseEvent) => onClose(), [onClose]);
 
@@ -114,6 +115,7 @@ export const FilterPopup = ({
         className={styles.filterContainer}
         onClick={stopPropagation}
         data-testid={selectors.components.Panels.Visualization.TableNG.Filters.Container}
+        ref={containerRef}
       >
         <Stack direction="column">
           <Stack alignItems="center">
@@ -124,6 +126,7 @@ export const FilterPopup = ({
               onChange={setOperator}
               value={operator}
               tooltip={operator.description}
+              root={containerRef.current ?? undefined}
             />
           </Stack>
 
