@@ -22,6 +22,42 @@
     ".": {
       "import": "./src/index.ts",
       "require": "./src/index.ts"
+    },
+    "./advisor": {
+      "import": "./src/clients/advisor/index.ts",
+      "require": "./src/clients/advisor/index.ts"
+    },
+    "./dashboard": {
+      "import": "./src/clients/dashboard/index.ts",
+      "require": "./src/clients/dashboard/index.ts"
+    },
+    "./folder": {
+      "import": "./src/clients/folder/index.ts",
+      "require": "./src/clients/folder/index.ts"
+    },
+    "./iam": {
+      "import": "./src/clients/iam/index.ts",
+      "require": "./src/clients/iam/index.ts"
+    },
+    "./playlist": {
+      "import": "./src/clients/playlist/index.ts",
+      "require": "./src/clients/playlist/index.ts"
+    },
+    "./preferences": {
+      "import": "./src/clients/preferences/index.ts",
+      "require": "./src/clients/preferences/index.ts"
+    },
+    "./provisioning": {
+      "import": "./src/clients/provisioning/index.ts",
+      "require": "./src/clients/provisioning/index.ts"
+    },
+    "./rules": {
+      "import": "./src/clients/rules/index.ts",
+      "require": "./src/clients/rules/index.ts"
+    },
+    "./shorturl": {
+      "import": "./src/clients/shorturl/index.ts",
+      "require": "./src/clients/shorturl/index.ts"
     }
   },
   "publishConfig": {

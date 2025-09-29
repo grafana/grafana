@@ -103,7 +103,7 @@ const config: ConfigFile = {
     },
     '../clients/dashboard/v0alpha1/endpoints.gen.ts': {
       apiFile: '../clients/dashboard/v0alpha1/baseAPI.ts',
-      schemaFile: path.join(basePath, 'data/openapi/dashboard.grafana.app-v1alpha1.json'),
+      schemaFile: path.join(basePath, 'data/openapi/dashboard.grafana.app-v0alpha1.json'),
       filterEndpoints: ['getSearch'],
       tag: true,
     },
