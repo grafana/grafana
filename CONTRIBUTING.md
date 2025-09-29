@@ -19,34 +19,47 @@ Interact and be heard:
 
 ## Make technical contributions
 
-We welcome your technical contributions! Here are some examples:
+We welcome your technical contributions! You can contribute with or without code:
 
-- Contribute to the Grafana codebase- check out these [help-wanted issues](<(https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22)>)
-- Develop community [plugins](https://grafana.com/developers/plugin-tools)
-- Report [bugs](https://github.com/grafana/grafana/issues/new?template=0-bug-report.yaml)
-- [Triage issues](https://github.com/grafana/grafana/blob/4414b92e93440cc9ed0f281989ee71dc16216a15/contribute/triage-issues.md)
-- Report [security vulnerabilities](https://github.com/grafana/grafana/security/policy)
-- Submit a [feature request](https://github.com/grafana/grafana/issues/new?template=1-feature_requests.md)
-- Write [technical documentation](https://github.com/grafana/grafana/blob/4414b92e93440cc9ed0f281989ee71dc16216a15/contribute/documentation/README.md)
+### 1. Contribute Code
+
+**What you should bring:**
+- Follow our [developer guide](contribute/developer-guide.md) to set up your environment.
+- Adhere to our [frontend](contribute/style-guides/frontend.md) and [backend](contribute/backend/style-guide.md) style guides.
+- Use [Emotion](contribute/style-guides/styling.md) for frontend styling.
+- Write or update tests ([testing guide](contribute/style-guides/testing.md)).
+- Run linting and formatting:  
+  - Install pre-commit hooks: `make lefthook-install`
+  - Lint/fix code: `yarn lint` and `yarn format`
+- Ensure your code passes all tests:
+  - Frontend: `yarn test`
+  - Backend: `go test -v ./pkg/...`
+  - End-to-end: `yarn e2e:playwright`
+- Prepare a clear, descriptive pull request ([how-to guide](contribute/create-pull-request.md)).
+
+**Step-by-step:**
+1. Pick an issue or feature ([help-wanted](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22)).
+2. Set up your environment ([guide](contribute/developer-guide.md)).
+3. Make your changes, following code style and testing guidelines.
+4. Run linting, formatting, and tests.
+5. Commit and push your changes.
+6. Open a pull request, referencing related issues and describing your changes.
+
+### 2. Contribute without Code
+
+You can help even if you don't write code:
+
+- **Triage issues:** Review, label, and clarify open issues ([triage guide](contribute/triage-issues.md)).
+- **Report bugs:** Submit detailed bug reports ([bug template](https://github.com/grafana/grafana/issues/new?template=0-bug-report.yaml)).
+- **Suggest features:** Propose new ideas ([feature request template](https://github.com/grafana/grafana/issues/new?template=1-feature_requests.md)).
+- **Improve documentation:** Edit or add to our docs ([docs guide](contribute/documentation/README.md)).
+
+**Step-by-step:**
+1. Choose how you want to help (issue triage, bug report, feature request, docs).
+2. Read the relevant guide or template.
+3. Submit your contribution via GitHub (issue, PR, or doc edit).
 
 **Please note:** We do not currently accept contributions for translations. Please do not submit pull requests translating grafana.json files - they will be rejected. We do accept contributions to mark up phrases for translation. See [Internationalization](contribute/internationalization.md).
-
-### Your first contribution
-
-Unsure where to begin contributing to Grafana? Start by browsing issues labeled `beginner friendly` or `help wanted`.
-
-- [Beginner-friendly](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22) issues are generally straightforward to complete.
-- [Help wanted](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) issues are problems we would like the community to help us with regardless of complexity.
-
-If you're looking to make a code change, see how to set up your environment for [local development](contribute/developer-guide.md).
-
-When you're ready to contribute, it's time to [create a pull request](/contribute/create-pull-request.md).
-
-### Develop a plugin
-
-Developing a Grafana plugin is a fantastic way to share your unique ideas with the community, extend the platform’s capabilities, and make a real impact on how people visualize and understand their data. Check out our guide to creating [plugins](https://grafana.com/developers/plugin-tools)
-
-### Report bugs
 
 Before submitting a new issue, try to make sure someone hasn't already reported the problem. Look through the [existing issues](https://github.com/grafana/grafana/issues) for similar issues.
 
