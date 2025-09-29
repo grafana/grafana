@@ -9,12 +9,7 @@ const pkg = rq('./package.json');
 export default [
   {
     input: entryPoint,
-    plugins: [
-      ...plugins,
-      copy({
-        targets: [{ src: 'src/eslint', dest: 'dist' }],
-      }),
-    ],
+    plugins,
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-i18n')],
     treeshake: false,
   },

@@ -28,16 +28,14 @@
     "./internal": {
       "@grafana-app/source": "./src/internal/index.ts"
     },
-    "./eslint-plugin": {
-      "@grafana-app/source": "./src/eslint/index.cjs",
-      "default": "./dist/eslint/index.cjs"
-    }
+    "./eslint-plugin": "./src/eslint/index.cjs"
   },
   "publishConfig": {
     "access": "public"
   },
   "files": [
     "dist",
+    "./src/eslint",
     "./README.md",
     "./CHANGELOG.md",
     "LICENSE_APACHE2"
