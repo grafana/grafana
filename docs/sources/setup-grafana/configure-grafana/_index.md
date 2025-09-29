@@ -726,6 +726,8 @@ Set to `true` if you host Grafana behind HTTPS. Default is `false`.
 
 Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is to mitigate the risk of cross-origin information leakage. This setting also provides some protection against cross-site request forgery attacks (CSRF), [read more about SameSite here](https://owasp.org/www-community/SameSite). Valid values are `lax`, `strict`, `none`, and `disabled`. Default is `lax`. Using value `disabled` does not add any `SameSite` attribute to cookies.
 
+If you want to use OAuth/SAML for login, it is necessary to configure this attribute as `lax`.
+
 #### `allow_embedding`
 
 When `false`, the HTTP header `X-Frame-Options: deny` is set in Grafana HTTP responses which instructs browsers to not allow rendering Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>`.

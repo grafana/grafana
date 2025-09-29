@@ -11,7 +11,7 @@ import (
 	"embed"
 	"encoding/json"
 
-	featuretoggle "github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
+	featuretoggleapi "github.com/grafana/grafana/pkg/services/featuremgmt/feature_toggle_api"
 )
 
 var (
@@ -338,15 +338,6 @@ var (
 			RequiresDevMode: true,
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
-		},
-		{
-			Name:            "featureToggleAdminPage",
-			Description:     "Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           grafanaBackendServicesSquad,
-			RequiresRestart: true,
-			HideFromDocs:    true,
 		},
 		{
 			Name:        "awsAsyncQueryCaching",
@@ -2080,8 +2071,8 @@ var (
 var f embed.FS
 
 // Get the cached feature list (exposed as a k8s resource)
-func GetEmbeddedFeatureList() (featuretoggle.FeatureList, error) {
-	features := featuretoggle.FeatureList{}
+func GetEmbeddedFeatureList() (featuretoggleapi.FeatureList, error) {
+	features := featuretoggleapi.FeatureList{}
 	body, err := f.ReadFile("toggles_gen.json")
 	if err == nil {
 		err = json.Unmarshal(body, &features)

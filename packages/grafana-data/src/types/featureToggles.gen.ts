@@ -209,10 +209,6 @@ export interface FeatureToggles {
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   /**
-  * Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.
-  */
-  featureToggleAdminPage?: boolean;
-  /**
   * Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
   * @default true
   */
