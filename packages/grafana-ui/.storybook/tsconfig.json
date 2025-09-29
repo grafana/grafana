@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "declarationDir": "dist",
-    "moduleResolution": "bundler",
     "noUnusedLocals": false
   },
   "extends": "../tsconfig.json",
