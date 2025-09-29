@@ -488,6 +488,5 @@ func runDashboardSearchTest(t *testing.T, mode rest.DualWriterMode) {
 		}
 		require.GreaterOrEqual(t, dashboards, 1)
 		require.GreaterOrEqual(t, folders, 1)
-
 	})
 }
