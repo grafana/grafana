@@ -212,7 +212,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         }
 
         if (limitAlerts !== undefined) {
-          queryParams[PrometheusAPIFilters.LimitAlerts] = String(PrometheusAPIFilters.LimitAlerts);
+          queryParams[PrometheusAPIFilters.LimitAlerts] = String(limitAlerts);
         }
 
         if (maxGroups) {

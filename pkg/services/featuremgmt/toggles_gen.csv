@@ -21,6 +21,7 @@ lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
 individualCookiePreferences,experimental,@grafana/grafana-backend-group,false,false,false
 influxdbBackendMigration,GA,@grafana/partner-datasources,false,false,true
 starsFromAPIServer,experimental,@grafana/grafana-frontend-platform,false,false,true
+kubernetesStars,experimental,@grafana/grafana-app-platform-squad,false,true,false
 influxqlStreamingParser,experimental,@grafana/partner-datasources,false,false,false
 influxdbRunQueriesInParallel,privatePreview,@grafana/partner-datasources,false,false,false
 lokiLogsDataplane,experimental,@grafana/observability-logs,false,false,false
@@ -42,7 +43,6 @@ datasourceAPIServers,experimental,@grafana/grafana-app-platform-squad,false,true
 grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
 provisioning,experimental,@grafana/grafana-app-platform-squad,false,true,false
 grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,true,true,false
-featureToggleAdminPage,experimental,@grafana/grafana-backend-services-squad,false,true,false
 awsAsyncQueryCaching,GA,@grafana/aws-datasources,false,false,false
 queryCacheRequestDeduplication,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 permissionsFilterRemoveSubquery,experimental,@grafana/search-and-storage,false,false,false
