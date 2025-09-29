@@ -24,6 +24,36 @@
       "import": "./dist/esm/index.mjs",
       "require": "./dist/cjs/index.cjs"
     },
+    "./raw/preferences": {
+      "@grafana-app/source": "./src/raw/preferences/x/preferences_types.gen.ts",
+      "types": "./dist/types/raw/preferences/x/preferences_types.gen.d.ts",
+      "import": "./dist/esm/raw/preferences/x/preferences_types.gen.mjs",
+      "require": "./dist/cjs/raw/preferences/x/preferences_types.gen.cjs"
+    },
+    "./raw/dashboard": {
+      "@grafana-app/source": "./src/raw/dashboard/x/dashboard_types.gen.ts",
+      "types": "./dist/types/raw/dashboard/x/dashboard_types.gen.d.ts",
+      "import": "./dist/esm/raw/dashboard/x/dashboard_types.gen.mjs",
+      "require": "./dist/cjs/raw/dashboard/x/dashboard_types.gen.cjs"
+    },
+    "./raw/librarypanel": {
+      "@grafana-app/source": "./src/raw/librarypanel/x/librarypanel_types.gen.ts",
+      "types": "./dist/types/raw/librarypanel/x/librarypanel_types.gen.d.ts",
+      "import": "./dist/esm/raw/librarypanel/x/librarypanel_types.gen.mjs",
+      "require": "./dist/cjs/raw/librarypanel/x/librarypanel_types.gen.cjs"
+    },
+    "./schema/dashboard/*": {
+      "@grafana-app/source": "./src/schema/dashboard/*.ts",
+      "types": "./dist/types/schema/dashboard/*.d.ts",
+      "import": "./dist/esm/schema/dashboard/*.mjs",
+      "require": "./dist/cjs/schema/dashboard/*.cjs"
+    },
+    "./veneer/*": {
+      "@grafana-app/source": "./src/veneer/*.types.ts",
+      "types": "./dist/types/veneer/*.types.d.ts",
+      "import": "./dist/esm/veneer/*.types.mjs",
+      "require": "./dist/cjs/veneer/*.types.cjs"
+    },
     "./dist/*": {
       "types": "./dist/*",
       "default": "./dist/*"
