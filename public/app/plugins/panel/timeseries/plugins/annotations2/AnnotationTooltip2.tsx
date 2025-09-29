@@ -11,16 +11,24 @@ interface Props {
   annoIdx: number;
   timeZone: string;
   onEdit: () => void;
+  isPinned: boolean;
+  onClose: () => void;
 }
 
 const retFalse = () => false;
 
-export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Props) => {
+export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit, isPinned, onClose }: Props) => {
   const annoId = annoVals.id?.[annoIdx];
 
   const styles = useStyles2(getStyles);
-
+  const focusRef = React.useRef<HTMLButtonElement | null>(null);
   const { canEditAnnotations = retFalse, canDeleteAnnotations = retFalse, onAnnotationDelete } = usePanelContext();
+
+  React.useEffect(() => {
+    if (isPinned) {
+      focusRef.current?.focus();
+    }
+  }, [isPinned]);
 
   const dashboardUID = annoVals.dashboardUID?.[annoIdx];
 
@@ -73,10 +81,13 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
             </span>
             {time}
           </div>
-          {(canEdit || canDelete) && (
-            <div className={styles.editControls}>
+
+          {(canEdit || canDelete || isPinned) && (
+            // @todo canEdit/canDelete is set when user cannot edit/delete
+            <div className={styles.controls}>
               {canEdit && (
                 <IconButton
+                  ref={focusRef}
                   name={'pen'}
                   size={'sm'}
                   onClick={onEdit}
@@ -89,6 +100,18 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
                   size={'sm'}
                   onClick={() => onAnnotationDelete(annoId)}
                   tooltip={t('timeseries.annotation-tooltip2.tooltip-delete', 'Delete')}
+                />
+              )}
+              {isPinned && (
+                <IconButton
+                  name={'times'}
+                  size={'sm'}
+                  onClick={(e) => {
+                    // Don't trigger onClick
+                    e.stopPropagation();
+                    onClose();
+                  }}
+                  tooltip={t('timeseries.annotation-tooltip2.tooltip-close', 'Close')}
                 />
               )}
             </div>
@@ -134,7 +157,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.primary,
     fontWeight: 400,
   }),
-  editControls: css({
+  controls: css({
     display: 'flex',
     '> :last-child': {
       marginLeft: 0,

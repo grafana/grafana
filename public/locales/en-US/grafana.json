@@ -13008,9 +13008,11 @@
       "label-tags": "Tags",
       "placeholder-add-tags": "Add tags",
       "save": "Save",
-      "saving": "Saving"
+      "saving": "Saving",
+      "tooltip-close": "Close"
     },
     "annotation-tooltip2": {
+      "tooltip-close": "Close",
       "tooltip-delete": "Delete",
       "tooltip-edit": "Edit"
     },
@@ -13210,8 +13212,10 @@
         "convert-frame-type": "Convert frame data topic (e.g., series to annotations/exemplars)."
       },
       "label": {
-        "annotations": "Annotations",
-        "annotations-description": "Convert to annotations format",
+        "annotation": "Annotation",
+        "annotation-description": "Convert to Annotation frame(s)",
+        "exemplar": "Exemplar",
+        "exemplar-description": "Convert to Exemplar frame(s)",
         "target-data-topic": "Target data topic"
       },
       "placeholder": {
