@@ -115,6 +115,10 @@ export interface FeatureToggles {
   */
   starsFromAPIServer?: boolean;
   /**
+  * Routes stars requests from /api to the /apis endpoint
+  */
+  kubernetesStars?: boolean;
+  /**
   * Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
   */
   influxqlStreamingParser?: boolean;
