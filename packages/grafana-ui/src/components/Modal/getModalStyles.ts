@@ -3,15 +3,13 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
 export const getModalStyles = (theme: GrafanaTheme2) => {
-  const borderRadius = theme.shape.radius.default;
-
   return {
     modal: css({
       position: 'fixed',
       zIndex: theme.zIndex.modal,
       background: theme.colors.background.primary,
       boxShadow: theme.shadows.z3,
-      borderRadius,
+      borderRadius: theme.shape.radius.lg,
       border: `1px solid ${theme.colors.border.weak}`,
       backgroundClip: 'padding-box',
       outline: 'none',

@@ -98,7 +98,7 @@ type ListUserQuery struct {
 }
 
 type ListUserResult struct {
-	Users    []user.User
+	Items    []common.UserWithRole
 	Continue int64
 	RV       int64
 }
@@ -166,19 +166,19 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDa
 	if err == nil {
 		var lastID int64
 		for rows.Next() {
-			u := user.User{}
+			u := common.UserWithRole{}
 			err = rows.Scan(&u.OrgID, &u.ID, &u.UID, &u.Login, &u.Email, &u.Name,
 				&u.Created, &u.Updated, &u.IsServiceAccount, &u.IsDisabled, &u.IsAdmin, &u.EmailVerified,
-				&u.IsProvisioned, &u.LastSeenAt,
+				&u.IsProvisioned, &u.LastSeenAt, &u.Role,
 			)
 			if err != nil {
 				return res, err
 			}
 
 			lastID = u.ID
-			res.Users = append(res.Users, u)
-			if len(res.Users) > limit {
-				res.Users = res.Users[0 : len(res.Users)-1]
+			res.Items = append(res.Items, u)
+			if len(res.Items) > limit {
+				res.Items = res.Items[0 : len(res.Items)-1]
 				res.Continue = lastID
 				break
 			}
@@ -310,7 +310,7 @@ type CreateUserCommand struct {
 }
 
 type CreateUserResult struct {
-	User user.User
+	User common.UserWithRole
 }
 
 type CreateOrgUserCommand struct {
@@ -398,7 +398,7 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 
 	req := newCreateUser(sql, &cmd)
 
-	var createdUser user.User
+	var createdUser common.UserWithRole
 	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
 		userQuery, err := sqltemplate.Execute(sqlCreateUserTemplate, req)
 		if err != nil {
@@ -429,23 +429,26 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 			return fmt.Errorf("failed to create org_user relationship: %w", err)
 		}
 
-		createdUser = user.User{
-			ID:               userID,
-			UID:              cmd.UID,
-			Login:            cmd.Login,
-			Email:            cmd.Email,
-			Name:             cmd.Name,
-			OrgID:            cmd.OrgID,
-			IsAdmin:          cmd.IsAdmin,
-			IsDisabled:       cmd.IsDisabled,
-			EmailVerified:    cmd.EmailVerified,
-			IsProvisioned:    cmd.IsProvisioned,
-			Salt:             cmd.Salt,
-			Rands:            cmd.Rands,
-			Created:          cmd.Created.Time,
-			Updated:          cmd.Updated.Time,
-			LastSeenAt:       cmd.LastSeenAt.Time,
-			IsServiceAccount: false,
+		createdUser = common.UserWithRole{
+			User: user.User{
+				ID:               userID,
+				UID:              cmd.UID,
+				Login:            cmd.Login,
+				Email:            cmd.Email,
+				Name:             cmd.Name,
+				OrgID:            cmd.OrgID,
+				IsAdmin:          cmd.IsAdmin,
+				IsDisabled:       cmd.IsDisabled,
+				EmailVerified:    cmd.EmailVerified,
+				IsProvisioned:    cmd.IsProvisioned,
+				Salt:             cmd.Salt,
+				Rands:            cmd.Rands,
+				Created:          cmd.Created.Time,
+				Updated:          cmd.Updated.Time,
+				LastSeenAt:       cmd.LastSeenAt.Time,
+				IsServiceAccount: false,
+			},
+			Role: cmd.Role,
 		}
 
 		return nil

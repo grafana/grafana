@@ -86,7 +86,7 @@ export function useFoldersQueryAppPlatform({
         return;
       }
 
-      const args = { folder: finalParentUid, type: 'folder' };
+      const args = { folder: finalParentUid, type: 'folder' } as const;
 
       // Make a request
       const subscription = dispatch(dashboardAPIv0alpha1.endpoints.getSearch.initiate(args));

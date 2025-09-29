@@ -53,6 +53,7 @@ export class LogListModel implements LogRowModel {
   timeUtc: string;
   uid: string;
   uniqueLabels: Labels | undefined;
+  uniqueLabelsExpanded = false;
 
   private _body: string | undefined = undefined;
   private _currentSearch: string | undefined = undefined;
@@ -325,4 +326,12 @@ function countNewLines(log: string, limit = Infinity) {
     }
   }
   return count;
+}
+
+export function getLevelsFromLogs(logs: LogListModel[]) {
+  const levels = new Set<LogLevel>();
+  for (const log of logs) {
+    levels.add(log.logLevel);
+  }
+  return Array.from(levels).filter((level) => level != null);
 }

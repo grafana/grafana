@@ -7,7 +7,7 @@ import (
 
 	alertingImages "github.com/grafana/alerting/images"
 	"github.com/grafana/alerting/receivers"
-	alertingEmail "github.com/grafana/alerting/receivers/email"
+	alertingEmail "github.com/grafana/alerting/receivers/email/v1"
 	alertingTemplates "github.com/grafana/alerting/templates"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"

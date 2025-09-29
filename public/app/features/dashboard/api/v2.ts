@@ -130,7 +130,7 @@ export class K8sDashboardV2API
     }
 
     // add folder annotation
-    if (options.folderUid) {
+    if (options.folderUid !== undefined) {
       // remove frontend folder annotations
       delete obj.metadata.annotations?.[AnnoKeyFolderTitle];
       delete obj.metadata.annotations?.[AnnoKeyFolderUrl];

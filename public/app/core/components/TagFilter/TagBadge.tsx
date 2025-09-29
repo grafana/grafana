@@ -34,7 +34,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   badge: css({
     ...theme.typography.bodySmall,
     backgroundColor: theme.v1.palette.gray1,
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.sm,
     color: theme.v1.palette.white,
     display: 'inline-block',
     height: '20px',

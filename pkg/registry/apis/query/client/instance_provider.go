@@ -21,6 +21,7 @@ type singleTenantInstanceProvider struct {
 type singleTenantInstance struct {
 	client       clientapi.QueryDataClient
 	instanceConf clientapi.InstanceConfigurationSettings
+	logger       log.Logger
 }
 
 func (t *singleTenantInstance) GetDataSourceClient(_ context.Context, _ data.DataSourceRef) (clientapi.QueryDataClient, error) {
@@ -43,10 +44,11 @@ func NewSingleTenantInstanceProvider(cfg *setting.Cfg, features featuremgmt.Feat
 	}
 }
 
-func (s *singleTenantInstanceProvider) GetInstance(_ context.Context, _ map[string]string) (clientapi.Instance, error) {
+func (s *singleTenantInstanceProvider) GetInstance(_ context.Context, logger log.Logger, _ map[string]string) (clientapi.Instance, error) {
 	return &singleTenantInstance{
 		client:       s.client,
 		instanceConf: s.instanceConf,
+		logger:       logger,
 	}, nil
 }
 
@@ -54,9 +56,8 @@ func (s *singleTenantInstance) GetSettings() clientapi.InstanceConfigurationSett
 	return s.instanceConf
 }
 
-func (s *singleTenantInstance) GetLogger(parent log.Logger) log.Logger {
-	// currently we do not add any extra info
-	return parent.New()
+func (s *singleTenantInstance) GetLogger() log.Logger {
+	return s.logger
 }
 
 func (s *singleTenantInstance) ReportMetrics() {

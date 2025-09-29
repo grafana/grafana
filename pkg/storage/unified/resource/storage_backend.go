@@ -889,12 +889,13 @@ func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 	pagedKeys := applyPagination(filteredKeys, lastSeenRV, sortAscending)
 
 	iter := kvHistoryIterator{
-		keys:          pagedKeys,
-		currentIndex:  -1,
-		ctx:           ctx,
-		listRV:        listRV,
-		sortAscending: sortAscending,
-		dataStore:     k.dataStore,
+		keys:            pagedKeys,
+		currentIndex:    -1,
+		ctx:             ctx,
+		listRV:          listRV,
+		sortAscending:   sortAscending,
+		dataStore:       k.dataStore,
+		skipProvisioned: true,
 	}
 
 	err = fn(&iter)
@@ -907,12 +908,13 @@ func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 
 // kvHistoryIterator implements ListIterator for KV storage history
 type kvHistoryIterator struct {
-	ctx           context.Context
-	keys          []DataKey
-	currentIndex  int
-	listRV        int64
-	sortAscending bool
-	dataStore     *dataStore
+	ctx             context.Context
+	keys            []DataKey
+	currentIndex    int
+	listRV          int64
+	sortAscending   bool
+	skipProvisioned bool
+	dataStore       *dataStore
 
 	// current
 	rv     int64
@@ -961,6 +963,11 @@ func (i *kvHistoryIterator) Next() bool {
 	}
 	i.folder = meta.GetFolder()
 	i.err = nil
+
+	// if the resource is provisioned and we are skipping provisioned resources, continue onto the next one
+	if i.skipProvisioned && meta.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
+		return i.Next()
+	}
 
 	return true
 }

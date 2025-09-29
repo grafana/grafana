@@ -19,6 +19,20 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+jest.mock('app/store/store', () => ({
+  dispatch: jest.fn((action) => {
+    // Return the mocked result directly
+    return Promise.resolve({
+      data: {
+        metadata: {
+          name: 'bewyw48durgu8d',
+          namespace: '1',
+        },
+      },
+    });
+  }),
+}));
+
 beforeEach(() => {
   Object.assign(navigator, {
     clipboard: {
@@ -29,6 +43,9 @@ beforeEach(() => {
 
   document.execCommand = jest.fn();
   config.featureToggles.useKubernetesShortURLsAPI = false;
+
+  // Clear any caches between tests
+  jest.clearAllMocks();
 });
 
 describe('createShortLink', () => {
@@ -40,9 +57,19 @@ describe('createShortLink', () => {
 
 describe('createShortLink using k8s API', () => {
   it('creates short link', async () => {
+    // Mock window.location for k8s API test
+    const mockLocation = {
+      protocol: 'https:',
+      host: 'www.test.grafana.com',
+    };
+    Object.defineProperty(window, 'location', {
+      value: mockLocation,
+      writable: true,
+    });
+
     config.featureToggles.useKubernetesShortURLsAPI = true;
     const shortUrl = await createShortLink('d/edhmipji89b0gb/welcome?orgId=1&from=now-6h&to=now&timezone=browser');
-    expect(shortUrl).toBe('www.test.grafana.com/goto/bewyw48durgu8d?orgId=1');
+    expect(shortUrl).toBe('https://www.test.grafana.com/goto/bewyw48durgu8d?orgId=1');
   });
 });
 

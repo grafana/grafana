@@ -48,9 +48,6 @@ const aubergineTheme: NewThemeOptions = {
     hoverFactor: 0.07,
     tonalOffset: 0.15,
   },
-  shape: {
-    borderRadius: 6,
-  },
 };
 
 export default aubergineTheme;

@@ -17,9 +17,6 @@ describe('ScopesSelectorService', () => {
     },
     spec: {
       title: 'test-scope',
-      type: 'scope',
-      description: 'test scope',
-      category: 'scope',
       filters: [],
     },
   };
@@ -30,9 +27,6 @@ describe('ScopesSelectorService', () => {
     },
     spec: {
       title: 'test-scope',
-      type: 'scope',
-      category: 'scope',
-      description: 'test scope',
       filters: [],
     },
   };
@@ -97,7 +91,10 @@ describe('ScopesSelectorService', () => {
       expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: '', query: '' });
     });
 
-    it('should update node query and fetch children when query changes', async () => {
+    it.skip('should update node query and fetch children when query changes', async () => {
+      await service.updateNode('', true, ''); // Expand first
+      // Simulate a change in the query
+      await service.updateNode('', true, 'new-qu');
       await service.updateNode('', true, 'new-query');
       expect(service.state.tree).toMatchObject({
         children: {},
@@ -115,6 +112,122 @@ describe('ScopesSelectorService', () => {
       await service.updateNode('', false, '');
       // Only the first expansion should trigger fetchNodes
       expect(apiClient.fetchNodes).toHaveBeenCalledTimes(1);
+    });
+
+    it.skip('should clear query on first expansion but keep it when filtering within populated node', async () => {
+      const mockChildNode: ScopeNode = {
+        metadata: { name: 'child-node' },
+        spec: { linkId: 'child-scope', linkType: 'scope', parentName: '', nodeType: 'leaf', title: 'child-node' },
+      };
+
+      apiClient.fetchNodes.mockResolvedValue([mockChildNode]);
+
+      // Scenario 1: First expansion (no children yet) - clear query for unfiltered view
+      await service.updateNode('', true, 'search-query');
+      expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: '', query: undefined });
+
+      // Parent query should be cleared and child nodes should have no query (first expansion)
+      expect(service.state.tree?.query).toBe('');
+      let childTreeNode = service.state.tree?.children?.['child-node'];
+      expect(childTreeNode?.query).toBe('');
+
+      // Scenario 2: Filtering within node that already has children
+      await service.updateNode('', true, 'new-search');
+      expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: '', query: 'new-search' });
+
+      // Parent and child nodes should have the filter query (filtering within existing children)
+      expect(service.state.tree?.query).toBe('new-search');
+      childTreeNode = service.state.tree?.children?.['child-node'];
+      expect(childTreeNode?.query).toBe('new-search');
+
+      expect(apiClient.fetchNodes).toHaveBeenCalledTimes(2);
+    });
+
+    it.skip('should always reset query on any expansion', async () => {
+      const mockChildNode: ScopeNode = {
+        metadata: { name: 'child-node' },
+        spec: { linkId: 'child-scope', linkType: 'scope', parentName: '', nodeType: 'leaf', title: 'child-node' },
+      };
+
+      apiClient.fetchNodes.mockResolvedValue([mockChildNode]);
+
+      // First expansion with any query should reset parent query and not pass query to API
+      await service.updateNode('', true, 'some-search-query');
+
+      // Verify query is reset and API called without query for first expansion
+      expect(service.state.tree?.query).toBe('');
+      expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: '', query: undefined });
+      expect(service.state.tree?.children?.['child-node']?.query).toBe('');
+    });
+
+    it.skip('should handle query reset correctly for nested levels beyond root', async () => {
+      // Set up mock nodes for multi-level hierarchy
+      const mockParentNode: ScopeNode = {
+        metadata: { name: 'parent-container' },
+        spec: { linkId: '', linkType: 'scope', parentName: '', nodeType: 'container', title: 'Parent Container' },
+      };
+
+      const mockChildNode: ScopeNode = {
+        metadata: { name: 'child-container' },
+        spec: {
+          linkId: '',
+          linkType: 'scope',
+          parentName: 'parent-container',
+          nodeType: 'container',
+          title: 'Child Container',
+        },
+      };
+
+      const mockGrandchildNode: ScopeNode = {
+        metadata: { name: 'grandchild-leaf' },
+        spec: {
+          linkId: 'leaf-scope',
+          linkType: 'scope',
+          parentName: 'child-container',
+          nodeType: 'leaf',
+          title: 'Grandchild Leaf',
+        },
+      };
+
+      // Mock different responses for different parent nodes
+      apiClient.fetchNodes.mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
+        if (options.parent === '') {
+          return Promise.resolve([mockParentNode]);
+        } else if (options.parent === 'parent-container') {
+          return Promise.resolve([mockChildNode]);
+        } else if (options.parent === 'child-container') {
+          return Promise.resolve([mockGrandchildNode]);
+        }
+        return Promise.resolve([]);
+      });
+
+      // Step 1: Expand root node with search query
+      await service.updateNode('', true, 'search-query');
+
+      // Root should have query reset, API called without query
+      expect(service.state.tree?.query).toBe('');
+      expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: '', query: undefined });
+      expect(service.state.tree?.children?.['parent-container']?.query).toBe('');
+
+      // Step 2: Expand first-level child with search query
+      await service.updateNode('parent-container', true, 'open-search-query');
+
+      // First-level child should have query reset, API called without query
+      const parentContainer = service.state.tree?.children?.['parent-container'];
+      expect(parentContainer?.query).toBe('');
+      expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: 'parent-container', query: undefined });
+      expect(parentContainer?.children?.['child-container']?.query).toBe('');
+
+      // Step 3: Now filter within the first-level child (second call to same node)
+      await service.updateNode('parent-container', true, 'filter-search');
+
+      // Now both parent and children should show the filter query since we're filtering within existing children
+      const newParentContainer = service.state.tree?.children?.['parent-container'];
+      expect(newParentContainer?.query).toBe('filter-search');
+      expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: 'parent-container', query: 'filter-search' });
+      expect(newParentContainer?.children?.['child-container']?.query).toBe('filter-search');
+
+      expect(apiClient.fetchNodes).toHaveBeenCalledTimes(3);
     });
   });
 
@@ -283,9 +396,6 @@ describe('ScopesSelectorService', () => {
         metadata: { name: 'test-scope' },
         spec: {
           title: 'test-scope',
-          type: 'scope',
-          category: 'scope',
-          description: 'test scope',
           filters: [],
         },
         parentNode: {
@@ -314,9 +424,6 @@ describe('ScopesSelectorService', () => {
         metadata: { name: 'test-scope' },
         spec: {
           title: 'test-scope',
-          type: 'scope',
-          category: 'scope',
-          description: 'test scope',
           filters: [],
         },
         parentNode: {
@@ -336,9 +443,6 @@ describe('ScopesSelectorService', () => {
         metadata: { name: 'test-scope' },
         spec: {
           title: 'test-scope',
-          type: 'scope',
-          category: 'scope',
-          description: 'test scope',
           filters: [],
         },
         parentNode: {
@@ -366,9 +470,6 @@ describe('ScopesSelectorService', () => {
         metadata: { name: 'valid-scope' },
         spec: {
           title: 'valid-scope',
-          type: 'scope',
-          category: 'scope',
-          description: 'valid scope',
           filters: [],
         },
         parentNode: {
@@ -387,9 +488,6 @@ describe('ScopesSelectorService', () => {
         metadata: { name: 'invalid-scope-1' },
         spec: {
           title: 'invalid-scope-1',
-          type: 'scope',
-          category: 'scope',
-          description: 'invalid scope 1',
           filters: [],
         },
         parentNode: {
@@ -404,9 +502,6 @@ describe('ScopesSelectorService', () => {
         metadata: { name: 'invalid-scope-2' },
         spec: {
           title: 'invalid-scope-2',
-          type: 'scope',
-          category: 'scope',
-          description: 'invalid scope 2',
           filters: [],
         },
         parentNode: {

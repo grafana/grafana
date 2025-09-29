@@ -21,7 +21,12 @@ export async function addDashboard(page: Page, title?: string): Promise<string> 
 
   // Click save
   const saveAsButton = page.getByTestId('data-testid Save dashboard drawer button');
-  await saveAsButton.click();
+  // Ensure button is ready and click using the method that works with React
+  // Doing simply saveAsButton.click doesn't work, even with force: true and when button is enabled
+  // It stopped working when https://github.com/grafana/grafana/pull/111518 introduced proper title validation
+  // This should be a an ok alternative since we are checking that the button is enabled first
+  await expect(saveAsButton).toBeEnabled();
+  await saveAsButton.evaluate((btn: HTMLElement) => btn.click());
 
   // Wait for success notification
   await expect(page.getByText('Dashboard saved')).toBeVisible();

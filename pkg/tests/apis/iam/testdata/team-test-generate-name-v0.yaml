@@ -1,0 +1,10 @@
+apiVersion: iam.grafana.app/v0alpha1
+kind: Team
+metadata:
+  generateName: team-
+spec:
+  title: "Team with GenerateName"
+  email: genname@example.com
+  provisioned: false
+
+

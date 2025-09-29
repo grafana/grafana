@@ -30,7 +30,9 @@ type LegacyIdentityStore interface {
 	ListServiceAccountTokens(ctx context.Context, ns claims.NamespaceInfo, query ListServiceAccountTokenQuery) (*ListServiceAccountTokenResult, error)
 
 	GetTeamInternalID(ctx context.Context, ns claims.NamespaceInfo, query GetTeamInternalIDQuery) (*GetTeamInternalIDResult, error)
+	CreateTeam(ctx context.Context, ns claims.NamespaceInfo, cmd CreateTeamCommand) (*CreateTeamResult, error)
 	ListTeams(ctx context.Context, ns claims.NamespaceInfo, query ListTeamQuery) (*ListTeamResult, error)
+	DeleteTeam(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteTeamCommand) error
 	ListTeamBindings(ctx context.Context, ns claims.NamespaceInfo, query ListTeamBindingsQuery) (*ListTeamBindingsResult, error)
 	ListTeamMembers(ctx context.Context, ns claims.NamespaceInfo, query ListTeamMembersQuery) (*ListTeamMembersResult, error)
 }
@@ -76,6 +78,14 @@ func (t DBTime) Value() (driver.Value, error) {
 	}
 
 	return t.Format(time.DateTime), nil
+}
+
+func (t DBTime) String() string {
+	if t.IsZero() {
+		return ""
+	}
+
+	return t.Format(time.DateTime)
 }
 
 func (t *DBTime) Scan(value interface{}) error {

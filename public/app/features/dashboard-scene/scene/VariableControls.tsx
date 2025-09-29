@@ -20,7 +20,7 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   return (
     <>
       {variables
-        .filter((v) => !v.state.showInControlsMenu)
+        .filter((v) => v.state.hide !== VariableHide.inControlsMenu)
         .map((variable) => (
           <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
         ))}

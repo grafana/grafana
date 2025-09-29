@@ -76,7 +76,7 @@ func (c *PreferencesClient) Patch(ctx context.Context, identifier resource.Ident
 	return c.client.Patch(ctx, identifier, req, opts)
 }
 
-func (c *PreferencesClient) UpdateStatus(ctx context.Context, newStatus PreferencesStatus, opts resource.UpdateOptions) (*Preferences, error) {
+func (c *PreferencesClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus PreferencesStatus, opts resource.UpdateOptions) (*Preferences, error) {
 	return c.client.Update(ctx, &Preferences{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       PreferencesKind().Kind(),
@@ -84,6 +84,8 @@ func (c *PreferencesClient) UpdateStatus(ctx context.Context, newStatus Preferen
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			ResourceVersion: opts.ResourceVersion,
+			Namespace:       identifier.Namespace,
+			Name:            identifier.Name,
 		},
 		Status: newStatus,
 	}, resource.UpdateOptions{

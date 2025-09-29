@@ -187,6 +187,9 @@ export const DashboardInteractions = {
   downloadDashboardImageClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('dashboard_image_downloaded', properties);
   },
+  copyImageUrlClicked: (properties?: Record<string, unknown>) => {
+    reportDashboardInteraction('dashboard_image_url_copied', properties);
+  },
 };
 
 const reportDashboardInteraction: typeof reportInteraction = (name, properties) => {

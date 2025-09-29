@@ -18,11 +18,16 @@ export function getTempoTraceFromLinks(fields: FieldDef[]) {
 }
 
 function getTempoTraceFromLink(link: LinkModel) {
-  const queryData = getDataSourceAndQueryFromLink(link);
-  if (!queryData || queryData.queryType !== 'traceql') {
-    return null;
+  if (link.interpolatedParams?.query && isTempoQuery(link.interpolatedParams.query)) {
+    const query = link.interpolatedParams.query;
+    return {
+      dsUID: query.datasource?.uid || '',
+      query: query.query,
+      queryType: query.queryType || '',
+    };
+  } else {
+    return undefined;
   }
-  return queryData;
 }
 
 export type EmbeddedInternalLink = {
@@ -31,31 +36,14 @@ export type EmbeddedInternalLink = {
   queryType: string;
 };
 
-function getDataSourceAndQueryFromLink(link: LinkModel): EmbeddedInternalLink | null {
-  if (!link.href) {
-    return null;
+type TempoQuery = {
+  query: string;
+  queryType: string;
+};
+
+const isTempoQuery = (query: unknown): query is TempoQuery => {
+  if (!query || typeof query !== 'object') {
+    return false;
   }
-  const paramsStrings = link.href.split('?')[1];
-  if (!paramsStrings) {
-    return null;
-  }
-  const params = Object.values(Object.fromEntries(new URLSearchParams(paramsStrings)));
-  try {
-    const parsed = JSON.parse(params[0]);
-    const dsUID: string = 'datasource' in parsed && parsed.datasource ? parsed.datasource.toString() : '';
-    const query: string =
-      'queries' in parsed && Array.isArray(parsed.queries) && 'query' in parsed.queries[0] && parsed.queries[0].query
-        ? parsed.queries[0].query.toString()
-        : '';
-    const queryType =
-      'queryType' in parsed.queries[0] && parsed.queries[0].queryType ? parsed.queries[0].queryType.toString() : '';
-    return dsUID && query && queryType
-      ? {
-          dsUID,
-          query,
-          queryType,
-        }
-      : null;
-  } catch (e) {}
-  return null;
-}
+  return 'query' in query && 'queryType' in query;
+};

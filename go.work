@@ -9,6 +9,7 @@ use (
 	./apps/alerting/alertenrichment
 	./apps/alerting/notifications
 	./apps/alerting/rules
+	./apps/correlations
 	./apps/dashboard
 	./apps/folder
 	./apps/iam

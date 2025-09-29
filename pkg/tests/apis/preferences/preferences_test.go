@@ -127,15 +127,15 @@ func TestIntegrationPreferences(t *testing.T) {
 			`"regionalFormat":""
 		}`, string(jj))
 
-		current := apis.DoRequest(helper, apis.RequestParams{
+		merged := apis.DoRequest(helper, apis.RequestParams{
 			User:   clientAdmin.Args.User,
 			Method: http.MethodGet,
-			Path:   "/apis/preferences.grafana.app/v1alpha1/namespaces/default/current",
+			Path:   "/apis/preferences.grafana.app/v1alpha1/namespaces/default/preferences/merged",
 		}, &preferences.Preferences{})
-		require.Equal(t, http.StatusOK, current.Response.StatusCode, "get current preferences")
-		require.Equal(t, "saturday", *current.Result.Spec.WeekStart) // from user
-		require.Equal(t, "africa", *current.Result.Spec.Timezone)    // from team
-		require.Equal(t, "dark", *current.Result.Spec.Theme)         // from org
-		require.Equal(t, "en-US", *current.Result.Spec.Language)     // settings.ini
+		require.Equal(t, http.StatusOK, merged.Response.StatusCode, "get merged preferences")
+		require.Equal(t, "saturday", *merged.Result.Spec.WeekStart) // from user
+		require.Equal(t, "africa", *merged.Result.Spec.Timezone)    // from team
+		require.Equal(t, "dark", *merged.Result.Spec.Theme)         // from org
+		require.Equal(t, "en-US", *merged.Result.Spec.Language)     // settings.ini
 	})
 }

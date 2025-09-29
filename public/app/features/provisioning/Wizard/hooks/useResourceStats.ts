@@ -6,6 +6,7 @@ import {
   GetRepositoryFilesApiResponse,
   GetResourceStatsApiResponse,
   ManagerStats,
+  RepositoryView,
   ResourceCount,
   useGetRepositoryFilesQuery,
   useGetResourceStatsQuery,
@@ -76,7 +77,7 @@ function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetReso
 /**
  * Hook that provides resource statistics and sync logic
  */
-export function useResourceStats(repoName?: string, isLegacyStorage?: boolean) {
+export function useResourceStats(repoName?: string, isLegacyStorage?: boolean, syncTarget?: RepositoryView['target']) {
   const resourceStatsQuery = useGetResourceStatsQuery(repoName ? undefined : skipToken);
   const filesQuery = useGetRepositoryFilesQuery(repoName ? { name: repoName } : skipToken);
 
@@ -96,7 +97,7 @@ export function useResourceStats(repoName?: string, isLegacyStorage?: boolean) {
   }, [resourceStatsQuery.data]);
 
   const requiresMigration = isLegacyStorage || resourceCount > 0;
-  const shouldSkipSync = !requiresMigration && resourceCount === 0 && fileCount === 0;
+  const shouldSkipSync = !isLegacyStorage && (resourceCount === 0 || syncTarget === 'folder') && fileCount === 0;
 
   // Format display strings
   const resourceCountDisplay =

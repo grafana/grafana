@@ -7,6 +7,7 @@ import {
   useCreateRepositoryJobsMutation,
   useGetFrontendSettingsQuery,
   useGetRepositoryFilesQuery,
+  useGetRepositoryStatusQuery,
   useGetResourceStatsQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -29,6 +30,7 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
   useGetFrontendSettingsQuery: jest.fn(),
   useGetRepositoryFilesQuery: jest.fn(),
+  useGetRepositoryStatusQuery: jest.fn(),
   useGetResourceStatsQuery: jest.fn(),
   useCreateRepositoryJobsMutation: jest.fn(),
 }));
@@ -42,6 +44,9 @@ const mockUseGetFrontendSettingsQuery = useGetFrontendSettingsQuery as jest.Mock
 >;
 const mockUseGetRepositoryFilesQuery = useGetRepositoryFilesQuery as jest.MockedFunction<
   typeof useGetRepositoryFilesQuery
+>;
+const mockUseGetRepositoryStatusQuery = useGetRepositoryStatusQuery as jest.MockedFunction<
+  typeof useGetRepositoryStatusQuery
 >;
 const mockUseGetResourceStatsQuery = useGetResourceStatsQuery as jest.MockedFunction<typeof useGetResourceStatsQuery>;
 const mockUseCreateRepositoryJobsMutation = useCreateRepositoryJobsMutation as jest.MockedFunction<
@@ -116,6 +121,7 @@ describe('ProvisioningWizard', () => {
       data: {
         items: [],
         legacyStorage: false,
+        allowImageRendering: true,
         availableRepositoryTypes: ['github', 'gitlab', 'bitbucket', 'git', 'local'],
       },
       isLoading: false,
@@ -126,6 +132,23 @@ describe('ProvisioningWizard', () => {
     mockUseGetRepositoryFilesQuery.mockReturnValue({
       data: [],
       isLoading: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+
+    mockUseGetRepositoryStatusQuery.mockReturnValue({
+      data: {
+        status: {
+          health: {
+            healthy: true,
+            checked: true,
+            message: '',
+          },
+        },
+      },
+      isLoading: false,
+      isFetching: false,
+      isError: false,
       error: null,
       refetch: jest.fn(),
     });

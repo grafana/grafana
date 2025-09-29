@@ -364,14 +364,6 @@
       "tooltip-assigned-role": "此用户登录时，系统将分配一个许可角色"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "隐藏通用标签",
-      "show": {
-        "tooltip": "显示通用标签"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "活跃时间设定"
@@ -477,15 +469,16 @@
     "alert-instance-state-filter": {
       "state": "状态"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "移除标签"
     },
     "alert-label-dropdown": {
       "placeholder-select": "选择{{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "标签",
-      "common-labels-count_other": "+{{count}} 个常用标签"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "静音、分组和时间设定（可选）",
@@ -1673,6 +1666,10 @@
     "inspector-yaml-tab": {
       "apply": "应用"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "如何连接到 IRM",
       "disabled-description": "通过 Webhook 集成启用 IRM",
@@ -1814,6 +1811,10 @@
         }
       }
     },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
+    },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "使用不带大括号的标签查询来筛选提醒，例如：",
       "filter-alerts-using-label-querying-without-spaces": "使用不带空格的标签查询来筛选警报，例如：",
@@ -1920,9 +1921,6 @@
       "title-remove": "删除",
       "tooltip-remove-time-range": "移除时间范围"
     },
-    "namespace": {
-      "title-alert-rules": "警报规则"
-    },
     "namespace-and-group-filter": {
       "select-group": "选择组",
       "select-namespace": "选择命名空间"
@@ -1979,8 +1977,10 @@
       "label-notification-policies": "通知策略",
       "label-time-intervals": "时间间隔"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "默认策略",
       "no-matchers": "没有匹配器"
     },
     "notification-preview": {
@@ -1997,22 +1997,12 @@
     },
     "notification-route": {
       "no-labels": "无标签",
-      "no-matching-labels": "无匹配标签"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "您的警报实例的路由如下。",
-      "close": "关闭",
-      "contact-point": "联络点",
-      "default-policy": "默认策略",
-      "notification-policy-path": "通知策略路径",
-      "see-details-link": "查看详情",
-      "title-routing-details": "路由详情"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "展开策略路由",
-      "delivered-to": "@ 发送目标",
-      "notification-policy": "通知策略",
-      "see-details": "查看详情"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2040,7 +2030,9 @@
       "recipient-notification-fires": "选择警报规则触发时应向谁发送通知。"
     },
     "option-customfield": {
-      "label-custom-template": "自定义模板"
+      "label-custom-template": "自定义模板",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "所选 Alertmanager 不再存在，或者您可能没有访问它的权限。您可以从下拉列表中选择其他 Alertmanager。",
@@ -2136,10 +2128,6 @@
       "label-new-child-policy": "新的子策略",
       "label-new-sibling-above": "上方的新同级元素",
       "label-new-sibling-below": "下方的新同级元素"
-    },
-    "policy-path": {
-      "default-policy": "默认策略",
-      "no-matchers": "没有匹配器"
     },
     "preview-rule": {
       "body-preview-is-not-available": "无法显示查询预览。查询中使用的某些数据源不可用。",
@@ -5336,7 +5324,6 @@
             "json": "导出为 JSON"
           }
         },
-        "mark-favorite": "标记为收藏",
         "more-save-options": "更多保存选项",
         "playlist-next": "前往下一个仪表板",
         "playlist-previous": "前往上一个仪表板",
@@ -5365,8 +5352,7 @@
             "yesText": "保存"
           }
         },
-        "unlink-library-panel": "取消链接库面板",
-        "unmark-favorite": "取消标记为收藏"
+        "unlink-library-panel": "取消链接库面板"
       },
       "open-original": "打开原始仪表板",
       "playlist-next": "前往下一个仪表板",
@@ -5387,6 +5373,10 @@
       "save-library-panel": "保存库面板",
       "settings": "仪表板设置",
       "share-button": "分享",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "取消链接库面板",
       "unmark-favorite": "取消标记为收藏"
     },
@@ -9325,6 +9315,7 @@
     },
     "share-panel": {
       "config-description": "使用以下自定义设置，创建一个个性化的直接链接，以便在您的组织内共享面板：",
+      "copy-image-link": "",
       "download-image": "下载图像",
       "render-image": "生成图像"
     }
@@ -9410,7 +9401,7 @@
       "label-signature": "签名"
     },
     "description-enable-infinite-scrolling": "实验性。通过滚动到日志列表底部来请求更多结果。",
-    "description-enable-syntax-highlighting": "使用预定义的语法着色规则来突出显示日志行的相关部分",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "显示控件以跳转到最后一行或第一行日志，并按日志级别筛选",
     "fields": {
       "type": {
@@ -9679,14 +9670,14 @@
     },
     "name-common-labels": "常用标签",
     "name-deduplication": "去重",
-    "name-details-mode": "日志详情面板模式",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "内联",
       "label-sidebar": "侧边栏"
     },
     "name-enable-infinite-scrolling": "启用无限滚动",
     "name-enable-log-details": "启用日志详情",
-    "name-enable-syntax-highlighting": "启用语法高亮",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "字体大小",
     "name-order": "顺序",
     "name-prettify-json": "美化 JSON",
@@ -10623,6 +10614,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -10977,7 +10976,6 @@
       "body-not-published": "此插件未发布到 <2>grafana.com/plugins</2>，无法通过目录管理。",
       "enterprise-plugin-info": "此插件仅在 Grafana Cloud 和 Grafana Enterprise 中可用。",
       "learn-more": "了解更多",
-      "no-valid-grafana-enterprise-license-detected": "未检测到有效的 Grafana 企业版许可证。",
       "title-dev-alert": "这是插件的开发版本，无法卸载。",
       "title-plugin-doesnt-support-version-grafana": "此插件不支持您的 Grafana 版本。",
       "title-remote-plugins-unavailable": "安装控件已被禁用，因为 Grafana 服务器无法访问 grafana.com。",
@@ -11296,6 +11294,7 @@
       "actions": {
         "set-up-required-feature-toggles": "设置所需的功能切换"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "在 Git 中将数据面板作为代码进行管理，并自动预置更新",
       "manage-your-dashboards-with-remote-provisioning": "开始使用 Git 同步",
       "store-dashboards-in-version-controlled-storage": "将数据面板存储在版本控制的存储中，以便更好地整理内容和跟踪历史记录"
@@ -11333,9 +11332,10 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "没有找到与您的查询匹配的结果",
+      "partial-managed": "",
       "placeholder-search": "搜索",
       "all-resources-managed_other": "",
-      "partial-managed_other": ""
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11482,8 +11482,16 @@
         "subtitle": "如果要通过外部存储来同步和管理整个 Grafana 实例，请使用此选项。"
       }
     },
-    "read-only-local-tooltip": "此文件夹是只读的，并已通过文件预置操作进行预置。要对文件夹进行任何更改，请更新连接的文件存储库。要修改文件夹设置，请依次转到“管理”>“预置”>“存储库”。",
-    "read-only-remote-tooltip": "此文件夹是只读的，并已通过 Git 预置。要对文件夹进行任何更改，请更新连接的存储库。要修改文件夹设置，请依次转到“管理”>“预置”>“存储库”。",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "活跃的作业",
       "column-action": "操作",
@@ -11597,6 +11605,7 @@
         "removed-from-repo-test-ui": "已从存储库测试用户界面中移除",
         "updated-from-repo-test-ui": "已从存储库测试用户界面中更新"
       },
+      "read-only-repo-tooltip": "",
       "repository": "存储库",
       "tab-info": {
         "label": {
@@ -11633,6 +11642,8 @@
       "tooltip-unhealthy-repository": "无法拉取状态不良的存储库"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "包括每个历史值的提交",
       "synchronization-options": "同步选项"

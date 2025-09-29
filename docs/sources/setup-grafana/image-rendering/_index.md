@@ -32,6 +32,12 @@ Alert notifications can include images, but rendering many images at the same ti
 
 ## Install Grafana Image Renderer plugin
 
+{{< admonition type="caution" >}}
+Starting with Grafana v12.2, the Grafana Image Renderer plugin is deprecated and is no longer maintained.
+
+Instead, use the Grafana Image Renderer remote rendering service.
+{{< /admonition >}}
+
 {{< admonition type="note" >}}
 All PhantomJS support has been removed. Instead, use the Grafana Image Renderer plugin or remote rendering service.
 {{< /admonition >}}

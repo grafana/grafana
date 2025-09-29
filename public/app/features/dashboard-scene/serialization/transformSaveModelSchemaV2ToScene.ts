@@ -53,6 +53,7 @@ import {
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
+  getDashboardComponentInteractionCallback,
   getDashboardInteractionCallback,
   getDashboardSceneProfiler,
 } from 'app/features/dashboard/services/DashboardProfiler';
@@ -172,6 +173,15 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     getDashboardSceneProfiler()
   );
 
+  const interactionTracker = new behaviors.SceneInteractionTracker(
+    {
+      enableInteractionTracking:
+        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
+      onInteractionComplete: getDashboardComponentInteractionCallback(metadata.name, dashboard.title),
+    },
+    getDashboardSceneProfiler()
+  );
+
   const dashboardScene = new DashboardScene(
     {
       description: dashboard.description,
@@ -200,6 +210,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
           sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
         }),
         queryController,
+        interactionTracker,
         registerDashboardMacro,
         registerPanelInteractionsReporter,
         new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
@@ -273,7 +284,6 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
     name: variable.spec.name,
     label: variable.spec.label,
     description: variable.spec.description,
-    showInControlsMenu: variable.spec.showInControlsMenu,
   };
   if (variable.kind === defaultAdhocVariableKind().kind) {
     const ds = getDataSourceForQuery(

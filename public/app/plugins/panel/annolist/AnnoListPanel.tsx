@@ -7,7 +7,7 @@ import {
   AnnotationEvent,
   AppEvents,
   dateTime,
-  DurationUnit,
+  dateMath,
   GrafanaTheme2,
   locationUtil,
   PanelProps,
@@ -35,6 +35,7 @@ interface State {
   loaded: boolean;
   queryUser?: UserInfo;
   queryTags: string[];
+  requestId: string;
 }
 export class AnnoListPanel extends PureComponent<Props, State> {
   style = getStyles(config.theme2);
@@ -49,6 +50,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       timeInfo: '',
       loaded: false,
       queryTags: [],
+      requestId: `anno-list-panel-${Math.random()}`,
     };
   }
 
@@ -126,7 +128,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       params.tags = params.tags ? [...params.tags, ...queryTags] : queryTags;
     }
 
-    const annotations = await getBackendSrv().get('/api/annotations', params, `anno-list-panel-${this.props.id}`);
+    const annotations = await getBackendSrv().get('/api/annotations', params, this.state.requestId);
 
     this.setState({
       annotations,
@@ -180,7 +182,12 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     if (subtract) {
       incr *= -1;
     }
-    return t.add(incr, unit as DurationUnit).valueOf();
+
+    if (!dateMath.isDurationUnit(unit)) {
+      return 0;
+    }
+
+    return t.add(incr, unit).valueOf();
   }
 
   onTagClick = (tag: string, remove?: boolean) => {

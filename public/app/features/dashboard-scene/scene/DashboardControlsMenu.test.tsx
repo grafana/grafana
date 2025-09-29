@@ -1,6 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { VariableHide } from '@grafana/data';
 import { SceneVariableSet, TextBoxVariable, QueryVariable, CustomVariable, SceneVariable } from '@grafana/scenes';
 
 import {
@@ -21,7 +22,6 @@ describe('DashboardControlsMenu', () => {
       new TextBoxVariable({
         name: 'textVar',
         value: 'test',
-        showInControlsMenu: false,
       }),
     ];
     const { container } = render(<DashboardControlsButton dashboard={getDashboard(variables)} />);
@@ -33,7 +33,7 @@ describe('DashboardControlsMenu', () => {
       new TextBoxVariable({
         name: 'textVar',
         value: 'test',
-        showInControlsMenu: true,
+        hide: VariableHide.inControlsMenu,
       }),
     ];
 
@@ -51,17 +51,17 @@ describe('DashboardControlsMenu', () => {
       new TextBoxVariable({
         name: 'textVar1',
         value: 'test1',
-        showInControlsMenu: true,
+        hide: VariableHide.inControlsMenu,
       }),
       new TextBoxVariable({
         name: 'textVar2',
         value: 'test2',
-        showInControlsMenu: true,
+        hide: VariableHide.inControlsMenu,
       }),
       new QueryVariable({
         name: 'queryVar',
         query: 'test query',
-        showInControlsMenu: true,
+        hide: VariableHide.inControlsMenu,
       }),
     ];
 
@@ -79,28 +79,28 @@ describe('DashboardControlsMenu', () => {
     expect(await screen.findByText('queryVar')).toBeInTheDocument();
   });
 
-  it('should filter out variables with showInControlsMenu=false', async () => {
+  it('should filter out variables with hide=VariableHide.inControlsMenu', async () => {
     const variables = [
       new TextBoxVariable({
         name: 'textVar1',
         value: 'test1',
-        showInControlsMenu: true,
+        hide: VariableHide.inControlsMenu,
       }),
+      // This should be filtered out
       new TextBoxVariable({
         name: 'textVar2',
         value: 'test2',
-        showInControlsMenu: false, // This should be filtered out
       }),
       new CustomVariable({
         name: 'customVar',
         query: 'option1,option2',
-        showInControlsMenu: true,
+        hide: VariableHide.inControlsMenu,
       }),
     ];
 
     render(<DashboardControlsButton dashboard={getDashboard(variables)} />);
 
-    // Should still render dropdown since we have variables with showInControlsMenu=true
+    // Should still render dropdown since we have variables with hide=VariableHide.inControlsMenu
     expect(screen.getByRole('button')).toBeInTheDocument();
 
     // Open the dropdown

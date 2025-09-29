@@ -43,7 +43,7 @@ func (c *Client) Check(ctx context.Context, id authlib.AuthInfo, req authlib.Che
 	return c.authzlibclient.Check(ctx, id, req)
 }
 
-func (c *Client) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, error) {
+func (c *Client) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
 	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Compile")
 	defer span.End()
 

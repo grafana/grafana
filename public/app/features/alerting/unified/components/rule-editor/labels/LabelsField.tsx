@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { FC, useCallback, useMemo, useState } from 'react';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from 'react-hook-form';
 
+import { AlertLabels } from '@grafana/alerting/unstable';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ComboboxOption, Field, InlineLabel, Input, Space, Stack, Text, useStyles2 } from '@grafana/ui';
@@ -13,7 +14,6 @@ import { KBObjectArray, RuleFormType, RuleFormValues } from '../../../types/rule
 import { isPrivateLabelKey } from '../../../utils/labels';
 import { isRecordingRuleByType } from '../../../utils/rules';
 import AlertLabelDropdown from '../../AlertLabelDropdown';
-import { AlertLabels } from '../../AlertLabels';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 import { useGetLabelsFromDataSourceName } from '../useAlertRuleSuggestions';
 
@@ -281,11 +281,11 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
                 name={`labelsInSubform.${index}.key`}
                 control={control}
                 rules={{ required: Boolean(labelsInSubform[index]?.value) ? 'Required.' : false }}
-                render={({ field: { onChange, ref, ...rest } }) => {
+                render={({ field: { onChange, value, ref, ...rest } }) => {
                   return (
                     <AlertLabelDropdown
                       {...rest}
-                      defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
+                      defaultValue={value ? { label: value, value: value } : undefined}
                       options={
                         labelsPluginInstalled
                           ? groupedOptions.flatMap((group) => group.options)
@@ -315,11 +315,11 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
                 control={control}
                 name={`labelsInSubform.${index}.value`}
                 rules={{ required: Boolean(labelsInSubform[index]?.value) ? 'Required.' : false }}
-                render={({ field: { onChange, ref, ...rest } }) => {
+                render={({ field: { onChange, value, ref, ...rest } }) => {
                   return (
                     <AlertLabelDropdown
                       {...rest}
-                      defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
+                      defaultValue={value ? { label: value, value: value } : undefined}
                       options={values}
                       isLoading={loading}
                       onChange={(newValue: SelectableValue) => {

@@ -323,7 +323,7 @@ jobs:
           retention-days: 1
 
   run-azure-monitor-e2e:
-    if: needs.detect-changes.outputs.cloud_plugins_changed == 'true' && github.event.pull_request.head.repo.fork == false
+    if: needs.detect-changes.outputs.cloud_plugins_changed == 'true' && github.event.pull_request.head.repo.fork == false && github.event_name == 'pull_request'
     runs-on: ubuntu-x64-large
     needs:
       - build-grafana

@@ -1,5 +1,10 @@
 package schemaversion
 
+import (
+	"strconv"
+	"strings"
+)
+
 // migration_utils.go contains shared utility functions used across multiple schema version migrations.
 
 // GetStringValue safely extracts a string value from a map, returning empty string if not found or not a string
@@ -55,6 +60,14 @@ func ConvertToFloat(value interface{}) (float64, bool) {
 		return float64(v), true
 	case int32:
 		return float64(v), true
+	case string:
+		// Handle string values like "700px" - strip px suffix and parse
+		// This matches frontend behavior: parseInt(height.replace('px', ''), 10)
+		cleanStr := strings.TrimSuffix(v, "px")
+		if parsed, err := strconv.ParseFloat(cleanStr, 64); err == nil {
+			return parsed, true
+		}
+		return 0, false
 	default:
 		return 0, false
 	}
@@ -76,4 +89,13 @@ func ConvertToInt(value interface{}) (int, bool) {
 	default:
 		return 0, false
 	}
+}
+
+// IsArray checks if a value is an array (slice)
+func IsArray(value interface{}) bool {
+	if value == nil {
+		return false
+	}
+	_, ok := value.([]interface{})
+	return ok
 }

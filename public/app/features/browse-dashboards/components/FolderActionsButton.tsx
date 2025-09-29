@@ -122,8 +122,8 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const menu = (
     <Menu>
       {canViewPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />}
-      {canMoveFolder && <MenuItem onClick={showMoveModal} label={moveLabel} />}
-      {canDeleteFolders && (
+      {canMoveFolder && !isReadOnlyRepo && <MenuItem onClick={showMoveModal} label={moveLabel} />}
+      {canDeleteFolders && !isReadOnlyRepo && (
         <MenuItem
           destructive
           onClick={isProvisionedFolder ? showDeleteProvisionedModal : showDeleteModal}
@@ -142,8 +142,12 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
       <Dropdown overlay={menu} onVisibleChange={setIsOpen}>
         <Button
           variant="secondary"
-          disabled={isReadOnlyRepo}
-          tooltip={isReadOnlyRepo ? getReadOnlyTooltipText({ isLocal: repoType === 'local' }) : undefined}
+          disabled={isReadOnlyRepo && !canViewPermissions}
+          tooltip={
+            isReadOnlyRepo && !canViewPermissions
+              ? getReadOnlyTooltipText({ isLocal: repoType === 'local' })
+              : undefined
+          }
         >
           <Trans i18nKey="browse-dashboards.folder-actions-button.folder-actions">Folder actions</Trans>
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} />

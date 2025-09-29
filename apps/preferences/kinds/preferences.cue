@@ -40,21 +40,21 @@ preferencesV1alpha1: {
 
 			// Navigation preferences
 			navbar?: #NavbarPreference
-		} @cuetsy(kind="interface")
+		}
 
 		#QueryHistoryPreference: {
 			// one of: '' | 'query' | 'starred';
 			homeTab?: string
-		} @cuetsy(kind="interface")
+		}
 
 		#CookiePreferences: {
 			analytics?: {}
 			performance?: {}
 			functional?: {}
-		} @cuetsy(kind="interface")
+		}
 
 		#NavbarPreference: {
 			bookmarkUrls: [...string]
-		} @cuetsy(kind="interface")
+		} 
 	}
 }

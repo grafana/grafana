@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"context"
 	"fmt"
-	"hash/fnv"
 	"log/slog"
 	"slices"
 	"strings"
@@ -20,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/ring"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -130,8 +128,7 @@ type searchSupport struct {
 	initWorkers  int
 	initMinSize  int
 
-	ring           *ring.Ring
-	ringLifecycler *ring.BasicLifecycler
+	ownsIndexFn func(key NamespacedResource) (bool, error)
 
 	buildIndex singleflight.Group
 
@@ -144,7 +141,7 @@ var (
 	_ resourcepb.ManagedObjectIndexServer = (*searchSupport)(nil)
 )
 
-func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer, indexMetrics *BleveIndexMetrics, ring *ring.Ring, ringLifecycler *ring.BasicLifecycler) (support *searchSupport, err error) {
+func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (support *searchSupport, err error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -157,6 +154,12 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 		opts.WorkerThreads = 1
 	}
 
+	if ownsIndexFn == nil {
+		ownsIndexFn = func(key NamespacedResource) (bool, error) {
+			return true, nil
+		}
+	}
+
 	support = &searchSupport{
 		access:          access,
 		tracer:          tracer,
@@ -167,8 +170,7 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 		initMinSize:     opts.InitMinCount,
 		indexMetrics:    indexMetrics,
 		rebuildInterval: opts.RebuildInterval,
-		ring:            ring,
-		ringLifecycler:  ringLifecycler,
+		ownsIndexFn:     ownsIndexFn,
 	}
 
 	info, err := opts.Resources.GetDocumentBuilders()
@@ -399,33 +401,6 @@ func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceSt
 	return rsp, nil
 }
 
-func (s *searchSupport) shouldBuildIndex(info ResourceStats) bool {
-	if s.ring == nil {
-		s.log.Debug("ring is not setup. Will proceed to build index")
-		return true
-	}
-
-	if s.ringLifecycler == nil {
-		s.log.Error("missing ring lifecycler")
-		return true
-	}
-
-	ringHasher := fnv.New32a()
-	_, err := ringHasher.Write([]byte(info.Namespace))
-	if err != nil {
-		s.log.Error("error hashing namespace", "namespace", info.Namespace, "err", err)
-		return true
-	}
-
-	rs, err := s.ring.GetWithOptions(ringHasher.Sum32(), searchOwnerRead, ring.WithReplicationFactor(s.ring.ReplicationFactor()))
-	if err != nil {
-		s.log.Error("error getting replicaset from ring", "namespace", info.Namespace, "err", err)
-		return true
-	}
-
-	return rs.Includes(s.ringLifecycler.GetInstanceAddr())
-}
-
 func (s *searchSupport) buildIndexes(ctx context.Context, rebuild bool) (int, error) {
 	totalBatchesIndexed := 0
 	group := errgroup.Group{}
@@ -442,7 +417,10 @@ func (s *searchSupport) buildIndexes(ctx context.Context, rebuild bool) (int, er
 			continue
 		}
 
-		if !s.shouldBuildIndex(info) {
+		own, err := s.ownsIndexFn(info.NamespacedResource)
+		if err != nil {
+			s.log.Warn("failed to check index ownership, building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource, "error", err)
+		} else if !own {
 			s.log.Debug("skip building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
 			continue
 		}

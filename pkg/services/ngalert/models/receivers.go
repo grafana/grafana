@@ -13,8 +13,7 @@ import (
 	"strings"
 
 	alertingNotify "github.com/grafana/alerting/notify"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
+	"github.com/grafana/alerting/receivers/schema"
 )
 
 // GetReceiverQuery represents a query for a single receiver.
@@ -228,32 +227,35 @@ func (f IntegrationFieldPath) With(segment string) IntegrationFieldPath {
 //	IntegrationConfig - The integration configuration
 //	error - Error if integration type not found or invalid version specified
 func IntegrationConfigFromType(integrationType string, version *string) (IntegrationConfig, error) {
-	config, err := channels_config.ConfigForIntegrationType(integrationType)
-	if err != nil {
-		return IntegrationConfig{}, err
+	typeSchema, ok := alertingNotify.GetSchemaForIntegration(schema.IntegrationType(integrationType))
+	if !ok {
+		return IntegrationConfig{}, fmt.Errorf("integration type %s not found", integrationType)
 	}
-	var versionConfig channels_config.NotifierPluginVersion
 	if version == nil {
-		versionConfig = config.GetCurrentVersion()
-	} else {
-		var ok bool
-		versionConfig, ok = config.GetVersion(*version)
-		if !ok {
-			return IntegrationConfig{}, fmt.Errorf("version %s not found in config", *version)
-		}
+		return IntegrationConfigFromSchema(typeSchema, typeSchema.CurrentVersion)
+	}
+	return IntegrationConfigFromSchema(typeSchema, schema.Version(*version))
+}
+
+// IntegrationConfigFromSchema returns an integration configuration for a given version of the integration type schema.
+// Returns an error if the schema does not have such version
+func IntegrationConfigFromSchema(typeSchema schema.IntegrationTypeSchema, version schema.Version) (IntegrationConfig, error) {
+	typeVersion, ok := typeSchema.GetVersion(version)
+	if !ok {
+		return IntegrationConfig{}, fmt.Errorf("version %s not found in config", version)
 	}
 	integrationConfig := IntegrationConfig{
-		Type:    config.Type,
-		Version: versionConfig.Version,
-		Fields:  make(map[string]IntegrationField, len(versionConfig.Options)),
+		Type:    string(typeSchema.Type),
+		Version: string(typeVersion.Version),
+		Fields:  make(map[string]IntegrationField, len(typeVersion.Options)),
 	}
-	for _, option := range versionConfig.Options {
+	for _, option := range typeVersion.Options {
 		integrationConfig.Fields[option.PropertyName] = notifierOptionToIntegrationField(option)
 	}
 	return integrationConfig, nil
 }
 
-func notifierOptionToIntegrationField(option channels_config.NotifierOption) IntegrationField {
+func notifierOptionToIntegrationField(option schema.Field) IntegrationField {
 	f := IntegrationField{
 		Name:   option.PropertyName,
 		Secure: option.Secure,

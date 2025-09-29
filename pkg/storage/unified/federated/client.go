@@ -10,11 +10,13 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func NewFederatedClient(base resource.ResourceClient, sql legacysql.LegacyDatabaseProvider) resource.ResourceClient {
+func NewFederatedClient(base resource.ResourceClient, sql legacysql.LegacyDatabaseProvider, disableDashboardsFallback bool, disableFoldersFallback bool) resource.ResourceClient {
 	return &federatedClient{
 		ResourceClient: base,
 		stats: &LegacyStatsGetter{
-			SQL: sql,
+			SQL:                          sql,
+			DisableSQLFallbackDashboards: disableDashboardsFallback,
+			DisableSQLFallbackFolders:    disableFoldersFallback,
 		},
 	}
 }

@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/services"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -66,10 +67,23 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobThresholdBytes:  apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues)
 	if err == nil {
+		// Decide whether to disable SQL fallback stats per resource in Mode 5.
+		// Otherwise we would still try to query the legacy SQL database in Mode 5.
+		var disableDashboardsFallback, disableFoldersFallback bool
+		if opts.Cfg != nil {
+			// String are static here, so we don't need to import the packages.
+			foldersMode := opts.Cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode
+			disableFoldersFallback = foldersMode == grafanarest.Mode5
+			dashboardsMode := opts.Cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode
+			disableDashboardsFallback = dashboardsMode == grafanarest.Mode5
+		}
+
 		// Used to get the folder stats
 		client = federated.NewFederatedClient(
 			client, // The original
 			legacysql.NewDatabaseProvider(opts.DB),
+			disableDashboardsFallback,
+			disableFoldersFallback,
 		)
 	}
 
@@ -154,7 +168,7 @@ func newClient(opts options.StorageOptions,
 		return client, nil
 
 	default:
-		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, indexMetrics)
+		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, indexMetrics, nil)
 		if err != nil {
 			return nil, err
 		}

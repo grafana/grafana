@@ -1076,7 +1076,6 @@ export interface QueryVariableSpec {
 	refresh: VariableRefresh;
 	skipUrlSync: boolean;
 	description?: string;
-	showInControlsMenu?: boolean;
 	query: DataQueryKind;
 	regex: string;
 	sort: VariableSort;
@@ -1171,7 +1170,6 @@ export interface TextVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
-	showInControlsMenu?: boolean;
 }
 
 export const defaultTextVariableSpec = (): TextVariableSpec => ({
@@ -1202,7 +1200,6 @@ export interface ConstantVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
-	showInControlsMenu?: boolean;
 }
 
 export const defaultConstantVariableSpec = (): ConstantVariableSpec => ({
@@ -1240,7 +1237,6 @@ export interface DatasourceVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	allowCustomValue: boolean;
-	showInControlsMenu?: boolean;
 }
 
 export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
@@ -1282,7 +1278,6 @@ export interface IntervalVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
-	showInControlsMenu?: boolean;
 }
 
 export const defaultIntervalVariableSpec = (): IntervalVariableSpec => ({
@@ -1323,7 +1318,6 @@ export interface CustomVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	allowCustomValue: boolean;
-	showInControlsMenu?: boolean;
 }
 
 export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
@@ -1365,7 +1359,6 @@ export interface GroupByVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
-	showInControlsMenu?: boolean;
 }
 
 export const defaultGroupByVariableSpec = (): GroupByVariableSpec => ({
@@ -1404,7 +1397,6 @@ export interface AdhocVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	allowCustomValue: boolean;
-	showInControlsMenu?: boolean;
 }
 
 export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({

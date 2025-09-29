@@ -1,7 +1,6 @@
 import { groupBy } from 'lodash';
 import { EMPTY, forkJoin, from, lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, concatMap, finalize, map, mergeMap, toArray } from 'rxjs/operators';
-import semver from 'semver';
 
 import {
   CoreApp,
@@ -86,10 +85,6 @@ export const featuresToTempoVersion = {
   [FeatureName.metricsStreaming]: '2.7.0',
 };
 
-// The version that we use as default in case we cannot retrieve it from the backend.
-// This is the last minor version of Tempo that does not expose the endpoint for build information.
-const defaultTempoVersion = '2.1.0';
-
 interface ServiceMapQueryResponse {
   nodes: DataFrame;
   edges: DataFrame;
@@ -137,9 +132,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   };
 
   timeRangeForTags?: number;
-
-  // The version of Tempo running on the backend. `null` if we cannot retrieve it for whatever reason
-  tempoVersion?: string | null;
 
   constructor(
     public instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
@@ -265,19 +257,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     );
   }
 
-  init = async () => {
-    const response = await lastValueFrom(
-      this._request('/api/status/buildinfo').pipe(
-        map((response) => response),
-        catchError((error) => {
-          console.error('Failure in retrieving build information', error?.data?.message);
-          return of({ error, data: { version: null } }); // unknown version
-        })
-      )
-    );
-    this.tempoVersion = response.data.version;
-  };
-
   // TODO: Implement this function in Prometheus datasource https://github.com/grafana/grafana/issues/109706
   async getNativeHistograms(timeRange?: TimeRange): Promise<boolean> {
     if (!this.serviceMap?.datasourceUid) {
@@ -322,27 +301,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     } catch (error) {
       console.warn('Failed to check for native histograms:', error);
       return false;
-    }
-  }
-
-  /**
-   * Check, for the given feature, whether it is available in Grafana.
-   *
-   * The check is done based on the version of the Tempo instance running on the backend and
-   * the minimum version required by the given feature to work.
-   *
-   * @param featureName - the name of the feature to consider
-   * @return true if the feature is available, false otherwise
-   */
-  isFeatureAvailable(featureName: FeatureName) {
-    // We know for old Tempo instances we don't know their version, so resort to default
-    const actualVersion = this.tempoVersion ?? defaultTempoVersion;
-
-    try {
-      return semver.gte(actualVersion, featuresToTempoVersion[featureName]);
-    } catch {
-      // We assume we are on a development and recent branch, thus we enable all features
-      return true;
     }
   }
 

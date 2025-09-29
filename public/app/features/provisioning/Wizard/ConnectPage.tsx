@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
+import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 
 import { isGitProvider } from '../utils/repositoryTypes';
@@ -11,6 +12,7 @@ import { RepoType } from './types';
 
 export default function ConnectPage() {
   const { type } = useParams<{ type: RepoType }>();
+  const { data: settingsData } = useGetFrontendSettingsQuery();
 
   if (!type) {
     return null;
@@ -29,7 +31,7 @@ export default function ConnectPage() {
     >
       <Page.Contents>
         <StepStatusProvider>
-          <ProvisioningWizard type={type} />
+          <ProvisioningWizard type={type} settingsData={settingsData} />
         </StepStatusProvider>
       </Page.Contents>
     </Page>

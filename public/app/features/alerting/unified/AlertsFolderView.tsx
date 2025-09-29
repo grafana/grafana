@@ -213,6 +213,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   noResults: css({
     padding: theme.spacing(2),
     backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.shape.radius.lg,
     fontStyle: 'italic',
   }),
 });

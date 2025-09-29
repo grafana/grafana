@@ -121,7 +121,7 @@ query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
 {{< admonition type="note" >}}
 Saved queries is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 
-This feature is only available on Grafana Enterprise and Grafana Cloud.
+This feature is only available on Grafana Enterprise and Grafana Cloud. It will gradually roll out to all Grafana Cloud users with no action required. To try out this feature on Grafana Enterprise, enable the `queryLibrary` feature toggle.
 {{< /admonition >}}
 
 You can save queries that you've created so they can be reused by you and others in your organization.

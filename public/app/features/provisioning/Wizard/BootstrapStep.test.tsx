@@ -212,6 +212,7 @@ describe('BootstrapStep', () => {
       setup({
         settingsData: {
           legacyStorage: true,
+          allowImageRendering: true,
           items: [],
           availableRepositoryTypes: [],
         },
@@ -243,6 +244,7 @@ describe('BootstrapStep', () => {
       setup({
         settingsData: {
           legacyStorage: true,
+          allowImageRendering: true,
           items: [],
           availableRepositoryTypes: [],
         },

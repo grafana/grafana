@@ -255,7 +255,7 @@ func generateFallbackDashboard(data []byte, title, uid string) ([]byte, error) {
 				"type":  "text",
 			},
 		},
-		"schemaVersion": 41,
+		"schemaVersion": 42,
 		"title":         title,
 		"uid":           uid,
 		"version":       3,

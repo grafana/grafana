@@ -183,6 +183,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1,
   }),
   imagePreview: css({
+    borderRadius: theme.shape.radius.lg,
     maxWidth: '100%',
     maxHeight: '80vh',
     objectFit: 'contain',

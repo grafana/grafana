@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -142,24 +143,24 @@ func (c *LegacyAccessClient) Check(ctx context.Context, id claims.AuthInfo, req 
 	return claims.CheckResponse{Allowed: allowed}, nil
 }
 
-func (c *LegacyAccessClient) Compile(ctx context.Context, id claims.AuthInfo, req claims.ListRequest) (claims.ItemChecker, error) {
+func (c *LegacyAccessClient) Compile(ctx context.Context, id claims.AuthInfo, req claims.ListRequest) (claims.ItemChecker, claims.Zookie, error) {
 	ident, ok := id.(identity.Requester)
 	if !ok {
-		return nil, errors.New("expected identity.Requester for legacy access control")
+		return nil, claims.NoopZookie{}, errors.New("expected identity.Requester for legacy access control")
 	}
 
 	opts, ok := c.opts[req.Resource]
 	if !ok {
-		return nil, fmt.Errorf("unsupported resource: %s", req.Resource)
+		return nil, claims.NoopZookie{}, fmt.Errorf("unsupported resource: %s", req.Resource)
 	}
 
 	action, ok := opts.Mapping[utils.VerbList]
 	if !ok {
-		return nil, fmt.Errorf("missing action for %s %s", utils.VerbList, req.Resource)
+		return nil, claims.NoopZookie{}, fmt.Errorf("missing action for %s %s", utils.VerbList, req.Resource)
 	}
 
 	check := Checker(ident, action)
 	return func(name, _ string) bool {
 		return check(fmt.Sprintf("%s:%s:%s", opts.Resource, opts.Attr, name))
-	}, nil
+	}, claims.NoopZookie{}, nil
 }

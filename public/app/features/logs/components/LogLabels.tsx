@@ -68,6 +68,7 @@ export const LogLabels = memo(
             size="sm"
             fill="outline"
             variant="secondary"
+            className={styles.button}
             aria-label={t('logs.log-labels.expand', 'Expand labels')}
             onClick={() => {
               setDisplayAll(true);
@@ -83,6 +84,7 @@ export const LogLabels = memo(
             size="sm"
             fill="outline"
             variant="secondary"
+            className={styles.button}
             aria-label={t('logs.log-labels.collapse', 'Collapse labels')}
             onClick={() => {
               setDisplayAll(false);
@@ -137,7 +139,7 @@ LogLabel.displayName = 'LogLabel';
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     logsLabels: css({
-      display: 'flex',
+      display: 'inline-flex',
       flexWrap: 'wrap',
       fontSize: theme.typography.size.xs,
       alignItems: 'center',
@@ -160,6 +162,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       maxWidth: theme.spacing(25),
       textOverflow: 'ellipsis',
       overflow: 'hidden',
+    }),
+    button: css({
+      height: theme.spacing(2.75),
     }),
   };
 };

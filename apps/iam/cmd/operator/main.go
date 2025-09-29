@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/iam/pkg/app"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func main() {
@@ -67,11 +68,12 @@ func main() {
 
 	// Create app config from operator config
 	appCfg := app.AppConfig{
-		ZanzanaClientCfg:          cfg.ZanzanaClient,
-		FolderReconcilerNamespace: cfg.FolderReconciler.Namespace,
+		ZanzanaClientCfg: cfg.ZanzanaClient,
+		Namespace:        cfg.FolderReconciler.Namespace,
 		InformerConfig: app.InformerConfig{
 			MaxConcurrentWorkers: cfg.FolderReconciler.MaxConcurrentWorkers,
 		},
+		MetricsRegisterer: prometheus.DefaultRegisterer,
 	}
 
 	// Run

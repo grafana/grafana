@@ -33,17 +33,17 @@ The Alert rules list view page lists all existing recording and alert rules, inc
 
 To access the Alert rules page, click **Alerts & IRM** -> **Alerting** -> **Alert rules**.
 
-{{< figure src="/media/docs/alerting/alert-rules-page-2.png" max-width="750px" alt="Alert rule view page in Grafana Alerting" >}}
-
 By default, alert rules are grouped in separate sections—one for Grafana-managed alerts, and another for data source-managed alerts.
 Inside the Grafana-managed alert rules section, the rules are organized in a hierarchical structure, from folder -> rule group -> rules.
 Inside the data source-managed alert rules section, the rules are organized from namespace ->rule group -> rules.
 
 Select a group to expand it and view the list of alert rules within that group.
 
-The view includes filters to simplify managing large volumes of alerts.
+The list view includes a number of filters to simplify managing large volumes of alerts.
 
-You can filter by data sources, dashboards, and alert rule properties such as state, type, health, and contact points. The **Search** input allows you to filter by additional parameters like folders, evaluation groups, labels, and more.
+Click the **Filter** button to open the filter popup. You can filter by name, label, folder/namespace, evaluation group, data source, contact point, rule source, rule state, rule type, and the health of the alert rule from the popup menu. Click **Apply** at the bottom of the filter popup to enact the filters as you search.
+
+{{< figure src="/media/docs/alerting/alerting-list-view-filter.png" max-width="750px" alt="Alert rule filter options" >}}
 
 ## Change alert rules list view
 

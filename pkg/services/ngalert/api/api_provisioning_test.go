@@ -15,6 +15,7 @@ import (
 	"time"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers/schema"
 	prometheus "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/timeinterval"
@@ -2037,7 +2038,7 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 							integration := models.IntegrationGen(
 								models.IntegrationMuts.WithName(allIntegrationsName),
 								models.IntegrationMuts.WithUID(fmt.Sprintf("%s-uid", integrationType)),
-								models.IntegrationMuts.WithValidConfig(integrationType),
+								models.IntegrationMuts.WithValidConfig(schema.IntegrationType(integrationType)),
 							)()
 							integration.DisableResolveMessage = redacted
 							allIntegrations = append(allIntegrations, integration)

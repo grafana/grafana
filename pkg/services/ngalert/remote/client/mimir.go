@@ -149,7 +149,7 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, ou
 		if err != nil {
 			bodyStr = fmt.Sprintf("fail_to_read: %s", err)
 		}
-		mc.logger.Error(msg, "content-type", "url", r.URL.String(), "method", r.Method, ct, "status", resp.StatusCode, "body", bodyStr)
+		mc.logger.Error(msg, "content-type", ct, "url", r.URL.String(), "method", r.Method, "status", resp.StatusCode, "body", bodyStr)
 		return nil, fmt.Errorf("%s: %s", msg, ct)
 	}
 

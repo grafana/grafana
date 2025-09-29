@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { MouseEvent } from 'react';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
-import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, styleMixins, Tooltip, useStyles2 } from '@grafana/ui';
 
 interface Props {
   icon: IconName;
@@ -91,28 +91,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     justifyContent: 'center',
     width: theme.spacing(2.5),
-    height: theme.spacing(2.5),
-    borderRadius: theme.shape.radius.default,
+    height: '100%',
     transform: 'translateX(0)',
     position: 'relative',
+    borderRadius: styleMixins.getInternalRadius(theme, 2),
+    border: `1px solid ${theme.colors.secondary.border}`,
 
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: 'all 0.2s ease-in-out',
     },
-
-    '&:after': css({
-      content: "''",
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      borderRadius: theme.shape.radius.default,
-      background: theme.colors.secondary.main,
-      border: `1px solid ${theme.colors.secondary.border}`,
-    }),
   }),
   boxChecked: css({
     transform: `translateX(calc(100% - ${theme.spacing(0.25)}))`,
+    borderColor: 'transparent',
   }),
 });

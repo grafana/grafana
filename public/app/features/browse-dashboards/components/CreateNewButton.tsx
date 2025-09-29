@@ -86,7 +86,7 @@ export default function CreateNewButton({
         />
       )}
       {canCreateFolder && <MenuItem onClick={() => setShowNewFolderDrawer(true)} label={getNewFolderPhrase()} />}
-      {canCreateDashboard && (
+      {canCreateDashboard && !isProvisionedInstance && parentFolder?.managedBy !== ManagerKind.Repo && (
         <MenuItem
           label={getImportPhrase()}
           onClick={() =>

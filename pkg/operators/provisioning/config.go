@@ -33,11 +33,13 @@ import (
 
 // provisioningControllerConfig contains the configuration that overlaps for the jobs and repo controllers
 type provisioningControllerConfig struct {
-	provisioningClient *client.Clientset
-	resyncInterval     time.Duration
-	repoFactory        repository.Factory
-	unified            resources.ResourceStore
-	clients            resources.ClientFactory
+	provisioningClient  *client.Clientset
+	resyncInterval      time.Duration
+	repoFactory         repository.Factory
+	unified             resources.ResourceStore
+	clients             resources.ClientFactory
+	tokenExchangeClient *authn.TokenExchangeClient
+	tlsConfig           rest.TLSClientConfig
 }
 
 // expects:
@@ -69,7 +71,7 @@ type provisioningControllerConfig struct {
 // local_permitted_prefixes =
 // [provisioning]
 // repository_types =
-func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerConfig, err error) {
+func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controllerCfg *provisioningControllerConfig, err error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
 	}
@@ -130,7 +132,7 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 		return nil, fmt.Errorf("failed to setup decrypter: %w", err)
 	}
 
-	repoFactory, err := setupRepoFactory(cfg, decrypter, provisioningClient)
+	repoFactory, err := setupRepoFactory(cfg, decrypter, provisioningClient, registry)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup repository getter: %w", err)
 	}
@@ -179,11 +181,13 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders)
 
 	return &provisioningControllerConfig{
-		provisioningClient: provisioningClient,
-		repoFactory:        repoFactory,
-		unified:            unified,
-		clients:            clients,
-		resyncInterval:     operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
+		provisioningClient:  provisioningClient,
+		repoFactory:         repoFactory,
+		unified:             unified,
+		clients:             clients,
+		resyncInterval:      operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
+		tokenExchangeClient: tokenExchangeClient,
+		tlsConfig:           tlsConfig,
 	}, nil
 }
 
@@ -220,6 +224,7 @@ func setupRepoFactory(
 	cfg *setting.Cfg,
 	decrypter repository.Decrypter,
 	provisioningClient *client.Clientset,
+	registry prometheus.Registerer,
 ) (repository.Factory, error) {
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
@@ -246,7 +251,7 @@ func setupRepoFactory(
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
 			if provisioningAppURL != "" {
-				webhook = webhooks.ProvideWebhooks(provisioningAppURL)
+				webhook = webhooks.ProvideWebhooks(provisioningAppURL, registry)
 			}
 
 			extras = append(extras, github.Extra(

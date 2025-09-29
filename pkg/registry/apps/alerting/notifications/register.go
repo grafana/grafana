@@ -4,21 +4,21 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	restclient "k8s.io/client-go/rest"
 
-	notificationsResource "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
 	notificationsApp "github.com/grafana/grafana/apps/alerting/notifications/pkg/app"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/receiver"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/templategroup"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/timeinterval"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
+	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
@@ -26,31 +26,53 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type AlertingNotificationsAppProvider struct {
-	app.Provider
+var (
+	_ appsdkapiserver.AppInstaller       = (*AlertingNotificationsAppInstaller)(nil)
+	_ appinstaller.LegacyStorageProvider = (*AlertingNotificationsAppInstaller)(nil)
+	_ appinstaller.AuthorizerProvider    = (*AlertingNotificationsAppInstaller)(nil)
+)
+
+type AlertingNotificationsAppInstaller struct {
+	appsdkapiserver.AppInstaller
+	cfg *setting.Cfg
+	ng  *ngalert.AlertNG
 }
 
-func RegisterApp(
+func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	ng *ngalert.AlertNG,
-) *AlertingNotificationsAppProvider {
+) (*AlertingNotificationsAppInstaller, error) {
 	if ng.IsDisabled() {
-		return nil
-	}
-	appCfg := &runner.AppBuilderConfig{
-		Authorizer:               getAuthorizer(ng.Api.AccessControl),
-		LegacyStorageGetter:      getLegacyStorage(request.GetNamespaceMapper(cfg), ng),
-		OpenAPIDefGetter:         v0alpha1.GetOpenAPIDefinitions,
-		ManagedKinds:             notificationsResource.GetKinds(),
-		AllowedV0Alpha1Resources: []string{builder.AllResourcesAllowed},
+		log.New("app-registry").Info("Skipping Kubernetes Alerting Notifications API server (notifications.alerting.grafana.app): Unified Alerting is disabled")
+		return nil, nil
 	}
 
-	return &AlertingNotificationsAppProvider{
-		Provider: simple.NewAppProvider(notificationsResource.LocalManifest(), appCfg, notificationsApp.New),
+	installer := &AlertingNotificationsAppInstaller{
+		cfg: cfg,
+		ng:  ng,
 	}
+
+	localManifest := apis.LocalManifest()
+
+	provider := simple.NewAppProvider(localManifest, nil, notificationsApp.New)
+
+	appConfig := app.Config{
+		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
+		ManifestData:   *localManifest.ManifestData,
+		SpecificConfig: nil,
+	}
+
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, &apis.GoTypeAssociator{})
+	if err != nil {
+		return nil, err
+	}
+	installer.AppInstaller = i
+
+	return installer, nil
 }
 
-func getAuthorizer(authz accesscontrol.AccessControl) authorizer.Authorizer {
+func (a AlertingNotificationsAppInstaller) GetAuthorizer() authorizer.Authorizer {
+	authz := a.ng.Api.AccessControl
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 			switch a.GetResource() {
@@ -67,17 +89,17 @@ func getAuthorizer(authz accesscontrol.AccessControl) authorizer.Authorizer {
 		})
 }
 
-func getLegacyStorage(namespacer request.NamespaceMapper, ng *ngalert.AlertNG) runner.LegacyStorageGetter {
-	return func(gvr schema.GroupVersionResource) grafanarest.Storage {
-		if gvr == receiver.ResourceInfo.GroupVersionResource() {
-			return receiver.NewStorage(ng.Api.ReceiverService, namespacer, ng.Api.ReceiverService)
-		} else if gvr == timeinterval.ResourceInfo.GroupVersionResource() {
-			return timeinterval.NewStorage(ng.Api.MuteTimings, namespacer)
-		} else if gvr == templategroup.ResourceInfo.GroupVersionResource() {
-			return templategroup.NewStorage(ng.Api.Templates, namespacer)
-		} else if gvr == routingtree.ResourceInfo.GroupVersionResource() {
-			return routingtree.NewStorage(ng.Api.Policies, namespacer)
-		}
-		panic("unknown legacy storage requested: " + gvr.String())
+func (a AlertingNotificationsAppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
+	namespacer := request.GetNamespaceMapper(a.cfg)
+	api := a.ng.Api
+	if gvr == receiver.ResourceInfo.GroupVersionResource() {
+		return receiver.NewStorage(api.ReceiverService, namespacer, api.ReceiverService)
+	} else if gvr == timeinterval.ResourceInfo.GroupVersionResource() {
+		return timeinterval.NewStorage(api.MuteTimings, namespacer)
+	} else if gvr == templategroup.ResourceInfo.GroupVersionResource() {
+		return templategroup.NewStorage(api.Templates, namespacer)
+	} else if gvr == routingtree.ResourceInfo.GroupVersionResource() {
+		return routingtree.NewStorage(api.Policies, namespacer)
 	}
+	panic("unknown legacy storage requested: " + gvr.String())
 }

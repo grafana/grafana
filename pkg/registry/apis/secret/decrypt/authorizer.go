@@ -4,11 +4,12 @@ import (
 	"context"
 	"strings"
 
-	"github.com/grafana/authlib/authn"
-	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -17,16 +18,26 @@ import (
 // decryptAuthorizer is the authorizer implementation for decrypt operations.
 type decryptAuthorizer struct {
 	tracer trace.Tracer
+	extra  []ExtraOwnerDecrypter
 }
 
-func ProvideDecryptAuthorizer(tracer trace.Tracer) contracts.DecryptAuthorizer {
+type ExtraOwnerDecrypter struct {
+	Identity string
+	Group    string
+}
+
+func ProvideDecryptAuthorizer(
+	tracer trace.Tracer,
+	extra []ExtraOwnerDecrypter,
+) contracts.DecryptAuthorizer {
 	return &decryptAuthorizer{
 		tracer: tracer,
+		extra:  extra,
 	}
 }
 
-// authorize checks whether the auth info token has the right permissions to decrypt the secure value.
-func (a *decryptAuthorizer) Authorize(ctx context.Context, ns xkube.Namespace, secureValueName string, secureValueDecrypters []string) (id string, isAllowed bool) {
+// Authorize checks whether the auth info token has the right permissions to decrypt the secure value.
+func (a *decryptAuthorizer) Authorize(ctx context.Context, ns xkube.Namespace, secureValueName string, secureValueDecrypters []string, owners []metav1.OwnerReference) (id string, isAllowed bool) {
 	ctx, span := a.tracer.Start(ctx, "DecryptAuthorizer.Authorize", trace.WithAttributes(
 		attribute.String("name", secureValueName),
 		attribute.StringSlice("decrypters", secureValueDecrypters),
@@ -69,16 +80,27 @@ func (a *decryptAuthorizer) Authorize(ctx context.Context, ns xkube.Namespace, s
 		return serviceIdentity, false
 	}
 
-	// Finally check whether the service identity is allowed to decrypt this secure value.
-	allowed := false
+	// Check whether the service identity is allowed to decrypt this secure value.
 	for _, decrypter := range secureValueDecrypters {
 		if decrypter == serviceIdentity {
-			allowed = true
-			break
+			return serviceIdentity, true
 		}
 	}
 
-	return serviceIdentity, allowed
+	// finally check if the owner matches any hardcoded service identities
+	if owners != nil && a.extra != nil {
+		for _, extra := range a.extra {
+			if extra.Identity == serviceIdentity {
+				for _, owner := range owners {
+					if strings.HasPrefix(owner.APIVersion, extra.Group) {
+						return serviceIdentity, true
+					}
+				}
+			}
+		}
+	}
+
+	return serviceIdentity, false
 }
 
 // Adapted from https://github.com/grafana/authlib/blob/1492b99410603ca15730a1805a9220ce48232bc3/authz/client.go#L138

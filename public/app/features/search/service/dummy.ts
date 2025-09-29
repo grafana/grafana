@@ -1,7 +1,7 @@
 import { SelectableValue, DataFrame, DataFrameView } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
-import { GrafanaSearcher, QueryResponse, SearchQuery } from './types';
+import { GrafanaSearcher, LocationInfo, QueryResponse, SearchQuery } from './types';
 
 // This is a dummy search useful for tests
 export class DummySearcher implements GrafanaSearcher {
@@ -9,6 +9,7 @@ export class DummySearcher implements GrafanaSearcher {
   expectedStarsResponse: QueryResponse | undefined;
   expectedSortResponse: SelectableValue[] = [];
   expectedTagsResponse: TermCount[] = [];
+  expectedLocationInfoResponse: Record<string, LocationInfo> = {};
 
   setExpectedSearchResult(result: DataFrame) {
     this.expectedSearchResponse = {
@@ -33,6 +34,10 @@ export class DummySearcher implements GrafanaSearcher {
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
     return Promise.resolve(this.expectedTagsResponse);
+  }
+
+  async getLocationInfo(): Promise<Record<string, LocationInfo>> {
+    return Promise.resolve(this.expectedLocationInfoResponse);
   }
 
   getFolderViewSort(): string {

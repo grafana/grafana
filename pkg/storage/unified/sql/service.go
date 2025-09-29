@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"net"
 	"os"
 	"strconv"
@@ -193,6 +194,34 @@ func ProvideUnifiedStorageGrpcService(
 	return s, nil
 }
 
+var (
+	// operation used by the search-servers to check if they own the namespace
+	searchOwnerRead = ring.NewOp([]ring.InstanceState{ring.JOINING, ring.ACTIVE, ring.LEAVING}, nil)
+)
+
+func (s *service) OwnsIndex(key resource.NamespacedResource) (bool, error) {
+	if s.searchRing == nil {
+		return true, nil
+	}
+
+	if st := s.searchRing.State(); st != services.Running {
+		return false, fmt.Errorf("ring is not Running: %s", st)
+	}
+
+	ringHasher := fnv.New32a()
+	_, err := ringHasher.Write([]byte(key.Namespace))
+	if err != nil {
+		return false, fmt.Errorf("error hashing namespace: %w", err)
+	}
+
+	rs, err := s.searchRing.GetWithOptions(ringHasher.Sum32(), searchOwnerRead, ring.WithReplicationFactor(s.searchRing.ReplicationFactor()))
+	if err != nil {
+		return false, fmt.Errorf("error getting replicaset from ring: %w", err)
+	}
+
+	return rs.Includes(s.ringLifecycler.GetInstanceAddr()), nil
+}
+
 func (s *service) starting(ctx context.Context) error {
 	if s.hasSubservices {
 		s.subservicesWatcher.WatchManager(s.subservices)
@@ -206,7 +235,7 @@ func (s *service) starting(ctx context.Context) error {
 		return err
 	}
 
-	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.tracing, s.docBuilders, s.indexMetrics)
+	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.tracing, s.docBuilders, s.indexMetrics, s.OwnsIndex)
 	if err != nil {
 		return err
 	}
@@ -222,8 +251,7 @@ func (s *service) starting(ctx context.Context) error {
 		IndexMetrics:   s.indexMetrics,
 		Features:       s.features,
 		QOSQueue:       s.queue,
-		Ring:           s.searchRing,
-		RingLifecycler: s.ringLifecycler,
+		OwnsIndexFn:    s.OwnsIndex,
 	}
 	server, err := NewResourceServer(serverOptions)
 	if err != nil {

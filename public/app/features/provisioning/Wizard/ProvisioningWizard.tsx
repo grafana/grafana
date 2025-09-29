@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -7,7 +7,7 @@ import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents, isFetchError } from '@grafana/runtime';
 import { Box, Button, ConfirmModal, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { RepositoryViewList, useDeleteRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { getDefaultValues } from '../Config/defaults';
@@ -58,13 +58,28 @@ const getSteps = (): Array<Step<WizardStep>> => {
   ];
 };
 
-export function ProvisioningWizard({ type }: { type: RepoType }) {
+export const ProvisioningWizard = memo(function ProvisioningWizard({
+  type,
+  settingsData,
+}: {
+  type: RepoType;
+  settingsData?: RepositoryViewList;
+}) {
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
+
+  const repositoryRequestFailed = t(
+    'provisioning.provisioning-wizard.on-submit.title.repository-request-failed',
+    'Repository request failed'
+  );
+  const repositoryConnectionFailed = t(
+    'provisioning.provisioning-wizard.on-submit.title.repository-connection-failed',
+    'Repository connection failed'
+  );
 
   const { stepStatusInfo, setStepStatusInfo, isStepSuccess, isStepRunning, hasStepError, hasStepWarning } =
     useStepStatus();
@@ -74,14 +89,13 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     activeStep === 'finish' && (isStepSuccess || completedSteps.includes('synchronize'));
   const shouldUseCancelBehavior = activeStep === 'connection' || isSyncCompleted || isFinishWithSyncCompleted;
 
-  const { data } = useGetFrontendSettingsQuery();
-  const isLegacyStorage = Boolean(data?.legacyStorage);
+  const isLegacyStorage = Boolean(settingsData?.legacyStorage);
   const navigate = useNavigate();
 
   const steps = getSteps();
   const styles = useStyles2(getStyles);
 
-  const values = getDefaultValues();
+  const values = getDefaultValues({ allowedTargets: settingsData?.allowedTargets });
   const methods = useForm<WizardFormData>({
     defaultValues: {
       repository: { ...values, type },
@@ -101,14 +115,14 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     handleSubmit,
   } = methods;
 
-  const [repoName = '', repoType] = watch(['repositoryName', 'repository.type']);
+  const [repoName = '', repoType, syncTarget] = watch(['repositoryName', 'repository.type', 'repository.sync.target']);
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
   const {
     shouldSkipSync,
     requiresMigration,
     isLoading: isResourceStatsLoading,
-  } = useResourceStats(repoName, isLegacyStorage);
+  } = useResourceStats(repoName, isLegacyStorage, syncTarget);
   const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
     repoName: repoName,
     requiresMigration,
@@ -124,7 +138,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
   // A different repository is marked with instance target -- nothing will succeed
   useEffect(() => {
-    if (data?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
+    if (settingsData?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: [
@@ -134,7 +148,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
       navigate(PROVISIONING_URL);
     }
-  }, [navigate, repoName, data?.items]);
+  }, [navigate, repoName, settingsData?.items]);
 
   const handleRepositoryDeletion = async (name: string) => {
     setIsCancelling(true);
@@ -283,10 +297,20 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         const spec = dataToSpec(formData.repository);
         const rsp = await submitData(spec, formData.repository.token);
         if (rsp.error) {
-          setStepStatusInfo({
-            status: 'error',
-            error: 'Repository request failed',
-          });
+          if (isFetchError(rsp.error)) {
+            setStepStatusInfo({
+              status: 'error',
+              error: {
+                title: repositoryRequestFailed,
+                message: rsp.error.data.message,
+              },
+            });
+          } else {
+            setStepStatusInfo({
+              status: 'error',
+              error: repositoryRequestFailed,
+            });
+          }
           return;
         }
 
@@ -304,11 +328,19 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
           const [field, errorMessage] = getFormErrors(error.data.errors);
           if (field && errorMessage) {
             setError(field, errorMessage);
+          } else {
+            setStepStatusInfo({
+              status: 'error',
+              error: {
+                title: repositoryConnectionFailed,
+                message: error.data.message,
+              },
+            });
           }
         } else {
           setStepStatusInfo({
             status: 'error',
-            error: 'Repository connection failed',
+            error: repositoryConnectionFailed,
           });
         }
       } finally {
@@ -357,7 +389,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
             <div className={styles.content}>
               {activeStep === 'connection' && <ConnectStep />}
-              {activeStep === 'bootstrap' && <BootstrapStep settingsData={data} repoName={repoName} />}
+              {activeStep === 'bootstrap' && <BootstrapStep settingsData={settingsData} repoName={repoName} />}
               {activeStep === 'synchronize' && (
                 <SynchronizeStep
                   isLegacyStorage={isLegacyStorage}
@@ -399,7 +431,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       />
     </FormProvider>
   );
-}
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   form: css({

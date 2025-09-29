@@ -26,8 +26,6 @@ export interface ModeOption {
   subtitle: string;
 }
 
-export type StepStatus = 'idle' | 'running' | 'error' | 'success';
-
 export const RepoTypeDisplay: { [key in RepoType]: string } = {
   github: 'GitHub',
   gitlab: 'GitLab',

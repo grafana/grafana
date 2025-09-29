@@ -130,6 +130,10 @@ export class SQLSearcher implements GrafanaSearcher {
     return terms.sort((a, b) => b.count - a.count);
   }
 
+  async getLocationInfo() {
+    return this.locationInfo;
+  }
+
   async doAPIQuery(query: APIQuery): Promise<QueryResponse> {
     let rsp: DashboardSearchHit[];
 

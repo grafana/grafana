@@ -28,6 +28,18 @@ jest.mock('app/features/dashboard/utils/dashboard', () => ({
   onAddLibraryPanel: jest.fn(),
 }));
 
+jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
+  useGetResourceRepositoryView: jest.fn(() => ({
+    isReadOnlyRepo: false,
+    isInstanceManaged: false,
+    isLoading: false,
+  })),
+}));
+
+const mockUseGetResourceRepositoryView = jest.mocked(
+  require('app/features/provisioning/hooks/useGetResourceRepositoryView').useGetResourceRepositoryView
+);
+
 function setup(options?: Partial<Props>) {
   const props = {
     dashboard: createDashboardModelFixture(defaultDashboard),
@@ -40,6 +52,12 @@ function setup(options?: Partial<Props>) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  // Reset the mock to default state
+  mockUseGetResourceRepositoryView.mockReturnValue({
+    isReadOnlyRepo: false,
+    isInstanceManaged: false,
+    isLoading: false,
+  });
 });
 
 it('renders page with correct title for an empty dashboard', () => {
@@ -116,4 +134,19 @@ it('renders page without Add Widget button when feature flag is disabled', () =>
   expect(screen.getByRole('button', { name: 'Import dashboard' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Add library panel' })).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Add widget' })).not.toBeInTheDocument();
+});
+
+it('renders with buttons disabled when repository is read-only', () => {
+  // Mock the hook to return read-only repository
+  mockUseGetResourceRepositoryView.mockReturnValue({
+    isReadOnlyRepo: true,
+    isInstanceManaged: false,
+    isLoading: false,
+  });
+
+  setup({ canCreate: true });
+
+  expect(screen.getByRole('button', { name: 'Add visualization' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Import dashboard' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Add library panel' })).toBeDisabled();
 });

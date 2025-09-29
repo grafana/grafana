@@ -18,7 +18,7 @@ export interface ScopesTreeProps {
   selectedScopes: SelectedScope[];
   scopeNodes: NodesMap;
 
-  onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
+  filterNode: (scopeNodeId: string, query: string) => void;
 
   selectScope: (scopeNodeId: string) => void;
   deselectScope: (scopeNodeId: string) => void;
@@ -26,6 +26,8 @@ export interface ScopesTreeProps {
   // Recent scopes are only shown at the root node
   recentScopes?: Scope[][];
   onRecentScopesSelect?: (scopeIds: string[], parentNodeId?: string) => void;
+
+  toggleExpandedNode: (scopeNodeId: string) => void;
 }
 
 export function ScopesTree({
@@ -34,10 +36,11 @@ export function ScopesTree({
   selectedScopes,
   recentScopes,
   onRecentScopesSelect,
-  onNodeUpdate,
+  filterNode,
   scopeNodes,
   selectScope,
   deselectScope,
+  toggleExpandedNode,
 }: ScopesTreeProps) {
   const styles = useStyles2(getStyles);
 
@@ -75,7 +78,7 @@ export function ScopesTree({
     treeQuery: tree.query,
     scopeNodes,
     selectedScopes,
-    onNodeUpdate,
+    toggleExpandedNode,
     selectScope,
     deselectScope,
   });
@@ -91,7 +94,7 @@ export function ScopesTree({
       <ScopesTreeSearch
         anyChildExpanded={anyChildExpanded}
         searchArea={searchArea}
-        onNodeUpdate={onNodeUpdate}
+        filterNode={filterNode}
         treeNode={tree}
         aria-controls={`${selectedNodesToShowId} ${childrenArrayId}`}
         aria-activedescendant={ariaActiveDescendant}
@@ -114,11 +117,12 @@ export function ScopesTree({
             anyChildExpanded={anyChildExpanded}
             lastExpandedNode={lastExpandedNode}
             loadingNodeName={loadingNodeName}
-            onNodeUpdate={onNodeUpdate}
+            filterNode={filterNode}
             selectedScopes={selectedScopes}
             scopeNodes={scopeNodes}
             selectScope={selectScope}
             deselectScope={deselectScope}
+            toggleExpandedNode={toggleExpandedNode}
             maxHeight={`${Math.min(5, selectedNodesToShow.length) * 30}px`}
             highlightedId={highlightedId}
             id={selectedNodesToShowId}
@@ -136,10 +140,11 @@ export function ScopesTree({
             anyChildExpanded={anyChildExpanded}
             lastExpandedNode={lastExpandedNode}
             loadingNodeName={loadingNodeName}
-            onNodeUpdate={onNodeUpdate}
+            filterNode={filterNode}
             selectedScopes={selectedScopes}
             scopeNodes={scopeNodes}
             selectScope={selectScope}
+            toggleExpandedNode={toggleExpandedNode}
             deselectScope={deselectScope}
             maxHeight={'100%'}
             highlightedId={highlightedId}

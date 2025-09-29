@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1725885733879",
+        "resourceVersion": "1758739325095",
         "creationTimestamp": "2024-03-25T13:19:04Z"
       },
       "spec": {
@@ -105,11 +105,11 @@
                 "additionalProperties": false,
                 "description": "ScopeSpec is a hand copy of the ScopeSpec struct from pkg/apis/scope/v0alpha1/types.go to avoid import (temp fix).",
                 "properties": {
-                  "category": {
-                    "type": "string"
-                  },
-                  "description": {
-                    "type": "string"
+                  "defaultPath": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
                   },
                   "filters": {
                     "items": {
@@ -148,18 +148,11 @@
                   },
                   "title": {
                     "type": "string"
-                  },
-                  "type": {
-                    "type": "string"
                   }
                 },
                 "required": [
                   "name",
-                  "title",
-                  "type",
-                  "description",
-                  "category",
-                  "filters"
+                  "title"
                 ],
                 "type": "object"
               },
