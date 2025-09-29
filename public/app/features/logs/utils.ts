@@ -467,18 +467,29 @@ export const downloadLogs = async (
       });
       dataFrameMap.forEach(async (dataFrame) => {
         const transforms: Array<DataTransformerConfig | CustomTransformOperator> = getLogsExtractFields(dataFrame);
-        transforms.push(
-          {
-            id: 'organize',
+        if (fields.length) {
+          transforms.push(addISODateTransformation, {
+            id: 'filterFieldsByName',
             options: {
-              excludeByName: {
-                ['labels']: true,
-                ['labelTypes']: true,
+              include: {
+                names: ['Date', ...fields],
               },
             },
-          },
-          addISODateTransformation
-        );
+          });
+        } else {
+          transforms.push(
+            {
+              id: 'organize',
+              options: {
+                excludeByName: {
+                  ['labels']: true,
+                  ['labelTypes']: true,
+                },
+              },
+            },
+            addISODateTransformation
+          );
+        }
         const transformedDataFrame = await lastValueFrom(transformDataFrame(transforms, [dataFrame]));
         downloadDataFrameAsCsv(transformedDataFrame[0], `Logs-${dataFrame.refId}`);
       });
