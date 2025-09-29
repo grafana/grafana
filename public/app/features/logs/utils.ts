@@ -29,6 +29,7 @@ import {
   getTimeField,
   Field,
   LogsMetaItem,
+  store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getConfig } from 'app/core/config';
@@ -67,6 +68,7 @@ export function getLogLevel(line: string): LogLevel {
 }
 
 export function getLogLevelFromKey(key: string | number): LogLevel {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const level = LogLevel[key.toString().toLowerCase() as keyof typeof LogLevel];
   if (level) {
     return level;
@@ -429,15 +431,15 @@ function getDataSourceLabelType(labelType: string, datasourceType: string, plura
 
 const POPOVER_STORAGE_KEY = 'logs.popover.disabled';
 export function disablePopoverMenu() {
-  localStorage.setItem(POPOVER_STORAGE_KEY, 'true');
+  store.set(POPOVER_STORAGE_KEY, 'true');
 }
 
 export function enablePopoverMenu() {
-  localStorage.removeItem(POPOVER_STORAGE_KEY);
+  store.delete(POPOVER_STORAGE_KEY);
 }
 
 export function isPopoverMenuDisabled() {
-  return Boolean(localStorage.getItem(POPOVER_STORAGE_KEY));
+  return Boolean(store.get(POPOVER_STORAGE_KEY));
 }
 
 export enum DownloadFormat {
