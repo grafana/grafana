@@ -41,8 +41,12 @@ func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.Team) error {
 		return apierrors.NewBadRequest("the team must have a title")
 	}
 
-	if !requester.IsIdentityType(types.TypeServiceAccount) && obj.Spec.Provisioned {
+	if !requester.IsIdentityType(types.TypeServiceAccount) && obj.Spec.Provisioned && !old.Spec.Provisioned {
 		return apierrors.NewBadRequest("provisioned teams are only allowed for service accounts")
+	}
+
+	if old.Spec.Provisioned && !obj.Spec.Provisioned {
+		return apierrors.NewBadRequest("provisioned teams cannot be updated to non-provisioned teams")
 	}
 
 	if !obj.Spec.Provisioned && obj.Spec.ExternalUID != "" {
