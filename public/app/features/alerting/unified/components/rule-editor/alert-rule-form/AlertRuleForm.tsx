@@ -12,6 +12,7 @@ import { SparkJoyToggle } from 'app/core/components/SparkJoyToggle';
 import { SparkJoyWave } from 'app/core/components/SparkJoyWave';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
+import { getSparkJoyEnabled, setSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import {
   getRuleGroupLocationFromFormValues,
@@ -90,7 +91,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
   const { redirectToDetailsPage } = useRedirectToDetailsPage(uidFromParams);
   const [showEditYaml, setShowEditYaml] = useState(false);
-  const [sparkJoy, setSparkJoy] = useState(true);
+  const [sparkJoy, setSparkJoy] = useState<boolean>(() => getSparkJoyEnabled(true));
 
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
   const [updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
@@ -114,7 +115,12 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
     return defaultFormValuesForRuleType(ruleType);
   }, [existing, prefill, ruleType]);
 
-  const onToggleSparkJoy = () => setSparkJoy((current) => !current);
+  const onToggleSparkJoy = () =>
+    setSparkJoy((current) => {
+      const next = !current;
+      setSparkJoyEnabled(next);
+      return next;
+    });
 
   const navBarActions = [<SparkJoyToggle key="sparks-joy-toggle" value={sparkJoy} onToggle={onToggleSparkJoy} />];
 

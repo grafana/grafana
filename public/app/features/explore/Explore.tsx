@@ -33,6 +33,7 @@ import {
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { SparkJoyWave } from 'app/core/components/SparkJoyWave';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
+import { getSparkJoyEnabled, setSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { StoreState } from 'app/types/store';
 
@@ -154,7 +155,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
     super(props);
     this.state = {
       contentOutlineVisible: store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.visible, true),
-      sparkJoy: true,
+      sparkJoy: getSparkJoyEnabled(true),
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
     this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
@@ -351,7 +352,11 @@ export class Explore extends PureComponent<Props, ExploreState> {
   };
 
   onToggleSparkJoy = () => {
-    this.setState((state) => ({ sparkJoy: !state.sparkJoy }));
+    this.setState((state) => {
+      const next = !state.sparkJoy;
+      setSparkJoyEnabled(next);
+      return { sparkJoy: next };
+    });
   };
 
   renderEmptyState(exploreContainerStyles: string) {

@@ -6977,7 +6977,9 @@
       }
     },
     "explore-toolbar": {
+      "go-back-old-view": "Go back to old view",
       "outline": "Outline",
+      "spark-some-joy": "Spark Some Joy",
       "sparks-joy": "Sparks Joy",
       "tooltip-content-outline": "Content outline"
     },
