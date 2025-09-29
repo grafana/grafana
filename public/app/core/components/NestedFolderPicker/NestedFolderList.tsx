@@ -173,6 +173,11 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
     ) : null;
   }
 
+  // We don't have a direct value of whether things are coming from user searching but this seems to be a good
+  // approximation as when searching all items will be at top level, while things that are actually in the top level
+  // when just looking at a folders tree should not have parent.
+  const isSearchItem = level === 0 && item.parentUID !== undefined;
+
   return (
     // don't need a key handler here, it's handled at the input level in NestedFolderPicker
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events
@@ -204,6 +209,11 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
             // by using onMouseDown here instead of onClick we can stop focus moving
             // to the button when the user clicks it (via preventDefault + stopPropagation)
             onMouseDown={handleExpand}
+            // Additionally, prevent the click event from bubbling to the row, which would select the folder
+            onClick={(ev) => {
+              ev.preventDefault();
+              ev.stopPropagation();
+            }}
             // tabIndex not needed here because we handle keyboard navigation at the input level
             tabIndex={-1}
             aria-label={isOpen ? `Collapse folder ${item.title}` : `Expand folder ${item.title}`}
@@ -217,7 +227,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
           <Text truncate>{item.title}</Text>
           <FolderRepo folder={item} />
         </label>
-        <FolderParent item={items[index]} />
+        {isSearchItem && <FolderParent item={items[index]} />}
       </div>
     </div>
   );

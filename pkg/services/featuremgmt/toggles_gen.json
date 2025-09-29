@@ -1577,6 +1577,7 @@
         "name": "featureToggleAdminPage",
         "resourceVersion": "1758022099771",
         "creationTimestamp": "2023-07-18T20:43:32Z",
+        "deletionTimestamp": "2025-09-29T13:36:16Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-09-16 11:28:19.771156 +0000 UTC"
         }
@@ -2182,6 +2183,19 @@
       },
       "spec": {
         "description": "Routes snapshot requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesStars",
+        "resourceVersion": "1759149842036",
+        "creationTimestamp": "2025-09-29T12:44:02Z"
+      },
+      "spec": {
+        "description": "Routes stars requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
