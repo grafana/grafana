@@ -59,16 +59,12 @@ func TestStore_Plugin(t *testing.T) {
 		p1.RegisterClient(&DecommissionedPlugin{})
 		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel"}}
 
-		ps := New(&fakes.FakePluginRegistry{
+		ps, err := NewPluginStoreForTest(&fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p1.ID: p1,
 				p2.ID: p2,
 			},
 		}, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
-
-		err := ps.StartAsync(context.Background())
-		require.NoError(t, err)
-		err = ps.AwaitRunning(context.Background())
 		require.NoError(t, err)
 
 		p, exists := ps.Plugin(context.Background(), p1.ID)
@@ -90,7 +86,7 @@ func TestStore_Plugins(t *testing.T) {
 		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-panel", Type: plugins.TypePanel}}
 		p5.RegisterClient(&DecommissionedPlugin{})
 
-		ps := New(&fakes.FakePluginRegistry{
+		ps, err := NewPluginStoreForTest(&fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p1.ID: p1,
 				p2.ID: p2,
@@ -99,10 +95,6 @@ func TestStore_Plugins(t *testing.T) {
 				p5.ID: p5,
 			},
 		}, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
-
-		err := ps.StartAsync(context.Background())
-		require.NoError(t, err)
-		err = ps.AwaitRunning(context.Background())
 		require.NoError(t, err)
 
 		ToGrafanaDTO(p1)
@@ -138,7 +130,7 @@ func TestStore_Routes(t *testing.T) {
 		p6 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "f-test-app", Type: plugins.TypeApp}}
 		p6.RegisterClient(&DecommissionedPlugin{})
 
-		ps := New(&fakes.FakePluginRegistry{
+		ps, err := NewPluginStoreForTest(&fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p1.ID: p1,
 				p2.ID: p2,
@@ -147,10 +139,6 @@ func TestStore_Routes(t *testing.T) {
 				p6.ID: p6,
 			},
 		}, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
-
-		err := ps.StartAsync(context.Background())
-		require.NoError(t, err)
-		err = ps.AwaitRunning(context.Background())
 		require.NoError(t, err)
 
 		sr := func(p *plugins.Plugin) *plugins.StaticRoute {
@@ -228,14 +216,12 @@ func TestStore_availablePlugins(t *testing.T) {
 		p1.RegisterClient(&DecommissionedPlugin{})
 		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-app"}}
 
-		ps := New(&fakes.FakePluginRegistry{
+		ps, err := NewPluginStoreForTest(&fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p1.ID: p1,
 				p2.ID: p2,
 			},
 		}, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
-
-		ps, err := NewPluginStoreForTest(fakes.NewFakePluginRegistry(), &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
 		require.NoError(t, err)
 
 		aps := ps.availablePlugins(context.Background())
