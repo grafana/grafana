@@ -17,13 +17,13 @@ import {
 } from './performanceConstants';
 
 /**
- * Grafana service that subscribes to Scene performance events
- * and integrates them with Grafana's observability systems.
- * Also creates Chrome DevTools performance marks and measurements for debugging.
+ * Grafana logger that subscribes to Scene performance events
+ * and logs them to console with Chrome DevTools performance marks and measurements for debugging.
  */
-export class ScenePerformanceService implements ScenePerformanceObserver {
+export class ScenePerformanceLogger implements ScenePerformanceObserver {
   private isInitialized = false;
   private unsubscribe: (() => void) | null = null;
+  private panelGroupsOpen = new Set<string>(); // Track which panels we've seen
 
   constructor() {
     // Bind all observer methods to preserve 'this' context when called by ScenePerformanceTracker
@@ -48,7 +48,7 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     // Note: Analytics aggregator will be initialized separately with dashboard context
 
     this.isInitialized = true;
-    writePerformanceLog('ScenePerformanceService', 'Initialized and subscribed to Scene performance events');
+    writePerformanceLog('SPL', 'Initialized and subscribed to Scene performance events');
   }
 
   public destroy() {
@@ -63,7 +63,7 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     }
 
     this.isInitialized = false;
-    writePerformanceLog('ScenePerformanceService', 'Destroyed and unsubscribed from Scene performance events');
+    writePerformanceLog('SPL', 'Destroyed and unsubscribed from Scene performance events');
   }
 
   // Dashboard-level events
@@ -72,14 +72,10 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     const dashboardStartMark = PERFORMANCE_MARKS.DASHBOARD_INTERACTION_START(data.operationId);
     createPerformanceMark(dashboardStartMark, data.timestamp);
 
-    writePerformanceLog('ScenePerformanceService', '🎯 Dashboard Interaction Started:', {
-      type: data.interactionType,
-      uid: data.metadata?.dashboardUID,
-      title: data.metadata?.dashboardTitle,
-      panelCount: data.metadata?.panelCount,
-      timestamp: data.timestamp,
-      operationId: data.operationId,
-    });
+    const title = data.metadata?.dashboardTitle || 'Unknown Dashboard';
+    const panelCount = data.metadata?.panelCount || 0;
+
+    writePerformanceLog('SPL', `[DASHBOARD] ${data.interactionType} started: ${title} (${panelCount} panels)`);
   }
 
   onDashboardInteractionMilestone(data: DashboardInteractionMilestoneData): void {
@@ -88,13 +84,8 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     const dashboardMilestoneMark = PERFORMANCE_MARKS.DASHBOARD_MILESTONE(data.operationId, milestone);
     createPerformanceMark(dashboardMilestoneMark, data.timestamp);
 
-    writePerformanceLog('ScenePerformanceService', '🔄 Dashboard Milestone:', {
-      type: data.interactionType,
-      uid: data.metadata?.dashboardUID,
-      milestone: data.milestone,
-      timestamp: data.timestamp,
-      operationId: data.operationId,
-    });
+    // Log milestones quietly - only when verbose debugging is needed
+    // Most milestones are covered by the start/complete query logs
   }
 
   onDashboardInteractionComplete(data: DashboardInteractionCompleteData): void {
@@ -106,15 +97,11 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     createPerformanceMark(dashboardEndMark, data.timestamp);
     createPerformanceMeasure(dashboardMeasureName, dashboardStartMark, dashboardEndMark);
 
-    writePerformanceLog('ScenePerformanceService', '✅ Dashboard Interaction Complete:', {
-      type: data.interactionType,
-      uid: data.metadata?.dashboardUID,
-      title: data.metadata?.dashboardTitle,
-      duration: data.duration,
-      networkDuration: data.networkDuration,
-      timestamp: data.timestamp,
-      operationId: data.operationId,
-    });
+    // Clear tracking state
+    this.panelGroupsOpen.clear();
+
+    // Dashboard completion logging is handled comprehensively by SceneRenderProfiler
+    // This observer focuses on creating DevTools performance marks/measures
   }
 
   // Panel-level events
@@ -122,16 +109,10 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     // Create standardized performance marks based on operation type
     this.createStandardizedPanelMark(data, 'start');
 
-    const operationIcon = this.getOperationIcon(data.operation);
-    writePerformanceLog('ScenePerformanceService', `${operationIcon} Panel Operation Started [${data.operation}]:`, {
-      panelId: data.panelId,
-      panelKey: data.panelKey,
-      pluginId: data.pluginId,
-      operation: data.operation,
-      timestamp: data.timestamp,
-      metadata: data.metadata,
-      operationId: data.operationId,
-    });
+    // Track panel for summary logging later
+    this.panelGroupsOpen.add(data.panelKey);
+
+    // Don't log start events - they're noise. Only log completions with timing.
   }
 
   onPanelOperationComplete(data: PanelPerformanceData): void {
@@ -139,17 +120,19 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     this.createStandardizedPanelMark(data, 'end');
     this.createStandardizedPanelMeasure(data);
 
-    const operationIcon = this.getOperationIcon(data.operation);
-    writePerformanceLog('ScenePerformanceService', `${operationIcon} Panel Operation Complete [${data.operation}]:`, {
-      panelId: data.panelId,
-      panelKey: data.panelKey,
-      pluginId: data.pluginId,
-      operation: data.operation,
-      duration: data.duration,
-      timestamp: data.timestamp,
-      metadata: data.metadata,
-      operationId: data.operationId,
-    });
+    const duration = (data.duration || 0).toFixed(1);
+    const slowWarning = (data.duration || 0) > 100 ? ' ⚠️ SLOW' : '';
+
+    // For query operations, include the queryId for correlation
+    let operationDisplay: string = data.operation;
+    if (data.operation === 'query') {
+      operationDisplay = `${data.operation} [${data.metadata.queryId}]`;
+    }
+
+    writePerformanceLog(
+      'SPL',
+      `[PANEL] ${data.pluginId}-${data.panelId} ${operationDisplay}: ${duration}ms${slowWarning}`
+    );
   }
 
   // Query-level events
@@ -158,14 +141,9 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     const queryStartMark = PERFORMANCE_MARKS.QUERY_START(data.origin, data.queryId);
     createPerformanceMark(queryStartMark, data.timestamp);
 
-    writePerformanceLog('ScenePerformanceService', '📊 Non-Panel Query Started:', {
-      queryId: data.queryId,
-      queryType: data.queryType,
-      querySource: data.querySource,
-      origin: data.origin,
-      timestamp: data.timestamp,
-      operationId: data.operationId,
-    });
+    // Mark that we're processing infrastructure queries
+
+    // Don't log start events - they're noise. Only log completions with timing.
   }
 
   onQueryComplete(data: QueryPerformanceData): void {
@@ -177,15 +155,12 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     createPerformanceMark(queryEndMark, data.timestamp);
     createPerformanceMeasure(queryMeasureName, queryStartMark, queryEndMark);
 
-    writePerformanceLog('ScenePerformanceService', '📊 Non-Panel Query Complete:', {
-      queryId: data.queryId,
-      queryType: data.queryType,
-      querySource: data.querySource,
-      origin: data.origin,
-      duration: data.duration,
-      timestamp: data.timestamp,
-      operationId: data.operationId,
-    });
+    const duration = (data.duration || 0).toFixed(1);
+    const slowWarning = (data.duration || 0) > 100 ? ' ⚠️ SLOW' : '';
+
+    // Simple, clean format
+    const queryType = data.queryType.replace(/^(getDataSource\/|AnnotationsDataLayer\/)/, ''); // Remove prefixes
+    writePerformanceLog('SPL', `[QUERY ${data.origin}] ${queryType} [${data.queryId}]: ${duration}ms${slowWarning}`);
   }
 
   // Standardized performance mark creation methods - now with full type safety!
@@ -302,44 +277,26 @@ export class ScenePerformanceService implements ScenePerformanceObserver {
     }
   }
 
-  // Helper method to get appropriate icon for operation type
-  private getOperationIcon(operation: string): string {
-    switch (operation) {
-      case 'query':
-        return '🔍';
-      case 'transform':
-        return '🔄';
-      case 'fieldConfig':
-        return '🔧';
-      case 'render':
-        return '🎨';
-      case 'plugin-load':
-        return '⚡';
-      default:
-        return '⚡';
-    }
-  }
-
   // All performance marks now use standardized functions from performanceConstants.ts
 }
 
 // Singleton instance
-let scenePerformanceService: ScenePerformanceService | null = null;
+let scenePerformanceLogger: ScenePerformanceLogger | null = null;
 
-export function getScenePerformanceService(): ScenePerformanceService {
-  if (!scenePerformanceService) {
-    scenePerformanceService = new ScenePerformanceService();
+export function getScenePerformanceLogger(): ScenePerformanceLogger {
+  if (!scenePerformanceLogger) {
+    scenePerformanceLogger = new ScenePerformanceLogger();
   }
-  return scenePerformanceService;
+  return scenePerformanceLogger;
 }
 
-export function initializeScenePerformanceService(): void {
-  getScenePerformanceService().initialize();
+export function initializeScenePerformanceLogger(): void {
+  getScenePerformanceLogger().initialize();
 }
 
-export function destroyScenePerformanceService(): void {
-  if (scenePerformanceService) {
-    scenePerformanceService.destroy();
-    scenePerformanceService = null;
+export function destroyScenePerformanceLogger(): void {
+  if (scenePerformanceLogger) {
+    scenePerformanceLogger.destroy();
+    scenePerformanceLogger = null;
   }
 }

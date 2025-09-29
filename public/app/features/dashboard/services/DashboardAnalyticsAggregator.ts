@@ -6,7 +6,6 @@ import {
   type DashboardInteractionCompleteData,
   type PanelPerformanceData,
   type QueryPerformanceData,
-  writePerformanceLog,
 } from '@grafana/scenes';
 
 /**
@@ -120,8 +119,7 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   }
 
   onPanelOperationComplete(data: PanelPerformanceData): void {
-    writePerformanceLog('DashboardAnalyticsAggregator', '🔍 onPanelOperationComplete called with:', data);
-
+    // Aggregate panel metrics without verbose logging (handled by ScenePerformanceLogger)
     const panel = this.panelMetrics.get(data.panelKey);
     if (!panel) {
       console.warn('Panel not found for operation completion:', data.panelKey);
@@ -176,27 +174,14 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   onQueryStart(data: QueryPerformanceData): void {
     // Non-panel queries (annotations, variables, plugins, datasources) don't need aggregation
     // These are infrastructure queries that don't belong to specific panels
-    writePerformanceLog('DashboardAnalyticsAggregator', '📊 Non-Panel Query Started:', {
-      queryId: data.queryId,
-      queryType: data.queryType,
-      querySource: data.querySource,
-      origin: data.origin,
-    });
+    // Logging handled by ScenePerformanceLogger to avoid duplication
   }
 
   onQueryComplete(data: QueryPerformanceData): void {
     // Non-panel queries (annotations, variables, plugins, datasources) don't need panel aggregation
     // These are infrastructure queries that don't belong to specific panels
-    writePerformanceLog('DashboardAnalyticsAggregator', '📊 Non-Panel Query Complete:', {
-      queryId: data.queryId,
-      queryType: data.queryType,
-      querySource: data.querySource,
-      origin: data.origin,
-      duration: data.duration,
-    });
-
+    // Logging handled by ScenePerformanceLogger to avoid duplication
     // Could track infrastructure query metrics separately in the future if needed
-    // For now, just log for observability
   }
 
   /**
@@ -252,7 +237,7 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
     // S4.0/S5.0: Log complete analytics event including panel metrics
     this.logDashboardAnalyticsEvent(data, payload, panelMetrics);
 
-    writePerformanceLog('DashboardAnalyticsAggregator', 'Analytics payload:', payload);
+    // Analytics payload logged separately if needed for debugging
 
     // Send the same analytics as before
     reportInteraction('dashboard_render', {
@@ -276,66 +261,124 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
     payload: Record<string, unknown>,
     panelMetrics: PanelAnalyticsMetrics[] | null
   ): void {
-    // Calculate performance insights if panel metrics are available
-    let performanceInsights = null;
+    const panelCount = panelMetrics?.length || 0;
+    const panelSummary = panelCount ? `${panelCount} panels analyzed` : 'No panel metrics';
+
+    // Main analytics summary
+    const slowPanelCount =
+      panelMetrics?.filter(
+        (p) =>
+          p.totalQueryTime + p.totalTransformationTime + p.totalRenderTime + p.totalFieldConfigTime + p.pluginLoadTime >
+          100
+      ).length || 0;
+
+    // eslint-disable-next-line no-console
+    console.groupCollapsed(
+      `DAA: [ANALYTICS] ${data.interactionType} | ${panelSummary}${slowPanelCount > 0 ? ` | ${slowPanelCount} slow panels ⚠️` : ''}`
+    );
+
+    // Dashboard overview
+    console.log('📊 Dashboard:', {
+      duration: `${(data.duration || 0).toFixed(1)}ms`,
+      network: `${(data.networkDuration || 0).toFixed(1)}ms`,
+      interactionType: data.interactionType,
+      slowPanels: slowPanelCount,
+    });
+
+    // Analytics payload
+    console.log('📈 Analytics payload:', payload);
+
+    // Individual collapsible panel logs with detailed breakdown
     if (panelMetrics && panelMetrics.length > 0) {
-      const totalPanelTime = panelMetrics.reduce((sum: number, panel) => {
-        const panelTotal =
+      panelMetrics.forEach((panel) => {
+        const totalPanelTime =
           panel.totalQueryTime +
-          panel.totalFieldConfigTime +
           panel.totalTransformationTime +
           panel.totalRenderTime +
-          panel.pluginLoadTime;
-        return sum + panelTotal;
-      }, 0);
-
-      const avgPanelTime = totalPanelTime / panelMetrics.length;
-
-      const slowestPanel = panelMetrics.reduce((slowest, panel) => {
-        const panelTotal =
-          panel.totalQueryTime +
           panel.totalFieldConfigTime +
-          panel.totalTransformationTime +
-          panel.totalRenderTime +
           panel.pluginLoadTime;
-        const slowestTotal =
-          slowest.totalQueryTime +
-          slowest.totalFieldConfigTime +
-          slowest.totalTransformationTime +
-          slowest.totalRenderTime +
-          slowest.pluginLoadTime;
 
-        return panelTotal > slowestTotal ? panel : slowest;
+        const isSlowPanel = totalPanelTime > 100;
+        const slowWarning = isSlowPanel ? ' ⚠️ SLOW' : '';
+
+        // eslint-disable-next-line no-console
+        console.groupCollapsed(
+          `🎨 Panel ${panel.pluginId}-${panel.panelId}: ${totalPanelTime.toFixed(1)}ms total${slowWarning}`
+        );
+
+        console.log('🔧 Plugin:', {
+          id: panel.pluginId,
+          version: panel.pluginVersion || 'unknown',
+          panelId: panel.panelId,
+          panelKey: panel.panelKey,
+        });
+
+        console.log('⚡ Performance:', {
+          totalTime: `${totalPanelTime.toFixed(1)}ms`,
+          isSlowPanel: isSlowPanel,
+          breakdown: {
+            query: `${panel.totalQueryTime.toFixed(1)}ms`,
+            transform: `${panel.totalTransformationTime.toFixed(1)}ms`,
+            render: `${panel.totalRenderTime.toFixed(1)}ms`,
+            fieldConfig: `${panel.totalFieldConfigTime.toFixed(1)}ms`,
+            pluginLoad: `${panel.pluginLoadTime.toFixed(1)}ms`,
+          },
+        });
+
+        if (panel.queryOperations.length > 0) {
+          console.log('📊 Queries:', {
+            count: panel.queryOperations.length,
+            details: panel.queryOperations.map((op, index) => ({
+              operation: index + 1,
+              duration: `${op.duration.toFixed(1)}ms`,
+              timestamp: op.timestamp,
+              queryType: op.queryType || 'unknown',
+            })),
+          });
+        }
+
+        if (panel.transformationOperations.length > 0) {
+          console.log('🔄 Transformations:', {
+            count: panel.transformationOperations.length,
+            details: panel.transformationOperations.map((op, index) => ({
+              operation: index + 1,
+              duration: `${op.duration.toFixed(1)}ms`,
+              timestamp: op.timestamp,
+              transformationId: op.transformationId || 'unknown',
+              success: op.success !== false,
+            })),
+          });
+        }
+
+        if (panel.renderOperations.length > 0) {
+          console.log('🎨 Renders:', {
+            count: panel.renderOperations.length,
+            details: panel.renderOperations.map((op, index) => ({
+              operation: index + 1,
+              duration: `${op.duration.toFixed(1)}ms`,
+              timestamp: op.timestamp,
+            })),
+          });
+        }
+
+        if (panel.fieldConfigOperations.length > 0) {
+          console.log('⚙️ FieldConfigs:', {
+            count: panel.fieldConfigOperations.length,
+            details: panel.fieldConfigOperations.map((op, index) => ({
+              operation: index + 1,
+              duration: `${op.duration.toFixed(1)}ms`,
+              timestamp: op.timestamp,
+            })),
+          });
+        }
+
+        // eslint-disable-next-line no-console
+        console.groupEnd();
       });
-
-      const slowestPanelTime =
-        slowestPanel.totalQueryTime +
-        slowestPanel.totalFieldConfigTime +
-        slowestPanel.totalTransformationTime +
-        slowestPanel.totalRenderTime +
-        slowestPanel.pluginLoadTime;
-
-      performanceInsights = {
-        totalPanelTime: `${totalPanelTime.toFixed(2)}ms`,
-        averagePanelTime: `${avgPanelTime.toFixed(2)}ms`,
-        slowestPanel: {
-          panelId: slowestPanel.panelId,
-          pluginId: slowestPanel.pluginId,
-          time: `${slowestPanelTime.toFixed(2)}ms`,
-        },
-      };
     }
 
-    writePerformanceLog('DashboardAnalyticsAggregator', '🎯 Dashboard Analytics Event:', {
-      uid: this.dashboardUID,
-      title: this.dashboardTitle,
-      interactionType: data.interactionType,
-      dashboardMetrics: payload,
-      panelMetricsMapSize: this.panelMetrics.size,
-      panelMetricsArrayLength: panelMetrics?.length || 0,
-      panelMetrics: (panelMetrics?.length ?? 0) > 0 ? panelMetrics : 'No panel metrics found',
-      performanceInsights: performanceInsights || 'No performance insights available',
-    });
+    // eslint-disable-next-line no-console
+    console.groupEnd();
   }
 }
 

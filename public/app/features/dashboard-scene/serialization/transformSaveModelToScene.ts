@@ -32,7 +32,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
-import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { dashboardPerformanceInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { CustomTimeRangeCompare } from '../scene/CustomTimeRangeCompare';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -331,7 +331,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       uid,
     }),
     // Analytics aggregator lifecycle management (initialization, observer registration, cleanup)
-    dashboardAnalyticsInitializer,
+    dashboardPerformanceInitializer,
   ];
 
   // Panel profiling is now handled by composed SceneRenderProfiler

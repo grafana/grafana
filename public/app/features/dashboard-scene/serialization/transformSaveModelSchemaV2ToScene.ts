@@ -60,7 +60,7 @@ import {
 import { DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
-import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { dashboardPerformanceInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -228,7 +228,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
           uid: dashboardId?.toString(),
         }),
         // Analytics aggregator lifecycle management (initialization, observer registration, cleanup)
-        dashboardAnalyticsInitializer,
+        dashboardPerformanceInitializer,
         // Panel profiling is now handled by composed SceneRenderProfiler
       ],
       $data: new DashboardDataLayerSet({

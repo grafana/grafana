@@ -1,7 +1,7 @@
 import { logMeasurement, reportInteraction, config } from '@grafana/runtime';
 import { SceneRenderProfiler, type SceneObject } from '@grafana/scenes';
 
-import { initializeScenePerformanceService } from './ScenePerformanceService';
+import { initializeScenePerformanceLogger } from './ScenePerformanceLogger';
 
 interface SceneInteractionProfileEvent {
   origin: string;
@@ -26,9 +26,6 @@ export function getDashboardSceneProfiler() {
     };
 
     dashboardSceneProfiler = new SceneRenderProfiler(panelProfilingConfig);
-
-    // Initialize the Scene performance service to start listening to events
-    initializeScenePerformanceService();
   }
   return dashboardSceneProfiler;
 }
