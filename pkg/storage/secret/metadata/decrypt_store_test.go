@@ -32,7 +32,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		exposed, err := sut.DecryptStorage.Decrypt(ctx, "default", "name")
-		require.Error(t, err)
+		require.Equal(t, err.Error(), contracts.ErrDecryptNotAuthorized.Error()) // make sure we are stripping the error details
 		require.Empty(t, exposed)
 	})
 
@@ -48,7 +48,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", "non-existent-value")
-		require.ErrorIs(t, err, contracts.ErrDecryptNotFound)
+		require.Equal(t, err.Error(), contracts.ErrDecryptNotFound.Error()) // make sure we are stripping the error details
 		require.Empty(t, exposed)
 	})
 
@@ -114,7 +114,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		require.NoError(t, err)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", svName)
-		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
+		require.Equal(t, err.Error(), contracts.ErrDecryptNotAuthorized.Error()) // make sure we are stripping the error details
 		require.Empty(t, exposed)
 	})
 
@@ -146,7 +146,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		require.NoError(t, err)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", "sv-test")
-		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
+		require.Equal(t, err.Error(), contracts.ErrDecryptNotAuthorized.Error()) // make sure we are stripping the error details
 		require.Empty(t, exposed)
 	})
 
@@ -179,7 +179,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		require.NoError(t, err)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", svName)
-		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
+		require.Equal(t, err.Error(), contracts.ErrDecryptNotAuthorized.Error()) // make sure we are stripping the error details)
 		require.Empty(t, exposed)
 	})
 
@@ -211,7 +211,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		require.NoError(t, err)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", "sv-test")
-		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
+		require.Equal(t, err.Error(), contracts.ErrDecryptNotAuthorized.Error()) // make sure we are stripping the error details
 		require.Empty(t, exposed)
 	})
 
@@ -244,8 +244,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		require.NoError(t, err)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", svName)
-		require.Error(t, err)
-		require.Equal(t, err.Error(), "not authorized")
+		require.Equal(t, err.Error(), contracts.ErrDecryptNotAuthorized.Error()) // make sure we are stripping the error details
 		require.Empty(t, exposed)
 	})
 
