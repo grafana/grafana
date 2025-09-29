@@ -21,6 +21,7 @@ import {
   expectRecentScopeNotPresent,
   expectRecentScopeNotPresentInDocument,
   expectRecentScopesSection,
+  expectResultApplicationsGrafanaSelected,
   expectScopesSelectorValue,
 } from './utils/assertions';
 import { getDatasource, getInstanceSettings, getMock, mocksScopes } from './utils/mocks';
@@ -44,6 +45,7 @@ describe('Selector', () => {
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
     config.featureToggles.groupByVariable = true;
+    config.featureToggles.useScopeSingleNodeEndpoint = true;
   });
 
   beforeEach(async () => {
@@ -83,6 +85,26 @@ describe('Selector', () => {
   it('Does not reload the dashboard on scope change', async () => {
     await updateScopes(scopesService, ['grafana']);
     expect(dashboardReloadSpy).not.toHaveBeenCalled();
+  });
+
+  it('Should initializae values from the URL', async () => {
+    const mockLocation = {
+      pathname: '/dashboard',
+      search: '?scopes=grafana&scope_parent=applications',
+      hash: '',
+      key: 'test',
+      state: null,
+    };
+
+    jest.spyOn(locationService, 'getLocation').mockReturnValue(mockLocation);
+    jest.spyOn(locationService, 'getSearch').mockReturnValue(new URLSearchParams(mockLocation.search));
+
+    await resetScenes([fetchSelectedScopesSpy, dashboardReloadSpy]);
+    await renderDashboard();
+    // Lowercase because we don't have any backend that returns the correct case, then it falls back to the value in the URL
+    expectScopesSelectorValue('grafana');
+    await openSelector();
+    expectResultApplicationsGrafanaSelected();
   });
 
   describe('Recent scopes', () => {
