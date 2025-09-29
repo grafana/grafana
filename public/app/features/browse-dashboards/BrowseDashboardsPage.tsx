@@ -30,9 +30,10 @@ import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
 import { useHasSelection } from './state/hooks';
 import { setAllSelection } from './state/slice';
+import HackathonBrowseDashboardsPage from './hackathon14/HackathonBrowseDashboardsPage';
 
 // New Browse/Manage/Search Dashboards views for nested folders
-const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string, string> }) => {
+const BrowseDashboardsPageOld = memo(({ queryParams }: { queryParams: Record<string, string> }) => {
   const { uid: folderUID } = useParams();
   const dispatch = useDispatch();
 
@@ -237,6 +238,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
 });
+
+const BrowseDashboardsPage = ({ queryParams }: { queryParams: Record<string, string> }) => {
+  if (1 == 1) {
+    return <HackathonBrowseDashboardsPage queryParams={queryParams} />;
+  } else {
+    return <BrowseDashboardsPageOld queryParams={queryParams} />;
+  }
+};
 
 BrowseDashboardsPage.displayName = 'BrowseDashboardsPage';
 export default BrowseDashboardsPage;
