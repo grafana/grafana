@@ -286,7 +286,7 @@ func ConvertLegacyAnnotationToK8s(item *annotations.ItemDTO, orgID int64) (*v0al
 	}
 
 	if item.Created > 0 {
-		annotation.ObjectMeta.CreationTimestamp = metav1.Unix(item.Created/1000, (item.Created%1000)*1000000)
+		annotation.CreationTimestamp = metav1.Unix(item.Created/1000, (item.Created%1000)*1000000)
 	}
 
 	return annotation, nil
@@ -321,8 +321,8 @@ func ConvertK8sAnnotationToLegacy(annotation *v0alpha1.Annotation, orgID int64) 
 	}
 
 	// Convert timestamps
-	if !annotation.ObjectMeta.CreationTimestamp.IsZero() {
-		item.Created = annotation.ObjectMeta.CreationTimestamp.Unix() * 1000
+	if !annotation.CreationTimestamp.IsZero() {
+		item.Created = annotation.CreationTimestamp.Unix() * 1000
 	}
 	return item, nil
 }
