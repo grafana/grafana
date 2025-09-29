@@ -165,17 +165,18 @@ const QueryCard = ({
     
     const firstSeries = series[0];
     const totalRows = firstSeries.length;
+    const unit = firstSeries.meta?.preferredVisualisationType === 'logs' ? 'logs' : 'data points';
     
     if (totalRows === 0) {
       return 'No data found';
     }
     if (totalRows >= 1000) {
-      return '1000+ entries found';
+      return `1000+ ${unit} found`;
     }
     if (totalRows === 1) {
-      return '1 entry found';
+      return `1 ${unit} found`;
     }
-    return `${totalRows.toLocaleString()} entries found`;
+    return `${totalRows.toLocaleString()} ${unit} found`;
   };
 
   const styles = {
@@ -372,7 +373,7 @@ export const SparkJoySection = <TQuery extends DataQuery>({
   const styles = {
     container: {
       backgroundColor: theme.colors.background.primary,
-      padding: theme.spacing(3),
+      padding: theme.spacing(1),
     },
     header: {
       display: 'flex',
