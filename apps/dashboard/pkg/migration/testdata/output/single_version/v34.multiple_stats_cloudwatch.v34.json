@@ -82,6 +82,39 @@
       },
       {
         "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "dimensions": {
+          "InstanceId": "i-null-annotation"
+        },
+        "enable": true,
+        "iconColor": "orange",
+        "name": "CloudWatch Annotation with Null in Statistics - null",
+        "namespace": "AWS/EC2",
+        "prefixMatching": false,
+        "region": "us-east-1"
+      },
+      {
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "dimensions": {
+          "InstanceId": "i-invalid-annotation"
+        },
+        "enable": true,
+        "iconColor": "pink",
+        "name": "CloudWatch Annotation Only Invalid Statistics - 123",
+        "namespace": "AWS/EC2",
+        "prefixMatching": false,
+        "region": "us-east-1",
+        "statistic": 123
+      },
+      {
+        "datasource": {
           "uid": "prometheus"
         },
         "enable": true,
@@ -171,6 +204,74 @@
         "prefixMatching": false,
         "region": "us-east-1",
         "statistic": "Average"
+      },
+      {
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "dimensions": {
+          "InstanceId": "i-null-annotation"
+        },
+        "enable": true,
+        "iconColor": "orange",
+        "name": "CloudWatch Annotation with Null in Statistics - Average",
+        "namespace": "AWS/EC2",
+        "prefixMatching": false,
+        "region": "us-east-1",
+        "statistic": "Average"
+      },
+      {
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "dimensions": {
+          "InstanceId": "i-null-annotation"
+        },
+        "enable": true,
+        "iconColor": "orange",
+        "name": "CloudWatch Annotation with Null in Statistics - ",
+        "namespace": "AWS/EC2",
+        "prefixMatching": false,
+        "region": "us-east-1",
+        "statistic": ""
+      },
+      {
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "dimensions": {
+          "InstanceId": "i-invalid-annotation"
+        },
+        "enable": true,
+        "iconColor": "pink",
+        "name": "CloudWatch Annotation Only Invalid Statistics - true",
+        "namespace": "AWS/EC2",
+        "prefixMatching": false,
+        "region": "us-east-1",
+        "statistic": true
+      },
+      {
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "dimensions": {
+          "InstanceId": "i-invalid-annotation"
+        },
+        "enable": true,
+        "iconColor": "pink",
+        "name": "CloudWatch Annotation Only Invalid Statistics - [object Object]",
+        "namespace": "AWS/EC2",
+        "prefixMatching": false,
+        "region": "us-east-1",
+        "statistic": {}
       }
     ]
   },
@@ -631,9 +732,274 @@
     },
     {
       "datasource": {
-        "uid": "prometheus"
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
       },
       "id": 10,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "dimensions": {
+            "InstanceId": "i-missing-fields"
+          },
+          "metricEditorMode": 0,
+          "metricName": "CPUUtilization",
+          "metricQueryType": 0,
+          "namespace": "AWS/EC2",
+          "refId": "A",
+          "region": "us-east-1",
+          "statistic": "Average"
+        }
+      ],
+      "title": "CloudWatch Query Missing Editor Fields",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "id": 11,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "dimensions": {
+            "InstanceId": "i-with-expression"
+          },
+          "expression": "SEARCH('{AWS/EC2,InstanceId} MetricName=\"CPUUtilization\"', 'Average', 300)",
+          "metricEditorMode": 1,
+          "metricName": "CPUUtilization",
+          "metricQueryType": 0,
+          "namespace": "AWS/EC2",
+          "refId": "A",
+          "region": "us-east-1",
+          "statistic": "Average"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "dimensions": {
+            "InstanceId": "i-with-expression"
+          },
+          "expression": "SEARCH('{AWS/EC2,InstanceId} MetricName=\"CPUUtilization\"', 'Average', 300)",
+          "metricEditorMode": 1,
+          "metricName": "CPUUtilization",
+          "metricQueryType": 0,
+          "namespace": "AWS/EC2",
+          "refId": "B",
+          "region": "us-east-1",
+          "statistic": "Maximum"
+        }
+      ],
+      "title": "CloudWatch Query with Expression (Code Mode)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "id": 12,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "dimensions": {
+            "InstanceId": "i-insights"
+          },
+          "metricEditorMode": 1,
+          "metricName": "CPUUtilization",
+          "metricQueryType": 1,
+          "namespace": "AWS/EC2",
+          "refId": "A",
+          "region": "us-east-1",
+          "statistic": "Average"
+        }
+      ],
+      "title": "CloudWatch Insights Query Missing Editor Mode",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "id": 13,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "dimensions": {
+            "InstanceId": "i-null-stats"
+          },
+          "metricEditorMode": 0,
+          "metricName": "CPUUtilization",
+          "metricQueryType": 0,
+          "namespace": "AWS/EC2",
+          "refId": "A",
+          "region": "us-east-1"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "dimensions": {
+            "InstanceId": "i-null-stats"
+          },
+          "metricEditorMode": 0,
+          "metricName": "CPUUtilization",
+          "metricQueryType": 0,
+          "namespace": "AWS/EC2",
+          "refId": "B",
+          "region": "us-east-1",
+          "statistic": "Average"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "dimensions": {
+            "InstanceId": "i-null-stats"
+          },
+          "metricEditorMode": 0,
+          "metricName": "CPUUtilization",
+          "metricQueryType": 0,
+          "namespace": "AWS/EC2",
+          "refId": "C",
+          "region": "us-east-1",
+          "statistic": ""
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "dimensions": {
+            "InstanceId": "i-null-stats"
+          },
+          "metricEditorMode": 0,
+          "metricName": "CPUUtilization",
+          "metricQueryType": 0,
+          "namespace": "AWS/EC2",
+          "refId": "D",
+          "region": "us-east-1",
+          "statistic": "Maximum"
+        }
+      ],
+      "title": "CloudWatch Query with Null Statistics",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "id": 14,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "dimensions": {
+            "InstanceId": "i-invalid-only"
+          },
+          "metricEditorMode": 0,
+          "metricName": "CPUUtilization",
+          "metricQueryType": 0,
+          "namespace": "AWS/EC2",
+          "refId": "A",
+          "region": "us-east-1",
+          "statistic": 123
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "dimensions": {
+            "InstanceId": "i-invalid-only"
+          },
+          "metricEditorMode": 0,
+          "metricName": "CPUUtilization",
+          "metricQueryType": 0,
+          "namespace": "AWS/EC2",
+          "refId": "B",
+          "region": "us-east-1",
+          "statistic": true
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "dimensions": {
+            "InstanceId": "i-invalid-only"
+          },
+          "metricEditorMode": 0,
+          "metricName": "CPUUtilization",
+          "metricQueryType": 0,
+          "namespace": "AWS/EC2",
+          "refId": "C",
+          "region": "us-east-1",
+          "statistic": {}
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "dimensions": {
+            "InstanceId": "i-invalid-only"
+          },
+          "metricEditorMode": 0,
+          "metricName": "CPUUtilization",
+          "metricQueryType": 0,
+          "namespace": "AWS/EC2",
+          "refId": "D",
+          "region": "us-east-1",
+          "statistic": []
+        }
+      ],
+      "title": "CloudWatch Query with Only Invalid Statistics",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "id": 15,
       "targets": [
         {
           "datasource": {
