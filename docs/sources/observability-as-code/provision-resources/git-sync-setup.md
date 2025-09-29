@@ -16,19 +16,14 @@ weight: 100
 # Set up Git Sync
 
 {{< admonition type="caution" >}}
-Git Sync is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana to use this feature. This feature is not publicly available in Grafana Cloud yet. Only the cloud-hosted version of GitHub (GitHub.com) is supported at this time. GitHub Enterprise is not yet compatible.
 
-Sign up for Grafana Cloud Git Sync early access using [this form](https://forms.gle/WKkR3EVMcbqsNnkD9).
+TBC
 
 {{< /admonition >}}
 
-Git Sync lets you manage Grafana dashboards as code by storing dashboards JSON files and folders in a remote GitHub repository.
-Alternatively, you can configure a local file system instead of using GitHub.
-Refer to [Set up file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/) for information.
+Git Sync lets you manage Grafana dashboards as code by storing dashboard JSON files and folders in a remote GitHub repository.
 
-This page explains how to use Git Sync with a GitHub repository.
-
-To set up Git Sync, you need to:
+To set up Git Sync and synchronize with a GitHub repository you need to:
 
 1. Enable feature toggles in Grafana (first time set up).
 1. Configure a connection to your GitHub repository.
@@ -40,14 +35,25 @@ To set up Git Sync, you need to:
 | Adds a table summarizing changes to your pull request | Provides a convenient way to save changes back to GitHub.                       | Webhooks configured                           |
 | Add a dashboard preview image to a PR                 | View a snapshot of dashboard changes to a pull request without opening Grafana. | Image renderer plugin and webhooks configured |
 
+
+{{< admonition type="note" >}}
+
+Alternatively, you can configure a local file system instead of using GitHub. Refer to [Set up file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/) for information.
+
+{{< /admonition >}}
+
 ## Performance impacts of enabling Git Sync
 
-Git Sync is an experimental feature and is under continuous development.
-
-We recommend evaluating the performance impact, if any, in a non-production environment.
+Git Sync is an experimental feature and is under continuous development. Reporting any issues you encounter can help us improve Git Sync. 
 
 When Git Sync is enabled, the database load might increase, especially for instances with a lot of folders and nested folders.
-Reporting any issues you encounter can help us improve Git Sync.
+Evaluate the performance impact, if any, in a non-production environment.
+
+{{< admonition type="caution" >}}
+
+See also [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/use-git-sync#known-limitations/).
+
+{{< /admonition >}}
 
 ## Before you begin
 
@@ -57,7 +63,7 @@ To set up Git Sync, you need:
 - Enable the required feature toggles in your Grafana instance. Refer to [Enable required feature toggles](#enable-required-feature-toggles) for instructions.
 - A GitHub repository to store your dashboards in.
   - If you want to use a local file path, refer to [the local file path guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/).
-- A GitHub access token. The Grafana UI will also explain this to you as you set it up.
+- A GitHub access token. The Grafana UI will prompt you during setup.
 - Optional: A public Grafana instance.
 - Optional: Image Renderer plugin to save image previews with your PRs.
 
@@ -123,8 +129,13 @@ If you choose to sync all resources with external storage, then all of your dash
 You won't have the option of setting up additional repositories to connect to.
 
 You can choose to synchronize all resources with GitHub or you can sync resources to a new Grafana folder.
-The options you have depend on the status of your GitHub repository.
-For example, if you are syncing with a new or empty repository, you won't have an option to migrate dashboards.
+The options you have depend on the status of your GitHub repository. For example, if you are syncing with a new or empty repository, you won't have an option to migrate dashboards.
+
+{{< admonition type="caution" >}}
+
+If you're using Git Sync in Grafana Cloud you can only sync specific folders for the moment. Git Sync will be available for your full instance soon. 
+
+{{< /admonition >}}
 
 1. Select how resources should be handled in Grafana.
 

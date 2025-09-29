@@ -19,21 +19,25 @@ weight: 400
 # Manage provisioned repositories with Git Sync
 
 {{< admonition type="caution" >}}
-Git Sync is available in [public preview](https://grafana.com/docs/release-life-cycle/) for Grafana v12 open source and Enterprise editions, and in Grafana Cloud. 
-
-Support and documentation is available but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided. Do not use Git Sync in production environments.
-
-You can sign up for Grafana Cloud Git Sync public preview using [this form](https://forms.gle/WKkR3EVMcbqsNnkD9).
+TBC
 {{< /admonition >}}
 
-After you have set up Git Sync, you can synchronize any changes in your existing dashboards with your configured GitHub repository. Similarly, if you push a change in the repository, those changes are mirrored in your Grafana instance.
+After you have set up Git Sync, you can synchronize any changes you make in your existing dashboards with your configured GitHub repository. Similarly, if you push a change in your repository, those changes are mirrored in your Grafana instance.
+
+## Known limitations
+
+Git Sync is under development and the following limitations apply:
+
+- You can only authenticate using your GitHub token.
+- Support for native Git and other providers, such as GitLab or Bitbucket, is scheduled.
+- If you're using Git Sync in Grafana Cloud you can only sync specific folders for the moment. Git Sync will be available for your full instance soon. 
+- History functionality in the UI is limited and restoring resources is currently not possible. For a workaround, restore dashboards directly in your GitHub repo by raising a PR.  
 
 ## View current status of synchronization
 
-Each repository synchronized with Git Sync has a dashboard that provides a summary of resources, health, pull status, webhook, sync jobs, resources, and files.
-Use the detailed information accessed in **View** to help troubleshoot and understand the health of your repository's connection with Grafana.
+When you synchronize a repository, Git Sync also creates a dashboard that provides a summary of resources, health, pull status, webhook, sync jobs, resources, and files. 
 
-To view the current status, follow these steps.
+Use the **View** section in **Provisioning** to see detailed information about the current status of your sync, understand the health of your repository's connection with Grafana, and [troubleshoot](#troubleshoot-synchronization) possible issues:
 
 1. Log in to your Grafana server with an account that has the Grafana Admin or Editor flag set.
 1. Select **Administration** in the left-side menu and then **Provisioning**.
@@ -45,7 +49,7 @@ To view the current status, follow these steps.
 
 Synchronizing resources from provisioned repositories into your Grafana instance pulls the resources into the selected folder. Existing dashboards with the same `uid` are overwritten.
 
-To sync changes from your dashboards with your Git repository:
+To sync changes from your Grafana dashboards with your Git repository:
 
 1. From the left menu, select **Administration** > **Provisioning**.
 1. Select **Pull** under the repository you want to sync.
