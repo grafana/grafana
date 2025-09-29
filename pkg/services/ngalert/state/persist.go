@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
@@ -25,7 +26,10 @@ type InstanceWriter interface {
 	// SaveAlertInstancesForRule overwrites the state for the given rule.
 	SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, instances []models.AlertInstance) error
 	DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKeyWithGroup) error
-	FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int) error
+	// FullSync performs a full synchronization of alert instances.
+	// If jitterFunc is provided, applies jitter delays between batches to distribute database load.
+	// If jitterFunc is nil, executes batches without delays.
+	FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int, jitterFunc func(int) time.Duration) error
 }
 
 type OrgReader interface {

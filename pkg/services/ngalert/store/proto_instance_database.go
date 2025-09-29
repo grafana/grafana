@@ -133,7 +133,7 @@ func (st ProtoInstanceDBStore) DeleteAlertInstancesByRule(ctx context.Context, k
 	})
 }
 
-func (st ProtoInstanceDBStore) FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int) error {
+func (st ProtoInstanceDBStore) FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int, jitterFunc func(int) time.Duration) error {
 	logger := st.Logger.FromContext(ctx)
 	logger.Error("FullSync called and not implemented")
 	return errors.New("fullsync is not implemented for proto instance database store")
