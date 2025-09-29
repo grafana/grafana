@@ -96,17 +96,17 @@ Review the following settings in your Grafana configuration:
 
 ```ini
 [security]
-cookie_samesite = none
+cookie_samesite = lax
 ```
 
-This setting should be set to none to allow Grafana session cookies to work correctly with redirects.
+This setting should be set to `lax` to allow Grafana session cookies to work correctly with redirects.
 
 ```ini
 [security]
 cookie_secure = true
 ```
 
-Ensure `cookie_secure` is set to true to ensure that cookies are only sent over HTTPS.
+For enhanced security, set `cookie_secure` to `true`, which forces cookies to be sent only via HTTPS.
 
 ### Troubleshoot Graph API calls
 
