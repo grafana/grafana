@@ -26,14 +26,19 @@ func TestIntegrationStars(t *testing.T) {
 
 	for _, mode := range []grafanarest.DualWriterMode{
 		grafanarest.Mode0,
-		grafanarest.Mode2, // anything past 2 will fail
+		grafanarest.Mode2,
+		grafanarest.Mode3,
+		grafanarest.Mode5,
 	} {
+		flags := []string{featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs}
+		if mode > grafanarest.Mode2 {
+			flags = append(flags, featuremgmt.FlagKubernetesStars)
+		}
+
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction: false, // required for experimental APIs
-			DisableAnonymous:  true,
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-			},
+			AppModeProduction:    false, // required for experimental APIs
+			DisableAnonymous:     true,
+			EnableFeatureToggles: flags,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: mode,

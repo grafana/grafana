@@ -95,6 +95,10 @@ const (
 	// populate star status from apiserver
 	FlagStarsFromAPIServer = "starsFromAPIServer"
 
+	// FlagKubernetesStars
+	// Routes stars requests from /api to the /apis endpoint
+	FlagKubernetesStars = "kubernetesStars"
+
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
 	FlagInfluxqlStreamingParser = "influxqlStreamingParser"

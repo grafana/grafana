@@ -112,6 +112,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	if err != nil {
 		return err
 	}
+	stars = &starStorage{store: stars} // wrap List so we only return one value
 	if b.legacyStars != nil && opts.DualWriteBuilder != nil {
 		stars, err = opts.DualWriteBuilder(resource.GroupResource(), b.legacyStars, stars)
 		if err != nil {

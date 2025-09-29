@@ -2190,6 +2190,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesStars",
+        "resourceVersion": "1759149842036",
+        "creationTimestamp": "2025-09-29T12:44:02Z"
+      },
+      "spec": {
+        "description": "Routes stars requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "localeFormatPreference",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-03-31T13:59:07Z"
