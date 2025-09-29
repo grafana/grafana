@@ -13,8 +13,9 @@ import {
   QueryEditorMode,
 } from '@grafana/plugin-ui';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal, Space, Stack } from '@grafana/ui';
+import { Button, ConfirmModal, Space, Stack, RadioButtonGroup } from '@grafana/ui';
 
+import { isLogsQuery } from '../queryUtils';
 import { LabelBrowserModal } from '../querybuilder/components/LabelBrowserModal';
 import { LokiQueryBuilderContainer } from '../querybuilder/components/LokiQueryBuilderContainer';
 import { LokiQueryBuilderOptions } from '../querybuilder/components/LokiQueryBuilderOptions';
@@ -22,7 +23,7 @@ import { LokiQueryCodeEditor } from '../querybuilder/components/LokiQueryCodeEdi
 import { QueryPatternsModal } from '../querybuilder/components/QueryPatternsModal';
 import { buildVisualQueryFromString } from '../querybuilder/parsing';
 import { changeEditorMode, getQueryWithDefaults } from '../querybuilder/state';
-import { LokiQuery, QueryStats } from '../types';
+import { LokiQuery, QueryStats, LokiQueryType } from '../types';
 
 import { shouldUpdateStats } from './stats';
 import { LokiQueryEditorProps } from './types';
@@ -114,6 +115,12 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps & { sparkJoy?: boolean 
     setLabelBrowserVisible((visible) => !visible);
   };
 
+  const onQueryTypeToggle = (value: LokiQueryType) => {
+    const updatedQuery = { ...query, queryType: value };
+    onChange(updatedQuery);
+    onRunQuery();
+  };
+
   useEffect(() => {
     const shouldUpdate = shouldUpdateStats(
       query.expr,
@@ -195,6 +202,28 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps & { sparkJoy?: boolean 
           </Button>
         </Stack>
         <QueryHeaderSwitch label="Explain query" value={explain} onChange={onExplainChange} />
+        {sparkJoy && query.expr && !isLogsQuery(query.expr) && (
+          <RadioButtonGroup
+            value={query.queryType || LokiQueryType.Range}
+            onChange={onQueryTypeToggle}
+            size="sm"
+            aria-label="Query type selection"
+            options={[
+              {
+                value: LokiQueryType.Range,
+                icon: 'chart-line',
+                ariaLabel: 'Range query',
+                description: 'Range query - Run query over a range of time'
+              },
+              {
+                value: LokiQueryType.Instant,
+                icon: 'calculator-alt',
+                ariaLabel: 'Instant query',
+                description: 'Instant query - Execute query at a single point in time'
+              }
+            ]}
+          />
+        )}
         <FlexItem grow={1} />
         {(app !== CoreApp.Explore && app !== CoreApp.Correlations) && (
           <Button
@@ -224,14 +253,16 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps & { sparkJoy?: boolean 
             timeRange={timeRange}
           />
         )}
-        <LokiQueryBuilderOptions
-          query={query}
-          onChange={onChange}
-          onRunQuery={onRunQuery}
-          app={app}
-          queryStats={queryStats}
-          datasource={props.datasource}
-        />
+        {!sparkJoy && (
+          <LokiQueryBuilderOptions
+            query={query}
+            onChange={onChange}
+            onRunQuery={onRunQuery}
+            app={app}
+            queryStats={queryStats}
+            datasource={props.datasource}
+          />
+        )}
       </EditorRows>
     </>
   );

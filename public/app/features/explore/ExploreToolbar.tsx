@@ -205,6 +205,13 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
 
   const onChangeRefreshInterval = (refreshInterval: string) => {
     dispatch(changeRefreshInterval({ exploreId, refreshInterval }));
+    
+    // If Live option is selected, we need to report the interaction for analytics
+    if (refreshInterval === 'LIVE' && datasourceInstance) {
+      reportInteraction('grafana_explore_logs_live_tailing_clicked', {
+        datasourceType: datasourceInstance.type,
+      });
+    }
   };
 
   const navBarActions = [
@@ -338,10 +345,11 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             isLive={isLive}
             onRefresh={() => onRunQuery(loading)}
             noIntervalPicker={isLive}
+            showLiveOption={sparkJoy && datasourceInstance?.meta.streaming}
             primary={true}
             width={(showSmallTimePicker ? 35 : 108) + 'px'}
           />,
-          datasourceInstance?.meta.streaming && (
+          datasourceInstance?.meta.streaming && !sparkJoy && (
             <LiveTailControls key="liveControls" exploreId={exploreId}>
               {(c) => {
                 const controls = {
