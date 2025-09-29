@@ -40,7 +40,7 @@ export const CONTENT_OUTLINE_LOCAL_STORAGE_KEYS = {
   expanded: 'grafana.explore.contentOutline.expanded',
 };
 
-export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
+export function ContentOutline({ scroller, panelId, sparkJoy }: { scroller: HTMLElement | undefined; panelId: string; sparkJoy?: boolean }) {
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(
     store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, true)
   );
@@ -157,20 +157,22 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     <PanelContainer className={styles.wrapper} id={panelId}>
       <ScrollContainer>
         <div className={styles.content}>
-          <ContentOutlineItemButton
-            icon={'arrow-from-right'}
-            tooltip={
-              contentOutlineExpanded
-                ? t('explore.content-outline.tooltip-collapse-outline', 'Collapse outline')
-                : t('explore.content-outline.tooltip-expand-outline', 'Expand outline')
-            }
-            tooltipPlacement={contentOutlineExpanded ? 'right' : 'bottom'}
-            onClick={toggle}
-            className={cx(styles.toggleContentOutlineButton, {
-              [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsShouldIndent,
-            })}
-            aria-expanded={contentOutlineExpanded}
-          />
+          {!sparkJoy && (
+            <ContentOutlineItemButton
+              icon={'arrow-from-right'}
+              tooltip={
+                contentOutlineExpanded
+                  ? t('explore.content-outline.tooltip-collapse-outline', 'Collapse outline')
+                  : t('explore.content-outline.tooltip-expand-outline', 'Expand outline')
+              }
+              tooltipPlacement={contentOutlineExpanded ? 'right' : 'bottom'}
+              onClick={toggle}
+              className={cx(styles.toggleContentOutlineButton, {
+                [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsShouldIndent,
+              })}
+              aria-expanded={contentOutlineExpanded}
+            />
+          )}
 
           {outlineItems.map((item) => {
             return (

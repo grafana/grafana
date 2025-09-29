@@ -126,7 +126,7 @@ const MonacoQueryField = ({
   const autocompleteCleanupCallback = useRef<(() => void) | null>(null);
 
   // State for cycling placeholder
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [_, setPlaceholderIndex] = useState(0);
   const [displayedPlaceholder, setDisplayedPlaceholder] = useState(placeholder);
   const placeholderIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);

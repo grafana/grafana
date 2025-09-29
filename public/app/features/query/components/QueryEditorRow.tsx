@@ -17,13 +17,12 @@ import {
   TimeRange,
   getDataSourceRef,
   PluginExtensionPoints,
-  FeatureState,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Badge, ErrorBoundaryAlert, List, Dropdown, IconButton, Menu, Box, FeatureBadge } from '@grafana/ui';
+import { Badge, ErrorBoundaryAlert, List, IconButton, Dropdown, Menu } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
@@ -392,94 +391,46 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const isEditingQueryLibrary = queryLibraryRef !== undefined;
     const isUnifiedAlerting = app === CoreApp.UnifiedAlerting;
 
-    // Feature flag for decluttered actions: when true, show the new 3-dot menu; when false, show legacy inline actions
 
-    const overlay = () => (
-      <Box
-        minWidth={28}
-        borderColor={'weak'}
-        borderStyle={'solid'}
-        boxShadow={'z3'}
-        display={'flex'}
-        direction={'column'}
-        borderRadius={'default'}
-        backgroundColor={'primary'}
-        padding={1}
-        gap={0.5}
-      >
-        <Menu>
-          {hasEditorHelp && (
-            <Menu.Item
-              icon="question-circle"
-              label={t('query-operation.header.datasource-help', 'Show data source help')}
-              onClick={this.onToggleHelp}
-              active={showingHelp}
-            />
-          )}
-          {!isEditingQueryLibrary && (
-            <Menu.Item
-              icon="copy"
-              label={t('query-operation.header.duplicate-query', 'Duplicate query')}
-              onClick={this.onCopyQuery}
-              testId={selectors.components.QueryEditorRow.actionButton(
-                t('query-operation.header.duplicate-query', 'Duplicate query')
-              )}
-            />
-          )}
-          {!hideHideQueryButton && (
-            <Menu.Item
-              icon={isHidden ? 'eye-slash' : 'eye'}
-              label={
-                query.hide
-                  ? t('query-operation.header.show-response', 'Show response')
-                  : t('query-operation.header.hide-response', 'Hide response')
-              }
-              onClick={this.onHideQuery}
-              testId={selectors.components.QueryEditorRow.actionButton('Hide response')}
-            />
-          )}
-          {!isEditingQueryLibrary && (
-            <Menu.Item
-              icon="trash-alt"
-              label={t('query-operation.header.remove-query', 'Remove query')}
-              onClick={this.onRemoveQuery}
-              destructive
-              testId={selectors.components.QueryEditorRow.actionButton(
-                t('query-operation.header.remove-query', 'Remove query')
-              )}
-            />
-          )}
-          {!isEditingQueryLibrary && !isUnifiedAlerting && (
-            <>
-              <Menu.Divider />
-              <SavedQueryMenuItems
-                query={query}
-                app={app}
-                onSelectQuery={this.onSelectQueryFromLibrary}
-                datasourceFilters={datasource?.name ? [datasource.name] : []}
-              />
-            </>
-          )}
-        </Menu>
-        {/* Additional actions and notices */}
-        <div>{this.renderExtraActions()}</div>
-      </Box>
-    );
 
     if (sparkJoy) {
       return (
         <>
-          {isHidden && (
-            <IconButton
-              name="eye-slash"
-              tooltip={t('query-operation.header.show-response', 'Show response')}
-              onClick={this.onHideQuery}
-              data-testid={selectors.components.QueryEditorRow.actionButton('Hide response')}
+          {/* 3-dot menu for save query functionality */}
+          {!isEditingQueryLibrary && !isUnifiedAlerting && (
+            <SavedQueryMenuWithDropdown
+              query={query}
+              app={app}
+              onUpdateSuccess={this.onExitQueryLibraryEditingMode}
+              onSelectQuery={this.onSelectQueryFromLibrary}
+              datasourceFilters={datasource?.name ? [datasource.name] : []}
             />
           )}
-          <Dropdown overlay={overlay} placement="bottom-end">
-            <IconButton name="ellipsis-v" tooltip={t('query-operation.header.more-actions', 'Query actions')} />
-          </Dropdown>
+          
+          {/* Individual icon buttons for main actions */}
+          {!isEditingQueryLibrary && (
+          <QueryOperationAction
+            title={t('query-operation.header.duplicate-query', 'Duplicate query')}
+            icon="copy"
+            onClick={this.onCopyQuery}
+          />
+        )}
+          {!hideHideQueryButton && (
+            <QueryOperationToggleAction
+              title={isHidden ? t('query-operation.header.show-response', 'Show response') : t('query-operation.header.hide-response', 'Hide response')}
+              icon={isHidden ? 'eye-slash' : 'eye'}
+              onClick={this.onHideQuery}
+              data-testid={selectors.components.QueryEditorRow.actionButton('Hide response')}
+              active={isHidden}
+            />
+          )}
+          {!isEditingQueryLibrary && (
+            <QueryOperationAction
+              icon="trash-alt"
+              title={t('query-operation.header.remove-query', 'Remove query')}
+              onClick={this.onRemoveQuery}
+            />
+          )}
         </>
       );
     }
@@ -741,11 +692,12 @@ function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
   }
 }
 
-// Will render "Save query" and "Replace with saved query" as menu items when query library is enabled
-function SavedQueryMenuItems(props: {
+// 3-dot menu with save query functionality for sparkJoy mode
+function SavedQueryMenuWithDropdown(props: {
   query: DataQuery;
   app?: CoreApp;
-  onSelectQuery?: (query: DataQuery) => void;
+  onUpdateSuccess?: () => void;
+  onSelectQuery: (query: DataQuery) => void;
   datasourceFilters: string[];
 }) {
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
@@ -754,25 +706,32 @@ function SavedQueryMenuItems(props: {
     return null;
   }
 
-  // Reuse existing rendering but adapt to menu: render as inline content inside Menu.Item via component prop
-  const SaveBadge = () => <FeatureBadge featureState={FeatureState.new} />;
+  const onSaveQuery = () => {
+    openDrawer({ 
+      onSelectQuery: props.onSelectQuery, 
+      options: { context: props.app }, 
+      query: props.query 
+    });
+  };
 
-  const saveButton = (
-    <Menu.Item
-      icon="save"
-      label={t('query-operation.header.save-to-query-library', 'Save query')}
-      component={SaveBadge}
-      onClick={() => openDrawer({ onSelectQuery: props.onSelectQuery, options: { context: props.app }, query: props.query })}
-    />
+  const menu = (
+    <Menu>
+      <Menu.Item
+        icon="save"
+        label={t('query-operation.header.save-to-query-library', 'Save query')}
+        onClick={onSaveQuery}
+      />
+    </Menu>
   );
 
-  const replaceButton = (
-    <Menu.Item
-      icon="book"
-      label={t('query-operation.header.replace-query-from-library', 'Replace with saved query')}
-      onClick={() => openDrawer({ datasourceFilters: props.datasourceFilters, onSelectQuery: props.onSelectQuery, options: { isReplacingQuery: true, context: props.app } })}
-    />
+  return (
+    <Dropdown overlay={menu} placement="bottom-start">
+      <IconButton
+        name="ellipsis-v"
+        tooltip={t('query-operation.header.query-options', 'Query options')}
+        variant="secondary"
+        size="sm"
+      />
+    </Dropdown>
   );
-
-  return <>{saveButton}{replaceButton}</>;
 }
