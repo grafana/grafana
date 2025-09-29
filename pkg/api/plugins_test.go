@@ -527,10 +527,7 @@ func callGetPluginAsset(sc *scenarioContext) {
 func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string,
 	cfg *setting.Cfg, pluginRegistry registry.Service, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		store := pluginstore.New(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
-		err := store.StartAsync(context.Background())
-		require.NoError(t, err)
-		err = store.AwaitRunning(context.Background())
+		store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
 		require.NoError(t, err)
 
 		hs := HTTPServer{
@@ -645,10 +642,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				store := pluginstore.New(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
-				err := store.StartAsync(context.Background())
-				require.NoError(t, err)
-				err = store.AwaitRunning(context.Background())
+				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
 				require.NoError(t, err)
 
 				hs.Cfg = setting.NewCfg()
@@ -838,10 +832,7 @@ func Test_PluginsSettings(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				store := pluginstore.New(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
-				err := store.StartAsync(context.Background())
-				require.NoError(t, err)
-				err = store.AwaitRunning(context.Background())
+				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
 				require.NoError(t, err)
 
 				hs.Cfg = setting.NewCfg()
@@ -911,10 +902,7 @@ func Test_UpdatePluginSetting(t *testing.T) {
 
 	t.Run("should return an error when trying to disable an auto-enabled plugin", func(t *testing.T) {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
-			store := pluginstore.New(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
-			err := store.StartAsync(context.Background())
-			require.NoError(t, err)
-			err = store.AwaitRunning(context.Background())
+			store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
 			require.NoError(t, err)
 
 			hs.Cfg = setting.NewCfg()
