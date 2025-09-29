@@ -5,11 +5,16 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	k8sValidation "k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 )
 
 func TestValidation(t *testing.T) {
+	// We are not using the out-of-the-box "isQualifiedName" because it allows slashes
+	rsp := k8sValidation.IsQualifiedName("hello/world")
+	require.Nil(t, rsp, "standard qualified name allows a slash")
+
 	t.Run("name", func(t *testing.T) {
 		tests := []struct {
 			name   string
