@@ -26,7 +26,11 @@ export {
   type ConvertFieldTypeTransformerOptions,
   convertFieldType,
 } from '../transformations/transformers/convertFieldType';
-export { type ConvertFrameTypeTransformerOptions, FrameType } from '../transformations/transformers/convertFrameType';
+export {
+  type ConvertFrameTypeTransformerOptions,
+  FrameType,
+  type AnnotationFieldMapping,
+} from '../transformations/transformers/convertFrameType';
 export { type FilterFieldsByNameTransformerOptions } from '../transformations/transformers/filterByName';
 export { type FilterFramesByRefIdTransformerOptions } from '../transformations/transformers/filterByRefId';
 export { FormatStringOutput, type FormatStringTransformerOptions } from '../transformations/transformers/formatString';
