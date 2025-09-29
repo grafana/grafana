@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "declarationDir": "dist",
-    "noUnusedLocals": false,
-    "outDir": "compiled"
+    "moduleResolution": "bundler",
+    "noUnusedLocals": false
   },
   "extends": "../tsconfig.json",
   "include": ["../src/**/*.ts*", "../../../public/app/types/svg.d.ts"]
