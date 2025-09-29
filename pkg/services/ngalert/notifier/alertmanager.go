@@ -365,7 +365,7 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 		return false, nil
 	}
 
-	receivers := PostableApiAlertingConfigToApiReceivers(amConfig)
+	receivers := alertingNotify.PostableAPIReceiversToAPIReceivers(amConfig.Receivers)
 	for _, recv := range receivers {
 		err = patchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.decryptFn)
 		if err != nil {
