@@ -227,6 +227,18 @@ function legacyCreateSpanLinkFactory(
             datasourceUid: logsDataSourceSettings.uid,
             datasourceName: logsDataSourceSettings.name,
             query,
+            range: getTimeRangeFromSpan(
+              span,
+              {
+                startMs: traceToLogsOptions.spanStartTimeShift
+                  ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
+                  : 0,
+                endMs: traceToLogsOptions.spanEndTimeShift
+                  ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift)
+                  : 0,
+              },
+              isSplunkDS
+            ),
           },
         };
 
@@ -245,41 +257,24 @@ function legacyCreateSpanLinkFactory(
             link: dataLink,
             internalLink: dataLink.internal!,
             scopedVars: scopedVars,
-            range: getTimeRangeFromSpan(
-              span,
-              {
-                startMs: traceToLogsOptions.spanStartTimeShift
-                  ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
-                  : 0,
-                endMs: traceToLogsOptions.spanEndTimeShift
-                  ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift)
-                  : 0,
-              },
-              isSplunkDS
-            ),
+            range: dataLink.internal!.range,
             field: {} as Field,
             onClickFn: splitOpenFn,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
 
-          // Until we refactor legacy data links (#110685) and make it possible to define dynamic time ranges
-          // and scoped vars inside the default post-processor we need to skip post-processing for Explore to
-          // not override the time range set above with (mapInternalLinkToExplore). Eventually we will not need
-          // this special handling and calling mapInternalLinkToExplore.
-          if (app !== CoreApp.Explore) {
-            link =
-              (dataFrame &&
-                dataLinkPostProcessor?.({
-                  frame: dataFrame,
-                  field: field,
-                  dataLinkScopedVars: scopedVars,
-                  replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-                  config: {},
-                  link: dataLink,
-                  linkModel: link,
-                })) ||
-              link;
-          }
+          link =
+            (dataFrame &&
+              dataLinkPostProcessor?.({
+                frame: dataFrame,
+                field: field,
+                dataLinkScopedVars: scopedVars,
+                replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+                config: {},
+                link: dataLink,
+                linkModel: link,
+              })) ||
+            link;
 
           links.push({
             href: link.href,
