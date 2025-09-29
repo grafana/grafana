@@ -109,6 +109,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   searchInput: css({
     width: '100%',
     maxWidth: '800px',
+    height: '40px',
     
     // Custom styling to match the image
     '& input': {
