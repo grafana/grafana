@@ -46,7 +46,7 @@ describe('Connections', () => {
   });
 
   test('shows the "Connections Homepage" page by default when edition is Cloud', async () => {
-    config.buildInfo.edition = GrafanaEdition.Enterprise;
+    config.pluginAdminExternalManageEnabled = true;
     renderPage();
 
     // Add new connection card
@@ -66,7 +66,7 @@ describe('Connections', () => {
   });
 
   test('shows the OSS "Connections Homepage" page by default when edition is OpenSource', async () => {
-    config.buildInfo.edition = GrafanaEdition.OpenSource;
+    config.pluginAdminExternalManageEnabled = false;
     renderPage();
 
     // Add new connection card
