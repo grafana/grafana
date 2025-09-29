@@ -91,6 +91,10 @@ const (
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
 
+	// FlagStarsFromAPIServer
+	// populate star status from apiserver
+	FlagStarsFromAPIServer = "starsFromAPIServer"
+
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
 	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
@@ -496,12 +500,8 @@ const (
 	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
 
 	// FlagQueryLibrary
-	// Renamed feature toggle, enables Saved queries feature
+	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
-
-	// FlagSavedQueries
-	// Enables Saved Queries feature
-	FlagSavedQueries = "savedQueries"
 
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
@@ -626,6 +626,10 @@ const (
 	// FlagUnifiedStorageSearchSprinkles
 	// Enable sprinkles on unified storage search
 	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
+
+	// FlagUnifiedStorageUseFullNgram
+	// Use full n-gram indexing instead of edge n-gram for unified storage search
+	FlagUnifiedStorageUseFullNgram = "unifiedStorageUseFullNgram"
 
 	// FlagManagedDualWriter
 	// Pick the dual write mode from database configs
@@ -910,6 +914,10 @@ const (
 	// FlagKubernetesAuthzApis
 	// Registers AuthZ /apis endpoint
 	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
+
+	// FlagKubernetesAuthZHandlerRedirect
+	// Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints
+	FlagKubernetesAuthZHandlerRedirect = "kubernetesAuthZHandlerRedirect"
 
 	// FlagKubernetesAuthzResourcePermissionApis
 	// Registers AuthZ resource permission /apis endpoints

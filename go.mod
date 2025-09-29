@@ -82,13 +82,13 @@ require (
 	github.com/google/go-github/v70 v70.0.0 // indirect; @grafana/grafana-git-ui-sync-team
 	github.com/google/go-querystring v1.1.0 // indirect; @grafana/oss-big-tent
 	github.com/google/uuid v1.6.0 // @grafana/grafana-backend-group
-	github.com/google/wire v0.6.0 // @grafana/grafana-backend-group
+	github.com/google/wire v0.7.0 // @grafana/grafana-backend-group
 	github.com/googleapis/gax-go/v2 v2.14.2 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20250915130141-a8ee25091876 // @grafana/alerting-backend
-	github.com/grafana/authlib v0.0.0-20250910124502-5d080d6bb9ea // @grafana/identity-access-team
-	github.com/grafana/authlib/types v0.0.0-20250721184729-1593a38e4933 // @grafana/identity-access-team
+	github.com/grafana/alerting v0.0.0-20250925193206-bd061d3d9185 // @grafana/alerting-backend
+	github.com/grafana/authlib v0.0.0-20250924100039-ea07223cdb6c // @grafana/identity-access-team
+	github.com/grafana/authlib/types v0.0.0-20250917093142-83a502239781 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
 	github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4 // @grafana/grafana-backend-group
@@ -101,7 +101,7 @@ require (
 	github.com/grafana/grafana-aws-sdk v1.2.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.9.0 // @grafana/grafana-operator-experience-squad
-	github.com/grafana/grafana-google-sdk-go v0.4.1 // @grafana/partner-datasources
+	github.com/grafana/grafana-google-sdk-go v0.4.2 // @grafana/partner-datasources
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
 	github.com/grafana/grafana-plugin-sdk-go v0.279.0 // @grafana/plugins-platform-backend
 	github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
@@ -160,6 +160,7 @@ require (
 	github.com/prometheus/common v0.66.1 // @grafana/alerting-backend
 	github.com/prometheus/prometheus v0.303.1 // @grafana/alerting-backend
 	github.com/prometheus/sigv4 v0.1.2 // @grafana/alerting-backend
+	github.com/puzpuzpuz/xsync/v4 v4.2.0 // @grafana/grafana-backend-group
 	github.com/redis/go-redis/v9 v9.8.0 // @grafana/alerting-backend
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/grafana-backend-group
 	github.com/rs/cors v1.11.1 // @grafana/identity-access-team
@@ -567,7 +568,7 @@ require (
 	github.com/sethvargo/go-retry v0.3.0 // indirect
 	github.com/shadowspore/fossil-delta v0.0.0-20241213113458-1d797d70cbe3 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20230704072500-f1e31cf0ba5c // indirect
-	github.com/shurcooL/vfsgen v0.0.0-20200824052919-0d455de96546 // indirect
+	github.com/shurcooL/vfsgen v0.0.0-20230704071429-0000e147ea92 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/smarty/assertions v1.15.0 // indirect
 	github.com/sony/gobreaker v0.5.0 // indirect
@@ -639,7 +640,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/src-d/go-errors.v1 v1.0.0 // indirect
-	gopkg.in/telebot.v3 v3.2.1 // indirect
+	gopkg.in/telebot.v3 v3.3.8 // indirect
 	k8s.io/apiextensions-apiserver v0.34.1 // indirect
 	k8s.io/kms v0.34.1 // indirect
 	modernc.org/libc v1.66.3 // indirect

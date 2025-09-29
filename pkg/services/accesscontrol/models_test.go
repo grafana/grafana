@@ -79,7 +79,7 @@ func TestSaveExternalServiceRoleCommand_Validate(t *testing.T) {
 			},
 			wantErr:         false,
 			wantID:          "app-1",
-			wantPermissions: []Permission{{Action: "users:read", Scope: "users:id:1"}},
+			wantPermissions: []Permission{{Action: "users:read", Scope: "users:id:1", Kind: "users", Attribute: "id", Identifier: "1"}},
 		},
 	}
 	for _, tt := range tests {

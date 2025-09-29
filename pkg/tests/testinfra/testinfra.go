@@ -545,6 +545,11 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 	}
 
+	dashboardsSection, err := getOrCreateSection("dashboards")
+	require.NoError(t, err)
+	_, err = dashboardsSection.NewKey("min_refresh_interval", "10s")
+	require.NoError(t, err)
+
 	if opts.APIServerRuntimeConfig != "" {
 		section, err := getOrCreateSection("grafana-apiserver")
 		require.NoError(t, err)
