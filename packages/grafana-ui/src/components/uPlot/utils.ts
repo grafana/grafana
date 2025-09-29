@@ -226,8 +226,7 @@ export function preparePlotData2(
     }
 
     let stackingMode = custom.stacking?.mode;
-    let clusteredStacking = custom.clusteredStacking;
-
+    let clusteredStacking = custom.clusteredStacking.mode;
     if ((!stackingMode || stackingMode === StackingMode.None) && !clusteredStacking) {
       data[i] = vals;
     } else {

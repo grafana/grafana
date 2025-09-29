@@ -126,7 +126,6 @@ export function prepSeries(
                   mode: stacking,
                 },
                 clusteredStacking: {
-                  cluster: '_',
                   mode: isClusteredStacked,
                 }
               },
