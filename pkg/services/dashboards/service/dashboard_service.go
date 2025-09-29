@@ -2043,13 +2043,13 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 
 	dashs := make([]*dashboardProvisioningWithUID, 0)
 	for _, hit := range searchResults.Hits {
-		if utils.ParseManagerKindString(hit.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND)) != utils.ManagerKindClassicFP { // nolint:staticcheck
+		if utils.ParseManagerKindString(string(hit.ManagedBy.Kind)) != utils.ManagerKindClassicFP { // nolint:staticcheck
 			continue
 		}
 
 		provisioning := &dashboardProvisioningWithUID{
 			DashboardProvisioning: dashboards.DashboardProvisioning{
-				Name:        hit.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_ID),
+				Name:        hit.ManagedBy.ID,
 				ExternalID:  hit.Field.GetNestedString(resource.SEARCH_FIELD_SOURCE_PATH),
 				CheckSum:    hit.Field.GetNestedString(resource.SEARCH_FIELD_SOURCE_CHECKSUM),
 				Updated:     hit.Field.GetNestedInt64(resource.SEARCH_FIELD_SOURCE_TIME),
