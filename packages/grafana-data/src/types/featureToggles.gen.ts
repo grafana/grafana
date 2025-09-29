@@ -549,13 +549,13 @@ export interface FeatureToggles {
   */
   grafanaManagedRecordingRules?: boolean;
   /**
-  * Renamed feature toggle, enables Saved queries feature
+  * Enables Saved queries (query library) feature
   */
   queryLibrary?: boolean;
   /**
-  * Enables Saved Queries feature
+  * Enable suggested dashboards when creating new dashboards
   */
-  savedQueries?: boolean;
+  dashboardLibrary?: boolean;
   /**
   * Sets the logs table as default visualisation in logs explore
   */
@@ -1173,11 +1173,6 @@ export interface FeatureToggles {
   */
   prometheusTypeMigration?: boolean;
   /**
-  * Enables dskit background service wrapper
-  * @default false
-  */
-  dskitBackgroundServices?: boolean;
-  /**
   * Enables running plugins in containers
   * @default false
   */
@@ -1192,4 +1187,9 @@ export interface FeatureToggles {
   * @default false
   */
   filterOutBotsFromFrontendLogs?: boolean;
+  /**
+  * Prioritize loading plugins from the CDN before other sources
+  * @default false
+  */
+  cdnPluginsLoadFirst?: boolean;
 }

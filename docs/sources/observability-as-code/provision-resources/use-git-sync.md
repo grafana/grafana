@@ -12,7 +12,7 @@ labels:
     - enterprise
     - oss
 title: Manage provisioned repositories with Git Sync
-menuTitle: Manage repositories
+menuTitle: Manage repositories with Git Sync
 weight: 400
 ---
 
@@ -25,8 +25,7 @@ Sign up for Grafana Cloud Git Sync early access using [this form](https://forms.
 
 {{< /admonition >}}
 
-After you have set up Git Sync, you can synchronize dashboards and changes to existing dashboards to your configured GitHub repository.
-If you push a change in the repository, those changes are mirrored in your Grafana instance.
+After you have set up Git Sync, you can synchronize any changes in your existing dashboards with your configured GitHub repository. Similarly, if you push a change in the repository, those changes are mirrored in your Grafana instance.
 
 ## View current status of synchronization
 
