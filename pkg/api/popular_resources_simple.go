@@ -64,7 +64,11 @@ func (hs *HTTPServer) GetPopularResourcesSimple(c *contextmodel.ReqContext) resp
 		sql := `
 			SELECT 
 				urs.resource_uid as uid,
-				COALESCE(d.title, urs.resource_uid) as title,
+				CASE 
+					WHEN urs.resource_type IN ('dashboard', 'folder') AND d.title IS NOT NULL 
+					THEN d.title 
+					ELSE urs.resource_uid 
+				END as title,
 				urs.resource_type,
 				urs.visit_count,
 				urs.last_visited,
@@ -72,6 +76,7 @@ func (hs *HTTPServer) GetPopularResourcesSimple(c *contextmodel.ReqContext) resp
 			FROM user_resources_visit_stats urs
 			LEFT JOIN dashboard d ON d.uid = urs.resource_uid AND d.org_id = urs.org_id 
 				AND urs.resource_type IN ('dashboard', 'folder')
+				AND (d.deleted IS NULL OR d.deleted = '')
 			WHERE urs.user_id = ? AND urs.org_id = ?
 		`
 		

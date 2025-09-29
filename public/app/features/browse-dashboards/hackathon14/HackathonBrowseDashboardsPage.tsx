@@ -15,6 +15,7 @@ const HackathonBrowseDashboardsPage = memo(
   ({ queryParams, onToggleSparkJoy }: { queryParams: Record<string, string>; onToggleSparkJoy: () => void }) => {
     const styles = useStyles2(getStyles);
     const [searchState, stateManager] = useSearchStateManager();
+    const isSearching = stateManager.hasSearchFilters();
 
     const renderCenteredTitle = (title: string) => (
       <div className={styles.centeredTitle}>
@@ -45,7 +46,7 @@ const HackathonBrowseDashboardsPage = memo(
       }
 
       if (!searchState.result) {
-        return <Text>No search performed yet. Enter a query and click "Search" to see results.</Text>;
+        return <Text>No search performed yet. Placeholder here.</Text>;
       }
 
       const results = [];
@@ -111,17 +112,22 @@ const HackathonBrowseDashboardsPage = memo(
         //   </>
         // }
       >
-        <div className={styles.container}>
-          <HackathonSearchInput onSearchChange={handleSearch} placeholder="Search for dashboards and folders" />
-
-          <Stack>
-            <Text variant="h3">Search Results: "{searchState.query || 'none'}"</Text>
-          </Stack>
-
-          <RecentVisited />
-
-          <Card className={styles.resultsCard}>{renderSearchResults()}</Card>
-        </div>
+        <HackathonSearchInput onSearchChange={handleSearch} placeholder="Search for dashboards and folders" />
+        
+        {isSearching ? (
+          <>
+            <div className={styles.container}>
+              <Stack>
+                <Text variant="h3">Search Results: "{searchState.query || 'none'}"</Text>
+              </Stack>
+              <Card className={styles.resultsCard}>{renderSearchResults()}</Card>
+            </div>
+          </>
+        ) : (
+          <>
+                        <RecentVisited />
+          </>
+        )}
         {/* <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />
         <div>
