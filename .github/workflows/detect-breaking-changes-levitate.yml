@@ -230,7 +230,7 @@ jobs:
           name: levitate
 
       - name: Parsing levitate result
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         id: levitate-run
         with:
           script: |
@@ -241,7 +241,7 @@ jobs:
       # Check if label exists
       - name: Check if "levitate breaking change" label exists
         id: does-label-exist
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         with:
@@ -334,7 +334,7 @@ jobs:
       # Add the label
       - name: Add "levitate breaking change" label
         if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
@@ -350,7 +350,7 @@ jobs:
       # Remove label (no more breaking changes)
       - name: Remove "levitate breaking change" label
         if: steps.levitate-run.outputs.exit_code == 0 && steps.does-label-exist.outputs.result == 1
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
@@ -368,7 +368,7 @@ jobs:
       # Related issue: https://github.com/renovatebot/renovate/issues/1908
       - name: Add "grafana/plugins-platform-frontend" as a reviewer
         if: steps.levitate-run.outputs.exit_code == 1
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
@@ -385,7 +385,7 @@ jobs:
       # Remove reviewers (no more breaking changes)
       - name: Remove "grafana/plugins-platform-frontend" from the list of reviewers
         if: steps.levitate-run.outputs.exit_code == 0
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
