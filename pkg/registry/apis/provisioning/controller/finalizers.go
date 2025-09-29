@@ -51,12 +51,6 @@ func (f *finalizer) process(ctx context.Context,
 		start := time.Now()
 		outcome := metricutils.SuccessOutcome
 
-	for _, finalizer := range finalizers {
-		var err error
-		var count int
-		start := time.Now()
-		outcome := metricutils.SuccessOutcome
-
 		switch finalizer {
 		case repository.CleanFinalizer:
 			// NOTE: the controller loop will never get run unless a finalizer is set
@@ -64,41 +58,29 @@ func (f *finalizer) process(ctx context.Context,
 			hooks, ok := repo.(repository.Hooks)
 			if ok {
 				if err = hooks.OnDelete(ctx); err != nil {
-					logger.Warn("Error running deletion hooks", "err", err)
+					err = fmt.Errorf("execute deletion hooks: %w", err)
 					outcome = metricutils.ErrorOutcome
 				}
 			}
 
 		case repository.ReleaseOrphanResourcesFinalizer:
-			count, err = f.processExistingItems(ctx, repo.Config(),
-				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
-					patchAnnotations, err := getPatchedAnnotations(item)
-					if err != nil {
-						return err
-					}
-
-					_, err = client.Patch(
-						ctx, item.Name, types.JSONPatchType, patchAnnotations, v1.PatchOptions{},
-					)
-					return err
-				})
+			logger.Info("releasing orphan resources")
+			count, err = f.processExistingItems(ctx, repo.Config(), f.releaseResources(ctx, logger))
 			if err != nil {
+				err = fmt.Errorf("release resources: %w", err)
 				outcome = metricutils.ErrorOutcome
-				logger.Warn("Error processing release orphan resources finalizer", "err", err)
 			}
 
 		case repository.RemoveOrphanResourcesFinalizer:
-			count, err = f.processExistingItems(ctx, repo.Config(),
-				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
-					return client.Delete(ctx, item.Name, v1.DeleteOptions{})
-				})
+			logger.Info("removing orphan resources")
+			count, err = f.processExistingItems(ctx, repo.Config(), f.removeResources(ctx, logger))
 			if err != nil {
+				err = fmt.Errorf("remove resources: %w", err)
 				outcome = metricutils.ErrorOutcome
-				logger.Warn("Error processing remove orphan resources finalizer", "err", err)
 			}
 
 		default:
-			logger.Warn("skipping unknown finalizer", "finalizer", finalizer)
+			logger.Error("skipping unknown finalizer", "finalizer", finalizer)
 			continue
 		}
 
@@ -125,7 +107,7 @@ func (f *finalizer) processExistingItems(
 
 	items, err := f.lister.List(ctx, repo.Namespace, repo.Name)
 	if err != nil {
-		logger.Warn("error listing resources", "error", err)
+		logger.Error("error listing resources", "error", err)
 		return 0, err
 	}
 
@@ -151,8 +133,46 @@ func (f *finalizer) processExistingItems(
 			count++
 		}
 	}
-	logger.Info("processed orphan items", "items", count, "errors", errors)
+	logger.Info("processed orphan items", "items", count)
 	return count, nil
+}
+
+func (f *finalizer) releaseResources(
+	ctx context.Context, logger logging.Logger,
+) func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
+	return func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
+		logger.Info("release resource",
+			"name", item.Name,
+			"group", item.Group,
+			"resource", item.Resource,
+		)
+
+		patchAnnotations, err := getPatchedAnnotations(item)
+		if err != nil {
+			return fmt.Errorf("get patched annotations: %w", err)
+		}
+
+		_, err = client.Patch(
+			ctx, item.Name, types.JSONPatchType, patchAnnotations, v1.PatchOptions{},
+		)
+		if err != nil {
+			return fmt.Errorf("patch resource to release ownership: %w", err)
+		}
+		return nil
+	}
+}
+
+func (f *finalizer) removeResources(
+	ctx context.Context, logger logging.Logger,
+) func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
+	return func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
+		logger.Info("remove resource",
+			"name", item.Name,
+			"group", item.Group,
+			"resource", item.Resource,
+		)
+		return client.Delete(ctx, item.Name, v1.DeleteOptions{})
+	}
 }
 
 type jsonPatchOperation struct {
