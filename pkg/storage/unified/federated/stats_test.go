@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/utils/pointer"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
@@ -79,9 +78,10 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 	require.NoError(t, err)
 
 	ruleStore := ngalertstore.SetupStoreForTesting(t, db)
+	dashboardUID := "test"
 	_, err = ruleStore.InsertAlertRules(context.Background(), ngmodels.NewUserUID(tempUser), []ngmodels.AlertRule{
 		{
-			DashboardUID: pointer.String("test"),
+			DashboardUID: &dashboardUID,
 			UID:          "test",
 			Title:        "test",
 			OrgID:        1,
