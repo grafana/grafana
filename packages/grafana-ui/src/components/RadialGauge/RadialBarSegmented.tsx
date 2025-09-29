@@ -37,7 +37,7 @@ export function RadialBarSegmented({
   const segments: React.ReactNode[] = [];
   const theme = useTheme2();
 
-  const segmentCountAdjusted = getOptimalSegmentCount(size, segmentCount, segmentWidth, margin);
+  const segmentCountAdjusted = getOptimalSegmentCount(size, segmentCount, barWidth, segmentWidth, margin);
   const range = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
   let angle = ((value - min) / (max - min)) * range;
 
@@ -50,7 +50,7 @@ export function RadialBarSegmented({
     const segmentColor = segmentAngle > angle ? theme.colors.action.hover : color;
 
     segments.push(
-      <RadialSegmentPath
+      <RadialSegmentArcPath
         gaugeId={gaugeId}
         angle={segmentAngle}
         center={center}
@@ -61,6 +61,7 @@ export function RadialBarSegmented({
         margin={margin}
         segmentWidth={segmentWidth}
         roundedBars={size > 100}
+        arcLengthDeg={360 / segmentCountAdjusted}
       />
     );
   }
@@ -68,7 +69,7 @@ export function RadialBarSegmented({
   return segments;
 }
 
-export interface RadialSegmentPathProps {
+export interface RadialSegmentProps {
   gaugeId: string;
   angle: number;
   center: number;
@@ -79,9 +80,10 @@ export interface RadialSegmentPathProps {
   glow?: boolean;
   margin: number;
   segmentWidth: number;
+  arcLengthDeg: number;
 }
 
-export function RadialSegmentPath({
+export function RadialSegmentLine({
   gaugeId,
   center,
   angle,
@@ -92,45 +94,97 @@ export function RadialSegmentPath({
   glow,
   margin,
   segmentWidth,
-}: RadialSegmentPathProps) {
+}: RadialSegmentProps) {
   const arcSize = size - barWidth;
   const radius = arcSize / 2 - margin;
 
-  let angleRad = (Math.PI * (angle - 90)) / 180;
-  let lineLength = radius - barWidth;
+  const angleRad = (Math.PI * (angle - 90)) / 180;
+  const lineLength = radius - barWidth;
 
-  let x1 = center + radius * Math.cos(angleRad);
-  let y1 = center + radius * Math.sin(angleRad);
-  let x2 = center + lineLength * Math.cos(angleRad);
-  let y2 = center + lineLength * Math.sin(angleRad);
+  const x1 = center + radius * Math.cos(angleRad);
+  const y1 = center + radius * Math.sin(angleRad);
+  const x2 = center + lineLength * Math.cos(angleRad);
+  const y2 = center + lineLength * Math.sin(angleRad);
 
   return (
-    <>
-      <line
-        //d={path}
-        x1={x1}
-        y1={y1}
-        x2={x2}
-        y2={y2}
-        fill="none"
-        fillOpacity="0.85"
-        stroke={color}
-        strokeOpacity="1"
-        strokeLinecap={roundedBars ? 'round' : 'butt'}
-        strokeWidth={segmentWidth}
-        strokeDasharray="0"
-        filter={glow ? `url(#glow-${gaugeId})` : undefined}
-      />
-    </>
+    <line
+      x1={x1}
+      y1={y1}
+      x2={x2}
+      y2={y2}
+      fill="none"
+      fillOpacity="0.85"
+      stroke={color}
+      strokeOpacity="1"
+      strokeLinecap={roundedBars ? 'round' : 'butt'}
+      strokeWidth={segmentWidth}
+      strokeDasharray="0"
+      filter={glow ? `url(#glow-${gaugeId})` : undefined}
+    />
   );
 }
 
-function getOptimalSegmentCount(size: number, segmentCount: number, segmentWidth: number, margin: number) {
-  const minSpaceBetweenSegments = Math.min((segmentCount / 100) * 30, 5);
+export function RadialSegmentArcPath({
+  gaugeId,
+  center,
+  angle,
+  size,
+  color,
+  barWidth,
+  roundedBars,
+  glow,
+  margin,
+  segmentWidth,
+  arcLengthDeg,
+}: RadialSegmentProps) {
+  const arcSize = size - barWidth;
+  const radius = arcSize / 2 - margin;
+  const spacingAngle = getAngleBetweenSegments(segmentWidth, size);
 
-  const innerRadius = (size - segmentWidth) / 2 - margin;
+  const startRadians = (Math.PI * (angle - 90)) / 180;
+  const endRadians = (Math.PI * (angle + arcLengthDeg - 90 - spacingAngle)) / 180;
+
+  let x1 = center + radius * Math.cos(startRadians);
+  let y1 = center + radius * Math.sin(startRadians);
+  let x2 = center + radius * Math.cos(endRadians);
+  let y2 = center + radius * Math.sin(endRadians);
+
+  //let largeArc = angle > 180 ? 1 : 0;
+  const largeArc = 0;
+
+  const path = ['M', x1, y1, 'A', radius, radius, 0, largeArc, 1, x2, y2].join(' ');
+
+  return (
+    <path
+      d={path}
+      fill="none"
+      fillOpacity="1"
+      stroke={color}
+      strokeOpacity="1"
+      strokeLinecap={'butt'}
+      strokeWidth={barWidth}
+      strokeDasharray="0"
+      filter={glow ? `url(#glow-${gaugeId})` : undefined}
+    />
+  );
+}
+
+function getAngleBetweenSegments(segmentSpacing: number, size: number) {
+  return segmentSpacing * 6 + 100 / size;
+}
+
+function getOptimalSegmentCount(
+  size: number,
+  segmentCount: number,
+  barWidth: number,
+  segmentSpacing: number,
+  margin: number
+) {
+  const angleBetweenSegments = getAngleBetweenSegments(segmentSpacing, size);
+
+  const innerRadius = (size - barWidth) / 2 - margin;
   const circumference = Math.PI * innerRadius * 2;
-  const maxSegments = Math.floor(circumference / (segmentWidth + minSpaceBetweenSegments));
+  const maxSegments = Math.floor(circumference / (angleBetweenSegments + 3));
 
   return Math.min(maxSegments, segmentCount);
 }

@@ -52,8 +52,8 @@ const meta: Meta<StoryProps> = {
     sparkline: { control: 'boolean' },
     gradient: { control: { type: 'radio', options: ['none', 'hue', 'shade', 'scheme'] } },
     seriesCount: { control: { type: 'range', min: 1, max: 20 } },
-    segmentCount: { control: { type: 'range', min: 10, max: 100 } },
-    segmentWidth: { control: { type: 'range', min: 1, max: 10 } },
+    segmentCount: { control: { type: 'range', min: 0, max: 100 } },
+    segmentWidth: { control: { type: 'range', min: 0.1, max: 1, step: 0.01 } },
   },
 };
 
@@ -227,7 +227,7 @@ function RadialBarExample({
   vizCount = 1,
   textMode = 'auto',
   segmentCount = 0,
-  segmentWidth = 4,
+  segmentWidth = 0.1,
 }: ExampleProps) {
   const theme = useTheme2();
 
@@ -281,10 +281,6 @@ function RadialBarExample({
     data,
     sparkline,
   });
-
-  if (segmentCount < 11) {
-    segmentCount = 0;
-  }
 
   return (
     <RadialGauge
