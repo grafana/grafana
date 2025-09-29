@@ -18,7 +18,7 @@ type Extra interface {
 	Mutate(ctx context.Context, obj runtime.Object) error
 }
 
-//go:generate mockery --name=Factor --structname=MockFactory --inpackage --filename=factory_mock.go --with-expecter
+//go:generate mockery --name=Factory --structname=MockFactory --inpackage --filename=factory_mock.go --with-expecter
 type Factory interface {
 	Types() []provisioning.RepositoryType
 	Build(ctx context.Context, r *provisioning.Repository) (Repository, error)
