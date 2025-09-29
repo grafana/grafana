@@ -131,21 +131,6 @@ func NewMapperRegistry() MapperRegistry {
 				folderSupport:     false,
 				skipScopeOnCreate: false,
 			},
-			"rolebindings": translation{
-				resource:  "rolebindings",
-				attribute: "uid",
-				verbMapping: map[string]string{
-					utils.VerbCreate:           "roles:write",
-					utils.VerbGet:              "roles:read",
-					utils.VerbUpdate:           "roles:write",
-					utils.VerbPatch:            "roles:write",
-					utils.VerbDelete:           "roles:delete",
-					utils.VerbDeleteCollection: "roles:delete",
-					utils.VerbList:             "roles:read",
-					utils.VerbWatch:            "roles:read",
-				},
-				folderSupport: false,
-			},
 		},
 		"secret.grafana.app": {
 			"securevalues": newResourceTranslation("secret.securevalues", "uid", false, false),
