@@ -300,6 +300,12 @@ export const LogListContextProvider = ({
 
   // OTel displayed fields
   useEffect(() => {
+    if (config.featureToggles.otelLogsFormatting && showLogAttributes !== false) {
+      onLogOptionsChange?.('defaultDisplayedFields', otelDisplayedFields);
+    }
+  }, [onLogOptionsChange, otelDisplayedFields, showLogAttributes]);
+
+  useEffect(() => {
     if (displayedFields.length > 0 || !setDisplayedFields) {
       return;
     }
@@ -307,12 +313,6 @@ export const LogListContextProvider = ({
       setDisplayedFields(otelDisplayedFields);
     }
   }, [displayedFields.length, otelDisplayedFields, setDisplayedFields]);
-
-  useEffect(() => {
-    if (config.featureToggles.otelLogsFormatting && showLogAttributes !== false) {
-      onLogOptionsChange?.('defaultDisplayedFields', otelDisplayedFields);
-    }
-  }, [onLogOptionsChange, otelDisplayedFields, showLogAttributes]);
 
   // Sync state
   useEffect(() => {
