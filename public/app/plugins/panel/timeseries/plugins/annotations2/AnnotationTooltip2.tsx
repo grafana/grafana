@@ -21,8 +21,14 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit, isPinn
   const annoId = annoVals.id?.[annoIdx];
 
   const styles = useStyles2(getStyles);
-
+  const focusRef = React.useRef<HTMLButtonElement | null>(null);
   const { canEditAnnotations = retFalse, canDeleteAnnotations = retFalse, onAnnotationDelete } = usePanelContext();
+
+  React.useEffect(() => {
+    if (isPinned) {
+      focusRef.current?.focus();
+    }
+  }, [isPinned]);
 
   const dashboardUID = annoVals.dashboardUID?.[annoIdx];
 
@@ -81,7 +87,7 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit, isPinn
             <div className={styles.controls}>
               {canEdit && (
                 <IconButton
-                  autoFocus
+                  ref={focusRef}
                   name={'pen'}
                   size={'sm'}
                   onClick={onEdit}

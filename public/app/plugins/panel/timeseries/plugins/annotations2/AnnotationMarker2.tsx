@@ -93,13 +93,12 @@ export const AnnotationMarker2 = ({
       onMouseLeave={() => setIsHovering(false)}
       data-testid={selectors.pages.Dashboard.Annotations.marker}
     >
-      {/* @todo contents not keyboard navigable */}
       {contents &&
         createPortal(
           <div ref={refs.setFloating} className={styles.annoBox} style={floatingStyles} data-testid="annotation-marker">
             {/*
                @TODO close on annotation click doesn't unpin
-               Currently the click outside prevents clicking on the button while pinned to close,
+               Currently the click outside prevents clicking on the annotation while pinned to close,
                as the click outside pinAnnotations call will set the pinned state before the onClick event is sent
                */}
             <ClickOutsideWrapper includeButtonPress={false} useCapture={true} onClick={() => pinAnnotation(false)}>
