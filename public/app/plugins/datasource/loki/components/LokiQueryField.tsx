@@ -11,6 +11,7 @@ import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWr
 export interface LokiQueryFieldProps extends QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions> {
   ExtraFieldElement?: ReactNode;
   placeholder?: string;
+  sparkJoy?: boolean;
   'data-testid'?: string;
 }
 
@@ -65,7 +66,7 @@ export class LokiQueryField extends PureComponent<LokiQueryFieldProps, LokiQuery
   };
 
   render() {
-    const { ExtraFieldElement, query, datasource, history, onRunQuery, range } = this.props;
+    const { ExtraFieldElement, query, datasource, history, onRunQuery, range, sparkJoy } = this.props;
     const placeholder = this.props.placeholder ?? 'Enter a Loki query (run with Shift+Enter)';
 
     return (
@@ -82,6 +83,7 @@ export class LokiQueryField extends PureComponent<LokiQueryFieldProps, LokiQuery
               onRunQuery={onRunQuery}
               initialValue={query.expr ?? ''}
               placeholder={placeholder}
+              sparkJoy={sparkJoy}
               timeRange={range}
             />
           </div>

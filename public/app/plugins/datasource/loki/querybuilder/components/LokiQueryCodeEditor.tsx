@@ -11,6 +11,7 @@ import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplained';
 
 type Props = LokiQueryEditorProps & {
   showExplain: boolean;
+  sparkJoy?: boolean;
 };
 
 export function LokiQueryCodeEditor({
@@ -23,6 +24,7 @@ export function LokiQueryCodeEditor({
   app,
   showExplain,
   history,
+  sparkJoy,
 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -37,6 +39,7 @@ export function LokiQueryCodeEditor({
         history={history}
         data={data}
         app={app}
+        sparkJoy={sparkJoy}
         data-testid={testIds.editor}
       />
       {showExplain && <LokiQueryBuilderExplained query={query.expr} />}

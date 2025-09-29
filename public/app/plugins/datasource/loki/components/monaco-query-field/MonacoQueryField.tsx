@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useLatest } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -110,6 +110,7 @@ const MonacoQueryField = ({
   placeholder,
   onChange,
   timeRange,
+  sparkJoy,
 }: Props) => {
   const id = uuidv4();
   // we need only one instance of `overrideServices` during the lifetime of the react component
@@ -124,15 +125,127 @@ const MonacoQueryField = ({
 
   const autocompleteCleanupCallback = useRef<(() => void) | null>(null);
 
+  // State for cycling placeholder
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [displayedPlaceholder, setDisplayedPlaceholder] = useState(placeholder);
+  const placeholderIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const updatePlaceholderRef = useRef<((text: string) => void) | null>(null);
+  const historyExamplesRef = useRef<string[]>([placeholder]);
+
   const theme = useTheme2();
-  const styles = getStyles(theme, placeholder);
+  const styles = getStyles(theme, displayedPlaceholder);
 
   useEffect(() => {
     // when we unmount, we unregister the autocomplete-function, if it was registered
     return () => {
       autocompleteCleanupCallback.current?.();
+      if (placeholderIntervalRef.current) {
+        clearInterval(placeholderIntervalRef.current);
+      }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
     };
   }, []);
+
+  // Typing effect function
+  const typeText = (text: string, callback?: () => void) => {
+    // Clear any existing typing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    let currentIndex = 0;
+    setDisplayedPlaceholder('');
+
+    const typeNextCharacter = () => {
+      if (currentIndex < text.length) {
+        setDisplayedPlaceholder(text.substring(0, currentIndex + 1));
+        currentIndex++;
+        typingTimeoutRef.current = setTimeout(typeNextCharacter, 50); // 50ms per character
+      } else if (callback) {
+        callback();
+      }
+    };
+
+    typeNextCharacter();
+  };
+
+  // Effect to cycle through query history as placeholders
+  useEffect(() => {
+    // Get unique history items for placeholders
+    const getHistoryExamples = () => {
+      if (!history || history.length === 0) {
+        return [placeholder];
+      }
+      
+      const uniqueQueries = Array.from(
+        new Set(
+          history
+            .filter(item => item.query?.expr && item.query.expr.trim() !== '')
+            .map(item => item.query.expr.trim())
+            .slice(0, 10) // Limit to 10 most recent unique queries
+        )
+      );
+      
+      // Only return unique queries, don't include the default placeholder in cycling
+      return uniqueQueries.length > 0 ? uniqueQueries : [placeholder];
+    };
+
+    const historyExamples = getHistoryExamples();
+    historyExamplesRef.current = historyExamples;
+    
+    // Only start cycling if sparkJoy is enabled, we have history examples, and the editor is empty
+    if (sparkJoy && historyExamples.length > 1 && initialValue.trim() === '') {
+      // Clear any existing interval
+      if (placeholderIntervalRef.current) {
+        clearInterval(placeholderIntervalRef.current);
+      }
+      
+      // Start the first typing animation immediately
+      typeText(historyExamples[0]);
+      
+      // Start cycling every 6 seconds
+      placeholderIntervalRef.current = setInterval(() => {
+        setPlaceholderIndex((prevIndex) => {
+          const nextIndex = (prevIndex + 1) % historyExamplesRef.current.length;
+          const nextText = historyExamplesRef.current[nextIndex];
+          typeText(nextText);
+          return nextIndex;
+        });
+      }, 6000);
+    } else {
+      // Use the original placeholder if no history or editor has content
+      setDisplayedPlaceholder(placeholder);
+      if (placeholderIntervalRef.current) {
+        clearInterval(placeholderIntervalRef.current);
+        placeholderIntervalRef.current = null;
+      }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+    }
+
+    return () => {
+      if (placeholderIntervalRef.current) {
+        clearInterval(placeholderIntervalRef.current);
+        placeholderIntervalRef.current = null;
+      }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+    };
+  }, [history, placeholder, initialValue, sparkJoy]);
+
+  // Effect to update the placeholder when displayedPlaceholder changes
+  useEffect(() => {
+    if (updatePlaceholderRef.current) {
+      updatePlaceholderRef.current(displayedPlaceholder);
+    }
+  }, [displayedPlaceholder]);
 
   useEffect(() => {
     if (completionDataProviderRef.current && timeRange) {
@@ -141,21 +254,26 @@ const MonacoQueryField = ({
   }, [timeRange]);
 
   const setPlaceholder = (monaco: Monaco, editor: MonacoEditor) => {
-    const placeholderDecorators = [
-      {
-        range: new monaco.Range(1, 1, 1, 1),
-        options: {
-          className: styles.placeholder,
-          isWholeLine: true,
-        },
-      },
-    ];
-
     let decorators: string[] = [];
 
-    const checkDecorators: () => void = () => {
-      const model = editor.getModel();
+    const updatePlaceholderDecorators = (placeholderText: string) => {
+      const placeholderDecorators = [
+        {
+          range: new monaco.Range(1, 1, 1, 1),
+          options: {
+            className: css({
+              '::after': {
+                content: `'${placeholderText}'`,
+                fontFamily: theme.typography.fontFamilyMonospace,
+                opacity: 0.3,
+              },
+            }),
+            isWholeLine: true,
+          },
+        },
+      ];
 
+      const model = editor.getModel();
       if (!model) {
         return;
       }
@@ -164,8 +282,37 @@ const MonacoQueryField = ({
       decorators = model.deltaDecorations(decorators, newDecorators);
     };
 
-    checkDecorators();
+    const checkDecorators: () => void = () => {
+      const model = editor.getModel();
+
+      if (!model) {
+        return;
+      }
+
+      const hasContent = model.getValueLength() > 0;
+      
+      // Stop cycling and typing when user starts typing
+      if (hasContent) {
+        if (placeholderIntervalRef.current) {
+          clearInterval(placeholderIntervalRef.current);
+          placeholderIntervalRef.current = null;
+        }
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+          typingTimeoutRef.current = null;
+        }
+      }
+      
+      updatePlaceholderDecorators(displayedPlaceholder);
+    };
+
+    // Initial placeholder setup
+    updatePlaceholderDecorators(displayedPlaceholder);
+    
     editor.onDidChangeModelContent(checkDecorators);
+    
+    // Return a function to update placeholder from outside
+    return updatePlaceholderDecorators;
   };
 
   const onTypeDebounced = debounce(async (query: string) => {
@@ -287,7 +434,8 @@ const MonacoQueryField = ({
             }
           });
 
-          setPlaceholder(monaco, editor);
+          const updatePlaceholderFunction = setPlaceholder(monaco, editor);
+          updatePlaceholderRef.current = updatePlaceholderFunction;
         }}
       />
     </div>

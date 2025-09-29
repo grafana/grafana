@@ -7,6 +7,7 @@ export type Props = Omit<MonacoProps, 'onRunQuery' | 'onBlur'> & {
   onChange: (query: string) => void;
   onRunQuery: () => void;
   onQueryType?: (query: string) => void;
+  sparkJoy?: boolean;
 };
 
 export const MonacoQueryFieldWrapper = (props: Props) => {

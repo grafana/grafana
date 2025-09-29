@@ -16,4 +16,5 @@ export type Props = {
   datasource: LokiDatasource;
   onChange: (query: string) => void;
   timeRange?: TimeRange;
+  sparkJoy?: boolean;
 };
