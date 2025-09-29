@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -51,7 +52,7 @@ func TestErrToHealthCheckResult(t *testing.T) {
 		},
 		{
 			name: "invalid port specifier error",
-			err:  fmt.Errorf("%w %q: %w", ErrParsingPostgresURL, `"foo.bar.co"`, errors.New(`strconv.Atoi: parsing "foo.bar.co": invalid syntax`)),
+			err:  fmt.Errorf("%w %q: %w", sqleng.ErrParsingPostgresURL, `"foo.bar.co"`, errors.New(`strconv.Atoi: parsing "foo.bar.co": invalid syntax`)),
 			want: &backend.CheckHealthResult{
 				Status:      backend.HealthStatusError,
 				Message:     "Connection string error: error parsing postgres url",

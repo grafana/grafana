@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
-	"github.com/lib/pq"
 )
 
 func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -65,26 +64,8 @@ func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 		}
 	}
 
-	if errors.Is(err, pq.ErrSSLNotSupported) {
-		res.Message = "SSL error: Failed to connect to the server"
-	}
-	if strings.HasPrefix(err.Error(), "pq") {
-		res.Message = "Database error: Failed to connect to the postgres server"
-		if unwrappedErr := errors.Unwrap(err); unwrappedErr != nil {
-			details["verboseMessage"] = unwrappedErr.Error()
-		}
-	}
-	var pqErr *pq.Error
-	if errors.As(err, &pqErr) {
-		if pqErr != nil {
-			if pqErr.Code != "" {
-				res.Message += fmt.Sprintf(". Postgres error code: %s", pqErr.Code.Name())
-			}
-			details["verboseMessage"] = pqErr.Message
-		}
-	}
-	if errors.Is(err, ErrParsingPostgresURL) {
-		res.Message = fmt.Sprintf("Connection string error: %s", ErrParsingPostgresURL.Error())
+	if errors.Is(err, sqleng.ErrParsingPostgresURL) {
+		res.Message = fmt.Sprintf("Connection string error: %s", sqleng.ErrParsingPostgresURL.Error())
 		if unwrappedErr := errors.Unwrap(err); unwrappedErr != nil {
 			details["verboseMessage"] = unwrappedErr.Error()
 		}
