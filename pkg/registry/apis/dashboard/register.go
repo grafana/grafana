@@ -652,9 +652,7 @@ func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteO
 	err = client.Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil {
 		log.Error("failed to delete dashboard permissions", "error", err)
-		return
 	}
-	return
 }
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
