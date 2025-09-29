@@ -14,13 +14,14 @@ import {
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
 } from 'app/features/apiserver/types';
-import { transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
+import { ensureV2Response, transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Resource, isDashboardV2Spec, isV2StoredVersion } from 'app/features/dashboard/api/utils';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ProvisioningPreview } from 'app/features/provisioning/types';
 import {
   DashboardDataDTO,
@@ -230,6 +231,12 @@ abstract class DashboardScenePageStateManagerBase<T>
     anno[AnnoKeyManagerIdentity] = repo;
     anno[AnnoKeySourcePath] = provisioningPreview.ref ? path + '#' + provisioningPreview.ref : path;
 
+    // Include version information to align with the current dashboard schema
+    const specWithVersion = {
+      ...dryRun.spec,
+      version: dryRun.metadata.generation || 0,
+    };
+
     return {
       meta: {
         canStar: false,
@@ -247,7 +254,7 @@ abstract class DashboardScenePageStateManagerBase<T>
         // lookup info
         provisioning: provisioningPreview,
       },
-      dashboard: dryRun.spec,
+      dashboard: specWithVersion,
     };
   }
 
@@ -402,6 +409,10 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const rsp = await dashboardLoaderSrv.loadSnapshot(slug);
 
     if (rsp?.dashboard) {
+      if (isDashboardV2Spec(rsp.dashboard)) {
+        throw new DashboardVersionError('v2beta1', 'Using legacy snapshot API to get a V2 dashboard');
+      }
+
       const scene = transformSaveModelToScene(rsp);
       return scene;
     }
@@ -445,7 +456,14 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         case DashboardRoutes.Provisioning:
           return this.loadProvisioningDashboard(slug || '', uid);
         case DashboardRoutes.Public: {
-          return await dashboardLoaderSrv.loadDashboard('public', '', uid);
+          const result = await dashboardLoaderSrv.loadDashboard('public', '', uid);
+          // public dashboards use legacy API but can return V2 dashboards
+          // in this case we need to throw a dashboard version error so that the call can be delegated
+          // to V2 state manager which will run fetchDashboard
+          if (isDashboardV2Spec(result.dashboard)) {
+            throw new DashboardVersionError('v2beta1', 'Using legacy public dashboard API to get a V2 dashboard');
+          }
+          return result;
         }
         default:
           // If reloadDashboardsOnParamsChange is on, we need to process query params for dashboard load
@@ -462,7 +480,9 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           }
       }
 
-      if (rsp.meta.url && route === DashboardRoutes.Normal) {
+      // Fix outdated URLs (e.g., old slugs from title changes) but skip during playlist navigation
+      // Playlists manage their own URL generation and redirects would break the navigation flow
+      if (rsp.meta.url && route === DashboardRoutes.Normal && !playlistSrv.state.isPlaying) {
         const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.meta.url);
         const currentPath = locationService.getLocation().pathname;
 
@@ -577,9 +597,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
   public async loadSnapshotScene(slug: string): Promise<DashboardScene> {
     const rsp = await this.dashboardLoader.loadSnapshot(slug);
+    const v2Response = ensureV2Response(rsp);
 
-    if (rsp?.spec) {
-      const scene = transformSaveModelSchemaV2ToScene(rsp);
+    if (v2Response.spec) {
+      const scene = transformSaveModelSchemaV2ToScene(v2Response);
       return scene;
     }
 
@@ -644,7 +665,9 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
             rsp.metadata.annotations[AnnoKeyEmbedded] = 'embedded';
           }
       }
-      if (rsp.access.url && route === DashboardRoutes.Normal) {
+      // Fix outdated URLs (e.g., old slugs from title changes) but skip during playlist navigation
+      // Playlists manage their own URL generation and redirects would break the navigation flow
+      if (rsp.access.url && route === DashboardRoutes.Normal && !playlistSrv.state.isPlaying) {
         const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.access.url);
         const currentPath = locationService.getLocation().pathname;
         if (dashboardUrl !== currentPath) {

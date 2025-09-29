@@ -12,13 +12,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/configprovider"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/util/testutil"
 
 	"github.com/grafana/dskit/kv"
 
@@ -543,6 +545,11 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 	}
 
+	dashboardsSection, err := getOrCreateSection("dashboards")
+	require.NoError(t, err)
+	_, err = dashboardsSection.NewKey("min_refresh_interval", "10s")
+	require.NoError(t, err)
+
 	if opts.APIServerRuntimeConfig != "" {
 		section, err := getOrCreateSection("grafana-apiserver")
 		require.NoError(t, err)
@@ -570,8 +577,9 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 
 func SQLiteIntegrationTest(t *testing.T) {
 	t.Helper()
+	testutil.SkipIntegrationTestInShortMode(t)
 
-	if testing.Short() || !db.IsTestDbSQLite() {
+	if !db.IsTestDbSQLite() {
 		t.Skip("skipping integration test")
 	}
 }

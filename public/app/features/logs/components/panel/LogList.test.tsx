@@ -1,7 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, getDefaultTimeRange, LogRowModel, LogsDedupStrategy, LogsSortOrder, store } from '@grafana/data';
+import {
+  CoreApp,
+  getDefaultTimeRange,
+  LogLevel,
+  LogRowModel,
+  LogsDedupStrategy,
+  LogsSortOrder,
+  store,
+} from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
@@ -195,6 +203,26 @@ describe('LogList', () => {
     spy.mockRestore();
   });
 
+  test('Shows controls with level filters based on the displayed logs', async () => {
+    logs = [createLogRow({ uid: '1', logLevel: LogLevel.info }), createLogRow({ uid: '2', logLevel: LogLevel.debug })];
+
+    render(<LogList {...defaultProps} showControls logs={logs} />);
+
+    expect(screen.getByText('info')).toBeInTheDocument();
+    expect(screen.getByText('debug')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Filter levels'));
+
+    expect(await screen.findByText('All levels')).toBeVisible();
+    expect(screen.getByText('Info')).toBeVisible();
+    expect(screen.getByText('Debug')).toBeVisible();
+
+    await userEvent.click(screen.getByText('Debug'));
+
+    expect(screen.queryByText('info')).not.toBeInTheDocument();
+    expect(screen.getByText('debug')).toBeInTheDocument();
+  });
+
   describe('Popover menu', () => {
     function setup(overrides: Partial<Props> = {}) {
       return render(
@@ -359,17 +387,16 @@ describe('LogList', () => {
       render(<LogList {...defaultProps} showTime showControls logs={logs} />);
 
       expect(screen.getByText('2025-08-06 03:35:19.504')).toBeInTheDocument();
-      expect(screen.getByLabelText('Show nanosecond timestamps')).toBeInTheDocument();
 
-      await userEvent.click(screen.getByLabelText('Show nanosecond timestamps'));
+      await userEvent.click(screen.getByLabelText('Log timestamps'));
+      await userEvent.click(screen.getByText('Show nanosecond timestamps'));
 
       expect(screen.getByText('2025-08-06 03:35:19.504133766')).toBeInTheDocument();
-      expect(screen.getByLabelText('Hide timestamps')).toBeInTheDocument();
 
-      await userEvent.click(screen.getByLabelText('Hide timestamps'));
+      await userEvent.click(screen.getByLabelText('Log timestamps'));
+      await userEvent.click(screen.getByText('Hide timestamps'));
 
       expect(screen.queryByText(/2025-08-06 03:35:19/)).not.toBeInTheDocument();
-      expect(screen.getByLabelText('Show millisecond timestamps')).toBeInTheDocument();
     });
   });
   describe('Interactions', () => {

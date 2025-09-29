@@ -64,25 +64,29 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       delete obj.metadata.annotations[AnnoKeyMessage];
     }
 
-    if (options.folderUid) {
+    if (options.folderUid !== undefined) {
       obj.metadata.annotations = {
         ...obj.metadata.annotations,
         [AnnoKeyFolder]: options.folderUid,
       };
     }
 
+    // remove resource version because it's not allowed to be set
+    // and the api server will throw an error
+    delete obj.metadata.resourceVersion;
+
     // for v1 in g12, we will ignore the schema version validation from all default clients,
     // as we implement the necessary backend conversions, we will drop this query param
     if (dashboard.uid) {
       obj.metadata.name = dashboard.uid;
-      // remove resource version when updating
-      delete obj.metadata.resourceVersion;
       return this.client.update(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     obj.metadata.annotations = {
       ...obj.metadata.annotations,
       [AnnoKeyGrantPermissions]: 'default',
     };
+    // non-scene dashboard will have obj.metadata.name when trying to save a dashboard copy
+    delete obj.metadata.name;
     return this.client.create(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 

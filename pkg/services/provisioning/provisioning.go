@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/promtypemigration"
 	prov_alerting "github.com/grafana/grafana/pkg/services/provisioning/alerting"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
@@ -59,6 +60,7 @@ func ProvideService(
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
 	tracer tracing.Tracer,
 	dual dualwrite.Service,
+	promTypeMigrationProvider promtypemigration.PromTypeMigrationProvider,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
@@ -85,6 +87,8 @@ func ProvideService(
 		folderService:                folderService,
 		resourcePermissions:          resourcePermissions,
 		tracer:                       tracer,
+		migratePrometheusType:        promTypeMigrationProvider.Run,
+		dual:                         dual,
 	}
 
 	if err := s.setDashboardProvisioner(); err != nil {
@@ -120,6 +124,7 @@ func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionDatasources func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) error,
 	provisionPlugins func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error,
+	migratePrometheusType func(context.Context) error,
 	searchService searchV2.SearchService,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
@@ -129,6 +134,7 @@ func newProvisioningServiceImpl(
 		provisionPlugins:        provisionPlugins,
 		Cfg:                     setting.NewCfg(),
 		searchService:           searchService,
+		migratePrometheusType:   migratePrometheusType,
 	}
 
 	if err := s.setDashboardProvisioner(); err != nil {
@@ -168,6 +174,7 @@ type ProvisioningServiceImpl struct {
 	tracer                       tracing.Tracer
 	dual                         dualwrite.Service
 	onceInitProvisioners         sync.Once
+	migratePrometheusType        func(context.Context) error
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
@@ -199,6 +206,15 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 		err = ps.ProvisionAlerting(ctx)
 		if err != nil {
 			ps.log.Error("Failed to provision alerting", "error", err)
+			return
+		}
+
+		// Migrating prom types relies on data source provisioning to already be completed
+		// If we can make services depend on other services completing first,
+		// then we should remove this from provisioning
+		err = ps.migratePrometheusType(ctx)
+		if err != nil {
+			ps.log.Error("Failed to migrate Prometheus type", "error", err)
 			return
 		}
 	})

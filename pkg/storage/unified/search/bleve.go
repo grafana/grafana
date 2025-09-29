@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
@@ -27,10 +28,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/atomic"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
 	authlib "github.com/grafana/authlib/types"
@@ -48,6 +49,12 @@ const (
 	indexStorageFile   = "file"
 )
 
+// Keys used to store internal data in index.
+const (
+	internalRVKey        = "rv"         // Encoded as big-endian int64
+	internalBuildInfoKey = "build_info" // Encoded as JSON of IndexBuildInfo struct
+)
+
 var _ resource.SearchBackend = &bleveBackend{}
 var _ resource.ResourceIndex = &bleveIndex{}
 
@@ -63,7 +70,22 @@ type BleveOptions struct {
 	BatchSize int
 
 	// Index cache TTL for bleve indices. 0 disables expiration for in-memory indexes.
+	// Also used for file-based indexes, if they are not owned by this instance, and they are not fetched from the cache recently.
 	IndexCacheTTL time.Duration
+
+	BuildVersion string
+
+	MaxFileIndexAge time.Duration   // Maximum age of file-based index that can be reused. Ignored if zero.
+	MinBuildVersion *semver.Version // Minimum build version for reusing file-based indexes. Ignored if nil.
+
+	Logger *slog.Logger
+
+	UseFullNgram bool
+
+	// This function is called to check whether the index is owned by the current instance.
+	// Indexes that are not owned by current instance are eligible for cleanup.
+	// If nil, all indexes are owned by the current instance.
+	OwnsIndex func(key resource.NamespacedResource) (bool, error)
 }
 
 type bleveBackend struct {
@@ -71,14 +93,22 @@ type bleveBackend struct {
 	log    *slog.Logger
 	opts   BleveOptions
 
+	// set from opts.OwnsIndex, always non-nil
+	ownsIndexFn func(key resource.NamespacedResource) (bool, error)
+
 	cacheMx sync.RWMutex
 	cache   map[resource.NamespacedResource]*bleveIndex
 
-	features     featuremgmt.FeatureToggles
 	indexMetrics *resource.BleveIndexMetrics
+
+	// if true will use ngram instead of edge_ngram for title indexes. See custom_analyzers.go
+	useFullNgram bool
+
+	bgTasksCancel func()
+	bgTasksWg     sync.WaitGroup
 }
 
-func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
 	if opts.Root == "" {
 		return nil, fmt.Errorf("bleve backend missing root folder configuration")
 	}
@@ -96,23 +126,52 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 		return nil, fmt.Errorf("bleve root is configured against a file (not folder)")
 	}
 
+	if opts.BuildVersion != "" {
+		// Don't allow storing invalid versions to the index.
+		_, err := semver.NewVersion(opts.BuildVersion)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse build version %s: %w", opts.BuildVersion, err)
+		}
+	}
+
+	log := opts.Logger
+	if log == nil {
+		log = slog.Default().With("logger", "bleve-backend")
+	}
+
+	ownFn := opts.OwnsIndex
+	if ownFn == nil {
+		// By default all indexes are owned by this instance.
+		ownFn = func(key resource.NamespacedResource) (bool, error) { return true, nil }
+	}
+
 	be := &bleveBackend{
-		log:          slog.Default().With("logger", "bleve-backend"),
+		log:          log,
 		tracer:       tracer,
 		cache:        map[resource.NamespacedResource]*bleveIndex{},
 		opts:         opts,
-		features:     features,
+		ownsIndexFn:  ownFn,
 		indexMetrics: indexMetrics,
+		useFullNgram: opts.UseFullNgram,
 	}
 
-	go be.updateIndexSizeMetric(opts.Root)
+	ctx, cancel := context.WithCancel(context.Background())
+	be.bgTasksCancel = cancel
+
+	be.bgTasksWg.Add(1)
+	go be.evictExpiredOrUnownedIndexesPeriodically(ctx)
+
+	if be.indexMetrics != nil {
+		be.bgTasksWg.Add(1)
+		go be.updateIndexSizeMetric(ctx, opts.Root)
+	}
 
 	return be, nil
 }
 
 // GetIndex will return nil if the key does not exist
 func (b *bleveBackend) GetIndex(_ context.Context, key resource.NamespacedResource) (resource.ResourceIndex, error) {
-	idx := b.getCachedIndex(key)
+	idx := b.getCachedIndex(key, time.Now())
 	// Avoid returning typed nils.
 	if idx == nil {
 		return nil, nil
@@ -120,56 +179,104 @@ func (b *bleveBackend) GetIndex(_ context.Context, key resource.NamespacedResour
 	return idx, nil
 }
 
-func (b *bleveBackend) getCachedIndex(key resource.NamespacedResource) *bleveIndex {
+func (b *bleveBackend) getCachedIndex(key resource.NamespacedResource, now time.Time) *bleveIndex {
 	// Check index with read-lock first.
 	b.cacheMx.RLock()
-	val := b.cache[key]
+	idx := b.cache[key]
 	b.cacheMx.RUnlock()
 
-	if val == nil {
+	if idx == nil {
 		return nil
 	}
 
-	if val.expiration.IsZero() || val.expiration.After(time.Now()) {
-		// Not expired yet.
-		return val
-	}
+	idx.lastFetchedFromCache.Store(now.UnixMilli())
+	return idx
+}
 
-	// We're dealing with expired index. We need to remove it from the cache and close it.
-	b.cacheMx.Lock()
-	val = b.cache[key]
-	delete(b.cache, key)
-	b.cacheMx.Unlock()
-
-	if val == nil {
-		return nil
-	}
-
-	// Index is no longer in the cache, but we need to close it.
-	err := val.stopUpdaterAndCloseIndex()
+func (b *bleveBackend) closeIndex(idx *bleveIndex, key resource.NamespacedResource) {
+	err := idx.stopUpdaterAndCloseIndex()
 	if err != nil {
 		b.log.Error("failed to close index", "key", key, "err", err)
 	}
-	b.log.Info("index evicted from cache", "key", key)
 
 	if b.indexMetrics != nil {
-		b.indexMetrics.OpenIndexes.WithLabelValues(val.indexStorage).Dec()
+		b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Dec()
+	}
+}
+
+// This function will periodically evict expired or un-owned indexes from the cache.
+func (b *bleveBackend) evictExpiredOrUnownedIndexesPeriodically(ctx context.Context) {
+	defer b.bgTasksWg.Done()
+
+	t := time.NewTicker(2 * time.Minute)
+
+	for ctx.Err() == nil {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			b.runEvictExpiredOrUnownedIndexes(time.Now())
+		}
+	}
+}
+
+func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
+	cacheTTLMillis := b.opts.IndexCacheTTL.Milliseconds()
+
+	// Collect all expired or unowned into this map, and perform the actual closing without holding the lock.
+	expired := map[resource.NamespacedResource]*bleveIndex{}
+	unowned := map[resource.NamespacedResource]*bleveIndex{}
+	ownCheckErrors := map[resource.NamespacedResource]error{}
+
+	b.cacheMx.Lock()
+	for key, idx := range b.cache {
+		// Check if index has expired.
+		if !idx.expiration.IsZero() && now.After(idx.expiration) {
+			delete(b.cache, key)
+			expired[key] = idx
+			continue
+		}
+
+		// Check if index is owned by this instance.
+		if cacheTTLMillis > 0 {
+			owned, err := b.ownsIndexFn(key)
+			if err != nil {
+				ownCheckErrors[key] = err
+			} else if !owned && now.UnixMilli()-idx.lastFetchedFromCache.Load() > cacheTTLMillis {
+				delete(b.cache, key)
+				unowned[key] = idx
+			}
+		}
+	}
+	b.cacheMx.Unlock()
+
+	for key, err := range ownCheckErrors {
+		b.log.Warn("failed to check if index belongs to this instance", "key", key, "err", err)
 	}
 
-	return nil
+	for key, idx := range unowned {
+		b.log.Info("index evicted from cache", "reason", "unowned", "key", key, "storage", idx.indexStorage)
+		b.closeIndex(idx, key)
+	}
+
+	for key, idx := range expired {
+		b.log.Info("index evicted from cache", "reason", "expired", "key", key, "storage", idx.indexStorage)
+		b.closeIndex(idx, key)
+	}
 }
 
 // updateIndexSizeMetric sets the total size of all file-based indices metric.
-func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
-	if b.indexMetrics == nil {
-		return
-	}
+func (b *bleveBackend) updateIndexSizeMetric(ctx context.Context, indexPath string) {
+	defer b.bgTasksWg.Done()
 
-	for {
+	for ctx.Err() == nil {
 		var totalSize int64
 
 		err := filepath.WalkDir(indexPath, func(path string, info os.DirEntry, err error) error {
 			if err != nil {
+				return err
+			}
+			if err = ctx.Err(); err != nil {
 				return err
 			}
 			if !info.IsDir() {
@@ -188,14 +295,73 @@ func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
 			b.log.Error("got error while trying to calculate bleve file index size", "error", err)
 		}
 
-		time.Sleep(60 * time.Second)
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(60 * time.Second):
+			continue
+		}
 	}
+}
+
+// newBleveIndex creates a new bleve index with consistent configuration.
+// If path is empty, creates an in-memory index.
+// If path is not empty, creates a file-based index at the specified path.
+func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time, buildVersion string) (bleve.Index, error) {
+	kvstore := bleve.Config.DefaultKVStore
+	if path == "" {
+		// use in-memory kvstore
+		kvstore = bleve.Config.DefaultMemKVStore
+	}
+	ix, err := bleve.NewUsing(path, mapper, bleve.Config.DefaultIndexType, kvstore, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	bi := IndexBuildInfo{
+		BuildTime:    buildTime.Unix(),
+		BuildVersion: buildVersion,
+	}
+
+	biBytes, err := json.Marshal(bi)
+	if err != nil {
+		cErr := ix.Close()
+		return nil, errors.Join(fmt.Errorf("failed to store index build info: %w", err), cErr)
+	}
+
+	if err = ix.SetInternal([]byte(internalBuildInfoKey), biBytes); err != nil {
+		cErr := ix.Close()
+		return nil, errors.Join(fmt.Errorf("failed to store index build info: %w", err), cErr)
+	}
+	return ix, nil
+}
+
+type IndexBuildInfo struct {
+	BuildTime    int64  `json:"build_time"`    // Unix seconds timestamp of time when the index was built
+	BuildVersion string `json:"build_version"` // Grafana version used when building the index
+}
+
+func (bi IndexBuildInfo) GetBuildTime() time.Time {
+	if bi.BuildTime == 0 {
+		return time.Time{}
+	}
+	return time.Unix(bi.BuildTime, 0)
+}
+
+func (bi IndexBuildInfo) GetBuildVersion() *semver.Version {
+	if bi.BuildVersion == "" {
+		return nil
+	}
+	v, err := semver.NewVersion(bi.BuildVersion)
+	if err != nil {
+		return nil
+	}
+	return v
 }
 
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
 // If built successfully, the new index replaces the old index in the cache (if there was any).
-// An index in the file system is considered to be valid if the requested resourceVersion is smaller than or equal to
-// the resourceVersion used to build the index and the number of indexed objects matches the expected size.
+// Existing index in the file system is reused, if it exists, and if size indicates that we should use file-based index, and rebuild is not true.
 // The return value of "builder" should be the RV returned from List. This will be stored as the index RV
 //
 //nolint:gocyclo
@@ -203,11 +369,11 @@ func (b *bleveBackend) BuildIndex(
 	ctx context.Context,
 	key resource.NamespacedResource,
 	size int64,
-	resourceVersion int64,
 	fields resource.SearchableDocumentFields,
 	indexBuildReason string,
 	builder resource.BuildFn,
 	updater resource.UpdateFn,
+	rebuild bool,
 ) (resource.ResourceIndex, error) {
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
 	defer span.End()
@@ -217,11 +383,10 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("group", key.Group),
 		attribute.String("resource", key.Resource),
 		attribute.Int64("size", size),
-		attribute.Int64("rv", resourceVersion),
 		attribute.String("reason", indexBuildReason),
 	)
 
-	mapper, err := GetBleveMappings(fields)
+	mapper, err := GetBleveMappings(fields, b.useFullNgram)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +398,7 @@ func (b *bleveBackend) BuildIndex(
 		return nil, err
 	}
 
-	logWithDetails := b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "rv", resourceVersion, "reason", indexBuildReason)
+	logWithDetails := b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "reason", indexBuildReason)
 
 	// Close the newly created/opened index by default.
 	closeIndex := true
@@ -258,7 +423,7 @@ func (b *bleveBackend) BuildIndex(
 
 	var index bleve.Index
 	var indexRV int64
-	cachedIndex := b.getCachedIndex(key)
+	cachedIndex := b.getCachedIndex(key, time.Now())
 	fileIndexName := "" // Name of the file-based index, or empty for in-memory indexes.
 	newIndexType := indexStorageMemory
 	build := true
@@ -269,8 +434,12 @@ func (b *bleveBackend) BuildIndex(
 		// We only check for the existing file-based index if we don't already have an open index for this key.
 		// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 		// If we do have an unexpired cached index already, we always build a new index from scratch.
-		if cachedIndex == nil && resourceVersion > 0 {
-			index, fileIndexName, indexRV = b.findPreviousFileBasedIndex(resourceDir, resourceVersion, size)
+		if cachedIndex == nil && !rebuild {
+			minBuildTime := time.Time{}
+			if b.opts.MaxFileIndexAge > 0 {
+				minBuildTime = time.Now().Add(-b.opts.MaxFileIndexAge)
+			}
+			index, fileIndexName, indexRV = b.findPreviousFileBasedIndex(resourceDir, minBuildTime, b.opts.MinBuildVersion)
 		}
 
 		if index != nil {
@@ -290,7 +459,7 @@ func (b *bleveBackend) BuildIndex(
 					return nil, fmt.Errorf("invalid path %s", indexDir)
 				}
 
-				index, err = bleve.New(indexDir, mapper)
+				index, err = newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion)
 				if errors.Is(err, bleve.ErrorIndexPathExists) {
 					now = now.Add(time.Second) // Bump time for next try
 					index = nil                // Bleve actually returns non-nil value with ErrorIndexPathExists
@@ -305,7 +474,7 @@ func (b *bleveBackend) BuildIndex(
 			defer closeIndexOnExit(index, indexDir) // Close index, and delete new index directory.
 		}
 	} else {
-		index, err = bleve.NewMemOnly(mapper)
+		index, err = newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion)
 		if err != nil {
 			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
 		}
@@ -469,9 +638,10 @@ func (b *bleveBackend) TotalDocs() int64 {
 	var totalDocs int64
 	// We iterate over keys and call getCachedIndex for each index individually.
 	// We do this to avoid keeping a lock for the entire TotalDocs function, since DocCount may be slow (due to disk access).
-	// Calling getCachedIndex also handles index expiration.
+
+	now := time.Now()
 	for _, key := range b.cacheKeys() {
-		idx := b.getCachedIndex(key)
+		idx := b.getCachedIndex(key, now)
 		if idx == nil {
 			continue
 		}
@@ -488,7 +658,7 @@ func formatIndexName(now time.Time) string {
 	return now.Format("20060102-150405")
 }
 
-func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVersion int64, size int64) (bleve.Index, string, int64) {
+func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, minBuildTime time.Time, minBuildVersion *semver.Version) (bleve.Index, string, int64) {
 	entries, err := os.ReadDir(resourceDir)
 	if err != nil {
 		return nil, "", 0
@@ -507,32 +677,36 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVe
 			continue
 		}
 
-		cnt, err := idx.DocCount()
-		if err != nil {
-			b.log.Debug("error getting count from index", "indexDir", indexDir, "err", err)
-			_ = idx.Close()
-			continue
-		}
-
-		if uint64(size) != cnt {
-			b.log.Debug("index count mismatch. ignoring index", "indexDir", indexDir, "size", size, "cnt", cnt)
-			_ = idx.Close()
-			continue
-		}
-
 		indexRV, err := getRV(idx)
 		if err != nil {
 			b.log.Error("error getting rv from index", "indexDir", indexDir, "err", err)
-			if !errors.Is(err, bleve.ErrorIndexClosed) {
-				_ = idx.Close()
-			}
+			_ = idx.Close()
 			continue
 		}
 
-		if indexRV < resourceVersion {
-			b.log.Debug("indexRV is less than requested resourceVersion. ignoring index", "indexDir", indexDir, "rv", indexRV, "resourceVersion", resourceVersion)
+		buildInfo, err := getBuildInfo(idx)
+		if err != nil {
+			b.log.Error("error getting build info from index", "indexDir", indexDir, "err", err)
 			_ = idx.Close()
 			continue
+		}
+
+		if !minBuildTime.IsZero() {
+			bt := buildInfo.GetBuildTime()
+			if bt.IsZero() || bt.Before(minBuildTime) {
+				b.log.Debug("index build time is before minBuildTime, not reusing the index", "indexDir", indexDir, "indexBuildTime", bt, "minBuildTime", minBuildTime)
+				_ = idx.Close()
+				continue
+			}
+		}
+
+		if minBuildVersion != nil {
+			bv := buildInfo.GetBuildVersion()
+			if bv == nil || bv.Compare(minBuildVersion) < 0 {
+				b.log.Debug("index build version is before minBuildVersion, not reusing the index", "indexDir", indexDir, "indexBuildVersion", bv, "minBuildVersion", minBuildVersion)
+				_ = idx.Close()
+				continue
+			}
 		}
 
 		return idx, indexName, indexRV
@@ -541,7 +715,15 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVe
 	return nil, "", 0
 }
 
-func (b *bleveBackend) CloseAllIndexes() {
+// Stop closes all indexes and stops background tasks.
+func (b *bleveBackend) Stop() {
+	b.closeAllIndexes()
+
+	b.bgTasksCancel()
+	b.bgTasksWg.Wait()
+}
+
+func (b *bleveBackend) closeAllIndexes() {
 	b.cacheMx.Lock()
 	defer b.cacheMx.Unlock()
 
@@ -585,7 +767,6 @@ type bleveIndex struct {
 
 	// The values returned with all
 	allFields []*resourcepb.ResourceTableColumnDefinition
-	features  featuremgmt.FeatureToggles
 	tracing   trace.Tracer
 	logger    *slog.Logger
 
@@ -600,6 +781,9 @@ type bleveIndex struct {
 
 	updateLatency    prometheus.Histogram
 	updatedDocuments prometheus.Summary
+
+	// Used to detect if the index can be safely closed, if it no longer belongs to this instance. UnixMilli.
+	lastFetchedFromCache atomic.Int64
 }
 
 func (b *bleveBackend) newBleveIndex(
@@ -619,7 +803,6 @@ func (b *bleveBackend) newBleveIndex(
 		fields:       fields,
 		allFields:    allFields,
 		standard:     standardSearchFields,
-		features:     b.features,
 		tracing:      b.tracer,
 		logger:       logger,
 		updaterFn:    updaterFn,
@@ -659,8 +842,6 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	return b.index.Batch(batch)
 }
 
-var internalRVKey = []byte("rv")
-
 func (b *bleveIndex) updateResourceVersion(rv int64) error {
 	if rv == 0 {
 		return nil
@@ -679,13 +860,13 @@ func setRV(index bleve.Index, rv int64) error {
 	buf := make([]byte, 8)
 	binary.BigEndian.PutUint64(buf, uint64(rv))
 
-	return index.SetInternal(internalRVKey, buf)
+	return index.SetInternal([]byte(internalRVKey), buf)
 }
 
 // getRV will call index.GetInternal to retrieve the RV saved in the index. If index is closed, it will return a
 // bleve.ErrorIndexClosed error. If there's no RV saved in the index, or it's invalid format, it will return 0
 func getRV(index bleve.Index) (int64, error) {
-	raw, err := index.GetInternal(internalRVKey)
+	raw, err := index.GetInternal([]byte(internalRVKey))
 	if err != nil {
 		return 0, err
 	}
@@ -695,6 +876,21 @@ func getRV(index bleve.Index) (int64, error) {
 	}
 
 	return int64(binary.BigEndian.Uint64(raw)), nil
+}
+
+func getBuildInfo(index bleve.Index) (IndexBuildInfo, error) {
+	raw, err := index.GetInternal([]byte(internalBuildInfoKey))
+	if err != nil {
+		return IndexBuildInfo{}, err
+	}
+
+	if len(raw) == 0 {
+		return IndexBuildInfo{}, nil
+	}
+
+	res := IndexBuildInfo{}
+	err = json.Unmarshal(raw, &res)
+	return res, err
 }
 
 func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
@@ -1048,16 +1244,18 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		// Query 1: Match the exact query string
 		queryExact := bleve.NewMatchQuery(req.Query)
 		queryExact.SetBoost(10.0)
-		queryExact.Analyzer = keyword.Name // don't analyze the query input - treat it as a single token
+		queryExact.Analyzer = keyword.Name                // don't analyze the query input - treat it as a single token
+		queryExact.Operator = query.MatchQueryOperatorAnd // This doesn't make a difference for keyword analyzer, we add it just to be explicit.
 
 		// Query 2: Phrase query with standard analyzer
 		queryPhrase := bleve.NewMatchPhraseQuery(req.Query)
-		queryExact.SetBoost(5.0)
+		queryPhrase.SetBoost(5.0)
 		queryPhrase.Analyzer = standard.Name
 
 		// Query 3: Match query with standard analyzer
-		queryAnalyzed := bleve.NewMatchQuery(req.Query)
+		queryAnalyzed := bleve.NewMatchQuery(removeSmallTerms(req.Query))
 		queryAnalyzed.Analyzer = standard.Name
+		queryAnalyzed.Operator = query.MatchQueryOperatorAnd // Make sure all terms from the query are matched
 
 		// At least one of the queries must match
 		searchQuery := bleve.NewDisjunctionQuery(queryExact, queryAnalyzed, queryPhrase)
@@ -1083,7 +1281,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			verb = utils.VerbPatch
 		}
 
-		checker, err := access.Compile(ctx, auth, authlib.ListRequest{
+		checker, _, err := access.Compile(ctx, auth, authlib.ListRequest{
 			Namespace: b.key.Namespace,
 			Group:     b.key.Group,
 			Resource:  b.key.Resource,
@@ -1098,7 +1296,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 
 		// handle federation
 		for _, federated := range req.Federated {
-			checker, err := access.Compile(ctx, auth, authlib.ListRequest{
+			checker, _, err := access.Compile(ctx, auth, authlib.ListRequest{
 				Namespace: federated.Namespace,
 				Group:     federated.Group,
 				Resource:  federated.Resource,
@@ -1139,6 +1337,23 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	return searchrequest, nil
+}
+
+func removeSmallTerms(query string) string {
+	words := strings.Fields(query)
+	validWords := make([]string, 0, len(words))
+
+	for _, word := range words {
+		if len(word) >= EDGE_NGRAM_MIN_TOKEN {
+			validWords = append(validWords, word)
+		}
+	}
+
+	if len(validWords) == 0 {
+		return query
+	}
+
+	return strings.Join(validWords, " ")
 }
 
 func (b *bleveIndex) stopUpdaterAndCloseIndex() error {
@@ -1244,16 +1459,10 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 			return
 		}
 
-		// Build reasons map
-		reasons := map[string]int{}
-		for _, req := range batch {
-			reasons[req.reason]++
-		}
-
 		var rv int64
 		var err = ctx.Err()
 		if err == nil {
-			rv, err = b.updateIndexWithLatestModifications(ctx, len(batch), reasons)
+			rv, err = b.updateIndexWithLatestModifications(ctx, len(batch))
 		}
 		for _, req := range batch {
 			req.callback <- updateResult{rv: rv, err: err}
@@ -1261,21 +1470,22 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 	}
 }
 
-func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, requests int, reasons map[string]int) (int64, error) {
+func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, requests int) (int64, error) {
 	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"updateIndexWithLatestModifications")
 	defer span.End()
 
-	b.logger.Debug("Updating index", "sinceRV", b.resourceVersion, "requests", requests, "reasons", reasons)
+	sinceRV := b.resourceVersion
+	b.logger.Debug("Updating index", "sinceRV", sinceRV, "requests", requests)
 
 	startTime := time.Now()
-	rv, docs, err := b.updaterFn(ctx, b, b.resourceVersion)
-	if err == nil && rv > 0 {
-		err = b.updateResourceVersion(rv)
+	listRV, docs, err := b.updaterFn(ctx, b, sinceRV)
+	if err == nil && listRV > 0 && listRV != sinceRV {
+		err = b.updateResourceVersion(listRV) // updates b.resourceVersion
 	}
 
 	elapsed := time.Since(startTime)
 	if err == nil {
-		b.logger.Debug("Finished updating index", "listRV", b.resourceVersion, "duration", elapsed, "docs", docs)
+		b.logger.Debug("Finished updating index", "sinceRV", sinceRV, "listRV", listRV, "duration", elapsed, "docs", docs)
 
 		if b.updateLatency != nil {
 			b.updateLatency.Observe(elapsed.Seconds())
@@ -1284,9 +1494,9 @@ func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, req
 			b.updatedDocuments.Observe(float64(docs))
 		}
 	} else {
-		b.logger.Debug("Updating of index finished with error", "duration", elapsed, "err", err)
+		b.logger.Error("Updating of index finished with error", "duration", elapsed, "err", err)
 	}
-	return rv, err
+	return listRV, err
 }
 
 func safeInt64ToInt(i64 int64) (int, error) {
@@ -1297,7 +1507,7 @@ func safeInt64ToInt(i64 int64) (int, error) {
 }
 
 func getSortFields(req *resourcepb.ResourceSearchRequest) []string {
-	sorting := []string{}
+	sorting := make([]string, 0, len(req.SortBy))
 	for _, sort := range req.SortBy {
 		input := sort.Field
 		if field, ok := textSortFields[input]; ok {
@@ -1612,6 +1822,8 @@ func newPermissionScopedQuery(q query.Query, checkers map[string]authlib.ItemChe
 }
 
 func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReader, m mapping.IndexMapping, options search.SearcherOptions) (search.Searcher, error) {
+	// Get a new logger from context, to pass traceIDs etc.
+	logger := q.log.FromContext(ctx)
 	searcher, err := q.Query.Searcher(ctx, i, m, options)
 	if err != nil {
 		return nil, err
@@ -1620,7 +1832,6 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 	if err != nil {
 		return nil, err
 	}
-
 	filteringSearcher := bleveSearch.NewFilteringSearcher(ctx, searcher, func(d *search.DocumentMatch) bool {
 		// The doc ID has the format: <namespace>/<group>/<resourceType>/<name>
 		// IndexInternalID will be the same as the doc ID when using an in-memory index, but when using a file-based
@@ -1628,14 +1839,14 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 		// correct doc ID regardless of the index type.
 		d.ID, err = i.ExternalID(d.IndexInternalID)
 		if err != nil {
-			q.log.Debug("Error getting external ID", "error", err)
+			logger.Debug("Error getting external ID", "error", err)
 			return false
 		}
 
 		parts := strings.Split(d.ID, "/")
 		// Exclude doc if id isn't expected format
 		if len(parts) != 4 {
-			q.log.Debug("Unexpected document ID format", "id", d.ID)
+			logger.Debug("Unexpected document ID format", "id", d.ID)
 			return false
 		}
 		ns := parts[0]
@@ -1648,16 +1859,16 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 			}
 		})
 		if err != nil {
-			q.log.Debug("Error reading doc values", "error", err)
+			logger.Debug("Error reading doc values", "error", err)
 			return false
 		}
 		if _, ok := q.checkers[resource]; !ok {
-			q.log.Debug("No resource checker found", "resource", resource)
+			logger.Debug("No resource checker found", "resource", resource)
 			return false
 		}
 		allowed := q.checkers[resource](name, folder)
 		if !allowed {
-			q.log.Debug("Denying access", "ns", ns, "name", name, "folder", folder)
+			logger.Debug("Denying access", "ns", ns, "name", name, "folder", folder)
 		}
 		return allowed
 	})

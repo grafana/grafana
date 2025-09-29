@@ -126,6 +126,7 @@ func TestIntegrationPostgresPGXSnapshots(t *testing.T) {
 		{format: "table", name: "types_char"},
 		{format: "table", name: "types_datetime_pgx"},
 		{format: "table", name: "types_other"},
+		{format: "table", name: "types_enum"},
 		{format: "table", name: "timestamp_convert_bigint"},
 		{format: "table", name: "timestamp_convert_integer"},
 		{format: "table", name: "timestamp_convert_real"},

@@ -36,24 +36,16 @@ const userStorage = new UserStorage('grafana-runtime');
  * @public
  */
 export function useFavoriteDatasources(): FavoriteDatasources {
-  if (!config.featureToggles.favoriteDatasources) {
-    return {
-      enabled: false,
-      isLoading: false,
-      favoriteDatasources: [],
-      initialFavoriteDataSources: [],
-      addFavoriteDatasource: () => {},
-      removeFavoriteDatasource: () => {},
-      isFavoriteDatasource: () => false,
-    };
-  }
-
   const [favoriteDatasources, setFavoriteDatasources] = useState<string[]>([]);
   const [initialFavoriteDataSources, setInitialFavoriteDataSources] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Load favorites from storage on mount
   useEffect(() => {
+    if (!config.featureToggles.favoriteDatasources) {
+      return;
+    }
+
     const loadFavorites = async () => {
       setIsLoading(true);
       const stored = await userStorage.getItem(FAVORITE_DATASOURCES_KEY);
@@ -107,6 +99,18 @@ export function useFavoriteDatasources(): FavoriteDatasources {
     },
     [favoriteDatasources]
   );
+
+  if (!config.featureToggles.favoriteDatasources) {
+    return {
+      enabled: false,
+      isLoading: false,
+      favoriteDatasources: [],
+      initialFavoriteDataSources: [],
+      addFavoriteDatasource: () => {},
+      removeFavoriteDatasource: () => {},
+      isFavoriteDatasource: () => false,
+    };
+  }
 
   return {
     enabled: true,

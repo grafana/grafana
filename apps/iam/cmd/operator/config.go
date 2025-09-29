@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/plugin/kubeconfig"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"github.com/grafana/grafana/pkg/services/authz"
 )
 
 const (
@@ -19,7 +20,7 @@ type Config struct {
 	OTelConfig       simple.OpenTelemetryConfig
 	WebhookServer    WebhookServerConfig
 	KubeConfig       *kubeconfig.NamespacedConfig
-	ZanzanaClient    ZanzanaClientConfig
+	ZanzanaClient    authz.ZanzanaClientConfig
 	FolderReconciler FolderReconcilerConfig
 }
 
@@ -29,12 +30,9 @@ type WebhookServerConfig struct {
 	TLSKeyPath  string
 }
 
-type ZanzanaClientConfig struct {
-	Addr string
-}
-
 type FolderReconcilerConfig struct {
-	Namespace string
+	Namespace            string
+	MaxConcurrentWorkers uint64
 }
 
 func LoadConfigFromEnv() (*Config, error) {
@@ -92,11 +90,11 @@ func LoadConfigFromEnv() (*Config, error) {
 		}
 		cfg.KubeConfig = kubeConfig
 	} else if folderAppURL := os.Getenv("FOLDER_APP_URL"); folderAppURL != "" {
-		exchangeUrl := os.Getenv("AUTH_TOKEN_EXCHANGE_URL")
+		exchangeUrl := os.Getenv("TOKEN_EXCHANGE_URL")
 		authToken := os.Getenv("AUTH_TOKEN")
 		namespace := os.Getenv("FOLDER_APP_NAMESPACE")
 		if exchangeUrl == "" || authToken == "" {
-			return nil, fmt.Errorf("AUTH_TOKEN_EXCHANGE_URL and AUTH_TOKEN must be set when FOLDER_APP_URL is set")
+			return nil, fmt.Errorf("TOKEN_EXCHANGE_URL and AUTH_TOKEN must be set when FOLDER_APP_URL is set")
 		}
 
 		kubeConfig, err := LoadKubeConfigFromFolderAppURL(folderAppURL, exchangeUrl, authToken, namespace)
@@ -112,9 +110,22 @@ func LoadConfigFromEnv() (*Config, error) {
 		cfg.KubeConfig = kubeConfig
 	}
 
-	cfg.ZanzanaClient.Addr = os.Getenv("ZANZANA_ADDR")
+	cfg.ZanzanaClient.URL = os.Getenv("ZANZANA_ADDR")
+	cfg.ZanzanaClient.Token = os.Getenv("ZANZANA_TOKEN")
+	cfg.ZanzanaClient.TokenExchangeURL = os.Getenv("TOKEN_EXCHANGE_URL")
+	cfg.ZanzanaClient.ServerCertFile = os.Getenv("ZANZANA_SERVER_CERT_FILE")
 
 	cfg.FolderReconciler.Namespace = os.Getenv("FOLDER_RECONCILER_NAMESPACE")
+	maxConcurrentWorkersStr := os.Getenv("FOLDER_RECONCILER_MAX_CONCURRENT_WORKERS")
+	if maxConcurrentWorkersStr == "" {
+		cfg.FolderReconciler.MaxConcurrentWorkers = 20
+	} else {
+		maxConcurrentWorkers, err := strconv.ParseUint(maxConcurrentWorkersStr, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid FOLDER_RECONCILER_MAX_CONCURRENT_WORKERS '%s': %w", maxConcurrentWorkersStr, err)
+		}
+		cfg.FolderReconciler.MaxConcurrentWorkers = maxConcurrentWorkers
+	}
 
 	return &cfg, nil
 }

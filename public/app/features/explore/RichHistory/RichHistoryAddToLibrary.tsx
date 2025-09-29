@@ -4,6 +4,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { useQueryLibraryContext } from '../QueryLibrary/QueryLibraryContext';
@@ -30,6 +31,10 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
 
   const buttonLabel = t('explore.rich-history-card.add-to-library', 'Save query');
 
+  if (contextSrv.hasRole('Viewer')) {
+    return null;
+  }
+
   return queryLibraryEnabled && !hasBeenSaved ? (
     <>
       <Button
@@ -51,5 +56,5 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
         {buttonLabel}
       </Button>
     </>
-  ) : undefined;
+  ) : null;
 };

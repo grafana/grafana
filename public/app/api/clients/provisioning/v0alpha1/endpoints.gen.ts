@@ -1289,6 +1289,8 @@ export type WebhookStatus = {
   url?: string;
 };
 export type RepositoryStatus = {
+  /** Error information during repository deletion (if any) */
+  deleteError?: string;
   /** This will get updated with the current health status (and updated periodically) */
   health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */
@@ -1468,6 +1470,10 @@ export type RepositoryView = {
   workflows: ('branch' | 'write')[];
 };
 export type RepositoryViewList = {
+  /** Whether image rendering is allowed for dashboard previews */
+  allowImageRendering: boolean;
+  /** The valid targets (can disable instance or folder types) */
+  allowedTargets?: ('folder' | 'instance')[];
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc) */

@@ -216,6 +216,17 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       await userEvent.click(screen.getByLabelText('Log menu'));
       expect(screen.getByText('Copy log line')).toBeInTheDocument();
     });
+
+    test('The menu can be clicked', async () => {
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} />
+        </LogListContextProvider>
+      );
+      expect(screen.queryByText('Copy log line')).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button'));
+      expect(screen.getByText('Copy log line')).toBeInTheDocument();
+    });
   });
 
   describe('Syntax highlighting', () => {
@@ -601,5 +612,35 @@ describe('getGridTemplateColumns', () => {
         ['field']
       )
     ).toBe('23px 4px 4px 20px');
+  });
+
+  test('Gets the template columns with unique labels', () => {
+    expect(
+      getGridTemplateColumns(
+        [
+          {
+            field: 'timestamp',
+            width: 23,
+          },
+          {
+            field: 'level',
+            width: 4,
+          },
+          {
+            field: 'unique-labels',
+            width: 0,
+          },
+          {
+            field: 'field',
+            width: 4,
+          },
+          {
+            field: LOG_LINE_BODY_FIELD_NAME,
+            width: 20,
+          },
+        ],
+        ['field']
+      )
+    ).toBe('23px 4px max-content 4px 20px');
   });
 });

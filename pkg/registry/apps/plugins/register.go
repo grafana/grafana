@@ -1,22 +1,26 @@
 package plugins
 
 import (
-	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"github.com/grafana/grafana-app-sdk/simple"
+	"context"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
 
+	"github.com/grafana/grafana-app-sdk/app"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/plugins/pkg/apis"
-	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
-	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
+
+	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
+	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
+	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
 var (
@@ -34,9 +38,13 @@ type PluginsAppInstaller struct {
 }
 
 func RegisterAppInstaller(
-	cfg *setting.Cfg,
+	cfgProvider configprovider.ConfigProvider,
 	inMemoryRegistry *registry.InMemoryAdapter,
 ) (*PluginsAppInstaller, error) {
+	cfg, err := cfgProvider.Get(context.Background())
+	if err != nil {
+		return nil, err
+	}
 	installer := &PluginsAppInstaller{
 		namespaceMapper: request.GetNamespaceMapper(cfg),
 		pluginRegistry:  inMemoryRegistry,
@@ -49,7 +57,7 @@ func RegisterAppInstaller(
 		ManifestData:   *apis.LocalManifest().ManifestData,
 		SpecificConfig: installer.pluginConfig,
 	}
-	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.ManifestGoTypeAssociator, apis.ManifestCustomRouteResponsesAssociator)
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, &apis.GoTypeAssociator{})
 	if err != nil {
 		return nil, err
 	}
