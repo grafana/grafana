@@ -14,7 +14,7 @@ export const DashboardInteractions = {
   },
 
   dashboardCreatedOrSaved: (name: 'created' | 'saved', properties: DashboardCreatedProps) => {
-    reportDashboardInteraction(name, properties);
+    reportDashboardInteraction(name, properties, 'grafana_');
   },
 
   // grafana_dashboards_edit_button_clicked
@@ -201,14 +201,14 @@ export const DashboardInteractions = {
   },
 };
 
-const reportDashboardInteraction: typeof reportInteraction = (name, properties) => {
+const reportDashboardInteraction: typeof reportInteraction = (name, properties, interactionPrefix = '') => {
   const meta = isScenesContextSet ? { scenesView: true } : {};
   const isDynamicDashboard = config.featureToggles?.dashboardNewLayouts ?? false;
 
   if (properties) {
-    reportInteraction(`dashboards_${name}`, { ...properties, ...meta, isDynamicDashboard });
+    reportInteraction(`${interactionPrefix}dashboards_${name}`, { ...properties, ...meta, isDynamicDashboard });
   } else {
-    reportInteraction(`dashboards_${name}`, { isDynamicDashboard });
+    reportInteraction(`${interactionPrefix}dashboards_${name}`, { isDynamicDashboard });
   }
 };
 

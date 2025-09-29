@@ -43,7 +43,11 @@ export const reportPageview = () => {
  *
  * @public
  */
-export const reportInteraction = (interactionName: string, properties?: Record<string, unknown>) => {
+export const reportInteraction = (
+  interactionName: string,
+  properties?: Record<string, unknown>,
+  interactionPrefix?: string
+) => {
   // get static reporting context and append it to properties
   if (config.reportingStaticContext && config.reportingStaticContext instanceof Object) {
     properties = { ...properties, ...config.reportingStaticContext };
