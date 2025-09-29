@@ -342,7 +342,7 @@ const PrometheusConsistencyCheck = withErrorBoundary(
   ({ ruleIdentifier }: PrometheusConsistencyCheckProps) => {
     const [ref, { width }] = useMeasure<HTMLDivElement>();
 
-    const { hasRuler } = useHasRulerV2(ruleIdentifierToRuleSourceIdentifier(ruleIdentifier));
+    const { hasRuler } = useHasRulerV2(ruleIdentifierToRuleSourceIdentifier(ruleIdentifier).uid);
     const { result: ruleLocation } = useRuleLocation(ruleIdentifier);
 
     const { waitForGroupConsistency, groupConsistent } = useRuleGroupConsistencyCheck();
