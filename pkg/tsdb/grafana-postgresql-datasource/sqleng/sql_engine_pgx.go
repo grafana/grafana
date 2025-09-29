@@ -550,6 +550,10 @@ func convertPostgresValue(rawValue []byte, fd pgconn.FieldDescription, m *pgtype
 		if err != nil {
 			return nil, err
 		}
+		// Handle null JSON values
+		if d == nil {
+			return nil, nil
+		}
 		j := json.RawMessage(*d)
 		return &j, nil
 	default:
