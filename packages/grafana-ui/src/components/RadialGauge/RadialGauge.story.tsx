@@ -27,7 +27,7 @@ const meta: Meta<StoryProps> = {
   component: RadialGauge,
   parameters: {
     controls: {
-      exclude: ['theme', 'startAngle', 'endAngle', 'clockwise', 'frames'],
+      exclude: ['theme', 'clockwise', 'values', 'width', 'height', 'vizCount'],
     },
   },
   args: {
@@ -42,7 +42,7 @@ const meta: Meta<StoryProps> = {
     gradient: 'hue',
     seriesCount: 1,
     segmentCount: undefined,
-    segmentWidth: undefined,
+    segmentSpacing: undefined,
   },
   argTypes: {
     barWidthFactor: { control: { type: 'range', min: 0.1, max: 1, step: 0.01 } },
@@ -53,7 +53,7 @@ const meta: Meta<StoryProps> = {
     gradient: { control: { type: 'radio', options: ['none', 'hue', 'shade', 'scheme'] } },
     seriesCount: { control: { type: 'range', min: 1, max: 20 } },
     segmentCount: { control: { type: 'range', min: 0, max: 100 } },
-    segmentWidth: { control: { type: 'range', min: 0.1, max: 1, step: 0.01 } },
+    segmentSpacing: { control: { type: 'range', min: 0, max: 1, step: 0.01 } },
   },
 };
 
@@ -176,8 +176,8 @@ export const Examples: StoryFn = (args) => {
       <Stack direction={'row'} gap={3}>
         <RadialBarExample
           value={70}
-          gradient="hue"
-          color="blue"
+          gradient="shade"
+          color="green"
           {...args}
           spotlight
           glowBar={true}
@@ -206,16 +206,16 @@ export const Examples: StoryFn = (args) => {
           glowBar={true}
           glowCenter={true}
           barWidthFactor={0.4}
-          segmentWidth={0.2}
+          segmentSpacing={0.2}
         />
       </Stack>
       <div>Segmented color scale</div>
       <Stack direction={'row'} gap={3}>
         <RadialBarExample
           value={70}
-          gradient="hue"
-          colorMode={FieldColorModeId.ContinuousGrYlRd}
           {...args}
+          gradient="scheme"
+          colorMode={FieldColorModeId.ContinuousGrYlRd}
           spotlight
           glowBar={true}
           glowCenter={true}
@@ -263,7 +263,7 @@ interface ExampleProps {
   vizCount?: number;
   textMode?: RadialTextMode;
   segmentCount?: number;
-  segmentWidth?: number;
+  segmentSpacing?: number;
 }
 
 function RadialBarExample({
@@ -286,7 +286,7 @@ function RadialBarExample({
   vizCount = 1,
   textMode = 'auto',
   segmentCount = 0,
-  segmentWidth = 0.1,
+  segmentSpacing = 0.1,
 }: ExampleProps) {
   const theme = useTheme2();
 
@@ -356,7 +356,7 @@ function RadialBarExample({
       textMode={textMode}
       vizCount={vizCount}
       segmentCount={segmentCount}
-      segmentWidth={segmentWidth}
+      segmentSpacing={segmentSpacing}
     />
   );
 }

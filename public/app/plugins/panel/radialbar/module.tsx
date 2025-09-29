@@ -13,6 +13,8 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
   .useFieldConfig({})
   .setPanelOptions((builder) => {
     const category = [t('gauge.category-radial-bar', 'Radial bar')];
+    const segments = [t('gauge.category-radial-bar', 'Radial segments')];
+
     addStandardDataReduceOptions(builder);
     addOrientationOption(builder, category);
     commonOptionsBuilder.addTextSizeOptions(builder);
@@ -52,6 +54,15 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       defaultValue: defaultOptions.sparkline,
     });
 
+    builder.addCustomEditor({
+      id: 'radialbar-effects',
+      path: 'effects',
+      name: 'Effects',
+      editor: EffectsEditor,
+      settings: {},
+      defaultValue: defaultOptions.effects,
+    });
+
     builder.addSliderInput({
       path: 'barWidthFactor',
       name: t('radialbar.config.bar-width', 'Bar width'),
@@ -64,13 +75,29 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       },
     });
 
-    builder.addCustomEditor({
-      id: 'radialbar-effects',
-      path: 'effects',
-      name: 'Effects',
-      editor: EffectsEditor,
-      settings: {},
-      defaultValue: defaultOptions.effects,
+    builder.addSliderInput({
+      path: 'segmentCount',
+      name: t('radialbar.config.segment-count', 'Segments'),
+      category,
+      defaultValue: defaultOptions.segmentCount,
+      settings: {
+        min: 1,
+        max: 100,
+        step: 1,
+      },
+    });
+
+    builder.addSliderInput({
+      path: 'segmentSpacing',
+      name: t('radialbar.config.segment-spacing', 'Segment spacing'),
+      category,
+      defaultValue: defaultOptions.segmentSpacing,
+      showIf: (options) => options.segmentCount > 1,
+      settings: {
+        min: 0,
+        max: 1,
+        step: 0.01,
+      },
     });
   })
   .setSuggestionsSupplier(new GaugeSuggestionsSupplier());

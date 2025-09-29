@@ -31,6 +31,8 @@ export function RadialBarPanel({
         glowCenter={options.effects?.centerGlow}
         vizCount={valueProps.count}
         shape={options.shape}
+        segmentCount={options.segmentCount}
+        segmentSpacing={options.segmentSpacing}
       />
     );
   }

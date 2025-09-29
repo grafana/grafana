@@ -2,6 +2,8 @@ import { DisplayProcessor } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
+import { RadialGradientMode } from './RadialGauge';
+
 export interface RadialBarSegmentedProps {
   gaugeId: string;
   value: number;
@@ -18,8 +20,9 @@ export interface RadialBarSegmentedProps {
   margin: number;
   glow?: boolean;
   segmentCount: number;
-  segmentWidth: number;
+  segmentSpacing: number;
   displayProcessor: DisplayProcessor;
+  gradient: RadialGradientMode;
 }
 export function RadialBarSegmented({
   center,
@@ -35,13 +38,14 @@ export function RadialBarSegmented({
   margin,
   glow,
   segmentCount,
-  segmentWidth,
+  segmentSpacing,
   displayProcessor,
+  gradient,
 }: RadialBarSegmentedProps) {
   const segments: React.ReactNode[] = [];
   const theme = useTheme2();
 
-  const segmentCountAdjusted = getOptimalSegmentCount(size, segmentCount, barWidth, segmentWidth, margin);
+  const segmentCountAdjusted = getOptimalSegmentCount(size, segmentCount, barWidth, segmentSpacing, margin);
   const range = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
   let angle = ((value - min) / (max - min)) * range;
 
@@ -49,11 +53,21 @@ export function RadialBarSegmented({
     angle = range;
   }
 
+  const getColorForValue = (value: number) => {
+    console.log('scheme', gradient);
+    if (gradient === 'scheme') {
+      return displayProcessor(value).color ?? 'green';
+    }
+
+    // For non scheme gradients the color is always the same
+    return color;
+  };
+
   for (let i = 0; i < segmentCountAdjusted; i++) {
     const angleValue = ((max - min) / segmentCountAdjusted) * i;
-    const angleColor = displayProcessor(angleValue);
+    const angleColor = getColorForValue(angleValue);
     const segmentAngle = (360 / segmentCountAdjusted) * i + 0.01;
-    const segmentColor = segmentAngle > angle ? theme.colors.action.hover : (angleColor.color ?? 'gray');
+    const segmentColor = segmentAngle > angle ? theme.colors.action.hover : angleColor;
 
     segments.push(
       <RadialSegmentArcPath
@@ -65,7 +79,7 @@ export function RadialBarSegmented({
         barWidth={barWidth}
         glow={glow}
         margin={margin}
-        segmentWidth={segmentWidth}
+        segmentWidth={segmentSpacing}
         roundedBars={size > 100}
         arcLengthDeg={360 / segmentCountAdjusted}
       />
@@ -148,14 +162,17 @@ export function RadialSegmentArcPath({
   const spacingAngle = getAngleBetweenSegments(segmentWidth, size);
 
   const startRadians = (Math.PI * (angle - 90)) / 180;
-  const endRadians = (Math.PI * (angle + arcLengthDeg - 90 - spacingAngle)) / 180;
+  let endRadians = (Math.PI * (angle + arcLengthDeg - 90 - spacingAngle)) / 180;
+
+  if (endRadians - startRadians < 0.02) {
+    endRadians = startRadians + 0.01;
+  }
 
   let x1 = center + radius * Math.cos(startRadians);
   let y1 = center + radius * Math.sin(startRadians);
   let x2 = center + radius * Math.cos(endRadians);
   let y2 = center + radius * Math.sin(endRadians);
 
-  //let largeArc = angle > 180 ? 1 : 0;
   const largeArc = 0;
 
   const path = ['M', x1, y1, 'A', radius, radius, 0, largeArc, 1, x2, y2].join(' ');

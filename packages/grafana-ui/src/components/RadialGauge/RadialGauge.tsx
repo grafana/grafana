@@ -41,7 +41,11 @@ export interface RadialGaugeProps {
    * factor 1-10 gives you relative control
    **/
   segmentCount?: number;
-  segmentWidth?: number;
+  /**
+   * Distance between segments
+   * Factor between 0-1
+   */
+  segmentSpacing?: number;
   /**
    * If multiple is shown in a group (via VizRepeater).
    * This impacts the auto textMode
@@ -67,7 +71,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     textMode = 'auto',
     vizCount = 1,
     segmentCount = 0,
-    segmentWidth = 4,
+    segmentSpacing = 0,
     values,
   } = props;
   const theme = useTheme2();
@@ -116,7 +120,7 @@ export function RadialGauge(props: RadialGaugeProps) {
               displayProcessor = displayValue.view.getFieldDisplayProcessor(displayValue.colIndex) ?? displayProcessor;
             }
 
-            if (segmentCount > 0) {
+            if (segmentCount > 1) {
               return (
                 <RadialBarSegmented
                   margin={margin}
@@ -135,8 +139,9 @@ export function RadialGauge(props: RadialGaugeProps) {
                   spotlight={spotlight}
                   glow={glowBar}
                   segmentCount={segmentCount}
-                  segmentWidth={segmentWidth}
+                  segmentSpacing={segmentSpacing}
                   displayProcessor={displayProcessor}
+                  gradient={gradient}
                 />
               );
             }

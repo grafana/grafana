@@ -20,6 +20,8 @@ export interface Options extends common.SingleStatBaseOptions {
   effects?: RadialBarEffects;
   sparkline?: boolean;
   shape: 'circle' | 'gauge'; 
+  segmentCount: number;
+  segmentSpacing: number;
 }
 
 export interface RadialBarEffects {
@@ -33,5 +35,7 @@ export const defaultOptions: Partial<Options> = {
   gradient: 'hue',
   effects: { spotlight: true, barGlow: false, centerGlow: true },
   sparkline: true,
-  shape: 'circle'
+  shape: 'circle',
+  segmentCount: 1,
+  segmentSpacing: 0.3,
 };

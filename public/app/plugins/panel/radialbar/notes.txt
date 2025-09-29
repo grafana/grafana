@@ -1,0 +1,5 @@
+
+* unit where name is
+* dynamic font size based on text length
+* text alignment factors 
+* segmented gauge shape
