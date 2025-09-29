@@ -313,12 +313,14 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
               </ToolbarButton>
             </ButtonGroup>
           ),
-          <ToolbarExtensionPoint
-            key="toolbar-extension-point"
-            exploreId={exploreId}
-            timeZone={timeZone}
-            extensionsToShow="basic"
-          />,
+          !sparkJoy && (
+            <ToolbarExtensionPoint
+              key="toolbar-extension-point"
+              exploreId={exploreId}
+              timeZone={timeZone}
+              extensionsToShow="basic"
+            />
+          ),
           !isLive && (
             <ExploreTimeControls
               key="timeControls"

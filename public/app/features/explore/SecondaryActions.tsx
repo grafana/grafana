@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { CoreApp, GrafanaTheme2, type PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, type PluginExtensionLink, PluginExtensionPoints, getTimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction, usePluginLinks } from '@grafana/runtime';
+import { reportInteraction, usePluginLinks, config } from '@grafana/runtime';
 import { ToolbarButton, useTheme2, Dropdown, Menu, ButtonGroup } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
 import { createDatasourcesList } from '../../core/utils/richHistory';
@@ -15,7 +17,8 @@ import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
 import { type OnSelectQueryType } from './QueryLibrary/types';
 import { ConfirmNavigationModal } from './extensions/ConfirmNavigationModal';
-import { selectExploreDSMaps, getExploreItemSelector } from './state/selectors';
+import { ToolbarExtensionPointMenu } from './extensions/ToolbarExtensionPointMenu';
+import { selectExploreDSMaps, getExploreItemSelector, isLeftPaneSelector, selectCorrelationDetails } from './state/selectors';
 
 type Props = {
   addQueryRowButtonDisabled?: boolean;
@@ -88,6 +91,42 @@ export function SecondaryActions({
   const selectExploreItem = getExploreItemSelector(exploreId);
   const noQueriesInPane = Boolean(useSelector(selectExploreItem)?.queries?.length);
   const querylessExtensions = links.filter((link) => QUERYLESS_APPS.includes(link.pluginId));
+
+  // Get proper context for use query extensions
+  const isCorrelationDetails = useSelector(selectCorrelationDetails);
+  const isCorrelationsEditorMode = isCorrelationDetails?.editorMode || false;
+  const exploreItem = useSelector(getExploreItemSelector(exploreId)) || { queries: [], queryResponse: undefined, range: { raw: {} } };
+  const { queries, queryResponse, range } = exploreItem;
+  const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
+
+  const useQueryContext = useMemo(() => {
+    const datasourceUids = queries.map((query) => query?.datasource?.uid).filter((uid) => uid !== undefined);
+    const numUniqueIds = [...new Set(datasourceUids)].length;
+    const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+
+    return {
+      exploreId,
+      targets: queries,
+      data: queryResponse,
+      timeRange: range?.raw || {},
+      timeZone: getTimeZone({ timeZone: 'browser' }),
+      shouldShowAddCorrelation:
+        config.featureToggles.correlations === true &&
+        canWriteCorrelations &&
+        !isCorrelationsEditorMode &&
+        isLeftPane &&
+        numUniqueIds === 1,
+    };
+  }, [exploreId, queries, queryResponse, range, isCorrelationsEditorMode, isLeftPane]);
+
+  // Get extensions for "Use query" functionality (add dashboard, add correlation, etc.)
+  const { links: useQueryLinks } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
+    context: useQueryContext,
+    limitPerPlugin: 3,
+  });
+
+  const useQueryExtensions = useQueryLinks.filter((link) => !QUERYLESS_APPS.includes(link.pluginId));
 
   const { queryLibraryEnabled, openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
   const { setDrawerOpened } = useQueriesDrawerContext();
@@ -223,6 +262,33 @@ export function SecondaryActions({
       >
         <Trans i18nKey="explore.secondary-actions.query-inspector-button">Query inspector</Trans>
       </ToolbarButton>
+      {sparkJoy && useQueryExtensions.length > 0 && (
+        <Dropdown
+          placement="bottom-end"
+          overlay={
+            <ToolbarExtensionPointMenu 
+              extensions={useQueryExtensions} 
+              onSelect={(extension) => {
+                // Handle extensions with paths (navigation)
+                if (extension.path) {
+                  // This would open a navigation modal or redirect
+                  console.log('Navigate to:', extension.path);
+                }
+                // Extensions without paths have their onClick handled automatically by the Menu.Item
+              }} 
+            />
+          }
+        >
+          <ToolbarButton
+            variant="canvas"
+            aria-label={t('explore.secondary-actions.use-query-aria-label', 'Use query')}
+            disabled={!noQueriesInPane}
+            icon="external-link-alt"
+          >
+            <Trans i18nKey="explore.secondary-actions.use-query">Use query</Trans>
+          </ToolbarButton>
+        </Dropdown>
+      )}
       {!!selectedExtension && !!selectedExtension.path && (
         <ConfirmNavigationModal
           path={selectedExtension.path}
