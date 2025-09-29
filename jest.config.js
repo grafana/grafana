@@ -41,7 +41,7 @@ module.exports = {
   verbose: false,
   testEnvironment: 'jsdom',
   testEnvironmentOptions: {
-    customExportConditions: ['@grafana-app/source'],
+    customExportConditions: ['@grafana-app/source', 'browser'],
   },
   transform: {
     '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest')],
