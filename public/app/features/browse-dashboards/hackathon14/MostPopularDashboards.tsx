@@ -9,10 +9,10 @@ import {
 } from 'app/features/dashboard/api/popularResourcesApi';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 
-export const RecentVisited = () => {
+export const MostPopularDashboards = () => {
   const styles = useStyles2(getStyles);
   const [searchState, stateManager] = useSearchStateManager();
-  const { data, isLoading } = useGetPopularResourcesQuery({
+  const { data, isLoading } = useGetPopularDashboards({
     limit: 4,
     period: '30d',
   });
@@ -38,7 +38,7 @@ export const RecentVisited = () => {
   return (
     <div>
       <Stack direction="row" gap={1} alignItems="baseline">
-        <Text variant="h4">Recently Visited</Text>
+        <Text variant="h4">Suggested Dashboards</Text>
       </Stack>
 
       <div className={styles.container}>
@@ -85,10 +85,11 @@ export const RecentVisited = () => {
           </Grid>
         )}
         
+        {/* TODO: show default dashboards list */}
         {data && data.resources.length === 0 && (
           <Card className={styles.emptyCard}>
             <Text color="secondary">
-              No recent activity. Start browsing dashboards to see suggestions here!
+              No data.
             </Text>
           </Card>
         )}

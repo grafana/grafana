@@ -8,6 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/db"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -27,6 +29,8 @@ type PopularResourcesResponse struct {
 }
 
 // GetPopularResourcesSimple returns most visited resources for the current user
+// Note: This queries the legacy dashboard table. For unified storage dashboards,
+// titles may need to be fetched via the dashboard service API.
 func (hs *HTTPServer) GetPopularResourcesSimple(c *contextmodel.ReqContext) response.Response {
 	// Parse query parameters
 	limitStr := c.Query("limit")
@@ -79,15 +83,15 @@ func (hs *HTTPServer) GetPopularResourcesSimple(c *contextmodel.ReqContext) resp
 				AND (d.deleted IS NULL OR d.deleted = '')
 			WHERE urs.user_id = ? AND urs.org_id = ?
 		`
-		
+
 		params := []interface{}{c.UserID, c.OrgID}
-		
+
 		// Add resource type filter
 		if resourceType != "" {
 			sql += " AND urs.resource_type = ?"
 			params = append(params, resourceType)
 		}
-		
+
 		// Add time filter
 		if period != "all" {
 			days := 30 // default
@@ -100,10 +104,10 @@ func (hs *HTTPServer) GetPopularResourcesSimple(c *contextmodel.ReqContext) resp
 			sql += " AND urs.last_visited >= ?"
 			params = append(params, time.Now().AddDate(0, 0, -days))
 		}
-		
+
 		// Exclude deleted resources
 		sql += " AND (d.deleted IS NULL OR d.deleted = '' OR urs.resource_type NOT IN ('dashboard', 'folder'))"
-		
+
 		// Order and limit
 		sql += " ORDER BY urs.visit_count DESC, urs.last_visited DESC LIMIT ?"
 		params = append(params, limit)
@@ -155,6 +159,34 @@ func (hs *HTTPServer) GetPopularResourcesSimple(c *contextmodel.ReqContext) resp
 		return response.Error(http.StatusInternalServerError, "Failed to get popular resources", err)
 	}
 
+	// Fetch titles for resources where title equals UID (not found in SQL tables)
+	// This handles unified storage dashboards/folders
+	for i := range resources {
+		// If title equals UID, it means we didn't find it in SQL tables
+		if resources[i].Title == resources[i].UID {
+			switch resources[i].ResourceType {
+			case "dashboard":
+				// Fetch dashboard title via dashboard service
+				dash, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dashboards.GetDashboardQuery{
+					UID:   resources[i].UID,
+					OrgID: c.OrgID,
+				})
+				if err == nil && dash != nil {
+					resources[i].Title = dash.Title
+				}
+			case "folder":
+				// Fetch folder title via folder service
+				foldr, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{
+					UID:   &resources[i].UID,
+					OrgID: c.OrgID,
+				})
+				if err == nil && foldr != nil {
+					resources[i].Title = foldr.Title
+				}
+			}
+		}
+	}
+
 	return response.JSON(http.StatusOK, PopularResourcesResponse{
 		Resources:  resources,
 		TotalCount: len(resources),
@@ -165,7 +197,7 @@ func (hs *HTTPServer) GetPopularResourcesSimple(c *contextmodel.ReqContext) resp
 func (hs *HTTPServer) RecordResourceVisitSimple(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	resourceType := web.Params(c.Req)[":type"]
-	
+
 	if uid == "" || resourceType == "" {
 		return response.Error(http.StatusBadRequest, "Resource UID and type are required", nil)
 	}
@@ -178,18 +210,18 @@ func (hs *HTTPServer) RecordResourceVisitSimple(c *contextmodel.ReqContext) resp
 
 	err := hs.SQLStore.WithTransactionalDbSession(c.Req.Context(), func(sess *db.Session) error {
 		now := time.Now()
-		
+
 		// Try to update existing record
 		result, err := sess.Exec(`
 			UPDATE user_resources_visit_stats 
 			SET visit_count = visit_count + 1, last_visited = ?, updated = ?
 			WHERE user_id = ? AND resource_uid = ? AND resource_type = ? AND org_id = ?
 		`, now, now, c.UserID, uid, resourceType, c.OrgID)
-		
+
 		if err != nil {
 			return err
 		}
-		
+
 		rowsAffected, _ := result.RowsAffected()
 		if rowsAffected == 0 {
 			// Insert new record
@@ -199,7 +231,7 @@ func (hs *HTTPServer) RecordResourceVisitSimple(c *contextmodel.ReqContext) resp
 				VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)
 			`, c.UserID, uid, resourceType, c.OrgID, now, now, now, now)
 		}
-		
+
 		return err
 	})
 

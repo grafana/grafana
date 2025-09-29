@@ -8,7 +8,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { useSearchStateManager } from '../../search/state/SearchStateManager';
 import { HackathonSearchInput } from './HackathonSearchInput';
 import SparkJoyToggle from 'app/core/components/SparkJoyToggle';
-import { RecentVisited } from './RecentVisited';
+import { MostPopularDashboards } from './MostPopularDashboards';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 
 // New Browse/Manage/Search Dashboards views for nested folders
@@ -130,7 +130,7 @@ const HackathonBrowseDashboardsPage = memo(
           </div>
         ) : (
           <div className={styles.contentContainer}>
-            <RecentVisited />
+            <MostPopularDashboards />
           </div>
         )}
         {/* <Page.Contents className={styles.pageContents}>
