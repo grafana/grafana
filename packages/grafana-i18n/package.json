@@ -39,6 +39,7 @@
   },
   "files": [
     "dist",
+    "./src/eslint",
     "./README.md",
     "./CHANGELOG.md",
     "LICENSE_APACHE2"
