@@ -202,7 +202,7 @@ func ProvideUnifiedStorageGrpcService(
 }
 
 func (s *service) PrepareDownscale(w http.ResponseWriter, r *http.Request) {
-	s.log.Info("Preparing for downscale. Will not keep instance in ring on shutdown")
+	s.log.Info("Preparing for downscale. Will not keep instance in ring on shutdown.", "method", r.Method)
 	s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(false)
 }
 
