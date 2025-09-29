@@ -31,7 +31,7 @@ export function getFieldOverrideCategories(
   series: DataFrame[],
   searchQuery: string,
   onFieldConfigsChange: (config: FieldConfigSource) => void,
-  annotations?: DataFrame[],
+  annotations?: DataFrame[]
 ): OptionsPaneCategoryDescriptor[] {
   const categories: OptionsPaneCategoryDescriptor[] = [];
   const currentFieldConfig = fieldConfig;
