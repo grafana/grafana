@@ -78,6 +78,11 @@ export interface Props {
   prettifyJSON?: boolean;
   setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
+  /**
+   * Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata
+   * @alpha
+   */
+  showLogAttributes?: boolean;
   showTime: boolean;
   showUniqueLabels?: boolean;
   sortOrder: LogsSortOrder;
@@ -148,6 +153,7 @@ export const LogList = ({
   prettifyJSON = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.prettifyLogMessage`, true) : true,
   setDisplayedFields,
   showControls,
+  showLogAttributes,
   showTime,
   showUniqueLabels,
   sortOrder,
@@ -193,6 +199,7 @@ export const LogList = ({
       prettifyJSON={prettifyJSON}
       setDisplayedFields={setDisplayedFields}
       showControls={showControls}
+      showLogAttributes={showLogAttributes}
       showTime={showTime}
       showUniqueLabels={showUniqueLabels}
       sortOrder={sortOrder}

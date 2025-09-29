@@ -128,6 +128,11 @@ interface LogsPanelProps extends PanelProps<Options> {
    *
    * When showing timestamps, toggle between showing nanoseconds or milliseconds.
    * timestampResolution?: 'ms' | 'ns'
+   *
+   * Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.
+   * Requires the `otelLogsFormatting`.
+   * @alpha
+   * showLogAttributes?: boolean
    */
 }
 interface LogsPermalinkUrlState {
@@ -170,6 +175,7 @@ export const LogsPanel = ({
     detailsMode: detailsModeProp,
     noInteractions,
     timestampResolution,
+    showLogAttributes,
     ...options
   },
   height,
@@ -609,6 +615,7 @@ export const LogsPanel = ({
               prettifyJSON={prettifyLogMessage}
               setDisplayedFields={setDisplayedFieldsFn}
               showControls={Boolean(showControls)}
+              showLogAttributes={showLogAttributes}
               showTime={showTime}
               showUniqueLabels={showLabels}
               sortOrder={sortOrder}

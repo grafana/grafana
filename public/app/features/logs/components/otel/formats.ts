@@ -1,4 +1,4 @@
-import { CoreApp, LogRowModel } from '@grafana/data';
+import { LogRowModel } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogListModel, NEWLINES_REGEX } from '../panel/processing';
@@ -89,8 +89,4 @@ export function getOtelAttributesField(log: LogListModel, wrapLogMessage: boolea
     return attributes.replace(NEWLINES_REGEX, '');
   }
   return attributes;
-}
-
-export function isSupportedApp(app: CoreApp) {
-  return app !== CoreApp.Dashboard && app !== CoreApp.PanelEditor && app !== CoreApp.PanelViewer;
 }

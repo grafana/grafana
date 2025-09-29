@@ -28,7 +28,7 @@ import { config, getDataSourceSrv } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
-import { getDisplayedFieldsForLogs, isSupportedApp } from '../otel/formats';
+import { getDisplayedFieldsForLogs } from '../otel/formats';
 
 import { LogLineTimestampResolution } from './LogLine';
 import { LogLineDetailsMode } from './LogLineDetails';
@@ -188,6 +188,7 @@ export interface Props {
   prettifyJSON?: boolean;
   setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
+  showLogAttributes?: boolean;
   showUniqueLabels?: boolean;
   showTime: boolean;
   sortOrder: LogsSortOrder;
@@ -234,6 +235,7 @@ export const LogListContextProvider = ({
   prettifyJSON: prettifyJSONProp,
   setDisplayedFields,
   showControls,
+  showLogAttributes,
   showTime,
   showUniqueLabels,
   sortOrder,
@@ -289,28 +291,28 @@ export const LogListContextProvider = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const otelDisplayedFields = useMemo(() => getDisplayedFieldsForLogs(logs), [logs]);
+  const otelDisplayedFields = useMemo(() => {
+    if (!config.featureToggles.otelLogsFormatting || !setDisplayedFields || showLogAttributes === false) {
+      return [];
+    }
+    return getDisplayedFieldsForLogs(logs);
+  }, [logs, setDisplayedFields, showLogAttributes]);
 
   // OTel displayed fields
   useEffect(() => {
-    if (
-      displayedFields.length > 0 ||
-      !config.featureToggles.otelLogsFormatting ||
-      !setDisplayedFields ||
-      !isSupportedApp(app)
-    ) {
+    if (displayedFields.length > 0 || !setDisplayedFields) {
       return;
     }
     if (otelDisplayedFields.length) {
       setDisplayedFields(otelDisplayedFields);
     }
-  }, [app, displayedFields.length, otelDisplayedFields, setDisplayedFields]);
+  }, [displayedFields.length, otelDisplayedFields, setDisplayedFields]);
 
   useEffect(() => {
-    if (config.featureToggles.otelLogsFormatting) {
+    if (config.featureToggles.otelLogsFormatting && showLogAttributes !== false) {
       onLogOptionsChange?.('defaultDisplayedFields', otelDisplayedFields);
     }
-  }, [onLogOptionsChange, otelDisplayedFields]);
+  }, [onLogOptionsChange, otelDisplayedFields, showLogAttributes]);
 
   // Sync state
   useEffect(() => {
@@ -415,6 +417,13 @@ export const LogListContextProvider = ({
       timestampResolution,
     }));
   }, [timestampResolution]);
+
+  // Sync showLogAttributes
+  useEffect(() => {
+    if (showLogAttributes === false && setDisplayedFields) {
+      setDisplayedFields([]);
+    }
+  }, [setDisplayedFields, showLogAttributes]);
 
   const controlsExpandedFromStore = store.getBool(
     `${logOptionsStorageKey}.controlsExpanded`,
