@@ -6,7 +6,7 @@ import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { EditorHeader, EditorRows, FlexItem } from '@grafana/plugin-ui';
-import { reportInteraction } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Space } from '@grafana/ui';
 
 import { PromQueryEditorProps } from '../../components/types';
@@ -23,7 +23,7 @@ import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { PromQueryCodeEditor } from './PromQueryCodeEditor';
 
-type Props = PromQueryEditorProps;
+type Props = PromQueryEditorProps & { sparkJoy?: boolean };
 
 export const PromQueryEditorSelector = memo<Props>((props) => {
   const {
@@ -34,6 +34,7 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
     onAddQuery,
     datasource: { defaultEditor },
     queries,
+    sparkJoy,
   } = props;
 
   const [parseModalOpen, setParseModalOpen] = useState(false);
@@ -66,6 +67,22 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
     },
     [onChange, query, app]
   );
+
+  // Open Kick start modal via global app event when sparkJoy is enabled in Explore
+  useEffect(() => {
+    if (!sparkJoy || app !== CoreApp.Explore) {
+      return;
+    }
+    const appEvents = getAppEvents();
+    const handler = () => setQueryPatternsModalOpen(true);
+    // legacy API supports string event names
+    // @ts-ignore - runtime EventBus legacy signature
+    appEvents.on('explore-kickstart-open', handler);
+    return () => {
+      // @ts-ignore - runtime EventBus legacy signature
+      appEvents.off('explore-kickstart-open', handler);
+    };
+  }, [sparkJoy, app]);
 
   useEffect(() => {
     setDataIsStale(false);
@@ -118,16 +135,18 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
         onAddQuery={onAddQuery}
       />
       <EditorHeader>
-        <Button
-          data-testid={selectors.components.QueryBuilder.queryPatterns}
-          variant="secondary"
-          size="sm"
-          onClick={handleOpenQueryPatternsModal}
-        >
-          <Trans i18nKey="grafana-prometheus.querybuilder.prom-query-editor-selector.kick-start-your-query">
-            Kick start your query
-          </Trans>
-        </Button>
+        {!(sparkJoy && app === CoreApp.Explore) && (
+          <Button
+            data-testid={selectors.components.QueryBuilder.queryPatterns}
+            variant="secondary"
+            size="sm"
+            onClick={handleOpenQueryPatternsModal}
+          >
+            <Trans i18nKey="grafana-prometheus.querybuilder.prom-query-editor-selector.kick-start-your-query">
+              Kick start your query
+            </Trans>
+          </Button>
+        )}
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.explain}>
           <QueryHeaderSwitch
             label={t('grafana-prometheus.querybuilder.prom-query-editor-selector.label-explain', 'Explain')}
@@ -136,7 +155,7 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
           />
         </div>
         <FlexItem grow={1} />
-        {app !== CoreApp.Explore && app !== CoreApp.Correlations && (
+        {(app !== CoreApp.Explore && app !== CoreApp.Correlations) && (
           <Button
             variant={dataIsStale ? 'primary' : 'secondary'}
             size="sm"

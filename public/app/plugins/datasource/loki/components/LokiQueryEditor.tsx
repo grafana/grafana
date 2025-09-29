@@ -2,7 +2,7 @@ import { isEqual } from 'lodash';
 import { memo, SyntheticEvent, useCallback, useEffect, useId, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { CoreApp, LoadingState } from '@grafana/data';
+import { CoreApp, LoadingState, store as grafanaStore } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   EditorHeader,
@@ -12,7 +12,7 @@ import {
   QueryHeaderSwitch,
   QueryEditorMode,
 } from '@grafana/plugin-ui';
-import { reportInteraction } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Space, Stack } from '@grafana/ui';
 
 import { LabelBrowserModal } from '../querybuilder/components/LabelBrowserModal';
@@ -33,15 +33,15 @@ export const testIds = {
 
 export const lokiQueryEditorExplainKey = 'LokiQueryEditorExplainDefault';
 
-export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
+export const LokiQueryEditor = memo<LokiQueryEditorProps & { sparkJoy?: boolean }>((props) => {
   const id = useId();
-  const { onChange, onRunQuery, onAddQuery, data, app, queries, datasource, range: timeRange } = props;
+  const { onChange, onRunQuery, onAddQuery, data, app, queries, datasource, range: timeRange, sparkJoy } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
   const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
   const [queryStats, setQueryStats] = useState<QueryStats | null>(null);
-  const [explain, setExplain] = useState(window.localStorage.getItem(lokiQueryEditorExplainKey) === 'true');
+  const [explain, setExplain] = useState(!!grafanaStore.get(lokiQueryEditorExplainKey));
 
   const previousTimeRange = usePrevious(timeRange);
 
@@ -53,8 +53,9 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
   const editorMode = query.editorMode!;
 
   const onExplainChange = (event: SyntheticEvent<HTMLInputElement>) => {
-    window.localStorage.setItem(lokiQueryEditorExplainKey, event.currentTarget.checked ? 'true' : 'false');
-    setExplain(event.currentTarget.checked);
+    const value = event.currentTarget.checked;
+    setExplain(value);
+    grafanaStore.set(lokiQueryEditorExplainKey, value);
   };
 
   const onEditorModeChange = useCallback(
@@ -78,6 +79,21 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
     },
     [onChange, query, app]
   );
+
+  // Open Kick start modal via global app event when sparkJoy is enabled in Explore
+  useEffect(() => {
+    if (!sparkJoy || app !== CoreApp.Explore) {
+      return;
+    }
+    const appEvents = getAppEvents();
+    const handler = () => setQueryPatternsModalOpen(true);
+    // @ts-ignore - runtime legacy event API
+    appEvents.on('explore-kickstart-open', handler);
+    return () => {
+      // @ts-ignore - runtime legacy event API
+      appEvents.off('explore-kickstart-open', handler);
+    };
+  }, [sparkJoy, app]);
 
   useEffect(() => {
     setDataIsStale(false);
@@ -117,6 +133,8 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
     }
   }, [datasource, timeRange, previousTimeRange, query, previousQueryExpr, previousQueryType, setQueryStats, id]);
 
+  console.log('sparkJoy', sparkJoy);
+  console.log('app', app);
   return (
     <>
       <ConfirmModal
@@ -151,32 +169,34 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
       />
       <EditorHeader>
         <Stack gap={1}>
-          <Button
-            data-testid={selectors.components.QueryBuilder.queryPatterns}
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              setQueryPatternsModalOpen((prevValue) => !prevValue);
+          {!(sparkJoy && app === CoreApp.Explore) && (
+            <Button
+              data-testid={selectors.components.QueryBuilder.queryPatterns}
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setQueryPatternsModalOpen((prevValue) => !prevValue);
 
-              const visualQuery = buildVisualQueryFromString(query.expr || '');
-              reportInteraction('grafana_loki_query_patterns_opened', {
-                version: 'v2',
-                app: app ?? '',
-                editorMode: query.editorMode,
-                preSelectedOperationsCount: visualQuery.query.operations.length,
-                preSelectedLabelsCount: visualQuery.query.labels.length,
-              });
-            }}
-          >
-            Kick start your query
-          </Button>
+                const visualQuery = buildVisualQueryFromString(query.expr || '');
+                reportInteraction('grafana_loki_query_patterns_opened', {
+                  version: 'v2',
+                  app: app ?? '',
+                  editorMode: query.editorMode,
+                  preSelectedOperationsCount: visualQuery.query.operations.length,
+                  preSelectedLabelsCount: visualQuery.query.labels.length,
+                });
+              }}
+            >
+              Kick start your query
+            </Button>
+          )}
           <Button variant="secondary" size="sm" onClick={onClickLabelBrowserButton} data-testid="label-browser-button">
             Label browser
           </Button>
         </Stack>
         <QueryHeaderSwitch label="Explain query" value={explain} onChange={onExplainChange} />
         <FlexItem grow={1} />
-        {app !== CoreApp.Explore && app !== CoreApp.Correlations && (
+        {(app !== CoreApp.Explore && app !== CoreApp.Correlations) && (
           <Button
             variant={dataIsStale ? 'primary' : 'secondary'}
             size="sm"

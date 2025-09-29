@@ -208,17 +208,19 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   };
 
   const navBarActions = [
-    <Button
-      key="query-history"
-      size="sm"
-      variant={'secondary'}
-      aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
-      onClick={() => setDrawerOpened(!drawerOpened)}
-      data-testid={Components.QueryTab.queryHistoryButton}
-      icon="history"
-    >
-      <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
-    </Button>,
+    !sparkJoy && (
+      <Button
+        key="query-history"
+        size="sm"
+        variant={'secondary'}
+        aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
+        onClick={() => setDrawerOpened(!drawerOpened)}
+        data-testid={Components.QueryTab.queryHistoryButton}
+        icon="history"
+      >
+        <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
+      </Button>
+    ),
     <Switch
       key="sparks-joy-toggle"
       value={sparkJoy}

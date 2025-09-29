@@ -23,7 +23,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Badge, ErrorBoundaryAlert, List, Dropdown, IconButton, Menu, Box, FeatureBadge, Icon } from '@grafana/ui';
+import { Badge, ErrorBoundaryAlert, List, Dropdown, IconButton, Menu, Box, FeatureBadge } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
@@ -190,7 +190,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   renderPluginEditor = () => {
-    const { query, onChange, queries, onRunQuery, onAddQuery, range, app = CoreApp.PanelEditor, history } = this.props;
+    const { query, onChange, queries, onRunQuery, onAddQuery, range, app = CoreApp.PanelEditor, history, sparkJoy } = this.props;
     const { datasource, data } = this.state;
 
     if (this.isWaitingForDatasourceToLoad()) {
@@ -201,9 +201,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       let QueryEditor = this.getQueryEditor(datasource);
 
       if (QueryEditor) {
+        const QueryEditorAny = QueryEditor as any;
         return (
           <DataSourcePluginContextProvider instanceSettings={this.props.dataSource}>
-            <QueryEditor
+            <QueryEditorAny
               key={datasource?.name}
               query={query}
               datasource={datasource}
@@ -215,6 +216,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
               queries={queries}
               app={app}
               history={history}
+              sparkJoy={sparkJoy}
             />
           </DataSourcePluginContextProvider>
         );

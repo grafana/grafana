@@ -682,6 +682,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           queryInspectorButtonActive={showQueryInspector}
                           onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                           onClickQueryInspectorButton={() => setShowQueryInspector(!showQueryInspector)}
+                          sparkJoy={sparkJoy}
                           onSelectQueryFromLibrary={async (query) => {
                             const { changeDatasource, queries, setQueries } = this.props;
                             const newQueries = [
