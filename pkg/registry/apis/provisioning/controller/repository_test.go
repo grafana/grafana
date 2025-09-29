@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -98,18 +99,20 @@ var (
 
 func TestRepositoryController_handleDelete(t *testing.T) {
 	testCases := []struct {
-		name        string
-		repoFactory repository.Factory
-		finalizer   finalizerProcessor
-		client      client.ProvisioningV0alpha1Interface
-		repo        *provisioning.Repository
-		expectedErr string
+		name          string
+		repoFactory   repository.Factory
+		finalizer     finalizerProcessor
+		client        client.ProvisioningV0alpha1Interface
+		statusPatcher StatusPatcher
+		repo          *provisioning.Repository
+		expectedErr   string
 	}{
 		{
-			name:        "No finalizers",
-			repoFactory: nil,
-			finalizer:   nil,
-			client:      nil,
+			name:          "No finalizers",
+			repoFactory:   nil,
+			finalizer:     nil,
+			client:        nil,
+			statusPatcher: nil,
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Finalizers: []string{},
@@ -154,6 +157,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 
 				return c
 			}(),
+			statusPatcher: nil,
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Finalizers: []string{
@@ -174,8 +178,9 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 
 				return f
 			}(),
-			finalizer: nil,
-			client:    nil,
+			finalizer:     nil,
+			client:        nil,
+			statusPatcher: nil,
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Finalizers: []string{
@@ -208,6 +213,16 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 					Return(assert.AnError)
 
 				return f
+			}(),
+			statusPatcher: func() StatusPatcher {
+				s := mocks.NewStatusPatcher(t)
+
+				s.
+					On("Patch", context.Background(), mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
+					Once().
+					Return(nil) // Return nil error for the status patch
+
+				return s
 			}(),
 			client: nil,
 			repo: &provisioning.Repository{
@@ -257,6 +272,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 
 				return c
 			}(),
+			statusPatcher: nil,
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Finalizers: []string{
@@ -271,9 +287,10 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			c := &RepositoryController{
-				repoFactory: tc.repoFactory,
-				finalizer:   tc.finalizer,
-				client:      tc.client,
+				repoFactory:   tc.repoFactory,
+				finalizer:     tc.finalizer,
+				client:        tc.client,
+				statusPatcher: tc.statusPatcher,
 			}
 
 			err := c.handleDelete(context.Background(), tc.repo)
