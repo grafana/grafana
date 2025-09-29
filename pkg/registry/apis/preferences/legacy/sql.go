@@ -120,7 +120,10 @@ func (s *LegacySQL) GetStars(ctx context.Context, orgId int64, user string) ([]d
 			return nil, 0, fmt.Errorf("unable to get RV %w", err)
 		}
 		if max.Valid && max.String != "" {
-			fmt.Printf("max RV: %s\n", max.String)
+			t, _ := time.Parse(time.RFC3339, max.String)
+			if !t.IsZero() {
+				updated = t
+			}
 		} else {
 			updated = s.startup
 		}
@@ -206,7 +209,10 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 			return nil, 0, fmt.Errorf("unable to get RV %w", err)
 		}
 		if max.Valid && max.String != "" {
-			fmt.Printf("max RV: %s\n", max.String)
+			t, _ := time.Parse(time.RFC3339, max.String)
+			if !t.IsZero() {
+				rv.Time = t
+			}
 		} else {
 			rv.Time = s.startup
 		}

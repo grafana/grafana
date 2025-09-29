@@ -120,8 +120,7 @@ func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav
 	return nil, preferences.PreferencesResourceInfo.NewNotFound(name)
 }
 
-// Create implements rest.Creater.
-func (s *preferenceStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+func (s *preferenceStorage) save(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
@@ -180,30 +179,37 @@ func (s *preferenceStorage) Create(ctx context.Context, obj runtime.Object, crea
 	}
 
 	switch owner.Owner {
+	case utils.NamespaceResourceOwner:
+		// the org ID is already set
+
 	case utils.UserResourceOwner:
+		if user.GetIdentifier() != owner.Identifier {
+			return nil, fmt.Errorf("only the user can save preferences")
+		}
 		cmd.UserID, err = user.GetInternalID()
 		if err != nil {
 			return nil, err
 		}
-
-		if err = s.prefs.Save(ctx, cmd); err != nil {
-			return nil, err
-		}
-		return s.Get(ctx, owner.AsName(), &metav1.GetOptions{})
+	case utils.TeamResourceOwner:
+		return nil, fmt.Errorf("TODO, get team from: %s", owner.Identifier)
 
 	default:
+		return nil, fmt.Errorf("unsupported name")
 	}
 
-	return nil, fmt.Errorf("unsupported create")
+	if err = s.prefs.Save(ctx, cmd); err != nil {
+		return nil, err
+	}
+	return s.Get(ctx, owner.AsName(), &metav1.GetOptions{})
+}
+
+// Create implements rest.Creater.
+func (s *preferenceStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	return s.save(ctx, obj)
 }
 
 // Update implements rest.Updater.
 func (s *preferenceStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, false, err
-	}
-
 	old, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
@@ -213,65 +219,9 @@ func (s *preferenceStorage) Update(ctx context.Context, name string, objInfo res
 	if err != nil {
 		return nil, false, err
 	}
-	p, ok := obj.(*preferences.Preferences)
-	if !ok {
-		return nil, false, fmt.Errorf("expected preferences")
-	}
 
-	owner, ok := utils.ParseOwnerFromName(p.Name)
-	if !ok {
-		return nil, false, fmt.Errorf("invalid name")
-	}
-
-	cmd := &pref.PatchPreferenceCommand{
-		OrgID:            user.GetOrgID(),
-		HomeDashboardUID: p.Spec.HomeDashboardUID,
-		Timezone:         p.Spec.Timezone,
-		WeekStart:        p.Spec.WeekStart,
-		Theme:            p.Spec.Theme,
-		Language:         p.Spec.Language,
-		RegionalFormat:   p.Spec.RegionalFormat,
-	}
-	if p.Spec.QueryHistory != nil {
-		cmd.QueryHistory = &pref.QueryHistoryPreference{
-			HomeTab: *p.Spec.QueryHistory.HomeTab,
-		}
-	}
-	if p.Spec.Navbar != nil {
-		cmd.Navbar = &pref.NavbarPreference{
-			BookmarkUrls: p.Spec.Navbar.BookmarkUrls,
-		}
-	}
-	if p.Spec.CookiePreferences != nil {
-		cmd.CookiePreferences = []pref.CookieType{}
-		if p.Spec.CookiePreferences.Analytics != nil {
-			cmd.CookiePreferences = append(cmd.CookiePreferences, "analytics")
-		}
-		if p.Spec.CookiePreferences.Functional != nil {
-			cmd.CookiePreferences = append(cmd.CookiePreferences, "functional")
-		}
-		if p.Spec.CookiePreferences.Performance != nil {
-			cmd.CookiePreferences = append(cmd.CookiePreferences, "performance")
-		}
-	}
-
-	switch owner.Owner {
-	case utils.UserResourceOwner:
-		cmd.UserID, err = user.GetInternalID()
-		if err != nil {
-			return nil, false, err
-		}
-
-		if err = s.prefs.Patch(ctx, cmd); err != nil {
-			return nil, false, err
-		}
-		obj, err = s.Get(ctx, owner.AsName(), &metav1.GetOptions{})
-		return obj, false, err
-
-	default:
-	}
-
-	return nil, false, fmt.Errorf("unsupported create")
+	obj, err = s.save(ctx, obj)
+	return obj, false, err
 }
 
 // Delete implements rest.GracefulDeleter.
