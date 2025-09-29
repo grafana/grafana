@@ -1,4 +1,4 @@
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, Tag, Tooltip } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
