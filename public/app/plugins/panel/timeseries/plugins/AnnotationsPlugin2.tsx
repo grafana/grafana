@@ -68,6 +68,7 @@ export const AnnotationsPlugin2 = ({
   canvasRegionRendering = true,
 }: AnnotationsPluginProps) => {
   const [plot, setPlot] = useState<uPlot>();
+  const [annoIdx, setAnnoIdx] = useState<string | undefined>();
 
   const [portalRoot] = useState(() => getPortalContainer());
 
@@ -215,6 +216,11 @@ export const AnnotationsPlugin2 = ({
     }
   }, [annos, plot]);
 
+  // Set active annotation tooltip state
+  const setAnnotationIndex = useCallback((annoIdx: string | undefined) => {
+    setAnnoIdx(annoIdx);
+  }, []);
+
   if (plot) {
     let markers = annos.flatMap((frame, frameIdx) => {
       let vals = getVals(frame);
@@ -253,10 +259,21 @@ export const AnnotationsPlugin2 = ({
 
         // @TODO: Reset newRange after annotation is saved
         if (isVisible) {
-          let isWip = frame.meta?.custom?.isWip;
+          const isWip: boolean = frame.meta?.custom?.isWip;
+          const setAnnotation = (active: boolean) => {
+            if (active) {
+              setAnnotationIndex(`${frameIdx}:${i}`);
+            } else {
+              setAnnotationIndex(undefined);
+            }
+          };
 
           markers.push(
             <AnnotationMarker2
+              pinAnnotation={setAnnotation}
+              isPinned={annoIdx === `${frameIdx}:${i}`}
+              // @todo let users control if anno tooltips show on hover?
+              showOnHover={!annoIdx}
               annoIdx={i}
               annoVals={vals}
               className={className}

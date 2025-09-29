@@ -8,7 +8,7 @@ import { createPortal } from 'react-dom';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeZone } from '@grafana/schema';
-import { floatingUtils, useStyles2 } from '@grafana/ui';
+import { ClickOutsideWrapper, floatingUtils, useStyles2 } from '@grafana/ui';
 
 import { AnnotationEditor2 } from './AnnotationEditor2';
 import { AnnotationTooltip2 } from './AnnotationTooltip2';
@@ -21,6 +21,9 @@ interface AnnoBoxProps {
   timeZone: TimeZone;
   exitWipEdit?: null | (() => void);
   portalRoot: HTMLElement;
+  pinAnnotation: (pin: boolean) => void;
+  isPinned: boolean;
+  showOnHover: boolean;
 }
 
 export const AnnotationMarker2 = ({
@@ -31,12 +34,15 @@ export const AnnotationMarker2 = ({
   exitWipEdit,
   timeZone,
   portalRoot,
+  pinAnnotation,
+  isPinned,
+  showOnHover,
 }: AnnoBoxProps) => {
   const styles = useStyles2(getStyles);
   const placement = 'bottom';
 
   const [editing, setEditing] = useState(exitWipEdit != null);
-  const [active, setActive] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
   const { refs, floatingStyles } = useFloating({
     open: true,
     placement,
@@ -45,17 +51,31 @@ export const AnnotationMarker2 = ({
     strategy: 'fixed',
   });
 
+  const onClose = () => {
+    pinAnnotation(false);
+    setIsHovering(false);
+  };
+
   const contents =
-    active && !editing ? (
-      <AnnotationTooltip2 annoIdx={annoIdx} annoVals={annoVals} timeZone={timeZone} onEdit={() => setEditing(true)} />
+    (isPinned && !editing) || (showOnHover && isHovering && !editing) ? (
+      <AnnotationTooltip2
+        onClose={onClose}
+        isPinned={isPinned}
+        annoIdx={annoIdx}
+        annoVals={annoVals}
+        timeZone={timeZone}
+        onEdit={() => setEditing(true)}
+      />
     ) : editing ? (
       <AnnotationEditor2
+        isPinned={isPinned}
         annoIdx={annoIdx}
         annoVals={annoVals}
         timeZone={timeZone}
         dismiss={() => {
           exitWipEdit?.();
           setEditing(false);
+          onClose();
         }}
       />
     ) : null;
@@ -65,17 +85,29 @@ export const AnnotationMarker2 = ({
       ref={refs.setReference}
       className={className}
       style={style!}
-      onFocus={() => setActive(true)}
-      onBlur={() => setActive(false)}
-      onClick={() => setActive(!active)}
+      onFocus={() => setIsHovering(true)}
+      onBlur={() => setIsHovering(false)}
+      onClick={() => pinAnnotation(true)}
+      // @todo do we still want to support showing tooltip on hover?
+      onMouseEnter={() => showOnHover && setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
       data-testid={selectors.pages.Dashboard.Annotations.marker}
     >
+      {/* @todo contents not keyboard navigable */}
       {contents &&
         createPortal(
           <div ref={refs.setFloating} className={styles.annoBox} style={floatingStyles} data-testid="annotation-marker">
-            {contents}
+            {/*
+               @TODO close on annotation click doesn't unpin
+               Currently the click outside prevents clicking on the button while pinned to close,
+               as the click outside pinAnnotations call will set the pinned state before the onClick event is sent
+               */}
+            <ClickOutsideWrapper includeButtonPress={false} useCapture={true} onClick={() => pinAnnotation(false)}>
+              {contents}
+            </ClickOutsideWrapper>
           </div>,
-          portalRoot
+          portalRoot,
+          'annotations-plugin-tooltip'
         )}
     </button>
   );
