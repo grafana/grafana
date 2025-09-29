@@ -15,7 +15,9 @@ import { AlertingEntityMetadataAnnotationsFactory } from './common';
 export const ListReceiverApiResponseFactory = Factory.define<EnhancedListReceiverApiResponse>(() => ({
   kind: 'ReceiverList',
   apiVersion: `${GROUP}/${VERSION}`,
-  metadata: {},
+  metadata: {
+    resourceVersion: generateResourceVersion(),
+  },
   items: ContactPointFactory.buildList(5),
 }));
 
@@ -23,6 +25,8 @@ export const ContactPointFactory = Factory.define<ContactPoint>(() => {
   const title = generateTitle();
 
   return {
+    kind: 'Receiver',
+    apiVersion: `${GROUP}/${VERSION}`,
     metadata: {
       name: btoa(title),
       namespace: DEFAULT_NAMESPACE,
@@ -32,7 +36,7 @@ export const ContactPointFactory = Factory.define<ContactPoint>(() => {
     },
     spec: ContactPointSpecFactory.build({ title }),
     status: {},
-  } satisfies ContactPoint;
+  };
 });
 
 export const ContactPointSpecFactory = Factory.define<ContactPoint['spec']>(() => ({
@@ -47,7 +51,7 @@ export const GenericIntegrationFactory = Factory.define<Integration>(() => ({
   settings: {
     foo: 'bar',
   },
-  version: 'v1', // Add version field
+  version: 'v1',
 }));
 
 export const EmailIntegrationFactory = Factory.define<Integration>(() => ({

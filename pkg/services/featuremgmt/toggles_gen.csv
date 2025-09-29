@@ -122,8 +122,8 @@ newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,f
 cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false
 disableNumericMetricsSortingInExpressions,experimental,@grafana/oss-big-tent,false,true,false
 grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
-queryLibrary,privatePreview,@grafana/sharing-squad,false,false,false
-savedQueries,preview,@grafana/sharing-squad,false,false,false
+queryLibrary,preview,@grafana/sharing-squad,false,false,false
+dashboardLibrary,experimental,@grafana/sharing-squad,false,false,true
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
@@ -227,6 +227,7 @@ alertingListViewV2PreviewToggle,privatePreview,@grafana/alerting-squad,false,fal
 alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,false
 alertingBulkActionsInUI,GA,@grafana/alerting-squad,false,false,true
 kubernetesAuthzApis,experimental,@grafana/identity-access-team,false,false,false
+kubernetesAuthZHandlerRedirect,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthzResourcePermissionApis,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthnMutation,experimental,@grafana/identity-access-team,false,false,false
 restoreDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false
@@ -260,7 +261,7 @@ alertingTriage,experimental,@grafana/alerting-squad,false,false,true
 graphiteBackendMode,privatePreview,@grafana/partner-datasources,false,false,false
 azureResourcePickerUpdates,preview,@grafana/partner-datasources,false,false,true
 prometheusTypeMigration,experimental,@grafana/partner-datasources,false,true,false
-dskitBackgroundServices,experimental,@grafana/plugins-platform-backend,false,true,false
 pluginContainers,privatePreview,@grafana/plugins-platform-backend,false,true,false
 tempoSearchBackendMigration,GA,@grafana/oss-big-tent,false,true,false
 filterOutBotsFromFrontendLogs,experimental,@grafana/plugins-platform-backend,false,false,true
+cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,false

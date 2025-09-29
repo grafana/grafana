@@ -35,6 +35,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.LibraryPanelList":          schema_pkg_apis_dashboard_v0alpha1_LibraryPanelList(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.LibraryPanelSpec":          schema_pkg_apis_dashboard_v0alpha1_LibraryPanelSpec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.LibraryPanelStatus":        schema_pkg_apis_dashboard_v0alpha1_LibraryPanelStatus(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.ManagedBy":                 schema_pkg_apis_dashboard_v0alpha1_ManagedBy(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SearchResults":             schema_pkg_apis_dashboard_v0alpha1_SearchResults(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SortBy":                    schema_pkg_apis_dashboard_v0alpha1_SortBy(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SortableField":             schema_pkg_apis_dashboard_v0alpha1_SortableField(ref),
@@ -337,6 +338,13 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 							Format:      "",
 						},
 					},
+					"managedBy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The resource is managed",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.ManagedBy"),
+						},
+					},
 					"field": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Stick untyped extra fields in this object (including the sort value)",
@@ -361,7 +369,7 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.ManagedBy", "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
 	}
 }
 
@@ -1024,6 +1032,32 @@ func schema_pkg_apis_dashboard_v0alpha1_LibraryPanelStatus(ref common.ReferenceC
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v0alpha1_ManagedBy(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"kind"},
+			},
+		},
 	}
 }
 

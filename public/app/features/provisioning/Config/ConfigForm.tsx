@@ -62,7 +62,12 @@ export function ConfigForm({ data }: ConfigFormProps) {
     setError,
     watch,
     getValues,
-  } = useForm<RepositoryFormData>({ defaultValues: getDefaultValues(data?.spec) });
+  } = useForm<RepositoryFormData>({
+    defaultValues: getDefaultValues({
+      repository: data?.spec,
+      allowedTargets: settings.data?.allowedTargets,
+    }),
+  });
 
   const isEdit = Boolean(repositoryName);
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
