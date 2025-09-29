@@ -440,10 +440,15 @@ export enum DownloadFormat {
   CSV = 'csv',
 }
 
-export const downloadLogs = async (format: DownloadFormat, logRows: LogRowModel[], meta?: LogsMetaItem[]) => {
+export const downloadLogs = async (
+  format: DownloadFormat,
+  logRows: LogRowModel[],
+  meta?: LogsMetaItem[],
+  fields: string[] = []
+) => {
   switch (format) {
     case DownloadFormat.Text:
-      downloadLogsModelAsTxt({ meta, rows: logRows });
+      downloadLogsModelAsTxt({ meta, rows: logRows }, '', fields);
       break;
     case DownloadFormat.Json:
       const jsonLogs = logRowsToReadableJson(logRows);
