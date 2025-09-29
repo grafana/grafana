@@ -179,10 +179,6 @@ const (
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
 
-	// FlagFeatureToggleAdminPage
-	// Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.
-	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
-
 	// FlagAwsAsyncQueryCaching
 	// Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
@@ -500,12 +496,12 @@ const (
 	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
 
 	// FlagQueryLibrary
-	// Renamed feature toggle, enables Saved queries feature
+	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
 
-	// FlagSavedQueries
-	// Enables Saved Queries feature
-	FlagSavedQueries = "savedQueries"
+	// FlagDashboardLibrary
+	// Enable suggested dashboards when creating new dashboards
+	FlagDashboardLibrary = "dashboardLibrary"
 
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
@@ -1055,10 +1051,6 @@ const (
 	// Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
 	FlagPrometheusTypeMigration = "prometheusTypeMigration"
 
-	// FlagDskitBackgroundServices
-	// Enables dskit background service wrapper
-	FlagDskitBackgroundServices = "dskitBackgroundServices"
-
 	// FlagPluginContainers
 	// Enables running plugins in containers
 	FlagPluginContainers = "pluginContainers"
@@ -1070,4 +1062,8 @@ const (
 	// FlagFilterOutBotsFromFrontendLogs
 	// Filter out bots from collecting data for Frontend Observability
 	FlagFilterOutBotsFromFrontendLogs = "filterOutBotsFromFrontendLogs"
+
+	// FlagCdnPluginsLoadFirst
+	// Prioritize loading plugins from the CDN before other sources
+	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"
 )

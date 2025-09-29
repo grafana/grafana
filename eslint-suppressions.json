@@ -1359,11 +1359,6 @@
       "count": 1
     }
   },
-  "public/app/features/admin/AdminFeatureTogglesTable.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "public/app/features/admin/ServerStatsCard.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -4481,6 +4476,11 @@
   },
   "public/app/plugins/panel/gauge/GaugeMigrations.ts": {
     "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "public/app/plugins/panel/geomap/components/DebugOverlay.tsx": {
+    "@grafana/no-aria-label-selectors": {
       "count": 1
     }
   },
