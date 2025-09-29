@@ -949,6 +949,13 @@ var (
 			AllowSelfServe: false,
 		},
 		{
+			Name:         "dashboardLibrary",
+			Description:  "Enable suggested dashboards when creating new dashboards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "logsExploreTableDefaultVisualization",
 			Description:  "Sets the logs table as default visualisation in logs explore",
 			Stage:        FeatureStageExperimental,
@@ -2026,16 +2033,6 @@ var (
 			RequiresRestart: true,
 			Owner:           grafanaPartnerPluginsSquad,
 			Expression:      "false",
-		},
-		{
-			Name:              "dskitBackgroundServices",
-			Description:       "Enables dskit background service wrapper",
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			Stage:             FeatureStageExperimental,
-			RequiresRestart:   true,
-			Owner:             grafanaPluginsPlatformSquad,
-			Expression:        "false",
 		},
 		{
 			Name:            "pluginContainers",
