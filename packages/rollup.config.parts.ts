@@ -23,12 +23,14 @@ export const plugins = [
 ];
 
 // Generates a rollup configuration for commonjs output.
-export function cjsOutput(pkg) {
+export function cjsOutput(pkg, pkgName) {
   return {
     format: 'cjs',
     sourcemap: true,
     dir: dirname(pkg.main),
     entryFileNames: '[name].cjs',
+    preserveModules: true,
+    preserveModulesRoot: resolve(projectCwd, `packages/${pkgName}/src`),
     esModule: true,
     interop: 'compat',
   };
