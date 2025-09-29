@@ -263,14 +263,26 @@ func ConvertLegacyAnnotationToK8s(item *annotations.ItemDTO, orgID int64) (*v0al
 		},
 		Spec: v0alpha1.AnnotationSpec{
 			Text: item.Text,
+			Time: item.Time,
+			Tags: item.Tags,
 		},
 	}
 
+	// Set optional pointer fields
 	if item.DashboardUID != nil && *item.DashboardUID != "" {
 		annotation.Spec.DashboardUID = item.DashboardUID
 	}
 	if item.PanelID != 0 {
 		annotation.Spec.PanelID = &item.PanelID
+	}
+	if item.TimeEnd != 0 {
+		annotation.Spec.TimeEnd = &item.TimeEnd
+	}
+	if item.PrevState != "" {
+		annotation.Spec.PrevState = &item.PrevState
+	}
+	if item.NewState != "" {
+		annotation.Spec.NewState = &item.NewState
 	}
 
 	if item.Created > 0 {
@@ -289,31 +301,47 @@ func ConvertK8sAnnotationToLegacy(annotation *v0alpha1.Annotation, orgID int64) 
 	item := &annotations.ItemDTO{
 		ID:           id,
 		Text:         annotation.Spec.Text,
+		Time:         annotation.Spec.Time,
+		Tags:         annotation.Spec.Tags,
 		DashboardUID: annotation.Spec.DashboardUID,
 	}
 
+	// Convert optional pointer fields
 	if annotation.Spec.PanelID != nil {
 		item.PanelID = *annotation.Spec.PanelID
 	}
+	if annotation.Spec.TimeEnd != nil {
+		item.TimeEnd = *annotation.Spec.TimeEnd
+	}
+	if annotation.Spec.PrevState != nil {
+		item.PrevState = *annotation.Spec.PrevState
+	}
+	if annotation.Spec.NewState != nil {
+		item.NewState = *annotation.Spec.NewState
+	}
 
+	// Convert timestamps
 	if !annotation.ObjectMeta.CreationTimestamp.IsZero() {
 		item.Created = annotation.ObjectMeta.CreationTimestamp.Unix() * 1000
 	}
-
 	return item, nil
 }
 
 func ConvertItemDTOToItem(dto *annotations.ItemDTO, orgID int64) *annotations.Item {
 	item := &annotations.Item{
-		ID:      dto.ID,
-		OrgID:   orgID,
-		UserID:  dto.UserID,
-		PanelID: dto.PanelID,
-		Text:    dto.Text,
-		AlertID: dto.AlertID,
-		Created: dto.Created,
-		Updated: dto.Updated,
-		Tags:    dto.Tags,
+		ID:        dto.ID,
+		OrgID:     orgID,
+		UserID:    dto.UserID,
+		PanelID:   dto.PanelID,
+		Text:      dto.Text,
+		AlertID:   dto.AlertID,
+		PrevState: dto.PrevState,
+		NewState:  dto.NewState,
+		Epoch:     dto.Time,
+		EpochEnd:  dto.TimeEnd,
+		Created:   dto.Created,
+		Updated:   dto.Updated,
+		Tags:      dto.Tags,
 	}
 
 	if dto.DashboardUID != nil {
