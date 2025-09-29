@@ -1169,11 +1169,6 @@ export interface FeatureToggles {
   */
   prometheusTypeMigration?: boolean;
   /**
-  * Enables dskit background service wrapper
-  * @default false
-  */
-  dskitBackgroundServices?: boolean;
-  /**
   * Enables running plugins in containers
   * @default false
   */
@@ -1188,4 +1183,9 @@ export interface FeatureToggles {
   * @default false
   */
   filterOutBotsFromFrontendLogs?: boolean;
+  /**
+  * Prioritize loading plugins from the CDN before other sources
+  * @default false
+  */
+  cdnPluginsLoadFirst?: boolean;
 }

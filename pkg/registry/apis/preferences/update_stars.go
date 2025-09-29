@@ -64,12 +64,12 @@ func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, 
 	if !found || parsed.Owner != utils.UserResourceOwner {
 		return nil, fmt.Errorf("only works with user stars")
 	}
-	if user.GetIdentifier() != parsed.Name {
+	if user.GetIdentifier() != parsed.Identifier {
 		return nil, fmt.Errorf("must request as the given user")
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		item, err := itemFromPath(req.URL.Path, fmt.Sprintf("/%s/write", name))
+		item, err := itemFromPath(req.URL.Path, fmt.Sprintf("/%s/update", name))
 		if err != nil {
 			responder.Error(err)
 			return
