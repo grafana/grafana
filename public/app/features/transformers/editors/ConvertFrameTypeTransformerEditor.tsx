@@ -21,7 +21,7 @@ import { getTransformationContent } from '../docs/getTransformationContent';
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 const fieldNamePickerSettings = {
-  settings: { width: 24, isClearable: false },
+  settings: { width: 24, isClearable: true },
 } as StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings>;
 
 export const ConvertFrameTypeTransformerEditor = ({
@@ -59,7 +59,7 @@ export const ConvertFrameTypeTransformerEditor = ({
   );
 
   const onSelectAnnotationMapping = useCallback(
-    (label: keyof AnnotationFieldMapping, value: string) => {
+    (label: keyof AnnotationFieldMapping, value?: string) => {
       onChange({
         ...options,
         annotationFieldMapping: {
@@ -91,6 +91,7 @@ export const ConvertFrameTypeTransformerEditor = ({
           />
         </InlineField>
       </InlineFieldRow>
+      {/* @todo HoC */}
       {options.targetType === FrameType.Annotation && (
         <section className={styles.annotationOptions}>
           <InlineFieldRow>
@@ -102,9 +103,7 @@ export const ConvertFrameTypeTransformerEditor = ({
                 context={{ data: input }}
                 value={options.annotationFieldMapping?.time ?? ''}
                 onChange={(value) => {
-                  if (value) {
-                    onSelectAnnotationMapping('time', value);
-                  }
+                  onSelectAnnotationMapping('time', value);
                 }}
                 item={fieldNamePickerSettings}
               />
@@ -116,9 +115,7 @@ export const ConvertFrameTypeTransformerEditor = ({
                 context={{ data: input }}
                 value={options.annotationFieldMapping?.timeEnd ?? ''}
                 onChange={(value) => {
-                  if (value) {
-                    onSelectAnnotationMapping('timeEnd', value);
-                  }
+                  onSelectAnnotationMapping('timeEnd', value);
                 }}
                 item={fieldNamePickerSettings}
               />
@@ -130,9 +127,7 @@ export const ConvertFrameTypeTransformerEditor = ({
                 context={{ data: input }}
                 value={options.annotationFieldMapping?.title ?? ''}
                 onChange={(value) => {
-                  if (value) {
-                    onSelectAnnotationMapping('title', value);
-                  }
+                  onSelectAnnotationMapping('title', value);
                 }}
                 item={fieldNamePickerSettings}
               />
@@ -144,9 +139,7 @@ export const ConvertFrameTypeTransformerEditor = ({
                 context={{ data: input }}
                 value={options.annotationFieldMapping?.text ?? ''}
                 onChange={(value) => {
-                  if (value) {
-                    onSelectAnnotationMapping('text', value);
-                  }
+                  onSelectAnnotationMapping('text', value);
                 }}
                 item={fieldNamePickerSettings}
               />
@@ -158,9 +151,7 @@ export const ConvertFrameTypeTransformerEditor = ({
                 context={{ data: input }}
                 value={options.annotationFieldMapping?.tags ?? ''}
                 onChange={(value) => {
-                  if (value) {
-                    onSelectAnnotationMapping('tags', value);
-                  }
+                  onSelectAnnotationMapping('tags', value);
                 }}
                 item={fieldNamePickerSettings}
               />
@@ -172,9 +163,7 @@ export const ConvertFrameTypeTransformerEditor = ({
                 context={{ data: input }}
                 value={options.annotationFieldMapping?.id ?? ''}
                 onChange={(value) => {
-                  if (value) {
-                    onSelectAnnotationMapping('id', value);
-                  }
+                  onSelectAnnotationMapping('id', value);
                 }}
                 item={fieldNamePickerSettings}
               />
