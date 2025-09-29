@@ -17,6 +17,9 @@ export default {
   setupFiles: ['jest-canvas-mock'],
   setupFilesAfterEnv: ['<rootDir>/jest-setup.js'],
   testEnvironment: 'jsdom',
+  testEnvironmentOptions: {
+    customExportConditions: ['@grafana-app/source'],
+  },
   testMatch: ['<rootDir>/**/__tests__/**/*.{js,jsx,ts,tsx}', '<rootDir>/**/*.{spec,test,jest}.{js,jsx,ts,tsx}'],
   transform: {
     '^.+\\.(t|j)sx?$': [
