@@ -42,7 +42,7 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps & { sparkJoy?: boolean 
   const [dataIsStale, setDataIsStale] = useState(false);
   const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
   const [queryStats, setQueryStats] = useState<QueryStats | null>(null);
-  const [explain, setExplain] = useState(!!grafanaStore.get(lokiQueryEditorExplainKey));
+  const [explain, setExplain] = useState(false);
 
   const previousTimeRange = usePrevious(timeRange);
 

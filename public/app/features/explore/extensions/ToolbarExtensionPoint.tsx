@@ -18,6 +18,7 @@ type Props = {
   exploreId: string;
   timeZone: TimeZone;
   extensionsToShow: 'queryless' | 'basic';
+  sparkJoy?: boolean;
 };
 
 const QUERYLESS_APPS = [
@@ -28,7 +29,7 @@ const QUERYLESS_APPS = [
 ];
 
 export function ToolbarExtensionPoint(props: Props): ReactElement | null {
-  const { exploreId, extensionsToShow } = props;
+  const { exploreId, extensionsToShow, sparkJoy } = props;
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const context = useExtensionPointContext(props);
@@ -46,7 +47,7 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
 
   return (
     <>
-      {extensionsToShow === 'queryless' && (
+      {extensionsToShow === 'queryless' && !sparkJoy && (
         <QuerylessAppsExtensions
           links={querylessLinks}
           noQueriesInPane={noQueriesInPane}

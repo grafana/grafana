@@ -272,6 +272,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             exploreId={exploreId}
             timeZone={timeZone}
             extensionsToShow="queryless"
+            sparkJoy={sparkJoy}
           />,
         ].filter(Boolean)}
         forceShowLeftItems
