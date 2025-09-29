@@ -2,7 +2,7 @@ import { map } from 'rxjs/operators';
 
 import { DataTopic } from '@grafana/schema';
 
-import { DataFrame } from '../../types/dataFrame';
+import { DataFrame, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
@@ -84,12 +84,36 @@ function convertSeriesToExemplar(frame: DataFrame): DataFrame {
   };
 }
 
+/**
+ * Generate isRegion field from anno frame
+ * Requires 'time' and 'timeEnd' field names in source frame
+ */
+const createIsRegionField = (frame: DataFrame) => {
+  const timeFields = frame.fields.filter((field) => field.type === FieldType.time);
+  const startTimeField = timeFields.find((field) => field.name === 'time');
+  const timeEndField = timeFields.find((field) => field.name === 'timeEnd');
+  const isRegionValues: boolean[] =
+    startTimeField?.values.map((v, idx) => {
+      const timeEnd = timeEndField?.values?.[idx];
+      return timeEnd && v !== timeEnd?.values?.[idx];
+    }) ?? [];
+
+  return {
+    config: {},
+    name: 'isRegion',
+    type: FieldType.boolean,
+    values: isRegionValues,
+  };
+};
+
 function convertSeriesToAnnotation(frame: DataFrame): DataFrame {
   // TODO: ensure time field
   // TODO: ensure value field
+  // @todo general mapping from source fields to anno fields?
 
   return {
     ...frame,
+    fields: [...frame.fields, createIsRegionField(frame)],
     meta: {
       ...frame.meta,
       dataTopic: DataTopic.Annotations,
