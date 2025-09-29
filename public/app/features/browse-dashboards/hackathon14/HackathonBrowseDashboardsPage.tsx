@@ -10,6 +10,7 @@ import { HackathonSearchInput } from './HackathonSearchInput';
 import SparkJoyToggle from 'app/core/components/SparkJoyToggle';
 import { MostPopularDashboards } from './MostPopularDashboards';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { MostPopularFolders } from './MostPopularFolders';
 
 // New Browse/Manage/Search Dashboards views for nested folders
 const HackathonBrowseDashboardsPage = memo(
@@ -130,6 +131,7 @@ const HackathonBrowseDashboardsPage = memo(
           </div>
         ) : (
           <div className={styles.contentContainer}>
+            <MostPopularFolders />
             <MostPopularDashboards />
           </div>
         )}

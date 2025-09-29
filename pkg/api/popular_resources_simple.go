@@ -164,6 +164,7 @@ func (hs *HTTPServer) GetPopularResourcesSimple(c *contextmodel.ReqContext) resp
 	for i := range resources {
 		// If title equals UID, it means we didn't find it in SQL tables
 		if resources[i].Title == resources[i].UID {
+			hs.log.Info("Fetching title for resource from service", "uid", resources[i].UID, "type", resources[i].ResourceType)
 			switch resources[i].ResourceType {
 			case "dashboard":
 				// Fetch dashboard title via dashboard service
@@ -171,7 +172,11 @@ func (hs *HTTPServer) GetPopularResourcesSimple(c *contextmodel.ReqContext) resp
 					UID:   resources[i].UID,
 					OrgID: c.OrgID,
 				})
+				if err != nil {
+					hs.log.Warn("Failed to fetch dashboard title", "uid", resources[i].UID, "error", err)
+				}
 				if err == nil && dash != nil {
+					hs.log.Info("Successfully fetched dashboard title", "uid", resources[i].UID, "title", dash.Title)
 					resources[i].Title = dash.Title
 				}
 			case "folder":
@@ -180,7 +185,11 @@ func (hs *HTTPServer) GetPopularResourcesSimple(c *contextmodel.ReqContext) resp
 					UID:   &resources[i].UID,
 					OrgID: c.OrgID,
 				})
+				if err != nil {
+					hs.log.Warn("Failed to fetch folder title", "uid", resources[i].UID, "error", err)
+				}
 				if err == nil && foldr != nil {
+					hs.log.Info("Successfully fetched folder title", "uid", resources[i].UID, "title", foldr.Title)
 					resources[i].Title = foldr.Title
 				}
 			}
