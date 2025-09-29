@@ -218,7 +218,7 @@ func TestProcessManager_shutdown(t *testing.T) {
 
 		err = ps.stopping(nil)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "unload failed")
+		require.ErrorIs(t, err, expectedErr)
 	})
 }
 
