@@ -285,7 +285,6 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 				})).Return(nil).Once()
 				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
 				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(unexpiredTokenWithIDToken)).Once()
-
 			},
 			expectedToken: unexpiredTokenWithIDToken,
 		},
@@ -878,6 +877,41 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 			expectedToken: unexpiredTokenWithIDToken,
 		},
 		{
+			desc:         "should refresh token when the access token is expired and the external session was not found",
+			identity:     userIdentity,
+			sessionToken: &auth.UserToken{ExternalSessionId: 1},
+			setup: func(env *environment) {
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: true,
+				}
+				env.authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(&login.UserAuth{
+					AuthModule:        login.GenericOAuthModule,
+					AuthId:            "subject",
+					UserId:            1234,
+					OAuthAccessToken:  expiredToken.AccessToken,
+					OAuthRefreshToken: expiredToken.RefreshToken,
+					OAuthExpiry:       expiredToken.Expiry,
+					OAuthTokenType:    expiredToken.TokenType,
+					OAuthIdToken:      EXPIRED_ID_TOKEN,
+				}, nil)
+
+				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(nil, auth.ErrExternalSessionNotFound).Once()
+
+				env.authInfoService.On("UpdateAuthInfo", mock.Anything, mock.MatchedBy(func(cmd *login.UpdateAuthInfoCommand) bool {
+					return cmd.UserId == 1234 && cmd.AuthModule == login.GenericOAuthModule &&
+						cmd.OAuthToken.AccessToken == unexpiredTokenWithIDToken.AccessToken &&
+						cmd.OAuthToken.RefreshToken == unexpiredTokenWithIDToken.RefreshToken &&
+						cmd.OAuthToken.Expiry.Equal(unexpiredTokenWithIDToken.Expiry) &&
+						cmd.OAuthToken.TokenType == unexpiredTokenWithIDToken.TokenType
+				})).Return(nil).Once()
+
+				// env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
+
+				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(unexpiredTokenWithIDToken)).Once()
+			},
+			expectedToken: unexpiredTokenWithIDToken,
+		},
+		{
 			desc:         "should refresh token when the access token is expired",
 			identity:     userIdentity,
 			sessionToken: &auth.UserToken{ExternalSessionId: 1},
@@ -899,10 +933,10 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
 					ID:           1,
 					UserID:       1234,
-					AuthModule:   login.GenericOAuthModule,
-					AccessToken:  unexpiredToken.AccessToken,
-					RefreshToken: unexpiredToken.RefreshToken,
-					ExpiresAt:    unexpiredToken.Expiry,
+					AccessToken:  expiredToken.AccessToken,
+					RefreshToken: expiredToken.RefreshToken,
+					ExpiresAt:    expiredToken.Expiry,
+					IDToken:      UNEXPIRED_ID_TOKEN,
 				}, nil).Once()
 
 				env.authInfoService.On("UpdateAuthInfo", mock.Anything, mock.MatchedBy(func(cmd *login.UpdateAuthInfoCommand) bool {
@@ -1016,257 +1050,255 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 	}
 }
 
-// func TestIntegration_GetCurrentOAuthToken_WithExternalSessions(t *testing.T) {
-// 	testutil.SkipIntegrationTestInShortMode(t)
+func TestIntegration_GetCurrentOAuthToken_WithExternalSessions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
-// 	unexpiredToken := &oauth2.Token{
-// 		AccessToken:  "testaccess",
-// 		RefreshToken: "testrefresh",
-// 		Expiry:       time.Now().Add(time.Hour),
-// 		TokenType:    "Bearer",
-// 	}
-// 	unexpiredTokenWithIDToken := unexpiredToken.WithExtra(map[string]interface{}{
-// 		"id_token": UNEXPIRED_ID_TOKEN,
-// 	})
+	unexpiredToken := &oauth2.Token{
+		AccessToken:  "testaccess",
+		RefreshToken: "testrefresh",
+		Expiry:       time.Now().Add(time.Hour),
+		TokenType:    "Bearer",
+	}
 
-// 	expiredToken := &oauth2.Token{
-// 		AccessToken:  "testaccess",
-// 		RefreshToken: "testrefresh",
-// 		Expiry:       time.Now().Add(-time.Hour),
-// 		TokenType:    "Bearer",
-// 	}
+	unexpiredTokenWithIDToken := unexpiredToken.WithExtra(map[string]interface{}{
+		"id_token": UNEXPIRED_ID_TOKEN,
+	})
 
-// 	type environment struct {
-// 		sessionService  *authtest.MockUserAuthTokenService
-// 		authInfoService *authinfotest.MockAuthInfoService
-// 		serverLock      *serverlock.ServerLockService
-// 		socialConnector *socialtest.MockSocialConnector
-// 		socialService   *socialtest.FakeSocialService
+	expiredToken := &oauth2.Token{
+		AccessToken:  "testaccess",
+		RefreshToken: "testrefresh",
+		Expiry:       time.Now().Add(-time.Hour),
+		TokenType:    "Bearer",
+	}
 
-// 		store   db.DB
-// 		service *Service
-// 	}
+	type environment struct {
+		sessionService  *authtest.MockUserAuthTokenService
+		authInfoService *authinfotest.MockAuthInfoService
+		serverLock      *serverlock.ServerLockService
+		socialConnector *socialtest.MockSocialConnector
+		socialService   *socialtest.FakeSocialService
 
-// 	type testCase struct {
-// 		desc          string
-// 		identity      identity.Requester
-// 		sessionToken  *auth.UserToken
-// 		setup         func(env *environment)
-// 		expectedToken *oauth2.Token
-// 	}
+		store   db.DB
+		service *Service
+	}
 
-// 	userIdentity := &authn.Identity{
-// 		AuthenticatedBy: login.GenericOAuthModule,
-// 		ID:              "1234",
-// 		Type:            claims.TypeUser,
-// 	}
+	type testCase struct {
+		desc          string
+		identity      identity.Requester
+		sessionToken  *auth.UserToken
+		setup         func(env *environment)
+		expectedToken *oauth2.Token
+	}
 
-// 	tests := []testCase{
-// 		{
-// 			desc:          "should return nil when identity is nil",
-// 			identity:      nil,
-// 			expectedToken: nil,
-// 		},
-// 		{
-// 			desc:          "should return nil when identity is not a user",
-// 			identity:      &authn.Identity{ID: "1", Type: claims.TypeServiceAccount},
-// 			expectedToken: nil,
-// 		},
-// 		{
-// 			desc:     "should refresh token for render service user",
-// 			identity: &authn.Identity{ID: "1", Type: claims.TypeUser, AuthenticatedBy: login.RenderModule},
-// 			setup: func(env *environment) {
-// 				env.sessionService.On("FindExternalSessions", mock.Anything, &auth.ListExternalSessionQuery{UserID: 1}).Return([]*auth.ExternalSession{
-// 					{
-// 						ID:           1,
-// 						UserID:       1,
-// 						AuthModule:   login.GenericOAuthModule,
-// 						AccessToken:  expiredToken.AccessToken,
-// 						RefreshToken: expiredToken.RefreshToken,
-// 						ExpiresAt:    expiredToken.Expiry,
-// 						IDToken:      EXPIRED_ID_TOKEN,
-// 					},
-// 				}, nil).Once()
+	userIdentity := &authn.Identity{
+		AuthenticatedBy: login.GenericOAuthModule,
+		ID:              "1234",
+		Type:            claims.TypeUser,
+	}
 
-// 				env.authInfoService.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{UserId: 1, AuthModule: login.GenericOAuthModule}).Return(&login.UserAuth{
-// 					AuthId: "subject",
-// 				}, nil).Once()
+	tests := []testCase{
+		{
+			desc:          "should return nil when identity is nil",
+			identity:      nil,
+			expectedToken: nil,
+		},
+		{
+			desc:          "should return nil when identity is not a user",
+			identity:      &authn.Identity{ID: "1", Type: claims.TypeServiceAccount},
+			expectedToken: nil,
+		},
+		{
+			desc:     "should refresh token for render service user",
+			identity: &authn.Identity{ID: "1", Type: claims.TypeUser, AuthenticatedBy: login.RenderModule},
+			setup: func(env *environment) {
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: true,
+				}
+				env.authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(&login.UserAuth{
+					AuthModule: login.GenericOAuthModule,
+				}, nil)
 
-// 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
-// 					UseRefreshToken: true,
-// 				}
+				env.sessionService.On("GetExternalSession", mock.Anything, int64(3)).Return(&auth.ExternalSession{
+					ID:           3,
+					UserID:       1,
+					AuthModule:   login.GenericOAuthModule,
+					AccessToken:  expiredToken.AccessToken,
+					RefreshToken: expiredToken.RefreshToken,
+					ExpiresAt:    expiredToken.Expiry,
+					IDToken:      EXPIRED_ID_TOKEN,
+				}, nil).Once()
 
-// 				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
+				env.sessionService.On("FindExternalSessions", mock.Anything, &auth.ListExternalSessionQuery{UserID: 1}).Return([]*auth.ExternalSession{
+					{
+						ID:           3,
+						UserID:       1,
+						AuthModule:   login.GenericOAuthModule,
+						AccessToken:  expiredToken.AccessToken,
+						RefreshToken: expiredToken.RefreshToken,
+						ExpiresAt:    expiredToken.Expiry,
+						IDToken:      EXPIRED_ID_TOKEN,
+					},
+				}, nil).Once()
 
-// 				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(unexpiredTokenWithIDToken)).Once()
-// 			},
-// 			expectedToken: unexpiredTokenWithIDToken,
-// 		},
-// 		{
-// 			desc:     "should skip token refresh when the token is still valid and no id token is present",
-// 			identity: userIdentity,
-// 			sessionToken: &auth.UserToken{
-// 				ExternalSessionId: 1,
-// 			},
-// 			setup: func(env *environment) {
-// 				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
-// 					ID:           1,
-// 					UserID:       1234,
-// 					AuthModule:   login.GenericOAuthModule,
-// 					AccessToken:  unexpiredToken.AccessToken,
-// 					RefreshToken: unexpiredToken.RefreshToken,
-// 					ExpiresAt:    unexpiredToken.Expiry,
-// 				}, nil).Once()
+				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(3), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
 
-// 				env.authInfoService.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{UserId: 1234, AuthModule: login.GenericOAuthModule}).Return(&login.UserAuth{
-// 					AuthId: "subject",
-// 				}, nil).Once()
+				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(unexpiredTokenWithIDToken)).Once()
+			},
+			expectedToken: unexpiredTokenWithIDToken,
+		},
+		{
+			desc:         "should skip token refresh when the token is still valid and no id token is present",
+			identity:     userIdentity,
+			sessionToken: &auth.UserToken{ExternalSessionId: 1},
+			setup: func(env *environment) {
+				env.authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(&login.UserAuth{
+					AuthModule: login.GenericOAuthModule,
+				}, nil)
 
-// 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
-// 					UseRefreshToken: true,
-// 				}
-// 			},
-// 			expectedToken: unexpiredToken,
-// 		},
-// 		{
-// 			desc:     "should not do token refresh if access token or id token have not expired yet",
-// 			identity: userIdentity,
-// 			sessionToken: &auth.UserToken{
-// 				ExternalSessionId: 1,
-// 			},
-// 			setup: func(env *environment) {
-// 				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
-// 					ID:           1,
-// 					UserID:       1234,
-// 					AuthModule:   login.GenericOAuthModule,
-// 					AccessToken:  unexpiredTokenWithIDToken.AccessToken,
-// 					RefreshToken: unexpiredTokenWithIDToken.RefreshToken,
-// 					ExpiresAt:    unexpiredTokenWithIDToken.Expiry,
-// 					IDToken:      UNEXPIRED_ID_TOKEN,
-// 				}, nil).Once()
+				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
+					ID:           1,
+					UserID:       1234,
+					AuthModule:   login.GenericOAuthModule,
+					AccessToken:  unexpiredToken.AccessToken,
+					RefreshToken: unexpiredToken.RefreshToken,
+					ExpiresAt:    unexpiredToken.Expiry,
+				}, nil).Once()
 
-// 				env.authInfoService.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{UserId: 1234, AuthModule: login.GenericOAuthModule}).Return(&login.UserAuth{
-// 					AuthId: "subject",
-// 				}, nil).Once()
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: true,
+				}
+			},
+			expectedToken: unexpiredToken,
+		},
+		{
+			desc:         "should not do token refresh if access token or id token have not expired yet",
+			identity:     userIdentity,
+			sessionToken: &auth.UserToken{ExternalSessionId: 1},
+			setup: func(env *environment) {
+				env.authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(&login.UserAuth{
+					AuthModule: login.GenericOAuthModule,
+				}, nil)
 
-// 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
-// 					UseRefreshToken: true,
-// 				}
-// 			},
-// 			expectedToken: unexpiredTokenWithIDToken,
-// 		},
-// 		{
-// 			desc:     "should refresh token when the access token is expired",
-// 			identity: userIdentity,
-// 			sessionToken: &auth.UserToken{
-// 				ExternalSessionId: 1,
-// 			},
-// 			setup: func(env *environment) {
-// 				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
-// 					ID:           1,
-// 					UserID:       1234,
-// 					AuthModule:   login.GenericOAuthModule,
-// 					AccessToken:  expiredToken.AccessToken,
-// 					RefreshToken: expiredToken.RefreshToken,
-// 					ExpiresAt:    expiredToken.Expiry,
-// 					IDToken:      UNEXPIRED_ID_TOKEN,
-// 				}, nil).Once()
+				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
+					ID:           1,
+					UserID:       1234,
+					AuthModule:   login.GenericOAuthModule,
+					AccessToken:  unexpiredTokenWithIDToken.AccessToken,
+					RefreshToken: unexpiredTokenWithIDToken.RefreshToken,
+					ExpiresAt:    unexpiredTokenWithIDToken.Expiry,
+					IDToken:      UNEXPIRED_ID_TOKEN,
+				}, nil).Once()
 
-// 				env.authInfoService.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{UserId: 1234, AuthModule: login.GenericOAuthModule}).Return(&login.UserAuth{
-// 					AuthId: "subject",
-// 				}, nil).Once()
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: true,
+				}
+			},
+			expectedToken: unexpiredTokenWithIDToken,
+		},
+		{
+			desc:         "should refresh token when the access token is expired",
+			identity:     userIdentity,
+			sessionToken: &auth.UserToken{ExternalSessionId: 1},
+			setup: func(env *environment) {
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: true,
+				}
+				env.authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(&login.UserAuth{
+					AuthModule: login.GenericOAuthModule,
+				}, nil)
 
-// 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
-// 					UseRefreshToken: true,
-// 				}
+				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
+					ID:           1,
+					UserID:       1,
+					AccessToken:  expiredToken.AccessToken,
+					RefreshToken: expiredToken.RefreshToken,
+					ExpiresAt:    expiredToken.Expiry,
+					IDToken:      UNEXPIRED_ID_TOKEN,
+				}, nil).Twice()
 
-// 				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
+				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
 
-// 				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(unexpiredTokenWithIDToken)).Once()
-// 			},
-// 			expectedToken: unexpiredTokenWithIDToken,
-// 		},
-// 		{
-// 			desc:     "should refresh token when the id token is expired",
-// 			identity: userIdentity,
-// 			sessionToken: &auth.UserToken{
-// 				ExternalSessionId: 1,
-// 			},
-// 			setup: func(env *environment) {
-// 				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
-// 					ID:           1,
-// 					UserID:       1234,
-// 					AuthModule:   login.GenericOAuthModule,
-// 					AccessToken:  unexpiredTokenWithIDToken.AccessToken,
-// 					RefreshToken: unexpiredTokenWithIDToken.RefreshToken,
-// 					ExpiresAt:    unexpiredTokenWithIDToken.Expiry,
-// 					IDToken:      EXPIRED_ID_TOKEN,
-// 				}, nil).Once()
+				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(unexpiredTokenWithIDToken)).Once()
+			},
+			expectedToken: unexpiredTokenWithIDToken,
+		},
+		{
+			desc:         "should refresh token when the id token is expired",
+			identity:     userIdentity,
+			sessionToken: &auth.UserToken{ExternalSessionId: 1},
+			setup: func(env *environment) {
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: true,
+				}
+				env.authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(&login.UserAuth{
+					AuthModule: login.GenericOAuthModule,
+				}, nil)
 
-// 				env.authInfoService.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{UserId: 1234, AuthModule: login.GenericOAuthModule}).Return(&login.UserAuth{
-// 					AuthId: "subject",
-// 				}, nil).Once()
+				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
+					ID:           1,
+					UserID:       1234,
+					AuthModule:   login.GenericOAuthModule,
+					AccessToken:  unexpiredToken.AccessToken,
+					RefreshToken: unexpiredToken.RefreshToken,
+					ExpiresAt:    unexpiredToken.Expiry,
+					IDToken:      EXPIRED_ID_TOKEN,
+				}, nil).Twice()
 
-// 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
-// 					UseRefreshToken: true,
-// 				}
+				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
 
-// 				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
+				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(unexpiredTokenWithIDToken)).Once()
+			},
+			expectedToken: unexpiredTokenWithIDToken,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			socialConnector := socialtest.NewMockSocialConnector(t)
+			store := db.InitTestDB(t)
+			features := featuremgmt.WithFeatures(featuremgmt.FlagImprovedExternalSessionHandling)
 
-// 				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(unexpiredTokenWithIDToken)).Once()
-// 			},
-// 			expectedToken: unexpiredTokenWithIDToken,
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.desc, func(t *testing.T) {
-// 			socialConnector := socialtest.NewMockSocialConnector(t)
-// 			store := db.InitTestDB(t)
-// 			features := featuremgmt.WithFeatures(featuremgmt.FlagImprovedExternalSessionHandling)
+			env := environment{
+				sessionService:  authtest.NewMockUserAuthTokenService(t),
+				authInfoService: authinfotest.NewMockAuthInfoService(t),
+				serverLock:      serverlock.ProvideService(store, tracing.InitializeTracerForTest()),
+				socialConnector: socialConnector,
+				socialService: &socialtest.FakeSocialService{
+					ExpectedConnector: socialConnector,
+				},
+				store: store,
+			}
 
-// 			env := environment{
-// 				sessionService:  authtest.NewMockUserAuthTokenService(t),
-// 				authInfoService: authinfotest.NewMockAuthInfoService(t),
-// 				serverLock:      serverlock.ProvideService(store, tracing.InitializeTracerForTest()),
-// 				socialConnector: socialConnector,
-// 				socialService: &socialtest.FakeSocialService{
-// 					ExpectedConnector: socialConnector,
-// 				},
-// 				store: store,
-// 			}
+			if tt.setup != nil {
+				tt.setup(&env)
+			}
 
-// 			if tt.setup != nil {
-// 				tt.setup(&env)
-// 			}
+			env.service = ProvideService(
+				env.socialService,
+				env.authInfoService,
+				setting.NewCfg(),
+				prometheus.NewRegistry(),
+				env.serverLock,
+				tracing.InitializeTracerForTest(),
+				env.sessionService,
+				features,
+			)
 
-// 			env.service = ProvideService(
-// 				env.socialService,
-// 				env.authInfoService,
-// 				setting.NewCfg(),
-// 				prometheus.NewRegistry(),
-// 				env.serverLock,
-// 				tracing.InitializeTracerForTest(),
-// 				env.sessionService,
-// 				features,
-// 			)
+			actualToken := env.service.GetCurrentOAuthToken(context.Background(), tt.identity, tt.sessionToken)
 
-// 			actualToken := env.service.GetCurrentOAuthToken(context.Background(), tt.identity, tt.sessionToken)
+			if tt.expectedToken == nil {
+				assert.Nil(t, actualToken)
+				return
+			}
 
-// 			if tt.expectedToken == nil {
-// 				assert.Nil(t, actualToken)
-// 				return
-// 			}
-
-// 			assert.NotNil(t, actualToken)
-// 			assert.Equal(t, tt.expectedToken.AccessToken, actualToken.AccessToken)
-// 			assert.Equal(t, tt.expectedToken.RefreshToken, actualToken.RefreshToken)
-// 			assert.WithinDuration(t, tt.expectedToken.Expiry, actualToken.Expiry, time.Second)
-// 			assert.Equal(t, tt.expectedToken.TokenType, actualToken.TokenType)
-// 			if tt.expectedToken.Extra("id_token") != nil {
-// 				assert.Equal(t, tt.expectedToken.Extra("id_token"), actualToken.Extra("id_token"))
-// 			} else {
-// 				assert.Nil(t, actualToken.Extra("id_token"))
-// 			}
-// 		})
-// 	}
-// }
+			assert.NotNil(t, actualToken)
+			assert.Equal(t, tt.expectedToken.AccessToken, actualToken.AccessToken)
+			assert.Equal(t, tt.expectedToken.RefreshToken, actualToken.RefreshToken)
+			assert.WithinDuration(t, tt.expectedToken.Expiry, actualToken.Expiry, time.Second)
+			if tt.expectedToken.Extra("id_token") != nil {
+				assert.Equal(t, tt.expectedToken.Extra("id_token"), actualToken.Extra("id_token"))
+			} else {
+				assert.Nil(t, actualToken.Extra("id_token"))
+			}
+		})
+	}
+}
