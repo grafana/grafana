@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FilterInput, useStyles2, Button, Icon } from '@grafana/ui';
+import { FilterTag } from './FilterTag';
 
 interface HackathonSearchInputProps {
   onSearchChange?: (value: string) => void;
@@ -71,15 +72,7 @@ export const HackathonSearchInput = ({
             Owned by me
           </Button>
 
-          <Button
-            variant={activeFilters.filterByTag ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => toggleFilter('filterByTag')}
-            className={styles.filterButton}
-          >
-            <Icon name="tag-alt" />
-            Filter by tag
-          </Button>
+          <FilterTag />
 
           <Button
             variant={activeFilters.moreFilters ? 'primary' : 'secondary'}
