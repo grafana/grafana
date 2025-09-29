@@ -1681,6 +1681,10 @@
     "inspector-yaml-tab": {
       "apply": "Použít"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "Jak se připojit k IRM",
       "disabled-description": "Povolit IRM prostřednictvím integrace webhooku",
@@ -1824,6 +1828,10 @@
           "use-notification-policy": "Použít zásadu oznamování"
         }
       }
+    },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
     },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Filtrovat výstrahy pomocí dotazování na štítky bez složených závorek, např.:",
@@ -1987,8 +1995,10 @@
       "label-notification-policies": "Zásady oznamování",
       "label-time-intervals": "Časové intervaly"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "Výchozí zásada",
       "no-matchers": "Žádné shody"
     },
     "notification-preview": {
@@ -2005,22 +2015,12 @@
     },
     "notification-route": {
       "no-labels": "Žádné štítky",
-      "no-matching-labels": "Žádné shodné štítky"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Vaše instance výstrah jsou přesměrovány následujícím způsobem.",
-      "close": "Zavřít",
-      "contact-point": "Kontaktní bod",
-      "default-policy": "Výchozí zásada",
-      "notification-policy-path": "Cesta k zásadě oznamování",
-      "see-details-link": "Zobrazit detaily",
-      "title-routing-details": "Podrobnosti o směrování"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Rozbalit trasu zásad",
-      "delivered-to": "@doručeno:",
-      "notification-policy": "Zásada oznamování",
-      "see-details": "Zobrazit detaily"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2143,19 +2143,15 @@
         "suffix": "Aktualizujte stránku a zkuste to znovu.",
         "title": "Nepodařilo se přidat nebo aktualizovat zásadu oznamování"
       },
-      "n-more-policies_one": "{{count}} další zásady",
-      "n-more-policies_few": "{{count}} další zásady",
-      "n-more-policies_many": "{{count}} další zásady",
-      "n-more-policies_other": "{{count}} další zásady"
+      "n-more-policies_one": "",
+      "n-more-policies_few": "",
+      "n-more-policies_many": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Nová podřízená zásada",
       "label-new-sibling-above": "Nová souvislost nahoře",
       "label-new-sibling-below": "Nová souvislost dole"
-    },
-    "policy-path": {
-      "default-policy": "Výchozí zásada",
-      "no-matchers": "Žádné shody"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Náhled dotazu nelze zobrazit. Některé zdroje dat použité v dotazech nejsou k dispozici.",
@@ -9403,6 +9399,7 @@
     },
     "share-panel": {
       "config-description": "Vytvořte personalizovaný přímý odkaz pro sdílení panelu v rámci vaší organizace s následujícími možnostmi přizpůsobení:",
+      "copy-image-link": "",
       "download-image": "Stáhnout obrázek",
       "render-image": "Generovat obrázek"
     }
@@ -10719,6 +10716,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11403,6 +11408,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Nastavit povinné přepínače funkcí"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Spravujte nástěnky jako kód v Git a automaticky zajišťujte aktualizace",
       "manage-your-dashboards-with-remote-provisioning": "Začínáme se synchronizací Git",
       "store-dashboards-in-version-controlled-storage": "Ukládejte nástěnky do úložiště s pevně nastavenou verzí pro lepší organizaci a sledování historie"
@@ -11596,8 +11602,16 @@
         "subtitle": "Tuto možnost použijte, pokud chcete synchronizovat a spravovat celou instanci Grafany prostřednictvím externího úložiště."
       }
     },
-    "read-only-local-tooltip": "Tato složka je jen pro čtení a je zajištěna prostřednictvím zajištění souborů. Chcete-li provést jakékoli změny ve složce, aktualizujte připojené úložiště souborů. Chcete-li upravit nastavení složky, přejděte na Správa > Zajištění > Úložiště.",
-    "read-only-remote-tooltip": "Tato složka je jen pro čtení a je zajištěna prostřednictvím služby Git. Chcete-li provést jakékoli změny ve složce, aktualizujte připojené úložiště. Chcete-li upravit nastavení složky, přejděte do části Správa > Zajištění > Úložiště.",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "aktivní práce",
       "column-action": "Akce",
@@ -11711,6 +11725,7 @@
         "removed-from-repo-test-ui": "odebráno z uživatelského rozhraní repo testu",
         "updated-from-repo-test-ui": "aktualizováno z uživatelského rozhraní repo testu"
       },
+      "read-only-repo-tooltip": "",
       "repository": "Úložiště",
       "tab-info": {
         "label": {
@@ -11747,6 +11762,8 @@
       "tooltip-unhealthy-repository": "Nelze stáhnout nezdravé úložiště"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "Zahrnout předložení pro každou historickou hodnotu",
       "synchronization-options": "Možnosti synchronizace"
@@ -12036,14 +12053,14 @@
       "restore-button": "Obnovit",
       "restore-loading": "Probíhá obnovení…",
       "title": "Obnovit nástěnky",
-      "folder-picker-text_one": "Vyberte složku, do které budou vaše nástěnky obnoveny.",
-      "folder-picker-text_few": "Vyberte složku, do které budou vaše nástěnky obnoveny.",
-      "folder-picker-text_many": "Vyberte složku, do které budou vaše nástěnky obnoveny.",
-      "folder-picker-text_other": "Vyberte složku, do které budou vaše nástěnky obnoveny.",
-      "text_one": "Tato akce obnoví následující počet nástěnek: {{numberOfDashboards}}.",
-      "text_few": "Tato akce obnoví následující počet nástěnek: {{numberOfDashboards}}.",
-      "text_many": "Tato akce obnoví následující počet nástěnek: {{numberOfDashboards}}.",
-      "text_other": "Tato akce obnoví následující počet nástěnek: {{numberOfDashboards}}."
+      "folder-picker-text_one": "",
+      "folder-picker-text_few": "",
+      "folder-picker-text_many": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_few": "",
+      "text_many": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {
