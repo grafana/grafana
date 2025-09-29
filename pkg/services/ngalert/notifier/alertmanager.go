@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/nfstatus"
 	"github.com/prometheus/alertmanager/config"
@@ -406,7 +407,7 @@ func patchNewSecureFields(ctx context.Context, api *alertingNotify.APIReceiver, 
 	return nil
 }
 
-func patchSettingsFromSecureSettings(ctx context.Context, integration *alertingNotify.GrafanaIntegrationConfig, key string, decode alertingNotify.DecodeSecretsFn, decrypt alertingNotify.GetDecryptedValueFn) error {
+func patchSettingsFromSecureSettings(ctx context.Context, integration *models.IntegrationConfig, key string, decode alertingNotify.DecodeSecretsFn, decrypt alertingNotify.GetDecryptedValueFn) error {
 	if _, ok := integration.SecureSettings[key]; !ok {
 		return nil
 	}

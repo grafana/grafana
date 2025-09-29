@@ -14,9 +14,7 @@ import (
 	"testing"
 	"time"
 
-	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/notifytest"
-	"github.com/grafana/alerting/receivers/schema"
 	prometheus "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/timeinterval"
