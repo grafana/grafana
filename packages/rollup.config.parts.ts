@@ -27,7 +27,7 @@ export function cjsOutput(pkg) {
   return {
     format: 'cjs',
     sourcemap: true,
-    dir: dirname(pkg.publishConfig.main),
+    dir: dirname(pkg.main),
     entryFileNames: '[name].cjs',
     esModule: true,
     interop: 'compat',
@@ -39,7 +39,7 @@ export function esmOutput(pkg, pkgName) {
   return {
     format: 'esm',
     sourcemap: true,
-    dir: dirname(pkg.publishConfig.module),
+    dir: dirname(pkg.module),
     entryFileNames: '[name].mjs',
     preserveModules: true,
     preserveModulesRoot: resolve(projectCwd, `packages/${pkgName}/src`),
