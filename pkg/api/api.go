@@ -455,6 +455,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Resources (popular resources endpoint)
 		apiRoute.Get("/resources/popular", routing.Wrap(hs.GetPopularResourcesSimple))
+		apiRoute.Get("/resources/recent", routing.Wrap(hs.GetRecentResourcesSimple))
 		apiRoute.Post("/resources/:type/:uid/visit", routing.Wrap(hs.RecordResourceVisitSimple))
 
 		// Dashboard

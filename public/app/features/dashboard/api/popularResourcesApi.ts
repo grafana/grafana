@@ -25,12 +25,18 @@ export interface GetPopularResourcesParams {
   period?: '7d' | '30d' | '90d' | 'all';
 }
 
+export interface GetRecentResourcesParams {
+  types?: ResourceType[];
+  limit?: number;
+  period?: '7d' | '30d' | '90d' | 'all';
+}
+
 export const popularResourcesApi = createApi({
   reducerPath: 'popularResourcesApi',
   baseQuery: fetchBaseQuery({
     baseUrl: '/api/',
   }),
-  tagTypes: ['PopularResources'],
+  tagTypes: ['PopularResources', 'RecentResources'],
   endpoints: (builder) => ({
     getPopularResources: builder.query<PopularResourcesResponse, GetPopularResourcesParams>({
       query: ({ type, limit = 10, period = '30d' } = {}) => {
@@ -44,18 +50,32 @@ export const popularResourcesApi = createApi({
       providesTags: ['PopularResources'],
     }),
     
+    getRecentResources: builder.query<PopularResourcesResponse, GetRecentResourcesParams>({
+      query: ({ types = [], limit = 10, period = '30d' } = {}) => {
+        const params = new URLSearchParams();
+        // Add types as array parameters (types[]=dashboard&types[]=folder)
+        types.forEach(type => params.append('types[]', type));
+        params.set('limit', limit.toString());
+        params.set('period', period);
+        
+        return `resources/recent?${params.toString()}`;
+      },
+      providesTags: ['RecentResources'],
+    }),
+    
     recordResourceVisit: builder.mutation<{ message: string }, { uid: string; type: ResourceType }>({
       query: ({ uid, type }) => ({
         url: `resources/${type}/${uid}/visit`,
         method: 'POST',
       }),
-      invalidatesTags: ['PopularResources'],
+      invalidatesTags: ['PopularResources', 'RecentResources'],
     }),
   }),
 });
 
 export const { 
   useGetPopularResourcesQuery,
+  useGetRecentResourcesQuery,
   useRecordResourceVisitMutation,
 } = popularResourcesApi;
 
@@ -82,3 +102,19 @@ export const useGetPopularResourcesConditional = (
     { ...params, type: resourceType! }, 
     { skip: !resourceType } // Skip the query if resourceType is null
   );
+
+// Recent resources hooks with support for multiple types
+export const useGetRecentResources = (params?: GetRecentResourcesParams) =>
+  useGetRecentResourcesQuery(params || {});
+
+// Convenience hook for recent dashboards and folders together
+export const useGetRecentDashboardsAndFolders = (params?: Omit<GetRecentResourcesParams, 'types'>) =>
+  useGetRecentResourcesQuery({ ...params, types: ['dashboard', 'folder'] });
+
+// Convenience hook for recent dashboards only
+export const useGetRecentDashboards = (params?: Omit<GetRecentResourcesParams, 'types'>) =>
+  useGetRecentResourcesQuery({ ...params, types: ['dashboard'] });
+
+// Convenience hook for recent folders only
+export const useGetRecentFolders = (params?: Omit<GetRecentResourcesParams, 'types'>) =>
+  useGetRecentResourcesQuery({ ...params, types: ['folder'] });
