@@ -38,7 +38,8 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
         props.plugin.fieldConfigRegistry,
         props.data?.series ?? [],
         searchQuery,
-        props.onFieldConfigsChange
+        props.onFieldConfigsChange,
+        props.data?.annotations
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [panel.configRev, props.data, props.instanceState, searchQuery]

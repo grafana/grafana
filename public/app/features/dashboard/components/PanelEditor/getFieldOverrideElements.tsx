@@ -28,9 +28,10 @@ import { OverrideCategoryTitle } from './OverrideCategoryTitle';
 export function getFieldOverrideCategories(
   fieldConfig: FieldConfigSource,
   registry: FieldConfigOptionsRegistry,
-  data: DataFrame[],
+  series: DataFrame[],
   searchQuery: string,
-  onFieldConfigsChange: (config: FieldConfigSource) => void
+  onFieldConfigsChange: (config: FieldConfigSource) => void,
+  annotations?: DataFrame[],
 ): OptionsPaneCategoryDescriptor[] {
   const categories: OptionsPaneCategoryDescriptor[] = [];
   const currentFieldConfig = fieldConfig;
@@ -67,8 +68,8 @@ export function getFieldOverrideCategories(
   };
 
   const context = {
-    data,
-    getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
+    data: series,
+    getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(series, scope),
     isOverride: true,
   };
 
@@ -132,7 +133,8 @@ export function getFieldOverrideCategories(
             <matcherUi.component
               id={htmlId}
               matcher={matcherUi.matcher}
-              data={data ?? []}
+              series={series}
+              annotations={annotations}
               options={override.matcher.options}
               onChange={onMatcherConfigChange}
             />
