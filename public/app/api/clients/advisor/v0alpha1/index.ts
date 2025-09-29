@@ -1,6 +1,6 @@
-import { advisorAPIv0alpha1Generated as generatedAPI } from '@grafana/api-clients';
+import { v0alpha1 } from '@grafana/api-clients/advisor';
 
-export const advisorAPIv0alpha1 = generatedAPI.enhanceEndpoints({
+export const advisorAPIv0alpha1 = v0alpha1.generatedAPI.enhanceEndpoints({
   endpoints: {
     // Need to mutate the generated query to set the Content-Type header correctly
     updateCheck: (endpointDefinition) => {
@@ -38,4 +38,6 @@ export const {
   useListCheckTypeQuery,
   useUpdateCheckTypeMutation,
 } = advisorAPIv0alpha1;
-export { type Check, type CheckType } from '@grafana/api-clients'; // eslint-disable-line
+
+// eslint-disable-next-line no-barrel-files/no-barrel-files
+export { type Check, type CheckType } from '@grafana/api-clients/advisor';
