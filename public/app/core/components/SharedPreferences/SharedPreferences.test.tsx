@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
+import { Preferences as UserPreferencesDTO } from '@grafana/schema/raw/preferences';
 
 import SharedPreferences from './SharedPreferences';
 

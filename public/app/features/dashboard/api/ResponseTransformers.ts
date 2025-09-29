@@ -14,6 +14,7 @@ import {
   MappingType as MappingTypeV1,
   SpecialValueMatch as SpecialValueMatchV1,
 } from '@grafana/schema';
+import { DashboardLink, DataTransformerConfig } from '@grafana/schema/raw/dashboard';
 import {
   AnnotationQueryKind,
   Spec as DashboardV2Spec,
@@ -41,8 +42,7 @@ import {
   defaultDataQueryKind,
   RowsLayoutRowKind,
   GridLayoutKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
+} from '@grafana/schema/schema/dashboard/v2';
 import { isWeekStart, WeekStart } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
