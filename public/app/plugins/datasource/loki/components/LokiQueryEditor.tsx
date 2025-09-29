@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { memo, SyntheticEvent, useCallback, useEffect, useId, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { CoreApp, LoadingState, store as grafanaStore } from '@grafana/data';
+import { CoreApp, LoadingState, store as grafanaStore, getValueFormat, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   EditorHeader,
@@ -13,7 +14,7 @@ import {
   QueryEditorMode,
 } from '@grafana/plugin-ui';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal, Space, Stack, RadioButtonGroup } from '@grafana/ui';
+import { Button, ConfirmModal, Space, Stack, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { isLogsQuery } from '../queryUtils';
 import { LabelBrowserModal } from '../querybuilder/components/LabelBrowserModal';
@@ -33,6 +34,59 @@ export const testIds = {
 };
 
 export const lokiQueryEditorExplainKey = 'LokiQueryEditorExplainDefault';
+
+// Component to show just the query stats when sparkJoy is enabled
+const QueryStatsDisplay = ({ queryStats }: { queryStats: QueryStats | null }) => {
+  const styles = useStyles2(getQueryStatsStyles);
+  
+  const generateQueryStats = (stats: QueryStats) => {
+    if (stats.message) {
+      return stats.message;
+    }
+    const { text, suffix } = getValueFormat('bytes')(stats.bytes, 1);
+    return `This query will process approximately ${text}${suffix}.`;
+  };
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.spacer} />
+      {queryStats ? (
+        <p className={styles.stats}>{generateQueryStats(queryStats)}</p>
+      ) : (
+        <div className={styles.placeholder}>&nbsp;</div>
+      )}
+    </div>
+  );
+};
+
+const getQueryStatsStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%', // Reserve space to prevent content jumping
+    paddingTop: `${theme.spacing(0.25)}`,
+  }),
+  spacer: css({
+    flex: 1, // Takes up remaining space to push stats to the right
+  }),
+  stats: css({
+    margin: 0,
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontStyle: 'italic', // Make it italic like the original
+    textAlign: 'right',
+    whiteSpace: 'nowrap', // Prevent wrapping
+  }),
+  placeholder: css({
+    margin: 0,
+    color: 'transparent', // Hidden but maintains space
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontStyle: 'italic',
+    textAlign: 'right',
+    whiteSpace: 'nowrap',
+  }),
+});
 
 export const LokiQueryEditor = memo<LokiQueryEditorProps & { sparkJoy?: boolean }>((props) => {
   const id = useId();
@@ -264,6 +318,7 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps & { sparkJoy?: boolean 
           />
         )}
       </EditorRows>
+      {sparkJoy && <QueryStatsDisplay queryStats={queryStats} />}
     </>
   );
 });
