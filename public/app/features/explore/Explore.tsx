@@ -114,6 +114,7 @@ export interface ExploreProps extends Themeable2 {
 
 interface ExploreState {
   contentOutlineVisible: boolean;
+  sparkJoy: boolean;
 }
 
 export type Props = ExploreProps & ConnectedProps<typeof connector>;
@@ -152,6 +153,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
     super(props);
     this.state = {
       contentOutlineVisible: store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.visible, true),
+      sparkJoy: true,
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
     this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
@@ -345,6 +347,10 @@ export class Explore extends PureComponent<Props, ExploreState> {
 
   onPinLineCallback = () => {
     this.setState({ contentOutlineVisible: true });
+  };
+
+  onToggleSparkJoy = () => {
+    this.setState((state) => ({ sparkJoy: !state.sparkJoy }));
   };
 
   renderEmptyState(exploreContainerStyles: string) {
@@ -592,7 +598,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
       compact,
       queryLibraryRef,
     } = this.props;
-    const { contentOutlineVisible } = this.state;
+    const { contentOutlineVisible, sparkJoy } = this.state;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const richHistoryRowButtonHidden = !supportedFeatures().queryHistoryAvailable;
@@ -623,6 +629,8 @@ export class Explore extends PureComponent<Props, ExploreState> {
           onChangeTime={this.onChangeTime}
           onContentOutlineToogle={this.onContentOutlineToogle}
           isContentOutlineOpen={contentOutlineVisible}
+          sparkJoy={sparkJoy}
+          onToggleSparkJoy={this.onToggleSparkJoy}
         />
         <div
           style={{
@@ -657,6 +665,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           // compact mode explicitly with a button in the UI instead of exiting when row is opened or
                           // content outline is opened.
                           isOpen={compact ? false : undefined}
+                          sparkJoy={sparkJoy}
                           changeCompactMode={(compact: boolean) =>
                             this.props.changeCompactMode(this.props.exploreId, false)
                           }

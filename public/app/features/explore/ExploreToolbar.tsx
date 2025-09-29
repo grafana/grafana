@@ -16,6 +16,7 @@ import {
   ButtonGroup,
   useStyles2,
   Button,
+  Switch,
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -64,9 +65,11 @@ interface Props {
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
   onContentOutlineToogle: () => void;
   isContentOutlineOpen: boolean;
+  sparkJoy: boolean;
+  onToggleSparkJoy: () => void;
 }
 
-export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen }: Props) {
+export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen, sparkJoy, onToggleSparkJoy }: Props) {
   const dispatch = useDispatch();
   const splitted = useSelector(isSplit);
   const styles = useStyles2(getStyles, splitted);
@@ -216,6 +219,14 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     >
       <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
     </Button>,
+    <Switch
+      key="sparks-joy-toggle"
+      value={sparkJoy}
+      name='Spark joy'
+      onChange={onToggleSparkJoy}
+      aria-label={t('explore.explore-toolbar.sparks-joy', 'Sparks Joy')}
+      label={t('explore.explore-toolbar.sparks-joy', 'Sparks Joy')}
+    />,
     <ShortLinkButtonMenu key="share" />,
   ];
 

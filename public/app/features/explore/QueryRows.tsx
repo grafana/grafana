@@ -21,6 +21,7 @@ interface Props {
   exploreId: string;
   changeCompactMode: (compact: boolean) => void;
   isOpen?: boolean;
+  sparkJoy?: boolean;
 }
 
 const makeSelectors = (exploreId: string) => {
@@ -38,7 +39,7 @@ const makeSelectors = (exploreId: string) => {
   };
 };
 
-export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
+export const QueryRows = ({ exploreId, isOpen, changeCompactMode, sparkJoy }: Props) => {
   const dispatch = useDispatch();
   const { openDrawer } = useQueryLibraryContext();
   const {
@@ -143,6 +144,7 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
       queryLibraryRef={queryLibraryRef}
       onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
       isOpen={isOpen}
+      sparkJoy={sparkJoy}
       queryRowWrapper={(children, refId) => (
         <ContentOutlineItem
           title={refId}

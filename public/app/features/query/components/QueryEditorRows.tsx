@@ -44,6 +44,7 @@ export interface Props {
   queryLibraryRef?: string;
   onCancelQueryLibraryEdit?: () => void;
   isOpen?: boolean;
+  sparkJoy?: boolean;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -186,6 +187,7 @@ export class QueryEditorRows extends PureComponent<Props> {
       queryLibraryRef,
       onCancelQueryLibraryEdit,
       isOpen,
+      sparkJoy,
     } = this.props;
 
     return (
@@ -227,6 +229,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                       queryLibraryRef={queryLibraryRef}
                       onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
                       isOpen={isOpen}
+                      sparkJoy={sparkJoy}
                     />
                   );
 
