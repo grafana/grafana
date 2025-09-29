@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -8,8 +8,12 @@ import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { LinkButton, FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
 import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
+import { SparkJoyToggle } from 'app/core/components/SparkJoyToggle';
+import { SparkJoyWave } from 'app/core/components/SparkJoyWave';
 import { getConfig } from 'app/core/config';
+import { getSparkJoyEnabled, setSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 import { useDispatch } from 'app/types/store';
 
 import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';
@@ -37,6 +41,13 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const dispatch = useDispatch();
 
   const styles = useStyles2(getStyles);
+  const [sparkJoy, setSparkJoy] = useState<boolean>(() => getSparkJoyEnabled(true));
+  const onToggleSparkJoy = () =>
+    setSparkJoy((current) => {
+      const next = !current;
+      setSparkJoyEnabled(next);
+      return next;
+    });
   const [searchState, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
   const location = useLocation();
@@ -153,6 +164,9 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
       renderTitle={renderTitle}
       actions={
         <>
+          <AppChromeUpdate
+            actions={[<SparkJoyToggle key="sparks-joy-toggle" value={sparkJoy} onToggle={onToggleSparkJoy} />]}
+          />
           {config.featureToggles.restoreDashboards && hasAdminRights && (
             <LinkButton
               variant="secondary"
@@ -175,6 +189,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
         </>
       }
     >
+      <SparkJoyWave active={sparkJoy} />
       <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />
         <div>
