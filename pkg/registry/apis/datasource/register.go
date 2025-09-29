@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
@@ -50,7 +51,7 @@ type DataSourceAPIBuilder struct {
 }
 
 func RegisterAPIService(
-	cfg *setting.Cfg,
+	cfgProvider configprovider.ConfigProvider,
 	features featuremgmt.FeatureToggles,
 	apiRegistrar builder.APIRegistrar,
 	pluginClient plugins.Client, // access to everything
@@ -70,6 +71,10 @@ func RegisterAPIService(
 	var err error
 	var builder *DataSourceAPIBuilder
 
+	cfg, err := cfgProvider.Get(context.Background())
+	if err != nil {
+		return nil, err
+	}
 	pluginJSONs, err := getCorePlugins(cfg)
 	if err != nil {
 		return nil, err
