@@ -29,14 +29,14 @@ var (
 
 type AnnotationsAppInstaller struct {
 	appsdkapiserver.AppInstaller
-	legacyService annotations.Repository
-	namespacer    request.NamespaceMapper
+	legacyStore annotations.Repository
+	namespacer  request.NamespaceMapper
 }
 
-func RegisterAppInstaller(cfg *setting.Cfg, features featuremgmt.FeatureToggles, legacyService annotations.Repository) (*AnnotationsAppInstaller, error) {
+func RegisterAppInstaller(cfg *setting.Cfg, features featuremgmt.FeatureToggles, legacyStore annotations.Repository) (*AnnotationsAppInstaller, error) {
 	installer := &AnnotationsAppInstaller{
-		legacyService: legacyService,
-		namespacer:    request.GetNamespaceMapper(cfg),
+		legacyStore: legacyStore,
+		namespacer:  request.GetNamespaceMapper(cfg),
 	}
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, annotationsapp.New)
 	appConfig := app.Config{
@@ -60,7 +60,7 @@ func (s *AnnotationsAppInstaller) GetLegacyStorage(requested schema.GroupVersion
 	if requested.String() != gvr.String() {
 		return nil
 	}
-	legacyStore := annotationsapp.NewLegacyAnnotationStorage(s.legacyService)
+	legacyStore := annotationsapp.NewLegacyAnnotationStorage(s.legacyStore)
 	legacyStore.SetTableConverter(utils.NewTableConverter(
 		gvr.GroupResource(),
 		utils.TableColumns{

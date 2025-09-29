@@ -22,30 +22,9 @@ func NewAnnotationstatusOperatorState() *AnnotationstatusOperatorState {
 
 // +k8s:openapi-gen=true
 type AnnotationStatus struct {
-	// System metadata (read-only)
-	// Creation timestamp (epoch milliseconds)
-	Created *int64 `json:"created,omitempty"`
-	// Last update timestamp (epoch milliseconds)
-	Updated *int64 `json:"updated,omitempty"`
-	// User information (populated by system)
-	// Internal user ID
-	UserId *int64 `json:"userId,omitempty"`
-	// User login name
-	UserLogin *string `json:"userLogin,omitempty"`
-	// User email
-	UserEmail *string `json:"userEmail,omitempty"`
-	// User avatar URL
-	AvatarUrl *string `json:"avatarUrl,omitempty"`
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
 	OperatorStates map[string]AnnotationstatusOperatorState `json:"operatorStates,omitempty"`
-	// Alert information (for alert annotations)
-	// Legacy fields (may be removed in future)
-	// dashboardId?: int64  // Legacy dashboard ID (deprecated)
-	// type?: string        // Legacy type field
-	// title?: string       // Legacy title field
-	// Alert rule name
-	AlertName *string `json:"alertName,omitempty"`
 	// additionalFields is reserved for future use
 	AdditionalFields map[string]interface{} `json:"additionalFields,omitempty"`
 }

@@ -270,7 +270,7 @@ func ConvertLegacyAnnotationToK8s(item *annotations.ItemDTO, orgID int64) (*v0al
 		annotation.Spec.DashboardUID = item.DashboardUID
 	}
 	if item.PanelID != 0 {
-		annotation.Spec.PanelId = &item.PanelID
+		annotation.Spec.PanelID = &item.PanelID
 	}
 
 	if item.Created > 0 {
@@ -292,8 +292,8 @@ func ConvertK8sAnnotationToLegacy(annotation *v0alpha1.Annotation, orgID int64) 
 		DashboardUID: annotation.Spec.DashboardUID,
 	}
 
-	if annotation.Spec.PanelId != nil {
-		item.PanelID = *annotation.Spec.PanelId
+	if annotation.Spec.PanelID != nil {
+		item.PanelID = *annotation.Spec.PanelID
 	}
 
 	if !annotation.ObjectMeta.CreationTimestamp.IsZero() {
