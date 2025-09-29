@@ -1,8 +1,12 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Stack, Text, useStyles2, Icon } from '@grafana/ui';
-import { useGetPopularDashboards, useGetPopularResourcesByType, useGetPopularResourcesQuery } from 'app/features/dashboard/api/popularResourcesApi';
+import { Card, Stack, Text, useStyles2, Icon, Grid } from '@grafana/ui';
+import {
+  useGetPopularDashboards,
+  useGetPopularResourcesByType,
+  useGetPopularResourcesQuery,
+} from 'app/features/dashboard/api/popularResourcesApi';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 
 export const RecentVisited = () => {
@@ -34,76 +38,88 @@ export const RecentVisited = () => {
   return (
     <div>
       <Stack direction="row" gap={1} alignItems="baseline">
-        <Text variant="h4">Suggested for you</Text>{' '}
-        <Text variant="bodySmall" color="secondary">
-          (based on your visited resources)
-        </Text>
+        <Text variant="h4">Recently Visited</Text>
       </Stack>
 
-      <Stack gap={2}>
-        {isLoading && <Text>Loading...</Text>}
-        {data &&
-          data.resources.map((resource) => (
-            <Card 
-              key={resource.uid}
-              className={styles.clickableCard}
-              onClick={() => handleResourceClick(resource)}
-            >
-              <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
-                <Stack direction="row" gap={2} alignItems="center">
-                  <Icon 
-                    name={getResourceIcon(resource.resourceType)} 
-                    className={styles.resourceIcon}
-                  />
-                  <Stack direction="column" gap={0}>
+      <div className={styles.container}>
+        {isLoading && (
+          <div className={styles.loadingContainer}>
+            <Text>Loading...</Text>
+          </div>
+        )}
+        
+        {data && data.resources.length > 0 && (
+          <Grid gap={2} columns={{ xs: 1, sm: 2, md: 3, lg: 4 }}>
+            {data.resources.map((resource) => (
+              <Card 
+                key={resource.uid} 
+                className={styles.clickableCard} 
+                onClick={() => handleResourceClick(resource)}
+              >
+                <Stack direction="column" gap={2}>
+                  <Stack direction="row" gap={2} alignItems="center">
+                    <Icon 
+                      name={getResourceIcon(resource.resourceType)} 
+                      className={styles.resourceIcon} 
+                    />
                     <Text weight="medium">{resource.title}</Text>
+                    {/* <Stack direction="column">
+                      <Text weight="medium" truncate>{resource.title}</Text>
+                      <Text variant="bodySmall" color="secondary">
+                        {resource.resourceType} • {resource.visitCount} visits
+                      </Text>
+                    </Stack> */}
+                  </Stack>
+                  
+                  <Stack direction="row" justifyContent="space-between" alignItems="center">
                     <Text variant="bodySmall" color="secondary">
-                      {resource.resourceType} • {resource.visitCount} visits
+                      Last visited
+                    </Text>
+                    <Text variant="bodySmall">
+                      {new Date(resource.lastVisited).toLocaleDateString()}
                     </Text>
                   </Stack>
                 </Stack>
-                <Stack direction="column" alignItems="flex-end">
-                  <Text variant="bodySmall" color="secondary">
-                    Last visited
-                  </Text>
-                  <Text variant="bodySmall">
-                    {new Date(resource.lastVisited).toLocaleDateString()}
-                  </Text>
-                </Stack>
-              </Stack>
-            </Card>
-          ))}
+              </Card>
+            ))}
+          </Grid>
+        )}
         
         {data && data.resources.length === 0 && (
-          <Card>
+          <Card className={styles.emptyCard}>
             <Text color="secondary">
               No recent activity. Start browsing dashboards to see suggestions here!
             </Text>
           </Card>
         )}
-      </Stack>
+      </div>
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    marginTop: theme.spacing(2),
+  }),
+
+  loadingContainer: css({
+    display: 'flex',
+    justifyContent: 'center',
+    padding: theme.spacing(4),
+  }),
+
   clickableCard: css({
-    cursor: 'pointer',
-    transition: 'all 0.2s ease-in-out',
-    
-    '&:hover': {
-      backgroundColor: theme.colors.background.secondary,
-      transform: 'translateY(-2px)',
-      boxShadow: theme.shadows.z2,
-    },
-    
-    '&:active': {
-      transform: 'translateY(0px)',
-    },
+
   }),
 
   resourceIcon: css({
     color: theme.colors.primary.main,
-    fontSize: '18px',
+    fontSize: '20px',
+    flexShrink: 0,
+  }),
+
+  emptyCard: css({
+    textAlign: 'center',
+    padding: theme.spacing(4),
   }),
 });

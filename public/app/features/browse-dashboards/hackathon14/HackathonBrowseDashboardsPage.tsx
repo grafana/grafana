@@ -9,6 +9,7 @@ import { useSearchStateManager } from '../../search/state/SearchStateManager';
 import { HackathonSearchInput } from './HackathonSearchInput';
 import SparkJoyToggle from 'app/core/components/SparkJoyToggle';
 import { RecentVisited } from './RecentVisited';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 
 // New Browse/Manage/Search Dashboards views for nested folders
 const HackathonBrowseDashboardsPage = memo(
@@ -19,7 +20,6 @@ const HackathonBrowseDashboardsPage = memo(
 
     const renderCenteredTitle = (title: string) => (
       <div className={styles.centeredTitle}>
-        <SparkJoyToggle onToggle={onToggleSparkJoy} value={true} />
         <h1>{title}</h1>
       </div>
     );
@@ -88,6 +88,11 @@ const HackathonBrowseDashboardsPage = memo(
         // onEditTitle={showEditTitle ? onEditTitle : undefined}
         renderTitle={renderCenteredTitle}
         subTitle=""
+        actions={
+          <AppChromeUpdate
+            actions={[<SparkJoyToggle key="sparks-joy-toggle" value={true} onToggle={onToggleSparkJoy} />]}
+          />
+        }
         // actions={
         //   <>
         //     {config.featureToggles.restoreDashboards && hasAdminRights && (
@@ -113,20 +118,20 @@ const HackathonBrowseDashboardsPage = memo(
         // }
       >
         <HackathonSearchInput onSearchChange={handleSearch} placeholder="Search for dashboards and folders" />
-        
+
         {isSearching ? (
-          <>
+          <div className={styles.contentContainer}>
             <div className={styles.container}>
               <Stack>
                 <Text variant="h3">Search Results: "{searchState.query || 'none'}"</Text>
               </Stack>
               <Card className={styles.resultsCard}>{renderSearchResults()}</Card>
             </div>
-          </>
+          </div>
         ) : (
-          <>
-                        <RecentVisited />
-          </>
+          <div className={styles.contentContainer}>
+            <RecentVisited />
+          </div>
         )}
         {/* <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />
@@ -208,6 +213,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(3),
     padding: theme.spacing(2),
     maxWidth: '1200px',
+    margin: '0 auto',
+  }),
+
+  contentContainer: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(3),
+    padding: theme.spacing(2),
+    maxWidth: '1000px',
     margin: '0 auto',
   }),
 
