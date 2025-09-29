@@ -498,6 +498,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesAnnotations",
+			Description:     "Adds support for Kubernetes annotations",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaBackendServicesSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,

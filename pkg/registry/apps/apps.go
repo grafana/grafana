@@ -52,8 +52,9 @@ func ProvideAppInstallers(
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesCorrelations) {
 		installers = append(installers, correlationsAppInstaller)
 	}
-	// TODO(zserge): feature toggle
-	installers = append(installers, annotationsAppInstaller)
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
+		installers = append(installers, annotationsAppInstaller)
+	}
 
 	if alertingNotificationAppInstaller != nil {
 		installers = append(installers, alertingNotificationAppInstaller)

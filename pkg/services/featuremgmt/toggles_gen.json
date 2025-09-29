@@ -2030,6 +2030,23 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAnnotations",
+        "resourceVersion": "1759183551274",
+        "creationTimestamp": "2025-09-29T22:04:10Z",
+        "deletionTimestamp": "2025-09-29T22:05:11Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-29 22:05:51.27497 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes annotations",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthZHandlerRedirect",
         "resourceVersion": "1758820248165",
         "creationTimestamp": "2025-09-25T17:10:48Z"
