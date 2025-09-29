@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
+import { isNumber } from 'lodash';
 import { useId } from 'react';
 
-import { DisplayValue, FieldConfig, FieldDisplay, GrafanaTheme2 } from '@grafana/data';
+import { DisplayValue, FieldConfig, FieldDisplay, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
 import { GraphFieldConfig, GraphGradientMode, LineInterpolation } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -109,6 +110,12 @@ export function RadialGauge(props: RadialGaugeProps) {
             const barSize = size - (barWidth * 2 + 8) * barIndex;
             const center = size / 2;
 
+            let displayProcessor = getDisplayProcessor();
+
+            if (displayValue.view && isNumber(displayValue.colIndex)) {
+              displayProcessor = displayValue.view.getFieldDisplayProcessor(displayValue.colIndex) ?? displayProcessor;
+            }
+
             if (segmentCount > 0) {
               return (
                 <RadialBarSegmented
@@ -129,6 +136,7 @@ export function RadialGauge(props: RadialGaugeProps) {
                   glow={glowBar}
                   segmentCount={segmentCount}
                   segmentWidth={segmentWidth}
+                  displayProcessor={displayProcessor}
                 />
               );
             }

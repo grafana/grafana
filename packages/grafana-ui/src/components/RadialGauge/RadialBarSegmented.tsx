@@ -1,3 +1,5 @@
+import { DisplayProcessor } from '@grafana/data';
+
 import { useTheme2 } from '../../themes/ThemeContext';
 
 export interface RadialBarSegmentedProps {
@@ -17,6 +19,7 @@ export interface RadialBarSegmentedProps {
   glow?: boolean;
   segmentCount: number;
   segmentWidth: number;
+  displayProcessor: DisplayProcessor;
 }
 export function RadialBarSegmented({
   center,
@@ -33,6 +36,7 @@ export function RadialBarSegmented({
   glow,
   segmentCount,
   segmentWidth,
+  displayProcessor,
 }: RadialBarSegmentedProps) {
   const segments: React.ReactNode[] = [];
   const theme = useTheme2();
@@ -46,8 +50,10 @@ export function RadialBarSegmented({
   }
 
   for (let i = 0; i < segmentCountAdjusted; i++) {
+    const angleValue = ((max - min) / segmentCountAdjusted) * i;
+    const angleColor = displayProcessor(angleValue);
     const segmentAngle = (360 / segmentCountAdjusted) * i + 0.01;
-    const segmentColor = segmentAngle > angle ? theme.colors.action.hover : color;
+    const segmentColor = segmentAngle > angle ? theme.colors.action.hover : (angleColor.color ?? 'gray');
 
     segments.push(
       <RadialSegmentArcPath

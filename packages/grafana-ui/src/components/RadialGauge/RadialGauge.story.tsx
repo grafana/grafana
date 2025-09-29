@@ -178,8 +178,6 @@ export const Examples: StoryFn = (args) => {
           value={70}
           gradient="hue"
           color="blue"
-          clockwise
-          shape="gauge"
           {...args}
           spotlight
           glowBar={true}
@@ -191,8 +189,6 @@ export const Examples: StoryFn = (args) => {
           value={30}
           gradient="hue"
           color="green"
-          clockwise
-          shape="gauge"
           {...args}
           segmentCount={20}
           spotlight
@@ -204,8 +200,6 @@ export const Examples: StoryFn = (args) => {
           value={50}
           gradient="hue"
           color="red"
-          clockwise
-          shape="gauge"
           {...args}
           segmentCount={40}
           spotlight
@@ -221,8 +215,6 @@ export const Examples: StoryFn = (args) => {
           value={70}
           gradient="hue"
           colorMode={FieldColorModeId.ContinuousGrYlRd}
-          clockwise
-          shape="gauge"
           {...args}
           spotlight
           glowBar={true}
@@ -236,7 +228,7 @@ export const Examples: StoryFn = (args) => {
 };
 
 Examples.parameters = {
-  controls: { include: ['barWidth'] },
+  controls: { include: ['barWidthFactor', 'value'] },
 };
 
 export const MultiSeries: StoryFn<StoryProps> = (args) => {
