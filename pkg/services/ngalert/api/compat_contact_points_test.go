@@ -53,7 +53,7 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 	}
 
 	// use the configs for testing because they have all fields supported by integrations
-	for integrationType, cfg := range notify.AllKnownConfigsForTesting {
+	for integrationType, cfg := range notifytest.AllKnownV1ConfigsForTesting {
 		t.Run(integrationType, func(t *testing.T) {
 			recCfg := &notify.APIReceiver{
 				ConfigReceiver: notify.ConfigReceiver{Name: "test-receiver"},
@@ -87,7 +87,7 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 			}
 			if integrationType != "webhook" {
 				// Many notifiers now support HTTPClientConfig but only Webhook currently has it enabled in schema.
-				//TODO: Remove this once HTTPClientConfig is added to other schemas.
+				// TODO: Remove this once HTTPClientConfig is added to other schemas.
 				pathFilters = append(pathFilters, "HTTPClientConfig")
 			}
 			pathFilter := cmp.FilterPath(func(path cmp.Path) bool {
