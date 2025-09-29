@@ -60,7 +60,7 @@ func (s *AnnotationsAppInstaller) GetLegacyStorage(requested schema.GroupVersion
 	if requested.String() != gvr.String() {
 		return nil
 	}
-	legacyStore := annotationsapp.NewSimpleLegacyAnnotationStorage(s.legacyService)
+	legacyStore := annotationsapp.NewLegacyAnnotationStorage(s.legacyService)
 	legacyStore.SetTableConverter(utils.NewTableConverter(
 		gvr.GroupResource(),
 		utils.TableColumns{
