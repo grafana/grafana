@@ -5,6 +5,7 @@ import * as React from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { getSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 
@@ -23,9 +24,19 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [listMode, setListMode] = useState(OptionFilter.All);
   const styles = useStyles2(getStyles);
+  const sparkJoyEnabled = getSparkJoyEnabled(true);
+  const isOpenDefault = !sparkJoyEnabled;
 
   const [panelFrameOptions, vizOptions, libraryPanelOptions] = useMemo(
-    () => [getPanelFrameCategory(props), getVisualizationOptions(props), getLibraryPanelOptionsCategory(props)],
+    () => {
+      const propsWithOpenDefault = { ...props, isOpenDefault };
+
+      return [
+        getPanelFrameCategory(propsWithOpenDefault),
+        getVisualizationOptions(props),
+        getLibraryPanelOptionsCategory(propsWithOpenDefault),
+      ];
+    },
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [panel.configRev, props.data, props.instanceState, searchQuery]
@@ -61,6 +72,7 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
           // Library Panel options first
           mainBoxElements.push(libraryPanelOptions.render());
         }
+
         // Panel frame options second
         mainBoxElements.push(panelFrameOptions.render());
 

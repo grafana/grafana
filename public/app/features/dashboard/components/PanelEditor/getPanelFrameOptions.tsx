@@ -13,11 +13,11 @@ import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OptionPaneRenderProps } from './types';
 
 export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor {
-  const { dashboard, panel, onPanelConfigChange } = props;
+  const { dashboard, panel, onPanelConfigChange, isOpenDefault = true } = props;
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: t('dashboard.get-panel-frame-category.descriptor.title.panel-options', 'Panel options'),
     id: 'Panel options',
-    isOpenDefault: true,
+    isOpenDefault,
   });
 
   const panelFrameTitleId = 'panel-frame-title';
@@ -106,7 +106,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
       new OptionsPaneCategoryDescriptor({
         title: t('dashboard.get-panel-frame-category.title.panel-links', 'Panel links'),
         id: 'panel-frame-links-category',
-        isOpenDefault: false,
+        isOpenDefault,
         itemsCount: panel.links?.length,
       }).addItem(
         new OptionsPaneItemDescriptor({
@@ -129,7 +129,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
       new OptionsPaneCategoryDescriptor({
         title: t('dashboard.get-panel-frame-category.title.repeat-options', 'Repeat options'),
         id: 'panel-frame-repeat',
-        isOpenDefault: false,
+        isOpenDefault,
       })
         .addItem(
           new OptionsPaneItemDescriptor({

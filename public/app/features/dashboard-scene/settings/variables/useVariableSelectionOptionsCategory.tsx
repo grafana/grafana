@@ -3,6 +3,7 @@ import { useCallback, useId, useMemo, useRef } from 'react';
 import { t } from '@grafana/i18n';
 import { MultiValueVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import { Input, Switch } from '@grafana/ui';
+import { getSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -11,12 +12,14 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
   const includeAllId = useId();
   const customAllValueId = useId();
   const allowCustomId = useId();
+  const sparkJoyEnabled = getSparkJoyEnabled(true);
+  const isOpenDefault = !sparkJoyEnabled;
 
   return useMemo(() => {
     return new OptionsPaneCategoryDescriptor({
       title: t('dashboard.edit-pane.variable.selection-options.category', 'Selection options'),
       id: 'selection-options-category',
-      isOpenDefault: true,
+      isOpenDefault,
     })
       .addItem(
         new OptionsPaneItemDescriptor({
@@ -61,7 +64,7 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
           render: (descriptor) => <AllowCustomSwitch id={descriptor.props.id} variable={variable} />,
         })
       );
-  }, [allowCustomId, customAllValueId, includeAllId, multiValueId, variable]);
+  }, [allowCustomId, customAllValueId, includeAllId, multiValueId, variable, isOpenDefault]);
 }
 
 interface InputProps {

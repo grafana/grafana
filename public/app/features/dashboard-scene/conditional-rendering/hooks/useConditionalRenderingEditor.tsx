@@ -1,5 +1,6 @@
 import { t } from '@grafana/i18n';
 import { Icon, Stack, Tooltip } from '@grafana/ui';
+import { getSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -20,6 +21,8 @@ export function useConditionalRenderingEditor(
   disabledText?: string
 ): OptionsPaneCategoryDescriptor {
   const title = t('dashboard.conditional-rendering.root.title', 'Show / hide rules');
+  const sparkJoyEnabled = getSparkJoyEnabled(true);
+  const isOpenDefault = !sparkJoyEnabled;
 
   const conditionalRenderingToRender = conditionalRendering ?? getPlaceholderConditionalRendering();
 
@@ -55,7 +58,7 @@ export function useConditionalRenderingEditor(
         </Stack>
       );
     },
-    isOpenDefault: true,
+    isOpenDefault,
   }).addItem(
     new OptionsPaneItemDescriptor({
       title,

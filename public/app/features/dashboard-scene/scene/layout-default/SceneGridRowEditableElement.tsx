@@ -4,6 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { sceneGraph, SceneGridRow, VizPanel } from '@grafana/scenes';
 import { Alert, Input, TextLink } from '@grafana/ui';
+import { getSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
@@ -19,11 +20,14 @@ import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 
 function useEditPaneOptions(this: SceneGridRowEditableElement, row: SceneGridRow): OptionsPaneCategoryDescriptor[] {
+  const sparkJoyEnabled = getSparkJoyEnabled(true);
+  const isOpenDefault = !sparkJoyEnabled;
+
   const rowOptions = useMemo(() => {
     return new OptionsPaneCategoryDescriptor({
       title: t('dashboard.default-layout.row-options.title', 'Row options'),
       id: 'row-options',
-      isOpenDefault: true,
+      isOpenDefault,
     }).addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.row-options.form.title', 'Title'),
@@ -31,7 +35,7 @@ function useEditPaneOptions(this: SceneGridRowEditableElement, row: SceneGridRow
         render: () => <RowTitleInput row={row} />,
       })
     );
-  }, [row]);
+  }, [row, isOpenDefault]);
 
   const rowRepeatOptions = useMemo(() => {
     const dashboard = getDashboardSceneFor(row);
@@ -39,7 +43,7 @@ function useEditPaneOptions(this: SceneGridRowEditableElement, row: SceneGridRow
     return new OptionsPaneCategoryDescriptor({
       title: t('dashboard.default-layout.row-options.repeat.title', 'Repeat options'),
       id: 'row-repeat-options',
-      isOpenDefault: true,
+      isOpenDefault,
     }).addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.row-options.repeat.variable.title', 'Variable'),
@@ -47,7 +51,7 @@ function useEditPaneOptions(this: SceneGridRowEditableElement, row: SceneGridRow
         render: () => <RowRepeatSelect row={row} dashboard={dashboard} />,
       })
     );
-  }, [row]);
+  }, [row, isOpenDefault]);
 
   return [rowOptions, rowRepeatOptions];
 }

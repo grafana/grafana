@@ -154,14 +154,17 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
   return Object.values(categoryIndex);
 }
 
-export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryPanelBehavior): OptionsPaneCategoryDescriptor {
+export function getLibraryVizPanelOptionsCategory(
+  libraryPanel: LibraryPanelBehavior,
+  isOpenDefault?: boolean
+): OptionsPaneCategoryDescriptor {
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: t(
       'dashboard.get-library-viz-panel-options-category.descriptor.title.library-panel-options',
       'Library panel options'
     ),
     id: 'Library panel options',
-    isOpenDefault: true,
+    isOpenDefault,
   });
 
   descriptor
@@ -204,8 +207,10 @@ export interface OptionPaneRenderProps2 {
   instanceState: unknown;
 }
 
-export function getVisualizationOptions2(props: OptionPaneRenderProps2): OptionsPaneCategoryDescriptor[] {
-  const { plugin, panel, data, eventBus, instanceState } = props;
+export function getVisualizationOptions2(
+  props: OptionPaneRenderProps2 & { isOpenDefault?: boolean }
+): OptionsPaneCategoryDescriptor[] {
+  const { plugin, panel, data, eventBus, instanceState, isOpenDefault = true } = props;
 
   const categoryIndex: Record<string, OptionsPaneCategoryDescriptor> = {};
   const getOptionsPaneCategory = (categoryNames?: string[]): OptionsPaneCategoryDescriptor => {
@@ -220,6 +225,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       title: categoryName,
       id: categoryName,
       sandboxId: plugin.meta.id,
+      isOpenDefault,
     }));
   };
 
