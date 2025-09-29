@@ -53,7 +53,7 @@ Refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/
 ### Limitations
 
 - A provisioned dashboard can't be deleted from within Grafana UI. The dashboard has to be deleted at the local file system and those changes synced to Grafana.
-- Changes from the local file system are one way: you can't save changes from
+- Changes from the local file system are one way: you can't save changes from the UI to GitHub.
 
 ## Before you begin
 

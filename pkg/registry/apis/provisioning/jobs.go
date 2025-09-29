@@ -101,7 +101,17 @@ func (c *jobsConnector) Connect(
 			responder.Error(err)
 			return
 		}
+
 		cfg := repo.Config()
+
+		if cfg.DeletionTimestamp != nil && !cfg.DeletionTimestamp.IsZero() {
+			responder.Error(apierrors.NewConflict(
+				provisioning.RepositoryResourceInfo.GroupResource(),
+				"cannot create jobs for a repository marked for deletion",
+				fmt.Errorf("cannot create jobs for a repository marked for deletion"),
+			))
+			return
+		}
 
 		if idx > 0 {
 			responder.Error(apierrors.NewBadRequest("can not post to a job UID"))
