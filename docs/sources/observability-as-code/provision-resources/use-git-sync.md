@@ -19,10 +19,11 @@ weight: 400
 # Manage provisioned repositories with Git Sync
 
 {{< admonition type="caution" >}}
-Git Sync is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana to use this feature. This feature is not publicly available in Grafana Cloud yet. Only the cloud-hosted version of GitHub (GitHub.com) is supported at this time. GitHub Enterprise is not yet compatible.
+Git Sync is available in [public preview](https://grafana.com/docs/release-life-cycle/) for Grafana v12 open source and Enterprise editions, and in Grafana Cloud. 
 
-Sign up for Grafana Cloud Git Sync early access using [this form](https://forms.gle/WKkR3EVMcbqsNnkD9).
+Support and documentation is available but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided. Do not use Git Sync in production environments.
 
+You can sign up for Grafana Cloud Git Sync public preview using [this form](https://forms.gle/WKkR3EVMcbqsNnkD9).
 {{< /admonition >}}
 
 After you have set up Git Sync, you can synchronize any changes in your existing dashboards with your configured GitHub repository. Similarly, if you push a change in the repository, those changes are mirrored in your Grafana instance.
