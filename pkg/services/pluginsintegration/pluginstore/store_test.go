@@ -205,7 +205,7 @@ func TestProcessManager_shutdown(t *testing.T) {
 		p.SetLogger(log.NewTestLogger())
 
 		expectedErr := errors.New("unload failed")
-		ps := New(&fakes.FakePluginRegistry{
+		ps, err := NewPluginStoreForTest(&fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
 			},
@@ -214,10 +214,6 @@ func TestProcessManager_shutdown(t *testing.T) {
 				return nil, expectedErr
 			},
 		}, &fakes.FakeSourceRegistry{})
-
-		err := ps.StartAsync(context.Background())
-		require.NoError(t, err)
-		err = ps.AwaitRunning(context.Background())
 		require.NoError(t, err)
 
 		err = ps.stopping(nil)
@@ -239,9 +235,7 @@ func TestStore_availablePlugins(t *testing.T) {
 			},
 		}, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
 
-		err := ps.StartAsync(context.Background())
-		require.NoError(t, err)
-		err = ps.AwaitRunning(context.Background())
+		ps, err := NewPluginStoreForTest(fakes.NewFakePluginRegistry(), &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
 		require.NoError(t, err)
 
 		aps := ps.availablePlugins(context.Background())

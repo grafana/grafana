@@ -160,10 +160,7 @@ func TestService_Run(t *testing.T) {
 			}
 			installed := 0
 			installedFromURL := 0
-			store := pluginstore.New(preg, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
-			err := store.StartAsync(context.Background())
-			require.NoError(t, err)
-			err = store.AwaitRunning(context.Background())
+			store, err := pluginstore.NewPluginStoreForTest(preg, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
 			require.NoError(t, err)
 			s, err := ProvideService(
 				&setting.Cfg{
