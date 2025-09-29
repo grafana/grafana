@@ -20,28 +20,16 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": {
-        "@grafana-app/source": "./src/index.ts",
-        "types": "./dist/types/index.d.ts",
-        "default": "./dist/esm/index.mjs"
-      },
-      "require": {
-        "@grafana-app/source": "./src/index.ts",
-        "types": "./dist/types/index.d.ts",
-        "default": "./dist/cjs/index.cjs"
-      }
+      "@grafana-app/source": "./src/index.ts",
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.cjs"
     },
     "./unstable": {
-      "import": {
-        "@grafana-app/source": "./src/unstable.ts",
-        "types": "./dist/types/unstable.d.ts",
-        "default": "./dist/esm/unstable.mjs"
-      },
-      "require": {
-        "@grafana-app/source": "./src/unstable.ts",
-        "types": "./dist/types/unstable.d.ts",
-        "default": "./dist/cjs/unstable.cjs"
-      }
+      "@grafana-app/source": "./src/unstable.ts",
+      "types": "./dist/types/unstable.d.ts",
+      "import": "./dist/esm/unstable.mjs",
+      "require": "./dist/cjs/unstable.cjs"
     },
     "./internal": {
       "@grafana-app/source": "./src/internal/index.ts"
