@@ -13,8 +13,7 @@ var (
 )
 
 type FeatureManager struct {
-	isDevMod        bool
-	restartRequired bool
+	isDevMod bool
 
 	flags    map[string]*FeatureFlag
 	enabled  map[string]bool   // only the "on" values
