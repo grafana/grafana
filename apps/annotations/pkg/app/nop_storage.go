@@ -2,15 +2,18 @@ package app
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	v0alpha1 "github.com/grafana/grafana/apps/annotations/pkg/apis/annotation/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
@@ -71,15 +74,99 @@ func (s *SimpleLegacyAnnotationStorage) ConvertToTable(ctx context.Context, obje
 }
 
 func (s *SimpleLegacyAnnotationStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return nil, apierrors.NewNotFound(schema.GroupResource{
-		Group:    "annotation.grafana.app",
-		Resource: "annotations",
-	}, name)
+	annotationID, err := s.parseAnnotationID(name)
+	if err != nil {
+		return nil, apierrors.NewBadRequest("invalid annotation name: " + err.Error())
+	}
+
+	namespace, ok := request.NamespaceFrom(ctx)
+	if !ok {
+		return nil, apierrors.NewBadRequest("namespace not found in context")
+	}
+
+	orgID, err := ExtractOrgIDFromNamespace(namespace)
+	if err != nil {
+		return nil, apierrors.NewBadRequest("invalid namespace: " + err.Error())
+	}
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, apierrors.NewUnauthorized("could not get user from context")
+	}
+
+	query := &annotations.ItemQuery{
+		OrgID:        orgID,
+		AnnotationID: annotationID,
+		SignedInUser: user,
+		Limit:        1,
+	}
+
+	items, err := s.legacyService.Find(ctx, query)
+	if err != nil {
+		return nil, apierrors.NewInternalError(err)
+	}
+
+	if len(items) == 0 {
+		return nil, apierrors.NewNotFound(schema.GroupResource{
+			Group:    "annotation.grafana.app",
+			Resource: "annotations",
+		}, name)
+	}
+
+	annotation, err := ConvertLegacyAnnotationToK8s(items[0], orgID)
+	if err != nil {
+		return nil, apierrors.NewInternalError(err)
+	}
+
+	return annotation, nil
 }
 
 func (s *SimpleLegacyAnnotationStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	namespace, ok := request.NamespaceFrom(ctx)
+	if !ok {
+		return nil, apierrors.NewBadRequest("namespace not found in context")
+	}
+
+	orgID, err := ExtractOrgIDFromNamespace(namespace)
+	if err != nil {
+		return nil, apierrors.NewBadRequest("invalid namespace: " + err.Error())
+	}
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, apierrors.NewUnauthorized("could not get user from context")
+	}
+
+	query := &annotations.ItemQuery{
+		OrgID:        orgID,
+		SignedInUser: user,
+		Limit:        100,
+	}
+
+	if options.Limit > 0 {
+		query.Limit = options.Limit
+	}
+
+	items, err := s.legacyService.Find(ctx, query)
+	if err != nil {
+		return nil, apierrors.NewInternalError(err)
+	}
+
+	annotations := make([]v0alpha1.Annotation, 0, len(items))
+	for _, item := range items {
+		annotation, err := ConvertLegacyAnnotationToK8s(item, orgID)
+		if err != nil {
+			continue
+		}
+		annotations = append(annotations, *annotation)
+	}
+
 	return &v0alpha1.AnnotationList{
-		Items: []v0alpha1.Annotation{},
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: v0alpha1.GroupVersion.String(),
+			Kind:       "AnnotationList",
+		},
+		Items: annotations,
 	}, nil
 }
 
@@ -109,4 +196,8 @@ func (s *SimpleLegacyAnnotationStorage) DeleteCollection(ctx context.Context, de
 		Group:    "annotation.grafana.app",
 		Resource: "annotations",
 	}, "deletecollection")
+}
+
+func (s *SimpleLegacyAnnotationStorage) parseAnnotationID(name string) (int64, error) {
+	return strconv.ParseInt(name, 10, 64)
 }
