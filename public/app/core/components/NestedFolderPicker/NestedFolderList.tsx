@@ -227,7 +227,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
           <Text truncate>{item.title}</Text>
           <FolderRepo folder={item} />
         </label>
-        <FolderParent item={items[index]} />
+        {isSearchItem && <FolderParent item={items[index]} />}
       </div>
     </div>
   );
