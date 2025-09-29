@@ -40,6 +40,9 @@ const esModules = [
 module.exports = {
   verbose: false,
   testEnvironment: 'jsdom',
+  testEnvironmentOptions: {
+    customExportConditions: ['@grafana-app/source'],
+  },
   transform: {
     '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest')],
   },
