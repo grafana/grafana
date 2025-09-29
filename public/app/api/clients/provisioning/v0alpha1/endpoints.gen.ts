@@ -1289,6 +1289,8 @@ export type WebhookStatus = {
   url?: string;
 };
 export type RepositoryStatus = {
+  /** Error information during repository deletion (if any) */
+  deleteError?: string;
   /** This will get updated with the current health status (and updated periodically) */
   health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */

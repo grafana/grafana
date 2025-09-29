@@ -271,6 +271,7 @@ func (d *jobDriver) processJobWithLeaseCheck(ctx context.Context, job *provision
 }
 
 func (d *jobDriver) processJob(ctx context.Context, job *provisioning.Job, recorder JobProgressRecorder) error {
+	logger := logging.FromContext(ctx)
 	for _, worker := range d.workers {
 		if !worker.IsSupported(ctx, *job) {
 			continue
@@ -279,6 +280,16 @@ func (d *jobDriver) processJob(ctx context.Context, job *provisioning.Job, recor
 		repo, err := d.repoGetter.GetRepository(ctx, job.Namespace, job.Spec.Repository)
 		if err != nil {
 			return apifmt.Errorf("failed to get repository '%s': %w", job.Spec.Repository, err)
+		}
+
+		r := repo.Config()
+		if r.DeletionTimestamp != nil && !r.DeletionTimestamp.IsZero() {
+			logger.Info("repository is marked for deletion, skipping processing job",
+				"name", r.Name,
+				"namespace", r.Namespace,
+				"deletionTimestamp", r.DeletionTimestamp,
+			)
+			return nil
 		}
 
 		return worker.Process(ctx, repo, *job, recorder)

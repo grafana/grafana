@@ -70,7 +70,7 @@ func (d *DiscoveryClientImpl) GetKindForResource(gvr schema.GroupVersionResource
 func (d *DiscoveryClientImpl) GetPreferredVesion(gr schema.GroupResource) (schema.GroupVersionResource, schema.GroupVersionKind, error) {
 	apiList, err := d.ServerPreferredResources()
 	if err != nil {
-		return schema.GroupVersionResource{}, schema.GroupVersionKind{}, err
+		return schema.GroupVersionResource{}, schema.GroupVersionKind{}, fmt.Errorf("getting server's preferred resources: %w", err)
 	}
 	for _, apis := range apiList {
 		if !strings.HasPrefix(apis.GroupVersion, gr.Group) {
