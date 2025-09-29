@@ -4,7 +4,7 @@ import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, PageLayoutType, TimeZone } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { PageToolbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useGrafana } from 'app/core/context/GrafanaContext';

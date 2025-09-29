@@ -16,7 +16,7 @@ import {
   sceneUtils,
   VizPanel,
 } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema/';
+import { LibraryPanel } from '@grafana/schema';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ClipboardButton, Field, Input, Stack, Label, ModalsController, Switch, useStyles2 } from '@grafana/ui';
 import {
