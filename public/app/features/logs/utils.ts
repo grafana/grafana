@@ -179,7 +179,7 @@ export const checkLogsSampled = (logRow: LogRowModel): string | undefined => {
 export const escapeUnescapedString = (string: string) =>
   string.replace(/\\r\\n|\\n|\\t|\\r/g, (match: string) => (match.slice(1) === 't' ? '\t' : '\n'));
 
-export function logRowsToReadableJson(logs: LogRowModel[]) {
+export function logRowsToReadableJson(logs: LogRowModel[], pickFields: string[] = []) {
   return logs.map((log) => {
     const fields = getDataframeFields(log).reduce<Record<string, string>>((acc, field) => {
       const key = field.keys[0];
@@ -187,14 +187,20 @@ export function logRowsToReadableJson(logs: LogRowModel[]) {
       return acc;
     }, {});
 
+    let logFields = {
+      ...fields,
+      ...log.labels,
+    };
+
+    if (pickFields.length) {
+      logFields = Object.fromEntries(Object.entries(logFields).filter(([key]) => pickFields.includes(key)));
+    }
+
     return {
       line: log.entry,
       timestamp: log.timeEpochNs,
       date: dateTime(log.timeEpochMs).toISOString(),
-      fields: {
-        ...fields,
-        ...log.labels,
-      },
+      fields: logFields,
     };
   });
 }
@@ -451,7 +457,7 @@ export const downloadLogs = async (
       downloadLogsModelAsTxt({ meta, rows: logRows }, '', fields);
       break;
     case DownloadFormat.Json:
-      const jsonLogs = logRowsToReadableJson(logRows);
+      const jsonLogs = logRowsToReadableJson(logRows, fields);
       const blob = new Blob([JSON.stringify(jsonLogs)], {
         type: 'application/json;charset=utf-8',
       });
