@@ -472,8 +472,8 @@ export class PrometheusDatasource
     // Use incremental query only if enabled and no instant queries or no $__range variables
     const shouldUseIncrementalQuery =
       this.hasIncrementalQuery &&
-      !request.targets.some((target) => target.instant || target.expr?.includes('$__range')) &&
-      !config.publicDashboardAccessToken;
+      !config.publicDashboardAccessToken &&
+      !request.targets.some((target) => target.instant || target.expr?.includes('$__range'));
 
     let fullOrPartialRequest: DataQueryRequest<PromQuery> = request;
     let requestInfo: CacheRequestInfo<PromQuery> | undefined = undefined;
