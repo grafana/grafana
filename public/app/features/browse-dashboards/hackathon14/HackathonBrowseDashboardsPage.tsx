@@ -7,14 +7,16 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { useSearchStateManager } from '../../search/state/SearchStateManager';
 import { HackathonSearchInput } from './HackathonSearchInput';
+import SparkJoyToggle from 'app/core/components/SparkJoyToggle';
 
 // New Browse/Manage/Search Dashboards views for nested folders
-const HackathonBrowseDashboardsPage = memo(() => {
+const HackathonBrowseDashboardsPage = memo(({ queryParams, onToggleSparkJoy }: { queryParams: Record<string, string>, onToggleSparkJoy: () => void }) => {
   const styles = useStyles2(getStyles);
   const [searchState, stateManager] = useSearchStateManager();
 
   const renderCenteredTitle = (title: string) => (
     <div className={styles.centeredTitle}>
+      <SparkJoyToggle onToggle={onToggleSparkJoy} value={true} />
       <h1>{title}</h1>
     </div>
   );

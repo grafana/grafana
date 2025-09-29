@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -31,9 +31,10 @@ import { getFolderPermissions } from './permissions';
 import { useHasSelection } from './state/hooks';
 import { setAllSelection } from './state/slice';
 import HackathonBrowseDashboardsPage from './hackathon14/HackathonBrowseDashboardsPage';
+import SparkJoyToggle from 'app/core/components/SparkJoyToggle';
 
 // New Browse/Manage/Search Dashboards views for nested folders
-const BrowseDashboardsPageOld = memo(({ queryParams }: { queryParams: Record<string, string> }) => {
+const BrowseDashboardsPageOld = memo(({ queryParams, onToggleSparkJoy }: { queryParams: Record<string, string>, onToggleSparkJoy: () => void }) => {
   const { uid: folderUID } = useParams();
   const dispatch = useDispatch();
 
@@ -141,6 +142,7 @@ const BrowseDashboardsPageOld = memo(({ queryParams }: { queryParams: Record<str
   const renderTitle = (title: string) => {
     return (
       <Stack alignItems={'center'} gap={2}>
+        <SparkJoyToggle onToggle={onToggleSparkJoy} value={false} />
         <Text element={'h1'}>{title}</Text> <FolderRepo folder={folder} />
       </Stack>
     );
@@ -240,10 +242,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 const BrowseDashboardsPage = ({ queryParams }: { queryParams: Record<string, string> }) => {
-  if (1 == 1) {
-    return <HackathonBrowseDashboardsPage queryParams={queryParams} />;
+  const [sparkJoy, setSparkJoy] = useState(true);
+  if (sparkJoy) {
+    return <HackathonBrowseDashboardsPage queryParams={queryParams} onToggleSparkJoy={() => setSparkJoy(!sparkJoy)} />;
   } else {
-    return <BrowseDashboardsPageOld queryParams={queryParams} />;
+    return <BrowseDashboardsPageOld queryParams={queryParams} onToggleSparkJoy={() => setSparkJoy(!sparkJoy)} />;
   }
 };
 
