@@ -176,8 +176,7 @@ function useGlobalScopesSearch(searchQuery: string, parentId?: string | null) {
             const leafNodes = nodes.filter((node) => node.spec.nodeType === 'leaf');
             const actions = [getScopesParentAction()];
             for (const node of leafNodes) {
-              const parentName = parentNodesMap.get(node.spec.parentName);
-              actions.push(mapScopeNodeToAction(node, selectScope, parentId || undefined, parentName || undefined));
+              actions.push(mapScopeNodeToAction(node, selectScope, parentId || undefined));
             }
             setActions(actions);
           }
