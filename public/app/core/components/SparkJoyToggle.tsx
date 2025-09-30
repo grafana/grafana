@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Switch } from '@grafana/ui';
+import { Switch, Icon, useStyles2 } from '@grafana/ui';
 
 type SparkJoyToggleProps = {
   value: boolean;
@@ -10,15 +11,18 @@ type SparkJoyToggleProps = {
   className?: string;
 };
 
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    container: css({ color: theme.colors.text.primary, display: 'inline-flex', alignItems: 'center', gap: 8 }),
+  };
+};
+
 export const SparkJoyToggle = memo(function SparkJoyToggle({ value, onToggle, className }: SparkJoyToggleProps) {
-  const container = css({ display: 'inline-flex', alignItems: 'center', gap: 8 });
-  const italic = css({ fontStyle: 'italic', opacity: 0.85 });
-  const leftLabel = value
-    ? t('explore.explore-toolbar.go-back-old-view', 'Go back to old view')
-    : t('explore.explore-toolbar.spark-some-joy', 'Spark Some Joy');
+  const styles = useStyles2(getStyles);
+
   return (
-    <span className={container}>
-      <span className={italic}>{leftLabel}</span>
+    <span className={styles.container}>
+      <Icon name="wizard-hat" size="lg" title={t('explore.explore-toolbar.go-back-old-view', 'Go back to old view')} />
       <Switch
         key="sparks-joy-toggle"
         value={value}
@@ -27,7 +31,9 @@ export const SparkJoyToggle = memo(function SparkJoyToggle({ value, onToggle, cl
         aria-label={t('explore.explore-toolbar.sparks-joy', 'Sparks Joy')}
         label={t('explore.explore-toolbar.sparks-joy', 'Sparks Joy')}
         className={className}
+        shouldSparkJoy
       />
+      <Icon name="smile-relaxed" size="lg" title={t('explore.explore-toolbar.spark-some-joy', 'Spark Some Joy')} />
     </span>
   );
 });
