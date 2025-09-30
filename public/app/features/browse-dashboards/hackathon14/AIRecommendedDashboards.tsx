@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { useState, useCallback, useEffect } from 'react';
+import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useAsync } from 'react-use';
 import { Card, Stack, Text, useStyles2, Icon, Spinner, Button, Grid } from '@grafana/ui';
 import { 
   useGetRecentDashboardsAndFolders,
@@ -60,7 +60,7 @@ export const AIRecommendedDashboards = () => {
   });
 
   const getRecommendations = useCallback(() => {
-    if (hasRequested) return;
+    if (hasRequested) {return;}
 
     const recentTitles = recentData?.resources?.map((r) => r.title).slice(0, 5) || [];
     const popularTitles = popularData?.resources?.map((r) => r.title).slice(0, 5) || [];

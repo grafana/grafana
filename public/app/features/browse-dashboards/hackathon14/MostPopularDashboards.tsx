@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Stack, Text, useStyles2, Icon, Grid, Spinner, useTheme2, Button, ButtonGroup } from '@grafana/ui';
 import { config } from '@grafana/runtime';
+import { Card, Stack, Text, useStyles2, Icon, Grid, Spinner, useTheme2, Button, ButtonGroup } from '@grafana/ui';
 import { useGetPopularDashboards } from 'app/features/dashboard/api/popularResourcesApi';
-import { useState } from 'react';
 
 interface DashboardThumbnailProps {
   url: string;
@@ -211,7 +211,7 @@ const getThumbnailStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
     height: '160px', // Increased height for better preview
     backgroundColor: theme.colors.background.secondary,
-    borderRadius: 0, // Remove border radius since it's flush with card
+    borderRadius: 'unset', // Remove border radius since it's flush with card
     overflow: 'hidden',
     display: 'flex',
     alignItems: 'center',

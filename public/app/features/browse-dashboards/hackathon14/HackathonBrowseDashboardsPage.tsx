@@ -3,23 +3,26 @@ import { memo, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Stack, Text, Box, Card } from '@grafana/ui';
-import { Page } from 'app/core/components/Page/Page';
-
-import { useSearchStateManager } from '../../search/state/SearchStateManager';
-import { HackathonSearchInput } from './HackathonSearchInput';
-import SparkJoyToggle from 'app/core/components/SparkJoyToggle';
-import { MostPopularDashboards } from './MostPopularDashboards';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
-import { MostPopularFolders } from './MostPopularFolders';
-import { RecentVisited } from './RecentVisited';
-import { SearchResults } from './SearchResults';
+import { Page } from 'app/core/components/Page/Page';
+import SparkJoyToggle from 'app/core/components/SparkJoyToggle';
 import { 
   useGetRecentDashboardsAndFolders, 
   useGetPopularDashboards, 
   useGetPopularFolders 
 } from 'app/features/dashboard/api/popularResourcesApi';
-import { CosmicSceneIcon } from './CosmicSceneIcon';
+
+import { useSearchStateManager } from '../../search/state/SearchStateManager';
+
 import { AIRecommendedDashboards } from './AIRecommendedDashboards';
+import { CosmicSceneIcon } from './CosmicSceneIcon';
+import { HackathonSearchInput } from './HackathonSearchInput';
+import { MostPopularDashboards } from './MostPopularDashboards';
+import { MostPopularFolders } from './MostPopularFolders';
+import { RecentVisited } from './RecentVisited';
+import { SearchResults } from './SearchResults';
+
+
 
 // Content section that shows fun empty state or the three components
 const ContentSection = () => {

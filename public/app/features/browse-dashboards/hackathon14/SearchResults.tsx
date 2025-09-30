@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Card, Stack, Text, Button, ButtonGroup, Grid, Icon, Spinner, useTheme2, Badge } from '@grafana/ui';
 import { config } from '@grafana/runtime';
+import { useStyles2, Card, Stack, Text, Button, ButtonGroup, Grid, Icon, Spinner, useTheme2, Badge } from '@grafana/ui';
+
 import { CosmicSceneIcon } from './CosmicSceneIcon';
 
 interface SearchResultsProps {
