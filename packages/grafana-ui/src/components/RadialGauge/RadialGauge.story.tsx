@@ -43,12 +43,14 @@ const meta: Meta<StoryProps> = {
     seriesCount: 0,
     segmentCount: undefined,
     segmentSpacing: undefined,
+    roundedBars: true,
   },
   argTypes: {
     barWidthFactor: { control: { type: 'range', min: 0.1, max: 1, step: 0.01 } },
     size: { control: { type: 'range', min: 50, max: 400 } },
     value: { control: { type: 'range', min: 0, max: 110 } },
     spotlight: { control: 'boolean' },
+    roundedBars: { control: 'boolean' },
     sparkline: { control: 'boolean' },
     gradient: { control: { type: 'radio', options: ['none', 'hue', 'shade', 'scheme'] } },
     seriesCount: { control: { type: 'range', min: 1, max: 20 } },
@@ -119,12 +121,20 @@ export const Examples: StoryFn = (args) => {
           gradient={GraphGradientMode.Scheme}
           value={40}
           shape="gauge"
+          roundedBars={false}
+          glowBar={true}
+          glowCenter={true}
+          barWidthFactor={0.6}
           clockwise
         />
         <RadialBarExample
           colorMode={FieldColorModeId.ContinuousGrYlRd}
           gradient={GraphGradientMode.Scheme}
-          value={100}
+          value={90}
+          barWidthFactor={0.6}
+          roundedBars={false}
+          glowBar={true}
+          glowCenter={true}
           shape="gauge"
           clockwise
         />
@@ -244,7 +254,7 @@ MultiSeries.args = {
 export const Temp: StoryFn<StoryProps> = (args) => {
   return (
     <Stack direction={'column'} gap={3}>
-      <RadialBarExample gradient="scheme" colorMode={FieldColorModeId.ContinuousReds} color="red" {...args} />
+      <RadialBarExample {...args} gradient="scheme" colorMode={FieldColorModeId.ContinuousReds} color="red" />
     </Stack>
   );
 };
@@ -270,6 +280,7 @@ interface ExampleProps {
   textMode?: RadialTextMode;
   segmentCount?: number;
   segmentSpacing?: number;
+  roundedBars?: boolean;
 }
 
 function RadialBarExample({
@@ -293,6 +304,7 @@ function RadialBarExample({
   textMode = 'auto',
   segmentCount = 0,
   segmentSpacing = 0.1,
+  roundedBars = true,
 }: ExampleProps) {
   const theme = useTheme2();
 
@@ -363,6 +375,7 @@ function RadialBarExample({
       vizCount={vizCount}
       segmentCount={segmentCount}
       segmentSpacing={segmentSpacing}
+      roundedBars={roundedBars}
     />
   );
 }

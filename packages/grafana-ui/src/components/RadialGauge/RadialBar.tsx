@@ -149,7 +149,7 @@ export function RadialArcPath({
       />
       {spotlight && angle > 5 && (
         <circle
-          r={barWidth * 1}
+          r={barWidth * 0.9}
           cx={clockwise ? x2 : x1}
           cy={clockwise ? y2 : y1}
           fill={`url(#spotlight-${gaugeId})`}

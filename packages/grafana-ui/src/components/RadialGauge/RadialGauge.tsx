@@ -35,6 +35,7 @@ export interface RadialGaugeProps {
   spotlight?: boolean;
   glowBar?: boolean;
   glowCenter?: boolean;
+  roundedBars?: boolean;
   textMode?: RadialTextMode;
   /**
    * Number of segments depends on size of gauge but this
@@ -72,6 +73,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     vizCount = 1,
     segmentCount = 0,
     segmentSpacing = 0,
+    roundedBars = true,
     values,
   } = props;
   const theme = useTheme2();
@@ -160,7 +162,7 @@ export function RadialGauge(props: RadialGaugeProps) {
                 size={barSize}
                 color={barColor}
                 barWidth={barWidth}
-                roundedBars={true}
+                roundedBars={roundedBars}
                 clockwise={clockwise}
                 spotlight={spotlight}
                 glow={glowBar}
