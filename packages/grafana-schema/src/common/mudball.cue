@@ -161,6 +161,9 @@ VizOrientation: "auto" | "vertical" | "horizontal" @cuetsy(kind="enum")
 // Breaks out each annotation frame into multiple lanes on the x-axis
 VizAnnotations: {
 	multiLane?: bool
+	showRegions?: bool
+	regionOpacity?: number
+	showLine?: bool
 } @cuetsy(kind="interface")
 
 // TODO docs

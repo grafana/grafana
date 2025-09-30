@@ -7,7 +7,6 @@ import {
   ScaleDistribution,
   ScaleDistributionConfig,
   HeatmapCellLayout,
-  VizAnnotations,
 } from '@grafana/schema';
 import { commonOptionsBuilder, TooltipDisplayMode } from '@grafana/ui';
 import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/internal';
