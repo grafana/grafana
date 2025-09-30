@@ -67,7 +67,7 @@ func convertSQLite3URL(dsn string) (string, error) {
 	newDSN := dsn[:pos]
 
 	q := url.Values{}
-	q.Add("_pragma", "busy_timeout(5000)")
+	q.Add("_pragma", "busy_timeout(10000)")
 
 	for key, values := range params {
 		if alias, ok := dsnAlias[strings.ToLower(key)]; ok {
