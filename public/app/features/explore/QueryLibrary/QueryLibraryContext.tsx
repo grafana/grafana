@@ -4,7 +4,7 @@ import { CoreApp } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 import { SavedQuery } from 'app/features/explore/QueryLibrary/types';
 
-import { OnSelectQueryType, QueryLibraryEventsPropertyMap } from './types';
+import { OnSelectQueryType, QueryLibraryEventsPropertyMap, QueryLibraryTab } from './types';
 
 export type QueryLibraryDrawerOptions = {
   datasourceFilters?: string[];
@@ -73,6 +73,18 @@ export type QueryLibraryContextType = {
   ) => void;
   setNewQuery: (query?: SavedQuery) => void;
   onSelectQuery: (query: DataQuery) => void;
+  onFavorite: (uid: string) => void;
+  onUnfavorite: (uid: string) => void;
+  userFavorites: { [key: string]: boolean };
+  isEditingQuery: boolean;
+  setIsEditingQuery: (isEditingQuery: boolean) => void;
+  onAddHistoryQueryToLibrary: (newQuery: SavedQuery) => void;
+  activeTab: QueryLibraryTab;
+  setActiveTab: (activeTab: QueryLibraryTab) => void;
+  onTabChange: (activeTab: QueryLibraryTab) => void;
+  highlightedQuery: string | undefined;
+  newQuery: SavedQuery | undefined;
+  activeDatasources: string[];
 };
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
@@ -95,6 +107,18 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   context: 'unknown',
   triggerAnalyticsEvent: () => {},
   onSelectQuery: () => {},
+  onFavorite: () => {},
+  onUnfavorite: () => {},
+  userFavorites: {},
+  isEditingQuery: false,
+  setIsEditingQuery: () => {},
+  onAddHistoryQueryToLibrary: () => {},
+  activeTab: QueryLibraryTab.ALL,
+  setActiveTab: () => {},
+  onTabChange: () => {},
+  highlightedQuery: undefined,
+  newQuery: undefined,
+  activeDatasources: [],
 });
 
 export function useQueryLibraryContext() {
