@@ -37,3 +37,8 @@ export function extractErrorMessage(error: unknown): string {
   }
   return String(error);
 }
+
+// TODO: Change imports to be directly from api-clients package
+// Best done after hackathon
+// eslint-disable-next-line no-barrel-files/no-barrel-files
+export { getAPIBaseURL, getAPINamespace } from '@grafana/api-clients';
