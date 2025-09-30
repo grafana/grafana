@@ -188,7 +188,7 @@ abstract class DashboardScenePageStateManagerBase<T>
         })
       );
 
-      if ('error' in result) {
+      if (result && 'error' in result) {
         throw result.error;
       }
 
