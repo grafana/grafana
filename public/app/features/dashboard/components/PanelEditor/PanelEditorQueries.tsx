@@ -4,7 +4,7 @@ import { DataQuery, getDataSourceRef } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { QueryGroup } from 'app/features/query/components/QueryGroup';
+import { QueryGroupWithHistory } from 'app/features/query/components/QueryGroup';
 import { QueryGroupDataSource, QueryGroupOptions } from 'app/types/query';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
@@ -114,12 +114,13 @@ export class PanelEditorQueries extends PureComponent<Props> {
     const options = this.buildQueryOptions(panel);
 
     return (
-      <QueryGroup
+      <QueryGroupWithHistory
         options={options}
         queryRunner={panel.getQueryRunner()}
         onRunQueries={this.onRunQueries}
         onOpenQueryInspector={this.onOpenQueryInspector}
         onOptionsChange={this.onOptionsChange}
+        sparkJoy={true}
       />
     );
   }

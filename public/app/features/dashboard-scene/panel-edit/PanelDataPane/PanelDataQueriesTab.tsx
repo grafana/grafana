@@ -31,6 +31,7 @@ import { QueryGroupOptions } from 'app/types/query';
 
 import { MIXED_DATASOURCE_NAME } from '../../../../plugins/datasource/mixed/MixedDataSource';
 import { useQueryLibraryContext } from '../../../explore/QueryLibrary/QueryLibraryContext';
+import { useQueriesDrawerContext } from '../../../explore/QueriesDrawer/QueriesDrawerContext';
 import { ExpressionDatasourceUID } from '../../../expressions/types';
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
@@ -336,6 +337,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
   const { datasource, dsSettings } = model.useState();
   const { data, queries } = model.queryRunner.useState();
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
+  const { setDrawerOpened } = useQueriesDrawerContext();
 
   if (!datasource || !dsSettings || !data) {
     return null;
@@ -388,6 +390,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         onRunQueries={model.onRunQueries}
         onUpdateDatasources={queryLibraryEnabled ? model.updateDatasourceIfNeeded : undefined}
         app={CoreApp.PanelEditor}
+        sparkJoy={true}
       />
 
       <Stack gap={2}>
@@ -419,6 +422,14 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
                 <Trans i18nKey={'dashboards.panel-queries.add-from-saved-queries'}>Add from saved queries</Trans>
               </Button>
             )}
+            <Button
+              icon="history"
+              onClick={() => setDrawerOpened(true)}
+              variant="secondary"
+              data-testid={selectors.components.QueryTab.queryHistoryButton}
+            >
+              <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.query-history">Query history</Trans>
+            </Button>
           </>
         )}
         {config.expressionsEnabled && model.isExpressionsSupported(dsSettings) && (

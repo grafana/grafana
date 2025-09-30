@@ -476,7 +476,6 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
                       alt={`${query.userInfo.displayName} avatar`}
                       width={2}
                       height={2}
-                      className={css(styles.badgeAvatar)}
                     />
                   </div>
                 }
@@ -494,11 +493,10 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
                       alt={`${config.bootData.user.name} avatar`}
                       width={2}
                       height={2}
-                      className={css(styles.badgeAvatar)}
                     />
                   </div>
                 }
-                color="gray" 
+                color="darkgrey" 
                 className={css(styles.badge)}
               />
             )}

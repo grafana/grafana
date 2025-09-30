@@ -34,13 +34,14 @@ import { updateQueries } from '../state/updateQueries';
 import { GroupActionComponents } from './QueryActionComponent';
 import { QueryEditorRows } from './QueryEditorRows';
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';
-
 export interface Props {
   queryRunner: PanelQueryRunner;
   options: QueryGroupOptions;
   onOpenQueryInspector?: () => void;
   onRunQueries: () => void;
   onOptionsChange: (options: QueryGroupOptions) => void;
+  sparkJoy?: boolean;
+  onOpenQueryHistory?: () => void;
 }
 
 interface State {
@@ -256,7 +257,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   renderQueries(dsSettings: DataSourceInstanceSettings) {
-    const { onRunQueries } = this.props;
+    const { onRunQueries, sparkJoy } = this.props;
     const { data, queries } = this.state;
 
     return (
@@ -268,6 +269,7 @@ export class QueryGroup extends PureComponent<Props, State> {
           onAddQuery={this.onAddQuery}
           onRunQueries={onRunQueries}
           data={data}
+          sparkJoy={sparkJoy}
         />
       </div>
     );
@@ -290,6 +292,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   renderAddQueryRow(dsSettings: DataSourceInstanceSettings, styles: QueriesTabStyles) {
+    const { onOpenQueryHistory } = this.props;
     const showAddButton = !isSharedDashboardQuery(dsSettings.name);
 
     return (
@@ -315,6 +318,16 @@ export class QueryGroup extends PureComponent<Props, State> {
             <span>
               <Trans i18nKey="query.query-group.expression">Expression</Trans>
             </span>
+          </Button>
+        )}
+        {onOpenQueryHistory && (
+          <Button
+            icon="history"
+            onClick={onOpenQueryHistory}
+            variant="secondary"
+            data-testid={selectors.components.QueryTab.queryHistoryButton}
+          >
+            <Trans i18nKey="query.query-group.query-history">Query history</Trans>
           </Button>
         )}
         {this.renderExtraActions()}
@@ -386,6 +399,20 @@ const getStyles = stylesFactory(() => {
 });
 
 type QueriesTabStyles = ReturnType<typeof getStyles>;
+
+// Wrapper component that provides the query history context
+export function QueryGroupWithHistory(props: Props) {
+  // Import the hook dynamically to avoid circular dependencies
+  const { useQueriesDrawerContext } = require('../../explore/QueriesDrawer/QueriesDrawerContext');
+  const { setDrawerOpened } = useQueriesDrawerContext();
+
+  return (
+    <QueryGroup
+      {...props}
+      onOpenQueryHistory={() => setDrawerOpened(true)}
+    />
+  );
+}
 
 interface QueryGroupTopSectionProps {
   data: PanelData;
