@@ -584,6 +584,10 @@ func (s *searchSupport) findIndexesToRebuild(ctx context.Context, now time.Time)
 				minBuildTime:       minBuildTime,
 				minBuildVersion:    s.minBuildVersion,
 			})
+
+			if s.indexMetrics != nil {
+				s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
+			}
 		}
 	}
 }
@@ -598,6 +602,10 @@ func (s *searchSupport) runIndexRebuilder(ctx context.Context) {
 		if err != nil {
 			s.log.Info("index rebuilder stopped", "error", err)
 			return
+		}
+
+		if s.indexMetrics != nil {
+			s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
 		}
 
 		s.rebuildIndex(ctx, req)
