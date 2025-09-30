@@ -47,17 +47,19 @@ Grafana plugins let you extend the platform with new data sources, panels, and m
 4. Follow best practices for code style, testing, and documentation.
 5. Publish your plugin or submit it for review as described in the guide.
 
-### 3. Contribute without Code
+### 3. Contribute without code
+
 
 You can help even if you don't write code:
 
 - **Triage issues:** Review, label, and clarify open issues ([triage guide](contribute/triage-issues.md)).
-- **Report bugs:** Submit detailed bug reports ([bug template](https://github.com/grafana/grafana/issues/new?template=0-bug-report.yaml)).
 - **Suggest features:** Propose new ideas ([feature request template](https://github.com/grafana/grafana/issues/new?template=1-feature_requests.md)).
 - **Improve documentation:** Edit or add to our docs ([docs guide](contribute/documentation/README.md)).
 - **Report security vulnerabilities:** If you believe you've found a security issue, please read our [security policy](https://github.com/grafana/grafana/security/policy) for details on responsible reporting.
 
 **Please note:** We do not currently accept contributions for translations. Please do not submit pull requests translating grafana.json files - they will be rejected. We do accept contributions to mark up phrases for translation. See [Internationalization](contribute/internationalization.md).
+
+#### Reporting issues
 
 Before submitting a new issue, try to make sure someone hasn't already reported the problem. Look through the [existing issues](https://github.com/grafana/grafana/issues) for similar issues.
 
@@ -70,11 +72,11 @@ For data visualization issues:
 - Query results from the inspect drawer (data tab & query inspector)
 - Panel settings can be extracted in the panel inspect drawer JSON tab
 
-For a dashboard related issues:
+For dashboard related issues:
 
 - Dashboard JSON can be found in the dashboard settings JSON model view
 
-For authentication and alerting Grafana server logs are useful.
+For authentication and alerting, Grafana server logs are useful.
 
 ### Triage issues
 
