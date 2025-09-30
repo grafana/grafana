@@ -115,6 +115,10 @@ export interface FeatureToggles {
   */
   starsFromAPIServer?: boolean;
   /**
+  * Routes stars requests from /api to the /apis endpoint
+  */
+  kubernetesStars?: boolean;
+  /**
   * Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
   */
   influxqlStreamingParser?: boolean;
@@ -204,10 +208,6 @@ export interface FeatureToggles {
   * Start an additional https handler and write kubectl options
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
-  /**
-  * Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.
-  */
-  featureToggleAdminPage?: boolean;
   /**
   * Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
   * @default true
@@ -552,6 +552,10 @@ export interface FeatureToggles {
   * Enables Saved queries (query library) feature
   */
   queryLibrary?: boolean;
+  /**
+  * Enable suggested dashboards when creating new dashboards
+  */
+  dashboardLibrary?: boolean;
   /**
   * Sets the logs table as default visualisation in logs explore
   */
@@ -1173,11 +1177,6 @@ export interface FeatureToggles {
   */
   prometheusTypeMigration?: boolean;
   /**
-  * Enables dskit background service wrapper
-  * @default false
-  */
-  dskitBackgroundServices?: boolean;
-  /**
   * Enables running plugins in containers
   * @default false
   */
@@ -1192,4 +1191,9 @@ export interface FeatureToggles {
   * @default false
   */
   filterOutBotsFromFrontendLogs?: boolean;
+  /**
+  * Prioritize loading plugins from the CDN before other sources
+  * @default false
+  */
+  cdnPluginsLoadFirst?: boolean;
 }

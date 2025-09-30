@@ -29,6 +29,10 @@ type CoreRoleStorageBackend interface{ resource.StorageBackend }
 // Used by wire to identify the storage backend for custom roles.
 type RoleStorageBackend interface{ resource.StorageBackend }
 
+// RoleBindingStorageBackend uses the resource.StorageBackend interface to provide storage for role bindings.
+// Used by wire to identify the storage backend for role bindings.
+type RoleBindingStorageBackend interface{ resource.StorageBackend }
+
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
 	// Stores
@@ -36,6 +40,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	coreRolesStorage           CoreRoleStorageBackend
 	rolesStorage               RoleStorageBackend
 	resourcePermissionsStorage resource.StorageBackend
+	roleBindingsStorage        RoleBindingStorageBackend
 
 	// Access Control
 	authorizer authorizer.Authorizer

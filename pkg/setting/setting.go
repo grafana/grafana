@@ -78,6 +78,8 @@ var (
 )
 
 // TODO move all global vars to this struct
+// Deprecated: Direct access to Cfg will be disallowed in a future release.
+// Use the ConfigProvider interface (see pkg/configprovider/configprovider.go) instead.
 type Cfg struct {
 	Target []string
 	Raw    *ini.File
@@ -540,9 +542,6 @@ type Cfg struct {
 
 	// Cloud Migration
 	CloudMigration CloudMigrationSettings
-
-	// Feature Management Settings
-	FeatureManagement FeatureMgmtSettings
 
 	// Alerting
 	AlertingEvaluationTimeout   time.Duration
@@ -1427,7 +1426,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	logSection := iniFile.Section("log")
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
 
-	cfg.readFeatureManagementConfig()
 	cfg.readPublicDashboardsSettings()
 	cfg.readCloudMigrationSettings()
 	cfg.readSecretsManagerSettings()
