@@ -16,13 +16,14 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/blevesearch/bleve/v2"
-	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/atomic"
 	"go.uber.org/goleak"
+
+	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -653,7 +654,7 @@ type StubAccessClient struct {
 	resourceResponses map[string]bool // key is the resource name, and bool if what the checker will return
 }
 
-func (nc *StubAccessClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest) (authlib.CheckResponse, error) {
+func (nc *StubAccessClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 	return authlib.CheckResponse{Allowed: nc.resourceResponses[req.Resource]}, nil
 }
 
