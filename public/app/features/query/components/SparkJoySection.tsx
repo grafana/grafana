@@ -635,20 +635,6 @@ export const SparkJoySection = <TQuery extends DataQuery>({
                       timestamp={query.createdAt}
                     />
                   ))}
-                  <div>
-                    <Button
-                      variant="secondary"
-                      onClick={() => openQueryLibraryDrawer({
-                        datasourceFilters: [datasource.name],
-                        onSelectQuery: handleLibraryQuerySelect,
-                        options: { context: 'explore' },
-                      })}
-                      size="md"
-                      icon="book"
-                    >
-                      Browse all saved queries
-                    </Button>
-                  </div>
                 </Stack>
               ) : (
                 <div>
@@ -678,9 +664,23 @@ export const SparkJoySection = <TQuery extends DataQuery>({
 
           {/* Query Patterns Section - Show for Loki and Prometheus */}
           <QueryPatternStarter
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             datasource={datasource as unknown as DataSourceApi}
             onSelectQuery={handleLibraryQuerySelect}
           />
+                      <Button
+                      variant="secondary"
+                      style={{ marginTop: '8px' }}
+                      onClick={() => openQueryLibraryDrawer({
+                        datasourceFilters: [datasource.name],
+                        onSelectQuery: handleLibraryQuerySelect,
+                        options: { context: 'explore' },
+                      })}
+                      size="md"
+                      icon="book"
+                    >
+                      Show more
+                    </Button>
         </div>
 
         {/* Recent Queries Column */}

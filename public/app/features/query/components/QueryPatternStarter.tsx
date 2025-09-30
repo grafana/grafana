@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { DataQuery, DataSourceApi } from '@grafana/data';
-import { Spinner, Text, useTheme2 } from '@grafana/ui';
+import { Spinner, useTheme2, Badge } from '@grafana/ui';
 
 // Query patterns types
 type LokiQueryPattern = {
@@ -50,17 +50,18 @@ const useQueryPatterns = (datasource: DataSourceApi) => {
         // Check if it's a Loki datasource
         if (datasource.type === 'loki') {
           // Get real label values from the datasource
-          const lokiDatasource = datasource as unknown as { languageProvider?: { started: boolean; getLabelKeys: () => string[]; fetchLabelValues: (label: string) => Promise<string[]> } };
+          const lokiDatasource = datasource as unknown as { languageProvider?: { started: boolean; start: () => Promise<void>; getLabelKeys: () => string[]; fetchLabelValues: (label: string) => Promise<string[]> } };
           const languageProvider = lokiDatasource.languageProvider;
           
           let labelSelector = '{}'; // Default empty selector
           let labelName = 'job';
           let labelValue = 'default';
 
-          if (languageProvider && languageProvider.started) {
+          if (languageProvider) {
             try {
+              await languageProvider.start();
               const labels = languageProvider.getLabelKeys() || [];
-              const preferredLabels = ['job', 'app', 'k8s_app', 'service', 'container'];
+              const preferredLabels = ['instance', 'job', 'app', 'cluster', 'service_name'];
               const preferredLabel = preferredLabels.find((l) => labels.includes(l));
               
               if (preferredLabel) {
@@ -78,11 +79,11 @@ const useQueryPatterns = (datasource: DataSourceApi) => {
 
           queryPatterns = [
             {
-              name: 'Parse and filter logs',
+              name: 'Search for logs',
               type: 'log',
               operations: [],
-              queryString: `${labelSelector} |= "error" | json | level="error"`,
-              description: `Find error logs in ${labelName}="${labelValue}" and parse them as JSON`
+              queryString: `${labelSelector}`,
+              description: `Find error logs in ${labelName}="${labelValue}"`
             }
           ];
         }
@@ -163,6 +164,16 @@ const QueryPatternCard = ({ pattern, onClick, datasource }: QueryPatternCardProp
       flexDirection: 'column' as const,
       gap: theme.spacing(1),
     },
+    header: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: theme.spacing(0.5),
+    },
+    badge: {
+      fontSize: theme.typography.bodySmall.fontSize,
+      padding: `${theme.spacing(0.25)} ${theme.spacing(0.75)}`,
+    },
     title: {
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.primary,
@@ -216,11 +227,14 @@ const QueryPatternCard = ({ pattern, onClick, datasource }: QueryPatternCardProp
       }}
     >
       <div className={css(styles.content)}>
-        <div className={css(styles.title)}>{pattern.name}</div>
-        <div className={css(styles.query)}>{getQueryDisplay()}</div>
-        <div className={css(styles.description)}>
-          {pattern.description || (datasource.type === 'loki' ? 'Loki query pattern' : 'Prometheus query pattern')}
+        <div className={css(styles.header)}>
+          <Badge 
+            text="Recommended by Grafana" 
+            color="blue" 
+            className={css(styles.badge)}
+          />
         </div>
+        <div className={css(styles.query)}>{getQueryDisplay()}</div>
       </div>
     </div>
   );
@@ -232,7 +246,7 @@ export const QueryPatternStarter = ({ datasource, onSelectQuery }: QueryPatternS
 
   const styles = {
     container: {
-      marginTop: '24px',
+      marginTop: '8px',
     },
     columnHeader: {
       display: 'flex',
@@ -282,9 +296,6 @@ export const QueryPatternStarter = ({ datasource, onSelectQuery }: QueryPatternS
 
   return (
     <div className={css(styles.container)}>
-      <div className={css(styles.columnHeader)}>
-        <Text variant="h6">Query starter</Text>
-      </div>
       {isLoadingPatterns ? (
         <div className={css(styles.loadingState)}>
           <Spinner size={16} />
