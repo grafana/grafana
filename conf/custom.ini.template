@@ -1,0 +1,7 @@
+[database]
+type = postgres
+host = 127.0.0.1:5432
+name = %%DB_NAME%%
+user = %%DB_USER%%
+password = %%DB_PASSWORD%%
+ssl_mode = disable
