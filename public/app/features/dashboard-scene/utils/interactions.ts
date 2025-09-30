@@ -208,7 +208,7 @@ const reportDashboardInteraction: typeof reportInteraction = (name, properties, 
   if (properties) {
     reportInteraction(`${interactionPrefix}_${name}`, { ...properties, ...meta, isDynamicDashboard });
   } else {
-    reportInteraction(`${interactionPrefix}dashboards_${name}`, { isDynamicDashboard });
+    reportInteraction(`${interactionPrefix}_${name}`, { isDynamicDashboard });
   }
 };
 
