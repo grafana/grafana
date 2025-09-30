@@ -109,11 +109,11 @@ Grafana Cloud Frontend Observability resources in the stack, and the related per
 
 ### Scale access management with Terraform and SSO
 
-Once the model is working, codify it! 
+After you've made sure the model is working, codify it! 
 
 You can add any new users to your Grafana instance with an Identity Provider through [SCIM](/configure-security/configure-scim-provisioning/manage-users-teams/#manage-users-and-teams-with-scim). Use [role sync](/configure-security/configure-authentication/saml/configure-saml-team-role-mapping/#configure-role-sync-for-saml) to ensure everyone is automatically assigned to the right team based on their membership, including those with the Admin role.
 
-You can also use Terraform to provision teams their folders, fixed roles, and shared datasource LBAC rules. For example, if you need to add a new team (Team D), you only need to add the new team to Grafana and run the Terraform script, which will automatically set them up to start using Grafana.
+You can also use Terraform to provision teams their folders, fixed roles, and shared data source LBAC rules. For example, if you need to add a new team (Team D), you only need to add the new team to Grafana and run the Terraform script, which will automatically set them up to start using Grafana.
 
 [IMAGE HERE]
 Add new Team D from Okta and automate the rest of their IAM setup using Terraform
