@@ -123,6 +123,7 @@ export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, 
       padding: theme.spacing(0, 1, 0, 2),
     }),
     menuItem: css({ maxWidth: '200px' }),
+    safariWrapper: css({ contain: 'strict', height: '100%' }),
   };
 };
 
