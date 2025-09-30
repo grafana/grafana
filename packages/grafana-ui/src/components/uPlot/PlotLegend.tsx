@@ -14,6 +14,7 @@ import { getDisplayValuesForCalcs } from './utils';
 interface PlotLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
   data: DataFrame[];
   config: UPlotConfigBuilder;
+  shouldSparkJoy?: boolean;
 }
 
 /**
@@ -40,7 +41,7 @@ export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFra
 }
 
 export const PlotLegend = memo(
-  ({ data, config, placement, calcs, displayMode, ...vizLayoutLegendProps }: PlotLegendProps) => {
+  ({ data, config, placement, calcs, displayMode, shouldSparkJoy, ...vizLayoutLegendProps }: PlotLegendProps) => {
     const theme = useTheme2();
     const legendItems = config
       .getSeries()
@@ -85,6 +86,9 @@ export const PlotLegend = memo(
           sortBy={vizLayoutLegendProps.sortBy}
           sortDesc={vizLayoutLegendProps.sortDesc}
           isSortable={true}
+          onLabelClick={(item, event) => console.log({ item, event })}
+          onLegendClick={() => console.log('click')}
+          shouldSparkJoy={shouldSparkJoy}
         />
       </VizLayout.Legend>
     );
