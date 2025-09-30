@@ -65,7 +65,7 @@ To set up Git Sync, you need:
   - If you want to use a local file path, refer to [the local file path guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/).
 - A GitHub access token. The Grafana UI will prompt you during setup.
 - Optional: A public Grafana instance.
-- Optional: the [Image Renderer plugin](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs.
+- Optional: the [Image Renderer service](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs.
 
 ## Enable required feature toggles
 
