@@ -24,6 +24,24 @@
       "import": "./dist/esm/index.mjs",
       "require": "./dist/cjs/index.cjs"
     },
+    "./index": {
+      "@grafana-app/source": "./src/index.ts",
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.cjs"
+    },
+    "./common/*": {
+      "@grafana-app/source": "./src/common/*.ts",
+      "types": "./dist/types/common/*.d.ts",
+      "import": "./dist/esm/common/*.mjs",
+      "require": "./dist/cjs/common/*.cjs"
+    },
+    "./raw/composable/*": {
+      "@grafana-app/source": "./src/raw/composable/*.ts",
+      "types": "./dist/types/raw/composable/*.d.ts",
+      "import": "./dist/esm/raw/composable/*.mjs",
+      "require": "./dist/cjs/raw/composable/*.cjs"
+    },
     "./raw/preferences": {
       "@grafana-app/source": "./src/raw/preferences/x/preferences_types.gen.ts",
       "types": "./dist/types/raw/preferences/x/preferences_types.gen.d.ts",
