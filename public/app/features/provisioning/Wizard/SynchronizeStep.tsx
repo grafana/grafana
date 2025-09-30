@@ -25,7 +25,6 @@ export const SynchronizeStep = memo(function SynchronizeStep({
   onCancel,
   isCancelling,
 }: SynchronizeStepProps) {
-  const [retryAttempt, setRetryAttempt] = useState(0);
   const { getValues, register, watch } = useFormContext<WizardFormData>();
   const { setStepStatusInfo } = useStepStatus();
   const [repoName = '', repoType] = watch(['repositoryName', 'repository.type']);
@@ -38,7 +37,15 @@ export const SynchronizeStep = memo(function SynchronizeStep({
     setStepStatusInfo,
   });
   const [job, setJob] = useState<Job>();
-  const repositoryStatusQuery = useGetRepositoryStatusQuery(repoName ? { name: repoName } : skipToken);
+  const [shouldEnablePolling, setShouldEnablePolling] = useState(true);
+
+  const POLLING_INTERVAL_MS = 5000;
+
+  const repositoryStatusQuery = useGetRepositoryStatusQuery(repoName ? { name: repoName } : skipToken, {
+    // Disable polling by setting interval to 0 when we should stop
+    pollingInterval: shouldEnablePolling ? POLLING_INTERVAL_MS : 0,
+    skipPollingIfUnfocused: true,
+  });
 
   const {
     healthy: isRepositoryHealthy,
@@ -52,12 +59,16 @@ export const SynchronizeStep = memo(function SynchronizeStep({
     repositoryStatusQuery?.data?.status?.health.healthy === false &&
     repositoryStatusQuery?.data?.status?.observedGeneration === 0;
 
+  // Stop polling when repository becomes healthy
+  useEffect(() => {
+    if (!healthStatusNotReady) {
+      setShouldEnablePolling(false);
+    }
+  }, [healthStatusNotReady]);
+
   const hasError = repositoryStatusQuery.isError;
   const isLoading = repositoryStatusQuery.isLoading || repositoryStatusQuery.isFetching;
   const isButtonDisabled = hasError || (checked !== undefined && isRepositoryHealthy === false) || healthStatusNotReady;
-
-  const MAX_RETRY_ATTEMPTS = 5;
-  const RETRY_INTERVAL_MS = 5000;
 
   const startSynchronization = async () => {
     const [history] = getValues(['migrate.history']);
@@ -66,27 +77,6 @@ export const SynchronizeStep = memo(function SynchronizeStep({
       setJob(response);
     }
   };
-
-  // Auto-retry mechanism
-  useEffect(() => {
-    if (!healthStatusNotReady || retryAttempt >= MAX_RETRY_ATTEMPTS || isLoading) {
-      return;
-    }
-
-    const timerId = setTimeout(() => {
-      setRetryAttempt((prev) => prev + 1);
-      repositoryStatusQuery.refetch();
-    }, RETRY_INTERVAL_MS);
-
-    return () => clearTimeout(timerId);
-  }, [healthStatusNotReady, retryAttempt, isLoading, repositoryStatusQuery]);
-
-  // Reset retry count when repository becomes healthy
-  useEffect(() => {
-    if (!healthStatusNotReady) {
-      setRetryAttempt(0);
-    }
-  }, [healthStatusNotReady]);
 
   if (isLoading) {
     return <Spinner />;
@@ -191,7 +181,12 @@ export const SynchronizeStep = memo(function SynchronizeStep({
           </Stack>
           <Stack>
             <Stack>
-              <Button onClick={() => repositoryStatusQuery.refetch()} disabled={isLoading}>
+              <Button
+                onClick={() => {
+                  repositoryStatusQuery.refetch();
+                }}
+                disabled={isLoading}
+              >
                 <Trans i18nKey="provisioning.wizard.check-status-button">Check repository status</Trans>
               </Button>
             </Stack>
