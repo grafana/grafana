@@ -9,7 +9,7 @@ export const getAPINamespace = () => config.namespace;
  * @returns
  */
 export const getAPIBaseURL = (group: string, version: string) => {
-  return `/apis/${group}/${version}/namespaces/${getAPINamespace()}`;
+  return `/apis/${group}/${version}/namespaces/${getAPINamespace()}` as const;
 };
 
 /**
