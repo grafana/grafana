@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
-	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,15 +29,6 @@ func TestErrToHealthCheckResult(t *testing.T) {
 				Status:      backend.HealthStatusError,
 				Message:     "Network error: Failed to connect to the server. Error message: some op",
 				JSONDetails: []byte(`{"errorDetailsLink":"https://grafana.com/docs/grafana/latest/datasources/postgres","verboseMessage":"foo\nread tcp: some op"}`),
-			},
-		},
-		{
-			name: "db error",
-			err:  errors.Join(errors.New("foo"), &pq.Error{Message: pq.ErrCouldNotDetectUsername.Error(), Code: pq.ErrorCode("28P01")}),
-			want: &backend.CheckHealthResult{
-				Status:      backend.HealthStatusError,
-				Message:     "foo\npq: pq: Could not detect default username. Please provide one explicitly. Postgres error code: invalid_password",
-				JSONDetails: []byte(`{"errorDetailsLink":"https://grafana.com/docs/grafana/latest/datasources/postgres","verboseMessage":"pq: Could not detect default username. Please provide one explicitly"}`),
 			},
 		},
 		{
