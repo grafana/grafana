@@ -18,6 +18,7 @@ import (
 const (
 	GoOSWindows = "windows"
 	GoOSLinux   = "linux"
+	GoOSDarwin  = "darwin"
 
 	BackendBinary = "grafana"
 	ServerBinary  = "grafana-server"
@@ -288,8 +289,9 @@ func setBuildEnv(opts BuildOpts) error {
 		}
 	}
 
-	if opts.goarch != "amd64" || opts.goos != GoOSLinux {
-		// needed for all other archs
+	if !(opts.goos == GoOSLinux && opts.goarch == "amd64") &&
+		!(opts.goos == GoOSDarwin) {
+		// needed for archs other than linux/amd64 and darwin/arm64 + darwin/amd64
 		opts.cgo = true
 	}
 
