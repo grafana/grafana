@@ -30,8 +30,8 @@ import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runShar
 import { QueryGroupOptions } from 'app/types/query';
 
 import { MIXED_DATASOURCE_NAME } from '../../../../plugins/datasource/mixed/MixedDataSource';
-import { useQueryLibraryContext } from '../../../explore/QueryLibrary/QueryLibraryContext';
 import { useQueriesDrawerContext } from '../../../explore/QueriesDrawer/QueriesDrawerContext';
+import { useQueryLibraryContext } from '../../../explore/QueryLibrary/QueryLibraryContext';
 import { ExpressionDatasourceUID } from '../../../expressions/types';
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';

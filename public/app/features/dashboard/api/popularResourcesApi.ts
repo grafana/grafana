@@ -41,7 +41,7 @@ export const popularResourcesApi = createApi({
     getPopularResources: builder.query<PopularResourcesResponse, GetPopularResourcesParams>({
       query: ({ type, limit = 10, period = '30d' } = {}) => {
         const params = new URLSearchParams();
-        if (type) params.set('type', type);
+        if (type) {params.set('type', type);}
         params.set('limit', limit.toString());
         params.set('period', period);
         

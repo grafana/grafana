@@ -207,7 +207,7 @@ const formatTimestamp = (timestamp: number): string => {
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
   if (minutes < 1) {
-    return 'Just now';
+    return 'just now';
   } else if (minutes < 60) {
     return `${minutes}m ago`;
   } else if (hours < 24) {
@@ -336,12 +336,12 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
       return 'No data found';
     }
     if (totalRows >= 1000) {
-      return `1000+ ${unit} found`;
+      return `1000+ ${unit}`;
     }
     if (totalRows === 1) {
-      return `1 ${unit} found`;
+      return `1 ${unit}`;
     }
-    return `${totalRows.toLocaleString()} ${unit} found`;
+    return `${totalRows.toLocaleString()} ${unit}`;
   };
 
   const styles = {
@@ -378,18 +378,26 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
     },
     query: {
       fontFamily: theme.typography.fontFamilyMonospace,
-      backgroundColor: theme.colors.background.canvas,
       padding: theme.spacing(1),
-      borderRadius: theme.shape.radius.default,
       wordBreak: 'break-all' as const,
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: 1.4,
+    },
+    queryText: {
+      padding: theme.spacing(0.25, 0.5),
+      fontSize: theme.typography.body.fontSize,
+      fontFamily: theme.typography.fontFamilyMonospace,
+      overflow: 'auto',
+      backgroundColor: theme.colors.emphasize(theme.colors.background.secondary, 0.06),
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
     },
     previewRow: {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: theme.spacing(1),
+      margin: theme.spacing(0, 1),
     },
     preview: {
       display: 'flex',
@@ -405,22 +413,23 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
     },
     badge: {
       fontSize: theme.typography.bodySmall.fontSize,
-      padding: `${theme.spacing(0.25)} ${theme.spacing(0.75)}`,
+      borderRadius: '1em',
     },
     userBadge: {
       fontSize: theme.typography.bodySmall.fontSize,
       padding: `${theme.spacing(0.25)} ${theme.spacing(0.5)}`,
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(0.5),
+      gap: theme.spacing(0.75),
+      borderRadius: theme.shape.radius.default,
     },
     badgeAvatar: {
       marginLeft: theme.spacing(0.5),
     },
   };
-  console.log('query', query);
   const queryDisplayText = datasource?.getQueryDisplayText?.(query.query) ?? JSON.stringify(query.query);
 
+  console.log('query', query);
   return (
     <div
       className={css(styles.card)}
@@ -437,7 +446,7 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
       <div className={css(styles.content)}>
         <div className={css(styles.mainContent)}>
           {/* Always use monospace style for now - can be extended per datasource */}
-          <div className={css(styles.query)}>{queryDisplayText}</div>
+          <div className={css(styles.query)}><span className={css(styles.queryText)}>{queryDisplayText}</span></div>
 
           <div className={css(styles.previewRow)}>
             <div className={css(styles.preview)}>
@@ -448,58 +457,66 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
                 </>
               ) : (
                 <>
-                  <Icon
-                    name={previewData?.state === LoadingState.Error ? 'exclamation-triangle' : 'chart-line'}
-                    size="sm"
-                    className={css(styles.previewIcon)}
-                  />
                   <span>{getPreviewText()}</span>
-                </>
-              )}
-            </div>
-
-            {/* Add badges on the same level as preview info */}
-            {query.isPattern && query.patternType === 'grafana' && (
-              <Badge 
-                text="Recommended by Grafana" 
-                color="blue" 
-                className={css(styles.badge)}
-              />
-            )}
-            {!isRecentQuery && query.userInfo && !query.isPattern && (
-              <Badge 
-                text={
-                  <div className={css(styles.userBadge)}>
-                    <span>Recommended by {query.userInfo.displayName || 'user'}</span>
-                    <Avatar
-                      src={query.userInfo.avatarURL || ''}
-                      alt={`${query.userInfo.displayName} avatar`}
-                      width={2}
-                      height={2}
-                    />
-                  </div>
-                }
-                color="green" 
-                className={css(styles.badge)}
-              />
-            )}
-            {isRecentQuery && timestamp && (
+                  <span style={{ color: theme.colors.text.secondary, margin: theme.spacing(0, 0.25) }}>|</span>
+                  {isRecentQuery && timestamp && (
+                    <span style={{ color: theme.colors.text.secondary }}>
+                    Last run {formatTimestamp(timestamp)}
+                    </span>
+                  )}
+                  {!isRecentQuery && (
+                    <span style={{ color: theme.colors.text.secondary }}>
+                      Created {formatTimestamp(query.createdAt || 0)}
+                    </span>
+                  )}
+                  <span style={{ color: theme.colors.text.secondary, margin: theme.spacing(0, 0.25) }}>|</span>
+                  <span style={{ color: theme.colors.text.secondary }}>
+                    {isRecentQuery ? 'Created by' : 'Recommended by'}
+                  </span>
+                  {isRecentQuery && timestamp && (
               <Badge 
                 text={
                   <div className={css(styles.userBadge)}>
-                    <span>Last run {formatTimestamp(timestamp)}</span>
                     <Avatar
                       src={config.bootData.user.gravatarUrl || ''}
                       alt={`${config.bootData.user.name} avatar`}
                       width={2}
                       height={2}
                     />
+                    {config.bootData.user.name}
                   </div>
                 }
-                color="darkgrey" 
+                color="green" 
                 className={css(styles.badge)}
               />
             )}
+            {query.isPattern && query.patternType === 'grafana' && (
+              <Badge 
+                text="Grafana" 
+                color="orange" 
+                className={css(styles.badge)}
+              />
+            )}
+            {!isRecentQuery && query.userInfo && !query.isPattern && (
+ <Badge 
+ text={
+   <div className={css(styles.userBadge)}>
+     <Avatar
+       src={query.userInfo.avatarURL || ''}
+       alt={`${query.userInfo.displayName} avatar`}
+       width={2}
+       height={2}
+     /> 
+     {query.userInfo.displayName}
+   </div>
+ }
+ color="blue" 
+ className={css(styles.badge)}
+/>
+            )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -642,7 +659,7 @@ export const SparkJoySection = <TQuery extends DataQuery>({
         <div className={css(styles.column)}>
           <div className={css(styles.columnHeader)}>
              {/* <Icon name="thumbs-up" size="md" /> */}
-             <Text variant="h6">Recommended queries</Text>
+             <Text variant="h5">Recommended queries</Text>
           </div>
 
           {/* Combine pattern queries and library queries */}
@@ -725,19 +742,14 @@ export const SparkJoySection = <TQuery extends DataQuery>({
 
           {/* Show more button */}
           {(patternQueries.length > 0 || libraryQueries.length > 0) && queryLibraryEnabled && (
-            <Button
-              variant="secondary"
-              style={{ marginTop: theme.spacing(1) }}
+            <button style={{ marginTop: theme.spacing(1), backgroundColor: theme.colors.background.primary, border: 'none', borderRadius: theme.shape.radius.default, cursor: 'pointer' }}
               onClick={() => openQueryLibraryDrawer({
                 datasourceFilters: [datasource.name],
                 onSelectQuery: handleLibraryQuerySelect,
                 options: { context: 'explore' },
-              })}
-              size="md"
-              icon="book"
-            >
+              })}>
               Show more
-            </Button>
+            </button>
           )}
         </div>
 
@@ -745,7 +757,7 @@ export const SparkJoySection = <TQuery extends DataQuery>({
         <div className={css(styles.column)}>
           <div className={css(styles.columnHeader)}>
             {/* <Icon name="history" size="md" /> */}
-            <Text variant="h6">My recent queries</Text>
+            <Text variant="h5">My recent queries</Text>
           </div>
 
           {isLoadingHistory ? (
@@ -771,9 +783,10 @@ export const SparkJoySection = <TQuery extends DataQuery>({
                 );
               })}
               <div>
-                <Button variant="secondary" onClick={() => setDrawerOpened(true)} size="md" icon="external-link-alt">
-                  Show more
-                </Button>
+                <button style={{ marginTop: theme.spacing(1), backgroundColor: theme.colors.background.primary, border: 'none', borderRadius: theme.shape.radius.default, cursor: 'pointer' }}
+                onClick={() => setDrawerOpened(true)}>
+                  View all
+              </button>
               </div>
             </Stack>
           ) : (

@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FilterInput, useStyles2, Button, Icon } from '@grafana/ui';
+
 import { FilterTag } from './FilterTag';
 
 interface HackathonSearchInputProps {

@@ -16,12 +16,12 @@ import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { changeDatasource } from 'app/features/explore/state/datasource';
 import { starHistoryItem, commentHistoryItem, deleteHistoryItem } from 'app/features/explore/state/history';
 import { setQueries } from 'app/features/explore/state/query';
+import { ContextAwareRunQueryButton } from 'app/features/query/components/ContextAwareRunQueryButton';
 import { dispatch } from 'app/store/store';
 import { ShowConfirmModalEvent } from 'app/types/events';
 import { RichHistoryQuery } from 'app/types/explore';
 import icnDatasourceSvg from 'img/icn-datasource.svg';
 
-import ExploreRunQueryButton from '../ExploreRunQueryButton';
 
 import { RichHistoryAddToLibrary } from './RichHistoryAddToLibrary';
 
@@ -349,7 +349,7 @@ export function RichHistoryCard(props: Props) {
         {!activeUpdateComment && <RichHistoryAddToLibrary query={queryHistoryItem?.queries[0]} />}
         {!activeUpdateComment && (
           <div className={styles.runButton}>
-            <ExploreRunQueryButton queries={queryHistoryItem.queries} rootDatasourceUid={cardRootDatasource?.uid} />
+            <ContextAwareRunQueryButton queries={queryHistoryItem.queries} rootDatasourceUid={cardRootDatasource?.uid} />
           </div>
         )}
       </div>

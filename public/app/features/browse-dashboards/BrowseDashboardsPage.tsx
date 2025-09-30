@@ -31,10 +31,10 @@ import { BrowseView } from './components/BrowseView';
 import CreateNewButton from './components/CreateNewButton';
 import { FolderActionsButton } from './components/FolderActionsButton';
 import { SearchView } from './components/SearchView';
+import HackathonBrowseDashboardsPage from './hackathon14/HackathonBrowseDashboardsPage';
 import { getFolderPermissions } from './permissions';
 import { useHasSelection } from './state/hooks';
 import { setAllSelection } from './state/slice';
-import HackathonBrowseDashboardsPage from './hackathon14/HackathonBrowseDashboardsPage';
 
 // New Browse/Manage/Search Dashboards views for nested folders
 const BrowseDashboardsPageOld = memo(

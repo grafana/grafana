@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 /* eslint-disable @grafana/i18n/no-untranslated-strings */
 import { useEffect, useState } from 'react';
 
