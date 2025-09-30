@@ -22,7 +22,7 @@ weight: 400
 TBC
 {{< /admonition >}}
 
-After you have set up Git Sync, you can synchronize any changes you make in your existing dashboards with your configured GitHub repository. Similarly, if you push a change in your repository, those changes are mirrored in your Grafana instance.
+After you have set up Git Sync, you can synchronize any changes you make in your existing provisioned folders in the UI with your configured GitHub repository. Similarly, if you push a change into your repository, those changes are mirrored in your Grafana instance.
 
 ## View current status of synchronization
 

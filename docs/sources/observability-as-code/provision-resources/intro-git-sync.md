@@ -29,9 +29,9 @@ Using Git Sync, you can:
 
 ## How it works
 
-Because dashboards are defined in JSON files, you can enable as-code workflows where the JSON is an output from Go, TypeScript, or another coding language in the format of a dashboard schema. To learn more about creating dashboards in a coding language to provision them for Git Sync, refer to the [Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/foundation-sdk) documentation.
+Because dashboards are defined in JSON files, you can enable as-code workflows where the JSON file is an output from Go, TypeScript, or another coding language in the format of a dashboard schema. To learn more about creating dashboards in a coding language to provision them for Git Sync, refer to the [Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/foundation-sdk) documentation.
 
-Git Sync is bidirectional and also works with changes done directly in GitHub as well as within the Grafana UI.
+Git Sync is bidirectional and works both with changes done directly in GitHub as well as in the Grafana UI.
 
 ### Making changes in Grafana 
 

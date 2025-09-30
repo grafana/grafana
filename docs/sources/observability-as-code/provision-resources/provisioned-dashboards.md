@@ -29,16 +29,17 @@ For more information, refer to the [Dashboards](https://grafana.com/docs/grafana
 
 Dashboards and folders synchronized using Git Sync or a local file path are referred to as "provisioned" resources.
 
-Of the two experimental options, Git Sync is the recommended method for provisioning your dashboards.
+### Git Sync provisioning
+
+Of the two experimental options, **Git Sync** is the recommended method for provisioning your dashboards.
 You can synchronize any new dashboards and changes to existing dashboards to your configured GitHub repository.
-If you push a change in the repository, those changes are mirrored in your Grafana instance.
-For more information on configuring Git Sync, refer to [Set up Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync/).
+If you push a change in the repository, those changes are mirrored in your Grafana instance. 
+
+For more information on configuring Git Sync, refer to [Introduction to Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync/).
 
 ### Local path provisioning
 
-Using the local path provisioning makes files from a specified path available within Grafana.
-These provisioned resources can only be modified in the local files and not within Grafana.
-Any changes made in the configured local path are updated in Grafana.
+Local path provisioning makes files from a specified path available within Grafana, and any changes made in the configured local path are updated in Grafana. Note that these provisioned resources can only be modified in the local files and not within Grafana. 
 
 Refer to [Set up file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup) to learn more about the version of local file provisioning in Grafana 12.
 
@@ -127,9 +128,6 @@ Grafana updates when the changes from the GitHub repository sync.
 ## Manage dashboards provisioned with file provisioning
 
 To update any resources in the local path, you need to edit the files directly and then save them locally.
-These changes are synchronized to Grafana.
-However, you can't create, edit, or delete these resources using the Grafana UI.
-
-For more information, refer to [How it works](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/).
+These changes are synchronized to Grafana. However, you can't create, edit, or delete these resources using the Grafana UI.
 
 Refer to [Set up file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/) for configuration instructions.

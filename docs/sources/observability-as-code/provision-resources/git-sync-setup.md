@@ -23,12 +23,14 @@ TBC
 
 Git Sync lets you manage Grafana dashboards as code by storing dashboard JSON files and folders in a remote GitHub repository.
 
-To set up Git Sync and synchronize with a GitHub repository you need to:
+To set up Git Sync and synchronize with a GitHub repository follow these steps:
 
-1. Enable feature toggles in Grafana (first time set up).
-1. Configure a connection to your GitHub repository.
-1. Choose what content to sync with Grafana.
-1. Optional: Extend Git Sync by enabling pull request notifications and image previews of dashboard changes.
+1. [Enable feature toggles in Grafana](#enable-required-feature-toggles) (first time set up).
+1. [Create a GitHub access token](#create-a-github-access-token).
+1. [Configure a connection to your GitHub repository](#set-up-the-connection-to-github).
+1. [Choose what content to sync with Grafana](#choose-what-to-synchronize).
+
+Optionally, you can [extend Git Sync](#configure-webhooks-and-image-rendering) by enabling pull request notifications and image previews of dashboard changes.
 
 | Capability                                            | Benefit                                                                         | Requires                                      |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------- |
@@ -38,7 +40,7 @@ To set up Git Sync and synchronize with a GitHub repository you need to:
 
 {{< admonition type="note" >}}
 
-Alternatively, you can configure a local file system instead of using GitHub. Refer to [Set up file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/) for information.
+Alternatively, you can configure a local file system instead of using GitHub. Refer to [Set up file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/) for more information.
 
 {{< /admonition >}}
 
@@ -167,7 +169,7 @@ Finally, you can set up how often your configured storage is polled for updates.
 
 To verify that your dashboards are available at the location that you specified, click **Dashboards**. The name of the dashboard is listed in the **Name** column.
 
-Now that your dashboards have been synced from a repository, you can customize the name, change the branch, and create a pull request (PR) for it. Refer to [Use Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/use-git-sync/) for more information.
+Now that your dashboards have been synced from a repository, you can customize the name, change the branch, and create a pull request (PR) for it. Refer to [Manage provisioned repositories with Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/use-git-sync/) for more information.
 
 ## Configure webhooks and image rendering
 
