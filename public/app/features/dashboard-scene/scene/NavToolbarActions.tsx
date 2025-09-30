@@ -18,8 +18,11 @@ import {
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
+import { SparkJoyToggle } from 'app/core/components/SparkJoyToggle';
+import { SparkJoyWave } from 'app/core/components/SparkJoyWave';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/core';
+import { getSparkJoyEnabled, setSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { trackDashboardSceneEditButtonClicked } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -82,6 +85,13 @@ export function ToolbarActions({ dashboard }: Props) {
   const isNew = !Boolean(uid || dashboard.isManaged());
 
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
+  const [sparkJoy, setSparkJoy] = useState<boolean>(() => getSparkJoyEnabled(true));
+  const onToggleSparkJoy = () =>
+    setSparkJoy((current) => {
+      const next = !current;
+      setSparkJoyEnabled(next);
+      return next;
+    });
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
@@ -152,6 +162,12 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <GoToSnapshotOriginButton key="go-to-snapshot-origin" originalURL={dashboard.getSnapshotUrl() ?? ''} />
     ),
+  });
+  // Spark Joy toggle in the dashboard toolbar
+  toolbarActions.push({
+    group: 'main-buttons',
+    condition: isEditing, // show in view mode
+    render: () => <SparkJoyToggle key="sparks-joy-toggle" value={sparkJoy} onToggle={onToggleSparkJoy} />,
   });
 
   if (!isEditingPanel && !isEditing) {
@@ -584,7 +600,12 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  return <ToolbarButtonRow alignment="right">{renderActionElements(toolbarActions)}</ToolbarButtonRow>;
+  return (
+    <>
+      <SparkJoyWave active={sparkJoy} />
+      <ToolbarButtonRow alignment="right">{renderActionElements(toolbarActions)}</ToolbarButtonRow>
+    </>
+  );
 }
 
 function renderActionElements(toolbarActions: ToolbarAction[]) {

@@ -2,19 +2,17 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { 
-  TimeRange, 
-  PanelData, 
-  LoadingState, 
-  DataQueryRequest, 
-  dateTime, 
+import {
+  TimeRange,
+  PanelData,
+  LoadingState,
+  DataQueryRequest,
+  dateTime,
   DataSourceApi,
-  DataQuery 
+  DataQuery,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-
 import { Stack, Text, Icon, useTheme2, Spinner, Avatar, Button } from '@grafana/ui';
-
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { useQueriesDrawerContext } from '../../explore/QueriesDrawer/QueriesDrawerContext';
@@ -31,11 +29,11 @@ interface QueryItem {
 const formatTimestamp = (timestamp: number): string => {
   const now = Date.now();
   const diff = now - timestamp;
-  
+
   const minutes = Math.floor(diff / (1000 * 60));
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  
+
   if (minutes < 1) {
     return 'Just now';
   } else if (minutes < 60) {
@@ -58,15 +56,7 @@ interface QueryCardProps {
   timestamp?: number;
 }
 
-
-const QueryCard = ({ 
-  query, 
-  onClick, 
-  datasource, 
-  timeRange, 
-  isRecentQuery, 
-  timestamp 
-}: QueryCardProps) => {
+const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, timestamp }: QueryCardProps) => {
   const theme = useTheme2();
   const [previewData, setPreviewData] = useState<PanelData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -76,25 +66,24 @@ const QueryCard = ({
       if (!query || typeof query !== 'object' || query === null || !query.query) {
         return;
       }
-      
+
       // Use a default time range if none provided (last 1 hour)
       const effectiveTimeRange = timeRange || {
         from: dateTime(Date.now() - 60 * 60 * 1000),
         to: dateTime(),
-        raw: { from: 'now-1h', to: 'now' }
+        raw: { from: 'now-1h', to: 'now' },
       };
-      
+
       setIsLoading(true);
       try {
         const uniqueId = Math.random().toString(36).substring(2, 15);
-        
+
         // Create a generic query object - each datasource will need to adapt this
         const target = {
           ...query.query,
           refId: `sparkjoy-${uniqueId}`,
           datasource: datasource.getRef(),
-        } 
-        
+        };
 
         const request: DataQueryRequest = {
           targets: [target],
@@ -110,10 +99,11 @@ const QueryCard = ({
         };
 
         const observable = datasource.query(request);
-       const result = 'toPromise' in observable 
-         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-         ? await (observable as { toPromise(): Promise<any> }).toPromise() 
-         : await Promise.resolve(observable);
+        const result =
+          'toPromise' in observable
+            ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
+              await (observable as { toPromise(): Promise<any> }).toPromise()
+            : await Promise.resolve(observable);
 
         if (result && result.data && result.data.length > 0) {
           setPreviewData({
@@ -157,16 +147,16 @@ const QueryCard = ({
     if (previewData.state === LoadingState.Error) {
       return 'Error loading preview';
     }
-    
+
     const series = previewData.series;
     if (!series || series.length === 0) {
       return 'No data found';
     }
-    
+
     const firstSeries = series[0];
     const totalRows = firstSeries.length;
     const unit = firstSeries.meta?.preferredVisualisationType === 'logs' ? 'logs' : 'data points';
-    
+
     if (totalRows === 0) {
       return 'No data found';
     }
@@ -256,12 +246,12 @@ const QueryCard = ({
       fontWeight: theme.typography.fontWeightMedium,
     },
   };
-console.log('query', query);
+  console.log('query', query);
   const queryDisplayText = datasource?.getQueryDisplayText?.(query.query) ?? JSON.stringify(query.query);
 
   return (
-    <div 
-      className={css(styles.card)} 
+    <div
+      className={css(styles.card)}
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -276,7 +266,7 @@ console.log('query', query);
         <div className={css(styles.mainContent)}>
           {/* Always use monospace style for now - can be extended per datasource */}
           <div className={css(styles.query)}>{queryDisplayText}</div>
-          
+
           <div className={css(styles.preview)}>
             {isLoading ? (
               <>
@@ -285,13 +275,9 @@ console.log('query', query);
               </>
             ) : (
               <>
-                <Icon 
-                  name={
-                    previewData?.state === LoadingState.Error 
-                      ? 'exclamation-triangle' 
-                      : 'chart-line'
-                  } 
-                  size="sm" 
+                <Icon
+                  name={previewData?.state === LoadingState.Error ? 'exclamation-triangle' : 'chart-line'}
+                  size="sm"
                   className={css(styles.previewIcon)}
                 />
                 <span>{getPreviewText()}</span>
@@ -299,21 +285,19 @@ console.log('query', query);
             )}
           </div>
         </div>
-        
+
         {isRecentQuery && timestamp && (
           <div className={css(styles.rightSide)}>
             <div className={css(styles.userInfo)}>
-              <Avatar 
-                src={config.bootData.user.gravatarUrl} 
-                alt={`${config.bootData.user.name} avatar`} 
-                width={2} 
-                height={2} 
+              <Avatar
+                src={config.bootData.user.gravatarUrl}
+                alt={`${config.bootData.user.name} avatar`}
+                width={2}
+                height={2}
               />
               <span className={css(styles.userName)}>You</span>
             </div>
-            <div className={css(styles.timestamp)}>
-              Last run {formatTimestamp(timestamp)}
-            </div>
+            <div className={css(styles.timestamp)}>Last run {formatTimestamp(timestamp)}</div>
           </div>
         )}
       </div>
@@ -349,15 +333,13 @@ export const SparkJoySection = <TQuery extends DataQuery>({
         // Filter for recent history items that have queries
         return item.queries && item.queries.length > 0 && item.queries[0];
       })
-       // also remove duplicates based on query content
-       .filter((item, index, self) =>
-         index === self.findIndex((t) => 
-           JSON.stringify(t.queries[0]) === JSON.stringify(item.queries[0])
-         )
-       )
-      .slice(0,4)
+      // also remove duplicates based on query content
+      .filter(
+        (item, index, self) =>
+          index === self.findIndex((t) => JSON.stringify(t.queries[0]) === JSON.stringify(item.queries[0]))
+      )
+      .slice(0, 4)
       .map((item, index) => {
-
         const firstQuery = item.queries[0];
         // Use datasource.getQueryDisplayText if available, otherwise extract query text manually
         return {
@@ -439,7 +421,7 @@ export const SparkJoySection = <TQuery extends DataQuery>({
             <Icon name="history" size="md" />
             <Text variant="h5">My recent queries</Text>
           </div>
-          
+
           {isLoadingHistory ? (
             <div className={css(styles.loadingState)}>
               <Spinner size={16} />
@@ -449,30 +431,30 @@ export const SparkJoySection = <TQuery extends DataQuery>({
             <Stack direction="column" gap={1}>
               {recentQueries.map((query, index) => {
                 return (
-                <QueryCard
-                  key={query.uid || index}
-                  query={query}
-                  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-                  onClick={() => handleQuerySelect(query.query as TQuery)}
-                  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-                  datasource={datasource as any}
-                  timeRange={timeRange}
-                  isRecentQuery={true}
-                  timestamp={query.timestamp}
-                />
-            )})}
-            <div>
-             <Button variant="secondary" onClick={() => setDrawerOpened(true)} size="md" icon="external-link-alt">Show more</Button>
-             </div>
+                  <QueryCard
+                    key={query.uid || index}
+                    query={query}
+                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
+                    onClick={() => handleQuerySelect(query.query as TQuery)}
+                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
+                    datasource={datasource as any}
+                    timeRange={timeRange}
+                    isRecentQuery={true}
+                    timestamp={query.timestamp}
+                  />
+                );
+              })}
+              <div>
+                <Button variant="secondary" onClick={() => setDrawerOpened(true)} size="md" icon="external-link-alt">
+                  Show more
+                </Button>
+              </div>
             </Stack>
           ) : (
-            <div className={css(styles.emptyState)}>
-              No recent queries available
-            </div>
+            <div className={css(styles.emptyState)}>No recent queries available</div>
           )}
         </div>
       </div>
     </div>
   );
 };
-
