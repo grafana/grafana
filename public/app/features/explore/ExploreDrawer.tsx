@@ -19,24 +19,25 @@ export function ExploreDrawer(props: Props) {
   const styles = useStyles2(getStyles);
   const dragStyles = getDragStyles(theme);
 
-  const height = initialHeight || `${theme.components.horizontalDrawer.defaultHeight}px`;
+  const width = initialHeight || `${theme.components.horizontalDrawer.defaultHeight}px`;
 
   return (
     <Resizable
       className={cx(styles.fixed, styles.container, styles.drawerActive)}
-      defaultSize={{ width: '100%', height }}
-      handleClasses={{ top: dragStyles.dragHandleHorizontal }}
+      defaultSize={{ width, height: '100vh' }}
+      handleClasses={{ left: dragStyles.dragHandleVertical }}
       enable={{
-        top: true,
+        top: false,
         right: false,
         bottom: false,
-        left: false,
+        left: true,
         topRight: false,
         bottomRight: false,
         bottomLeft: false,
         topLeft: false,
       }}
-      maxHeight="100vh"
+      maxWidth="80vw"
+      minWidth="300px"
       onResize={onResize}
     >
       {children}
@@ -46,11 +47,11 @@ export function ExploreDrawer(props: Props) {
 
 const drawerSlide = (theme: GrafanaTheme2) => keyframes`
   0% {
-    transform: translateY(${theme.components.horizontalDrawer.defaultHeight}px);
+    transform: translateX(100%);
   }
 
   100% {
-    transform: translateY(0px);
+    transform: translateX(0px);
   }
 `;
 
@@ -60,9 +61,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'absolute !important',
   }),
   container: css({
-    bottom: 0,
+    top: 0,
+    right: 0,
+    height: '100vh',
     background: theme.colors.background.primary,
-    borderTop: `1px solid ${theme.colors.border.weak}`,
+    borderLeft: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z3,
     zIndex: theme.zIndex.navbarFixed,
   }),
