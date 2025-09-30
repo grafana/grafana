@@ -26,14 +26,21 @@ func NewSQLKeeper(
 	tracer trace.Tracer,
 	encryptionManager contracts.EncryptionManager,
 	store contracts.EncryptedValueStorage,
+	migrationExecutor contracts.EncryptedValueMigrationExecutor,
 	reg prometheus.Registerer,
-) *SQLKeeper {
+) (*SQLKeeper, error) {
+	// Run the encrypted value store migration before anything else, otherwise operations may fail
+	err := migrationExecutor.Execute(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute encrypted value store migration: %w", err)
+	}
+
 	return &SQLKeeper{
 		tracer:            tracer,
 		encryptionManager: encryptionManager,
 		store:             store,
 		metrics:           metrics.NewKeeperMetrics(reg),
-	}
+	}, nil
 }
 
 func (s *SQLKeeper) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64, exposedValueOrRef string) (contracts.ExternalID, error) {

@@ -1,6 +1,8 @@
 package secretkeeper
 
 import (
+	"fmt"
+
 	"go.opentelemetry.io/otel/trace"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
@@ -20,11 +22,16 @@ func ProvideService(
 	tracer trace.Tracer,
 	store contracts.EncryptedValueStorage,
 	encryptionManager contracts.EncryptionManager,
+	migrationExecutor contracts.EncryptedValueMigrationExecutor,
 	reg prometheus.Registerer,
 ) (*OSSKeeperService, error) {
+	systemKeeper, err := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, store, migrationExecutor, reg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create system keeper: %w", err)
+	}
+
 	return &OSSKeeperService{
-		// TODO: rename to system keeper or something like that
-		systemKeeper: sqlkeeper.NewSQLKeeper(tracer, encryptionManager, store, reg),
+		systemKeeper: systemKeeper,
 	}, nil
 }
 

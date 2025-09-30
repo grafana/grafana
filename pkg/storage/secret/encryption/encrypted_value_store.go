@@ -341,3 +341,28 @@ func (s *globalEncryptedValStorage) CountAll(ctx context.Context, untilTime *int
 
 	return count, nil
 }
+
+type encryptedValMigrationExecutor struct {
+	db      contracts.Database
+	dialect sqltemplate.Dialect
+	tracer  trace.Tracer
+}
+
+func ProvideEncryptedValueMigrationExecutor(
+	db contracts.Database,
+	tracer trace.Tracer,
+) (contracts.EncryptedValueMigrationExecutor, error) {
+	return &encryptedValMigrationExecutor{
+		db:      db,
+		dialect: sqltemplate.DialectForDriver(db.DriverName()),
+		tracer:  tracer,
+	}, nil
+}
+
+func (s *encryptedValMigrationExecutor) Execute(ctx context.Context) error {
+	ctx, span := s.tracer.Start(ctx, "EncryptedValueMigrationExecutor.Execute")
+	defer span.End()
+
+	panic("not implemented")
+	return nil
+}

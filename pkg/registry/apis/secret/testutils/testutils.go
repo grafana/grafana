@@ -126,7 +126,9 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	globalEncryptedValueStorage, err := encryptionstorage.ProvideGlobalEncryptedValueStorage(database, tracer)
 	require.NoError(t, err)
 
-	sqlKeeper := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encryptedValueStorage, nil)
+	// TODO create a migration executor
+	sqlKeeper, err := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encryptedValueStorage, nil, nil)
+	require.NoError(t, err)
 
 	var keeperService contracts.KeeperService = newKeeperServiceWrapper(sqlKeeper)
 

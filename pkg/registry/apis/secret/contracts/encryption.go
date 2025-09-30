@@ -45,6 +45,10 @@ type GlobalEncryptedValueStorage interface {
 	CountAll(ctx context.Context, untilTime *int64) (int64, error)
 }
 
+type EncryptedValueMigrationExecutor interface {
+	Execute(ctx context.Context) error
+}
+
 type ConsolidationService interface {
 	Consolidate(ctx context.Context) error
 }
