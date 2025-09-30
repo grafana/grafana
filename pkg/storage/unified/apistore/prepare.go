@@ -21,7 +21,6 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -77,22 +76,6 @@ func (v *objectForStorage) finish(ctx context.Context, err error, secrets secret
 	return nil
 }
 
-func (s *Storage) prepareFolderAnnotation(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
-	if s.opts.EnableFolderSupport {
-		if obj.GetFolder() == "" {
-			// Missing folder will replace with the default (root)
-			// Someday... soon?? this could be the user home directory
-			obj.SetFolder(folder.GeneralFolderUID)
-		}
-		return nil
-	}
-
-	if obj.GetFolder() != "" {
-		return apierrors.NewBadRequest("folder annotation is not supported")
-	}
-	return nil
-}
-
 // Called on create
 func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime.Object) (objectForStorage, error) {
 	v := objectForStorage{}
@@ -114,8 +97,8 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if obj.GetUID() == "" {
 		obj.SetUID(types.UID(uuid.NewString()))
 	}
-	if err = s.prepareFolderAnnotation(ctx, obj); err != nil {
-		return v, err
+	if obj.GetFolder() != "" && !s.opts.EnableFolderSupport {
+		return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
 	}
 
 	v.grantPermissions = obj.GetAnnotation(utils.AnnoKeyGrantPermissions)
@@ -207,16 +190,17 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetDeprecatedInternalID(previousInternalID) // nolint:staticcheck
 	}
 
-	if err = s.prepareFolderAnnotation(ctx, obj); err != nil {
-		return v, err
-	}
-
-	if err = prepareSecureValues(ctx, s.opts.SecureValues, obj, previous, &v); err != nil {
+	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, previous, &v)
+	if err != nil {
 		return v, err
 	}
 
 	// Check if we should bump the generation
 	if obj.GetFolder() != previous.GetFolder() {
+		if !s.opts.EnableFolderSupport {
+			return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
+		}
+		// TODO: check that we can move the folder?
 		v.hasChanged = true
 	} else if obj.GetDeletionTimestamp() != nil && previous.GetDeletionTimestamp() == nil {
 		v.hasChanged = true // bump generation when deleted
