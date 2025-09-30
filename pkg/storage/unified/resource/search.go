@@ -503,9 +503,9 @@ func (s *searchSupport) init(ctx context.Context) error {
 
 	s.bgTaskCancel = cancel
 	s.bgTaskWg.Add(1)
-	go s.indexRebuilder(subctx)
+	go s.runIndexRebuilder(subctx)
 	s.bgTaskWg.Add(1)
-	go s.startPeriodicRebuild(subctx)
+	go s.runPeriodicScanForIndexesToRebuild(subctx)
 
 	end := time.Now().Unix()
 	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
@@ -519,7 +519,7 @@ func (s *searchSupport) stop() {
 	s.bgTaskWg.Wait()
 }
 
-func (s *searchSupport) startPeriodicRebuild(ctx context.Context) {
+func (s *searchSupport) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 	defer s.bgTaskWg.Done()
 
 	ticker := time.NewTicker(5 * time.Minute)
@@ -531,12 +531,12 @@ func (s *searchSupport) startPeriodicRebuild(ctx context.Context) {
 			s.log.Info("stopping periodic index rebuild due to context cancellation")
 			return
 		case <-ticker.C:
-			s.findIndexesToRebuild(ctx)
+			s.findIndexesToRebuild(ctx, time.Now())
 		}
 	}
 }
 
-func (s *searchSupport) findIndexesToRebuild(ctx context.Context) {
+func (s *searchSupport) findIndexesToRebuild(ctx context.Context, now time.Time) {
 	// Check all open indexes and see if any of them need to be rebuilt.
 	// This is done periodically to make sure that the indexes are up to date.
 
@@ -560,7 +560,7 @@ func (s *searchSupport) findIndexesToRebuild(ctx context.Context) {
 
 		var minBuildTime time.Time
 		if maxAge > 0 {
-			minBuildTime = time.Now().Add(-maxAge)
+			minBuildTime = now.Add(-maxAge)
 		}
 
 		bi, err := idx.BuildInfo()
@@ -579,9 +579,9 @@ func (s *searchSupport) findIndexesToRebuild(ctx context.Context) {
 	}
 }
 
-// indexRebuilder is a goroutine waiting for rebuild requests, and rebuils indexes specified in the request.
+// runIndexRebuilder is a goroutine waiting for rebuild requests, and rebuils indexes specified in the request.
 // Rebuild requests can be generated periodically (if configured), or after new documents have been imported into the storage with old RVs.
-func (s *searchSupport) indexRebuilder(ctx context.Context) {
+func (s *searchSupport) runIndexRebuilder(ctx context.Context) {
 	defer s.bgTaskWg.Done()
 
 	for {
@@ -621,12 +621,6 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 
 	rebuild := shouldRebuildIndex(req.minBuildVersion, bi, req.minBuildTime, l)
-	if err != nil {
-		span.RecordError(err)
-		l.Error("failed to check if index should be rebuilt", "error", err)
-		return
-	}
-
 	if !rebuild {
 		span.AddEvent("index not rebuilt")
 		l.Info("index doesn't need to be rebuilt")

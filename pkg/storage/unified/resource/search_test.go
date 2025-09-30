@@ -592,10 +592,29 @@ func TestFindIndexesForRebuild(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
-	support.findIndexesToRebuild(context.Background())
+	support.findIndexesToRebuild(context.Background(), now)
 	require.Equal(t, 6, support.rebuildQueue.Len())
 
-	// Running findIndexesToRebuild again should not add any new indexes to the rebuild queue, and all existing ones should be "combined" with new ones.
-	support.findIndexesToRebuild(context.Background())
+	now5m := now.Add(5 * time.Minute)
+
+	// Running findIndexesToRebuild again should not add any new indexes to the rebuild queue, and all existing
+	// ones should be "combined" with new ones (this will "bump" minBuildTime)
+	support.findIndexesToRebuild(context.Background(), now5m)
 	require.Equal(t, 6, support.rebuildQueue.Len())
+
+	// Values that we expect to find in rebuild requests.
+	minBuildVersion := semver.MustParse("5.5.5")
+	minBuildTime := now5m.Add(-5 * time.Hour)
+	minBuildTimeDashboard := now5m.Add(-1 * time.Hour)
+
+	vals := support.rebuildQueue.Elements()
+	require.ElementsMatch(t, vals, []rebuildRequest{
+		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v5", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
+		{NamespacedResource: NamespacedResource{Namespace: "resource-10h-v5", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
+		{NamespacedResource: NamespacedResource{Namespace: "resource-10h-v6", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
+
+		{NamespacedResource: NamespacedResource{Namespace: "resource-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
+		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
+		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
+	})
 }

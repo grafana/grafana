@@ -3,6 +3,7 @@ package debouncer
 import (
 	"context"
 	"errors"
+	"slices"
 	"sync"
 )
 
@@ -29,6 +30,13 @@ func (q *Queue[T]) Len() int {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	return len(q.elements)
+}
+
+// Elements returns copy of the queue.
+func (q *Queue[T]) Elements() []T {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	return slices.Clone(q.elements)
 }
 
 func (q *Queue[T]) Add(n T) {
