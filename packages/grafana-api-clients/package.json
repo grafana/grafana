@@ -59,9 +59,13 @@
       "import": "./src/clients/shorturl/v1alpha1/index.ts",
       "require": "./src/clients/shorturl/v1alpha1/index.ts"
     },
-    "./migrate-to-cloud": {
+    "./legacy/migrate-to-cloud": {
       "import": "./src/clients/migrate-to-cloud/index.ts",
       "require": "./src/clients/migrate-to-cloud/index.ts"
+    },
+    "./legacy/preferences": {
+      "import": "./src/clients/preferences/user/index.ts",
+      "require": "./src/clients/preferences/user/index.ts"
     }
   },
   "publishConfig": {
