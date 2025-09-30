@@ -155,6 +155,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false);
+    commonOptionsBuilder.addAnnotationOptions(builder);
     commonOptionsBuilder.addTooltipOptions(builder);
   })
   .setSuggestionsSupplier(new StatTimelineSuggestionsSupplier())

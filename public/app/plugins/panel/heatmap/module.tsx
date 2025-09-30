@@ -7,8 +7,9 @@ import {
   ScaleDistribution,
   ScaleDistributionConfig,
   HeatmapCellLayout,
+  VizAnnotations,
 } from '@grafana/schema';
-import { TooltipDisplayMode } from '@grafana/ui';
+import { commonOptionsBuilder, TooltipDisplayMode } from '@grafana/ui';
 import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
@@ -409,6 +410,8 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
         ],
       },
     });
+
+    commonOptionsBuilder.addAnnotationOptions(builder);
 
     builder.addBooleanSwitch({
       path: 'tooltip.yHistogram',
