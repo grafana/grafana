@@ -12,16 +12,16 @@ import {
   DataQuery,
 } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { Stack, Text, Icon, useTheme2, Spinner, Avatar, Button } from '@grafana/ui';
+import { Stack, Text, Icon, useTheme2, Spinner, Avatar, Button, Badge } from '@grafana/ui';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { useQueriesDrawerContext } from '../../explore/QueriesDrawer/QueriesDrawerContext';
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 
-import { QueryPatternStarter } from './QueryPatternStarter';
+import { useQueryPatterns } from './QueryPatternStarter';
 
 
-// Interface for query items used in the SparkJoy section
+// Unified interface for query items used in the SparkJoy section
 interface QueryItem {
   title: string;
   query: DataQuery;
@@ -33,6 +33,9 @@ interface QueryItem {
     displayName: string;
     avatarURL: string;
   };
+  // Pattern-specific fields
+  isPattern?: boolean;
+  patternType?: 'grafana' | 'user';
 }
 
 // Interface for the saved queries API response
@@ -364,22 +367,14 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
     },
     content: {
       display: 'flex',
-      flexDirection: 'row' as const,
-      gap: theme.spacing(2),
-      alignItems: 'flex-start',
+      flexDirection: 'column' as const,
+      gap: theme.spacing(1),
     },
     mainContent: {
       display: 'flex',
       flexDirection: 'column' as const,
       gap: theme.spacing(1),
       flex: 1,
-    },
-    rightSide: {
-      display: 'flex',
-      flexDirection: 'column' as const,
-      gap: theme.spacing(1),
-      alignItems: 'flex-end',
-      flexShrink: 0,
     },
     query: {
       fontFamily: theme.typography.fontFamilyMonospace,
@@ -390,6 +385,12 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: 1.4,
     },
+    previewRow: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing(1),
+    },
     preview: {
       display: 'flex',
       alignItems: 'center',
@@ -397,25 +398,24 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
       minHeight: '20px',
+      flex: 1,
     },
     previewIcon: {
       flexShrink: 0,
     },
-    timestamp: {
+    badge: {
       fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.text.secondary,
-      fontStyle: 'italic',
-      textAlign: 'right' as const,
+      padding: `${theme.spacing(0.25)} ${theme.spacing(0.75)}`,
     },
-    userInfo: {
+    userBadge: {
+      fontSize: theme.typography.bodySmall.fontSize,
+      padding: `${theme.spacing(0.25)} ${theme.spacing(0.5)}`,
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
-      fontSize: theme.typography.bodySmall.fontSize,
     },
-    userName: {
-      color: theme.colors.text.primary,
-      fontWeight: theme.typography.fontWeightMedium,
+    badgeAvatar: {
+      marginLeft: theme.spacing(0.5),
     },
   };
   console.log('query', query);
@@ -439,45 +439,71 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
           {/* Always use monospace style for now - can be extended per datasource */}
           <div className={css(styles.query)}>{queryDisplayText}</div>
 
-          <div className={css(styles.preview)}>
-            {isLoading ? (
-              <>
-                <Spinner className={css(styles.previewIcon)} size={12} />
-                <span>{getPreviewText()}</span>
-              </>
-            ) : (
-              <>
-                <Icon
-                  name={previewData?.state === LoadingState.Error ? 'exclamation-triangle' : 'chart-line'}
-                  size="sm"
-                  className={css(styles.previewIcon)}
-                />
-                <span>{getPreviewText()}</span>
-              </>
+          <div className={css(styles.previewRow)}>
+            <div className={css(styles.preview)}>
+              {isLoading ? (
+                <>
+                  <Spinner className={css(styles.previewIcon)} size={12} />
+                  <span>{getPreviewText()}</span>
+                </>
+              ) : (
+                <>
+                  <Icon
+                    name={previewData?.state === LoadingState.Error ? 'exclamation-triangle' : 'chart-line'}
+                    size="sm"
+                    className={css(styles.previewIcon)}
+                  />
+                  <span>{getPreviewText()}</span>
+                </>
+              )}
+            </div>
+
+            {/* Add badges on the same level as preview info */}
+            {query.isPattern && query.patternType === 'grafana' && (
+              <Badge 
+                text="Recommended by Grafana" 
+                color="blue" 
+                className={css(styles.badge)}
+              />
+            )}
+            {!isRecentQuery && query.userInfo && !query.isPattern && (
+              <Badge 
+                text={
+                  <div className={css(styles.userBadge)}>
+                    <span>Recommended by {query.userInfo.displayName || 'user'}</span>
+                    <Avatar
+                      src={query.userInfo.avatarURL || ''}
+                      alt={`${query.userInfo.displayName} avatar`}
+                      width={2}
+                      height={2}
+                      className={css(styles.badgeAvatar)}
+                    />
+                  </div>
+                }
+                color="green" 
+                className={css(styles.badge)}
+              />
+            )}
+            {isRecentQuery && timestamp && (
+              <Badge 
+                text={
+                  <div className={css(styles.userBadge)}>
+                    <span>Last run {formatTimestamp(timestamp)}</span>
+                    <Avatar
+                      src={config.bootData.user.gravatarUrl || ''}
+                      alt={`${config.bootData.user.name} avatar`}
+                      width={2}
+                      height={2}
+                      className={css(styles.badgeAvatar)}
+                    />
+                  </div>
+                }
+                color="gray" 
+                className={css(styles.badge)}
+              />
             )}
           </div>
         </div>
-        {((isRecentQuery && timestamp) || (!isRecentQuery && (query.userInfo || query.createdAt))) && (
-          <div className={css(styles.rightSide)}>
-            <div className={css(styles.userInfo)}>
-              <Avatar
-                src={isRecentQuery ? config.bootData.user.gravatarUrl : (query.userInfo?.avatarURL || '')}
-                alt={`${isRecentQuery ? config.bootData.user.name : query.userInfo?.displayName} avatar`}
-                width={2}
-                height={2}
-              />
-              <span className={css(styles.userName)}>
-                {isRecentQuery ? 'You' : (query.userInfo?.displayName || 'Unknown user')}
-              </span>
-            </div>
-            <div className={css(styles.timestamp)}>
-              {isRecentQuery
-                ? `Last run ${formatTimestamp(timestamp!)}`
-                : `Created ${formatTimestamp(query.createdAt!)}`
-              }
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -512,6 +538,10 @@ export const SparkJoySection = <TQuery extends DataQuery>({
     isLoading: isLoadingLibraryQueries,
     error: libraryQueriesError
   } = useSavedQueries(queryLibraryEnabled ? datasource.name : undefined, 4);
+
+  // Get query patterns for Loki and Prometheus datasources
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const { patterns: patternQueries, isLoading: isLoadingPatterns } = useQueryPatterns(datasource as unknown as DataSourceApi);
 
 
   useEffect(() => {
@@ -609,23 +639,26 @@ export const SparkJoySection = <TQuery extends DataQuery>({
              <Text variant="h6">Recommended queries</Text>
           </div>
 
-          {queryLibraryEnabled ? (
+          {/* Combine pattern queries and library queries */}
+          {isLoadingLibraryQueries || isLoadingPatterns ? (
+            <div className={css(styles.loadingState)}>
+              <Spinner size={16} />
+              <span>Loading recommended queries...</span>
+            </div>
+          ) : libraryQueriesError ? (
+            <div className={css(styles.emptyState)}>
+              Error loading saved queries
+            </div>
+          ) : (
             <>
-              {isLoadingLibraryQueries ? (
-                <div className={css(styles.loadingState)}>
-                  <Spinner size={16} />
-                  <span>Loading saved queries...</span>
-                </div>
-              ) : libraryQueriesError ? (
-                <div className={css(styles.emptyState)}>
-                  Error loading saved queries
-                </div>
-              ) : libraryQueries.length > 0 ? (
+              {/* Show pattern queries first (for Loki/Prometheus) */}
+              {patternQueries.length > 0 && (
                 <Stack direction="column" gap={1}>
-                  {libraryQueries.map((query, index) => (
+                  {patternQueries.map((query, index) => (
                     <QueryCard
-                      key={`${query.uid || index}-${query.userInfo ? 'with-user' : 'no-user'}`}
-                      query={query}
+                      key={`pattern-${query.uid || index}`}
+                      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                      query={query as unknown as QueryItem}
                       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                       onClick={() => handleQuerySelect(query.query as TQuery)}
                       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
@@ -636,41 +669,38 @@ export const SparkJoySection = <TQuery extends DataQuery>({
                     />
                   ))}
                 </Stack>
-              ) : (
-                <div>
-                  <div className={css(styles.emptyState)}>
-                    No saved queries found
-                  </div>
-                  <Button
-                    variant="secondary"
-                    onClick={() => openQueryLibraryDrawer({
-                      datasourceFilters: [datasource.name],
-                      onSelectQuery: handleLibraryQuerySelect,
-                      options: { context: 'explore' },
-                    })}
-                    size="md"
-                    icon="book"
-                  >
-                    Browse saved queries
-                  </Button>
+              )}
+              
+              {/* Show library queries if query library is enabled */}
+              {queryLibraryEnabled && libraryQueries.length > 0 && (
+                <div style={{ marginTop: patternQueries.length > 0 ? theme.spacing(1) : 0 }}>
+                  <Stack direction="column" gap={1}>
+                    {libraryQueries.map((query, index) => (
+                    <QueryCard
+                      key={`library-${query.uid || index}-${query.userInfo ? 'with-user' : 'no-user'}`}
+                      query={query}
+                      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                      onClick={() => handleQuerySelect(query.query as TQuery)}
+                      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
+                      datasource={datasource as any}
+                      timeRange={timeRange}
+                      isRecentQuery={false}
+                      timestamp={query.createdAt}
+                    />
+                    ))}
+                  </Stack>
                 </div>
               )}
-            </>
-          ) : (
-            <div className={css(styles.emptyState)}>
-              Query library not enabled
-            </div>
-          )}
-
-          {/* Query Patterns Section - Show for Loki and Prometheus */}
-          <QueryPatternStarter
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            datasource={datasource as unknown as DataSourceApi}
-            onSelectQuery={handleLibraryQuerySelect}
-          />
-                      <Button
+              
+              {/* Show empty state or browse button if no queries */}
+              {patternQueries.length === 0 && libraryQueries.length === 0 && (
+                <div>
+                  <div className={css(styles.emptyState)}>
+                    {queryLibraryEnabled ? 'No recommended queries found' : 'Query library not enabled'}
+                  </div>
+                  {queryLibraryEnabled && (
+                    <Button
                       variant="secondary"
-                      style={{ marginTop: '8px' }}
                       onClick={() => openQueryLibraryDrawer({
                         datasourceFilters: [datasource.name],
                         onSelectQuery: handleLibraryQuerySelect,
@@ -679,8 +709,30 @@ export const SparkJoySection = <TQuery extends DataQuery>({
                       size="md"
                       icon="book"
                     >
-                      Show more
+                      Browse saved queries
                     </Button>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Show more button */}
+          {(patternQueries.length > 0 || libraryQueries.length > 0) && queryLibraryEnabled && (
+            <Button
+              variant="secondary"
+              style={{ marginTop: theme.spacing(1) }}
+              onClick={() => openQueryLibraryDrawer({
+                datasourceFilters: [datasource.name],
+                onSelectQuery: handleLibraryQuerySelect,
+                options: { context: 'explore' },
+              })}
+              size="md"
+              icon="book"
+            >
+              Show more
+            </Button>
+          )}
         </div>
 
         {/* Recent Queries Column */}

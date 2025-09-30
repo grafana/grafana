@@ -1,9 +1,7 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings */
-import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { DataQuery, DataSourceApi } from '@grafana/data';
-import { Spinner, useTheme2, Badge } from '@grafana/ui';
 
 // Query patterns types
 type LokiQueryPattern = {
@@ -31,14 +29,30 @@ type QueryPattern = (LokiQueryPattern | PromQueryPattern) & {
   description?: string;
 };
 
+// Unified query item interface that matches SparkJoySection's QueryItem
+export interface PatternQueryItem {
+  title: string;
+  query: DataQuery;
+  uid: string;
+  timestamp?: number;
+  createdBy?: string;
+  createdAt?: number;
+  userInfo?: {
+    displayName: string;
+    avatarURL: string;
+  };
+  // Pattern-specific fields
+  isPattern?: boolean;
+  patternType?: 'grafana' | 'user';
+}
+
 interface QueryPatternStarterProps {
   datasource: DataSourceApi;
-  onSelectQuery: (query: DataQuery) => void;
 }
 
 // Custom hook to get query patterns with real label values for Loki and Prometheus datasources
-const useQueryPatterns = (datasource: DataSourceApi) => {
-  const [patterns, setPatterns] = useState<QueryPattern[]>([]);
+export const useQueryPatterns = (datasource: DataSourceApi) => {
+  const [patterns, setPatterns] = useState<PatternQueryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -50,7 +64,15 @@ const useQueryPatterns = (datasource: DataSourceApi) => {
         // Check if it's a Loki datasource
         if (datasource.type === 'loki') {
           // Get real label values from the datasource
-          const lokiDatasource = datasource as unknown as { languageProvider?: { started: boolean; start: () => Promise<void>; getLabelKeys: () => string[]; fetchLabelValues: (label: string) => Promise<string[]> } };
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const lokiDatasource = datasource as unknown as { 
+            languageProvider?: { 
+              started: boolean; 
+              start: () => Promise<void>; 
+              getLabelKeys: () => string[]; 
+              fetchLabelValues: (label: string) => Promise<string[]> 
+            } 
+          };
           const languageProvider = lokiDatasource.languageProvider;
           
           let labelSelector = '{}'; // Default empty selector
@@ -83,7 +105,14 @@ const useQueryPatterns = (datasource: DataSourceApi) => {
               type: 'log',
               operations: [],
               queryString: `${labelSelector}`,
-              description: `Find error logs in ${labelName}="${labelValue}"`
+              description: `Find logs in ${labelName}="${labelValue}"`
+            },
+            {
+              name: 'Count of logs',
+              type: 'log',
+              operations: [],
+              queryString: `sum((count_over_time(${labelSelector}[$__auto])))`,
+              description: `Count of logs in ${labelName}="${labelValue}"`
             }
           ];
         }
@@ -110,11 +139,41 @@ const useQueryPatterns = (datasource: DataSourceApi) => {
               ],
               queryString: `sum(rate(${metricName}[5m]))`,
               description: `Calculate the rate of ${metricName} over 5 minutes and sum across all instances`
+            },
+            {
+              name: 'Average metric value',
+              type: 'aggregation',
+              operations: [
+                { id: 'avg', params: [] },
+              ],
+              queryString: `avg(${metricName})`,
+              description: `Calculate the average value of ${metricName} across all instances`
             }
           ];
         }
 
-        setPatterns(queryPatterns);
+        // Convert QueryPattern[] to PatternQueryItem[]
+        const patternItems: PatternQueryItem[] = queryPatterns.map((pattern, index) => ({
+          title: pattern.name,
+          query: {
+            refId: 'A',
+            expr: pattern.queryString || (datasource.type === 'loki' ? '{}' : 'up'),
+            datasource: datasource.getRef(),
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          } as unknown as DataQuery,
+          uid: `pattern-${datasource.type}-${index}`,
+          timestamp: Date.now(),
+          createdBy: 'grafana',
+          createdAt: Date.now(),
+          userInfo: {
+            displayName: 'Grafana',
+            avatarURL: '', // Will be handled by the card component
+          },
+          isPattern: true,
+          patternType: 'grafana',
+        }));
+
+        setPatterns(patternItems);
       } catch (error) {
         console.error('Failed to load query patterns:', error);
         setPatterns([]);
@@ -129,189 +188,9 @@ const useQueryPatterns = (datasource: DataSourceApi) => {
   return { patterns, isLoading };
 };
 
-interface QueryPatternCardProps {
-  pattern: QueryPattern;
-  onClick: () => void;
-  datasource: DataSourceApi;
-}
-
-const QueryPatternCard = ({ pattern, onClick, datasource }: QueryPatternCardProps) => {
-  const theme = useTheme2();
-
-  const styles = {
-    card: {
-      cursor: 'pointer',
-      backgroundColor: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
-      padding: theme.spacing(1),
-      marginBottom: 0,
-      position: 'relative' as const,
-      transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
-        duration: theme.transitions.duration.short,
-      }),
-      '&:hover': {
-        backgroundColor: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
-        cursor: 'pointer',
-        zIndex: 1,
-      },
-      '&:focus': {
-        outline: `2px solid ${theme.colors.primary.main}`,
-        outlineOffset: '2px',
-      },
-    },
-    content: {
-      display: 'flex',
-      flexDirection: 'column' as const,
-      gap: theme.spacing(1),
-    },
-    footer: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'flex-end',
-      marginTop: theme.spacing(0.5),
-    },
-    badge: {
-      fontSize: theme.typography.bodySmall.fontSize,
-      padding: `${theme.spacing(0.25)} ${theme.spacing(0.75)}`,
-    },
-    title: {
-      fontWeight: theme.typography.fontWeightMedium,
-      color: theme.colors.text.primary,
-    },
-    description: {
-      fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.text.secondary,
-      fontStyle: 'italic',
-    },
-    query: {
-      fontFamily: theme.typography.fontFamilyMonospace,
-      backgroundColor: theme.colors.background.canvas,
-      padding: theme.spacing(1),
-      borderRadius: theme.shape.radius.default,
-      fontSize: theme.typography.bodySmall.fontSize,
-      lineHeight: 1.4,
-      color: theme.colors.text.secondary,
-    },
-  };
-
-  // Generate a query representation for display
-  const getQueryDisplay = () => {
-    // Use the pre-generated queryString if available
-    if (pattern.queryString) {
-      return pattern.queryString;
-    }
-    
-    // Fallback to operations-based display
-    if (datasource.type === 'loki') {
-      return `{} | ${pattern.operations.map(op => op.id).join(' | ')}`;
-    } else if (datasource.type === 'prometheus') {
-      if ('binaryQueries' in pattern && pattern.binaryQueries && pattern.binaryQueries.length > 0) {
-        return `metric | ${pattern.operations.map(op => op.id).join(' | ')} ${pattern.binaryQueries[0].operator} (...)`;
-      }
-      return `metric | ${pattern.operations.map(op => op.id).join(' | ')}`;
-    }
-    return pattern.name;
-  };
-
-  return (
-    <div
-      className={css(styles.card)}
-      onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-    >
-      <div className={css(styles.content)}>
-        <div className={css(styles.query)}>{getQueryDisplay()}</div>
-        <div className={css(styles.footer)}>
-          <Badge 
-            text="Recommended by Grafana" 
-            color="blue" 
-            className={css(styles.badge)}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export const QueryPatternStarter = ({ datasource, onSelectQuery }: QueryPatternStarterProps) => {
-  const theme = useTheme2();
-  const { patterns: queryPatterns, isLoading: isLoadingPatterns } = useQueryPatterns(datasource);
-
-  const styles = {
-    container: {
-      marginTop: '8px',
-    },
-    columnHeader: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      marginBottom: theme.spacing(2),
-    },
-    emptyState: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100px',
-      color: theme.colors.text.secondary,
-      fontStyle: 'italic' as const,
-    },
-    loadingState: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: theme.spacing(1),
-      height: '100px',
-      color: theme.colors.text.secondary,
-    },
-  };
-
-  const handlePatternSelect = (pattern: QueryPattern) => {
-    try {
-      // Use the pre-generated queryString if available, otherwise fallback to basic query
-      const queryString = pattern.queryString || (datasource.type === 'loki' ? '{}' : 'up');
-      
-      const generatedQuery = {
-        refId: 'A',
-        expr: queryString,
-        datasource: datasource.getRef(),
-      };
-
-      onSelectQuery(generatedQuery as unknown as DataQuery);
-    } catch (error) {
-      console.error('Failed to generate query from pattern:', error);
-    }
-  };
-
-  // Only render for Loki and Prometheus datasources
-  if (datasource.type !== 'loki' && datasource.type !== 'prometheus') {
-    return null;
-  }
-
-  return (
-    <div className={css(styles.container)}>
-      {isLoadingPatterns ? (
-        <div className={css(styles.loadingState)}>
-          <Spinner size={16} />
-          <span>Loading query starter...</span>
-        </div>
-      ) : queryPatterns.length > 0 ? (
-        <QueryPatternCard
-          pattern={queryPatterns[0]} // Show only the first (and only) pattern
-          onClick={() => handlePatternSelect(queryPatterns[0])}
-          datasource={datasource}
-        />
-      ) : (
-        <div className={css(styles.emptyState)}>
-          No query starter available
-        </div>
-      )}
-    </div>
-  );
+// Simple component that just returns the hook for external use
+export const QueryPatternStarter = ({ datasource }: QueryPatternStarterProps) => {
+  // This component now just exposes the hook functionality
+  // The actual rendering is handled by SparkJoySection
+  return null;
 };
