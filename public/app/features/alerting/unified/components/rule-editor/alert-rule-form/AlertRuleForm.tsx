@@ -65,7 +65,7 @@ import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { RuleInspector } from '../RuleInspector';
 
 import { AlertRuleFormContents } from './AlertRuleFormContents';
-import { AlertRuleFormContentsSimplified } from './AlertRuleFormContentsSimplified';
+import { AlertRuleFormContentsSimplified } from './simplified-rule-form/AlertRuleFormContentsSimplified';
 
 type Props = {
   existing?: RuleWithLocation;
