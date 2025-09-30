@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import { forwardRef, HTMLProps, useRef } from 'react';
 
@@ -12,10 +12,15 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   value?: boolean;
   /** Show an invalid state around the input */
   invalid?: boolean;
+
+  /**
+   * Control for sparking joy
+   */
+  shouldSparkJoy?: boolean;
 }
 
 export const Switch = forwardRef<HTMLInputElement, Props>(
-  ({ value, checked, onChange, id, label, disabled, invalid = false, ...inputProps }, ref) => {
+  ({ value, checked, onChange, id, label, disabled, invalid = false, shouldSparkJoy = false, ...inputProps }, ref) => {
     if (checked) {
       deprecationWarning('Switch', 'checked prop', 'value');
     }
@@ -24,7 +29,7 @@ export const Switch = forwardRef<HTMLInputElement, Props>(
     const switchIdRef = useRef(id ? id : uniqueId('switch-'));
 
     return (
-      <div className={cx(styles.switch, invalid && styles.invalid)}>
+      <div className={cx(styles.switch, invalid && styles.invalid, { [styles.joyful]: shouldSparkJoy })}>
         <input
           type="checkbox"
           role="switch"
@@ -55,7 +60,7 @@ export interface InlineSwitchProps extends Props {
 }
 
 export const InlineSwitch = forwardRef<HTMLInputElement, InlineSwitchProps>(
-  ({ transparent, className, showLabel, label, value, id, invalid, ...props }, ref) => {
+  ({ transparent, className, showLabel, label, value, id, invalid, shouldSparkJoy = false, ...props }, ref) => {
     const styles = useStyles2(getSwitchStyles, transparent);
 
     return (
@@ -77,6 +82,26 @@ export const InlineSwitch = forwardRef<HTMLInputElement, InlineSwitchProps>(
 );
 
 InlineSwitch.displayName = 'Switch';
+
+const animate = keyframes({
+  '0%': {
+    backgroundPosition: '0%',
+  },
+  '100%': {
+    backgroundPosition: '400%',
+  },
+});
+
+const rainbowLinearGradient = 'linear-gradient(90deg, #03a9f4, #f441a5, #ffeb3b, #03a9f4)';
+
+const backgroundPositionAnimation = {
+  animationName: animate,
+  animationDuration: '8s',
+  animationTimingFunction: 'linear',
+  animationIterationCount: 'infinite',
+};
+
+const glowRadius = '-1px';
 
 const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
   switch: css({
@@ -144,6 +169,7 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
       },
 
       svg: {
+        zIndex: 1,
         position: 'absolute',
         display: 'block',
         color: 'transparent',
@@ -197,6 +223,89 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
   invalid: css({
     'input + label, input:checked + label, input:hover + label': {
       border: `1px solid ${theme.colors.error.border}`,
+    },
+  }),
+  joyful: css({
+    input: {
+      '& + label:before': {
+        transitionDuration: '0.3s',
+        transitionProperty: 'all',
+        transitionTimingFunction: 'ease-in-out',
+        content: "''",
+        position: 'absolute',
+        top: glowRadius,
+        left: glowRadius,
+        right: glowRadius,
+        bottom: glowRadius,
+        background: rainbowLinearGradient,
+        backgroundSize: '400%',
+        borderRadius: theme.shape.radius.pill,
+        opacity: 0,
+      },
+
+      '& + label:after': {
+        transitionDuration: '0.3s',
+        transitionProperty: 'all',
+        transitionTimingFunction: 'ease-in-out',
+        content: "''",
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        borderRadius: theme.shape.radius.pill,
+        background: theme.components.input.background,
+        border: `1px solid ${theme.components.input.borderColor}`,
+      },
+
+      '& + label:hover:before': {
+        filter: 'blur(4px)',
+        opacity: 1,
+        ...backgroundPositionAnimation,
+        transition: '0.5s',
+      },
+
+      '& + label:hover:after': {
+        borderColor: theme.components.input.background, //'#22252b', // theme.colors.text.secondary,
+      },
+
+      '&:checked + label': {
+        background: rainbowLinearGradient,
+        borderColor: 'transparent',
+        backgroundSize: '400%',
+
+        '&:hover': {
+          ...backgroundPositionAnimation,
+          transition: '0.5s',
+        },
+
+        '&:before': {
+          transition: '0.5s',
+          content: "''",
+          position: 'absolute',
+          top: glowRadius,
+          left: glowRadius,
+          right: glowRadius,
+          bottom: glowRadius,
+          background: rainbowLinearGradient,
+          backgroundSize: '400%',
+          // eslint-disable-next-line @grafana/no-border-radius-literal
+          borderRadius: '999px',
+          opacity: 0,
+        },
+
+        '&:after': {
+          transitionDuration: '0',
+          content: 'initial',
+        },
+
+        '&:hover:before': {
+          filter: 'blur(4px)',
+          opacity: 1,
+          ...backgroundPositionAnimation,
+          transition: '0.5s',
+        },
+      },
     },
   }),
 });
