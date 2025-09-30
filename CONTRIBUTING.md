@@ -39,12 +39,11 @@ We welcome your technical contributions! You can contribute in several ways:
 - Prepare a clear, descriptive pull request ([how-to guide](contribute/create-pull-request.md)).
 
 **Step-by-step:**
-1. Pick an issue or feature ([help-wanted](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22)).
-2. Set up your environment ([guide](contribute/developer-guide.md)).
-3. Make your changes, following code style and testing guidelines.
-4. Run linting, formatting, and tests.
-5. Commit and push your changes.
-6. Open a pull request, referencing related issues and describing your changes.
+1. Pick an issue or feature ([help-wanted](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22)) or create a new issue to work on.
+1. Make sure your code follows the relevant [style guides](/contribute/style-guides).
+1. Set up your environment ([guide](contribute/developer-guide.md)).
+1. Ensure you include and run the appropriate tests as part of your Pull Request.
+1. Commit and push your changes. If you encounter merge conflicts, you may rebase your branch onto the main branch.
 
 ### 2. Develop a Plugin
 
