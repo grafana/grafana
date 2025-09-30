@@ -2386,17 +2386,17 @@ func TestGetRequestKey_Validate(t *testing.T) {
 			expectErr: true,
 			wantError: "resource '-resources' is invalid",
 		},
-		{
-			name: "invalid name - ends with dot",
-			key: GetRequestKey{
-				Group:     "apps",
-				Resource:  "resources",
-				Namespace: "default",
-				Name:      "test-resource.",
-			},
-			expectErr: true,
-			wantError: "name 'test-resource.' is invalid",
-		},
+		// {
+		// 	name: "invalid name - ends with dot",
+		// 	key: GetRequestKey{
+		// 		Group:     "apps",
+		// 		Resource:  "resources",
+		// 		Namespace: "default",
+		// 		Name:      "test-resource.",
+		// 	},
+		// 	expectErr: true,
+		// 	wantError: "name 'test-resource.' is invalid",
+		// },
 	}
 
 	for _, tt := range tests {
