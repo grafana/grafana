@@ -45,9 +45,15 @@ export const SynchronizeStep = memo(function SynchronizeStep({
     checked,
   } = repositoryStatusQuery?.data?.status?.health || {};
 
+  // healthStatusNotReady: If the repository is not yet ready (e.g., initial setup), synchronization cannot be started.
+  // User can potentially fail at this step if they click too fast and repo is not ready.
+  const healthStatusNotReady =
+    repositoryStatusQuery?.data?.status?.health.healthy === false &&
+    repositoryStatusQuery?.data?.status?.observedGeneration === 0;
+
   const hasError = repositoryStatusQuery.isError;
   const isLoading = repositoryStatusQuery.isLoading || repositoryStatusQuery.isFetching;
-  const isButtonDisabled = hasError || (checked !== undefined && isRepositoryHealthy === false);
+  const isButtonDisabled = hasError || (checked !== undefined && isRepositoryHealthy === false) || healthStatusNotReady;
 
   const startSynchronization = async () => {
     const [history] = getValues(['migrate.history']);
@@ -151,21 +157,27 @@ export const SynchronizeStep = memo(function SynchronizeStep({
         </>
       )}
 
-      <Field noMargin>
-        {hasError || (checked !== undefined && isRepositoryHealthy === false) ? (
-          <Button variant="destructive" onClick={() => onCancel?.(repoName)} disabled={isCancelling}>
-            {isCancelling ? (
-              <Trans i18nKey="provisioning.wizard.button-cancelling">Cancelling...</Trans>
-            ) : (
-              <Trans i18nKey="provisioning.wizard.button-cancel">Cancel</Trans>
-            )}
-          </Button>
-        ) : (
-          <Button variant="primary" onClick={startSynchronization} disabled={isButtonDisabled}>
-            <Trans i18nKey="provisioning.wizard.button-start">Begin synchronization</Trans>
-          </Button>
-        )}
-      </Field>
+      {healthStatusNotReady ? (
+        <Button onClick={() => repositoryStatusQuery.refetch()} disabled={isLoading}>
+          <Trans i18nKey="provisioning.wizard.check-status-button">Check ready to synchronize status</Trans>
+        </Button>
+      ) : (
+        <Field noMargin>
+          {hasError || (checked !== undefined && isRepositoryHealthy === false) ? (
+            <Button variant="destructive" onClick={() => onCancel?.(repoName)} disabled={isCancelling}>
+              {isCancelling ? (
+                <Trans i18nKey="provisioning.wizard.button-cancelling">Cancelling...</Trans>
+              ) : (
+                <Trans i18nKey="provisioning.wizard.button-cancel">Cancel</Trans>
+              )}
+            </Button>
+          ) : (
+            <Button variant="primary" onClick={startSynchronization} disabled={isButtonDisabled}>
+              <Trans i18nKey="provisioning.wizard.button-start">Begin synchronization</Trans>
+            </Button>
+          )}
+        </Field>
+      )}
     </Stack>
   );
 });
