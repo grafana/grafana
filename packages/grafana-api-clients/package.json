@@ -23,41 +23,41 @@
       "import": "./src/index.ts",
       "require": "./src/index.ts"
     },
-    "./advisor": {
-      "import": "./src/clients/advisor/index.ts",
-      "require": "./src/clients/advisor/index.ts"
+    "./advisor/v0alpha1": {
+      "import": "./src/clients/advisor/v0alpha1/index.ts",
+      "require": "./src/clients/advisor/v0alpha1/index.ts"
     },
-    "./dashboard": {
-      "import": "./src/clients/dashboard/index.ts",
-      "require": "./src/clients/dashboard/index.ts"
+    "./dashboard/v0alpha1": {
+      "import": "./src/clients/dashboard/v0alpha1/index.ts",
+      "require": "./src/clients/dashboard/v0alpha1/index.ts"
     },
-    "./folder": {
-      "import": "./src/clients/folder/index.ts",
-      "require": "./src/clients/folder/index.ts"
+    "./folder/v1beta1": {
+      "import": "./src/clients/folder/v1beta1/index.ts",
+      "require": "./src/clients/folder/v1beta1/index.ts"
     },
-    "./iam": {
-      "import": "./src/clients/iam/index.ts",
-      "require": "./src/clients/iam/index.ts"
+    "./iam/v0alpha1": {
+      "import": "./src/clients/iam/v0alpha1/index.ts",
+      "require": "./src/clients/iam/v0alpha1/index.ts"
     },
-    "./playlist": {
-      "import": "./src/clients/playlist/index.ts",
-      "require": "./src/clients/playlist/index.ts"
+    "./playlist/v0alpha1": {
+      "import": "./src/clients/playlist/v0alpha1/index.ts",
+      "require": "./src/clients/playlist/v0alpha1/index.ts"
     },
-    "./preferences": {
-      "import": "./src/clients/preferences/index.ts",
-      "require": "./src/clients/preferences/index.ts"
+    "./preferences/v1alpha1": {
+      "import": "./src/clients/preferences/v1alpha1/index.ts",
+      "require": "./src/clients/preferences/v1alpha1/index.ts"
     },
-    "./provisioning": {
-      "import": "./src/clients/provisioning/index.ts",
-      "require": "./src/clients/provisioning/index.ts"
+    "./provisioning/v0alpha1": {
+      "import": "./src/clients/provisioning/v0alpha1/index.ts",
+      "require": "./src/clients/provisioning/v0alpha1/index.ts"
     },
-    "./rules": {
-      "import": "./src/clients/rules/index.ts",
-      "require": "./src/clients/rules/index.ts"
+    "./rules/v0alpha1": {
+      "import": "./src/clients/rules/v0alpha1/index.ts",
+      "require": "./src/clients/rules/v0alpha1/index.ts"
     },
-    "./shorturl": {
-      "import": "./src/clients/shorturl/index.ts",
-      "require": "./src/clients/shorturl/index.ts"
+    "./shorturl/v1alpha1": {
+      "import": "./src/clients/shorturl/v1alpha1/index.ts",
+      "require": "./src/clients/shorturl/v1alpha1/index.ts"
     }
   },
   "publishConfig": {
