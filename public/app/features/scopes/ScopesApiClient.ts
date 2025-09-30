@@ -27,12 +27,18 @@ export class ScopesApiClient {
   }
 
   async fetchMultipleScopeNodes(names: string[]): Promise<ScopeNode[]> {
-    if (!config.featureToggles.useMultipleScopeNodesEndpoint) {
+    if (!config.featureToggles.useMultipleScopeNodesEndpoint || names.length === 0) {
       return Promise.resolve([]);
     }
-    return await getBackendSrv().get<ScopeNode[]>(apiUrl + `/find/scope_node_children`, {
-      names: names,
-    });
+
+    try {
+      const res = await getBackendSrv().get<{ items: ScopeNode[] }>(apiUrl + `/find/scope_node_children`, {
+        names: names,
+      });
+      return res?.items ?? [];
+    } catch (err) {
+      return [];
+    }
   }
 
   /**

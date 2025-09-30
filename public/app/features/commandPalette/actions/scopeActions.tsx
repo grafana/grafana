@@ -139,7 +139,7 @@ function useScopesRow(onApply: () => void) {
  * @param parentId
  */
 function useGlobalScopesSearch(searchQuery: string, parentId?: string | null) {
-  const { selectScope, searchAllNodes } = useScopeServicesState();
+  const { selectScope, searchAllNodes, getScopeNodes } = useScopeServicesState();
   const [actions, setActions] = useState<CommandPaletteAction[] | undefined>(undefined);
   const searchQueryRef = useRef<string>();
 
@@ -151,12 +151,36 @@ function useGlobalScopesSearch(searchQuery: string, parentId?: string | null) {
         if (searchQueryRef.current === searchQuery) {
           // Only show leaf nodes because otherwise there are issues with navigating to a category without knowing
           // where in the tree it is.
-          const leafNodes = nodes.filter((node) => node.spec.nodeType === 'leaf');
-          const actions = [getScopesParentAction()];
-          for (const node of leafNodes) {
-            actions.push(mapScopeNodeToAction(node, selectScope, parentId || undefined));
+
+          const parentNodesMap = new Map<string | undefined, string>();
+
+          if (config.featureToggles.useMultipleScopeNodesEndpoint) {
+            // Make sure we only request unqiue parent node names
+            const uniqueParentNodeNames = [
+              ...new Set(nodes.map((node) => node.spec.parentName).filter((name) => name !== undefined)),
+            ];
+            getScopeNodes(uniqueParentNodeNames).then((parentNodes) => {
+              for (const parentNode of parentNodes) {
+                parentNodesMap.set(parentNode.metadata.name, parentNode.spec.title);
+              }
+
+              const leafNodes = nodes.filter((node) => node.spec.nodeType === 'leaf');
+              const actions = [getScopesParentAction()];
+              for (const node of leafNodes) {
+                const parentName = parentNodesMap.get(node.spec.parentName);
+                actions.push(mapScopeNodeToAction(node, selectScope, parentId || undefined, parentName || undefined));
+              }
+              setActions(actions);
+            });
+          } else {
+            const leafNodes = nodes.filter((node) => node.spec.nodeType === 'leaf');
+            const actions = [getScopesParentAction()];
+            for (const node of leafNodes) {
+              const parentName = parentNodesMap.get(node.spec.parentName);
+              actions.push(mapScopeNodeToAction(node, selectScope, parentId || undefined, parentName || undefined));
+            }
+            setActions(actions);
           }
-          setActions(actions);
         }
       });
     } else {

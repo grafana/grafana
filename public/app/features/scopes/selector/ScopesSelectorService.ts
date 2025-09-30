@@ -508,6 +508,14 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.updateState({ nodes: newNodes });
     return scopeNodes;
   };
+
+  public getScopeNodes = async (scopeNodeNames: string[]): Promise<ScopeNode[]> => {
+    const nodes = await this.apiClient.fetchMultipleScopeNodes(scopeNodeNames);
+    for (const node of nodes) {
+      this.updateState({ nodes: { ...this.state.nodes, [node.metadata.name]: node } });
+    }
+    return nodes;
+  };
 }
 
 function isScopeLocalStorageV1(obj: unknown): obj is { scope: Scope } {
