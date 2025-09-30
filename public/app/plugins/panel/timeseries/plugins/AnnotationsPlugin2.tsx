@@ -279,20 +279,10 @@ export const AnnotationsPlugin2 = ({
             }
           };
 
-          let items: VizTooltipItem[] = [];
           let links: LinkModel[] = [];
 
           frame.fields.forEach((field: Field) => {
-            const value = field.values[i];
-
             links.push(...getDataLinks(field, i));
-
-            const fieldDisplay = field.display?.(value) ?? { text: `${value}`, numeric: +value };
-
-            items.push({
-              label: field.state?.displayName ?? field.name,
-              value: formattedValueToString(fieldDisplay),
-            });
           });
 
           markers.push(
