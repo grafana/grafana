@@ -8,7 +8,7 @@ const basePath = path.resolve(__dirname, '../../../..');
 /**
  * Helper to return consistent base API generation config
  */
-const getAPIConfig = (
+const createAPIConfig = (
   app: string,
   version: string,
   filterEndpoints?: ConfigFile['filterEndpoints'],
@@ -66,10 +66,10 @@ const config: ConfigFile = {
       apiFile: '../clients/preferences/user/baseAPI.ts',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
-    ...getAPIConfig('iam', 'v0alpha1', ['getDisplayMapping']),
-    ...getAPIConfig('provisioning', 'v0alpha1', filterEndpoints, { hooks: true }),
-    ...getAPIConfig('folder', 'v1beta1', undefined),
-    ...getAPIConfig('advisor', 'v0alpha1', [
+    ...createAPIConfig('iam', 'v0alpha1', ['getDisplayMapping']),
+    ...createAPIConfig('provisioning', 'v0alpha1', filterEndpoints, { hooks: true }),
+    ...createAPIConfig('folder', 'v1beta1', undefined),
+    ...createAPIConfig('advisor', 'v0alpha1', [
       'createCheck',
       'getCheck',
       'listCheck',
@@ -78,18 +78,17 @@ const config: ConfigFile = {
       'listCheckType',
       'updateCheckType',
     ]),
-    ...getAPIConfig('playlist', 'v0alpha1', [
+    ...createAPIConfig('playlist', 'v0alpha1', [
       'listPlaylist',
       'getPlaylist',
       'createPlaylist',
       'deletePlaylist',
       'replacePlaylist',
     ]),
-    ...getAPIConfig('shorturl', 'v1alpha1'),
-    ...getAPIConfig('rules.alerting', 'v0alpha1'),
-    ...getAPIConfig('preferences', 'v1alpha1', undefined, { hooks: true }),
-    ...getAPIConfig('dashboard', 'v0alpha1', ['getSearch']),
-    ...getAPIConfig('dashboard', 'v1beta1'),
+    ...createAPIConfig('shorturl', 'v1alpha1'),
+    ...createAPIConfig('rules.alerting', 'v0alpha1'),
+    ...createAPIConfig('preferences', 'v1alpha1', undefined, { hooks: true }),
+    ...createAPIConfig('dashboard', 'v0alpha1', ['getSearch']),
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };
