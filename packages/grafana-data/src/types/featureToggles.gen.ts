@@ -479,6 +479,11 @@ export interface FeatureToggles {
   */
   useScopeSingleNodeEndpoint?: boolean;
   /**
+  * Makes the frontend use the 'names' param for fetching multiple scope nodes at once
+  * @default false
+  */
+  useMultipleScopeNodesEndpoint?: boolean;
+  /**
   * In-development feature that will allow injection of labels into prometheus queries.
   * @default true
   */

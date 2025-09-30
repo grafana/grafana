@@ -435,6 +435,10 @@ const (
 	// Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
 	FlagUseScopeSingleNodeEndpoint = "useScopeSingleNodeEndpoint"
 
+	// FlagUseMultipleScopeNodesEndpoint
+	// Makes the frontend use the &#39;names&#39; param for fetching multiple scope nodes at once
+	FlagUseMultipleScopeNodesEndpoint = "useMultipleScopeNodesEndpoint"
+
 	// FlagPromQLScope
 	// In-development feature that will allow injection of labels into prometheus queries.
 	FlagPromQLScope = "promQLScope"

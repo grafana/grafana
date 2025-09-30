@@ -807,6 +807,16 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "useMultipleScopeNodesEndpoint",
+			Description:       "Makes the frontend use the 'names' param for fetching multiple scope nodes at once",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaOperatorExperienceSquad,
+			Expression:        "false",
+			FrontendOnly:      true,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:              "promQLScope",
 			Description:       "In-development feature that will allow injection of labels into prometheus queries.",
 			Stage:             FeatureStageGeneralAvailability,
