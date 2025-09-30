@@ -759,6 +759,7 @@ export const SparkJoySection = <TQuery extends DataQuery>({
 
           {/* Show more button */}
           {(patternQueries.length > 0 || libraryQueries.length > 0) && queryLibraryEnabled && (
+            <div style={{ marginTop: theme.spacing(1) }}>
             <button style={{ marginTop: theme.spacing(1), backgroundColor: theme.colors.background.primary, border: 'none', borderRadius: theme.shape.radius.default, cursor: 'pointer' }}
               onClick={() => openQueryLibraryDrawer({
                 datasourceFilters: [datasource.name],
@@ -767,6 +768,7 @@ export const SparkJoySection = <TQuery extends DataQuery>({
               })}>
               Show more
             </button>
+            </div>
           )}
         </div>
 
