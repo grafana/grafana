@@ -172,11 +172,14 @@ function processDirectory(sourceDir: string, outputDir: string) {
   }
 }
 
+// Grafana root path - navigate up from this script's directory
+const basePath = path.resolve(import.meta.dirname, '../../../..');
+
 const sourceDirs = [
-  path.resolve(import.meta.dirname, '../pkg/tests/apis/openapi_snapshots'),
-  path.resolve(import.meta.dirname, '../pkg/extensions/apiserver/tests/openapi_snapshots'),
+  path.join(basePath, 'pkg/tests/apis/openapi_snapshots'),
+  path.join(basePath, 'pkg/extensions/apiserver/tests/openapi_snapshots'),
 ];
-const outputDir = path.resolve(import.meta.dirname, '../data/openapi');
+const outputDir = path.join(basePath, 'data/openapi');
 
 for (const sourceDir of sourceDirs) {
   processDirectory(sourceDir, outputDir);
