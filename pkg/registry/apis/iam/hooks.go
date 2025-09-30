@@ -2,8 +2,10 @@ package iam
 
 import (
 	"context"
+	"strings"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"google.golang.org/protobuf/types/known/structpb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -11,34 +13,55 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
-func toZanzanaType(kind iamv0.ResourcePermissionSpecPermissionKind) string {
+func toZanzanaSubject(kind iamv0.ResourcePermissionSpecPermissionKind, uid string) string {
 	switch kind {
 	case iamv0.ResourcePermissionSpecPermissionKindUser:
-		return zanzana.TypeUser
+		return zanzana.NewTupleEntry(zanzana.TypeUser, uid, "")
 	case iamv0.ResourcePermissionSpecPermissionKindServiceAccount:
-		return zanzana.TypeServiceAccount
+		return zanzana.NewTupleEntry(zanzana.TypeServiceAccount, uid, "")
 	case iamv0.ResourcePermissionSpecPermissionKindTeam:
-		return zanzana.TypeTeam
+		return zanzana.NewTupleEntry(zanzana.TypeTeam, uid, "")
 	case iamv0.ResourcePermissionSpecPermissionKindBasicRole:
-		return zanzana.TypeRole
+		// e.g role:basic_viewer#assignee
+		return zanzana.NewTupleEntry(
+			zanzana.TypeRole,
+			zanzana.TranslateBasicRole(uid),
+			zanzana.RelationAssignee,
+		)
 	}
 	// should not happen since we are after create
 	// validation webhook should have caught invalid kinds
 	return ""
 }
 
-func toZanzanaRelation(verb string) string {
-	switch verb {
-	case "view":
-		return zanzana.RelationSetView
-	case "edit":
-		return zanzana.RelationSetEdit
-	case "admin":
-		return zanzana.RelationSetAdmin
+func NewResourceTuple(resource iamv0.ResourcePermissionspecResource, perm iamv0.ResourcePermissionspecPermission) *v1.TupleKey {
+	key := &v1.TupleKey{
+		// e.g. "user:{uid}", "serviceaccount:{uid}", "team:{uid}", "basicrole:{viewer|editor|admin}"
+		User: toZanzanaSubject(perm.Kind, perm.Name),
+		// "view", "edit", "admin"
+		Relation: strings.ToLower(perm.Verb),
 	}
-	// should not happen since we are after create
-	// validation webhook should have caught invalid verbs
-	return ""
+
+	if resource.ApiGroup == "folder.grafana.app" {
+		key.Object = zanzana.NewObjectEntry(zanzana.TypeFolder, "", "", "", resource.Name)
+	} else {
+		key.Object = zanzana.NewObjectEntry(
+			zanzana.TypeFolder, resource.ApiGroup, resource.Resource, "", resource.Name,
+		)
+		// TODO Understand the with group_filter condition
+		key.Condition = &v1.RelationshipCondition{
+			Name: "group_filter",
+			Context: &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					"group_resource": structpb.NewStringValue(
+						resource.ApiGroup + "/" + resource.Resource,
+					),
+				},
+			},
+		}
+	}
+
+	return key
 }
 
 func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj runtime.Object, options *metav1.CreateOptions) {
@@ -56,14 +79,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 
 	tuples := make([]*v1.TupleKey, 0, len(permissions))
 	for _, p := range permissions {
-		tuples = append(tuples, &v1.TupleKey{
-			// e.g. "user:{uid}", "serviceaccount:{uid}", "team:{uid}", "basicrole:{viewer|editor|admin}"
-			User: toZanzanaType(p.Kind) + ":" + p.Name,
-			// "view", "edit", "admin"
-			Relation: toZanzanaRelation(p.Verb),
-			// e.g. "folder.grafana.app:folders:fold1"
-			Object: resource.ApiGroup + ":" + resource.Resource + ":" + resource.Name,
-		})
+		tuples = append(tuples, NewResourceTuple(resource, p))
 	}
 
 	b.logger.Debug("writing resource permission to zanzana",
