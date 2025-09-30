@@ -168,7 +168,7 @@ func (s *encryptedValStorage) Get(ctx context.Context, namespace, name string, v
 	}
 
 	var encryptedValue EncryptedValue
-	err = rows.Scan(&encryptedValue.Namespace, &encryptedValue.Name, &encryptedValue.Version, &encryptedValue.EncryptedData, &encryptedValue.Created, &encryptedValue.Updated)
+	err = rows.Scan(&encryptedValue.Namespace, &encryptedValue.Name, &encryptedValue.Version, &encryptedValue.EncryptedData, &encryptedValue.DataKeyID, &encryptedValue.Created, &encryptedValue.Updated)
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan encrypted value row: %w", err)
 	}
@@ -271,8 +271,8 @@ func (s *globalEncryptedValStorage) ListAll(ctx context.Context, opts contracts.
 			&row.Namespace,
 			&row.Name,
 			&row.Version,
-			&row.DataKeyID,
 			&row.EncryptedData,
+			&row.DataKeyID,
 			&row.Created,
 			&row.Updated,
 		)
