@@ -6,6 +6,8 @@ import { config } from '@grafana/runtime';
 import { Card, Stack, Text, useStyles2, Icon, Grid, Spinner, useTheme2, Button, ButtonGroup } from '@grafana/ui';
 import { useGetPopularDashboards } from 'app/features/dashboard/api/popularResourcesApi';
 
+import { BrowsingSectionTitle } from './BrowsingSectionTitle';
+
 interface DashboardThumbnailProps {
   url: string;
   alt: string;
@@ -93,15 +95,11 @@ export const MostPopularDashboards = () => {
   return (
     <div>
       <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
-        <div>
-          <div className={styles.headerTitle}>
-            <Icon name="chart-line" size="lg" className={styles.headerIcon} style={{ marginRight: '4px' }} />
-            <Text variant="h4">Suggested Dashboards</Text>
-          </div>
-          <Text variant="bodySmall" color="secondary">
-            Trending in your organization
-          </Text>
-        </div>
+        <BrowsingSectionTitle
+          title="Most Popular Dashboards"
+          subtitle="Trending in your organization"
+          icon="chart-line"
+        />
         <ButtonGroup>
           <Button
             icon="apps"
@@ -168,11 +166,7 @@ export const MostPopularDashboards = () => {
             ) : (
               <div className={styles.listView}>
                 {data.resources.map((resource) => (
-                  <Card
-                    key={resource.uid}
-                    className={styles.listCard}
-                    onClick={() => handleResourceClick(resource)}
-                  >
+                  <Card key={resource.uid} className={styles.listCard} onClick={() => handleResourceClick(resource)}>
                     <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
                       <Stack direction="row" gap={2} alignItems="center">
                         <Icon name="apps" size="lg" className={styles.listIcon} />

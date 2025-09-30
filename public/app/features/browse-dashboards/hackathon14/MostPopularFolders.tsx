@@ -4,6 +4,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Card, Stack, Text, useStyles2, Icon, Grid } from '@grafana/ui';
 import { useGetPopularFolders } from 'app/features/dashboard/api/popularResourcesApi';
 
+import { BrowsingSectionTitle } from './BrowsingSectionTitle';
+
 export const MostPopularFolders = () => {
   const styles = useStyles2(getStyles);
   const { data, isLoading } = useGetPopularFolders({
@@ -18,17 +20,7 @@ export const MostPopularFolders = () => {
 
   return (
     <div>
-      <Stack direction="row" gap={2} alignItems="center">
-        <div>
-          <div className={styles.headerTitle}>
-            <Icon name="folder-open" size="lg" className={styles.headerIcon} style={{ marginRight: '4px' }} />
-            <Text variant="h4">Suggested Folders</Text>
-          </div>
-          <Text variant="bodySmall" color="secondary">
-            Based on your most active data sources
-          </Text>
-        </div>
-      </Stack>
+      <BrowsingSectionTitle title="Most Popular Folders" subtitle="Based on your activity" icon="fire" />
 
       <div className={styles.container}>
         {isLoading && (

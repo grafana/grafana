@@ -4,6 +4,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Card, Stack, Text, useStyles2, Icon, Spinner, Grid } from '@grafana/ui';
 import { useGetRecentDashboardsAndFolders } from 'app/features/dashboard/api/popularResourcesApi';
 
+import { BrowsingSectionTitle } from './BrowsingSectionTitle';
+import { RecentVisitCard } from './RecentVisitCard';
+
 export const RecentVisited = () => {
   const styles = useStyles2(getStyles);
   const { data, isLoading, error } = useGetRecentDashboardsAndFolders({
@@ -16,45 +19,9 @@ export const RecentVisited = () => {
     window.location.href = resource.url;
   };
 
-  const getResourceIcon = (resourceType: string) => {
-    switch (resourceType) {
-      case 'dashboard':
-        return 'apps';
-      case 'folder':
-        return 'folder';
-      case 'alert':
-        return 'bell';
-      default:
-        return 'question-circle';
-    }
-  };
-
-  const getRelativeTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) {return 'Just now';}
-    if (diffInSeconds < 3600) {return `${Math.floor(diffInSeconds / 60)} minutes ago`;}
-    if (diffInSeconds < 86400) {return `${Math.floor(diffInSeconds / 3600)} hours ago`;}
-    if (diffInSeconds < 604800) {return `${Math.floor(diffInSeconds / 86400)} days ago`;}
-
-    return date.toLocaleDateString();
-  };
-
   return (
     <div>
-      <Stack direction="row" gap={2} alignItems="center">
-        <div>
-          <div className={styles.headerTitle}>
-            <Icon name="history" size="lg" className={styles.headerIcon} style={{ marginRight: '4px' }} />
-            <Text variant="h4">Recently Visited</Text>
-          </div>
-          <Text variant="bodySmall" color="secondary">
-            Dashboards & Folders you've explored
-          </Text>
-        </div>
-      </Stack>
+      <BrowsingSectionTitle title="Recently Visited" subtitle="Dashboards & Folders you've explored" icon="history" />
 
       <div className={styles.container}>
         {isLoading && (
@@ -74,24 +41,13 @@ export const RecentVisited = () => {
           <div className={styles.listContainer}>
             <Grid gap={2} columns={{ xs: 1, sm: 2 }}>
               {data.resources.map((resource) => (
-                <Card key={resource.uid} className={styles.resourceCard} onClick={() => handleResourceClick(resource)}>
-                  <div className={styles.cardContent}>
-                    <Icon name={getResourceIcon(resource.resourceType)} size="xl" className={styles.resourceIcon} />
-                    <div className={styles.contentWrapper}>
-                      <div className={styles.titleRow}>
-                        <div className={styles.resourceTitle}>
-                          <Text weight="medium">{resource.title}</Text>
-                        </div>
-                        <div className={styles.typeBadge}>
-                          <Text variant="bodySmall">{resource.resourceType}</Text>
-                        </div>
-                      </div>
-                      <Text variant="bodySmall" color="secondary">
-                        {getRelativeTime(resource.lastVisited)}
-                      </Text>
-                    </div>
-                  </div>
-                </Card>
+                <RecentVisitCard
+                  key={resource.uid}
+                  type={resource.resourceType as 'dashboard' | 'folder' | 'alert'}
+                  title={resource.title}
+                  subtitle={getRelativeTime(resource.lastVisited)}
+                  onClick={() => handleResourceClick(resource)}
+                />
               ))}
             </Grid>
           </div>
@@ -108,18 +64,6 @@ export const RecentVisited = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  headerIcon: css({
-    color: '#8b5cf6',
-    filter: 'drop-shadow(0 0 8px rgba(139, 92, 246, 0.4))',
-  }),
-
-  headerTitle: css({
-    background: 'linear-gradient(135deg, #8b5cf6, #d946ef)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
-  }),
-
   container: css({
     marginTop: theme.spacing(3),
   }),
@@ -137,81 +81,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),
-  }),
-
-  resourceCard: css({
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    position: 'relative',
-    border: '2px solid transparent',
-    padding: theme.spacing(2),
-
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      borderRadius: theme.shape.radius.default,
-      padding: '2px',
-      background: 'linear-gradient(90deg, #FF780A, #FF8C2A, #FFA040)',
-      WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-      WebkitMaskComposite: 'xor',
-      maskComposite: 'exclude',
-      opacity: 0,
-      transition: 'opacity 0.3s ease',
-    },
-
-    '&:hover': {
-      transform: 'translateY(-4px)',
-      boxShadow: '0 8px 16px rgba(255, 120, 10, 0.12)',
-
-      '&::before': {
-        opacity: 0.35,
-      },
-    },
-  }),
-
-  cardContent: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(2),
-  }),
-
-  contentWrapper: css({
-    flex: 1,
-    minWidth: 0,
-    overflow: 'hidden',
-  }),
-
-  resourceIcon: css({
-    // color: '#8b5cf6',
-    flexShrink: 0,
-  }),
-
-  titleRow: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-    marginBottom: theme.spacing(0.5),
-  }),
-
-  resourceTitle: css({
-    flex: 1,
-    minWidth: 0,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  }),
-
-  typeBadge: css({
-    padding: theme.spacing(0.25, 1),
-    backgroundColor: `${theme.colors.primary.main}15`,
-    borderRadius: theme.shape.radius.pill,
-    border: `1px solid ${theme.colors.primary.main}`,
-    whiteSpace: 'nowrap',
-    flexShrink: 0,
   }),
 
   emptyCard: css({
@@ -261,15 +130,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     animation: 'float 3s ease-in-out infinite 0.5s',
   }),
 
-  iconCompass: css({
-    position: 'absolute',
-    top: '50px',
-    right: '20%',
-    color: theme.colors.success.main,
-    opacity: 0.6,
-    animation: 'float 3s ease-in-out infinite 1s',
-  }),
-
   tipCard: css({
     backgroundColor: theme.colors.background.secondary,
     padding: theme.spacing(2),
@@ -303,3 +163,24 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(2),
   }),
 });
+
+export const getRelativeTime = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) {
+    return 'Just now';
+  }
+  if (diffInSeconds < 3600) {
+    return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+  }
+  if (diffInSeconds < 86400) {
+    return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  }
+  if (diffInSeconds < 604800) {
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  }
+
+  return date.toLocaleDateString();
+};
