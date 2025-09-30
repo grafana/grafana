@@ -17,11 +17,7 @@ weight: 200
 
 {{< admonition type="caution" >}}
 
-Local file provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions, but is not available in Grafana Cloud. Only the cloud-hosted version of GitHub (GitHub.com) is supported at this time. GitHub Enterprise is not yet compatible.
-
-Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
-
-TBC same form to register?
+Local file provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions, but is not available in Grafana Cloud. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
 
 {{< /admonition >}}
 

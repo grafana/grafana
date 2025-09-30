@@ -35,7 +35,7 @@ Optionally, you can [extend Git Sync](#configure-webhooks-and-image-rendering) b
 | Capability                                            | Benefit                                                                         | Requires                                      |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------- |
 | Adds a table summarizing changes to your pull request | Provides a convenient way to save changes back to GitHub.                       | Webhooks configured                           |
-| Add a dashboard preview image to a PR                 | View a snapshot of dashboard changes to a pull request without opening Grafana. | Image renderer plugin and webhooks configured |
+| Add a dashboard preview image to a PR                 | View a snapshot of dashboard changes to a pull request without opening Grafana. | Image renderer and webhooks configured |
 
 {{< admonition type="note" >}}
 
@@ -65,7 +65,7 @@ To set up Git Sync, you need:
   - If you want to use a local file path, refer to [the local file path guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/).
 - A GitHub access token. The Grafana UI will prompt you during setup.
 - Optional: A public Grafana instance.
-- Optional: the [Image Renderer service](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs.
+- Optional: The [Image Renderer service](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs.
 
 ## Enable required feature toggles
 
@@ -159,7 +159,7 @@ Finally, you can set up how often your configured storage is polled for updates.
 1. For **Update instance interval (seconds)**, enter how often you want the instance to pull updates from GitHub. The default value is 60 seconds.
 1. Optional: Select **Read only** to ensure resources can't be modified in Grafana.
 <!-- No workflow option listed in the UI. 1. For **Workflows**, select the GitHub workflows that you want to allow to run in the repository. Both **Branch** and **Write** are selected by default. -->
-1. Optional: If you have the Grafana Image Renderer plugin configured, you can **Enable dashboards previews in pull requests**. If image rendering is not available, then you can't select this option. For more information, refer to [Grafana Image Renderer](https://grafana.com/grafana/plugins/grafana-image-renderer/).
+1. Optional: If you have the Grafana Image Renderer plugin configured, you can **Enable dashboards previews in pull requests**. If image rendering is not available, then you can't select this option. For more information, refer to the [Image Renderer service](https://github.com/grafana/grafana-image-renderer).
 1. Select **Finish** to proceed.
 
 ## Verify your dashboards in Grafana
@@ -215,8 +215,7 @@ The necessary paths required to be exposed are (RegExp):
 By setting up image rendering, you can add visual previews of dashboard updates directly in pull requests.
 Image rendering also requires webhooks.
 
-You can enable this capability by installing the Grafana Image Renderer plugin in your Grafana instance.
-For more information and installation instructions, refer to [Grafana Image Renderer](https://grafana.com/grafana/plugins/grafana-image-renderer/).
+You can enable this capability by installing the Grafana Image Renderer in your Grafana instance. For more information and installation instructions, refer to the [Image Renderer service](https://github.com/grafana/grafana-image-renderer).
 
 ## Modify configurations after set up is complete
 
