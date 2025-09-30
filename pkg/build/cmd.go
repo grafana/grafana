@@ -307,10 +307,12 @@ func setBuildEnv(opts BuildOpts) error {
 		}
 	}
 
+	cgoEnabled := "0"
 	if opts.cgo {
-		if err := os.Setenv("CGO_ENABLED", "1"); err != nil {
-			return err
-		}
+		cgoEnabled = "1"
+	}
+	if err := os.Setenv("CGO_ENABLED", cgoEnabled); err != nil {
+		return err
 	}
 
 	if opts.gocc == "" {
