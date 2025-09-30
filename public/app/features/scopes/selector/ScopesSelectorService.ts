@@ -510,11 +510,27 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   };
 
   public getScopeNodes = async (scopeNodeNames: string[]): Promise<ScopeNode[]> => {
-    const nodes = await this.apiClient.fetchMultipleScopeNodes(scopeNodeNames);
-    for (const node of nodes) {
-      this.updateState({ nodes: { ...this.state.nodes, [node.metadata.name]: node } });
+    const nodesMap: NodesMap = {};
+    // Get nodes that are already in the cache
+    for (const name of scopeNodeNames) {
+      if (this.state.nodes[name]) {
+        nodesMap[name] = this.state.nodes[name];
+      }
     }
-    return nodes;
+
+    // Get nodes that are not in the cache
+    const nodesToFetch = scopeNodeNames.filter((name) => !nodesMap[name]);
+
+    const nodes = await this.apiClient.fetchMultipleScopeNodes(nodesToFetch);
+    for (const node of nodes) {
+      nodesMap[node.metadata.name] = node;
+    }
+
+    const newNodes = { ...this.state.nodes, ...nodesMap };
+
+    // Return both caches and fetches nodes in the correct order
+    this.updateState({ nodes: newNodes });
+    return scopeNodeNames.map((name) => nodesMap[name]).filter((node) => node !== undefined);
   };
 }
 
