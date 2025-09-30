@@ -1681,6 +1681,10 @@
     "inspector-yaml-tab": {
       "apply": "Применить"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "Как подключиться к IRM",
       "disabled-description": "Включите IRM через интеграцию с веб-перехватчиком.",
@@ -1825,6 +1829,10 @@
         }
       }
     },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
+    },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Фильтр оповещений с использованием запросов меток без скобок, например,",
       "filter-alerts-using-label-querying-without-spaces": "Фильтруйте оповещения с использованием запросов меток без пробелов, например,",
@@ -1931,9 +1939,6 @@
       "title-remove": "Удалить",
       "tooltip-remove-time-range": "Удалить временной диапазон"
     },
-    "namespace": {
-      "title-alert-rules": "Правила оповещения"
-    },
     "namespace-and-group-filter": {
       "select-group": "Выбрать группу",
       "select-namespace": "Выбрать пространство имен"
@@ -1990,8 +1995,10 @@
       "label-notification-policies": "Политики уведомления",
       "label-time-intervals": "Временные интервалы"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "Политика по умолчанию",
       "no-matchers": "Нет средств сопоставления"
     },
     "notification-preview": {
@@ -2008,22 +2015,12 @@
     },
     "notification-route": {
       "no-labels": "Нет меток",
-      "no-matching-labels": "Нет совпадающих меток"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Ваши экземпляры оповещений направляются следующим образом.",
-      "close": "Закрыть",
-      "contact-point": "Точка контакта",
-      "default-policy": "Политика по умолчанию",
-      "notification-policy-path": "Путь политики уведомлений",
-      "see-details-link": "Подробнее",
-      "title-routing-details": "Сведения о маршрутизации"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Развернуть маршрут политики",
-      "delivered-to": "@ Кому доставлено",
-      "notification-policy": "Политика уведомления",
-      "see-details": "Подробнее"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2051,7 +2048,9 @@
       "recipient-notification-fires": "Выберите, кто должен получать уведомление при активации правила оповещения."
     },
     "option-customfield": {
-      "label-custom-template": "Пользовательский шаблон"
+      "label-custom-template": "Пользовательский шаблон",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Выбранный обработчик оповещений Alertmanager больше не существует или у вас может не быть разрешения на доступ к нему. Вы можете выбрать другой обработчик оповещений из раскрывающегося списка.",
@@ -2144,19 +2143,15 @@
         "suffix": "Обновите страницу и повторите попытку.",
         "title": "Не удалось добавить или обновить политику уведомления"
       },
-      "n-more-policies_one": "{{count}} дополнительная политика",
-      "n-more-policies_few": "{{count}} дополнительные политики",
-      "n-more-policies_many": "{{count}} дополнительных политик",
-      "n-more-policies_other": "{{count}} дополнительной политики"
+      "n-more-policies_one": "",
+      "n-more-policies_few": "",
+      "n-more-policies_many": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Новая дочерняя политика",
       "label-new-sibling-above": "Новый элемент того же уровня выше",
       "label-new-sibling-below": "Новый элемент того же уровня ниже"
-    },
-    "policy-path": {
-      "default-policy": "Политика по умолчанию",
-      "no-matchers": "Нет средств сопоставления"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Невозможно отобразить предварительный просмотр запроса. Некоторые источники данных, используемые в запросах, недоступны.",
@@ -5392,7 +5387,6 @@
             "json": "Экспорт в формате JSON"
           }
         },
-        "mark-favorite": "Добавить в избранное",
         "more-save-options": "Больше параметров сохранения",
         "playlist-next": "Перейти к следующему дашборду",
         "playlist-previous": "Перейти к предыдущему дашборду",
@@ -5421,8 +5415,7 @@
             "yesText": "Сохранить"
           }
         },
-        "unlink-library-panel": "Отсоединить панель библиотеки",
-        "unmark-favorite": "Убрать из избранного"
+        "unlink-library-panel": "Отсоединить панель библиотеки"
       },
       "open-original": "Открыть исходный дашборд",
       "playlist-next": "Перейти к следующему дашборду",
@@ -5443,6 +5436,10 @@
       "save-library-panel": "Сохранить панель библиотеки",
       "settings": "Параметры дашборда",
       "share-button": "Общий доступ",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Отсоединить панель библиотеки",
       "unmark-favorite": "Убрать из избранного"
     },
@@ -9402,6 +9399,7 @@
     },
     "share-panel": {
       "config-description": "Создайте индивидуальную прямую ссылку, чтобы делиться своей панелью внутри организации, с помощью следующих параметров настройки:",
+      "copy-image-link": "",
       "download-image": "Загрузить изображение",
       "render-image": "Создать изображение"
     }
@@ -10718,6 +10716,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11402,6 +11408,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Настроить необходимые переключатели функциональности"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Управлять дашбордами как кодом в Git и автоматически выполнять обновления",
       "manage-your-dashboards-with-remote-provisioning": "Начало работы с Git Sync",
       "store-dashboards-in-version-controlled-storage": "Храните дашборды в хранилище с контролем версий для лучшей организации и отслеживания журналов"
@@ -11595,8 +11602,16 @@
         "subtitle": "Используйте этот параметр, если хотите синхронизировать весь экземпляр Grafana и управлять им через внешнее хранилище"
       }
     },
-    "read-only-local-tooltip": "Эта папка предназначена только для чтения и предоставлена в рамках подготовки файлов. Чтобы внести изменения, обновите подключенный файловый репозиторий. Отредактировать настройки папки можно в разделе «Администрирование > Подготовка > Репозитории».",
-    "read-only-remote-tooltip": "Эта папка доступна только для чтения и предоставлена в формате GIT. Чтобы внести изменения, обновите подключенный репозиторий. Отредактировать настройки папке можно в разделе «Администрирование > Подготовка > Репозитории».",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "активные задания",
       "column-action": "Действие",
@@ -11710,6 +11725,7 @@
         "removed-from-repo-test-ui": "удалено из тестового пользовательского интерфейса репозитория",
         "updated-from-repo-test-ui": "обновлено из тестового пользовательского интерфейса репозитория"
       },
+      "read-only-repo-tooltip": "",
       "repository": "Репозиторий",
       "tab-info": {
         "label": {
@@ -11746,6 +11762,8 @@
       "tooltip-unhealthy-repository": "Невозможно внести изменения в неисправный репозиторий"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "Включить фиксации для каждого ранее зафиксированного значения",
       "synchronization-options": "Параметры синхронизации"
@@ -12035,14 +12053,14 @@
       "restore-button": "Восстановить",
       "restore-loading": "Восстановление...",
       "title": "Восстановление дашбордов",
-      "folder-picker-text_one": "Выберите папку для восстановления вашего дашборда.",
-      "folder-picker-text_few": "Выберите папку для восстановления ваших дашбордов.",
-      "folder-picker-text_many": "Выберите папку для восстановления ваших дашбордов.",
-      "folder-picker-text_other": "Выберите папку для восстановления вашего дашборда.",
-      "text_one": "Это действие приведет к восстановлению {{numberOfDashboards}} дашборда.",
-      "text_few": "Это действие приведет к восстановлению {{numberOfDashboards}} дашбордов.",
-      "text_many": "Это действие приведет к восстановлению {{numberOfDashboards}} дашбордов.",
-      "text_other": "Это действие приведет к восстановлению {{numberOfDashboards}} дашборда."
+      "folder-picker-text_one": "",
+      "folder-picker-text_few": "",
+      "folder-picker-text_many": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_few": "",
+      "text_many": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {

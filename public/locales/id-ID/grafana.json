@@ -1666,6 +1666,10 @@
     "inspector-yaml-tab": {
       "apply": "Terapkan"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "Cara terhubung ke IRM",
       "disabled-description": "Aktifkan IRM melalui integrasi Webhook",
@@ -1807,6 +1811,10 @@
         }
       }
     },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
+    },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Filter peringatan menggunakan kueri label tanpa kurung kurawal, misalnya:",
       "filter-alerts-using-label-querying-without-spaces": "Filter peringatan menggunakan kueri label tanpa spasi, misalnya:",
@@ -1913,9 +1921,6 @@
       "title-remove": "Hapus",
       "tooltip-remove-time-range": "Hapus rentang waktu"
     },
-    "namespace": {
-      "title-alert-rules": "Aturan peringatan"
-    },
     "namespace-and-group-filter": {
       "select-group": "Pilih grup",
       "select-namespace": "Pilih namespace"
@@ -1972,8 +1977,10 @@
       "label-notification-policies": "Kebijakan Pemberitahuan",
       "label-time-intervals": "Interval waktu"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "Kebijakan default",
       "no-matchers": "Tidak ada pencocok"
     },
     "notification-preview": {
@@ -1990,22 +1997,12 @@
     },
     "notification-route": {
       "no-labels": "Tidak ada label",
-      "no-matching-labels": "Tidak ada label yang cocok"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Instans peringatan Anda dirutekan sebagai berikut.",
-      "close": "Tutup",
-      "contact-point": "Titik kontak",
-      "default-policy": "Kebijakan default",
-      "notification-policy-path": "Jalur kebijakan pemberitahuan",
-      "see-details-link": "Lihat detail",
-      "title-routing-details": "Detail perutean"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Perluas rute kebijakan",
-      "delivered-to": "@ Dikirimkan ke",
-      "notification-policy": "Kebijakan pemberitahuan",
-      "see-details": "Lihat detail"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2033,7 +2030,9 @@
       "recipient-notification-fires": "Pilih siapa yang akan menerima pemberitahuan saat aturan peringatan menyala."
     },
     "option-customfield": {
-      "label-custom-template": "Templat kustom"
+      "label-custom-template": "Templat kustom",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Alertmanager yang dipilih tidak ada lagi atau Anda mungkin tidak memiliki izin untuk mengaksesnya. Anda dapat memilih Alertmanager lain dari menu dropdown.",
@@ -2129,10 +2128,6 @@
       "label-new-child-policy": "Kebijakan turunan baru",
       "label-new-sibling-above": "Sibling baru di atas",
       "label-new-sibling-below": "Sibling baru di bawah"
-    },
-    "policy-path": {
-      "default-policy": "Kebijakan default",
-      "no-matchers": "Tidak ada pencocok"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Tidak dapat menampilkan pratinjau kueri. Beberapa sumber data yang digunakan di kueri tidak tersedia.",
@@ -5329,7 +5324,6 @@
             "json": "Ekspor sebagai JSON"
           }
         },
-        "mark-favorite": "Tandai sebagai favorit",
         "more-save-options": "Opsi simpan lainnya",
         "playlist-next": "Buka dasbor berikutnya",
         "playlist-previous": "Buka dasbor sebelumnya",
@@ -5358,8 +5352,7 @@
             "yesText": "Simpan"
           }
         },
-        "unlink-library-panel": "Putus tautan panel pustaka",
-        "unmark-favorite": "Batal tandai sebagai favorit"
+        "unlink-library-panel": "Putus tautan panel pustaka"
       },
       "open-original": "Buka dasbor asli",
       "playlist-next": "Buka dasbor berikutnya",
@@ -5380,6 +5373,10 @@
       "save-library-panel": "Simpan panel pustaka",
       "settings": "Pengaturan dasbor",
       "share-button": "Bagikan",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Putuskan tautan panel pustaka",
       "unmark-favorite": "Batal tanda sebagai favorit"
     },
@@ -9318,6 +9315,7 @@
     },
     "share-panel": {
       "config-description": "Buat tautan langsung yang dipersonalisasi untuk membagikan panel Anda dalam organisasi Anda, dengan pengaturan penyesuaian berikut:",
+      "copy-image-link": "",
       "download-image": "Unduh gambar",
       "render-image": "Buat gambar"
     }
@@ -10616,6 +10614,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11288,6 +11294,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Atur tombol fitur yang diwajibkan"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Kelola dasbor sebagai kode di Git dan sediakan pembaruan secara otomatis",
       "manage-your-dashboards-with-remote-provisioning": "Mulai menggunakan Git Sync",
       "store-dashboards-in-version-controlled-storage": "Simpan dasbor di penyimpanan yang dikontrol versi untuk organisasi dan pelacakan riwayat yang lebih baik"
@@ -11475,8 +11482,16 @@
         "subtitle": "Gunakan opsi ini jika Anda ingin menyinkronkan dan mengelola seluruh instans Grafana melalui penyimpanan eksternal."
       }
     },
-    "read-only-local-tooltip": "Folder ini hanya-baca dan disediakan melalui penyediaan file. Untuk membuat perubahan di folder, perbarui repositori file yang terhubung. Untuk mengubah pengaturan folder, buka Administrasi > Penyediaan > Repositori.",
-    "read-only-remote-tooltip": "Folder ini hanya-baca dan disediakan melalui Git. Untuk membuat perubahan di folder, perbarui repositori yang terhubung. Untuk mengubah pengaturan folder, buka Administrasi > Penyediaan > Repositori.",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "pekerjaan aktif",
       "column-action": "Tindakan",
@@ -11590,6 +11605,7 @@
         "removed-from-repo-test-ui": "dihapus dari UI pengujian repo",
         "updated-from-repo-test-ui": "diperbarui dari UI pengujian repo"
       },
+      "read-only-repo-tooltip": "",
       "repository": "Repositori",
       "tab-info": {
         "label": {
@@ -11626,6 +11642,8 @@
       "tooltip-unhealthy-repository": "Tidak dapat menerapkan pull pada repositori yang tidak sehat"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "Sertakan commit untuk setiap nilai historis",
       "synchronization-options": "Opsi sinkronisasi"

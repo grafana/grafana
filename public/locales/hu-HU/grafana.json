@@ -1671,6 +1671,10 @@
     "inspector-yaml-tab": {
       "apply": "Alkalmaz"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "Csatlakozás az IRM-hez",
       "disabled-description": "Az IRM engedélyezése webkapocs-integráción keresztül",
@@ -1813,6 +1817,10 @@
         }
       }
     },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
+    },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Szűrheti a riasztásokat zárójelek nélküli címkelekérdezéssel, pl.:",
       "filter-alerts-using-label-querying-without-spaces": "Szűrheti a riasztásokat szóközök nélküli címkelekérdezéssel, pl.:",
@@ -1919,9 +1927,6 @@
       "title-remove": "Eltávolítás",
       "tooltip-remove-time-range": "Időtartomány eltávolítása"
     },
-    "namespace": {
-      "title-alert-rules": "Riasztási szabályok"
-    },
     "namespace-and-group-filter": {
       "select-group": "Csoport kijelölése",
       "select-namespace": "Névtér kijelölése"
@@ -1978,8 +1983,10 @@
       "label-notification-policies": "Értesítési házirendek",
       "label-time-intervals": "Időintervallumok"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "Alapértelmezett házirend",
       "no-matchers": "Nincs egyezés"
     },
     "notification-preview": {
@@ -1996,22 +2003,12 @@
     },
     "notification-route": {
       "no-labels": "Nincs címke",
-      "no-matching-labels": "Nincs egyező címke"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Riasztáspéldányai a következők szerint irányítottak.",
-      "close": "Bezárás",
-      "contact-point": "Kapcsolattartási pont",
-      "default-policy": "Alapértelmezett házirend",
-      "notification-policy-path": "Értesítési házirend útvonala",
-      "see-details-link": "Részletek megtekintése",
-      "title-routing-details": "Irányítás részletei"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Házirend útvonalának kibontása",
-      "delivered-to": "@ Kézbesítve ide:",
-      "notification-policy": "Értesítési házirend",
-      "see-details": "Részletek megtekintése"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2039,7 +2036,9 @@
       "recipient-notification-fires": "Válassza ki, hogy ki kapjon értesítést, amikor egy riasztási szabály aktiválódik."
     },
     "option-customfield": {
-      "label-custom-template": "Egyéni sablon"
+      "label-custom-template": "Egyéni sablon",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "A kijelölt riasztáskezelő már nem létezik, vagy előfordulhat, hogy nincs hozzáférési joga. A legördülő menüből választhat másik riasztáskezelőt.",
@@ -2130,17 +2129,13 @@
         "suffix": "Kérjük, frissítse az oldalt, és próbálkozzon újra.",
         "title": "Nem sikerült értesítési szabályzatot hozzáadni vagy frissíteni"
       },
-      "n-more-policies_one": "{{count}} további házirend",
-      "n-more-policies_other": "{{count}} további házirend"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Új gyermekházirend",
       "label-new-sibling-above": "Új testvér feljebb",
       "label-new-sibling-below": "Új testvér lejjebb"
-    },
-    "policy-path": {
-      "default-policy": "Alapértelmezett házirend",
-      "no-matchers": "Nincs egyezés"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Nem lehet megjeleníteni a lekérdezés előnézetét. A lekérdezésekben használt adatforrások némelyike nem érhető el.",
@@ -5350,7 +5345,6 @@
             "json": "Exportálás JSON-fájlként"
           }
         },
-        "mark-favorite": "Megjelölés kedvencként",
         "more-save-options": "További mentési beállítások",
         "playlist-next": "Tovább a következő irányítópulthoz",
         "playlist-previous": "Tovább az előző irányítópulthoz",
@@ -5379,8 +5373,7 @@
             "yesText": "Mentés"
           }
         },
-        "unlink-library-panel": "Könyvtárpanel leválasztása",
-        "unmark-favorite": "Kedvencnek jelölés visszavonása"
+        "unlink-library-panel": "Könyvtárpanel leválasztása"
       },
       "open-original": "Eredeti irányítópult megnyitása",
       "playlist-next": "Ugrás a következő irányítópulthoz",
@@ -5401,6 +5394,10 @@
       "save-library-panel": "Könyvtárpanel mentése",
       "settings": "Irányítópult beállításai",
       "share-button": "Megosztás",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Könyvtárpanel leválasztása",
       "unmark-favorite": "Kedvencnek jelölés visszavonása"
     },
@@ -9346,6 +9343,7 @@
     },
     "share-panel": {
       "config-description": "Létrehozhat egy személyre szabott, közvetlen hivatkozást a panel szervezeten belüli megosztásához, a következő testreszabási beállításokkal:",
+      "copy-image-link": "",
       "download-image": "Kép letöltése",
       "render-image": "Kép generálása"
     }
@@ -10650,6 +10648,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11326,6 +11332,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Kötelező funkcióváltások beállítása"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Irányítópultok kezelése kódként a Gitben, és a kiépítés automatikus frissítése",
       "manage-your-dashboards-with-remote-provisioning": "A Git-szinkronizálás használatának megkezdése",
       "store-dashboards-in-version-controlled-storage": "Tárolja az irányítópultokat verziókövetéses tárolóban a jobb rendszerezés és az előzmények nyomon követése érdekében"
@@ -11515,8 +11522,16 @@
         "subtitle": "Használja ezt a lehetőséget, ha külső tárolóeszközön keresztül szeretné szinkronizálni és kezelni a teljes Grafana-példányt."
       }
     },
-    "read-only-local-tooltip": "Ez a mappa csak olvasható, és fájlalapú konfigurációval rendelkezik. A módosításokhoz frissítse a kapcsolódó fájladattárat. A mappa beállításainak módosításához lépjen az Adminisztráció > Konfiguráció > Adattárak menüpontra.",
-    "read-only-remote-tooltip": "Ez a mappa csak olvasható, és Git-alapú konfigurációval rendelkezik. A módosításokhoz frissítse a kapcsolódó adattárat. A mappa beállításainak módosításához lépjen az Adminisztráció > Konfiguráció > Adattárak menüpontra.",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "aktív feladatok",
       "column-action": "Művelet",
@@ -11630,6 +11645,7 @@
         "removed-from-repo-test-ui": "eltávolítva az adattár tesztfelületéről",
         "updated-from-repo-test-ui": "frissítve az adattár tesztfelületéről"
       },
+      "read-only-repo-tooltip": "",
       "repository": "Adattár",
       "tab-info": {
         "label": {
@@ -11666,6 +11682,8 @@
       "tooltip-unhealthy-repository": "Nem lehet beolvasni egy nem megfelelő állapotú adattárat"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "Változtatások belefoglalása minden előzményértékhez",
       "synchronization-options": "Szinkronizálási beállítások"
@@ -11953,10 +11971,10 @@
       "restore-button": "Visszaállítás",
       "restore-loading": "Visszaállítás...",
       "title": "Irányítópultok visszaállítása",
-      "folder-picker-text_one": "Kérjük, válasszon egy mappát, ahová az irányítópultok vissza lesznek állítva.",
-      "folder-picker-text_other": "Kérjük, válasszon egy mappát, ahová az irányítópultok vissza lesznek állítva.",
-      "text_one": "Ez a művelet visszaállít {{numberOfDashboards}} irányítópultot.",
-      "text_other": "Ez a művelet visszaállít {{numberOfDashboards}} irányítópultot."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {

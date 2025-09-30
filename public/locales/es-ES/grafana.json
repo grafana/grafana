@@ -1671,6 +1671,10 @@
     "inspector-yaml-tab": {
       "apply": "Aplicar"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "Cómo conectarse a IRM",
       "disabled-description": "Habilitar IRM a través de una integración del webhook",
@@ -1813,6 +1817,10 @@
         }
       }
     },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
+    },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Filtrar alertas mediante consulta de etiquetas sin corchetes. Por ej.:",
       "filter-alerts-using-label-querying-without-spaces": "Filtra alertas mediante una consulta de etiquetas sin espacios. Por ejemplo:",
@@ -1919,9 +1927,6 @@
       "title-remove": "Eliminar",
       "tooltip-remove-time-range": "Quitar rango de tiempo"
     },
-    "namespace": {
-      "title-alert-rules": "Reglas de alerta"
-    },
     "namespace-and-group-filter": {
       "select-group": "Seleccionar grupo",
       "select-namespace": "Seleccionar espacio de nombres"
@@ -1978,8 +1983,10 @@
       "label-notification-policies": "Políticas de notificación",
       "label-time-intervals": "Intervalos de tiempo"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "Política predeterminada",
       "no-matchers": "Ningún buscador de coincidencias"
     },
     "notification-preview": {
@@ -1996,22 +2003,12 @@
     },
     "notification-route": {
       "no-labels": "Ninguna etiqueta",
-      "no-matching-labels": "Ninguna etiqueta coincidente"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Tus instancias de alerta se enrutan de la siguiente manera.",
-      "close": "Cerrar",
-      "contact-point": "Punto de contacto",
-      "default-policy": "Política predeterminada",
-      "notification-policy-path": "Ruta de la política de notificación",
-      "see-details-link": "Ver detalles",
-      "title-routing-details": "Detalles de enrutamiento"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Expandir ruta de política",
-      "delivered-to": "@ Entregado a",
-      "notification-policy": "Política de notificación",
-      "see-details": "Ver detalles"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2039,7 +2036,9 @@
       "recipient-notification-fires": "Selecciona quién debe recibir una notificación cuando se active una regla de alerta."
     },
     "option-customfield": {
-      "label-custom-template": "Plantilla personalizada"
+      "label-custom-template": "Plantilla personalizada",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "El Alertmanager seleccionado ya no existe o es posible que no tengas permiso para acceder a él. Puedes seleccionar otro Alertmanager en el menú desplegable.",
@@ -2130,17 +2129,13 @@
         "suffix": "Actualiza la página y vuelve a intentarlo.",
         "title": "Error al añadir o actualizar la política de notificación"
       },
-      "n-more-policies_one": "{{count}} políticas adicionales",
-      "n-more-policies_other": "{{count}} políticas adicionales"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Nueva política secundaria",
       "label-new-sibling-above": "Nuevo elemento del mismo nivel superior",
       "label-new-sibling-below": "Nuevo elemento del mismo nivel inferior"
-    },
-    "policy-path": {
-      "default-policy": "Política predeterminada",
-      "no-matchers": "Ningún buscador de coincidencias"
     },
     "preview-rule": {
       "body-preview-is-not-available": "No se puede mostrar la vista previa de la consulta. Algunas de las fuentes de datos utilizadas en las consultas no están disponibles.",
@@ -5350,7 +5345,6 @@
             "json": "Exportar como JSON"
           }
         },
-        "mark-favorite": "Marcar como favorito",
         "more-save-options": "Más opciones de guardado",
         "playlist-next": "Ir al siguiente panel de control",
         "playlist-previous": "Ir al panel de control anterior",
@@ -5379,8 +5373,7 @@
             "yesText": "Guardar"
           }
         },
-        "unlink-library-panel": "Desvincular panel de librería",
-        "unmark-favorite": "Deshacer marca como favorito"
+        "unlink-library-panel": "Desvincular panel de librería"
       },
       "open-original": "Abrir el panel de control original",
       "playlist-next": "Ir al siguiente panel de control",
@@ -5401,6 +5394,10 @@
       "save-library-panel": "Guardar panel de biblioteca",
       "settings": "Ajustes del panel de control",
       "share-button": "Compartir",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Desvincular panel de librería",
       "unmark-favorite": "Deshacer marca como favorito"
     },
@@ -9346,6 +9343,7 @@
     },
     "share-panel": {
       "config-description": "Crea un enlace personalizado y directo para compartir tu panel dentro de tu organización, con los siguientes ajustes de personalización:",
+      "copy-image-link": "",
       "download-image": "Descargar imagen",
       "render-image": "Generar imagen"
     }
@@ -10650,6 +10648,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11326,6 +11332,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Configurar los conmutadores de características necesarios"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Gestiona los dashboards como código en Git y aprovisiona las actualizaciones de forma automática",
       "manage-your-dashboards-with-remote-provisioning": "Empezar con Git Sync",
       "store-dashboards-in-version-controlled-storage": "Almacena los dashboards en un almacenamiento controlado por versiones para mejorar la organización y el seguimiento del historial"
@@ -11515,8 +11522,16 @@
         "subtitle": "Utiliza esta opción si quieres sincronizar y administrar toda tu instancia de Grafana a través de un almacenamiento externo."
       }
     },
-    "read-only-local-tooltip": "Esta carpeta es de solo lectura y se aprovisiona con el aprovisionamiento de archivos. Para realizar cualquier cambio en ella, actualiza el repositorio de archivos conectado. Para modificar la configuración de la carpeta, ve a Administración > Aprovisionamiento > Repositorios.",
-    "read-only-remote-tooltip": "Esta carpeta es de solo lectura y se aprovisiona a través de Git. Para realizar cualquier cambio en ella, actualiza el repositorio conectado. Para modificarla, ve a Administración > Aprovisionamiento > Repositorios.",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "trabajos activos",
       "column-action": "Acción",
@@ -11630,6 +11645,7 @@
         "removed-from-repo-test-ui": "eliminado de la interfaz de usuario de prueba de repositorio",
         "updated-from-repo-test-ui": "actualizado desde la interfaz de usuario de prueba de repositorio"
       },
+      "read-only-repo-tooltip": "",
       "repository": "Repositorio",
       "tab-info": {
         "label": {
@@ -11666,6 +11682,8 @@
       "tooltip-unhealthy-repository": "No se puede extraer un repositorio que no está en buen estado"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "Incluir confirmaciones para cada valor histórico",
       "synchronization-options": "Opciones de sincronización"
@@ -11953,10 +11971,10 @@
       "restore-button": "Restaurar",
       "restore-loading": "Restaurando...",
       "title": "Restaurar paneles de control",
-      "folder-picker-text_one": "Elige la carpeta en la que se restaurarán tus paneles de control.",
-      "folder-picker-text_other": "Elige la carpeta en la que se restaurarán tus paneles de control.",
-      "text_one": "Esta acción restaurará {{numberOfDashboards}} paneles de control.",
-      "text_other": "Esta acción restaurará {{numberOfDashboards}} paneles de control."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {

@@ -392,6 +392,73 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, []string{"test-plugin.zip"}, loadedPaths)
 	})
+
+	t.Run("Dependencies don't inherit parent plugin's URL during installation", func(t *testing.T) {
+		const (
+			parentPluginID = "parent-plugin"
+			depPluginID    = "dependency-plugin"
+			parentURL      = "https://example.com/parent-plugin.zip"
+		)
+
+		var loadedPaths []string
+		loader := &fakes.FakeLoader{
+			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
+				// Check if this is a LocalSource and get its paths
+				if localSrc, ok := src.(*sources.LocalSource); ok {
+					loadedPaths = append(loadedPaths, localSrc.Paths()...)
+				}
+				return []*plugins.Plugin{}, nil
+			},
+		}
+
+		// Track which methods are called to ensure dependencies use catalog, not URL
+		urlMethodCalled := false
+		catalogMethodCalled := false
+
+		pluginRepo := &fakes.FakePluginRepo{
+			GetPluginArchiveByURLFunc: func(_ context.Context, url string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
+				urlMethodCalled = true
+				require.Equal(t, parentURL, url, "URL method should only be called for parent plugin")
+				return &repo.PluginArchive{File: &zip.ReadCloser{Reader: zip.Reader{File: []*zip.File{{
+					FileHeader: zip.FileHeader{Name: "parent-plugin.zip"},
+				}}}}}, nil
+			},
+			GetPluginArchiveFunc: func(_ context.Context, id, version string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
+				catalogMethodCalled = true
+				require.Equal(t, depPluginID, id, "Catalog method should only be called for dependency plugin")
+				return &repo.PluginArchive{File: &zip.ReadCloser{Reader: zip.Reader{File: []*zip.File{{
+					FileHeader: zip.FileHeader{Name: "dependency-plugin.zip"},
+				}}}}}, nil
+			},
+		}
+
+		fs := &fakes.FakePluginStorage{
+			ExtractFunc: func(_ context.Context, id string, _ storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+				switch id {
+				case parentPluginID:
+					return &storage.ExtractedPluginArchive{
+						ID:           parentPluginID,
+						Dependencies: []*storage.Dependency{{ID: depPluginID}},
+						Path:         "parent-plugin.zip",
+					}, nil
+				case depPluginID:
+					return &storage.ExtractedPluginArchive{
+						ID:   depPluginID,
+						Path: "dependency-plugin.zip",
+					}, nil
+				default:
+					return nil, fmt.Errorf("unknown plugin %s", id)
+				}
+			},
+		}
+
+		inst := New(&config.PluginManagementCfg{}, fakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
+		err := inst.Add(context.Background(), parentPluginID, "", plugins.NewAddOpts("10.0.0", runtime.GOOS, runtime.GOARCH, parentURL))
+		require.NoError(t, err)
+		require.Equal(t, []string{"dependency-plugin.zip", "parent-plugin.zip"}, loadedPaths)
+		require.True(t, urlMethodCalled)
+		require.True(t, catalogMethodCalled)
+	})
 }
 
 func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, backend bool, cbs ...func(*plugins.Plugin)) *plugins.Plugin {

@@ -1671,6 +1671,10 @@
     "inspector-yaml-tab": {
       "apply": "Applica"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "Come connettersi a IRM",
       "disabled-description": "Abilita IRM tramite un'integrazione Webhook",
@@ -1813,6 +1817,10 @@
         }
       }
     },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
+    },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Filtra gli avvisi utilizzando la query dell'etichetta senza parentesi graffe, ad esempio:",
       "filter-alerts-using-label-querying-without-spaces": "Filtra gli avvisi utilizzando la query dell'etichetta senza spazi, ad esempio:",
@@ -1919,9 +1927,6 @@
       "title-remove": "Rimuovi",
       "tooltip-remove-time-range": "Rimuovi intervallo di tempo"
     },
-    "namespace": {
-      "title-alert-rules": "Regole di avviso"
-    },
     "namespace-and-group-filter": {
       "select-group": "Seleziona gruppo",
       "select-namespace": "Seleziona spazio di nomi"
@@ -1978,8 +1983,10 @@
       "label-notification-policies": "Criteri di Notifica",
       "label-time-intervals": "Intervalli di tempo"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "Criterio predefinito",
       "no-matchers": "Nessuna corrispondenza"
     },
     "notification-preview": {
@@ -1996,22 +2003,12 @@
     },
     "notification-route": {
       "no-labels": "Nessuna etichetta",
-      "no-matching-labels": "Nessuna etichetta corrispondente"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Le istanze di avviso vengono instradate come segue.",
-      "close": "Chiudi",
-      "contact-point": "Punto di contatto",
-      "default-policy": "Criterio predefinito",
-      "notification-policy-path": "Percorso del criterio di notifica",
-      "see-details-link": "Visualizza i dettagli",
-      "title-routing-details": "Dettagli di instradamento"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Espandi percorso del criterio",
-      "delivered-to": "@ Consegnato a",
-      "notification-policy": "Criterio di notifica",
-      "see-details": "Visualizza i dettagli"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2039,7 +2036,9 @@
       "recipient-notification-fires": "Seleziona chi deve ricevere una notifica quando viene attivata una regola di avviso."
     },
     "option-customfield": {
-      "label-custom-template": "Modello personalizzato"
+      "label-custom-template": "Modello personalizzato",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "L'Alertmanager selezionato non esiste più o potresti non avere l'autorizzazione per accedervi. È possibile selezionare un diverso Alertmanager dal menu a discesa.",
@@ -2130,17 +2129,13 @@
         "suffix": "Aggiorna la pagina e riprova.",
         "title": "Impossibile aggiungere o aggiornare i criteri di notifica"
       },
-      "n-more-policies_one": "{{count}} criterio aggiuntivo",
-      "n-more-policies_other": "{{count}} criteri aggiuntivi"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Nuova politica per i bambini",
       "label-new-sibling-above": "Nuovo nodo fratello in alto",
       "label-new-sibling-below": "Nuovo nodo fratello in basso"
-    },
-    "policy-path": {
-      "default-policy": "Criterio predefinito",
-      "no-matchers": "Nessuna corrispondenza"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Impossibile visualizzare l'anteprima della query. Alcune delle origini dati utilizzate nelle query non sono disponibili.",
@@ -5350,7 +5345,6 @@
             "json": "Esporta in formato JSON"
           }
         },
-        "mark-favorite": "Contrassegna come preferito",
         "more-save-options": "Altre opzioni di salvataggio",
         "playlist-next": "Vai alla dashboard successiva",
         "playlist-previous": "Vai alla dashboard precedente",
@@ -5379,8 +5373,7 @@
             "yesText": "Salva"
           }
         },
-        "unlink-library-panel": "Scollega pannello della libreria",
-        "unmark-favorite": "Rimuovi dai preferiti"
+        "unlink-library-panel": "Scollega pannello della libreria"
       },
       "open-original": "Apri il originale",
       "playlist-next": "Vai al dashboard successivo",
@@ -5401,6 +5394,10 @@
       "save-library-panel": "Salva pannello della libreria",
       "settings": "Impostazioni dashboard",
       "share-button": "Condividi",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Scollega pannello della libreria",
       "unmark-favorite": "Rimuovi dai preferiti"
     },
@@ -9346,6 +9343,7 @@
     },
     "share-panel": {
       "config-description": "Crea un link diretto e personalizzato per condividere il pannello all'interno della tua organizzazione, con le seguenti impostazioni di personalizzazione:",
+      "copy-image-link": "",
       "download-image": "Scarica immagine",
       "render-image": "Genera immagine"
     }
@@ -10650,6 +10648,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11326,6 +11332,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Configura i toggle delle funzionalità necessarie"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Gestisci le dashboard come codice in Git e fornisci automaticamente gli aggiornamenti",
       "manage-your-dashboards-with-remote-provisioning": "Inizia a usare la sincronizzazione Git",
       "store-dashboards-in-version-controlled-storage": "Archivia le dashboard in una memoria controllata dalla versione per una migliore organizzazione e monitoraggio della cronologia"
@@ -11515,8 +11522,16 @@
         "subtitle": "Utilizza questa opzione se desideri sincronizzare e gestire l'intera istanza di Grafana tramite la memoria esterna."
       }
     },
-    "read-only-local-tooltip": "Questa cartella è di sola lettura e viene fornita tramite il provisioning dei file. Per apportare modifiche alla cartella, aggiorna il repository dei file connesso. Per modificare le impostazioni della cartella, vai su Amministrazione > Provisioning > Repository.",
-    "read-only-remote-tooltip": "Questa cartella è di sola lettura e viene fornita tramite Git. Per apportare modifiche alla cartella, aggiorna il repository connesso. Per modificare le impostazioni della cartella, vai su Amministrazione > Provisioning > Repository.",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "attività attive",
       "column-action": "Azione",
@@ -11630,6 +11645,7 @@
         "removed-from-repo-test-ui": "rimosso dall'interfaccia utente del test del repository",
         "updated-from-repo-test-ui": "aggiornato dall'interfaccia utente del test del repository"
       },
+      "read-only-repo-tooltip": "",
       "repository": "Repository",
       "tab-info": {
         "label": {
@@ -11666,6 +11682,8 @@
       "tooltip-unhealthy-repository": "Impossibile eseguire il pull di un repository non integro"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "Includi commit per ogni valore storico",
       "synchronization-options": "Opzioni di sincronizzazione"
@@ -11953,10 +11971,10 @@
       "restore-button": "Ripristina",
       "restore-loading": "Ripristino in corso...",
       "title": "Ripristina dashboard",
-      "folder-picker-text_one": "Scegli una cartella in cui verrà ripristinato il dashboard.",
-      "folder-picker-text_other": "Scegli una cartella in cui verranno ripristinati i dashboard.",
-      "text_one": "Questa azione ripristinerà {{numberOfDashboards}} dashboard.",
-      "text_other": "Questa azione ripristinerà {{numberOfDashboards}} dashboard."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {
