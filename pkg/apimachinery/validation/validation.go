@@ -23,9 +23,9 @@ const qualifiedNameFmt string = "^(" + qnameCharFmt + qnameExtCharFmt + "*)?" + 
 const qualifiedNameErrMsg string = "must consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character"
 
 const alphaCharFmt string = "[A-Za-z]"
-const resourceCharFmt string = "[-A-Za-z0-9_]" // no "." allowed
+const resourceCharFmt string = "[A-Za-z0-9]" // alpha numeric
 const resourceFmt string = "^" + alphaCharFmt + resourceCharFmt + "*$"
-const resourceErrMsg string = "must consist of alphanumeric characters or '_', and must start and end with an alphanumeric character"
+const resourceErrMsg string = "must consist of alphanumeric characters"
 
 var (
 	grafanaNameRegexp   = regexp.MustCompile(grafanaNameFmt).MatchString
