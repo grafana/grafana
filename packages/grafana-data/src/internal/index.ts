@@ -28,6 +28,7 @@ export {
 } from '../transformations/transformers/convertFieldType';
 export {
   type ConvertFrameTypeTransformerOptions,
+  type OptionalAnnotationOptions,
   FrameType,
   type AnnotationFieldMapping,
 } from '../transformations/transformers/convertFrameType';

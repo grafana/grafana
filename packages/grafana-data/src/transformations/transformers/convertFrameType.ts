@@ -34,6 +34,11 @@ export interface OptionalAnnotationFields {
   timeEnd?: string;
   tags?: string;
   id?: string;
+  color?: string;
+}
+
+export interface OptionalAnnotationOptions {
+  defaultColor?: string;
 }
 
 export type AnnotationFieldMapping = OptionalAnnotationFields & RequiredAnnotationFields;
@@ -41,8 +46,8 @@ export type AnnotationFieldMapping = OptionalAnnotationFields & RequiredAnnotati
 export interface ConvertFrameTypeTransformerOptions {
   targetType?: FrameType;
   annotationFieldMapping?: AnnotationFieldMapping;
+  annotationOptions?: OptionalAnnotationOptions;
 }
-
 /** @alpha */
 export const convertFrameTypeTransformer: DataTransformerInfo<ConvertFrameTypeTransformerOptions> = {
   id: DataTransformerID.convertFrameType,
@@ -121,6 +126,16 @@ const createIsRegionField = (frame: DataFrame) => {
   };
 };
 
+const createColorField = (frame: DataFrame, options: ConvertFrameTypeTransformerOptions) => {
+  const startTimeField = frame.fields.find((field) => field.type === FieldType.time && field.name === 'time');
+  return {
+    config: {},
+    name: 'color',
+    type: FieldType.string,
+    values: new Array(startTimeField?.values.length).fill(options.annotationOptions?.defaultColor),
+  };
+};
+
 function mapSourceFieldNameToAnnoFieldName(
   options: ConvertFrameTypeTransformerOptions,
   sourceFieldName: string | undefined
@@ -157,9 +172,14 @@ function convertSeriesToAnnotation(frame: DataFrame, options: ConvertFrameTypeTr
     },
   };
 
+  const fields = [...mappedFrame.fields, createIsRegionField(mappedFrame)];
+  // If we've mapped an existing field, don't add the default
+  if (!mappedFrame.fields.find((field) => field.name === 'color')) {
+    fields.push(createColorField(mappedFrame, options));
+  }
   return {
     ...mappedFrame,
-    fields: [...mappedFrame.fields, createIsRegionField(mappedFrame)],
+    fields,
     meta: {
       ...frame.meta,
       dataTopic: DataTopic.Annotations,

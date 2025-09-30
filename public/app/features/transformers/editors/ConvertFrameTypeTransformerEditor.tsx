@@ -12,9 +12,14 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { ConvertFrameTypeTransformerOptions, FrameType, AnnotationFieldMapping } from '@grafana/data/internal';
+import {
+  ConvertFrameTypeTransformerOptions,
+  FrameType,
+  AnnotationFieldMapping,
+  OptionalAnnotationOptions,
+} from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
+import { ColorPicker, DEFAULT_ANNOTATION_COLOR, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
@@ -64,6 +69,18 @@ export const ConvertFrameTypeTransformerEditor = ({
         ...options,
         annotationFieldMapping: {
           ...options.annotationFieldMapping,
+          [label]: value,
+        },
+      });
+    },
+    [onChange, options]
+  );
+
+  const onSelectAnnotationOption = useCallback(
+    (label: keyof OptionalAnnotationOptions, value?: string) => {
+      onChange({
+        ...options,
+        annotationOptions: {
           [label]: value,
         },
       });
@@ -166,6 +183,32 @@ export const ConvertFrameTypeTransformerEditor = ({
                   onSelectAnnotationMapping('id', value);
                 }}
                 item={fieldNamePickerSettings}
+              />
+            </InlineField>
+          </InlineFieldRow>
+          {/* Map dataframe with existing color strings */}
+          <InlineFieldRow>
+            <InlineField labelWidth={20} label={t('transformers.annotation-transformer-editor.color', 'Color field')}>
+              <FieldNamePicker
+                context={{ data: input }}
+                value={options.annotationFieldMapping?.color ?? ''}
+                onChange={(value) => {
+                  onSelectAnnotationMapping('color', value);
+                }}
+                item={fieldNamePickerSettings}
+              />
+            </InlineField>
+          </InlineFieldRow>
+          <InlineFieldRow>
+            <InlineField
+              labelWidth={20}
+              label={t('transformers.annotation-transformer-editor.default-color', 'Default color')}
+            >
+              <ColorPicker
+                color={options.annotationOptions?.defaultColor ?? DEFAULT_ANNOTATION_COLOR}
+                onChange={(value) => {
+                  onSelectAnnotationOption('defaultColor', value);
+                }}
               />
             </InlineField>
           </InlineFieldRow>
