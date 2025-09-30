@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/dskit/ring"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
@@ -523,8 +524,8 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		return nil, NewBadRequestError(
 			fmt.Sprintf("key/name do not match (key: %s, name: %s)", key.Name, obj.GetName()))
 	}
-	if err := validateName(obj.GetName()); err != nil {
-		return nil, err
+	if errs := validation.IsValidGrafanaName(obj.GetName()); err != nil {
+		return nil, NewBadRequestError(errs[0])
 	}
 
 	// For folder moves, we need to check permissions on both folders
