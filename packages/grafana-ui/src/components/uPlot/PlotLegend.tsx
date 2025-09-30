@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Series } from 'uplot';
 
 import { DataFrame, getFieldDisplayName, getFieldSeriesColor } from '@grafana/data';
-import { VizLegendOptions, AxisPlacement, LineConfig } from '@grafana/schema';
+import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { VizLayout, VizLayoutLegendProps } from '../VizLayout/VizLayout';
@@ -84,7 +84,6 @@ export const PlotLegend = memo(
         const props: Series = anno.props;
         const annoConfig = anno.getConfig();
         legendItems.push({
-          color: props.stroke,
           disabled: !annoConfig.show,
           label: typeof props.label === 'string' ? props.label : 'annotation',
           yAxis: 1,
