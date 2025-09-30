@@ -21,8 +21,6 @@ import {
  * and logs them to console with Chrome DevTools performance marks and measurements for debugging.
  */
 export class ScenePerformanceLogger implements ScenePerformanceObserver {
-  private isInitialized = false;
-  private unsubscribe: (() => void) | null = null;
   private panelGroupsOpen = new Set<string>(); // Track which panels we've seen
 
   constructor() {
@@ -37,33 +35,14 @@ export class ScenePerformanceLogger implements ScenePerformanceObserver {
   }
 
   public initialize() {
-    if (this.isInitialized) {
-      return;
-    }
-
-    // Subscribe to Scene performance events
-    const tracker = getScenePerformanceTracker();
-    this.unsubscribe = tracker.addObserver(this);
-
-    // Note: Analytics aggregator will be initialized separately with dashboard context
-
-    this.isInitialized = true;
-    writePerformanceLog('SPL', 'Initialized and subscribed to Scene performance events');
+    // Initialization is now handled by singleton pattern in initialiseScenePerformanceLogger()
+    writePerformanceLog('SPL', 'Performance logger ready');
   }
 
   public destroy() {
-    if (!this.isInitialized) {
-      return;
-    }
-
-    // Unsubscribe from Scene performance events
-    if (this.unsubscribe) {
-      this.unsubscribe();
-      this.unsubscribe = null;
-    }
-
-    this.isInitialized = false;
-    writePerformanceLog('SPL', 'Destroyed and unsubscribed from Scene performance events');
+    // Clear any tracking state for testing
+    this.panelGroupsOpen.clear();
+    writePerformanceLog('SPL', 'Performance logger state cleared');
   }
 
   // Dashboard-level events
@@ -73,9 +52,8 @@ export class ScenePerformanceLogger implements ScenePerformanceObserver {
     createPerformanceMark(dashboardStartMark, data.timestamp);
 
     const title = data.metadata?.dashboardTitle || 'Unknown Dashboard';
-    const panelCount = data.metadata?.panelCount || 0;
 
-    writePerformanceLog('SPL', `[DASHBOARD] ${data.interactionType} started: ${title} (${panelCount} panels)`);
+    writePerformanceLog('SPL', `[DASHBOARD] ${data.interactionType} started: ${title}`);
   }
 
   onDashboardInteractionMilestone(data: DashboardInteractionMilestoneData): void {
@@ -280,23 +258,23 @@ export class ScenePerformanceLogger implements ScenePerformanceObserver {
   // All performance marks now use standardized functions from performanceConstants.ts
 }
 
-// Singleton instance
+// Global singleton instance with lazy initialization
 let scenePerformanceLogger: ScenePerformanceLogger | null = null;
 
-export function getScenePerformanceLogger(): ScenePerformanceLogger {
+export function initialiseScenePerformanceLogger(): ScenePerformanceLogger {
   if (!scenePerformanceLogger) {
     scenePerformanceLogger = new ScenePerformanceLogger();
+    scenePerformanceLogger.initialize();
+
+    // Register as global performance observer
+    const tracker = getScenePerformanceTracker();
+    tracker.addObserver(scenePerformanceLogger);
+
+    writePerformanceLog('SPL', 'Initialized globally and registered as performance observer');
   }
   return scenePerformanceLogger;
 }
 
-export function initializeScenePerformanceLogger(): void {
-  getScenePerformanceLogger().initialize();
-}
-
-export function destroyScenePerformanceLogger(): void {
-  if (scenePerformanceLogger) {
-    scenePerformanceLogger.destroy();
-    scenePerformanceLogger = null;
-  }
+export function getScenePerformanceLogger(): ScenePerformanceLogger {
+  return initialiseScenePerformanceLogger();
 }

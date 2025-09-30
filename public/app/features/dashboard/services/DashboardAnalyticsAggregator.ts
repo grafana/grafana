@@ -6,6 +6,8 @@ import {
   type DashboardInteractionCompleteData,
   type PanelPerformanceData,
   type QueryPerformanceData,
+  getScenePerformanceTracker,
+  writePerformanceLog,
 } from '@grafana/scenes';
 
 /**
@@ -51,7 +53,6 @@ interface PanelAnalyticsMetrics {
  */
 export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   private panelMetrics = new Map<string, PanelAnalyticsMetrics>();
-  private isInitialized = false;
   private dashboardUID = '';
   private dashboardTitle = '';
 
@@ -67,20 +68,17 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   }
 
   public initialize(uid: string, title: string) {
-    // Clear previous dashboard data
+    // Clear previous dashboard data and set new context
     this.panelMetrics.clear();
     this.dashboardUID = uid;
     this.dashboardTitle = title;
-    this.isInitialized = true;
   }
 
   public destroy() {
-    if (!this.isInitialized) {
-      return;
-    }
-
+    // Clear dashboard context
     this.panelMetrics.clear();
-    this.isInitialized = false;
+    this.dashboardUID = '';
+    this.dashboardTitle = '';
   }
 
   /**
@@ -382,23 +380,22 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   }
 }
 
-// Singleton instance
+// Global singleton instance with lazy initialization
 let dashboardAnalyticsAggregator: DashboardAnalyticsAggregator | null = null;
 
-export function getDashboardAnalyticsAggregator(): DashboardAnalyticsAggregator {
+export function initialiseDashboardAnalyticsAggregator(): DashboardAnalyticsAggregator {
   if (!dashboardAnalyticsAggregator) {
     dashboardAnalyticsAggregator = new DashboardAnalyticsAggregator();
+
+    // Register as global performance observer on first access
+    const tracker = getScenePerformanceTracker();
+    tracker.addObserver(dashboardAnalyticsAggregator);
+
+    writePerformanceLog('DAA', 'Initialized globally and registered as performance observer');
   }
   return dashboardAnalyticsAggregator;
 }
 
-export function initializeDashboardAnalyticsAggregator(uid: string, title: string): void {
-  getDashboardAnalyticsAggregator().initialize(uid, title);
-}
-
-export function destroyDashboardAnalyticsAggregator(): void {
-  if (dashboardAnalyticsAggregator) {
-    dashboardAnalyticsAggregator.destroy();
-    dashboardAnalyticsAggregator = null;
-  }
+export function getDashboardAnalyticsAggregator(): DashboardAnalyticsAggregator {
+  return initialiseDashboardAnalyticsAggregator();
 }

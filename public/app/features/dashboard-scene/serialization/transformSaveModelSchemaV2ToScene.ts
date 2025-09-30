@@ -60,7 +60,7 @@ import {
 import { DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
-import { dashboardPerformanceInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -170,11 +170,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       enableProfiling:
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
     },
-    getDashboardSceneProfilerWithMetadata(
-      metadata.name,
-      dashboard.title,
-      Object.keys(dashboard.elements || {}).length || 0
-    )
+    getDashboardSceneProfilerWithMetadata(metadata.name, dashboard.title)
   );
 
   const interactionTracker = new behaviors.SceneInteractionTracker(
@@ -183,11 +179,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
       onInteractionComplete: getDashboardComponentInteractionCallback(metadata.name, dashboard.title),
     },
-    getDashboardSceneProfilerWithMetadata(
-      metadata.name,
-      dashboard.title,
-      Object.keys(dashboard.elements || {}).length || 0
-    )
+    getDashboardSceneProfilerWithMetadata(metadata.name, dashboard.title)
   );
 
   const dashboardScene = new DashboardScene(
@@ -228,7 +220,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
           uid: dashboardId?.toString(),
         }),
         // Analytics aggregator lifecycle management (initialization, observer registration, cleanup)
-        dashboardPerformanceInitializer,
+        dashboardAnalyticsInitializer,
         // Panel profiling is now handled by composed SceneRenderProfiler
       ],
       $data: new DashboardDataLayerSet({

@@ -32,7 +32,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
-import { dashboardPerformanceInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { CustomTimeRangeCompare } from '../scene/CustomTimeRangeCompare';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -304,7 +304,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       enableProfiling:
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
     },
-    getDashboardSceneProfilerWithMetadata(oldModel.uid, oldModel.title, oldModel.panels.length)
+    getDashboardSceneProfilerWithMetadata(oldModel.uid, oldModel.title)
   );
 
   const interactionTracker = new behaviors.SceneInteractionTracker(
@@ -313,7 +313,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
       onInteractionComplete: getDashboardComponentInteractionCallback(oldModel.uid, oldModel.title),
     },
-    getDashboardSceneProfilerWithMetadata(oldModel.uid, oldModel.title, oldModel.panels.length)
+    getDashboardSceneProfilerWithMetadata(oldModel.uid, oldModel.title)
   );
 
   const behaviorList: SceneObjectState['$behaviors'] = [
@@ -331,7 +331,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       uid,
     }),
     // Analytics aggregator lifecycle management (initialization, observer registration, cleanup)
-    dashboardPerformanceInitializer,
+    dashboardAnalyticsInitializer,
   ];
 
   // Panel profiling is now handled by composed SceneRenderProfiler

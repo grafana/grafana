@@ -1,55 +1,37 @@
-import { getScenePerformanceTracker, writePerformanceLog } from '@grafana/scenes';
+import { writePerformanceLog } from '@grafana/scenes';
 
 import { getDashboardAnalyticsAggregator } from '../../dashboard/services/DashboardAnalyticsAggregator';
-import { getScenePerformanceLogger } from '../../dashboard/services/ScenePerformanceLogger';
 import { DashboardScene } from '../scene/DashboardScene';
 
 /**
- * Scene behavior function that manages the initialization and lifecycle of
- * dashboard performance services for each dashboard session.
+ * Scene behavior function that manages the dashboard-specific initialization
+ * of the global analytics aggregator for each dashboard session.
  *
- * Initializes both the analytics aggregator and performance logger, registering
- * them as performance observers. Returns a cleanup function for deactivation.
+ * Note: Both ScenePerformanceLogger and DashboardAnalyticsAggregator are now
+ * initialized globally to avoid timing issues. This behavior only sets
+ * dashboard-specific context.
  */
-export function dashboardPerformanceInitializer(dashboard: DashboardScene) {
+export function dashboardAnalyticsInitializer(dashboard: DashboardScene) {
   const { uid, title } = dashboard.state;
 
   if (!uid) {
-    console.warn('dashboardPerformanceInitializer: Dashboard UID is missing');
+    console.warn('dashboardAnalyticsInitializer: Dashboard UID is missing');
     return;
   }
 
-  writePerformanceLog('DAI', 'Initializing dashboard performance services');
+  writePerformanceLog('DAI', 'Setting dashboard context for analytics aggregator');
 
-  // Initialize analytics aggregator
+  // Set dashboard context on the global aggregator (observer already registered)
   const aggregator = getDashboardAnalyticsAggregator();
   aggregator.initialize(uid, title || 'Untitled Dashboard');
 
-  // Initialize performance logger
-  const logger = getScenePerformanceLogger();
-  logger.initialize();
-
-  // Register both as performance observers
-  const tracker = getScenePerformanceTracker();
-  const unsubscribeAggregator = tracker.addObserver(aggregator);
-  const unsubscribeLogger = tracker.addObserver(logger);
-
-  writePerformanceLog('DAI', 'Dashboard performance services initialized:', { uid, title });
+  writePerformanceLog('DAI', 'Dashboard analytics aggregator context set:', { uid, title });
 
   // Return cleanup function
   return () => {
-    // Unsubscribe from performance tracker
-    if (unsubscribeAggregator) {
-      unsubscribeAggregator();
-    }
-    if (unsubscribeLogger) {
-      unsubscribeLogger();
-    }
-
-    // Clean up service states
+    // Only clear dashboard state, keep observer registered for next dashboard
     aggregator.destroy();
-    logger.destroy();
 
-    writePerformanceLog('DAI', 'Dashboard performance services cleaned up');
+    writePerformanceLog('DAI', 'Dashboard analytics aggregator context cleared');
   };
 }

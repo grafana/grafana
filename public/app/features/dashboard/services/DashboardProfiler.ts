@@ -1,8 +1,6 @@
 import { logMeasurement, reportInteraction, config } from '@grafana/runtime';
 import { SceneRenderProfiler, type SceneObject } from '@grafana/scenes';
 
-import { initializeScenePerformanceLogger } from './ScenePerformanceLogger';
-
 interface SceneInteractionProfileEvent {
   origin: string;
   duration: number;
@@ -51,14 +49,13 @@ export function getDashboardComponentInteractionCallback(uid: string, title: str
 }
 
 // Enhanced function to create profiler with dashboard metadata
-export function getDashboardSceneProfilerWithMetadata(uid: string, title: string, panelCount: number) {
+export function getDashboardSceneProfilerWithMetadata(uid: string, title: string) {
   const profiler = getDashboardSceneProfiler();
 
   // Set metadata for observer notifications
   profiler.setMetadata({
     dashboardUID: uid,
     dashboardTitle: title,
-    panelCount: panelCount,
   });
 
   // Note: Analytics aggregator initialization and observer registration
