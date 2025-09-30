@@ -173,17 +173,17 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceInfoProvider) *DashboardsAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceInfoProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider)
 	return &DashboardsAPIBuilder{
-		minRefreshInterval:   "10s",
-		accessClient:         ac,
-		authorizer:           authsvc.NewResourceAuthorizer(ac),
-		features:             features,
-		dashboardService:     &dashsvc.DashboardServiceImpl{}, // for validation helpers only
-		folderClientProvider: folderClientProvider,
-
-		isStandalone: true,
+		minRefreshInterval:     "10s",
+		accessClient:           ac,
+		authorizer:             authsvc.NewResourceAuthorizer(ac),
+		features:               features,
+		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
+		folderClientProvider:   folderClientProvider,
+		resourcePermissionsSvc: resourcePermissionsSvc,
+		isStandalone:           true,
 	}
 }
 
