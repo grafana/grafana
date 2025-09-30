@@ -33,14 +33,14 @@ Because dashboards are defined in JSON files, you can enable as-code workflows w
 
 Git Sync is bidirectional and works both with changes done directly in GitHub as well as in the Grafana UI.
 
-### Making changes in Grafana 
+### Making changes in Grafana
 
 Whenever you modify a dashboard directly from the UI, Grafana can commit changes to Git upon saving. You can configure settings to either enforce PR approvals before merging in your repository, or allow direct commits.
 
 Grafana periodically polls GitHub at a regular internal to synchronize any changes.
-  
-  - With the webhooks feature enabled, repository notifications appear almost immediately.
-  - Without webhooks, Grafana polls for changes at the specified interval.
+
+- With the webhooks feature enabled, repository notifications appear almost immediately.
+- Without webhooks, Grafana polls for changes at the specified interval.
 
 The default polling interval is 60 seconds.
 
@@ -54,8 +54,8 @@ Git Sync is under development and the following limitations apply:
 
 - You can only authenticate using your GitHub token.
 - Support for native Git and other providers, such as GitLab or Bitbucket, is scheduled.
-- If you're using Git Sync in Grafana Cloud you can only sync specific folders for the moment. Git Sync will be available for your full instance soon. 
-- Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.  
+- If you're using Git Sync in Grafana Cloud you can only sync specific folders for the moment. Git Sync will be available for your full instance soon.
+- Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.
 
 ## Common use cases
 
@@ -76,7 +76,7 @@ This reduces the risk of human errors, ensures consistency across environments, 
 ### Collaborative dashboard development
 
 With Git Sync, multiple users can work on dashboards simultaneously without overwriting each other’s modifications.
-By leveraging pull requests and branch-based workflows, teams can submit changes for review before merging them into the main branch. This process not only improves quality control but also ensures that dashboards adhere to best practices and organizational standards. 
+By leveraging pull requests and branch-based workflows, teams can submit changes for review before merging them into the main branch. This process not only improves quality control but also ensures that dashboards adhere to best practices and organizational standards.
 
 Additionally, GitHub’s built-in discussion and review tools facilitate effective collaboration, making it easier to address feedback before changes go live.
 

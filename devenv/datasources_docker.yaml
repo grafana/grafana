@@ -1,4 +1,3 @@
-
 apiVersion: 1
 
 deleteDatasources:
@@ -13,7 +12,7 @@ datasources:
     access: proxy
     url: http://graphite11:80
     jsonData:
-      graphiteVersion: "1.1"
+      graphiteVersion: '1.1'
 
   - name: gdev-prometheus
     type: prometheus
@@ -56,9 +55,9 @@ datasources:
     url: http://influxdb:8086
     jsonData:
       dbName: mybucket
-      httpHeaderName1: "Authorization"
+      httpHeaderName1: 'Authorization'
     secureJsonData:
-      httpHeaderValue1: "Token mytoken"
+      httpHeaderValue1: 'Token mytoken'
 
   - name: gdev-opentsdb
     type: opentsdb
@@ -73,19 +72,19 @@ datasources:
     access: proxy
     url: http://elasticsearch:9200
     jsonData:
-      index: "[logs-]YYYY.MM.DD"
+      index: '[logs-]YYYY.MM.DD'
       interval: Daily
-      timeField: "@timestamp"
+      timeField: '@timestamp'
 
   - name: gdev-elasticsearch-filebeat
     type: elasticsearch
     access: proxy
     url: http://elasticsearch:9200
     jsonData:
-      index: "[filebeat-]YYYY.MM.DD"
+      index: '[filebeat-]YYYY.MM.DD'
       interval: Daily
-      timeField: "@timestamp"
-      timeInterval: "10s"
+      timeField: '@timestamp'
+      timeInterval: '10s'
       logMessageField: message
       logLevelField: fields.level
 
@@ -94,10 +93,10 @@ datasources:
     access: proxy
     url: http://elasticsearch:9200
     jsonData:
-      index: "[metricbeat-]YYYY.MM.DD"
+      index: '[metricbeat-]YYYY.MM.DD'
       interval: Daily
-      timeField: "@timestamp"
-      timeInterval: "10s"
+      timeField: '@timestamp'
+      timeInterval: '10s'
 
   - name: gdev-mysql
     type: mysql
@@ -129,7 +128,7 @@ datasources:
     database: grafana
     user: grafana
     jsonData:
-      encrypt: "true"
+      encrypt: 'true'
       tlsSkipVerify: true
     secureJsonData:
       password: Password!
@@ -150,7 +149,7 @@ datasources:
     secureJsonData:
       password: password
     jsonData:
-      sslmode: "disable"
+      sslmode: 'disable'
 
   - name: gdev-postgres-ds-tests
     type: postgres
@@ -160,7 +159,7 @@ datasources:
     secureJsonData:
       password: grafanatest
     jsonData:
-      sslmode: "disable"
+      sslmode: 'disable'
 
   - name: gdev-cloudwatch
     type: cloudwatch

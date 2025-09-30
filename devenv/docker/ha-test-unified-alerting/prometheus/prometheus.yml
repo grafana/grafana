@@ -1,6 +1,6 @@
 # my global config
 global:
-  scrape_interval:     10s # By default, scrape targets every 15 seconds.
+  scrape_interval: 10s # By default, scrape targets every 15 seconds.
   evaluation_interval: 10s # By default, scrape targets every 15 seconds.
   # scrape_timeout is set to the global default (10s).
 
@@ -25,7 +25,7 @@ scrape_configs:
   - job_name: 'grafana'
     dns_sd_configs:
       - names:
-        - 'grafana'
+          - 'grafana'
         type: 'A'
         port: 3000
         refresh_interval: 10s
@@ -33,7 +33,7 @@ scrape_configs:
   - job_name: 'mysql'
     dns_sd_configs:
       - names:
-        - 'mysqld-exporter'
+          - 'mysqld-exporter'
         type: 'A'
         port: 9104
         refresh_interval: 10s
@@ -41,7 +41,7 @@ scrape_configs:
   - job_name: 'loki'
     dns_sd_configs:
       - names:
-        - 'loki'
+          - 'loki'
         type: 'A'
         port: 3100
         refresh_interval: 10s

@@ -20,7 +20,7 @@ weight: 300
 {{< admonition type="caution" >}}
 Git Sync is available in [private preview](https://grafana.com/docs/release-life-cycle/) for Grafana v12 open source and Enterprise editions, and in Grafana Cloud. Support and documentation is available but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided. You can sign up for Grafana Cloud Git Sync public preview using [this form](https://forms.gle/WKkR3EVMcbqsNnkD9).
 
-Local file provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions, but is not available in Grafana Cloud. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. 
+Local file provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions, but is not available in Grafana Cloud. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
 
 TBC same form to register?
 {{< /admonition >}}
@@ -56,7 +56,7 @@ In the local file workflow:
 - All provisioned resources are changed in the local files.
 - Any changes made in the provisioned files are reflected in the Grafana database.
 - The Grafana UI reads the database and updates the UI to reflect these changes.
-- You can't use the Grafana UI to edit or delete provisioned resources. 
+- You can't use the Grafana UI to edit or delete provisioned resources.
 
 Learn more in [Set up file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/).
 

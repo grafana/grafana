@@ -1,17 +1,17 @@
-version: "2.1"
+version: '2.1'
 
 services:
   nginx-proxy:
     image: jwilder/nginx-proxy
     ports:
-      - "80:80"
+      - '80:80'
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
     depends_on:
       db:
         condition: service_healthy
     logging:
-      driver: "fluentd"
+      driver: 'fluentd'
       options:
         tag: nginx
 
@@ -22,11 +22,18 @@ services:
       MYSQL_DATABASE: grafana
       MYSQL_USER: grafana
       MYSQL_PASSWORD: password
-    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --innodb_monitor_enable=all, --max-connections=1001]
+    command:
+      [
+        mysqld,
+        --character-set-server=utf8mb4,
+        --collation-server=utf8mb4_unicode_ci,
+        --innodb_monitor_enable=all,
+        --max-connections=1001,
+      ]
     ports:
-      - "3306:3306"
+      - '3306:3306'
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
       timeout: 10s
       retries: 10
 
@@ -79,7 +86,7 @@ services:
       db:
         condition: service_healthy
     logging:
-      driver: "fluentd"
+      driver: 'fluentd'
       options:
         tag: grafana
 
@@ -107,5 +114,5 @@ services:
     links:
       - loki
     ports:
-      - "24224:24224"
-      - "24224:24224/udp"
+      - '24224:24224'
+      - '24224:24224/udp'

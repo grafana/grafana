@@ -17,6 +17,6 @@ output:
     - typescript:
         skip_runtime: true
         enums_as_union_types: true
-        path_prefix: ""
+        path_prefix: ''
         packages_import_map:
           common: '@grafana/schema'

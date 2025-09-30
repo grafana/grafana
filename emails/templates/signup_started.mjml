@@ -34,12 +34,8 @@
       </mj-section>
       <mj-section padding="0">
         <mj-column>
-          <mj-button href="{{ .SignUpUrl }}">
-            Complete Sign Up
-          </mj-button>
-          <mj-text>
-            You can also copy and paste this link into your browser directly:
-          </mj-text>
+          <mj-button href="{{ .SignUpUrl }}"> Complete Sign Up </mj-button>
+          <mj-text> You can also copy and paste this link into your browser directly: </mj-text>
           <mj-text>
             <a rel="noopener" href="{{ .LinkUrl }}">{{ .SignUpUrl }}</a>
           </mj-text>

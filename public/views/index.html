@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="[[.User.Language]]">
   <head>
     [[ if and .CSPEnabled .IsDevelopmentEnv ]]
     <!-- Cypress overwrites CSP headers in HTTP requests, so this is required for e2e tests-->
-    <meta  http-equiv="Content-Security-Policy" content="[[.CSPContent]]"/>
+    <meta http-equiv="Content-Security-Policy" content="[[.CSPContent]]" />
     [[ end ]]
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
@@ -19,7 +19,7 @@
     <link rel="mask-icon" href="[[.Assets.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
 
     [[range $asset := .Assets.CSSFiles]]
-      <link rel="stylesheet" href="[[$asset.FilePath]]" />
+    <link rel="stylesheet" href="[[$asset.FilePath]]" />
     [[end]]
 
     <!-- If theme is "system", we inject the stylesheets with javascript further down the page -->
@@ -213,15 +213,21 @@
           <h1>If you're seeing this Grafana has failed to load its application files</h1>
           <ol class="preloader__error-list">
             <li>This could be caused by your reverse proxy settings.</li>
-            <li>If you host grafana under a subpath make sure your <code>grafana.ini</code> <code>root_url</code> setting
-              includes subpath. If not using a reverse proxy make sure to set <code>serve_from_sub_path</code> to true.</li>
-            <li>If you have a local dev build make sure you build frontend using: <code>yarn start</code>, or
-              <code>yarn build</code>.</li>
+            <li>
+              If you host grafana under a subpath make sure your <code>grafana.ini</code> <code>root_url</code> setting
+              includes subpath. If not using a reverse proxy make sure to set <code>serve_from_sub_path</code> to true.
+            </li>
+            <li>
+              If you have a local dev build make sure you build frontend using: <code>yarn start</code>, or
+              <code>yarn build</code>.
+            </li>
             <li>Sometimes restarting <code>grafana-server</code> can help.</li>
-            <li>Check if you are using a non-supported browser. For more information, refer to the list of
+            <li>
+              Check if you are using a non-supported browser. For more information, refer to the list of
               <a href="https://grafana.com/docs/grafana/latest/installation/requirements/#supported-web-browsers">
                 supported browsers </a
-              >.</li>
+              >.
+            </li>
           </ol>
         </main>
       </div>
@@ -356,29 +362,18 @@
       })(window, document, 'script', 'dataLayer', '[[.GoogleTagManagerId]]');
     </script>
     <!-- End Google Tag Manager -->
-    [[end]]
-
-    [[if .Settings.FeatureToggles.assetSriChecks ]]
-      [[range $asset := .Assets.JSFiles]]
-        <script
-        nonce="[[$.Nonce]]"
-        src="[[$asset.FilePath]]"
-        integrity="[[$asset.Integrity]]"
-        crossorigin="anonymous"
-        type="text/javascript"
-        defer
-      ></script>
-      [[end]]
-    [[else]]
-      [[range $asset := .Assets.JSFiles]]
-        <script
-        nonce="[[$.Nonce]]"
-        src="[[$asset.FilePath]]"
-        type="text/javascript"
-        defer
-      ></script>
-      [[end]]
-    [[end]]
+    [[end]] [[if .Settings.FeatureToggles.assetSriChecks ]] [[range $asset := .Assets.JSFiles]]
+    <script
+      nonce="[[$.Nonce]]"
+      src="[[$asset.FilePath]]"
+      integrity="[[$asset.Integrity]]"
+      crossorigin="anonymous"
+      type="text/javascript"
+      defer
+    ></script>
+    [[end]] [[else]] [[range $asset := .Assets.JSFiles]]
+    <script nonce="[[$.Nonce]]" src="[[$asset.FilePath]]" type="text/javascript" defer></script>
+    [[end]] [[end]]
 
     <script nonce="[[.Nonce]]">
       performance.mark('frontend_boot_js_done_time_seconds');

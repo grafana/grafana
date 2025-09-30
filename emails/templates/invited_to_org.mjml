@@ -18,20 +18,15 @@
       <mj-column>
         <mj-text>
           <h2>You have been added to {{ .OrgName }}</h2>
-          <strong>{{ .InvitedBy }}</strong> has added you to the <strong>{{ .OrgName }}</strong> organization in Grafana.
+          <strong>{{ .InvitedBy }}</strong> has added you to the <strong>{{ .OrgName }}</strong> organization in
+          Grafana.
         </mj-text>
         <mj-text>
           Once logged in, <strong>{{ .OrgName }}</strong> will be available to switch to in the user interface.
         </mj-text>
-        <mj-text>
-          Log in now by clicking the link below:
-        </mj-text>
-        <mj-button href="{{ .AppUrl }}">
-          Login to Grafana
-        </mj-button>
-        <mj-text>
-          You can also copy and paste this link into your browser directly:
-        </mj-text>
+        <mj-text> Log in now by clicking the link below: </mj-text>
+        <mj-button href="{{ .AppUrl }}"> Login to Grafana </mj-button>
+        <mj-text> You can also copy and paste this link into your browser directly: </mj-text>
         <mj-text>
           <a rel="noopener" href="{{ .AppUrl }}">{{ .AppUrl }}</a>
         </mj-text>

@@ -19,7 +19,7 @@ weight: 200
 
 Local file provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions, but is not available in Grafana Cloud. Only the cloud-hosted version of GitHub (GitHub.com) is supported at this time. GitHub Enterprise is not yet compatible.
 
-Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. 
+Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
 
 TBC same form to register?
 
@@ -56,7 +56,7 @@ Refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/
 ## Before you begin
 
 {{< admonition type="note" >}}
-Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana to use this feature. 
+Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana to use this feature.
 {{< /admonition >}}
 
 To set up file provisioning, you need:
@@ -131,9 +131,9 @@ The set up process verifies the path and provides an error message if a problem 
 
 Choose to either sync your entire organization resources with external storage, or to sync certain resources to a new Grafana folder (with up to 10 connections).
 
-- Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. With this option, all of your dashboards are synced to that one repository. You can only have one provisioned connection with this selection, and you won't have the option of setting up additional repositories to connect to. 
+- Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. With this option, all of your dashboards are synced to that one repository. You can only have one provisioned connection with this selection, and you won't have the option of setting up additional repositories to connect to.
 
-- Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections. 
+- Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
 
 Next, enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
 

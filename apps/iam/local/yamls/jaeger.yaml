@@ -40,20 +40,20 @@ spec:
               name: sampling
           env:
             - name: MEMORY_MAX_TRACES
-              value: "100000"
+              value: '100000'
             - name: SPAN_STORAGE_TYPE
-              value: "badger"
+              value: 'badger'
             - name: COLLECTOR_OTLP_ENABLED
-              value: "true"
+              value: 'true'
             - name: LOG_LEVEL
-              value: "debug"
+              value: 'debug'
           resources:
             limits:
-              memory: "1Gi"
-              cpu: "500m"
+              memory: '1Gi'
+              cpu: '500m'
             requests:
-              memory: "512Mi"
-              cpu: "250m"
+              memory: '512Mi'
+              cpu: '250m'
           readinessProbe:
             httpGet:
               path: /
@@ -99,3 +99,4 @@ spec:
       targetPort: 5778
   type: ClusterIP
 ---
+

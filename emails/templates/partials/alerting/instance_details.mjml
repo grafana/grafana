@@ -70,7 +70,7 @@
     </mj-text>
 
     <mj-table>
-      <mj-raw>{{ range .Labels.SortedPairs }}</mj-raw>
+      <mj-raw>{{ range.Labels.SortedPairs }}</mj-raw>
       <tr>
         <td>
           <strong>{{ .Name }}</strong>
@@ -89,7 +89,7 @@
     </mj-text>
 
     <mj-table>
-      <mj-raw>{{ range .Annotations.SortedPairs }}</mj-raw>
+      <mj-raw>{{ range.Annotations.SortedPairs }}</mj-raw>
       <mj-raw>{{ if and (ne .Name "description") (ne .Name "summary") }}</mj-raw>
       <tr>
         <td>
@@ -139,7 +139,7 @@
 <mj-section css-class="border-top" padding="5px 0">
   <mj-column>
     <mj-text color="#91929e">
-      Observed <strong>{{ ago .StartsAt }}</strong> before this notification was delivered, at
+      Observed <strong>{{ ago.StartsAt }}</strong> before this notification was delivered, at
       <strong>{{ .StartsAt }}</strong>
     </mj-text>
   </mj-column>

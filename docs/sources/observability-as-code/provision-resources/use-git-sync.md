@@ -26,7 +26,7 @@ After you have set up Git Sync, you can synchronize any changes you make in your
 
 ## View current status of synchronization
 
-When you synchronize a repository, Git Sync also creates a dashboard that provides a summary of resources, health, pull status, webhook, sync jobs, resources, and files. 
+When you synchronize a repository, Git Sync also creates a dashboard that provides a summary of resources, health, pull status, webhook, sync jobs, resources, and files.
 
 Use the **View** section in **Provisioning** to see detailed information about the current status of your sync, understand the health of your repository's connection with Grafana, and [troubleshoot](#troubleshoot-synchronization) possible issues:
 

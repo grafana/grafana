@@ -1,6 +1,5 @@
 # Configuration file version
 apiVersion: 1
-
 # # List of data sources to delete from the database.
 # deleteDatasources:
 #   - name: Graphite

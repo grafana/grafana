@@ -37,7 +37,6 @@ Optionally, you can [extend Git Sync](#configure-webhooks-and-image-rendering) b
 | Adds a table summarizing changes to your pull request | Provides a convenient way to save changes back to GitHub.                       | Webhooks configured                           |
 | Add a dashboard preview image to a PR                 | View a snapshot of dashboard changes to a pull request without opening Grafana. | Image renderer plugin and webhooks configured |
 
-
 {{< admonition type="note" >}}
 
 Alternatively, you can configure a local file system instead of using GitHub. Refer to [Set up file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/) for more information.
@@ -46,7 +45,7 @@ Alternatively, you can configure a local file system instead of using GitHub. Re
 
 ## Performance impacts of enabling Git Sync
 
-Git Sync is an experimental feature and is under continuous development. Reporting any issues you encounter can help us improve Git Sync. 
+Git Sync is an experimental feature and is under continuous development. Reporting any issues you encounter can help us improve Git Sync.
 
 When Git Sync is enabled, the database load might increase, especially for instances with a lot of folders and nested folders. Evaluate the performance impact, if any, in a non-production environment.
 
@@ -127,17 +126,17 @@ To connect your GitHub repository, follow these steps:
 
 {{< admonition type="caution" >}}
 
-If you're using Git Sync in Grafana Cloud you can only sync specific folders for the moment. Git Sync will be available for your full instance soon. 
+If you're using Git Sync in Grafana Cloud you can only sync specific folders for the moment. Git Sync will be available for your full instance soon.
 
 {{< /admonition >}}
 
 In this step you can decide which elements to synchronize. Keep in mind the available options depend on the status of your GitHub repository. The first time you connect Grafana with a GitHub repository, you need to synchronize with external storage. If you are syncing with a new or empty repository, you won't have an option to migrate dashboards.
 
-Choose to either sync your entire organization resources with external storage, or to sync certain resources to a new Grafana folder (with up to 10 connections). 
+Choose to either sync your entire organization resources with external storage, or to sync certain resources to a new Grafana folder (with up to 10 connections).
 
-- Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. With this option, all of your dashboards are synced to that one repository. You can only have one provisioned connection with this selection, and you won't have the option of setting up additional repositories to connect to. 
+- Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. With this option, all of your dashboards are synced to that one repository. You can only have one provisioned connection with this selection, and you won't have the option of setting up additional repositories to connect to.
 
-- Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections. 
+- Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
 
 Next, enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
 

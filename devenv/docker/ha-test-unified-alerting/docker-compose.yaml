@@ -1,4 +1,4 @@
-version: "2.1"
+version: '2.1'
 
 services:
   db:
@@ -9,11 +9,18 @@ services:
       MYSQL_DATABASE: grafana
       MYSQL_USER: grafana
       MYSQL_PASSWORD: password
-    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --innodb_monitor_enable=all, --max-connections=1001]
+    command:
+      [
+        mysqld,
+        --character-set-server=utf8mb4,
+        --collation-server=utf8mb4_unicode_ci,
+        --innodb_monitor_enable=all,
+        --max-connections=1001,
+      ]
     ports:
       - 3306
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
       timeout: 10s
       retries: 10
   mysqld-exporter:
@@ -36,7 +43,7 @@ services:
   nginx-proxy:
     image: jwilder/nginx-proxy
     ports:
-      - "80:80"
+      - '80:80'
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
     depends_on:
@@ -90,6 +97,6 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "18081:8080"
+      - '18081:8080'
     volumes:
-      - "./logs/webhook:/tmp/logs:rw"
+      - './logs/webhook:/tmp/logs:rw'

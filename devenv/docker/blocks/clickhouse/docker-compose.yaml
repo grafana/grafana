@@ -1,5 +1,5 @@
-  clickhouse:
-    image: clickhouse/clickhouse-server:latest
-    container_name: clickhouse
-    ports:
-      - "8123:8123"
+clickhouse:
+  image: clickhouse/clickhouse-server:latest
+  container_name: clickhouse
+  ports:
+    - '8123:8123'

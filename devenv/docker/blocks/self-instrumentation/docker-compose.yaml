@@ -1,55 +1,55 @@
-  prometheus:
-    image: prom/prometheus:v3.5.0
-    ports:
-      - '9090:9090'
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
-    command: >
-      --enable-feature=exemplar-storage
-      --enable-feature=native-histograms
-      --web.enable-remote-write-receiver
-      --config.file=/etc/prometheus/prometheus.yml
-      --storage.tsdb.path=/prometheus
-    volumes:
-      - ./docker/blocks/self-instrumentation/prometheus.yaml:/etc/prometheus/prometheus.yml
-  loki:
-    image: grafana/loki:3.5.3
-    ports:
-      - '3100:3100'
-    command: -config.file=/etc/loki/local-config.yaml
-  tempo:
-    image: grafana/tempo:2.8.1
-    command: -config.file=/etc/tempo.yaml
-    volumes:
-      - ./docker/blocks/self-instrumentation/tempo.yaml:/etc/tempo.yaml
-    ports:
-      - '14268:14268'
-      - '3200:3200'
-      - '4317:4317'
-  pyroscope:
-    image: 'grafana/pyroscope:1.14.0'
-    ports:
-      - '4040:4040'
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
-  alloy:
-    image: grafana/alloy:v1.10.0
-    command:
-      - run
-      - /etc/alloy/config.alloy
-      - --storage.path=/var/lib/alloy/data
-      - --server.http.listen-addr=0.0.0.0:12345
-      - --stability.level=experimental # Enable all functionality
-    ports:
-      - '12345:12345'
-      - '12347:12347'
-    volumes:
-      - ./docker/blocks/self-instrumentation/config.alloy:/etc/alloy/config.alloy
-      - ../data/log:/var/log/grafana:ro # Mount Grafana logs directory
-    depends_on:
-      - tempo
-      - loki
-      - prometheus
-      - pyroscope
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
+prometheus:
+  image: prom/prometheus:v3.5.0
+  ports:
+    - '9090:9090'
+  extra_hosts:
+    - 'host.docker.internal:host-gateway'
+  command: >
+    --enable-feature=exemplar-storage
+    --enable-feature=native-histograms
+    --web.enable-remote-write-receiver
+    --config.file=/etc/prometheus/prometheus.yml
+    --storage.tsdb.path=/prometheus
+  volumes:
+    - ./docker/blocks/self-instrumentation/prometheus.yaml:/etc/prometheus/prometheus.yml
+loki:
+  image: grafana/loki:3.5.3
+  ports:
+    - '3100:3100'
+  command: -config.file=/etc/loki/local-config.yaml
+tempo:
+  image: grafana/tempo:2.8.1
+  command: -config.file=/etc/tempo.yaml
+  volumes:
+    - ./docker/blocks/self-instrumentation/tempo.yaml:/etc/tempo.yaml
+  ports:
+    - '14268:14268'
+    - '3200:3200'
+    - '4317:4317'
+pyroscope:
+  image: 'grafana/pyroscope:1.14.0'
+  ports:
+    - '4040:4040'
+  extra_hosts:
+    - 'host.docker.internal:host-gateway'
+alloy:
+  image: grafana/alloy:v1.10.0
+  command:
+    - run
+    - /etc/alloy/config.alloy
+    - --storage.path=/var/lib/alloy/data
+    - --server.http.listen-addr=0.0.0.0:12345
+    - --stability.level=experimental # Enable all functionality
+  ports:
+    - '12345:12345'
+    - '12347:12347'
+  volumes:
+    - ./docker/blocks/self-instrumentation/config.alloy:/etc/alloy/config.alloy
+    - ../data/log:/var/log/grafana:ro # Mount Grafana logs directory
+  depends_on:
+    - tempo
+    - loki
+    - prometheus
+    - pyroscope
+  extra_hosts:
+    - 'host.docker.internal:host-gateway'

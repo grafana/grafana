@@ -62,17 +62,17 @@ spec:
             - --homepath=/usr/share/grafana
           env:
             - name: KUBE_FEATURE_WatchListClient
-              value: "true"
+              value: 'true'
             - name: GF_DEFAULT_TARGET
               value: operator
             - name: GF_OPERATOR_NAME
               value: iam-folder-reconciler
             - name: GF_DIAGNOSTICS_PROFILING_ENABLED
-              value: "true"
+              value: 'true'
             - name: GF_DIAGNOSTICS_PROFILING_ADDR
-              value: "0.0.0.0"
+              value: '0.0.0.0'
             - name: GF_DIAGNOSTICS_PROFILING_PORT
-              value: "6060"
+              value: '6060'
             - name: GF_GRPC_CLIENT_AUTHENTICATION_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -108,3 +108,4 @@ spec:
   selector:
     name: iam-folder-reconciler
 ---
+

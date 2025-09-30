@@ -4,7 +4,7 @@
 ##
 # backend configuration
 ##
-state-dir: "/var/lib/sensu/sensu-backend"
+state-dir: '/var/lib/sensu/sensu-backend'
 #cache-dir: "/var/cache/sensu/sensu-backend"
 #config-file: "/etc/sensu/backend.yml"
 #debug: false

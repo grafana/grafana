@@ -9,17 +9,17 @@ client:
   url: http://loki:3100/api/prom/push
 
 scrape_configs:
-- job_name: system
-  static_configs:
-  - targets:
-      - localhost
-    labels:
-      job: varlogs
-      __path__: /var/log/*log
-- job_name: grafana
-  static_configs:
-  - targets:
-      - localhost
-    labels:
-      job: grafana
-      __path__: /var/log/grafana/*log
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: varlogs
+          __path__: /var/log/*log
+  - job_name: grafana
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: grafana
+          __path__: /var/log/grafana/*log

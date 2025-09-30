@@ -5,9 +5,7 @@
   <mj-include path="./partials/layout/theme.css" type="css" css-inline="inline" />
   <mj-head>
     <!-- ⬇ Don't forget to specify an email subject below! ⬇ -->
-    <mj-title>
-      {{ Subject .Subject .TemplateData "{{ .Title }}" }}
-    </mj-title>
+    <mj-title> {{ Subject .Subject .TemplateData "{{ .Title }}" }} </mj-title>
     <mj-include path="./partials/layout/head.mjml" />
     <!-- Summary of the email contents, this will go in the email preview -->
     <mj-include path="./partials/alerting/summary.mjml" />
@@ -63,7 +61,7 @@
 
     <!-- Firing instances loop -->
     <mj-raw>
-      {{ range .Alerts.Firing }}
+      {{ range.Alerts.Firing }}
     </mj-raw>
     <mj-wrapper css-class="background" padding="0">
       <mj-include path="./partials/alerting/firing_instance.mjml" />
@@ -96,7 +94,7 @@
 
     <!-- Resolved instances loop -->
     <mj-raw>
-      {{ range .Alerts.Resolved }}
+      {{ range.Alerts.Resolved }}
     </mj-raw>
     <mj-wrapper css-class="background" padding="0">
       <mj-include path="./partials/alerting/resolved_instance.mjml" />

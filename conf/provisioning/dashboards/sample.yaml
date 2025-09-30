@@ -1,6 +1,5 @@
 # # config file version
 apiVersion: 1
-
 #providers:
 # - name: 'default'
 #   orgId: 1

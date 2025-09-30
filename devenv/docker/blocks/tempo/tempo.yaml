@@ -2,32 +2,32 @@ server:
   http_listen_port: 3200
 
 distributor:
-  receivers:                           # this configuration will listen on all ports and protocols that tempo is capable of.
-    jaeger:                            # the receives all come from the OpenTelemetry collector.  more configuration information can
-      protocols:                       # be found there: https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver
-        thrift_http:                   #
-          endpoint: "tempo:14268"      # for a production deployment you should only enable the receivers you need!
+  receivers: # this configuration will listen on all ports and protocols that tempo is capable of.
+    jaeger: # the receives all come from the OpenTelemetry collector.  more configuration information can
+      protocols: # be found there: https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver
+        thrift_http: #
+          endpoint: 'tempo:14268' # for a production deployment you should only enable the receivers you need!
         grpc:
-          endpoint: "tempo:14250"
+          endpoint: 'tempo:14250'
         thrift_binary:
-          endpoint: "tempo:6832"
+          endpoint: 'tempo:6832'
         thrift_compact:
-          endpoint: "tempo:6831"
+          endpoint: 'tempo:6831'
     zipkin:
-      endpoint: "tempo:9411"
+      endpoint: 'tempo:9411'
     otlp:
       protocols:
         grpc:
-          endpoint: "tempo:4317"
+          endpoint: 'tempo:4317'
         http:
-          endpoint: "tempo:4318"
+          endpoint: 'tempo:4318'
     opencensus:
-      endpoint: "tempo:55678"
+      endpoint: 'tempo:55678'
 
 compactor:
   compaction:
-    compaction_window: 1h              # blocks in this time window will be compacted together
-    max_block_bytes: 100_000_000       # maximum size of compacted blocks
+    compaction_window: 1h # blocks in this time window will be compacted together
+    max_block_bytes: 100_000_000 # maximum size of compacted blocks
     block_retention: 1h
     compacted_block_retention: 10m
 
@@ -46,14 +46,14 @@ metrics_generator:
 
 storage:
   trace:
-    backend: local                     # backend configuration to use
+    backend: local # backend configuration to use
     block:
       bloom_filter_false_positive: .05 # bloom filter false positive rate.  lower values create larger filters but fewer false positives
-      v2_index_downsample_bytes: 1000     # number of bytes per index record
-      v2_encoding: zstd                   # block encoding/compression.  options: none, gzip, lz4-64k, lz4-256k, lz4-1M, lz4, snappy, zstd, s2
+      v2_index_downsample_bytes: 1000 # number of bytes per index record
+      v2_encoding: zstd # block encoding/compression.  options: none, gzip, lz4-64k, lz4-256k, lz4-1M, lz4, snappy, zstd, s2
     wal:
-      path: /tmp/tempo/wal             # where to store the wal locally
-      v2_encoding: snappy              # wal encoding/compression.  options: none, gzip, lz4-64k, lz4-256k, lz4-1M, lz4, snappy, zstd, s2
+      path: /tmp/tempo/wal # where to store the wal locally
+      v2_encoding: snappy # wal encoding/compression.  options: none, gzip, lz4-64k, lz4-256k, lz4-1M, lz4, snappy, zstd, s2
     local:
       path: /tmp/tempo/blocks
 

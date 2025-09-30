@@ -1,5 +1,5 @@
-  caddy_tls:
-    build:
-      context: docker/blocks/caddy_tls/build
-    ports:
-      - "2081:2081"
+caddy_tls:
+  build:
+    context: docker/blocks/caddy_tls/build
+  ports:
+    - '2081:2081'
