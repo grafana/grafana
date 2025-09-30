@@ -1,6 +1,6 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings */
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 import {
   TimeRange,
@@ -12,7 +12,7 @@ import {
   DataQuery,
 } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { Stack, Text, Icon, useTheme2, Spinner, Avatar, Button, Badge } from '@grafana/ui';
+import { Stack, Text, useTheme2, Spinner, Avatar, Button, Badge } from '@grafana/ui';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { useQueriesDrawerContext } from '../../explore/QueriesDrawer/QueriesDrawerContext';
@@ -532,6 +532,7 @@ interface SparkJoySectionProps<TQuery extends DataQuery> {
   onRunQuery?: () => void;
   timeRange?: TimeRange;
   isLoadingHistory?: boolean;
+  query?: TQuery;
 }
 
 export const SparkJoySection = <TQuery extends DataQuery>({
@@ -541,12 +542,26 @@ export const SparkJoySection = <TQuery extends DataQuery>({
   onRunQuery,
   timeRange,
   isLoadingHistory = false,
+  query,
 }: SparkJoySectionProps<TQuery>) => {
   const theme = useTheme2();
   const [recentQueries, setRecentQueries] = useState<QueryItem[]>([]);
   const [isHidden, setIsHidden] = useState(false);
   const { setDrawerOpened } = useQueriesDrawerContext();
   const { queryLibraryEnabled, openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
+  const hasCheckedInitialQuery = useRef(false);
+  
+  // Check if we should hide the section based on existing query (only on first render)
+  useEffect(() => {
+    if (!hasCheckedInitialQuery.current && query) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+      const queryasany = query as any;
+      if (queryasany && (queryasany.expr) && (queryasany.expr).length > 0) {
+        setIsHidden(true);
+      }
+      hasCheckedInitialQuery.current = true;
+    }
+  }, [query]); // Depend on query so we can check it when it becomes available
 
   // Use the custom hook to fetch saved queries (similar to useListQueryQuery pattern)
   const {

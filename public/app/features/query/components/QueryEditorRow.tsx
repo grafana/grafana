@@ -604,6 +604,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
                 onChangeQuery={this.props.onChange}
                 timeRange={this.props.range}
                 isLoadingHistory={this.state.isLoadingHistory}
+                query={this.props.query}
               />
             )}
           </ErrorBoundaryAlert>
