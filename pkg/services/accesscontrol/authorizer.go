@@ -85,7 +85,7 @@ type LegacyAccessClient struct {
 	opts map[string]ResourceAuthorizerOptions
 }
 
-func (c *LegacyAccessClient) Check(ctx context.Context, id claims.AuthInfo, req claims.CheckRequest) (claims.CheckResponse, error) {
+func (c *LegacyAccessClient) Check(ctx context.Context, id claims.AuthInfo, req claims.CheckRequest, folder string) (claims.CheckResponse, error) {
 	ident, ok := id.(identity.Requester)
 	if !ok {
 		return claims.CheckResponse{}, errors.New("expected identity.Requester for legacy access control")
@@ -138,6 +138,10 @@ func (c *LegacyAccessClient) Check(ctx context.Context, id claims.AuthInfo, req 
 	allowed, err := c.ac.Evaluate(ctx, ident, eval)
 	if err != nil {
 		return claims.CheckResponse{}, err
+	}
+
+	if folder != "" {
+		fmt.Printf("TODO, check that we can XXX in the folder context")
 	}
 
 	return claims.CheckResponse{Allowed: allowed}, nil
