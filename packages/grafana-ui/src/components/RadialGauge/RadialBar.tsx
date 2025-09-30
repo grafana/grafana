@@ -1,3 +1,5 @@
+import { GrafanaTheme2 } from '@grafana/data';
+
 import { useTheme2 } from '../../themes/ThemeContext';
 
 export interface RadialBarProps {
@@ -60,9 +62,10 @@ export function RadialBar({
         startAngle={trackStart}
         color={theme.colors.action.hover}
         barWidth={barWidth}
-        roundedBars={roundedBars}
+        roundedBars={false}
         clockwise={clockwise}
         margin={margin}
+        theme={theme}
       />
       {/** The colored bar */}
       <RadialArcPath
@@ -78,6 +81,7 @@ export function RadialBar({
         spotlight={spotlight}
         glow={glow}
         margin={margin}
+        theme={theme}
       />
     </>
   );
@@ -96,6 +100,7 @@ export interface RadialArcPathProps {
   spotlight?: boolean;
   glow?: boolean;
   margin: number;
+  theme: GrafanaTheme2;
 }
 
 export function RadialArcPath({
@@ -111,6 +116,7 @@ export function RadialArcPath({
   spotlight,
   glow,
   margin,
+  theme,
 }: RadialArcPathProps) {
   const arcSize = size - barWidth;
   const radius = arcSize / 2 - margin;
@@ -147,7 +153,7 @@ export function RadialArcPath({
         strokeDasharray="0"
         filter={glow ? `url(#glow-${gaugeId})` : undefined}
       />
-      {spotlight && angle > 5 && (
+      {spotlight && angle > 8 && roundedBars && (
         <circle
           r={barWidth * 0.9}
           cx={clockwise ? x2 : x1}
@@ -155,6 +161,47 @@ export function RadialArcPath({
           fill={`url(#spotlight-${gaugeId})`}
         />
       )}
+      {spotlight && angle > 8 && !roundedBars && (
+        <SpotlightEffect
+          radius={radius}
+          center={center}
+          angleRadian={endRadians}
+          barWidth={barWidth}
+          glow={glow}
+          gaugeId={gaugeId}
+          theme={theme}
+        />
+      )}
     </>
+  );
+}
+
+interface SpotlightEffectProps {
+  radius: number;
+  center: number;
+  angleRadian: number;
+  barWidth: number;
+  glow?: boolean;
+  gaugeId: string;
+  theme: GrafanaTheme2;
+}
+
+function SpotlightEffect({ radius, center, angleRadian, barWidth, glow, gaugeId, theme }: SpotlightEffectProps) {
+  let x1 = center + (radius - barWidth / 2) * Math.cos(angleRadian);
+  let y1 = center + (radius - barWidth / 2) * Math.sin(angleRadian);
+  let x2 = center + (radius + barWidth / 2) * Math.cos(angleRadian);
+  let y2 = center + (radius + barWidth / 2) * Math.sin(angleRadian);
+
+  const path = ['M', x1, y1, 'L', x2, y2].join(' ');
+
+  return (
+    <path
+      d={path}
+      fill="none"
+      strokeWidth={2}
+      stroke={theme.colors.text.maxContrast}
+      filter={glow ? `url(#glow-${gaugeId})` : undefined}
+      strokeDasharray={'0'}
+    />
   );
 }
