@@ -5,7 +5,7 @@ import { useState } from 'react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { ActionModel, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeZone } from '@grafana/schema';
 import { ClickOutsideWrapper, floatingUtils, useStyles2 } from '@grafana/ui';
@@ -25,6 +25,7 @@ interface AnnoBoxProps {
   isPinned: boolean;
   showOnHover: boolean;
   links?: LinkModel[];
+  actions: Array<ActionModel<Field>>;
 }
 
 export const AnnotationMarker2 = ({
@@ -39,6 +40,7 @@ export const AnnotationMarker2 = ({
   isPinned,
   showOnHover,
   links,
+  actions,
 }: AnnoBoxProps) => {
   const styles = useStyles2(getStyles);
   const placement = 'bottom';
@@ -61,6 +63,7 @@ export const AnnotationMarker2 = ({
   const contents =
     (isPinned && !editing) || (showOnHover && isHovering && !editing) ? (
       <AnnotationTooltip2
+        actions={actions}
         links={links}
         onClose={onClose}
         isPinned={isPinned}

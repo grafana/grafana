@@ -235,6 +235,7 @@ export const HeatmapPanel = ({
               />
             )}
             <AnnotationsPlugin2
+              replaceVariables={replaceVariables}
               annotationsConfig={options.annotations}
               annotations={data.annotations ?? []}
               config={builder}

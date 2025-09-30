@@ -1,23 +1,32 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useReducer } from 'react';
 import * as React from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
 import {
+  ActionModel,
   arrayToDataFrame,
   colorManipulator,
   DataFrame,
   DataTopic,
   Field,
-  formattedValueToString,
+  InterpolateFunction,
   LinkModel,
+  ScopedVars,
 } from '@grafana/data';
 import { TimeZone, VizAnnotations } from '@grafana/schema';
-import { DEFAULT_ANNOTATION_COLOR, getPortalContainer, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
-import { VizTooltipItem } from '@grafana/ui/internal';
+import {
+  DEFAULT_ANNOTATION_COLOR,
+  getPortalContainer,
+  UPlotConfigBuilder,
+  usePanelContext,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 
+import { getActions, getActionsDefaultField } from '../../../../features/actions/utils';
 import { getDataLinks } from '../../status-history/utils';
 
 import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
@@ -37,6 +46,7 @@ interface AnnotationsPluginProps {
   setNewRange: (newRage: TimeRange2 | null) => void;
   canvasRegionRendering?: boolean;
   annotationsConfig?: VizAnnotations;
+  replaceVariables: InterpolateFunction;
 }
 
 // TODO: batch by color, use Path2D objects
@@ -76,6 +86,7 @@ export const AnnotationsPlugin2 = ({
   config,
   newRange,
   setNewRange,
+  replaceVariables,
   canvasRegionRendering = true,
 }: AnnotationsPluginProps) => {
   const [plot, setPlot] = useState<uPlot>();
@@ -124,6 +135,9 @@ export const AnnotationsPlugin2 = ({
   annoRef.current = annos;
   const newRangeRef = useRef(newRange);
   newRangeRef.current = newRange;
+
+  const { canExecuteActions } = usePanelContext();
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   const xAxisRef = useRef<HTMLDivElement>();
 
@@ -279,24 +293,66 @@ export const AnnotationsPlugin2 = ({
             }
           };
 
-          let items: VizTooltipItem[] = [];
-          let links: LinkModel[] = [];
-
+          // Get data links
+          const links: LinkModel[] = [];
           frame.fields.forEach((field: Field) => {
-            const value = field.values[i];
-
             links.push(...getDataLinks(field, i));
-
-            const fieldDisplay = field.display?.(value) ?? { text: `${value}`, numeric: +value };
-
-            items.push({
-              label: field.state?.displayName ?? field.name,
-              value: formattedValueToString(fieldDisplay),
-            });
           });
+
+          // Get link actions
+          const actions: Array<ActionModel<Field>> = [];
+          if (userCanExecuteActions) {
+            // @todo dataLinks & actions
+            const defaultField = getActionsDefaultField();
+            const scopedVars: ScopedVars = {
+              __dataContext: {
+                value: {
+                  data: annotations,
+                  field: defaultField,
+                  frame,
+                  frameIndex: 0,
+                },
+              },
+            };
+
+            frame.fields.forEach((field: Field) => {
+              const actionsModel = getActions(
+                frame,
+                field,
+                scopedVars,
+                replaceVariables,
+                field.config.actions ?? [],
+                // @todo config?
+                {}
+              );
+
+              const actionsOut: Array<ActionModel<Field>> = [];
+              const actionLookup = new Set<string>();
+
+              if (actionsModel.length > 1) {
+                actions.forEach((action) => {
+                  const key = action.title;
+
+                  if (!actionLookup.has(key)) {
+                    actionsOut.push(action);
+                    actionLookup.add(key);
+                  }
+                });
+              }
+
+              actionsModel.forEach((action) => {
+                const key = `${action.title}/${Math.random()}`;
+                if (!actionLookup.has(key)) {
+                  actions.push(action);
+                  actionLookup.add(key);
+                }
+              });
+            });
+          }
 
           markers.push(
             <AnnotationMarker2
+              actions={actions}
               links={links}
               pinAnnotation={setAnnotation}
               isPinned={annoIdx === `${frameIdx}:${i}`}
