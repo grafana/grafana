@@ -3,13 +3,13 @@ import { useState, useCallback, useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Stack, Text, useStyles2, Icon, Spinner, Grid, Button } from '@grafana/ui';
-import {
-  useGetRecentDashboards,
-  useGetPopularDashboards,
-} from 'app/features/dashboard/api/popularResourcesApi';
+import { Card, Stack, Text, useStyles2, Icon, Grid, Button, Spinner } from '@grafana/ui';
+
+import { CosmicSceneIcon } from './CosmicSceneIcon';
+import { useGetRecentDashboards, useGetPopularDashboards } from 'app/features/dashboard/api/popularResourcesApi';
 import { useLLMStream, StreamStatus } from 'app/features/dashboard/components/GenAI/hooks';
 import { Role, DEFAULT_LLM_MODEL, isLLMPluginEnabled } from 'app/features/dashboard/components/GenAI/utils';
+import { AISuggestionStyleContainer } from './AISuggestionStyleContainer';
 
 interface DashboardRecommendation {
   uid: string;
@@ -244,36 +244,21 @@ Based on this search query and available dashboards, what are the most relevant 
     return null;
   }
 
-    return (
-    <div className={styles.container}>
-      <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
-        <Stack direction="row" gap={2} alignItems="center">
-          <Icon name="ai" size="lg" className={styles.titleIcon} />
-          <div>
-            <div className={styles.title}>
-              <Text variant="h5">AI Recommended Based on Your Search</Text>
-            </div>
-            <Text variant="bodySmall" color="secondary">
-              Smart suggestions powered by{' '}
-              <span className={styles.highlight}>LLM analysis</span>
-            </Text>
-          </div>
-        </Stack>
-        {hasRecommendations && (
-          <Button size="sm" variant="secondary" icon="sync" onClick={handleRefresh} className={styles.refreshButton}>
-            Refresh
-          </Button>
-        )}
-      </Stack>
-
+  return (
+    <AISuggestionStyleContainer handleRefresh={handleRefresh} hasRecommendations={hasRecommendations}>
       <div className={styles.content}>
         {isGenerating && (
-          <Card className={styles.loadingCard}>
-            <Stack direction="row" gap={2} alignItems="center">
-              <Spinner />
-              <Text>Analyzing search context and dashboard relevance...</Text>
+          <Stack direction="column" gap={2} alignItems="center">
+            <CosmicSceneIcon />
+            <Stack direction="column" gap={0.5} alignItems="center">
+              <Text variant="h5">Analyzing alert patterns...</Text>
+              <Stack direction="row" gap={1} alignItems="center">
+                <Text variant="bodySmall" color="secondary">
+                  Finding the most relevant dashboards
+                </Text>
+              </Stack>
             </Stack>
-          </Card>
+          </Stack>
         )}
 
         {error && (
@@ -304,58 +289,21 @@ Based on this search query and available dashboards, what are the most relevant 
           </Card>
         )}
       </div>
-    </div>
+    </AISuggestionStyleContainer>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    marginBottom: theme.spacing(4),
-    padding: theme.spacing(3),
-    background: 'linear-gradient(135deg, rgba(217, 70, 239, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)',
-    borderRadius: theme.shape.radius.default,
-    border: '1px solid rgba(217, 70, 239, 0.2)',
-  }),
-
-  titleIcon: css({
-    color: '#d946ef',
-    filter: 'drop-shadow(0 0 8px rgba(217, 70, 239, 0.5))',
-  }),
-
-  title: css({
-    background: 'linear-gradient(135deg, #d946ef, #8b5cf6)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
-    fontWeight: 600,
-  }),
-
-  highlight: css({
-    color: '#d946ef',
-    fontWeight: 500,
-  }),
-
-  refreshButton: css({
-    background: 'linear-gradient(135deg, rgba(217, 70, 239, 0.1), rgba(139, 92, 246, 0.1))',
-    border: '2px solid rgba(217, 70, 239, 0.3)',
-    transition: 'all 0.3s ease',
-
-    '&:hover': {
-      background: 'linear-gradient(135deg, rgba(217, 70, 239, 0.2), rgba(139, 92, 246, 0.2))',
-      border: '2px solid rgba(217, 70, 239, 0.6)',
-      transform: 'translateY(-2px)',
-      boxShadow: '0 0 20px rgba(217, 70, 239, 0.4)',
-    },
-  }),
-
   content: css({
     marginTop: theme.spacing(2),
   }),
 
   loadingCard: css({
-    padding: theme.spacing(2),
-    background: 'rgba(217, 70, 239, 0.05)',
-    border: '1px solid rgba(217, 70, 239, 0.2)',
+    padding: theme.spacing(4),
+    background: 'transparent',
+    border: 'none',
+    boxShadow: 'none',
+    textAlign: 'center',
   }),
 
   errorCard: css({

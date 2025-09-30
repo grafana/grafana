@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Stack, Text, useStyles2, Icon, Spinner, Grid } from '@grafana/ui';
+import { Card, Text, useStyles2, Spinner, Grid, Box, LinkButton } from '@grafana/ui';
 import { useGetRecentDashboardsAndFolders } from 'app/features/dashboard/api/popularResourcesApi';
 
 import { BrowsingSectionTitle } from './BrowsingSectionTitle';
@@ -20,7 +20,7 @@ export const RecentVisited = () => {
   };
 
   return (
-    <div>
+    <Box marginTop={2}>
       <BrowsingSectionTitle title="Recently Visited" subtitle="Dashboards & Folders you've explored" icon="history" />
 
       <div className={styles.container}>
@@ -38,19 +38,17 @@ export const RecentVisited = () => {
         )}
 
         {data && data.resources?.length > 0 && (
-          <div className={styles.listContainer}>
-            <Grid gap={2} columns={{ xs: 1, sm: 2 }}>
-              {data.resources.map((resource) => (
-                <RecentVisitCard
-                  key={resource.uid}
-                  type={resource.resourceType as 'dashboard' | 'folder' | 'alert'}
-                  title={resource.title}
-                  subtitle={getRelativeTime(resource.lastVisited)}
-                  onClick={() => handleResourceClick(resource)}
-                />
-              ))}
-            </Grid>
-          </div>
+          <Grid gap={2} columns={{ xs: 1, sm: 2 }}>
+            {data.resources.map((resource) => (
+              <RecentVisitCard
+                key={resource.uid}
+                type={resource.resourceType as 'dashboard' | 'folder' | 'alert'}
+                title={resource.title}
+                subtitle={`Last visited: ${getRelativeTime(resource.lastVisited)}`}
+                onClick={() => handleResourceClick(resource)}
+              />
+            ))}
+          </Grid>
         )}
 
         {data && data.resources?.length === 0 && (
@@ -59,7 +57,7 @@ export const RecentVisited = () => {
           </Card>
         )}
       </div>
-    </div>
+    </Box>
   );
 };
 
@@ -80,7 +78,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   listContainer: css({
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing(1),
+    gap: theme.spacing(2),
   }),
 
   emptyCard: css({

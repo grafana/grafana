@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Stack, Text, useStyles2, Icon, Grid } from '@grafana/ui';
+import { Card, Stack, Text, useStyles2, Icon, Grid, Box, TextLink } from '@grafana/ui';
 import { useGetPopularFolders } from 'app/features/dashboard/api/popularResourcesApi';
 
 import { BrowsingSectionTitle } from './BrowsingSectionTitle';
@@ -19,13 +19,22 @@ export const MostPopularFolders = () => {
   };
 
   return (
-    <div>
-      <BrowsingSectionTitle title="Most Popular Folders" subtitle="Based on your activity" icon="fire" />
+    <Box marginTop={2}>
+      <BrowsingSectionTitle
+        title="Most Popular Folders"
+        subtitle="Based on your activity"
+        icon="fire"
+        actions={
+          <TextLink href="/dashboards" color="secondary" className={styles.viewAllLink}>
+            View All
+          </TextLink>
+        }
+      />
 
       <div className={styles.container}>
         {isLoading && (
           <div className={styles.loadingContainer}>
-            <Text>Loading...</Text>
+            <Text variant="bodySmall">Loading...</Text>
           </div>
         )}
 
@@ -49,7 +58,7 @@ export const MostPopularFolders = () => {
           </Card>
         )}
       </div>
-    </div>
+    </Box>
   );
 };
 
@@ -117,5 +126,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   emptyCard: css({
     textAlign: 'center',
     padding: theme.spacing(4),
+  }),
+
+  viewAllLink: css({
+    color: theme.colors.text.secondary,
+    textDecoration: 'underline',
+    cursor: 'pointer',
+    '&:hover': {
+      color: theme.colors.text.primary,
+      textDecoration: 'underline',
+    },
   }),
 });

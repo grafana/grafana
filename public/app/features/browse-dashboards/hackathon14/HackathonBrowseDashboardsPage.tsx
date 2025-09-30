@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { memo, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Stack, Text, Box, Card, Button } from '@grafana/ui';
+import { useStyles2, Stack, Text, Box, Card, Button, Icon } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 import SparkJoyToggle from 'app/core/components/SparkJoyToggle';
@@ -145,9 +145,12 @@ const HackathonBrowseDashboardsPage = memo(
         renderTitle={renderCenteredTitle}
         subTitle=""
         actions={
-          <AppChromeUpdate
-            actions={[<SparkJoyToggle key="sparks-joy-toggle" value={true} onToggle={onToggleSparkJoy} />]}
-          />
+          <>
+            <AppChromeUpdate
+              actions={[<SparkJoyToggle key="sparks-joy-toggle" value={true} onToggle={onToggleSparkJoy} />]}
+            />
+             <Button icon="plus" variant="secondary">Add</Button>
+          </>
         }
         // actions={
         //   <>

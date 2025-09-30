@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Card, Stack, Text, useStyles2, Icon, Grid, Spinner, useTheme2, Button, ButtonGroup } from '@grafana/ui';
+import { Card, Stack, Text, useStyles2, Icon, Grid, Spinner, useTheme2, Button, ButtonGroup, Box, TextLink } from '@grafana/ui';
 import { useGetPopularDashboards } from 'app/features/dashboard/api/popularResourcesApi';
 
 import { BrowsingSectionTitle } from './BrowsingSectionTitle';
@@ -93,30 +93,35 @@ export const MostPopularDashboards = () => {
   };
 
   return (
-    <div>
-      <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
-        <BrowsingSectionTitle
+    <Box marginTop={2}>
+      <BrowsingSectionTitle
           title="Most Popular Dashboards"
           subtitle="Trending in your organization"
           icon="chart-line"
+          actions={
+            <Stack direction="row" gap={2} alignItems="center">
+              <ButtonGroup>
+                <Button
+                  icon="apps"
+                  variant={viewMode === 'thumbnail' ? 'primary' : 'secondary'}
+                  onClick={() => setViewMode('thumbnail')}
+                  tooltip="Thumbnail view"
+                  size="sm"
+                />
+                <Button
+                  icon="list-ul"
+                  variant={viewMode === 'list' ? 'primary' : 'secondary'}
+                  onClick={() => setViewMode('list')}
+                  tooltip="List view"
+                  size="sm"
+                />
+              </ButtonGroup>
+                <TextLink color="secondary" href="/dashboards" className={styles.viewAllLink}>
+                  View All
+                </TextLink>
+            </Stack>
+              }
         />
-        <ButtonGroup>
-          <Button
-            icon="apps"
-            variant={viewMode === 'thumbnail' ? 'primary' : 'secondary'}
-            onClick={() => setViewMode('thumbnail')}
-            tooltip="Thumbnail view"
-            size="sm"
-          />
-          <Button
-            icon="list-ul"
-            variant={viewMode === 'list' ? 'primary' : 'secondary'}
-            onClick={() => setViewMode('list')}
-            tooltip="List view"
-            size="sm"
-          />
-        </ButtonGroup>
-      </Stack>
 
       <div className={styles.container}>
         {isLoading && (
@@ -195,7 +200,7 @@ export const MostPopularDashboards = () => {
           </Card>
         )}
       </div>
-    </div>
+    </Box>
   );
 };
 
@@ -361,5 +366,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   listIcon: css({
     color: '#FF780A',
     flexShrink: 0,
+  }),
+
+  viewAllLink: css({
+    textDecoration: 'underline',
+    cursor: 'pointer',
+    '&:hover': {
+      textDecoration: 'underline',
+    },
   }),
 });

@@ -7,6 +7,7 @@ import { useStyles2, Card, Stack, Text, Button, ButtonGroup, Grid, Icon, Spinner
 
 import { CosmicSceneIcon } from './CosmicSceneIcon';
 import { SearchResultAIRecommendation } from './SearchResultAIRecommendation';
+import { SearchResultSuggestion } from './SearchResultSuggestion';
 
 interface SearchResultsProps {
   searchState: any;
@@ -132,13 +133,14 @@ export const SearchResults = ({ searchState, query }: SearchResultsProps) => {
           </Text>
           <div style={{ marginTop: '8px' }}>
             <Text variant="bodySmall" color="secondary">
-              Filtered by {searchState.tag.length} tag{searchState.tag.length > 1 ? 's' : ''}: {searchState.tag.join(', ')}
+              Filtered by {searchState.tag.length} tag{searchState.tag.length > 1 ? 's' : ''}:{' '}
+              {searchState.tag.join(', ')}
             </Text>
           </div>
         </div>
       );
     }
-    
+
     if (hasQuery) {
       return (
         <Text variant="h3">
@@ -146,7 +148,7 @@ export const SearchResults = ({ searchState, query }: SearchResultsProps) => {
         </Text>
       );
     }
-    
+
     if (hasTags) {
       return (
         <div>
@@ -159,29 +161,31 @@ export const SearchResults = ({ searchState, query }: SearchResultsProps) => {
         </div>
       );
     }
-    
+
     if (hasStarred || hasOwnedByMe) {
       const filters = [];
-      if (hasStarred) {filters.push('Starred');}
-      if (hasOwnedByMe) {filters.push('Owned by me');}
+      if (hasStarred) {
+        filters.push('Starred');
+      }
+      if (hasOwnedByMe) {
+        filters.push('Owned by me');
+      }
       return (
         <Text variant="h3">
           Filtered Results: <span className={styles.queryText}>{filters.join(', ')}</span>
         </Text>
       );
     }
-    
+
     return <Text variant="h3">All Results</Text>;
   };
 
   return (
     <div className={styles.container}>
       {/* Header */}
-      <div className={styles.searchHeader}>
-        {renderHeaderContent()}
-      </div>
+      <div className={styles.searchHeader}>{renderHeaderContent()}</div>
 
-      {hasQuery && <SearchResultAIRecommendation searchQuery={query} />}
+      {hasQuery && <SearchResultSuggestion searchQuery={query} />}
 
       {/* Tabs and Toggle */}
       <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -222,14 +226,14 @@ export const SearchResults = ({ searchState, query }: SearchResultsProps) => {
         </ButtonGroup>
       </Stack>
 
-          {/* Results Display */}
-          {displayResults.length === 0 ? (
-            <div className={styles.emptyState}>
-              <CosmicSceneIcon />
-              <Text variant="h4">No {activeTab} found</Text>
-              <Text color="secondary">Try a different search or browse other categories 🌟</Text>
-            </div>
-          ) : viewMode === 'thumbnail' ? (
+      {/* Results Display */}
+      {displayResults.length === 0 ? (
+        <div className={styles.emptyState}>
+          <CosmicSceneIcon />
+          <Text variant="h4">No {activeTab} found</Text>
+          <Text color="secondary">Try a different search or browse other categories 🌟</Text>
+        </div>
+      ) : viewMode === 'thumbnail' ? (
         <div className={styles.resultsGrid}>
           <Grid gap={2} columns={{ xs: 1, sm: 2, md: 3, lg: 4 }}>
             {displayResults.map((item, index) => {
@@ -295,9 +299,7 @@ export const SearchResults = ({ searchState, query }: SearchResultsProps) => {
                         <div className={styles.listTitle}>
                           <Text weight="medium">{item.name}</Text>
                         </div>
-                        {item.starred && (
-                          <Icon name="star" size="sm" className={styles.starIcon} title="Starred" />
-                        )}
+                        {item.starred && <Icon name="star" size="sm" className={styles.starIcon} title="Starred" />}
                       </Stack>
                       <div className={styles.listTypeBadge}>
                         <Icon

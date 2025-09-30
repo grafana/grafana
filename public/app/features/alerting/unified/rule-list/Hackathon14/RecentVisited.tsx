@@ -1,4 +1,4 @@
-import { Box, Grid } from '@grafana/ui';
+import { Grid } from '@grafana/ui';
 import { BrowsingSectionTitle } from 'app/features/browse-dashboards/hackathon14/BrowsingSectionTitle';
 import { RecentVisitCard } from 'app/features/browse-dashboards/hackathon14/RecentVisitCard';
 import { getRelativeTime } from 'app/features/browse-dashboards/hackathon14/RecentVisited';
@@ -6,6 +6,10 @@ import { useGetRecentAlerts } from 'app/features/dashboard/api/popularResourcesA
 
 export const RecentVisited = () => {
   const { data } = useGetRecentAlerts({ limit: 4 });
+
+  const handleResourceClick = (uid: string) => {
+    window.location.href = `/alerting/grafana/${uid}/view`;
+  };
 
   return (
     <>
@@ -19,7 +23,7 @@ export const RecentVisited = () => {
                 type="alert"
                 title={resource.title}
                 subtitle={getRelativeTime(resource.lastVisited)}
-                // onClick={() => handleResourceClick(resource)}
+                onClick={() => handleResourceClick(resource.uid)}
               />
             ))}
           </Grid>

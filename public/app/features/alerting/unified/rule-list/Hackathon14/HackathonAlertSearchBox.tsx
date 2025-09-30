@@ -3,25 +3,23 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, FilterInput, Icon, useStyles2 } from '@grafana/ui';
-import { FilterTag } from 'app/features/browse-dashboards/hackathon14/FilterTag';
-
-import { FilterButton } from './FilterButton';
 
 interface HackathonSearchInputProps {
   onSearchChange?: (value: string) => void;
+  onFilterChange?: (filters: { firing: boolean; ownedByMe: boolean }) => void;
   placeholder?: string;
 }
 
 export const HackathonAlertSearchInput = ({
   onSearchChange,
-  placeholder = 'Search for dashboards and folders',
+  onFilterChange,
+  placeholder = 'Search for alert rules',
 }: HackathonSearchInputProps) => {
   const styles = useStyles2(getStyles);
   const [searchValue, setSearchValue] = useState('');
   const [activeFilters, setActiveFilters] = useState({
-    starred: false,
+    firing: false,
     ownedByMe: false,
-    filterByTag: false,
     moreFilters: false,
   });
 
@@ -30,11 +28,18 @@ export const HackathonAlertSearchInput = ({
     onSearchChange?.(value);
   };
 
-  const toggleFilter = (filterKey: keyof typeof activeFilters) => {
-    setActiveFilters((prev) => ({
-      ...prev,
-      [filterKey]: !prev[filterKey],
-    }));
+  const toggleFilter = (filterKey: 'firing' | 'ownedByMe' | 'moreFilters') => {
+    const newFilters = {
+      ...activeFilters,
+      [filterKey]: !activeFilters[filterKey],
+    };
+    setActiveFilters(newFilters);
+    
+    // Notify parent of filter changes (excluding moreFilters which is UI-only)
+    onFilterChange?.({
+      firing: newFilters.firing,
+      ownedByMe: newFilters.ownedByMe,
+    });
   };
 
   return (
@@ -65,9 +70,9 @@ export const HackathonAlertSearchInput = ({
           </Button>
 
           <Button
-            variant={activeFilters.ownedByMe ? 'primary' : 'secondary'}
+            variant={activeFilters.firing ? 'primary' : 'secondary'}
             size="sm"
-            onClick={() => toggleFilter('ownedByMe')}
+            onClick={() => toggleFilter('firing')}
             className={styles.filterButton}
           >
             <Icon name="fire" style={{ marginRight: '4px' }} />
