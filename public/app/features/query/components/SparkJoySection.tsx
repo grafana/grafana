@@ -330,8 +330,8 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
     }
 
     const firstSeries = series[0];
-    const totalRows = firstSeries.length;
-    const unit = firstSeries.meta?.preferredVisualisationType === 'logs' ? 'logs' : 'data points';
+    const totalRows = firstSeries?.length ?? 0;
+    const unit = firstSeries?.meta?.preferredVisualisationType === 'logs' ? 'logs' : 'data points';
 
     if (totalRows === 0) {
       return 'No data found';
@@ -570,11 +570,11 @@ export const SparkJoySection = <TQuery extends DataQuery>({
     data: libraryQueries,
     isLoading: isLoadingLibraryQueries,
     error: libraryQueriesError
-  } = useSavedQueries(queryLibraryEnabled ? datasource.name : undefined, 4);
+  } = useSavedQueries(queryLibraryEnabled && datasource ? datasource.name : undefined, 4);
 
   // Get query patterns for Loki and Prometheus datasources
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const { patterns: patternQueries, isLoading: isLoadingPatterns } = useQueryPatterns(datasource as unknown as DataSourceApi);
+  const { patterns: patternQueries, isLoading: isLoadingPatterns } = useQueryPatterns(datasource as DataSourceApi);
 
 
   useEffect(() => {
@@ -582,7 +582,16 @@ export const SparkJoySection = <TQuery extends DataQuery>({
     const genericRecentQueries = history
       .filter((item) => {
         // Filter for recent history items that have queries
-        return item.queries && item.queries.length > 0 && item.queries[0];
+        if (!item.queries || item.queries.length === 0 || !item.queries[0]) {
+          return false;
+        }
+        
+        // Filter by datasource if we have one
+        if (datasource && item.datasourceName) {
+          return item.datasourceName === datasource.name;
+        }
+        
+        return true;
       })
       // also remove duplicates based on query content
       .filter(
@@ -664,8 +673,8 @@ export const SparkJoySection = <TQuery extends DataQuery>({
   };
 
 
-  // Don't render the section if it's hidden
-  if (isHidden) {
+  // Don't render the section if it's hidden or datasource is not available
+  if (isHidden || !datasource) {
     return null;
   }
 
@@ -811,7 +820,7 @@ export const SparkJoySection = <TQuery extends DataQuery>({
                     cursor: 'pointer' 
                   }}
                   onClick={() => {
-                    if (queryHistoryEnabled) {
+                    if (queryHistoryEnabled && datasource) {
                       openQueryHistoryDrawer({
                         datasourceFilters: [datasource.name],
                         onSelectQuery: (query) => handleQuerySelect(query as TQuery),

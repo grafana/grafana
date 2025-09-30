@@ -3,6 +3,7 @@ import { omit } from 'lodash';
 import { PureComponent, useState } from 'react';
 
 import {
+  DataSourceApi,
   DataSourceInstanceSettings,
   LoadingState,
   PanelData,
@@ -52,14 +53,40 @@ export class QueryRows extends PureComponent<Props> {
   state = {
     recentQueries: [] as RichHistoryQuery[],
     isLoadingHistory: false,
+    datasourceInstances: {} as Record<string, DataSourceApi>,
   };
   
   async componentDidMount() {
     // Load recent queries for SparkJoy section
     if (this.props.sparkJoy) {
       this.loadRecentQueries();
+      this.loadDatasourceInstances();
     }
   }
+  
+  componentDidUpdate(prevProps: Props) {
+    // Reload datasource instances if queries changed
+    if (this.props.sparkJoy && prevProps.queries !== this.props.queries) {
+      this.loadDatasourceInstances();
+    }
+  }
+  
+  loadDatasourceInstances = async () => {
+    const { queries } = this.props;
+    const instances: Record<string, DataSourceApi> = { ...this.state.datasourceInstances };
+    
+    for (const query of queries) {
+      if (query.datasourceUid && !instances[query.datasourceUid]) {
+        try {
+          instances[query.datasourceUid] = await getDataSourceSrv().get(query.datasourceUid);
+        } catch (error) {
+          console.error('Failed to load datasource:', query.datasourceUid, error);
+        }
+      }
+    }
+    
+    this.setState({ datasourceInstances: instances });
+  };
   
   loadRecentQueries = async () => {
     this.setState({ isLoadingHistory: true });
@@ -258,9 +285,9 @@ export class QueryRows extends PureComponent<Props> {
                           condition={this.props.condition}
                           onSetCondition={this.props.onSetCondition}
                         />
-                        {shouldShowSparkJoy && (
+                        {shouldShowSparkJoy && this.state.datasourceInstances[query.datasourceUid] && (
                           <SparkJoySection
-                            datasource={dsSettings as any}
+                            datasource={this.state.datasourceInstances[query.datasourceUid]}
                             history={this.state.recentQueries}
                             onChangeQuery={(newQuery) => {
                               this.onChangeQuery(newQuery, index);
