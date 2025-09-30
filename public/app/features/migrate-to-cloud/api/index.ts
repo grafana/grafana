@@ -1,5 +1,5 @@
 import { handleRequestError } from '@grafana/api-clients';
-import { cloudMigrationAPI as generatedAPI } from '@grafana/api-clients/migrate-to-cloud';
+import { generatedAPI } from '@grafana/api-clients/legacy/migrate-to-cloud';
 import { getLocalPlugins } from 'app/features/plugins/admin/api';
 import { LocalPlugin } from 'app/features/plugins/admin/types';
 
@@ -20,3 +20,5 @@ export const cloudMigrationAPI = generatedAPI.injectEndpoints({
 });
 
 export const { useGetLocalPluginListQuery } = cloudMigrationAPI;
+
+export * from '@grafana/api-clients/legacy/migrate-to-cloud';
