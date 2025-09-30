@@ -234,7 +234,7 @@ function getFramesDescription(frames: DataFrame[]): string {
 export const getFieldsByFrameRefIdItem: () => FieldMatcherUIRegistryItem<string> = () => ({
   id: FieldMatcherID.byFrameRefID,
   component: (props: MatcherUIProps<string>) => {
-    return <RefIDPicker value={props.options} data={props.data} onChange={props.onChange} />;
+    return <RefIDPicker value={props.options} data={props.series} onChange={props.onChange} />;
   },
   matcher: fieldMatchers.get(FieldMatcherID.byFrameRefID),
   name: t('grafana-ui.matchers-ui.name-fields-by-query', 'Fields returned by query'),
