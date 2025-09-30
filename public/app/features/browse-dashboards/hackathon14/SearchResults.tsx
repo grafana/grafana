@@ -6,6 +6,7 @@ import { config } from '@grafana/runtime';
 import { useStyles2, Card, Stack, Text, Button, ButtonGroup, Grid, Icon, Spinner, useTheme2, Badge } from '@grafana/ui';
 
 import { CosmicSceneIcon } from './CosmicSceneIcon';
+import { SearchResultAIRecommendation } from './SearchResultAIRecommendation';
 
 interface SearchResultsProps {
   searchState: any;
@@ -115,14 +116,72 @@ export const SearchResults = ({ searchState, query }: SearchResultsProps) => {
 
   const displayResults = activeTab === 'dashboards' ? dashboards : folders;
 
+  // Check for active filters
+  const hasQuery = query && query.trim().length > 0;
+  const hasTags = searchState?.tag && searchState.tag.length > 0;
+  const hasStarred = searchState?.starred;
+  const hasOwnedByMe = searchState?.ownedByMe;
+
+  // Generate header content
+  const renderHeaderContent = () => {
+    if (hasQuery && hasTags) {
+      return (
+        <div>
+          <Text variant="h3">
+            Search Results for: <span className={styles.queryText}>"{query}"</span>
+          </Text>
+          <div style={{ marginTop: '8px' }}>
+            <Text variant="bodySmall" color="secondary">
+              Filtered by {searchState.tag.length} tag{searchState.tag.length > 1 ? 's' : ''}: {searchState.tag.join(', ')}
+            </Text>
+          </div>
+        </div>
+      );
+    }
+    
+    if (hasQuery) {
+      return (
+        <Text variant="h3">
+          Search Results for: <span className={styles.queryText}>"{query}"</span>
+        </Text>
+      );
+    }
+    
+    if (hasTags) {
+      return (
+        <div>
+          <Text variant="h3">Filtered by Tags</Text>
+          <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {searchState.tag.map((tag: string) => (
+              <Badge key={tag} text={tag} color="blue" />
+            ))}
+          </div>
+        </div>
+      );
+    }
+    
+    if (hasStarred || hasOwnedByMe) {
+      const filters = [];
+      if (hasStarred) {filters.push('Starred');}
+      if (hasOwnedByMe) {filters.push('Owned by me');}
+      return (
+        <Text variant="h3">
+          Filtered Results: <span className={styles.queryText}>{filters.join(', ')}</span>
+        </Text>
+      );
+    }
+    
+    return <Text variant="h3">All Results</Text>;
+  };
+
   return (
     <div className={styles.container}>
       {/* Header */}
       <div className={styles.searchHeader}>
-        <Text variant="h3">
-          Search Results for: <span className={styles.queryText}>"{query || 'none'}"</span>
-        </Text>
+        {renderHeaderContent()}
       </div>
+
+      {hasQuery && <SearchResultAIRecommendation searchQuery={query} />}
 
       {/* Tabs and Toggle */}
       <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -379,7 +438,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       bottom: 0,
       borderRadius: theme.shape.radius.default,
       padding: '2px',
-      background: 'linear-gradient(90deg, #f59e0b, #ef4444, #ec4899, #8b5cf6, #6366f1)',
+      background: 'linear-gradient(90deg, #FF780A, #FF8C2A, #FFA040)',
       WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
       WebkitMaskComposite: 'xor',
       maskComposite: 'exclude',
@@ -390,10 +449,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     '&:hover': {
       transform: 'translateY(-4px)',
-      boxShadow: '0 8px 16px rgba(99, 102, 241, 0.25)',
+      boxShadow: '0 8px 16px rgba(255, 120, 10, 0.15)',
 
       '&::before': {
-        opacity: 0.45,
+        opacity: 0.35,
       },
     },
   }),
@@ -448,7 +507,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'center',
     height: '160px',
     backgroundColor: theme.colors.background.secondary,
-    color: '#ec4899',
+    color: '#FF780A',
   }),
 
   cardContent: css({
@@ -487,7 +546,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       bottom: -2,
       borderRadius: theme.shape.radius.default,
       padding: '2px',
-      background: 'linear-gradient(90deg, #f59e0b, #ef4444, #ec4899, #8b5cf6, #6366f1)',
+      background: 'linear-gradient(90deg, #FF780A, #FF8C2A, #FFA040)',
       WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
       WebkitMaskComposite: 'xor',
       maskComposite: 'exclude',
@@ -498,10 +557,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     '&:hover': {
       transform: 'translateY(-2px)',
-      boxShadow: '0 4px 12px rgba(99, 102, 241, 0.18)',
+      boxShadow: '0 4px 12px rgba(255, 120, 10, 0.12)',
 
       '&::before': {
-        opacity: 0.45,
+        opacity: 0.35,
       },
 
       '& .quick-actions': {
@@ -549,14 +608,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(0.5),
     padding: theme.spacing(0.5, 1),
-    backgroundColor: 'rgba(99, 102, 241, 0.1)',
-    border: '1px solid rgba(99, 102, 241, 0.3)',
+    backgroundColor: `${theme.colors.primary.main}15`,
+    border: `1px solid ${theme.colors.primary.main}`,
     borderRadius: theme.shape.radius.pill,
     flexShrink: 0,
   }),
 
   typeBadgeIcon: css({
-    color: '#6366f1',
+    color: theme.colors.primary.main,
   }),
 
   locationIcon: css({
@@ -595,7 +654,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 
   statIcon: css({
-    color: '#8b5cf6',
+    color: '#FF780A',
     flexShrink: 0,
   }),
 
@@ -607,7 +666,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 
   actionIcon: css({
-    color: '#6366f1',
+    color: '#FF780A',
     cursor: 'pointer',
     padding: theme.spacing(0.5),
     borderRadius: theme.shape.radius.default,

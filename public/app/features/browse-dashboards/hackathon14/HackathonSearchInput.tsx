@@ -182,7 +182,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       right: -2,
       bottom: -2,
       borderRadius: theme.shape.radius.default,
-      background: 'linear-gradient(90deg, #f59e0b, #ef4444, #ec4899, #8b5cf6, #6366f1)',
+      background: 'linear-gradient(90deg, #FF780A, #FF8C2A, #FFA040)',
       opacity: 0,
       transition: 'opacity 0.3s ease',
       zIndex: -1,
@@ -190,25 +190,25 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     '&:hover': {
       transform: 'translateY(-2px)',
-      boxShadow: '0 4px 12px rgba(139, 92, 246, 0.15)',
+      boxShadow: '0 4px 12px rgba(255, 120, 10, 0.1)',
 
       '&::before': {
-        opacity: 0.4,
+        opacity: 0.3,
       },
 
       '& svg': {
-        filter: 'drop-shadow(0 0 6px rgba(139, 92, 246, 0.5))',
+        filter: 'drop-shadow(0 0 6px rgba(255, 120, 10, 0.4))',
       },
     },
 
     // Active state with stronger gradient
     '&[aria-pressed="true"], &[data-active="true"]': {
       '&::before': {
-        opacity: 0.6,
+        opacity: 0.5,
       },
 
       '& svg': {
-        filter: 'drop-shadow(0 0 8px rgba(139, 92, 246, 0.7))',
+        filter: 'drop-shadow(0 0 8px rgba(255, 120, 10, 0.6))',
       },
     },
   }),

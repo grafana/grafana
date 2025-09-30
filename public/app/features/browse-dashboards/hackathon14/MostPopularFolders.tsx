@@ -104,7 +104,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       bottom: 0,
       borderRadius: theme.shape.radius.default,
       padding: '2px',
-      background: 'linear-gradient(90deg, #f59e0b, #ef4444, #ec4899, #8b5cf6, #6366f1)',
+      background: 'linear-gradient(90deg, #FF780A, #FF8C2A, #FFA040)',
       WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
       WebkitMaskComposite: 'xor',
       maskComposite: 'exclude',
@@ -114,10 +114,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     '&:hover': {
       transform: 'translateY(-4px)',
-      boxShadow: '0 8px 16px rgba(236, 72, 153, 0.18)',
+      boxShadow: '0 8px 16px rgba(255, 120, 10, 0.12)',
 
       '&::before': {
-        opacity: 0.45,
+        opacity: 0.35,
       },
     },
   }),
