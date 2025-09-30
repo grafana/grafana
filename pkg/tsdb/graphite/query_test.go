@@ -661,7 +661,7 @@ func TestParseGraphiteError(t *testing.T) {
 			name:     "HTML error",
 			status:   500,
 			body:     `<body><h1>Internal Server Error</h1><p>Target not found</p></body>`,
-			expected: "Internal Server ErrorTarget not found",
+			expected: "Internal Server Error\nTarget not found",
 		},
 		{
 			name:   "complex HTML error",
@@ -672,27 +672,27 @@ func TestParseGraphiteError(t *testing.T) {
 <div>Error: Invalid metric path &#39;stats.invalid.metric&#39;</div>
 Final error message here
 </body>`,
-			expected: "Final error message here",
+			expected: "Internal Server Error\nThe server encountered an unexpected condition that prevented it from fulfilling the request.\nError: Invalid metric path 'stats.invalid.metric'\nFinal error message here",
 		},
 		{
 			name:     "HTML error with unicode",
 			status:   500,
 			body:     `<body><p>Error: Invalid path &#x27;test&#x27; and &#x22;value&#x22;</p></body>`,
-			expected: "Error: Invalid path test and value",
+			expected: "Error: Invalid path 'test' and \"value\"",
 		},
 		{
 			name:   "HTML with whitespace and newlines",
 			status: 500,
 			body: `<body>
 
-<h1>Error</h1>
+		<h1>Error</h1>
 
-<p>Something went wrong</p>
+		<p>Something went wrong</p>
 
-Critical failure occurred
+		Critical failure occurred
 
-</body>`,
-			expected: "Critical failure occurred",
+		</body>`,
+			expected: "Error\nSomething went wrong\nCritical failure occurred",
 		},
 	}
 

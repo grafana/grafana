@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"golang.org/x/net/html"
 )
 
 func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataResponse, error) {
@@ -273,13 +274,23 @@ func parseGraphiteError(status int, body string) (errorMsg string) {
 	errorMsg = body
 	if status == http.StatusInternalServerError {
 		if strings.HasPrefix(body, "<body") {
-			htmlRegex := regexp.MustCompile(`(<([^>]+)>)`)
-			unicodeRegex := regexp.MustCompile(`u?&#[^;]+;`)
+			htmlErrorMsg := ""
+			tokenizer := html.NewTokenizer(strings.NewReader(body))
+			for {
+				// Break here as that typically means we've reached EOF
+				if tokenizer.Next() == html.ErrorToken {
+					break
+				}
 
-			errorMsg = htmlRegex.ReplaceAllString(body, "")
-			errorMsg = strings.TrimSpace(errorMsg)
-			errorMsgSplit := strings.Split(errorMsg, "\n")
-			errorMsg = unicodeRegex.ReplaceAllString(errorMsgSplit[len(errorMsgSplit)-1], "")
+				token := tokenizer.Token()
+				if token.Type == html.TextToken {
+					trimmed := strings.TrimSpace(token.Data)
+					if trimmed != "" {
+						htmlErrorMsg += html.UnescapeString(trimmed) + "\n"
+					}
+				}
+			}
+			errorMsg = strings.TrimSpace(htmlErrorMsg)
 		}
 	}
 	return errorMsg
