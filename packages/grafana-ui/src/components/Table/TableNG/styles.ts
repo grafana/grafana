@@ -232,22 +232,22 @@ export const getTooltipStyles = (theme: GrafanaTheme2, textAlign: TextAlign) => 
   }),
 });
 
-export const getActiveCellSelector = memoize((isNested?: boolean) => {
-  const SELECTORS = {
-    hover: {
-      nested: '.rdg-cell:hover &',
-      normal: '&:hover',
-    },
-    selected: {
-      nested: '[aria-selected=true] &',
-      normal: '&[aria-selected=true]',
-    },
-  };
+const ACTIVE_CELL_SELECTORS = {
+  hover: {
+    nested: '.rdg-cell:hover &',
+    normal: '&:hover',
+  },
+  selected: {
+    nested: '[aria-selected=true] &',
+    normal: '&[aria-selected=true]',
+  },
+} as const;
 
+export const getActiveCellSelector = memoize((isNested?: boolean) => {
   const selectors = [];
-  selectors.push(SELECTORS.selected[isNested ? 'nested' : 'normal']);
+  selectors.push(ACTIVE_CELL_SELECTORS.selected[isNested ? 'nested' : 'normal']);
   if (!IS_SAFARI_26) {
-    selectors.push(SELECTORS.hover[isNested ? 'nested' : 'normal']);
+    selectors.push(ACTIVE_CELL_SELECTORS.hover[isNested ? 'nested' : 'normal']);
   }
   return selectors.join(', ');
 });
