@@ -38,6 +38,10 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
     <Stack direction="row" alignItems="center">
       <Field
         label={t('alerting.contact-point-selector.contact-point-picker-label-contact-point', 'Contact point')}
+        description={t(
+          'alerting.contact-point-selector.contact-point-picker-description',
+          'Select who should receive a notification when the alert rule fires'
+        )}
         data-testid="contact-point-picker"
       >
         <Controller

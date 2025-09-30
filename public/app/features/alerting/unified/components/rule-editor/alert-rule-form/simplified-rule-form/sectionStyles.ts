@@ -29,5 +29,7 @@ export function getSimplifiedSectionStyles(theme: GrafanaTheme2) {
       fontWeight: 600,
     }),
     contentIndented: css({ marginLeft: `calc(20px + ${theme.spacing(1)})` }),
+    inlineField: css({ marginBottom: 0 }),
+    paragraphRow: css({ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: theme.spacing(1) }),
   };
 }
