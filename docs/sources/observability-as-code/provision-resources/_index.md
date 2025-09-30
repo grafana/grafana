@@ -18,7 +18,7 @@ weight: 300
 # Provision resources and sync dashboards
 
 {{< admonition type="caution" >}}
-Git Sync is available in [private preview](https://grafana.com/docs/release-life-cycle/) for Grafana v12 open source and Enterprise editions, and in Grafana Cloud. Support and documentation is available but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided. You can sign up for Git Sync public preview using [this form](https://forms.gle/WKkR3EVMcbqsNnkD9).
+Git Sync is available in [public preview](https://grafana.com/docs/release-life-cycle/) for Grafana v12 open source and Enterprise editions, and in Grafana Cloud. Support and documentation is available but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided. You can sign up for Git Sync public preview using [this form](https://forms.gle/WKkR3EVMcbqsNnkD9).
 
 Local file provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions, but is not available in Grafana Cloud. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
 
