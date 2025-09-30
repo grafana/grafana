@@ -27,6 +27,11 @@ func TestToFolderErrorResponse(t *testing.T) {
 			want:  response.Error(400, "Dashboard Error", dashboardaccess.DashboardErr{StatusCode: 400, Reason: "Dashboard Error", Status: "error"}),
 		},
 		{
+			name:  "errutil error",
+			input: folder.ErrMaximumDepthReached.Errorf("Maximum nested folder depth reached"),
+			want:  response.Error(400, "Maximum nested folder depth reached", folder.ErrMaximumDepthReached.Errorf("Maximum nested folder depth reached")),
+		},
+		{
 			name:  "folder title empty",
 			input: dashboards.ErrFolderTitleEmpty,
 			want:  response.Error(400, "folder title cannot be empty", nil),
@@ -67,14 +72,14 @@ func TestToFolderErrorResponse(t *testing.T) {
 			want:  response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": dashboards.ErrFolderVersionMismatch.Error()}),
 		},
 		{
-			name:  "folder max depth reached",
-			input: folder.ErrMaximumDepthReached,
-			want:  response.JSON(http.StatusBadRequest, util.DynMap{"messageId": "folder.maximum-depth-reached", "message": folder.ErrMaximumDepthReached.Error()}),
+			name:  "folder cannot be parent of itself",
+			input: folder.ErrFolderCannotBeParentOfItself,
+			want:  response.Error(http.StatusBadRequest, folder.ErrFolderCannotBeParentOfItself.Error(), nil),
 		},
 		{
-			name:  "fallback error",
-			input: errors.New("some error"),
-			want:  response.ErrOrFallback(http.StatusInternalServerError, "Folder API error", errors.New("some error")),
+			name:  "fallback error for an unknown error",
+			input: errors.New("an unexpected error"),
+			want:  response.Error(http.StatusInternalServerError, "Folder API error: an unexpected error", errors.New("an unexpected error")),
 		},
 		{
 			name: "kubernetes status error",
