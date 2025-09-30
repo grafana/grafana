@@ -25,12 +25,13 @@ export interface Props {
   overlay: React.ReactElement | (() => React.ReactElement);
   placement?: TooltipPlacement;
   children: React.ReactElement;
+  root?: HTMLElement;
   /** Amount in pixels to nudge the dropdown vertically and horizontally, respectively. */
   offset?: [number, number];
   onVisibleChange?: (state: boolean) => void;
 }
 
-export const Dropdown = React.memo(({ children, overlay, placement, offset, onVisibleChange }: Props) => {
+export const Dropdown = React.memo(({ children, overlay, placement, offset, root, onVisibleChange }: Props) => {
   const [show, setShow] = useState(false);
   const transitionRef = useRef(null);
   const floatingUIPlacement = getPlacement(placement);
@@ -84,7 +85,7 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
         ...getReferenceProps(),
       })}
       {show && (
-        <Portal>
+        <Portal root={root}>
           <FloatingFocusManager context={context}>
             {/*
               this is handling bubbled events from the inner overlay
