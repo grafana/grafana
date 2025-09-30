@@ -264,8 +264,5 @@ func PrefixRangeEnd(prefix string) string {
 // )
 
 func IsValidKey(key string) bool {
-	if key == "" {
-		return false
-	}
-	return true
+	return key != ""
 }
