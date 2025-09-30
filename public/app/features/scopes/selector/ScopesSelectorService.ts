@@ -11,6 +11,7 @@ import {
   closeNodes,
   expandNodes,
   getPathOfNode,
+  insertPathNodesIntoTree,
   isNodeExpandable,
   isNodeSelectable,
   modifyTreeNodeAtPath,
@@ -99,36 +100,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
   };
 
-  // Path starts with root node and goes down
-  private insertPathNodesIntoTree = (tree: TreeNode, path: ScopeNode[]) => {
-    const stringPath = path.map((n) => n.metadata.name);
-    stringPath.unshift('');
-
-    let newTree = tree;
-
-    // Go down the tree, don't iterate over the last node
-    for (let index = 0; index < stringPath.length - 1; index++) {
-      const childNodeName = stringPath[index + 1];
-      // Path up to iteration point
-      const pathSlice = stringPath.slice(0, index + 1);
-      newTree = modifyTreeNodeAtPath(newTree, pathSlice, (treeNode) => {
-        treeNode.children = { ...treeNode.children };
-        if (!childNodeName) {
-          console.warn('Failed to insert full path into tree. Did not find child to' + stringPath[index]);
-          return treeNode;
-        }
-        treeNode.children[childNodeName] = {
-          expanded: false,
-          scopeNodeId: childNodeName,
-          query: '',
-          children: undefined,
-        };
-        return treeNode;
-      });
-    }
-    return newTree;
-  };
-
   private getNodePath = async (scopeNodeId: string): Promise<ScopeNode[]> => {
     const node = await this.getScopeNode(scopeNodeId);
     if (!node) {
@@ -148,7 +119,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       throw new Error('Tree is required');
     }
     const nodePath = await this.getNodePath(scopeNodeId);
-    const newTree = this.insertPathNodesIntoTree(tree, nodePath);
+    const newTree = insertPathNodesIntoTree(tree, nodePath);
 
     this.updateState({ tree: newTree });
 
