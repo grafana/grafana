@@ -40,15 +40,12 @@ We welcome your technical contributions! You can contribute in several ways:
 
 Grafana plugins let you extend the platform with new data sources, panels, and more. This is a great way to share your ideas and make a real impact on the Grafana ecosystem.
 
-- **Get started:** See the [plugin development guide](https://grafana.com/developers/plugin-tools).
-
 **Step-by-step:**
 1. Read the [plugin development guide](https://grafana.com/developers/plugin-tools) to choose your plugin type and set up your environment.
 2. Scaffold your plugin using the recommended tools.
 3. Develop and test your plugin locally.
 4. Follow best practices for code style, testing, and documentation.
 5. Publish your plugin or submit it for review as described in the guide.
-
 
 ### 3. Contribute without Code
 
@@ -59,11 +56,6 @@ You can help even if you don't write code:
 - **Suggest features:** Propose new ideas ([feature request template](https://github.com/grafana/grafana/issues/new?template=1-feature_requests.md)).
 - **Improve documentation:** Edit or add to our docs ([docs guide](contribute/documentation/README.md)).
 - **Report security vulnerabilities:** If you believe you've found a security issue, please read our [security policy](https://github.com/grafana/grafana/security/policy) for details on responsible reporting.
-
-**Step-by-step:**
-1. Choose how you want to help (issue triage, bug report, feature request, docs, security).
-2. Read the relevant guide or template.
-3. Submit your contribution via GitHub (issue, PR, or doc edit).
 
 **Please note:** We do not currently accept contributions for translations. Please do not submit pull requests translating grafana.json files - they will be rejected. We do accept contributions to mark up phrases for translation. See [Internationalization](contribute/internationalization.md).
 
