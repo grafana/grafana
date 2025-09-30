@@ -14,7 +14,7 @@ export const DashboardInteractions = {
   },
 
   dashboardCreatedOrSaved: (name: 'created' | 'saved', properties: DashboardCreatedProps) => {
-    reportDashboardInteraction(name, properties, 'grafana_');
+    reportDashboardInteraction(name, properties, 'grafana_dashboard');
   },
 
   // grafana_dashboards_edit_button_clicked
