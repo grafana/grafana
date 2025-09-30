@@ -1671,6 +1671,10 @@
     "inspector-yaml-tab": {
       "apply": "Tillämpa"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "Så här ansluter du till IRM",
       "disabled-description": "Aktivera IRM via en Webhook-integration",
@@ -1813,6 +1817,10 @@
         }
       }
     },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
+    },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Filtrera varningar med etikettförfrågan utan klamrar, t.ex.:",
       "filter-alerts-using-label-querying-without-spaces": "Filtrera larm med etikettförfrågan utan mellanslag, t.ex.:",
@@ -1919,9 +1927,6 @@
       "title-remove": "Ta bort",
       "tooltip-remove-time-range": "Ta bort tidsintervall"
     },
-    "namespace": {
-      "title-alert-rules": "Varningsregler"
-    },
     "namespace-and-group-filter": {
       "select-group": "Markera grupp",
       "select-namespace": "Välj namnutrymme"
@@ -1978,8 +1983,10 @@
       "label-notification-policies": "Aviseringspolicyer",
       "label-time-intervals": "Tidsintervall"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "Standardpolicy",
       "no-matchers": "Inga matchare"
     },
     "notification-preview": {
@@ -1996,22 +2003,12 @@
     },
     "notification-route": {
       "no-labels": "Inga etiketter",
-      "no-matching-labels": "Inga matchande etiketter"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Dina larminstanser dirigeras enligt följande.",
-      "close": "Stäng",
-      "contact-point": "Kontaktpunkt",
-      "default-policy": "Standardpolicy",
-      "notification-policy-path": "Sökväg för aviseringspolicy",
-      "see-details-link": "Se detaljer",
-      "title-routing-details": "Routningsdetaljer"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Visa policyväg",
-      "delivered-to": "@ Levereras till",
-      "notification-policy": "Aviseringspolicy",
-      "see-details": "Se detaljer"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2039,7 +2036,9 @@
       "recipient-notification-fires": "Välj vem som ska få en avisering när en larmregel utlöses."
     },
     "option-customfield": {
-      "label-custom-template": "Anpassad mall"
+      "label-custom-template": "Anpassad mall",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Vald Alertmanager finns inte längre eller så kanske du inte har behörighet att komma åt den. Du kan välja en annan larmhanterare i rullgardinsmenyn.",
@@ -2130,17 +2129,13 @@
         "suffix": "Uppdatera sidan och försök igen.",
         "title": "Det gick inte att lägga till eller uppdatera aviseringspolicy"
       },
-      "n-more-policies_one": "{{count}} ytterligare policyer",
-      "n-more-policies_other": "{{count}} ytterligare policyer"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Ny underordnad policy",
       "label-new-sibling-above": "Nytt syskon ovanför",
       "label-new-sibling-below": "Nytt syskon nedanför"
-    },
-    "policy-path": {
-      "default-policy": "Standardpolicy",
-      "no-matchers": "Inga matchare"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Det går inte att visa förhandsgranskningen av frågan. Vissa av de datakällor som används i frågorna är inte tillgängliga.",
@@ -5350,7 +5345,6 @@
             "json": "Exportera som JSON"
           }
         },
-        "mark-favorite": "Markera som favorit",
         "more-save-options": "Fler sparalternativ",
         "playlist-next": "Gå till nästa instrumentpanel",
         "playlist-previous": "Gå till föregående instrumentpanel",
@@ -5379,8 +5373,7 @@
             "yesText": "Spara"
           }
         },
-        "unlink-library-panel": "Ta bort länk till bibliotekspanel",
-        "unmark-favorite": "Avmarkera som favorit"
+        "unlink-library-panel": "Ta bort länk till bibliotekspanel"
       },
       "open-original": "Öppna ursprunglig instrumentpanel",
       "playlist-next": "Gå till nästa instrumentpanel",
@@ -5401,6 +5394,10 @@
       "save-library-panel": "Spara bibliotekspanel",
       "settings": "Instrumentpanelens inställningar",
       "share-button": "Dela",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Ta bort länk till bibliotekspanel",
       "unmark-favorite": "Avmarkera som favorit"
     },
@@ -9346,6 +9343,7 @@
     },
     "share-panel": {
       "config-description": "Skapa en personlig direktlänk för att dela din panel inom din organisation, med följande anpassningsinställningar:",
+      "copy-image-link": "",
       "download-image": "Ladda ner bild",
       "render-image": "Generera bild"
     }
@@ -10650,6 +10648,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11326,6 +11332,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Konfigurera obligatoriska funktionsväxlare"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Hantera kontrollpaneler som kod i Git och provisionering av uppdateringar automatiskt",
       "manage-your-dashboards-with-remote-provisioning": "Kom igång med Git Sync",
       "store-dashboards-in-version-controlled-storage": "Lagra instrumentpaneler med versionsstyrd lagring för bättre organisering och historikspårning"
@@ -11515,8 +11522,16 @@
         "subtitle": "Använd det här alternativet om du vill synkronisera och hantera hela din Grafana-instans via extern lagring."
       }
     },
-    "read-only-local-tooltip": "Denna mapp är skrivskyddad och provisionerad via filprovisionering. Om du behöver göra ändringar i mappen måste du uppdatera den anslutna fillagringsplatsen. Ändra mappinställningarna genom att gå till Administration > Provisionering > Lagringsplatser.",
-    "read-only-remote-tooltip": "Den här mappen är skrivskyddad och provisionerad via Git. Om du behöver göra ändringar i mappen måste du uppdatera det anslutna arkivet. Ändra mappinställningarna genom att gå till Administration > Provisionering > Lagringsplatser.",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "aktiva jobb",
       "column-action": "Åtgärd",
@@ -11630,6 +11645,7 @@
         "removed-from-repo-test-ui": "borttagen från arkivets testgränssnitt",
         "updated-from-repo-test-ui": "uppdaterat från arkivets testgränssnitt"
       },
+      "read-only-repo-tooltip": "",
       "repository": "Databas",
       "tab-info": {
         "label": {
@@ -11666,6 +11682,8 @@
       "tooltip-unhealthy-repository": "Det gick inte att hämta en ohälsosam lagringsplats"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "Inkludera åtaganden för varje historiskt värde",
       "synchronization-options": "Synkroniseringsalternativ"
@@ -11953,10 +11971,10 @@
       "restore-button": "Återställ",
       "restore-loading": "Återställer ...",
       "title": "Återställ instrumentpaneler",
-      "folder-picker-text_one": "Välj en mapp där dina instrumentpaneler kommer att återställas.",
-      "folder-picker-text_other": "Välj en mapp där dina instrumentpaneler kommer att återställas.",
-      "text_one": "Denna åtgärd återställer {{numberOfDashboards}} instrumentpanel.",
-      "text_other": "Denna åtgärd återställer {{numberOfDashboards}} instrumentpanel."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {

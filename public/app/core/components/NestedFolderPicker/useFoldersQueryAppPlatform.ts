@@ -6,7 +6,7 @@ import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { AnnoKeyManagerKind, ManagerKind } from '../../../features/apiserver/types';
+import { ManagerKind } from '../../../features/apiserver/types';
 import { PAGE_SIZE } from '../../../features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from '../../../features/browse-dashboards/state/utils';
 
@@ -86,7 +86,7 @@ export function useFoldersQueryAppPlatform({
         return;
       }
 
-      const args = { folder: finalParentUid, type: 'folder' };
+      const args = { folder: finalParentUid, type: 'folder' } as const;
 
       // Make a request
       const subscription = dispatch(dashboardAPIv0alpha1.endpoints.getSearch.initiate(args));
@@ -138,8 +138,8 @@ export function useFoldersQueryAppPlatform({
             // query by it.
             uid: name,
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            managedBy: item.metadata?.annotations?.[AnnoKeyManagerKind] as ManagerKind | undefined,
-            parentUID: item.parentUID,
+            managedBy: item.managedBy?.kind as ManagerKind | undefined,
+            parentUID: item.folder,
           },
         };
 

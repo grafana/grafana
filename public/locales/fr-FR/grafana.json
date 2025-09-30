@@ -1671,6 +1671,10 @@
     "inspector-yaml-tab": {
       "apply": "Appliquer"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "Comment se connecter à IRM",
       "disabled-description": "Activer IRM via une intégration Webhook",
@@ -1813,6 +1817,10 @@
         }
       }
     },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
+    },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Filtrer les alertes à l'aide de la méthode de recherche d'étiquettes sans accolades, par exemple :",
       "filter-alerts-using-label-querying-without-spaces": "Filtrer les alertes à l’aide de la méthode de recherche d’étiquettes sans espaces, par exemple :",
@@ -1919,9 +1927,6 @@
       "title-remove": "Supprimer",
       "tooltip-remove-time-range": "Supprimer la plage temporelle"
     },
-    "namespace": {
-      "title-alert-rules": "Règles d'alerte"
-    },
     "namespace-and-group-filter": {
       "select-group": "Sélectionner un groupe",
       "select-namespace": "Sélectionner le namespace"
@@ -1978,8 +1983,10 @@
       "label-notification-policies": "Politiques de notification",
       "label-time-intervals": "Intervalles de temps"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "Politique par défaut",
       "no-matchers": "Aucun correspondant"
     },
     "notification-preview": {
@@ -1996,22 +2003,12 @@
     },
     "notification-route": {
       "no-labels": "Pas d’étiquettes",
-      "no-matching-labels": "Pas d’étiquettes correspondantes"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Vos instances d’alerte sont acheminées comme suit.",
-      "close": "Fermer",
-      "contact-point": "Point de contact",
-      "default-policy": "Politique par défaut",
-      "notification-policy-path": "Chemin de la politique de notification",
-      "see-details-link": "Afficher les détails",
-      "title-routing-details": "Détails de l’acheminement"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Développer le chemin de la politique",
-      "delivered-to": "@ Livré à",
-      "notification-policy": "Politique de notification",
-      "see-details": "Afficher les détails"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2039,7 +2036,9 @@
       "recipient-notification-fires": "Sélectionnez qui doit recevoir une notification lorsqu’une règle d’alerte se déclenche."
     },
     "option-customfield": {
-      "label-custom-template": "Personnaliser le modèle"
+      "label-custom-template": "Personnaliser le modèle",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "L’Alertmanager sélectionné n’existe plus ou vous n’avez peut-être pas l’autorisation d’y accéder. Vous pouvez sélectionner un autre Alertmanager dans la liste déroulante.",
@@ -2130,17 +2129,13 @@
         "suffix": "Actualisez la page, puis réessayez.",
         "title": "Échec lors de l’ajout ou de la mise à jour de la politique de notification"
       },
-      "n-more-policies_one": "{{count}} politiques supplémentaires",
-      "n-more-policies_other": "{{count}} politiques supplémentaires"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Nouvelle politique enfant",
       "label-new-sibling-above": "Nouvel élément frère au-dessus",
       "label-new-sibling-below": "Nouvel élément frère au-dessous"
-    },
-    "policy-path": {
-      "default-policy": "Politique par défaut",
-      "no-matchers": "Aucun correspondant"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Impossible d'afficher l'aperçu de la requête. Certaines des sources de données utilisées dans les requêtes ne sont pas disponibles.",
@@ -5350,7 +5345,6 @@
             "json": "Exporter en tant que JSON"
           }
         },
-        "mark-favorite": "Marquer comme favori",
         "more-save-options": "Plus d’options d’enregistrement",
         "playlist-next": "Accéder au tableau de bord suivant",
         "playlist-previous": "Accéder au tableau de bord précédent",
@@ -5379,8 +5373,7 @@
             "yesText": "Enregistrer"
           }
         },
-        "unlink-library-panel": "Dissocier le panneau Bibliothèque",
-        "unmark-favorite": "Supprimer des favoris"
+        "unlink-library-panel": "Dissocier le panneau Bibliothèque"
       },
       "open-original": "Ouvrir le tableau de bord d'origine",
       "playlist-next": "Accéder au tableau de bord suivant",
@@ -5401,6 +5394,10 @@
       "save-library-panel": "Enregistrer le panneau de la bibliothèque",
       "settings": "Paramètres du tableau de bord",
       "share-button": "Partager",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Dissocier le panneau de la bibliothèque",
       "unmark-favorite": "Supprimer des favoris"
     },
@@ -9346,6 +9343,7 @@
     },
     "share-panel": {
       "config-description": "Créez un lien direct personnalisé pour partager votre panneau au sein de votre organisation, avec les paramètres de personnalisation suivants :",
+      "copy-image-link": "",
       "download-image": "Télécharger l'image",
       "render-image": "Générer l'image"
     }
@@ -10650,6 +10648,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11326,6 +11332,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Configurer les basculements de fonctionnalité requis"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Gérez les tableaux de bord as code sur Git et approvisionnez automatiquement les mises à jour",
       "manage-your-dashboards-with-remote-provisioning": "Commencer avec Git Sync",
       "store-dashboards-in-version-controlled-storage": "Stockez les tableaux de bord dans un espace de stockage à gestion des versions pour une meilleure organisation et un meilleur suivi de l’historique"
@@ -11515,8 +11522,16 @@
         "subtitle": "Utilisez cette option si vous souhaitez synchroniser et gérer l’ensemble de votre instance Grafana via un stockage externe."
       }
     },
-    "read-only-local-tooltip": "Ce dossier est en lecture seule et provisionné via des fichiers. Pour apporter des modifications dans le dossier, mettez à jour le référentiel de fichiers connecté. Pour modifier les paramètres du dossier, accédez à Administration > Provisionnement > Référentiels.",
-    "read-only-remote-tooltip": "Ce dossier est en lecture seule et provisionné via Git. Pour apporter des modifications dans le dossier, mettez à jour le référentiel connecté. Pour modifier les paramètres du dossier, accédez à Administration > Provisionnement > Référentiels.",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "missions actives",
       "column-action": "Action",
@@ -11630,6 +11645,7 @@
         "removed-from-repo-test-ui": "supprimé de l’interface utilisateur de test de référentiel",
         "updated-from-repo-test-ui": "mis à jour à partir de l’interface utilisateur de test de référentiel"
       },
+      "read-only-repo-tooltip": "",
       "repository": "Référentiel",
       "tab-info": {
         "label": {
@@ -11666,6 +11682,8 @@
       "tooltip-unhealthy-repository": "Impossible de fusionner un référentiel en mauvais état"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "Inclure les commits pour chaque valeur historique",
       "synchronization-options": "Options de synchronisation"
@@ -11953,10 +11971,10 @@
       "restore-button": "Restaurer",
       "restore-loading": "Restauration...",
       "title": "Restaurer les tableaux de bord",
-      "folder-picker-text_one": "Veuillez choisir un dossier dans lequel vos tableaux de bord seront restaurés.",
-      "folder-picker-text_other": "Veuillez choisir un dossier dans lequel vos tableaux de bord seront restaurés.",
-      "text_one": "Cette action restaurera {{numberOfDashboards}} tableaux de bord.",
-      "text_other": "Cette action restaurera {{numberOfDashboards}} tableaux de bord."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {

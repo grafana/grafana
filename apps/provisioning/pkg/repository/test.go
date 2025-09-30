@@ -12,7 +12,16 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
+// RepositoryValidator interface for validating repositories against existing ones
+type RepositoryValidator interface {
+	VerifyAgainstExistingRepositories(ctx context.Context, cfg *provisioning.Repository) *field.Error
+}
+
 func TestRepository(ctx context.Context, repo Repository) (*provisioning.TestResults, error) {
+	return TestRepositoryWithValidator(ctx, repo, nil)
+}
+
+func TestRepositoryWithValidator(ctx context.Context, repo Repository, validator RepositoryValidator) (*provisioning.TestResults, error) {
 	errors := ValidateRepository(repo)
 	if len(errors) > 0 {
 		rsp := &provisioning.TestResults{
@@ -30,7 +39,27 @@ func TestRepository(ctx context.Context, repo Repository) (*provisioning.TestRes
 		return rsp, nil
 	}
 
-	return repo.Test(ctx)
+	rsp, err := repo.Test(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.Success && validator != nil {
+		cfg := repo.Config()
+		if validationErr := validator.VerifyAgainstExistingRepositories(ctx, cfg); validationErr != nil {
+			rsp = &provisioning.TestResults{
+				Success: false,
+				Code:    http.StatusUnprocessableEntity,
+				Errors: []provisioning.ErrorDetails{{
+					Type:   metav1.CauseType(validationErr.Type),
+					Field:  validationErr.Field,
+					Detail: validationErr.Detail,
+				}},
+			}
+		}
+	}
+
+	return rsp, nil
 }
 
 func ValidateRepository(repo Repository) field.ErrorList {
@@ -93,6 +122,18 @@ func ValidateRepository(repo Repository) field.ErrorList {
 				"cannot have both remove and release orphan resources finalizers",
 			),
 		)
+	}
+
+	for _, f := range cfg.Finalizers {
+		if !slices.Contains(SupportedFinalizers, f) {
+			list = append(list,
+				field.Invalid(
+					field.NewPath("medatada", "finalizers"),
+					cfg.Finalizers,
+					fmt.Sprintf("unknown finalizer: %s", f),
+				),
+			)
+		}
 	}
 
 	return list

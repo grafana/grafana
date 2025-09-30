@@ -12,10 +12,15 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tracer trace.Tracer, docs resource.DocumentBuilderSupplier, indexMetrics *resource.BleveIndexMetrics) (resource.SearchOptions, error) {
-	// Setup the search server
-	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) ||
-		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+func NewSearchOptions(
+	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+	tracer trace.Tracer,
+	docs resource.DocumentBuilderSupplier,
+	indexMetrics *resource.BleveIndexMetrics,
+	ownsIndexFn func(key resource.NamespacedResource) (bool, error),
+) (resource.SearchOptions, error) {
+	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) || features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		root := cfg.IndexPath
 		if root == "" {
 			root = filepath.Join(cfg.DataPath, "unified-search", "bleve")
@@ -43,6 +48,8 @@ func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tra
 			BuildVersion:    cfg.BuildVersion,
 			MaxFileIndexAge: cfg.MaxFileIndexAge,
 			MinBuildVersion: minVersion,
+			UseFullNgram:    features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageUseFullNgram),
+			OwnsIndex:       ownsIndexFn,
 		}, tracer, indexMetrics)
 
 		if err != nil {

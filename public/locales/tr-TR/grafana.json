@@ -1671,6 +1671,10 @@
     "inspector-yaml-tab": {
       "apply": "Uygula"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "IRM'ye bağlanma",
       "disabled-description": "Bir Web kancası entegrasyonu aracılığıyla IRM'yi etkinleştirin",
@@ -1813,6 +1817,10 @@
         }
       }
     },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
+    },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Uyarıları parantezler olmadan etiket sorgulama ile filtreleyin, örneğin:",
       "filter-alerts-using-label-querying-without-spaces": "Etiket sorgulaması kullanarak boşluksuz uyarı filtresi oluşturun, örn.:",
@@ -1919,9 +1927,6 @@
       "title-remove": "Kaldır",
       "tooltip-remove-time-range": "Zaman aralığını kaldır"
     },
-    "namespace": {
-      "title-alert-rules": "Uyarı kuralları"
-    },
     "namespace-and-group-filter": {
       "select-group": "Grup seç",
       "select-namespace": "Ad alanı seç"
@@ -1978,8 +1983,10 @@
       "label-notification-policies": "Bildirim Politikaları",
       "label-time-intervals": "Zaman aralıkları"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "Varsayılan politika",
       "no-matchers": "Eşleşen yok"
     },
     "notification-preview": {
@@ -1996,22 +2003,12 @@
     },
     "notification-route": {
       "no-labels": "Etiket yok",
-      "no-matching-labels": "Eşleşen etiket yok"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Uyarı örnekleriniz aşağıdaki şekilde yönlendiriliyor.",
-      "close": "Kapat",
-      "contact-point": "İletişim noktası",
-      "default-policy": "Varsayılan politika",
-      "notification-policy-path": "Bildirim politikası yolu",
-      "see-details-link": "Ayrıntıları görüntüle",
-      "title-routing-details": "Yönlendirme ayrıntıları"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Politika yönlendirmesini genişlet",
-      "delivered-to": "@ Teslim alan:",
-      "notification-policy": "Bildirim politikası",
-      "see-details": "Ayrıntıları görüntüle"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2039,7 +2036,9 @@
       "recipient-notification-fires": "Bir uyarı kuralı tetiklendiğinde bildirimi kimin alacağını seçin."
     },
     "option-customfield": {
-      "label-custom-template": "Özel şablon"
+      "label-custom-template": "Özel şablon",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Seçilen Alertmanager artık mevcut değil veya erişim izniniz olmayabilir. Açılır menüden başka bir Alertmanager seçebilirsiniz.",
@@ -2130,17 +2129,13 @@
         "suffix": "Lütfen sayfayı yenileyin ve tekrar deneyin.",
         "title": "Bildirim politikası eklenemedi veya güncellenemedi"
       },
-      "n-more-policies_one": "{{count}} ek politika",
-      "n-more-policies_other": "{{count}} ek politika"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Çocuklara ilişkin yeni politika",
       "label-new-sibling-above": "Yukarıdan yeni eş düzey",
       "label-new-sibling-below": "Aşağıdan yeni eş düzey"
-    },
-    "policy-path": {
-      "default-policy": "Varsayılan politika",
-      "no-matchers": "Eşleşen yok"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Sorgu ön izlemesi görüntülenemiyor. Sorgularda kullanılan bazı veri kaynakları mevcut değil.",
@@ -5350,7 +5345,6 @@
             "json": "JSON olarak dışa aktar"
           }
         },
-        "mark-favorite": "Favori olarak işaretle",
         "more-save-options": "Diğer kaydetme seçenekleri",
         "playlist-next": "Sonraki panoya git",
         "playlist-previous": "Önceki panoya git",
@@ -5379,8 +5373,7 @@
             "yesText": "Kaydet"
           }
         },
-        "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır",
-        "unmark-favorite": "Favorilerden kaldır"
+        "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır"
       },
       "open-original": "Orijinal panoyu aç",
       "playlist-next": "Sonraki panoya git",
@@ -5401,6 +5394,10 @@
       "save-library-panel": "Kütüphane panelini kaydet",
       "settings": "Pano ayarları",
       "share-button": "Paylaş",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır",
       "unmark-favorite": "Favorilerden kaldır"
     },
@@ -9346,6 +9343,7 @@
     },
     "share-panel": {
       "config-description": "Panelinizi kuruluşunuz içinde paylaşmak için kişiselleştirilmiş, doğrudan bir bağlantı oluşturun. ",
+      "copy-image-link": "",
       "download-image": "Görseli indir",
       "render-image": "Görsel oluştur"
     }
@@ -10650,6 +10648,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11326,6 +11332,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Gerekli özellik anahtarlarını ayarla"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Panoları Git'de kod olarak yönetin ve güncellemeleri otomatik sağlayın",
       "manage-your-dashboards-with-remote-provisioning": "Git Sync'i kullanmaya başlayın",
       "store-dashboards-in-version-controlled-storage": "Daha iyi organizasyon ve geçmiş takibi için panoları sürüm kontrollü bir depoda saklayın"
@@ -11515,6 +11522,14 @@
         "subtitle": "Tüm Grafana örneğinizi haricî depolama üzerinden senkronize edip yönetmek istiyorsanız bu seçeneği kullanın."
       }
     },
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
@@ -11630,6 +11645,7 @@
         "removed-from-repo-test-ui": "depo test arayüzünden kaldırıldı",
         "updated-from-repo-test-ui": "depo test arayüzünden güncellendi"
       },
+      "read-only-repo-tooltip": "",
       "repository": "Depo",
       "tab-info": {
         "label": {
@@ -11666,6 +11682,8 @@
       "tooltip-unhealthy-repository": "İyi durumda olmayan bir depo çekilemedi"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "Her geçmiş değer için yürütmeyi dahil et",
       "synchronization-options": "Senkronizasyon seçenekleri"
@@ -11953,10 +11971,10 @@
       "restore-button": "Geri yükle",
       "restore-loading": "Geri yükleniyor…",
       "title": "Panoları Geri Yükleme",
-      "folder-picker-text_one": "Lütfen panolarınızın geri yükleneceği bir klasör seçin.",
-      "folder-picker-text_other": "Lütfen panolarınızın geri yükleneceği bir klasör seçin.",
-      "text_one": "Bu işlem {{numberOfDashboards}} panoyu geri yükleyecektir.",
-      "text_other": "Bu işlem {{numberOfDashboards}} panoyu geri yükleyecektir."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {
