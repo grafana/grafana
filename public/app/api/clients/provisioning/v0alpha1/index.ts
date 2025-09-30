@@ -1,5 +1,5 @@
 import {
-  v0alpha1,
+  generatedAPI,
   type JobSpec,
   type JobStatus,
   type RepositorySpec,
@@ -18,7 +18,7 @@ import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
 import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
 import { createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
 
-export const provisioningAPIv0alpha1 = v0alpha1.generatedAPI.enhanceEndpoints({
+export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
     listJob: {
       // Do not include 'watch' in the first query, so we can get the initial list of jobs

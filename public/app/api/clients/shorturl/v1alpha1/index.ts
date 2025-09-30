@@ -1,3 +1,3 @@
-import { shorturlAPIv1alpha1Generated as generatedAPI } from '@grafana/api-clients';
+import { generatedAPI } from '@grafana/api-clients/shorturl/v1alpha1';
 
 export const shortURLAPIv1alpha1 = generatedAPI.enhanceEndpoints({});
