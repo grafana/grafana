@@ -98,9 +98,9 @@ func (k DataKey) Validate() error {
 	if !validNameRegex.MatchString(k.Resource) {
 		return fmt.Errorf("resource '%s' is invalid", k.Resource)
 	}
-	if !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid", k.Name)
-	}
+	// if !validNameRegex.MatchString(k.Name) {
+	// 	return fmt.Errorf("name '%s' is invalid", k.Name)
+	// }
 
 	// Validate folder field if provided (optional field)
 	if k.Folder != "" && !validNameRegex.MatchString(k.Folder) {
@@ -141,9 +141,6 @@ func (k ListRequestKey) Validate() error {
 	}
 	if !validNameRegex.MatchString(k.Resource) {
 		return fmt.Errorf("resource '%s' is invalid", k.Resource)
-	}
-	if k.Name != "" && !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid", k.Name)
 	}
 	return nil
 }
