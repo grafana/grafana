@@ -81,20 +81,6 @@
         "title-access-denied": "Access denied"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "Some features are stable (GA) and enabled by default, whereas some are currently in their preliminary Beta phase, available for early adoption.",
-      "confirm-modal-body-2": "We advise understanding the implications of each feature change before making modifications.",
-      "confirmText-save-changes": "Save changes",
-      "get-stage-cell": {
-        "beta": "Beta",
-        "content-general-availability": "General availability",
-        "deprecated": "Deprecated",
-        "ga": "GA"
-      },
-      "save-changes": "Save changes",
-      "saving": "Saving...",
-      "title-apply-feature-toggle-changes": "Apply feature toggle changes"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "Delete org",
       "confirmText-delete": "Delete",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "Settings updates at runtime",
       "title-sort-dashboards-by-popularity-in-search": "Sort dashboards by popularity in search",
       "title-team-sync": "Team Sync"
-    },
-    "feature-toggles": {
-      "restart-pending": "A restart is pending for your Grafana instance to apply the latest feature toggle changes",
-      "restart-required": "Saving feature toggle changes will prompt a restart of the instance, which may take a few minutes",
-      "sub-title": "View and edit feature toggles. Read more about feature toggles at <2>grafana.com</2>."
     },
     "get-enterprise": {
       "contact-us": "Contact us and get a free trial",
@@ -2181,7 +2162,6 @@
       "body-queries-expressions-configured": "Create at least one query or expression to be alerted on",
       "confirmText-deactivate": "Deactivate",
       "expressions": "Expressions",
-      "loading-data-sources": "Loading data sources...",
       "manipulate-returned-queries-other-operations": "Manipulate data returned from queries with math and other operations.",
       "message": {
         "a-valid-expression-is-required": "A valid expression is required"

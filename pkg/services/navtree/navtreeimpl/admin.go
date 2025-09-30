@@ -44,15 +44,6 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Text: "Organizations", SubTitle: "Isolated instances of Grafana running on the same server", Id: "global-orgs", Url: s.cfg.AppSubURL + "/admin/orgs", Icon: "building",
 		})
 	}
-	if s.features.IsEnabled(ctx, featuremgmt.FlagFeatureToggleAdminPage) && hasAccess(ac.EvalPermission(ac.ActionFeatureManagementRead)) {
-		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
-			Text:     "Feature toggles",
-			SubTitle: "View and edit feature toggles",
-			Id:       "feature-toggles",
-			Url:      s.cfg.AppSubURL + "/admin/featuretoggles",
-			Icon:     "toggle-on",
-		})
-	}
 	if hasAccess(cloudmigration.MigrationAssistantAccess) && s.features.IsEnabled(ctx, featuremgmt.FlagOnPremToCloudMigrations) {
 		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Migrate to Grafana Cloud",
