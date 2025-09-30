@@ -66,7 +66,7 @@ After you’ve deployed your Grafana instance:
 
 - To follow the example in this doc, create three [Grafana Teams](../../../administration/team-management/configure-grafana-teams/#create-a-grafana-team) and add them to the Grafana instance.
 - Determine the [RBAC strategy](../../../administration/roles-and-permissions/access-control/) for your organization. RBAC extends default Grafana roles, provides more access rights granularity, and simplifies how to grant, modify or revoke user access to Grafana resources, such as users and reports.
-- Assign each user to the [relevant team](../../../administration/ruser-management/manage-org-users/). By default [new users](../../configure-grafana/#auto_assign_org) are granted the **Viewer** role.
+- Assign each user to the [relevant team](../../../administration/user-management/manage-org-users/). By default [new users](../../configure-grafana/#auto_assign_org) are granted the **Viewer** role.
 - Assign the [**Admin** role](../../../administration/roles-and-permissions/access-control/assign-rbac-roles/#assign-rbac-roles) to Team C so that they can manage all resources in the instance.
 
 ### Design a folder structure to match your access needs
@@ -111,7 +111,7 @@ Grafana Cloud Frontend Observability resources in the stack, and the related per
 
 After you've made sure the model is working, codify it!
 
-You can add any new users to your Grafana instance with an Identity Provider through [SCIM](../../configure-scim-provisioning/manage-users-teams/#manage-users-and-teams-with-scim). Use [role sync](../../configure-security/configure-authentication/saml/configure-saml-team-role-mapping/#configure-role-sync-for-saml) to ensure everyone is automatically assigned to the right team based on their membership, including those with the Admin role.
+You can add any new users to your Grafana instance with an Identity Provider through [SCIM](../../configure-scim-provisioning/). Use [role sync](../../configure-security/configure-authentication/saml/configure-saml-team-role-mapping/#configure-role-sync-for-saml) to ensure everyone is automatically assigned to the right team based on their membership, including those with the Admin role.
 
 You can also use Terraform to provision teams their folders, fixed roles, and shared data source LBAC rules. For example, if you need to add a new team (Team D), you only need to add the new team to Grafana and run the Terraform script, which will automatically set them up to start using Grafana.
 
