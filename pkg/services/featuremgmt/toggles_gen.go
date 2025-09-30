@@ -95,6 +95,10 @@ const (
 	// populate star status from apiserver
 	FlagStarsFromAPIServer = "starsFromAPIServer"
 
+	// FlagKubernetesStars
+	// Routes stars requests from /api to the /apis endpoint
+	FlagKubernetesStars = "kubernetesStars"
+
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
 	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
@@ -178,10 +182,6 @@ const (
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
-
-	// FlagFeatureToggleAdminPage
-	// Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.
-	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
 
 	// FlagAwsAsyncQueryCaching
 	// Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
@@ -502,6 +502,10 @@ const (
 	// FlagQueryLibrary
 	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
+
+	// FlagDashboardLibrary
+	// Enable suggested dashboards when creating new dashboards
+	FlagDashboardLibrary = "dashboardLibrary"
 
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore

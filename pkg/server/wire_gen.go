@@ -547,10 +547,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	errorRegistry := pluginerrs.ProvideErrorTracker()
 	loaderLoader := loader.ProvideService(pluginManagementCfg, discovery, bootstrap, validate, initialize, terminate, errorRegistry)
-	pluginstoreService, err := pluginstore.ProvideService(inMemory, sourcesService, loaderLoader)
-	if err != nil {
-		return nil, err
-	}
+	pluginstoreService := pluginstore.ProvideService(inMemory, sourcesService, loaderLoader)
 	filestoreService := filestore.ProvideService(inMemory)
 	fileStoreManager := dashboards.ProvideFileStoreManager(pluginstoreService, filestoreService)
 	folderPermissionsService, err := ossaccesscontrol.ProvideFolderPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, folderimplService, acimplService, teamService, userService, actionSetService)
@@ -705,7 +702,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	searchHTTPService := searchV2.ProvideSearchHTTPService(searchService)
 	statsService := statsimpl.ProvideService(cfg, sqlStore, dashboardService, folderimplService, orgService, resourceClient, featureToggles)
 	gatherer := metrics.ProvideGatherer()
-	apiAPI := api3.ProvideApi(starService, dashboardService)
+	apiAPI := api3.ProvideApi(cfg, featureToggles, starService, eventualRestConfigProvider)
 	anonUserLimitValidatorImpl := validator2.ProvideAnonUserLimitValidator()
 	anonDeviceService := anonimpl.ProvideAnonymousDeviceService(usageStats, authnService, sqlStore, cfg, orgService, serverLockService, accessControl, routeRegisterImpl, anonUserLimitValidatorImpl)
 	signingkeysimplService, err := signingkeysimpl.ProvideEmbeddedSigningKeysService(sqlStore, secretsService, remoteCache, routeRegisterImpl)
@@ -810,13 +807,13 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	apiService := api4.ProvideService(cfg, routeRegisterImpl, accessControl, userService, authinfoimplService, ossGroups, identitySynchronizer, orgService, ldapImpl, userAuthTokenService, bundleregistryService)
 	dashboardsAPIBuilder := dashboard.RegisterAPIService(cfg, featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service15, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, resourceClient, dualwriteService, sortService, quotaService, libraryPanelService, eventualRestConfigProvider, userService)
 	snapshotsAPIBuilder := dashboardsnapshot.RegisterAPIService(serviceImpl, apiserverService, cfg, featureToggles, sqlStore, registerer)
-	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, accessControl, registerer)
+	dataSourceAPIBuilder, err := datasource.RegisterAPIService(configProvider, featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, accessControl, registerer)
 	if err != nil {
 		return nil, err
 	}
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, accessClient, registerer, resourceClient, zanzanaClient)
 	storageBackendImpl := noopstorage.ProvideStorageBackend()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, registerer, storageBackendImpl, storageBackendImpl)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, registerer, storageBackendImpl, storageBackendImpl, storageBackendImpl)
 	if err != nil {
 		return nil, err
 	}
@@ -1152,10 +1149,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	errorRegistry := pluginerrs.ProvideErrorTracker()
 	loaderLoader := loader.ProvideService(pluginManagementCfg, discovery, bootstrap, validate, initialize, terminate, errorRegistry)
-	pluginstoreService, err := pluginstore.ProvideService(inMemory, sourcesService, loaderLoader)
-	if err != nil {
-		return nil, err
-	}
+	pluginstoreService := pluginstore.ProvideService(inMemory, sourcesService, loaderLoader)
 	filestoreService := filestore.ProvideService(inMemory)
 	fileStoreManager := dashboards.ProvideFileStoreManager(pluginstoreService, filestoreService)
 	folderPermissionsService, err := ossaccesscontrol.ProvideFolderPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, folderimplService, acimplService, teamService, userService, actionSetService)
@@ -1312,7 +1306,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	searchHTTPService := searchV2.ProvideSearchHTTPService(searchService)
 	statsService := statsimpl.ProvideService(cfg, sqlStore, dashboardService, folderimplService, orgService, resourceClient, featureToggles)
 	gatherer := metrics.ProvideGathererForTest(registerer)
-	apiAPI := api3.ProvideApi(starService, dashboardService)
+	apiAPI := api3.ProvideApi(cfg, featureToggles, starService, eventualRestConfigProvider)
 	anonUserLimitValidatorImpl := validator2.ProvideAnonUserLimitValidator()
 	anonDeviceService := anonimpl.ProvideAnonymousDeviceService(usageStats, authnService, sqlStore, cfg, orgService, serverLockService, accessControl, routeRegisterImpl, anonUserLimitValidatorImpl)
 	signingkeysimplService, err := signingkeysimpl.ProvideEmbeddedSigningKeysService(sqlStore, secretsService, remoteCache, routeRegisterImpl)
@@ -1417,13 +1411,13 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	apiService := api4.ProvideService(cfg, routeRegisterImpl, accessControl, userService, authinfoimplService, ossGroups, identitySynchronizer, orgService, ldapImpl, userAuthTokenService, bundleregistryService)
 	dashboardsAPIBuilder := dashboard.RegisterAPIService(cfg, featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service15, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, resourceClient, dualwriteService, sortService, quotaService, libraryPanelService, eventualRestConfigProvider, userService)
 	snapshotsAPIBuilder := dashboardsnapshot.RegisterAPIService(serviceImpl, apiserverService, cfg, featureToggles, sqlStore, registerer)
-	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, accessControl, registerer)
+	dataSourceAPIBuilder, err := datasource.RegisterAPIService(configProvider, featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, accessControl, registerer)
 	if err != nil {
 		return nil, err
 	}
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, accessClient, registerer, resourceClient, zanzanaClient)
 	storageBackendImpl := noopstorage.ProvideStorageBackend()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, registerer, storageBackendImpl, storageBackendImpl)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, registerer, storageBackendImpl, storageBackendImpl, storageBackendImpl)
 	if err != nil {
 		return nil, err
 	}
