@@ -688,6 +688,7 @@ describe('DashboardSceneSerializer', () => {
         });
 
         expect(dashboard.getDynamicDashboardsTrackingInformation()).toEqual({
+          panelCount: 6,
           rowCount: 6,
           tabCount: 4,
           templateVariableCount: 2,

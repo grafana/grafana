@@ -501,7 +501,7 @@ export class V2DashboardSerializer
             return panelsAcc;
           }
 
-          panelSpec.data.spec.queries.reduce((queriesAcc, { spec: querySpec }) => {
+          return panelSpec.data.spec.queries.reduce((queriesAcc, { spec: querySpec }) => {
             if (!querySpec.query.datasource) {
               return queriesAcc;
             }
@@ -511,8 +511,6 @@ export class V2DashboardSerializer
 
             return queriesAcc;
           }, panelsAcc);
-
-          return panelsAcc;
         },
         {}
       ),
@@ -528,33 +526,33 @@ export class V2DashboardSerializer
   }
 
   private _parseDynamicDashboardsLayouts(
-    acc: DynamicDashboardsTrackingInformationLayoutParsing,
+    result: DynamicDashboardsTrackingInformationLayoutParsing,
     layout: DashboardV2Spec['layout'],
     nestingLevel: number,
     structureTarget: DynamicDashboardTrackingInformationStructureNode[]
   ): DynamicDashboardsTrackingInformationLayoutParsing {
-    acc.maxNestingLevel = Math.max(acc.maxNestingLevel, nestingLevel);
+    result.maxNestingLevel = Math.max(result.maxNestingLevel, nestingLevel);
 
     switch (layout.kind) {
       case 'GridLayout':
-        acc.customGridLayoutCount++;
-        acc.panelCount += layout.spec.items.length;
+        result.customGridLayoutCount++;
+        result.panelCount += layout.spec.items.length;
         structureTarget.push(...layout.spec.items.map(() => ({ kind: 'panel' })));
-        return acc;
+        return result;
 
       case 'AutoGridLayout':
-        acc.autoLayoutCount++;
-        acc.panelCount += layout.spec.items.length;
+        result.autoLayoutCount++;
+        result.panelCount += layout.spec.items.length;
         structureTarget.push(...layout.spec.items.map(() => ({ kind: 'panel' })));
-        acc.conditionalRenderRulesCount = layout.spec.items.reduce(
+        result.conditionalRenderRulesCount = layout.spec.items.reduce(
           (acc, item) => acc + (item.spec.conditionalRendering?.spec?.items?.length || 0),
-          acc.conditionalRenderRulesCount
+          result.conditionalRenderRulesCount
         );
-        return acc;
+        return result;
 
       case 'RowsLayout':
-        acc.rowsLayoutCount++;
-        acc.rowCount += layout.spec.rows.length;
+        result.rowsLayoutCount++;
+        result.rowCount += layout.spec.rows.length;
         const rowsNextingLevel = nestingLevel + 1;
         return layout.spec.rows.reduce((acc, row) => {
           acc.conditionalRenderRulesCount += row.spec.conditionalRendering?.spec?.items?.length || 0;
@@ -563,11 +561,11 @@ export class V2DashboardSerializer
           return !row.spec.layout
             ? acc
             : this._parseDynamicDashboardsLayouts(acc, row.spec.layout, rowsNextingLevel, children);
-        }, acc);
+        }, result);
 
       case 'TabsLayout':
-        acc.tabsLayoutCount++;
-        acc.tabCount += layout.spec.tabs.length;
+        result.tabsLayoutCount++;
+        result.tabCount += layout.spec.tabs.length;
         const tabsNextingLevel = nestingLevel + 1;
         return layout.spec.tabs.reduce((acc, tab) => {
           acc.conditionalRenderRulesCount += tab.spec.conditionalRendering?.spec?.items?.length || 0;
@@ -576,10 +574,10 @@ export class V2DashboardSerializer
           return !tab.spec.layout
             ? acc
             : this._parseDynamicDashboardsLayouts(acc, tab.spec.layout, tabsNextingLevel, children);
-        }, acc);
+        }, result);
 
       default:
-        return acc;
+        return result;
     }
   }
 }
