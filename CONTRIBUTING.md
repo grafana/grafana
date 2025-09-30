@@ -26,22 +26,13 @@ We welcome your technical contributions! You can contribute in several ways:
 
 **What you should bring:**
 - Follow our [developer guide](contribute/developer-guide.md) to set up your environment.
+- Set up your environment ([guide](contribute/developer-guide.md)).
 - Adhere to our [frontend](contribute/style-guides/frontend.md) and [backend](contribute/backend/style-guide.md) style guides.
-- Use [Emotion](contribute/style-guides/styling.md) for frontend styling.
 - Write or update tests ([testing guide](contribute/style-guides/testing.md)).
-- Run linting and formatting:  
-  - Install pre-commit hooks: `make lefthook-install`
-  - Lint/fix code: `yarn lint` and `yarn format`
-- Ensure your code passes all tests:
-  - Frontend: `yarn test`
-  - Backend: `go test -v ./pkg/...`
-  - End-to-end: `yarn e2e:playwright`
-- Prepare a clear, descriptive pull request ([how-to guide](contribute/create-pull-request.md)).
 
 **Step-by-step:**
 1. Pick an issue or feature ([help-wanted](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22)) or create a new issue to work on.
-1. Make sure your code follows the relevant [style guides](/contribute/style-guides).
-1. Set up your environment ([guide](contribute/developer-guide.md)).
+1. Prepare a clear, descriptive pull request ([how-to guide](contribute/create-pull-request.md)).
 1. Ensure you include and run the appropriate tests as part of your Pull Request.
 1. Commit and push your changes. If you encounter merge conflicts, you may rebase your branch onto the main branch.
 
