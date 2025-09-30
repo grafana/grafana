@@ -112,6 +112,10 @@ func init() {
 	sql.Register("sqlite3", &moderncDriver{Driver: &Driver{}})
 }
 
+func DriverType() string {
+	return "modernc.org/sqlite (CGO disabled)"
+}
+
 func IsBusyOrLocked(err error) bool {
 	var sqliteErr *sqlite.Error
 	if errors.As(err, &sqliteErr) {

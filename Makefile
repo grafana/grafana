@@ -17,6 +17,7 @@ GO_RACE_FLAG := $(if $(GO_RACE),-race)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(GO_RACE_FLAG)
+GO_BUILD_FLAGS += $(if $(GO_BUILD_CGO),-cgo-enabled=$(GO_BUILD_CGO))
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
 GIT_BASE = remotes/origin/main
 
