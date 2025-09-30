@@ -53,7 +53,7 @@ Follow these suggested steps to structure, configure and set permissions to acce
 
 For more information on how to install a Grafana instance:
 
-- If you’re using Grafana on-prem, see [Configure Grafana](./configure-grafana/).
+- If you’re using Grafana on-prem, see [Configure Grafana](../../configure-grafana/).
 - If you’re using Grafana Cloud, see [Your Grafana Cloud stack](https://grafana.com/docs/grafana-cloud/security-and-account-management/cloud-stacks).
 
 {{< admonition type="note" >}}
@@ -64,7 +64,7 @@ For guidance on when to use one stack vs. multiple, see [Stack architecture guid
 
 After you’ve deployed your Grafana instance:
 
-- To follow the example in this doc, create three [Grafana Teams](/administration/team-management/configure-grafana-teams/#create-a-grafana-team) and add them to the Grafana instance.
+- To follow the example in this doc, create three [Grafana Teams](../../administration/team-management/configure-grafana-teams/#create-a-grafana-team) and add them to the Grafana instance.
 - Determine the [RBAC strategy](/administration/roles-and-permissions/access-control/) for your organization. RBAC extends default Grafana roles, provides more access rights granularity, and simplifies how to grant, modify or revoke user access to Grafana resources, such as users and reports.
 - Assign each user to the [relevant team](/administration/ruser-management/manage-org-users/). By default [new users](configure-grafana/#auto_assign_org) are granted the **Viewer** role.
 - Assign the [**Admin** role](/administration/roles-and-permissions/access-control/assign-rbac-roles/#assign-rbac-roles) to Team C so that they can manage all resources in the instance.
