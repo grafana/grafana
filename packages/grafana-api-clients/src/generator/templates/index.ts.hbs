@@ -1,3 +1,5 @@
-import { generatedAPI } from './endpoints.gen';
+export { BASE_URL } from './baseAPI';
+import { generatedAPI as rawAPI } from './endpoints.gen';
 
-export const {{reducerPath}} = generatedAPI.enhanceEndpoints({});
+export * from './endpoints.gen';
+export const generatedAPI = rawAPI.enhanceEndpoints({});
