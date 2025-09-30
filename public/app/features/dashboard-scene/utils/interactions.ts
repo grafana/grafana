@@ -201,7 +201,11 @@ export const DashboardInteractions = {
   },
 };
 
-const reportDashboardInteraction: typeof reportInteraction = (name, properties, interactionPrefix = 'dashboards') => {
+const reportDashboardInteraction = (
+  name: string,
+  properties?: Record<string, unknown>,
+  interactionPrefix = 'dashboards'
+) => {
   const meta = isScenesContextSet ? { scenesView: true } : {};
   const isDynamicDashboard = config.featureToggles?.dashboardNewLayouts ?? false;
 

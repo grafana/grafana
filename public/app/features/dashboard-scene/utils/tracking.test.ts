@@ -43,7 +43,7 @@ describe('dashboard tracking', () => {
     it('should call report interaction with correct parameters when saving a new dashboard', async () => {
       const scene = buildTestScene();
       trackDashboardSceneCreatedOrSaved('created', scene, { name: 'new dashboard', url: 'new-url' });
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_created', {
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_created', {
         isDynamicDashboard: true,
         uid: 'dashboard-test',
         name: 'new dashboard',
