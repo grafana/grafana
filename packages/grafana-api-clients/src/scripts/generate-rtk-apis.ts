@@ -5,6 +5,9 @@ import path from 'path';
 // Grafana root path - navigate up from this script's directory
 const basePath = path.resolve(__dirname, '../../../..');
 
+/**
+ * Helper to return consistent base API generation config
+ */
 const getAPIConfig = (
   app: string,
   version: string,
@@ -64,7 +67,7 @@ const config: ConfigFile = {
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
     ...getAPIConfig('iam', 'v0alpha1', ['getDisplayMapping']),
-    ...getAPIConfig('provisioning', 'v0alpha1', filterEndpoints),
+    ...getAPIConfig('provisioning', 'v0alpha1', filterEndpoints, { hooks: true }),
     ...getAPIConfig('folder', 'v1beta1', undefined),
     ...getAPIConfig('advisor', 'v0alpha1', [
       'createCheck',
@@ -82,11 +85,11 @@ const config: ConfigFile = {
       'deletePlaylist',
       'replacePlaylist',
     ]),
-
     ...getAPIConfig('shorturl', 'v1alpha1'),
     ...getAPIConfig('rules.alerting', 'v0alpha1'),
-    ...getAPIConfig('preferences', 'v1alpha1'),
+    ...getAPIConfig('preferences', 'v1alpha1', undefined, { hooks: true }),
     ...getAPIConfig('dashboard', 'v0alpha1', ['getSearch']),
+    ...getAPIConfig('dashboard', 'v1beta1'),
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };
