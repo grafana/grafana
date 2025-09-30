@@ -11,11 +11,12 @@ import {
   DataSourceApi,
   DataQuery,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { Stack, Text, Icon, useTheme2, Spinner, Avatar, Button } from '@grafana/ui';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { useQueriesDrawerContext } from '../../explore/QueriesDrawer/QueriesDrawerContext';
+import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 
 // Interface for query items used in the SparkJoy section
 interface QueryItem {
@@ -23,7 +24,171 @@ interface QueryItem {
   query: DataQuery;
   uid: string;
   timestamp?: number;
+  createdBy?: string;
+  createdAt?: number;
+  userInfo?: {
+    displayName: string;
+    avatarURL: string;
+  };
 }
+
+// Interface for the saved queries API response
+interface SavedQueryAPIResponse {
+  items: Array<{
+    metadata: {
+      uid: string;
+      name?: string;
+      annotations?: {
+        'grafana.app/createdBy'?: string;
+      };
+      creationTimestamp?: string;
+    };
+    spec: {
+      title: string;
+      description?: string;
+      targets: DataQuery[];
+    };
+  }>;
+}
+
+// Interface for user display information
+interface UserDisplayInfo {
+  displayName: string;
+  avatarURL: string;
+  identity: {
+    type: string;
+    name: string;
+  };
+}
+
+// Function to fetch user display information
+const fetchUserDisplayInfo = async (userKey: string): Promise<UserDisplayInfo | null> => {
+  try {
+    const response = await getBackendSrv().get(
+      `apis/iam.grafana.app/v0alpha1/namespaces/stacks-42/display`,
+      { key: userKey }
+    );
+    return response;
+  } catch (error) {
+    console.error('Failed to fetch user display info:', error);
+    return null;
+  }
+};
+
+// Custom hook to fetch saved queries (similar to useListQueryQuery pattern)
+const useSavedQueries = (datasourceName?: string, limit = 4) => {
+  const [data, setData] = useState<QueryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    const fetchQueries = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        console.log('Fetching saved queries with datasourceName:', datasourceName, 'limit:', limit);
+        const response: SavedQueryAPIResponse = await getBackendSrv().get(
+          'apis/queries.grafana.app/v1beta1/namespaces/stacks-42/queries',
+          { limit: limit * 2 } // Fetch more to account for filtering
+        );
+        console.log('Saved queries API response:', response);
+
+        const filteredItems = response.items
+          .filter((item) => {
+            console.log('item', item);
+            // Filter by datasource if provided
+            if (datasourceName && item.spec.targets?.[0]?.datasource) {
+              const queryDatasource = item.spec.targets[0].datasource;
+              const dsName = typeof queryDatasource === 'string' ? queryDatasource : queryDatasource?.type;
+              return dsName === datasourceName;
+            }
+            return true;
+          })
+          .filter((item) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+            return (item.spec.targets?.[0] as any)?.properties !== undefined;
+          })
+          .slice(0, limit);
+
+        // Process queries first without user info to avoid blocking
+        const basicQueries = filteredItems.map((item) => ({
+          title: item.spec.title || 'Untitled query',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+          query: (item.spec.targets?.[0] as any)?.properties!,
+          uid: item.metadata.uid,
+          createdBy: item.metadata.annotations?.['grafana.app/createdBy'],
+          createdAt: item.metadata.creationTimestamp ? new Date(item.metadata.creationTimestamp).getTime() : undefined,
+          userInfo: undefined,
+        }));
+
+        // Set basic queries first so UI shows something immediately
+        setData(basicQueries);
+
+        // Then try to fetch user information for each query
+        try {
+          const processedQueries = await Promise.all(
+            filteredItems.map(async (item) => {
+              const createdBy = item.metadata.annotations?.['grafana.app/createdBy'];
+              let userInfo = undefined;
+
+              if (createdBy) {
+                try {
+                  console.log('Fetching user info for:', createdBy);
+                  const userDisplayInfo = await fetchUserDisplayInfo(createdBy);
+                  console.log('User display info response:', userDisplayInfo);
+                  if (userDisplayInfo) {
+                    // Convert relative avatar URL to full URL
+                    const response =  await getBackendSrv().get(
+          `apis/iam.grafana.app/v0alpha1/namespaces/stacks-42/display?key=${createdBy}`,
+                    );
+
+                    userInfo = {
+                      displayName:response.display[0].displayName,
+                      avatarURL:response.display[0].avatarURL,
+                    };
+                  }
+                } catch (userError) {
+                  console.warn('Failed to fetch user info for', createdBy, ':', userError);
+                  // Continue without user info rather than failing the whole query
+                }
+              }
+
+              return {
+                title: item.spec.title || 'Untitled query',
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+                query: (item.spec.targets?.[0] as any)?.properties!,
+                uid: item.metadata.uid,
+                createdBy,
+                createdAt: item.metadata.creationTimestamp ? new Date(item.metadata.creationTimestamp).getTime() : undefined,
+                userInfo,
+              };
+            })
+          );
+
+          // Update with full user info
+          console.log('Setting processed queries with user info:', processedQueries);
+          setData(processedQueries);
+        } catch (userFetchError) {
+          console.warn('Failed to fetch user info, using basic queries:', userFetchError);
+          // Keep the basic queries without user info
+        }
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error('Failed to fetch saved queries');
+        console.error('Failed to fetch saved queries:', error);
+        console.error('Error details:', err);
+        setError(error);
+        setData([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchQueries();
+  }, [datasourceName, limit]);
+
+  return { data, isLoading, error };
+};
 
 // Helper function to format timestamp
 const formatTimestamp = (timestamp: number): string => {
@@ -60,6 +225,9 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
   const theme = useTheme2();
   const [previewData, setPreviewData] = useState<PanelData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Debug logging
+  console.log('QueryCard props:', { query, isRecentQuery, timestamp, userInfo: query.userInfo, createdAt: query.createdAt });
 
   useEffect(() => {
     const fetchPreviewData = async () => {
@@ -285,19 +453,25 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
             )}
           </div>
         </div>
-
-        {isRecentQuery && timestamp && (
+        {((isRecentQuery && timestamp) || (!isRecentQuery && (query.userInfo || query.createdAt))) && (
           <div className={css(styles.rightSide)}>
             <div className={css(styles.userInfo)}>
               <Avatar
-                src={config.bootData.user.gravatarUrl}
-                alt={`${config.bootData.user.name} avatar`}
+                src={isRecentQuery ? config.bootData.user.gravatarUrl : (query.userInfo?.avatarURL || '')}
+                alt={`${isRecentQuery ? config.bootData.user.name : query.userInfo?.displayName} avatar`}
                 width={2}
                 height={2}
               />
-              <span className={css(styles.userName)}>You</span>
+              <span className={css(styles.userName)}>
+                {isRecentQuery ? 'You' : (query.userInfo?.displayName || 'Unknown user')}
+              </span>
             </div>
-            <div className={css(styles.timestamp)}>Last run {formatTimestamp(timestamp)}</div>
+            <div className={css(styles.timestamp)}>
+              {isRecentQuery
+                ? `Last run ${formatTimestamp(timestamp!)}`
+                : `Created ${formatTimestamp(query.createdAt!)}`
+              }
+            </div>
           </div>
         )}
       </div>
@@ -325,6 +499,14 @@ export const SparkJoySection = <TQuery extends DataQuery>({
   const theme = useTheme2();
   const [recentQueries, setRecentQueries] = useState<QueryItem[]>([]);
   const { setDrawerOpened } = useQueriesDrawerContext();
+  const { queryLibraryEnabled, openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
+
+  // Use the custom hook to fetch saved queries (similar to useListQueryQuery pattern)
+  const {
+    data: libraryQueries,
+    isLoading: isLoadingLibraryQueries,
+    error: libraryQueriesError
+  } = useSavedQueries(queryLibraryEnabled ? datasource.name : undefined, 4);
 
   useEffect(() => {
     // Process RichHistoryQuery items to get recent queries
@@ -404,22 +586,95 @@ export const SparkJoySection = <TQuery extends DataQuery>({
     }
   };
 
+  const handleLibraryQuerySelect = (query: DataQuery) => {
+    // Type assertion is safe here since TQuery extends DataQuery
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    handleQuerySelect(query as TQuery);
+  };
+
   return (
     <div className={css(styles.container)}>
       <div className={css(styles.columnsContainer)}>
         {/* Recommended Queries Column */}
         <div className={css(styles.column)}>
           <div className={css(styles.columnHeader)}>
-            <Icon name="thumbs-up" size="md" />
-            <Text variant="h5">Recommended queries</Text>
+             {/* <Icon name="thumbs-up" size="md" /> */}
+             <Text variant="h6">Recommended queries</Text>
           </div>
+
+          {queryLibraryEnabled ? (
+            <>
+              {isLoadingLibraryQueries ? (
+                <div className={css(styles.loadingState)}>
+                  <Spinner size={16} />
+                  <span>Loading saved queries...</span>
+                </div>
+              ) : libraryQueriesError ? (
+                <div className={css(styles.emptyState)}>
+                  Error loading saved queries
+                </div>
+              ) : libraryQueries.length > 0 ? (
+                <Stack direction="column" gap={1}>
+                  {libraryQueries.map((query, index) => (
+                    <QueryCard
+                      key={`${query.uid || index}-${query.userInfo ? 'with-user' : 'no-user'}`}
+                      query={query}
+                      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                      onClick={() => handleQuerySelect(query.query as TQuery)}
+                      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
+                      datasource={datasource as any}
+                      timeRange={timeRange}
+                      isRecentQuery={false}
+                      timestamp={query.createdAt}
+                    />
+                  ))}
+                  <div>
+                    <Button
+                      variant="secondary"
+                      onClick={() => openQueryLibraryDrawer({
+                        datasourceFilters: [datasource.name],
+                        onSelectQuery: handleLibraryQuerySelect,
+                        options: { context: 'explore' },
+                      })}
+                      size="md"
+                      icon="book"
+                    >
+                      Browse all saved queries
+                    </Button>
+                  </div>
+                </Stack>
+              ) : (
+                <div>
+                  <div className={css(styles.emptyState)}>
+                    No saved queries found
+                  </div>
+                  <Button
+                    variant="secondary"
+                    onClick={() => openQueryLibraryDrawer({
+                      datasourceFilters: [datasource.name],
+                      onSelectQuery: handleLibraryQuerySelect,
+                      options: { context: 'explore' },
+                    })}
+                    size="md"
+                    icon="book"
+                  >
+                    Browse saved queries
+                  </Button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className={css(styles.emptyState)}>
+              Query library not enabled
+            </div>
+          )}
         </div>
 
         {/* Recent Queries Column */}
         <div className={css(styles.column)}>
           <div className={css(styles.columnHeader)}>
-            <Icon name="history" size="md" />
-            <Text variant="h5">My recent queries</Text>
+            {/* <Icon name="history" size="md" /> */}
+            <Text variant="h6">My recent queries</Text>
           </div>
 
           {isLoadingHistory ? (
