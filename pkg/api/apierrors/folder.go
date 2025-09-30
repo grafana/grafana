@@ -10,7 +10,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -19,14 +18,10 @@ import (
 
 // ToFolderErrorResponse returns a different response status according to the folder error type
 func ToFolderErrorResponse(err error) response.Response {
+	// --- Dashboard errors ---
 	var dashboardErr dashboardaccess.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
 		return response.Error(dashboardErr.StatusCode, err.Error(), err)
-	}
-
-	var errutilErr errutil.Error
-	if errors.As(err, &errutilErr) {
-		return response.Error(errutilErr.Public().StatusCode, errutilErr.Public().Message, err)
 	}
 
 	// --- 400 Bad Request ---
@@ -59,13 +54,13 @@ func ToFolderErrorResponse(err error) response.Response {
 		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": dashboards.ErrFolderVersionMismatch.Error()})
 	}
 
-	// Handle generic Kubernetes status errors.
+	// --- Kubernetes status errors ---
 	var statusErr *k8sErrors.StatusError
 	if errors.As(err, &statusErr) {
 		return response.Error(int(statusErr.ErrStatus.Code), statusErr.ErrStatus.Message, err)
 	}
 
-	return response.Error(http.StatusInternalServerError, fmt.Sprintf("Folder API error: %s", err.Error()), err)
+	return response.ErrOrFallback(http.StatusInternalServerError, fmt.Sprintf("Folder API error: %s", err.Error()), err)
 }
 
 func ToFolderStatusError(err error) k8sErrors.StatusError {

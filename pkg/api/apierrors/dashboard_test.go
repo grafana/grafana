@@ -46,18 +46,21 @@ func TestToDashboardErrorResponse(t *testing.T) {
 		input       error
 		want        response.Response
 	}{
-		{
-			name:        "dashboard error with a non-bad-request status",
-			pluginStore: pluginStoreWithoutPlugin,
-			input:       dashboardaccess.DashboardErr{Reason: "Not Found", StatusCode: http.StatusNotFound},
-			want:        response.Error(http.StatusNotFound, "Not Found", dashboardaccess.DashboardErr{Reason: "Not Found", StatusCode: http.StatusNotFound}),
-		},
+		// --- 400 Bad Request ---
 		{
 			name:        "dashboard error with a bad-request status",
 			pluginStore: pluginStoreWithoutPlugin,
 			input:       dashboardaccess.DashboardErr{Reason: "Bad Request", StatusCode: http.StatusBadRequest},
 			want:        response.Error(http.StatusBadRequest, "Bad Request", nil),
 		},
+		// --- 403 Forbidden ---
+		{
+			name:        "dashboard error with a forbidden status",
+			pluginStore: pluginStoreWithoutPlugin,
+			input:       &k8sErrors.StatusError{ErrStatus: metav1.Status{Code: http.StatusForbidden, Message: "access denied"}},
+			want:        response.Error(http.StatusForbidden, "access denied", &k8sErrors.StatusError{ErrStatus: metav1.Status{Code: http.StatusForbidden, Message: "access denied"}}),
+		},
+		// --- 404 Not Found ---
 		{
 			name:        "folder not found error",
 			pluginStore: pluginStoreWithoutPlugin,
@@ -65,29 +68,49 @@ func TestToDashboardErrorResponse(t *testing.T) {
 			want:        response.Error(http.StatusBadRequest, dashboards.ErrFolderNotFound.Error(), nil),
 		},
 		{
+			name:        "dashboard error with a non-bad-request status",
+			pluginStore: pluginStoreWithoutPlugin,
+			input:       dashboardaccess.DashboardErr{Reason: "Not Found", StatusCode: http.StatusNotFound},
+			want:        response.Error(http.StatusNotFound, "Not Found", dashboardaccess.DashboardErr{Reason: "Not Found", StatusCode: http.StatusNotFound}),
+		},
+		{
 			name:        "plugin dashboard error where plugin is found",
 			pluginStore: pluginStoreWithPlugin,
 			input:       dashboards.UpdatePluginDashboardError{PluginId: "test-plugin"},
 			want:        response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "plugin-dashboard", "message": "The dashboard belongs to plugin Test Plugin."}),
 		},
+		// --- 412 Precondition Failed ---
 		{
 			name:        "plugin dashboard error where plugin is not found",
 			pluginStore: pluginStoreWithoutPlugin,
 			input:       dashboards.UpdatePluginDashboardError{PluginId: "unknown-plugin"},
 			want:        response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "plugin-dashboard", "message": "The dashboard belongs to plugin unknown-plugin."}),
 		},
+		// --- 413 Payload Too Large ---
 		{
 			name:        "request entity too large error",
 			pluginStore: pluginStoreWithoutPlugin,
 			input:       k8sErrors.NewRequestEntityTooLargeError("request is too large"),
 			want:        response.Error(http.StatusRequestEntityTooLarge, fmt.Sprintf("Dashboard is too large, max is %d MB", apiserver.MaxRequestBodyBytes/1024/1024), k8sErrors.NewRequestEntityTooLargeError("request is too large")),
 		},
+		// --- Kubernetes status errors ---
 		{
 			name:        "kubernetes status error",
 			pluginStore: pluginStoreWithoutPlugin,
-			input:       &k8sErrors.StatusError{ErrStatus: metav1.Status{Code: http.StatusForbidden, Message: "access denied"}},
-			want:        response.Error(http.StatusForbidden, "access denied", &k8sErrors.StatusError{ErrStatus: metav1.Status{Code: http.StatusForbidden, Message: "access denied"}}),
+			input: &k8sErrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    412,
+					Message: "the dashboard has been changed by someone else",
+				},
+			},
+			want: response.Error(412, "the dashboard has been changed by someone else", &k8sErrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    412,
+					Message: "the dashboard has been changed by someone else",
+				},
+			}),
 		},
+		// --- 500 Internal Server Error ---
 		{
 			name:        "fallback error for an unknown error",
 			pluginStore: pluginStoreWithoutPlugin,
