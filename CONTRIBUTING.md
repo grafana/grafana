@@ -72,7 +72,7 @@ For data visualization issues:
 
 For dashboard related issues:
 
-- Dashboard JSON can be found in the dashboard settings JSON model view
+- Dashboard JSON can be found in the dashboard settings JSON model view. You can [send the panel JSON model](https://grafana.com/docs/grafana/latest/troubleshooting/send-panel-to-grafana-support/) to Grafana Labs Technical Support and request help with troubleshooting your issue.
 
 For authentication and alerting, Grafana server logs are useful.
 
