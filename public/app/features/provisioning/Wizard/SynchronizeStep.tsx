@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { memo, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
@@ -25,6 +25,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({
   onCancel,
   isCancelling,
 }: SynchronizeStepProps) {
+  const [retryAttempt, setRetryAttempt] = useState(0);
   const { getValues, register, watch } = useFormContext<WizardFormData>();
   const { setStepStatusInfo } = useStepStatus();
   const [repoName = '', repoType] = watch(['repositoryName', 'repository.type']);
@@ -47,11 +48,16 @@ export const SynchronizeStep = memo(function SynchronizeStep({
 
   // healthStatusNotReady: If the repository is not yet ready (e.g., initial setup), synchronization cannot be started.
   // User can potentially fail at this step if they click too fast and repo is not ready.
-  const healthStatusNotReady = true;
+  const healthStatusNotReady =
+    repositoryStatusQuery?.data?.status?.health.healthy === false &&
+    repositoryStatusQuery?.data?.status?.observedGeneration === 0;
 
   const hasError = repositoryStatusQuery.isError;
   const isLoading = repositoryStatusQuery.isLoading || repositoryStatusQuery.isFetching;
   const isButtonDisabled = hasError || (checked !== undefined && isRepositoryHealthy === false) || healthStatusNotReady;
+
+  const MAX_RETRY_ATTEMPTS = 5;
+  const RETRY_INTERVAL_MS = 5000;
 
   const startSynchronization = async () => {
     const [history] = getValues(['migrate.history']);
@@ -60,6 +66,27 @@ export const SynchronizeStep = memo(function SynchronizeStep({
       setJob(response);
     }
   };
+
+  // Auto-retry mechanism
+  useEffect(() => {
+    if (!healthStatusNotReady || retryAttempt >= MAX_RETRY_ATTEMPTS || isLoading) {
+      return;
+    }
+
+    const timerId = setTimeout(() => {
+      setRetryAttempt((prev) => prev + 1);
+      repositoryStatusQuery.refetch();
+    }, RETRY_INTERVAL_MS);
+
+    return () => clearTimeout(timerId);
+  }, [healthStatusNotReady, retryAttempt, isLoading, repositoryStatusQuery]);
+
+  // Reset retry count when repository becomes healthy
+  useEffect(() => {
+    if (!healthStatusNotReady) {
+      setRetryAttempt(0);
+    }
+  }, [healthStatusNotReady]);
 
   if (isLoading) {
     return <Spinner />;
@@ -158,9 +185,8 @@ export const SynchronizeStep = memo(function SynchronizeStep({
       {healthStatusNotReady ? (
         <>
           <Stack>
-            <Spinner />{' '}
             <Trans i18nKey="provisioning.wizard.check-status-message">
-              Repository connecting, synchronize will be ready soon...
+              Repository connecting, synchronize will be ready soon.
             </Trans>
           </Stack>
           <Stack>
