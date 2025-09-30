@@ -140,9 +140,8 @@ func (c *LegacyAccessClient) Check(ctx context.Context, id claims.AuthInfo, req 
 		return claims.CheckResponse{}, err
 	}
 
-	if folder != "" {
-		fmt.Printf("TODO, check that we can XXX in the folder context")
-	}
+	// NOTE: folder is looked up again in the evaluator:
+	// pkg/services/accesscontrol/acimpl/accesscontrol.go#L77
 
 	return claims.CheckResponse{Allowed: allowed}, nil
 }
