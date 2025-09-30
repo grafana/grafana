@@ -45,8 +45,9 @@ export function RadialBarSegmented({
   const segments: React.ReactNode[] = [];
   const theme = useTheme2();
 
-  const segmentCountAdjusted = getOptimalSegmentCount(size, segmentCount, barWidth, segmentSpacing, margin);
   const range = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
+  const segmentCountAdjusted = getOptimalSegmentCount(size, segmentCount, barWidth, segmentSpacing, margin, range);
+
   let angle = ((value - min) / (max - min)) * range;
 
   if (angle > range) {
@@ -65,8 +66,8 @@ export function RadialBarSegmented({
   for (let i = 0; i < segmentCountAdjusted; i++) {
     const angleValue = ((max - min) / segmentCountAdjusted) * i;
     const angleColor = getColorForValue(angleValue);
-    const segmentAngle = (360 / segmentCountAdjusted) * i + 0.01;
-    const segmentColor = segmentAngle > angle ? theme.colors.action.hover : angleColor;
+    const segmentAngle = startAngle + (range / segmentCountAdjusted) * i + 0.01;
+    const segmentColor = angleValue > value ? theme.colors.action.hover : angleColor;
 
     segments.push(
       <RadialSegmentArcPath
@@ -78,9 +79,9 @@ export function RadialBarSegmented({
         barWidth={barWidth}
         glow={glow}
         margin={margin}
-        segmentWidth={segmentSpacing}
+        segmentSpacing={segmentSpacing}
         roundedBars={size > 100}
-        arcLengthDeg={360 / segmentCountAdjusted}
+        arcLengthDeg={range / segmentCountAdjusted}
       />
     );
   }
@@ -98,7 +99,7 @@ export interface RadialSegmentProps {
   roundedBars?: boolean;
   glow?: boolean;
   margin: number;
-  segmentWidth: number;
+  segmentSpacing: number;
   arcLengthDeg: number;
 }
 
@@ -112,12 +113,12 @@ export function RadialSegmentArcPath({
   roundedBars,
   glow,
   margin,
-  segmentWidth,
+  segmentSpacing,
   arcLengthDeg,
 }: RadialSegmentProps) {
   const arcSize = size - barWidth;
   const radius = arcSize / 2 - margin;
-  const spacingAngle = getAngleBetweenSegments(segmentWidth, size);
+  const spacingAngle = getAngleBetweenSegments(segmentSpacing, size);
 
   const startRadians = (Math.PI * (angle - 90)) / 180;
   let endRadians = (Math.PI * (angle + arcLengthDeg - 90 - spacingAngle)) / 180;
@@ -159,12 +160,13 @@ function getOptimalSegmentCount(
   segmentCount: number,
   barWidth: number,
   segmentSpacing: number,
-  margin: number
+  margin: number,
+  range: number
 ) {
   const angleBetweenSegments = getAngleBetweenSegments(segmentSpacing, size);
 
   const innerRadius = (size - barWidth) / 2 - margin;
-  const circumference = Math.PI * innerRadius * 2;
+  const circumference = Math.PI * innerRadius * 2 * (range / 360);
   const maxSegments = Math.floor(circumference / (angleBetweenSegments + 3));
 
   return Math.min(maxSegments, segmentCount);

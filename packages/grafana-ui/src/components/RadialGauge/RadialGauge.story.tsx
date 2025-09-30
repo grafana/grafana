@@ -230,6 +230,18 @@ export const Examples: StoryFn = (args) => {
           segmentCount={20}
           barWidthFactor={0.4}
         />
+        <RadialBarExample
+          value={70}
+          {...args}
+          gradient="scheme"
+          colorMode={FieldColorModeId.ContinuousGrYlRd}
+          spotlight
+          shape="gauge"
+          glowBar={true}
+          glowCenter={true}
+          segmentCount={20}
+          barWidthFactor={0.4}
+        />
       </Stack>
     </Stack>
   );
@@ -254,7 +266,16 @@ MultiSeries.args = {
 export const Temp: StoryFn<StoryProps> = (args) => {
   return (
     <Stack direction={'column'} gap={3}>
-      <RadialBarExample {...args} gradient="scheme" colorMode={FieldColorModeId.ContinuousReds} color="red" />
+      <RadialBarExample
+        {...args}
+        gradient="scheme"
+        colorMode={FieldColorModeId.ContinuousReds}
+        color="red"
+        shape="gauge"
+        roundedBars={false}
+        barWidthFactor={0.8}
+        spotlight
+      />
     </Stack>
   );
 };
@@ -382,7 +403,7 @@ function RadialBarExample({
 
 function getExtraSeries(seriesCount: number, colorMode: FieldColorModeId, theme: GrafanaTheme2) {
   const fields: Field[] = [];
-  const colors = ['blue', 'green', 'purple', 'orange', 'red'];
+  const colors = ['blue', 'green', 'purple', 'orange', 'yellow'];
 
   for (let i = 0; i < seriesCount; i++) {
     fields.push({
