@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { memo, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Card, Stack, Text, Box } from '@grafana/ui';
+import { useStyles2, Stack, Text, Box, Card } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { useSearchStateManager } from '../../search/state/SearchStateManager';
@@ -12,13 +12,14 @@ import { MostPopularDashboards } from './MostPopularDashboards';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { MostPopularFolders } from './MostPopularFolders';
 import { RecentVisited } from './RecentVisited';
-import { AIRecommendedDashboards } from './AIRecommendedDashboards';
+import { SearchResults } from './SearchResults';
 import { 
   useGetRecentDashboardsAndFolders, 
   useGetPopularDashboards, 
   useGetPopularFolders 
 } from 'app/features/dashboard/api/popularResourcesApi';
 import { CosmicSceneIcon } from './CosmicSceneIcon';
+import { AIRecommendedDashboards } from './AIRecommendedDashboards';
 
 // Content section that shows fun empty state or the three components
 const ContentSection = () => {
@@ -61,7 +62,7 @@ const ContentSection = () => {
               </div>
             </Stack> */}
 
-            {/* <AIRecommendedDashboards /> */}
+            <AIRecommendedDashboards />
 
             {/* Getting started cards */}
             <div className={styles.actionCards}>
@@ -132,48 +133,6 @@ const HackathonBrowseDashboardsPage = memo(
       stateManager.onQueryChange(value);
     };
 
-    // Render search results as simple list
-    const renderSearchResults = () => {
-      if (searchState.loading) {
-        return <Text>Loading...</Text>;
-      }
-
-      if (!searchState.result) {
-        return <Text>No search performed yet. Placeholder here.</Text>;
-      }
-
-      const results = [];
-      const view = searchState.result.view;
-
-      for (let i = 0; i < Math.min(view.length, 20); i++) {
-        // Limit to first 20 results
-        const item = view.get(i);
-        results.push(item);
-      }
-
-      if (results?.length === 0) {
-        return <Text>No results found for "{searchState.query}"</Text>;
-      }
-
-      return (
-        <div className={styles.results}>
-          {/* Simple text format */}
-          <div className={styles.textResults}>
-            <Text weight="medium">Plain Text Format:</Text>
-            {results.map((item, index) => (
-              <div key={`${item.uid}-${index}`} className={styles.resultItem}>
-                <Text>
-                  {index + 1}. <strong>{item.name}</strong> ({item.kind}){item.location && ` - ${item.location}`}
-                  {item.tags?.length > 0 && ` - Tags: ${item.tags.join(', ')}`}
-                  {item.url && ` - URL: ${item.url}`}
-                </Text>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    };
-
     return (
       <Page
         navId="dashboards/browse"
@@ -214,12 +173,7 @@ const HackathonBrowseDashboardsPage = memo(
 
         {isSearching ? (
           <div className={styles.contentContainer}>
-            <div className={styles.container}>
-              <Stack>
-                <Text variant="h3">Search Results: "{searchState.query || 'none'}"</Text>
-              </Stack>
-              <Card className={styles.resultsCard}>{renderSearchResults()}</Card>
-            </div>
+            <SearchResults searchState={searchState} query={searchState.query || ''} />
           </div>
         ) : (
           <ContentSection />
@@ -424,49 +378,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(2),
     maxWidth: '1000px',
     margin: '0 auto',
-  }),
-
-  resultsCard: css({
-    padding: theme.spacing(3),
-    maxHeight: '70vh',
-    overflow: 'auto',
-  }),
-
-  results: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(2),
-  }),
-
-  textResults: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
-    marginBottom: theme.spacing(2),
-  }),
-
-  resultItem: css({
-    padding: theme.spacing(1),
-    borderLeft: `3px solid ${theme.colors.primary.main}`,
-    paddingLeft: theme.spacing(2),
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.default,
-  }),
-
-  jsonResults: css({
-    marginTop: theme.spacing(2),
-  }),
-
-  jsonPre: css({
-    backgroundColor: theme.colors.background.secondary,
-    border: `1px solid ${theme.colors.border.medium}`,
-    borderRadius: theme.shape.radius.default,
-    padding: theme.spacing(2),
-    fontSize: theme.typography.bodySmall.fontSize,
-    overflow: 'auto',
-    maxHeight: '400px',
-    whiteSpace: 'pre-wrap',
-    wordWrap: 'break-word',
   }),
 });
 

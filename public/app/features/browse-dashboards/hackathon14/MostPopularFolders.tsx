@@ -114,10 +114,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     '&:hover': {
       transform: 'translateY(-4px)',
-      boxShadow: '0 8px 16px rgba(236, 72, 153, 0.2)',
+      boxShadow: '0 8px 16px rgba(236, 72, 153, 0.18)',
 
       '&::before': {
-        opacity: 0.6,
+        opacity: 0.45,
       },
     },
   }),

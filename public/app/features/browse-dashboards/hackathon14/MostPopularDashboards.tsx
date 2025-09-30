@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Stack, Text, useStyles2, Icon, Grid, Spinner, useTheme2 } from '@grafana/ui';
+import { Card, Stack, Text, useStyles2, Icon, Grid, Spinner, useTheme2, Button, ButtonGroup } from '@grafana/ui';
 import { config } from '@grafana/runtime';
 import { useGetPopularDashboards } from 'app/features/dashboard/api/popularResourcesApi';
 import { useState } from 'react';
@@ -55,13 +55,11 @@ const DashboardThumbnail = ({ url, alt }: DashboardThumbnailProps) => {
 export const MostPopularDashboards = () => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-  const { data, isLoading, error } = useGetPopularDashboards({
-    limit: 4,
+  const [viewMode, setViewMode] = useState<'thumbnail' | 'list'>('thumbnail');
+  const { data, isLoading } = useGetPopularDashboards({
+    limit: 10,
     period: '30d',
   });
-
-  // Debug logging
-  console.log('Popular Dashboards API Response:', { data, isLoading, error });
 
   const handleResourceClick = (resource: any) => {
     // Navigate to the resource URL
@@ -94,7 +92,7 @@ export const MostPopularDashboards = () => {
 
   return (
     <div>
-      <Stack direction="row" gap={2} alignItems="center">
+      <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
         <div>
           <div className={styles.headerTitle}>
             <Icon name="chart-line" size="lg" className={styles.headerIcon} style={{ marginRight: '4px' }} />
@@ -104,6 +102,22 @@ export const MostPopularDashboards = () => {
             Trending in your organization
           </Text>
         </div>
+        <ButtonGroup>
+          <Button
+            icon="apps"
+            variant={viewMode === 'thumbnail' ? 'primary' : 'secondary'}
+            onClick={() => setViewMode('thumbnail')}
+            tooltip="Thumbnail view"
+            size="sm"
+          />
+          <Button
+            icon="list-ul"
+            variant={viewMode === 'list' ? 'primary' : 'secondary'}
+            onClick={() => setViewMode('list')}
+            tooltip="List view"
+            size="sm"
+          />
+        </ButtonGroup>
       </Stack>
 
       <div className={styles.container}>
@@ -114,41 +128,70 @@ export const MostPopularDashboards = () => {
         )}
 
         {data && data.resources?.length > 0 && (
-          <Grid gap={2} columns={{ xs: 1, sm: 2, md: 3, lg: 4 }}>
-            {data.resources.map((resource) => {
-              const thumbnailUrl = getThumbnailUrl(resource);
+          <>
+            {viewMode === 'thumbnail' ? (
+              <Grid gap={2} columns={{ xs: 1, sm: 2, md: 3, lg: 4 }}>
+                {data.resources.map((resource) => {
+                  const thumbnailUrl = getThumbnailUrl(resource);
 
-              return (
-                <Card key={resource.uid} className={styles.clickableCard} onClick={() => handleResourceClick(resource)}>
-                  <Stack direction="column" gap={0}>
-                    {/* Dashboard Thumbnail */}
-                    {thumbnailUrl && (
-                      <div className={styles.thumbnailContainer}>
-                        <DashboardThumbnail url={thumbnailUrl} alt={resource.title} />
-                      </div>
-                    )}
+                  return (
+                    <Card
+                      key={resource.uid}
+                      className={styles.clickableCard}
+                      onClick={() => handleResourceClick(resource)}
+                    >
+                      <Stack direction="column" gap={0}>
+                        {/* Dashboard Thumbnail */}
+                        {thumbnailUrl && (
+                          <div className={styles.thumbnailContainer}>
+                            <DashboardThumbnail url={thumbnailUrl} alt={resource.title} />
+                          </div>
+                        )}
 
-                    <div className={styles.cardContent}>
+                        <div className={styles.cardContent}>
+                          <Stack direction="row" gap={2} alignItems="center">
+                            <Text weight="medium">{resource.title}</Text>
+                          </Stack>
+
+                          <Stack direction="row" justifyContent="space-between" alignItems="center">
+                            <Text variant="bodySmall" color="secondary">
+                              Last visited
+                            </Text>
+                            <Text variant="bodySmall">{new Date(resource.lastVisited).toLocaleDateString()}</Text>
+                          </Stack>
+                        </div>
+                      </Stack>
+                    </Card>
+                  );
+                })}
+              </Grid>
+            ) : (
+              <div className={styles.listView}>
+                {data.resources.map((resource) => (
+                  <Card
+                    key={resource.uid}
+                    className={styles.listCard}
+                    onClick={() => handleResourceClick(resource)}
+                  >
+                    <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
                       <Stack direction="row" gap={2} alignItems="center">
-                        {/* <Icon 
-                          name={getResourceIcon(resource.resourceType)} 
-                          className={styles.resourceIcon} 
-                        /> */}
-                        <Text weight="medium">{resource.title}</Text>
+                        <Icon name="apps" size="lg" className={styles.listIcon} />
+                        <div>
+                          <Text weight="medium">{resource.title}</Text>
+                          <Text variant="bodySmall" color="secondary">
+                            {resource.visitCount} visits
+                          </Text>
+                        </div>
                       </Stack>
-
-                      <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Text variant="bodySmall" color="secondary">
-                          Last visited
-                        </Text>
-                        <Text variant="bodySmall">{new Date(resource.lastVisited).toLocaleDateString()}</Text>
-                      </Stack>
-                    </div>
-                  </Stack>
-                </Card>
-              );
-            })}
-          </Grid>
+                      <Text variant="bodySmall" color="secondary">
+                        {new Date(resource.lastVisited).toLocaleDateString()}
+                      </Text>
+                    </Stack>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </>
         )}
 
         {/* TODO: show default dashboards list */}
@@ -251,10 +294,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     '&:hover': {
       transform: 'translateY(-6px)',
-      boxShadow: '0 12px 24px rgba(99, 102, 241, 0.3)',
+      boxShadow: '0 12px 24px rgba(99, 102, 241, 0.25)',
 
       '&::before': {
-        opacity: 0.8,
+        opacity: 0.45,
       },
     },
   }),
@@ -279,5 +322,50 @@ const getStyles = (theme: GrafanaTheme2) => ({
   emptyCard: css({
     textAlign: 'center',
     padding: theme.spacing(4),
+  }),
+
+  listView: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1.5),
+  }),
+
+  listCard: css({
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    position: 'relative',
+    border: '2px solid transparent',
+
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: -2,
+      left: -2,
+      right: -2,
+      bottom: -2,
+      borderRadius: theme.shape.radius.default,
+      padding: '2px',
+      background: 'linear-gradient(90deg, #f59e0b, #ef4444, #ec4899, #8b5cf6, #6366f1)',
+      WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+      WebkitMaskComposite: 'xor',
+      maskComposite: 'exclude',
+      opacity: 0,
+      transition: 'opacity 0.3s ease',
+      zIndex: -1,
+    },
+
+    '&:hover': {
+      transform: 'translateY(-2px)',
+      boxShadow: '0 4px 12px rgba(99, 102, 241, 0.18)',
+
+      '&::before': {
+        opacity: 0.45,
+      },
+    },
+  }),
+
+  listIcon: css({
+    color: '#6366f1',
+    flexShrink: 0,
   }),
 });

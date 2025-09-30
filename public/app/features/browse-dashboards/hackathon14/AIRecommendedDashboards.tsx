@@ -359,16 +359,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
       WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
       WebkitMaskComposite: 'xor',
       maskComposite: 'exclude',
-      opacity: 0.6,
+      opacity: 0.3,
       transition: 'opacity 0.3s ease',
     },
     
     '&:hover': {
       transform: 'translateY(-4px)',
-      boxShadow: '0 8px 24px rgba(217, 70, 239, 0.3)',
+      boxShadow: '0 8px 24px rgba(217, 70, 239, 0.25)',
       
       '&::before': {
-        opacity: 1,
+        opacity: 0.5,
       },
     },
   }),
