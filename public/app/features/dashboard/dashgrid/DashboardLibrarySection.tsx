@@ -29,7 +29,7 @@ export const DashboardLibrarySection = () => {
 
     const dashboards = await getBackendSrv().get(`api/plugins/${ds.type}/dashboards`);
     if (dashboards.length > 0) {
-      reportInteraction('grafana_dashboard_empty_page_template_dashboards_loaded', {
+      reportInteraction('dashboard_library_loaded', {
         count: dashboards.length,
         datasource: ds.type,
       });
@@ -39,7 +39,7 @@ export const DashboardLibrarySection = () => {
   }, [initialDatasource]);
 
   const onImportDashboardClick = async (dashboard: PluginDashboard) => {
-    reportInteraction('grafana_dashboard_empty_page_template_dashboard_clicked', {
+    reportInteraction('dashboard_library_clicked', {
       id: dashboard.uid,
       title: dashboard.title,
       datasource: dashboard.pluginId,
