@@ -143,7 +143,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
   const isClusteredStacked = opts.isClusteredStacked;
   let { clusterWidth, groupWidth, barWidth, barRadius = 0 } = opts;
 
-  if (isStacked || isClusteredStacked) {
+  if (isStacked || isClusteredStacked && groupByField) {
     [groupWidth, barWidth] = [barWidth, groupWidth];
   }
 
