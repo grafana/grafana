@@ -91,7 +91,7 @@ export function prepSeries(
   if (timeFieldIdx >= 0 && frames.length > 1) {
     frame = outerJoinDataFrames({ frames, keepDisplayNames: true }) ?? frame;
   }
-  
+
   const groupMatcher = getFieldMatcher({ id: FieldMatcherID.byName, options: groupByField});
   const xFieldMatcher = getFieldMatcher({ id: FieldMatcherID.byName, options: xFieldName });
   const stringMatcher = getFieldMatcher({ id: FieldMatcherID.byType, options: FieldType.string });
