@@ -54,10 +54,8 @@ export function addAnnotationOptions<
     category,
     name: t('grafana-ui.builder.annotations.region-opacity', 'Region opacity'),
     description: t('grafana-ui.builder.annotations.desc.region-opacity', 'Sets the annotation region opacity'),
-    showIf: (currentOptions) => {
-      return currentOptions.annotations?.showRegions;
-    },
-    defaultValue: 60,
+    showIf: (currentOptions) => currentOptions.annotations?.showRegions,
+    defaultValue: 10,
     settings: {
       min: 0,
       max: 100,

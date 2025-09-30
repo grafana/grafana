@@ -156,12 +156,15 @@ export const AnnotationsPlugin2 = ({
       ctx.save();
 
       ctx.beginPath();
-      ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
-      ctx.clip();
+      console.log('annos.length', annos.length, annos);
+      const additionalHeight = annotationsConfig?.multiLane ? annos.length * ANNOTATION_LANE_SIZE : 0;
+      ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height + additionalHeight);
+      // ctx.clip();
 
       // Multi-lane annotations do not support vertical lines or shaded regions
-      if (!annotationsConfig?.multiLane) {
-        annos.forEach((frame) => {
+      if (!annotationsConfig?.multiLane || annotationsConfig.showRegions || annotationsConfig.showLine) {
+        annos.forEach((frame, frameIdx) => {
+          const verticalOffset = annotationsConfig?.multiLane ? frameIdx * ANNOTATION_LANE_SIZE * 2 : 0;
           let vals = getVals(frame);
 
           if (frame.name === 'xymark') {
@@ -170,29 +173,31 @@ export const AnnotationsPlugin2 = ({
             let xKey = config.scales[0].props.scaleKey;
             let yKey = config.scales[1].props.scaleKey;
 
-            for (let i = 0; i < frame.length; i++) {
-              let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
+            if (annotationsConfig?.showLine !== false) {
+              for (let i = 0; i < frame.length; i++) {
+                let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
 
-              let x0 = u.valToPos(vals.xMin[i], xKey, true);
-              let x1 = u.valToPos(vals.xMax[i], xKey, true);
-              let y0 = u.valToPos(vals.yMax[i], yKey, true);
-              let y1 = u.valToPos(vals.yMin[i], yKey, true);
+                let x0 = u.valToPos(vals.xMin[i], xKey, true);
+                let x1 = u.valToPos(vals.xMax[i], xKey, true);
+                let y0 = u.valToPos(vals.yMax[i], yKey, true);
+                let y1 = u.valToPos(vals.yMin[i], yKey, true);
 
-              ctx.fillStyle = colorManipulator.alpha(color, vals.fillOpacity[i]);
-              ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+                ctx.fillStyle = colorManipulator.alpha(color, vals.fillOpacity[i]);
+                ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
 
-              ctx.lineWidth = Math.round(vals.lineWidth[i] * uPlot.pxRatio);
+                ctx.lineWidth = Math.round(vals.lineWidth[i] * uPlot.pxRatio);
 
-              if (vals.lineStyle[i] === 'dash') {
-                // maybe extract this to vals.lineDash[i] in future?
-                ctx.setLineDash([5, 5]);
-              } else {
-                // solid
-                ctx.setLineDash([]);
+                if (vals.lineStyle[i] === 'dash') {
+                  // maybe extract this to vals.lineDash[i] in future?
+                  ctx.setLineDash([5, 5]);
+                } else {
+                  // solid
+                  ctx.setLineDash([]);
+                }
+
+                ctx.strokeStyle = color;
+                ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
               }
-
-              ctx.strokeStyle = color;
-              ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
             }
           } else {
             let y0 = u.bbox.top;
@@ -200,22 +205,30 @@ export const AnnotationsPlugin2 = ({
 
             ctx.lineWidth = 2;
             ctx.setLineDash([5, 5]);
+            if (annotationsConfig?.showRegions !== false || annotationsConfig.showLine !== false) {
+              for (let i = 0; i < vals.time.length; i++) {
+                let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
 
-            for (let i = 0; i < vals.time.length; i++) {
-              let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
+                let x0 = u.valToPos(vals.time[i], 'x', true);
+                if (annotationsConfig?.showLine !== false) {
+                  renderLine(ctx, y0, y1 + verticalOffset, x0, color);
+                }
 
-              let x0 = u.valToPos(vals.time[i], 'x', true);
-              renderLine(ctx, y0, y1, x0, color);
+                // If dataframe does not have end times, let's omit rendering the region for now to prevent runtime error in valToPos
+                // @todo do we want to fix isRegion to render a point (or use "to" as timeEnd) when we're missing timeEnd?
+                if (vals.isRegion?.[i] && vals.timeEnd?.[i]) {
+                  let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
+                  if (annotationsConfig?.showLine !== false) {
+                    renderLine(ctx, y0, y1 + verticalOffset, x1, color);
+                  }
 
-              // If dataframe does not have end times, let's omit rendering the region for now to prevent runtime error in valToPos
-              // @todo do we want to fix isRegion to render a point (or use "to" as timeEnd) when we're missing timeEnd?
-              if (vals.isRegion?.[i] && vals.timeEnd?.[i]) {
-                let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
-                renderLine(ctx, y0, y1, x1, color);
-
-                if (canvasRegionRendering) {
-                  ctx.fillStyle = colorManipulator.alpha(color, 0.1);
-                  ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
+                  if (canvasRegionRendering && annotationsConfig?.showRegions !== false) {
+                    const regionOpacity = annotationsConfig?.regionOpacity
+                      ? annotationsConfig?.regionOpacity / 100
+                      : 0.1;
+                    ctx.fillStyle = colorManipulator.alpha(color, regionOpacity);
+                    ctx.fillRect(x0, y0, x1 - x0, u.bbox.height + verticalOffset);
+                  }
                 }
               }
             }
