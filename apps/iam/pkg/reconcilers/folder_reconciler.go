@@ -211,7 +211,7 @@ func validateFolder(folder *foldersKind.Folder) error {
 
 func getFolderParent(ctx context.Context, folder *foldersKind.Folder) (string, error) {
 	tracer := otel.GetTracerProvider().Tracer("iam-folder-reconciler")
-	ctx, span := tracer.Start(ctx, "get-folder-parent",
+	_, span := tracer.Start(ctx, "get-folder-parent",
 		trace.WithAttributes(
 			attribute.String("folder.uid", folder.Name),
 		),
