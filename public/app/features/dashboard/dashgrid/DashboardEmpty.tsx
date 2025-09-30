@@ -19,12 +19,14 @@ import { useDispatch, useSelector } from 'app/types/store';
 
 import { setInitialDatasource } from '../state/reducers';
 
+import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
+
 export interface Props {
   dashboard: DashboardModel | DashboardScene;
   canCreate: boolean;
 }
 
-const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
+const InternalDashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
@@ -149,6 +151,14 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     </Stack>
   );
 };
+
+// We pass the default empty UI through to the extension point so that the extension can conditionally render it if needed, and while loading.
+// For example, an extension might want to render custom UI for a specific experiment cohort, and the default UI for everyone else.
+const DashboardEmpty = (props: Props) => (
+  <DashboardEmptyExtensionPoint>
+    <InternalDashboardEmpty {...props} />
+  </DashboardEmptyExtensionPoint>
+);
 
 export default DashboardEmpty;
 

@@ -1894,6 +1894,16 @@ var (
 			Expression:        "false", // extensions will be disabled by default
 		},
 		{
+			Name:              "enableDashboardEmptyExtensions",
+			Description:       "Set this to true to enable all dashboard empty state extensions registered by plugins.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+			Expression:        "false", // extensions will be disabled by default
+		},
+		{
 			Name:              "foldersAppPlatformAPI",
 			Description:       "Enables use of app platform API for folders",
 			Stage:             FeatureStageExperimental,
