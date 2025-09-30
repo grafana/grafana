@@ -634,7 +634,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 }
 
 func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptions) {
-	if b.resourcePermissionsSvc == nil {
+	if util.IsInterfaceNil(b.resourcePermissionsSvc) {
 		return
 	}
 
