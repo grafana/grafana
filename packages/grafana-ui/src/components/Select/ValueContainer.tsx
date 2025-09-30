@@ -76,5 +76,5 @@ class UnthemedValueContainer<Option, isMulti extends boolean, Group extends Grou
   }
 }
 
-// TODO: type this properly
-export const ValueContainer: React.FC<ValueContainerProps<any, any, any>> = withTheme2(UnthemedValueContainer);
+export const ValueContainer: React.FC<ValueContainerProps<unknown, boolean, GroupBase<unknown>>> =
+  withTheme2(UnthemedValueContainer);
