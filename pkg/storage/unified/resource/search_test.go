@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -30,10 +31,12 @@ type MockResourceIndex struct {
 
 	updateIndexMu    sync.Mutex
 	updateIndexCalls []string
+
+	buildInfo IndexBuildInfo
 }
 
 func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
-	return IndexBuildInfo{}, nil
+	return m.buildInfo, nil
 }
 
 func (m *MockResourceIndex) BulkIndex(req *BulkIndexRequest) error {
@@ -215,7 +218,6 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 		},
 	}
 
-	// Create search support with the specified initMaxSize
 	opts := SearchOptions{
 		Backend:       search,
 		Resources:     supplier,
@@ -272,7 +274,6 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 		},
 	}
 
-	// Create search support with the specified initMaxSize
 	opts := SearchOptions{
 		Backend:       search,
 		Resources:     supplier,
@@ -324,7 +325,6 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 		},
 	}
 
-	// Create search support with the specified initMaxSize
 	opts := SearchOptions{
 		Backend:       search,
 		Resources:     supplier,
@@ -499,40 +499,103 @@ func TestShouldRebuildIndex(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			res := shouldRebuildIndex(slog.New(&logtest.NopHandler{}), tc.buildInfo, tc.minTime, tc.minBuildVersion)
+			res := shouldRebuildIndex(tc.minBuildVersion, tc.buildInfo, tc.minTime, slog.New(&logtest.NopHandler{}))
 			require.Equal(t, tc.expected, res)
 		})
 	}
 }
 
-//func TestFindIndexesForRebuild(t *testing.T) {
-//	// Setup mock implementations
-//	storage := &mockStorageBackend{
-//		resourceStats: []ResourceStats{
-//			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
-//		},
-//	}
-//	search := &mockSearchBackend{}
-//	supplier := &TestDocumentBuilderSupplier{
-//		GroupsResources: map[string]string{
-//			"group": "resource",
-//		},
-//	}
-//
-//	// Create search support with the specified initMaxSize
-//	opts := SearchOptions{
-//		Backend:       search,
-//		Resources:     supplier,
-//		WorkerThreads: 1,
-//		InitMinCount:  1, // set min count to default for this test
-//
-//		MinBuildVersion: semver.MustParse("10.15.20"),
-//		MaxIndexAge:     1 * time.Hour,
-//	}
-//
-//	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil)
-//	require.NoError(t, err)
-//	require.NotNil(t, support)
-//
-//	support.findIndexesToRebuild()
-//}
+func TestFindIndexesForRebuild(t *testing.T) {
+	storage := &mockStorageBackend{
+		resourceStats: []ResourceStats{
+			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
+		},
+	}
+
+	now := time.Now()
+
+	search := &mockSearchBackend{
+		openIndexes: []NamespacedResource{
+			{Namespace: "resource-2h-v5", Group: "group", Resource: "folder"},
+			{Namespace: "resource-2h-v6", Group: "group", Resource: "folder"},
+			{Namespace: "resource-10h-v5", Group: "group", Resource: "folder"},
+			{Namespace: "resource-10h-v6", Group: "group", Resource: "folder"},
+			{Namespace: "resource-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
+			{Namespace: "resource-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
+			{Namespace: "resource-2h-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
+			{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
+
+			// We report this index as open, but it's really not. This can happen if index expires between the call
+			// to GetOpenIndexes and the call to GetIndex.
+			{Namespace: "ns", Group: "group", Resource: "missing"},
+		},
+
+		cache: map[NamespacedResource]ResourceIndex{
+			// To be rebuilt because of minVersion
+			{Namespace: "resource-2h-v5", Group: "group", Resource: "folder"}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour), BuildVersion: semver.MustParse("5.0.0")},
+			},
+
+			// Not rebuilt
+			{Namespace: "resource-2h-v6", Group: "group", Resource: "folder"}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour), BuildVersion: semver.MustParse("6.0.0")},
+			},
+
+			// To be rebuilt because of minTime
+			{Namespace: "resource-10h-v5", Group: "group", Resource: "folder"}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-10 * time.Hour), BuildVersion: semver.MustParse("5.0.0")},
+			},
+
+			// To be rebuilt because of minTime
+			{Namespace: "resource-10h-v6", Group: "group", Resource: "folder"}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-10 * time.Hour), BuildVersion: semver.MustParse("6.0.0")},
+			},
+
+			// To be rebuilt because of minVersion
+			{Namespace: "resource-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now, BuildVersion: semver.MustParse("5.0.0")},
+			},
+
+			// Not rebuilt
+			{Namespace: "resource-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now, BuildVersion: semver.MustParse("6.0.0")},
+			},
+
+			// To be rebuilt because of minTime (1h for dashboards)
+			{Namespace: "resource-2h-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour), BuildVersion: semver.MustParse("5.0.0")},
+			},
+
+			// To be rebuilt because of minTime (1h for dashboards)
+			{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour), BuildVersion: semver.MustParse("6.0.0")},
+			},
+		},
+	}
+
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{
+			"group": "resource",
+		},
+	}
+
+	opts := SearchOptions{
+		Backend:   search,
+		Resources: supplier,
+
+		DashboardIndexMaxAge: 1 * time.Hour,
+		MaxIndexAge:          5 * time.Hour,
+		MinBuildVersion:      semver.MustParse("5.5.5"),
+	}
+
+	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, support)
+
+	support.findIndexesToRebuild(context.Background())
+	require.Equal(t, 6, support.rebuildQueue.Len())
+
+	// Running findIndexesToRebuild again should not add any new indexes to the rebuild queue, and all existing ones should be "combined" with new ones.
+	support.findIndexesToRebuild(context.Background())
+	require.Equal(t, 6, support.rebuildQueue.Len())
+}

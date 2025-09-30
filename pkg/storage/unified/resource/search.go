@@ -520,6 +520,8 @@ func (s *searchSupport) stop() {
 }
 
 func (s *searchSupport) startPeriodicRebuild(ctx context.Context) {
+	defer s.bgTaskWg.Done()
+
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
 
@@ -567,7 +569,7 @@ func (s *searchSupport) findIndexesToRebuild(ctx context.Context) {
 			continue
 		}
 
-		if shouldRebuildIndex(slog.New(nil /* TODO */), bi, minBuildTime, s.minBuildVersion) {
+		if shouldRebuildIndex(s.minBuildVersion, bi, minBuildTime, nil) {
 			s.rebuildQueue.Add(rebuildRequest{
 				NamespacedResource: key,
 				minBuildTime:       minBuildTime,
@@ -618,7 +620,7 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		l.Error("failed to get build info for index to rebuild", "error", err)
 	}
 
-	rebuild := shouldRebuildIndex(l, bi, req.minBuildTime, req.minBuildVersion)
+	rebuild := shouldRebuildIndex(req.minBuildVersion, bi, req.minBuildTime, l)
 	if err != nil {
 		span.RecordError(err)
 		l.Error("failed to check if index should be rebuilt", "error", err)
@@ -661,17 +663,21 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	return
 }
 
-func shouldRebuildIndex(l *slog.Logger, buildInfo IndexBuildInfo, minBuildTime time.Time, minBuildVersion *semver.Version) bool {
+func shouldRebuildIndex(minBuildVersion *semver.Version, buildInfo IndexBuildInfo, minBuildTime time.Time, rebuildLogger *slog.Logger) bool {
 	if !minBuildTime.IsZero() {
 		if buildInfo.BuildTime.IsZero() || buildInfo.BuildTime.Before(minBuildTime) {
-			l.Info("index build time is before minBuildTime, rebuilding the index", "indexBuildTime", buildInfo.BuildTime, "minBuildTime", minBuildTime)
+			if rebuildLogger != nil {
+				rebuildLogger.Info("index build time is before minBuildTime, rebuilding the index", "indexBuildTime", buildInfo.BuildTime, "minBuildTime", minBuildTime)
+			}
 			return true
 		}
 	}
 
 	if minBuildVersion != nil {
 		if buildInfo.BuildVersion == nil || buildInfo.BuildVersion.Compare(minBuildVersion) < 0 {
-			l.Info("index build version is before minBuildVersion, rebuilding the index", "indexBuildVersion", buildInfo.BuildVersion, "minBuildVersion", minBuildVersion)
+			if rebuildLogger != nil {
+				rebuildLogger.Info("index build version is before minBuildVersion, rebuilding the index", "indexBuildVersion", buildInfo.BuildVersion, "minBuildVersion", minBuildVersion)
+			}
 			return true
 		}
 	}
