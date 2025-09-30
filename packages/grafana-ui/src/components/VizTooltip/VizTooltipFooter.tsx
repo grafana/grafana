@@ -1,20 +1,23 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { ActionModel, Field, GrafanaTheme2, LinkModel, ThemeSpacingTokens } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { ActionButton } from '../Actions/ActionButton';
 import { Button } from '../Button/Button';
 import { DataLinkButton } from '../DataLinks/DataLinkButton';
+import { Dropdown } from '../Dropdown/Dropdown';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 import { ResponsiveProp } from '../Layout/utils/responsiveness';
+import { Menu } from '../Menu/Menu';
 import { AdHocFilterItem } from '../Table/TableNG/types';
 
 export interface AdHocFilterModel extends AdHocFilterItem {
   onClick: () => void;
+  displayName?: string;
 }
 
 interface VizTooltipFooterProps {
@@ -89,6 +92,11 @@ export const VizTooltipFooter = ({ dataLinks, actions = [], annotate, adHocFilte
   const styles = useStyles2(getStyles);
   const hasOneClickLink = useMemo(() => dataLinks.some((link) => link.oneClick === true), [dataLinks]);
   const hasOneClickAction = useMemo(() => actions.some((action) => action.oneClick === true), [actions]);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const onFilterToggle = useCallback((open: boolean) => {
+    setIsFilterOpen(open);
+  }, []);
 
   return (
     <div className={styles.wrapper}>
@@ -96,13 +104,44 @@ export const VizTooltipFooter = ({ dataLinks, actions = [], annotate, adHocFilte
       {!hasOneClickLink && renderActions(actions, styles)}
       {!hasOneClickLink && !hasOneClickAction && adHocFilters.length > 0 && (
         <div className={styles.footerSection}>
-          {adHocFilters.map((item, index) => (
-            <Button key={index} icon="filter" variant="secondary" size="sm" onClick={item.onClick}>
-              <Trans i18nKey="grafana-ui.viz-tooltip.footer-filter-for-value">
-                Filter for '{{ value: item.value }}'
+          {adHocFilters.length === 1 ? (
+            <Button icon="filter" variant="secondary" size="sm" onClick={adHocFilters[0].onClick}>
+              <Trans i18nKey="grafana-ui.viz-tooltip.footer-filter-for-field-value">
+                Filter for {{ value: adHocFilters[0].value }}
               </Trans>
             </Button>
-          ))}
+          ) : (
+            <Dropdown
+              overlay={
+                <Menu>
+                  {adHocFilters.map((item, index) => (
+                    <Menu.Item
+                      key={index}
+                      label={t(
+                        'grafana-ui.viz-tooltip.footer-filter-for-field-value',
+                        'Filter {{ fieldName }} for {{ value }}',
+                        {
+                          fieldName: item.displayName || item.key,
+                          value: item.value,
+                        }
+                      )}
+                      icon="filter"
+                      onClick={item.onClick}
+                    />
+                  ))}
+                </Menu>
+              }
+              placement="bottom-start"
+              onVisibleChange={onFilterToggle}
+            >
+              <Button icon="filter" variant="secondary" size="sm" aria-haspopup="menu" aria-expanded={isFilterOpen}>
+                <Stack direction="row" alignItems="center" gap={0.5}>
+                  <Trans i18nKey="grafana-ui.viz-tooltip.footer-filter-options">Filter options</Trans>
+                  <Icon name={isFilterOpen ? 'angle-up' : 'angle-down'} size="sm" aria-hidden="true" />
+                </Stack>
+              </Button>
+            </Dropdown>
+          )}
         </div>
       )}
       {!hasOneClickLink && !hasOneClickAction && annotate != null && (

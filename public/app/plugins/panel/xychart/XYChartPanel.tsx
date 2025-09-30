@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { colorManipulator, FALLBACK_COLOR, PanelProps } from '@grafana/data';
+import { colorManipulator, FALLBACK_COLOR, Field, PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
+  AdHocFilterItem,
   TooltipDisplayMode,
   TooltipPlugin2,
   UPlotChart,
@@ -14,7 +15,12 @@ import {
   useTheme2,
   usePanelContext,
 } from '@grafana/ui';
-import { getDisplayValuesForCalcs, TooltipHoverMode } from '@grafana/ui/internal';
+import {
+  AdHocFilterModel,
+  FILTER_FOR_OPERATOR,
+  getDisplayValuesForCalcs,
+  TooltipHoverMode,
+} from '@grafana/ui/internal';
 
 import { getDataLinks } from '../status-history/utils';
 
@@ -29,7 +35,7 @@ export const XYChartPanel2 = (props: Props2) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
-  const { canExecuteActions } = usePanelContext();
+  const { canExecuteActions, onAddAdHocFilter } = usePanelContext();
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   let { mapping, series: mappedSeries } = props.options;
@@ -121,7 +127,55 @@ export const XYChartPanel2 = (props: Props2) => {
                 const xySeries = series[seriesIdx - 1];
                 return getDataLinks(xySeries.y.field, dataIdx);
               }}
-              render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks) => {
+              getAdHocFilters={(seriesIdx, dataIdx) => {
+                if (seriesIdx === 0 || !series[seriesIdx - 1]) {
+                  return [];
+                }
+
+                if (!config.featureToggles.adhocFiltersInTooltips || onAddAdHocFilter == null) {
+                  return [];
+                }
+
+                const xySeries = series[seriesIdx - 1];
+                const adHocFilters: AdHocFilterModel[] = [];
+
+                // Helper function to add filter for a field if it's filterable
+                const addFilterForField = (field: Field) => {
+                  if (field?.config.filterable && !field.config.custom?.hideFrom?.tooltip) {
+                    const adHocFilterItem: AdHocFilterItem = {
+                      key: field.name,
+                      operator: FILTER_FOR_OPERATOR,
+                      value: String(field.values[dataIdx]),
+                    };
+
+                    adHocFilters.push({
+                      ...adHocFilterItem,
+                      displayName: field.state?.displayName || field.name,
+                      onClick: () => onAddAdHocFilter(adHocFilterItem),
+                    });
+                  }
+                };
+
+                // Add filters for all filterable fields that are shown in the tooltip
+                addFilterForField(xySeries.x.field);
+                addFilterForField(xySeries.y.field);
+
+                if (xySeries.size.field) {
+                  addFilterForField(xySeries.size.field);
+                }
+
+                if (xySeries.color.field) {
+                  addFilterForField(xySeries.color.field);
+                }
+
+                // Add filters for any additional fields in _rest
+                xySeries._rest?.forEach((field) => {
+                  addFilterForField(field);
+                });
+
+                return adHocFilters;
+              }}
+              render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks, adHocFilters) => {
                 return (
                   <XYChartTooltip
                     data={props.data.series}
@@ -132,6 +186,7 @@ export const XYChartPanel2 = (props: Props2) => {
                     seriesIdx={seriesIdx!}
                     replaceVariables={props.replaceVariables}
                     dataLinks={dataLinks}
+                    adHocFilters={adHocFilters}
                     canExecuteActions={userCanExecuteActions}
                   />
                 );

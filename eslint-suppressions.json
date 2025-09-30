@@ -968,11 +968,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/VizTooltip/VizTooltipFooter.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 2
-    }
-  },
   "packages/grafana-ui/src/components/uPlot/Plot.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
