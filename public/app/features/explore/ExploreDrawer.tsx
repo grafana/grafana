@@ -37,7 +37,7 @@ export function ExploreDrawer(props: Props) {
         topLeft: false,
       }}
       maxWidth="80vw"
-      minWidth="300px"
+      minWidth="800px"
       onResize={onResize}
     >
       {children}
