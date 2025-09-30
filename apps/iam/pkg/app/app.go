@@ -79,7 +79,6 @@ func New(cfg app.Config) (app.App, error) {
 
 	folderReconciler, err := reconcilers.NewFolderReconciler(reconcilers.ReconcilerConfig{
 		ZanzanaCfg: appSpecificConfig.ZanzanaClientCfg,
-		KubeConfig: &cfg.KubeConfig,
 		Metrics:    metrics,
 	})
 	if err != nil {
