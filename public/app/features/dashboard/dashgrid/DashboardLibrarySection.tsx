@@ -8,9 +8,9 @@ import { getBackendSrv, getDataSourceSrv, locationService, reportInteraction } f
 import { Button, useStyles2, Text, Box, Stack } from '@grafana/ui';
 import { PluginDashboard } from 'app/types/plugins';
 import { useSelector } from 'app/types/store';
-import templateDashboard1 from 'img/template-dashboards/template_dashboard_1.png';
-import templateDashboard2 from 'img/template-dashboards/template_dashboard_2.png';
-import templateDashboard3 from 'img/template-dashboards/template_dashboard_3.png';
+import dashboardLibrary1 from 'img/dashboard-library/dashboard_library_1.png';
+import dashboardLibrary2 from 'img/dashboard-library/dashboard_library_2.png';
+import dashboardLibrary3 from 'img/dashboard-library/dashboard_library_3.png';
 
 export const DashboardLibrarySection = () => {
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
@@ -111,15 +111,13 @@ const TemplateDashboardBox = ({
   onImportClick: (d: PluginDashboard) => void;
   index: number;
 }) => {
-  const templateDashboardImages = [templateDashboard1, templateDashboard2, templateDashboard3];
+  const dashboardLibraryImages = [dashboardLibrary1, dashboardLibrary2, dashboardLibrary3];
 
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.provisionedDashboardBox}>
       <img
-        src={
-          index <= 2 ? templateDashboardImages[index] : templateDashboardImages[index % templateDashboardImages.length]
-        }
+        src={index <= 2 ? dashboardLibraryImages[index] : dashboardLibraryImages[index % dashboardLibraryImages.length]}
         width={177}
         height={150}
         alt={dashboard.title}
@@ -145,7 +143,7 @@ function getStyles(theme: GrafanaTheme2, dashboardsLength?: number) {
       width: '177px',
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(3),
+      gap: theme.spacing(2),
       alignItems: 'center',
     }),
     privisionedDashboardSection: css({
@@ -162,10 +160,11 @@ function getStyles(theme: GrafanaTheme2, dashboardsLength?: number) {
       objectFit: 'cover',
     }),
     dashboardGrid: css({
+      marginTop: theme.spacing(2),
       display: 'grid',
       gridTemplateColumns: '1fr',
-      columnGap: theme.spacing(6),
-      rowGap: theme.spacing(4),
+      columnGap: theme.spacing(8),
+      rowGap: theme.spacing(5),
       justifyItems: 'center',
 
       [theme.breakpoints.up('md')]: {
