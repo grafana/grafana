@@ -29,26 +29,24 @@ Using Git Sync, you can:
 
 ## How it works
 
-Because dashboards are defined in JSON files, you can enable as-code workflows where the JSON is an utput from Go, TypeScript, or another coding language in the format of a dashboard schema. To learn more about creating dashboards in a coding language to provision them for Git Sync, refer to the [Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/foundation-sdk) documentation.
+Because dashboards are defined in JSON files, you can enable as-code workflows where the JSON is an output from Go, TypeScript, or another coding language in the format of a dashboard schema. To learn more about creating dashboards in a coding language to provision them for Git Sync, refer to the [Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/foundation-sdk) documentation.
 
 Git Sync is bidirectional and also works with changes done directly in GitHub as well as within the Grafana UI.
 
 ### Making changes in Grafana 
 
-Whenever you modify a dashboard, Grafana can commit changes to Git upon saving: 
+Whenever you modify a dashboard directly from the UI, Grafana can commit changes to Git upon saving. You can configure settings to either enforce PR approvals before merging in your repository, or allow direct commits.
 
-- You can configure settings to either enforce PR approvals before merging or allow direct commits.
-- Grafana periodically polls GitHub at a regular internal to synchronize any changes.
-    - With the webhooks feature enabled, repository notifications appear almost immediately.
-    - Without webhooks, Grafana polls for changes at the specified interval.
-- The default polling interval is 60 seconds.
+Grafana periodically polls GitHub at a regular internal to synchronize any changes.
+  
+  - With the webhooks feature enabled, repository notifications appear almost immediately.
+  - Without webhooks, Grafana polls for changes at the specified interval.
+
+The default polling interval is 60 seconds.
 
 ### Making changes in your GitHub repositories
 
-With Git Sync, you can make changes in your provisioned files in GitHub and see them in Grafana: 
-
-- Automated workflows ensure those changes are automatically represented in the Grafana database by updating Git.
-- The Grafana UI reads the database and updates the UI to reflect these changes.
+With Git Sync, you can make changes in your provisioned files in GitHub and see them in Grafana. Automated workflows ensure those changes are automatically represented in the Grafana database by updating Git. The Grafana UI reads the database and updates the UI to reflect these changes.
 
 ## Known limitations
 
@@ -71,14 +69,16 @@ Additionally, having a detailed history of changes enhances compliance efforts, 
 
 ### Automated deployment and CI/CD integration
 
-Teams can streamline their workflow by integrating dashboard updates into their CI/CD pipelines.
-By pushing changes to GitHub, automated processes can trigger validation checks, test dashboard configurations, and deploy updates programmatically using the `grafanactl` CLI and Foundation SDK.
+Teams can streamline their workflow by integrating dashboard updates into their CI/CD pipelines. By pushing changes to GitHub, automated processes can trigger validation checks, test dashboard configurations, and deploy updates programmatically using the `grafanactl` CLI and Foundation SDK.
+
 This reduces the risk of human errors, ensures consistency across environments, and enables a faster, more reliable release cycle for dashboards used in production monitoring and analytics.
 
 ### Collaborative dashboard development
 
 With Git Sync, multiple users can work on dashboards simultaneously without overwriting each other’s modifications.
-By leveraging pull requests and branch-based workflows, teams can submit changes for review before merging them into the main branch. This process not only improves quality control but also ensures that dashboards adhere to best practices and organizational standards. Additionally, GitHub’s built-in discussion and review tools facilitate effective collaboration, making it easier to address feedback before changes go live.
+By leveraging pull requests and branch-based workflows, teams can submit changes for review before merging them into the main branch. This process not only improves quality control but also ensures that dashboards adhere to best practices and organizational standards. 
+
+Additionally, GitHub’s built-in discussion and review tools facilitate effective collaboration, making it easier to address feedback before changes go live.
 
 ### Multi-environment synchronization
 
@@ -90,6 +90,4 @@ By using Git Sync, teams can automate deployments across environments, eliminati
 
 By continuously syncing dashboards to GitHub, organizations can create an always-updated backup, ensuring dashboards are never lost due to accidental deletion or system failures.
 
-If an issue arises, such as a corrupted dashboard, unintended modification, or a system crash, teams can quickly restore the latest functional version from the Git repository.
-
-This not only minimizes downtime but also adds a layer of resilience to Grafana monitoring setups, ensuring critical dashboards remain available when needed.
+If an issue arises, such as a corrupted dashboard, unintended modification, or a system crash, teams can quickly restore the latest functional version from the Git repository. This not only minimizes downtime but also adds a layer of resilience to Grafana monitoring setups, ensuring critical dashboards remain available when needed.
