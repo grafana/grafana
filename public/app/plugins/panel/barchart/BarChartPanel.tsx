@@ -70,7 +70,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
         // auto max length clamps to half viz height, subracts 3 chars for ... ellipsis
         Math.floor(height / 2 / Math.sin(Math.abs(xTickLabelRotation * toRads)) / charWidth - 3);
 
-      
+  // TODO: config data links
   const info = useMemo(
     () => prepSeries(data.series, fieldConfig, stacking, isClusteredStacked, theme, xField, colorByField, groupByField),
     [data.series, fieldConfig, stacking, isClusteredStacked, theme, xField, colorByField, groupByField]

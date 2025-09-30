@@ -112,7 +112,7 @@ export function getStackingGroups(frame: DataFrame) {
     }
 
     let { mode: stackingMode, group: stackingGroup } = stacking;
-    
+
     // not stacking
     if (stackingMode === StackingMode.None && !clusteredStacking) {
       return;
@@ -191,7 +191,6 @@ export function preparePlotData2(
     });
   });
 
-
   frame.fields.forEach((field, i) => {
     let vals = field.values;
 
@@ -245,7 +244,7 @@ export function preparePlotData2(
           stacked[i] = groupValsAtX[i] ? accum[i] : v;
         }
       }
-    } 
+    }
   });
 
   if (onStackMeta) {
@@ -266,7 +265,7 @@ export function preparePlotData2(
     }
 
     let stackingMode = field.config.custom?.stacking?.mode;
-    
+
     if (stackingMode === StackingMode.Percent) {
       let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
       let accum = accums[stackIdx];

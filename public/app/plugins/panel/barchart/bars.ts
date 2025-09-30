@@ -159,8 +159,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
   // for distr: 2 scales, the splits array should contain indices into data[0] rather than values
   const xSplits: Axis.Splits | undefined = (u) => Array.from(u.data[0].map((v, i) => i));
 
-  
-
   const hFilter: Axis.Filter | undefined =
     xSpacing === 0
       ? undefined
@@ -220,7 +218,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldI
   };
 
   // this expands the distr: 2 scale so that the indicies of each data[0] land at the proper justified positions
-  const xRange: Scale.Range = (u, min, max) => {    
+  const xRange: Scale.Range = (u, min, max) => {
     min = 0;
 
     let pctOffset = 0;

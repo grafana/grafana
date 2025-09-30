@@ -19,7 +19,6 @@ import { TickSpacingEditor } from './TickSpacingEditor';
 import { changeToBarChartPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
-// import { Data } from 'ol/DataTile';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
   .setPanelChangeHandler(changeToBarChartPanelMigrationHandler)

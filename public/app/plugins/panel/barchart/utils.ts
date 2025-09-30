@@ -4,12 +4,14 @@ import {
   DataFrame,
   Field,
   FieldConfigSource,
+  FieldMatcherID,
   FieldType,
   GrafanaTheme2,
   cacheFieldDisplayNames,
   formattedValueToString,
   getDisplayProcessor,
   getFieldColorModeForField,
+  getFieldMatcher,
   getFieldSeriesColor,
   outerJoinDataFrames,
 } from '@grafana/data';
@@ -48,7 +50,6 @@ interface BarSeries {
   color?: Field | null;
   warn?: string | null;
 }
-
 
 export function prepSeries(
   frames: DataFrame[],
@@ -91,11 +92,14 @@ export function prepSeries(
     frame = outerJoinDataFrames({ frames, keepDisplayNames: true }) ?? frame;
   }
   
-  const xField =
-    // TODO: use matcher
-    frame.fields.find((field) => field.state?.displayName === groupByField || field.name === groupByField) ??
-    frame.fields.find((field) => field.state?.displayName === xFieldName || field.name === xFieldName) ??
-    frame.fields.find((field) => field.type === FieldType.string) ??
+  const groupMatcher = getFieldMatcher({ id: FieldMatcherID.byName, options: groupByField});
+  const xFieldMatcher = getFieldMatcher({ id: FieldMatcherID.byName, options: xFieldName });
+  const stringMatcher = getFieldMatcher({ id: FieldMatcherID.byType, options: FieldType.string });
+
+  let xField =
+    frame.fields.find(f => groupMatcher(f, frame, [frame])) ??
+    frame.fields.find(f => xFieldMatcher(f, frame, [frame])) ??
+    frame.fields.find(f => stringMatcher(f, frame, [frame])) ??
     frame.fields[timeFieldIdx];
 
   if (xField != null) {
@@ -623,7 +627,6 @@ function getFieldIdx(data: DataFrame[], groupByFieldName: string | undefined): n
   if (!groupByFieldName || !data || data.length === 0 || data[0].length === 0) { return -1 };
   return data[0].fields.findIndex((field) => field.name === groupByFieldName);
 }
-
 
 function shortenValue(value: string, length: number) {
   if (value.length > length) {
