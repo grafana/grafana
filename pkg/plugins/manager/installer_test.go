@@ -397,10 +397,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		var loadedPaths []string
 		loader := &fakes.FakeLoader{
 			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
-				// Check if this is a LocalSource and get its paths
-				if localSrc, ok := src.(*sources.LocalSource); ok {
-					loadedPaths = append(loadedPaths, localSrc.Paths()...)
-				}
+				loadedPaths = append(loadedPaths, src.PluginURIs(ctx)...)
 				return []*plugins.Plugin{}, nil
 			},
 		}
@@ -446,7 +443,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		inst := New(&config.PluginManagementCfg{}, fakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
+		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
 		err := inst.Add(context.Background(), parentPluginID, "", plugins.NewAddOpts("10.0.0", runtime.GOOS, runtime.GOARCH, parentURL))
 		require.NoError(t, err)
 		require.Equal(t, []string{"dependency-plugin.zip", "parent-plugin.zip"}, loadedPaths)
