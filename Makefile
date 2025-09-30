@@ -245,6 +245,10 @@ build-backend: ## Build Grafana backend.
 	@echo "build backend"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build-backend
 
+.PHONY: build-air
+build-air: build-backend
+	@cp ./bin/grafana ./bin/grafana-air
+
 .PHONY: build-server
 build-server: ## Build Grafana server.
 	@echo "build server"
