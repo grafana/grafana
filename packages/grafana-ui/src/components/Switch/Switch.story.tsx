@@ -69,4 +69,14 @@ export const Uncontrolled: StoryFn<typeof Switch> = (args) => {
   );
 };
 
+export const Joyful: StoryFn<typeof Switch> = (args) => {
+  const [checked, setChecked] = useState(args.value);
+  const onChange = useCallback(
+    (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
+    [setChecked]
+  );
+  const id = useId();
+  return <Switch id={id} value={checked} onChange={onChange} shouldSparkJoy />;
+};
+
 export default meta;
