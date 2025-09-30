@@ -545,6 +545,13 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 	}
 
+	if opts.DisableProvisioningControllers {
+		provisioningSection, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSection.NewKey("disable_controllers", "true")
+		require.NoError(t, err)
+	}
+
 	dashboardsSection, err := getOrCreateSection("dashboards")
 	require.NoError(t, err)
 	_, err = dashboardsSection.NewKey("min_refresh_interval", "10s")
@@ -615,6 +622,7 @@ type GrafanaOpts struct {
 	EnableRecordingRules                  bool
 	EnableSCIM                            bool
 	APIServerRuntimeConfig                string
+	DisableProvisioningControllers        bool
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType
