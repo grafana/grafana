@@ -112,9 +112,10 @@ export function useFoldersQueryAppPlatform({
 
   // Convert the individual responses into a flat list of folders, with level indicating
   // the depth in the hierarchy.
-  const treeList = useMemo(() => {
+  const [foldersMap, treeList] = useMemo(() => {
+    const foldersMap: Record<string, { children: string[] }> = { general: { children: [] } };
     if (!isBrowsing) {
-      return [];
+      return [foldersMap, []];
     }
 
     function createFlatList(
@@ -143,6 +144,13 @@ export function useFoldersQueryAppPlatform({
           },
         };
 
+        foldersMap[item.name] = { children: [] };
+        if (item.folder) {
+          foldersMap[item.folder].children.push(item.name);
+        } else {
+          foldersMap['general'].children.push(item.name);
+        }
+
         const childResponse = folderIsOpen && state.responseByParent[name];
         if (childResponse) {
           const childFlatItems = createFlatList(name, childResponse, level + 1);
@@ -164,10 +172,11 @@ export function useFoldersQueryAppPlatform({
     const rootFlatTree = createFlatList(startingToken, state.responseByParent[startingToken], 1);
     rootFlatTree.unshift(rootFolderItem || getRootFolderItem());
 
-    return rootFlatTree;
+    return [foldersMap, rootFlatTree];
   }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
 
   return {
+    foldersMap,
     items: treeList,
     isLoading: state.isLoading,
     requestNextPage,
