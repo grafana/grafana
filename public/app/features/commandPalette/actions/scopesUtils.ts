@@ -121,11 +121,12 @@ export function mapScopeNodeToAction(
   parentName?: string
 ): CommandPaletteAction {
   let action: CommandPaletteAction;
+  const subtitle = parentName || scopeNode.spec.parentName || undefined;
   if (parentId) {
     action = {
       id: `${parentId}/${scopeNode.metadata.name}`,
       name: scopeNode.spec.title,
-      subtitle: parentName || scopeNode.spec.parentName,
+      subtitle: subtitle,
       keywords: `${scopeNode.spec.title} ${scopeNode.metadata.name}`,
       priority: SCOPES_PRIORITY,
       parent: parentId,
@@ -144,7 +145,7 @@ export function mapScopeNodeToAction(
       keywords: `${scopeNode.spec.title} ${scopeNode.metadata.name}`,
       priority: SCOPES_PRIORITY,
       section: t('command-palette.action.scopes', 'Scopes'),
-      subtitle: parentName || scopeNode.spec.parentName,
+      subtitle: subtitle,
       perform: () => {
         selectScope(scopeNode.metadata.name);
       },
