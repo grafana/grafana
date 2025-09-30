@@ -29,7 +29,7 @@ const shimmer = keyframes({
   },
 });
 
-export function SparkJoyWave({ active, durationMs = 2400, zIndex = 9999 }: SparkJoyWaveProps) {
+export function SparkJoyWave({ active, durationMs = 8000, zIndex = 9999 }: SparkJoyWaveProps) {
   const [visible, setVisible] = useState(false);
   const prevActive = useRef<boolean>(false);
   const firstRender = useRef<boolean>(true);

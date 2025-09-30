@@ -70,10 +70,9 @@ interface UserDisplayInfo {
 // Function to fetch user display information
 const fetchUserDisplayInfo = async (userKey: string): Promise<UserDisplayInfo | null> => {
   try {
-    const response = await getBackendSrv().get(
-      `apis/iam.grafana.app/v0alpha1/namespaces/stacks-42/display`,
-      { key: userKey }
-    );
+    const response = await getBackendSrv().get(`apis/iam.grafana.app/v0alpha1/namespaces/stacks-42/display`, {
+      key: userKey,
+    });
     return response;
   } catch (error) {
     console.error('Failed to fetch user display info:', error);
@@ -145,13 +144,13 @@ const useSavedQueries = (datasourceName?: string, limit = 4) => {
                   console.log('User display info response:', userDisplayInfo);
                   if (userDisplayInfo) {
                     // Convert relative avatar URL to full URL
-                    const response =  await getBackendSrv().get(
-          `apis/iam.grafana.app/v0alpha1/namespaces/stacks-42/display?key=${createdBy}`,
+                    const response = await getBackendSrv().get(
+                      `apis/iam.grafana.app/v0alpha1/namespaces/stacks-42/display?key=${createdBy}`
                     );
 
                     userInfo = {
-                      displayName:response.display[0].displayName,
-                      avatarURL:response.display[0].avatarURL,
+                      displayName: response.display[0].displayName,
+                      avatarURL: response.display[0].avatarURL,
                     };
                   }
                 } catch (userError) {
@@ -166,7 +165,9 @@ const useSavedQueries = (datasourceName?: string, limit = 4) => {
                 query: (item.spec.targets?.[0] as any)?.properties!,
                 uid: item.metadata.uid,
                 createdBy,
-                createdAt: item.metadata.creationTimestamp ? new Date(item.metadata.creationTimestamp).getTime() : undefined,
+                createdAt: item.metadata.creationTimestamp
+                  ? new Date(item.metadata.creationTimestamp).getTime()
+                  : undefined,
                 userInfo,
               };
             })
@@ -234,7 +235,13 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
   const [isLoading, setIsLoading] = useState(false);
 
   // Debug logging
-  console.log('QueryCard props:', { query, isRecentQuery, timestamp, userInfo: query.userInfo, createdAt: query.createdAt });
+  console.log('QueryCard props:', {
+    query,
+    isRecentQuery,
+    timestamp,
+    userInfo: query.userInfo,
+    createdAt: query.createdAt,
+  });
 
   useEffect(() => {
     const fetchPreviewData = async () => {
@@ -535,7 +542,7 @@ export const SparkJoySection = <TQuery extends DataQuery>({
   const {
     data: libraryQueries,
     isLoading: isLoadingLibraryQueries,
-    error: libraryQueriesError
+    error: libraryQueriesError,
   } = useSavedQueries(queryLibraryEnabled ? datasource.name : undefined, 4);
 
   // Get query patterns for Loki and Prometheus datasources
@@ -641,103 +648,68 @@ export const SparkJoySection = <TQuery extends DataQuery>({
         {/* Recommended Queries Column */}
         <div className={css(styles.column)}>
           <div className={css(styles.columnHeader)}>
-             {/* <Icon name="thumbs-up" size="md" /> */}
-             <Text variant="h6">Recommended queries</Text>
+            {/* <Icon name="thumbs-up" size="md" /> */}
+            <Text variant="h6">Recommended queries</Text>
           </div>
 
           {/* Combine pattern queries and library queries */}
-          {isLoadingLibraryQueries || isLoadingPatterns ? (
-            <div className={css(styles.loadingState)}>
-              <Spinner size={16} />
-              <span>Loading recommended queries...</span>
-            </div>
-          ) : libraryQueriesError ? (
-            <div className={css(styles.emptyState)}>
-              Error loading saved queries
-            </div>
-          ) : (
-            <>
-              {/* Show pattern queries first (for Loki/Prometheus) */}
-              {patternQueries.length > 0 && (
-                <Stack direction="column" gap={1}>
-                  {patternQueries.map((query, index) => (
-                    <QueryCard
-                      key={`pattern-${query.uid || index}`}
-                      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                      query={query as unknown as QueryItem}
-                      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                      onClick={() => handleQuerySelect(query.query as TQuery)}
-                      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-                      datasource={datasource as any}
-                      timeRange={timeRange}
-                      isRecentQuery={false}
-                      timestamp={query.createdAt}
-                    />
-                  ))}
-                </Stack>
-              )}
-              
-              {/* Show library queries if query library is enabled */}
-              {queryLibraryEnabled && libraryQueries.length > 0 && (
-                <div style={{ marginTop: patternQueries.length > 0 ? theme.spacing(1) : 0 }}>
+          {queryLibraryEnabled ? (
+            isLoadingLibraryQueries || isLoadingPatterns ? (
+              <div className={css(styles.loadingState)}>
+                <Spinner size={16} />
+                <span>Loading recommended queries...</span>
+              </div>
+            ) : libraryQueriesError ? (
+              <div className={css(styles.emptyState)}>Error loading saved queries</div>
+            ) : (
+              <>
+                {isLoadingLibraryQueries ? (
+                  <div className={css(styles.loadingState)}>
+                    <Spinner size={16} />
+                    <span>Loading saved queries...</span>
+                  </div>
+                ) : libraryQueriesError ? (
+                  <div className={css(styles.emptyState)}>Error loading saved queries</div>
+                ) : libraryQueries.length > 0 ? (
                   <Stack direction="column" gap={1}>
-                    {libraryQueries.map((query, index) => (
-                    <QueryCard
-                      key={`library-${query.uid || index}-${query.userInfo ? 'with-user' : 'no-user'}`}
-                      query={query}
-                      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                      onClick={() => handleQuerySelect(query.query as TQuery)}
-                      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-                      datasource={datasource as any}
-                      timeRange={timeRange}
-                      isRecentQuery={false}
-                      timestamp={query.createdAt}
-                    />
+                    {patternQueries.map((query, index) => (
+                      <QueryCard
+                        key={`pattern-${query.uid || index}`}
+                        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                        query={query as unknown as QueryItem}
+                        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                        onClick={() => handleQuerySelect(query.query as TQuery)}
+                        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
+                        datasource={datasource as any}
+                        timeRange={timeRange}
+                        isRecentQuery={false}
+                        timestamp={query.createdAt}
+                      />
                     ))}
                   </Stack>
-                </div>
-              )}
-              
-              {/* Show empty state or browse button if no queries */}
-              {patternQueries.length === 0 && libraryQueries.length === 0 && (
-                <div>
-                  <div className={css(styles.emptyState)}>
-                    {queryLibraryEnabled ? 'No recommended queries found' : 'Query library not enabled'}
-                  </div>
-                  {queryLibraryEnabled && (
+                ) : (
+                  <div>
+                    <div className={css(styles.emptyState)}>No saved queries found</div>
                     <Button
                       variant="secondary"
-                      onClick={() => openQueryLibraryDrawer({
-                        datasourceFilters: [datasource.name],
-                        onSelectQuery: handleLibraryQuerySelect,
-                        options: { context: 'explore' },
-                      })}
+                      onClick={() =>
+                        openQueryLibraryDrawer({
+                          datasourceFilters: [datasource.name],
+                          onSelectQuery: handleLibraryQuerySelect,
+                          options: { context: 'explore' },
+                        })
+                      }
                       size="md"
                       icon="book"
                     >
                       Browse saved queries
                     </Button>
-                  )}
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Show more button */}
-          {(patternQueries.length > 0 || libraryQueries.length > 0) && queryLibraryEnabled && (
-            <Button
-              variant="secondary"
-              style={{ marginTop: theme.spacing(1) }}
-              onClick={() => openQueryLibraryDrawer({
-                datasourceFilters: [datasource.name],
-                onSelectQuery: handleLibraryQuerySelect,
-                options: { context: 'explore' },
-              })}
-              size="md"
-              icon="book"
-            >
-              Show more
-            </Button>
+                  </div>
+                )}
+              </>
+            )
+          ) : (
+            <div className={css(styles.emptyState)}>Query library not enabled</div>
           )}
         </div>
 
