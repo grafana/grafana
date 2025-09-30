@@ -11692,7 +11692,8 @@
       "button-cancelling": "Cancelling...",
       "button-next": "Finish",
       "button-start": "Begin synchronization",
-      "check-status-button": "Check ready to synchronize status",
+      "check-status-button": "Check repository status",
+      "check-status-message": "Repository connecting, synchronize will be ready soon...",
       "discard-modal": {
         "body": "This will delete the repository configuration and you will lose all progress. Are you sure you want to discard your changes?",
         "confirm": "Yes, discard",

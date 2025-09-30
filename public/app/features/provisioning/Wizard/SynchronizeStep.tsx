@@ -47,9 +47,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({
 
   // healthStatusNotReady: If the repository is not yet ready (e.g., initial setup), synchronization cannot be started.
   // User can potentially fail at this step if they click too fast and repo is not ready.
-  const healthStatusNotReady =
-    repositoryStatusQuery?.data?.status?.health.healthy === false &&
-    repositoryStatusQuery?.data?.status?.observedGeneration === 0;
+  const healthStatusNotReady = true;
 
   const hasError = repositoryStatusQuery.isError;
   const isLoading = repositoryStatusQuery.isLoading || repositoryStatusQuery.isFetching;
@@ -158,11 +156,21 @@ export const SynchronizeStep = memo(function SynchronizeStep({
       )}
 
       {healthStatusNotReady ? (
-        <Field noMargin>
-          <Button onClick={() => repositoryStatusQuery.refetch()} disabled={isLoading}>
-            <Trans i18nKey="provisioning.wizard.check-status-button">Check ready to synchronize status</Trans>
-          </Button>
-        </Field>
+        <>
+          <Stack>
+            <Spinner />{' '}
+            <Trans i18nKey="provisioning.wizard.check-status-message">
+              Repository connecting, synchronize will be ready soon...
+            </Trans>
+          </Stack>
+          <Stack>
+            <Stack>
+              <Button onClick={() => repositoryStatusQuery.refetch()} disabled={isLoading}>
+                <Trans i18nKey="provisioning.wizard.check-status-button">Check repository status</Trans>
+              </Button>
+            </Stack>
+          </Stack>
+        </>
       ) : (
         <Field noMargin>
           {hasError || (checked !== undefined && isRepositoryHealthy === false) ? (
