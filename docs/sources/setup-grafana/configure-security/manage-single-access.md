@@ -53,7 +53,7 @@ Follow these suggested steps to structure, configure and set permissions to acce
 
 For more information on how to install a Grafana instance:
 
-- If you’re using Grafana on-prem, see [Configure Grafana](/configure-grafana/).
+- If you’re using Grafana on-prem, see [Configure Grafana](./configure-grafana/).
 - If you’re using Grafana Cloud, see [Your Grafana Cloud stack](https://grafana.com/docs/grafana-cloud/security-and-account-management/cloud-stacks).
 
 {{< admonition type="note" >}}
