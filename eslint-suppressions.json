@@ -861,21 +861,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/Table/TableNG/Filter/Filter.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Table/TableNG/Filter/FilterPopup.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 3
-    }
-  },
-  "packages/grafana-ui/src/components/Table/TableNG/Filter/utils.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Table/TableNG/TableNG.test.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -1359,11 +1344,6 @@
       "count": 1
     }
   },
-  "public/app/features/admin/AdminFeatureTogglesTable.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "public/app/features/admin/ServerStatsCard.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -1691,11 +1671,6 @@
   "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/CloudDataSourceSelector.tsx": {
     "no-restricted-syntax": {
       "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/QueryAndExpressionsStep.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/rule-types/RuleType.tsx": {
@@ -4481,6 +4456,11 @@
   },
   "public/app/plugins/panel/gauge/GaugeMigrations.ts": {
     "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "public/app/plugins/panel/geomap/components/DebugOverlay.tsx": {
+    "@grafana/no-aria-label-selectors": {
       "count": 1
     }
   },
