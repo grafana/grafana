@@ -1,9 +1,9 @@
-import { v1alpha1 } from '@grafana/api-clients/preferences';
+import { generatedAPI } from '@grafana/api-clients/preferences/v1alpha1';
 import { t } from '@grafana/i18n';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification, createErrorNotification } from 'app/core/copy/appNotification';
 
-export const preferencesAPIv1alpha1 = v1alpha1.generatedAPI.enhanceEndpoints({
+export const preferencesAPIv1alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
     addStar: {
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
@@ -39,4 +39,4 @@ export const preferencesAPIv1alpha1 = v1alpha1.generatedAPI.enhanceEndpoints({
 });
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export { v1alpha1 } from '@grafana/api-clients/preferences';
+export * from '@grafana/api-clients/preferences/v1alpha1';

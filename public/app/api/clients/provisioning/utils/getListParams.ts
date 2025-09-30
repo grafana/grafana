@@ -1,6 +1,7 @@
+import { ListRepositoryApiArg } from '@grafana/api-clients/provisioning/v0alpha1';
+
 import { parseListOptionsSelector } from '../../../../features/apiserver/client';
 import { ListOptions } from '../../../../features/apiserver/types';
-import { ListRepositoryApiArg } from '../v0alpha1/endpoints.gen';
 
 type ListParams = Omit<ListRepositoryApiArg, 'fieldSelector' | 'labelSelector'> &
   Pick<ListOptions, 'labelSelector' | 'fieldSelector'>;

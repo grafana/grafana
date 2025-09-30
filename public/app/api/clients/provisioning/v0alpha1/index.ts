@@ -6,7 +6,7 @@ import {
   type RepositoryStatus,
   type ErrorDetails,
   type Status,
-} from '@grafana/api-clients/provisioning';
+} from '@grafana/api-clients/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { clearFolders } from 'app/features/browse-dashboards/state/slice';
@@ -241,4 +241,4 @@ export const provisioningAPIv0alpha1 = v0alpha1.generatedAPI.enhanceEndpoints({
 });
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export * from '@grafana/api-clients/provisioning';
+export * from '@grafana/api-clients/provisioning/v0alpha1';

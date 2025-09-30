@@ -1,6 +1,6 @@
-import { v0alpha1 } from '@grafana/api-clients/dashboard';
+import { generatedAPI } from '@grafana/api-clients/dashboard/v0alpha1';
 
-export const dashboardAPIv0alpha1 = v0alpha1.generatedAPI.enhanceEndpoints({
+export const dashboardAPIv0alpha1 = generatedAPI.enhanceEndpoints({
   addTagTypes: ['Folder', 'Dashboard'],
   endpoints: {
     getSearch: (endpointDefinition) => {
