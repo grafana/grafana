@@ -18,23 +18,23 @@ export interface Options extends common.SingleStatBaseOptions {
   barWidthFactor: number; 
   gradient: 'none' | 'hue' | 'shade' | 'scheme';
   effects?: RadialBarEffects;
-  sparkline?: boolean;
   shape: 'circle' | 'gauge'; 
   segmentCount: number;
   segmentSpacing: number;
+  sparkline?: boolean;
 }
 
 export interface RadialBarEffects {
   barGlow?: boolean;
   centerGlow?: boolean;
   spotlight?: boolean;
+  rounded?: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {
   barWidthFactor: 0.4,
   gradient: 'hue',
-  effects: { spotlight: true, barGlow: false, centerGlow: true },
-  sparkline: true,
+  effects: { spotlight: true, barGlow: false, centerGlow: true, rounded: true },
   shape: 'circle',
   segmentCount: 1,
   segmentSpacing: 0.3,

@@ -382,7 +382,7 @@ function RadialBarExample({
 
 function getExtraSeries(seriesCount: number, colorMode: FieldColorModeId, theme: GrafanaTheme2) {
   const fields: Field[] = [];
-  const colors = ['blue', 'green', 'purple', 'orange', 'yellow'];
+  const colors = ['blue', 'green', 'purple', 'orange', 'red'];
 
   for (let i = 0; i < seriesCount; i++) {
     fields.push({

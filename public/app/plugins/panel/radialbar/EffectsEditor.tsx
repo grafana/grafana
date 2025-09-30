@@ -8,7 +8,12 @@ import { RadialBarEffects } from './panelcfg.gen';
  */
 export function EffectsEditor(props: StandardEditorProps<RadialBarEffects>) {
   return (
-    <Stack direction="row" alignItems={'flex-start'} gap={2}>
+    <Stack direction="row" alignItems={'flex-start'} gap={2} wrap>
+      <Checkbox
+        label="Rounded"
+        value={!!props.value?.rounded}
+        onChange={(e) => props.onChange({ ...props.value, rounded: e.currentTarget.checked })}
+      />
       <Checkbox
         label="Bar glow"
         value={!!props.value?.barGlow}

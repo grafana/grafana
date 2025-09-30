@@ -281,7 +281,7 @@ function RadialSparkline({ sparkline, size, theme, barWidth, margin, color }: Ra
     },
     custom: {
       gradientMode: GraphGradientMode.Opacity,
-      fillOpacity: 50,
+      fillOpacity: 40,
       lineInterpolation: LineInterpolation.Smooth,
     },
   };
