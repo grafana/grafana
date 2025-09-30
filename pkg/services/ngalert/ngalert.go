@@ -369,21 +369,23 @@ func (ng *AlertNG) init() error {
 	ng.InstanceStore, ng.StartupInstanceReader = initInstanceStore(ng.store.SQLStore, ng.Log, ng.FeatureToggles)
 
 	stateManagerCfg := state.ManagerCfg{
-		Metrics:                        ng.Metrics.GetStateMetrics(),
-		ExternalURL:                    appUrl,
-		DisableExecution:               !ng.Cfg.UnifiedAlerting.ExecuteAlerts,
-		InstanceStore:                  ng.InstanceStore,
-		Images:                         ng.ImageService,
-		Clock:                          clk,
-		Historian:                      history,
-		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
-		StatePeriodicSaveBatchSize:     ng.Cfg.UnifiedAlerting.StatePeriodicSaveBatchSize,
-		StatePeriodicSaveJitterEnabled: ng.Cfg.UnifiedAlerting.StatePeriodicSaveJitterEnabled,
-		StatePeriodicSaveInterval:      ng.Cfg.UnifiedAlerting.StatePeriodicSaveInterval,
-		RulesPerRuleGroupLimit:         ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit,
-		Tracer:                         ng.tracer,
-		Log:                            log.New("ngalert.state.manager"),
-		ResolvedRetention:              ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
+		Metrics:                             ng.Metrics.GetStateMetrics(),
+		ExternalURL:                         appUrl,
+		DisableExecution:                    !ng.Cfg.UnifiedAlerting.ExecuteAlerts,
+		InstanceStore:                       ng.InstanceStore,
+		Images:                              ng.ImageService,
+		Clock:                               clk,
+		Historian:                           history,
+		MaxStateSaveConcurrency:             ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
+		StatePeriodicSaveBatchSize:          ng.Cfg.UnifiedAlerting.StatePeriodicSaveBatchSize,
+		StatePeriodicSaveJitterEnabled:      ng.Cfg.UnifiedAlerting.StatePeriodicSaveJitterEnabled,
+		StatePeriodicSaveInterval:           ng.Cfg.UnifiedAlerting.StatePeriodicSaveInterval,
+		StateCompressedPeriodicSaveEnabled:  ng.Cfg.UnifiedAlerting.StateCompressedPeriodicSaveEnabled,
+		StateCompressedPeriodicSaveInterval: ng.Cfg.UnifiedAlerting.StateCompressedPeriodicSaveInterval,
+		RulesPerRuleGroupLimit:              ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit,
+		Tracer:                              ng.tracer,
+		Log:                                 log.New("ngalert.state.manager"),
+		ResolvedRetention:                   ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
 	}
 	statePersister := initStatePersister(ng.Cfg.UnifiedAlerting, stateManagerCfg, ng.FeatureToggles)
 	stateManager := state.NewManager(stateManagerCfg, statePersister)
@@ -525,7 +527,15 @@ func initStatePersister(uaCfg setting.UnifiedAlertingSettings, cfg state.Manager
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
 		logger.Info("Using rule state persister")
-		statePersister = state.NewSyncRuleStatePersisiter(logger, cfg)
+
+		if uaCfg.StateCompressedPeriodicSaveEnabled {
+			logger.Info("Compressed storage FullSync enabled")
+			ticker := clock.New().Ticker(uaCfg.StateCompressedPeriodicSaveInterval)
+			statePersister = state.NewSyncRuleStatePersisiter(logger, ticker, cfg)
+		} else {
+			logger.Info("Compressed storage FullSync disabled")
+			statePersister = state.NewSyncRuleStatePersisiter(logger, nil, cfg)
+		}
 	} else if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
 		logger.Info("Using periodic state persister")
 		ticker := clock.New().Ticker(uaCfg.StatePeriodicSaveInterval)

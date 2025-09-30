@@ -77,6 +77,13 @@ type ManagerCfg struct {
 	// StatePeriodicSaveJitterEnabled enables jitter for periodic state saves to distribute database load.
 	StatePeriodicSaveJitterEnabled bool
 
+	// StateCompressedPeriodicSaveEnabled enables compressed periodic save for alert state storage.
+	// When enabled, alert instances are grouped by rule, compressed using protobuf and snappy,
+	// and saved periodically in batches to reduce database load and storage requirements.
+	StateCompressedPeriodicSaveEnabled bool
+	// StateCompressedPeriodicSaveInterval controls the interval for compressed periodic state saves.
+	StateCompressedPeriodicSaveInterval time.Duration
+
 	RulesPerRuleGroupLimit int64
 
 	DisableExecution bool
