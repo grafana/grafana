@@ -5,6 +5,24 @@ import path from 'path';
 // Grafana root path - navigate up from this script's directory
 const basePath = path.resolve(__dirname, '../../../..');
 
+const getAPIConfig = (
+  app: string,
+  version: string,
+  filterEndpoints?: ConfigFile['filterEndpoints'],
+  additional = {}
+) => {
+  const filePath = `../clients/${app}/${version}/endpoints.gen.ts`;
+  return {
+    [filePath]: {
+      schemaFile: path.join(basePath, `data/openapi/${app}.grafana.app-${version}.json`),
+      apiFile: `../clients/${app}/${version}/baseAPI.ts`,
+      filterEndpoints,
+      tag: true,
+      ...additional,
+    },
+  };
+};
+
 const config: ConfigFile = {
   schemaFile: '', // leave this empty, and instead populate the outputFiles object below
   apiFile: '', // leave this empty, and instead populate the outputFiles object below
@@ -43,66 +61,31 @@ const config: ConfigFile = {
       apiFile: '../clients/preferences/user/baseAPI.ts',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
-    '../clients/iam/v0alpha1/endpoints.gen.ts': {
-      schemaFile: path.join(basePath, 'data/openapi/iam.grafana.app-v0alpha1.json'),
-      apiFile: '../clients/iam/v0alpha1/baseAPI.ts',
-      filterEndpoints: ['getDisplayMapping'],
-      tag: true,
-    },
-    '../clients/provisioning/v0alpha1/endpoints.gen.ts': {
-      apiFile: '../clients/provisioning/v0alpha1/baseAPI.ts',
-      schemaFile: path.join(basePath, 'data/openapi/provisioning.grafana.app-v0alpha1.json'),
-      filterEndpoints,
-      tag: true,
-      hooks: true,
-    },
-    '../clients/folder/v1beta1/endpoints.gen.ts': {
-      apiFile: '../clients/folder/v1beta1/baseAPI.ts',
-      schemaFile: path.join(basePath, 'data/openapi/folder.grafana.app-v1beta1.json'),
-      tag: true,
-    },
-    '../clients/advisor/v0alpha1/endpoints.gen.ts': {
-      apiFile: '../clients/advisor/v0alpha1/baseAPI.ts',
-      schemaFile: path.join(basePath, 'data/openapi/advisor.grafana.app-v0alpha1.json'),
-      filterEndpoints: [
-        'createCheck',
-        'getCheck',
-        'listCheck',
-        'deleteCheck',
-        'updateCheck',
-        'listCheckType',
-        'updateCheckType',
-      ],
-      tag: true,
-    },
-    '../clients/playlist/v0alpha1/endpoints.gen.ts': {
-      apiFile: '../clients/playlist/v0alpha1/baseAPI.ts',
-      schemaFile: path.join(basePath, 'data/openapi/playlist.grafana.app-v0alpha1.json'),
-      filterEndpoints: ['listPlaylist', 'getPlaylist', 'createPlaylist', 'deletePlaylist', 'replacePlaylist'],
-      tag: true,
-    },
-    '../clients/shorturl/v1alpha1/endpoints.gen.ts': {
-      apiFile: '../clients/shorturl/v1alpha1/baseAPI.ts',
-      schemaFile: path.join(basePath, 'data/openapi/shorturl.grafana.app-v1alpha1.json'),
-      tag: true,
-    },
-    '../clients/rules/v0alpha1/endpoints.gen.ts': {
-      apiFile: '../clients/rules/v0alpha1/baseAPI.ts',
-      schemaFile: path.join(basePath, 'data/openapi/rules.alerting.grafana.app-v0alpha1.json'),
-      tag: true,
-    },
-    '../clients/preferences/v1alpha1/endpoints.gen.ts': {
-      apiFile: '../clients/preferences/v1alpha1/baseAPI.ts',
-      schemaFile: path.join(basePath, 'data/openapi/preferences.grafana.app-v1alpha1.json'),
-      tag: true,
-      hooks: true,
-    },
-    '../clients/dashboard/v0alpha1/endpoints.gen.ts': {
-      apiFile: '../clients/dashboard/v0alpha1/baseAPI.ts',
-      schemaFile: path.join(basePath, 'data/openapi/dashboard.grafana.app-v0alpha1.json'),
-      filterEndpoints: ['getSearch'],
-      tag: true,
-    },
+    ...getAPIConfig('iam', 'v0alpha1', ['getDisplayMapping']),
+    ...getAPIConfig('provisioning', 'v0alpha1', filterEndpoints),
+    ...getAPIConfig('folder', 'v1beta1', undefined),
+    ...getAPIConfig('advisor', 'v0alpha1', [
+      'createCheck',
+      'getCheck',
+      'listCheck',
+      'deleteCheck',
+      'updateCheck',
+      'listCheckType',
+      'updateCheckType',
+    ]),
+    ...getAPIConfig('playlist', 'v0alpha1', [
+      'listPlaylist',
+      'getPlaylist',
+      'createPlaylist',
+      'deletePlaylist',
+      'replacePlaylist',
+    ]),
+
+    ...getAPIConfig('shorturl', 'v1alpha1'),
+    ...getAPIConfig('rules', 'v0alpha1'),
+    ...getAPIConfig('preferences', 'v1alpha1'),
+    ...getAPIConfig('dashboard', 'v0alpha1', ['getSearch']),
+    ...getAPIConfig(foo, 'v0alpha1', []),
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };
