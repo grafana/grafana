@@ -15,8 +15,7 @@ import (
 )
 
 // TestIntegrationProvisioning_JobConflict tests that if two concurrent drivers try to update a
-// job they received before the other updated it, that one will fail. This is more of a generic
-// test for unified storage, but also is important for Claiming jobs, so adding it here.
+// job they received before the other updated it, that one will fail. This is critical for concurrent jobs
 func TestIntegrationProvisioning_JobConflict(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
