@@ -1029,9 +1029,9 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 	t.Run("put and fetch blob", func(t *testing.T) {
 		key := &resourcepb.ResourceKey{
 			Namespace: ns,
-			Group:     "g",
-			Resource:  "r",
-			Name:      "n",
+			Group:     "ggg",
+			Resource:  "rrr",
+			Name:      "nnn",
 		}
 		b1, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
 			Resource:    key,

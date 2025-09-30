@@ -59,6 +59,9 @@ type StorageOptions struct {
 	// Allow writing objects with metadata.annotations[grafana.app/folder]
 	EnableFolderSupport bool
 
+	// Some resources should not allow the absolute maximum (254 characters)
+	MaximumNameLength int
+
 	// Add internalID label when missing
 	RequireDeprecatedInternalID bool
 

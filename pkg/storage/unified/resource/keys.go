@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -17,17 +18,17 @@ func verifyRequestKey(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
 	if key.Resource == "" {
 		return NewBadRequestError("request key is missing resource")
 	}
-	if err := validateName(key.Name); err != nil {
-		return NewBadRequestError(fmt.Sprintf("name '%s' is invalid: '%s'", key.Name, err))
+	if err := validation.IsValidNamespace(key.Namespace); err != nil {
+		return NewBadRequestError(err[0])
 	}
-	if err := validateNamespace(key.Namespace); err != nil {
-		return NewBadRequestError(fmt.Sprintf("namespace '%s' is invalid: '%s'", key.Namespace, err))
+	if err := validation.IsValidGroup(key.Group); err != nil {
+		return NewBadRequestError(err[0])
 	}
-	if err := validateGroup(key.Group); err != nil {
-		return NewBadRequestError(fmt.Sprintf("group '%s' is invalid: '%s'", key.Group, err))
+	if err := validation.IsValidateResource(key.Resource); err != nil {
+		return NewBadRequestError(err[0])
 	}
-	if err := validateResource(key.Resource); err != nil {
-		return NewBadRequestError(fmt.Sprintf("resource '%s' is invalid: '%s'", key.Resource, err))
+	if err := validation.IsValidGrafanaName(key.Name); err != nil {
+		return NewBadRequestError(err[0])
 	}
 	return nil
 }
