@@ -33,7 +33,7 @@ export const SparkJoyToggle = memo(function SparkJoyToggle({ value, onToggle, cl
         className={className}
         shouldSparkJoy
       />
-      <Icon name="smile-relaxed" size="lg" title={t('explore.explore-toolbar.spark-some-joy', 'Spark Some Joy')} />
+      <Icon name="kawaii-heart" size="lg" title={t('explore.explore-toolbar.spark-some-joy', 'Spark Some Joy')} />
     </span>
   );
 });

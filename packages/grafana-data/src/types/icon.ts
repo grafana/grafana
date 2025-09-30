@@ -174,6 +174,7 @@ export const availableIconsIndex = {
   'info-circle': true,
   k6: true,
   'k6-rounded': true,
+  'kawaii-heart': true,
   'key-skeleton-alt': true,
   keyboard: true,
   kubernetes: true,
