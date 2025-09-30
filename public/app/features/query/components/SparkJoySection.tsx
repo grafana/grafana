@@ -12,7 +12,7 @@ import {
   DataQuery,
 } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { Stack, Text, Icon, useTheme2, Spinner, Avatar, Button } from '@grafana/ui';
+import { Stack, Text, Icon, useTheme2, Spinner, Avatar, Button, Badge } from '@grafana/ui';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { useQueriesDrawerContext } from '../../explore/QueriesDrawer/QueriesDrawerContext';
@@ -417,6 +417,19 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
       color: theme.colors.text.primary,
       fontWeight: theme.typography.fontWeightMedium,
     },
+    badgeContainer: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      marginTop: theme.spacing(0.5),
+    },
+    userBadge: {
+      fontSize: theme.typography.bodySmall.fontSize,
+      padding: `${theme.spacing(0.25)} ${theme.spacing(0.75)}`,
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+    },
   };
   console.log('query', query);
   const queryDisplayText = datasource?.getQueryDisplayText?.(query.query) ?? JSON.stringify(query.query);
@@ -456,6 +469,26 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
               </>
             )}
           </div>
+          
+          {/* Add badge for saved queries (non-recent queries with user info) */}
+          {!isRecentQuery && query.userInfo && (
+            <div className={css(styles.badgeContainer)}>
+              <Badge 
+                text={
+                  <div className={css(styles.userBadge)}>
+                    <Avatar 
+                      src={query.userInfo.avatarURL || ''} 
+                      alt={`${query.userInfo.displayName} avatar`} 
+                      width={2}
+                      height={2}
+                    />
+                    <span>Recommended by {query.userInfo.displayName || 'User'}</span>
+                  </div>
+                }
+                color="green" 
+              />
+            </div>
+          )}
         </div>
         {((isRecentQuery && timestamp) || (!isRecentQuery && (query.userInfo || query.createdAt))) && (
           <div className={css(styles.rightSide)}>
