@@ -97,6 +97,7 @@ func (d *dashboardStore) GetDashboardsByLibraryPanelUID(ctx context.Context, lib
 	return connectedDashboards, err
 }
 
+// nolint:gocyclo
 func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dash *dashboards.Dashboard, overwrite bool) (bool, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.ValidateDashboardBeforesave")
 	defer span.End()
