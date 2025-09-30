@@ -323,6 +323,7 @@ export const CandlestickPanel = ({
               />
             )}
             <AnnotationsPlugin2
+              replaceVariables={replaceVariables}
               annotationsConfig={options.annotations}
               annotations={data.annotations ?? []}
               config={uplotConfig}
