@@ -12,18 +12,19 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
@@ -527,12 +528,9 @@ func callGetPluginAsset(sc *scenarioContext) {
 func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string,
 	cfg *setting.Cfg, pluginRegistry registry.Service, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
-		require.NoError(t, err)
-
 		hs := HTTPServer{
 			Cfg:             cfg,
-			pluginStore:     store,
+			pluginStore:     pluginstore.New(pluginRegistry, &fakes.FakeLoader{}),
 			pluginFileStore: filestore.ProvideService(pluginRegistry),
 			log:             log.NewNopLogger(),
 			pluginsCDNService: pluginscdn.ProvideService(&config.PluginManagementCfg{
@@ -642,14 +640,12 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
-				require.NoError(t, err)
-
 				hs.Cfg = setting.NewCfg()
 				hs.PluginSettings = &pluginSettings
-				hs.pluginStore = store
+				hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{})
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
 				hs.managedPluginsService = managedplugins.NewNoop()
+				var err error
 				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
 					hs.Cfg,
 					hs.pluginStore,
@@ -832,12 +828,9 @@ func Test_PluginsSettings(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
-				require.NoError(t, err)
-
 				hs.Cfg = setting.NewCfg()
 				hs.PluginSettings = &pluginSettings
-				hs.pluginStore = store
+				hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{})
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
 				errTracker := pluginerrs.ProvideErrorTracker()
 				if tc.errCode != "" {
@@ -851,6 +844,7 @@ func Test_PluginsSettings(t *testing.T) {
 				sig := signature.ProvideService(pCfg, statickey.New())
 				hs.pluginAssets = pluginassets.ProvideService(pCfg, pluginCDN, sig, hs.pluginStore)
 				hs.pluginErrorResolver = pluginerrs.ProvideStore(errTracker)
+				var err error
 				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
 					hs.Cfg,
 					hs.pluginStore,
@@ -902,12 +896,9 @@ func Test_UpdatePluginSetting(t *testing.T) {
 
 	t.Run("should return an error when trying to disable an auto-enabled plugin", func(t *testing.T) {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
-			store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
-			require.NoError(t, err)
-
 			hs.Cfg = setting.NewCfg()
 			hs.PluginSettings = &pluginSettings
-			hs.pluginStore = store
+			hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{})
 			hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
 			hs.managedPluginsService = managedplugins.NewNoop()
 			hs.log = log.NewNopLogger()

@@ -26,7 +26,7 @@ func TestService_IsDisabled(t *testing.T) {
 		&setting.Cfg{
 			PreinstallPluginsAsync: []setting.InstallPlugin{{ID: "myplugin"}},
 		},
-		pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{}),
+		pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
 		&fakes.FakePluginInstaller{},
 		prometheus.NewRegistry(),
 		&fakes.FakePluginRepo{},
@@ -160,14 +160,12 @@ func TestService_Run(t *testing.T) {
 			}
 			installed := 0
 			installedFromURL := 0
-			store, err := pluginstore.NewPluginStoreForTest(preg, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
-			require.NoError(t, err)
 			s, err := ProvideService(
 				&setting.Cfg{
 					PreinstallPluginsAsync: tt.pluginsToInstall,
 					PreinstallPluginsSync:  tt.pluginsToInstallSync,
 				},
-				store,
+				pluginstore.New(preg, &fakes.FakeLoader{}),
 				&fakes.FakePluginInstaller{
 					AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.AddOpts) error {
 						for _, plugin := range tt.pluginsToFail {
