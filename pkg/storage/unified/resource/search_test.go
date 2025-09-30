@@ -9,9 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"log/slog"
+
 	"github.com/Masterminds/semver"
 	"github.com/grafana/authlib/types"
-	"github.com/sagikazarmark/slog-shim"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
