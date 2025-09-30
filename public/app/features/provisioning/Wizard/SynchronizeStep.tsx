@@ -158,9 +158,11 @@ export const SynchronizeStep = memo(function SynchronizeStep({
       )}
 
       {healthStatusNotReady ? (
-        <Button onClick={() => repositoryStatusQuery.refetch()} disabled={isLoading}>
-          <Trans i18nKey="provisioning.wizard.check-status-button">Check ready to synchronize status</Trans>
-        </Button>
+        <Field noMargin>
+          <Button onClick={() => repositoryStatusQuery.refetch()} disabled={isLoading}>
+            <Trans i18nKey="provisioning.wizard.check-status-button">Check ready to synchronize status</Trans>
+          </Button>
+        </Field>
       ) : (
         <Field noMargin>
           {hasError || (checked !== undefined && isRepositoryHealthy === false) ? (
