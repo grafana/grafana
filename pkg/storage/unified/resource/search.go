@@ -561,13 +561,13 @@ func (s *searchSupport) findIndexesToRebuild(ctx context.Context) {
 			minBuildTime = time.Now().Add(-maxAge)
 		}
 
-		rebuild, err := s.shouldRebuildIndex(slog.New(nil /* TODO */), idx, minBuildTime, s.minBuildVersion)
+		bi, err := idx.BuildInfo()
 		if err != nil {
-			s.log.Error("failed to check if index should be rebuilt", "key", key, "error", err)
+			s.log.Error("failed to get build info for index to rebuild", "key", key, "error", err)
 			continue
 		}
 
-		if rebuild {
+		if shouldRebuildIndex(slog.New(nil /* TODO */), bi, minBuildTime, s.minBuildVersion) {
 			s.rebuildQueue.Add(rebuildRequest{
 				NamespacedResource: key,
 				minBuildTime:       minBuildTime,
@@ -612,7 +612,13 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		return
 	}
 
-	rebuild, err := s.shouldRebuildIndex(l, idx, req.minBuildTime, req.minBuildVersion)
+	bi, err := idx.BuildInfo()
+	if err != nil {
+		span.RecordError(err)
+		l.Error("failed to get build info for index to rebuild", "error", err)
+	}
+
+	rebuild := shouldRebuildIndex(l, bi, req.minBuildTime, req.minBuildVersion)
 	if err != nil {
 		span.RecordError(err)
 		l.Error("failed to check if index should be rebuilt", "error", err)
@@ -655,27 +661,22 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	return
 }
 
-func (s *searchSupport) shouldRebuildIndex(l *slog.Logger, idx ResourceIndex, minBuildTime time.Time, minBuildVersion *semver.Version) (bool, error) {
-	buildInfo, err := idx.BuildInfo()
-	if err != nil {
-		return false, err
-	}
-
+func shouldRebuildIndex(l *slog.Logger, buildInfo IndexBuildInfo, minBuildTime time.Time, minBuildVersion *semver.Version) bool {
 	if !minBuildTime.IsZero() {
 		if buildInfo.BuildTime.IsZero() || buildInfo.BuildTime.Before(minBuildTime) {
 			l.Info("index build time is before minBuildTime, rebuilding the index", "indexBuildTime", buildInfo.BuildTime, "minBuildTime", minBuildTime)
-			return true, nil
+			return true
 		}
 	}
 
 	if minBuildVersion != nil {
 		if buildInfo.BuildVersion == nil || buildInfo.BuildVersion.Compare(minBuildVersion) < 0 {
 			l.Info("index build version is before minBuildVersion, rebuilding the index", "indexBuildVersion", buildInfo.BuildVersion, "minBuildVersion", minBuildVersion)
-			return true, nil
+			return true
 		}
 	}
 
-	return false, nil
+	return false
 }
 
 type rebuildRequest struct {

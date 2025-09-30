@@ -11,10 +11,12 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/grafana/authlib/types"
+	"github.com/sagikazarmark/slog-shim"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -125,6 +127,8 @@ func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key Namespac
 
 // mockSearchBackend implements SearchBackend for testing with tracking capabilities
 type mockSearchBackend struct {
+	openIndexes []NamespacedResource
+
 	mu                   sync.Mutex
 	buildIndexCalls      []buildIndexCall
 	buildEmptyIndexCalls []buildEmptyIndexCall
@@ -194,7 +198,7 @@ func (m *mockSearchBackend) TotalDocs() int64 {
 }
 
 func (m *mockSearchBackend) GetOpenIndexes() []NamespacedResource {
-	return nil
+	return m.openIndexes
 }
 
 func TestSearchGetOrCreateIndex(t *testing.T) {
@@ -204,10 +208,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
 		},
 	}
-	search := &mockSearchBackend{
-		buildIndexCalls:      []buildIndexCall{},
-		buildEmptyIndexCalls: []buildEmptyIndexCall{},
-	}
+	search := &mockSearchBackend{}
 	supplier := &TestDocumentBuilderSupplier{
 		GroupsResources: map[string]string{
 			"group": "resource",
@@ -259,9 +260,6 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 	}
 	failedErr := fmt.Errorf("failed to update index")
 	search := &mockSearchBackend{
-		buildIndexCalls:      []buildIndexCall{},
-		buildEmptyIndexCalls: []buildEmptyIndexCall{},
-
 		cache: map[NamespacedResource]ResourceIndex{
 			{Namespace: "ns", Group: "group", Resource: "bad"}: &MockResourceIndex{
 				updateIndexError: failedErr,
@@ -452,3 +450,89 @@ func TestCombineBuildRequests(t *testing.T) {
 		})
 	}
 }
+
+func TestShouldRebuildIndex(t *testing.T) {
+	type testcase struct {
+		buildInfo       IndexBuildInfo
+		minTime         time.Time
+		minBuildVersion *semver.Version
+
+		expected bool
+	}
+
+	now := time.Now()
+
+	for name, tc := range map[string]testcase{
+		"empty build info, with no rebuild conditions": {
+			buildInfo: IndexBuildInfo{},
+			expected:  false,
+		},
+		"empty build info, with minTime": {
+			buildInfo: IndexBuildInfo{},
+			minTime:   now,
+			expected:  true,
+		},
+		"empty build info, with minVersion": {
+			buildInfo:       IndexBuildInfo{},
+			minBuildVersion: semver.MustParse("10.15.20"),
+			expected:        true,
+		},
+		"build time before min time": {
+			buildInfo: IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
+			minTime:   now,
+			expected:  true,
+		},
+		"build time after min time": {
+			buildInfo: IndexBuildInfo{BuildTime: now.Add(2 * time.Hour)},
+			minTime:   now,
+			expected:  false,
+		},
+		"build version before min version": {
+			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("10.15.19")},
+			minBuildVersion: semver.MustParse("10.15.20"),
+			expected:        true,
+		},
+		"build version after min version": {
+			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("11.0.0")},
+			minBuildVersion: semver.MustParse("10.15.20"),
+			expected:        false,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			res := shouldRebuildIndex(slog.New(&logtest.NopHandler{}), tc.buildInfo, tc.minTime, tc.minBuildVersion)
+			require.Equal(t, tc.expected, res)
+		})
+	}
+}
+
+//func TestFindIndexesForRebuild(t *testing.T) {
+//	// Setup mock implementations
+//	storage := &mockStorageBackend{
+//		resourceStats: []ResourceStats{
+//			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
+//		},
+//	}
+//	search := &mockSearchBackend{}
+//	supplier := &TestDocumentBuilderSupplier{
+//		GroupsResources: map[string]string{
+//			"group": "resource",
+//		},
+//	}
+//
+//	// Create search support with the specified initMaxSize
+//	opts := SearchOptions{
+//		Backend:       search,
+//		Resources:     supplier,
+//		WorkerThreads: 1,
+//		InitMinCount:  1, // set min count to default for this test
+//
+//		MinBuildVersion: semver.MustParse("10.15.20"),
+//		MaxIndexAge:     1 * time.Hour,
+//	}
+//
+//	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil)
+//	require.NoError(t, err)
+//	require.NotNil(t, support)
+//
+//	support.findIndexesToRebuild()
+//}
