@@ -18,12 +18,14 @@ weight: 300
 # Provision resources and sync dashboards
 
 {{< admonition type="caution" >}}
-Provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. This feature is not publicly available in Grafana Cloud yet. Only the cloud-hosted version of GitHub (GitHub.com) is supported at this time. GitHub Enterprise is not yet compatible.
+Git Sync is available in [private preview](https://grafana.com/docs/release-life-cycle/) for Grafana v12 open source and Enterprise editions, and in Grafana Cloud. Support and documentation is available but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided. You can sign up for Grafana Cloud Git Sync public preview using [this form](https://forms.gle/WKkR3EVMcbqsNnkD9).
 
-Sign up for Grafana Cloud Git Sync early access using [this form](https://forms.gle/WKkR3EVMcbqsNnkD9).
+Local file provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions, but is not available in Grafana Cloud. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
+
+TBC same form to register?
 {{< /admonition >}}
 
-Provisioning is an experimental feature that allows you to configure how to store your dashboard JSONs and other files in GitHub repositories using either Git Sync or a local path.
+Provisioning allows you to configure how to store your dashboard JSONs and other files in GitHub repositories using either Git Sync or a local path.
 
 Of the two options, **Git Sync** is the favorited method for provisioning your dashboards. You can synchronize any new dashboards and changes to existing dashboards from the UI to your configured GitHub repository. If you push a change in the repository, those changes are mirrored in your Grafana instance. See [Git Sync workflow](#git-sync-workflow).
 
