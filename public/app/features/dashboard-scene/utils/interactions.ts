@@ -206,7 +206,7 @@ const reportDashboardInteraction: typeof reportInteraction = (name, properties, 
   const isDynamicDashboard = config.featureToggles?.dashboardNewLayouts ?? false;
 
   if (properties) {
-    reportInteraction(`${interactionPrefix}dashboards_${name}`, { ...properties, ...meta, isDynamicDashboard });
+    reportInteraction(`${interactionPrefix}_${name}`, { ...properties, ...meta, isDynamicDashboard });
   } else {
     reportInteraction(`${interactionPrefix}dashboards_${name}`, { isDynamicDashboard });
   }
