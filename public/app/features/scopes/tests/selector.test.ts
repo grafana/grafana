@@ -105,6 +105,9 @@ describe('Selector', () => {
     expectScopesSelectorValue('grafana');
     await openSelector();
     expectResultApplicationsGrafanaSelected();
+
+    jest.spyOn(locationService, 'getLocation').mockRestore();
+    jest.spyOn(locationService, 'getSearch').mockRestore();
   });
 
   describe('Recent scopes', () => {
@@ -131,6 +134,9 @@ describe('Selector', () => {
       expectScopesSelectorValue('Grafana');
 
       await openSelector();
+      // Close to root node so we can see the recent scopes
+      await expandResultApplications();
+
       await expandRecentScopes();
       expectRecentScope('Grafana, Mimir Applications');
       expectRecentScopeNotPresent('Grafana Applications');
@@ -147,6 +153,8 @@ describe('Selector', () => {
       await applyScopes();
 
       await openSelector();
+      // Close to root node so we can try to see the recent scopes
+      await expandResultApplications();
       expectRecentScopeNotPresentInDocument();
     });
 

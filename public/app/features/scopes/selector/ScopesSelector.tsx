@@ -12,7 +12,6 @@ import { getModKey } from 'app/core/utils/browser';
 
 import { useScopesServices } from '../ScopesContextProvider';
 
-import { RecentScopes } from './RecentScopes';
 import { ScopesInput } from './ScopesInput';
 import { ScopesSelectorServiceState } from './ScopesSelectorService';
 import { ScopesTree } from './ScopesTree';
@@ -81,8 +80,6 @@ export const ScopesSelector = () => {
       ? t('scopes.dashboards.toggle.collapse', 'Collapse suggested dashboards list')
       : t('scopes.dashboards.toggle.expand', 'Expand suggested dashboards list');
 
-  const anyChildExpanded = tree?.children && Object.values(tree.children).some(({ expanded }) => expanded);
-
   return (
     <div className={styles.container}>
       <IconButton
@@ -129,16 +126,6 @@ export const ScopesSelector = () => {
                       <Spinner data-testid="scopes-selector-loading" />
                     ) : (
                       <>
-                        {anyChildExpanded && recentScopes && recentScopes.length > 0 && (
-                          // For the root node, recent scopes are showing inside the ScopesTree
-                          <RecentScopes
-                            recentScopes={recentScopes}
-                            onSelect={(scopeIds: string[], parentNodeId?: string) => {
-                              scopesSelectorService.changeScopes(scopeIds, parentNodeId);
-                              scopesSelectorService.closeAndReset();
-                            }}
-                          />
-                        )}
                         <ScopesTree
                           tree={tree}
                           loadingNodeName={loadingNodeName}
