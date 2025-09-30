@@ -3,9 +3,7 @@ package datasource
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"path/filepath"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,16 +20,14 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
 
@@ -51,12 +47,12 @@ type DataSourceAPIBuilder struct {
 }
 
 func RegisterAPIService(
-	cfgProvider configprovider.ConfigProvider,
 	features featuremgmt.FeatureToggles,
 	apiRegistrar builder.APIRegistrar,
 	pluginClient plugins.Client, // access to everything
 	datasources ScopedPluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
+	pluginStore pluginstore.Store,
 	accessControl accesscontrol.AccessControl,
 	reg prometheus.Registerer,
 ) (*DataSourceAPIBuilder, error) {
@@ -70,43 +66,25 @@ func RegisterAPIService(
 
 	var err error
 	var builder *DataSourceAPIBuilder
-
-	cfg, err := cfgProvider.Get(context.Background())
-	if err != nil {
-		return nil, err
-	}
-	pluginJSONs, err := getCorePlugins(cfg)
-	if err != nil {
-		return nil, err
-	}
-
+	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
 	ids := []string{
 		"grafana-testdata-datasource",
 		"prometheus",
 		"graphite",
 	}
 
-	for _, pluginJSON := range pluginJSONs {
-		if explictPluginList && !slices.Contains(ids, pluginJSON.ID) {
+	for _, ds := range all {
+		if explictPluginList && !slices.Contains(ids, ds.ID) {
 			continue // skip this one
 		}
 
-		if !pluginJSON.Backend {
+		if !ds.Backend {
 			continue // skip frontend only plugins
 		}
 
-		if pluginJSON.Type != plugins.TypeDataSource {
-			continue // skip non-datasource plugins
-		}
-
-		client, ok := pluginClient.(PluginClient)
-		if !ok {
-			return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
-		}
-
-		builder, err = NewDataSourceAPIBuilder(pluginJSON,
-			client,
-			datasources.GetDatasourceProvider(pluginJSON),
+		builder, err = NewDataSourceAPIBuilder(ds.JSONData,
+			pluginClient,
+			datasources.GetDatasourceProvider(ds.JSONData),
 			contextProvider,
 			accessControl,
 			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
@@ -298,23 +276,4 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	})
 
 	return oas, err
-}
-
-func getCorePlugins(cfg *setting.Cfg) ([]plugins.JSONData, error) {
-	coreDataSourcesPath := filepath.Join(cfg.StaticRootPath, "app", "plugins", "datasource")
-	coreDataSourcesSrc := sources.NewLocalSource(
-		plugins.ClassCore,
-		[]string{coreDataSourcesPath},
-	)
-
-	res, err := coreDataSourcesSrc.Discover(context.Background())
-	if err != nil {
-		return nil, errors.New("failed to load core data source plugins")
-	}
-
-	pluginJSONs := make([]plugins.JSONData, 0, len(res))
-	for _, p := range res {
-		pluginJSONs = append(pluginJSONs, p.Primary.JSONData)
-	}
-	return pluginJSONs, nil
 }
