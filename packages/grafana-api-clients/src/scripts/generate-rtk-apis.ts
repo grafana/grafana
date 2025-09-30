@@ -85,7 +85,6 @@ const config: ConfigFile = {
     ...getAPIConfig('rules', 'v0alpha1'),
     ...getAPIConfig('preferences', 'v1alpha1'),
     ...getAPIConfig('dashboard', 'v0alpha1', ['getSearch']),
-    ...getAPIConfig(foo, 'v0alpha1', []),
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };
