@@ -58,6 +58,10 @@
     "./shorturl/v1alpha1": {
       "import": "./src/clients/shorturl/v1alpha1/index.ts",
       "require": "./src/clients/shorturl/v1alpha1/index.ts"
+    },
+    "./migrate-to-cloud": {
+      "import": "./src/clients/migrate-to-cloud/index.ts",
+      "require": "./src/clients/migrate-to-cloud/index.ts"
     }
   },
   "publishConfig": {

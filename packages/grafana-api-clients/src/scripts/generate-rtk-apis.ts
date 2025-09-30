@@ -11,11 +11,9 @@ const config: ConfigFile = {
   exportName: 'generatedAPI',
 
   outputFiles: {
-    [path.join(basePath, 'public/app/features/migrate-to-cloud/api/endpoints.gen.ts')]: {
+    '../clients/migrate-to-cloud/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
-      apiFile: 'baseAPI',
-      // TODO this import doesn't seem to work correctly - ends up as import { baseAPI } from 'baseAPI'
-      apiImport: 'baseAPI',
+      apiFile: '../clients/migrate-to-cloud/baseAPI.ts',
       hooks: true,
       filterEndpoints: [
         'getSessionList',
@@ -39,12 +37,10 @@ const config: ConfigFile = {
         'getResourceDependencies',
       ],
     },
-    [path.join(basePath, 'public/app/features/preferences/api/user/endpoints.gen.ts')]: {
+    '../clients/preferences/user/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
       hooks: true,
-      apiFile: 'baseAPI',
-      // TODO this import doesn't seem to work correctly - ends up as import { baseAPI } from 'baseAPI'
-      apiImport: 'baseAPI',
+      apiFile: '../clients/preferences/user/baseAPI.ts',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
     '../clients/iam/v0alpha1/endpoints.gen.ts': {

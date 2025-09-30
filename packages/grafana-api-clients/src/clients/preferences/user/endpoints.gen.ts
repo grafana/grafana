@@ -1,4 +1,4 @@
-import { baseAPI as api } from './baseAPI';
+import { api } from './baseAPI';
 const injectedRtkApi = api.injectEndpoints({
   endpoints: (build) => ({
     getUserPreferences: build.query<GetUserPreferencesApiResponse, GetUserPreferencesApiArg>({
@@ -62,7 +62,7 @@ export type ErrorResponseBody = {
   /** a human readable version of the error */
   message: string;
   /** Status An optional status to denote the cause of the error.
-
+    
     For example, a 412 Precondition Failed error may include additional information of why that error happened. */
   status?: string;
 };

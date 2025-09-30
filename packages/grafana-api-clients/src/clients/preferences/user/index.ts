@@ -1,4 +1,4 @@
-import { generatedAPI } from './user/endpoints.gen';
+import { generatedAPI } from './endpoints.gen';
 
 export const { useGetUserPreferencesQuery, usePatchUserPreferencesMutation, useUpdateUserPreferencesMutation } =
   generatedAPI;
