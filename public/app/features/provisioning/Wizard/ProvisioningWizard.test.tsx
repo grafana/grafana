@@ -248,7 +248,7 @@ describe('ProvisioningWizard', () => {
 
       await waitFor(() => {
         expect(screen.getByRole('heading', { name: /3\. Synchronize with external storage/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /Begin synchronization/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Check repository status/i })).toBeInTheDocument();
       });
     });
 
