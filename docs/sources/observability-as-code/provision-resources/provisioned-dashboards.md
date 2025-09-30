@@ -116,7 +116,7 @@ Saving changes requires opening a pull request in your GitHub repository.
 
 You can remove a provisioned dashboard by deleting the dashboard from the repository. The Grafana UI updates when the changes from the GitHub repository sync.
 
-To restore a deleted dashboard, raise a PR directly in your GitHub repository. Restoring resources from the UI is currently not possible. 
+To restore a deleted dashboard, raise a PR directly in your GitHub repository. Restoring resources from the UI is currently not possible.
 
 ### Tips
 
