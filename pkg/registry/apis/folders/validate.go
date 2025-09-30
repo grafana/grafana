@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -35,15 +34,25 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return fmt.Errorf("unable to read metadata from object: %w", err)
 	}
 
-	name, ok := utils2.ParseOwnerFromName(id)
+	owner, ok := utils2.ParseOwnerFromName(id)
 	if ok {
-		if err = validateOwnerReference(name, meta); err != nil {
+		if owner.Owner == utils2.NamespaceResourceOwner {
+			return fmt.Errorf("folder may not be a namespace")
+		}
+		if meta.GetFolder() != "" {
+			return fmt.Errorf("%s folder must be a root", owner.Owner)
+		}
+		if meta.GetAnnotation(utils.AnnoKeyGrantPermissions) != "" {
+			return fmt.Errorf("%s folders do not support: %s", owner.Owner, utils.AnnoKeyGrantPermissions)
+		}
+
+		if err = owner.Validate(meta); err != nil {
 			return err
 		}
 
 		// The title will be based on the team/user so we should not save a value in the folder
 		if f.Spec.Title != "" {
-			return fmt.Errorf("folder title must be empty when creating a %s folder", name.Owner)
+			return fmt.Errorf("folder title must be empty when creating a %s folder", owner.Owner)
 		}
 		return nil
 	}
@@ -83,39 +92,6 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	return nil
 }
 
-func validateOwnerReference(name utils2.OwnerReference, folder utils.GrafanaMetaAccessor) error {
-	if name.Owner == utils2.NamespaceResourceOwner {
-		return fmt.Errorf("folder may not be a namespace")
-	}
-	if folder.GetFolder() != "" {
-		return fmt.Errorf("%s folder must be a root", name.Owner)
-	}
-	if folder.GetAnnotation(utils.AnnoKeyGrantPermissions) != "" {
-		return fmt.Errorf("%s folders do not support: %s", name.Owner, utils.AnnoKeyGrantPermissions)
-	}
-
-	// Make sure a team/root
-	refs := folder.GetOwnerReferences()
-	switch len(refs) {
-	case 0:
-		return fmt.Errorf("folder is missing owner reference (%s)", name.Name)
-	case 1: // OK
-	default:
-		return fmt.Errorf("folder has multiple owner references (%s)", name.Name)
-	}
-	ref := refs[0]
-	if ref.Name != name.Name {
-		return fmt.Errorf("owner reference must match the same name")
-	}
-	if strings.ToLower(ref.Kind) != string(name.Owner) {
-		return fmt.Errorf("owner reference kind must match the name")
-	}
-	if !strings.HasPrefix(ref.APIVersion, "iam.grafana.app/") {
-		return fmt.Errorf("owner reference should be iam.grafana.app")
-	}
-	return nil
-}
-
 func validateOnUpdate(ctx context.Context,
 	obj *folders.Folder,
 	old *folders.Folder,
@@ -134,7 +110,7 @@ func validateOnUpdate(ctx context.Context,
 
 	name, ok := utils2.ParseOwnerFromName(obj.Name)
 	if ok {
-		if err = validateOwnerReference(name, folderObj); err != nil {
+		if err = name.Validate(folderObj); err != nil {
 			return err
 		}
 

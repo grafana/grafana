@@ -154,7 +154,7 @@ func TestValidateCreate(t *testing.T) {
 					Name: "user-xyz",
 				},
 			},
-			expectedErr: "folder is missing owner reference (xyz)",
+			expectedErr: "missing owner reference (user-xyz)",
 		}, {
 			name: "team with owner mismatch",
 			folder: &folders.Folder{
@@ -199,7 +199,7 @@ func TestValidateCreate(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "folder has multiple owner references",
+			expectedErr: "multiple owner references",
 		}, {
 			name: "team with title set",
 			folder: &folders.Folder{
@@ -408,7 +408,7 @@ func TestValidateUpdate(t *testing.T) {
 				},
 			},
 			old:         &folders.Folder{},
-			expectedErr: "folder is missing owner reference",
+			expectedErr: "missing owner reference",
 		}}
 
 	for _, tt := range tests {
