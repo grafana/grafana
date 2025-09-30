@@ -140,6 +140,9 @@ type UnifiedAlertingSettings struct {
 	StatePeriodicSaveJitterEnabled bool
 	RulesPerRuleGroupLimit         int64
 
+	StateCompressedPeriodicSaveEnabled  bool
+	StateCompressedPeriodicSaveInterval time.Duration
+
 	// Retention period for Alertmanager notification log entries.
 	NotificationLogRetention time.Duration
 
@@ -562,6 +565,12 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.StatePeriodicSaveBatchSize = ua.Key("state_periodic_save_batch_size").MustInt(1)
 
 	uaCfg.StatePeriodicSaveJitterEnabled = ua.Key("state_periodic_save_jitter_enabled").MustBool(false)
+
+	uaCfg.StateCompressedPeriodicSaveEnabled = ua.Key("state_compressed_periodic_save_enabled").MustBool(false)
+	uaCfg.StateCompressedPeriodicSaveInterval, err = gtime.ParseDuration(valueAsString(ua, "state_compressed_periodic_save_interval", (time.Minute * 5).String()))
+	if err != nil {
+		return err
+	}
 
 	uaCfg.NotificationLogRetention, err = gtime.ParseDuration(valueAsString(ua, "notification_log_retention", (5 * 24 * time.Hour).String()))
 	if err != nil {

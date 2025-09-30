@@ -64,6 +64,22 @@ By default, Grafana performs one SQL update per alert rule after each evaluation
 
 You can change this behavior by disabling the `alertingSaveStateCompressed` feature flag. In this case, Grafana performs a separate SQL update for each state change of an alert instance. This configuration is rarely recommended, as it can add significant database overhead for alert rules with many instances.
 
+#### Periodic saves for compressed alert state
+
+When using compressed alert state, you can further reduce database load by enabling periodic saves instead of saving after every evaluation. This combines the benefits of compressed storage with periodic writes.
+
+To enable periodic saves for compressed alert state, set the following configuration options:
+
+```ini
+[unified_alerting]
+state_compressed_periodic_save_enabled = true
+state_compressed_periodic_save_interval = 5m
+```
+
+When enabled, Grafana will periodically save all compressed alert states to the database at the specified interval. The system groups alert instances by their alert rule UID, compresses each group, and processes all rules within a single database transaction. This ensures data consistency while maximizing compression efficiency.
+
+The periodic interval can be configured using the `state_compressed_periodic_save_interval` setting. The default value is `5m` (5 minutes).
+
 ### Save state periodically
 
 You can also reduce database load by writing states periodically instead of after every evaluation.
