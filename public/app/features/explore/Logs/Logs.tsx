@@ -281,18 +281,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     store.set(visualisationTypeKey, visualisationType);
   }, [panelState?.logs?.visualisationType]);
 
-  useEffect(() => {
-    let displayedFields: string[] = [];
-    if (Array.isArray(panelState?.logs?.displayedFields)) {
-      displayedFields = panelState?.logs?.displayedFields;
-    } else if (panelState?.logs?.displayedFields && typeof panelState?.logs?.displayedFields === 'object') {
-      displayedFields = Object.values(panelState?.logs?.displayedFields);
-    }
-    setDisplayedFields(displayedFields);
-    // Run once
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   useUnmount(() => {
     if (flipOrderTimer) {
       window.clearTimeout(flipOrderTimer.current);
