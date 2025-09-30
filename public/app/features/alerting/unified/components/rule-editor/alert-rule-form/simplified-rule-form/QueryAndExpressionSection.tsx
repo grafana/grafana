@@ -24,7 +24,10 @@ import {
 import { addNewDataQuery, queriesAndExpressionsReducer } from '../../query-and-alert-condition/reducer';
 import { useAlertQueryRunner } from '../../query-and-alert-condition/useAlertQueryRunner';
 
+import { getSimplifiedSectionStyles } from './sectionStyles';
+
 export function QueryAndExpressionSection() {
+  const base = useStyles2(getSimplifiedSectionStyles);
   const styles = useStyles2(getStyles);
   const { getValues, setValue } = useFormContext<RuleFormValues>();
   const initialState = useMemo(() => ({ queries: getValues('queries') as AlertQuery[] }), [getValues]);
@@ -61,114 +64,116 @@ export function QueryAndExpressionSection() {
   const onDuplicateQuery = useCallback((q: AlertQuery) => {}, []);
   const handleSetCondition = useCallback((c: string) => setCondition(c), []);
   return (
-    <div className={styles.section}>
-      <div className={styles.sectionHeaderRow}>
-        <span className={styles.stepBadge}>
+    <div className={base.section}>
+      <div className={base.sectionHeaderRow}>
+        <span className={base.stepBadge}>
           <Trans i18nKey="alerting.simplified.step-number-two">2</Trans>
         </span>
-        <div className={styles.sectionHeader}>
+        <div className={base.sectionHeader}>
           <Trans i18nKey="alerting.simplified.query-and-expressions">Query and expressions</Trans>
         </div>
       </div>
-      <Stack direction="column">
-        <Stack direction="row" gap={0.5} alignItems="center">
-          <Text variant="bodySmall" color="secondary">
-            <Trans i18nKey="alerting.simplified.query-and-expressions.help-text">
-              Define query and alert condition
-            </Trans>
-          </Text>
-          <NeedHelpInfo
-            contentText={t(
-              'alerting.simplified.query-and-expressions.help-content',
-              'An alert rule consists of one or more queries and expressions that select the data you want to measure. Define queries and/or expressions and then choose one of them as the alert rule condition. This is the threshold that an alert rule must meet or exceed in order to fire. For more information on queries and expressions, see Query and transform data.'
-            )}
-            externalLink="https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/"
-            linkText={t(
-              'alerting.simplified.query-and-expressions.link-text',
-              'Read more on our documentation website'
-            )}
-            title={t('alerting.simplified.query-and-expressions.title', 'Define query and alert condition')}
-          />
-        </Stack>
-        <QueryEditor
-          queries={dataQueries}
-          expressions={expressionQueries}
-          onRunQueries={() => runQueriesPreview()}
-          onChangeQueries={onChangeQueries}
-          onDuplicateQuery={onDuplicateQuery}
-          panelData={queryPreviewData}
-          condition={condition}
-          onSetCondition={handleSetCondition}
-        />
-        {!simplifiedQueryStep && (
-          <div className={styles.spacedAfter}>
-            <Stack direction="row" alignItems="center">
-              <Tooltip
-                content={t(
-                  'alerting.query-and-expressions-step.no-compatible-sources',
-                  'You appear to have no compatible data sources'
-                )}
-                show={noCompatibleDataSources}
-              >
-                <Button
-                  type="button"
-                  onClick={() => {
-                    dispatch(addNewDataQuery());
-                  }}
-                  variant="secondary"
-                  data-testid={selectors.components.QueryTab.addQuery}
-                  disabled={noCompatibleDataSources}
-                >
-                  <Trans i18nKey="alerting.query-and-expressions-step.add-query">Add query</Trans>
-                </Button>
-              </Tooltip>
-            </Stack>
-          </div>
-        )}
-        {/* action buttons */}
+      <div className={base.contentIndented}>
         <Stack direction="column">
-          <SimpleConditionEditor
-            simpleCondition={simpleConditionState}
-            onChange={setSimpleConditionState}
-            expressionQueriesList={expressionQueries as Array<AlertQuery<ExpressionQuery>>}
-            dispatch={dispatch as any}
-            previewData={queryPreviewData[condition ?? '']}
-          />
-          <Stack direction="row">
-            {isPreviewLoading && (
-              <Button icon="spinner" type="button" variant="destructive" onClick={cancelQueries}>
-                <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-              </Button>
-            )}
-            {!isPreviewLoading && (
-              <Button
-                data-testid={selectors.components.AlertRules.previewButton}
-                icon="sync"
-                type="button"
-                onClick={() => runQueriesPreview()}
-                disabled={emptyQueries}
-              >
-                {t('alerting.queryAndExpressionsStep.preview', 'Preview')}
-              </Button>
-            )}
+          <Stack direction="row" gap={0.5} alignItems="center">
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="alerting.simplified.query-and-expressions.help-text">
+                Define query and alert condition
+              </Trans>
+            </Text>
+            <NeedHelpInfo
+              contentText={t(
+                'alerting.simplified.query-and-expressions.help-content',
+                'An alert rule consists of one or more queries and expressions that select the data you want to measure. Define queries and/or expressions and then choose one of them as the alert rule condition. This is the threshold that an alert rule must meet or exceed in order to fire. For more information on queries and expressions, see Query and transform data.'
+              )}
+              externalLink="https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/"
+              linkText={t(
+                'alerting.simplified.query-and-expressions.link-text',
+                'Read more on our documentation website'
+              )}
+              title={t('alerting.simplified.query-and-expressions.title', 'Define query and alert condition')}
+            />
           </Stack>
-        </Stack>
+          <QueryEditor
+            queries={dataQueries}
+            expressions={expressionQueries}
+            onRunQueries={() => runQueriesPreview()}
+            onChangeQueries={onChangeQueries}
+            onDuplicateQuery={onDuplicateQuery}
+            panelData={queryPreviewData}
+            condition={condition}
+            onSetCondition={handleSetCondition}
+          />
+          {!simplifiedQueryStep && (
+            <div className={styles.spacedAfter}>
+              <Stack direction="row" alignItems="center">
+                <Tooltip
+                  content={t(
+                    'alerting.query-and-expressions-step.no-compatible-sources',
+                    'You appear to have no compatible data sources'
+                  )}
+                  show={noCompatibleDataSources}
+                >
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      dispatch(addNewDataQuery());
+                    }}
+                    variant="secondary"
+                    data-testid={selectors.components.QueryTab.addQuery}
+                    disabled={noCompatibleDataSources}
+                  >
+                    <Trans i18nKey="alerting.query-and-expressions-step.add-query">Add query</Trans>
+                  </Button>
+                </Tooltip>
+              </Stack>
+            </div>
+          )}
+          {/* action buttons */}
+          <Stack direction="column">
+            <SimpleConditionEditor
+              simpleCondition={simpleConditionState}
+              onChange={setSimpleConditionState}
+              expressionQueriesList={expressionQueries as Array<AlertQuery<ExpressionQuery>>}
+              dispatch={dispatch as any}
+              previewData={queryPreviewData[condition ?? '']}
+            />
+            <Stack direction="row">
+              {isPreviewLoading && (
+                <Button icon="spinner" type="button" variant="destructive" onClick={cancelQueries}>
+                  <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+                </Button>
+              )}
+              {!isPreviewLoading && (
+                <Button
+                  data-testid={selectors.components.AlertRules.previewButton}
+                  icon="sync"
+                  type="button"
+                  onClick={() => runQueriesPreview()}
+                  disabled={emptyQueries}
+                >
+                  {t('alerting.queryAndExpressionsStep.preview', 'Preview')}
+                </Button>
+              )}
+            </Stack>
+          </Stack>
 
-        {/* No Queries */}
-        {emptyQueries && (
-          <Alert
-            title={t(
-              'alerting.query-and-expressions-step.title-queries-expressions-configured',
-              'No queries or expressions have been configured'
-            )}
-            severity="warning"
-          >
-            <Trans i18nKey="alerting.query-and-expressions-step.body-queries-expressions-configured">
-              Create at least one query or expression to be alerted on
-            </Trans>
-          </Alert>
-        )}
-      </Stack>
+          {/* No Queries */}
+          {emptyQueries && (
+            <Alert
+              title={t(
+                'alerting.query-and-expressions-step.title-queries-expressions-configured',
+                'No queries or expressions have been configured'
+              )}
+              severity="warning"
+            >
+              <Trans i18nKey="alerting.query-and-expressions-step.body-queries-expressions-configured">
+                Create at least one query or expression to be alerted on
+              </Trans>
+            </Alert>
+          )}
+        </Stack>
+      </div>
     </div>
   );
 }
