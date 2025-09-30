@@ -37,12 +37,10 @@ Git Sync is bidirectional and works both with changes done directly in GitHub as
 
 Whenever you modify a dashboard directly from the UI, Grafana can commit changes to Git upon saving. You can configure settings to either enforce PR approvals before merging in your repository, or allow direct commits.
 
-Grafana periodically polls GitHub at a regular internal to synchronize any changes.
+Grafana periodically polls GitHub at a regular internal to synchronize any changes. The default polling interval is 60 seconds.
 
-- With the webhooks feature enabled, repository notifications appear almost immediately.
+- If you enable the [webhooks feature](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/git-sync-setup/#configure-webhooks-and-image-rendering), repository notifications appear almost immediately.
 - Without webhooks, Grafana polls for changes at the specified interval.
-
-The default polling interval is 60 seconds.
 
 ### Making changes in your GitHub repositories
 

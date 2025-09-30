@@ -49,13 +49,13 @@ Git Sync is an experimental feature and is under continuous development. Reporti
 
 When Git Sync is enabled, the database load might increase, especially for instances with a lot of folders and nested folders. Evaluate the performance impact, if any, in a non-production environment.
 
+## Before you begin
+
 {{< admonition type="caution" >}}
 
 See also [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#known-limitations/) before using Git Sync.
 
 {{< /admonition >}}
-
-## Before you begin
 
 To set up Git Sync, you need:
 
@@ -65,7 +65,7 @@ To set up Git Sync, you need:
   - If you want to use a local file path, refer to [the local file path guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/).
 - A GitHub access token. The Grafana UI will prompt you during setup.
 - Optional: A public Grafana instance.
-- Optional: Image Renderer plugin to save image previews with your PRs.
+- Optional: the [Image Renderer plugin](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs.
 
 ## Enable required feature toggles
 
@@ -132,15 +132,13 @@ If you're using Git Sync in Grafana Cloud you can only sync specific folders for
 
 In this step you can decide which elements to synchronize. Keep in mind the available options depend on the status of your GitHub repository. The first time you connect Grafana with a GitHub repository, you need to synchronize with external storage. If you are syncing with a new or empty repository, you won't have an option to migrate dashboards.
 
-Choose to either sync your entire organization resources with external storage, or to sync certain resources to a new Grafana folder (with up to 10 connections).
+1. Choose to either sync your entire organization resources with external storage, or to sync certain resources to a new Grafana folder (with up to 10 connections).
 
-- Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. With this option, all of your dashboards are synced to that one repository. You can only have one provisioned connection with this selection, and you won't have the option of setting up additional repositories to connect to.
+  - Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. With this option, all of your dashboards are synced to that one repository. You can only have one provisioned connection with this selection, and you won't have the option of setting up additional repositories to connect to.
 
-- Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
-
-Next, enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
-
-Click **Synchronize** to continue.
+  - Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
+1. Enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
+1. Click **Synchronize** to continue.
 
 <!-- ### Synchronize with external storage
 

@@ -29,7 +29,7 @@ Provisioning allows you to configure how to store your dashboard JSONs and other
 
 Of the two options, **Git Sync** is the favorited method for provisioning your dashboards. You can synchronize any new dashboards and changes to existing dashboards from the UI to your configured GitHub repository. If you push a change in the repository, those changes are mirrored in your Grafana instance. See [Git Sync workflow](#git-sync-workflow).
 
-Alternatively, **local file provisioning** allows you to include in your Grafana instance resources (such as folders and dashboard JSON files) that are stored in a local file system. See [Local file workflow](local-file-workflow).
+Alternatively, **local file provisioning** allows you to include in your Grafana instance resources (such as folders and dashboard JSON files) that are stored in a local file system. See [Local file workflow](#local-file-workflow).
 
 ## Provisioned folders and connections
 
@@ -42,8 +42,7 @@ You can set a single folder, or multiple folders to a different repository, with
 In the Git Sync workflow:
 
 - When you provision resources with Git Sync you can modify them from within the Grafana UI or within the GitHub repository. Changes made in either the repository or the Grafana UI are bidirectional.
-- Any changes made in the provisioned files stored in the GitHub repository are reflected in the Grafana database. By default, Grafana polls GitHub every 60 seconds.
-- The Grafana UI reads from the database and updates the UI to reflect these changes.
+- Any changes made in the provisioned files stored in the GitHub repository are reflected in the Grafana database. By default, Grafana polls GitHub every 60 seconds. The Grafana UI reads from the database and updates the UI to reflect these changes.
 
 For example, if you update a dashboard within the Grafana UI and click **Save** to preserve the changes, you'll be notified that the dashboard is provisioned in a GitHub repository. Next you'll be prompted to choose how to preserve the changes: either directly to a branch, or pushed to a new branch using a pull request in GitHub.
 
@@ -54,8 +53,7 @@ For more information, see [Introduction to Git Sync](https://grafana.com/docs/gr
 In the local file workflow:
 
 - All provisioned resources are changed in the local files.
-- Any changes made in the provisioned files are reflected in the Grafana database.
-- The Grafana UI reads the database and updates the UI to reflect these changes.
+- Any changes made in the provisioned files are reflected in the Grafana database. The Grafana UI reads the database and updates the UI to reflect these changes.
 - You can't use the Grafana UI to edit or delete provisioned resources.
 
 Learn more in [Set up file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/).
