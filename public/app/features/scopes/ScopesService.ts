@@ -76,9 +76,6 @@ export class ScopesService implements ScopesContextValue {
 
     // Pre-load parent node, to prevent UI flickering
     if (parentNodeId) {
-      // this.selectorService.getScopeNode(parentNodeId).catch((error) => {
-      //   console.error('Failed to pre-load parent node', error);
-      // });
       this.selectorService.resolvePathToRoot(parentNodeId, this.selectorService.state.tree!).catch((error) => {
         console.error('Failed to pre-load parent node path', error);
       });
