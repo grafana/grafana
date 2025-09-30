@@ -63,7 +63,7 @@
     "storybook": "yarn workspace @grafana/ui storybook --ci",
     "storybook:build": "yarn workspace @grafana/ui storybook:build",
     "themes-schema": "typescript-json-schema ./tsconfig.json NewThemeOptions --include 'packages/grafana-data/src/themes/createTheme.ts' --out public/app/features/theme-playground/schema.generated.json",
-    "themes-generate": "yarn themes-schema && esbuild --target=es6 ./scripts/cli/generateSassVariableFiles.ts --bundle --platform=node --tsconfig=./scripts/cli/tsconfig.json | node",
+    "themes-generate": "yarn themes-schema && esbuild --target=es6 ./scripts/cli/generateSassVariableFiles.ts --bundle --conditions=@grafana-app/source --platform=node --tsconfig=./scripts/cli/tsconfig.json | node",
     "themes:usage": "eslint . --ignore-pattern '*.test.ts*' --ignore-pattern '*.spec.ts*' --cache --plugin '@grafana' --rule '{ @grafana/theme-token-usage: \"error\" }'",
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
     "plugins:build-bundled": "echo 'bundled plugins are no longer supported'",
