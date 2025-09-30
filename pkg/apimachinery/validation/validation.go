@@ -8,11 +8,11 @@ import (
 
 const maxNameLength = 253
 const maxNamespaceLength = 40
-const minNamespaceLength = 4
+const minNamespaceLength = 3
 const maxGroupLength = 60
-const minGroupLength = 4
+const minGroupLength = 3
 const maxResourceLength = 40
-const minResourceLength = 4
+const minResourceLength = 3
 
 const grafanaNameFmt = `^[a-zA-Z0-9:\-\_\.]*$`
 const grafanaNameErrMsg string = "must consist of alphanumeric characters, '-', '_', ':' or '.'"

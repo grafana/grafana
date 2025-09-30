@@ -82,7 +82,7 @@ func TestValidation(t *testing.T) {
 		}, {
 			name:   "too short",
 			expect: []string{"namespace is too short"},
-			input:  []string{"a", "1", "aa", "aaa"},
+			input:  []string{"a", "1", "aa"},
 		}, {
 			name: "ok",
 			input: []string{
@@ -95,6 +95,7 @@ func TestValidation(t *testing.T) {
 				"stacks-123456", // ends with a number
 				"org-3",         // ends with a number
 				"1234",          // just a numbers
+				"aaa",
 			},
 		}, {
 			name: "bad input",
@@ -136,7 +137,7 @@ func TestValidation(t *testing.T) {
 		}, {
 			name:   "too short",
 			expect: []string{"group is too short"},
-			input:  []string{"a", "1", "aa", "aaa"},
+			input:  []string{"a", "1", "aa"},
 		}, {
 			name: "ok",
 			input: []string{
@@ -145,6 +146,7 @@ func TestValidation(t *testing.T) {
 				"dashboards.grafana.app",
 				"prometheus-datasource",
 				"1234", // just a numbers
+				"aaa",
 			},
 		}, {
 			name: "bad input",
@@ -186,7 +188,7 @@ func TestValidation(t *testing.T) {
 		}, {
 			name:   "too short",
 			expect: []string{"resource is too short"},
-			input:  []string{"a", "1", "aa", "aaa"},
+			input:  []string{"a", "1", "aa"},
 		}, {
 			name: "ok",
 			input: []string{
@@ -195,6 +197,7 @@ func TestValidation(t *testing.T) {
 				"dashboards",
 				"folders",
 				"folders123",
+				"aaa",
 			},
 		}, {
 			name: "bad input",
