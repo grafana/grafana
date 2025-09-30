@@ -157,14 +157,14 @@ export const AnnotationsPlugin2 = ({
 
       ctx.beginPath();
       console.log('annos.length', annos.length, annos);
-      const additionalHeight = annotationsConfig?.multiLane ? annos.length * ANNOTATION_LANE_SIZE : 0;
+      const additionalHeight = annotationsConfig?.multiLane ? annos.length * ANNOTATION_LANE_SIZE * uPlot.pxRatio : 0;
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height + additionalHeight);
-      // ctx.clip();
+      ctx.clip();
 
       // Multi-lane annotations do not support vertical lines or shaded regions
       if (!annotationsConfig?.multiLane || annotationsConfig.showRegions || annotationsConfig.showLine) {
         annos.forEach((frame, frameIdx) => {
-          const verticalOffset = annotationsConfig?.multiLane ? frameIdx * ANNOTATION_LANE_SIZE * 2 : 0;
+          const verticalOffset = annotationsConfig?.multiLane ? frameIdx * ANNOTATION_LANE_SIZE * uPlot.pxRatio : 0;
           let vals = getVals(frame);
 
           if (frame.name === 'xymark') {
