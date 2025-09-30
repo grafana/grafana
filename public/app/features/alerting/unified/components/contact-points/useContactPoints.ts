@@ -5,6 +5,7 @@
 
 import { useMemo } from 'react';
 
+import { getAPINamespace } from '@grafana/api-clients';
 import { receiversApi } from 'app/features/alerting/unified/api/receiversK8sApi';
 import { useOnCallIntegration } from 'app/features/alerting/unified/components/receivers/grafanaAppReceivers/onCall/useOnCallIntegration';
 import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver } from 'app/features/alerting/unified/openapi/receiversApi.gen';
@@ -14,7 +15,6 @@ import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/d
 import { isK8sEntityProvisioned, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { GrafanaManagedContactPoint, Receiver } from 'app/plugins/datasource/alertmanager/types';
 
-import { getAPINamespace } from '../../../../../api/utils';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { onCallApi } from '../../api/onCallApi';
 import { useAsync } from '../../hooks/useAsync';

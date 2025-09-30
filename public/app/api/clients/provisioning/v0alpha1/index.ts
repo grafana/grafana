@@ -1,3 +1,12 @@
+import {
+  v0alpha1,
+  type JobSpec,
+  type JobStatus,
+  type RepositorySpec,
+  type RepositoryStatus,
+  type ErrorDetails,
+  type Status,
+} from '@grafana/api-clients/provisioning';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { clearFolders } from 'app/features/browse-dashboards/state/slice';
@@ -9,17 +18,7 @@ import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
 import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
 import { createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
 
-import {
-  provisioningAPIv0alpha1Generated as generatedAPI,
-  JobSpec,
-  JobStatus,
-  RepositorySpec,
-  RepositoryStatus,
-  ErrorDetails,
-  Status,
-} from '@grafana/api-clients';
-
-export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
+export const provisioningAPIv0alpha1 = v0alpha1.generatedAPI.enhanceEndpoints({
   endpoints: {
     listJob: {
       // Do not include 'watch' in the first query, so we can get the initial list of jobs
@@ -242,4 +241,4 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
 });
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export * from './endpoints.gen';
+export * from '@grafana/api-clients/provisioning';
