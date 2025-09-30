@@ -164,11 +164,11 @@ const QueryPatternCard = ({ pattern, onClick, datasource }: QueryPatternCardProp
       flexDirection: 'column' as const,
       gap: theme.spacing(1),
     },
-    header: {
+    footer: {
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: theme.spacing(0.5),
+      justifyContent: 'flex-end',
+      marginTop: theme.spacing(0.5),
     },
     badge: {
       fontSize: theme.typography.bodySmall.fontSize,
@@ -227,14 +227,14 @@ const QueryPatternCard = ({ pattern, onClick, datasource }: QueryPatternCardProp
       }}
     >
       <div className={css(styles.content)}>
-        <div className={css(styles.header)}>
+        <div className={css(styles.query)}>{getQueryDisplay()}</div>
+        <div className={css(styles.footer)}>
           <Badge 
             text="Recommended by Grafana" 
             color="blue" 
             className={css(styles.badge)}
           />
         </div>
-        <div className={css(styles.query)}>{getQueryDisplay()}</div>
       </div>
     </div>
   );
