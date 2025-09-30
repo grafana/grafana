@@ -1,4 +1,4 @@
-import { act, fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { DateTime, makeTimeRange, dateMath } from '@grafana/data';
