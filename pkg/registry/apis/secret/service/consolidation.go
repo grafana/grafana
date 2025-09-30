@@ -60,7 +60,7 @@ func (s *ConsolidationService) Consolidate(ctx context.Context) (err error) {
 
 	for _, ev := range encryptedValues {
 		// Decrypt the value using its old data key.
-		decryptedValue, err := s.encryptionManager.Decrypt(ctx, ev.Namespace, ev.EncryptedData)
+		decryptedValue, err := s.encryptionManager.Decrypt(ctx, ev.Namespace, ev.EncryptedPayload)
 		if err != nil {
 			logging.FromContext(ctx).Error("Failed to decrypt value", "namespace", ev.Namespace, "name", ev.Name, "error", err)
 			continue

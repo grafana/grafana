@@ -420,10 +420,24 @@ func TestEncryptionService_Decrypt(t *testing.T) {
 
 	t.Run("empty payload should fail", func(t *testing.T) {
 		svc := setupTestService(t)
-		_, err := svc.Decrypt(context.Background(), namespace, []byte(""))
+		_, err := svc.Decrypt(context.Background(), namespace, contracts.EncryptedPayload{
+			DataKeyID:     "test-data-key-id",
+			EncryptedData: []byte(""),
+		})
 		require.Error(t, err)
 
 		assert.Equal(t, "unable to decrypt empty payload", err.Error())
+	})
+
+	t.Run("empty data key id should fail", func(t *testing.T) {
+		svc := setupTestService(t)
+		_, err := svc.Decrypt(context.Background(), namespace, contracts.EncryptedPayload{
+			DataKeyID:     "",
+			EncryptedData: []byte("some payload"),
+		})
+		require.Error(t, err)
+
+		assert.Equal(t, "unable to decrypt empty data key id", err.Error())
 	})
 
 	t.Run("ee encrypted payload with ee enabled should work", func(t *testing.T) {

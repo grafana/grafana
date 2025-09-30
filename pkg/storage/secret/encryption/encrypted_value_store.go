@@ -37,7 +37,7 @@ type encryptedValStorage struct {
 	tracer  trace.Tracer
 }
 
-func (s *encryptedValStorage) Create(ctx context.Context, namespace, name string, version int64, encryptedData []byte) (ev *contracts.EncryptedValue, err error) {
+func (s *encryptedValStorage) Create(ctx context.Context, namespace, name string, version int64, encryptedData contracts.EncryptedPayload) (ev *contracts.EncryptedValue, err error) {
 	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.Create", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
@@ -59,7 +59,8 @@ func (s *encryptedValStorage) Create(ctx context.Context, namespace, name string
 		Namespace:     namespace,
 		Name:          name,
 		Version:       version,
-		EncryptedData: encryptedData,
+		EncryptedData: encryptedData.EncryptedData,
+		DataKeyID:     encryptedData.DataKeyID,
 		Created:       createdTime,
 		Updated:       createdTime,
 	}
@@ -88,16 +89,19 @@ func (s *encryptedValStorage) Create(ctx context.Context, namespace, name string
 	}
 
 	return &contracts.EncryptedValue{
-		Namespace:     encryptedValue.Namespace,
-		Name:          encryptedValue.Name,
-		Version:       encryptedValue.Version,
-		EncryptedData: encryptedValue.EncryptedData,
-		Created:       encryptedValue.Created,
-		Updated:       encryptedValue.Updated,
+		Namespace: encryptedValue.Namespace,
+		Name:      encryptedValue.Name,
+		Version:   encryptedValue.Version,
+		EncryptedPayload: contracts.EncryptedPayload{
+			DataKeyID:     encryptedValue.DataKeyID,
+			EncryptedData: encryptedValue.EncryptedData,
+		},
+		Created: encryptedValue.Created,
+		Updated: encryptedValue.Updated,
 	}, nil
 }
 
-func (s *encryptedValStorage) Update(ctx context.Context, namespace, name string, version int64, encryptedData []byte) error {
+func (s *encryptedValStorage) Update(ctx context.Context, namespace, name string, version int64, encryptedData contracts.EncryptedPayload) error {
 	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.Update", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
@@ -110,7 +114,8 @@ func (s *encryptedValStorage) Update(ctx context.Context, namespace, name string
 		Namespace:     namespace,
 		Name:          name,
 		Version:       version,
-		EncryptedData: encryptedData,
+		EncryptedData: encryptedData.EncryptedData,
+		DataKeyID:     encryptedData.DataKeyID,
 		Updated:       time.Now().Unix(),
 	}
 
@@ -172,12 +177,15 @@ func (s *encryptedValStorage) Get(ctx context.Context, namespace, name string, v
 	}
 
 	return &contracts.EncryptedValue{
-		Namespace:     encryptedValue.Namespace,
-		Name:          encryptedValue.Name,
-		Version:       encryptedValue.Version,
-		EncryptedData: encryptedValue.EncryptedData,
-		Created:       encryptedValue.Created,
-		Updated:       encryptedValue.Updated,
+		Namespace: encryptedValue.Namespace,
+		Name:      encryptedValue.Name,
+		Version:   encryptedValue.Version,
+		EncryptedPayload: contracts.EncryptedPayload{
+			DataKeyID:     encryptedValue.DataKeyID,
+			EncryptedData: encryptedValue.EncryptedData,
+		},
+		Created: encryptedValue.Created,
+		Updated: encryptedValue.Updated,
 	}, nil
 }
 
@@ -263,6 +271,7 @@ func (s *globalEncryptedValStorage) ListAll(ctx context.Context, opts contracts.
 			&row.Namespace,
 			&row.Name,
 			&row.Version,
+			&row.DataKeyID,
 			&row.EncryptedData,
 			&row.Created,
 			&row.Updated,
@@ -272,12 +281,15 @@ func (s *globalEncryptedValStorage) ListAll(ctx context.Context, opts contracts.
 		}
 
 		encryptedValues = append(encryptedValues, &contracts.EncryptedValue{
-			Namespace:     row.Namespace,
-			Name:          row.Name,
-			Version:       row.Version,
-			EncryptedData: row.EncryptedData,
-			Created:       row.Created,
-			Updated:       row.Updated,
+			Namespace: row.Namespace,
+			Name:      row.Name,
+			Version:   row.Version,
+			EncryptedPayload: contracts.EncryptedPayload{
+				DataKeyID:     row.DataKeyID,
+				EncryptedData: row.EncryptedData,
+			},
+			Created: row.Created,
+			Updated: row.Updated,
 		})
 	}
 	if err := rows.Err(); err != nil {

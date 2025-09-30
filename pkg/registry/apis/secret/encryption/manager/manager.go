@@ -1,10 +1,8 @@
 package manager
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"strconv"
@@ -99,10 +97,7 @@ func (s *EncryptionManager) registerUsageMetrics() {
 	})
 }
 
-// TODO: Why do we need to use a global variable for this?
-var b64 = base64.RawStdEncoding
-
-func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, payload []byte) ([]byte, error) {
+func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, payload []byte) (contracts.EncryptedPayload, error) {
 	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.Encrypt", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
@@ -128,26 +123,22 @@ func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, paylo
 	id, dataKey, err = s.currentDataKey(ctx, namespace, label)
 	if err != nil {
 		s.log.Error("Failed to get current data key", "error", err, "label", label)
-		return nil, err
+		return contracts.EncryptedPayload{}, err
 	}
 
 	var encrypted []byte
 	encrypted, err = s.cipher.Encrypt(ctx, payload, string(dataKey))
 	if err != nil {
 		s.log.Error("Failed to encrypt secret", "error", err)
-		return nil, err
+		return contracts.EncryptedPayload{}, err
 	}
 
-	prefix := make([]byte, b64.EncodedLen(len(id))+2)
-	b64.Encode(prefix[1:], []byte(id))
-	prefix[0] = keyIdDelimiter
-	prefix[len(prefix)-1] = keyIdDelimiter
+	encryptedPayload := contracts.EncryptedPayload{
+		DataKeyID:     id,
+		EncryptedData: encrypted,
+	}
 
-	blob := make([]byte, len(prefix)+len(encrypted))
-	copy(blob, prefix)
-	copy(blob[len(prefix):], encrypted)
-
-	return blob, nil
+	return encryptedPayload, nil
 }
 
 // currentDataKey looks up for current data key in cache or database by name, and decrypts it.
@@ -264,7 +255,7 @@ func newRandomDataKey() ([]byte, error) {
 	return rawDataKey, nil
 }
 
-func (s *EncryptionManager) Decrypt(ctx context.Context, namespace string, payload []byte) ([]byte, error) {
+func (s *EncryptionManager) Decrypt(ctx context.Context, namespace string, payload contracts.EncryptedPayload) ([]byte, error) {
 	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.Decrypt", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
@@ -285,48 +276,40 @@ func (s *EncryptionManager) Decrypt(ctx context.Context, namespace string, paylo
 		}
 	}()
 
-	if len(payload) == 0 {
+	if len(payload.EncryptedData) == 0 {
 		err = fmt.Errorf("unable to decrypt empty payload")
 		return nil, err
 	}
 
-	payload = payload[1:]
-	endOfKey := bytes.Index(payload, []byte{keyIdDelimiter})
-	if endOfKey == -1 {
-		err = fmt.Errorf("could not find valid key id in encrypted payload")
-		return nil, err
-	}
-	b64Key := payload[:endOfKey]
-	payload = payload[endOfKey+1:]
-	keyId := make([]byte, b64.DecodedLen(len(b64Key)))
-	_, err = b64.Decode(keyId, b64Key)
-	if err != nil {
+	if payload.DataKeyID == "" {
+		err = fmt.Errorf("unable to decrypt empty data key id")
 		return nil, err
 	}
 
-	dataKey, err := s.dataKeyById(ctx, namespace, string(keyId))
+	// payload = payload[1:]
+	// endOfKey := bytes.Index(payload, []byte{keyIdDelimiter})
+	// if endOfKey == -1 {
+	// 	err = fmt.Errorf("could not find valid key id in encrypted payload")
+	// 	return nil, err
+	// }
+	// b64Key := payload[:endOfKey]
+	// payload = payload[endOfKey+1:]
+	// keyId := make([]byte, base64.RawStdEncoding.DecodedLen(len(b64Key)))
+	// _, err = base64.RawStdEncoding.Decode(keyId, b64Key)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	dataKey, err := s.dataKeyById(ctx, namespace, payload.DataKeyID)
 	if err != nil {
-		s.log.FromContext(ctx).Error("Failed to lookup data key by id", "id", string(keyId), "error", err)
+		s.log.FromContext(ctx).Error("Failed to lookup data key by id", "id", payload.DataKeyID, "error", err)
 		return nil, err
 	}
 
 	var decrypted []byte
-	decrypted, err = s.cipher.Decrypt(ctx, payload, string(dataKey))
+	decrypted, err = s.cipher.Decrypt(ctx, payload.EncryptedData, string(dataKey))
 
 	return decrypted, err
-}
-
-func (s *EncryptionManager) GetDecryptedValue(ctx context.Context, namespace string, sjd map[string][]byte, key, fallback string) string {
-	if value, ok := sjd[key]; ok {
-		decryptedData, err := s.Decrypt(ctx, namespace, value)
-		if err != nil {
-			return fallback
-		}
-
-		return string(decryptedData)
-	}
-
-	return fallback
 }
 
 // dataKeyById looks up for data key in the database and returns it decrypted.

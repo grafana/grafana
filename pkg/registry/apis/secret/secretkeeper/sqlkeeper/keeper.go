@@ -77,7 +77,7 @@ func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, 
 		return "", fmt.Errorf("unable to get encrypted value: %w", err)
 	}
 
-	exposedBytes, err := s.encryptionManager.Decrypt(ctx, namespace, encryptedValue.EncryptedData)
+	exposedBytes, err := s.encryptionManager.Decrypt(ctx, namespace, encryptedValue.EncryptedPayload)
 	if err != nil {
 		return "", fmt.Errorf("unable to decrypt value: %w", err)
 	}

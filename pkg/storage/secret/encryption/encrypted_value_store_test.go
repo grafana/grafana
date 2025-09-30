@@ -21,7 +21,10 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		t.Parallel()
 
 		sut := testutils.Setup(t)
-		createdEV, err := sut.EncryptedValueStorage.Create(t.Context(), "test-namespace", "test-name", 1, []byte("test-data"))
+		createdEV, err := sut.EncryptedValueStorage.Create(t.Context(), "test-namespace", "test-name", 1, contracts.EncryptedPayload{
+			DataKeyID:     "test-data-key-id",
+			EncryptedData: []byte("test-data"),
+		})
 		require.NoError(t, err)
 		require.NotEmpty(t, createdEV.Namespace)
 		require.NotEmpty(t, createdEV.Name)
@@ -36,7 +39,10 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		t.Parallel()
 
 		sut := testutils.Setup(t)
-		createdEV, err := sut.EncryptedValueStorage.Create(t.Context(), "test-namespace", "test-name", 1, []byte("test-data"))
+		createdEV, err := sut.EncryptedValueStorage.Create(t.Context(), "test-namespace", "test-name", 1, contracts.EncryptedPayload{
+			DataKeyID:     "test-data-key-id",
+			EncryptedData: []byte("test-data"),
+		})
 		require.NoError(t, err)
 
 		obtainedEV, err := sut.EncryptedValueStorage.Get(t.Context(), createdEV.Namespace, createdEV.Name, createdEV.Version)
@@ -47,6 +53,7 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		require.Equal(t, createdEV.Created, obtainedEV.Created)
 		require.Equal(t, createdEV.Updated, obtainedEV.Updated)
 		require.Equal(t, createdEV.EncryptedData, obtainedEV.EncryptedData)
+		require.Equal(t, createdEV.DataKeyID, obtainedEV.DataKeyID)
 		require.Equal(t, createdEV.Namespace, obtainedEV.Namespace)
 	})
 
@@ -54,7 +61,10 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		t.Parallel()
 
 		sut := testutils.Setup(t)
-		createdEV, err := sut.EncryptedValueStorage.Create(t.Context(), "ns1", "test-name", 1, []byte("test-data"))
+		createdEV, err := sut.EncryptedValueStorage.Create(t.Context(), "ns1", "test-name", 1, contracts.EncryptedPayload{
+			DataKeyID:     "test-data-key-id",
+			EncryptedData: []byte("test-data"),
+		})
 		require.NoError(t, err)
 
 		obtainedEV, err := sut.EncryptedValueStorage.Get(t.Context(), "ns2", createdEV.Name, createdEV.Version)
@@ -78,16 +88,23 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		t.Parallel()
 
 		sut := testutils.Setup(t)
-		createdEV, err := sut.EncryptedValueStorage.Create(t.Context(), "test-namespace", "test-name", 1, []byte("test-data"))
+		createdEV, err := sut.EncryptedValueStorage.Create(t.Context(), "test-namespace", "test-name", 1, contracts.EncryptedPayload{
+			DataKeyID:     "test-data-key-id",
+			EncryptedData: []byte("test-data"),
+		})
 		require.NoError(t, err)
 
-		err = sut.EncryptedValueStorage.Update(t.Context(), createdEV.Namespace, createdEV.Name, createdEV.Version, []byte("test-data-updated"))
+		err = sut.EncryptedValueStorage.Update(t.Context(), createdEV.Namespace, createdEV.Name, createdEV.Version, contracts.EncryptedPayload{
+			DataKeyID:     "test-data-key-id-updated",
+			EncryptedData: []byte("test-data-updated"),
+		})
 		require.NoError(t, err)
 
 		updatedEV, err := sut.EncryptedValueStorage.Get(t.Context(), createdEV.Namespace, createdEV.Name, createdEV.Version)
 		require.NoError(t, err)
 
 		require.Equal(t, []byte("test-data-updated"), updatedEV.EncryptedData)
+		require.Equal(t, "test-data-key-id-updated", updatedEV.DataKeyID)
 		require.Equal(t, createdEV.Created, updatedEV.Created)
 		require.Equal(t, createdEV.Namespace, updatedEV.Namespace)
 	})
@@ -96,7 +113,10 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		t.Parallel()
 
 		sut := testutils.Setup(t)
-		err := sut.EncryptedValueStorage.Update(t.Context(), "test-namespace", "test-uid", 1, []byte("test-data"))
+		err := sut.EncryptedValueStorage.Update(t.Context(), "test-namespace", "test-uid", 1, contracts.EncryptedPayload{
+			DataKeyID:     "test-data-key-id",
+			EncryptedData: []byte("test-data"),
+		})
 		require.Error(t, err)
 	})
 
@@ -104,7 +124,10 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		t.Parallel()
 
 		sut := testutils.Setup(t)
-		createdEV, err := sut.EncryptedValueStorage.Create(t.Context(), "test-namespace", "test-name", 1, []byte("ttttest-data"))
+		createdEV, err := sut.EncryptedValueStorage.Create(t.Context(), "test-namespace", "test-name", 1, contracts.EncryptedPayload{
+			DataKeyID:     "test-data-key-id",
+			EncryptedData: []byte("ttttest-data"),
+		})
 		require.NoError(t, err)
 
 		_, err = sut.EncryptedValueStorage.Get(t.Context(), createdEV.Namespace, createdEV.Name, createdEV.Version)
@@ -130,10 +153,16 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		t.Parallel()
 
 		sut := testutils.Setup(t)
-		createdEvA, err := sut.EncryptedValueStorage.Create(t.Context(), "test-namespace-a", "test-name", 1, []byte("test-data"))
+		createdEvA, err := sut.EncryptedValueStorage.Create(t.Context(), "test-namespace-a", "test-name", 1, contracts.EncryptedPayload{
+			DataKeyID:     "test-data-key-id",
+			EncryptedData: []byte("test-data"),
+		})
 		require.NoError(t, err)
 
-		createdEvB, err := sut.EncryptedValueStorage.Create(t.Context(), "test-namespace-b", "test-name", 1, []byte("test-data"))
+		createdEvB, err := sut.EncryptedValueStorage.Create(t.Context(), "test-namespace-b", "test-name", 1, contracts.EncryptedPayload{
+			DataKeyID:     "test-data-key-id",
+			EncryptedData: []byte("test-data"),
+		})
 		require.NoError(t, err)
 
 		// List all encrypted values, without pagination
@@ -180,10 +209,16 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		t.Parallel()
 
 		sut := testutils.Setup(t)
-		_, err := sut.EncryptedValueStorage.Create(t.Context(), "test-namespace-a", "test-name", 1, []byte("test-data"))
+		_, err := sut.EncryptedValueStorage.Create(t.Context(), "test-namespace-a", "test-name", 1, contracts.EncryptedPayload{
+			DataKeyID:     "test-data-key-id",
+			EncryptedData: []byte("test-data"),
+		})
 		require.NoError(t, err)
 
-		_, err = sut.EncryptedValueStorage.Create(t.Context(), "test-namespace-b", "test-name", 1, []byte("test-data"))
+		_, err = sut.EncryptedValueStorage.Create(t.Context(), "test-namespace-b", "test-name", 1, contracts.EncryptedPayload{
+			DataKeyID:     "test-data-key-id",
+			EncryptedData: []byte("test-data"),
+		})
 		require.NoError(t, err)
 
 		count, err := sut.GlobalEncryptedValueStorage.CountAll(t.Context(), nil)
@@ -212,10 +247,14 @@ func TestStateMachine(t *testing.T) {
 				ns := namespaceGen.Draw(t, "ns")
 				name := nameGen.Draw(t, "name")
 				version := versionGen.Draw(t, "version")
+				dataKeyId := rapid.String().Draw(t, "dataKeyId")
 				plaintext := rapid.String().Draw(t, "plaintext")
 
-				_, modelErr := m.create(ns, name, version, []byte(plaintext))
-				_, err := sut.EncryptedValueStorage.Create(t.Context(), ns, name, version, []byte(plaintext))
+				_, modelErr := m.create(ns, name, version, []byte(plaintext), dataKeyId)
+				_, err := sut.EncryptedValueStorage.Create(t.Context(), ns, name, version, contracts.EncryptedPayload{
+					DataKeyID:     dataKeyId,
+					EncryptedData: []byte(plaintext),
+				})
 				if modelErr != nil || err != nil {
 					require.ErrorIs(t, err, modelErr)
 					return
@@ -225,10 +264,14 @@ func TestStateMachine(t *testing.T) {
 				ns := namespaceGen.Draw(t, "ns")
 				name := nameGen.Draw(t, "name")
 				version := versionGen.Draw(t, "version")
+				dataKeyId := rapid.String().Draw(t, "dataKeyId")
 				plaintext := rapid.String().Draw(t, "plaintext")
 
-				modelErr := m.update(ns, name, version, []byte(plaintext))
-				err := sut.EncryptedValueStorage.Update(t.Context(), ns, name, version, []byte(plaintext))
+				modelErr := m.update(ns, name, version, []byte(plaintext), dataKeyId)
+				err := sut.EncryptedValueStorage.Update(t.Context(), ns, name, version, contracts.EncryptedPayload{
+					DataKeyID:     dataKeyId,
+					EncryptedData: []byte(plaintext),
+				})
 				if modelErr != nil || err != nil {
 					require.ErrorIs(t, err, modelErr)
 					return
@@ -290,13 +333,14 @@ type entry struct {
 	name          string
 	version       int64
 	encryptedData []byte
+	dataKeyId     string
 }
 
 func newModel() *model {
 	return &model{}
 }
 
-func (m *model) create(namespace, name string, version int64, encryptedData []byte) (*contracts.EncryptedValue, error) {
+func (m *model) create(namespace, name string, version int64, encryptedData []byte, dataKeyId string) (*contracts.EncryptedValue, error) {
 	v, err := m.get(namespace, name, version)
 	if err != nil && !errors.Is(err, encryption.ErrEncryptedValueNotFound) {
 		return nil, err
@@ -311,20 +355,25 @@ func (m *model) create(namespace, name string, version int64, encryptedData []by
 		name:          name,
 		version:       version,
 		encryptedData: encryptedData,
+		dataKeyId:     dataKeyId,
 	})
 	return &contracts.EncryptedValue{
-		Namespace:     namespace,
-		Name:          name,
-		Version:       version,
-		EncryptedData: encryptedData,
-		Created:       1,
-		Updated:       1,
+		Namespace: namespace,
+		Name:      name,
+		Version:   version,
+		EncryptedPayload: contracts.EncryptedPayload{
+			DataKeyID:     dataKeyId,
+			EncryptedData: encryptedData,
+		},
+		Created: 1,
+		Updated: 1,
 	}, nil
 }
-func (m *model) update(namespace, name string, version int64, encryptedData []byte) error {
+func (m *model) update(namespace, name string, version int64, encryptedData []byte, dataKeyId string) error {
 	for _, v := range m.entries {
 		if v.namespace == namespace && v.name == name && v.version == version {
 			v.encryptedData = encryptedData
+			v.dataKeyId = dataKeyId
 			return nil
 		}
 	}
@@ -336,12 +385,15 @@ func (m *model) get(namespace, name string, version int64) (*contracts.Encrypted
 	for _, v := range m.entries {
 		if v.namespace == namespace && v.name == name && v.version == version {
 			return &contracts.EncryptedValue{
-				Namespace:     namespace,
-				Name:          name,
-				Version:       version,
-				EncryptedData: v.encryptedData,
-				Created:       1,
-				Updated:       1,
+				Namespace: namespace,
+				Name:      name,
+				Version:   version,
+				EncryptedPayload: contracts.EncryptedPayload{
+					DataKeyID:     v.dataKeyId,
+					EncryptedData: v.encryptedData,
+				},
+				Created: 1,
+				Updated: 1,
 			}, nil
 		}
 	}
