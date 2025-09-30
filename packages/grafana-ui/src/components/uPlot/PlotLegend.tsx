@@ -5,6 +5,7 @@ import { DataFrame, getFieldDisplayName, getFieldSeriesColor } from '@grafana/da
 import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { DEFAULT_ANNOTATION_COLOR } from '../../utils/colors';
 import { VizLayout, VizLayoutLegendProps } from '../VizLayout/VizLayout';
 import { VizLegend } from '../VizLegend/VizLegend';
 import { VizLegendItem } from '../VizLegend/types';
@@ -87,6 +88,7 @@ export const PlotLegend = memo(
           disabled: !annoConfig.show,
           label: typeof props.label === 'string' ? props.label : 'annotation',
           yAxis: 1,
+          color: anno.props.lineColor,
         });
       });
     }

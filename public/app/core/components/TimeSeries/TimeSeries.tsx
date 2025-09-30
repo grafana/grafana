@@ -1,7 +1,7 @@
 import { Component } from 'react';
 
 import { DataFrame, TimeRange } from '@grafana/data';
-import { withTheme2 } from '@grafana/ui';
+import { DEFAULT_ANNOTATION_COLOR, withTheme2 } from '@grafana/ui';
 import { hasVisibleLegendSeries, PlotLegend, UPlotConfigBuilder, UPlotSeriesBuilder } from '@grafana/ui/internal';
 
 import { GraphNG, GraphNGProps, PropDiffFn } from '../GraphNG/GraphNG';
@@ -49,7 +49,15 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
 
     if (annotations !== undefined && annotations.length > 0) {
       annotations.forEach((anno) => {
-        const series = { label: anno.name, scaleKey: config.scaleKeys[0], theme: theme, show: true };
+        //TODO : What should we do if there are multiple colors?
+        const colorField = anno.fields.find((f) => f.name === 'color');
+        const series = {
+          label: anno.name,
+          scaleKey: config.scaleKeys[0],
+          theme: theme,
+          show: true,
+          lineColor: colorField?.values[0] ?? DEFAULT_ANNOTATION_COLOR,
+        };
         uPlotSeriesAnnos.push(new UPlotSeriesBuilder(series));
       });
     }
