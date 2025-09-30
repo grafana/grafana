@@ -575,6 +575,7 @@ type Cfg struct {
 	MaxPageSizeBytes                           int
 	IndexPath                                  string
 	IndexWorkers                               int
+	IndexRebuildWorkers                        int
 	IndexMaxBatchSize                          int
 	IndexFileThreshold                         int
 	IndexMinCount                              int

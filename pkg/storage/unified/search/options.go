@@ -57,7 +57,8 @@ func NewSearchOptions(
 		return resource.SearchOptions{
 			Backend:              bleve,
 			Resources:            docs,
-			WorkerThreads:        cfg.IndexWorkers,
+			InitWorkerThreads:    cfg.IndexWorkers,
+			IndexRebuildWorkers:  cfg.IndexRebuildWorkers,
 			InitMinCount:         cfg.IndexMinCount,
 			DashboardIndexMaxAge: cfg.IndexRebuildInterval,
 			MaxIndexAge:          cfg.MaxFileIndexAge,

@@ -154,7 +154,8 @@ type searchSupport struct {
 	bgTaskWg     sync.WaitGroup
 	bgTaskCancel func()
 
-	rebuildQueue *debouncer.Queue[rebuildRequest]
+	rebuildQueue   *debouncer.Queue[rebuildRequest]
+	rebuildWorkers int
 }
 
 var (
@@ -171,8 +172,12 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 		return nil, fmt.Errorf("missing tracer")
 	}
 
-	if opts.WorkerThreads < 1 {
-		opts.WorkerThreads = 1
+	if opts.InitWorkerThreads < 1 {
+		opts.InitWorkerThreads = 1
+	}
+
+	if opts.IndexRebuildWorkers < 1 {
+		opts.IndexRebuildWorkers = 1
 	}
 
 	if ownsIndexFn == nil {
@@ -182,15 +187,16 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 	}
 
 	support = &searchSupport{
-		access:       access,
-		tracer:       tracer,
-		storage:      storage,
-		search:       opts.Backend,
-		log:          slog.Default().With("logger", "resource-search"),
-		initWorkers:  opts.WorkerThreads,
-		initMinSize:  opts.InitMinCount,
-		indexMetrics: indexMetrics,
-		ownsIndexFn:  ownsIndexFn,
+		access:         access,
+		tracer:         tracer,
+		storage:        storage,
+		search:         opts.Backend,
+		log:            slog.Default().With("logger", "resource-search"),
+		initWorkers:    opts.InitWorkerThreads,
+		rebuildWorkers: opts.IndexRebuildWorkers,
+		initMinSize:    opts.InitMinCount,
+		indexMetrics:   indexMetrics,
+		ownsIndexFn:    ownsIndexFn,
 
 		dashboardIndexMaxAge: opts.DashboardIndexMaxAge,
 		maxIndexAge:          opts.MaxIndexAge,
@@ -502,8 +508,11 @@ func (s *searchSupport) init(ctx context.Context) error {
 	subctx, cancel := context.WithCancel(origCtx)
 
 	s.bgTaskCancel = cancel
-	s.bgTaskWg.Add(1)
-	go s.runIndexRebuilder(subctx)
+	for i := 0; i < s.rebuildWorkers; i++ {
+		s.bgTaskWg.Add(1)
+		go s.runIndexRebuilder(subctx)
+	}
+
 	s.bgTaskWg.Add(1)
 	go s.runPeriodicScanForIndexesToRebuild(subctx)
 

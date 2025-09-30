@@ -219,10 +219,9 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 	}
 
 	opts := SearchOptions{
-		Backend:       search,
-		Resources:     supplier,
-		WorkerThreads: 1,
-		InitMinCount:  1, // set min count to default for this test
+		Backend:      search,
+		Resources:    supplier,
+		InitMinCount: 1, // set min count to default for this test
 	}
 
 	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil)
@@ -275,10 +274,9 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 	}
 
 	opts := SearchOptions{
-		Backend:       search,
-		Resources:     supplier,
-		WorkerThreads: 1,
-		InitMinCount:  1, // set min count to default for this test
+		Backend:      search,
+		Resources:    supplier,
+		InitMinCount: 1, // set min count to default for this test
 	}
 
 	// Enable searchAfterWrite
@@ -326,10 +324,9 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	}
 
 	opts := SearchOptions{
-		Backend:       search,
-		Resources:     supplier,
-		WorkerThreads: 1,
-		InitMinCount:  1, // set min count to default for this test
+		Backend:      search,
+		Resources:    supplier,
+		InitMinCount: 1, // set min count to default for this test
 	}
 
 	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil)
