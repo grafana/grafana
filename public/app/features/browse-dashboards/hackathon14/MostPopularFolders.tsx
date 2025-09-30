@@ -31,7 +31,7 @@ export const MostPopularFolders = () => {
           </div>
         )}
         
-        {data && data.resources.length > 0 && (
+        {data && data.resources?.length > 0 && (
           <Grid gap={2} columns={{ xs: 1, sm: 2, md: 3, lg: 4 }}>
             {data.resources.map((resource) => (
               <Card 
@@ -49,7 +49,7 @@ export const MostPopularFolders = () => {
         )}
         
         {/* TODO: show default dashboards list */}
-        {data && data.resources.length === 0 && (
+        {data && data.resources?.length === 0 && (
           <Card className={styles.emptyCard}>
             <Text color="secondary">
               No data.

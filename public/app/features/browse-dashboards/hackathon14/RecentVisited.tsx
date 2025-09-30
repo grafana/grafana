@@ -52,7 +52,7 @@ export const RecentVisited = () => {
           </Card>
         )}
 
-        {data && data.resources.length > 0 && (
+        {data && data.resources?.length > 0 && (
           <div className={styles.listContainer}>
             <Grid gap={2} columns={{ xs: 1, sm: 2, md: 3, lg: 4 }}>
               {data.resources.map((resource) => (
@@ -77,7 +77,7 @@ export const RecentVisited = () => {
           </div>
         )}
 
-        {data && data.resources.length === 0 && (
+        {data && data.resources?.length === 0 && (
           <Card className={styles.emptyCard}>
             <Text color="secondary">No recently visited resources found</Text>
           </Card>
@@ -119,7 +119,87 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   emptyCard: css({
     textAlign: 'center',
-    padding: theme.spacing(4),
+    padding: theme.spacing(6),
+    background: `linear-gradient(135deg, ${theme.colors.background.canvas} 0%, ${theme.colors.background.secondary} 100%)`,
+  }),
+
+  emptyIllustration: css({
+    position: 'relative',
+    height: '120px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }),
+
+  iconStack: css({
+    position: 'relative',
+    width: '120px',
+    height: '120px',
+  }),
+
+  iconDashboard: css({
+    position: 'absolute',
+    top: '0',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    color: theme.colors.primary.main,
+    opacity: 0.3,
+    animation: 'float 3s ease-in-out infinite',
+    '@keyframes float': {
+      '0%, 100%': {
+        transform: 'translateX(-50%) translateY(0px)',
+      },
+      '50%': {
+        transform: 'translateX(-50%) translateY(-10px)',
+      },
+    },
+  }),
+
+  iconFolder: css({
+    position: 'absolute',
+    top: '30px',
+    left: '20%',
+    color: theme.colors.warning.main,
+    opacity: 0.5,
+    animation: 'float 3s ease-in-out infinite 0.5s',
+  }),
+
+  iconCompass: css({
+    position: 'absolute',
+    top: '50px',
+    right: '20%',
+    color: theme.colors.success.main,
+    opacity: 0.6,
+    animation: 'float 3s ease-in-out infinite 1s',
+  }),
+
+  tipCard: css({
+    backgroundColor: theme.colors.background.secondary,
+    padding: theme.spacing(2),
+    border: `1px solid ${theme.colors.border.weak}`,
+    maxWidth: '400px',
+  }),
+
+  tipIcon: css({
+    color: theme.colors.warning.main,
+    fontSize: theme.typography.h5.fontSize,
+  }),
+
+  actionLink: css({
+    padding: theme.spacing(1.5, 2),
+    backgroundColor: theme.colors.background.secondary,
+    border: `1px solid ${theme.colors.border.medium}`,
+    borderRadius: theme.shape.radius.default,
+    textDecoration: 'none',
+    color: theme.colors.text.primary,
+    transition: 'all 0.2s ease',
+
+    '&:hover': {
+      backgroundColor: theme.colors.background.canvas,
+      borderColor: theme.colors.primary.border,
+      transform: 'translateY(-2px)',
+      boxShadow: theme.shadows.z2,
+    },
   }),
 
   errorCard: css({

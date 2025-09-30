@@ -18,9 +18,6 @@ const DashboardThumbnail = ({ url, alt }: DashboardThumbnailProps) => {
   const [imageError, setImageError] = useState(false);
   const styles = useStyles2(getThumbnailStyles);
 
-  // Debug: Log the render URL
-  console.log('Dashboard render URL:', url);
-
   return (
     <div className={styles.wrapper}>
       {imageLoading && !imageError && (
@@ -45,7 +42,6 @@ const DashboardThumbnail = ({ url, alt }: DashboardThumbnailProps) => {
         className={styles.image}
         style={{ display: imageLoading || imageError ? 'none' : 'block' }}
         onLoad={() => {
-          console.log('Dashboard thumbnail loaded:', url);
           setImageLoading(false);
         }}
         onError={(e) => {
@@ -124,7 +120,7 @@ export const MostPopularDashboards = () => {
           </div>
         )}
         
-        {data && data.resources.length > 0 && (
+        {data && data.resources?.length > 0 && (
           <Grid gap={2} columns={{ xs: 1, sm: 2, md: 3, lg: 4 }}>
             {data.resources.map((resource) => {
               const thumbnailUrl = getThumbnailUrl(resource);
@@ -169,7 +165,7 @@ export const MostPopularDashboards = () => {
         )}
         
         {/* TODO: show default dashboards list */}
-        {data && data.resources.length === 0 && (
+        {data && data.resources?.length === 0 && (
           <Card className={styles.emptyCard}>
             <Text color="secondary">
               No data.
