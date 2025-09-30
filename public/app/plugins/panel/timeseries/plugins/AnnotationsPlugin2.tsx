@@ -5,9 +5,20 @@ import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic } from '@grafana/data';
+import {
+  arrayToDataFrame,
+  colorManipulator,
+  DataFrame,
+  DataTopic,
+  Field,
+  formattedValueToString,
+  LinkModel,
+} from '@grafana/data';
 import { TimeZone, VizAnnotations } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR, getPortalContainer, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
+import { VizTooltipItem } from '@grafana/ui/internal';
+
+import { getDataLinks } from '../../status-history/utils';
 
 import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
 import { ANNOTATION_LANE_SIZE, getAnnotationFrames } from './utils';
@@ -268,8 +279,25 @@ export const AnnotationsPlugin2 = ({
             }
           };
 
+          let items: VizTooltipItem[] = [];
+          let links: LinkModel[] = [];
+
+          frame.fields.forEach((field: Field) => {
+            const value = field.values[i];
+
+            links.push(...getDataLinks(field, i));
+
+            const fieldDisplay = field.display?.(value) ?? { text: `${value}`, numeric: +value };
+
+            items.push({
+              label: field.state?.displayName ?? field.name,
+              value: formattedValueToString(fieldDisplay),
+            });
+          });
+
           markers.push(
             <AnnotationMarker2
+              links={links}
               pinAnnotation={setAnnotation}
               isPinned={annoIdx === `${frameIdx}:${i}`}
               // @todo let users control if anno tooltips show on hover?
