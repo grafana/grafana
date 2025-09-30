@@ -580,6 +580,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
               panelData={queryPreviewData}
               condition={condition}
               onSetCondition={handleSetCondition}
+              sparkJoy={true}
             />
             {!simplifiedQueryStep && (
               <Tooltip

@@ -15,6 +15,7 @@ interface Props {
   onDuplicateQuery: (query: AlertQuery) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
+  sparkJoy?: boolean;
 }
 
 export const QueryEditor = ({
@@ -26,6 +27,7 @@ export const QueryEditor = ({
   onDuplicateQuery,
   condition,
   onSetCondition,
+  sparkJoy = false,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -40,6 +42,7 @@ export const QueryEditor = ({
         onDuplicateQuery={onDuplicateQuery}
         condition={condition}
         onSetCondition={onSetCondition}
+        sparkJoy={sparkJoy}
       />
     </div>
   );

@@ -15,8 +15,11 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button, Card, Icon, Stack } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { SortOrder, getRichHistory } from 'app/core/utils/richHistory';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { SparkJoySection } from 'app/features/query/components/SparkJoySection';
+import { RichHistoryQuery } from 'app/types/explore';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { getInstantFromDataQuery } from '../../utils/rule-form';
@@ -36,12 +39,50 @@ interface Props {
   onDuplicateQuery: (query: AlertQuery) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
+  
+  // SparkJoy support
+  sparkJoy?: boolean;
 }
 
 export class QueryRows extends PureComponent<Props> {
   constructor(props: Props) {
     super(props);
   }
+  
+  state = {
+    recentQueries: [] as RichHistoryQuery[],
+    isLoadingHistory: false,
+  };
+  
+  async componentDidMount() {
+    // Load recent queries for SparkJoy section
+    if (this.props.sparkJoy) {
+      this.loadRecentQueries();
+    }
+  }
+  
+  loadRecentQueries = async () => {
+    this.setState({ isLoadingHistory: true });
+    try {
+      // Create default filters for recent queries
+      const filters = {
+        search: '',
+        sortOrder: SortOrder.Descending,
+        datasourceFilters: [],
+        from: 0,
+        to: 7, // Last 7 days
+        starred: false,
+        page: 1,
+      };
+      const richHistoryResults = await getRichHistory(filters);
+      // Get the most recent 10 queries
+      const recentQueries = richHistoryResults.richHistory.slice(0, 10);
+      this.setState({ recentQueries, isLoadingHistory: false });
+    } catch (error) {
+      console.error('Failed to load recent queries:', error);
+      this.setState({ isLoadingHistory: false });
+    }
+  };
 
   onRemoveQuery = (query: DataQuery) => {
     const { queries, onQueriesChange } = this.props;
@@ -192,27 +233,44 @@ export class QueryRows extends PureComponent<Props> {
                       );
                     }
 
+                    // Check if query has expression content
+                    const hasExpressionContent = 'expr' in query.model && query.model.expr;
+                    const shouldShowSparkJoy = this.props.sparkJoy && index === 0 && queries.length === 1 && !hasExpressionContent;
+                    
                     return (
-                      <QueryWrapper
-                        index={index}
-                        key={query.refId}
-                        dsSettings={dsSettings}
-                        data={data}
-                        error={error}
-                        query={query}
-                        onChangeQuery={this.onChangeQuery}
-                        onRemoveQuery={this.onRemoveQuery}
-                        queries={[...queries, ...expressions]}
-                        onChangeDataSource={this.onChangeDataSource}
-                        onDuplicateQuery={this.props.onDuplicateQuery}
-                        onChangeTimeRange={this.onChangeTimeRange}
-                        onChangeQueryOptions={this.onChangeQueryOptions}
-                        thresholds={thresholdByRefId[query.refId]?.config}
-                        thresholdsType={thresholdByRefId[query.refId]?.mode}
-                        onRunQueries={this.props.onRunQueries}
-                        condition={this.props.condition}
-                        onSetCondition={this.props.onSetCondition}
-                      />
+                      <div key={query.refId}>
+                        <QueryWrapper
+                          index={index}
+                          dsSettings={dsSettings}
+                          data={data}
+                          error={error}
+                          query={query}
+                          onChangeQuery={this.onChangeQuery}
+                          onRemoveQuery={this.onRemoveQuery}
+                          queries={[...queries, ...expressions]}
+                          onChangeDataSource={this.onChangeDataSource}
+                          onDuplicateQuery={this.props.onDuplicateQuery}
+                          onChangeTimeRange={this.onChangeTimeRange}
+                          onChangeQueryOptions={this.onChangeQueryOptions}
+                          thresholds={thresholdByRefId[query.refId]?.config}
+                          thresholdsType={thresholdByRefId[query.refId]?.mode}
+                          onRunQueries={this.props.onRunQueries}
+                          condition={this.props.condition}
+                          onSetCondition={this.props.onSetCondition}
+                        />
+                        {shouldShowSparkJoy && (
+                          <SparkJoySection
+                            datasource={dsSettings as any}
+                            history={this.state.recentQueries}
+                            onChangeQuery={(newQuery) => {
+                              this.onChangeQuery(newQuery, index);
+                            }}
+                            onRunQuery={this.props.onRunQueries}
+                            isLoadingHistory={this.state.isLoadingHistory}
+                            query={query.model}
+                          />
+                        )}
+                      </div>
                     );
                   })}
                   {provided.placeholder}

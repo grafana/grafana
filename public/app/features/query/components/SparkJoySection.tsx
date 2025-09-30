@@ -16,6 +16,7 @@ import { Stack, Text, useTheme2, Spinner, Avatar, Button, Badge } from '@grafana
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { useQueriesDrawerContext } from '../../explore/QueriesDrawer/QueriesDrawerContext';
+import { useQueryHistoryContext } from '../../explore/QueryHistory/QueryHistoryContext';
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 
 import { useQueryPatterns } from './QueryPatternStarter';
@@ -549,6 +550,7 @@ export const SparkJoySection = <TQuery extends DataQuery>({
   const [isHidden, setIsHidden] = useState(false);
   const { setDrawerOpened } = useQueriesDrawerContext();
   const { queryLibraryEnabled, openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
+  const { openDrawer: openQueryHistoryDrawer, queryHistoryEnabled } = useQueryHistoryContext();
   const hasCheckedInitialQuery = useRef(false);
   
   // Check if we should hide the section based on existing query (only on first render)
@@ -798,10 +800,28 @@ export const SparkJoySection = <TQuery extends DataQuery>({
                 );
               })}
               <div>
-                <button style={{ marginTop: theme.spacing(1), backgroundColor: theme.colors.background.primary, border: 'none', borderRadius: theme.shape.radius.default, cursor: 'pointer' }}
-                onClick={() => setDrawerOpened(true)}>
+                <button 
+                  style={{ 
+                    marginTop: theme.spacing(1), 
+                    backgroundColor: theme.colors.background.primary, 
+                    border: 'none', 
+                    borderRadius: theme.shape.radius.default, 
+                    cursor: 'pointer' 
+                  }}
+                  onClick={() => {
+                    if (queryHistoryEnabled) {
+                      openQueryHistoryDrawer({
+                        datasourceFilters: [datasource.name],
+                        onSelectQuery: (query) => handleQuerySelect(query as TQuery),
+                        options: { context: 'alerting' },
+                      });
+                    } else {
+                      setDrawerOpened(true);
+                    }
+                  }}
+                >
                   View all
-              </button>
+                </button>
               </div>
             </Stack>
           ) : (
