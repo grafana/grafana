@@ -7,6 +7,8 @@ on:
       - main
       - release-*.*.*
 
+# TODO(zserge): remove this, only used to trigger the workflow dispatch
+
 # TODO: re-enable this before merging
 # concurrency:
 #   group: ${{ github.workflow }}-${{ github.ref }}
