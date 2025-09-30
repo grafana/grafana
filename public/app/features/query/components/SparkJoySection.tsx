@@ -529,6 +529,7 @@ export const SparkJoySection = <TQuery extends DataQuery>({
 }: SparkJoySectionProps<TQuery>) => {
   const theme = useTheme2();
   const [recentQueries, setRecentQueries] = useState<QueryItem[]>([]);
+  const [isHidden, setIsHidden] = useState(false);
   const { setDrawerOpened } = useQueriesDrawerContext();
   const { queryLibraryEnabled, openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
 
@@ -615,6 +616,8 @@ export const SparkJoySection = <TQuery extends DataQuery>({
 
   const handleQuerySelect = (query: TQuery) => {
     onChangeQuery(query);
+    // Hide the SparkJoy section after selecting a query
+    setIsHidden(true);
     // Auto-run the query after selecting it
     if (onRunQuery) {
       // Small delay to ensure the query is set before running
@@ -628,6 +631,11 @@ export const SparkJoySection = <TQuery extends DataQuery>({
     handleQuerySelect(query as TQuery);
   };
 
+
+  // Don't render the section if it's hidden
+  if (isHidden) {
+    return null;
+  }
 
   return (
     <div className={css(styles.container)}>
