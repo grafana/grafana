@@ -21,7 +21,6 @@ Interact and be heard:
 
 We welcome your technical contributions! You can contribute in several ways:
 
-
 ### 1. Contribute Code to Grafana
 
 **What you should bring:**
@@ -48,7 +47,6 @@ Grafana plugins let you extend the platform with new data sources, panels, and m
 5. Publish your plugin or submit it for review as described in the guide.
 
 ### 3. Contribute without code
-
 
 You can help even if you don't write code:
 
@@ -88,7 +86,7 @@ Read more about the ways you can [Triage issues](/contribute/triage-issues.md).
 
 If you believe you've found a security vulnerability, please read our [security policy](https://github.com/grafana/grafana/security/policy) for more details on reporting.
 
-### Suggest enhancements
+### Suggest features
 
 If you have an idea of how to improve Grafana, submit a [feature request](https://github.com/grafana/grafana/issues/new?template=1-feature_requests.md).
 
