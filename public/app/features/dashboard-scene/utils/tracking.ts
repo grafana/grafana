@@ -1,32 +1,29 @@
 import { store } from '@grafana/data';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
 import { DashboardInteractions } from './interactions';
 
-export interface DashboardInitProps {
-  [key: string]: unknown;
-}
-
 export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: number) {
-  const trackingInformation = dashboard.getTrackingInformation();
-  const v2TrackingFields = {
-    tabCount: trackingInformation?.tabCount,
-    templateVariableCount: trackingInformation?.templateVariableCount,
-    maxNestingLevel: trackingInformation?.maxNestingLevel,
-    dashStructure: trackingInformation?.dashStructure,
-    conditionalRenderRules: trackingInformation?.conditionalRenderRulesCount,
-    autoLayoutCount: trackingInformation?.autoLayoutCount,
-    customGridLayoutCount: trackingInformation?.customGridLayoutCount,
-  };
+  const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
 
   DashboardInteractions.dashboardInitialized({
     theme: undefined,
     duration,
     isScene: true,
-    ...v2TrackingFields,
+    ...(dashboard.getTrackingInformation() ?? {}),
+    ...(dynamicDashboardsTrackingInformation
+      ? {
+          tabCount: dynamicDashboardsTrackingInformation.tabCount,
+          templateVariableCount: dynamicDashboardsTrackingInformation.templateVariableCount,
+          maxNestingLevel: dynamicDashboardsTrackingInformation.maxNestingLevel,
+          dashStructure: dynamicDashboardsTrackingInformation.dashStructure,
+          conditionalRenderRules: dynamicDashboardsTrackingInformation.conditionalRenderRulesCount,
+          autoLayoutCount: dynamicDashboardsTrackingInformation.autoLayoutCount,
+          customGridLayoutCount: dynamicDashboardsTrackingInformation.customGridLayoutCount,
+        }
+      : {}),
   });
 }
 
@@ -43,201 +40,31 @@ export const trackDeleteDashboardElement = (element: EditableDashboardElementInf
   }
 };
 
-export function getNoOfConditionalRulesInDashboard(layout: DashboardV2Spec['layout']): number {
-  const l = castLayoutKind(layout);
-  switch (l.kind) {
-    case 'GridLayout':
-      return 0;
-    case 'AutoGridLayout':
-      return l.spec.items.reduce((acc, item) => {
-        const direct = item.spec.conditionalRendering?.spec?.items?.length || 0;
-        return acc + direct;
-      }, 0);
-    case 'RowsLayout':
-      return l.spec.rows.reduce((acc, row) => {
-        const direct = row.spec.conditionalRendering?.spec?.items?.length || 0;
-        const nested = row.spec.layout ? getNoOfConditionalRulesInDashboard(row.spec.layout) : 0;
-        return acc + direct + nested;
-      }, 0);
-    case 'TabsLayout':
-      return l.spec.tabs.reduce((acc, row) => {
-        const direct = row.spec.conditionalRendering?.spec?.items?.length || 0;
-        const nested = row.spec.layout ? getNoOfConditionalRulesInDashboard(row.spec.layout) : 0;
-        return acc + direct + nested;
-      }, 0);
-    default:
-      // make sure we handle all possible kinds
-      const exhaustiveCheck: never = l;
-      throw new Error(`Unhandled layout: ${exhaustiveCheck}`);
-  }
-}
-
-interface LayoutStats {
-  tabCount: number;
-  maxDepth: number;
-  layoutTypesCount: Record<DashboardV2Spec['layout']['kind'], number>;
-}
-interface PanelStats {
-  countByDatasourceType: Record<string, number>;
-}
-
-export function getStatsForDashboard(dashboard: DashboardV2Spec): { layoutStats: LayoutStats; panelStats: PanelStats } {
-  const { layout, elements } = dashboard;
-
-  const layoutTypesCount: Record<DashboardV2Spec['layout']['kind'], number> = {
-    AutoGridLayout: 0,
-    GridLayout: 0,
-    RowsLayout: 0,
-    TabsLayout: 0,
-  };
-
-  let tabCount = 0;
-  let maxDepth = 0;
-
-  const recursivelyGetLayoutStats = (layout: DashboardV2Spec['layout'], depth: number) => {
-    const l = castLayoutKind(layout);
-    if (depth > maxDepth) {
-      maxDepth = depth;
-    }
-    switch (l.kind) {
-      case 'GridLayout':
-        layoutTypesCount.GridLayout++;
-        break;
-      case 'AutoGridLayout':
-        layoutTypesCount.AutoGridLayout++;
-        break;
-      case 'RowsLayout':
-        layoutTypesCount.RowsLayout++;
-        l.spec.rows.forEach((row) => {
-          if (row.spec.layout) {
-            recursivelyGetLayoutStats(row.spec.layout, depth + 1);
-          }
-        });
-        break;
-      case 'TabsLayout':
-        layoutTypesCount.TabsLayout++;
-        tabCount += l.spec.tabs.length;
-        l.spec.tabs.forEach((tab) => {
-          if (tab.spec.layout) {
-            recursivelyGetLayoutStats(tab.spec.layout, depth + 1);
-          }
-        });
-        break;
-      default:
-        break;
-    }
-  };
-
-  recursivelyGetLayoutStats(layout, 0);
-
-  const countByDatasourceType: PanelStats['countByDatasourceType'] = {};
-  const panels = Object.values(elements).filter((e) => e.kind === 'Panel');
-
-  for (const panel of panels) {
-    for (const query of panel.spec.data.spec.queries) {
-      const { datasource, group: datasourceType } = query.spec.query;
-      if (datasource) {
-        countByDatasourceType[datasourceType] = countByDatasourceType[datasourceType] || 0;
-        countByDatasourceType[datasourceType]++;
-      }
-    }
-  }
-
-  return {
-    layoutStats: {
-      layoutTypesCount,
-      tabCount,
-      maxDepth,
-    },
-    panelStats: {
-      countByDatasourceType,
-    },
-  };
-}
-
-// type guard for layout kinds
-type LayoutType = DashboardV2Spec['layout'];
-type ExtractLayout<K extends LayoutType['kind']> = Extract<LayoutType, { kind: K }>;
-function castLayoutKind<K extends LayoutType['kind']>(layout: ExtractLayout<K>): ExtractLayout<K> {
-  switch (layout.kind) {
-    case 'RowsLayout':
-    case 'GridLayout':
-    case 'AutoGridLayout':
-    case 'TabsLayout':
-      return layout;
-    default:
-      throw new Error(`Unknown layout kind: ${layout['kind']}`);
-  }
-}
-
-// a sanitized version of the layout, showing only the structure (kind and nesting) without any IDs or names
-type StructureNode = {
-  kind: string;
-  children?: StructureNode[];
-};
-
-export function getSanitizedLayout(layout: DashboardV2Spec['layout']): string {
-  return JSON.stringify(getStructure(layout));
-}
-
-function getStructure(layout: DashboardV2Spec['layout']): StructureNode[] {
-  const l = castLayoutKind(layout);
-
-  switch (l.kind) {
-    case 'TabsLayout':
-      return l.spec.tabs.map((tab, i) => ({
-        kind: 'tab',
-        children: tab.spec.layout ? getStructure(tab.spec.layout) : [],
-      }));
-
-    case 'RowsLayout':
-      return l.spec.rows.map((row, i) => ({
-        kind: 'row',
-        children: row.spec.layout ? getStructure(row.spec.layout) : [],
-      }));
-
-    case 'GridLayout':
-    case 'AutoGridLayout':
-      return l.spec.items.map(() => ({
-        kind: 'panel',
-      }));
-
-    default:
-      return [];
-  }
-}
-
 export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
-  const outlineExpandedByDefault = !store.getBool('grafana.dashboard.edit-pane.outline.collapsed', true);
   DashboardInteractions.editButtonClicked({
-    outlineExpanded: outlineExpandedByDefault,
+    outlineExpanded: !store.getBool('grafana.dashboard.edit-pane.outline.collapsed', true),
     dashboardUid,
   });
 };
 
-export interface DashboardCreatedProps {
-  name: string;
-  url: string;
-  [key: string]: unknown;
-}
-
 export function trackDashboardSceneCreatedOrSaved(
-  name: 'created' | 'saved',
+  isNew: boolean,
   dashboard: DashboardScene,
-  initialProperties: DashboardCreatedProps
+  initialProperties: { name: string; url: string }
 ) {
-  const trackingInformation = dashboard.getTrackingInformation();
-  const v2TrackingFields = {
-    uid: dashboard.state.uid,
-    numPanels: trackingInformation?.panels_count,
-    conditionalRenderRules: trackingInformation?.conditionalRenderRulesCount,
-    autoLayoutCount: trackingInformation?.autoLayoutCount,
-    customGridLayoutCount: trackingInformation?.customGridLayoutCount,
-    panelsByDatasourceType: trackingInformation?.panelsByDatasourceType,
-  };
+  const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
 
-  DashboardInteractions.dashboardCreatedOrSaved(name, {
+  DashboardInteractions.dashboardCreatedOrSaved(isNew, {
     ...initialProperties,
-    ...v2TrackingFields,
+    ...(dynamicDashboardsTrackingInformation
+      ? {
+          uid: dashboard.state.uid,
+          numPanels: dynamicDashboardsTrackingInformation.panelCount,
+          conditionalRenderRules: dynamicDashboardsTrackingInformation.conditionalRenderRulesCount,
+          autoLayoutCount: dynamicDashboardsTrackingInformation.autoLayoutCount,
+          customGridLayoutCount: dynamicDashboardsTrackingInformation.customGridLayoutCount,
+          panelsByDatasourceType: dynamicDashboardsTrackingInformation.panelsByDatasourceType,
+        }
+      : {}),
   });
 }

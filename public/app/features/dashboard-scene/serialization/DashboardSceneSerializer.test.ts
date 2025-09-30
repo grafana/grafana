@@ -24,14 +24,14 @@ import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/Dashboard
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
-import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getTestDashboardSceneFromSaveModel } from '../utils/test-utils';
 import { findVizPanelByKey } from '../utils/utils';
 
 import { V1DashboardSerializer, V2DashboardSerializer } from './DashboardSceneSerializer';
 import nestedDashboard from './testfiles/nested_dashboard.json';
 import { getPanelElement } from './transformSaveModelSchemaV2ToScene';
+import { transformSaveModelToScene } from './transformSaveModelToScene';
+import { transformSceneToSaveModel } from './transformSceneToSaveModel';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -685,7 +685,10 @@ describe('DashboardSceneSerializer', () => {
           variable_type_custom_count: 1,
           variable_type_query_count: 1,
           panel_type_timeseries_count: 6,
-          // V2TrackingFields
+        });
+
+        expect(dashboard.getDynamicDashboardsTrackingInformation()).toEqual({
+          rowCount: 6,
           tabCount: 4,
           templateVariableCount: 2,
           maxNestingLevel: 3,
@@ -694,6 +697,8 @@ describe('DashboardSceneSerializer', () => {
           conditionalRenderRulesCount: 3,
           autoLayoutCount: 3,
           customGridLayoutCount: 2,
+          rowsLayoutCount: 4,
+          tabsLayoutCount: 2,
           panelsByDatasourceType: {
             cloudwatch: 5,
             datasource: 1,

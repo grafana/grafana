@@ -1,20 +1,39 @@
 import { config, reportInteraction } from '@grafana/runtime';
-import { DashboardCreatedProps, DashboardInitProps } from 'app/features/dashboard-scene/utils/tracking';
+
+import { DashboardTrackingInfo, DynamicDashboardsTrackingInformation } from '../serialization/DashboardSceneSerializer';
 
 let isScenesContextSet = false;
 
 export const DashboardInteractions = {
   // Dashboard interactions:
-  dashboardInitialized: (properties: DashboardInitProps) => {
-    reportDashboardInteraction('init_dashboard_completed', { ...properties });
+  dashboardInitialized: (
+    properties: { theme: undefined; duration: number | undefined; isScene: boolean } & Partial<DashboardTrackingInfo> &
+      Partial<DynamicDashboardsTrackingInformation> &
+      Partial<{ version_before_migration: number | undefined }>
+  ) => {
+    reportDashboardInteraction('init_dashboard_completed', properties);
   },
 
-  dashboardCopied: (properties: DashboardCreatedProps) => {
+  dashboardCopied: (properties: { name: string; url: string }) => {
     reportInteraction('grafana_dashboard_copied', properties);
   },
 
-  dashboardCreatedOrSaved: (name: 'created' | 'saved', properties: DashboardCreatedProps) => {
-    reportDashboardInteraction(name, properties, 'grafana_dashboard');
+  dashboardCreatedOrSaved: (
+    isNew: boolean | undefined,
+    properties:
+      | { name: string; url: string }
+      | {
+          name: string;
+          url: string;
+          numPanels: number;
+          uid: string;
+          conditionalRenderRules: number;
+          autoLayoutCount: number;
+          customGridLayoutCount: number;
+          panelsByDatasourceType: Record<string, number>;
+        }
+  ) => {
+    reportDashboardInteraction(isNew ? 'created' : 'saved', properties, 'grafana_dashboard');
   },
 
   // grafana_dashboards_edit_button_clicked

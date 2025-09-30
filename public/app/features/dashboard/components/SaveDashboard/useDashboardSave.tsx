@@ -65,7 +65,7 @@ export const useDashboardSave = (isCopy = false) => {
         if (isCopy) {
           DashboardInteractions.dashboardCopied({ name: dashboard.title || '', url: result.url });
         } else {
-          trackDashboardCreatedOrSaved(dashboard.id ? 'saved' : 'created', { name: dashboard.title, url: result.url });
+          trackDashboardCreatedOrSaved(!!dashboard.id, { name: dashboard.title, url: result.url });
         }
 
         const currentPath = locationService.getLocation().pathname;

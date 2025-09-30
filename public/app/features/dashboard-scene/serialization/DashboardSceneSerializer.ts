@@ -19,7 +19,6 @@ import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
 import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
-import { getNoOfConditionalRulesInDashboard, getSanitizedLayout, getStatsForDashboard } from '../utils/tracking';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
@@ -50,7 +49,8 @@ export interface DashboardSceneSerializerLike<T, M, I = T, E = T | { error: unkn
     }
   ) => DashboardChangeInfo;
   onSaveComplete(saveModel: T, result: SaveDashboardResponseDTO): void;
-  getTrackingInformation: (s: DashboardScene) => (DashboardTrackingInfo & Partial<DashboardV2TrackingInfo>) | undefined;
+  getTrackingInformation: (s: DashboardScene) => DashboardTrackingInfo | undefined;
+  getDynamicDashboardsTrackingInformation: (s: DashboardScene) => DynamicDashboardsTrackingInformation | undefined;
   getSnapshotUrl: () => string | undefined;
   getPanelIdForElement: (elementId: string) => number | undefined;
   getElementIdForPanel: (panelId: number) => string | undefined;
@@ -69,15 +69,32 @@ export interface DashboardTrackingInfo {
   settings_livenow?: boolean;
 }
 
-export interface DashboardV2TrackingInfo {
+export interface DynamicDashboardsTrackingInformation {
+  panelCount: number;
+  rowCount: number;
   tabCount: number;
   templateVariableCount: number;
   maxNestingLevel: number;
   conditionalRenderRulesCount: number;
   autoLayoutCount: number;
   customGridLayoutCount: number;
+  rowsLayoutCount: number;
+  tabsLayoutCount: number;
   dashStructure: string;
   panelsByDatasourceType: Record<string, number>;
+}
+
+interface DynamicDashboardTrackingInformationStructureNode {
+  kind: string;
+  children?: DynamicDashboardTrackingInformationStructureNode[];
+}
+
+interface DynamicDashboardsTrackingInformationLayoutParsing
+  extends Omit<
+    DynamicDashboardsTrackingInformation,
+    'dashStructure' | 'panelsByDatasourceType' | 'templateVariableCount'
+  > {
+  dashStructure: DynamicDashboardTrackingInformationStructureNode[];
 }
 
 export interface DSReferencesMapping {
@@ -221,6 +238,11 @@ export class V1DashboardSerializer
         ...variables,
       };
     }
+    return undefined;
+  }
+
+  getDynamicDashboardsTrackingInformation(): undefined {
+    // We don't have dynamic dashboards in V1 schema
     return undefined;
   }
 
@@ -412,16 +434,22 @@ export class V2DashboardSerializer
     return this.metadata;
   }
 
-  getTrackingInformation(s: DashboardScene): (DashboardTrackingInfo & Partial<DashboardV2TrackingInfo>) | undefined {
+  getTrackingInformation(s: DashboardScene): DashboardTrackingInfo | undefined {
     if (!this.initialSaveModel) {
       return undefined;
     }
 
     const panelPluginIds =
       'elements' in this.initialSaveModel
-        ? Object.values(this.initialSaveModel.elements)
-            .filter((e) => e.kind === 'Panel')
-            .map((p) => p.spec.vizConfig.group)
+        ? Object.values(this.initialSaveModel.elements).reduce<string[]>((acc, e) => {
+            if (e.kind !== 'Panel') {
+              return acc;
+            }
+
+            acc.push(e.spec.vizConfig.group);
+
+            return acc;
+          }, [])
         : [];
     const panels = getPanelPluginCounts(panelPluginIds);
     const variables =
@@ -434,9 +462,60 @@ export class V2DashboardSerializer
       panels_count: panelPluginIds.length || 0,
       settings_nowdelay: undefined,
       settings_livenow: !!this.initialSaveModel.liveNow,
-      ...(isDashboardV2Spec(this.initialSaveModel) ? getDashboardV2TrackingFields(this.initialSaveModel) : {}),
       ...panels,
       ...variables,
+    };
+  }
+
+  getDynamicDashboardsTrackingInformation(): DynamicDashboardsTrackingInformation | undefined {
+    if (!this.initialSaveModel || !isDashboardV2Spec(this.initialSaveModel)) {
+      return undefined;
+    }
+
+    const dashStructure: DynamicDashboardTrackingInformationStructureNode[] = [];
+    const result = this._parseDynamicDashboardsLayouts(
+      {
+        autoLayoutCount: 0,
+        customGridLayoutCount: 0,
+        rowsLayoutCount: 0,
+        tabsLayoutCount: 0,
+        panelCount: 0,
+        rowCount: 0,
+        tabCount: 0,
+        maxNestingLevel: 0,
+        conditionalRenderRulesCount: 0,
+        dashStructure,
+      },
+      this.initialSaveModel.layout,
+      0,
+      dashStructure
+    );
+
+    return {
+      ...result,
+      dashStructure: JSON.stringify(result.dashStructure),
+      templateVariableCount: this.initialSaveModel.variables?.length ?? 0,
+      panelsByDatasourceType: Object.values(this.initialSaveModel.elements).reduce<Record<string, number>>(
+        (panelsAcc, { kind, spec: panelSpec }) => {
+          if (kind !== 'Panel') {
+            return panelsAcc;
+          }
+
+          panelSpec.data.spec.queries.reduce((queriesAcc, { spec: querySpec }) => {
+            if (!querySpec.query.datasource) {
+              return queriesAcc;
+            }
+
+            queriesAcc[querySpec.query.group] = queriesAcc[querySpec.query.group] ?? 0;
+            queriesAcc[querySpec.query.group]++;
+
+            return queriesAcc;
+          }, panelsAcc);
+
+          return panelsAcc;
+        },
+        {}
+      ),
     };
   }
 
@@ -446,6 +525,62 @@ export class V2DashboardSerializer
 
   async makeExportableExternally(s: DashboardScene) {
     return await makeExportableV2(this.getSaveModel(s));
+  }
+
+  private _parseDynamicDashboardsLayouts(
+    acc: DynamicDashboardsTrackingInformationLayoutParsing,
+    layout: DashboardV2Spec['layout'],
+    nestingLevel: number,
+    structureTarget: DynamicDashboardTrackingInformationStructureNode[]
+  ): DynamicDashboardsTrackingInformationLayoutParsing {
+    acc.maxNestingLevel = Math.max(acc.maxNestingLevel, nestingLevel);
+
+    switch (layout.kind) {
+      case 'GridLayout':
+        acc.customGridLayoutCount++;
+        acc.panelCount += layout.spec.items.length;
+        structureTarget.push(...layout.spec.items.map(() => ({ kind: 'panel' })));
+        return acc;
+
+      case 'AutoGridLayout':
+        acc.autoLayoutCount++;
+        acc.panelCount += layout.spec.items.length;
+        structureTarget.push(...layout.spec.items.map(() => ({ kind: 'panel' })));
+        acc.conditionalRenderRulesCount = layout.spec.items.reduce(
+          (acc, item) => acc + (item.spec.conditionalRendering?.spec?.items?.length || 0),
+          acc.conditionalRenderRulesCount
+        );
+        return acc;
+
+      case 'RowsLayout':
+        acc.rowsLayoutCount++;
+        acc.rowCount += layout.spec.rows.length;
+        const rowsNextingLevel = nestingLevel + 1;
+        return layout.spec.rows.reduce((acc, row) => {
+          acc.conditionalRenderRulesCount += row.spec.conditionalRendering?.spec?.items?.length || 0;
+          const children: DynamicDashboardTrackingInformationStructureNode[] = [];
+          structureTarget.push({ kind: 'row', children });
+          return !row.spec.layout
+            ? acc
+            : this._parseDynamicDashboardsLayouts(acc, row.spec.layout, rowsNextingLevel, children);
+        }, acc);
+
+      case 'TabsLayout':
+        acc.tabsLayoutCount++;
+        acc.tabCount += layout.spec.tabs.length;
+        const tabsNextingLevel = nestingLevel + 1;
+        return layout.spec.tabs.reduce((acc, tab) => {
+          acc.conditionalRenderRulesCount += tab.spec.conditionalRendering?.spec?.items?.length || 0;
+          const children: DynamicDashboardTrackingInformationStructureNode[] = [];
+          structureTarget.push({ kind: 'tab', children });
+          return !tab.spec.layout
+            ? acc
+            : this._parseDynamicDashboardsLayouts(acc, tab.spec.layout, tabsNextingLevel, children);
+        }, acc);
+
+      default:
+        return acc;
+    }
   }
 }
 
@@ -479,18 +614,4 @@ export function getDashboardSceneSerializer(
   }
 
   return new V1DashboardSerializer();
-}
-
-function getDashboardV2TrackingFields(dashboard: DashboardV2Spec): DashboardV2TrackingInfo {
-  const { layoutStats, panelStats } = getStatsForDashboard(dashboard);
-  return {
-    tabCount: layoutStats.tabCount,
-    templateVariableCount: dashboard.variables ? dashboard.variables.length : 0,
-    maxNestingLevel: layoutStats.maxDepth,
-    dashStructure: getSanitizedLayout(dashboard.layout),
-    conditionalRenderRulesCount: getNoOfConditionalRulesInDashboard(dashboard.layout),
-    autoLayoutCount: layoutStats.layoutTypesCount.AutoGridLayout,
-    customGridLayoutCount: layoutStats.layoutTypesCount.GridLayout,
-    panelsByDatasourceType: panelStats.countByDatasourceType,
-  };
 }

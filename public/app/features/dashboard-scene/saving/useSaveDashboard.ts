@@ -80,7 +80,7 @@ export function useSaveDashboard(isCopy = false) {
         if (isCopy) {
           DashboardInteractions.dashboardCopied({ name: saveModel.title || '', url: resultData.url });
         } else {
-          trackDashboardSceneCreatedOrSaved(options.isNew ? 'created' : 'saved', scene, {
+          trackDashboardSceneCreatedOrSaved(!!options.isNew, scene, {
             name: saveModel.title || '',
             url: resultData.url || '',
           });
