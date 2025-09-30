@@ -4,7 +4,7 @@ import { useLocalStorage } from 'react-use';
 import { PluginExtensionPoints, store, type ExtensionInfo } from '@grafana/data';
 import { getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
-import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent } from 'app/types/events';
+import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ToggleExtensionSideBarEvent } from 'app/types/events';
 
 import { DEFAULT_EXTENSION_SIDEBAR_WIDTH, MAX_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
 
@@ -171,13 +171,34 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       setDockedComponentId(undefined);
     };
 
+    const toggleSidebarHandler = (event: ToggleExtensionSideBarEvent) => {
+      const { payload } = event;
+      if (
+        !payload ||
+        !payload.pluginId ||
+        !payload.componentTitle ||
+        !PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(payload.pluginId)
+      ) {
+        return;
+      }
+
+      const componentId = JSON.stringify({ pluginId: payload.pluginId, componentTitle: payload.componentTitle });
+      if (componentId === dockedComponentId) {
+        return closeSidebarHandler();
+      }
+      return openSidebarHandler(event);
+    };
+
     const openSubscription = getAppEvents().subscribe(OpenExtensionSidebarEvent, openSidebarHandler);
     const closeSubscription = getAppEvents().subscribe(CloseExtensionSidebarEvent, closeSidebarHandler);
+    const toggleSubscription = getAppEvents().subscribe(ToggleExtensionSideBarEvent, toggleSidebarHandler);
+
     return () => {
       openSubscription.unsubscribe();
       closeSubscription.unsubscribe();
+      toggleSubscription.unsubscribe();
     };
-  }, [setDockedComponentWithProps, availableComponents]);
+  }, [setDockedComponentWithProps, availableComponents, dockedComponentId]);
 
   // update the stored docked component id when it changes
   useEffect(() => {

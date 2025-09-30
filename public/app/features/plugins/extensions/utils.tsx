@@ -20,7 +20,7 @@ import { reportInteraction, config, AppPluginConfig } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
-import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ShowModalReactEvent } from 'app/types/events';
+import { CloseExtensionSidebarEvent, ShowModalReactEvent, ToggleExtensionSideBarEvent } from 'app/types/events';
 
 import { RestrictedGrafanaApisProvider } from '../components/restrictedGrafanaApis/RestrictedGrafanaApisProvider';
 
@@ -540,7 +540,7 @@ export function getLinkExtensionOnClick(
         openModal: createOpenModalFunction(config),
         openSidebar: (componentTitle, context) => {
           appEvents.publish(
-            new OpenExtensionSidebarEvent({
+            new ToggleExtensionSideBarEvent({
               props: context,
               pluginId,
               componentTitle,

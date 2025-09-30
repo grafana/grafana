@@ -27,7 +27,10 @@ const allowedPluginId = 'grafana-grafanadocsplugin-app';
 
 export function HelpDropdownButton({ helpNode }: Props) {
   const styles = useStyles2(getStyles);
-  const context = useMemo<PluginExtensionTopbarHelpV1Context>(() => ({ helpNode }), [helpNode]);
+  const context = useMemo<PluginExtensionTopbarHelpV1Context>(
+    () => ({ helpNode: withoutParents(helpNode) }),
+    [helpNode]
+  );
   const { dockedComponentId, isOpen: isSidebarOpen } = useExtensionSidebarContext();
 
   const { links, isLoading } = usePluginLinks({
@@ -70,6 +73,14 @@ function getStyles(theme: GrafanaTheme2) {
       border: `1px solid ${theme.colors.primary.borderTransparent}`,
       color: theme.colors.text.primary,
     }),
+  };
+}
+
+function withoutParents(node: NavModelItem): NavModelItem {
+  const { parentItem, ...rest } = node;
+  return {
+    ...rest,
+    children: node.children?.map(withoutParents),
   };
 }
 
