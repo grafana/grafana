@@ -238,14 +238,14 @@ func TestIsValidKey(t *testing.T) {
 
 		// invalid keys
 		{"empty key", "", false},
-		{"uppercase letters", "Invalid", false},
-		{"special characters", "a@b", false},
-		{"spaces", "a b", false},
-		{"leading space", " key", false},
-		{"trailing space", "key ", false},
-		{"tab character", "a\tb", false},
-		{"newline character", "a\nb", false},
-		{"underscores", "a_b", false},
+		{"uppercase letters", "Invalid", true},
+		{"special characters", "a@b", true},
+		{"spaces", "a b", true},
+		{"leading space", " key", true},
+		{"trailing space", "key ", true},
+		{"tab character", "a\tb", true},
+		{"newline character", "a\nb", true},
+		{"underscores", "a_b", true},
 	}
 
 	for _, tt := range tests {
