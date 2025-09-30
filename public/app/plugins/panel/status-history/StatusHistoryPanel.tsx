@@ -108,7 +108,7 @@ export const StatusHistoryPanel = ({
         replaceVariables={replaceVariables}
         dataLinkPostProcessor={dataLinkPostProcessor}
         cursorSync={cursorSync}
-        annotationLanes={getAnnotationFrames(data.annotations).length}
+        annotations={getAnnotationFrames(data.annotations)}
       >
         {(builder, alignedFrame) => {
           return (

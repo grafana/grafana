@@ -44,7 +44,7 @@ export interface GraphNGProps extends Themeable2 {
     alignedFrame: DataFrame,
     allFrames: DataFrame[],
     getTimeRange: () => TimeRange,
-    annotationLanes?: number
+    annotations?: DataFrame[]
   ) => UPlotConfigBuilder;
   propsToDiff?: Array<string | PropDiffFn>;
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame | null;
@@ -69,8 +69,8 @@ export interface GraphNGProps extends Themeable2 {
    */
   options?: Record<string, any>;
 
-  // Annotation lanes count
-  annotationLanes?: number;
+  // Annotation
+  annotations?: DataFrame[];
 }
 
 function sameProps<T extends Record<string, unknown>>(
@@ -199,7 +199,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
       let config = this.state?.config;
 
       if (withConfig) {
-        config = props.prepConfig(alignedFrameFinal, this.props.frames, this.getTimeRange, this.props.annotationLanes);
+        config = props.prepConfig(alignedFrameFinal, this.props.frames, this.getTimeRange, this.props.annotations);
         pluginLog('GraphNG', false, 'config prepared', config);
       }
 
@@ -233,7 +233,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
           timeZone !== prevProps.timeZone ||
           cursorSync !== prevProps.cursorSync ||
           structureRev !== prevProps.structureRev ||
-          this.props.annotationLanes !== prevProps.annotationLanes ||
+          this.props.annotations !== prevProps.annotations ||
           !structureRev ||
           propsChanged;
 
@@ -242,7 +242,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
             newState.alignedFrame,
             this.props.frames,
             this.getTimeRange,
-            this.props.annotationLanes
+            this.props.annotations
           );
           pluginLog('GraphNG', false, 'config recreated', newState.config);
         }

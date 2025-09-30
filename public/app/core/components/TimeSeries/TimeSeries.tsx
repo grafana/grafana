@@ -2,7 +2,7 @@ import { Component } from 'react';
 
 import { DataFrame, TimeRange } from '@grafana/data';
 import { withTheme2 } from '@grafana/ui';
-import { hasVisibleLegendSeries, PlotLegend, UPlotConfigBuilder } from '@grafana/ui/internal';
+import { hasVisibleLegendSeries, PlotLegend, UPlotConfigBuilder, UPlotSeriesBuilder } from '@grafana/ui/internal';
 
 import { GraphNG, GraphNGProps, PropDiffFn } from '../GraphNG/GraphNG';
 
@@ -17,7 +17,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
     alignedFrame: DataFrame,
     allFrames: DataFrame[],
     getTimeRange: () => TimeRange,
-    annotationLanes?: number
+    annotations?: DataFrame[]
   ) => {
     const { theme, timeZone, options, renderers, tweakAxis, tweakScale } = this.props;
 
@@ -33,19 +33,28 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
       hoverProximity: options?.tooltip?.hoverProximity,
       orientation: options?.orientation,
       xAxisConfig: {
-        ...calculateAnnotationLaneSizes(annotationLanes, options?.annotations),
+        ...calculateAnnotationLaneSizes(annotations?.length ?? 0, options?.annotations),
       },
     });
   };
 
   renderLegend = (config: UPlotConfigBuilder) => {
-    const { legend, frames } = this.props;
+    const { legend, frames, annotations, theme } = this.props;
 
     if (!config || (legend && !legend.showLegend) || !hasVisibleLegendSeries(config, frames)) {
       return null;
     }
 
-    return <PlotLegend data={frames} config={config} {...legend} />;
+    let uPlotSeriesAnnos: UPlotSeriesBuilder[] | undefined = [];
+
+    if (annotations !== undefined && annotations.length > 0) {
+      annotations.forEach((anno) => {
+        const series = { label: anno.name, scaleKey: config.scaleKeys[0], theme: theme, show: true };
+        uPlotSeriesAnnos.push(new UPlotSeriesBuilder(series));
+      });
+    }
+
+    return <PlotLegend data={frames} config={config} annotations={uPlotSeriesAnnos} {...legend} />;
   };
 
   render() {

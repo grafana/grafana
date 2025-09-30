@@ -17,6 +17,7 @@ export {
   UPlotConfigBuilder,
   type UPlotConfigPrepFn,
 } from '../components/uPlot/config/UPlotConfigBuilder';
+export { UPlotSeriesBuilder } from '../components/uPlot/config/UPlotSeriesBuilder';
 export { type ScaleProps } from '../components/uPlot/config/UPlotScaleBuilder';
 export {
   pluginLog,

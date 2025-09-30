@@ -1,7 +1,8 @@
 import { memo } from 'react';
+import { Series } from 'uplot';
 
 import { DataFrame, getFieldDisplayName, getFieldSeriesColor } from '@grafana/data';
-import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
+import { VizLegendOptions, AxisPlacement, LineConfig } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { VizLayout, VizLayoutLegendProps } from '../VizLayout/VizLayout';
@@ -9,11 +10,13 @@ import { VizLegend } from '../VizLegend/VizLegend';
 import { VizLegendItem } from '../VizLegend/types';
 
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
+import { UPlotSeriesBuilder } from './config/UPlotSeriesBuilder';
 import { getDisplayValuesForCalcs } from './utils';
 
 interface PlotLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
   data: DataFrame[];
   config: UPlotConfigBuilder;
+  annotations?: UPlotSeriesBuilder[];
 }
 
 /**
@@ -40,9 +43,9 @@ export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFra
 }
 
 export const PlotLegend = memo(
-  ({ data, config, placement, calcs, displayMode, ...vizLayoutLegendProps }: PlotLegendProps) => {
+  ({ data, config, placement, calcs, displayMode, annotations, ...vizLayoutLegendProps }: PlotLegendProps) => {
     const theme = useTheme2();
-    const legendItems = config
+    let legendItems = config
       .getSeries()
       .map<VizLegendItem | undefined>((s) => {
         const seriesConfig = s.props;
@@ -75,6 +78,19 @@ export const PlotLegend = memo(
         };
       })
       .filter((i): i is VizLegendItem => i !== undefined);
+
+    if (annotations && annotations.length > 0) {
+      annotations.forEach((anno) => {
+        const props: Series = anno.props;
+        const annoConfig = anno.getConfig();
+        legendItems.push({
+          color: props.stroke,
+          disabled: !annoConfig.show,
+          label: typeof props.label === 'string' ? props.label : 'annotation',
+          yAxis: 1,
+        });
+      });
+    }
 
     return (
       <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>
