@@ -113,3 +113,4 @@ export interface AnnotationSupport<TQuery extends DataQuery = DataQuery, TAnno =
    */
   getDefaultQuery?(): Partial<TQuery>;
 }
+

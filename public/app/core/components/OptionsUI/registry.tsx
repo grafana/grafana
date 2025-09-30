@@ -1,42 +1,43 @@
 import { BooleanFieldSettings } from '@react-awesome-query-builder/ui';
 
 import {
+  Action,
+  booleanOverrideProcessor,
+  DataLink,
+  DataLinksFieldConfigSettings,
+  dataLinksOverrideProcessor,
+  displayNameOverrideProcessor,
+  FieldColor,
+  FieldColorConfigSettings,
   FieldConfigPropertyItem,
+  FieldNamePickerConfigSettings,
   FieldType,
+  identityOverrideProcessor,
+  NumberFieldConfigSettings,
+  numberOverrideProcessor,
   standardEditorsRegistry,
   StandardEditorsRegistryItem,
+  StatsPickerConfigSettings,
+  StringFieldConfigSettings,
+  stringOverrideProcessor,
   ThresholdsConfig,
   ThresholdsFieldConfigSettings,
   ThresholdsMode,
   thresholdsOverrideProcessor,
+  TimeZone,
   ValueMapping,
   ValueMappingFieldConfigSettings,
   valueMappingsOverrideProcessor,
-  DataLink,
-  dataLinksOverrideProcessor,
-  NumberFieldConfigSettings,
-  numberOverrideProcessor,
-  StringFieldConfigSettings,
-  stringOverrideProcessor,
-  identityOverrideProcessor,
-  TimeZone,
-  FieldColor,
-  FieldColorConfigSettings,
-  StatsPickerConfigSettings,
-  displayNameOverrideProcessor,
-  FieldNamePickerConfigSettings,
-  booleanOverrideProcessor,
-  Action,
-  DataLinksFieldConfigSettings,
 } from '@grafana/data';
 import { actionsOverrideProcessor } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { FieldConfig } from '@grafana/schema';
-import { RadioButtonGroup, TimeZonePicker, Switch } from '@grafana/ui';
+import { RadioButtonGroup, Switch, TimeZonePicker } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { ThresholdsValueEditor } from 'app/features/dimensions/editors/ThresholdsEditor/thresholds';
 import { ValueMappingsEditor } from 'app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditor';
 
+import { AnnotationEditorOptions } from './AnnotationEditor';
 import { DashboardPicker, DashboardPickerOptions } from './DashboardPicker';
 import { ActionsValueEditor } from './actions';
 import { ColorValueEditor, ColorValueEditorSettings } from './color';
@@ -466,6 +467,18 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
+  const annotations: FieldConfigPropertyItem<AnnotationEditorOptions, boolean | undefined, {}> = {
+    id: 'annotations',
+    path: 'annotations',
+    name: t('options-ui.registry.standard-field-configs.annotations', 'Annotations'),
+    editor: standardEditorsRegistry.get('boolean').editor,
+    override: standardEditorsRegistry.get('boolean').editor,
+    process: booleanOverrideProcessor,
+    shouldApply: () => true,
+    settings: {},
+    category: ['Annotations'],
+  }
+
   return [
     unit,
     min,
@@ -480,5 +493,6 @@ export const getAllStandardFieldConfigs = () => {
     mappings,
     thresholds,
     filterable,
+    annotations
   ];
 };
