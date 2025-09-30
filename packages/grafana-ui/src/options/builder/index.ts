@@ -5,3 +5,4 @@ export { addTooltipOptions } from './tooltip';
 export * from './text';
 export * from './stacking';
 export { addTimeCompareOption } from './timeCompare';
+export { addAnnotationOptions } from './annotations';
