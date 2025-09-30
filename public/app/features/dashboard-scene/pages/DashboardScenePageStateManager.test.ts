@@ -14,6 +14,7 @@ import {
   setDashboardLoaderSrv,
 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/SnapshotSrv';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DASHBOARD_FROM_LS_KEY, DashboardDataDTO, DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -70,6 +71,14 @@ jest.mock('@grafana/runtime', () => {
 
 jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   getDashboardAPI: jest.fn(),
+}));
+
+jest.mock('app/features/playlist/PlaylistSrv', () => ({
+  playlistSrv: {
+    state: {
+      isPlaying: false,
+    },
+  },
 }));
 
 const setupDashboardAPI = (
@@ -482,6 +491,123 @@ describe('DashboardScenePageStateManager v1', () => {
         expect(loadDashSpy).toHaveBeenCalledTimes(2);
       });
     });
+    describe('URL correction during playlist navigation', () => {
+      const mockLocationService = locationService as jest.Mocked<typeof locationService>;
+      let originalReplace: typeof locationService.replace;
+      let originalGetLocation: typeof locationService.getLocation;
+
+      beforeEach(() => {
+        // Store original methods
+        originalReplace = locationService.replace;
+        originalGetLocation = locationService.getLocation;
+
+        // Mock location service methods
+        mockLocationService.replace = jest.fn();
+        mockLocationService.getLocation = jest.fn().mockReturnValue({
+          pathname: '/d/fake-uid/-warehouse-dashboard-test',
+        });
+
+        // Reset playlist service state
+        playlistSrv.state.isPlaying = false;
+        // Mock console.log to prevent test failures
+        jest.spyOn(console, 'log').mockImplementation(() => {});
+      });
+
+      afterEach(() => {
+        // Restore original location service methods
+        locationService.replace = originalReplace;
+        locationService.getLocation = originalGetLocation;
+        // Restore console.log
+        jest.restoreAllMocks();
+      });
+
+      it('should perform URL correction when playlist is not active', async () => {
+        // Setup dashboard with mismatched URL (simulates emoji hex encoding scenario)
+        const dashboardWithUrl = {
+          dashboard: { uid: 'fake-uid', title: '📦 Warehouse Dashboard Test' },
+          meta: { url: '/d/fake-uid/f09f93a6-warehouse-dashboard-test' }, // hex-encoded emoji
+        };
+        setupLoadDashboardMock(dashboardWithUrl);
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+        // URL correction should happen because playlist is not active
+        expect(mockLocationService.replace).toHaveBeenCalledWith({
+          pathname: '/d/fake-uid/f09f93a6-warehouse-dashboard-test',
+        });
+      });
+
+      it('should skip URL correction when playlist is active', async () => {
+        // Set playlist as playing
+        playlistSrv.state.isPlaying = true;
+
+        // Setup dashboard with mismatched URL (same scenario as above)
+        const dashboardWithUrl = {
+          dashboard: { uid: 'fake-uid', title: '📦 Warehouse Dashboard Test' },
+          meta: { url: '/d/fake-uid/f09f93a6-warehouse-dashboard-test' }, // hex-encoded emoji
+        };
+        setupLoadDashboardMock(dashboardWithUrl);
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+        // URL correction should NOT happen because playlist is active
+        expect(mockLocationService.replace).not.toHaveBeenCalled();
+      });
+
+      it('should not perform URL correction when URLs match', async () => {
+        // Setup dashboard with matching URL
+        const dashboardWithMatchingUrl = {
+          dashboard: { uid: 'fake-uid', title: 'Regular Dashboard' },
+          meta: { url: '/d/fake-uid/regular-dashboard' },
+        };
+        setupLoadDashboardMock(dashboardWithMatchingUrl);
+
+        // Set current location to match meta.url
+        mockLocationService.getLocation = jest.fn().mockReturnValue({
+          pathname: '/d/fake-uid/regular-dashboard',
+        });
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+        // No URL correction needed since they match
+        expect(mockLocationService.replace).not.toHaveBeenCalled();
+      });
+
+      it('should handle dashboard without meta.url', async () => {
+        // Setup dashboard without URL metadata
+        const dashboardWithoutUrl = {
+          dashboard: { uid: 'fake-uid', title: 'Dashboard Without URL' },
+          meta: {}, // No url property
+        };
+        setupLoadDashboardMock(dashboardWithoutUrl);
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+        // No URL correction should happen since meta.url doesn't exist
+        expect(mockLocationService.replace).not.toHaveBeenCalled();
+      });
+
+      it('should only perform URL correction for Normal route', async () => {
+        // Setup dashboard with mismatched URL
+        const dashboardWithUrl = {
+          dashboard: { uid: 'fake-uid', title: 'Test Dashboard' },
+          meta: { url: '/d/fake-uid/different-path' },
+        };
+        setupLoadDashboardMock(dashboardWithUrl);
+
+        const loader = new DashboardScenePageStateManager({});
+
+        // Test with non-Normal route (e.g., New route)
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.New });
+
+        // URL correction should NOT happen for non-Normal routes
+        expect(mockLocationService.replace).not.toHaveBeenCalled();
+      });
+    });
   });
 });
 
@@ -817,6 +943,169 @@ describe('DashboardScenePageStateManager v2', () => {
         advanceBy(DASHBOARD_CACHE_TTL / 2 + 1);
         await loader.fetchDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
         expect(getDashSpy).toHaveBeenCalledTimes(2);
+      });
+    });
+
+    describe('URL correction during playlist navigation', () => {
+      const mockLocationService = locationService as jest.Mocked<typeof locationService>;
+      let originalReplace: typeof locationService.replace;
+      let originalGetLocation: typeof locationService.getLocation;
+
+      beforeEach(() => {
+        originalReplace = locationService.replace;
+        originalGetLocation = locationService.getLocation;
+
+        mockLocationService.replace = jest.fn();
+        mockLocationService.getLocation = jest.fn().mockReturnValue({
+          pathname: '/d/fake-uid/-warehouse-dashboard-test',
+        });
+
+        // Reset playlist service state
+        playlistSrv.state.isPlaying = false;
+        jest.spyOn(console, 'log').mockImplementation(() => {});
+      });
+
+      afterEach(() => {
+        locationService.replace = originalReplace;
+        locationService.getLocation = originalGetLocation;
+        jest.restoreAllMocks();
+      });
+
+      it('should perform URL correction when playlist is not active', async () => {
+        // Setup v2 dashboard with mismatched URL (simulates emoji hex encoding scenario)
+        const getDashSpy = jest.fn();
+        setupDashboardAPI(
+          {
+            access: { url: '/d/fake-uid/f09f93a6-warehouse-dashboard-test' }, // v2 uses access.url
+            apiVersion: 'v2beta1',
+            kind: 'DashboardWithAccessInfo',
+            metadata: {
+              name: 'fake-uid',
+              creationTimestamp: '',
+              resourceVersion: '1',
+            },
+            spec: { ...defaultDashboardV2Spec(), title: '📦 Warehouse Dashboard Test' },
+          },
+          getDashSpy
+        );
+
+        const loader = new DashboardScenePageStateManagerV2({});
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+        // URL correction should happen because playlist is not active
+        expect(mockLocationService.replace).toHaveBeenCalledWith({
+          pathname: '/d/fake-uid/f09f93a6-warehouse-dashboard-test',
+        });
+      });
+
+      it('should skip URL correction when playlist is active', async () => {
+        // Set playlist as playing
+        playlistSrv.state.isPlaying = true;
+
+        // Setup v2 dashboard with mismatched URL
+        const getDashSpy = jest.fn();
+        setupDashboardAPI(
+          {
+            access: { url: '/d/fake-uid/f09f93a6-warehouse-dashboard-test' }, // v2 uses access.url
+            apiVersion: 'v2beta1',
+            kind: 'DashboardWithAccessInfo',
+            metadata: {
+              name: 'fake-uid',
+              creationTimestamp: '',
+              resourceVersion: '1',
+            },
+            spec: { ...defaultDashboardV2Spec(), title: '📦 Warehouse Dashboard Test' },
+          },
+          getDashSpy
+        );
+
+        const loader = new DashboardScenePageStateManagerV2({});
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+        // URL correction should NOT happen because playlist is active
+        expect(mockLocationService.replace).not.toHaveBeenCalled();
+      });
+
+      it('should not perform URL correction when URLs match', async () => {
+        // Setup v2 dashboard with matching URL
+        const getDashSpy = jest.fn();
+        setupDashboardAPI(
+          {
+            access: { url: '/d/fake-uid/regular-dashboard' }, // v2 uses access.url
+            apiVersion: 'v2beta1',
+            kind: 'DashboardWithAccessInfo',
+            metadata: {
+              name: 'fake-uid',
+              creationTimestamp: '',
+              resourceVersion: '1',
+            },
+            spec: { ...defaultDashboardV2Spec(), title: 'Regular Dashboard' },
+          },
+          getDashSpy
+        );
+
+        // Mock matching URLs
+        mockLocationService.getLocation = jest.fn().mockReturnValue({
+          pathname: '/d/fake-uid/regular-dashboard',
+        });
+
+        const loader = new DashboardScenePageStateManagerV2({});
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+        // No URL correction needed since they match
+        expect(mockLocationService.replace).not.toHaveBeenCalled();
+      });
+
+      it('should handle v2 dashboard without access.url', async () => {
+        // Setup v2 dashboard without URL metadata
+        const getDashSpy = jest.fn();
+        setupDashboardAPI(
+          {
+            access: {}, // No url property for v2
+            apiVersion: 'v2beta1',
+            kind: 'DashboardWithAccessInfo',
+            metadata: {
+              name: 'fake-uid',
+              creationTimestamp: '',
+              resourceVersion: '1',
+            },
+            spec: { ...defaultDashboardV2Spec(), title: 'Dashboard Without URL' },
+          },
+          getDashSpy
+        );
+
+        const loader = new DashboardScenePageStateManagerV2({});
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+        // No URL correction should happen since access.url doesn't exist
+        expect(mockLocationService.replace).not.toHaveBeenCalled();
+      });
+
+      it('should only perform URL correction for Normal route', async () => {
+        // Setup v2 dashboard with mismatched URL
+        const getDashSpy = jest.fn();
+        setupDashboardAPI(
+          {
+            access: { url: '/d/fake-uid/different-path' }, // v2 uses access.url
+            apiVersion: 'v2beta1',
+            kind: 'DashboardWithAccessInfo',
+            metadata: {
+              name: 'fake-uid',
+              creationTimestamp: '',
+              resourceVersion: '1',
+            },
+            spec: { ...defaultDashboardV2Spec(), title: 'Test Dashboard' },
+          },
+          getDashSpy
+        );
+
+        const loader = new DashboardScenePageStateManagerV2({});
+
+        // Test with non-Normal route (e.g., New route)
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.New });
+
+        // URL correction should NOT happen for non-Normal routes
+        expect(mockLocationService.replace).not.toHaveBeenCalled();
       });
     });
 
