@@ -143,10 +143,10 @@ export class KeybindingSrv {
       return;
     }
 
-    const { kioskMode } = this.chromeService.state.getValue();
-    if (kioskMode) {
-      this.chromeService.exitKioskMode();
-    }
+    // const { kioskMode } = this.chromeService.state.getValue();
+    // if (kioskMode) {
+    //   this.chromeService.exitKioskMode();
+    // }
   }
 
   private showDashEditView() {

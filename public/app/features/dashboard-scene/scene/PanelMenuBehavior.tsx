@@ -171,15 +171,15 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    items.push({
-      type: 'submenu',
-      text: t('panel.header-menu.share', 'Share'),
-      iconClassName: 'share-alt',
-      subMenu,
-      onClick: (e) => {
-        e.preventDefault();
-      },
-    });
+    // items.push({
+    //   type: 'submenu',
+    //   text: t('panel.header-menu.share', 'Share'),
+    //   iconClassName: 'share-alt',
+    //   subMenu,
+    //   onClick: (e) => {
+    //     e.preventDefault();
+    //   },
+    // });
 
     if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
       moreSubMenu.push({
@@ -325,17 +325,17 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       }
     }
 
-    if (moreSubMenu.length) {
-      items.push({
-        type: 'submenu',
-        text: t('panel.header-menu.more', `More...`),
-        iconClassName: 'cube',
-        subMenu: moreSubMenu,
-        onClick: (e) => {
-          e.preventDefault();
-        },
-      });
-    }
+    // if (moreSubMenu.length) {
+    //   items.push({
+    //     type: 'submenu',
+    //     text: t('panel.header-menu.more', `More...`),
+    //     iconClassName: 'cube',
+    //     subMenu: moreSubMenu,
+    //     onClick: (e) => {
+    //       e.preventDefault();
+    //     },
+    //   });
+    // }
 
     if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
       items.push({

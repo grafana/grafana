@@ -242,7 +242,7 @@ export class AppChromeService {
   }
 
   private getNextKioskMode() {
-    appEvents.emit(AppEvents.alertInfo, [t('navigation.kiosk.tv-alert', 'Press ESC to exit kiosk mode')]);
+    // appEvents.emit(AppEvents.alertInfo, [t('navigation.kiosk.tv-alert', 'Press ESC to exit kiosk mode')]);
     return KioskMode.Full;
   }
 }
