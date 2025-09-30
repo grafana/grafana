@@ -130,6 +130,9 @@ profile.cov
 /public/app/extensions
 !/public/app/extensions/.keep
 
+# Enterprise operators
+/pkg/operators/enterprise_*
+/pkg/operators/**/enterprise_*
 
 debug.test
 /examples/*/dist
