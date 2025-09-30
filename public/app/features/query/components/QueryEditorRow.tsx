@@ -22,7 +22,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Badge, ErrorBoundaryAlert, List, IconButton, Dropdown, Menu } from '@grafana/ui';
+import { Badge, ErrorBoundaryAlert, List } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
@@ -434,9 +434,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     if (sparkJoy) {
       return (
         <>
-          {/* 3-dot menu for save query functionality */}
+          {/* Individual icon buttons for main actions */}
           {!isEditingQueryLibrary && !isUnifiedAlerting && (
-            <SavedQueryMenuWithDropdown
+            <SaveQueryAction
               query={query}
               app={app}
               onUpdateSuccess={this.onExitQueryLibraryEditingMode}
@@ -444,8 +444,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
               datasourceFilters={datasource?.name ? [datasource.name] : []}
             />
           )}
-          
-          {/* Individual icon buttons for main actions */}
           {!isEditingQueryLibrary && (
           <QueryOperationAction
             title={t('query-operation.header.duplicate-query', 'Duplicate query')}
@@ -741,8 +739,8 @@ function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
   }
 }
 
-// 3-dot menu with save query functionality for sparkJoy mode
-function SavedQueryMenuWithDropdown(props: {
+// Individual save query action button for sparkJoy mode
+function SaveQueryAction(props: {
   query: DataQuery;
   app?: CoreApp;
   onUpdateSuccess?: () => void;
@@ -763,24 +761,11 @@ function SavedQueryMenuWithDropdown(props: {
     });
   };
 
-  const menu = (
-    <Menu>
-      <Menu.Item
-        icon="save"
-        label={t('query-operation.header.save-to-query-library', 'Save query')}
-        onClick={onSaveQuery}
-      />
-    </Menu>
-  );
-
   return (
-    <Dropdown overlay={menu} placement="bottom-start">
-      <IconButton
-        name="ellipsis-v"
-        tooltip={t('query-operation.header.query-options', 'Query options')}
-        variant="secondary"
-        size="sm"
-      />
-    </Dropdown>
+    <QueryOperationAction
+      title={t('query-operation.header.save-to-query-library', 'Save query')}
+      icon="save"
+      onClick={onSaveQuery}
+    />
   );
 }
