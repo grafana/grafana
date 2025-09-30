@@ -30,6 +30,7 @@ import {
   serializeStateToUrlParam,
   urlUtil,
   LogLevel,
+  shallowCompare,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -337,6 +338,16 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     ]
   );
 
+  useEffect(() => {
+    if (!shallowCompare(displayedFields, panelState?.logs?.displayedFields ?? [])) {
+      console.log('siyncinynng');
+      updatePanelState({
+        ...panelState?.logs,
+        displayedFields,
+      });
+    }
+  }, [displayedFields, panelState?.logs, updatePanelState]);
+
   // actions
   const onLogRowHover = useCallback(
     (row?: LogRowModel) => {
@@ -535,13 +546,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       if (index === -1) {
         const updatedDisplayedFields = displayedFields.concat(key);
         setDisplayedFields(updatedDisplayedFields);
-        updatePanelState({
-          ...panelState?.logs,
-          displayedFields: updatedDisplayedFields,
-        });
       }
     },
-    [displayedFields, panelState?.logs, updatePanelState]
+    [displayedFields]
   );
 
   const hideField = useCallback(
@@ -550,22 +557,14 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       if (index > -1) {
         const updatedDisplayedFields = displayedFields.filter((k) => key !== k);
         setDisplayedFields(updatedDisplayedFields);
-        updatePanelState({
-          ...panelState?.logs,
-          displayedFields: updatedDisplayedFields,
-        });
       }
     },
-    [displayedFields, panelState?.logs, updatePanelState]
+    [displayedFields]
   );
 
   const clearDisplayedFields = useCallback(() => {
-    updatePanelState({
-      ...panelState?.logs,
-      displayedFields: [],
-    });
     setDisplayedFields([]);
-  }, [panelState?.logs, updatePanelState]);
+  }, []);
 
   const onCloseCallbackRef = useRef<() => void>(() => {});
 
