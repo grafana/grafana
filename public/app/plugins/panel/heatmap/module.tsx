@@ -412,7 +412,6 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
     });
 
     commonOptionsBuilder.addAnnotationOptions(builder);
-
     builder.addBooleanSwitch({
       path: 'tooltip.yHistogram',
       name: t('heatmap.name-show-histogram', 'Show histogram (Y axis)'),
