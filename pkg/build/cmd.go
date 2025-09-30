@@ -289,8 +289,8 @@ func setBuildEnv(opts BuildOpts) error {
 		}
 	}
 
-	if !(opts.goos == GoOSLinux && opts.goarch == "amd64") &&
-		!(opts.goos == GoOSDarwin) {
+	if (opts.goos != GoOSLinux || opts.goarch != "amd64") &&
+		opts.goos != GoOSDarwin {
 		// needed for archs other than linux/amd64 and darwin/arm64 + darwin/amd64
 		opts.cgo = true
 	}
