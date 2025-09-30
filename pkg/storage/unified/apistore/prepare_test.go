@@ -240,6 +240,9 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		dash := &dashv1.Dashboard{
 			ObjectMeta: v1.ObjectMeta{
 				Name: "test",
+				Annotations: map[string]string{
+					utils.AnnoKeyFolder: "general",
+				},
 			},
 			Spec: dashv1.DashboardSpec{
 				Object: map[string]interface{}{
@@ -282,7 +285,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		t.Run("keep when status, labels, or annotations change", func(t *testing.T) {
 			b := dash.DeepCopy()
 			b.Annotations = map[string]string{
-				"x": "hello",
+				"x":                 "hello",
+				utils.AnnoKeyFolder: "general",
 			}
 			b.Labels = map[string]string{
 				"a": "b",

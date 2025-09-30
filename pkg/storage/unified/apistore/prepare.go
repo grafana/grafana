@@ -21,6 +21,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -97,8 +98,12 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if obj.GetUID() == "" {
 		obj.SetUID(types.UID(uuid.NewString()))
 	}
-	if obj.GetFolder() != "" && !s.opts.EnableFolderSupport {
-		return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
+	if s.opts.EnableFolderSupport {
+		if obj.GetFolder() == "" {
+			obj.SetFolder(folder.GeneralFolderUID) // Default to the general folder (TODO)
+		}
+	} else if obj.GetFolder() != "" {
+		return v, apierrors.NewBadRequest("folder annotation is not supported")
 	}
 
 	v.grantPermissions = obj.GetAnnotation(utils.AnnoKeyGrantPermissions)
@@ -190,6 +195,14 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetDeprecatedInternalID(previousInternalID) // nolint:staticcheck
 	}
 
+	if s.opts.EnableFolderSupport {
+		if obj.GetFolder() == "" {
+			return v, apierrors.NewBadRequest("unsupported folder annotation")
+		}
+	} else if obj.GetFolder() != "" {
+		return v, apierrors.NewBadRequest("missing folder annotation")
+	}
+
 	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, previous, &v)
 	if err != nil {
 		return v, err
@@ -197,10 +210,6 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 
 	// Check if we should bump the generation
 	if obj.GetFolder() != previous.GetFolder() {
-		if !s.opts.EnableFolderSupport {
-			return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
-		}
-		// TODO: check that we can move the folder?
 		v.hasChanged = true
 	} else if obj.GetDeletionTimestamp() != nil && previous.GetDeletionTimestamp() == nil {
 		v.hasChanged = true // bump generation when deleted
