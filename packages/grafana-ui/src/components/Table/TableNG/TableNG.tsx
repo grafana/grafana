@@ -783,7 +783,7 @@ export function TableNG(props: TableNGProps) {
   const displayedEnd = pageRangeEnd;
   const numRows = sortedRows.length;
 
-  return (
+  let rendered = (
     <>
       <DataGrid<TableRow, TableSummaryRow>
         {...commonDataGridProps}
@@ -871,6 +871,12 @@ export function TableNG(props: TableNGProps) {
       )}
     </>
   );
+
+  if (IS_SAFARI_26) {
+    rendered = <div className={styles.safariWrapper}>{rendered}</div>;
+  }
+
+  return rendered;
 }
 
 /**
