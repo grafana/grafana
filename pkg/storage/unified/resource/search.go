@@ -197,26 +197,7 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 		minBuildVersion:      opts.MinBuildVersion,
 	}
 
-	support.rebuildQueue = debouncer.NewQueue(func(a, b rebuildRequest) (c rebuildRequest, ok bool) {
-		if a.NamespacedResource != b.NamespacedResource {
-			// We can only debounce same keys.
-			return rebuildRequest{}, false
-		}
-
-		// Take larger "minBuildVersion"
-		v := a.minBuildVersion
-		if a.minBuildVersion == nil || (b.minBuildVersion != nil && b.minBuildVersion.GreaterThan(a.minBuildVersion)) {
-			v = b.minBuildVersion
-		}
-
-		ret := rebuildRequest{
-			NamespacedResource: a.NamespacedResource,
-			maxAge:             min(a.maxAge, b.maxAge), // Take minimum max age, to rebuild index faster
-			minBuildVersion:    v,
-		}
-
-		return ret, true
-	})
+	support.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
 
 	info, err := opts.Resources.GetDocumentBuilders()
 	if err != nil {
@@ -229,6 +210,27 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 	}
 
 	return support, err
+}
+
+func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
+	if a.NamespacedResource != b.NamespacedResource {
+		// We can only combine requests for the same keys.
+		return rebuildRequest{}, false
+	}
+
+	ret := a
+
+	// Using higher "min build version" is stricter condition, and causes more indexes to be rebuilt.
+	if a.minBuildVersion == nil || (b.minBuildVersion != nil && b.minBuildVersion.GreaterThan(a.minBuildVersion)) {
+		ret.minBuildVersion = b.minBuildVersion
+	}
+
+	// Using higher "min build time" is stricter condition, and causes more indexes to be rebuilt.
+	if a.minBuildTime.IsZero() || (!b.minBuildTime.IsZero() && b.minBuildTime.After(a.minBuildTime)) {
+		ret.minBuildTime = b.minBuildTime
+	}
+
+	return ret, true
 }
 
 func (s *searchSupport) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
@@ -554,7 +556,12 @@ func (s *searchSupport) findIndexesToRebuild(ctx context.Context) {
 			maxAge = s.dashboardIndexMaxAge
 		}
 
-		rebuild, err := s.shouldRebuildIndex(slog.New(nil /* TODO */), idx, maxAge, s.minBuildVersion)
+		var minBuildTime time.Time
+		if maxAge > 0 {
+			minBuildTime = time.Now().Add(-maxAge)
+		}
+
+		rebuild, err := s.shouldRebuildIndex(slog.New(nil /* TODO */), idx, minBuildTime, s.minBuildVersion)
 		if err != nil {
 			s.log.Error("failed to check if index should be rebuilt", "key", key, "error", err)
 			continue
@@ -563,7 +570,7 @@ func (s *searchSupport) findIndexesToRebuild(ctx context.Context) {
 		if rebuild {
 			s.rebuildQueue.Add(rebuildRequest{
 				NamespacedResource: key,
-				maxAge:             maxAge,
+				minBuildTime:       minBuildTime,
 				minBuildVersion:    s.minBuildVersion,
 			})
 		}
@@ -605,7 +612,7 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		return
 	}
 
-	rebuild, err := s.shouldRebuildIndex(l, idx, req.maxAge, req.minBuildVersion)
+	rebuild, err := s.shouldRebuildIndex(l, idx, req.minBuildTime, req.minBuildVersion)
 	if err != nil {
 		span.RecordError(err)
 		l.Error("failed to check if index should be rebuilt", "error", err)
@@ -648,15 +655,13 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	return
 }
 
-func (s *searchSupport) shouldRebuildIndex(l *slog.Logger, idx ResourceIndex, maxAge time.Duration, minBuildVersion *semver.Version) (bool, error) {
+func (s *searchSupport) shouldRebuildIndex(l *slog.Logger, idx ResourceIndex, minBuildTime time.Time, minBuildVersion *semver.Version) (bool, error) {
 	buildInfo, err := idx.BuildInfo()
 	if err != nil {
 		return false, err
 	}
 
-	if maxAge > 0 {
-		minBuildTime := time.Now().Add(-maxAge)
-
+	if !minBuildTime.IsZero() {
 		if buildInfo.BuildTime.IsZero() || buildInfo.BuildTime.Before(minBuildTime) {
 			l.Info("index build time is before minBuildTime, rebuilding the index", "indexBuildTime", buildInfo.BuildTime, "minBuildTime", minBuildTime)
 			return true, nil
@@ -676,7 +681,7 @@ func (s *searchSupport) shouldRebuildIndex(l *slog.Logger, idx ResourceIndex, ma
 type rebuildRequest struct {
 	NamespacedResource
 
-	maxAge          time.Duration   // if not 0, only rebuild index if it has reached this age (since last full build)
+	minBuildTime    time.Time       // if not zero, only rebuild index if it has been built before this timestamp
 	minBuildVersion *semver.Version // if not nil, only rebuild index with build version older than this.
 }
 

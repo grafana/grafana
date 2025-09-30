@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -27,6 +28,10 @@ type MockResourceIndex struct {
 
 	updateIndexMu    sync.Mutex
 	updateIndexCalls []string
+}
+
+func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
+	return IndexBuildInfo{}, nil
 }
 
 func (m *MockResourceIndex) BulkIndex(req *BulkIndexRequest) error {
@@ -384,4 +389,66 @@ func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key Namespa
 		return nil, err
 	}
 	return idx, nil
+}
+
+func TestCombineBuildRequests(t *testing.T) {
+	type testcase struct {
+		a, b  rebuildRequest
+		exp   rebuildRequest
+		expOK bool
+	}
+
+	now := time.Now()
+	for name, tc := range map[string]testcase{
+		"mismatched resource": {
+			a:     rebuildRequest{NamespacedResource: NamespacedResource{Namespace: "a", Group: "a", Resource: "a"}},
+			b:     rebuildRequest{NamespacedResource: NamespacedResource{Namespace: "b", Group: "b", Resource: "b"}},
+			expOK: false,
+		},
+		"equal values": {
+			a:     rebuildRequest{minBuildTime: now, minBuildVersion: semver.MustParse("10.15.20")},
+			b:     rebuildRequest{minBuildTime: now, minBuildVersion: semver.MustParse("10.15.20")},
+			expOK: true,
+			exp:   rebuildRequest{minBuildTime: now, minBuildVersion: semver.MustParse("10.15.20")},
+		},
+		"empty field": {
+			a:     rebuildRequest{minBuildTime: now},
+			b:     rebuildRequest{minBuildVersion: semver.MustParse("10.15.20")},
+			expOK: true,
+			exp:   rebuildRequest{minBuildTime: now, minBuildVersion: semver.MustParse("10.15.20")},
+		},
+		"use max build time": {
+			a:     rebuildRequest{minBuildTime: now.Add(2 * time.Hour)},
+			b:     rebuildRequest{minBuildTime: now.Add(-time.Hour)},
+			expOK: true,
+			exp:   rebuildRequest{minBuildTime: now.Add(2 * time.Hour)},
+		},
+		"use max version": {
+			a:     rebuildRequest{minBuildVersion: semver.MustParse("12.10.99")},
+			b:     rebuildRequest{minBuildVersion: semver.MustParse("10.15.20")},
+			expOK: true,
+			exp:   rebuildRequest{minBuildVersion: semver.MustParse("12.10.99")},
+		},
+		"both fields": {
+			a:     rebuildRequest{minBuildTime: now.Add(2 * time.Hour), minBuildVersion: semver.MustParse("12.10.99")},
+			b:     rebuildRequest{minBuildTime: now.Add(-time.Hour), minBuildVersion: semver.MustParse("10.15.20")},
+			expOK: true,
+			exp:   rebuildRequest{minBuildTime: now.Add(2 * time.Hour), minBuildVersion: semver.MustParse("12.10.99")},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			res1, ok := combineRebuildRequests(tc.a, tc.b)
+			require.Equal(t, tc.expOK, ok)
+			if ok {
+				require.Equal(t, tc.exp, res1)
+			}
+
+			// commutativity
+			res2, ok := combineRebuildRequests(tc.b, tc.a)
+			require.Equal(t, tc.expOK, ok)
+			if ok {
+				require.Equal(t, tc.exp, res2)
+			}
+		})
+	}
 }
