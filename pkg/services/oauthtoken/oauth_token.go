@@ -67,12 +67,9 @@ type OAuthTokenService interface {
 }
 
 type TokenRefreshMetadata struct {
-	// Only used when the `improvedExternalSessionHandling` feature flag is enabled
 	ExternalSessionID int64
 	AuthModule        string
-	// Required for being backward compatible when (in case the improvedExternalSessionHandling feature flag gets disabled)
-	// Should not be required when the old flow is completely removed
-	AuthID string
+	AuthID            string
 }
 
 func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer,
@@ -480,12 +477,12 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 			}
 		}
 
-		// Only update the external session if we have one, which should always be the case when the
-		// improvedExternalSessionHandling feature flag is enabled except for some edge cases:
-		// - when Grafana was updated to a version where the feature flag was enabled after the user logged in
+		// Update the external session with the new token if we the user has an external session,
+		// regardless of the feature flag state to keep the `user_external_session` table in sync.
+		// ExternalSessionID should always be set except for some edge cases:
+		// - when Grafana was updated to a version where the `improvedExternalSessionHandling` feature flag
+		//   was enabled after the user logged in
 		if tokenRefreshMetadata.ExternalSessionID != 0 {
-			// Update the external session with the new token regardless of the feature flag state
-			// to keep both tables in sync
 			if err := o.sessionService.UpdateExternalSession(ctx, tokenRefreshMetadata.ExternalSessionID, &auth.UpdateExternalSessionCommand{
 				Token: token,
 			}); err != nil {
