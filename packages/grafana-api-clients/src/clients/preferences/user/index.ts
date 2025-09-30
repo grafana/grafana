@@ -1,9 +1,6 @@
-import { generatedAPI } from './endpoints.gen';
+import { generatedAPI as rawAPI } from './endpoints.gen';
 
-export const { useGetUserPreferencesQuery, usePatchUserPreferencesMutation, useUpdateUserPreferencesMutation } =
-  generatedAPI;
-
-export const userPreferencesAPI = generatedAPI.enhanceEndpoints({
+export const generatedAPI = rawAPI.enhanceEndpoints({
   addTagTypes: ['UserPreferences'],
   endpoints: {
     getUserPreferences: {
@@ -17,3 +14,5 @@ export const userPreferencesAPI = generatedAPI.enhanceEndpoints({
     },
   },
 });
+
+export * from './endpoints.gen';

@@ -1,8 +1,8 @@
 import { BaseQueryFn, EndpointDefinition } from '@reduxjs/toolkit/query';
 
-import { generatedAPI } from './endpoints.gen';
+import { generatedAPI as rawAPI } from './endpoints.gen';
 
-export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
+export const generatedAPI = rawAPI.enhanceEndpoints({
   addTagTypes: [
     'cloud-migration-token',
     'cloud-migration-session',
@@ -86,3 +86,5 @@ function suppressErrorsOnQuery<
     return baseQuery;
   };
 }
+
+export * from './endpoints.gen';
