@@ -3,9 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, Stack, Text, useStyles2, Icon, Grid, Spinner, useTheme2 } from '@grafana/ui';
 import { config } from '@grafana/runtime';
-import {
-  useGetPopularDashboards,
-} from 'app/features/dashboard/api/popularResourcesApi';
+import { useGetPopularDashboards } from 'app/features/dashboard/api/popularResourcesApi';
 import { useState } from 'react';
 
 interface DashboardThumbnailProps {
@@ -23,16 +21,16 @@ const DashboardThumbnail = ({ url, alt }: DashboardThumbnailProps) => {
       {imageLoading && !imageError && (
         <div className={styles.loading}>
           <Spinner />
-          <Text variant="bodySmall" color="secondary">Rendering preview...</Text>
+          <Text variant="bodySmall" color="secondary">
+            Rendering preview...
+          </Text>
         </div>
       )}
       {imageError && (
         <div className={styles.error}>
           <Icon name="apps" size="xxl" />
           <Text variant="bodySmall" color="secondary">
-            {!config.rendererAvailable 
-              ? 'Image renderer not installed' 
-              : 'Preview unavailable'}
+            {!config.rendererAvailable ? 'Image renderer not installed' : 'Preview unavailable'}
           </Text>
         </div>
       )}
@@ -70,47 +68,42 @@ export const MostPopularDashboards = () => {
     window.location.href = resource.url;
   };
 
-  const getResourceIcon = (resourceType: string) => {
-    switch (resourceType) {
-      case 'dashboard':
-        return 'apps';
-      case 'folder':
-        return 'folder';
-      case 'alert':
-        return 'bell';
-      default:
-        return 'question-circle';
-    }
-  };
-
   const getThumbnailUrl = (resource: any) => {
     if (resource.resourceType !== 'dashboard') {
       return null;
     }
-    
+
     // Check if renderer is available
     if (!config.rendererAvailable) {
       console.warn('Image renderer plugin not available');
       return null;
     }
-    
+
     // Generate render URL for full dashboard thumbnail with current theme
     const params = new URLSearchParams({
-      width: '1920',  // Larger width to capture full dashboard
+      width: '1920', // Larger width to capture full dashboard
       height: '1080', // Larger height for full content
       scale: '1',
       theme: theme.isDark ? 'dark' : 'light', // Match current theme
       kiosk: '1', // Full kiosk mode - completely hides sidebar and topbar
       timeout: '60', // Increased timeout for larger render
     });
-    
+
     return `${config.appSubUrl}/render/d/${resource.uid}?${params.toString()}`;
   };
 
   return (
     <div>
-      <Stack direction="row" gap={1} alignItems="baseline">
-        <Text variant="h4">Suggested Dashboards</Text><Text variant="bodySmall" color="secondary">(Most Visited)</Text>
+      <Stack direction="row" gap={2} alignItems="center">
+        <div>
+          <div className={styles.headerTitle}>
+            <Icon name="chart-line" size="lg" className={styles.headerIcon} style={{ marginRight: '4px' }} />
+            <Text variant="h4">Suggested Dashboards</Text>
+          </div>
+          <Text variant="bodySmall" color="secondary">
+            Trending in your organization
+          </Text>
+        </div>
       </Stack>
 
       <div className={styles.container}>
@@ -119,18 +112,14 @@ export const MostPopularDashboards = () => {
             <Text>Loading...</Text>
           </div>
         )}
-        
+
         {data && data.resources?.length > 0 && (
           <Grid gap={2} columns={{ xs: 1, sm: 2, md: 3, lg: 4 }}>
             {data.resources.map((resource) => {
               const thumbnailUrl = getThumbnailUrl(resource);
-              
+
               return (
-                <Card 
-                  key={resource.uid} 
-                  className={styles.clickableCard} 
-                  onClick={() => handleResourceClick(resource)}
-                >
+                <Card key={resource.uid} className={styles.clickableCard} onClick={() => handleResourceClick(resource)}>
                   <Stack direction="column" gap={0}>
                     {/* Dashboard Thumbnail */}
                     {thumbnailUrl && (
@@ -138,7 +127,7 @@ export const MostPopularDashboards = () => {
                         <DashboardThumbnail url={thumbnailUrl} alt={resource.title} />
                       </div>
                     )}
-                    
+
                     <div className={styles.cardContent}>
                       <Stack direction="row" gap={2} alignItems="center">
                         {/* <Icon 
@@ -147,14 +136,12 @@ export const MostPopularDashboards = () => {
                         /> */}
                         <Text weight="medium">{resource.title}</Text>
                       </Stack>
-                      
+
                       <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Text variant="bodySmall" color="secondary">
                           Last visited
                         </Text>
-                        <Text variant="bodySmall">
-                          {new Date(resource.lastVisited).toLocaleDateString()}
-                        </Text>
+                        <Text variant="bodySmall">{new Date(resource.lastVisited).toLocaleDateString()}</Text>
                       </Stack>
                     </div>
                   </Stack>
@@ -163,13 +150,11 @@ export const MostPopularDashboards = () => {
             })}
           </Grid>
         )}
-        
+
         {/* TODO: show default dashboards list */}
         {data && data.resources?.length === 0 && (
           <Card className={styles.emptyCard}>
-            <Text color="secondary">
-              No data.
-            </Text>
+            <Text color="secondary">No data.</Text>
           </Card>
         )}
       </div>
@@ -189,7 +174,7 @@ const getThumbnailStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     justifyContent: 'center',
   }),
-  
+
   loading: css({
     display: 'flex',
     flexDirection: 'column',
@@ -198,7 +183,7 @@ const getThumbnailStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
     height: '100%',
   }),
-  
+
   error: css({
     display: 'flex',
     flexDirection: 'column',
@@ -207,7 +192,7 @@ const getThumbnailStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
     color: theme.colors.text.secondary,
   }),
-  
+
   image: css({
     width: '100%',
     height: '100%',
@@ -216,8 +201,20 @@ const getThumbnailStyles = (theme: GrafanaTheme2) => ({
 });
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  headerIcon: css({
+    color: '#6366f1',
+    filter: 'drop-shadow(0 0 8px rgba(99, 102, 241, 0.4))',
+  }),
+
+  headerTitle: css({
+    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+  }),
+
   container: css({
-    marginTop: theme.spacing(2),
+    marginTop: theme.spacing(3),
   }),
 
   loadingContainer: css({
@@ -228,13 +225,37 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   clickableCard: css({
     cursor: 'pointer',
-    transition: 'transform 0.2s, box-shadow 0.2s',
-    padding: 0, // Remove all padding
-    overflow: 'hidden', // Ensure content doesn't overflow
-    
+    transition: 'all 0.3s ease',
+    padding: 0,
+    overflow: 'hidden',
+    position: 'relative',
+    border: '2px solid transparent',
+
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      borderRadius: theme.shape.radius.default,
+      padding: '2px',
+      background: 'linear-gradient(90deg, #f59e0b, #ef4444, #ec4899, #8b5cf6, #6366f1)',
+      WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+      WebkitMaskComposite: 'xor',
+      maskComposite: 'exclude',
+      opacity: 0,
+      transition: 'opacity 0.3s ease',
+      zIndex: 1,
+    },
+
     '&:hover': {
-      transform: 'translateY(-2px)',
-      boxShadow: theme.shadows.z3,
+      transform: 'translateY(-6px)',
+      boxShadow: '0 12px 24px rgba(99, 102, 241, 0.3)',
+
+      '&::before': {
+        opacity: 0.8,
+      },
     },
   }),
 

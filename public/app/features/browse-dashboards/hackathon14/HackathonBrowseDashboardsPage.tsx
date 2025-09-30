@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { memo, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Card, Stack, Text } from '@grafana/ui';
+import { useStyles2, Card, Stack, Text, Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { useSearchStateManager } from '../../search/state/SearchStateManager';
@@ -12,6 +12,7 @@ import { MostPopularDashboards } from './MostPopularDashboards';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { MostPopularFolders } from './MostPopularFolders';
 import { RecentVisited } from './RecentVisited';
+import { AIRecommendedDashboards } from './AIRecommendedDashboards';
 import { 
   useGetRecentDashboardsAndFolders, 
   useGetPopularDashboards, 
@@ -46,10 +47,9 @@ const ContentSection = () => {
 
   if (allEmpty) {
     return (
-      <div>
+      <Box marginTop={4}>
           <Stack direction="column" gap={4} alignItems="center">
             {/* Cosmic empty state illustration */}
-            <CosmicSceneIcon />
 
             {/* Welcome message */}
             {/* <Stack direction="column" gap={2} alignItems="center">
@@ -60,6 +60,8 @@ const ContentSection = () => {
                 </Text>
               </div>
             </Stack> */}
+
+            {/* <AIRecommendedDashboards /> */}
 
             {/* Getting started cards */}
             <div className={styles.actionCards}>
@@ -91,12 +93,14 @@ const ContentSection = () => {
                 </Text>
               </Stack>
             </Card>
+
+            <CosmicSceneIcon />
           </Stack>
-      </div>
+      </Box>
     );
   }
 
-  // Show the three components normally
+  // Show the AI and other components normally
   return (
     <div className={styles.contentContainer}>
       <RecentVisited />

@@ -162,10 +162,53 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(1),
     minHeight: theme.spacing(4),
+    position: 'relative',
+    transition: 'all 0.3s ease',
+    border: '2px solid transparent',
 
     '& svg': {
       width: '14px',
       height: '14px',
+      transition: 'filter 0.3s ease',
+    },
+
+    // Subtle gradient border on hover
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: -2,
+      left: -2,
+      right: -2,
+      bottom: -2,
+      borderRadius: theme.shape.radius.default,
+      background: 'linear-gradient(90deg, #f59e0b, #ef4444, #ec4899, #8b5cf6, #6366f1)',
+      opacity: 0,
+      transition: 'opacity 0.3s ease',
+      zIndex: -1,
+    },
+
+    '&:hover': {
+      transform: 'translateY(-2px)',
+      boxShadow: '0 4px 12px rgba(139, 92, 246, 0.15)',
+
+      '&::before': {
+        opacity: 0.4,
+      },
+
+      '& svg': {
+        filter: 'drop-shadow(0 0 6px rgba(139, 92, 246, 0.5))',
+      },
+    },
+
+    // Active state with stronger gradient
+    '&[aria-pressed="true"], &[data-active="true"]': {
+      '&::before': {
+        opacity: 0.6,
+      },
+
+      '& svg': {
+        filter: 'drop-shadow(0 0 8px rgba(139, 92, 246, 0.7))',
+      },
     },
   }),
 });
