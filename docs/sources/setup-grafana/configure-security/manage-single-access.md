@@ -20,25 +20,25 @@ weight: 1200
 
 # Manage multi-team access in a single Grafana instance
 
-If your organization has multiple teams using Grafana, you can use a single Grafana deployment (OSS/Enterprise) or a single Grafana Cloud stack to manage access across teams using roles and folders. This approach reduces complexity, simplifies identity and access management, and facilitates cross-team collaboration. 
+If your organization has multiple teams using Grafana, you can use a single Grafana deployment (OSS/Enterprise) or a single Grafana Cloud stack to manage access across teams using roles and folders. This approach reduces complexity, simplifies identity and access management, and facilitates cross-team collaboration.
 
 ## Benefits
 
 By using a single Grafana instance to manage access, you can:
 
-- Implement a unified SSO, establishing clear permissions. 
+- Implement a unified SSO, establishing clear permissions.
 - Reduce setup and maintenance work, avoiding multi-stack complexity.
-- Centralize configuration and plugin management.  
+- Centralize configuration and plugin management.
 - Ensure teams can access the right dashboards and data, avoiding stepping on or overwriting each other’s work.
-- Enable collaboration across teams. Teams are not isolated in silos and can discover and collaborate with each other’s work. 
+- Enable collaboration across teams. Teams are not isolated in silos and can discover and collaborate with each other’s work.
 - Optimize resource management. With shared spaces, like an “Everyone” folder, you can publish executive dashboards or cross-team metrics that all groups can benefit from, without duplicating it across stacks.
 
-##  Example: Three teams, one stack
+## Example: Three teams, one stack
 
 Let’s imagine a setup with three teams:
 
-- Team A builds product features and needs autonomy with their own dashboards and data sources. 
-- Team B handles data engineering and needs autonomy with their own dashboards.  
+- Team A builds product features and needs autonomy with their own dashboards and data sources.
+- Team B handles data engineering and needs autonomy with their own dashboards.
 - Team C is the observability team and the admins of the Grafana stack.
 
 Follow these suggested steps to structure, configure and set permissions to access data in your Grafana instance:
@@ -54,28 +54,28 @@ Follow these suggested steps to structure, configure and set permissions to acce
 For more information on how to install a Grafana instance:
 
 - If you’re using Grafana on-prem, see [Configure Grafana](/configure-grafana/).
-- If you’re using Grafana Cloud, see [Your Grafana Cloud stack](https://grafana.com/docs/grafana-cloud/security-and-account-management/cloud-stacks). 
+- If you’re using Grafana Cloud, see [Your Grafana Cloud stack](https://grafana.com/docs/grafana-cloud/security-and-account-management/cloud-stacks).
 
 {{< admonition type="note" >}}
-For guidance on when to use one stack vs. multiple, see [Stack architecture guidance](https://grafana.com/docs/grafana-cloud/security-and-account-management/cloud-stacks/stack-architecture-guidance/). 
+For guidance on when to use one stack vs. multiple, see [Stack architecture guidance](https://grafana.com/docs/grafana-cloud/security-and-account-management/cloud-stacks/stack-architecture-guidance/).
 {{< /admonition >}}
 
 ### Create teams and configure user access
 
-After you’ve deployed your Grafana instance: 
+After you’ve deployed your Grafana instance:
 
-- To follow the example in this doc, create three [Grafana Teams](/administration/team-management/configure-grafana-teams/#create-a-grafana-team) and add them to the Grafana instance. 
-- Determine the [RBAC strategy](/administration/roles-and-permissions/access-control/) for your organization. RBAC extends default Grafana roles, provides more access rights granularity, and simplifies how to grant, modify or revoke user access to Grafana resources, such as users and reports. 
-- Assign each user to the [relevant team](/administration/ruser-management/manage-org-users/). By default [new users](configure-grafana/#auto_assign_org) are granted the **Viewer** role.  
+- To follow the example in this doc, create three [Grafana Teams](/administration/team-management/configure-grafana-teams/#create-a-grafana-team) and add them to the Grafana instance.
+- Determine the [RBAC strategy](/administration/roles-and-permissions/access-control/) for your organization. RBAC extends default Grafana roles, provides more access rights granularity, and simplifies how to grant, modify or revoke user access to Grafana resources, such as users and reports.
+- Assign each user to the [relevant team](/administration/ruser-management/manage-org-users/). By default [new users](configure-grafana/#auto_assign_org) are granted the **Viewer** role.
 - Assign the [**Admin** role](/administration/roles-and-permissions/access-control/assign-rbac-roles/#assign-rbac-roles) to Team C so that they can manage all resources in the instance.
 
 ### Design a folder structure to match your access needs
 
 Next, design a [folder](/dashboards/manage-dashboards/#create-a-dashboard-folder) setup that helps users quickly understand where to go, what they can access, and what they can manage. Among other:
 
-- Create an “Everyone” folder for shared items that all teams can manage. 
-- For each team create a folder that they can manage and grant them the `fixed:teams:read` [fixed role](/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions).  This means they can share items in their team folder with other teams, to encourage collaboration and learning from each other.
-- Create an “Admins” folder (Team C’s folder) for sensitive content only Admins can access. 
+- Create an “Everyone” folder for shared items that all teams can manage.
+- For each team create a folder that they can manage and grant them the `fixed:teams:read` [fixed role](/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions). This means they can share items in their team folder with other teams, to encourage collaboration and learning from each other.
+- Create an “Admins” folder (Team C’s folder) for sensitive content only Admins can access.
 - Optionally, create a personal folder for each team member so that they can work on draft content before moving it into their team folder when ready.
 
 [IMAGE HERE]
@@ -83,7 +83,7 @@ Teams and folders in the stack, and the related admin permissions Team A and Tea
 
 ### Configure data access based on team requirements
 
-Next, focus on how teams interact with data to decide further access needs. 
+Next, focus on how teams interact with data to decide further access needs.
 
 #### General resources
 
@@ -102,14 +102,14 @@ Teams and data sources in the stack, and the related permissions Team A and Team
 
 Some Grafana resources, such as service accounts, alert contact points, [Fleet Management collectors](https://grafana.com/docs/grafana-cloud/send-data/fleet-management/), and other feature resources, are not linked to teams but are managed at the stack level. For these type of resources, assign fixed roles to teams carefully.
 
-For example, users working in [Frontend Observability](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/) need a writer fixed role so that they can create and manage services.  
+For example, users working in [Frontend Observability](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/) need a writer fixed role so that they can create and manage services.
 
 [IMAGE HERE]
 Grafana Cloud Frontend Observability resources in the stack, and the related permissions Team A have been granted.
 
 ### Scale access management with Terraform and SSO
 
-After you've made sure the model is working, codify it! 
+After you've made sure the model is working, codify it!
 
 You can add any new users to your Grafana instance with an Identity Provider through [SCIM](/configure-security/configure-scim-provisioning/manage-users-teams/#manage-users-and-teams-with-scim). Use [role sync](/configure-security/configure-authentication/saml/configure-saml-team-role-mapping/#configure-role-sync-for-saml) to ensure everyone is automatically assigned to the right team based on their membership, including those with the Admin role.
 
@@ -122,10 +122,6 @@ Add new Team D from Okta and automate the rest of their IAM setup using Terrafor
 
 Read on to learn more about access management:
 
-- The [Least privilege custom role explainer](https://grafana.com/blog/2024/09/10/grafana-access-management-how-to-use-teams-for-seamless-user-and-permission-management/) blog walks through how to design roles that keep things simple and safe, so your users have just the access they need. 
-- See the [LBAC for metrics data sources](https://www.youtube.com/watch?v=gj27qKPSVsM) demo to learn how you can give every team a clear view of their own data while still benefiting from a shared pipeline. 
+- The [Least privilege custom role explainer](https://grafana.com/blog/2024/09/10/grafana-access-management-how-to-use-teams-for-seamless-user-and-permission-management/) blog walks through how to design roles that keep things simple and safe, so your users have just the access they need.
+- See the [LBAC for metrics data sources](https://www.youtube.com/watch?v=gj27qKPSVsM) demo to learn how you can give every team a clear view of their own data while still benefiting from a shared pipeline.
 - The [Introducing SCIM](https://grafana.com/blog/2025/05/14/introducing-scim-provisioning-in-grafana-enterprise-grade-user-management-made-simple/) post covers how to connect Grafana to your identity provider, making it easy to bring new users on board and keep permissions in sync as your organization grows.
-
-
-
-
