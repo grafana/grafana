@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -154,11 +155,10 @@ const InternalDashboardEmpty = ({ dashboard, canCreate }: Props) => {
 
 // We pass the default empty UI through to the extension point so that the extension can conditionally render it if needed, and while loading.
 // For example, an extension might want to render custom UI for a specific experiment cohort, and the default UI for everyone else.
-const DashboardEmpty = (props: Props) => (
-  <DashboardEmptyExtensionPoint>
-    <InternalDashboardEmpty {...props} />
-  </DashboardEmptyExtensionPoint>
-);
+const DashboardEmpty = (props: Props) => {
+  const DefaultUI = useCallback(() => <InternalDashboardEmpty {...props} />, [props]);
+  return <DashboardEmptyExtensionPoint DefaultUI={DefaultUI} />;
+};
 
 export default DashboardEmpty;
 
