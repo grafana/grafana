@@ -5,34 +5,37 @@ import { config, renderLimitedComponents, usePluginComponents } from '@grafana/r
 
 interface DashboardEmptyExtensionPointProps {
   DefaultUI: ComponentType;
+  onAddVisualization?: () => void;
+  onAddLibraryPanel?: () => void;
+  onImportDashboard?: () => void;
 }
 
-export function DashboardEmptyExtensionPoint({ DefaultUI }: DashboardEmptyExtensionPointProps): JSX.Element | null {
+export function DashboardEmptyExtensionPoint(props: DashboardEmptyExtensionPointProps): JSX.Element | null {
   if (config.featureToggles.enableDashboardEmptyExtensions !== true) {
-    return <DefaultUI />;
+    return <props.DefaultUI />;
   }
 
-  return <InternalDashboardEmptyExtensionPoint DefaultUI={DefaultUI} />;
+  return <InternalDashboardEmptyExtensionPoint {...props} />;
 }
 
 // We have this "internal" component so we can prevent pre-loading the plugins associated with the extension-point if the feature is not enabled.
-function InternalDashboardEmptyExtensionPoint({ DefaultUI }: DashboardEmptyExtensionPointProps): JSX.Element | null {
+function InternalDashboardEmptyExtensionPoint(props: DashboardEmptyExtensionPointProps): JSX.Element | null {
   const { components, isLoading } = usePluginComponents<DashboardEmptyExtensionPointProps>({
     extensionPointId: PluginExtensionPoints.DashboardEmpty,
   });
 
   if (isLoading) {
-    return <DefaultUI />;
+    return <props.DefaultUI />;
   }
 
   return (
     renderLimitedComponents<DashboardEmptyExtensionPointProps>({
-      props: { DefaultUI },
+      props,
       components: components,
       // We only ever want one component to replace the default empty state UI (so that we don't end up with two competing/default UIs being rendered).
       // And, currently, we only want to allow setupguide-app to be able to do this.
       limit: 1,
       pluginId: 'grafana-setupguide-app',
-    }) ?? <DefaultUI />
+    }) ?? <props.DefaultUI />
   );
 }

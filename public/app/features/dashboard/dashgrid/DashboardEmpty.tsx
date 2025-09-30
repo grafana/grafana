@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,7 +10,7 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
   onAddLibraryPanel as onAddLibraryPanelImpl,
   onCreateNewPanel,
-  onImportDashboard,
+  onImportDashboard as onImportDashboardImpl,
 } from 'app/features/dashboard/utils/dashboard';
 import { buildPanelEditScene } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -27,41 +27,80 @@ export interface Props {
   canCreate: boolean;
 }
 
-const InternalDashboardEmpty = ({ dashboard, canCreate }: Props) => {
-  const styles = useStyles2(getStyles);
+const useOnAddVisualization = ({ dashboard, canCreate }: Props) => {
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
-
-  // Get repository information to check if it's read-only
   const { isReadOnlyRepo } = useGetResourceRepositoryView({
     folderName: dashboard instanceof DashboardScene ? dashboard.state.meta.folderUid : dashboard.meta.folderUid,
   });
 
-  const onAddVisualization = () => {
-    let id;
-    if (dashboard instanceof DashboardScene) {
-      const panel = dashboard.onCreateNewPanel();
-      dashboard.setState({ editPanel: buildPanelEditScene(panel, true) });
-      locationService.partial({ firstPanel: true });
-    } else {
-      id = onCreateNewPanel(dashboard, initialDatasource);
-      dispatch(setInitialDatasource(undefined));
-      locationService.partial({ editPanel: id, firstPanel: true });
+  return useMemo(() => {
+    if (!canCreate || isReadOnlyRepo) {
+      return undefined;
     }
 
-    DashboardInteractions.emptyDashboardButtonClicked({ item: 'add_visualization' });
-  };
+    return () => {
+      let id;
+      if (dashboard instanceof DashboardScene) {
+        const panel = dashboard.onCreateNewPanel();
+        dashboard.setState({ editPanel: buildPanelEditScene(panel, true) });
+        locationService.partial({ firstPanel: true });
+      } else {
+        id = onCreateNewPanel(dashboard, initialDatasource);
+        dispatch(setInitialDatasource(undefined));
+        locationService.partial({ editPanel: id, firstPanel: true });
+      }
 
-  const onAddLibraryPanel = () => {
-    DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_from_library' });
-    if (dashboard instanceof DashboardScene) {
-      dashboard.onShowAddLibraryPanelDrawer();
-    } else {
-      onAddLibraryPanelImpl(dashboard);
-    }
-  };
+      DashboardInteractions.emptyDashboardButtonClicked({ item: 'add_visualization' });
+    };
+  }, [canCreate, isReadOnlyRepo, dashboard, dispatch, initialDatasource]);
+};
 
+const useOnAddLibraryPanel = ({ dashboard, canCreate }: Props) => {
   const isProvisioned = dashboard instanceof DashboardScene && dashboard.isManagedRepository();
+  const { isReadOnlyRepo } = useGetResourceRepositoryView({
+    folderName: dashboard instanceof DashboardScene ? dashboard.state.meta.folderUid : dashboard.meta.folderUid,
+  });
+
+  return useMemo(() => {
+    if (!canCreate || isProvisioned || isReadOnlyRepo) {
+      return undefined;
+    }
+
+    return () => {
+      DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_from_library' });
+      if (dashboard instanceof DashboardScene) {
+        dashboard.onShowAddLibraryPanelDrawer();
+      } else {
+        onAddLibraryPanelImpl(dashboard);
+      }
+    };
+  }, [canCreate, isProvisioned, isReadOnlyRepo, dashboard]);
+};
+
+const useOnImportDashboard = ({ dashboard, canCreate }: Props) => {
+  const { isReadOnlyRepo } = useGetResourceRepositoryView({
+    folderName: dashboard instanceof DashboardScene ? dashboard.state.meta.folderUid : dashboard.meta.folderUid,
+  });
+
+  return useMemo(() => {
+    if (!canCreate || isReadOnlyRepo) {
+      return undefined;
+    }
+
+    return () => {
+      DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_dashboard' });
+      onImportDashboardImpl();
+    };
+  }, [canCreate, isReadOnlyRepo]);
+};
+
+const InternalDashboardEmpty = ({ dashboard, canCreate }: Props) => {
+  const styles = useStyles2(getStyles);
+  const onAddVisualization = useOnAddVisualization({ dashboard, canCreate });
+  const onAddLibraryPanel = useOnAddLibraryPanel({ dashboard, canCreate });
+  const onImportDashboard = useOnImportDashboard({ dashboard, canCreate });
+
   return (
     <Stack alignItems="center" justifyContent="center">
       <div className={styles.wrapper}>
@@ -86,7 +125,7 @@ const InternalDashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 icon="plus"
                 data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
                 onClick={onAddVisualization}
-                disabled={!canCreate || isReadOnlyRepo}
+                disabled={!onAddVisualization}
               >
                 <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
               </Button>
@@ -110,7 +149,7 @@ const InternalDashboardEmpty = ({ dashboard, canCreate }: Props) => {
                   fill="outline"
                   data-testid={selectors.pages.AddDashboard.itemButton('Add a panel from the panel library button')}
                   onClick={onAddLibraryPanel}
-                  disabled={!canCreate || isProvisioned || isReadOnlyRepo}
+                  disabled={!onAddLibraryPanel}
                 >
                   <Trans i18nKey="dashboard.empty.add-library-panel-button">Add library panel</Trans>
                 </Button>
@@ -136,11 +175,8 @@ const InternalDashboardEmpty = ({ dashboard, canCreate }: Props) => {
                   icon="upload"
                   fill="outline"
                   data-testid={selectors.pages.AddDashboard.itemButton('Import dashboard button')}
-                  onClick={() => {
-                    DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_dashboard' });
-                    onImportDashboard();
-                  }}
-                  disabled={!canCreate || isReadOnlyRepo}
+                  onClick={onImportDashboard}
+                  disabled={!onImportDashboard}
                 >
                   <Trans i18nKey="dashboard.empty.import-dashboard-button">Import dashboard</Trans>
                 </Button>
@@ -157,7 +193,17 @@ const InternalDashboardEmpty = ({ dashboard, canCreate }: Props) => {
 // For example, an extension might want to render custom UI for a specific experiment cohort, and the default UI for everyone else.
 const DashboardEmpty = (props: Props) => {
   const DefaultUI = useCallback(() => <InternalDashboardEmpty {...props} />, [props]);
-  return <DashboardEmptyExtensionPoint DefaultUI={DefaultUI} />;
+  const onAddVisualization = useOnAddVisualization(props);
+  const onAddLibraryPanel = useOnAddLibraryPanel(props);
+  const onImportDashboard = useOnImportDashboard(props);
+  return (
+    <DashboardEmptyExtensionPoint
+      DefaultUI={DefaultUI}
+      onAddVisualization={onAddVisualization}
+      onAddLibraryPanel={onAddLibraryPanel}
+      onImportDashboard={onImportDashboard}
+    />
+  );
 };
 
 export default DashboardEmpty;
