@@ -352,7 +352,10 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(1), // isCompact padding
       marginBottom: 0, // noMargin equivalent
-      position: 'relative' as const,
+      position: 'relative',
+      minHeight: '85px', // Ensure consistent height
+      display: 'flex',
+      flexDirection: 'column',
       transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
         duration: theme.transitions.duration.short,
       }),
@@ -370,6 +373,8 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
       display: 'flex',
       flexDirection: 'column' as const,
       gap: theme.spacing(1),
+      flex: 1,
+      justifyContent: 'space-between',
     },
     mainContent: {
       display: 'flex',
