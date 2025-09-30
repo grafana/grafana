@@ -276,12 +276,8 @@ func parseGraphiteError(status int, body string) (errorMsg string) {
 		if strings.HasPrefix(body, "<body") {
 			htmlErrorMsg := ""
 			tokenizer := html.NewTokenizer(strings.NewReader(body))
-			for {
-				// Break here as that typically means we've reached EOF
-				if tokenizer.Next() == html.ErrorToken {
-					break
-				}
-
+			// Break here as that typically means we've reached EOF
+			for tokenizer.Next() != html.ErrorToken {
 				token := tokenizer.Token()
 				if token.Type == html.TextToken {
 					trimmed := strings.TrimSpace(token.Data)
