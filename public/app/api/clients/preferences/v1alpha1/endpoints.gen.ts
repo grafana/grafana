@@ -10,10 +10,6 @@ const injectedRtkApi = api
         query: () => ({ url: `/apis/preferences.grafana.app/v1alpha1/` }),
         providesTags: ['API Discovery'],
       }),
-      currentPreferences: build.query<CurrentPreferencesApiResponse, CurrentPreferencesApiArg>({
-        query: () => ({ url: `/current` }),
-        providesTags: ['Preferences'],
-      }),
       listPreferences: build.query<ListPreferencesApiResponse, ListPreferencesApiArg>({
         query: (queryArg) => ({
           url: `/preferences`,
@@ -31,6 +27,10 @@ const injectedRtkApi = api
             watch: queryArg.watch,
           },
         }),
+        providesTags: ['Preferences'],
+      }),
+      mergedPreferences: build.query<MergedPreferencesApiResponse, MergedPreferencesApiArg>({
+        query: () => ({ url: `/preferences/merged` }),
         providesTags: ['Preferences'],
       }),
       getPreferences: build.query<GetPreferencesApiResponse, GetPreferencesApiArg>({
@@ -153,14 +153,14 @@ const injectedRtkApi = api
       }),
       addStar: build.mutation<AddStarApiResponse, AddStarApiArg>({
         query: (queryArg) => ({
-          url: `/stars/${queryArg.name}/write/${queryArg.group}/${queryArg.kind}/${queryArg.id}`,
+          url: `/stars/${queryArg.name}/update/${queryArg.group}/${queryArg.kind}/${queryArg.id}`,
           method: 'PUT',
         }),
         invalidatesTags: ['Stars'],
       }),
       removeStar: build.mutation<RemoveStarApiResponse, RemoveStarApiArg>({
         query: (queryArg) => ({
-          url: `/stars/${queryArg.name}/write/${queryArg.group}/${queryArg.kind}/${queryArg.id}`,
+          url: `/stars/${queryArg.name}/update/${queryArg.group}/${queryArg.kind}/${queryArg.id}`,
           method: 'DELETE',
         }),
         invalidatesTags: ['Stars'],
@@ -171,8 +171,6 @@ const injectedRtkApi = api
 export { injectedRtkApi as generatedAPI };
 export type GetApiResourcesApiResponse = /** status 200 OK */ ApiResourceList;
 export type GetApiResourcesApiArg = void;
-export type CurrentPreferencesApiResponse = /** status 200 undefined */ any;
-export type CurrentPreferencesApiArg = void;
 export type ListPreferencesApiResponse = /** status 200 OK */ PreferencesList;
 export type ListPreferencesApiArg = {
   /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
@@ -218,6 +216,8 @@ export type ListPreferencesApiArg = {
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
   watch?: boolean;
 };
+export type MergedPreferencesApiResponse = /** status 200 undefined */ any;
+export type MergedPreferencesApiArg = void;
 export type GetPreferencesApiResponse = /** status 200 OK */ Preferences;
 export type GetPreferencesApiArg = {
   /** name of the Preferences */
@@ -704,8 +704,8 @@ export type Status = {
 export type Patch = object;
 export const {
   useGetApiResourcesQuery,
-  useCurrentPreferencesQuery,
   useListPreferencesQuery,
+  useMergedPreferencesQuery,
   useGetPreferencesQuery,
   useListStarsQuery,
   useCreateStarsMutation,

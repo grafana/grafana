@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -16,6 +17,18 @@ func verifyRequestKey(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
 	}
 	if key.Resource == "" {
 		return NewBadRequestError("request key is missing resource")
+	}
+	if err := validation.IsValidNamespace(key.Namespace); err != nil {
+		return NewBadRequestError(err[0])
+	}
+	if err := validation.IsValidGroup(key.Group); err != nil {
+		return NewBadRequestError(err[0])
+	}
+	if err := validation.IsValidateResource(key.Resource); err != nil {
+		return NewBadRequestError(err[0])
+	}
+	if err := validation.IsValidGrafanaName(key.Name); err != nil {
+		return NewBadRequestError(err[0])
 	}
 	return nil
 }
