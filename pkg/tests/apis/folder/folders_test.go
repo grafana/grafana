@@ -1427,3 +1427,78 @@ func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *tes
 		})
 	}
 }
+
+// Test moving folders to root.
+func TestIntegrationMoveNestedFolderToRootK8S(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		EnableFeatureToggles: []string{featuremgmt.FlagUnifiedStorageSearch},
+		APIServerStorageType: "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			folders.RESOURCEGROUP: {
+				DualWriterMode: grafanarest.Mode5,
+			},
+		},
+	})
+
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	// Create f1 under root
+	f1Payload := `{"title":"Folder 1","uid":"f1"}`
+	createF1 := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(f1Payload),
+	}, &dtos.Folder{})
+	require.NotNil(t, createF1.Result)
+	require.Equal(t, http.StatusOK, createF1.Response.StatusCode)
+	require.Equal(t, "f1", createF1.Result.UID)
+	require.Equal(t, "", createF1.Result.ParentUID)
+
+	// Create f2 under f1
+	f2Payload := `{"title":"Folder 2","uid":"f2","parentUid":"f1"}`
+	createF2 := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(f2Payload),
+	}, &dtos.Folder{})
+	require.NotNil(t, createF2.Result)
+	require.Equal(t, http.StatusOK, createF2.Response.StatusCode)
+	require.Equal(t, "f2", createF2.Result.UID)
+	require.Equal(t, "f1", createF2.Result.ParentUID)
+
+	// Move f2 to the root by having parentUid being empty in the request body
+	move := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders/f2/move",
+		Body:   []byte(`{"parentUid":""}`),
+	}, &dtos.Folder{})
+	require.NotNil(t, move.Result)
+	require.Equal(t, http.StatusOK, move.Response.StatusCode)
+	require.Equal(t, "f2", move.Result.UID)
+	require.Equal(t, "", move.Result.ParentUID)
+
+	// Fetch the folder to confirm it is now at root
+	get := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodGet,
+		Path:   "/api/folders/f2",
+	}, &dtos.Folder{})
+	require.NotNil(t, get.Result)
+	require.Equal(t, http.StatusOK, get.Response.StatusCode)
+	require.Equal(t, "f2", get.Result.UID)
+	require.Equal(t, "", get.Result.ParentUID)
+}

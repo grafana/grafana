@@ -94,6 +94,11 @@ func validateOnUpdate(ctx context.Context,
 	// Validate the move operation
 	newParent := folderObj.GetFolder()
 
+	// If we move to root, we don't need to validate the depth.
+	if newParent == folder.RootFolderUID {
+		return nil
+	}
+
 	// folder cannot be moved to a k6 folder
 	if newParent == accesscontrol.K6FolderUID {
 		return fmt.Errorf("k6 project may not be moved")
