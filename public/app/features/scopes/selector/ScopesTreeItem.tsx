@@ -126,7 +126,11 @@ export function ScopesTreeItem({
           <button
             className={styles.expand}
             data-testid={`scopes-tree-${treeNode.scopeNodeId}-expand`}
-            aria-label={treeNode.expanded ? t('scopes.tree.collapse', 'Collapse') : t('scopes.tree.expand', 'Expand')}
+            aria-label={
+              treeNode.expanded
+                ? t('scopes.tree.collapse', 'Collapse {{title}}', { title: titleText })
+                : t('scopes.tree.expand', 'Expand {{title}}', { title: titleText })
+            }
             onClick={() => {
               toggleExpandedNode(treeNode.scopeNodeId);
             }}

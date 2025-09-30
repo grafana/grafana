@@ -267,6 +267,18 @@ describe('Tree', () => {
     expectScopesHeadline('Recommended');
   });
 
+  it('Should open to a specific path when scopes and scope_parent are provided', async () => {
+    await openSelector();
+    await expandResultApplications();
+    await expandResultApplicationsCloud();
+    await selectResultApplicationsCloudDev();
+    await applyScopes();
+    await openSelector();
+
+    // Verify that Cloud is expanded
+    expect(screen.getByRole('button', { name: 'Collapse Cloud' })).toBeInTheDocument();
+  });
+
   describe('Keyboard Navigation', () => {
     it('should navigate through items with arrow keys when search is focused', async () => {
       await openSelector();
