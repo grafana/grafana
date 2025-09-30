@@ -187,7 +187,7 @@ function useGlobalScopesSearch(searchQuery: string, parentId?: string | null) {
       searchQueryRef.current = undefined;
       setActions(undefined);
     }
-  }, [searchAllNodes, searchQuery, parentId, selectScope]);
+  }, [searchAllNodes, searchQuery, parentId, selectScope, getScopeNodes]);
 
   return actions;
 }
