@@ -110,7 +110,7 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
                 />
               )
             )}
-            <TextLink icon="external-link-alt" href={`${config.appSubUrl || ''}/dashboard/snapshots`}>
+            <TextLink icon="external-link-alt" href={`${config.appSubUrl || ''}/dashboard/snapshots`} external>
               {t('snapshot.share.view-all-button', 'View all snapshots')}
             </TextLink>
           </Stack>
