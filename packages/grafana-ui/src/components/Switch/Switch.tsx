@@ -83,7 +83,7 @@ export const InlineSwitch = forwardRef<HTMLInputElement, InlineSwitchProps>(
 
 InlineSwitch.displayName = 'Switch';
 
-const animate = keyframes({
+const translationAnimation = keyframes({
   '0%': {
     backgroundPosition: '0%',
   },
@@ -95,7 +95,7 @@ const animate = keyframes({
 const rainbowLinearGradient = 'linear-gradient(90deg, #03a9f4, #f441a5, #ffeb3b, #03a9f4)';
 
 const backgroundPositionAnimation = {
-  animationName: animate,
+  animationName: translationAnimation,
   animationDuration: '8s',
   animationTimingFunction: 'linear',
   animationIterationCount: 'infinite',
@@ -262,11 +262,12 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
         filter: 'blur(4px)',
         opacity: 1,
         ...backgroundPositionAnimation,
-        transition: '0.5s',
+        transitionDuration: '0.3s',
+        transitionTimingFunction: 'ease-in-out',
       },
 
       '& + label:hover:after': {
-        borderColor: theme.components.input.background, //'#22252b', // theme.colors.text.secondary,
+        borderColor: theme.components.input.background,
       },
 
       '&:checked + label': {
@@ -276,11 +277,14 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
 
         '&:hover': {
           ...backgroundPositionAnimation,
-          transition: '0.5s',
+          background: rainbowLinearGradient,
+          backgroundSize: '400%',
+          transitionDuration: '0.3s',
+          transitionTimingFunction: 'ease-in-out',
         },
 
         '&:before': {
-          transition: '0.5s',
+          transition: '0.3s',
           content: "''",
           position: 'absolute',
           top: glowRadius,
@@ -295,15 +299,16 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
         },
 
         '&:after': {
-          transitionDuration: '0',
-          content: 'initial',
+          opacity: 0,
+          transitionDuration: '0s',
         },
 
         '&:hover:before': {
           filter: 'blur(4px)',
           opacity: 1,
           ...backgroundPositionAnimation,
-          transition: '0.5s',
+          transitionDuration: '0.3s',
+          transitionTimingFunction: 'ease-in-out',
         },
       },
     },
