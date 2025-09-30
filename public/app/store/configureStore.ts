@@ -3,6 +3,7 @@ import { setupListeners } from '@reduxjs/toolkit/query';
 import { Middleware } from 'redux';
 
 import { alertingAPI as alertingPackageAPI } from '@grafana/alerting/unstable';
+import { generatedAPI as userPreferencesAPI } from '@grafana/api-clients/legacy/preferences';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { preferencesAPIv1alpha1 } from 'app/api/clients/preferences/v1alpha1';
 import { rulesAPIv0alpha1 } from 'app/api/clients/rules/v0alpha1';
@@ -10,7 +11,6 @@ import { shortURLAPIv1alpha1 } from 'app/api/clients/shorturl/v1alpha1';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
-import { userPreferencesAPI } from 'app/features/preferences/api';
 import { StoreState } from 'app/types/store';
 
 import { advisorAPIv0alpha1 } from '../api/clients/advisor/v0alpha1';

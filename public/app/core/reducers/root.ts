@@ -2,6 +2,7 @@ import { ReducersMapObject } from '@reduxjs/toolkit';
 import { AnyAction, combineReducers } from 'redux';
 
 import { alertingAPI as alertingPackageAPI } from '@grafana/alerting/unstable';
+import { generatedAPI as userPreferencesAPI } from '@grafana/api-clients/legacy/preferences';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { preferencesAPIv1alpha1 } from 'app/api/clients/preferences/v1alpha1';
 import { rulesAPIv0alpha1 } from 'app/api/clients/rules/v0alpha1';
@@ -37,7 +38,6 @@ import { iamAPIv0alpha1 } from '../../api/clients/iam/v0alpha1';
 import { playlistAPIv0alpha1 } from '../../api/clients/playlist/v0alpha1';
 import { provisioningAPIv0alpha1 } from '../../api/clients/provisioning/v0alpha1';
 import { alertingApi } from '../../features/alerting/unified/api/alertingApi';
-import { userPreferencesAPI } from '../../features/preferences/api';
 import { cleanUpAction } from '../actions/cleanUp';
 // Used by the API client generator
 // PLOP_INJECT_IMPORT
