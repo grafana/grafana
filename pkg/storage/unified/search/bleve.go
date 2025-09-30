@@ -607,18 +607,6 @@ func isPathWithinRoot(path, absoluteRoot string) bool {
 	return true
 }
 
-// cacheKeys returns list of keys for indexes in the cache (including possibly expired ones).
-func (b *bleveBackend) cacheKeys() []resource.NamespacedResource {
-	b.cacheMx.RLock()
-	defer b.cacheMx.RUnlock()
-
-	keys := make([]resource.NamespacedResource, 0, len(b.cache))
-	for k := range b.cache {
-		keys = append(keys, k)
-	}
-	return keys
-}
-
 // TotalDocs returns the total number of documents across all indices
 func (b *bleveBackend) TotalDocs() int64 {
 	var totalDocs int64
@@ -626,7 +614,7 @@ func (b *bleveBackend) TotalDocs() int64 {
 	// We do this to avoid keeping a lock for the entire TotalDocs function, since DocCount may be slow (due to disk access).
 
 	now := time.Now()
-	for _, key := range b.cacheKeys() {
+	for _, key := range b.GetOpenIndexes() {
 		idx := b.getCachedIndex(key, now)
 		if idx == nil {
 			continue
