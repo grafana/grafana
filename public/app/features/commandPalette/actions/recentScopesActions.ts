@@ -16,12 +16,20 @@ export function getRecentScopesActions(): CommandPaletteAction[] {
   const recentScopes = scopesSelectorService.getRecentScopes();
 
   return recentScopes.map((recentScope) => {
+    const names = recentScope.map((scope) => scope.spec.title).join(', ');
+    const keywords = recentScope
+      .map((scope) => `${scope.spec.title} ${scope.metadata.name}`)
+      .concat(names)
+      .join(' ');
     return {
-      id: recentScope.map((scope) => scope.spec.title).join(', '),
-      name: recentScope.map((scope) => scope.spec.title).join(', '),
-      section: t('command-palette.section.recent-scopes', 'Recent scopes'),
-      // Only show the parent of the first scope for now
+      id: names,
+      name: names,
+      section: {
+        name: t('command-palette.section.recent-scopes', 'Recent scopes'),
+        priority: RECENT_SCOPES_PRIORITY,
+      },
       subtitle: recentScope[0]?.parentNode?.spec.title,
+      keywords: keywords,
       priority: RECENT_SCOPES_PRIORITY,
       perform: () => {
         scopesSelectorService.changeScopes(recentScope.map((scope) => scope.metadata.name));
