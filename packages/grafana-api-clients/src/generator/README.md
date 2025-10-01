@@ -26,7 +26,9 @@ The generator automates the following:
    - `scripts/generate-rtk-apis.ts` for OSS APIs
    - `local/generate-enterprise-apis.ts` for Enterprise APIs
 3. Creates the `index.ts` file with proper exports
-4. For OSS APIs only: Registers Redux reducers and middleware in the store. For Enterprise this needs to be done manually
+4. For OSS APIs only: 
+   - Registers Redux reducers and middleware in the store
+   - Updates `package.json` exports to include the new API client
 5. Formats all generated files using Prettier and ESLint
 6. Automatically runs the appropriate command to generate endpoints from the OpenAPI schema
 

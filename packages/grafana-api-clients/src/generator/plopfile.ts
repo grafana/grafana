@@ -6,6 +6,7 @@ import {
   formatFiles,
   getFilesToFormat,
   runGenerateApis,
+  updatePackageJsonExports,
   validateGroup,
   validateVersion,
 } from './helpers.ts';
@@ -18,6 +19,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
   // Register custom action types
   plop.setActionType('runGenerateApis', runGenerateApis(basePath));
   plop.setActionType('formatFiles', formatFiles(basePath));
+  plop.setActionType('updatePackageJsonExports', updatePackageJsonExports(basePath));
 
   // Used in templates to format endpoints
   plop.setHelper('formatEndpoints', formatEndpoints());
@@ -89,6 +91,9 @@ export default function plopGenerator(plop: NodePlopAPI) {
           path: path.join(basePath, 'public/app/store/configureStore.ts'),
           pattern: '// PLOP_INJECT_MIDDLEWARE',
           template: `${reducerPath}.middleware,\n        // PLOP_INJECT_MIDDLEWARE`,
+        },
+        {
+          type: 'updatePackageJsonExports',
         }
       );
     }

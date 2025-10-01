@@ -10,8 +10,17 @@ export interface RunGenerateApisActionConfig {
   isEnterprise: boolean;
 }
 
+export interface UpdatePackageJsonExportsActionConfig {
+  type: 'updatePackageJsonExports';
+}
+
 // Union type of all possible action configs
-export type ActionConfig = AddActionConfig | ModifyActionConfig | FormatFilesActionConfig | RunGenerateApisActionConfig;
+export type ActionConfig =
+  | AddActionConfig
+  | ModifyActionConfig
+  | FormatFilesActionConfig
+  | RunGenerateApisActionConfig
+  | UpdatePackageJsonExportsActionConfig;
 
 export interface PlopData {
   groupName: string;

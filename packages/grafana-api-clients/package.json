@@ -27,10 +27,6 @@
       "import": "./src/clients/advisor/v0alpha1/index.ts",
       "require": "./src/clients/advisor/v0alpha1/index.ts"
     },
-    "./dashboard/v0alpha1": {
-      "import": "./src/clients/dashboard/v0alpha1/index.ts",
-      "require": "./src/clients/dashboard/v0alpha1/index.ts"
-    },
     "./folder/v1beta1": {
       "import": "./src/clients/folder/v1beta1/index.ts",
       "require": "./src/clients/folder/v1beta1/index.ts"
@@ -66,6 +62,10 @@
     "./legacy/preferences": {
       "import": "./src/clients/preferences/user/index.ts",
       "require": "./src/clients/preferences/user/index.ts"
+    },
+    "./dashboard/v0alpha1": {
+      "import": "./src/clients/dashboard/v0alpha1/index.ts",
+      "require": "./src/clients/dashboard/v0alpha1/index.ts"
     }
   },
   "publishConfig": {
@@ -87,8 +87,8 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json",
-    "process-specs": "node --experimental-strip-types src/scripts/process-specs.ts",
-    "generate-apis": "yarn process-specs && rtk-query-codegen-openapi ./src/scripts/generate-rtk-apis.ts",
+    "process-specs": "NODE_OPTIONS='--disable-warning=ExperimentalWarning' node --experimental-strip-types src/scripts/process-specs.ts",
+    "generate-apis": "yarn process-specs && NODE_OPTIONS='--disable-warning=ExperimentalWarning' rtk-query-codegen-openapi ./src/scripts/generate-rtk-apis.ts",
     "generate:api-client": "NODE_OPTIONS='--experimental-strip-types --disable-warning=ExperimentalWarning' plop --plopfile src/generator/plopfile.ts"
   },
   "devDependencies": {

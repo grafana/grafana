@@ -11,11 +11,13 @@ const getAPIConfig = (
   filterEndpoints?: ConfigFile['filterEndpoints'],
   additional = {}
 ) => {
-  const filePath = `../clients/${app}/${version}/endpoints.gen.ts`;
+  // Handle cases where app name contains dots, e.g. rules.alerting
+  const appName = app.split('.')[0];
+  const filePath = `../clients/${appName}/${version}/endpoints.gen.ts`;
   return {
     [filePath]: {
       schemaFile: path.join(basePath, `data/openapi/${app}.grafana.app-${version}.json`),
-      apiFile: `../clients/${app}/${version}/baseAPI.ts`,
+      apiFile: `../clients/${appName}/${version}/baseAPI.ts`,
       filterEndpoints,
       tag: true,
       ...additional,
@@ -82,7 +84,7 @@ const config: ConfigFile = {
     ]),
 
     ...getAPIConfig('shorturl', 'v1alpha1'),
-    ...getAPIConfig('rules', 'v0alpha1'),
+    ...getAPIConfig('rules.alerting', 'v0alpha1'),
     ...getAPIConfig('preferences', 'v1alpha1'),
     ...getAPIConfig('dashboard', 'v0alpha1', ['getSearch']),
     // PLOP_INJECT_API_CLIENT - Used by the API client generator

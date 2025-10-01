@@ -1,4 +1,5 @@
 import { execSync } from 'child_process';
+import fs from 'fs';
 import path from 'path';
 
 type PlopActionFunction = (
@@ -45,7 +46,13 @@ export const getFilesToFormat = (groupName: string, version: string, isEnterpris
     `${apiClientBasePath}/${groupName}/${version}/baseAPI.ts`,
     `${apiClientBasePath}/${groupName}/${version}/index.ts`,
     generateScriptPath,
-    ...(isEnterprise ? [] : [`public/app/core/reducers/root.ts`, `public/app/store/configureStore.ts`]),
+    ...(isEnterprise
+      ? []
+      : [
+          `public/app/core/reducers/root.ts`,
+          `public/app/store/configureStore.ts`,
+          `packages/grafana-api-clients/package.json`,
+        ]),
   ];
 };
 
@@ -117,3 +124,42 @@ export const validateGroup = (group: string) => {
 export const validateVersion = (version: string) => {
   return version && /^v\d+[a-z]*\d+$/.test(version) ? true : 'Version should be in format: v0alpha1, v1beta2, etc.';
 };
+
+export const updatePackageJsonExports =
+  (basePath: string): PlopActionFunction =>
+  (answers) => {
+    try {
+      const { groupName, version } = answers;
+
+      if (!groupName || !version) {
+        return '❌ Missing groupName or version for package.json update';
+      }
+
+      const packageJsonPath = path.join(basePath, 'packages/grafana-api-clients/package.json');
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+
+      // Create the new export entry
+      const newExportKey = `./${groupName}/${version}`;
+      const newExportValue = {
+        import: `./src/clients/${groupName}/${version}/index.ts`,
+        require: `./src/clients/${groupName}/${version}/index.ts`,
+      };
+
+      // Check if export already exists
+      if (packageJson.exports[newExportKey]) {
+        return `✅ Export for ${newExportKey} already exists in package.json`;
+      }
+
+      // Add the new export entry
+      packageJson.exports[newExportKey] = newExportValue;
+
+      // Write the updated package.json back to file
+      fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
+
+      return `✅ Added export for ${newExportKey} to package.json`;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('❌ Failed to update package.json exports:', errorMessage);
+      return '❌ Failed to update package.json exports. See error above.';
+    }
+  };
