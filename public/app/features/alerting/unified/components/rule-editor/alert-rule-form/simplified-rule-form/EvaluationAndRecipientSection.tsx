@@ -8,10 +8,12 @@ import { Field, Icon, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui
 
 import { RuleFormType, RuleFormValues } from '../../../../types/rule-form';
 import { safeParsePrometheusDuration } from '../../../../utils/time';
+import { CollapseToggle } from '../../../CollapseToggle';
 import { getPendingPeriodQuickOptions } from '../../DurationQuickPick';
 import { NeedHelpInfo } from '../../NeedHelpInfo';
 import { ContactPointSelector } from '../simplifiedRouting/contactPoint/ContactPointSelector';
 
+import { AnnotationsExpandable } from './AnnotationsExpandable';
 import { getSimplifiedSectionStyles } from './sectionStyles';
 
 export function EvaluationAndRecipientSection({ type }: { type: RuleFormType }) {
@@ -26,6 +28,7 @@ export function EvaluationAndRecipientSection({ type }: { type: RuleFormType }) 
   const evalMs = safeParsePrometheusDuration(evaluateEvery);
   const customMs = safeParsePrometheusDuration(customDelay || '0s');
   const isCustomInvalid = isCustomSelected && (evalMs <= 0 || customMs <= 0 || customMs % evalMs !== 0);
+  const [showCustomMessage, setShowCustomMessage] = useState(false);
 
   // Compute label for the "Fire the alert rule" select without nested ternaries
   let fireSelectLabel: string = evaluateFor;
@@ -154,6 +157,13 @@ export function EvaluationAndRecipientSection({ type }: { type: RuleFormType }) 
           <Stack direction="column" gap={1}>
             <ContactPointSelector alertManager={t('alerting.contact-point-selector.alertmanager', 'grafana')} />
           </Stack>
+
+          <CollapseToggle
+            isCollapsed={!showCustomMessage}
+            onToggle={(isCollapsed: boolean) => setShowCustomMessage(!isCollapsed)}
+            text={t('alerting.annotations.title', 'Configure notification message')}
+          />
+          {showCustomMessage && <AnnotationsExpandable />}
 
           {evaluateFor === '0s' && (
             <Stack direction="row" gap={0.5} alignItems="center">
