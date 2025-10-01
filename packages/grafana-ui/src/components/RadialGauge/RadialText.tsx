@@ -4,7 +4,7 @@ import { DisplayValue, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
-import { RadialTextMode } from './RadialGauge';
+import { RadialShape, RadialTextMode } from './RadialGauge';
 
 // function toCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
 //   let radian = ((angleInDegrees - 90) * Math.PI) / 180.0;
@@ -20,9 +20,10 @@ interface RadialTextProps {
   size: number;
   textMode: RadialTextMode;
   vizCount: number;
+  shape: RadialShape;
 }
 
-export function RadialText({ displayValue, theme, size, textMode, vizCount }: RadialTextProps) {
+export function RadialText({ displayValue, theme, size, textMode, vizCount, shape }: RadialTextProps) {
   const styles = useStyles2(getStyles);
 
   if (textMode === 'none') {
@@ -41,15 +42,19 @@ export function RadialText({ displayValue, theme, size, textMode, vizCount }: Ra
 
   const valueFontSize = Math.max(size / 7, 12);
   const unitFontSize = Math.max(valueFontSize * 0.7, 12);
-  const nameFontSize = Math.max(valueFontSize * 0.55, 12);
+  const nameFontSize = Math.max(valueFontSize * 0.5, 12);
 
   const valueHeight = valueFontSize * 1.2;
   const nameHeight = nameFontSize * 1.2;
 
   const valueY = showName ? centerY - nameHeight / 2 : centerY;
-  const nameY = showValue ? valueY + valueHeight : centerY;
+  const nameY = showValue ? valueY + valueHeight * 0.85 : centerY;
   const nameColor = showValue ? theme.colors.text.secondary : theme.colors.text.primary;
   const suffixShift = (valueFontSize - unitFontSize * 1.2) / 2;
+
+  // For gauge shape we shift text up a bit
+  const valueDy = shape === 'gauge' ? -valueFontSize * 0.3 : 0;
+  const nameDy = shape === 'gauge' ? -nameFontSize * 0.7 : 0;
 
   return (
     <g>
@@ -62,6 +67,7 @@ export function RadialText({ displayValue, theme, size, textMode, vizCount }: Ra
           className={styles.text}
           textAnchor="middle"
           dominantBaseline="middle"
+          dy={valueDy}
         >
           <tspan fontSize={unitFontSize}>{displayValue.prefix ?? ''}</tspan>
           <tspan>{displayValue.text}</tspan>
@@ -75,6 +81,7 @@ export function RadialText({ displayValue, theme, size, textMode, vizCount }: Ra
           fontSize={nameFontSize}
           x={centerX}
           y={nameY}
+          dy={nameDy}
           textAnchor="middle"
           dominantBaseline="middle"
           fill={nameColor}

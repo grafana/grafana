@@ -2,15 +2,14 @@ import { css } from '@emotion/css';
 import { isNumber } from 'lodash';
 import { useId } from 'react';
 
-import { DisplayValue, FieldConfig, FieldDisplay, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
-import { GraphFieldConfig, GraphGradientMode, LineInterpolation } from '@grafana/schema';
+import { DisplayValue, FieldDisplay, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { Sparkline } from '../Sparkline/Sparkline';
 
 import { GradientDef, getGradientId } from './GradientDef';
 import { RadialBar } from './RadialBar';
 import { RadialBarSegmented } from './RadialBarSegmented';
+import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
 import { CenterGlowGradient, GlowGradient, SpotlightGradient } from './effects';
 
@@ -81,8 +80,8 @@ export function RadialGauge(props: RadialGaugeProps) {
   const styles = useStyles2(getStyles);
   const size = Math.min(width, height);
 
-  let startAngle = shape === 'gauge' ? 240 : 0;
-  let endAngle = shape === 'gauge' ? 120 : 360;
+  let startAngle = shape === 'gauge' ? 250 : 0;
+  let endAngle = shape === 'gauge' ? 110 : 360;
 
   const margin = calculateMargin(size, glowBar, spotlight, barWidthFactor);
   const primaryValue = values[0];
@@ -181,6 +180,7 @@ export function RadialGauge(props: RadialGaugeProps) {
               displayValue={primaryValue.display}
               size={size}
               theme={theme}
+              shape={shape}
             />
           )}
         </g>
@@ -193,6 +193,7 @@ export function RadialGauge(props: RadialGaugeProps) {
           barWidth={barWidth}
           margin={margin}
           color={color}
+          shape={shape}
         />
       )}
     </div>
@@ -251,44 +252,4 @@ function getStyles(theme: GrafanaTheme2) {
       filter: `drop-shadow(0px 0px 5px black);`,
     }),
   };
-}
-
-interface RadialSparklineProps {
-  sparkline: FieldDisplay['sparkline'];
-  size: number;
-  theme: GrafanaTheme2;
-  barWidth: number;
-  margin: number;
-  color?: string;
-}
-
-function RadialSparkline({ sparkline, size, theme, barWidth, margin, color }: RadialSparklineProps) {
-  if (!sparkline) {
-    return null;
-  }
-
-  const height = size / 8;
-  const width = size / 1.5 - barWidth * 1.2 - margin * 2;
-  const styles = css({
-    position: 'absolute',
-    marginTop: size / 2 - barWidth * 1.5 + height / 3,
-  });
-
-  const config: FieldConfig<GraphFieldConfig> = {
-    color: {
-      mode: 'fixed',
-      fixedColor: color ?? 'blue',
-    },
-    custom: {
-      gradientMode: GraphGradientMode.Opacity,
-      fillOpacity: 40,
-      lineInterpolation: LineInterpolation.Smooth,
-    },
-  };
-
-  return (
-    <div className={styles}>
-      <Sparkline height={height} width={width} sparkline={sparkline} theme={theme} config={config} />
-    </div>
-  );
 }

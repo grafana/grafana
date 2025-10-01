@@ -55,8 +55,8 @@ export function GradientDef({ fieldDisplay, index, theme, gaugeId, gradient }: G
         <linearGradient x1="0" y1="1" x2="1" y2="1" id={getGradientId(gaugeId, index)}>
           {theme.isDark ? (
             <>
-              <stop offset="0%" stopColor={color2.lighten(10).toString()} stopOpacity={1} />
-              <stop offset="100%" stopColor={color1.darken(10).toString()} stopOpacity={1} />
+              <stop offset="0%" stopColor={color1.darken(10).toString()} stopOpacity={1} />
+              <stop offset="100%" stopColor={color2.lighten(10).toString()} stopOpacity={1} />
             </>
           ) : (
             <>
