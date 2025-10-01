@@ -3,14 +3,24 @@ import { autoUpdate, safePolygon, useDismiss, useFloating, useHover, useInteract
 import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
-import { DataFrame, Field, formattedValueToString, GrafanaTheme2, LinkModel } from '@grafana/data';
+import {
+  ActionModel,
+  DataFrame,
+  Field,
+  formattedValueToString,
+  GrafanaTheme2,
+  InterpolateFunction,
+  LinkModel,
+  ScopedVars,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeZone } from '@grafana/schema';
-import { floatingUtils, Portal, UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
+import { floatingUtils, Portal, UPlotConfigBuilder, usePanelContext, useStyles2 } from '@grafana/ui';
 import { VizTooltipItem } from '@grafana/ui/internal';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
 
+import { getActions, getActionsDefaultField } from '../../../../features/actions/utils';
 import { getDataLinks } from '../../status-history/utils';
 
 interface ExemplarMarkerProps {
@@ -24,6 +34,7 @@ interface ExemplarMarkerProps {
   setClickedRowIndex: React.Dispatch<number | undefined>;
   maxHeight?: number;
   maxWidth?: number;
+  replaceVariables: InterpolateFunction;
 }
 
 export const ExemplarMarker = ({
@@ -37,11 +48,14 @@ export const ExemplarMarker = ({
   setClickedRowIndex,
   maxHeight,
   maxWidth,
+  replaceVariables,
 }: ExemplarMarkerProps) => {
   const styles = useStyles2(getExemplarMarkerStyles, maxWidth);
   const [isOpen, setIsOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const placement = 'bottom';
+  const { canExecuteActions } = usePanelContext();
+  const userCanExecuteActions = React.useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   // the order of middleware is important!
   const middleware = floatingUtils.getPositioningMiddleware(placement);
@@ -139,6 +153,57 @@ export const ExemplarMarker = ({
       });
     });
 
+    const actions: Array<ActionModel<Field>> = [];
+
+    if (userCanExecuteActions) {
+      // @todo dataLinks & actions
+      const defaultField = getActionsDefaultField();
+      const scopedVars: ScopedVars = {
+        __dataContext: {
+          value: {
+            data: [dataFrame],
+            field: defaultField,
+            frame: dataFrame,
+            frameIndex: 0,
+          },
+        },
+      };
+
+      dataFrame.fields.forEach((field: Field) => {
+        const actionsModel = getActions(
+          dataFrame,
+          field,
+          scopedVars,
+          replaceVariables,
+          field.config.actions ?? [],
+          // @todo config?
+          {}
+        );
+
+        const actionsOut: Array<ActionModel<Field>> = [];
+        const actionLookup = new Set<string>();
+
+        if (actionsModel.length > 1) {
+          actions.forEach((action) => {
+            const key = action.title;
+
+            if (!actionLookup.has(key)) {
+              actionsOut.push(action);
+              actionLookup.add(key);
+            }
+          });
+        }
+
+        actionsModel.forEach((action) => {
+          const key = `${action.title}/${Math.random()}`;
+          if (!actionLookup.has(key)) {
+            actions.push(action);
+            actionLookup.add(key);
+          }
+        });
+      });
+    }
+
     return (
       <div
         className={cx(styles.tooltipWrapper, isLocked && styles.pinned)}
@@ -147,11 +212,11 @@ export const ExemplarMarker = ({
         {...getFloatingProps()}
       >
         {isLocked && <CloseButton onClick={onClose} />}
-        <ExemplarTooltip items={items} links={links} isPinned={isLocked} maxHeight={maxHeight} />
+        <ExemplarTooltip actions={actions} items={items} links={links} isPinned={isLocked} maxHeight={maxHeight} />
       </div>
     );
   }, [
-    dataFrame.fields,
+    dataFrame,
     rowIndex,
     styles,
     isLocked,
@@ -160,6 +225,8 @@ export const ExemplarMarker = ({
     getFloatingProps,
     refs.setFloating,
     maxHeight,
+    replaceVariables,
+    userCanExecuteActions,
   ]);
 
   const seriesColor = config.getSeries().find((s) => s.props.dataFrameFieldIndex?.frameIndex === frameIndex)
