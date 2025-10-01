@@ -65,7 +65,8 @@ export const runGenerateApis =
 
       let command;
       if (isEnterprise) {
-        command = 'yarn process-specs && npx rtk-query-codegen-openapi ./local/generate-enterprise-apis.ts';
+        command =
+          'yarn workspace @grafana/api-clients process-specs && npx rtk-query-codegen-openapi ./local/generate-enterprise-apis.ts';
       } else {
         command = 'cd packages/grafana-api-clients && yarn generate-apis';
       }
