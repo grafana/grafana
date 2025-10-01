@@ -1,3 +1,4 @@
+import fs from 'fs';
 import path from 'path';
 import type { NodePlopAPI, PlopGeneratorConfig } from 'plop';
 
@@ -5,6 +6,7 @@ import {
   formatEndpoints,
   formatFiles,
   getFilesToFormat,
+  getOperationIds,
   runGenerateApis,
   updatePackageJsonExports,
   validateGroup,
@@ -35,7 +37,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
       : 'packages/grafana-api-clients/src/scripts/generate-rtk-apis.ts';
 
     // Using app path, so the imports work on any file level
-    const clientImportPath = isEnterprise ? '../extensions/api/clients' : '@grafana/api-clients/src/clients';
+    const clientImportPath = isEnterprise ? '../extensions/api/clients' : '@grafana/api-clients';
 
     const apiPathPrefix = isEnterprise ? '../public/app/extensions/api/clients' : '../clients';
 
@@ -72,7 +74,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
           type: 'modify',
           path: path.join(basePath, 'public/app/core/reducers/root.ts'),
           pattern: '// PLOP_INJECT_IMPORT',
-          template: `import { ${reducerPath} } from '${clientImportPath}/${groupName}/${version}';\n// PLOP_INJECT_IMPORT`,
+          template: `import { generatedAPI as ${reducerPath} } from '${clientImportPath}/${groupName}/${version}';\n// PLOP_INJECT_IMPORT`,
         },
         {
           type: 'modify',
@@ -84,7 +86,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
           type: 'modify',
           path: path.join(basePath, 'public/app/store/configureStore.ts'),
           pattern: '// PLOP_INJECT_IMPORT',
-          template: `import { ${reducerPath} } from '${clientImportPath}/${groupName}/${version}';\n// PLOP_INJECT_IMPORT`,
+          template: `import { generatedAPI as ${reducerPath} } from '${clientImportPath}/${groupName}/${version}';\n// PLOP_INJECT_IMPORT`,
         },
         {
           type: 'modify',
@@ -113,6 +115,16 @@ export default function plopGenerator(plop: NodePlopAPI) {
     return actions;
   };
 
+  // Read files from data/openapi directory and use as an array of API clients that the user can select
+
+  const openapiDir = path.join(basePath, 'data/openapi');
+  let possibleOpenAPISpecs: string[] = [];
+  try {
+    possibleOpenAPISpecs = fs.readdirSync(openapiDir).filter((file: string) => file.endsWith('.json'));
+  } catch (e) {
+    possibleOpenAPISpecs = [];
+  }
+
   const generator: PlopGeneratorConfig = {
     description: 'Generate RTK Query API client for a Grafana API group',
     prompts: [
@@ -123,38 +135,61 @@ export default function plopGenerator(plop: NodePlopAPI) {
         default: false,
       },
       {
-        type: 'input',
-        name: 'groupName',
-        message: 'API group name (e.g. dashboard):',
+        type: 'list',
+        loop: false,
+        choices: possibleOpenAPISpecs,
+        pageSize: 50,
+        name: 'apiInfo',
+        message: 'OpenAPI spec:',
         validate: (input: string) => (input?.trim() ? true : 'Group name is required'),
       },
       {
         type: 'input',
+        name: 'groupName',
+        message: 'API group name:',
+        validate: (input: string) => (input?.trim() ? true : 'Group name is required'),
+        default: (answers: { apiInfo?: string }) => answers.apiInfo?.split('.grafana.app-')[0],
+      },
+      {
+        type: 'input',
         name: 'group',
-        message: 'API group (e.g. dashboard.grafana.app):',
+        message: 'API group:',
         default: (answers: { groupName?: string }) => `${answers.groupName}.grafana.app`,
         validate: validateGroup,
       },
       {
         type: 'input',
         name: 'version',
-        message: 'API version (e.g. v0alpha1):',
-        default: 'v0alpha1',
+        message: 'API version:',
+        default: (answers: { apiInfo?: string }) => answers.apiInfo?.split('.grafana.app-')[1].replace(/\.json$/, ''),
         validate: validateVersion,
       },
       {
         type: 'input',
         name: 'reducerPath',
-        message: 'Reducer path (e.g. dashboardAPIv0alpha1):',
-        default: (answers: { groupName?: string; version?: string }) => `${answers.groupName}API${answers.version}`,
+        message: 'Reducer path:',
+        default: (answers: { groupName?: string; version?: string }) => {
+          const groupNameParsed = answers.groupName?.replace(/\.([a-z])/g, (_, letter) => letter.toUpperCase());
+          return `${groupNameParsed}API${answers.version}`;
+        },
         validate: (input: string) =>
           input?.endsWith('API') || input?.match(/API[a-z]\d+[a-z]*\d*$/)
             ? true
             : 'Reducer path should end with "API" or "API<version>" (e.g. dashboardAPI, dashboardAPIv0alpha1)',
       },
       {
-        type: 'input',
+        type: 'checkbox',
         name: 'endpoints',
+        loop: false,
+        pageSize: 50,
+        default: undefined,
+        choices: (answers) => {
+          const apiSpecRaw = fs.readFileSync(path.join(openapiDir, `${answers.apiInfo}`), 'utf-8');
+          const apiSpec = JSON.parse(apiSpecRaw);
+          const operationIds = getOperationIds(apiSpec);
+
+          return operationIds;
+        },
         message: 'Endpoints to include (comma-separated, optional):',
         validate: () => true,
       },

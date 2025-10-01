@@ -14,13 +14,11 @@ const createAPIConfig = (
   filterEndpoints?: ConfigFile['filterEndpoints'],
   additional = {}
 ) => {
-  // Handle cases where app name contains dots, e.g. rules.alerting
-  const appName = app.split('.')[0];
-  const filePath = `../clients/${appName}/${version}/endpoints.gen.ts`;
+  const filePath = `../clients/${app}/${version}/endpoints.gen.ts`;
   return {
     [filePath]: {
       schemaFile: path.join(basePath, `data/openapi/${app}.grafana.app-${version}.json`),
-      apiFile: `../clients/${appName}/${version}/baseAPI.ts`,
+      apiFile: `../clients/${app}/${version}/baseAPI.ts`,
       filterEndpoints,
       tag: true,
       ...additional,

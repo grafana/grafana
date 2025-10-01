@@ -1,5 +1,6 @@
 import { execSync } from 'child_process';
 import fs from 'fs';
+import { OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 
 type PlopActionFunction = (
@@ -163,3 +164,19 @@ export const updatePackageJsonExports =
       return '❌ Failed to update package.json exports. See error above.';
     }
   };
+
+export const getOperationIds = (apiSpec: OpenAPIV3.Document) => {
+  return (
+    Object.values(apiSpec.paths).flatMap((path) => {
+      return Object.entries(path || {})
+        .filter(([name]) => name !== 'parameters')
+        .flatMap(([_, pathItem]) => {
+          if (typeof pathItem === 'object' && 'operationId' in pathItem && pathItem.operationId) {
+            return pathItem.operationId;
+          }
+          return null;
+        })
+        .filter((id) => id !== null);
+    }) || []
+  );
+};
