@@ -49,7 +49,7 @@ export function addAnnotationOptions<
     defaultValue: true,
   });
 
-  builder.addNumberInput({
+  builder.addSliderInput({
     path: 'annotations.regionOpacity',
     category,
     name: t('grafana-ui.builder.annotations.region-opacity', 'Region opacity'),
@@ -59,6 +59,7 @@ export function addAnnotationOptions<
     settings: {
       min: 0,
       max: 100,
+      step: 2,
     },
   });
 }
