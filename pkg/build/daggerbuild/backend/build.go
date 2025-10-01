@@ -62,7 +62,7 @@ func Build(
 
 	ldflags := LDFlagsDynamic(vcsinfo)
 
-	if opts.Static {
+	if opts.Static && opts.CGOEnabled {
 		ldflags = LDFlagsStatic(vcsinfo)
 	}
 
