@@ -97,8 +97,6 @@ refs:
 
 After creating a Azure Monitor Managed Service for Prometheus data source:
 
-## Configure Azure authentication
-
 1. In the data source configuration page, locate the **Authentication** section
 2. Select your authentication method:
    - **Managed Identity**: For Azure-hosted Grafana instances. To learn more about Entra login for Grafana, refer to [Configure Azure AD/Entra ID OAuth authentication](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/azuread/#configure-azure-adentra-id-oauth-authentication)
@@ -106,8 +104,6 @@ After creating a Azure Monitor Managed Service for Prometheus data source:
    - **Current User**: Uses the current user's Azure AD credentials
 
 3. Configure based on your chosen method:
-
-### App Registration authentication
 
 | Setting                     | Description                     | Example                                |
 | --------------------------- | ------------------------------- | -------------------------------------- |
@@ -152,21 +148,11 @@ datasources:
 
 Learn more about why this is happening: [Prometheus data source update: Redefining our big tent philosophy](https://grafana.com/blog/2025/06/16/prometheus-data-source-update-redefining-our-big-tent-philosophy/)
 
-## Before you begin
+Before you begin, ensure you have the organization administrator role. If you are self-hosting Grafana, back up your existing dashboard configurations and queries.
 
-- Ensure you have the organization administrator role
-- If you are self hosting Grafana, back up your existing dashboard configurations and queries
+Grafana Cloud users will be automatically migrated to the relevant version of Prometheus, so no action needs to be taken.
 
-## Migrate on Grafana Cloud
-
-Grafana Cloud users will be automatically migrated to the relevant version of Prometheus. No action needs to be taken.
-
-## Migrate in air-gapped environments
-
-For air-gapped Grafana installations:
-
-1. Download and install [Azure Monitor Managed Service for Prometheus](https://grafana.com/grafana/plugins/grafana-azureprometheus-datasource/)
-2. Follow the standard migration process
+For air-gapped environments, download and install [Azure Monitor Managed Service for Prometheus](https://grafana.com/grafana/plugins/grafana-azureprometheus-datasource/), then follow the standard migration process.
 
 ## Migrate
 
@@ -190,9 +176,9 @@ The banner displays one of the following messages:
 - **"Deprecation Notice"** - The data source has not been migrated
 - **No banner** - No migration is needed for this data source
 
-## Troubleshooting
+## Common migration issues
 
-### Common migration issues
+The following sections contain troubleshooting guidance.
 
 **Migration banner not appearing**
 
@@ -209,7 +195,7 @@ The banner displays one of the following messages:
 - If you are using self-hosted Grafana, check your .ini for `grafana-azureprometheus-datasource` is included in `forward_settings_to_plugins` under the `[azure]` heading.
 - If you are using Grafana Cloud, contact Grafana support.
 
-### Rolling the migration back without a backup
+### Rollback without a backup
 
 If you don’t have a backup of your Grafana instance before the migration, run the following script. It reverts all the Azure Monitor Managed Service data source instances back to core Prometheus.
 
@@ -370,6 +356,5 @@ log_message "Script completed"
 echo ""
 echo "Migration completed. Full log available at: $LOG_FILE"
 ```
-
 
 If you continue to experience issues, check the Grafana server logs for detailed error messages and contact [Grafana Support](https://grafana.com/help/) with your troubleshooting results.
