@@ -1,6 +1,7 @@
+import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataFrame } from '@grafana/data';
+import { DataFrame, InterpolateFunction } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { BackendDataSourceResponse, config, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { Alert, Button } from '@grafana/ui';
@@ -9,7 +10,15 @@ import { AlertRuleListItemSkeleton } from 'app/features/alerting/unified/rule-li
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { isPromAlertingRuleState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-interface GrafanaManagedAlertsProps {}
+import { StateFilter } from './types';
+import { createFilter } from './utils';
+
+interface GrafanaManagedAlertsProps {
+  stateFilter: StateFilter;
+  alertInstanceLabelFilter?: string;
+  folder?: { uid: string; title: string } | null;
+  replaceVariables: InterpolateFunction;
+}
 
 type Labels = {
   alertname: string;
@@ -17,7 +26,18 @@ type Labels = {
   grafana_folder: string;
 };
 
-export function GrafanaManagedAlerts({}: GrafanaManagedAlertsProps) {
+export function GrafanaManagedAlerts({
+  stateFilter,
+  alertInstanceLabelFilter,
+  folder,
+  replaceVariables,
+}: GrafanaManagedAlertsProps) {
+  // construct query filter
+  const filter = useMemo(
+    () => createFilter({ stateFilter, folder, alertInstanceLabelFilter }, replaceVariables),
+    [folder, stateFilter, alertInstanceLabelFilter, replaceVariables]
+  );
+
   const {
     value: alertRules,
     loading,
@@ -31,7 +51,7 @@ export function GrafanaManagedAlerts({}: GrafanaManagedAlertsProps) {
     }
 
     // Query Prometheus for GRAFANA_ALERTS metric
-    const query = `group by (alertname, alertstate, grafana_rule_uid, grafana_folder) (${metricName}{})`;
+    const query = `group by (alertname, alertstate, grafana_rule_uid, grafana_folder) (${metricName}{${filter}})`;
 
     const now = Date.now();
     const queries = [
@@ -63,7 +83,7 @@ export function GrafanaManagedAlerts({}: GrafanaManagedAlertsProps) {
 
     const dataQueryResponse = toDataQueryResponse({ data }, queries);
     return dataQueryResponse.data ?? [];
-  }, []);
+  }, [filter]);
 
   if (loading) {
     return (
@@ -89,6 +109,11 @@ export function GrafanaManagedAlerts({}: GrafanaManagedAlertsProps) {
         <div>
           {alertRules.map((frame) => {
             const valueField = frame.fields.at(1);
+
+            if (!valueField) {
+              return;
+            }
+
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             const labels = valueField?.labels as Labels;
 

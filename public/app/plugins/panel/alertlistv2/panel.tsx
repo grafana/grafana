@@ -8,21 +8,34 @@ import { GrafanaManagedAlerts } from './grafanaManaged';
 import { AlertListPanelOptions } from './types';
 
 function AlertListPanel(props: PanelProps<AlertListPanelOptions>) {
-  const sources = props.options.datasource;
+  const { datasource, stateFilter, alertInstanceLabelFilter, folder } = props.options;
+  const { replaceVariables } = props;
 
   return (
     <ScrollContainer minHeight="100%">
       <Stack direction="column">
-        {sources.length === 0 && (
+        {datasource.length === 0 && (
           <div>
             <Trans i18nKey="alertlist.panel.no-sources">No alert sources configured</Trans>
           </div>
         )}
-        {sources.map((source) =>
+        {datasource.map((source) =>
           source === GRAFANA_RULES_SOURCE_NAME ? (
-            <GrafanaManagedAlerts key={source} />
+            <GrafanaManagedAlerts
+              key={source}
+              stateFilter={stateFilter}
+              alertInstanceLabelFilter={alertInstanceLabelFilter}
+              folder={folder}
+              replaceVariables={replaceVariables}
+            />
           ) : (
-            <ExternalManagedAlerts key={source} datasourceUID={source} />
+            <ExternalManagedAlerts
+              key={source}
+              datasourceUID={source}
+              stateFilter={stateFilter}
+              alertInstanceLabelFilter={alertInstanceLabelFilter}
+              replaceVariables={replaceVariables}
+            />
           )
         )}
       </Stack>

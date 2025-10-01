@@ -3056,6 +3056,15 @@
     "description-sort-order": "Sort order of alerts and alert instances",
     "description-source": "Search for alerts in these sources",
     "description-view-mode": "Toggle between list view and stat view",
+    "external": {
+      "error-title": "Failed to fetch Grafana alerts",
+      "no-alerts": "No alerts found"
+    },
+    "grafana": {
+      "error-title": "Failed to fetch Grafana alerts",
+      "no-alerts": "No Grafana alerts found",
+      "view-rule": "View rule"
+    },
     "group-by": {
       "aria-label-group-by-label-keys": "group by label keys",
       "placeholder-group-by": "Group by"
@@ -3081,6 +3090,9 @@
     "name-show-inactive-alerts": "Show alerts with 0 instances",
     "name-sort-order": "Sort order",
     "name-view-mode": "View mode",
+    "panel": {
+      "no-sources": "No alert sources configured"
+    },
     "sort-order-options": {
       "label-alphabetical-asc": "Alphabetical (asc)",
       "label-alphabetical-desc": "Alphabetical (desc)",
@@ -3089,6 +3101,7 @@
       "label-time-desc": "Time (desc)"
     },
     "source": "Source",
+    "source-filter": "Source",
     "ungrouped-mode-view": {
       "active-for": "for <1>{{duration}}</1>",
       "aria-label-view-alert-rule": "View alert rule",
