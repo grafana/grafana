@@ -915,6 +915,10 @@ const (
 	// Use FiredAt for StartsAt when sending alerts to Alertmaanger
 	FlagAlertRuleUseFiredAtForStartsAt = "alertRuleUseFiredAtForStartsAt"
 
+	// FlagAlertingGenerateSimplifiedRoutingWithOldHashes
+	// Generate simplified routing with old hashes
+	FlagAlertingGenerateSimplifiedRoutingWithOldHashes = "alertingGenerateSimplifiedRoutingWithOldHashes"
+
 	// FlagAlertingBulkActionsInUI
 	// Enables the alerting bulk actions in the UI
 	FlagAlertingBulkActionsInUI = "alertingBulkActionsInUI"
