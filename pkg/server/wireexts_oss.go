@@ -143,7 +143,6 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Struct(new(unified.Options), "*"),
 	unified.ProvideUnifiedStorageClient,
 	sql.ProvideStorageBackend,
-	// wire.Bind(new(resource.StorageBackend), new(*sql.StorageBackend)),
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
 	apisregistry.WireSetExts,
