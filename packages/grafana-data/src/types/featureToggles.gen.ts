@@ -885,6 +885,11 @@ export interface FeatureToggles {
   */
   alertingJiraIntegration?: boolean;
   /**
+  * 
+  * @default true
+  */
+  alertingUseNewSimplifiedRoutingHashAlgorithm?: boolean;
+  /**
   * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
   */
   useScopesNavigationEndpoint?: boolean;
@@ -1008,11 +1013,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertRuleUseFiredAtForStartsAt?: boolean;
-  /**
-  * Generate simplified routing with old hashes
-  * @default false
-  */
-  alertingGenerateSimplifiedRoutingWithOldHashes?: boolean;
   /**
   * Enables the alerting bulk actions in the UI
   * @default true

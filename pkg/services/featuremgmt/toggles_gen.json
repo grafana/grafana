@@ -309,19 +309,6 @@
     },
     {
       "metadata": {
-        "name": "alertingGenerateSimplifiedRoutingWithOldHashes",
-        "resourceVersion": "1759334385382",
-        "creationTimestamp": "2025-10-01T15:59:45Z"
-      },
-      "spec": {
-        "description": "Generate simplified routing with old hashes",
-        "stage": "experimental",
-        "codeowner": "@grafana/alerting-squad",
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "alertingImportAlertmanagerAPI",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-06-10T08:32:50Z"
@@ -621,6 +608,46 @@
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingUseNewSimplifiedRoutingHashAlgorithm",
+        "resourceVersion": "1759339813575",
+        "creationTimestamp": "2025-10-01T17:28:42Z",
+        "deletionTimestamp": "2025-10-01T17:29:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-01 17:30:13.575464 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "",
+        "stage": "preview",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingUseOldSimplifiedRoutingHashAlgorithm",
+        "resourceVersion": "1759339782639",
+        "creationTimestamp": "2025-10-01T17:29:29Z",
+        "deletionTimestamp": "2025-10-01T17:30:13Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-01 17:29:42.63941 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "",
+        "stage": "deprecated",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
