@@ -3057,7 +3057,7 @@
     "description-source": "Search for alerts in these sources",
     "description-view-mode": "Toggle between list view and stat view",
     "external": {
-      "error-title": "Failed to fetch Grafana alerts",
+      "error-title": "Failed to fetch alerts",
       "no-alerts": "No alerts found"
     },
     "grafana": {
