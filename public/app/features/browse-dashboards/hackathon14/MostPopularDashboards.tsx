@@ -437,6 +437,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       opacity: 0,
       transition: 'opacity 0.3s ease',
       zIndex: 1,
+      pointerEvents: 'none',
     },
 
     '&:hover': {
