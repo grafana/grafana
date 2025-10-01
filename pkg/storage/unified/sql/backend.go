@@ -539,13 +539,13 @@ func (b *backend) checkConflict(ctx context.Context, tx db.Tx, res db.Result, ke
 	if err != nil {
 		return fmt.Errorf("unable to read previous value %w", err)
 	}
-	if rv != existing.ResourceVersion {
-		return apierrors.NewConflict(schema.GroupResource{
-			Group:    key.Group,
-			Resource: key.Resource,
-		}, key.Name, fmt.Errorf("update resource version does not match current version"))
+	if rv == existing.ResourceVersion {
+		return nil // OK
 	}
-	return fmt.Errorf("unable to update value")
+	return apierrors.NewConflict(schema.GroupResource{
+		Group:    key.Group,
+		Resource: key.Resource,
+	}, key.Name, fmt.Errorf("resource version does not match current value"))
 }
 
 func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
