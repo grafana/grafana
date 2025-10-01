@@ -291,7 +291,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Page:    int64(page), // for modes 0-2 (legacy)
 		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 	}
-	fields := []string{"title", "folder", "tags", "description"}
+	fields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id"}
 	if queryParams.Has("field") {
 		// add fields to search and exclude duplicates
 		for _, f := range queryParams["field"] {
@@ -302,20 +302,22 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	searchRequest.Fields = fields
 
-	// Search dashboards or folders (or both)
-	switch queryParams.Get("type") {
-	case "folder":
-		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), folders.RESOURCE)
-	case "dashboard":
-		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
-	default:
+	// A search request can include multiple types, we need to acces the slice directly.
+	types := queryParams["type"]
+	hasDash := len(types) == 0 || slices.Contains(types, "dashboard")
+	hasFolder := len(types) == 0 || slices.Contains(types, "folder")
+	// If both types are present, we need to search both dashboards and folders, by default is nothing is set we also search both.
+	if (hasDash && hasFolder) || (!hasDash && !hasFolder) {
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
 		if err == nil {
-			federate, _ := asResourceKey(user.GetNamespace(), folders.RESOURCE)
-			if federate != nil {
+			if federate, _ := asResourceKey(user.GetNamespace(), folders.RESOURCE); federate != nil {
 				searchRequest.Federated = []*resourcepb.ResourceKey{federate}
 			}
 		}
+	} else if hasFolder {
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), folders.RESOURCE)
+	} else if hasDash {
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
 	}
 	if err != nil {
 		errhttp.Write(ctx, err, w)
