@@ -139,7 +139,7 @@ Learn more about why this is happening: [Prometheus data source update: Redefini
 - Ensure you have the organization administrator role.
 - If you are self hosting Grafana, back up your existing dashboard configurations and queries
 
-## Migrate on grafana Cloud
+## Migrate to Grafana Cloud
 
 grafana Cloud users will be automatically migrated to the relevant version of Prometheus. No action needs to be taken.
 
