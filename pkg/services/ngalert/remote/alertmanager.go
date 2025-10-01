@@ -50,7 +50,7 @@ type stateStore interface {
 type AutogenFn func(ctx context.Context, logger log.Logger, orgId int64, config *apimodels.PostableApiAlertingConfig, invalidReceiverAction notifier.InvalidReceiversAction) error
 
 // NoopAutogenFn is used to skip auto-generating routes.
-func NoopAutogenFn(_ context.Context, _ log.Logger, _ int64, _ *apimodels.PostableApiAlertingConfig, _ bool) error {
+func NoopAutogenFn(_ context.Context, _ log.Logger, _ int64, _ *apimodels.PostableApiAlertingConfig, _ notifier.InvalidReceiversAction) error {
 	return nil
 }
 
