@@ -4,11 +4,11 @@ import (
 	"context"
 	"strings"
 
-	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"google.golang.org/protobuf/types/known/structpb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
@@ -34,20 +34,29 @@ func toZanzanaSubject(kind iamv0.ResourcePermissionSpecPermissionKind, uid strin
 	return ""
 }
 
+func toZanzanaType(apiGroup string) string {
+	if apiGroup == "folder.grafana.app" {
+		return zanzana.TypeFolder
+	}
+	return zanzana.TypeResource
+}
+
 func NewResourceTuple(resource iamv0.ResourcePermissionspecResource, perm iamv0.ResourcePermissionspecPermission) *v1.TupleKey {
+	// Typ is "folder" or "resource"
+	typ := toZanzanaType(resource.ApiGroup)
+
 	key := &v1.TupleKey{
 		// e.g. "user:{uid}", "serviceaccount:{uid}", "team:{uid}", "basicrole:{viewer|editor|admin}"
 		User: toZanzanaSubject(perm.Kind, perm.Name),
 		// "view", "edit", "admin"
 		Relation: strings.ToLower(perm.Verb),
+		// e.g. "folder:{name}" or "resource:{apiGroup}/{resource}:{name}"
+		Object: zanzana.NewObjectEntry(typ, resource.ApiGroup, resource.Resource, "", resource.Name),
 	}
 
-	if resource.ApiGroup == "folder.grafana.app" {
-		key.Object = zanzana.NewObjectEntry(zanzana.TypeFolder, "", "", "", resource.Name)
-	} else {
-		key.Object = zanzana.NewObjectEntry(
-			zanzana.TypeResource, resource.ApiGroup, resource.Resource, "", resource.Name,
-		)
+	// For resources we add a condition to filter by apiGroup/resource
+	// e.g "group_filter": {"group_resource": "dashboards.grafana.app/dashboards"}
+	if typ == zanzana.TypeResource {
 		key.Condition = &v1.RelationshipCondition{
 			Name: "group_filter",
 			Context: &structpb.Struct{
@@ -63,7 +72,8 @@ func NewResourceTuple(resource iamv0.ResourcePermissionspecResource, perm iamv0.
 	return key
 }
 
-func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj runtime.Object, options *metav1.CreateOptions) {
+// AfterResourcePermissionCreate is a post-create hook that writes the resource permission to Zanzana (openFGA)
+func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj runtime.Object, _ *metav1.CreateOptions) {
 	if b.zClient == nil {
 		return
 	}
