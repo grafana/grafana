@@ -1,7 +1,8 @@
 import { map } from 'rxjs/operators';
+import tinycolor from 'tinycolor2';
 
-import { DataTopic, FieldColor } from '@grafana/schema';
-import { getTheme } from '@grafana/ui';
+import { DataTopic, FieldColor, FieldColorModeId } from '@grafana/schema';
+import { colors } from '@grafana/ui';
 
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
@@ -40,7 +41,7 @@ export interface OptionalAnnotationFields {
 
 export interface OptionalAnnotationOptions {
   frameName?: string;
-  defaultColor?: string;
+  // defaultColor?: string;
   colorScheme?: FieldColor;
 }
 
@@ -164,6 +165,7 @@ function convertSeriesToAnnotation(
   // TODO: ensure time field
   // TODO: ensure value field
 
+  // get rid of default color, use color
   let frameName = undefined;
   if (options.annotationOptions?.frameName) {
     const sourceFieldForFrameName = frame.fields.find((field) => field.name === options.annotationOptions?.frameName);
@@ -188,8 +190,6 @@ function convertSeriesToAnnotation(
         }
         return {
           ...sourceField,
-          // @todo annotations config doesn't work like this, color is a field
-          // config: {...sourceField.config, color: options.annotationOptions?.colorScheme ?? {mode: FieldColorModeId.Fixed, fixedColor: options.annotationOptions?.defaultColor}},
           name,
         };
       }),
@@ -200,15 +200,18 @@ function convertSeriesToAnnotation(
     },
   };
 
-  const fields = [...mappedFrame.fields, createIsRegionField(mappedFrame)];
-  // If we've mapped an existing field, don't add the default
-  if (options.annotationOptions?.colorScheme) {
-    // @todo respect color theme
-    const color = annotationPalette[frameIdx % annotationPalette.length];
-    fields.push(createColorField(mappedFrame, color));
-  } else if (options.annotationOptions?.defaultColor && !mappedFrame.fields.find((field) => field.name === 'color')) {
-    fields.push(createColorField(mappedFrame, options.annotationOptions?.defaultColor));
+  // Currently creating custom "complement" palette
+  let color = annotationPalette[frameIdx % annotationPalette.length];
+  // @todo support other color schemes besides fixed
+  if (
+    options.annotationOptions?.colorScheme?.mode === FieldColorModeId.Fixed &&
+    options.annotationOptions?.colorScheme.fixedColor
+  ) {
+    color = options.annotationOptions?.colorScheme.fixedColor;
   }
+
+  const colorField = createColorField(mappedFrame, color);
+  const fields = [...mappedFrame.fields, { ...createIsRegionField(mappedFrame) }, { ...colorField }];
 
   return {
     ...mappedFrame,
@@ -220,4 +223,7 @@ function convertSeriesToAnnotation(
   };
 }
 
-export const annotationPalette = ['#ff0', '#f0f', '#f00'];
+export const annotationPalette = colors.map((color) => {
+  const tinyColor = tinycolor(color).complement();
+  return tinyColor.toHexString();
+});
