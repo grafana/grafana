@@ -71,16 +71,6 @@ export const HackathonRuleListPage = ({ onToggleSparkJoy }: { onToggleSparkJoy: 
             <PopularAlerts />
           </>
         )}
-
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
-          <TextLink
-            href="/alerting/list/hackathon14/view-all-alerts"
-            color="secondary"
-            style={{ textDecoration: 'underline' }}
-          >
-            <Trans i18nKey="alerting.hackathon.view-all">View All</Trans>
-          </TextLink>
-        </div>
       </div>
     </AlertingPageWrapper>
   );
