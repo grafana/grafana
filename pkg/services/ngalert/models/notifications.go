@@ -200,7 +200,7 @@ func (s *NotificationSettings) Fingerprint() data.Fingerprint {
 	return data.Fingerprint(h.Sum64())
 }
 
-// FingerprintOld calculates a hash value using the old algorithm (before the separator fix).
+// FingerprintOld calculates a hash value using the old algorithm (before the separator fix in the Fingerpring function).
 // This is used temporarily during migration to support existing alerts with old hash labels.
 // TODO: Remove this method once the migration is complete.
 func (s *NotificationSettings) FingerprintOld() data.Fingerprint {
