@@ -98,15 +98,85 @@ To add the Azure Monitor data source, complete the following steps:
 
 Grafana takes you to the **Settings** tab, where you will set up your Azure Monitor configuration.
 
+## Configure the data source in the UI
+
+The following are configuration options for the Azure Monitor data source:
+
+| **Setting** | **Description** |
+|-------------|----------------|
+| **Name**    | The data source name. Sets the name you use to refer to the data source in panels and queries. Examples: `logs-monitor-1`. |
+| **Default** | Toggle to select as the default name in dashboard panels. When you go to a dashboard panel, this will be the default selected data source. |
+
+There are four authentication methods for teh Azure Monitor data source. Select one from the drop-down. `Managed Identity` is the default.
+
+**Managed Identity:** You can use managed identity to configure Azure Monitor in Grafana if you host Grafana in Azure (such as an App Service or with Azure Virtual Machines) and have managed identity enabled on your VM. This lets you securely authenticate data sources without manually configuring credentials via Azure AD App Registrations. For details on Azure managed identities, refer to the Azure documentation.
+
+<!-- **Default Subscription:** Click **Load Subscriptions** to populate the drop-down with available subscriptions. Select the subscription that contains the Azure resources you want to monitor. This becomes the primary subscription for querying metrics, logs, and other monitoring data. For additional information refer to [Configure Managed Identity](#configure-managed-identity).
+
+| **Enable Basic Logs**       | Allows the data source to execute queries against [Basic Logs tables](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-query?tabs=portal-1) in supported Log Analytics Workspaces. These queries may incur additional costs. -->
+
+| Setting                 | Description |
+|--------------------------|-------------|
+| **Default Subscription** | Click **Load Subscriptions** to populate the drop-down with available subscriptions. Select the subscription that contains the Azure resources you want to monitor. This becomes the primary subscription for querying metrics, logs, and other monitoring data. For additional information refer to [Configure Managed Identity](#configure-managed-identity). |
+| **Enable Basic Logs**    | Allows the data source to execute queries against [Basic Logs tables](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-query?tabs=portal-1) in supported Log Analytics Workspaces. These queries may incur additional costs. |
+
+For additional detail refer to [Configure Managed Identity](#configure-managed-identity).
+
+
+**Current User:** Current User authentication uses the individual Grafana user's Azure AD, which provides user-level access control but requires fallback credentials for automated features.
+
+| Setting | Description |
+|---------|-------------|
+| **Authentication** | Set to "Current User" to use the logged-in Grafana user's Azure credentials for authentication. This passes the current user's identity to Azure services when querying data. |
+| **Default Subscription** | Select which Azure subscription to query by default. Click "Load Subscriptions" to populate the drop-down with subscriptions accessible to the current user. |
+| **Enable Basic Logs** | Toggle to allow querying Azure Monitor Basic Logs tables. These are lower-cost logs with some query limitations, and enabling this incurs per-query costs when querying basic log tables in dashboard panels. |
+| **Fallback Service Credentials** | Optional configuration to provide app registration credentials as a fallback. User-based authentication doesn't support certain Grafana features that make requests without user context (like alerting). Enable fallback credentials to ensure these features continue to function. Note that features using fallback credentials will be restricted to the access level of those credentials rather than the user's permissions. |
+
+**App Registration:** Use a service principal (an Azure AD application) to authenticate.
+
+<!-- Azure Cloud - Specifies which Azure environment you're connecting to. "Azure" is the standard public Azure cloud. Other options would include Azure Government, Azure China, etc.
+
+Directory (tenant) ID - The unique identifier for your Azure Active Directory (Azure AD) tenant. This is the GUID that identifies your organization's Azure AD instance.
+
+Application (client) ID - The unique identifier for the Azure AD app registration (service principal) you created. This identifies which application is requesting access to Azure resources.
+
+Client Secret - The password/secret key associated with your app registration. This proves that the request is coming from the authorized application. This should be kept secure and rotated periodically.
+
+Default Subscription - Lets you select which Azure subscription to query by default. After entering the credentials above, you can click "Load Subscriptions" to populate this drop-down with subscriptions your service principal has access to.
+
+Enable Basic Logs - Toggle to allow querying Azure Monitor Basic Logs tables. These are lower-cost logs with some query limitations, and enabling this incurs per-query costs when querying basic log tables in dashboard panels. -->
+
+| Setting | Description |
+|---------|-------------|
+| **Azure Cloud** | Specifies which Azure environment you're connecting to. "Azure" is the standard public Azure cloud. Other options would include Azure Government, Azure China, etc. |
+| **Directory (tenant) ID** | The unique identifier for your Azure Active Directory (Azure AD) tenant. This is the GUID that identifies your organization's Azure AD instance. |
+| **Application (client) ID** | The unique identifier for the Azure AD app registration (service principal) you created. This identifies which application is requesting access to Azure resources. |
+| **Client Secret** | The password/secret key associated with your app registration. This proves that the request is coming from the authorized application. This should be kept secure and rotated periodically. |
+| **Default Subscription** | Lets you select which Azure subscription to query by default. After entering your credentials, click **Load Subscriptions** to populate this drop-down with subscriptions your service principal has access to. |
+| **Enable Basic Logs** | Toggle to allow querying Azure Monitor Basic Logs tables. These are lower-cost logs with some query limitations, and enabling this incurs per-query costs when querying basic log tables in dashboard panels. |
+
+**Workload Identity:** Azure's modern authentication method for applications and services running in Kubernetes environments. It allows pods/workloads to authenticate to Azure services using federated identity credentials without needing to manage secrets. Set to "Workload Identity" to use Azure Workload Identity for authentication. This is designed for Grafana instances running in Azure Kubernetes Service (AKS) or other Kubernetes environments configured with workload identity federation. |
+
+| Setting | Description |
+|---------|-------------|
+| **Default Subscription** | Select which Azure subscription to query by default. Click "Load Subscriptions" to populate the dropdown with subscriptions accessible to the workload identity. |
+| **Enable Basic Logs** | Toggle to allow querying Azure Monitor Basic Logs tables. These are lower-cost logs with some query limitations, and enabling this incurs per-query costs when querying basic log tables in dashboard panels. |
 
 
 
 
-Authentication:
+Additional settings - Applies to current user, managed identity and workload identity
 
-Managed identity is the default.
 
-Click **Load Subscriptions** to populate the drop-down with available subscriptions. Select the subscription that contains the Azure resources you want to monitor. This becomes the primary subscription for querying metrics, logs, and other monitoring data. For additional information refer to [Configure Managed Identity](#configure-managed-identity).
+Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy, request timeout, and forwarded cookies.
+
+Advanced HTTP settings
+Allowed cookies
+New cookie (hit enter to add)
+
+Add
+Timeout
+Timeout in seconds
 
 
 ### Configure Azure Active Directory (AD) authentication
@@ -138,7 +208,8 @@ For details, refer to [Configuring using Workload Identity](#configuring-using-w
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
 
-#### Provisioning examples
+Examples:
+
 
 **Azure AD App Registration (client secret):**
 
