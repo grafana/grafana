@@ -46,11 +46,7 @@ export function ChannelOptions<R extends ChannelValues>({
 }: Props<R>): JSX.Element {
   const { watch } = useFormContext<ReceiverFormValues<CloudChannelValues | GrafanaChannelValues>>();
 
-  const [settings, secureFields, notifierType] = watch([
-    `${integrationPrefix}.settings`,
-    `${integrationPrefix}.secureFields`,
-    `${integrationPrefix}.type`,
-  ]);
+  const [settings, secureFields] = watch([`${integrationPrefix}.settings`, `${integrationPrefix}.secureFields`]);
 
   // Note: settingsPath includes a trailing dot for OptionField, unlike the path used in watch()
   const settingsPath = `${integrationPrefix}.settings.` as const;
@@ -63,7 +59,7 @@ export function ChannelOptions<R extends ChannelValues>({
   return (
     <>
       {selectedChannelOptions.map((option: NotificationChannelOption, index: number) => {
-        const key = `${notifierType}-${option.propertyName}-${index}`;
+        const key = `${option.label}-${index}`;
         // Some options can be dependent on other options, this determines what is selected in the dependency options
         // I think this needs more thought.
         // pathPrefix = items.index.

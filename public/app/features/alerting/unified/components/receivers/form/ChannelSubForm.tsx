@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import * as React from 'react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Controller, FieldErrors, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -249,7 +249,7 @@ export function ChannelSubForm<R extends ChannelValues>({
         </div>
       </div>
       {notifier && (
-        <div key={selectedType} className={styles.innerContent}>
+        <div className={styles.innerContent}>
           {showTelegramWarning && (
             <Alert
               title={t(
@@ -266,7 +266,6 @@ export function ChannelSubForm<R extends ChannelValues>({
             </Alert>
           )}
           <ChannelOptions<R>
-            key={`${selectedType}-mandatory`}
             defaultValues={defaultValues}
             selectedChannelOptions={mandatoryOptions.length ? mandatoryOptions : optionalOptions}
             errors={errors}
@@ -288,7 +287,6 @@ export function ChannelSubForm<R extends ChannelValues>({
                 </Alert>
               )}
               <ChannelOptions<R>
-                key={`${selectedType}-optional`}
                 defaultValues={defaultValues}
                 selectedChannelOptions={optionalOptions}
                 onResetSecureField={onResetSecureField}
