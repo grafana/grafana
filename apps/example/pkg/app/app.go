@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -30,6 +31,11 @@ func New(cfg app.Config) (app.App, error) {
 	client, err := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig()).ClientFor(examplev1alpha1.ExampleKind())
 	if err != nil {
 		return nil, fmt.Errorf("unable to create example client: %w", err)
+	}
+	var reconciler operator.Reconciler
+	exampleConfig, ok := cfg.SpecificConfig.(*ExampleConfig)
+	if ok && exampleConfig.EnableReconciler {
+		reconciler = NewExampleReconciler(client)
 	}
 
 	// This is the configuration for our App.
@@ -56,7 +62,7 @@ func New(cfg app.Config) (app.App, error) {
 				// We only want the reconciler on one version of our kind, and it's usually best to use the latest
 				// We'll receive events for every example object, regardless of version used in the API,
 				// it will convert them to the version used for the reconciler.
-				Reconciler: NewExampleReconciler(client),
+				Reconciler: reconciler,
 				// By default, reconcilers for ManagedKinds are wrapped in
 				ReconcileOptions: simple.BasicReconcileOptions{
 					// Namespace is the namespace your reconciler will watch.

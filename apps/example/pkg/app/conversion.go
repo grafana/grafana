@@ -22,6 +22,8 @@ func NewExampleConverter() *ExampleConverter {
 	return &ExampleConverter{}
 }
 
+// Convert converts an object from an arbitrary input version slice of bytes
+// to a target version, and returns the JSON bytes of that version.
 func (e *ExampleConverter) Convert(obj k8s.RawKind, targetAPIVersion string) ([]byte, error) {
 	srcGVK := schema.FromAPIVersionAndKind(obj.APIVersion, obj.Kind)
 	dstGVK := schema.FromAPIVersionAndKind(targetAPIVersion, v1alpha1.ExampleKind().Kind())

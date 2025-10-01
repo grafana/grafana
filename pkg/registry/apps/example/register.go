@@ -1,12 +1,16 @@
 package example
 
 import (
+	"fmt"
+	"strings"
+
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/example/pkg/apis"
+	"github.com/grafana/grafana/apps/example/pkg/apis/example/v1alpha1"
 	exampleapp "github.com/grafana/grafana/apps/example/pkg/app"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -29,10 +33,25 @@ func RegisterAppInstaller(
 		cfg: cfg,
 	}
 	// Config specific to the app. This can pull from feature flags or setting.Cfg.
-	// Here we don't do anything except set a static value for demonstration purposes.
 	specificConfig := &exampleapp.ExampleConfig{
 		EnableSomeFeature: true,
 	}
+
+	// Set specificConfig.EnableReconciler to true IFF the v1alpha1 API is enabled in the runtime config
+	apiserverRuntimeCfg := cfg.SectionWithEnvOverrides("grafana-apiserver").Key("runtime_config").String()
+	for _, s := range strings.Split(apiserverRuntimeCfg, ",") {
+		if len(s) == 0 {
+			continue
+		}
+		arr := strings.SplitN(s, "=", 2)
+		if len(arr) == 2 {
+			if arr[0] == fmt.Sprintf("%s/%s", v1alpha1.APIGroup, v1alpha1.APIVersion) {
+				specificConfig.EnableReconciler = strings.EqualFold("true", arr[1])
+				break
+			}
+		}
+	}
+
 	// Provider is the app provider, which contains the AppManifest, app-specific-config, and the New function for the app
 	provider := simple.NewAppProvider(apis.LocalManifest(), specificConfig, exampleapp.New)
 
