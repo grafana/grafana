@@ -68,7 +68,7 @@ export const runGenerateApis =
         command =
           'yarn workspace @grafana/api-clients process-specs && npx rtk-query-codegen-openapi ./local/generate-enterprise-apis.ts';
       } else {
-        command = 'cd packages/grafana-api-clients && yarn generate-apis';
+        command = 'yarn workspace @grafana/api-clients generate-apis';
       }
 
       console.log(`⏳ Running ${command} to generate endpoints...`);
