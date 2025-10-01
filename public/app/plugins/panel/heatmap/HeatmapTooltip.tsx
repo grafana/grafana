@@ -12,9 +12,10 @@ import {
   InterpolateFunction,
   LinkModel,
   PanelData,
+  ScopedVars,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
-import { TooltipDisplayMode, useTheme2 } from '@grafana/ui';
+import { TooltipDisplayMode, usePanelContext, useTheme2 } from '@grafana/ui';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -30,6 +31,7 @@ import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/tra
 import { getDisplayValuesAndLinks } from 'app/features/visualization/data-hover/DataHoverView';
 import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
 
+import { getActions, getActionsDefaultField } from '../../../features/actions/utils';
 import { getDataLinks, getFieldActions } from '../status-history/utils';
 import { isTooltipScrollable } from '../timeseries/utils';
 
@@ -55,6 +57,9 @@ interface HeatmapTooltipProps {
 }
 
 export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
+  const { canExecuteActions } = usePanelContext();
+  const userCanExecuteActions = React.useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
+
   if (props.seriesIdx === 2) {
     const dispValuesAndLinks = getDisplayValuesAndLinks(props.dataRef.current!.exemplars!, props.dataIdxs[2]!);
 
@@ -63,9 +68,61 @@ export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
     }
 
     const { displayValues, links } = dispValuesAndLinks;
+    const actions: Array<ActionModel<Field>> = [];
+
+    if (userCanExecuteActions) {
+      const frame = props.panelData.series?.[props.seriesIdx];
+      // @todo dataLinks & actions
+      const defaultField = getActionsDefaultField();
+      const scopedVars: ScopedVars = {
+        __dataContext: {
+          value: {
+            data: props.panelData.series,
+            field: defaultField,
+            frame,
+            frameIndex: 0,
+          },
+        },
+      };
+
+      frame.fields.forEach((field: Field) => {
+        const actionsModel = getActions(
+          frame,
+          field,
+          scopedVars,
+          props.replaceVariables,
+          field.config.actions ?? [],
+          // @todo config?
+          {}
+        );
+
+        const actionsOut: Array<ActionModel<Field>> = [];
+        const actionLookup = new Set<string>();
+
+        if (actionsModel.length > 1) {
+          actions.forEach((action) => {
+            const key = action.title;
+
+            if (!actionLookup.has(key)) {
+              actionsOut.push(action);
+              actionLookup.add(key);
+            }
+          });
+        }
+
+        actionsModel.forEach((action) => {
+          const key = `${action.title}/${Math.random()}`;
+          if (!actionLookup.has(key)) {
+            actions.push(action);
+            actionLookup.add(key);
+          }
+        });
+      });
+    }
 
     return (
       <ExemplarTooltip
+        actions={actions}
         items={displayValues.map((dispVal) => ({
           label: dispVal.name,
           value: dispVal.valueString,

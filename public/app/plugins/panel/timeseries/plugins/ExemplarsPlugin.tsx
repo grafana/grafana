@@ -3,6 +3,7 @@ import uPlot from 'uplot';
 
 import { DataFrame, Labels, TIME_SERIES_TIME_FIELD_NAME, TIME_SERIES_VALUE_FIELD_NAME, TimeZone } from '@grafana/data';
 import { FIXED_UNIT, EventsCanvas, UPlotConfigBuilder } from '@grafana/ui';
+import { replaceVariables } from '@grafana-plugins/loki/querybuilder/parsingUtils';
 
 import { ExemplarMarker } from './ExemplarMarker';
 
@@ -77,6 +78,7 @@ export const ExemplarsPlugin = ({
 
       return (
         <ExemplarMarker
+          replaceVariables={replaceVariables}
           setClickedRowIndex={setLockedExemplarRowIndex}
           clickedRowIndex={lockedExemplarRowIndex}
           timeZone={timeZone}
