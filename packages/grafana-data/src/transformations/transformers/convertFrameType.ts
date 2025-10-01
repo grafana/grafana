@@ -154,15 +154,21 @@ function mapSourceFieldNameToAnnoFieldName(
 }
 
 function convertSeriesToAnnotation(frame: DataFrame, options: ConvertFrameTypeTransformerOptions): DataFrame {
+  console.log('frame', frame);
   // TODO: ensure time field
   // TODO: ensure value field
   const mappedFrame = {
     ...frame,
     fields: [
       ...frame.fields.map((sourceField) => {
+        const name = mapSourceFieldNameToAnnoFieldName(options, sourceField.name) ?? sourceField.name;
+        // Tags will throw errors if not array of values
+        if (name === 'tags') {
+          sourceField = { ...sourceField, values: [...sourceField.values.map((v) => (Array.isArray(v) ? v : [v]))] };
+        }
         return {
           ...sourceField,
-          name: mapSourceFieldNameToAnnoFieldName(options, sourceField.name) ?? sourceField.name,
+          name,
         };
       }),
     ],

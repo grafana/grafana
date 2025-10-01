@@ -14,14 +14,14 @@ import { Options as TimeseriesOptions } from '@grafana/schema/src/raw/composable
 export function addAnnotationOptions<
   T extends HeatmapOptions | TimeseriesOptions | StatusHistoryOptions | StatetimelineOptions | CandlestickOptions,
 >(builder: PanelOptionsEditorBuilder<T>) {
-  const category = [t('grafana-ui.builder.annotations', 'Annotations')];
+  const category = [t('grafana-ui.builder.annotations.category', 'Annotations')];
 
   builder.addBooleanSwitch({
     path: 'annotations.multiLane',
     category,
-    name: t('grafana-ui.builder.annotations.multi-lane-name', 'Enable multi-lane annotations'),
+    name: t('grafana-ui.builder.annotations.lane.name', 'Enable multi lane annotations'),
     description: t(
-      'grafana-ui.builder.annotations.multi-lane-desc',
+      'grafana-ui.builder.annotations.lane.desc',
       'Breaks each annotation frame into a separate row in the visualization'
     ),
     defaultValue: false,

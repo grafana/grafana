@@ -156,7 +156,6 @@ export const AnnotationsPlugin2 = ({
       ctx.save();
 
       ctx.beginPath();
-      console.log('annos.length', annos.length, annos);
       const additionalHeight = annotationsConfig?.multiLane ? annos.length * ANNOTATION_LANE_SIZE * uPlot.pxRatio : 0;
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height + additionalHeight);
       ctx.clip();
