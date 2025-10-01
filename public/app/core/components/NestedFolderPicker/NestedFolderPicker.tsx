@@ -123,8 +123,6 @@ export function NestedFolderPicker({
     rootFolderItem,
   });
 
-  // const emptyFolders = useEmptyFolders(foldersOpenState, foldersMap);
-
   useEffect(() => {
     if (!search) {
       setSearchResults(null);

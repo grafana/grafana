@@ -61,8 +61,6 @@ export function useFoldersQueryLegacy({
   // Set of UIDs for which children were requested but were empty.
   const [emptyFolders, setEmptyFolders] = useState<Set<string>>(new Set());
 
-  // const foldersMap: Record<string, { children: string[] }> = { general: { children: [] } };
-
   // Keep a list of selectors for dynamic state selection
   const [selectors, setSelectors] = useState<
     Array<ReturnType<typeof browseDashboardsAPI.endpoints.listFolders.select>>
