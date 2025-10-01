@@ -86,7 +86,9 @@ export const TeamList = ({
         return;
       }
       try {
-        const scimSettings = await getBackendSrv().get(`/apis/scim.grafana.app/v0alpha1/namespaces/${config.namespace}/config`);
+        const scimSettings = await getBackendSrv().get(
+          `/apis/scim.grafana.app/v0alpha1/namespaces/${config.namespace}/config`
+        );
         setScimGroupSyncEnabled(scimSettings?.items[0]?.spec?.enableGroupSync || false);
       } catch {
         setScimGroupSyncEnabled(false);
