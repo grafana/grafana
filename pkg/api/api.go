@@ -454,9 +454,10 @@ func (hs *HTTPServer) registerRoutes() {
 		hs.registerFolderAPI(apiRoute, authorize)
 
 		// Resources (popular resources endpoint)
-		apiRoute.Get("/resources/popular", routing.Wrap(hs.GetPopularResourcesSimple))
-		apiRoute.Get("/resources/recent", routing.Wrap(hs.GetRecentResourcesSimple))
-		apiRoute.Post("/resources/:type/:uid/visit", routing.Wrap(hs.RecordResourceVisitSimple))
+	apiRoute.Get("/resources/popular", routing.Wrap(hs.GetPopularResourcesSimple))
+	apiRoute.Get("/resources/recent", routing.Wrap(hs.GetRecentResourcesSimple))
+	apiRoute.Get("/resources/alerts", reqSignedIn, routing.Wrap(hs.ListAllAlertsSimple))
+	apiRoute.Post("/resources/:type/:uid/visit", routing.Wrap(hs.RecordResourceVisitSimple))
 
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {

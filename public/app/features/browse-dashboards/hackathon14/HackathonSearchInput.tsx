@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { FilterInput, useStyles2, Button, Icon } from '@grafana/ui';
+import { FilterInput, useStyles2, Button, Icon, Dropdown, Text } from '@grafana/ui';
 
 import { FilterTag } from './FilterTag';
 
@@ -23,6 +23,7 @@ export const HackathonSearchInput = ({
     filterByTag: false,
     moreFilters: false,
   });
+  const [isMoreFiltersOpen, setIsMoreFiltersOpen] = useState(false);
 
   const handleSearchChange = (value: string) => {
     setSearchValue(value);
@@ -35,6 +36,67 @@ export const HackathonSearchInput = ({
       [filterKey]: !prev[filterKey],
     }));
   };
+
+  const renderMoreFiltersDropdown = () => (
+    <div className={styles.moreFiltersDropdown}>
+      <Text variant="h5">Advanced filters</Text>
+      <Text variant="bodySmall" color="secondary">
+        Tweak additional filters to refine your dashboard results.
+      </Text>
+
+      <div className={styles.moreFiltersSection}>
+        <Text variant="bodyStrong">Resource type</Text>
+        <div className={styles.moreFiltersRow}>
+          <Button size="sm" variant="secondary">Dashboards</Button>
+          <Button size="sm" variant="secondary">Folders</Button>
+          <Button size="sm" variant="secondary">Dashboards + Folders</Button>
+        </div>
+      </div>
+
+      <div className={styles.moreFiltersSection}>
+        <Text variant="bodyStrong">Sort by</Text>
+        <div className={styles.moreFiltersRow}>
+          <Button size="sm" variant="secondary">Most popular</Button>
+          <Button size="sm" variant="secondary">Recently updated</Button>
+          <Button size="sm" variant="secondary">Recently visited</Button>
+        </div>
+      </div>
+
+      <div className={styles.moreFiltersSection}>
+        <Text variant="bodyStrong">Time range</Text>
+        <div className={styles.moreFiltersRow}>
+          <Button size="sm" variant="secondary">Last 7 days</Button>
+          <Button size="sm" variant="secondary">Last 30 days</Button>
+          <Button size="sm" variant="secondary">All time</Button>
+        </div>
+      </div>
+
+      <div className={styles.aiDiscoveryWrapper}>
+        <Text variant="bodyStrong" className={styles.aiDiscoveryTitle}>
+          AI-powered discovery:
+        </Text>
+        <div className={styles.aiDiscoveryButtons}>
+          {aiDiscoveryButtons.map((label) => (
+            <Button
+              key={label}
+              variant="primary"
+              size="sm"
+              className={styles.aiDiscoveryButton}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const aiDiscoveryButtons = [
+    '💡 Recommend dashboards for me',
+    '🚀 What should I explore?',
+    '📊 Discover new insights',
+    '✨ Discover more',
+  ];
 
   return (
     <div className={styles.container}>
@@ -75,15 +137,22 @@ export const HackathonSearchInput = ({
 
           <FilterTag />
 
-          <Button
-            variant={activeFilters.moreFilters ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => toggleFilter('moreFilters')}
-            className={styles.filterButton}
+          <Dropdown
+            overlay={renderMoreFiltersDropdown}
+            placement="bottom-start"
+            isOpen={isMoreFiltersOpen}
+            onOpenChange={(open) => setIsMoreFiltersOpen(open)}
           >
-            <Icon name="filter" />
-            More filters
-          </Button>
+            <Button
+              variant={isMoreFiltersOpen ? 'primary' : 'secondary'}
+              size="sm"
+              className={styles.filterButton}
+              icon="filter"
+              onClick={() => setIsMoreFiltersOpen((prev) => !prev)}
+            >
+              More filters
+            </Button>
+          </Dropdown>
         </div>
       </div>
     </div>
@@ -210,6 +279,68 @@ const getStyles = (theme: GrafanaTheme2) => ({
       '& svg': {
         filter: 'drop-shadow(0 0 8px rgba(255, 120, 10, 0.6))',
       },
+    },
+  }),
+
+  moreFiltersDropdown: css({
+    padding: theme.spacing(3),
+    width: '640px',
+    maxWidth: '640px',
+    backgroundColor: theme.colors.background.primary,
+    borderRadius: theme.shape.radius.default,
+    boxShadow: `0 12px 28px rgba(112, 76, 182, 0.28)`,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(2),
+    backgroundImage: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12), transparent 35%, rgba(236, 72, 153, 0.12))',
+  }),
+
+  moreFiltersSection: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+  }),
+
+  moreFiltersRow: css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+  }),
+
+  aiDiscoveryWrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+    padding: theme.spacing(1.5, 2),
+    borderRadius: theme.shape.radius.default,
+    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(236, 72, 153, 0.1))',
+    border: `1px solid rgba(99, 102, 241, 0.35)`,
+    boxShadow: '0 8px 20px rgba(59, 130, 246, 0.18)',
+  }),
+
+  aiDiscoveryTitle: css({
+    color: theme.colors.text.secondary,
+  }),
+
+  aiDiscoveryButtons: css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+  }),
+
+  aiDiscoveryButton: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+    borderRadius: theme.shape.radius.pill,
+    background: 'linear-gradient(135deg, #2563eb, #7c3aed)',
+    border: 'none',
+    boxShadow: '0 6px 14px rgba(59, 130, 246, 0.28)',
+
+    '&:hover': {
+      background: 'linear-gradient(135deg, #1d4ed8, #6d28d9)',
+      transform: 'translateY(-2px)',
+      boxShadow: '0 10px 24px rgba(79, 70, 229, 0.35)',
     },
   }),
 });
