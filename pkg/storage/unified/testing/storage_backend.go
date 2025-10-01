@@ -1299,9 +1299,6 @@ func runTestIntegrationBackendTrash(t *testing.T, backend resource.StorageBacken
 	rvDelete1, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rv1))
 	require.NoError(t, err)
 	require.Greater(t, rvDelete1, rv1)
-	rvDelete2, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rvDelete1))
-	require.NoError(t, err)
-	require.Greater(t, rvDelete2, rvDelete1)
 
 	// item2 deleted and recreated, should not be returned in trash
 	rv2, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
@@ -1336,10 +1333,10 @@ func runTestIntegrationBackendTrash(t *testing.T, backend resource.StorageBacken
 					},
 				},
 			},
-			expectedVersions:   []int64{rvDelete2},
+			expectedVersions:   []int64{rvDelete1},
 			expectedValues:     []string{"item1 DELETED"},
-			minExpectedHeadRV:  rvDelete2,
-			expectedContinueRV: rvDelete2,
+			minExpectedHeadRV:  rvDelete1,
+			expectedContinueRV: rvDelete1,
 			expectedSortAsc:    false,
 		},
 		{

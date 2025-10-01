@@ -415,7 +415,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		if err != nil {
 			return event.GUID, fmt.Errorf("resource update: %w", err)
 		}
-		if err = b.checkConflict(ctx, tx, res, event.Key, event.PreviousRV); err != nil {
+		if err = b.checkConflict(res, event.Key, event.PreviousRV); err != nil {
 			return event.GUID, err
 		}
 
@@ -472,7 +472,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		if err != nil {
 			return event.GUID, fmt.Errorf("delete resource: %w", err)
 		}
-		if err = b.checkConflict(ctx, tx, res, event.Key, event.PreviousRV); err != nil {
+		if err = b.checkConflict(res, event.Key, event.PreviousRV); err != nil {
 			return event.GUID, err
 		}
 
@@ -511,7 +511,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	return rv, nil
 }
 
-func (b *backend) checkConflict(ctx context.Context, tx db.Tx, res db.Result, key *resourcepb.ResourceKey, rv int64) error {
+func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv int64) error {
 	if rv == 0 {
 		return nil
 	}
@@ -522,25 +522,10 @@ func (b *backend) checkConflict(ctx context.Context, tx db.Tx, res db.Result, ke
 		return fmt.Errorf("unable to verify RV: %w", err)
 	}
 	if rows == 1 {
-		return nil
+		return nil // expected one result
 	}
 	if rows > 0 {
 		return fmt.Errorf("multiple rows effected (%d)", rows)
-	}
-
-	existing, err := dbutil.QueryRow(ctx, tx, sqlResourceHistoryRead, &sqlResourceHistoryReadRequest{
-		SQLTemplate: sqltemplate.New(b.dialect),
-		Request: &historyReadRequest{
-			Key:             key,
-			ResourceVersion: rv,
-		},
-		Response: NewReadResponse(),
-	})
-	if err != nil {
-		return fmt.Errorf("unable to read previous value %w", err)
-	}
-	if rv == existing.ResourceVersion {
-		return nil // OK
 	}
 	return apierrors.NewConflict(schema.GroupResource{
 		Group:    key.Group,
