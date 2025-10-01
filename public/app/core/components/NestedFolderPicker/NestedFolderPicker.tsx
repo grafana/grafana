@@ -111,6 +111,7 @@ export function NestedFolderPicker({
 
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
+    emptyFolders,
     items: browseFlatTree,
     isLoading: isBrowseLoading,
     requestNextPage: fetchFolderPage,
@@ -328,7 +329,7 @@ export function NestedFolderPicker({
       <Input
         ref={refs.setReference}
         autoFocus
-        prefix={label ? <Icon name="folder" /> : null}
+        prefix={label ? <Icon name="folder" /> : <Icon name="search" />}
         placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
         value={search}
         invalid={invalid}
@@ -341,7 +342,6 @@ export function NestedFolderPicker({
         aria-owns={overlayId}
         aria-activedescendant={getDOMId(overlayId, flatTree[focusedItemIndex]?.item.uid)}
         role="combobox"
-        suffix={<Icon name="search" />}
         {...getReferenceProps()}
         onKeyDown={handleKeyDown}
       />
@@ -381,6 +381,7 @@ export function NestedFolderPicker({
               foldersAreOpenable={!(search && searchResults)}
               isItemLoaded={isItemLoaded}
               requestLoadMore={handleLoadMore}
+              emptyFolders={emptyFolders}
             />
           </div>
         )}
