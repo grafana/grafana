@@ -47,9 +47,9 @@
       "import": "./src/clients/provisioning/v0alpha1/index.ts",
       "require": "./src/clients/provisioning/v0alpha1/index.ts"
     },
-    "./rules/v0alpha1": {
-      "import": "./src/clients/rules/v0alpha1/index.ts",
-      "require": "./src/clients/rules/v0alpha1/index.ts"
+    "./rules.alerting/v0alpha1": {
+      "import": "./src/clients/rules.alerting/v0alpha1/index.ts",
+      "require": "./src/clients/rules.alerting/v0alpha1/index.ts"
     },
     "./shorturl/v1alpha1": {
       "import": "./src/clients/shorturl/v1alpha1/index.ts",
