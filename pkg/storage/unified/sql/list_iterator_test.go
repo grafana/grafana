@@ -75,7 +75,6 @@ func TestIntegrationListIter(t *testing.T) {
 	// Insert the test data directly with SQL to include resource_version
 	err = resourceDB.WithTx(ctx, nil, func(ctx context.Context, tx dbsql.Tx) error {
 		for _, item := range testData {
-			// This will insert
 			_, err := dbutil.Exec(ctx, tx, sqlResourceInsert, sqlResourceRequest{
 				SQLTemplate:     sqltemplate.New(dialect),
 				GUID:            item.guid,
