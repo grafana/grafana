@@ -5,7 +5,6 @@ import { Middleware } from 'redux';
 import { alertingAPI as alertingPackageAPI } from '@grafana/alerting/unstable';
 import { generatedAPI as dashboardAPIv0alpha1 } from '@grafana/api-clients/dashboard/v0alpha1';
 import { generatedAPI as userPreferencesAPI } from '@grafana/api-clients/legacy/preferences';
-import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { preferencesAPIv1alpha1 } from 'app/api/clients/preferences/v1alpha1';
 import { rulesAPIv0alpha1 } from 'app/api/clients/rules/v0alpha1';
 import { shortURLAPIv1alpha1 } from 'app/api/clients/shorturl/v1alpha1';
@@ -62,7 +61,6 @@ export function configureStore(initialState?: Partial<StoreState>) {
         rulesAPIv0alpha1.middleware,
         shortURLAPIv1alpha1.middleware,
         preferencesAPIv1alpha1.middleware,
-        dashboardAPIv0alpha1.middleware,
         // PLOP_INJECT_MIDDLEWARE
         // Used by the API client generator
         ...extraMiddleware
