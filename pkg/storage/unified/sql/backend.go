@@ -41,6 +41,8 @@ const defaultPrunerHistoryLimit = 20
 func ProvideStorageBackend(
 	cfg *setting.Cfg,
 ) (resource.StorageBackend, error) {
+	// TODO: make this the central place to provide SQL backend
+	// Currently it is skipped as we need to handle the cases of Diagnostics and Lifecycle
 	return nil, nil
 }
 
