@@ -30,7 +30,7 @@ export class UserLdapSyncInfo extends PureComponent<Props, State> {
     const { ldapSyncInfo, user } = this.props;
     const nextSyncSuccessful = ldapSyncInfo && ldapSyncInfo.nextSync;
     const nextSyncTime = nextSyncSuccessful ? dateTimeFormat(ldapSyncInfo.nextSync, { format }) : '';
-    const debugLDAPMappingURL = `${debugLDAPMappingBaseURL}?user=${user && user.login}`;
+    const debugLDAPMappingURL = `${debugLDAPMappingBaseURL}?username=${user && user.login}`;
     const canReadLDAPUser = contextSrv.hasPermission(AccessControlAction.LDAPUsersRead);
     const canSyncLDAPUser = contextSrv.hasPermission(AccessControlAction.LDAPUsersSync);
 
