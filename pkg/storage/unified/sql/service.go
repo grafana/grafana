@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"hash/fnv"
 	"net"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel"
@@ -94,6 +96,7 @@ func ProvideUnifiedStorageGrpcService(
 	indexMetrics *resource.BleveIndexMetrics,
 	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
+	httpServerRouter *mux.Router,
 ) (UnifiedStorageGrpcService, error) {
 	var err error
 	tracer := otel.Tracer("unified-storage")
@@ -159,6 +162,10 @@ func ProvideUnifiedStorageGrpcService(
 
 		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(true)
 		subservices = append(subservices, s.ringLifecycler)
+
+		if httpServerRouter != nil {
+			httpServerRouter.Path("/prepare-downscale").Methods("GET", "POST", "DELETE").Handler(http.HandlerFunc(s.PrepareDownscale))
+		}
 	}
 
 	if cfg.QOSEnabled {
@@ -192,6 +199,21 @@ func ProvideUnifiedStorageGrpcService(
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.StorageServer)
 
 	return s, nil
+}
+
+func (s *service) PrepareDownscale(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPost:
+		s.log.Info("Preparing for downscale. Will not keep instance in ring on shutdown.")
+		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(false)
+	case http.MethodDelete:
+		s.log.Info("Downscale canceled. Will keep instance in ring on shutdown.")
+		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(true)
+	case http.MethodGet:
+		// used for delayed downscale use case, which we don't support. Leaving here for completion sake
+		s.log.Info("Received GET request for prepare-downscale. Behavior not implemented.")
+	default:
+	}
 }
 
 var (
