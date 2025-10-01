@@ -58,6 +58,11 @@ export function useFoldersQueryLegacy({
   // Keep a list of all request subscriptions so we can unsubscribe from them when the component is unmounted
   const requestsRef = useRef<ListFoldersRequest[]>([]);
 
+  // Set of UIDs for which children were requested but were empty.
+  const [emptyFolders, setEmptyFolders] = useState<Set<string>>(new Set());
+
+  // const foldersMap: Record<string, { children: string[] }> = { general: { children: [] } };
+
   // Keep a list of selectors for dynamic state selection
   const [selectors, setSelectors] = useState<
     Array<ReturnType<typeof browseDashboardsAPI.endpoints.listFolders.select>>
@@ -137,10 +142,9 @@ export function useFoldersQueryLegacy({
 
   // Convert the individual responses into a flat list of folders, with level indicating
   // the depth in the hierarchy.
-  const [foldersMap, treeList] = useMemo(() => {
-    const foldersMap: Record<string, { children: string[] }> = { general: { children: [] } };
+  const treeList = useMemo(() => {
     if (!isBrowsing) {
-      return [foldersMap, []];
+      return [];
     }
 
     function createFlatList(
@@ -164,16 +168,17 @@ export function useFoldersQueryLegacy({
               parentUID: item.parentUid,
             },
           };
-          foldersMap[item.uid] = { children: [] };
-          if (item.parentUid) {
-            foldersMap[item.parentUid].children.push(item.uid);
-          } else {
-            foldersMap['general'].children.push(item.uid);
-          }
 
           const childPages = folderIsOpen && state.pagesByParent[item.uid];
+
           if (childPages) {
             const childFlatItems = createFlatList(item.uid, childPages, level + 1);
+
+            // If we finished loading and there are no children add to empty list
+            if (childPages[0] && childPages[0].status !== PENDING_STATUS && childFlatItems.length === 0) {
+              setEmptyFolders((prev) => new Set(prev).add(item.uid));
+            }
+
             return [flatItem, ...childFlatItems];
           }
 
@@ -194,11 +199,11 @@ export function useFoldersQueryLegacy({
     const rootFlatTree = createFlatList(rootFolderUID ?? undefined, startingPages ?? [], 1);
     rootFlatTree.unshift(rootFolderItem || getRootFolderItem());
 
-    return [foldersMap, rootFlatTree];
+    return rootFlatTree;
   }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
 
   return {
-    foldersMap,
+    emptyFolders,
     items: treeList,
     isLoading: state.isLoading,
     requestNextPage,

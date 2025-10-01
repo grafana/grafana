@@ -40,6 +40,9 @@ export function useFoldersQueryAppPlatform({
   // Keep a list of all request subscriptions so we can unsubscribe from them when the component is unmounted
   const requestsRef = useRef<GetFolderChildrenRequest[]>([]);
 
+  // Set of UIDs for which children were requested but were empty.
+  const [emptyFolders, setEmptyFolders] = useState<Set<string>>(new Set());
+
   // Keep a list of selectors for dynamic state selection
   const [selectors, setSelectors] = useState<Array<ReturnType<typeof dashboardAPIv0alpha1.endpoints.getSearch.select>>>(
     []
@@ -112,10 +115,9 @@ export function useFoldersQueryAppPlatform({
 
   // Convert the individual responses into a flat list of folders, with level indicating
   // the depth in the hierarchy.
-  const [foldersMap, treeList] = useMemo(() => {
-    const foldersMap: Record<string, { children: string[] }> = { general: { children: [] } };
+  const treeList = useMemo(() => {
     if (!isBrowsing) {
-      return [foldersMap, []];
+      return [];
     }
 
     function createFlatList(
@@ -144,15 +146,16 @@ export function useFoldersQueryAppPlatform({
           },
         };
 
-        foldersMap[item.name] = { children: [] };
-        if (item.folder) {
-          foldersMap[item.folder].children.push(item.name);
-        } else {
-          foldersMap['general'].children.push(item.name);
-        }
-
         const childResponse = folderIsOpen && state.responseByParent[name];
         if (childResponse) {
+          // If we finished loading and there are no children add to empty list
+          if (
+            childResponse.data &&
+            childResponse.status !== QueryStatus.pending &&
+            childResponse.data.hits.length === 0
+          ) {
+            setEmptyFolders((prev) => new Set(prev).add(name));
+          }
           const childFlatItems = createFlatList(name, childResponse, level + 1);
           return [flatItem, ...childFlatItems];
         }
@@ -172,11 +175,11 @@ export function useFoldersQueryAppPlatform({
     const rootFlatTree = createFlatList(startingToken, state.responseByParent[startingToken], 1);
     rootFlatTree.unshift(rootFolderItem || getRootFolderItem());
 
-    return [foldersMap, rootFlatTree];
+    return rootFlatTree;
   }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
 
   return {
-    foldersMap,
+    emptyFolders,
     items: treeList,
     isLoading: state.isLoading,
     requestNextPage,

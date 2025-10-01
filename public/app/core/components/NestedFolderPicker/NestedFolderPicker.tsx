@@ -111,7 +111,7 @@ export function NestedFolderPicker({
 
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
-    foldersMap,
+    emptyFolders,
     items: browseFlatTree,
     isLoading: isBrowseLoading,
     requestNextPage: fetchFolderPage,
@@ -123,7 +123,7 @@ export function NestedFolderPicker({
     rootFolderItem,
   });
 
-  const emptyFolders = useEmptyFolders(foldersOpenState, foldersMap);
+  // const emptyFolders = useEmptyFolders(foldersOpenState, foldersMap);
 
   useEffect(() => {
     if (!search) {
@@ -421,31 +421,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
-/**
- * Returns a set of folder UIDs that are empty. Meaning that even after querying on they still have no children.
- */
-function useEmptyFolders(
-  foldersOpenState: Record<string, boolean>,
-  foldersMap: Record<string, { children: string[] }>
-): Set<string> {
-  return useMemo(() => {
-    const newEmptyFolders = new Set<string>();
-
-    // Check each open folder to see if it's empty. We are checking expanded folders only, which means we check only
-    // folders where we actually asked the backend to load the children.
-    Object.entries(foldersOpenState).forEach(([uid, isOpen]) => {
-      if (isOpen) {
-        const collection = uid ? foldersMap[uid] : foldersMap['general'];
-        if (!collection) {
-          return;
-        }
-
-        if (collection.children.length === 0) {
-          newEmptyFolders.add(uid);
-        }
-      }
-    });
-    return newEmptyFolders;
-  }, [foldersMap, foldersOpenState]);
-}
