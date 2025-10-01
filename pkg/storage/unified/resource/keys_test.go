@@ -81,7 +81,7 @@ func TestVerifyRequestKey(t *testing.T) {
 	invalidNamespace := "(((((default"
 	invalidName := "    " // only spaces
 
-	namespaceTooLong := strings.Repeat("a", MaxNameLength+1)
+	namespaceTooLong := strings.Repeat("a", 61)
 	nameTooLong := strings.Repeat("a", 300)
 
 	tests := []struct {
