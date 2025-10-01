@@ -515,9 +515,8 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 		Resource:  parsed.GVR.Resource,
 		Namespace: id.GetNamespace(),
 		Name:      name,
-		Folder:    parsed.Meta.GetFolder(),
 		Verb:      verb,
-	})
+	}, parsed.Meta.GetFolder())
 	if err != nil || !rsp.Allowed {
 		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
 			fmt.Errorf("no access to read the embedded file"))
