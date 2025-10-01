@@ -33,7 +33,6 @@ import { SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: ProvisionedDashboardFormData;
-  loadedFromRef?: string;
   workflowOptions: Array<{ label: string; value: string }>;
   readOnly: boolean;
   repository?: RepositoryView;
@@ -45,7 +44,6 @@ export function SaveProvisionedDashboardForm({
   drawer,
   changeInfo,
   isNew,
-  loadedFromRef,
   workflowOptions,
   readOnly,
   repository,
