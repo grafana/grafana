@@ -21,11 +21,26 @@ try {
 
   await pkgJson.save();
 
-  // Aliasable exports point to a separate entry point. Wildcard exports aren't supported.
-  const aliasableExports = Object.entries(pkgJsonExports).reduce((acc, [key, val], idx) => {
+  // Aliasable exports point to a separate entry point. The following should not be aliased:
+  // - ./package.json
+  // - .
+  // - ./index
+  // - Wildcard exports
+  // - exports with a single key '@grafana-app/source'
+  const aliasableExports = Object.entries(pkgJsonExports).reduce((acc, [key, val]) => {
     if (key === './package.json' || key === '.' || key === './index' || key.endsWith('*')) {
       return acc;
     }
+
+    if (
+      val !== null &&
+      typeof val === 'object' &&
+      Object.keys(val).length === 1 &&
+      Object.keys(val)[0] === '@grafana-app/source'
+    ) {
+      return acc;
+    }
+
     acc[key] = val;
     return acc;
   }, {});
@@ -46,14 +61,26 @@ async function createAliasPackageJsonFiles(packageJsonContent, aliasName, pkgJso
     console.log(`📦 Writing alias package.json for ${pkgName}.`);
     const pkgJsonPath = join(cwd, aliasName);
     await mkdir(pkgJsonPath, { recursive: true });
-    const pkgJson = await PackageJson.create(pkgJsonPath, {
-      data: {
-        name: pkgName,
-        types: relative(pkgJsonPath, pkgJsonExport.types),
-        main: relative(pkgJsonPath, pkgJsonExport.require),
-        module: relative(pkgJsonPath, pkgJsonExport.import),
-      },
-    });
+    let pkgJson;
+
+    if (typeof pkgJsonExport === 'string') {
+      pkgJson = await PackageJson.create(pkgJsonPath, {
+        data: {
+          name: pkgName,
+          main: relative(pkgJsonPath, pkgJsonExport),
+        },
+      });
+    } else {
+      pkgJson = await PackageJson.create(pkgJsonPath, {
+        data: {
+          name: pkgName,
+          types: relative(pkgJsonPath, pkgJsonExport.types),
+          main: relative(pkgJsonPath, pkgJsonExport.require),
+          module: relative(pkgJsonPath, pkgJsonExport.import),
+        },
+      });
+    }
+
     await pkgJson.save();
   } catch (error) {
     throw new Error(`Error generating package.json for ${pkgName}`, error);
