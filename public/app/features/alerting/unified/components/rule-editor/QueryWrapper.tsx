@@ -59,6 +59,7 @@ interface Props {
   condition: string | null;
   onSetCondition: (refId: string) => void;
   onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
+  sparkJoy?: boolean;
 }
 
 export const QueryWrapper = ({
@@ -80,6 +81,7 @@ export const QueryWrapper = ({
   condition,
   onSetCondition,
   onChangeQueryOptions,
+  sparkJoy,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [dsInstance, setDsInstance] = useState<DataSourceApi>();
@@ -170,7 +172,7 @@ export const QueryWrapper = ({
     return (
       <Stack direction="row" alignItems="center" gap={1}>
         <SelectingDataSourceTooltip />
-        <AlertingRuleQueryExtensionPoint query={Object.assign({}, query.model)} extensionsToShow="queryless" />
+        <AlertingRuleQueryExtensionPoint query={Object.assign({}, query.model)} extensionsToShow="queryless" sparkJoy={sparkJoy} />
         <QueryOptions
           onChangeTimeRange={onChangeTimeRange}
           query={query}
@@ -193,7 +195,6 @@ export const QueryWrapper = ({
   // TypeScript isn't complaining here because the interfaces just happen to be compatible
   const editorQueries = cloneDeep(queries.map((query) => query.model));
   const range = rangeUtil.relativeToTimeRange(query.relativeTimeRange ?? getDefaultRelativeTimeRange());
-
   return (
     <Stack direction="column" gap={0.5}>
       <div className={styles.wrapper}>
@@ -214,6 +215,7 @@ export const QueryWrapper = ({
           onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
           onRunQuery={onRunQueries}
           queries={editorQueries}
+          sparkJoy={sparkJoy}
           range={range}
           renderHeaderExtras={() => (
             <HeaderExtras query={query} index={index} error={error} isAdvancedMode={isAdvancedMode} />

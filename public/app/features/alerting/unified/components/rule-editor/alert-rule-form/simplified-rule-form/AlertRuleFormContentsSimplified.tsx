@@ -14,9 +14,10 @@ import { RuleDefinitionSection } from './RuleDefinitionSection';
 
 type Props = {
   type: RuleFormType;
+  sparkJoy?: boolean;
 };
 
-export function AlertRuleFormContentsSimplified({ type }: Props) {
+export function AlertRuleFormContentsSimplified({ type, sparkJoy }: Props) {
   const styles = useStyles2(getStyles);
   const { formState, handleSubmit } = useFormContext<RuleFormValues>();
 
@@ -28,7 +29,7 @@ export function AlertRuleFormContentsSimplified({ type }: Props) {
 
       <div className={styles.divider} aria-hidden="true" />
 
-      <QueryAndExpressionSection />
+      <QueryAndExpressionSection sparkJoy={sparkJoy}/>
 
       <div className={styles.divider} aria-hidden="true" />
 

@@ -250,7 +250,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
           )}
           {isPaused && <InfoPausedRule />}
           {sparkJoy ? (
-            <AlertRuleFormContentsSimplified key="simplified" type={type} />
+            <AlertRuleFormContentsSimplified key="simplified" type={type} sparkJoy={sparkJoy}/>
           ) : (
             <AlertRuleFormContents
               key="full"

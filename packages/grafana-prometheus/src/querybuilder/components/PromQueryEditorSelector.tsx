@@ -135,7 +135,7 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
         onAddQuery={onAddQuery}
       />
       <EditorHeader>
-        {!(sparkJoy && app === CoreApp.Explore) && (
+        {!sparkJoy && (
           <Button
             data-testid={selectors.components.QueryBuilder.queryPatterns}
             variant="secondary"

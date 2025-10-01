@@ -12,6 +12,7 @@ import { QuerylessAppsExtensions } from './QuerylessAppExtensions';
 type Props = {
   extensionsToShow: 'queryless';
   query: DataQuery;
+  sparkJoy?: boolean;
 };
 
 const QUERYLESS_APPS = [
@@ -35,7 +36,7 @@ export type PluginExtensionAlertingRuleContext = {
   // TODO: add rule form values for creating alerting rule from drilldown apps
 };
 
-export function AlertingRuleQueryExtensionPoint({ extensionsToShow, query }: Props): ReactElement | null {
+export function AlertingRuleQueryExtensionPoint({ extensionsToShow, query, sparkJoy }: Props): ReactElement | null {
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
@@ -64,7 +65,7 @@ export function AlertingRuleQueryExtensionPoint({ extensionsToShow, query }: Pro
     }
 
     // Check if this queryless app is compatible with the data source type
-    const compatibleApps = DATASOURCE_TO_QUERYLESS_APP[datasourceType.toLowerCase()] || [];
+    const compatibleApps = sparkJoy ? [] : DATASOURCE_TO_QUERYLESS_APP[datasourceType.toLowerCase()] || [];
     return compatibleApps.includes(link.pluginId);
   });
 

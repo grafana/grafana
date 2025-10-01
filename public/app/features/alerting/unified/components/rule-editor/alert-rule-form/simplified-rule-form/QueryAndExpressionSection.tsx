@@ -26,7 +26,7 @@ import { useAlertQueryRunner } from '../../query-and-alert-condition/useAlertQue
 
 import { getSimplifiedSectionStyles } from './sectionStyles';
 
-export function QueryAndExpressionSection() {
+export function QueryAndExpressionSection({ sparkJoy }: { sparkJoy?: boolean }) {
   const base = useStyles2(getSimplifiedSectionStyles);
   const styles = useStyles2(getStyles);
   const { getValues, setValue } = useFormContext<RuleFormValues>();
@@ -103,6 +103,7 @@ export function QueryAndExpressionSection() {
             panelData={queryPreviewData}
             condition={condition}
             onSetCondition={handleSetCondition}
+            sparkJoy={sparkJoy}
           />
           {!simplifiedQueryStep && (
             <div className={styles.spacedAfter}>

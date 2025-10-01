@@ -19,7 +19,6 @@ import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOp
 import { SortOrder, getRichHistory } from 'app/core/utils/richHistory';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { SparkJoySection } from 'app/features/query/components/SparkJoySection';
 import { RichHistoryQuery } from 'app/types/explore';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -217,7 +216,7 @@ export class QueryRows extends PureComponent<Props> {
   };
 
   render() {
-    const { queries, expressions, condition } = this.props;
+    const { queries, expressions, condition, sparkJoy } = this.props;
     const thresholdByRefId = getThresholdsForQueries([...queries, ...expressions], condition);
 
     return (
@@ -259,11 +258,6 @@ export class QueryRows extends PureComponent<Props> {
                         />
                       );
                     }
-
-                    // Check if query has expression content
-                    const hasExpressionContent = 'expr' in query.model && query.model.expr;
-                    const shouldShowSparkJoy = this.props.sparkJoy && index === 0 && queries.length === 1 && !hasExpressionContent;
-                    
                     return (
                       <div key={query.refId}>
                         <QueryWrapper
@@ -284,19 +278,8 @@ export class QueryRows extends PureComponent<Props> {
                           onRunQueries={this.props.onRunQueries}
                           condition={this.props.condition}
                           onSetCondition={this.props.onSetCondition}
+                          sparkJoy={sparkJoy}
                         />
-                        {shouldShowSparkJoy && this.state.datasourceInstances[query.datasourceUid] && (
-                          <SparkJoySection
-                            datasource={this.state.datasourceInstances[query.datasourceUid]}
-                            history={this.state.recentQueries}
-                            onChangeQuery={(newQuery) => {
-                              this.onChangeQuery(newQuery, index);
-                            }}
-                            onRunQuery={this.props.onRunQueries}
-                            isLoadingHistory={this.state.isLoadingHistory}
-                            query={query.model}
-                          />
-                        )}
                       </div>
                     );
                   })}

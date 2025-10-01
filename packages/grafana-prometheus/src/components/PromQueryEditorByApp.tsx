@@ -8,7 +8,7 @@ import { PromQueryEditorSelector } from '../querybuilder/components/PromQueryEdi
 import { PromQueryEditorForAlerting } from './PromQueryEditorForAlerting';
 import { PromQueryEditorProps } from './types';
 
-function PromQueryEditorByAppBase(props: PromQueryEditorProps) {
+function PromQueryEditorByAppBase(props: PromQueryEditorProps & { sparkJoy?: boolean }) {
   const { app } = props;
 
   switch (app) {
