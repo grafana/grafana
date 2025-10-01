@@ -150,7 +150,13 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
   // @todo why is error not propagated to form?
   const submit = async (values: RuleFormValues): Promise<void> => {
-    const { type, evaluateEvery } = values;
+    // Ensure required group name defaults to rule name if not provided
+    const adjustedValues: RuleFormValues = {
+      ...values,
+      group: values.group && values.group.trim().length > 0 ? values.group : values.name,
+    };
+
+    const { type, evaluateEvery } = adjustedValues;
 
     if (conditionErrorMsg !== '') {
       notifyApp.error(conditionErrorMsg);
@@ -163,28 +169,30 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
     trackAlertRuleFormSaved({ formAction: existing ? 'update' : 'create', ruleType: type });
 
-    const ruleDefinition = grafanaTypeRule ? formValuesToRulerGrafanaRuleDTO(values) : formValuesToRulerRuleDTO(values);
+    const ruleDefinition = grafanaTypeRule
+      ? formValuesToRulerGrafanaRuleDTO(adjustedValues)
+      : formValuesToRulerRuleDTO(adjustedValues);
 
     const ruleGroupIdentifier = existing
       ? getRuleGroupLocationFromRuleWithLocation(existing)
-      : getRuleGroupLocationFromFormValues(values);
+      : getRuleGroupLocationFromFormValues(adjustedValues);
 
-    const targetRuleGroupIdentifier = getRuleGroupLocationFromFormValues(values);
+    const targetRuleGroupIdentifier = getRuleGroupLocationFromFormValues(adjustedValues);
 
     let saveResult: RulerGroupUpdatedResponse;
     // @TODO move this to a hook too to make sure the logic here is tested for regressions?
     if (!existing) {
       // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
-      storeInLocalStorageValues(values);
+      storeInLocalStorageValues(adjustedValues);
       // save the rule to the rule group
       saveResult = await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
       // track the new Grafana-managed rule creation in the analytics
       if (grafanaTypeRule) {
-        const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
-        const expressionQueries = values.queries.filter((query) => isExpressionQueryInAlert(query));
+        const dataQueries = adjustedValues.queries.filter((query) => !isExpressionQuery(query.model));
+        const expressionQueries = adjustedValues.queries.filter((query) => isExpressionQueryInAlert(query));
         trackNewGrafanaAlertRuleFormSavedSuccess({
-          simplifiedQueryEditor: values.editorSettings?.simplifiedQueryEditor ?? false,
-          simplifiedNotificationEditor: values.editorSettings?.simplifiedNotificationEditor ?? false,
+          simplifiedQueryEditor: adjustedValues.editorSettings?.simplifiedQueryEditor ?? false,
+          simplifiedNotificationEditor: adjustedValues.editorSettings?.simplifiedNotificationEditor ?? false,
           canBeTransformedToSimpleQuery: areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries),
         });
       }
@@ -250,7 +258,14 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
           )}
           {isPaused && <InfoPausedRule />}
           {sparkJoy ? (
-            <AlertRuleFormContentsSimplified key="simplified" type={type} sparkJoy={sparkJoy}/>
+            <AlertRuleFormContentsSimplified
+              key="simplified"
+              type={type}
+              sparkJoy={sparkJoy}
+              isSubmitting={isSubmitting}
+              onSaveClick={handleSubmit((values) => submit(values), onInvalid)}
+              onCancelClick={cancelRuleCreation}
+            />
           ) : (
             <AlertRuleFormContents
               key="full"

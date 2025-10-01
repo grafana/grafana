@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
-import { RuleFormType, RuleFormValues } from '../../../../types/rule-form';
+import { RuleFormType } from '../../../../types/rule-form';
 import { isRecordingRuleByType } from '../../../../utils/rules';
 
 import { EvaluationAndRecipientSection } from './EvaluationAndRecipientSection';
@@ -15,11 +14,13 @@ import { RuleDefinitionSection } from './RuleDefinitionSection';
 type Props = {
   type: RuleFormType;
   sparkJoy?: boolean;
+  isSubmitting: boolean;
+  onSaveClick: () => void;
+  onCancelClick: () => void;
 };
 
-export function AlertRuleFormContentsSimplified({ type, sparkJoy }: Props) {
+export function AlertRuleFormContentsSimplified({ type, sparkJoy, isSubmitting, onSaveClick, onCancelClick }: Props) {
   const styles = useStyles2(getStyles);
-  const { formState, handleSubmit } = useFormContext<RuleFormValues>();
 
   isRecordingRuleByType(type);
 
@@ -29,7 +30,7 @@ export function AlertRuleFormContentsSimplified({ type, sparkJoy }: Props) {
 
       <div className={styles.divider} aria-hidden="true" />
 
-      <QueryAndExpressionSection sparkJoy={sparkJoy}/>
+      <QueryAndExpressionSection sparkJoy={sparkJoy} />
 
       <div className={styles.divider} aria-hidden="true" />
 
@@ -37,10 +38,17 @@ export function AlertRuleFormContentsSimplified({ type, sparkJoy }: Props) {
 
       <div className={styles.actionsRow}>
         <Stack direction="row" alignItems="center" gap={1}>
-          <Button type="submit" onClick={handleSubmit(() => {})} disabled={formState.isSubmitting}>
+          <Button
+            data-testid="save-rule"
+            variant="primary"
+            type="button"
+            onClick={onSaveClick}
+            disabled={isSubmitting}
+            icon={isSubmitting ? 'spinner' : undefined}
+          >
             <Trans i18nKey="alerting.alert-rule-form.button-save">Save</Trans>
           </Button>
-          <Button type="button" variant="secondary" onClick={() => window.history.back()}>
+          <Button type="button" variant="secondary" onClick={onCancelClick} disabled={isSubmitting}>
             {t('alerting.alert-rule-form.button-cancel', 'Cancel')}
           </Button>
         </Stack>

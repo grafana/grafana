@@ -39,7 +39,7 @@ export function RuleDefinitionSection({ type }: { type: RuleFormType }) {
         </div>
       </div>
       <div className={styles.contentIndented}>
-        <Stack direction="column" gap={3}>
+        <Stack direction="column" gap={2}>
           <Field
             noMargin
             label={<Trans i18nKey="alerting.alert-rule-name-and-metric.label-name">Name</Trans>}
