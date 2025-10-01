@@ -57,7 +57,7 @@ export const FilterByValueTransformerEditor = (props: TransformerUIProps<FilterB
 
   const onAddFilter = useCallback(() => {
     const frame = input[0];
-    const field = frame.fields.find((f) => f.type !== FieldType.time);
+    const field = frame?.fields?.find((f) => f.type !== FieldType.time);
 
     if (!field) {
       return;
