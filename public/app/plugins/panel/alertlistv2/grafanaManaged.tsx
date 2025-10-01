@@ -4,10 +4,11 @@ import { useAsync } from 'react-use';
 import { DataFrame, InterpolateFunction } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { BackendDataSourceResponse, config, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
-import { Alert, Button } from '@grafana/ui';
+import { Alert } from '@grafana/ui';
 import { AlertRuleListItem } from 'app/features/alerting/unified/rule-list/components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton } from 'app/features/alerting/unified/rule-list/components/AlertRuleListItemLoader';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
+import { rulesNav } from 'app/features/alerting/unified/utils/navigation';
 import { isPromAlertingRuleState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { StateFilter } from './types';
@@ -24,6 +25,7 @@ type Labels = {
   alertname: string;
   alertstate: 'firing' | 'pending';
   grafana_folder: string;
+  grafana_rule_uid: string;
 };
 
 export function GrafanaManagedAlerts({
@@ -117,24 +119,21 @@ export function GrafanaManagedAlerts({
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             const labels = valueField?.labels as Labels;
 
-            const { alertname = 'unknown', alertstate = PromAlertingRuleState.Unknown } = labels;
+            const { alertname = 'unknown', alertstate = PromAlertingRuleState.Unknown, grafana_rule_uid } = labels;
 
             const state = isPromAlertingRuleState(alertstate) ? alertstate : PromAlertingRuleState.Unknown;
+            const ruleLink = rulesNav.detailsPageLink('grafana', { uid: grafana_rule_uid, ruleSourceName: 'grafana' });
 
             const key = JSON.stringify(labels);
             return (
               <AlertRuleListItem
                 key={key}
                 name={alertname}
-                href={'#'}
+                href={ruleLink}
                 application="grafana"
                 state={state}
                 namespace={labels.grafana_folder}
-                actions={
-                  <Button variant="secondary" size="sm">
-                    <Trans i18nKey="alertlist.grafana.view-rule">View rule</Trans>
-                  </Button>
-                }
+                actions={<></>}
               />
             );
           })}

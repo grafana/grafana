@@ -3062,8 +3062,7 @@
     },
     "grafana": {
       "error-title": "Failed to fetch Grafana alerts",
-      "no-alerts": "No Grafana alerts found",
-      "view-rule": "View rule"
+      "no-alerts": "No Grafana alerts found"
     },
     "group-by": {
       "aria-label-group-by-label-keys": "group by label keys",
