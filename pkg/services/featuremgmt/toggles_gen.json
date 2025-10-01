@@ -309,19 +309,6 @@
     },
     {
       "metadata": {
-        "name": "alertingGenerateSimplifiedRoutingWithOldHashes",
-        "resourceVersion": "1759334385382",
-        "creationTimestamp": "2025-10-01T15:59:45Z"
-      },
-      "spec": {
-        "description": "Generate simplified routing with old hashes",
-        "stage": "experimental",
-        "codeowner": "@grafana/alerting-squad",
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "alertingImportAlertmanagerAPI",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-06-10T08:32:50Z"

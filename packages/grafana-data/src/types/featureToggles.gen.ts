@@ -1009,11 +1009,6 @@ export interface FeatureToggles {
   */
   alertRuleUseFiredAtForStartsAt?: boolean;
   /**
-  * Generate simplified routing with old hashes
-  * @default false
-  */
-  alertingGenerateSimplifiedRoutingWithOldHashes?: boolean;
-  /**
   * Enables the alerting bulk actions in the UI
   * @default true
   */
