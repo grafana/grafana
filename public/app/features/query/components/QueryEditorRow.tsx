@@ -394,7 +394,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             app={app}
             onUpdateSuccess={this.onExitQueryLibraryEditingMode}
             onSelectQuery={this.onSelectQueryFromLibrary}
-            datasourceFilters={datasource?.name ? [datasource.name] : []}
+            datasourceType={datasource?.type}
+            datasourceName={datasource?.name}
             onlyIcons={app === CoreApp.UnifiedAlerting}
           />
         )}
@@ -587,16 +588,32 @@ function SavedQueryButtons(props: {
   app?: CoreApp;
   onUpdateSuccess?: () => void;
   onSelectQuery: (query: DataQuery) => void;
-  datasourceFilters: string[];
+  datasourceType?: string;
+  datasourceName?: string;
   onlyIcons?: boolean;
 }) {
   const { renderSavedQueryButtons } = useQueryLibraryContext();
+
+  // For alerting context, only show buttons for supported datasources (Prometheus, Loki)
+  // This prevents users from seeing buttons for datasources that don't work with saved queries in alerting
+  if (props.app === CoreApp.UnifiedAlerting) {
+    const datasourceType = props.datasourceType?.toLowerCase() || '';
+    const isSupportedForAlerting = datasourceType === 'prometheus' || datasourceType === 'loki';
+
+    if (!isSupportedForAlerting) {
+      return null; // Hide buttons for unsupported datasources in alerting
+    }
+  }
+
+  // No need to pass datasourceFilters - the drawer filters based on appContext
+  // For alerting context, drawer automatically filters to Prometheus/Loki
+  // For other contexts, drawer shows all datasources
   return renderSavedQueryButtons(
     props.query,
     props.app,
     props.onUpdateSuccess,
     props.onSelectQuery,
-    props.datasourceFilters,
+    undefined, // Drawer handles filtering based on appContext
     props.onlyIcons
   );
 }

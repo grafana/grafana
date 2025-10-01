@@ -8,7 +8,6 @@ import { GrafanaTheme2, getDefaultRelativeTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
 import {
   Alert,
   Button,
@@ -468,17 +467,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
       return undefined;
     }
 
-    const handleQueryReplace = (replacedQuery: DataQuery) => {
-      const updatedQuery: AlertQuery = {
-        ...singleQuery,
-        model: {
-          ...replacedQuery,
-          datasource: replacedQuery.datasource,
-        },
-        datasourceUid: replacedQuery.datasource?.uid || singleQuery.datasourceUid,
-      };
-
-      onChangeQueries([updatedQuery]);
+    const handleQueryReplace = async (updatedAlertQuery: AlertQuery) => {
+      // This handler receives the already-processed AlertQuery from AlertingQueryEditorActionsWrapper
+      // We just need to update the queries list with the normalized query
+      onChangeQueries([updatedAlertQuery]);
     };
 
     return (
