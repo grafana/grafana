@@ -198,16 +198,17 @@ func TestValidation(t *testing.T) {
 				"folders",
 				"folders123",
 				"aaa",
+				"hello-world",
+				"hello-world-",
 			},
 		}, {
 			name: "bad input",
 			expect: []string{
-				"resource must consist of alphanumeric characters (e.g. 'dashboards',  or 'folders', regex used for validation is '^[A-Za-z][A-Za-z0-9]*$')",
+				"resource must consist of alphanumeric characters and dashes, and must start with an alphabetic character (e.g. 'dashboards',  or 'folders', regex used for validation is '^[A-Za-z][A-Za-z0-9-]*$')",
 			},
 			input: []string{
 				"_bad_input",
 				"hello world",
-				"hello-world",
 				"hello!",
 				"hello~",
 				"hello ",
