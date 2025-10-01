@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { advanceBy } from 'jest-date-mock';
+import { UnknownAction } from 'redux';
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
@@ -107,7 +108,7 @@ jest.mock('app/store/store', () => {
   const actual = jest.requireActual('app/store/store');
   return {
     ...actual,
-    dispatch: jest.fn((action: any) => {
+    dispatch: jest.fn((action: UnknownAction) => {
       if (testStore) {
         return testStore.dispatch(action);
       }
