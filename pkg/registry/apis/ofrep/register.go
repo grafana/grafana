@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 
 	"github.com/gorilla/mux"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -30,6 +33,8 @@ import (
 var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
 var _ builder.APIGroupRouteProvider = (*APIBuilder)(nil)
 var _ builder.APIGroupVersionProvider = (*APIBuilder)(nil)
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/registry/apis/ofrep")
 
 const ofrepPath = "/ofrep/v1/evaluate/flags"
 
@@ -240,50 +245,64 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 }
 
 func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, span := tracer.Start(r.Context(), "ofrep.handler.evalFlag")
+	defer span.End()
+
 	if !b.validateNamespace(r) {
 		b.logger.Error(namespaceMismatchMsg)
+		span.RecordError(errors.New(namespaceMismatchMsg))
 		http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 		return
 	}
 
 	flagKey := mux.Vars(r)["flagKey"]
 	if flagKey == "" {
+		span.RecordError(fmt.Errorf("flagKey parameter is required"))
 		http.Error(w, "flagKey parameter is required", http.StatusBadRequest)
 		return
 	}
 
+	span.SetAttributes(attribute.String("flag_key", flagKey))
+
 	isAuthedReq := b.isAuthenticatedRequest(r)
+	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
 	// Unless the request is authenticated, we only allow public flags evaluations
 	if !isAuthedReq && !isPublicFlag(flagKey) {
 		b.logger.Error("Unauthorized to evaluate flag", "flagKey", flagKey)
+		span.RecordError(fmt.Errorf("unauthorized to evaluate flag: %s", flagKey))
 		http.Error(w, "unauthorized to evaluate flag", http.StatusUnauthorized)
 		return
 	}
 
 	if b.providerType == setting.GOFFProviderType {
-		b.proxyFlagReq(flagKey, isAuthedReq, w, r)
+		b.proxyFlagReq(ctx, flagKey, isAuthedReq, w, r)
 		return
 	}
 
-	b.evalFlagStatic(flagKey, w, r)
+	b.evalFlagStatic(ctx, flagKey, w, r)
 }
 
 func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, span := tracer.Start(r.Context(), "ofrep.handler.evalAllFlags")
+	defer span.End()
+
 	if !b.validateNamespace(r) {
 		b.logger.Error(namespaceMismatchMsg)
+		span.RecordError(errors.New(namespaceMismatchMsg))
 		http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 		return
 	}
 
 	isAuthedReq := b.isAuthenticatedRequest(r)
+	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
 	if b.providerType == setting.GOFFProviderType {
-		b.proxyAllFlagReq(isAuthedReq, w, r)
+		b.proxyAllFlagReq(ctx, isAuthedReq, w, r)
 		return
 	}
 
-	b.evalAllFlagsStatic(isAuthedReq, w, r)
+	b.evalAllFlagsStatic(ctx, isAuthedReq, w, r)
 }
 
 func writeResponse(statusCode int, result any, logger log.Logger, w http.ResponseWriter) {
