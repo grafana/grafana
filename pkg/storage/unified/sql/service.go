@@ -202,8 +202,18 @@ func ProvideUnifiedStorageGrpcService(
 }
 
 func (s *service) PrepareDownscale(w http.ResponseWriter, r *http.Request) {
-	s.log.Info("Preparing for downscale. Will not keep instance in ring on shutdown.", "method", r.Method)
-	s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(false)
+	switch r.Method {
+	case http.MethodPost:
+		s.log.Info("Preparing for downscale. Will not keep instance in ring on shutdown.")
+		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(false)
+	case http.MethodDelete:
+		s.log.Info("Downscale canceled. Will keep instance in ring on shutdown.")
+		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(true)
+	case http.MethodGet:
+		// used for delayed downscale use case, which we don't support. Leaving here for completion sake
+		s.log.Info("Received GET request for prepare-downscale. Behavior not implemented.")
+	default:
+	}
 }
 
 var (
