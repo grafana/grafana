@@ -54,6 +54,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
 	cfg.IndexPath = section.Key("index_path").String()
 	cfg.IndexWorkers = section.Key("index_workers").MustInt(10)
+	cfg.IndexRebuildWorkers = section.Key("index_rebuild_workers").MustInt(5)
 	cfg.IndexMaxBatchSize = section.Key("index_max_batch_size").MustInt(100)
 	cfg.EnableSharding = section.Key("enable_sharding").MustBool(false)
 	cfg.QOSEnabled = section.Key("qos_enabled").MustBool(false)
@@ -76,4 +77,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
 	cfg.CACertPath = section.Key("ca_cert_path").String()
 	cfg.HttpsSkipVerify = section.Key("https_skip_verify").MustBool(false)
+
+	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
+	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")
 }

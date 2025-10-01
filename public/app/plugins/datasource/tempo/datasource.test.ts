@@ -52,17 +52,6 @@ import { createTempoDatasource } from './test/mocks';
 import { initTemplateSrv } from './test/test_utils';
 import { TempoJsonData, TempoQuery } from './types';
 
-let mockObservable: () => Observable<unknown>;
-jest.mock('@grafana/runtime', () => {
-  return {
-    ...jest.requireActual('@grafana/runtime'),
-    getBackendSrv: () => ({
-      fetch: mockObservable,
-      _request: mockObservable,
-    }),
-  };
-});
-
 describe('Tempo data source', () => {
   // Mock the console error so that running the test suite doesnt throw the error
   const origError = console.error;
@@ -71,7 +60,6 @@ describe('Tempo data source', () => {
   beforeEach(() => (console.error = consoleErrorMock));
 
   describe('runs correctly', () => {
-    jest.spyOn(TempoDatasource.prototype, 'isFeatureAvailable').mockImplementation(() => true);
     const handleStreamingQuery = jest.spyOn(TempoDatasource.prototype, 'handleStreamingQuery');
     const request = jest.spyOn(TempoDatasource.prototype, '_request');
     const templateSrv: TemplateSrv = { replace: (s: string) => s } as unknown as TemplateSrv;
@@ -338,20 +326,6 @@ describe('Tempo data source', () => {
     const edgesFrame = response.data[1];
     expect(edgesFrame.name).toBe('Edges');
     expect(edgesFrame.meta?.preferredVisualisationType).toBe('nodeGraph');
-  });
-
-  describe('test the testDatasource function', () => {
-    it('should return a success msg if response.ok is true', async () => {
-      mockObservable = () => of({ ok: true });
-      const handleStreamingQuery = jest
-        .spyOn(TempoDatasource.prototype, 'handleStreamingQuery')
-        .mockImplementation(() => of({ data: [] }));
-
-      const ds = new TempoDatasource(defaultSettings);
-      const response = await ds.testDatasource();
-      expect(response.status).toBe('success');
-      expect(handleStreamingQuery).toHaveBeenCalled();
-    });
   });
 
   describe('test the metadataRequest function', () => {

@@ -81,20 +81,6 @@
         "title-access-denied": "アクセス拒否"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "一部機能は安定版（GA）として標準で有効になっていますが、いくつかの機能は現在暫定的なベータ版の段階であり、早期導入することが可能です。",
-      "confirm-modal-body-2": "変更する前に、各機能の変更がもたらす影響を理解することをお勧めします。",
-      "confirmText-save-changes": "変更を保存",
-      "get-stage-cell": {
-        "beta": "ベータ版",
-        "content-general-availability": "一般提供",
-        "deprecated": "非推奨",
-        "ga": "GA"
-      },
-      "save-changes": "変更を保存",
-      "saving": "保存中…",
-      "title-apply-feature-toggle-changes": "機能の切り替え変更を適用する"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "組織を削除",
       "confirmText-delete": "削除",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "実行中の設定更新",
       "title-sort-dashboards-by-popularity-in-search": "検索時に人気度順にダッシュボードを並べ替え",
       "title-team-sync": "チーム同期"
-    },
-    "feature-toggles": {
-      "restart-pending": "最新の機能切り替えの変更を適用するために、Grafanaインスタンスの再起動は保留中です",
-      "restart-required": "機能切り替えの変更を保存すると、インスタンスの再起動が必要となります。これには数分かかる場合があります",
-      "sub-title": "機能トグルを表示および編集します。機能トグルの詳細については、<2>grafana.com</2>をご覧ください。"
     },
     "get-enterprise": {
       "contact-us": "お問い合わせいただくと、無料トライアルをご利用いただけます",
@@ -364,14 +345,6 @@
       "tooltip-assigned-role": "このユーザーがサインインすると、ライセンス付きロールが割り当てられます"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "共通ラベルを非表示にする",
-      "show": {
-        "tooltip": "共通ラベルを表示する"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "アクティブタイミング"
@@ -477,15 +450,16 @@
     "alert-instance-state-filter": {
       "state": "ステート"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "ラベルを削除"
     },
     "alert-label-dropdown": {
       "placeholder-select": "{{type}}を選択"
-    },
-    "alert-labels": {
-      "aria-label-labels": "ラベル",
-      "common-labels-count_other": "その他{{count}}個の共通ラベル"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "ミュート、グループ化、タイミング（任意）",
@@ -1673,6 +1647,10 @@
     "inspector-yaml-tab": {
       "apply": "適用"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "IRMへの接続方法",
       "disabled-description": "Webhook連携を通じてIRMを有効化",
@@ -1814,6 +1792,10 @@
         }
       }
     },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
+    },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "ブレースなしのラベルクエリを使用してアラートをフィルタします。例：",
       "filter-alerts-using-label-querying-without-spaces": "スペースなしのラベルクエリでアラートを絞り込みます。例：",
@@ -1920,9 +1902,6 @@
       "title-remove": "削除",
       "tooltip-remove-time-range": "時間範囲を削除"
     },
-    "namespace": {
-      "title-alert-rules": "アラートルール"
-    },
     "namespace-and-group-filter": {
       "select-group": "グループを選択",
       "select-namespace": "名前空間を選択"
@@ -1979,8 +1958,10 @@
       "label-notification-policies": "通知ポリシー",
       "label-time-intervals": "時間間隔"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "デフォルトのポリシー",
       "no-matchers": "マッチャーなし"
     },
     "notification-preview": {
@@ -1997,22 +1978,12 @@
     },
     "notification-route": {
       "no-labels": "ラベルなし",
-      "no-matching-labels": "一致するラベルがありません"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "アラートインスタンスは次のようにルーティングされます。",
-      "close": "閉じる",
-      "contact-point": "コンタクトポイント",
-      "default-policy": "デフォルトのポリシー",
-      "notification-policy-path": "通知ポリシーパス",
-      "see-details-link": "詳細を見る",
-      "title-routing-details": "ルーティング詳細"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "ポリシールートを展開",
-      "delivered-to": "配信先：",
-      "notification-policy": "通知ポリシー",
-      "see-details": "詳細を見る"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2040,7 +2011,9 @@
       "recipient-notification-fires": "アラートルールの発生時に通知を受け取る相手を選択してください。"
     },
     "option-customfield": {
-      "label-custom-template": "カスタムテンプレート"
+      "label-custom-template": "カスタムテンプレート",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "選択したAlertmanagerは存在しないか、アクセス権限がない可能性があります。ドロップダウンから別のAlertmanagerを選択できます。",
@@ -2137,10 +2110,6 @@
       "label-new-sibling-above": "上に新しい兄弟ポリシーを追加",
       "label-new-sibling-below": "下に新しい兄弟ポリシーを追加"
     },
-    "policy-path": {
-      "default-policy": "デフォルトのポリシー",
-      "no-matchers": "マッチャーなし"
-    },
     "preview-rule": {
       "body-preview-is-not-available": "クエリプレビューを表示できません。クエリで使用されているデータソースの一部が利用できません。",
       "preview-alerts": "アラートをプレビュー",
@@ -2185,7 +2154,6 @@
       "body-queries-expressions-configured": "アラート対象となるクエリまたは式を少なくとも1つ作成してください",
       "confirmText-deactivate": "無効化する",
       "expressions": "式",
-      "loading-data-sources": "データソース読み込み中...",
       "manipulate-returned-queries-other-operations": "数式やその他の演算を使用してクエリから返されたデータを操作します。",
       "message": {
         "a-valid-expression-is-required": "有効な式の入力が必要です"
@@ -3582,6 +3550,7 @@
       "button-cancel": "キャンセル",
       "button-delete": "削除",
       "button-deleting": "削除中…",
+      "commit": "",
       "delete-warning": "このフォルダとその下位のすべてのフォルダやコンテンツが削除されます。全部で、次に影響します: ",
       "success-message": "フォルダが正常に削除されました"
     },
@@ -5335,7 +5304,6 @@
             "json": "JSON形式でエクスポート"
           }
         },
-        "mark-favorite": "お気に入りに登録",
         "more-save-options": "その他の保存オプション",
         "playlist-next": "次のダッシュボードへ",
         "playlist-previous": "前のダッシュボードへ",
@@ -5364,8 +5332,7 @@
             "yesText": "保存"
           }
         },
-        "unlink-library-panel": "ライブラリパネルのリンクを解除",
-        "unmark-favorite": "お気に入りから削除"
+        "unlink-library-panel": "ライブラリパネルのリンクを解除"
       },
       "open-original": "元のダッシュボードを開く",
       "playlist-next": "次のダッシュボードに移動",
@@ -5385,11 +5352,11 @@
       "save-dashboard-short": "保存",
       "save-library-panel": "ライブラリパネルを保存",
       "settings": "ダッシュボードの設定",
-      "share": {
-        "label": "共有",
-        "tooltip": "ダッシュボードを共有"
-      },
       "share-button": "共有",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "ライブラリパネルのリンクを解除",
       "unmark-favorite": "お気に入りを解除"
     },
@@ -5639,14 +5606,6 @@
         "title": {
           "new-dashboard": "新しいダッシュボード"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "公開URLを取り消す"
-      },
-      "title": {
-        "revoke-public-url": "公開URLを取り消す"
       }
     },
     "constant-variable-form": {
@@ -5902,13 +5861,12 @@
       "usage-count_other": "{{count}}件のダッシュボードで使用中"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "ダッシュボードの移動中にエラーが発生しました",
       "api-error": "ダッシュボードの移動に失敗しました",
       "cancel-action": "キャンセル",
       "current-file-not-found": "現在のダッシュボードファイルが見つかりませんでした",
       "drawer-title": "プロビジョニング済みダッシュボードを移動",
       "file-load-error": "ダッシュボードの読み込み中にエラーが発生しました",
-      "loading-file-data": "ダッシュボード読み込み中...",
+      "loading-dashboard-data": "",
       "move-action": "ダッシュボードを移動",
       "move-read-only-message": "読み取り専用リポジトリのため、このダッシュボードをGrafanaから直接移動することはできません。このダッシュボードを移動するには、Gitリポジトリ内のファイルを移動してください。",
       "moving": "移動中…",
@@ -9247,8 +9205,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "キャンセル",
-      "create": "ライブラリパネルを作成",
       "error": "この名前のライブラリパネルは既に存在します",
       "folder": "フォルダに保存",
       "folder-description": "ライブラリパネルの権限は、フォルダの権限から派生します",
@@ -9339,6 +9295,7 @@
     },
     "share-panel": {
       "config-description": "次のカスタマイズ設定を使用して、組織内でパネルを共有するためのパーソナライズされた直接リンクを作成します。",
+      "copy-image-link": "",
       "download-image": "画像をダウンロード",
       "render-image": "画像を生成する"
     }
@@ -9424,7 +9381,7 @@
       "label-signature": "署名"
     },
     "description-enable-infinite-scrolling": "実験的機能。ログリストの一番下までスクロールして、さらに結果をリクエストします。",
-    "description-enable-syntax-highlighting": "事前定義された構文の色付けルールを使い、ログ行の該当部分をハイライト表示します",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "最後または最初のログ行にジャンプするコントロールを表示し、ログレベルでフィルタリングします",
     "fields": {
       "type": {
@@ -9693,14 +9650,14 @@
     },
     "name-common-labels": "共通ラベル",
     "name-deduplication": "重複排除",
-    "name-details-mode": "ログ詳細パネルの表示モード",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "インライン表示",
       "label-sidebar": "サイドバー"
     },
     "name-enable-infinite-scrolling": "無限スクロールを有効化",
     "name-enable-log-details": "ログの詳細を有効化",
-    "name-enable-syntax-highlighting": "構文ハイライトを有効化",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "フォントサイズ",
     "name-order": "順番",
     "name-prettify-json": "JSONを整形",
@@ -10311,9 +10268,6 @@
     "profiles": {
       "title": "プロフィール"
     },
-    "public": {
-      "title": "公開ダッシュボード"
-    },
     "recently-deleted": {
       "subtitle": "ここに30日以上リストされているアイテムはすべて自動的に削除されます。",
       "title": "最近削除された"
@@ -10640,6 +10594,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -10994,7 +10956,6 @@
       "body-not-published": "このプラグインは<2>grafana.com/plugins</2>に公開されておらず、カタログから管理できません。",
       "enterprise-plugin-info": "このプラグインはGrafana CloudとGrafana Enterpriseでのみ利用可能です。",
       "learn-more": "もっと詳しく",
-      "no-valid-grafana-enterprise-license-detected": "有効なGrafana Enterpriseライセンスが検出されませんでした。",
       "title-dev-alert": "こちらはプラグインの開発ビルドであるため、アンインストールできません。",
       "title-plugin-doesnt-support-version-grafana": "このプラグインはお使いのGrafanaバージョンに対応していません。",
       "title-remote-plugins-unavailable": "GrafanaサーバーがGrafana.comにアクセスできないため、インストール機能は無効になっています。",
@@ -11313,6 +11274,7 @@
       "actions": {
         "set-up-required-feature-toggles": "必要な機能切り替えを設定"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Gitでコードとしてダッシュボードを管理し、更新を自動的にプロビジョニング",
       "manage-your-dashboards-with-remote-provisioning": "Git Sync を使ってみる",
       "store-dashboards-in-version-controlled-storage": "バージョン管理されたストレージにダッシュボードを保存して、整理と履歴追跡を改善"
@@ -11350,9 +11312,10 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "クエリに一致する結果なし",
+      "partial-managed": "",
       "placeholder-search": "検索",
       "all-resources-managed_other": "",
-      "partial-managed_other": ""
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11499,8 +11462,16 @@
         "subtitle": "外部ストレージを通じてGrafanaインスタンス全体を同期・管理したい場合は、このオプションを使用してください。"
       }
     },
-    "read-only-local-tooltip": "このフォルダは読み取り専用であり、ファイルのプロビジョニングを通じてプロビジョニングされます。フォルダに変更を加えるには、接続されたファイルリポジトリを更新します。フォルダ設定を変更するには、[管理] > [プロビジョニング] > [リポジトリ]の順で移動します。",
-    "read-only-remote-tooltip": "このフォルダは読み取り専用であり、Gitを介してプロビジョニングされます。フォルダに変更を加えるには、接続されているリポジトリを更新します。フォルダ設定を変更するには、[管理] > [プロビジョニング] > [リポジトリ]の順に移動します。",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "アクティブなジョブ",
       "column-action": "操作",
@@ -11614,6 +11585,7 @@
         "removed-from-repo-test-ui": "リポジトリテストUIから削除されました",
         "updated-from-repo-test-ui": "リポジトリテストUIから更新されました"
       },
+      "read-only-repo-tooltip": "",
       "repository": "レポジトリ",
       "tab-info": {
         "label": {
@@ -11650,6 +11622,8 @@
       "tooltip-unhealthy-repository": "問題のあるリポジトリをプルできません"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "各履歴値のコミットを含める",
       "synchronization-options": "同期オプション"
@@ -11724,7 +11698,6 @@
       "email-share-type-option-label": "指定された人のみ",
       "pause-sharing-dashboard-label": "ダッシュボードの共有を一時停止",
       "public-share-type-option-label": "リンクをお持ちの方全員",
-      "revoke-body": "このURLを取り消してもよろしいですか？ダッシュボードは公開されなくなります。",
       "revoke-public-URL-button": "公開URLを取り消す",
       "revoke-public-URL-button-title": "公開URLを取り消す",
       "settings-title": "設定"
@@ -11738,7 +11711,6 @@
       "success-pause": "ダッシュボードへのアクセスが一時停止されました",
       "success-resume": "ダッシュボードへのアクセスが再開されました",
       "success-update": "設定が正常に更新されました",
-      "success-update-old": "公開ダッシュボードが更新されました！",
       "time-range-label": "時間範囲",
       "time-range-tooltip": "共有ダッシュボードは、ダッシュボードのデフォルトの時間範囲設定を使用します"
     },
@@ -11746,10 +11718,6 @@
       "generate-public-url-button": "公開URLを生成する",
       "unsupported-features-desc": "現在、テンプレート変数またはフロントエンドデータソースはサポートされていません",
       "welcome-title": "公開ダッシュボードへようこそ！"
-    },
-    "delete-modal": {
-      "revoke-body-text": "このURLを取り消してもよろしいですか？ダッシュボードは公開されなくなります。",
-      "revoke-title": "公開URLを取り消す"
     },
     "email-sharing": {
       "accept-button": "承諾",
@@ -11780,11 +11748,8 @@
       "success-share-type-change": "ダッシュボードへのアクセスが更新されました：特定のユーザーのみがリンクでアクセスできるようになりました"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "管理者に連絡して、パブリックダッシュボードを{{action}}する権限を取得してください",
-      "no-upsert-perm-alert-title": " パブリックダッシュボードを{{ action }}する権限がありません",
       "save-dashboard-changes-alert-title": "パブリック構成を更新する前に、ダッシュボードの変更を保存してください",
       "unsupport-data-source-alert-readmore-link": "サポートされているデータソースの詳細を読む",
-      "unsupported-data-source-alert-desc": "このダッシュボードには、公開ダッシュボードでサポートされていないデータソースがあります。これらのデータソース、{{unsupportedDataSources}}を使用するパネルは正しく機能しない場合があります。",
       "unsupported-data-source-alert-title": "サポートされていないデータソース",
       "unsupported-template-variable-alert-desc": "この公開ダッシュボードは、テンプレート変数を使用しているため機能しない場合があります",
       "unsupported-template-variable-alert-title": "テンプレート変数はサポートされていません"
@@ -11818,8 +11783,7 @@
       "time-range-text": "時間範囲 = "
     },
     "share": {
-      "success-delete": "ダッシュボードは共有できなくなりました",
-      "success-delete-old": "公開ダッシュボードが削除されました！"
+      "success-delete": "ダッシュボードは共有できなくなりました"
     },
     "share-configuration": {
       "share-type-label": "リンクアクセス"
@@ -11838,24 +11802,6 @@
       "revoke-access-button": "アクセス権を取り消す",
       "revoke-access-description": "このアクセスを取り消してもよろしいですか？ダッシュボードは共有できなくなります。",
       "unsupported-data-source-alert-desc": "このダッシュボードには、共有ダッシュボードでサポートされていないデータソースがあります。これらのデータソース、{{unsupportedDataSources}}を使用するパネルは正しく機能しない場合があります。"
-    },
-    "sharing": {
-      "success-creation": "ダッシュボードは公開されています！"
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "公開ダッシュボードを設定",
-      "revoke-button-text": "公開URLを取り消す",
-      "revoke-button-tooltip": "公開ダッシュボードのURLを取り消す",
-      "view-button-tooltip": "公開ダッシュボードを表示"
-    },
-    "empty-state": {
-      "message": "まだ公開ダッシュボードを作成していません",
-      "more-info": "<1>共有</1>モーダルを使用して、既存のダッシュボードから公開ダッシュボードを作成します。<2>詳細はこちら</2>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "共有を一時停止"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11863,8 +11809,6 @@
       "external-link": "外部リンク",
       "loading-text": "読み込み中...",
       "open-dashboard-list-text": "ダッシュボードリストを開く",
-      "public-dashboard-link": "公開ダッシュボードのURL",
-      "public-dashboard-setting": "公開ダッシュボードの設定",
       "sharing-setting": "共有設定"
     },
     "delete-user-modal": {
@@ -11872,14 +11816,12 @@
       "delete-user-cancel-button": "キャンセル",
       "delete-user-revoke-access-button": "アクセス権を取り消す",
       "revoke-access-title": "アクセス権を取り消す",
-      "revoke-user-access-modal-desc-line1": "{{email}}のアクセス権を取り消してもよろしいです か？",
-      "revoke-user-access-modal-desc-line2": "この操作により、{{email}}&apos;s のすべての公開ダッシュボードへのアクセスが即時に取り消されます。"
+      "revoke-user-access-modal-desc-line1": "{{email}}のアクセス権を取り消してもよろしいです か？"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "このアクションにより、{{email}}は、すべての共有ダッシュボードへのアクセスが即座に取り消されます。"
     },
     "modal": {
-      "dashboard-modal-title": "公開ダッシュボード",
       "shared-dashboard-modal-title": "共有したダッシュボード"
     },
     "table-body": {
@@ -12085,8 +12027,8 @@
       "title": "スコープを選択"
     },
     "tree": {
-      "collapse": "折りたたみ表示",
-      "expand": "展開",
+      "collapse": "",
+      "expand": "",
       "headline": {
         "noResults": "クエリに一致する結果が見つかりませんでした。",
         "recommended": "おすすめ",
@@ -12377,8 +12319,6 @@
       "export": "エクスポート",
       "library-panel": "ライブラリパネルを追加",
       "link": "リンク",
-      "panel-embed": "埋め込み",
-      "public-dashboard": "公開ダッシュボードを表示",
       "public-dashboard-title": "公開ダッシュボード",
       "snapshot": "スナップショット"
     },
@@ -13973,7 +13913,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "公開ダッシュボードのユーザー",
       "shared-dashboard-users-tab-title": "共有ダッシュボードのユーザー"
     }
   },

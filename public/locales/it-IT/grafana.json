@@ -81,20 +81,6 @@
         "title-access-denied": "Accesso negato"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "Alcune funzionalità sono stabili (GA) e attive per impostazione predefinita, mentre altre sono ancora in fase beta preliminare e disponibili su richiesta in anteprima.",
-      "confirm-modal-body-2": "Si consiglia di comprendere le implicazioni di ogni modifica delle funzionalità prima di applicarle.",
-      "confirmText-save-changes": "Salva modifiche",
-      "get-stage-cell": {
-        "beta": "Beta",
-        "content-general-availability": "Disponibilità generale",
-        "deprecated": "Obsoleto",
-        "ga": "GA"
-      },
-      "save-changes": "Salva modifiche",
-      "saving": "Salvataggio in corso...",
-      "title-apply-feature-toggle-changes": "Applica le modifiche al toggle delle funzionalità"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "Elimina org",
       "confirmText-delete": "Elimina",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "Aggiornamenti delle impostazioni in fase di esecuzione",
       "title-sort-dashboards-by-popularity-in-search": "Ordina le dashboard in base alla popolarità nella ricerca",
       "title-team-sync": "Sincronizzazione del team"
-    },
-    "feature-toggles": {
-      "restart-pending": "È in sospeso un riavvio per l'istanza Grafana per applicare le ultime modifiche al toggle delle funzionalità",
-      "restart-required": "Il salvataggio delle modifiche al toggle delle funzionalità richiederà il riavvio dell'istanza, che potrebbe richiedere alcuni minuti",
-      "sub-title": "Visualizza e modifica gli interruttori della funzionalità. Scopri di più sugli interruttori della funzionalità su <2>grafana.com</2>."
     },
     "get-enterprise": {
       "contact-us": "Contattaci e ricevi una prova gratuita",
@@ -364,14 +345,6 @@
       "tooltip-assigned-role": "Quando questo utente effettua l'accesso, verrà assegnato un ruolo con licenza"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "Nascondi etichette comuni",
-      "show": {
-        "tooltip": "Mostra etichette comuni"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Orari attivi"
@@ -480,16 +453,16 @@
     "alert-instance-state-filter": {
       "state": "Stato"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "Rimuovi etichetta"
     },
     "alert-label-dropdown": {
       "placeholder-select": "Scegli {{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "Etichette",
-      "common-labels-count_one": "+{{count}} etichette comuni",
-      "common-labels-count_other": "+{{count}} etichette comuni"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "Disattivazione audio, raggruppamento e tempistiche (opzionale)",
@@ -1679,6 +1652,10 @@
     "inspector-yaml-tab": {
       "apply": "Applica"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "Come connettersi a IRM",
       "disabled-description": "Abilita IRM tramite un'integrazione Webhook",
@@ -1821,6 +1798,10 @@
         }
       }
     },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
+    },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Filtra gli avvisi utilizzando la query dell'etichetta senza parentesi graffe, ad esempio:",
       "filter-alerts-using-label-querying-without-spaces": "Filtra gli avvisi utilizzando la query dell'etichetta senza spazi, ad esempio:",
@@ -1927,9 +1908,6 @@
       "title-remove": "Rimuovi",
       "tooltip-remove-time-range": "Rimuovi intervallo di tempo"
     },
-    "namespace": {
-      "title-alert-rules": "Regole di avviso"
-    },
     "namespace-and-group-filter": {
       "select-group": "Seleziona gruppo",
       "select-namespace": "Seleziona spazio di nomi"
@@ -1986,8 +1964,10 @@
       "label-notification-policies": "Criteri di Notifica",
       "label-time-intervals": "Intervalli di tempo"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "Criterio predefinito",
       "no-matchers": "Nessuna corrispondenza"
     },
     "notification-preview": {
@@ -2004,22 +1984,12 @@
     },
     "notification-route": {
       "no-labels": "Nessuna etichetta",
-      "no-matching-labels": "Nessuna etichetta corrispondente"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Le istanze di avviso vengono instradate come segue.",
-      "close": "Chiudi",
-      "contact-point": "Punto di contatto",
-      "default-policy": "Criterio predefinito",
-      "notification-policy-path": "Percorso del criterio di notifica",
-      "see-details-link": "Visualizza i dettagli",
-      "title-routing-details": "Dettagli di instradamento"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Espandi percorso del criterio",
-      "delivered-to": "@ Consegnato a",
-      "notification-policy": "Criterio di notifica",
-      "see-details": "Visualizza i dettagli"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2047,7 +2017,9 @@
       "recipient-notification-fires": "Seleziona chi deve ricevere una notifica quando viene attivata una regola di avviso."
     },
     "option-customfield": {
-      "label-custom-template": "Modello personalizzato"
+      "label-custom-template": "Modello personalizzato",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "L'Alertmanager selezionato non esiste più o potresti non avere l'autorizzazione per accedervi. È possibile selezionare un diverso Alertmanager dal menu a discesa.",
@@ -2138,17 +2110,13 @@
         "suffix": "Aggiorna la pagina e riprova.",
         "title": "Impossibile aggiungere o aggiornare i criteri di notifica"
       },
-      "n-more-policies_one": "{{count}} criterio aggiuntivo",
-      "n-more-policies_other": "{{count}} criteri aggiuntivi"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Nuova politica per i bambini",
       "label-new-sibling-above": "Nuovo nodo fratello in alto",
       "label-new-sibling-below": "Nuovo nodo fratello in basso"
-    },
-    "policy-path": {
-      "default-policy": "Criterio predefinito",
-      "no-matchers": "Nessuna corrispondenza"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Impossibile visualizzare l'anteprima della query. Alcune delle origini dati utilizzate nelle query non sono disponibili.",
@@ -2194,7 +2162,6 @@
       "body-queries-expressions-configured": "Crea almeno una query o un'espressione su cui ricevere un avviso",
       "confirmText-deactivate": "Disattiva",
       "expressions": "Espressioni",
-      "loading-data-sources": "Caricamento delle origini dei dati in corso...",
       "manipulate-returned-queries-other-operations": "Modifica i dati che trovi nelle query usando operazioni matematiche e di altro tipo.",
       "message": {
         "a-valid-expression-is-required": "È richiesta un'espressione valida"
@@ -3600,6 +3567,7 @@
       "button-cancel": "Annulla",
       "button-delete": "Elimina",
       "button-deleting": "Eliminazione in corso...",
+      "commit": "",
       "delete-warning": "Questa operazione eliminerà questa cartella e tutti i suoi discendenti. In totale, questo influenzerà:",
       "success-message": "Cartella eliminata correttamente"
     },
@@ -5357,7 +5325,6 @@
             "json": "Esporta in formato JSON"
           }
         },
-        "mark-favorite": "Contrassegna come preferito",
         "more-save-options": "Altre opzioni di salvataggio",
         "playlist-next": "Vai alla dashboard successiva",
         "playlist-previous": "Vai alla dashboard precedente",
@@ -5386,8 +5353,7 @@
             "yesText": "Salva"
           }
         },
-        "unlink-library-panel": "Scollega pannello della libreria",
-        "unmark-favorite": "Rimuovi dai preferiti"
+        "unlink-library-panel": "Scollega pannello della libreria"
       },
       "open-original": "Apri il originale",
       "playlist-next": "Vai al dashboard successivo",
@@ -5407,11 +5373,11 @@
       "save-dashboard-short": "Salva",
       "save-library-panel": "Salva pannello della libreria",
       "settings": "Impostazioni dashboard",
-      "share": {
-        "label": "Condividi",
-        "tooltip": "Condividi dashboard"
-      },
       "share-button": "Condividi",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Scollega pannello della libreria",
       "unmark-favorite": "Rimuovi dai preferiti"
     },
@@ -5661,14 +5627,6 @@
         "title": {
           "new-dashboard": "Nuovo dashboard"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "Revoca URL pubblico"
-      },
-      "title": {
-        "revoke-public-url": "Revoca URL pubblico"
       }
     },
     "constant-variable-form": {
@@ -5925,13 +5883,12 @@
       "usage-count_other": "Utilizzato su {{count}} dashboard"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "Errore durante lo spostamento della dashboard",
       "api-error": "Impossibile spostare la dashboard",
       "cancel-action": "Annulla",
       "current-file-not-found": "Impossibile trovare il file della dashboard corrente",
       "drawer-title": "Sposta la dashboard configurata",
       "file-load-error": "Errore durante il caricamento della dashboard",
-      "loading-file-data": "Caricamento dati dashboard",
+      "loading-dashboard-data": "",
       "move-action": "Sposta dashboard",
       "move-read-only-message": "Questa dashboard non può essere spostata direttamente da Grafana perché il repository è di sola lettura. Per spostare questa dashboard, sposta il file nel repository Git.",
       "moving": "Spostamento in corso...",
@@ -9273,8 +9230,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "Annulla",
-      "create": "Crea pannello della libreria",
       "error": "Esiste già un pannello della libreria con questo nome",
       "folder": "Salva nella cartella",
       "folder-description": "Le autorizzazioni del pannello della libreria derivano dalle autorizzazioni della cartella",
@@ -9368,6 +9323,7 @@
     },
     "share-panel": {
       "config-description": "Crea un link diretto e personalizzato per condividere il pannello all'interno della tua organizzazione, con le seguenti impostazioni di personalizzazione:",
+      "copy-image-link": "",
       "download-image": "Scarica immagine",
       "render-image": "Genera immagine"
     }
@@ -9453,7 +9409,7 @@
       "label-signature": "Firma"
     },
     "description-enable-infinite-scrolling": "Sperimentale. Richiedi più risultati scorrendo fino alla fine dell'elenco dei registri.",
-    "description-enable-syntax-highlighting": "Utilizza una grammatica di colorazione della sintassi predefinita per evidenziare le parti rilevanti delle righe del registro",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "Visualizza i controlli per passare all'ultima o alla prima riga del registro e filtra per livello di registro",
     "fields": {
       "type": {
@@ -9725,14 +9681,14 @@
     },
     "name-common-labels": "Etichette comuni",
     "name-deduplication": "Deduplicazione",
-    "name-details-mode": "Modalità pannello Dettagli registro",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "In linea",
       "label-sidebar": "Barra laterale"
     },
     "name-enable-infinite-scrolling": "Abilita lo scorrimento infinito",
     "name-enable-log-details": "Abilita i dettagli del registro",
-    "name-enable-syntax-highlighting": "Attiva l'evidenziazione della sintassi",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "Dimensione carattere",
     "name-order": "Ordina",
     "name-prettify-json": "Migliora JSON",
@@ -10343,9 +10299,6 @@
     "profiles": {
       "title": "Profili"
     },
-    "public": {
-      "title": "Dashboard pubblici"
-    },
     "recently-deleted": {
       "subtitle": "Tutti gli elementi elencati qui per più di 30 giorni verranno eliminati automaticamente.",
       "title": "Eliminati di recente"
@@ -10675,6 +10628,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11029,7 +10990,6 @@
       "body-not-published": "Questo componente aggiuntivo non è pubblicato su <2>grafana.com/plugins</2> e non può essere gestito tramite il catalogo.",
       "enterprise-plugin-info": "Questo plugin è disponibile solo in Grafana Cloud e Grafana Enterprise.",
       "learn-more": "Scopri di più",
-      "no-valid-grafana-enterprise-license-detected": "Non è stata rilevata alcuna licenza Grafana Enterprise valida.",
       "title-dev-alert": "Questa è una versione di sviluppo del componente aggiuntivo e non può essere disinstallata.",
       "title-plugin-doesnt-support-version-grafana": "Questo componente aggiuntivo non supporta la tua versione di Grafana.",
       "title-remote-plugins-unavailable": "I controlli di installazione sono stati disabilitati perché il server Grafana non può accedere a grafana.com.",
@@ -11352,6 +11312,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Configura i toggle delle funzionalità necessarie"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Gestisci le dashboard come codice in Git e fornisci automaticamente gli aggiornamenti",
       "manage-your-dashboards-with-remote-provisioning": "Inizia a usare la sincronizzazione Git",
       "store-dashboards-in-version-controlled-storage": "Archivia le dashboard in una memoria controllata dalla versione per una migliore organizzazione e monitoraggio della cronologia"
@@ -11389,11 +11350,12 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Nessun risultato corrisponde alla tua query",
+      "partial-managed": "",
       "placeholder-search": "Cerca",
       "all-resources-managed_one": "",
       "all-resources-managed_other": "",
-      "partial-managed_one": "",
-      "partial-managed_other": ""
+      "unmanaged-resources_one": "",
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11540,8 +11502,16 @@
         "subtitle": "Utilizza questa opzione se desideri sincronizzare e gestire l'intera istanza di Grafana tramite la memoria esterna."
       }
     },
-    "read-only-local-tooltip": "Questa cartella è di sola lettura e viene fornita tramite il provisioning dei file. Per apportare modifiche alla cartella, aggiorna il repository dei file connesso. Per modificare le impostazioni della cartella, vai su Amministrazione > Provisioning > Repository.",
-    "read-only-remote-tooltip": "Questa cartella è di sola lettura e viene fornita tramite Git. Per apportare modifiche alla cartella, aggiorna il repository connesso. Per modificare le impostazioni della cartella, vai su Amministrazione > Provisioning > Repository.",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "attività attive",
       "column-action": "Azione",
@@ -11655,6 +11625,7 @@
         "removed-from-repo-test-ui": "rimosso dall'interfaccia utente del test del repository",
         "updated-from-repo-test-ui": "aggiornato dall'interfaccia utente del test del repository"
       },
+      "read-only-repo-tooltip": "",
       "repository": "Repository",
       "tab-info": {
         "label": {
@@ -11691,6 +11662,8 @@
       "tooltip-unhealthy-repository": "Impossibile eseguire il pull di un repository non integro"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "Includi commit per ogni valore storico",
       "synchronization-options": "Opzioni di sincronizzazione"
@@ -11765,7 +11738,6 @@
       "email-share-type-option-label": "Solo persone specificate",
       "pause-sharing-dashboard-label": "Sospendi la condivisione del dashboard",
       "public-share-type-option-label": "Chiunque abbia un link",
-      "revoke-body": "Vuoi davvero revocare questo URL? Il dashboard non sarà più pubblico.",
       "revoke-public-URL-button": "Revoca URL pubblico",
       "revoke-public-URL-button-title": "Revoca URL pubblico",
       "settings-title": "Impostazioni"
@@ -11779,7 +11751,6 @@
       "success-pause": "L'accesso al dashboard è stato sospeso",
       "success-resume": "L'accesso al dashboard è stato ripristinato",
       "success-update": "Le impostazioni sono state salvate correttamente",
-      "success-update-old": "Dashboard pubblico aggiornato.",
       "time-range-label": "Intervallo di tempo",
       "time-range-tooltip": "Il dashboard condiviso utilizza le impostazioni dell'intervallo di tempo predefinite del dashboard"
     },
@@ -11787,10 +11758,6 @@
       "generate-public-url-button": "Genera URL pubblico",
       "unsupported-features-desc": "Al momento non supportiamo variabili di modello o origini dati frontend",
       "welcome-title": "Ti diamo il benvenuto nei dashboard pubblici!"
-    },
-    "delete-modal": {
-      "revoke-body-text": "Vuoi davvero revocare questo URL? Il dashboard non sarà più pubblico.",
-      "revoke-title": "Revoca URL pubblico"
     },
     "email-sharing": {
       "accept-button": "Accetta",
@@ -11821,11 +11788,8 @@
       "success-share-type-change": "Accesso al dashboard aggiornato: solo alcune persone possono ora accedere con il link"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Contatta il tuo amministratore per ottenere l'autorizzazione a {{action}} le dashboard pubbliche",
-      "no-upsert-perm-alert-title": "Non hai l'autorizzazione per {{ action }} una dashboard pubblica",
       "save-dashboard-changes-alert-title": "Salva le modifiche al dashboard prima di aggiornare la configurazione pubblica",
       "unsupport-data-source-alert-readmore-link": "Scopri di più sulle origini dati supportate",
-      "unsupported-data-source-alert-desc": "In questo dashboard sono presenti origini dati non supportate per i dashboard pubblici. I pannelli che utilizzano queste origini dati potrebbero non funzionare correttamente: {{unsupportedDataSources}}.",
       "unsupported-data-source-alert-title": "Origini dati non supportate",
       "unsupported-template-variable-alert-desc": "Questo dashboard pubblico potrebbe non funzionare poiché utilizza variabili di modello",
       "unsupported-template-variable-alert-title": "Le variabili di modello non sono supportate"
@@ -11859,8 +11823,7 @@
       "time-range-text": "Intervallo di tempo = "
     },
     "share": {
-      "success-delete": "Il tuo dashboard non è più condivisibile",
-      "success-delete-old": "Dashboard pubblico eliminato."
+      "success-delete": "Il tuo dashboard non è più condivisibile"
     },
     "share-configuration": {
       "share-type-label": "Accesso al link"
@@ -11879,24 +11842,6 @@
       "revoke-access-button": "Revoca accesso",
       "revoke-access-description": "Vuoi davvero revocare questo accesso? Il dashboard non può più essere condiviso.",
       "unsupported-data-source-alert-desc": "In questo dashboard sono presenti origini dati non supportate per i dashboard condivisi. I pannelli che utilizzano queste origini dati potrebbero non funzionare correttamente: {{unsupportedDataSources}}."
-    },
-    "sharing": {
-      "success-creation": "Il dashboard è pubblico."
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "Configura dashboard pubblico",
-      "revoke-button-text": "Revoca URL pubblico",
-      "revoke-button-tooltip": "Revoca URL dashboard pubblico",
-      "view-button-tooltip": "Visualizza dashboard pubblico"
-    },
-    "empty-state": {
-      "message": "Non hai ancora creato nessun dashboard pubblico",
-      "more-info": "Crea un dashboard pubblico da qualsiasi dashboard esistente tramite la modalità <1>Condividi</1>. <4>Ulteriori informazioni</4>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "Sospendi condivisione"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11904,8 +11849,6 @@
       "external-link": "Collegamento esterno",
       "loading-text": "Caricamento in corso...",
       "open-dashboard-list-text": "Apri l'elenco dei dashboard",
-      "public-dashboard-link": "URL dashboard pubblico",
-      "public-dashboard-setting": "Impostazioni dashboard pubblico",
       "sharing-setting": "Impostazioni di condivisione"
     },
     "delete-user-modal": {
@@ -11913,14 +11856,12 @@
       "delete-user-cancel-button": "Annulla",
       "delete-user-revoke-access-button": "Revoca accesso",
       "revoke-access-title": "Revoca accesso",
-      "revoke-user-access-modal-desc-line1": "Vuoi davvero revocare l'accesso a {{email}}?",
-      "revoke-user-access-modal-desc-line2": "Questa azione revoca immediatamente l'accesso a {{email}} a tutti i dashboard pubblici."
+      "revoke-user-access-modal-desc-line1": "Vuoi davvero revocare l'accesso a {{email}}?"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "Questa azione revoca immediatamente l'accesso a {{email}} a tutti i dashboard condivisi."
     },
     "modal": {
-      "dashboard-modal-title": "Dashboard pubblici",
       "shared-dashboard-modal-title": "Dashboard condivisi"
     },
     "table-body": {
@@ -12010,10 +11951,10 @@
       "restore-button": "Ripristina",
       "restore-loading": "Ripristino in corso...",
       "title": "Ripristina dashboard",
-      "folder-picker-text_one": "Scegli una cartella in cui verrà ripristinato il dashboard.",
-      "folder-picker-text_other": "Scegli una cartella in cui verranno ripristinati i dashboard.",
-      "text_one": "Questa azione ripristinerà {{numberOfDashboards}} dashboard.",
-      "text_other": "Questa azione ripristinerà {{numberOfDashboards}} dashboard."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {
@@ -12129,8 +12070,8 @@
       "title": "Seleziona gli ambiti"
     },
     "tree": {
-      "collapse": "Riduci",
-      "expand": "Espandi",
+      "collapse": "",
+      "expand": "",
       "headline": {
         "noResults": "Nessun risultato trovato per la ricerca",
         "recommended": "Consigliato",
@@ -12422,8 +12363,6 @@
       "export": "Esporta",
       "library-panel": "Pannello della libreria",
       "link": "Link",
-      "panel-embed": "Incorpora",
-      "public-dashboard": "Dashboard pubblico",
       "public-dashboard-title": "Dashboard pubblico",
       "snapshot": "Istantanea"
     },
@@ -14019,7 +13958,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Utenti dashboard pubblico",
       "shared-dashboard-users-tab-title": "Utenti con dashboard condiviso"
     }
   },

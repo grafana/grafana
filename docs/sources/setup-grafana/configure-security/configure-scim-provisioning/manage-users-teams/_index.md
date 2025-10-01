@@ -77,6 +77,10 @@ SCIM uses a specific process to establish and maintain user identity between the
 
 This process ensures secure and consistent user identification across both systems, preventing security issues that could arise from email changes or other user attribute modifications.
 
+{{< admonition type="note" >}}
+During provisioning, if the identity provider sends user attributes that has no use in Grafana, those attributes will be gracefully ignored.
+{{< /admonition >}}
+
 ### Existing Grafana users
 
 For users who already exist in the Grafana instance:

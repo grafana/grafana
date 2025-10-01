@@ -310,6 +310,7 @@ func (cmd *SaveExternalServiceRoleCommand) Validate() error {
 			continue
 		}
 		dedupMap[cmd.Permissions[i]] = true
+		cmd.Permissions[i].Kind, cmd.Permissions[i].Attribute, cmd.Permissions[i].Identifier = SplitScope(cmd.Permissions[i].Scope)
 		dedup = append(dedup, cmd.Permissions[i])
 	}
 	cmd.Permissions = dedup
@@ -392,6 +393,7 @@ const (
 	// Settings scope
 	ScopeSettingsAll  = "settings:*"
 	ScopeSettingsSAML = "settings:auth.saml:*"
+	ScopeSettingsSCIM = "settings:auth.scim:*"
 
 	// Team related actions
 	ActionTeamsCreate           = "teams:create"

@@ -3,12 +3,14 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
+	provisioningAPIServer "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -213,6 +215,70 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			}
 		})
 	}
+
+	// Test Git repository path validation - ensure child paths are rejected
+	t.Run("Git repository path validation", func(t *testing.T) {
+		baseURL := "https://github.com/grafana/test-repo-path-validation"
+
+		pathTests := []struct {
+			name        string
+			path        string
+			expectError error
+		}{
+			{
+				name:        "first repo with path 'demo/nested' should succeed",
+				path:        "demo/nested",
+				expectError: nil,
+			},
+			{
+				name:        "second repo with child path 'demo/nested/again' should fail",
+				path:        "demo/nested/again",
+				expectError: provisioningAPIServer.ErrRepositoryParentFolderConflict,
+			},
+			{
+				name:        "third repo with parent path 'demo' should fail",
+				path:        "demo",
+				expectError: provisioningAPIServer.ErrRepositoryParentFolderConflict,
+			},
+			{
+				name:        "fourth repo with nested child path 'demo/nested/nested-second' should fail",
+				path:        "demo/nested/again/two",
+				expectError: provisioningAPIServer.ErrRepositoryParentFolderConflict,
+			},
+			{
+				name:        "fifth repo with duplicate path 'demo/nested' should fail",
+				path:        "demo/nested",
+				expectError: provisioningAPIServer.ErrRepositoryDuplicatePath,
+			},
+		}
+
+		for i, test := range pathTests {
+			t.Run(test.name, func(t *testing.T) {
+				repoName := fmt.Sprintf("git-path-test-%d", i+1)
+				gitRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+					"Name":        repoName,
+					"URL":         baseURL,
+					"Path":        test.path,
+					"SyncEnabled": false, // Disable sync to avoid external dependencies
+					"SyncTarget":  "folder",
+				})
+
+				_, err := helper.Repositories.Resource.Create(ctx, gitRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+
+				if test.expectError != nil {
+					require.Error(t, err, "Expected error for repository with path: %s", test.path)
+					require.ErrorContains(t, err, test.expectError.Error(), "Error should contain expected message for path: %s", test.path)
+					var statusError *apierrors.StatusError
+					if errors.As(err, &statusError) {
+						require.Equal(t, metav1.StatusReasonInvalid, statusError.ErrStatus.Reason, "Should be a validation error")
+						require.Equal(t, http.StatusUnprocessableEntity, int(statusError.ErrStatus.Code), "Should return 422 status code")
+					}
+				} else {
+					require.NoError(t, err, "Expected success for repository with path: %s", test.path)
+				}
+			})
+		}
+	})
 }
 
 func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
@@ -364,7 +430,8 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 					"Name":        test.name,
 					"URL":         test.input,
 					"SyncTarget":  "folder",
-					"SyncEnabled": false, // Disable sync since we're just testing URL cleanup
+					"SyncEnabled": false, // Disable sync since we're just testing URL cleanup,
+					"Path":        fmt.Sprintf("grafana-%s/", test.name),
 				})
 
 				_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
@@ -382,9 +449,6 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
-	// TODO: fix flaky test
-	t.Skip("skipping flaky test")
-
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)

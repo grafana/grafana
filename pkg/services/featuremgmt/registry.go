@@ -11,7 +11,7 @@ import (
 	"embed"
 	"encoding/json"
 
-	featuretoggle "github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
+	featuretoggleapi "github.com/grafana/grafana/pkg/services/featuremgmt/feature_toggle_api"
 )
 
 var (
@@ -172,6 +172,22 @@ var (
 			AllowSelfServe: false,
 		},
 		{
+			Name:           "starsFromAPIServer",
+			Description:    "populate star status from apiserver",
+			Stage:          FeatureStageExperimental,
+			FrontendOnly:   true,
+			Owner:          grafanaFrontendPlatformSquad,
+			AllowSelfServe: false,
+			HideFromDocs:   true,
+		},
+		{
+			Name:            "kubernetesStars",
+			Description:     "Routes stars requests from /api to the /apis endpoint",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
@@ -324,15 +340,6 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
-			Name:            "featureToggleAdminPage",
-			Description:     "Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           grafanaBackendServicesSquad,
-			RequiresRestart: true,
-			HideFromDocs:    true,
-		},
-		{
 			Name:        "awsAsyncQueryCaching",
 			Description: "Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled",
 			Stage:       FeatureStageGeneralAvailability,
@@ -481,6 +488,13 @@ var (
 			Description:     "Adds support for Kubernetes alerting and recording rules",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:            "kubernetesCorrelations",
+			Description:     "Adds support for Kubernetes correlations",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDataProSquad,
 			RequiresRestart: true,
 		},
 		{
@@ -793,6 +807,16 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "useMultipleScopeNodesEndpoint",
+			Description:       "Makes the frontend use the 'names' param for fetching multiple scope nodes at once",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaOperatorExperienceSquad,
+			Expression:        "false",
+			FrontendOnly:      true,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:              "promQLScope",
 			Description:       "In-development feature that will allow injection of labels into prometheus queries.",
 			Stage:             FeatureStageGeneralAvailability,
@@ -926,19 +950,18 @@ var (
 		},
 		{
 			Name:           "queryLibrary",
-			Description:    "Renamed feature toggle, enables Saved queries feature",
-			Stage:          FeatureStagePrivatePreview,
+			Description:    "Enables Saved queries (query library) feature",
+			Stage:          FeatureStagePublicPreview,
 			Owner:          grafanaSharingSquad,
 			FrontendOnly:   false,
 			AllowSelfServe: false,
 		},
 		{
-			Name:           "savedQueries",
-			Description:    "Enables Saved Queries feature",
-			Stage:          FeatureStagePublicPreview,
-			Owner:          grafanaSharingSquad,
-			FrontendOnly:   false,
-			AllowSelfServe: false,
+			Name:         "dashboardLibrary",
+			Description:  "Enable suggested dashboards when creating new dashboards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
 		},
 		{
 			Name:         "logsExploreTableDefaultVisualization",
@@ -1172,6 +1195,14 @@ var (
 		{
 			Name:              "unifiedStorageSearchSprinkles",
 			Description:       "Enable sprinkles on unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "unifiedStorageUseFullNgram",
+			Description:       "Use full n-gram indexing instead of edge n-gram for unified storage search",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromDocs:      true,
@@ -1727,6 +1758,14 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:              "kubernetesAuthZHandlerRedirect",
+			Description:       "Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:              "kubernetesAuthzResourcePermissionApis",
 			Description:       "Registers AuthZ resource permission /apis endpoints",
 			Stage:             FeatureStageExperimental,
@@ -2004,16 +2043,6 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:              "dskitBackgroundServices",
-			Description:       "Enables dskit background service wrapper",
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			Stage:             FeatureStageExperimental,
-			RequiresRestart:   true,
-			Owner:             grafanaPluginsPlatformSquad,
-			Expression:        "false",
-		},
-		{
 			Name:            "pluginContainers",
 			Description:     "Enables running plugins in containers",
 			Stage:           FeatureStagePrivatePreview,
@@ -2037,6 +2066,14 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
 		},
+		{
+			Name:         "cdnPluginsLoadFirst",
+			Description:  "Prioritize loading plugins from the CDN before other sources",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
 	}
 )
 
@@ -2044,8 +2081,8 @@ var (
 var f embed.FS
 
 // Get the cached feature list (exposed as a k8s resource)
-func GetEmbeddedFeatureList() (featuretoggle.FeatureList, error) {
-	features := featuretoggle.FeatureList{}
+func GetEmbeddedFeatureList() (featuretoggleapi.FeatureList, error) {
+	features := featuretoggleapi.FeatureList{}
 	body, err := f.ReadFile("toggles_gen.json")
 	if err == nil {
 		err = json.Unmarshal(body, &features)

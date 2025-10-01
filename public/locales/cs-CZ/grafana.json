@@ -81,20 +81,6 @@
         "title-access-denied": "Přístup nebyl povolen"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "Některé funkce jsou stabilní (GA) a povolené ve výchozím nastavení, zatímco některé funkce jsou v současné době ve fázi předběžné beta verze, připravené k implementaci.",
-      "confirm-modal-body-2": "Před provedením úprav doporučujeme porozumět důsledkům každé změny funkce.",
-      "confirmText-save-changes": "Uložit změny",
-      "get-stage-cell": {
-        "beta": "Beta",
-        "content-general-availability": "Obecná dostupnost",
-        "deprecated": "Zastaralé",
-        "ga": "GA"
-      },
-      "save-changes": "Uložit změny",
-      "saving": "Ukládání…",
-      "title-apply-feature-toggle-changes": "Použít změny přepínače funkce"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "Odstranit organizaci",
       "confirmText-delete": "Odstranit",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "Aktualizace nastavení po spuštění",
       "title-sort-dashboards-by-popularity-in-search": "Seřadit nástěnky podle oblíbenosti ve vyhledávání",
       "title-team-sync": "Synchronizace týmu"
-    },
-    "feature-toggles": {
-      "restart-pending": "Probíhá restartování vaší instance Grafana pro použití nejnovějších změn funkce přepínače",
-      "restart-required": "Uložením změn funkce přepínače dojde k resetování instance, což může trvat několik minut",
-      "sub-title": "Zobrazit a upravit přepínače funkcí. Další informace o přepínání funkcí najdete na <2>grafana.com</2>."
     },
     "get-enterprise": {
       "contact-us": "Kontaktujte nás a získejte bezplatnou zkušební verzi",
@@ -364,14 +345,6 @@
       "tooltip-assigned-role": "Po přihlášení tohoto uživatele bude přiřazena licencovaná role"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "Skrýt běžné štítky",
-      "show": {
-        "tooltip": "Zobrazit běžné štítky"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Aktivní časování"
@@ -486,18 +459,16 @@
     "alert-instance-state-filter": {
       "state": "Stav"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "Odebrat štítek"
     },
     "alert-label-dropdown": {
       "placeholder-select": "Vybrat {{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "Štítky",
-      "common-labels-count_one": "+{{count}} běžného štítku",
-      "common-labels-count_few": "+{{count}} běžné štítky",
-      "common-labels-count_many": "+{{count}} běžných štítků",
-      "common-labels-count_other": "+{{count}} běžného štítku"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "Ztlumení, seskupení a časování (nepovinné)",
@@ -1691,6 +1662,10 @@
     "inspector-yaml-tab": {
       "apply": "Použít"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "Jak se připojit k IRM",
       "disabled-description": "Povolit IRM prostřednictvím integrace webhooku",
@@ -1835,6 +1810,10 @@
         }
       }
     },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
+    },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Filtrovat výstrahy pomocí dotazování na štítky bez složených závorek, např.:",
       "filter-alerts-using-label-querying-without-spaces": "Filtrujte výstrahy pomocí dotazu na štítky bez mezer, např.:",
@@ -1941,9 +1920,6 @@
       "title-remove": "Odebrat",
       "tooltip-remove-time-range": "Odebrat časový rozsah"
     },
-    "namespace": {
-      "title-alert-rules": "Pravidla výstrah"
-    },
     "namespace-and-group-filter": {
       "select-group": "Vybrat skupinu",
       "select-namespace": "Vyberte jmenný prostor"
@@ -2000,8 +1976,10 @@
       "label-notification-policies": "Zásady oznamování",
       "label-time-intervals": "Časové intervaly"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "Výchozí zásada",
       "no-matchers": "Žádné shody"
     },
     "notification-preview": {
@@ -2018,22 +1996,12 @@
     },
     "notification-route": {
       "no-labels": "Žádné štítky",
-      "no-matching-labels": "Žádné shodné štítky"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Vaše instance výstrah jsou přesměrovány následujícím způsobem.",
-      "close": "Zavřít",
-      "contact-point": "Kontaktní bod",
-      "default-policy": "Výchozí zásada",
-      "notification-policy-path": "Cesta k zásadě oznamování",
-      "see-details-link": "Zobrazit detaily",
-      "title-routing-details": "Podrobnosti o směrování"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Rozbalit trasu zásad",
-      "delivered-to": "@doručeno:",
-      "notification-policy": "Zásada oznamování",
-      "see-details": "Zobrazit detaily"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2061,7 +2029,9 @@
       "recipient-notification-fires": "Vyberte, kdo by měl obdržet oznámení při spuštění pravidla výstrahy."
     },
     "option-customfield": {
-      "label-custom-template": "Vlastní šablona"
+      "label-custom-template": "Vlastní šablona",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Vybraný správce výstrah již neexistuje nebo nemáte potřebná oprávnění. Vyberte jiného správce výstrah z rozevíracího seznamu.",
@@ -2154,19 +2124,15 @@
         "suffix": "Aktualizujte stránku a zkuste to znovu.",
         "title": "Nepodařilo se přidat nebo aktualizovat zásadu oznamování"
       },
-      "n-more-policies_one": "{{count}} další zásady",
-      "n-more-policies_few": "{{count}} další zásady",
-      "n-more-policies_many": "{{count}} další zásady",
-      "n-more-policies_other": "{{count}} další zásady"
+      "n-more-policies_one": "",
+      "n-more-policies_few": "",
+      "n-more-policies_many": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Nová podřízená zásada",
       "label-new-sibling-above": "Nová souvislost nahoře",
       "label-new-sibling-below": "Nová souvislost dole"
-    },
-    "policy-path": {
-      "default-policy": "Výchozí zásada",
-      "no-matchers": "Žádné shody"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Náhled dotazu nelze zobrazit. Některé zdroje dat použité v dotazech nejsou k dispozici.",
@@ -2212,7 +2178,6 @@
       "body-queries-expressions-configured": "Vytvořte alespoň jeden dotaz nebo výraz, na který chcete být upozorněni",
       "confirmText-deactivate": "Deaktivovat",
       "expressions": "Výrazy",
-      "loading-data-sources": "Načítání zdrojů dat…",
       "manipulate-returned-queries-other-operations": "Spravujte data získaná z dotazů pomocí matematických a dalších operací.",
       "message": {
         "a-valid-expression-is-required": "Je vyžadován platný výraz"
@@ -3636,6 +3601,7 @@
       "button-cancel": "Zrušit",
       "button-delete": "Odstranit",
       "button-deleting": "Probíhá odstraňování…",
+      "commit": "",
       "delete-warning": "Tímto odstraníte tuto složku a všechny následné složky. Celkově to ovlivní:",
       "success-message": "Složka byla úspěšně odstraněna"
     },
@@ -5401,7 +5367,6 @@
             "json": "Exportovat jako JSON"
           }
         },
-        "mark-favorite": "Označit jako oblíbené",
         "more-save-options": "Další možnosti uložení",
         "playlist-next": "Přejít na další nástěnku",
         "playlist-previous": "Přejít na předchozí nástěnku",
@@ -5430,8 +5395,7 @@
             "yesText": "Uložit"
           }
         },
-        "unlink-library-panel": "Odpojit panel knihovny",
-        "unmark-favorite": "Zrušit označení jako oblíbené"
+        "unlink-library-panel": "Odpojit panel knihovny"
       },
       "open-original": "Otevřít původní nástěnku",
       "playlist-next": "Přejít na další nástěnku",
@@ -5451,11 +5415,11 @@
       "save-dashboard-short": "Uložit",
       "save-library-panel": "Uložit panel knihovny",
       "settings": "Nastavení nástěnky",
-      "share": {
-        "label": "Sdílet",
-        "tooltip": "Sdílet nástěnku"
-      },
       "share-button": "Sdílet",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Odpojit panel knihovny",
       "unmark-favorite": "Odznačit z oblíbených"
     },
@@ -5705,14 +5669,6 @@
         "title": {
           "new-dashboard": "Nová nástěnka"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "Odvolat veřejnou adresu URL"
-      },
-      "title": {
-        "revoke-public-url": "Odvolat veřejnou adresu URL"
       }
     },
     "constant-variable-form": {
@@ -5971,13 +5927,12 @@
       "usage-count_other": "Použito na {{count}} nástěnkách"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "Chyba při přesouvání nástěnky",
       "api-error": "Nástěnku se nepodařilo přesunout",
       "cancel-action": "Zrušit",
       "current-file-not-found": "Aktuální soubor nástěnky se nepodařilo najít",
       "drawer-title": "Přesunout zajištěnou nástěnku",
       "file-load-error": "Chyba při načítání nástěnky",
-      "loading-file-data": "Načítání dat nástěnky",
+      "loading-dashboard-data": "",
       "move-action": "Přesunout nástěnku",
       "move-read-only-message": "Tuto nástěnku nelze přesunout přímo z Grafany, protože úložiště je jen pro čtení. Chcete-li tuto nástěnku přesunout, přesuňte soubor v úložišti Git.",
       "moving": "Probíhá přesouvání…",
@@ -9325,8 +9280,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "Zrušit",
-      "create": "Vytvořit panel knihovny",
       "error": "Panel knihovny s tímto názvem už existuje",
       "folder": "Uložit do složky",
       "folder-description": "Oprávnění panelu knihovny jsou odvozena od oprávnění ke složkám",
@@ -9426,6 +9379,7 @@
     },
     "share-panel": {
       "config-description": "Vytvořte personalizovaný přímý odkaz pro sdílení panelu v rámci vaší organizace s následujícími možnostmi přizpůsobení:",
+      "copy-image-link": "",
       "download-image": "Stáhnout obrázek",
       "render-image": "Generovat obrázek"
     }
@@ -9511,7 +9465,7 @@
       "label-signature": "Podpis"
     },
     "description-enable-infinite-scrolling": "Experimentální. Požádejte o další výsledky posunutím do dolní části seznamu protokolů.",
-    "description-enable-syntax-highlighting": "Použijte předdefinovanou gramatiku barev syntaxe pro zvýraznění příslušných částí řádků protokolu",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "Zobrazit ovládací prvky pro přechod na poslední nebo první řádek protokolu a filtry podle úrovně protokolu",
     "fields": {
       "type": {
@@ -9789,14 +9743,14 @@
     },
     "name-common-labels": "Běžné štítky",
     "name-deduplication": "Deduplikace",
-    "name-details-mode": "Režim panelu Podrobnosti protokolu",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "Vedle sebe",
       "label-sidebar": "Postranní panel"
     },
     "name-enable-infinite-scrolling": "Povolit nekonečné posouvání",
     "name-enable-log-details": "Povolit podrobnosti protokolu",
-    "name-enable-syntax-highlighting": "Povolit zvýraznění syntaxe",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "Velikost písma",
     "name-order": "Objednávka",
     "name-prettify-json": "Zkrášlit JSON",
@@ -10407,9 +10361,6 @@
     "profiles": {
       "title": "Profily"
     },
-    "public": {
-      "title": "Veřejné nástěnky"
-    },
     "recently-deleted": {
       "subtitle": "Všechny tady uvedené položky po dobu delší než 30 dnů budou automaticky odstraněny.",
       "title": "Nedávno odstraněné"
@@ -10745,6 +10696,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11099,7 +11058,6 @@
       "body-not-published": "Tento plugin není publikován na <2>grafana.com/plugins</2> a nelze ho spravovat prostřednictvím katalogu.",
       "enterprise-plugin-info": "Tento plugin je k dispozici pouze v Grafana Cloud a Grafana Enterprise.",
       "learn-more": "Zjistěte víc",
-      "no-valid-grafana-enterprise-license-detected": "Nebyla zjištěna žádná platná licence Grafana Enterprise.",
       "title-dev-alert": "Toto je vývojové sestavení pluginu a nelze jej odinstalovat.",
       "title-plugin-doesnt-support-version-grafana": "Tento plugin nepodporuje vaši verzi Grafany.",
       "title-remote-plugins-unavailable": "Ovládací prvky instalace byly zakázány, protože server Grafana nemá přístup ke grafana.com.",
@@ -11430,6 +11388,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Nastavit povinné přepínače funkcí"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Spravujte nástěnky jako kód v Git a automaticky zajišťujte aktualizace",
       "manage-your-dashboards-with-remote-provisioning": "Začínáme se synchronizací Git",
       "store-dashboards-in-version-controlled-storage": "Ukládejte nástěnky do úložiště s pevně nastavenou verzí pro lepší organizaci a sledování historie"
@@ -11467,15 +11426,16 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Vašemu dotazu neodpovídají žádné výsledky",
+      "partial-managed": "",
       "placeholder-search": "Hledat",
       "all-resources-managed_one": "",
       "all-resources-managed_few": "",
       "all-resources-managed_many": "",
       "all-resources-managed_other": "",
-      "partial-managed_one": "",
-      "partial-managed_few": "",
-      "partial-managed_many": "",
-      "partial-managed_other": ""
+      "unmanaged-resources_one": "",
+      "unmanaged-resources_few": "",
+      "unmanaged-resources_many": "",
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11622,8 +11582,16 @@
         "subtitle": "Tuto možnost použijte, pokud chcete synchronizovat a spravovat celou instanci Grafany prostřednictvím externího úložiště."
       }
     },
-    "read-only-local-tooltip": "Tato složka je jen pro čtení a je zajištěna prostřednictvím zajištění souborů. Chcete-li provést jakékoli změny ve složce, aktualizujte připojené úložiště souborů. Chcete-li upravit nastavení složky, přejděte na Správa > Zajištění > Úložiště.",
-    "read-only-remote-tooltip": "Tato složka je jen pro čtení a je zajištěna prostřednictvím služby Git. Chcete-li provést jakékoli změny ve složce, aktualizujte připojené úložiště. Chcete-li upravit nastavení složky, přejděte do části Správa > Zajištění > Úložiště.",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "aktivní práce",
       "column-action": "Akce",
@@ -11737,6 +11705,7 @@
         "removed-from-repo-test-ui": "odebráno z uživatelského rozhraní repo testu",
         "updated-from-repo-test-ui": "aktualizováno z uživatelského rozhraní repo testu"
       },
+      "read-only-repo-tooltip": "",
       "repository": "Úložiště",
       "tab-info": {
         "label": {
@@ -11773,6 +11742,8 @@
       "tooltip-unhealthy-repository": "Nelze stáhnout nezdravé úložiště"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "Zahrnout předložení pro každou historickou hodnotu",
       "synchronization-options": "Možnosti synchronizace"
@@ -11847,7 +11818,6 @@
       "email-share-type-option-label": "Pouze specifikovaní lidé",
       "pause-sharing-dashboard-label": "Pozastavit sdílení nástěnky",
       "public-share-type-option-label": "Kdokoli s odkazem",
-      "revoke-body": "Opravdu chcete odvolat tuto adresu URL? Nástěnka už nebude veřejná.",
       "revoke-public-URL-button": "Odvolat veřejnou adresu URL",
       "revoke-public-URL-button-title": "Odvolat veřejnou adresu URL",
       "settings-title": "Nastavení"
@@ -11861,7 +11831,6 @@
       "success-pause": "Přístup k nástěnce byl pozastaven",
       "success-resume": "Přístup k nástěnce byl obnoven",
       "success-update": "Nastavení byla úspěšně aktualizována",
-      "success-update-old": "Veřejná nástěnka aktualizována!",
       "time-range-label": "Časový rozsah",
       "time-range-tooltip": "Sdílená nástěnka používá výchozí nastavení časového rozsahu nástěnky"
     },
@@ -11869,10 +11838,6 @@
       "generate-public-url-button": "Generovat veřejnou adresu URL",
       "unsupported-features-desc": "V současné době nepodporujeme proměnné hodnoty pro šablony nebo frontendové zdroje dat",
       "welcome-title": "Vítejte na veřejných nástěnkách!"
-    },
-    "delete-modal": {
-      "revoke-body-text": "Opravdu chcete odvolat tuto adresu URL? Nástěnka už nebude veřejná.",
-      "revoke-title": "Odvolat veřejnou adresu URL"
     },
     "email-sharing": {
       "accept-button": "Přijmout",
@@ -11903,11 +11868,8 @@
       "success-share-type-change": "Přístup k řídicímu panelu byl aktualizován: Přístup mají pouze lidé s odkazem"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Pokud chcete {{action}} veřejné nástěnky, kontaktujte správce a požádejte o oprávnění",
-      "no-upsert-perm-alert-title": "Nemůžete {{ action }} veřejnou nástěnku",
       "save-dashboard-changes-alert-title": "Před aktualizací veřejné konfigurace uložte změny nástěnky",
       "unsupport-data-source-alert-readmore-link": "Zjistěte víc o podporovaných zdrojích dat",
-      "unsupported-data-source-alert-desc": "Na této nástěnce jsou zdroje dat, které nejsou pro veřejné nástěnky podporovány. Panely, které používají tyto zdroje dat, nemusí fungovat správně: {{unsupportedDataSources}}.",
       "unsupported-data-source-alert-title": "Nepodporované zdroje dat",
       "unsupported-template-variable-alert-desc": "Tato veřejná nástěnka nemusí fungovat, protože používá proměnné hodnoty pro šablony",
       "unsupported-template-variable-alert-title": "Proměnné hodnoty pro šablony nejsou podporovány"
@@ -11941,8 +11903,7 @@
       "time-range-text": "Časový rozsah = "
     },
     "share": {
-      "success-delete": "Vaši nástěnka už nejde sdílet",
-      "success-delete-old": "Veřejná nástěnka odstraněna."
+      "success-delete": "Vaši nástěnka už nejde sdílet"
     },
     "share-configuration": {
       "share-type-label": "Odkaz pro přístup"
@@ -11961,24 +11922,6 @@
       "revoke-access-button": "Odvolat přístup",
       "revoke-access-description": "Opravdu chcete odvolat tento přístup? Nástěnku už nelze sdílet.",
       "unsupported-data-source-alert-desc": "Na této nástěnce jsou zdroje dat, které nejsou pro sdílené nástěnky podporovány. Panely, které používají tyto zdroje dat, nemusí fungovat správně: {{unsupportedDataSources}}."
-    },
-    "sharing": {
-      "success-creation": "Nástěnka je veřejná."
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "Konfigurovat veřejnou nástěnku",
-      "revoke-button-text": "Odvolat veřejnou adresu URL",
-      "revoke-button-tooltip": "Odvolat adresu URL veřejné nástěnky",
-      "view-button-tooltip": "Zobrazit veřejnou nástěnku"
-    },
-    "empty-state": {
-      "message": "Dosud jste nevytvořili žádné veřejné nástěnky",
-      "more-info": "Vytvořte veřejnou nástěnku z libovolné existující nástěnky prostřednictvím modálu <1>Sdílet</1>. <4>Zjistěte víc</4>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "Pozastavit sdílení"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11986,8 +11929,6 @@
       "external-link": "Externí odkaz",
       "loading-text": "Načítání…",
       "open-dashboard-list-text": "Otevřít seznam nástěnek",
-      "public-dashboard-link": "Adresa URL veřejné nástěnky",
-      "public-dashboard-setting": "Nastavení veřejné nástěnky",
       "sharing-setting": "Nastavení sdílení"
     },
     "delete-user-modal": {
@@ -11995,14 +11936,12 @@
       "delete-user-cancel-button": "Zrušit",
       "delete-user-revoke-access-button": "Odvolat přístup",
       "revoke-access-title": "Odvolat přístup",
-      "revoke-user-access-modal-desc-line1": "Opravdu chcete odvolat přístup pro {{email}}?",
-      "revoke-user-access-modal-desc-line2": "Tato akce okamžitě odvolá přístup pro {{email}} ke všem veřejným nástěnkám."
+      "revoke-user-access-modal-desc-line1": "Opravdu chcete odvolat přístup pro {{email}}?"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "Tato akce okamžitě odvolá přístup pro {{email}} ke všem sdíleným nástěnkám."
     },
     "modal": {
-      "dashboard-modal-title": "Veřejné nástěnky",
       "shared-dashboard-modal-title": "Sdílené nástěnky"
     },
     "table-body": {
@@ -12094,14 +12033,14 @@
       "restore-button": "Obnovit",
       "restore-loading": "Probíhá obnovení…",
       "title": "Obnovit nástěnky",
-      "folder-picker-text_one": "Vyberte složku, do které budou vaše nástěnky obnoveny.",
-      "folder-picker-text_few": "Vyberte složku, do které budou vaše nástěnky obnoveny.",
-      "folder-picker-text_many": "Vyberte složku, do které budou vaše nástěnky obnoveny.",
-      "folder-picker-text_other": "Vyberte složku, do které budou vaše nástěnky obnoveny.",
-      "text_one": "Tato akce obnoví následující počet nástěnek: {{numberOfDashboards}}.",
-      "text_few": "Tato akce obnoví následující počet nástěnek: {{numberOfDashboards}}.",
-      "text_many": "Tato akce obnoví následující počet nástěnek: {{numberOfDashboards}}.",
-      "text_other": "Tato akce obnoví následující počet nástěnek: {{numberOfDashboards}}."
+      "folder-picker-text_one": "",
+      "folder-picker-text_few": "",
+      "folder-picker-text_many": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_few": "",
+      "text_many": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {
@@ -12217,8 +12156,8 @@
       "title": "Vyberte rozsahy"
     },
     "tree": {
-      "collapse": "Sbalit",
-      "expand": "Rozbalit",
+      "collapse": "",
+      "expand": "",
       "headline": {
         "noResults": "Nebyly nalezeny žádné výsledky pro váš dotaz",
         "recommended": "Doporučeno",
@@ -12512,8 +12451,6 @@
       "export": "Exportovat",
       "library-panel": "Panel knihovny",
       "link": "Odkaz",
-      "panel-embed": "Vložené",
-      "public-dashboard": "Veřejná nástěnka",
       "public-dashboard-title": "Veřejná nástěnka",
       "snapshot": "Snímek"
     },
@@ -14111,7 +14048,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Uživatelé veřejné nástěnky",
       "shared-dashboard-users-tab-title": "Uživatelé sdílené nástěnky"
     }
   },

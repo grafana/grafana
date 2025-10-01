@@ -81,20 +81,6 @@
         "title-access-denied": "Åtkomst nekad"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "Vissa funktioner är stabila (GA) och aktiverade som standard, medan vissa för närvarande är i sin preliminära betafas och finns tillgängliga för tidig tillämpning.",
-      "confirm-modal-body-2": "Vi rekommenderar att du ser till att du förstår konsekvenserna av varje funktionsändring innan du gör några ändringar.",
-      "confirmText-save-changes": "Spara ändringarna",
-      "get-stage-cell": {
-        "beta": "Beta",
-        "content-general-availability": "Allmän tillgänglighet",
-        "deprecated": "Föråldrat",
-        "ga": "GA"
-      },
-      "save-changes": "Spara ändringarna",
-      "saving": "Sparar ...",
-      "title-apply-feature-toggle-changes": "Tillämpa ändringarna för funktionsväxlare"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "Radera org",
       "confirmText-delete": "Radera",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "Inställningarna uppdateras vid körning",
       "title-sort-dashboards-by-popularity-in-search": "Sortera instrumentpaneler efter popularitet vid sökningar",
       "title-team-sync": "Teamsynkronisering"
-    },
-    "feature-toggles": {
-      "restart-pending": "En omstart väntar för din Grafana-instans för att tillämpa de senaste ändringarna för växling av funktion",
-      "restart-required": "Om du sparar ändringar av funktionen kommer en omstart av instansen att uppmanas, vilket kan ta några minuter",
-      "sub-title": "Visa och redigera funktionsväxlare. Läs mer om funktionsväxlare på <2>grafana.com</2>."
     },
     "get-enterprise": {
       "contact-us": "Kontakta oss och få en gratis provperiod",
@@ -364,14 +345,6 @@
       "tooltip-assigned-role": "En licensierad roll kommer att tilldelas när den här användaren loggar in"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "Dölj vanliga etiketter",
-      "show": {
-        "tooltip": "Visa vanliga etiketter"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Aktiva tidsinställningar"
@@ -480,16 +453,16 @@
     "alert-instance-state-filter": {
       "state": "Tillstånd"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "Ta bort etikett"
     },
     "alert-label-dropdown": {
       "placeholder-select": "Välj {{type}}"
-    },
-    "alert-labels": {
-      "aria-label-labels": "Etiketter",
-      "common-labels-count_one": "+{{count}} vanliga etiketter",
-      "common-labels-count_other": "+{{count}} vanliga etiketter"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "Tystnad, gruppering och tidsinställningar (valfritt)",
@@ -1679,6 +1652,10 @@
     "inspector-yaml-tab": {
       "apply": "Tillämpa"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "Så här ansluter du till IRM",
       "disabled-description": "Aktivera IRM via en Webhook-integration",
@@ -1821,6 +1798,10 @@
         }
       }
     },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
+    },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Filtrera varningar med etikettförfrågan utan klamrar, t.ex.:",
       "filter-alerts-using-label-querying-without-spaces": "Filtrera larm med etikettförfrågan utan mellanslag, t.ex.:",
@@ -1927,9 +1908,6 @@
       "title-remove": "Ta bort",
       "tooltip-remove-time-range": "Ta bort tidsintervall"
     },
-    "namespace": {
-      "title-alert-rules": "Varningsregler"
-    },
     "namespace-and-group-filter": {
       "select-group": "Markera grupp",
       "select-namespace": "Välj namnutrymme"
@@ -1986,8 +1964,10 @@
       "label-notification-policies": "Aviseringspolicyer",
       "label-time-intervals": "Tidsintervall"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "Standardpolicy",
       "no-matchers": "Inga matchare"
     },
     "notification-preview": {
@@ -2004,22 +1984,12 @@
     },
     "notification-route": {
       "no-labels": "Inga etiketter",
-      "no-matching-labels": "Inga matchande etiketter"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Dina larminstanser dirigeras enligt följande.",
-      "close": "Stäng",
-      "contact-point": "Kontaktpunkt",
-      "default-policy": "Standardpolicy",
-      "notification-policy-path": "Sökväg för aviseringspolicy",
-      "see-details-link": "Se detaljer",
-      "title-routing-details": "Routningsdetaljer"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Visa policyväg",
-      "delivered-to": "@ Levereras till",
-      "notification-policy": "Aviseringspolicy",
-      "see-details": "Se detaljer"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2047,7 +2017,9 @@
       "recipient-notification-fires": "Välj vem som ska få en avisering när en larmregel utlöses."
     },
     "option-customfield": {
-      "label-custom-template": "Anpassad mall"
+      "label-custom-template": "Anpassad mall",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Vald Alertmanager finns inte längre eller så kanske du inte har behörighet att komma åt den. Du kan välja en annan larmhanterare i rullgardinsmenyn.",
@@ -2138,17 +2110,13 @@
         "suffix": "Uppdatera sidan och försök igen.",
         "title": "Det gick inte att lägga till eller uppdatera aviseringspolicy"
       },
-      "n-more-policies_one": "{{count}} ytterligare policyer",
-      "n-more-policies_other": "{{count}} ytterligare policyer"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Ny underordnad policy",
       "label-new-sibling-above": "Nytt syskon ovanför",
       "label-new-sibling-below": "Nytt syskon nedanför"
-    },
-    "policy-path": {
-      "default-policy": "Standardpolicy",
-      "no-matchers": "Inga matchare"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Det går inte att visa förhandsgranskningen av frågan. Vissa av de datakällor som används i frågorna är inte tillgängliga.",
@@ -2194,7 +2162,6 @@
       "body-queries-expressions-configured": "Skapa minst en fråga eller ett uttryck att bli larmad för",
       "confirmText-deactivate": "Inaktivera",
       "expressions": "Uttryck",
-      "loading-data-sources": "Laddar datakällor …",
       "manipulate-returned-queries-other-operations": "Manipulera data som returneras från frågor med matematikfunktioner och andra operationer.",
       "message": {
         "a-valid-expression-is-required": "Ett giltigt uttryck krävs"
@@ -3600,6 +3567,7 @@
       "button-cancel": "Avbryt",
       "button-delete": "Ta bort",
       "button-deleting": "Tar bort ...",
+      "commit": "",
       "delete-warning": "Detta kommer att radera den här mappen och alla dess underordnade. Totalt kommer detta att påverka:",
       "success-message": "Mappen har raderats"
     },
@@ -5357,7 +5325,6 @@
             "json": "Exportera som JSON"
           }
         },
-        "mark-favorite": "Markera som favorit",
         "more-save-options": "Fler sparalternativ",
         "playlist-next": "Gå till nästa instrumentpanel",
         "playlist-previous": "Gå till föregående instrumentpanel",
@@ -5386,8 +5353,7 @@
             "yesText": "Spara"
           }
         },
-        "unlink-library-panel": "Ta bort länk till bibliotekspanel",
-        "unmark-favorite": "Avmarkera som favorit"
+        "unlink-library-panel": "Ta bort länk till bibliotekspanel"
       },
       "open-original": "Öppna ursprunglig instrumentpanel",
       "playlist-next": "Gå till nästa instrumentpanel",
@@ -5407,11 +5373,11 @@
       "save-dashboard-short": "Spara",
       "save-library-panel": "Spara bibliotekspanel",
       "settings": "Instrumentpanelens inställningar",
-      "share": {
-        "label": "Dela",
-        "tooltip": "Dela instrumentpanel"
-      },
       "share-button": "Dela",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "Ta bort länk till bibliotekspanel",
       "unmark-favorite": "Avmarkera som favorit"
     },
@@ -5661,14 +5627,6 @@
         "title": {
           "new-dashboard": "Ny instrumentpanel"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "Återkalla offentlig webbadress"
-      },
-      "title": {
-        "revoke-public-url": "Återkalla offentlig webbadress"
       }
     },
     "constant-variable-form": {
@@ -5925,13 +5883,12 @@
       "usage-count_other": "Används på {{count}} instrumentpaneler"
     },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "Fel när kontrollpanel skulle flyttas",
       "api-error": "Det gick inte att flytta kontrollpanelen",
       "cancel-action": "Avbryt",
       "current-file-not-found": "Den aktuella kontrollpanelfilen kunde inte hittas",
       "drawer-title": "Flytta tilldelad kontrollpanel",
       "file-load-error": "Fel vid laddning av kontrollpanel",
-      "loading-file-data": "Laddar kontrollpanel",
+      "loading-dashboard-data": "",
       "move-action": "Flytta kontrollpanel",
       "move-read-only-message": "Den här kontrollpanelen kan inte flyttas direkt från Grafana eftersom arkivet är skrivskyddat. Om du vill flytta den ska du flytta filen i Git-arkivet istället.",
       "moving": "Flyttar …",
@@ -9273,8 +9230,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "Avbryt",
-      "create": "Skapa bibliotekspanel",
       "error": "Bibliotekspanel med detta namn finns redan",
       "folder": "Spara i mapp",
       "folder-description": "Behörigheter för bibliotekspanelen härleds från mappbehörigheterna",
@@ -9368,6 +9323,7 @@
     },
     "share-panel": {
       "config-description": "Skapa en personlig direktlänk för att dela din panel inom din organisation, med följande anpassningsinställningar:",
+      "copy-image-link": "",
       "download-image": "Ladda ner bild",
       "render-image": "Generera bild"
     }
@@ -9453,7 +9409,7 @@
       "label-signature": "Underskrift"
     },
     "description-enable-infinite-scrolling": "Experimentellt. Begär fler resultat genom att bläddra till längst ner i logglistan.",
-    "description-enable-syntax-highlighting": "Använd en fördefinierad syntaxfärgningsgrammatik för att markera relevanta delar av loggraderna",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "Visa kontroller för att hoppa till den sista eller första loggraden och filtrera efter loggnivå",
     "fields": {
       "type": {
@@ -9725,14 +9681,14 @@
     },
     "name-common-labels": "Vanliga etiketter",
     "name-deduplication": "Avduplicering",
-    "name-details-mode": "Panelläge för loggdetaljer",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "Inline",
       "label-sidebar": "Sidofält"
     },
     "name-enable-infinite-scrolling": "Aktivera oändlig rullning",
     "name-enable-log-details": "Aktivera loggdetaljer",
-    "name-enable-syntax-highlighting": "Aktivera syntaxfärgläggning",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "Teckenstorlek",
     "name-order": "Beställning",
     "name-prettify-json": "Gör JSON snyggare",
@@ -10343,9 +10299,6 @@
     "profiles": {
       "title": "Profiler"
     },
-    "public": {
-      "title": "Offentliga instrumentpaneler"
-    },
     "recently-deleted": {
       "subtitle": "Alla objekt som listas här i fler än 30 dagar raderas automatiskt.",
       "title": "Nyligen raderat"
@@ -10675,6 +10628,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11029,7 +10990,6 @@
       "body-not-published": "Detta tillägg har inte publicerat på <2>grafana.com/plugins</2> och kan inte hanteras via katalogen.",
       "enterprise-plugin-info": "Detta tillägg är endast tillgängligt i Grafana Cloud och Grafana Enterprise.",
       "learn-more": "Läs mer",
-      "no-valid-grafana-enterprise-license-detected": "Ingen giltig Grafana Enterprise-licens upptäcktes.",
       "title-dev-alert": "Detta är en utvecklingsversion av tillägget och kan inte avinstalleras.",
       "title-plugin-doesnt-support-version-grafana": "Detta tillägg saknar stöd för din version av Grafana.",
       "title-remote-plugins-unavailable": "Installationskontrollerna har inaktiverats eftersom Grafanas server inte kan komma åt grafana.com.",
@@ -11352,6 +11312,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Konfigurera obligatoriska funktionsväxlare"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Hantera kontrollpaneler som kod i Git och provisionering av uppdateringar automatiskt",
       "manage-your-dashboards-with-remote-provisioning": "Kom igång med Git Sync",
       "store-dashboards-in-version-controlled-storage": "Lagra instrumentpaneler med versionsstyrd lagring för bättre organisering och historikspårning"
@@ -11389,11 +11350,12 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Inga resultat som matchar din fråga",
+      "partial-managed": "",
       "placeholder-search": "Sök",
       "all-resources-managed_one": "",
       "all-resources-managed_other": "",
-      "partial-managed_one": "",
-      "partial-managed_other": ""
+      "unmanaged-resources_one": "",
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11540,8 +11502,16 @@
         "subtitle": "Använd det här alternativet om du vill synkronisera och hantera hela din Grafana-instans via extern lagring."
       }
     },
-    "read-only-local-tooltip": "Denna mapp är skrivskyddad och provisionerad via filprovisionering. Om du behöver göra ändringar i mappen måste du uppdatera den anslutna fillagringsplatsen. Ändra mappinställningarna genom att gå till Administration > Provisionering > Lagringsplatser.",
-    "read-only-remote-tooltip": "Den här mappen är skrivskyddad och provisionerad via Git. Om du behöver göra ändringar i mappen måste du uppdatera det anslutna arkivet. Ändra mappinställningarna genom att gå till Administration > Provisionering > Lagringsplatser.",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "aktiva jobb",
       "column-action": "Åtgärd",
@@ -11655,6 +11625,7 @@
         "removed-from-repo-test-ui": "borttagen från arkivets testgränssnitt",
         "updated-from-repo-test-ui": "uppdaterat från arkivets testgränssnitt"
       },
+      "read-only-repo-tooltip": "",
       "repository": "Databas",
       "tab-info": {
         "label": {
@@ -11691,6 +11662,8 @@
       "tooltip-unhealthy-repository": "Det gick inte att hämta en ohälsosam lagringsplats"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "Inkludera åtaganden för varje historiskt värde",
       "synchronization-options": "Synkroniseringsalternativ"
@@ -11765,7 +11738,6 @@
       "email-share-type-option-label": "Endast angivna personer",
       "pause-sharing-dashboard-label": "Pausa delning av instrumentpanelen",
       "public-share-type-option-label": "Alla med länk",
-      "revoke-body": "Är du säker på att du vill återkalla denna URL? Instrumentpanelen kommer inte längre att vara offentlig.",
       "revoke-public-URL-button": "Återkalla offentlig webbadress",
       "revoke-public-URL-button-title": "Återkalla offentlig webbadress",
       "settings-title": "Inställningar"
@@ -11779,7 +11751,6 @@
       "success-pause": "Din åtkomst till instrumentpanelen har pausats",
       "success-resume": "Din åtkomst till instrumentpanelen har återupptagits",
       "success-update": "Inställningarna har uppdaterats",
-      "success-update-old": "Offentlig instrumentpanel uppdaterad!",
       "time-range-label": "Tidsintervall",
       "time-range-tooltip": "Den offentliga instrumentpanelen använder instrumentpanelens standardinställning för tidsintervall"
     },
@@ -11787,10 +11758,6 @@
       "generate-public-url-button": "Generera offentlig webbadress",
       "unsupported-features-desc": "För närvarande saknar vi stöd för mallvariabler eller frontend-datakällor",
       "welcome-title": "Välkommen till offentliga instrumentpaneler!"
-    },
-    "delete-modal": {
-      "revoke-body-text": "Är du säker på att du vill återkalla denna URL? Instrumentpanelen kommer inte längre att vara offentlig.",
-      "revoke-title": "Återkalla offentlig webbadress"
     },
     "email-sharing": {
       "accept-button": "Acceptera",
@@ -11821,11 +11788,8 @@
       "success-share-type-change": "Åtkomst till instrumentpanelen uppdaterad: Endast specifika personer kan nu komma åt den med hjälp av länken"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Kontakta din administratör för att få tillstånd att {{action}} offentliga instrumentpaneler",
-      "no-upsert-perm-alert-title": "Du har inte behörighet att {{ action }} en offentlig instrumentpanel",
       "save-dashboard-changes-alert-title": "Spara ändringarna i instrumentpanelen innan du uppdaterar den offentliga konfigurationen",
       "unsupport-data-source-alert-readmore-link": "Läs mer om datakällor som stöds",
-      "unsupported-data-source-alert-desc": "Det finns datakällor i denna instrumentpanel som inte stöds för offentliga instrumentpaneler. Paneler som använder dessa datakällor kanske inte fungerar korrekt: {{unsupportedDataSources}}.",
       "unsupported-data-source-alert-title": "Datakällor som inte stöds",
       "unsupported-template-variable-alert-desc": "Den här offentliga instrumentpanelen kanske inte fungerar eftersom den använder mallvariabler",
       "unsupported-template-variable-alert-title": "Mallvariabler stöds inte"
@@ -11859,8 +11823,7 @@
       "time-range-text": "Tidsintervall = "
     },
     "share": {
-      "success-delete": "Din instrumentpanel kan inte längre delas",
-      "success-delete-old": "Offentlig instrumentpanel raderad!"
+      "success-delete": "Din instrumentpanel kan inte längre delas"
     },
     "share-configuration": {
       "share-type-label": "Länkåtkomst"
@@ -11879,24 +11842,6 @@
       "revoke-access-button": "Återkalla åtkomst",
       "revoke-access-description": "Är du säker på att du vill återkalla denna åtkomst? Instrumentpanelen kan inte längre delas.",
       "unsupported-data-source-alert-desc": "Det finns datakällor i denna kontrollpanel som inte stöds för delade kontrollpaneler. Paneler som använder dessa datakällor kanske inte fungerar korrekt: {{unsupportedDataSources}}."
-    },
-    "sharing": {
-      "success-creation": "Kontrollpanelen är offentlig!"
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "Konfigurera offentlig instrumentpanel",
-      "revoke-button-text": "Återkalla offentlig webbadress",
-      "revoke-button-tooltip": "Återkalla webbadress för offentlig instrumentpanel",
-      "view-button-tooltip": "Visa offentlig instrumentpanel"
-    },
-    "empty-state": {
-      "message": "Du har inte skapat några offentliga kontrollpaneler ännu",
-      "more-info": "Skapa en offentlig kontrollpanel från en befintlig kontrollpanel via modalen <1>Dela</1>. <4>Läs mer</4>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "Pausa delning"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11904,8 +11849,6 @@
       "external-link": "Extern länk",
       "loading-text": "Laddar …",
       "open-dashboard-list-text": "Öppna instrumentpanellista",
-      "public-dashboard-link": "Webbadress för offentlig instrumentpanel",
-      "public-dashboard-setting": "Offentliga inställningar för instrumentpanel",
       "sharing-setting": "Inställningar för delning"
     },
     "delete-user-modal": {
@@ -11913,14 +11856,12 @@
       "delete-user-cancel-button": "Avbryt",
       "delete-user-revoke-access-button": "Återkalla åtkomst",
       "revoke-access-title": "Återkalla åtkomst",
-      "revoke-user-access-modal-desc-line1": "Är du säker på att du vill återkalla åtkomst för {{email}}?",
-      "revoke-user-access-modal-desc-line2": "Denna åtgärd återkallar omedelbart åtkomsten för {{email}} till alla offentliga instrumentpaneler."
+      "revoke-user-access-modal-desc-line1": "Är du säker på att du vill återkalla åtkomst för {{email}}?"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "Denna åtgärd återkallar omedelbart åtkomsten för {{email}} till alla delade kontrollpaneler."
     },
     "modal": {
-      "dashboard-modal-title": "Offentliga instrumentpaneler",
       "shared-dashboard-modal-title": "Delade instrumentpaneler"
     },
     "table-body": {
@@ -12010,10 +11951,10 @@
       "restore-button": "Återställ",
       "restore-loading": "Återställer ...",
       "title": "Återställ instrumentpaneler",
-      "folder-picker-text_one": "Välj en mapp där dina instrumentpaneler kommer att återställas.",
-      "folder-picker-text_other": "Välj en mapp där dina instrumentpaneler kommer att återställas.",
-      "text_one": "Denna åtgärd återställer {{numberOfDashboards}} instrumentpanel.",
-      "text_other": "Denna åtgärd återställer {{numberOfDashboards}} instrumentpanel."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {
@@ -12129,8 +12070,8 @@
       "title": "Välj omfattningar"
     },
     "tree": {
-      "collapse": "Minimera",
-      "expand": "Expandera",
+      "collapse": "",
+      "expand": "",
       "headline": {
         "noResults": "Inga resultat hittades för din fråga",
         "recommended": "Rekommenderas",
@@ -12422,8 +12363,6 @@
       "export": "Exportera",
       "library-panel": "Bibliotekspanel",
       "link": "Länk",
-      "panel-embed": "Bädda in",
-      "public-dashboard": "Offentlig instrumentpanel",
       "public-dashboard-title": "Offentlig instrumentpanel",
       "snapshot": "Ögonblicksbild"
     },
@@ -14019,7 +13958,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Användare av allmänna instrumentpaneler",
       "shared-dashboard-users-tab-title": "Användare av delade instrumentpaneler"
     }
   },

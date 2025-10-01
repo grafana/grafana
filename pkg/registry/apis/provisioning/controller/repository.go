@@ -22,9 +22,11 @@ import (
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const loggerName = "provisioning-repository-controller"
@@ -39,6 +41,11 @@ type queueItem struct {
 	attempts int
 }
 
+//go:generate mockery --name finalizerProcessor --structname MockFinalizerProcessor --inpackage --filename finalizer_mock.go --with-expecter
+type finalizerProcessor interface {
+	process(ctx context.Context, repo repository.Repository, finalizers []string) error
+}
+
 // RepositoryController controls how and when CRD is established.
 type RepositoryController struct {
 	client     client.ProvisioningV0alpha1Interface
@@ -48,7 +55,7 @@ type RepositoryController struct {
 	dualwrite  dualwrite.Service
 
 	jobs          jobs.Queue
-	finalizer     *finalizer
+	finalizer     finalizerProcessor
 	statusPatcher StatusPatcher
 
 	repoFactory   repository.Factory
@@ -59,6 +66,9 @@ type RepositoryController struct {
 	keyFunc           func(obj any) (string, error)
 
 	queue workqueue.TypedRateLimitingInterface[*queueItem]
+
+	registry prometheus.Registerer
+	tracer   tracing.Tracer
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -72,7 +82,11 @@ func NewRepositoryController(
 	dualwrite dualwrite.Service,
 	healthChecker *HealthChecker,
 	statusPatcher StatusPatcher,
+	registry prometheus.Registerer,
+	tracer tracing.Tracer,
 ) (*RepositoryController, error) {
+	finalizerMetrics := registerFinalizerMetrics(registry)
+
 	rc := &RepositoryController{
 		client:     provisioningClient,
 		repoLister: repoInformer.Lister(),
@@ -89,10 +103,13 @@ func NewRepositoryController(
 		finalizer: &finalizer{
 			lister:        resourceLister,
 			clientFactory: clients,
+			metrics:       &finalizerMetrics,
 		},
 		jobs:      jobs,
 		logger:    logging.DefaultLogger.With("logger", loggerName),
 		dualwrite: dualwrite,
+		registry:  registry,
+		tracer:    tracer,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -211,12 +228,15 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 	if len(obj.Finalizers) > 0 {
 		repo, err := rc.repoFactory.Build(ctx, obj)
 		if err != nil {
-			logger.Warn("unable to get repository for cleanup")
-		} else {
-			err := rc.finalizer.process(ctx, repo, obj.Finalizers)
-			if err != nil {
-				logger.Warn("error running finalizer", "err", err)
+			return fmt.Errorf("create repository from configuration: %w", err)
+		}
+
+		err = rc.finalizer.process(ctx, repo, obj.Finalizers)
+		if err != nil {
+			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("remove finalizers: %w", err)); statusErr != nil {
+				logger.Error("failed to update repository status after finalizer removal error", "error", statusErr)
 			}
+			return fmt.Errorf("process finalizers: %w", err)
 		}
 
 		// remove the finalizers
@@ -226,10 +246,25 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 				]`), v1.PatchOptions{
 				FieldManager: "provisioning-controller",
 			})
-		return err // delete will be called again
+		if err != nil {
+			return fmt.Errorf("remove finalizers: %w", err)
+		}
+		return nil
+	} else {
+		logger.Info("no finalizers to process")
 	}
 
 	return nil
+}
+
+func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *provisioning.Repository, err error) error {
+	logger := logging.FromContext(ctx)
+	logger.Info("updating repository status with deletion error", "error", err.Error())
+	return rc.statusPatcher.Patch(ctx, obj, map[string]interface{}{
+		"op":    "replace",
+		"path":  "/status/deleteError",
+		"value": err.Error(),
+	})
 }
 
 func (rc *RepositoryController) shouldResync(obj *provisioning.Repository) bool {
