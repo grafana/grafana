@@ -3,11 +3,12 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useStyles2, Card, Stack, Text, Button, ButtonGroup, Grid, Icon, Spinner, useTheme2, Badge } from '@grafana/ui';
+import { useStyles2, Card, Stack, Text, Button, ButtonGroup, Grid, Icon, Spinner, useTheme2, Badge, LinkButton } from '@grafana/ui';
 
 import { CosmicSceneIcon } from './CosmicSceneIcon';
 import { SearchResultAIRecommendation } from './SearchResultAIRecommendation';
 import { SearchResultSuggestion } from './SearchResultSuggestion';
+import { HackathonTable, TableColumn, ExpandedContent } from './HackathonTable';
 
 interface SearchResultsProps {
   searchState: any;
@@ -78,6 +79,139 @@ export const SearchResults = ({ searchState, query }: SearchResultsProps) => {
         />
       </div>
     );
+  };
+
+  // Table column configuration for list view
+  const getColumns = (): TableColumn[] => {
+    if (activeTab === 'dashboards') {
+      return [
+        {
+          key: 'name',
+          header: 'Name',
+          width: '2.5fr',
+          render: (item) => (
+            <Stack direction="row" gap={1.5} alignItems="center">
+              <Icon name="apps" size="lg" />
+              <Text weight="medium">{item.name}</Text>
+            </Stack>
+          ),
+        },
+        {
+          key: 'details',
+          header: 'Details',
+          width: '2fr',
+          render: (item) =>
+            item.tags && item.tags.length > 0 ? (
+              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <Text variant="bodySmall" color="secondary">
+                  Tags: {item.tags.slice(0, 3).join(', ')}
+                </Text>
+              </div>
+            ) : (
+              <Text variant="bodySmall" color="secondary">
+                Dashboard
+              </Text>
+            ),
+        },
+        {
+          key: 'location',
+          header: 'Location',
+          width: '1.5fr',
+          render: (item) =>
+            item.location ? (
+              <Stack direction="row" gap={1} alignItems="center">
+                <Icon name="folder-open" size="sm" />
+                <Text variant="bodySmall" color="secondary">
+                  {item.location}
+                </Text>
+              </Stack>
+            ) : (
+              <Text variant="bodySmall" color="secondary">
+                General
+              </Text>
+            ),
+        },
+      ];
+    } else {
+      // Folders
+      return [
+        {
+          key: 'name',
+          header: 'Name',
+          width: '3fr',
+          render: (item) => (
+            <Stack direction="row" gap={1.5} alignItems="center">
+              <Icon name="folder" size="lg" style={{ color: '#FFB800' }} />
+              <Text weight="medium">{item.name}</Text>
+            </Stack>
+          ),
+        },
+        {
+          key: 'location',
+          header: 'Parent Folder',
+          width: '2fr',
+          render: (item) =>
+            item.location ? (
+              <Stack direction="row" gap={1} alignItems="center">
+                <Icon name="folder-open" size="sm" />
+                <Text variant="bodySmall" color="secondary">
+                  {item.location}
+                </Text>
+              </Stack>
+            ) : (
+              <Text variant="bodySmall" color="secondary">
+                Root
+              </Text>
+            ),
+        },
+      ];
+    }
+  };
+
+  // Expanded content configuration for list view
+  const expandedContent: ExpandedContent = {
+    render: (item) => (
+      <Stack direction="column" gap={2}>
+        <Stack direction="row" gap={4}>
+          <div>
+            <Text variant="bodySmall" weight="medium" color="secondary">
+              UID:
+            </Text>
+            <Text variant="bodySmall"> {item.uid}</Text>
+          </div>
+          {item.url && (
+            <div>
+              <Text variant="bodySmall" weight="medium" color="secondary">
+                URL:
+              </Text>
+              <Text variant="bodySmall"> {item.url}</Text>
+            </div>
+          )}
+        </Stack>
+        {item.tags && item.tags.length > 0 && (
+          <div>
+            <Text variant="bodySmall" weight="medium" color="secondary">
+              All Tags:
+            </Text>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
+              {item.tags.map((tag: string, idx: number) => (
+                <Badge key={idx} text={tag} color="blue" />
+              ))}
+            </div>
+          </div>
+        )}
+        <div>
+          <LinkButton
+            size="sm"
+            variant="primary"
+            href={item.url}
+            onClick={(e) => e.stopPropagation()}
+          >
+            Open {activeTab === 'dashboards' ? 'Dashboard' : 'Folder'}
+          </LinkButton>
+        </div>
+      </Stack>
+    ),
   };
 
   if (searchState.loading) {
@@ -283,96 +417,14 @@ export const SearchResults = ({ searchState, query }: SearchResultsProps) => {
           </Grid>
         </div>
       ) : (
-        <div className={styles.listResults}>
-          {displayResults.map((item, index) => {
-            return (
-              <Card
-                key={`${item.uid}-${index}`}
-                className={styles.listCard}
-                onClick={() => item.url && (window.location.href = item.url)}
-              >
-                <div className={styles.listCardContent}>
-                  {/* Content */}
-                  <div className={styles.listContentSection}>
-                    <div className={styles.listTitleRow}>
-                      <Stack direction="row" gap={1} alignItems="center">
-                        <div className={styles.listTitle}>
-                          <Text weight="medium">{item.name}</Text>
-                        </div>
-                        {item.starred && <Icon name="star" size="sm" className={styles.starIcon} title="Starred" />}
-                      </Stack>
-                      <div className={styles.listTypeBadge}>
-                        <Icon
-                          name={activeTab === 'dashboards' ? 'apps' : 'folder'}
-                          size="xs"
-                          className={styles.typeBadgeIcon}
-                        />
-                        <Text variant="bodySmall">{activeTab === 'dashboards' ? 'Dashboard' : 'Folder'}</Text>
-                      </div>
-                    </div>
-
-                    {item.location && (
-                      <Stack direction="row" gap={0.5} alignItems="center">
-                        <Icon name="folder-open" size="xs" className={styles.locationIcon} />
-                        <div className={styles.location}>
-                          <Text variant="bodySmall" color="secondary">
-                            {item.location}
-                          </Text>
-                        </div>
-                      </Stack>
-                    )}
-
-                    {/* Tags and metadata */}
-                    <Stack direction="row" gap={2} alignItems="center" wrap="wrap">
-                      {item.tags && item.tags.length > 0 && (
-                        <Stack direction="row" gap={0.5} alignItems="center">
-                          <Icon name="tag-alt" size="xs" className={styles.metaIcon} />
-                          {item.tags.slice(0, 4).map((tag: string) => (
-                            <Badge key={tag} text={tag} color="blue" />
-                          ))}
-                          {item.tags.length > 4 && (
-                            <Text variant="bodySmall" color="secondary">
-                              +{item.tags.length - 4} more
-                            </Text>
-                          )}
-                        </Stack>
-                      )}
-                    </Stack>
-                  </div>
-
-                  {/* Right: Stats */}
-                  <div className={styles.listStatsSection}>
-                    {item.sortMeta && (
-                      <div className={styles.statItem}>
-                        <Icon name="eye" size="sm" className={styles.statIcon} />
-                        <div>
-                          <Text variant="bodySmall" color="secondary">
-                            Views
-                          </Text>
-                          <Text weight="medium">{item.sortMeta || 'N/A'}</Text>
-                        </div>
-                      </div>
-                    )}
-                    {item.updated && (
-                      <div className={styles.statItem}>
-                        <Icon name="clock-nine" size="sm" className={styles.statIcon} />
-                        <div>
-                          <Text variant="bodySmall" color="secondary">
-                            Updated
-                          </Text>
-                          <Text variant="bodySmall">{new Date(item.updated).toLocaleDateString()}</Text>
-                        </div>
-                      </div>
-                    )}
-                    <div className={`${styles.quickActions} quick-actions`}>
-                      <Icon name="external-link-alt" size="sm" className={styles.actionIcon} title="Open" />
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+        <HackathonTable
+          columns={getColumns()}
+          data={displayResults}
+          expandable={true}
+          expandedContent={expandedContent}
+          onRowClick={(item) => item.url && (window.location.href = item.url)}
+          emptyMessage={`No ${activeTab} found`}
+        />
       )}
     </div>
   );

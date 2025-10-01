@@ -2,11 +2,15 @@ import { css } from '@emotion/css';
 import { useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Stack, Text, useStyles2, Icon, Grid, Pagination, Spinner, LinkButton } from '@grafana/ui';
+import { Stack, Text, useStyles2, Icon, Pagination, Spinner, LinkButton } from '@grafana/ui';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
+import { SparkJoyToggle } from 'app/core/components/SparkJoyToggle';
+import { setSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 
 import { listFolders, PAGE_SIZE as API_PAGE_SIZE } from '../api/services';
 import { BrowsingSectionTitle } from './BrowsingSectionTitle';
+import { HackathonTable, TableColumn } from './HackathonTable';
 
 const DISPLAY_PAGE_SIZE = 12;
 
@@ -15,6 +19,11 @@ export const ViewAllFolders = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [allFolders, setAllFolders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleToggleSparkJoy = () => {
+    setSparkJoyEnabled(false);
+    window.location.href = '/dashboards';
+  };
 
   useEffect(() => {
     const fetchAllFolders = async () => {
@@ -54,6 +63,38 @@ export const ViewAllFolders = () => {
     }
   };
 
+  const columns: TableColumn[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      width: '3fr',
+      render: (folder) => (
+        <Stack direction="row" gap={1.5} alignItems="center">
+          <Icon name="folder" size="lg" style={{ color: '#FFB800' }} />
+          <Text weight="medium">{folder.title}</Text>
+        </Stack>
+      ),
+    },
+    {
+      key: 'location',
+      header: 'Parent Folder',
+      width: '2fr',
+      render: (folder) =>
+        folder.parentTitle ? (
+          <Stack direction="row" gap={1} alignItems="center">
+            <Icon name="folder-open" size="sm" />
+            <Text variant="bodySmall" color="secondary">
+              {folder.parentTitle}
+            </Text>
+          </Stack>
+        ) : (
+          <Text variant="bodySmall" color="secondary">
+            Root
+          </Text>
+        ),
+    },
+  ];
+
   // Client-side pagination
   const totalItems = allFolders.length;
   const totalPages = Math.ceil(totalItems / DISPLAY_PAGE_SIZE);
@@ -67,6 +108,9 @@ export const ViewAllFolders = () => {
         Back to Dashboards
       </LinkButton>
     }>
+      <AppChromeUpdate
+        actions={[<SparkJoyToggle key="sparks-joy-toggle" value={true} onToggle={handleToggleSparkJoy} />]}
+      />
       <Page.Contents>
         <div className={styles.container}>
           <BrowsingSectionTitle
@@ -82,34 +126,14 @@ export const ViewAllFolders = () => {
             </div>
           )}
 
-          {!isLoading && paginatedData.length > 0 && (
+          {!isLoading && (
             <>
-              <Grid gap={2} columns={{ xs: 1, sm: 2, md: 3, lg: 4 }} className={styles.grid}>
-                {paginatedData.map((folder) => (
-                  <Card
-                    key={folder.uid}
-                    className={styles.folderCard}
-                    onClick={() => handleFolderClick(folder)}
-                  >
-                    <Stack direction="column" gap={2}>
-                      <Stack direction="row" gap={2} alignItems="flex-start">
-                        <Icon name="folder" size="lg" className={styles.icon} />
-                        <div className={styles.titleWrapper}>
-                          <Text weight="medium">{folder.title}</Text>
-                        </div>
-                      </Stack>
-                      {folder.parentTitle && (
-                        <Stack direction="row" gap={1} alignItems="center">
-                          <Icon name="folder-open" size="sm" />
-                          <Text variant="bodySmall" color="secondary">
-                            in {folder.parentTitle}
-                          </Text>
-                        </Stack>
-                      )}
-                    </Stack>
-                  </Card>
-                ))}
-              </Grid>
+              <HackathonTable
+                columns={columns}
+                data={paginatedData}
+                onRowClick={handleFolderClick}
+                emptyMessage="No folders found. Start organizing your dashboards with folders."
+              />
 
               {totalPages > 1 && (
                 <div className={styles.paginationContainer}>
@@ -121,16 +145,6 @@ export const ViewAllFolders = () => {
                 </div>
               )}
             </>
-          )}
-
-          {!isLoading && paginatedData.length === 0 && (
-            <Card className={styles.emptyCard}>
-              <Stack direction="column" gap={2} alignItems="center">
-                <Icon name="folder" size="xxl" className={styles.emptyIcon} />
-                <Text variant="h5">No folders found</Text>
-                <Text color="secondary">Start organizing your dashboards with folders</Text>
-              </Stack>
-            </Card>
           )}
         </div>
       </Page.Contents>

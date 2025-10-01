@@ -3,10 +3,14 @@ import { useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, Stack, Text, useStyles2, Icon, Grid, Pagination, Spinner, LinkButton, ToolbarButton, ButtonGroup } from '@grafana/ui';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
+import { SparkJoyToggle } from 'app/core/components/SparkJoyToggle';
+import { setSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { BrowsingSectionTitle } from './BrowsingSectionTitle';
+import { HackathonTable, TableColumn, ExpandedContent } from './HackathonTable';
 
 const DISPLAY_PAGE_SIZE = 12;
 
@@ -18,7 +22,11 @@ export const ViewAllDashboards = () => {
   const [allDashboards, setAllDashboards] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const handleToggleSparkJoy = () => {
+    setSparkJoyEnabled(false);
+    window.location.href = '/dashboards';
+  };
 
   useEffect(() => {
     const fetchAllDashboards = async () => {
@@ -62,17 +70,100 @@ export const ViewAllDashboards = () => {
     }
   };
 
-  const toggleRowExpansion = (uid: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    setExpandedRows((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(uid)) {
-        newSet.delete(uid);
-      } else {
-        newSet.add(uid);
-      }
-      return newSet;
-    });
+  // Table column configuration
+  const columns: TableColumn[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      width: '2.5fr',
+      render: (dashboard) => (
+        <Stack direction="row" gap={1.5} alignItems="center">
+          <Icon name="apps" size="lg" />
+          <Text weight="medium">{dashboard.name || dashboard.title}</Text>
+        </Stack>
+      ),
+    },
+    {
+      key: 'details',
+      header: 'Details',
+      width: '2fr',
+      render: (dashboard) =>
+        dashboard.tags && dashboard.tags.length > 0 ? (
+          <Text variant="bodySmall" color="secondary">
+            Tags: {dashboard.tags.slice(0, 3).join(', ')}
+          </Text>
+        ) : (
+          <Text variant="bodySmall" color="secondary">
+            Dashboard
+          </Text>
+        ),
+    },
+    {
+      key: 'location',
+      header: 'Location',
+      width: '1.5fr',
+      render: (dashboard) =>
+        dashboard.folderName ? (
+          <Stack direction="row" gap={1} alignItems="center">
+            <Icon name="folder-open" size="sm" />
+            <Text variant="bodySmall" color="secondary">
+              {dashboard.folderName}
+            </Text>
+          </Stack>
+        ) : (
+          <Text variant="bodySmall" color="secondary">
+            General
+          </Text>
+        ),
+    },
+  ];
+
+  // Expanded content configuration
+  const expandedContent: ExpandedContent = {
+    render: (dashboard) => (
+      <Stack direction="column" gap={2}>
+        <Stack direction="row" gap={4}>
+          <div>
+            <Text variant="bodySmall" weight="medium" color="secondary">
+              UID:
+            </Text>
+            <Text variant="bodySmall"> {dashboard.uid}</Text>
+          </div>
+          {dashboard.url && (
+            <div>
+              <Text variant="bodySmall" weight="medium" color="secondary">
+                URL:
+              </Text>
+              <Text variant="bodySmall"> {dashboard.url}</Text>
+            </div>
+          )}
+        </Stack>
+        {dashboard.tags && dashboard.tags.length > 0 && (
+          <div>
+            <Text variant="bodySmall" weight="medium" color="secondary">
+              All Tags:
+            </Text>
+            <div className={styles.tagContainer}>
+              {dashboard.tags.map((tag: string, idx: number) => (
+                <span key={idx} className={styles.tag}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        <div className={styles.expandedActions}>
+          <LinkButton
+            size="sm"
+            variant="primary"
+            href={dashboard.url}
+            onClick={(e) => e.stopPropagation()}
+          >
+            Open Dashboard
+          </LinkButton>
+        </div>
+      </Stack>
+    ),
   };
 
   // Client-side pagination
@@ -88,6 +179,9 @@ export const ViewAllDashboards = () => {
         Back to Dashboards
       </LinkButton>
     }>
+      <AppChromeUpdate
+        actions={[<SparkJoyToggle key="sparks-joy-toggle" value={true} onToggle={handleToggleSparkJoy} />]}
+      />
       <Page.Contents>
         <div className={styles.container}>
           <div className={styles.header}>
@@ -160,102 +254,13 @@ export const ViewAllDashboards = () => {
                   ))}
                 </Grid>
               ) : (
-                <div className={styles.listView}>
-                  <div className={styles.tableHeader}>
-                    <div className={styles.columnToggle}></div>
-                    <div className={styles.columnName}>Name</div>
-                    <div className={styles.columnDetails}>Details</div>
-                    <div className={styles.columnLocation}>Location</div>
-                  </div>
-                  {paginatedData.map((dashboard) => {
-                    const isExpanded = expandedRows.has(dashboard.uid);
-                    return (
-                      <div key={dashboard.uid}>
-                        <div
-                          className={styles.tableRow}
-                          onClick={(e) => toggleRowExpansion(dashboard.uid, e)}
-                        >
-                          <div className={styles.columnToggle}>
-                            <Icon 
-                              name={isExpanded ? 'angle-down' : 'angle-right'} 
-                              size="sm" 
-                              className={styles.expandIcon}
-                            />
-                          </div>
-                          <div className={styles.columnName}>
-                            <Icon name="apps" size="lg" className={styles.icon} />
-                            <Text weight="medium">{dashboard.name || dashboard.title}</Text>
-                          </div>
-                          <div className={styles.columnDetails}>
-                            {dashboard.tags && dashboard.tags.length > 0 ? (
-                              <Text variant="bodySmall" color="secondary">
-                                Tags: {dashboard.tags.slice(0, 3).join(', ')}
-                              </Text>
-                            ) : (
-                              <Text variant="bodySmall" color="secondary">
-                                Dashboard
-                              </Text>
-                            )}
-                          </div>
-                          <div className={styles.columnLocation}>
-                            {dashboard.folderName ? (
-                              <Stack direction="row" gap={1} alignItems="center">
-                                <Icon name="folder-open" size="sm" />
-                                <Text variant="bodySmall" color="secondary">
-                                  {dashboard.folderName}
-                                </Text>
-                              </Stack>
-                            ) : (
-                              <Text variant="bodySmall" color="secondary">
-                                General
-                              </Text>
-                            )}
-                          </div>
-                        </div>
-                        {isExpanded && (
-                          <div className={styles.expandedRow}>
-                            <Stack direction="column" gap={2}>
-                              <Stack direction="row" gap={4}>
-                                <div>
-                                  <Text variant="bodySmall" weight="medium" color="secondary">UID:</Text>
-                                  <Text variant="bodySmall"> {dashboard.uid}</Text>
-                                </div>
-                                {dashboard.url && (
-                                  <div>
-                                    <Text variant="bodySmall" weight="medium" color="secondary">URL:</Text>
-                                    <Text variant="bodySmall"> {dashboard.url}</Text>
-                                  </div>
-                                )}
-                              </Stack>
-                              {dashboard.tags && dashboard.tags.length > 0 && (
-                                <div>
-                                  <Text variant="bodySmall" weight="medium" color="secondary">All Tags:</Text>
-                                  <div className={styles.tagContainer}>
-                                    {dashboard.tags.map((tag: string, idx: number) => (
-                                      <span key={idx} className={styles.tag}>
-                                        {tag}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              <div className={styles.expandedActions}>
-                                <LinkButton
-                                  size="sm"
-                                  variant="primary"
-                                  href={dashboard.url}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  Open Dashboard
-                                </LinkButton>
-                              </div>
-                            </Stack>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                <HackathonTable
+                  columns={columns}
+                  data={paginatedData}
+                  expandable={true}
+                  expandedContent={expandedContent}
+                  emptyMessage="No dashboards found"
+                />
               )}
 
               {totalPages > 1 && (

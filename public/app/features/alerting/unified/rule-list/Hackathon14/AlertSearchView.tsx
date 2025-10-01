@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Stack, Text, useStyles2, Icon } from '@grafana/ui';
+import { GrafanaTheme2, IconName } from '@grafana/data';
+import { Card, Stack, Text, useStyles2, Icon, Badge, LinkButton } from '@grafana/ui';
 import { AlertSearchSuggestion } from './AlertSearchSuggestion';
 import { BrowsingSectionTitle } from 'app/features/browse-dashboards/hackathon14/BrowsingSectionTitle';
+import { HackathonTable, TableColumn, ExpandedContent } from 'app/features/browse-dashboards/hackathon14/HackathonTable';
 
 interface AlertSearchViewProps {
   query: string;
@@ -125,6 +126,95 @@ export const AlertSearchView = ({ query, filters }: AlertSearchViewProps) => {
     return parts.length > 0 ? parts.join(' • ') : 'All Alert Rules';
   };
 
+  // Get state badge configuration
+  const getStateBadgeConfig = (state: string) => {
+    const stateUpper = state.toUpperCase();
+    switch (stateUpper) {
+      case 'FIRING':
+        return { text: 'Firing', color: 'red' as const, icon: 'fire' as IconName };
+      case 'PENDING':
+        return { text: 'Pending', color: 'orange' as const, icon: 'exclamation-triangle' as IconName };
+      default:
+        return { text: 'Normal', color: 'green' as const, icon: 'check-circle' as IconName };
+    }
+  };
+
+  // Table column configuration
+  const columns: TableColumn[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      width: '2.5fr',
+      render: (item) => (
+        <Stack direction="row" gap={1.5} alignItems="center">
+          <Icon name="bell" size="lg" />
+          <Text weight="medium">{item.title}</Text>
+        </Stack>
+      ),
+    },
+    {
+      key: 'message',
+      header: 'Message',
+      width: '3fr',
+      render: (item) => (
+        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <Text variant="bodySmall" color="secondary">
+            {item.title}
+          </Text>
+        </div>
+      ),
+    },
+    {
+      key: 'state',
+      header: 'State',
+      width: '120px',
+      render: (item) => {
+        const badgeConfig = getStateBadgeConfig(item.state);
+        return (
+          <Badge text={badgeConfig.text} color={badgeConfig.color} icon={badgeConfig.icon} />
+        );
+      },
+    },
+  ];
+
+  // Expanded content configuration
+  const expandedContent: ExpandedContent = {
+    render: (item) => (
+      <Stack direction="column" gap={2}>
+        <Stack direction="row" gap={4}>
+          <div>
+            <Text variant="bodySmall" weight="medium" color="secondary">
+              UID:
+            </Text>
+            <Text variant="bodySmall"> {item.uid}</Text>
+          </div>
+          <div>
+            <Text variant="bodySmall" weight="medium" color="secondary">
+              Folder:
+            </Text>
+            <Text variant="bodySmall"> {item.folder || 'N/A'}</Text>
+          </div>
+          <div>
+            <Text variant="bodySmall" weight="medium" color="secondary">
+              Created by:
+            </Text>
+            <Text variant="bodySmall"> {item.createdBy || 'N/A'}</Text>
+          </div>
+        </Stack>
+        <div>
+          <LinkButton
+            size="sm"
+            variant="primary"
+            href={`/alerting/grafana/${item.uid}/view`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            View Alert Rule
+          </LinkButton>
+        </div>
+      </Stack>
+    ),
+  };
+
   return (
     <div className={styles.container}>
       <Stack direction="column" gap={2}>
@@ -143,30 +233,16 @@ export const AlertSearchView = ({ query, filters }: AlertSearchViewProps) => {
             </Stack>
           </Card>
         ) : (
-            <div>
-
-            <BrowsingSectionTitle title={`Matched Alerts (${filteredResults.length})` }icon="alert" subtitle="" />
-          <div className={styles.resultsContainer}>
-            {filteredResults.map((result) => (
-              <Card key={result.uid} className={styles.resultCard}>
-                <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
-                  <Stack direction="row" gap={2} alignItems="center">
-                    <Icon name="bell" size="lg" />
-                    <div>
-                      <Text weight="medium">{result.title}</Text>
-                      <Text variant="bodySmall" color="secondary">
-                        {result.folder}
-                      </Text>
-                    </div>
-                  </Stack>
-                  <div className={`${styles.stateBadge} ${result.state === 'firing' ? styles.firing : styles.normal}`}>
-                    {result.state === 'firing' && <Icon name="fire" size="sm" />}
-                    <Text variant="bodySmall">{result.state}</Text>
-                  </div>
-                </Stack>
-              </Card>
-            ))}
-          </div>
+          <div>
+            <BrowsingSectionTitle title={`Matched Alerts (${filteredResults.length})`} icon="bell" subtitle="" />
+            <HackathonTable
+              columns={columns}
+              data={filteredResults}
+              expandable={true}
+              expandedContent={expandedContent}
+              onRowClick={(item) => (window.location.href = `/alerting/grafana/${item.uid}/view`)}
+              emptyMessage="No alert rules found"
+            />
           </div>
         )}
       </Stack>

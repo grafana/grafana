@@ -256,8 +256,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 const BrowseDashboardsPage = ({ queryParams }: { queryParams: Record<string, string> }) => {
   const [sparkJoy, setSparkJoy] = useState<boolean>(() => getSparkJoyEnabled(true));
-  const location = useLocation();
-  
   const handleToggleSparkJoy = () => {
     setSparkJoy((current) => {
       const next = !current;
@@ -268,21 +266,15 @@ const BrowseDashboardsPage = ({ queryParams }: { queryParams: Record<string, str
 
   // Use window.location to get the full URL info
   const fullPathname = window.location.pathname;
-  const fullHref = window.location.href;
-  console.log('Full pathname:', fullPathname);
-  console.log('Full href:', fullHref);
-  console.log('React Router pathname:', location.pathname);
 
   // Check if we're on a view-all route
   const isViewAllDashboards = fullPathname.includes('/hackathon14/view-all-dashboards');
   const isViewAllFolders = fullPathname.includes('/hackathon14/view-all-folders');
   
   if (isViewAllDashboards) {
-    console.log('Rendering ViewAllDashboards');
     return <ViewAllDashboards />;
   }
   if (isViewAllFolders) {
-    console.log('Rendering ViewAllFolders');
     return <ViewAllFolders />;
   }
   
