@@ -47,7 +47,7 @@ func NewModule(opts Options,
 	moduleRegisterer ModuleRegisterer,
 	storageBackend resource.StorageBackend, // Ensures unified storage backend is initialized
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, storageBackend)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend)
 	if err != nil {
 		return nil, err
 	}
