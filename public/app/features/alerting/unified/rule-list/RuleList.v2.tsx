@@ -147,13 +147,11 @@ export default function RuleListPage() {
 
   // Use window.location.pathname to get the full path (React Router strips matched portions)
   const fullPathname = window.location.pathname;
-  console.log('Alert full pathname:', fullPathname);
 
   // Check if we're on the view-all-alerts route
   const isViewAllAlerts = fullPathname.includes('/hackathon14/view-all-alerts');
   
   if (isViewAllAlerts) {
-    console.log('Rendering ViewAllAlerts');
     return <ViewAllAlerts />;
   }
 
