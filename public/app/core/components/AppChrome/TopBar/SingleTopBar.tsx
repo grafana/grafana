@@ -127,6 +127,9 @@ export const SingleTopBar = memo(function SingleTopBar({
                           new OpenExtensionSidebarEvent({
                             pluginId: 'grafana-grafanadocsplugin-app',
                             componentTitle: 'Grafana Pathfinder',
+                            props: {
+                              helpNode: withoutParents(enrichedHelpNode),
+                            },
                           })
                         );
                       }
@@ -153,6 +156,14 @@ export const SingleTopBar = memo(function SingleTopBar({
     </>
   );
 });
+
+function withoutParents(node: NavModelItem): NavModelItem {
+  const { parentItem, ...rest } = node;
+  return {
+    ...rest,
+    children: node.children?.map(withoutParents),
+  };
+}
 
 const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
   layout: css({
