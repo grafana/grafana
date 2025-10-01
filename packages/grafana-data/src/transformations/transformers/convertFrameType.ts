@@ -1,8 +1,9 @@
 import { map } from 'rxjs/operators';
 
 import { DataTopic, FieldColor } from '@grafana/schema';
+import { getTheme } from '@grafana/ui';
 
-import { DataFrame, FieldType } from '../../types/dataFrame';
+import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
@@ -78,7 +79,7 @@ export function convertFrameTypes(options: ConvertFrameTypeTransformerOptions, f
     return frames.map(convertSeriesToExemplar);
   }
   if (targetType === FrameType.Annotation) {
-    return frames.map((frame) => convertSeriesToAnnotation(frame, options));
+    return frames.map((frame, frameIdx) => convertSeriesToAnnotation(frame, frameIdx, options));
   }
   return frames;
 }
@@ -128,13 +129,13 @@ const createIsRegionField = (frame: DataFrame) => {
   };
 };
 
-const createColorField = (frame: DataFrame, options: ConvertFrameTypeTransformerOptions) => {
+const createColorField = (frame: DataFrame, color: string): Field => {
   const startTimeField = frame.fields.find((field) => field.type === FieldType.time && field.name === 'time');
   return {
     config: {},
     name: 'color',
     type: FieldType.string,
-    values: new Array(startTimeField?.values.length).fill(options.annotationOptions?.defaultColor),
+    values: new Array(startTimeField?.values.length).fill(color),
   };
 };
 
@@ -155,7 +156,11 @@ function mapSourceFieldNameToAnnoFieldName(
   return undefined;
 }
 
-function convertSeriesToAnnotation(frame: DataFrame, options: ConvertFrameTypeTransformerOptions): DataFrame {
+function convertSeriesToAnnotation(
+  frame: DataFrame,
+  frameIdx: number,
+  options: ConvertFrameTypeTransformerOptions
+): DataFrame {
   // TODO: ensure time field
   // TODO: ensure value field
 
@@ -164,14 +169,14 @@ function convertSeriesToAnnotation(frame: DataFrame, options: ConvertFrameTypeTr
     const sourceFieldForFrameName = frame.fields.find((field) => field.name === options.annotationOptions?.frameName);
     const nameSet = new Set(sourceFieldForFrameName?.values);
     if (nameSet.size > 1) {
+      // There can be only one!! @todo
       console.warn('should only be a single unique value in source frameName field');
     }
 
-    // There can be only one!! @todo
     frameName = sourceFieldForFrameName?.values[0];
   }
 
-  const mappedFrame = {
+  const mappedFrame: DataFrame = {
     ...frame,
     name: frameName ?? frame.name ?? Math.random().toString(),
     fields: [
@@ -183,6 +188,8 @@ function convertSeriesToAnnotation(frame: DataFrame, options: ConvertFrameTypeTr
         }
         return {
           ...sourceField,
+          // @todo annotations config doesn't work like this, color is a field
+          // config: {...sourceField.config, color: options.annotationOptions?.colorScheme ?? {mode: FieldColorModeId.Fixed, fixedColor: options.annotationOptions?.defaultColor}},
           name,
         };
       }),
@@ -195,10 +202,14 @@ function convertSeriesToAnnotation(frame: DataFrame, options: ConvertFrameTypeTr
 
   const fields = [...mappedFrame.fields, createIsRegionField(mappedFrame)];
   // If we've mapped an existing field, don't add the default
-  if (!mappedFrame.fields.find((field) => field.name === 'color')) {
-    // @todo pick another palette by default if default undefined
-    fields.push(createColorField(mappedFrame, options));
+  if (options.annotationOptions?.colorScheme) {
+    // @todo respect color theme
+    const color = annotationPalette[frameIdx % annotationPalette.length];
+    fields.push(createColorField(mappedFrame, color));
+  } else if (options.annotationOptions?.defaultColor && !mappedFrame.fields.find((field) => field.name === 'color')) {
+    fields.push(createColorField(mappedFrame, options.annotationOptions?.defaultColor));
   }
+
   return {
     ...mappedFrame,
     fields,
@@ -208,3 +219,5 @@ function convertSeriesToAnnotation(frame: DataFrame, options: ConvertFrameTypeTr
     },
   };
 }
+
+export const annotationPalette = ['#ff0', '#f0f', '#f00'];
