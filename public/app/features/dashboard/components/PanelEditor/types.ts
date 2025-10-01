@@ -60,6 +60,7 @@ export interface OptionPaneRenderProps {
   onPanelConfigChange: <T extends keyof PanelModel>(configKey: T, value: PanelModel[T]) => void;
   onPanelOptionsChanged: (options: PanelModel['options']) => void;
   onFieldConfigsChange: (config: FieldConfigSource) => void;
+  isOpenDefault?: boolean;
 }
 
 export interface OptionPaneItemOverrideInfo {

@@ -23,12 +23,14 @@ export function VizLegend<T>({
   seriesVisibilityChangeBehavior = SeriesVisibilityChangeBehavior.Isolate,
   sortDesc,
   onLabelClick,
+  onLegendClick,
   onToggleSort,
   placement,
   className,
   itemRenderer,
   readonly,
   isSortable,
+  shouldSparkJoy,
 }: LegendProps<T>) {
   const { eventBus, onToggleSeriesVisibility, onToggleLegendSort } = usePanelContext();
 
@@ -94,13 +96,25 @@ export function VizLegend<T>({
           onLabelMouseOver={onMouseOver}
           onLabelMouseOut={onMouseOut}
           onLabelClick={onLegendLabelClick}
+          onLegendClick={onLegendClick}
           itemRenderer={itemRenderer}
           readonly={readonly}
           items={items}
+          shouldSparkJoy={shouldSparkJoy}
         />
       );
     },
-    [className, placement, onMouseOver, onMouseOut, onLegendLabelClick, itemRenderer, readonly]
+    [
+      className,
+      placement,
+      onMouseOver,
+      onMouseOut,
+      onLegendLabelClick,
+      onLegendClick,
+      itemRenderer,
+      readonly,
+      shouldSparkJoy,
+    ]
   );
 
   switch (displayMode) {

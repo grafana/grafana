@@ -8,7 +8,10 @@ import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, TextArea, Switch } from '@grafana/ui';
 import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import {
+  OptionsPaneCategoryDescriptor,
+  OptionsPaneCategoryDescriptorProps,
+} from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
@@ -21,13 +24,18 @@ import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/tra
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
-export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescriptor {
-  const descriptor = new OptionsPaneCategoryDescriptor({
+export function getPanelFrameOptions(
+  panel: VizPanel,
+  panelOptions?: Partial<OptionsPaneCategoryDescriptorProps>
+): OptionsPaneCategoryDescriptor {
+  const optionsPaneCategoryDescriptorProps = {
     title: t('dashboard-scene.get-panel-frame-options.descriptor.title.panel-options', 'Panel options'),
     id: 'Panel options',
     isOpenDefault: true,
-  });
+    ...panelOptions,
+  };
 
+  const descriptor = new OptionsPaneCategoryDescriptor(optionsPaneCategoryDescriptorProps);
   const panelLinksObject = dashboardSceneGraph.getPanelLinks(panel);
   const links = panelLinksObject?.state.rawLinks ?? [];
   const dashboard = getDashboardSceneFor(panel);

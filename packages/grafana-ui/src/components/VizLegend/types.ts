@@ -26,6 +26,8 @@ export interface VizLegendBaseProps<T> {
     event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
   ) => void;
   readonly?: boolean;
+  onLegendClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+  shouldSparkJoy?: boolean;
 }
 
 export interface VizLegendTableProps<T> extends VizLegendBaseProps<T> {

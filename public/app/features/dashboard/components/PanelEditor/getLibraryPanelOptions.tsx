@@ -9,14 +9,14 @@ import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OptionPaneRenderProps } from './types';
 
 export function getLibraryPanelOptionsCategory(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor {
-  const { panel, onPanelConfigChange, dashboard } = props;
+  const { panel, onPanelConfigChange, dashboard, isOpenDefault = true } = props;
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: t(
       'dashboard.get-library-panel-options-category.descriptor.title.library-panel-options',
       'Library panel options'
     ),
     id: 'Library panel options',
-    isOpenDefault: true,
+    isOpenDefault,
   });
 
   if (isPanelModelLibraryPanel(panel)) {

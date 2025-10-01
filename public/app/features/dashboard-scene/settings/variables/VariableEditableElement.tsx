@@ -6,6 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { LocalValueVariable, MultiValueVariable, SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { Input, TextArea, Button, Field, Box, Stack } from '@grafana/ui';
+import { getSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -264,6 +265,9 @@ function VariableHideInput({ variable }: VariableInputProps) {
 
 function useVariableTypeCategory(variable: SceneVariable) {
   const oldVariableId = useId();
+  const sparkJoyEnabled = getSparkJoyEnabled(true);
+  const isOpenDefault = !sparkJoyEnabled;
+
   return useMemo(() => {
     const variableEditorDef = getEditableVariableDefinition(variable.state.type);
     const categoryName = t('dashboard.edit-pane.variable.type-category', '{{type}} options', {
@@ -273,7 +277,7 @@ function useVariableTypeCategory(variable: SceneVariable) {
     const category = new OptionsPaneCategoryDescriptor({
       title: categoryName,
       id: 'variable-type',
-      isOpenDefault: true,
+      isOpenDefault,
     });
 
     if (variableEditorDef.getOptions) {
@@ -291,7 +295,7 @@ function useVariableTypeCategory(variable: SceneVariable) {
     }
 
     return category;
-  }, [oldVariableId, variable]);
+  }, [oldVariableId, variable, isOpenDefault]);
 }
 
 function OpenOldVariableEditButton({ variable }: VariableInputProps) {

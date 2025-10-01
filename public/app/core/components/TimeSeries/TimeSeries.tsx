@@ -3,6 +3,7 @@ import { Component } from 'react';
 import { DataFrame, TimeRange } from '@grafana/data';
 import { withTheme2 } from '@grafana/ui';
 import { hasVisibleLegendSeries, PlotLegend, UPlotConfigBuilder } from '@grafana/ui/internal';
+import { getSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 
 import { GraphNG, GraphNGProps, PropDiffFn } from '../GraphNG/GraphNG';
 
@@ -32,12 +33,13 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
 
   renderLegend = (config: UPlotConfigBuilder) => {
     const { legend, frames } = this.props;
+    const sparkJoyEnabled = getSparkJoyEnabled(true);
 
     if (!config || (legend && !legend.showLegend) || !hasVisibleLegendSeries(config, frames)) {
       return null;
     }
 
-    return <PlotLegend data={frames} config={config} {...legend} />;
+    return <PlotLegend data={frames} config={config} shouldSparkJoy={sparkJoyEnabled} {...legend} />;
   };
 
   render() {

@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { PanelData } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
+import { getSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
 import {
@@ -24,8 +25,10 @@ interface Props {
 
 export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, data }) => {
   const { options, fieldConfig, _pluginInstanceState } = panel.useState();
+  const sparkJoyEnabled = getSparkJoyEnabled(true);
+  const isOpenDefault = !sparkJoyEnabled;
 
-  const panelFrameOptions = useMemo(() => getPanelFrameOptions(panel), [panel]);
+  const panelFrameOptions = useMemo(() => getPanelFrameOptions(panel, { isOpenDefault }), [panel, isOpenDefault]);
 
   const visualizationOptions = useMemo(() => {
     const plugin = panel.getPlugin();
@@ -39,6 +42,7 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
       plugin: plugin,
       eventBus: panel.getPanelContext().eventBus,
       instanceState: _pluginInstanceState,
+      isOpenDefault,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, panel, options, fieldConfig, _pluginInstanceState]);
@@ -51,10 +55,10 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
         return;
       }
 
-      return getLibraryVizPanelOptionsCategory(behavior);
+      return getLibraryVizPanelOptionsCategory(behavior, isOpenDefault);
     }
     return;
-  }, [panel]);
+  }, [panel, isOpenDefault]);
 
   const justOverrides = useMemo(
     () =>
