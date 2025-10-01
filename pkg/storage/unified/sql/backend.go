@@ -20,6 +20,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/sqlite"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -36,6 +37,12 @@ const tracePrefix = "sql.resource."
 const defaultPollingInterval = 100 * time.Millisecond
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
 const defaultPrunerHistoryLimit = 20
+
+func ProvideStorageBackend(
+	cfg *setting.Cfg,
+) (resource.StorageBackend, error) {
+	return nil, nil
+}
 
 type Backend interface {
 	resource.StorageBackend
