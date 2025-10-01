@@ -361,8 +361,7 @@ func (m TeamMember) MemberID() string {
 }
 
 type TeamBinding struct {
-	TeamUID string
-	Members []TeamMember
+	TeamMember TeamMember
 }
 
 var sqlQueryTeamBindingsTemplate = mustTemplate("team_bindings_query.sql")
@@ -421,10 +420,9 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 	}
 
 	res := &ListTeamBindingsResult{}
-	grouped := map[string][]TeamMember{}
+	members := make([]TeamMember, 0, int(query.Pagination.Limit))
 
 	var lastID int64
-	var atTeamLimit bool
 
 	for rows.Next() {
 		m := TeamMember{}
@@ -433,16 +431,11 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 			return res, err
 		}
 
-		lastID = m.TeamID
-		members, ok := grouped[m.TeamUID]
-		if ok {
-			grouped[m.TeamUID] = append(members, m)
-		} else if !atTeamLimit {
-			grouped[m.TeamUID] = []TeamMember{m}
-		}
+		members = append(members, m)
 
-		if len(grouped) >= int(query.Pagination.Limit)-1 {
-			atTeamLimit = true
+		lastID = m.ID
+
+		if len(members) >= int(query.Pagination.Limit)-1 {
 			res.Continue = lastID
 		}
 	}
@@ -451,11 +444,10 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 		res.RV, err = sql.GetResourceVersion(ctx, "team_member", "updated")
 	}
 
-	res.Bindings = make([]TeamBinding, 0, len(grouped))
-	for uid, members := range grouped {
+	res.Bindings = make([]TeamBinding, 0, len(members))
+	for _, m := range members {
 		res.Bindings = append(res.Bindings, TeamBinding{
-			TeamUID: uid,
-			Members: members,
+			TeamMember: m,
 		})
 	}
 

@@ -121,40 +121,30 @@ func mapToBindingObject(ns claims.NamespaceInfo, b legacy.TeamBinding) iamv0alph
 	rv := time.Time{}
 	ct := time.Now()
 
-	for _, m := range b.Members {
-		if m.Updated.After(rv) {
-			rv = m.Updated
-		}
-		if m.Created.Before(ct) {
-			ct = m.Created
-		}
+	if b.TeamMember.Updated.After(rv) {
+		rv = b.TeamMember.Updated
+	}
+	if b.TeamMember.Created.Before(ct) {
+		ct = b.TeamMember.Created
 	}
 
 	return iamv0alpha1.TeamBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              b.TeamUID,
+			Name:              b.TeamMember.TeamUID,
 			Namespace:         ns.Value,
 			ResourceVersion:   strconv.FormatInt(rv.UnixMilli(), 10),
 			CreationTimestamp: metav1.NewTime(ct),
 		},
 		Spec: iamv0alpha1.TeamBindingSpec{
 			TeamRef: iamv0alpha1.TeamBindingTeamRef{
-				Name: b.TeamUID,
+				Name: b.TeamMember.TeamUID,
 			},
-			Subjects: mapToSubjects(b.Members),
+			Subject: iamv0alpha1.TeamBindingspecSubject{
+				Name: b.TeamMember.UserUID,
+			},
+			Permission: common.MapTeamPermission(b.TeamMember.Permission),
 		},
 	}
-}
-
-func mapToSubjects(members []legacy.TeamMember) []iamv0alpha1.TeamBindingspecSubject {
-	out := make([]iamv0alpha1.TeamBindingspecSubject, 0, len(members))
-	for _, m := range members {
-		out = append(out, iamv0alpha1.TeamBindingspecSubject{
-			Name:       m.UserUID,
-			Permission: common.MapTeamPermission(m.Permission),
-		})
-	}
-	return out
 }
 
 func mapPermisson(p team.PermissionType) iamv0.TeamPermission {
