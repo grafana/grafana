@@ -177,22 +177,26 @@ function convertSeriesToAnnotation(
     frameName = sourceFieldForFrameName?.values[0];
   }
 
+  const annoFields: Field[] = frame.fields
+    .filter((sourceField) => {
+      const name = mapSourceFieldNameToAnnoFieldName(options, sourceField.name);
+      return !!name;
+    })
+    .map((sourceField) => {
+      const name = mapSourceFieldNameToAnnoFieldName(options, sourceField.name) ?? sourceField.name;
+      if (name === 'tags') {
+        return { ...sourceField, name, values: [...sourceField.values.map((v) => (Array.isArray(v) ? v : [v]))] };
+      }
+      return {
+        ...sourceField,
+        name,
+      };
+    });
+
   const mappedFrame: DataFrame = {
     ...frame,
     name: frameName ?? frame.name ?? Math.random().toString(),
-    fields: [
-      ...frame.fields.map((sourceField) => {
-        const name = mapSourceFieldNameToAnnoFieldName(options, sourceField.name) ?? sourceField.name;
-        // Tags will throw errors if not array of values
-        if (name === 'tags') {
-          sourceField = { ...sourceField, values: [...sourceField.values.map((v) => (Array.isArray(v) ? v : [v]))] };
-        }
-        return {
-          ...sourceField,
-          name,
-        };
-      }),
-    ],
+    fields: [...frame.fields, ...annoFields],
     meta: {
       ...frame.meta,
       dataTopic: DataTopic.Annotations,
