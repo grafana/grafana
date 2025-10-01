@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataFrame } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 import { BackendDataSourceResponse, config, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
-import { Alert, Button, Icon, Stack } from '@grafana/ui';
+import { Alert, Button } from '@grafana/ui';
 import { AlertRuleListItem } from 'app/features/alerting/unified/rule-list/components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton } from 'app/features/alerting/unified/rule-list/components/AlertRuleListItemLoader';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
@@ -76,7 +76,11 @@ export function GrafanaManagedAlerts({}: GrafanaManagedAlertsProps) {
   }
 
   if (error) {
-    return <Alert title="Failed to fetch Grafana alerts">{stringifyErrorLike(error)}</Alert>;
+    return (
+      <Alert title={t('alertlist.grafana.error-title', 'Failed to fetch Grafana alerts')}>
+        {stringifyErrorLike(error)}
+      </Alert>
+    );
   }
 
   return (
@@ -85,7 +89,8 @@ export function GrafanaManagedAlerts({}: GrafanaManagedAlertsProps) {
         <div>
           {alertRules.map((frame) => {
             const valueField = frame.fields.at(1);
-            const labels: Labels = valueField?.labels;
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            const labels = valueField?.labels as Labels;
 
             const { alertname = 'unknown', alertstate = PromAlertingRuleState.Unknown } = labels;
 
@@ -102,7 +107,7 @@ export function GrafanaManagedAlerts({}: GrafanaManagedAlertsProps) {
                 namespace={labels.grafana_folder}
                 actions={
                   <Button variant="secondary" size="sm">
-                    View rule
+                    <Trans i18nKey="alertlist.grafana.view-rule">View rule</Trans>
                   </Button>
                 }
               />
@@ -110,7 +115,9 @@ export function GrafanaManagedAlerts({}: GrafanaManagedAlertsProps) {
           })}
         </div>
       ) : (
-        <div>No Grafana alerts found</div>
+        <div>
+          <Trans i18nKey="alertlist.grafana.no-alerts">No Grafana alerts found</Trans>
+        </div>
       )}
     </>
   );

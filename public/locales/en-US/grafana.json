@@ -3054,6 +3054,7 @@
     "description-max-items": "Maximum alerts to display",
     "description-show-inactive-alerts": "Include alert rules which have 0 (zero) instances. Because these rules have no instances, they remain hidden if the Alert instance label filter is configured.",
     "description-sort-order": "Sort order of alerts and alert instances",
+    "description-source": "Search for alerts in these sources",
     "description-view-mode": "Toggle between list view and stat view",
     "group-by": {
       "aria-label-group-by-label-keys": "group by label keys",
@@ -3087,6 +3088,7 @@
       "label-time-asc": "Time (asc)",
       "label-time-desc": "Time (desc)"
     },
+    "source": "Source",
     "ungrouped-mode-view": {
       "active-for": "for <1>{{duration}}</1>",
       "aria-label-view-alert-rule": "View alert rule",
