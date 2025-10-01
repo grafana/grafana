@@ -84,7 +84,7 @@ The following are the components of the CloudWatch query editor.
 
 Create a query in Builder mode:
 
-1. Browse and select a metric namespace, metric name, filter, group, and order options using information from the [Metrics Insights keywords table](#metrics-insights-keywords).
+1. Browse and select a metric namespace, metric name, filter, group, and order options using information from the [Metrics Insights keywords table](#use-metrics-insights-keywords).
 1. For each of these keywords, choose from the list of available options.
 
 Grafana constructs a SQL query based on your selections.
@@ -118,7 +118,7 @@ The Log group selector specifies the target log groups for the logs query. When 
 You can create two types of queries in the CloudWatch query editor:
 
 - [Metric Search](#metric-search-queries), which help you retrieve and filter available metrics.
-- [Metric Query](#create-a-metric-insights-queries), which use the Metrics Insights feature to fetch time series data.
+- [Metric Query](#use-metric-insights-syntax), which use the Metrics Insights feature to fetch time series data.
 
 The query type you use depends on how you want to interact with AWS metrics. Use the drop-down in the upper middle of the query editor to select which type you want to create.
 
@@ -168,7 +168,7 @@ This means that in the example, the query returns only metrics with exactly one 
 
 Disabling `Match Exact` includes metrics with additional dimensions and creates a search expression even without wildcards. Grafana searches for any metric matching at least the namespace, metric name, and all defined dimensions.
 
-### Use multi-value template variables
+#### Use multi-value template variables
 
 When defining dimension values based on multi-valued template variables, the data source uses a search expression to query for the matching metrics.
 This enables the use of multiple template variables in one query, and also lets you use template variables for queries that have the `Match Exact` option disabled.
@@ -179,7 +179,7 @@ We recommend using the asterisk (`*`) wildcard instead of the `All` option to qu
 Multi-valued template variables are supported only for dimension values.
 Using multi-valued template variables for `Region`, `Namespace`, or `Metric Name` is not supported.
 
-### Use metric math expressions
+#### Use metric math expressions
 
 Create new time series metrics using mathematical functions on CloudWatch metrics. This supports arithmetic operators, unary subtraction, and other functions. For available functions, refer to [AWS Metric Math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html).
 
