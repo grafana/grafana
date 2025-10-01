@@ -3,7 +3,9 @@ import { useState, useCallback, useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Stack, Text, useStyles2, Icon, Spinner, Button, Grid } from '@grafana/ui';
+import { Card, Stack, Text, useStyles2, Icon, Button, Grid, Spinner } from '@grafana/ui';
+
+import { CosmicSceneIcon } from './CosmicSceneIcon';
 import { 
   useGetRecentDashboardsAndFolders,
   useGetPopularDashboards,
@@ -212,9 +214,17 @@ Based on this context, what 5 dashboards should this user explore next?`;
       <div className={styles.container}>
         {isGenerating && (
           <Card className={styles.loadingCard}>
-            <Stack direction="row" gap={2} alignItems="center">
-              <Spinner />
-              <Text>Analyzing your dashboard activity...</Text>
+            <Stack direction="column" gap={3} alignItems="center">
+              <CosmicSceneIcon />
+              <Stack direction="column" gap={0.5} alignItems="center">
+                <Text variant="h5">Finding the perfect dashboards for you!</Text>
+                <Stack direction="row" gap={1} alignItems="center">
+                  <Spinner />
+                  <Text variant="bodySmall" color="secondary">
+                    Analyzing your activity and preferences
+                  </Text>
+                </Stack>
+              </Stack>
             </Stack>
           </Card>
         )}
@@ -321,11 +331,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 
   loadingCard: css({
-    padding: theme.spacing(3),
-    background: 'linear-gradient(135deg, rgba(217, 70, 239, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)',
-    border: '2px solid',
-    borderImage: 'linear-gradient(90deg, #f59e0b, #ef4444, #ec4899, #8b5cf6, #6366f1) 1',
-    borderRadius: theme.shape.radius.default,
+    padding: theme.spacing(4),
+    background: 'transparent',
+    border: 'none',
+    boxShadow: 'none',
+    textAlign: 'center',
   }),
 
   errorCard: css({

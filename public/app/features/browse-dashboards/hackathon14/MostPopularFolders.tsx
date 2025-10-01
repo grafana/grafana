@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Stack, Text, useStyles2, Icon, Grid } from '@grafana/ui';
+import { Card, Stack, Text, useStyles2, Icon, Grid, Box, TextLink } from '@grafana/ui';
 import { useGetPopularFolders } from 'app/features/dashboard/api/popularResourcesApi';
+
+import { BrowsingSectionTitle } from './BrowsingSectionTitle';
 
 export const MostPopularFolders = () => {
   const styles = useStyles2(getStyles);
@@ -17,23 +19,22 @@ export const MostPopularFolders = () => {
   };
 
   return (
-    <div>
-      <Stack direction="row" gap={2} alignItems="center">
-        <div>
-          <div className={styles.headerTitle}>
-            <Icon name="folder-open" size="lg" className={styles.headerIcon} style={{ marginRight: '4px' }} />
-            <Text variant="h4">Suggested Folders</Text>
-          </div>
-          <Text variant="bodySmall" color="secondary">
-            Based on your most active data sources
-          </Text>
-        </div>
-      </Stack>
+    <Box marginTop={2}>
+      <BrowsingSectionTitle
+        title="Most Popular Folders"
+        subtitle="Based on your activity"
+        icon="fire"
+        actions={
+          <TextLink href="/dashboards/hackathon14/view-all-folders" color="secondary" className={styles.viewAllLink}>
+            View All
+          </TextLink>
+        }
+      />
 
       <div className={styles.container}>
         {isLoading && (
           <div className={styles.loadingContainer}>
-            <Text>Loading...</Text>
+            <Text variant="bodySmall">Loading...</Text>
           </div>
         )}
 
@@ -57,7 +58,7 @@ export const MostPopularFolders = () => {
           </Card>
         )}
       </div>
-    </div>
+    </Box>
   );
 };
 
@@ -104,7 +105,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       bottom: 0,
       borderRadius: theme.shape.radius.default,
       padding: '2px',
-      background: 'linear-gradient(90deg, #f59e0b, #ef4444, #ec4899, #8b5cf6, #6366f1)',
+      background: 'linear-gradient(90deg, #FF780A, #FF8C2A, #FFA040)',
       WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
       WebkitMaskComposite: 'xor',
       maskComposite: 'exclude',
@@ -114,10 +115,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     '&:hover': {
       transform: 'translateY(-4px)',
-      boxShadow: '0 8px 16px rgba(236, 72, 153, 0.18)',
+      boxShadow: '0 8px 16px rgba(255, 120, 10, 0.12)',
 
       '&::before': {
-        opacity: 0.45,
+        opacity: 0.35,
       },
     },
   }),
@@ -125,5 +126,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   emptyCard: css({
     textAlign: 'center',
     padding: theme.spacing(4),
+  }),
+
+  viewAllLink: css({
+    color: theme.colors.text.secondary,
+    textDecoration: 'underline',
+    cursor: 'pointer',
+    '&:hover': {
+      color: theme.colors.text.primary,
+      textDecoration: 'underline',
+    },
   }),
 });

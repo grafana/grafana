@@ -1,10 +1,12 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getSparkJoyEnabled, setSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
@@ -16,6 +18,8 @@ import { useRulesFilter } from '../hooks/useFilteredRules';
 
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
+import { HackathonRuleListPage } from './Hackathon14/HackathonRuleListPage';
+import { ViewAllAlerts } from './Hackathon14/ViewAllAlerts';
 import { RuleListPageTitle } from './RuleListPageTitle';
 import RulesFilter from './filter/RulesFilter';
 
@@ -116,15 +120,44 @@ export function RuleListActions() {
   );
 }
 
-export default function RuleListPage() {
+const RuleListPageCurrent = ({ onToggleSparkJoy }: { onToggleSparkJoy: () => void }) => {
   return (
     <AlertingPageWrapper
       navId="alert-list"
-      renderTitle={(title) => <RuleListPageTitle title={title} />}
+      renderTitle={(title) => <RuleListPageTitle title={title} onToggleSparkJoy={onToggleSparkJoy} />}
       isLoading={false}
       actions={<RuleListActions />}
     >
       <RuleList />
     </AlertingPageWrapper>
   );
+};
+
+export default function RuleListPage() {
+  const [sparkJoy, setSparkJoy] = useState<boolean>(() => getSparkJoyEnabled(true));
+  const location = useLocation();
+
+  const handleToggleSparkJoy = () => {
+    setSparkJoy((current) => {
+      const next = !current;
+      setSparkJoyEnabled(next);
+      return next;
+    });
+  };
+
+  // Use window.location.pathname to get the full path (React Router strips matched portions)
+  const fullPathname = window.location.pathname;
+
+  // Check if we're on the view-all-alerts route
+  const isViewAllAlerts = fullPathname.includes('/hackathon14/view-all-alerts');
+  
+  if (isViewAllAlerts) {
+    return <ViewAllAlerts />;
+  }
+
+  if (sparkJoy) {
+    return <HackathonRuleListPage onToggleSparkJoy={handleToggleSparkJoy} />;
+  } else {
+    return <RuleListPageCurrent onToggleSparkJoy={handleToggleSparkJoy} />;
+  }
 }

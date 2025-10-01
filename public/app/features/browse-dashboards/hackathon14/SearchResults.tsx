@@ -3,9 +3,12 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useStyles2, Card, Stack, Text, Button, ButtonGroup, Grid, Icon, Spinner, useTheme2, Badge } from '@grafana/ui';
+import { useStyles2, Card, Stack, Text, Button, ButtonGroup, Grid, Icon, Spinner, useTheme2, Badge, LinkButton } from '@grafana/ui';
 
 import { CosmicSceneIcon } from './CosmicSceneIcon';
+import { SearchResultAIRecommendation } from './SearchResultAIRecommendation';
+import { SearchResultSuggestion } from './SearchResultSuggestion';
+import { HackathonTable, TableColumn, ExpandedContent } from './HackathonTable';
 
 interface SearchResultsProps {
   searchState: any;
@@ -78,6 +81,139 @@ export const SearchResults = ({ searchState, query }: SearchResultsProps) => {
     );
   };
 
+  // Table column configuration for list view
+  const getColumns = (): TableColumn[] => {
+    if (activeTab === 'dashboards') {
+      return [
+        {
+          key: 'name',
+          header: 'Name',
+          width: '2.5fr',
+          render: (item) => (
+            <Stack direction="row" gap={1.5} alignItems="center">
+              <Icon name="apps" size="lg" />
+              <Text weight="medium">{item.name}</Text>
+            </Stack>
+          ),
+        },
+        {
+          key: 'details',
+          header: 'Details',
+          width: '2fr',
+          render: (item) =>
+            item.tags && item.tags.length > 0 ? (
+              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <Text variant="bodySmall" color="secondary">
+                  Tags: {item.tags.slice(0, 3).join(', ')}
+                </Text>
+              </div>
+            ) : (
+              <Text variant="bodySmall" color="secondary">
+                Dashboard
+              </Text>
+            ),
+        },
+        {
+          key: 'location',
+          header: 'Location',
+          width: '1.5fr',
+          render: (item) =>
+            item.location ? (
+              <Stack direction="row" gap={1} alignItems="center">
+                <Icon name="folder-open" size="sm" />
+                <Text variant="bodySmall" color="secondary">
+                  {item.location}
+                </Text>
+              </Stack>
+            ) : (
+              <Text variant="bodySmall" color="secondary">
+                General
+              </Text>
+            ),
+        },
+      ];
+    } else {
+      // Folders
+      return [
+        {
+          key: 'name',
+          header: 'Name',
+          width: '3fr',
+          render: (item) => (
+            <Stack direction="row" gap={1.5} alignItems="center">
+              <Icon name="folder" size="lg" style={{ color: '#FFB800' }} />
+              <Text weight="medium">{item.name}</Text>
+            </Stack>
+          ),
+        },
+        {
+          key: 'location',
+          header: 'Parent Folder',
+          width: '2fr',
+          render: (item) =>
+            item.location ? (
+              <Stack direction="row" gap={1} alignItems="center">
+                <Icon name="folder-open" size="sm" />
+                <Text variant="bodySmall" color="secondary">
+                  {item.location}
+                </Text>
+              </Stack>
+            ) : (
+              <Text variant="bodySmall" color="secondary">
+                Root
+              </Text>
+            ),
+        },
+      ];
+    }
+  };
+
+  // Expanded content configuration for list view
+  const expandedContent: ExpandedContent = {
+    render: (item) => (
+      <Stack direction="column" gap={2}>
+        <Stack direction="row" gap={4}>
+          <div>
+            <Text variant="bodySmall" weight="medium" color="secondary">
+              UID:
+            </Text>
+            <Text variant="bodySmall"> {item.uid}</Text>
+          </div>
+          {item.url && (
+            <div>
+              <Text variant="bodySmall" weight="medium" color="secondary">
+                URL:
+              </Text>
+              <Text variant="bodySmall"> {item.url}</Text>
+            </div>
+          )}
+        </Stack>
+        {item.tags && item.tags.length > 0 && (
+          <div>
+            <Text variant="bodySmall" weight="medium" color="secondary">
+              All Tags:
+            </Text>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
+              {item.tags.map((tag: string, idx: number) => (
+                <Badge key={idx} text={tag} color="blue" />
+              ))}
+            </div>
+          </div>
+        )}
+        <div>
+          <LinkButton
+            size="sm"
+            variant="primary"
+            href={item.url}
+            onClick={(e) => e.stopPropagation()}
+          >
+            Open {activeTab === 'dashboards' ? 'Dashboard' : 'Folder'}
+          </LinkButton>
+        </div>
+      </Stack>
+    ),
+  };
+
   if (searchState.loading) {
     return (
       <div className={styles.loadingState}>
@@ -115,14 +251,75 @@ export const SearchResults = ({ searchState, query }: SearchResultsProps) => {
 
   const displayResults = activeTab === 'dashboards' ? dashboards : folders;
 
+  // Check for active filters
+  const hasQuery = query && query.trim().length > 0;
+  const hasTags = searchState?.tag && searchState.tag.length > 0;
+  const hasStarred = searchState?.starred;
+  const hasOwnedByMe = searchState?.ownedByMe;
+
+  // Generate header content
+  const renderHeaderContent = () => {
+    if (hasQuery && hasTags) {
+      return (
+        <div>
+          <Text variant="h3">
+            Search Results for: <span className={styles.queryText}>"{query}"</span>
+          </Text>
+          <div style={{ marginTop: '8px' }}>
+            <Text variant="bodySmall" color="secondary">
+              Filtered by {searchState.tag.length} tag{searchState.tag.length > 1 ? 's' : ''}:{' '}
+              {searchState.tag.join(', ')}
+            </Text>
+          </div>
+        </div>
+      );
+    }
+
+    if (hasQuery) {
+      return (
+        <Text variant="h3">
+          Search Results for: <span className={styles.queryText}>"{query}"</span>
+        </Text>
+      );
+    }
+
+    if (hasTags) {
+      return (
+        <div>
+          <Text variant="h3">Filtered by Tags</Text>
+          <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {searchState.tag.map((tag: string) => (
+              <Badge key={tag} text={tag} color="blue" />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (hasStarred || hasOwnedByMe) {
+      const filters = [];
+      if (hasStarred) {
+        filters.push('Starred');
+      }
+      if (hasOwnedByMe) {
+        filters.push('Owned by me');
+      }
+      return (
+        <Text variant="h3">
+          Filtered Results: <span className={styles.queryText}>{filters.join(', ')}</span>
+        </Text>
+      );
+    }
+
+    return <Text variant="h3">All Results</Text>;
+  };
+
   return (
     <div className={styles.container}>
       {/* Header */}
-      <div className={styles.searchHeader}>
-        <Text variant="h3">
-          Search Results for: <span className={styles.queryText}>"{query || 'none'}"</span>
-        </Text>
-      </div>
+      <div className={styles.searchHeader}>{renderHeaderContent()}</div>
+
+      {hasQuery && <SearchResultSuggestion searchQuery={query} />}
 
       {/* Tabs and Toggle */}
       <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -163,14 +360,14 @@ export const SearchResults = ({ searchState, query }: SearchResultsProps) => {
         </ButtonGroup>
       </Stack>
 
-          {/* Results Display */}
-          {displayResults.length === 0 ? (
-            <div className={styles.emptyState}>
-              <CosmicSceneIcon />
-              <Text variant="h4">No {activeTab} found</Text>
-              <Text color="secondary">Try a different search or browse other categories 🌟</Text>
-            </div>
-          ) : viewMode === 'thumbnail' ? (
+      {/* Results Display */}
+      {displayResults.length === 0 ? (
+        <div className={styles.emptyState}>
+          <CosmicSceneIcon />
+          <Text variant="h4">No {activeTab} found</Text>
+          <Text color="secondary">Try a different search or browse other categories 🌟</Text>
+        </div>
+      ) : viewMode === 'thumbnail' ? (
         <div className={styles.resultsGrid}>
           <Grid gap={2} columns={{ xs: 1, sm: 2, md: 3, lg: 4 }}>
             {displayResults.map((item, index) => {
@@ -220,98 +417,14 @@ export const SearchResults = ({ searchState, query }: SearchResultsProps) => {
           </Grid>
         </div>
       ) : (
-        <div className={styles.listResults}>
-          {displayResults.map((item, index) => {
-            return (
-              <Card
-                key={`${item.uid}-${index}`}
-                className={styles.listCard}
-                onClick={() => item.url && (window.location.href = item.url)}
-              >
-                <div className={styles.listCardContent}>
-                  {/* Content */}
-                  <div className={styles.listContentSection}>
-                    <div className={styles.listTitleRow}>
-                      <Stack direction="row" gap={1} alignItems="center">
-                        <div className={styles.listTitle}>
-                          <Text weight="medium">{item.name}</Text>
-                        </div>
-                        {item.starred && (
-                          <Icon name="star" size="sm" className={styles.starIcon} title="Starred" />
-                        )}
-                      </Stack>
-                      <div className={styles.listTypeBadge}>
-                        <Icon
-                          name={activeTab === 'dashboards' ? 'apps' : 'folder'}
-                          size="xs"
-                          className={styles.typeBadgeIcon}
-                        />
-                        <Text variant="bodySmall">{activeTab === 'dashboards' ? 'Dashboard' : 'Folder'}</Text>
-                      </div>
-                    </div>
-
-                    {item.location && (
-                      <Stack direction="row" gap={0.5} alignItems="center">
-                        <Icon name="folder-open" size="xs" className={styles.locationIcon} />
-                        <div className={styles.location}>
-                          <Text variant="bodySmall" color="secondary">
-                            {item.location}
-                          </Text>
-                        </div>
-                      </Stack>
-                    )}
-
-                    {/* Tags and metadata */}
-                    <Stack direction="row" gap={2} alignItems="center" wrap="wrap">
-                      {item.tags && item.tags.length > 0 && (
-                        <Stack direction="row" gap={0.5} alignItems="center">
-                          <Icon name="tag-alt" size="xs" className={styles.metaIcon} />
-                          {item.tags.slice(0, 4).map((tag: string) => (
-                            <Badge key={tag} text={tag} color="blue" />
-                          ))}
-                          {item.tags.length > 4 && (
-                            <Text variant="bodySmall" color="secondary">
-                              +{item.tags.length - 4} more
-                            </Text>
-                          )}
-                        </Stack>
-                      )}
-                    </Stack>
-                  </div>
-
-                  {/* Right: Stats */}
-                  <div className={styles.listStatsSection}>
-                    {item.sortMeta && (
-                      <div className={styles.statItem}>
-                        <Icon name="eye" size="sm" className={styles.statIcon} />
-                        <div>
-                          <Text variant="bodySmall" color="secondary">
-                            Views
-                          </Text>
-                          <Text weight="medium">{item.sortMeta || 'N/A'}</Text>
-                        </div>
-                      </div>
-                    )}
-                    {item.updated && (
-                      <div className={styles.statItem}>
-                        <Icon name="clock-nine" size="sm" className={styles.statIcon} />
-                        <div>
-                          <Text variant="bodySmall" color="secondary">
-                            Updated
-                          </Text>
-                          <Text variant="bodySmall">{new Date(item.updated).toLocaleDateString()}</Text>
-                        </div>
-                      </div>
-                    )}
-                    <div className={`${styles.quickActions} quick-actions`}>
-                      <Icon name="external-link-alt" size="sm" className={styles.actionIcon} title="Open" />
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+        <HackathonTable
+          columns={getColumns()}
+          data={displayResults}
+          expandable={true}
+          expandedContent={expandedContent}
+          onRowClick={(item) => item.url && (window.location.href = item.url)}
+          emptyMessage={`No ${activeTab} found`}
+        />
       )}
     </div>
   );
@@ -322,6 +435,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(3),
+    marginLeft: theme.spacing(6),
+    marginRight: theme.spacing(6),
   }),
 
   searchHeader: css({
@@ -379,7 +494,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       bottom: 0,
       borderRadius: theme.shape.radius.default,
       padding: '2px',
-      background: 'linear-gradient(90deg, #f59e0b, #ef4444, #ec4899, #8b5cf6, #6366f1)',
+      background: 'linear-gradient(90deg, #FF780A, #FF8C2A, #FFA040)',
       WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
       WebkitMaskComposite: 'xor',
       maskComposite: 'exclude',
@@ -390,10 +505,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     '&:hover': {
       transform: 'translateY(-4px)',
-      boxShadow: '0 8px 16px rgba(99, 102, 241, 0.25)',
+      boxShadow: '0 8px 16px rgba(255, 120, 10, 0.15)',
 
       '&::before': {
-        opacity: 0.45,
+        opacity: 0.35,
       },
     },
   }),
@@ -448,7 +563,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'center',
     height: '160px',
     backgroundColor: theme.colors.background.secondary,
-    color: '#ec4899',
+    color: '#FF780A',
   }),
 
   cardContent: css({
@@ -487,7 +602,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       bottom: -2,
       borderRadius: theme.shape.radius.default,
       padding: '2px',
-      background: 'linear-gradient(90deg, #f59e0b, #ef4444, #ec4899, #8b5cf6, #6366f1)',
+      background: 'linear-gradient(90deg, #FF780A, #FF8C2A, #FFA040)',
       WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
       WebkitMaskComposite: 'xor',
       maskComposite: 'exclude',
@@ -498,10 +613,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     '&:hover': {
       transform: 'translateY(-2px)',
-      boxShadow: '0 4px 12px rgba(99, 102, 241, 0.18)',
+      boxShadow: '0 4px 12px rgba(255, 120, 10, 0.12)',
 
       '&::before': {
-        opacity: 0.45,
+        opacity: 0.35,
       },
 
       '& .quick-actions': {
@@ -549,14 +664,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(0.5),
     padding: theme.spacing(0.5, 1),
-    backgroundColor: 'rgba(99, 102, 241, 0.1)',
-    border: '1px solid rgba(99, 102, 241, 0.3)',
+    backgroundColor: `${theme.colors.primary.main}15`,
+    border: `1px solid ${theme.colors.primary.main}`,
     borderRadius: theme.shape.radius.pill,
     flexShrink: 0,
   }),
 
   typeBadgeIcon: css({
-    color: '#6366f1',
+    color: theme.colors.primary.main,
   }),
 
   locationIcon: css({
@@ -595,7 +710,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 
   statIcon: css({
-    color: '#8b5cf6',
+    color: '#FF780A',
     flexShrink: 0,
   }),
 
@@ -607,7 +722,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 
   actionIcon: css({
-    color: '#6366f1',
+    color: '#FF780A',
     cursor: 'pointer',
     padding: theme.spacing(0.5),
     borderRadius: theme.shape.radius.default,

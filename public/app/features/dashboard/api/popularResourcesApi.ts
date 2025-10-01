@@ -118,3 +118,7 @@ export const useGetRecentDashboards = (params?: Omit<GetRecentResourcesParams, '
 // Convenience hook for recent folders only
 export const useGetRecentFolders = (params?: Omit<GetRecentResourcesParams, 'types'>) =>
   useGetRecentResourcesQuery({ ...params, types: ['folder'] });
+
+// Convenience hook for recent alerts only
+export const useGetRecentAlerts = (params?: Omit<GetRecentResourcesParams, 'types'>) =>
+  useGetRecentResourcesQuery({ ...params, types: ['alert'] });

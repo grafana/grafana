@@ -2,25 +2,24 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { FilterInput, useStyles2, Button, Icon } from '@grafana/ui';
-
-import { FilterTag } from './FilterTag';
+import { Button, FilterInput, Icon, useStyles2 } from '@grafana/ui';
 
 interface HackathonSearchInputProps {
   onSearchChange?: (value: string) => void;
+  onFilterChange?: (filters: { firing: boolean; ownedByMe: boolean }) => void;
   placeholder?: string;
 }
 
-export const HackathonSearchInput = ({
+export const HackathonAlertSearchInput = ({
   onSearchChange,
-  placeholder = 'Search for dashboards and folders',
+  onFilterChange,
+  placeholder = 'Search for alert rules',
 }: HackathonSearchInputProps) => {
   const styles = useStyles2(getStyles);
   const [searchValue, setSearchValue] = useState('');
   const [activeFilters, setActiveFilters] = useState({
-    starred: false,
+    firing: false,
     ownedByMe: false,
-    filterByTag: false,
     moreFilters: false,
   });
 
@@ -29,11 +28,18 @@ export const HackathonSearchInput = ({
     onSearchChange?.(value);
   };
 
-  const toggleFilter = (filterKey: keyof typeof activeFilters) => {
-    setActiveFilters((prev) => ({
-      ...prev,
-      [filterKey]: !prev[filterKey],
-    }));
+  const toggleFilter = (filterKey: 'firing' | 'ownedByMe' | 'moreFilters') => {
+    const newFilters = {
+      ...activeFilters,
+      [filterKey]: !activeFilters[filterKey],
+    };
+    setActiveFilters(newFilters);
+    
+    // Notify parent of filter changes (excluding moreFilters which is UI-only)
+    onFilterChange?.({
+      firing: newFilters.firing,
+      ownedByMe: newFilters.ownedByMe,
+    });
   };
 
   return (
@@ -54,26 +60,24 @@ export const HackathonSearchInput = ({
           <span className={styles.lookingForText}>I'm looking for:</span>
 
           <Button
-            variant={activeFilters.starred ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => toggleFilter('starred')}
-            className={styles.filterButton}
-          >
-            <Icon name="star" />
-            Starred
-          </Button>
-
-          <Button
             variant={activeFilters.ownedByMe ? 'primary' : 'secondary'}
             size="sm"
             onClick={() => toggleFilter('ownedByMe')}
             className={styles.filterButton}
           >
-            <Icon name="user" />
-            Owned by me
+            <Icon name="user" style={{ marginRight: '4px' }} />
+            Created by me
           </Button>
 
-          <FilterTag />
+          <Button
+            variant={activeFilters.firing ? 'primary' : 'secondary'}
+            size="sm"
+            onClick={() => toggleFilter('firing')}
+            className={styles.filterButton}
+          >
+            <Icon name="fire" style={{ marginRight: '4px' }} />
+            Firing
+          </Button>
 
           <Button
             variant={activeFilters.moreFilters ? 'primary' : 'secondary'}
@@ -81,8 +85,8 @@ export const HackathonSearchInput = ({
             onClick={() => toggleFilter('moreFilters')}
             className={styles.filterButton}
           >
-            <Icon name="filter" />
-            More filters
+            <Icon name="filter" style={{ marginRight: '4px' }} />
+            Filters
           </Button>
         </div>
       </div>

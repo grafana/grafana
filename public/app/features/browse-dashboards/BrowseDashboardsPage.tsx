@@ -32,6 +32,8 @@ import CreateNewButton from './components/CreateNewButton';
 import { FolderActionsButton } from './components/FolderActionsButton';
 import { SearchView } from './components/SearchView';
 import HackathonBrowseDashboardsPage from './hackathon14/HackathonBrowseDashboardsPage';
+import { ViewAllDashboards } from './hackathon14/ViewAllDashboards';
+import { ViewAllFolders } from './hackathon14/ViewAllFolders';
 import { getFolderPermissions } from './permissions';
 import { useHasSelection } from './state/hooks';
 import { setAllSelection } from './state/slice';
@@ -254,7 +256,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 const BrowseDashboardsPage = ({ queryParams }: { queryParams: Record<string, string> }) => {
   const [sparkJoy, setSparkJoy] = useState<boolean>(() => getSparkJoyEnabled(true));
-  
   const handleToggleSparkJoy = () => {
     setSparkJoy((current) => {
       const next = !current;
@@ -262,6 +263,20 @@ const BrowseDashboardsPage = ({ queryParams }: { queryParams: Record<string, str
       return next;
     });
   };
+
+  // Use window.location to get the full URL info
+  const fullPathname = window.location.pathname;
+
+  // Check if we're on a view-all route
+  const isViewAllDashboards = fullPathname.includes('/hackathon14/view-all-dashboards');
+  const isViewAllFolders = fullPathname.includes('/hackathon14/view-all-folders');
+  
+  if (isViewAllDashboards) {
+    return <ViewAllDashboards />;
+  }
+  if (isViewAllFolders) {
+    return <ViewAllFolders />;
+  }
   
   if (sparkJoy) {
     return <HackathonBrowseDashboardsPage queryParams={queryParams} onToggleSparkJoy={handleToggleSparkJoy} />;

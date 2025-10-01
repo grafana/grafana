@@ -1,11 +1,13 @@
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ButtonProps, Stack } from '@grafana/ui';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import SparkJoyToggle from 'app/core/components/SparkJoyToggle';
 
 import { shouldUseAlertingListViewV2 } from '../featureToggles';
 import { setPreviewToggle } from '../previewToggles';
 
-export function RuleListPageTitle({ title }: { title: string }) {
+export function RuleListPageTitle({ title, onToggleSparkJoy }: { title: string; onToggleSparkJoy: () => void }) {
   const shouldShowV2Toggle = config.featureToggles.alertingListViewV2PreviewToggle ?? false;
 
   const listViewV2Enabled = shouldUseAlertingListViewV2();
@@ -36,13 +38,18 @@ export function RuleListPageTitle({ title }: { title: string }) {
       };
 
   return (
-    <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2}>
-      <h1>{title}</h1>
-      {shouldShowV2Toggle && (
-        <div>
-          <Button size="sm" fill="outline" {...configToUse} onClick={toggleListView} className="fs-unmask" />
-        </div>
-      )}
-    </Stack>
+    <>
+      <AppChromeUpdate
+        actions={[<SparkJoyToggle key="sparks-joy-toggle" value={false} onToggle={onToggleSparkJoy} />]}
+      />
+      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2}>
+        <h1>{title}</h1>
+        {shouldShowV2Toggle && (
+          <div>
+            <Button size="sm" fill="outline" {...configToUse} onClick={toggleListView} className="fs-unmask" />
+          </div>
+        )}
+      </Stack>
+    </>
   );
 }

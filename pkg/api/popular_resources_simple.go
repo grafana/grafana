@@ -72,6 +72,8 @@ func (hs *HTTPServer) GetPopularResourcesSimple(c *contextmodel.ReqContext) resp
 				CASE 
 					WHEN urs.resource_type IN ('dashboard', 'folder') AND d.title IS NOT NULL 
 					THEN d.title 
+					WHEN urs.resource_type = 'alert' AND ar.title IS NOT NULL
+					THEN ar.title
 					ELSE urs.resource_uid 
 				END as title,
 				urs.resource_type,
@@ -82,6 +84,8 @@ func (hs *HTTPServer) GetPopularResourcesSimple(c *contextmodel.ReqContext) resp
 			LEFT JOIN dashboard d ON d.uid = urs.resource_uid AND d.org_id = urs.org_id 
 				AND urs.resource_type IN ('dashboard', 'folder')
 				AND (d.deleted IS NULL OR d.deleted = '')
+			LEFT JOIN alert_rule ar ON ar.uid = urs.resource_uid AND ar.org_id = urs.org_id
+				AND urs.resource_type = 'alert'
 			WHERE urs.user_id = ? AND urs.org_id = ?
 		`
 
@@ -138,17 +142,17 @@ func (hs *HTTPServer) GetPopularResourcesSimple(c *contextmodel.ReqContext) resp
 				FirstVisited: row.FirstVisited,
 			}
 
-			// Generate URL based on type
-			switch row.ResourceType {
-			case "dashboard":
-				resource.URL = "/d/" + row.UID
-			case "folder":
-				resource.URL = "/dashboards/f/" + row.UID
-			case "alert":
-				resource.URL = "/alerting/list?search=" + row.UID
-			default:
-				resource.URL = "/resource/" + row.UID
-			}
+		// Generate URL based on type
+		switch row.ResourceType {
+		case "dashboard":
+			resource.URL = "/d/" + row.UID
+		case "folder":
+			resource.URL = "/dashboards/f/" + row.UID
+		case "alert":
+			resource.URL = "/alerting/grafana/" + row.UID + "/view"
+		default:
+			resource.URL = "/resource/" + row.UID
+		}
 
 			resources = append(resources, resource)
 		}
@@ -259,6 +263,8 @@ func (hs *HTTPServer) GetRecentResourcesSimple(c *contextmodel.ReqContext) respo
 				CASE 
 					WHEN urs.resource_type IN ('dashboard', 'folder') AND d.title IS NOT NULL 
 					THEN d.title 
+					WHEN urs.resource_type = 'alert' AND ar.title IS NOT NULL
+					THEN ar.title
 					ELSE urs.resource_uid 
 				END as title,
 				urs.resource_type,
@@ -269,6 +275,8 @@ func (hs *HTTPServer) GetRecentResourcesSimple(c *contextmodel.ReqContext) respo
 			LEFT JOIN dashboard d ON d.uid = urs.resource_uid AND d.org_id = urs.org_id 
 				AND urs.resource_type IN ('dashboard', 'folder')
 				AND (d.deleted IS NULL OR d.deleted = '')
+			LEFT JOIN alert_rule ar ON ar.uid = urs.resource_uid AND ar.org_id = urs.org_id
+				AND urs.resource_type = 'alert'
 			WHERE urs.user_id = ? AND urs.org_id = ?
 		`
 
@@ -329,17 +337,17 @@ func (hs *HTTPServer) GetRecentResourcesSimple(c *contextmodel.ReqContext) respo
 				FirstVisited: row.FirstVisited,
 			}
 
-			// Generate URL based on type
-			switch row.ResourceType {
-			case "dashboard":
-				resource.URL = "/d/" + row.UID
-			case "folder":
-				resource.URL = "/dashboards/f/" + row.UID
-			case "alert":
-				resource.URL = "/alerting/list?search=" + row.UID
-			default:
-				resource.URL = "/resource/" + row.UID
-			}
+		// Generate URL based on type
+		switch row.ResourceType {
+		case "dashboard":
+			resource.URL = "/d/" + row.UID
+		case "folder":
+			resource.URL = "/dashboards/f/" + row.UID
+		case "alert":
+			resource.URL = "/alerting/grafana/" + row.UID + "/view"
+		default:
+			resource.URL = "/resource/" + row.UID
+		}
 
 			resources = append(resources, resource)
 		}

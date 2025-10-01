@@ -3,6 +3,7 @@ import { chain, truncate } from 'lodash';
 import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
+
 import { AlertLabels, StateText } from '@grafana/alerting/unstable';
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -19,6 +20,7 @@ import {
 } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { recordResourceVisit } from 'app/core/utils/resourceVisitTracking';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import {
@@ -102,6 +104,13 @@ const RuleViewer = () => {
   const [duplicateRuleIdentifier, setDuplicateRuleIdentifier] = useState<RuleIdentifier>();
   const { returnTo } = useReturnTo('/alerting/list');
   const { annotations, promRule, rulerRule } = rule;
+
+  // Record visit when alert rule is viewed
+  useEffect(() => {
+    if (rule.uid) {
+      recordResourceVisit(rule.uid, 'alert');
+    }
+  }, [rule.uid]);
 
   const hasError = isErrorHealth(promRule?.health);
 
