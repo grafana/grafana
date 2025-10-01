@@ -2999,6 +2999,7 @@ __metadata:
     openapi-types: "npm:^12.1.3"
     plop: "npm:^4.0.1"
     rollup: "npm:^4.22.4"
+    typescript: "npm:5.5.4"
   languageName: unknown
   linkType: soft
 
