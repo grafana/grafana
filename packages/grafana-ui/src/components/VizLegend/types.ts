@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
-import { LegendDisplayMode, LegendPlacement, LineStyle } from '@grafana/schema';
+import { DataTopic, LegendDisplayMode, LegendPlacement, LineStyle } from '@grafana/schema';
 
 export enum SeriesVisibilityChangeBehavior {
   Isolate,
@@ -52,4 +52,5 @@ export interface VizLegendItem<T = any> {
   fieldName?: string;
   data?: T;
   lineStyle?: LineStyle;
+  dataTopic?: DataTopic;
 }

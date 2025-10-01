@@ -119,8 +119,6 @@ export const TimeSeriesPanel = ({
     );
   }
 
-  console.log(data.annotations);
-
   return (
     <TimeSeries
       frames={frames}

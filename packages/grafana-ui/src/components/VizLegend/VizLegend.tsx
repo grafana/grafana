@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import * as React from 'react';
 
 import { DataHoverClearEvent, DataHoverEvent } from '@grafana/data';
-import { LegendDisplayMode } from '@grafana/schema';
+import { DataTopic, LegendDisplayMode } from '@grafana/schema';
 
 import { SeriesVisibilityChangeMode, usePanelContext } from '../PanelChrome';
 
@@ -30,7 +30,7 @@ export function VizLegend<T>({
   readonly,
   isSortable,
 }: LegendProps<T>) {
-  const { eventBus, onToggleSeriesVisibility, onToggleLegendSort } = usePanelContext();
+  const { eventBus, onToggleSeriesVisibility, onAnnotationVisibilityChange, onToggleLegendSort } = usePanelContext();
 
   const onMouseOver = useCallback(
     (
@@ -73,7 +73,9 @@ export function VizLegend<T>({
       if (onLabelClick) {
         onLabelClick(item, event);
       }
-      if (onToggleSeriesVisibility) {
+      if (item.dataTopic === DataTopic.Annotations && onAnnotationVisibilityChange) {
+        onAnnotationVisibilityChange(item.fieldName ?? item.label, SeriesVisibilityChangeMode.ToggleSelection);
+      } else if (onToggleSeriesVisibility) {
         onToggleSeriesVisibility(
           item.fieldName ?? item.label,
           seriesVisibilityChangeBehavior === SeriesVisibilityChangeBehavior.Hide
@@ -82,7 +84,7 @@ export function VizLegend<T>({
         );
       }
     },
-    [onToggleSeriesVisibility, onLabelClick, seriesVisibilityChangeBehavior]
+    [onLabelClick, onToggleSeriesVisibility, onAnnotationVisibilityChange, seriesVisibilityChangeBehavior]
   );
 
   const makeVizLegendList = useCallback(
