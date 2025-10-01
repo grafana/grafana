@@ -216,7 +216,7 @@ class DataSourceWithBackend<
     }
 
     // Use the new query service
-    if (config.featureToggles.queryServiceFromUI) {
+    if (evaluateBooleanFlag('queryServiceFromUI')) {
       url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
     }
 
