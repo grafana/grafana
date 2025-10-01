@@ -472,6 +472,9 @@ func validateListHistoryRequest(req *resourcepb.ListRequest) error {
 	if key.Namespace == "" {
 		return fmt.Errorf("namespace is required")
 	}
+	if key.Name == "" {
+		return fmt.Errorf("name is required")
+	}
 	return nil
 }
 
