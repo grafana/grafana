@@ -38,7 +38,10 @@
       "@grafana-app/source": "./src/internal.ts"
     },
     "./testing": {
-      "@grafana-app/source": "./src/testing.ts"
+      "@grafana-app/source": "./src/testing.ts",
+      "types": "./dist/types/testing.d.ts",
+      "import": "./dist/esm/testing.mjs",
+      "require": "./dist/cjs/testing.cjs"
     }
   },
   "publishConfig": {
