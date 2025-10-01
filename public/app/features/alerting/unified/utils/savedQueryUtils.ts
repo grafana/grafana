@@ -60,34 +60,27 @@ export async function updateAlertQueryFromSavedQuery(
   replacedQuery: DataQuery
 ): Promise<AlertQuery> {
   try {
-    const datasource = await getDataSourceSrv().get(replacedQuery.datasource);
-    const currentDatasource = await getDataSourceSrv().get(alertQuery.datasourceUid);
+    const replacedDatasource = await getDataSourceSrv().get(replacedQuery.datasource);
+    const originalAlertDatasource = await getDataSourceSrv().get(alertQuery.datasourceUid);
     let normalizedQuery = replacedQuery;
 
     // Check if datasource is supported
-    if (!isAlertingSavedQuerySupported(datasource.type)) {
-      throw new Error(`Saved queries are not supported for ${datasource.type} in alerting context`);
-    }
-
-    // Check for cross-datasource replacement between Prometheus and Loki
-    // These datasources return different data formats (wide vs long) which breaks downstream expressions
-    const isPrometheus = (type: string) => type.toLowerCase().includes('prometheus');
-    const isLoki = (type: string) => type.toLowerCase().includes('loki');
-
-    if (
-      (isPrometheus(currentDatasource.type) && isLoki(datasource.type)) ||
-      (isLoki(currentDatasource.type) && isPrometheus(datasource.type))
-    ) {
-      throw new Error(
-        'Cannot replace between Prometheus and Loki queries in alerting. ' +
-          'These datasources return different data formats that may break downstream expressions.'
-      );
+    if (!isAlertingSavedQuerySupported(replacedDatasource.type)) {
+      throw new Error(`Saved queries are not supported for ${replacedDatasource.type} in alerting context`);
     }
 
     // Use export/import to get normalized query content (expr, etc.)
-    if (hasQueryExportSupport(datasource) && hasQueryImportSupport(datasource)) {
-      const abstractQueries = await datasource.exportToAbstractQueries([replacedQuery]);
-      const importedQueries = await datasource.importFromAbstractQueries(abstractQueries);
+    // If the datasource is the same, we might be dealing with cross-context scenearios (query from Prometheus to Loki
+    // in explore being used in annotations, then we need to normalized the query)
+    // /FIXME: This is a bit hacky, because we're using export/import to get normalized query content we lost
+    // expressions, functions from the replaced query
+    if (
+      hasQueryExportSupport(replacedDatasource) &&
+      hasQueryImportSupport(replacedDatasource) &&
+      replacedDatasource.type !== originalAlertDatasource.type
+    ) {
+      const abstractQueries = await replacedDatasource.exportToAbstractQueries([replacedQuery]);
+      const importedQueries = await replacedDatasource.importFromAbstractQueries(abstractQueries);
 
       if (importedQueries.length > 0) {
         // Strategy: Preserve all properties from saved query, then apply alerting context
@@ -102,7 +95,12 @@ export async function updateAlertQueryFromSavedQuery(
         };
 
         // Apply datasource-specific context properties for alerting
-        normalizedQuery = applyAlertingContextProperties(normalizedQuery, datasource.type);
+        normalizedQuery = applyAlertingContextProperties(normalizedQuery, replacedDatasource.type);
+
+        console.warn(
+          'Cross datasource replacement, normalized query from saved query for alerting context, we might have lost expressions, aggregators, etc:',
+          JSON.stringify(normalizedQuery, null, 2)
+        );
       }
     } else {
       // FALLBACK PATH: Direct copy with context override
@@ -112,7 +110,7 @@ export async function updateAlertQueryFromSavedQuery(
       };
 
       // Apply datasource-specific context properties
-      normalizedQuery = applyAlertingContextProperties(normalizedQuery, datasource.type);
+      normalizedQuery = applyAlertingContextProperties(normalizedQuery, replacedDatasource.type);
     }
 
     // Step 2: Create updated AlertQuery with proper datasource synchronization
