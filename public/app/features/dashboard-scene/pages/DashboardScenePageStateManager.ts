@@ -20,7 +20,7 @@ import { isDashboardV2Resource, isDashboardV2Spec, isV2StoredVersion } from 'app
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
-import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
+import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ProvisioningPreview } from 'app/features/provisioning/types';
 import { dispatch } from 'app/store/store';
