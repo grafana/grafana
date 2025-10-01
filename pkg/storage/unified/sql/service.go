@@ -164,7 +164,7 @@ func ProvideUnifiedStorageGrpcService(
 		subservices = append(subservices, s.ringLifecycler)
 
 		if httpServerRouter != nil {
-			httpServerRouter.Path("/prepare-downscale").Methods("GET").Handler(http.HandlerFunc(s.PrepareDownscale))
+			httpServerRouter.Path("/prepare-downscale").Methods("GET", "POST", "DELETE").Handler(http.HandlerFunc(s.PrepareDownscale))
 		}
 	}
 
