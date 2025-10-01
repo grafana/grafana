@@ -1,4 +1,4 @@
-import { LinkModel } from '@grafana/data';
+import { ActionModel, Field, LinkModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   VizTooltipContent,
@@ -13,9 +13,10 @@ export interface Props {
   links?: LinkModel[];
   isPinned: boolean;
   maxHeight?: number;
+  actions: Array<ActionModel<Field>>;
 }
 
-export const ExemplarTooltip = ({ items, links, isPinned, maxHeight }: Props) => {
+export const ExemplarTooltip = ({ items, links, isPinned, maxHeight, actions }: Props) => {
   const timeItem = items.find((val) => val.label === 'Time');
 
   return (
@@ -33,7 +34,7 @@ export const ExemplarTooltip = ({ items, links, isPinned, maxHeight }: Props) =>
         maxHeight={maxHeight}
         scrollable={maxHeight != null}
       />
-      <VizTooltipFooter dataLinks={links ?? []} />
+      <VizTooltipFooter actions={actions} dataLinks={links ?? []} />
     </VizTooltipWrapper>
   );
 };
