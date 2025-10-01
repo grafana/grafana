@@ -222,7 +222,7 @@ To preview label values, select `Use notification policy`, and then click on `Pr
 
 ## Grafana Cloud AI-generated templates
 
-Grafana Cloud users can use Grafana's build-in AI tool to generate templates in the appropriate [alerting template language](/docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/) for you. 
+Grafana Cloud users can use Grafana's built-in AI tool to generate templates in the appropriate [alerting template language](/docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/) for you. 
 
 To use AI to create your template, follow these steps:
 
