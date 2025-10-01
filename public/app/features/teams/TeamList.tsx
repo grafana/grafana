@@ -247,7 +247,7 @@ export const TeamList = ({
         },
       },
     ],
-    [displayRolePicker, hasFetched, rolesLoading, roleOptions, deleteTeam, styles]
+    [displayRolePicker, hasFetched, rolesLoading, roleOptions, deleteTeam, styles, scimGroupSyncEnabled]
   );
 
   return (
