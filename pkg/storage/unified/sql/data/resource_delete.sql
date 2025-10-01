@@ -6,4 +6,7 @@ DELETE FROM {{ .Ident "resource" }}
     {{ if .WriteEvent.Key.Name }}
     AND {{ .Ident "name" }}      = {{ .Arg .WriteEvent.Key.Name }}
     {{ end }}
+    {{ if .WriteEvent.PreviousRV }}
+    AND {{ .Ident "resource_version" }} = {{ .Arg .WriteEvent.PreviousRV }}
+    {{ end }}
 ;

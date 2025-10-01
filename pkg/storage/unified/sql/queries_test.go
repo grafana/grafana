@@ -31,6 +31,21 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						},
 					},
 				},
+				{
+					Name: "with rv",
+					Data: &sqlResourceRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						WriteEvent: resource.WriteEvent{
+							Key: &resourcepb.ResourceKey{
+								Namespace: "nn",
+								Group:     "gg",
+								Resource:  "rr",
+								Name:      "name",
+							},
+							PreviousRV: 1234,
+						},
+					},
+				},
 			},
 			sqlResourceInsert: {
 				{
