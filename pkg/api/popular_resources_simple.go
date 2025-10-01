@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -28,6 +29,8 @@ type PopularResourcesResponse struct {
 	Resources  []PopularResource `json:"resources"`
 	TotalCount int               `json:"totalCount"`
 }
+
+type AlertRuleSummary struct {}
 
 // GetPopularResourcesSimple returns most visited resources for the current user
 // Note: This queries the legacy dashboard table. For unified storage dashboards,

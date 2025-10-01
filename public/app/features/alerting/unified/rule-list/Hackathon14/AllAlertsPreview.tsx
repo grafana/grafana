@@ -1,34 +1,22 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import {
-  Badge,
-  Box,
-  ButtonGroup,
-  Grid,
-  Stack,
-  Text,
-  TextLink,
-  ToolbarButton,
-  useStyles2,
-} from '@grafana/ui';
-import { useGetPopularAlerts } from 'app/features/dashboard/api/popularResourcesApi';
-
-import { RecentVisitCard } from 'app/features/browse-dashboards/hackathon14/RecentVisitCard';
+import { Box, ButtonGroup, Grid, Stack, Text, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { BrowsingSectionTitle } from 'app/features/browse-dashboards/hackathon14/BrowsingSectionTitle';
 import { HackathonTable, TableColumn } from 'app/features/browse-dashboards/hackathon14/HackathonTable';
+import { RecentVisitCard } from 'app/features/browse-dashboards/hackathon14/RecentVisitCard';
+import { useGetPopularAlerts } from 'app/features/dashboard/api/popularResourcesApi';
 
 type ViewMode = 'card' | 'list';
 
-const PREVIEW_LIMIT = 12;
+const PREVIEW_LIMIT = 8;
 
 export const AllAlertsPreview = () => {
   const styles = useStyles2(getStyles);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
 
-  const { data, isLoading } = useGetPopularAlerts({ limit: 100 });
+  const { data, isLoading } = useGetPopularAlerts({ limit: 40, period: '90d' });
   const alerts = useMemo(() => data?.resources ?? [], [data]);
-
   const previewAlerts = useMemo(() => alerts.slice(0, PREVIEW_LIMIT), [alerts]);
 
   const columns: TableColumn[] = useMemo(
@@ -54,12 +42,6 @@ export const AllAlertsPreview = () => {
         ),
       },
       {
-        key: 'state',
-        header: 'State',
-        width: '120px',
-        render: (resource) => <Badge text={resource.state ? resource.state : 'Normal'} color="blue" />,
-      },
-      {
         key: 'views',
         header: 'Views',
         width: '100px',
@@ -73,11 +55,10 @@ export const AllAlertsPreview = () => {
     [styles]
   );
 
-  const handleToggleView = (mode: ViewMode) => setViewMode(mode);
+  const handleViewToggle = (mode: ViewMode) => setViewMode(mode);
   const handleViewAll = () => {
     window.location.href = '/alerting/list/hackathon14/view-all-alerts';
   };
-
   const handleAlertClick = (uid: string) => {
     window.location.href = `/alerting/grafana/${uid}/view`;
   };
@@ -86,33 +67,34 @@ export const AllAlertsPreview = () => {
     <Box className={styles.container}>
       <Stack direction="row" justifyContent="space-between" alignItems="flex-end" className={styles.header}>
         <Stack direction="column" gap={0.5}>
-          <Text variant="h5" weight="medium">
-            Explore all alerts
-          </Text>
-          <Text variant="bodySmall" color="secondary">
-            Preview the latest rules across your organization.
-          </Text>
+          <BrowsingSectionTitle
+            title="All alerts"
+            subtitle="Peek at the latest activity across your workspace"
+            icon="bell"
+            actions={
+              <Text onClick={handleViewAll} className={styles.viewAllLink} role="link" tabIndex={0}>
+                View all
+              </Text>
+            }
+          />
         </Stack>
-        <Stack direction="row" gap={1} alignItems="center">
-          <ButtonGroup>
-            <div className={viewMode === 'card' ? styles.activeToggle : ''}>
-              <ToolbarButton icon="apps" variant="default" tooltip="Card view" onClick={() => handleToggleView('card')} />
-            </div>
-            <div className={viewMode === 'list' ? styles.activeToggle : ''}>
-              <ToolbarButton icon="list-ul" variant="default" tooltip="List view" onClick={() => handleToggleView('list')} />
-            </div>
-          </ButtonGroup>
-          <TextLink onClick={handleViewAll}>View all</TextLink>
-        </Stack>
+        <ButtonGroup>
+          <div className={viewMode === 'card' ? styles.activeToggle : ''}>
+            <ToolbarButton icon="apps" variant="default" tooltip="Card view" onClick={() => handleViewToggle('card')} />
+          </div>
+          <div className={viewMode === 'list' ? styles.activeToggle : ''}>
+            <ToolbarButton icon="list-ul" variant="default" tooltip="List view" onClick={() => handleViewToggle('list')} />
+          </div>
+        </ButtonGroup>
       </Stack>
 
       {isLoading ? (
-        <Text variant="bodySmall" color="secondary" className={styles.loadingText}>
+        <Text variant="bodySmall" color="secondary" className={styles.statusText}>
           Loading alerts…
         </Text>
       ) : previewAlerts.length === 0 ? (
-        <Text variant="bodySmall" color="secondary" className={styles.loadingText}>
-          No alert rules found yet.
+        <Text variant="bodySmall" color="secondary" className={styles.statusText}>
+          No alerts found yet.
         </Text>
       ) : viewMode === 'card' ? (
         <Grid gap={2} columns={{ xs: 1, sm: 2, md: 3 }}>
@@ -127,7 +109,12 @@ export const AllAlertsPreview = () => {
           ))}
         </Grid>
       ) : (
-        <HackathonTable data={previewAlerts} columns={columns} onRowClick={(resource) => handleAlertClick(resource.uid)} />
+        <HackathonTable
+          data={previewAlerts}
+          columns={columns}
+          onRowClick={(resource) => handleAlertClick(resource.uid)}
+          emptyMessage="No alerts to display"
+        />
       )}
     </Box>
   );
@@ -135,11 +122,11 @@ export const AllAlertsPreview = () => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    border: `1px solid ${theme.colors.border.strong}`,
+    border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.lg,
     padding: theme.spacing(3),
     background: theme.colors.background.primary,
-    boxShadow: `0 20px 40px -34px ${theme.colors.primary.shade}`,
+    boxShadow: `0 24px 48px -32px ${theme.colors.primary.shade}`,
   }),
 
   header: css({
@@ -162,7 +149,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
 
-  loadingText: css({
+  statusText: css({
     marginTop: theme.spacing(2),
   }),
 
@@ -171,6 +158,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
   }),
+
+  viewAllLink: css({
+    color: theme.colors.text.link,
+    cursor: 'pointer',
+    fontSize: theme.typography.size.sm,
+    textDecoration: 'underline',
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+  }),
 });
-
-

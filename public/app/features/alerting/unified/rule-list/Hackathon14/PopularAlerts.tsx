@@ -7,6 +7,7 @@ import { BrowsingSectionTitle } from 'app/features/browse-dashboards/hackathon14
 import { RecentVisitCard } from 'app/features/browse-dashboards/hackathon14/RecentVisitCard';
 import { HackathonTable, TableColumn, ExpandedContent } from 'app/features/browse-dashboards/hackathon14/HackathonTable';
 import { useGetPopularAlerts } from 'app/features/dashboard/api/popularResourcesApi';
+import { AllAlertsPreview } from './AllAlertsPreview';
 
 type ViewMode = 'card' | 'list';
 
@@ -102,6 +103,10 @@ export const PopularAlerts = () => {
       </Stack>
     ),
   };
+
+  if (data?.resources?.length === 0 || data?.resources === null) {
+    return null;
+  }
 
   return (
     <Box marginTop={4}>

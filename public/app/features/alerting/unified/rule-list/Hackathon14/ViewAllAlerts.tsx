@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
@@ -22,18 +22,26 @@ import {
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { SparkJoyToggle } from 'app/core/components/SparkJoyToggle';
 import { setSparkJoyEnabled } from 'app/core/utils/sparkJoy';
-import { useGetPopularAlerts } from 'app/features/dashboard/api/popularResourcesApi';
+import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { AlertingPageWrapper } from 'app/features/alerting/unified/components/AlertingPageWrapper';
 import { RecentVisitCard } from 'app/features/browse-dashboards/hackathon14/RecentVisitCard';
-import {
-  HackathonTable,
-  TableColumn,
-  ExpandedContent,
-} from 'app/features/browse-dashboards/hackathon14/HackathonTable';
+import { HackathonTable, TableColumn } from 'app/features/browse-dashboards/hackathon14/HackathonTable';
 
 const PAGE_SIZE = 12;
 
 type ViewMode = 'card' | 'list';
+
+type AlertRow = {
+  uid: string | null;
+  title: string;
+  message: string;
+  folderTitle: string;
+  groupName: string;
+  namespace: string;
+  state: string;
+  severity: string;
+  lastEvaluation?: string;
+};
 
 export const ViewAllAlerts = () => {
   const styles = useStyles2(getStyles);
@@ -41,8 +49,11 @@ export const ViewAllAlerts = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data, isLoading } = useGetPopularAlerts({
-    limit: 100,
+  const { data: namespaces = [], isLoading } = alertRuleApi.usePrometheusRuleNamespacesQuery({
+    ruleSourceName: 'grafana',
+    limitAlerts: 0,
+    maxGroups: 2000,
+    excludeAlerts: false,
   });
 
   const handleToggleSparkJoy = () => {
@@ -50,18 +61,68 @@ export const ViewAllAlerts = () => {
     window.location.href = '/alerting/list';
   };
 
-  const handleAlertClick = (uid: string) => {
-    window.location.href = `/alerting/grafana/${uid}/view`;
+  const handleAlertClick = (alert: AlertRow) => {
+    if (alert.uid) {
+      window.location.href = `/alerting/grafana/${alert.uid}/view`;
+      return;
+    }
+
+    if (alert.namespace && alert.groupName) {
+      const params = new URLSearchParams({
+        folderUid: alert.namespace,
+        group: alert.groupName,
+      });
+      window.location.href = `/alerting/unified/new-group?${params.toString()}`;
+    }
   };
 
-  const getSeverityLevel = (uid: string) => {
-    const hash = uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const levels = ['warning', 'critical', 'info'];
-    return levels[hash % levels.length];
+  const allAlerts: AlertRow[] = useMemo(() => {
+    return namespaces.flatMap((namespace) =>
+      namespace.groups.flatMap((group) =>
+        group.rules
+          .filter((rule) => rule.type?.toLowerCase() !== 'recording')
+          .map((rule) => {
+            const annotations = rule.annotations ?? {};
+            const labels = rule.labels ?? {};
+            const title = rule.name ?? 'Untitled rule';
+            const message =
+              annotations.summary ?? annotations.description ?? annotations.message ?? 'No summary provided yet.';
+            const severityLabel = (labels.severity ?? labels.Severity ?? rule.health ?? 'unknown').toString();
+
+            return {
+              uid: (rule.uid as string | undefined) ?? (rule.grafana_alert as any)?.uid ?? null,
+              title,
+              message,
+              folderTitle: namespace.folderTitle ?? namespace.name ?? 'Unknown folder',
+              groupName: group.name ?? 'Unknown group',
+              namespace: namespace.name ?? 'Unknown namespace',
+              state: rule.state ?? 'unknown',
+              severity: severityLabel,
+              lastEvaluation: rule.lastEvaluation ?? rule.lastStateChange,
+            } satisfies AlertRow;
+          })
+      )
+    );
+  }, [namespaces]);
+
+  const getStateBadge = (state: string) => {
+    const normalized = state.toLowerCase();
+    switch (normalized) {
+      case 'firing':
+        return { color: 'red' as const, text: 'Firing' };
+      case 'pending':
+        return { color: 'orange' as const, text: 'Pending' };
+      case 'inactive':
+        return { color: 'blue' as const, text: 'Inactive' };
+      case 'normal':
+        return { color: 'blue' as const, text: 'Normal' };
+      default:
+        return { color: 'green' as const, text: normalized || 'Unknown' };
+    }
   };
 
   // Table column configuration
-  const columns: TableColumn[] = [
+  const columns: TableColumn<AlertRow>[] = [
     {
       key: 'name',
       header: 'Name',
@@ -86,9 +147,7 @@ export const ViewAllAlerts = () => {
           }}
         >
           <Text variant="bodySmall" color="secondary">
-            {/* TODO: Backend should return annotations.summary or annotations.message field 
-                which contains the alert message template like "High application latency for job {{ $labels.job }}" */}
-            {resource.title}
+            {resource.message}
           </Text>
         </div>
       ),
@@ -99,8 +158,7 @@ export const ViewAllAlerts = () => {
       width: '1.5fr',
       render: (resource) => (
         <Text variant="bodySmall" color="secondary">
-          {/* TODO: Backend should include alert group name in response */}
-          {resource.folderTitle || 'Default'}
+          {resource.groupName}
         </Text>
       ),
     },
@@ -108,18 +166,10 @@ export const ViewAllAlerts = () => {
       key: 'activity',
       header: 'State',
       width: '120px',
-      render: (resource) => (
-        <Badge
-          text={getSeverityLevel(resource.uid)}
-          color={
-            getSeverityLevel(resource.uid) === 'critical'
-              ? 'red'
-              : getSeverityLevel(resource.uid) === 'warning'
-                ? 'orange'
-                : 'blue'
-          }
-        />
-      ),
+      render: (resource) => {
+        const badge = getStateBadge(resource.state);
+        return <Badge text={badge.text} color={badge.color} />;
+      },
     },
     {
       key: 'actions',
@@ -146,22 +196,18 @@ export const ViewAllAlerts = () => {
   ];
 
   // Expanded content configuration
-  const expandedContent: ExpandedContent = {
-    render: (resource) => (
-      <Stack direction="column" gap={2}>
-        Placeholder
-      </Stack>
-    ),
-  };
-
   // Filter alerts based on search query
-  const allAlerts = data?.resources || [];
   const filteredAlerts = allAlerts.filter((alert) => {
     if (!searchQuery) {
       return true;
     }
     const query = searchQuery.toLowerCase();
-    return alert.title?.toLowerCase().includes(query) || alert.folderTitle?.toLowerCase().includes(query);
+    return (
+      alert.title.toLowerCase().includes(query) ||
+      alert.folderTitle.toLowerCase().includes(query) ||
+      alert.groupName.toLowerCase().includes(query) ||
+      alert.message.toLowerCase().includes(query)
+    );
   });
 
   // Client-side pagination
@@ -238,13 +284,13 @@ export const ViewAllAlerts = () => {
                 ))}
               </Grid>
             ) : (
-              <HackathonTable
-                columns={columns}
-                data={paginatedData}
-                expandable={true}
-                expandedContent={expandedContent}
-                emptyMessage="No alert rules found"
-              />
+          <HackathonTable
+            columns={columns}
+            data={paginatedData}
+            expandable={false}
+            emptyMessage="No alert rules found"
+            onRowClick={(resource) => handleAlertClick(resource)}
+          />
             )}
 
             {totalPages > 1 && (

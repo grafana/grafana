@@ -3,6 +3,7 @@ import { BrowsingSectionTitle } from 'app/features/browse-dashboards/hackathon14
 import { RecentVisitCard } from 'app/features/browse-dashboards/hackathon14/RecentVisitCard';
 import { getRelativeTime } from 'app/features/browse-dashboards/hackathon14/RecentVisited';
 import { useGetRecentAlerts } from 'app/features/dashboard/api/popularResourcesApi';
+import { QuickStart } from './QuickStart';
 
 export const RecentVisited = () => {
   const { data } = useGetRecentAlerts({ limit: 4 });
@@ -10,6 +11,10 @@ export const RecentVisited = () => {
   const handleResourceClick = (uid: string) => {
     window.location.href = `/alerting/grafana/${uid}/view`;
   };
+
+  if (data?.resources?.length === 0 || data?.resources === null) {
+    return <QuickStart />;
+  }
 
   return (
     <>
