@@ -57,7 +57,6 @@ export const generatedAPI = rawAPI.enhanceEndpoints({
 
     getDashboardByUid: suppressErrorsOnQuery,
     getLibraryElementByUid: suppressErrorsOnQuery,
-    getLocalPluginList: suppressErrorsOnQuery,
   },
 });
 
