@@ -17,17 +17,11 @@ export function getRecentScopesActions(): CommandPaletteAction[] {
 
   return recentScopes.map((recentScope) => {
     const names = recentScope.map((scope) => scope.spec.title).join(', ');
-    const keywords = recentScope
-      .map((scope) => `${scope.spec.title} ${scope.metadata.name}`)
-      .concat(names)
-      .join(' ');
+    const keywords = recentScope.map((scope) => `${scope.spec.title} ${scope.metadata.name}`).join(' ');
     return {
       id: names,
       name: names,
-      section: {
-        name: t('command-palette.section.recent-scopes', 'Recent scopes'),
-        priority: RECENT_SCOPES_PRIORITY,
-      },
+      section: t('command-palette.section.recent-scopes', 'Recent scopes'),
       subtitle: recentScope[0]?.parentNode?.spec.title,
       keywords: keywords,
       priority: RECENT_SCOPES_PRIORITY,
