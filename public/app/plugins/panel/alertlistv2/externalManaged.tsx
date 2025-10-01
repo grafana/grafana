@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
+import AutoSizer from 'react-virtualized-auto-sizer';
+import { FixedSizeList } from 'react-window';
 
 import { DataFrame, InterpolateFunction } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -8,7 +10,7 @@ import { Alert } from '@grafana/ui';
 import { AlertRuleListItem } from 'app/features/alerting/unified/rule-list/components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton } from 'app/features/alerting/unified/rule-list/components/AlertRuleListItemLoader';
 import { getRulesDataSourceByUID } from 'app/features/alerting/unified/utils/datasource';
-import { createShareLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
+import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { isPromAlertingRuleState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -28,7 +30,51 @@ type Labels = {
   alertstate: 'firing' | 'pending';
 };
 
+interface AlertListItem {
+  key: string;
+  name: string;
+  href: string;
+  state: PromAlertingRuleState;
+}
+
 const metricName = 'ALERTS';
+
+function processAlertFrames(alertRules: DataFrame[], datasourceName?: string): AlertListItem[] {
+  if (!alertRules?.length) {
+    return [];
+  }
+
+  const items: AlertListItem[] = [];
+
+  for (const frame of alertRules) {
+    const valueField = frame.fields.at(1);
+    if (!valueField) {
+      continue;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const labels = valueField?.labels as Labels;
+    const { alertname = 'unknown', alertstate = PromAlertingRuleState.Unknown } = labels;
+    const state = isPromAlertingRuleState(alertstate) ? alertstate : PromAlertingRuleState.Unknown;
+
+    // Create link to rule find page using datasource name and rule name
+    const ruleLink =
+      datasourceName && alertname
+        ? createRelativeUrl(
+            `/alerting/${encodeURIComponent(datasourceName)}/${encodeURIComponent(escapePathSeparators(alertname))}/find`
+          )
+        : '#';
+
+    items.push({
+      key: JSON.stringify(labels),
+      name: alertname,
+      href: ruleLink,
+      state,
+    });
+  }
+
+  return items;
+}
 
 export function ExternalManagedAlerts({
   datasourceUID,
@@ -90,6 +136,9 @@ export function ExternalManagedAlerts({
     return dataQueryResponse.data ?? [];
   }, [datasourceUID, filter]);
 
+  const alertItems = useMemo(() => processAlertFrames(alertRules ?? [], datasourceName), [alertRules, datasourceName]);
+
+  // Now handle loading and error states after all hooks
   if (loading) {
     return (
       <>
@@ -102,44 +151,40 @@ export function ExternalManagedAlerts({
 
   if (error) {
     return (
-      <Alert title={t('alertlist.external.error-title', 'Failed to fetch Grafana alerts')}>
-        {stringifyErrorLike(error)}
-      </Alert>
+      <Alert title={t('alertlist.external.error-title', 'Failed to fetch alerts')}>{stringifyErrorLike(error)}</Alert>
     );
   }
 
+  if (!alertItems.length) {
+    return (
+      <div>
+        <Trans i18nKey="alertlist.external.no-alerts">No alerts found</Trans>
+      </div>
+    );
+  }
+
+  const ITEM_HEIGHT = 52; // Height of each AlertRuleListItem
+
   return (
-    <>
-      {alertRules?.length ? (
-        <div>
-          {alertRules.map((frame) => {
-            const valueField = frame.fields.at(1);
-
-            if (!valueField) {
-              return;
-            }
-
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            const labels = valueField?.labels as Labels;
-
-            const { alertname = 'unknown', alertstate = PromAlertingRuleState.Unknown } = labels;
-
-            const state = isPromAlertingRuleState(alertstate) ? alertstate : PromAlertingRuleState.Unknown;
-
-            // Create link to rule find page using datasource name and rule name
-            const ruleLink = createRelativeUrl(
-              `/alerting/${encodeURIComponent(datasourceName!)}/${encodeURIComponent(escapePathSeparators(alertname))}/find`
+    <AutoSizer disableWidth>
+      {({ height }) => (
+        <FixedSizeList
+          height={height}
+          width="100%"
+          itemCount={alertItems.length}
+          itemSize={ITEM_HEIGHT}
+          overscanCount={5}
+        >
+          {({ index, style }) => {
+            const item = alertItems[index];
+            return (
+              <div style={style}>
+                <AlertRuleListItem key={item.key} name={item.name} href={item.href} state={item.state} />
+              </div>
             );
-
-            const key = JSON.stringify(labels);
-            return <AlertRuleListItem key={key} name={alertname} href={ruleLink ?? '#'} state={state} />;
-          })}
-        </div>
-      ) : (
-        <div>
-          <Trans i18nKey="alertlist.external.no-alerts">No alerts found</Trans>
-        </div>
+          }}
+        </FixedSizeList>
       )}
-    </>
+    </AutoSizer>
   );
 }

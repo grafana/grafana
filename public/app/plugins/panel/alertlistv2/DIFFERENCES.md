@@ -6,6 +6,7 @@ NOT supported
 - No state durations
 - No "stats" view
 - No "custom grouping"
+- No support for recording rules
 
 supported
 

@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
+import AutoSizer from 'react-virtualized-auto-sizer';
+import { FixedSizeList } from 'react-window';
 
 import { DataFrame, InterpolateFunction } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -27,6 +29,46 @@ type Labels = {
   grafana_folder: string;
   grafana_rule_uid: string;
 };
+
+interface GrafanaAlertListItem {
+  key: string;
+  name: string;
+  href: string;
+  state: PromAlertingRuleState;
+  namespace: string;
+}
+
+function processGrafanaAlertFrames(alertRules: DataFrame[]): GrafanaAlertListItem[] {
+  if (!alertRules?.length) {
+    return [];
+  }
+
+  const items: GrafanaAlertListItem[] = [];
+
+  for (const frame of alertRules) {
+    const valueField = frame.fields.at(1);
+    if (!valueField) {
+      continue;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const labels = valueField?.labels as Labels;
+    const { alertname = 'unknown', alertstate = PromAlertingRuleState.Unknown, grafana_rule_uid } = labels;
+
+    const state = isPromAlertingRuleState(alertstate) ? alertstate : PromAlertingRuleState.Unknown;
+    const ruleLink = rulesNav.detailsPageLink('grafana', { uid: grafana_rule_uid, ruleSourceName: 'grafana' });
+
+    items.push({
+      key: JSON.stringify(labels),
+      name: alertname,
+      href: ruleLink,
+      state,
+      namespace: labels.grafana_folder,
+    });
+  }
+
+  return items;
+}
 
 export function GrafanaManagedAlerts({
   stateFilter,
@@ -87,6 +129,10 @@ export function GrafanaManagedAlerts({
     return dataQueryResponse.data ?? [];
   }, [filter]);
 
+  // Prepare alert items for virtualization (must be before early returns to avoid conditional hooks)
+  const alertItems = useMemo(() => processGrafanaAlertFrames(alertRules ?? []), [alertRules]);
+
+  // Now handle loading and error states after all hooks
   if (loading) {
     return (
       <>
@@ -105,44 +151,44 @@ export function GrafanaManagedAlerts({
     );
   }
 
+  if (!alertItems.length) {
+    return (
+      <div>
+        <Trans i18nKey="alertlist.grafana.no-alerts">No Grafana alerts found</Trans>
+      </div>
+    );
+  }
+
+  const ITEM_HEIGHT = 52; // Height of each AlertRuleListItem
+
   return (
-    <>
-      {alertRules?.length ? (
-        <div>
-          {alertRules.map((frame) => {
-            const valueField = frame.fields.at(1);
-
-            if (!valueField) {
-              return;
-            }
-
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            const labels = valueField?.labels as Labels;
-
-            const { alertname = 'unknown', alertstate = PromAlertingRuleState.Unknown, grafana_rule_uid } = labels;
-
-            const state = isPromAlertingRuleState(alertstate) ? alertstate : PromAlertingRuleState.Unknown;
-            const ruleLink = rulesNav.detailsPageLink('grafana', { uid: grafana_rule_uid, ruleSourceName: 'grafana' });
-
-            const key = JSON.stringify(labels);
+    <AutoSizer disableWidth>
+      {({ height }) => (
+        <FixedSizeList
+          height={height}
+          width="100%"
+          itemCount={alertItems.length}
+          itemSize={ITEM_HEIGHT}
+          overscanCount={5}
+        >
+          {({ index, style }) => {
+            const item = alertItems[index];
             return (
-              <AlertRuleListItem
-                key={key}
-                name={alertname}
-                href={ruleLink}
-                application="grafana"
-                state={state}
-                namespace={labels.grafana_folder}
-                actions={<></>}
-              />
+              <div style={style}>
+                <AlertRuleListItem
+                  key={item.key}
+                  name={item.name}
+                  href={item.href}
+                  application="grafana"
+                  state={item.state}
+                  namespace={item.namespace}
+                  actions={<></>}
+                />
+              </div>
             );
-          })}
-        </div>
-      ) : (
-        <div>
-          <Trans i18nKey="alertlist.grafana.no-alerts">No Grafana alerts found</Trans>
-        </div>
+          }}
+        </FixedSizeList>
       )}
-    </>
+    </AutoSizer>
   );
 }
