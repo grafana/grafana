@@ -415,26 +415,8 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		if err != nil {
 			return event.GUID, fmt.Errorf("resource update: %w", err)
 		}
-
-		// The RV is part of the update request, and it may no longer be the most recent
-		rows, err := res.RowsAffected()
-		if err != nil {
-			return event.GUID, fmt.Errorf("unable to verify RV: %w", err)
-		}
-		if rows == 0 {
-			rsp := b.ReadResource(ctx, &resourcepb.ReadRequest{
-				Key: event.Key,
-			})
-			if rsp.Value == nil {
-				return event.GUID, fmt.Errorf("previous value not found")
-			}
-			if event.PreviousRV != rsp.ResourceVersion {
-				return event.GUID, apierrors.NewConflict(schema.GroupResource{
-					Group:    event.Key.Group,
-					Resource: event.Key.Resource,
-				}, event.Key.Name, fmt.Errorf("update resource version does not match current version"))
-			}
-			return event.GUID, fmt.Errorf("unable to update value")
+		if err = b.checkConflict(ctx, tx, res, event.Key, event.PreviousRV); err != nil {
+			return event.GUID, err
 		}
 
 		// 2. Insert into resource history
@@ -482,13 +464,16 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	}
 	rv, err := b.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
 		// 1. delete from resource
-		_, err := dbutil.Exec(ctx, tx, sqlResourceDelete, sqlResourceRequest{
+		res, err := dbutil.Exec(ctx, tx, sqlResourceDelete, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			GUID:        event.GUID,
 		})
 		if err != nil {
 			return event.GUID, fmt.Errorf("delete resource: %w", err)
+		}
+		if err = b.checkConflict(ctx, tx, res, event.Key, event.PreviousRV); err != nil {
+			return event.GUID, err
 		}
 
 		// 2. Add event to resource history
@@ -524,6 +509,43 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	})
 
 	return rv, nil
+}
+
+func (b *backend) checkConflict(ctx context.Context, tx db.Tx, res db.Result, key *resourcepb.ResourceKey, rv int64) error {
+	if rv == 0 {
+		return nil
+	}
+
+	// The RV is part of the update request, and it may no longer be the most recent
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("unable to verify RV: %w", err)
+	}
+	if rows == 1 {
+		return nil
+	}
+	if rows > 0 {
+		return fmt.Errorf("multiple rows effected (%d)", rows)
+	}
+
+	existing, err := dbutil.QueryRow(ctx, tx, sqlResourceHistoryRead, &sqlResourceHistoryReadRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Request: &historyReadRequest{
+			Key:             key,
+			ResourceVersion: rv,
+		},
+		Response: NewReadResponse(),
+	})
+	if err != nil {
+		return fmt.Errorf("unable to read previous value %w", err)
+	}
+	if rv != existing.ResourceVersion {
+		return apierrors.NewConflict(schema.GroupResource{
+			Group:    key.Group,
+			Resource: key.Resource,
+		}, key.Name, fmt.Errorf("update resource version does not match current version"))
+	}
+	return fmt.Errorf("unable to update value")
 }
 
 func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
