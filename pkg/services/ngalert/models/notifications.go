@@ -199,3 +199,42 @@ func (s *NotificationSettings) Fingerprint() data.Fingerprint {
 
 	return data.Fingerprint(h.Sum64())
 }
+
+// FingerprintOld calculates a hash value using the old algorithm (before the separator fix in the Fingerpring function).
+// This is used temporarily during migration to support existing alerts with old hash labels.
+// TODO: Remove this method once the migration is complete.
+func (s *NotificationSettings) FingerprintOld() data.Fingerprint {
+	h := fnv.New64()
+	tmp := make([]byte, 8)
+
+	writeString := func(s string) {
+		// save on extra slice allocation when string is converted to bytes.
+		_, _ = h.Write(unsafe.Slice(unsafe.StringData(s), len(s))) //nolint:gosec
+		// ignore errors returned by Write method because fnv never returns them.
+		_, _ = h.Write([]byte{255}) // use an invalid utf-8 sequence as separator
+	}
+	writeDuration := func(d *model.Duration) {
+		if d == nil {
+			_, _ = h.Write([]byte{255})
+		} else {
+			binary.LittleEndian.PutUint64(tmp, uint64(*d))
+			_, _ = h.Write(tmp)
+			_, _ = h.Write([]byte{255})
+		}
+	}
+
+	writeString(s.Receiver)
+	for _, gb := range s.NormalizedGroupBy() {
+		writeString(gb)
+	}
+	writeDuration(s.GroupWait)
+	writeDuration(s.GroupInterval)
+	writeDuration(s.RepeatInterval)
+	for _, interval := range s.MuteTimeIntervals {
+		writeString(interval)
+	}
+	for _, interval := range s.ActiveTimeIntervals {
+		writeString(interval)
+	}
+	return data.Fingerprint(h.Sum64())
+}

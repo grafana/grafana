@@ -1740,6 +1740,13 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "alertingGenerateSimplifiedRoutingWithOldHashes",
+			Description: "Generate simplified routing with old hashes",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "false",
+		},
+		{
 			Name:              "alertingBulkActionsInUI",
 			Description:       "Enables the alerting bulk actions in the UI",
 			FrontendOnly:      true,

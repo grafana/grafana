@@ -201,6 +201,55 @@ func TestNotificationSettingsLabels(t *testing.T) {
 	}
 }
 
+func TestNotificationSettings_OldFingerprint(t *testing.T) {
+	testCases := []struct {
+		name                   string
+		notificationSettings   NotificationSettings
+		expectedOldFingerprint string
+	}{
+		{
+			name: "default notification settings with hardcoded default group by",
+			notificationSettings: NotificationSettings{
+				Receiver: "receiver name",
+				GroupBy:  DefaultNotificationSettingsGroupBy,
+			},
+			expectedOldFingerprint: "6027cdeaff62ba3f",
+		},
+		{
+			name: "custom notification settings",
+			notificationSettings: NotificationSettings{
+				Receiver:          "receiver name",
+				GroupBy:           []string{"label1", "label2"},
+				GroupWait:         util.Pointer(model.Duration(1 * time.Minute)),
+				GroupInterval:     util.Pointer(model.Duration(2 * time.Minute)),
+				RepeatInterval:    util.Pointer(model.Duration(3 * time.Minute)),
+				MuteTimeIntervals: []string{"maintenance1", "maintenance2"},
+			},
+			expectedOldFingerprint: "47164c92f2986a35",
+		},
+		{
+			name: "custom notification settings with active time interval",
+			notificationSettings: NotificationSettings{
+				Receiver:            "receiver name",
+				GroupBy:             []string{"label1", "label2"},
+				GroupWait:           util.Pointer(model.Duration(1 * time.Minute)),
+				GroupInterval:       util.Pointer(model.Duration(2 * time.Minute)),
+				RepeatInterval:      util.Pointer(model.Duration(3 * time.Minute)),
+				MuteTimeIntervals:   []string{"maintenance1", "maintenance2"},
+				ActiveTimeIntervals: []string{"active1", "active2"},
+			},
+			expectedOldFingerprint: "a173df6210e43af0",
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			oldFp := tt.notificationSettings.FingerprintOld()
+			require.Equal(t, tt.expectedOldFingerprint, oldFp.String())
+		})
+	}
+}
+
 func TestNotificationSettings_TimeIntervals(t *testing.T) {
 	// Create notification settings with default settings and usign the same
 	// time interval, but in one case as a mute time interval and in another case
