@@ -56,7 +56,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({
   // healthStatusNotReady: If the repository is not yet ready (e.g., initial setup), synchronization cannot be started.
   // User can potentially fail at this step if they click too fast and repo is not ready.
   const healthStatusNotReady =
-    repositoryStatusQuery?.data?.status?.health.healthy === false &&
+    isRepositoryHealthy === false &&
     repositoryStatusQuery?.data?.status?.observedGeneration === 0;
 
   // Stop polling when repository becomes healthy
