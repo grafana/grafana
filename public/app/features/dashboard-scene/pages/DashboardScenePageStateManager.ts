@@ -1,6 +1,6 @@
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
@@ -416,7 +416,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       const scene = transformSaveModelToScene(rsp);
 
       // Special handling for Template route - set up edit mode and dirty state
-      if (options.route === DashboardRoutes.Template) {
+      if (config.featureToggles.dashboardLibrary && options.route === DashboardRoutes.Template) {
         scene.setInitialSaveModel(rsp.dashboard, rsp.meta);
         scene.onEnterEditMode();
         scene.setState({ isDirty: true });
@@ -457,6 +457,11 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
     if (!datasource || !pluginId || !path) {
       throw new Error('Missing required parameters for template dashboard');
+    }
+
+    const ds = getDataSourceSrv().getInstanceSettings(datasource);
+    if (!ds) {
+      throw new Error(`Datasource "${datasource}" not found. Please check your datasource configuration.`);
     }
 
     const data = {

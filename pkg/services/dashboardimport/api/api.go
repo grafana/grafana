@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboardimport/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/web"
@@ -23,15 +24,17 @@ type ImportDashboardAPI struct {
 	quotaService           QuotaService
 	pluginStore            pluginstore.Store
 	ac                     accesscontrol.AccessControl
+	features               featuremgmt.FeatureToggles
 }
 
 func New(dashboardImportService dashboardimport.Service, quotaService QuotaService,
-	pluginStore pluginstore.Store, ac accesscontrol.AccessControl) *ImportDashboardAPI {
+	pluginStore pluginstore.Store, ac accesscontrol.AccessControl, features featuremgmt.FeatureToggles) *ImportDashboardAPI {
 	return &ImportDashboardAPI{
 		dashboardImportService: dashboardImportService,
 		quotaService:           quotaService,
 		pluginStore:            pluginStore,
 		ac:                     ac,
+		features:               features,
 	}
 }
 
@@ -43,11 +46,13 @@ func (api *ImportDashboardAPI) RegisterAPIEndpoints(routeRegister routing.RouteR
 			authorize(accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate)),
 			routing.Wrap(api.ImportDashboard),
 		)
-		route.Post(
-			"/interpolate",
-			authorize(accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate)),
-			routing.Wrap(api.InterpolateDashboard),
-		)
+		if api.features.IsEnabledGlobally(featuremgmt.FlagDashboardLibrary) {
+			route.Post(
+				"/interpolate",
+				authorize(accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate)),
+				routing.Wrap(api.InterpolateDashboard),
+			)
+		}
 	}, middleware.ReqSignedIn)
 }
 

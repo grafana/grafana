@@ -34,7 +34,7 @@ func ProvideService(routeRegister routing.RouteRegister,
 		features:               features,
 	}
 
-	dashboardImportAPI := api.New(s, quotaService, pluginStore, ac)
+	dashboardImportAPI := api.New(s, quotaService, pluginStore, ac, features)
 	dashboardImportAPI.RegisterAPIEndpoints(routeRegister)
 
 	return s
