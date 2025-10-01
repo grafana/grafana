@@ -15,12 +15,22 @@ interface CreateBaseQueryOptions {
 export function createBaseQuery({ baseURL }: CreateBaseQueryOptions): BaseQueryFn<RequestOptions> {
   async function backendSrvBaseQuery(requestOptions: RequestOptions) {
     try {
+      const headers: Record<string, string> = {
+        ...requestOptions.headers,
+      };
+
+      // Add Content-Type header for PATCH requests
+      if (requestOptions.method?.toUpperCase() === 'PATCH') {
+        headers['Content-Type'] = 'application/strategic-merge-patch+json';
+      }
+
       const { data: responseData, ...meta } = await lastValueFrom(
         getBackendSrv().fetch({
           ...requestOptions,
           url: baseURL + requestOptions.url,
           showErrorAlert: requestOptions.showErrorAlert ?? false,
           data: requestOptions.body,
+          headers,
         })
       );
       return { data: responseData, meta };
