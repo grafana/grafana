@@ -1,3 +1,5 @@
-import { generatedAPI } from './endpoints.gen';
+export { BASE_URL } from './baseAPI';
+import { generatedAPI as rawAPI } from './endpoints.gen';
 
-export const dashboardAPIv0alpha1 = generatedAPI.enhanceEndpoints({});
+export * from './endpoints.gen';
+export const generatedAPI = rawAPI.enhanceEndpoints({});
