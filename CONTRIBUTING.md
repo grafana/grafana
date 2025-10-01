@@ -24,12 +24,14 @@ We welcome your technical contributions! You can contribute in several ways:
 ### 1. Contribute Code to Grafana
 
 **What you should bring:**
+
 - Follow our [developer guide](contribute/developer-guide.md) to set up your environment.
 - Set up your environment ([guide](contribute/developer-guide.md)).
 - Adhere to our [frontend](contribute/style-guides/frontend.md) and [backend](contribute/backend/style-guide.md) style guides.
 - Write or update tests ([testing guide](contribute/style-guides/testing.md)).
 
 **Step-by-step:**
+
 1. Pick an issue or feature ([help-wanted](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22)) or create a new issue to work on.
 1. Prepare a clear, descriptive pull request ([how-to guide](contribute/create-pull-request.md)).
 1. Ensure you include and run the appropriate tests as part of your Pull Request.
@@ -40,6 +42,7 @@ We welcome your technical contributions! You can contribute in several ways:
 Grafana plugins let you extend the platform with new data sources, panels, and more. This is a great way to share your ideas and make a real impact on the Grafana ecosystem.
 
 **Step-by-step:**
+
 1. Read the [plugin development guide](https://grafana.com/developers/plugin-tools) to choose your plugin type and set up your environment.
 2. Scaffold your plugin using the recommended tools.
 3. Develop and test your plugin locally.
