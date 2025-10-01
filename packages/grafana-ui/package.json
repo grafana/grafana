@@ -55,8 +55,8 @@
     "storybook:build": "storybook build -o ./dist/storybook -c .storybook",
     "storybook:test": "test-storybook --url http://localhost:9001",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "cp package.json package.json.bak && ALIAS_PACKAGE_NAME=unstable node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json && rimraf ./unstable"
+    "prepack": "node ../../scripts/prepare-npm-package.js",
+    "postpack": "rimraf ./unstable"
   },
   "browserslist": [
     "defaults",
