@@ -3,6 +3,8 @@ import { useCallback } from 'react';
 
 import {
   DataTransformerID,
+  FieldColor,
+  FieldColorModeId,
   FieldNamePickerConfigSettings,
   GrafanaTheme2,
   SelectableValue,
@@ -13,15 +15,16 @@ import {
   TransformerUIProps,
 } from '@grafana/data';
 import {
+  AnnotationFieldMapping,
   ConvertFrameTypeTransformerOptions,
   FrameType,
-  AnnotationFieldMapping,
   OptionalAnnotationOptions,
 } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { ColorPicker, DEFAULT_ANNOTATION_COLOR, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 
+import { FieldColorEditor } from '../../../core/components/OptionsUI/fieldColor';
 import { getTransformationContent } from '../docs/getTransformationContent';
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -77,7 +80,7 @@ export const ConvertFrameTypeTransformerEditor = ({
   );
 
   const onSelectAnnotationOption = useCallback(
-    (label: keyof OptionalAnnotationOptions, value?: string) => {
+    (label: keyof OptionalAnnotationOptions, value?: string | FieldColor) => {
       onChange({
         ...options,
         annotationOptions: {
@@ -186,6 +189,20 @@ export const ConvertFrameTypeTransformerEditor = ({
               />
             </InlineField>
           </InlineFieldRow>
+
+          <InlineFieldRow>
+            <InlineField labelWidth={20} label={t('transformers.annotation-transformer-editor.name', 'Frame name')}>
+              <FieldNamePicker
+                context={{ data: input }}
+                value={options.annotationOptions?.frameName ?? ''}
+                onChange={(value) => {
+                  onSelectAnnotationOption('frameName', value);
+                }}
+                item={fieldNamePickerSettings}
+              />
+            </InlineField>
+          </InlineFieldRow>
+
           {/* Map dataframe with existing color strings */}
           <InlineFieldRow>
             <InlineField labelWidth={20} label={t('transformers.annotation-transformer-editor.color', 'Color field')}>
@@ -196,6 +213,23 @@ export const ConvertFrameTypeTransformerEditor = ({
                   onSelectAnnotationMapping('color', value);
                 }}
                 item={fieldNamePickerSettings}
+              />
+            </InlineField>
+          </InlineFieldRow>
+          <InlineFieldRow>
+            <InlineField
+              labelWidth={20}
+              label={t('transformers.annotation-transformer-editor.color-scheme', 'Color scheme')}
+            >
+              <FieldColorEditor
+                item={{ id: 'colorScheme', name: 'colorScheme' }}
+                context={{ data: input }}
+                value={options.annotationOptions?.colorScheme ?? { mode: FieldColorModeId.ContinuousBlYlRd }}
+                onChange={(value) => {
+                  if (value) {
+                    onSelectAnnotationOption('colorScheme', value);
+                  }
+                }}
               />
             </InlineField>
           </InlineFieldRow>

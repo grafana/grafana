@@ -1,6 +1,6 @@
 import { map } from 'rxjs/operators';
 
-import { DataTopic } from '@grafana/schema';
+import { DataTopic, FieldColor } from '@grafana/schema';
 
 import { DataFrame, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
@@ -38,7 +38,9 @@ export interface OptionalAnnotationFields {
 }
 
 export interface OptionalAnnotationOptions {
+  frameName?: string;
   defaultColor?: string;
+  colorScheme?: FieldColor;
 }
 
 export type AnnotationFieldMapping = OptionalAnnotationFields & RequiredAnnotationFields;
@@ -154,11 +156,24 @@ function mapSourceFieldNameToAnnoFieldName(
 }
 
 function convertSeriesToAnnotation(frame: DataFrame, options: ConvertFrameTypeTransformerOptions): DataFrame {
-  console.log('frame', frame);
   // TODO: ensure time field
   // TODO: ensure value field
+
+  let frameName = undefined;
+  if (options.annotationOptions?.frameName) {
+    const sourceFieldForFrameName = frame.fields.find((field) => field.name === options.annotationOptions?.frameName);
+    const nameSet = new Set(sourceFieldForFrameName?.values);
+    if (nameSet.size > 1) {
+      console.warn('should only be a single unique value in source frameName field');
+    }
+
+    // There can be only one!! @todo
+    frameName = sourceFieldForFrameName?.values[0];
+  }
+
   const mappedFrame = {
     ...frame,
+    name: frameName ?? frame.name ?? Math.random().toString(),
     fields: [
       ...frame.fields.map((sourceField) => {
         const name = mapSourceFieldNameToAnnoFieldName(options, sourceField.name) ?? sourceField.name;
@@ -181,6 +196,7 @@ function convertSeriesToAnnotation(frame: DataFrame, options: ConvertFrameTypeTr
   const fields = [...mappedFrame.fields, createIsRegionField(mappedFrame)];
   // If we've mapped an existing field, don't add the default
   if (!mappedFrame.fields.find((field) => field.name === 'color')) {
+    // @todo pick another palette by default if default undefined
     fields.push(createColorField(mappedFrame, options));
   }
   return {
