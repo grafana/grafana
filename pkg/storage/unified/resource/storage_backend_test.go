@@ -25,14 +25,14 @@ var appsNamespace = NamespacedResource{
 	Resource:  "resource",
 }
 
-func setupTestStorageBackend(t *testing.T) *KVStorageBackend {
+func setupTestStorageBackend(t *testing.T) *kvStorageBackend {
 	kv := setupTestKV(t)
-	opts := KvBackendOptions{
+	opts := KVBackendOptions{
 		KvStore:    kv,
 		WithPruner: true,
 	}
-	backend, err := NewKvStorageBackend(opts)
-	kvBackend := backend.(*KVStorageBackend)
+	backend, err := NewKVStorageBackend(opts)
+	kvBackend := backend.(*kvStorageBackend)
 	require.NoError(t, err)
 	return kvBackend
 }
@@ -755,7 +755,7 @@ func generateOldSnowflake(t *testing.T) int64 {
 }
 
 // seedBackend seeds the kvstore with data and return the expected result for ListModifiedSince calls
-func seedBackend(t *testing.T, backend *KVStorageBackend, ctx context.Context, ns NamespacedResource) []expectation {
+func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, ns NamespacedResource) []expectation {
 	uniqueStringGen := randomStringGenerator()
 	nsDifferentNamespace := NamespacedResource{
 		Namespace: "uaoeueao",
@@ -800,7 +800,7 @@ func seedBackend(t *testing.T, backend *KVStorageBackend, ctx context.Context, n
 	return expectations
 }
 
-func createAndSaveTestObject(t *testing.T, backend *KVStorageBackend, ctx context.Context, ns NamespacedResource, uniqueStringGen func() string, updates int, deleted bool) *ModifiedResource {
+func createAndSaveTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Context, ns NamespacedResource, uniqueStringGen func() string, updates int, deleted bool) *ModifiedResource {
 	name := uniqueStringGen()
 	action := resourcepb.WatchEvent_ADDED
 	rv, testObj := addTestObject(t, backend, ctx, ns, name, uniqueStringGen())
@@ -831,7 +831,7 @@ func createAndSaveTestObject(t *testing.T, backend *KVStorageBackend, ctx contex
 	}
 }
 
-func addTestObject(t *testing.T, backend *KVStorageBackend, ctx context.Context, ns NamespacedResource, name, value string) (int64, *unstructured.Unstructured) {
+func addTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Context, ns NamespacedResource, name, value string) (int64, *unstructured.Unstructured) {
 	testObj, err := createTestObjectWithName(name, ns, value)
 	require.NoError(t, err)
 
@@ -856,7 +856,7 @@ func addTestObject(t *testing.T, backend *KVStorageBackend, ctx context.Context,
 	return rv, testObj
 }
 
-func deleteTestObject(t *testing.T, backend *KVStorageBackend, ctx context.Context, originalObj *unstructured.Unstructured, previousRV int64, ns NamespacedResource, name string) int64 {
+func deleteTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Context, originalObj *unstructured.Unstructured, previousRV int64, ns NamespacedResource, name string) int64 {
 	metaAccessor, err := utils.MetaAccessor(originalObj)
 	require.NoError(t, err)
 
@@ -879,7 +879,7 @@ func deleteTestObject(t *testing.T, backend *KVStorageBackend, ctx context.Conte
 	return rv
 }
 
-func updateTestObject(t *testing.T, backend *KVStorageBackend, ctx context.Context, originalObj *unstructured.Unstructured, previousRV int64, ns NamespacedResource, name, value string) int64 {
+func updateTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Context, originalObj *unstructured.Unstructured, previousRV int64, ns NamespacedResource, name, value string) int64 {
 	originalObj.Object["spec"].(map[string]any)["value"] = value
 
 	metaAccessor, err := utils.MetaAccessor(originalObj)
@@ -1441,7 +1441,7 @@ func createTestObjectWithName(name string, ns NamespacedResource, value string) 
 }
 
 // writeObject writes an unstructured object to the backend using the provided event type and previous resource version
-func writeObject(t *testing.T, backend *KVStorageBackend, obj *unstructured.Unstructured, eventType resourcepb.WatchEvent_Type, previousRV int64) (int64, error) {
+func writeObject(t *testing.T, backend *kvStorageBackend, obj *unstructured.Unstructured, eventType resourcepb.WatchEvent_Type, previousRV int64) (int64, error) {
 	metaAccessor, err := utils.MetaAccessor(obj)
 	require.NoError(t, err)
 
@@ -1485,7 +1485,7 @@ func writeObject(t *testing.T, backend *KVStorageBackend, obj *unstructured.Unst
 }
 
 // createAndWriteTestObject creates a basic test object and writes it to the backend
-func createAndWriteTestObject(t *testing.T, backend *KVStorageBackend) (*unstructured.Unstructured, int64) {
+func createAndWriteTestObject(t *testing.T, backend *kvStorageBackend) (*unstructured.Unstructured, int64) {
 	testObj, err := createTestObject()
 	require.NoError(t, err)
 
