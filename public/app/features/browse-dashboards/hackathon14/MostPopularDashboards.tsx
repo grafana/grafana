@@ -3,57 +3,12 @@ import { useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Card, Stack, Text, useStyles2, Icon, Grid, Spinner, useTheme2, ButtonGroup, Box, TextLink, LinkButton, ToolbarButton } from '@grafana/ui';
+import { Stack, Text, useStyles2, Icon, Grid, useTheme2, ButtonGroup, Box, TextLink, ToolbarButton, Card, LinkButton } from '@grafana/ui';
 import { useGetPopularDashboards } from 'app/features/dashboard/api/popularResourcesApi';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { BrowsingSectionTitle } from './BrowsingSectionTitle';
-
-interface DashboardThumbnailProps {
-  url: string;
-  alt: string;
-}
-
-const DashboardThumbnail = ({ url, alt }: DashboardThumbnailProps) => {
-  const [imageLoading, setImageLoading] = useState(true);
-  const [imageError, setImageError] = useState(false);
-  const styles = useStyles2(getThumbnailStyles);
-
-  return (
-    <div className={styles.wrapper}>
-      {imageLoading && !imageError && (
-        <div className={styles.loading}>
-          <Spinner />
-          <Text variant="bodySmall" color="secondary">
-            Rendering preview...
-          </Text>
-        </div>
-      )}
-      {imageError && (
-        <div className={styles.error}>
-          <Icon name="apps" size="xxl" />
-          <Text variant="bodySmall" color="secondary">
-            {!config.rendererAvailable ? 'Image renderer not installed' : 'Preview unavailable'}
-          </Text>
-        </div>
-      )}
-      <img
-        src={url}
-        alt={alt}
-        className={styles.image}
-        style={{ display: imageLoading || imageError ? 'none' : 'block' }}
-        onLoad={() => {
-          setImageLoading(false);
-        }}
-        onError={(e) => {
-          console.error('Dashboard thumbnail failed to load:', url, e);
-          setImageLoading(false);
-          setImageError(true);
-        }}
-      />
-    </div>
-  );
-};
+import { DashboardThumbnailCard } from './DashboardThumbnailCard';
 
 export const MostPopularDashboards = () => {
   const styles = useStyles2(getStyles);
@@ -202,37 +157,22 @@ export const MostPopularDashboards = () => {
           <>
             {viewMode === 'thumbnail' ? (
               <Grid gap={2} columns={{ xs: 1, sm: 2, md: 3, lg: 4 }}>
-                {data.resources.map((resource) => {
+                {enrichedDashboards.map((resource) => {
                   const thumbnailUrl = getThumbnailUrl(resource);
 
                   return (
-                    <Card
+                    <DashboardThumbnailCard
                       key={resource.uid}
-                      className={styles.clickableCard}
+                      uid={resource.uid}
+                      title={resource.title}
+                      thumbnailUrl={thumbnailUrl}
+                      folderName={resource.folderName}
+                      tags={resource.tags}
+                      lastVisited={resource.lastVisited}
+                      visitCount={resource.visitCount}
                       onClick={() => handleResourceClick(resource)}
-                    >
-                      <Stack direction="column" gap={0}>
-                        {/* Dashboard Thumbnail */}
-                        {thumbnailUrl && (
-                          <div className={styles.thumbnailContainer}>
-                            <DashboardThumbnail url={thumbnailUrl} alt={resource.title} />
-                          </div>
-                        )}
-
-                        <div className={styles.cardContent}>
-                          <Stack direction="row" gap={2} alignItems="center">
-                            <Text weight="medium">{resource.title}</Text>
-                          </Stack>
-
-                          <Stack direction="row" justifyContent="space-between" alignItems="center">
-                            <Text variant="bodySmall" color="secondary">
-                              Last visited
-                            </Text>
-                            <Text variant="bodySmall">{new Date(resource.lastVisited).toLocaleDateString()}</Text>
-                          </Stack>
-                        </div>
-                      </Stack>
-                    </Card>
+                      showThumbnail={true}
+                    />
                   );
                 })}
               </Grid>
@@ -351,44 +291,6 @@ export const MostPopularDashboards = () => {
     </Box>
   );
 };
-
-const getThumbnailStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
-    position: 'relative',
-    width: '100%',
-    height: '160px', // Increased height for better preview
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: 'unset', // Remove border radius since it's flush with card
-    overflow: 'hidden',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  }),
-
-  loading: css({
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing(1),
-    height: '100%',
-  }),
-
-  error: css({
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing(1),
-    color: theme.colors.text.secondary,
-  }),
-
-  image: css({
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-  }),
-});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   headerIcon: css({

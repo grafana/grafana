@@ -2,14 +2,34 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Stack, Text, useStyles2, Icon, Grid, Pagination, Spinner, LinkButton, ToolbarButton, ButtonGroup, Badge, Dropdown, Menu, FilterInput } from '@grafana/ui';
+import {
+  Card,
+  Stack,
+  Text,
+  useStyles2,
+  Icon,
+  Grid,
+  Pagination,
+  Spinner,
+  LinkButton,
+  ToolbarButton,
+  ButtonGroup,
+  Badge,
+  Dropdown,
+  Menu,
+  FilterInput,
+} from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { SparkJoyToggle } from 'app/core/components/SparkJoyToggle';
 import { setSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 import { useGetPopularAlerts } from 'app/features/dashboard/api/popularResourcesApi';
 import { AlertingPageWrapper } from 'app/features/alerting/unified/components/AlertingPageWrapper';
 import { RecentVisitCard } from 'app/features/browse-dashboards/hackathon14/RecentVisitCard';
-import { HackathonTable, TableColumn, ExpandedContent } from 'app/features/browse-dashboards/hackathon14/HackathonTable';
+import {
+  HackathonTable,
+  TableColumn,
+  ExpandedContent,
+} from 'app/features/browse-dashboards/hackathon14/HackathonTable';
 
 const PAGE_SIZE = 12;
 
@@ -20,7 +40,7 @@ export const ViewAllAlerts = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const { data, isLoading } = useGetPopularAlerts({
     limit: 100,
   });
@@ -58,11 +78,13 @@ export const ViewAllAlerts = () => {
       header: 'Message',
       width: '2.5fr',
       render: (resource) => (
-        <div style={{ 
-          overflow: 'hidden', 
-          textOverflow: 'ellipsis', 
-          whiteSpace: 'nowrap' 
-        }}>
+        <div
+          style={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
           <Text variant="bodySmall" color="secondary">
             {/* TODO: Backend should return annotations.summary or annotations.message field 
                 which contains the alert message template like "High application latency for job {{ $labels.job }}" */}
@@ -87,9 +109,15 @@ export const ViewAllAlerts = () => {
       header: 'State',
       width: '120px',
       render: (resource) => (
-        <Badge 
-          text={getSeverityLevel(resource.uid)} 
-          color={getSeverityLevel(resource.uid) === 'critical' ? 'red' : getSeverityLevel(resource.uid) === 'warning' ? 'orange' : 'blue'} 
+        <Badge
+          text={getSeverityLevel(resource.uid)}
+          color={
+            getSeverityLevel(resource.uid) === 'critical'
+              ? 'red'
+              : getSeverityLevel(resource.uid) === 'warning'
+                ? 'orange'
+                : 'blue'
+          }
         />
       ),
     },
@@ -121,7 +149,7 @@ export const ViewAllAlerts = () => {
   const expandedContent: ExpandedContent = {
     render: (resource) => (
       <Stack direction="column" gap={2}>
-       Placeholder
+        Placeholder
       </Stack>
     ),
   };
@@ -133,10 +161,7 @@ export const ViewAllAlerts = () => {
       return true;
     }
     const query = searchQuery.toLowerCase();
-    return (
-      alert.title?.toLowerCase().includes(query) ||
-      alert.folderTitle?.toLowerCase().includes(query)
-    );
+    return alert.title?.toLowerCase().includes(query) || alert.folderTitle?.toLowerCase().includes(query);
   });
 
   // Client-side pagination
@@ -150,9 +175,15 @@ export const ViewAllAlerts = () => {
     <AlertingPageWrapper
       navId="alert-list"
       isLoading={false}
+      renderTitle={() => (
+        <div className={styles.centeredTitle}>
+          <Text variant="h2">All Alerts</Text>
+        </div>
+      )}
+      subTitle=""
       actions={
         <LinkButton variant="secondary" color="grey" icon="arrow-left" href="/alerting/list">
-          Back to Alert Rules
+          Back to browsing
         </LinkButton>
       }
     >
@@ -177,20 +208,10 @@ export const ViewAllAlerts = () => {
           </Text>
           <ButtonGroup>
             <div className={viewMode === 'card' ? styles.activeToggle : ''}>
-              <ToolbarButton
-                icon="apps"
-                variant="default"
-                onClick={() => setViewMode('card')}
-                tooltip="Card view"
-              />
+              <ToolbarButton icon="apps" variant="default" onClick={() => setViewMode('card')} tooltip="Card view" />
             </div>
             <div className={viewMode === 'list' ? styles.activeToggle : ''}>
-              <ToolbarButton
-                icon="list-ul"
-                variant="default"
-                onClick={() => setViewMode('list')}
-                tooltip="List view"
-              />
+              <ToolbarButton icon="list-ul" variant="default" onClick={() => setViewMode('list')} tooltip="List view" />
             </div>
           </ButtonGroup>
         </div>
@@ -228,11 +249,7 @@ export const ViewAllAlerts = () => {
 
             {totalPages > 1 && (
               <div className={styles.paginationContainer}>
-                <Pagination
-                  numberOfPages={totalPages}
-                  currentPage={currentPage}
-                  onNavigate={setCurrentPage}
-                />
+                <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={setCurrentPage} />
               </div>
             )}
           </>
@@ -262,7 +279,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     justifyContent: 'center',
     width: '100%',
-    
+
     '& input': {
       fontSize: theme.typography.size.md,
       padding: theme.spacing(1.5, 2),
@@ -293,7 +310,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   activeToggle: css({
     position: 'relative',
     display: 'inline-block',
-    
+
     '&::after': {
       content: '""',
       position: 'absolute',
@@ -378,6 +395,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     justifyContent: 'flex-end',
     minWidth: 0,
+  }),
+
+  centeredTitle: css({
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    h1: {
+      marginBottom: 0,
+      textAlign: 'center',
+    },
   }),
 
   statusIcon: css({

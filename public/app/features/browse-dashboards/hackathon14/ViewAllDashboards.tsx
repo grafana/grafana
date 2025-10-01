@@ -2,13 +2,29 @@ import { css } from '@emotion/css';
 import { useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Stack, Text, useStyles2, Icon, Grid, Pagination, Spinner, LinkButton, ToolbarButton, ButtonGroup, FilterInput } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import {
+  Card,
+  Stack,
+  Text,
+  useStyles2,
+  Icon,
+  Grid,
+  Pagination,
+  Spinner,
+  LinkButton,
+  ToolbarButton,
+  ButtonGroup,
+  FilterInput,
+  useTheme2,
+} from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 import { SparkJoyToggle } from 'app/core/components/SparkJoyToggle';
 import { setSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
+import { DashboardThumbnailCard } from './DashboardThumbnailCard';
 import { HackathonTable, TableColumn, ExpandedContent } from './HackathonTable';
 
 const DISPLAY_PAGE_SIZE = 12;
@@ -17,6 +33,7 @@ type ViewMode = 'card' | 'list';
 
 export const ViewAllDashboards = () => {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
   const [currentPage, setCurrentPage] = useState(1);
   const [allDashboards, setAllDashboards] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,6 +43,23 @@ export const ViewAllDashboards = () => {
   const handleToggleSparkJoy = () => {
     setSparkJoyEnabled(false);
     window.location.href = '/dashboards';
+  };
+
+  const getThumbnailUrl = (dashboard: any) => {
+    if (!config.rendererAvailable) {
+      return null;
+    }
+
+    const params = new URLSearchParams({
+      width: '1920',
+      height: '1080',
+      scale: '1',
+      theme: theme.isDark ? 'dark' : 'light',
+      kiosk: '1',
+      timeout: '60',
+    });
+
+    return `${config.appSubUrl}/render/d/${dashboard.uid}?${params.toString()}`;
   };
 
   useEffect(() => {
@@ -41,12 +75,12 @@ export const ViewAllDashboards = () => {
 
         // Get location info to map folder UIDs to folder names
         const locationInfo = await searcher.getLocationInfo();
-        
+
         // Enrich dashboards with folder names
         const enrichedDashboards = (result.view || []).map((dashboard: any) => {
           const folderUid = dashboard.location;
           const folderInfo = folderUid ? locationInfo[folderUid] : null;
-          
+
           return {
             ...dashboard,
             folderName: folderInfo?.name || (folderUid === 'general' ? 'General' : dashboard.location),
@@ -153,12 +187,7 @@ export const ViewAllDashboards = () => {
           </div>
         )}
         <div className={styles.expandedActions}>
-          <LinkButton
-            size="sm"
-            variant="primary"
-            href={dashboard.url}
-            onClick={(e) => e.stopPropagation()}
-          >
+          <LinkButton size="sm" variant="primary" href={dashboard.url} onClick={(e) => e.stopPropagation()}>
             Open Dashboard
           </LinkButton>
         </div>
@@ -188,11 +217,21 @@ export const ViewAllDashboards = () => {
   const paginatedData = filteredDashboards.slice(startIndex, endIndex);
 
   return (
-    <Page navId="dashboards/browse" actions={
-      <LinkButton variant="secondary" color="grey" icon="arrow-left" href="/dashboards">
-        Back to Dashboards
-      </LinkButton>
-    }>
+    <Page
+      navId="dashboards/browse"
+      renderTitle={() => (
+        <div className={styles.centeredTitle}>
+          <Text variant="h2">All Dashboards</Text>
+        </div>
+      )}
+      subTitle=""
+      actions={
+        // <LinkButton variant="secondary" color="grey" icon="arrow-left" href="/dashboards">
+        //   {/* Back to Dashboards */}
+        // </LinkButton>
+        <></>
+      }
+    >
       <AppChromeUpdate
         actions={[<SparkJoyToggle key="sparks-joy-toggle" value={true} onToggle={handleToggleSparkJoy} />]}
       />
@@ -215,12 +254,7 @@ export const ViewAllDashboards = () => {
             </Text>
             <ButtonGroup>
               <div className={viewMode === 'card' ? styles.activeToggle : ''}>
-                <ToolbarButton
-                  icon="apps"
-                  variant="default"
-                  onClick={() => setViewMode('card')}
-                  tooltip="Card view"
-                />
+                <ToolbarButton icon="apps" variant="default" onClick={() => setViewMode('card')} tooltip="Card view" />
               </div>
               <div className={viewMode === 'list' ? styles.activeToggle : ''}>
                 <ToolbarButton
@@ -245,35 +279,16 @@ export const ViewAllDashboards = () => {
               {viewMode === 'card' ? (
                 <Grid gap={2} columns={{ xs: 1, sm: 2, md: 3, lg: 4 }}>
                   {paginatedData.map((dashboard) => (
-                    <Card
+                    <DashboardThumbnailCard
                       key={dashboard.uid}
-                      className={styles.dashboardCard}
+                      uid={dashboard.uid}
+                      title={dashboard.name || dashboard.title}
+                      thumbnailUrl={getThumbnailUrl(dashboard)}
+                      folderName={dashboard.location}
+                      tags={dashboard.tags}
                       onClick={() => handleDashboardClick(dashboard)}
-                    >
-                      <Stack direction="column" gap={2}>
-                        <Stack direction="row" gap={2} alignItems="center">
-                          <Icon name="apps" size="lg" className={styles.icon} />
-                          <div className={styles.titleWrapper}>
-                            <Text weight="medium">{dashboard.name || dashboard.title}</Text>
-                          </div>
-                        </Stack>
-                        <Stack direction="row" gap={2} justifyContent="space-between">
-                          {dashboard.location && (
-                            <Stack direction="row" gap={1} alignItems="center">
-                              <Icon name="folder-open" size="sm" />
-                              <Text variant="bodySmall" color="secondary">
-                                {dashboard.location}
-                              </Text>
-                            </Stack>
-                          )}
-                          {dashboard.tags && dashboard.tags.length > 0 && (
-                            <Text variant="bodySmall" color="secondary">
-                              {dashboard.tags[0]}
-                            </Text>
-                          )}
-                        </Stack>
-                      </Stack>
-                    </Card>
+                      showThumbnail={true}
+                    />
                   ))}
                 </Grid>
               ) : (
@@ -288,11 +303,7 @@ export const ViewAllDashboards = () => {
 
               {totalPages > 1 && (
                 <div className={styles.paginationContainer}>
-                  <Pagination
-                    numberOfPages={totalPages}
-                    currentPage={currentPage}
-                    onNavigate={setCurrentPage}
-                  />
+                  <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={setCurrentPage} />
                 </div>
               )}
             </>
@@ -314,6 +325,16 @@ export const ViewAllDashboards = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  centeredTitle: css({
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    h1: {
+      marginBottom: 0,
+      textAlign: 'center',
+    },
+  }),
   container: css({
     padding: theme.spacing(3),
   }),
@@ -323,7 +344,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     justifyContent: 'center',
     width: '100%',
-    
+
     '& input': {
       fontSize: theme.typography.size.md,
       padding: theme.spacing(1.5, 2),
@@ -354,7 +375,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   activeToggle: css({
     position: 'relative',
     display: 'inline-block',
-    
+
     '&::after': {
       content: '""',
       position: 'absolute',
