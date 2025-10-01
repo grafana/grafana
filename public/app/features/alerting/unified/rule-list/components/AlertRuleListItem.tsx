@@ -82,7 +82,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
   const listItemAriaId = useId();
 
   const metadata: ReactNode[] = [];
-  if (namespace && group && showLocation) {
+  if (namespace && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
         <RuleLocation

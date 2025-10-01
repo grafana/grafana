@@ -6,7 +6,7 @@ import { DataSourceIcon } from './DataSourceIcon';
 
 interface RuleLocationProps {
   namespace: string;
-  group: string;
+  group?: string;
   groupUrl?: string;
   rulesSource?: RulesSourceIdentifier;
   application?: RulesSourceApplication;
@@ -29,13 +29,17 @@ export function RuleLocation({ namespace, group, groupUrl, rulesSource, applicat
 
       <Stack direction="row" alignItems="center" gap={0}>
         {namespace}
-        <Icon size="sm" name="angle-right" />
-        {groupUrl ? (
-          <TextLink href={groupUrl} color="secondary" variant="bodySmall" inline={false}>
-            {group}
-          </TextLink>
-        ) : (
-          group
+        {group && (
+          <>
+            <Icon size="sm" name="angle-right" />
+            {groupUrl ? (
+              <TextLink href={groupUrl} color="secondary" variant="bodySmall" inline={false}>
+                {group}
+              </TextLink>
+            ) : (
+              group
+            )}
+          </>
         )}
       </Stack>
     </Stack>
