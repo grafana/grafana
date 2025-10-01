@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Stack, Text, useStyles2, Icon, Spinner, Grid, Switch } from '@grafana/ui';
-import { isLLMPluginEnabled } from 'app/features/dashboard/components/GenAI/utils';
+import { Trans, t } from '@grafana/i18n';
+import { Card, Grid, Icon, Spinner, Stack, Switch, Text, useStyles2 } from '@grafana/ui';
 import { BrowsingSectionTitle } from 'app/features/browse-dashboards/hackathon14/BrowsingSectionTitle';
 import { RecentVisitCard } from 'app/features/browse-dashboards/hackathon14/RecentVisitCard';
+import { isLLMPluginEnabled } from 'app/features/dashboard/components/GenAI/utils';
 
 import { AlertSearchAISuggestion } from './AlertSearchAISuggestion';
 
@@ -40,69 +41,42 @@ export const AlertSearchSuggestion = ({ query = '', filters }: AlertSearchSugges
 
   const hasActiveFilters = filters?.firing || filters?.ownedByMe || (query && query.trim().length > 0);
 
-  useEffect(() => {
-    if (!useAI && hasActiveFilters) {
-      fetchNormalSuggestions();
-    }
-  }, [query, useAI, filters?.firing, filters?.ownedByMe, hasActiveFilters]);
-
-  const fetchNormalSuggestions = async () => {
+  const fetchNormalSuggestions = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
       // Mock alert rules search - in a real implementation, this would call an API
       const mockAlerts = [
-        { uid: '1', title: 'High CPU Usage Alert', state: 'firing', folder: 'Production' },
-        { uid: '2', title: 'Disk Space Warning', state: 'normal', folder: 'Infrastructure' },
-        { uid: '3', title: 'API Response Time', state: 'firing', folder: 'APIs' },
-        { uid: '4', title: 'Memory Usage Critical', state: 'firing', folder: 'Production' },
-        { uid: '5', title: 'Database Connection Pool', state: 'normal', folder: 'Database' },
-        { uid: '6', title: 'Network Latency Alert', state: 'normal', folder: 'Infrastructure' },
-        { uid: '7', title: 'Error Rate Threshold', state: 'firing', folder: 'APIs' },
-        { uid: '8', title: 'SSL Certificate Expiring', state: 'normal', folder: 'Security' },
+        {
+          uid: '1',
+          title: t('alerting.hackathon.mock.high-cpu', 'High CPU Usage Alert'),
+          state: 'firing',
+          folder: t('alerting.hackathon.mock.production', 'Production'),
+        },
       ];
 
       const suggestions: NormalSuggestion[] = [];
       const queryLower = query.toLowerCase();
 
       mockAlerts.forEach((alert) => {
-        // Filter by firing state if filter is active
         if (filters?.firing && alert.state !== 'firing') {
           return;
         }
-
-        // Filter by owner if filter is active
-        // Note: Mock data doesn't have owner info, so we'll skip for now
-        // In real implementation, you'd check: if (filters?.ownedByMe && alert.createdBy !== 'me') return;
-
         let score = 0;
-
-        // Title match (highest weight)
         const titleLower = alert.title.toLowerCase();
         if (query) {
           if (titleLower === queryLower) {
             score += 100;
           } else if (titleLower.includes(queryLower)) {
             score += 50;
-          } else if (titleLower.split(' ').some((word) => word.startsWith(queryLower))) {
-            score += 30;
-          }
-
-          // Folder match
-          if (alert.folder.toLowerCase().includes(queryLower)) {
-            score += 20;
           }
         } else {
-          // If no query, give base score so all items show
           score = 10;
         }
-
-        // Firing alerts get priority
         if (alert.state === 'firing') {
           score += 15;
         }
-
         if (score > 0) {
           suggestions.push({
             uid: alert.uid,
@@ -114,28 +88,46 @@ export const AlertSearchSuggestion = ({ query = '', filters }: AlertSearchSugges
         }
       });
 
-      // Sort by score (highest first)
       suggestions.sort((a, b) => b.score - a.score);
 
       setNormalSuggestions(suggestions.slice(0, 4));
     } catch (err) {
       console.error('Failed to fetch alert suggestions:', err);
-      setError('Failed to load suggestions');
+      setError(t('alerting.hackathon.suggestions.failed', 'Failed to load suggestions'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters?.firing, query]);
+
+  useEffect(() => {
+    if (!useAI && hasActiveFilters) {
+      fetchNormalSuggestions();
+    }
+  }, [query, useAI, filters?.firing, filters?.ownedByMe, hasActiveFilters, fetchNormalSuggestions]);
+
+  
 
   const handleCardClick = (uid: string) => {
     window.location.href = `/alerting/grafana/${uid}/view`;
   };
 
-  const subtitle = useAI ? 'AI-powered recommendations' : 'Based on relevance and state';
+  // If there are no suggestions to show and not loading, hide the section entirely
+  if (!useAI && !loading && !error && normalSuggestions.length === 0) {
+    return null;
+  }
+
+  const subtitle = useAI
+    ? t('alerting.hackathon.suggestions.ai-subtitle', 'AI-powered recommendations')
+    : t('alerting.hackathon.suggestions.subtitle', 'Based on relevance and state');
 
   return (
     <Stack direction="column" gap={2}>
       <div className={styles.header}>
-        <BrowsingSectionTitle title="Suggestions" subtitle={subtitle} icon="lightbulb" />
+        <BrowsingSectionTitle
+          title={t('alerting.hackathon.suggestions.title', 'Suggestions')}
+          subtitle={subtitle}
+          icon="bell"
+        />
 
         {llmEnabled && (
           <div className={styles.switchContainer}>
@@ -155,12 +147,14 @@ export const AlertSearchSuggestion = ({ query = '', filters }: AlertSearchSugges
           {loading && (
             <div className={styles.loadingState}>
               <Spinner />
-              <Text>Finding suggestions...</Text>
+              <Text>
+                <Trans i18nKey="alerting.hackathon.suggestions.finding">Finding suggestions...</Trans>
+              </Text>
             </div>
           )}
 
           {error && (
-            <Card className={styles.errorCard}>
+            <Card noMargin className={styles.errorCard}>
               <Text color="error">{error}</Text>
             </Card>
           )}
@@ -177,16 +171,6 @@ export const AlertSearchSuggestion = ({ query = '', filters }: AlertSearchSugges
                 />
               ))}
             </Grid>
-          )}
-
-          {!loading && !error && normalSuggestions.length === 0 && (
-            <Card className={styles.emptyCard}>
-              <Stack direction="column" gap={2} alignItems="center">
-                <Icon name="search" size="xxl" className={styles.emptyIcon} />
-                <Text variant="h5">No suggestions found</Text>
-                <Text color="secondary">Try a different search term</Text>
-              </Stack>
-            </Card>
           )}
         </div>
       )}
@@ -237,12 +221,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   switchIcon: css({
     color: theme.colors.text.secondary,
-    transition: 'color 0.2s ease',
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: 'color 0.2s ease',
+    },
   }),
 
   switchIconActive: css({
     color: theme.colors.primary.main,
     filter: 'drop-shadow(0 0 4px rgba(217, 70, 239, 0.5))',
-    transition: 'all 0.2s ease',
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: 'all 0.2s ease',
+    },
   }),
 });

@@ -44,7 +44,7 @@ export function EvaluationAndRecipientSection({ type }: { type: RuleFormType }) 
           <Trans i18nKey="alerting.simplified.step-number-three">3</Trans>
         </span>
         <div className={base.sectionHeader}>
-          <Trans i18nKey="alerting.simplified.evaluation-and-recipient">Evaluation and Recipient</Trans>
+          <Trans i18nKey="alerting.simplified.evaluation-and-recipient.title">Evaluation and Recipient</Trans>
         </div>
       </div>
 

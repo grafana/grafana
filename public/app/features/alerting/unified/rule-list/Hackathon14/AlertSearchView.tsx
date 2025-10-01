@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
-import { Card, Stack, Text, useStyles2, Icon, Badge, LinkButton } from '@grafana/ui';
-import { AlertSearchSuggestion } from './AlertSearchSuggestion';
+import { Trans, t } from '@grafana/i18n';
+import { Badge, Card, Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { BrowsingSectionTitle } from 'app/features/browse-dashboards/hackathon14/BrowsingSectionTitle';
-import { HackathonTable, TableColumn, ExpandedContent } from 'app/features/browse-dashboards/hackathon14/HackathonTable';
+import { ExpandedContent, HackathonTable, TableColumn } from 'app/features/browse-dashboards/hackathon14/HackathonTable';
 import { useGetPopularAlerts, useGetRecentAlerts } from 'app/features/dashboard/api/popularResourcesApi';
+
+import { AlertSearchSuggestion } from './AlertSearchSuggestion';
 
 interface AlertSearchViewProps {
   query: string;
@@ -37,18 +39,18 @@ export const AlertSearchView = ({ query, filters }: AlertSearchViewProps) => {
     uid: alert.uid,
     title: alert.title,
     state: 'normal', // TODO: Get from backend
-    folder: 'N/A', // TODO: Get from backend  
-    createdBy: 'unknown', // TODO: Get from backend
+    folder: t('alerting.hackathon.search.na', 'N/A'), // TODO: Get from backend  
+    createdBy: t('alerting.hackathon.search.unknown', 'unknown'), // TODO: Get from backend
   }));
 
   // Keep original mock for fallback
   const fallbackMockResults = [
     {
       uid: '1',
-      title: 'High CPU Usage Alert',
+      title: t('alerting.hackathon.mock.high-cpu', 'High CPU Usage Alert'),
       state: 'firing',
-      folder: 'Production',
-      createdBy: 'me',
+      folder: t('alerting.hackathon.mock.production', 'Production'),
+      createdBy: t('alerting.hackathon.mock.me', 'me'),
     },
     {
       uid: '2',
@@ -139,18 +141,18 @@ export const AlertSearchView = ({ query, filters }: AlertSearchViewProps) => {
   });
 
   const renderHeader = () => {
-    const parts = [];
+    const parts: string[] = [];
     if (query) {
       parts.push(`"${query}"`);
     }
     if (filters.firing) {
-      parts.push('Firing');
+      parts.push(t('alerting.hackathon.search.firing', 'Firing'));
     }
     if (filters.ownedByMe) {
-      parts.push('Created by me');
+      parts.push(t('alerting.hackathon.search.created-by-me', 'Created by me'));
     }
 
-    return parts.length > 0 ? parts.join(' • ') : 'All Alert Rules';
+    return parts.length > 0 ? parts.join(' • ') : t('alerting.hackathon.search.all-alert-rules', 'All Alert Rules');
   };
 
   // Get state badge configuration
@@ -170,7 +172,7 @@ export const AlertSearchView = ({ query, filters }: AlertSearchViewProps) => {
   const columns: TableColumn[] = [
     {
       key: 'name',
-      header: 'Name',
+      header: t('alerting.hackathon.search.name', 'Name'),
       width: '2.5fr',
       render: (item) => (
         <Stack direction="row" gap={1.5} alignItems="center">
@@ -181,7 +183,7 @@ export const AlertSearchView = ({ query, filters }: AlertSearchViewProps) => {
     },
     {
       key: 'message',
-      header: 'Message',
+      header: t('alerting.hackathon.search.message', 'Message'),
       width: '3fr',
       render: (item) => (
         <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -193,7 +195,7 @@ export const AlertSearchView = ({ query, filters }: AlertSearchViewProps) => {
     },
     {
       key: 'state',
-      header: 'State',
+      header: t('alerting.hackathon.search.state', 'State'),
       width: '120px',
       render: (item) => {
         const badgeConfig = getStateBadgeConfig(item.state);
@@ -211,19 +213,19 @@ export const AlertSearchView = ({ query, filters }: AlertSearchViewProps) => {
         <Stack direction="row" gap={4}>
           <div>
             <Text variant="bodySmall" weight="medium" color="secondary">
-              UID:
+              <Trans i18nKey="alerting.hackathon.search.uid">UID:</Trans>
             </Text>
             <Text variant="bodySmall"> {item.uid}</Text>
           </div>
           <div>
             <Text variant="bodySmall" weight="medium" color="secondary">
-              Folder:
+              <Trans i18nKey="alerting.hackathon.search.folder">Folder:</Trans>
             </Text>
             <Text variant="bodySmall"> {item.folder || 'N/A'}</Text>
           </div>
           <div>
             <Text variant="bodySmall" weight="medium" color="secondary">
-              Created by:
+              <Trans i18nKey="alerting.hackathon.search.created-by">Created by:</Trans>
             </Text>
             <Text variant="bodySmall"> {item.createdBy || 'N/A'}</Text>
           </div>
@@ -235,7 +237,7 @@ export const AlertSearchView = ({ query, filters }: AlertSearchViewProps) => {
             href={`/alerting/grafana/${item.uid}/view`}
             onClick={(e) => e.stopPropagation()}
           >
-            View Alert Rule
+            <Trans i18nKey="alerting.hackathon.search.view-alert">View Alert Rule</Trans>
           </LinkButton>
         </div>
       </Stack>
@@ -246,36 +248,47 @@ export const AlertSearchView = ({ query, filters }: AlertSearchViewProps) => {
     <div className={styles.container}>
       <Stack direction="column" gap={2}>
         <div className={styles.header}>
-          <Text variant="h4">Search Results: {renderHeader()}</Text>
+          <Text variant="h4">
+            <Trans i18nKey="alerting.hackathon.search.results">Search Results:</Trans> {renderHeader()}
+          </Text>
         </div>
 
         <AlertSearchSuggestion query={query} filters={filters} />
 
         {isLoading ? (
-          <Card className={styles.emptyCard}>
+          <Card noMargin className={styles.emptyCard}>
             <Stack direction="column" gap={2} alignItems="center">
               <Icon name="fa fa-spinner" size="xxl" className={styles.emptyIcon} />
-              <Text variant="h5">Loading alert rules...</Text>
+              <Text variant="h5">
+                <Trans i18nKey="alerting.hackathon.search.loading">Loading alert rules...</Trans>
+              </Text>
             </Stack>
           </Card>
         ) : filteredResults.length === 0 ? (
-          <Card className={styles.emptyCard}>
+          <Card noMargin className={styles.emptyCard}>
             <Stack direction="column" gap={2} alignItems="center">
               <Icon name="search" size="xxl" className={styles.emptyIcon} />
-              <Text variant="h5">No alert rule name matches your search</Text>
-              <Text color="secondary">Try adjusting your search or filters</Text>
+              <Text variant="h5">
+                <Trans i18nKey="alerting.hackathon.search.no-matches">No matches found</Trans>
+              </Text>
             </Stack>
           </Card>
         ) : (
           <div>
-            <BrowsingSectionTitle title={`Matched Alerts (${filteredResults.length})`} icon="bell" subtitle="" />
+            <BrowsingSectionTitle
+              title={t('alerting.hackathon.search.matched', 'Matched Alerts ({{count}})', {
+                count: filteredResults.length,
+              })}
+              icon="bell"
+              subtitle=""
+            />
             <HackathonTable
               columns={columns}
               data={filteredResults}
               expandable={true}
               expandedContent={expandedContent}
               onRowClick={(item) => (window.location.href = `/alerting/grafana/${item.uid}/view`)}
-              emptyMessage="No alert rules found"
+              emptyMessage={t('alerting.hackathon.search.no-alerts', 'No alert rules found')}
             />
           </div>
         )}
@@ -302,9 +315,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   resultCard: css({
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
     position: 'relative',
-    
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: 'all 0.3s ease',
+    },
     '&::before': {
       content: '""',
       position: 'absolute',
@@ -319,12 +333,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
       WebkitMaskComposite: 'xor',
       maskComposite: 'exclude',
       opacity: 0,
-      transition: 'opacity 0.3s ease',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'opacity 0.3s ease',
+      },
     },
 
     '&:hover': {
       transform: 'translateY(-2px)',
-      boxShadow: '0 8px 16px rgba(255, 120, 10, 0.18)',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        boxShadow: '0 8px 16px rgba(255, 120, 10, 0.18)',
+      },
       
       '&::before': {
         opacity: 0.35,

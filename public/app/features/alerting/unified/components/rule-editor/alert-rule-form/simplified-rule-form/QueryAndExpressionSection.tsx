@@ -70,7 +70,7 @@ export function QueryAndExpressionSection({ sparkJoy }: { sparkJoy?: boolean }) 
           <Trans i18nKey="alerting.simplified.step-number-two">2</Trans>
         </span>
         <div className={base.sectionHeader}>
-          <Trans i18nKey="alerting.simplified.query-and-expressions">Query and expressions</Trans>
+          <Trans i18nKey="alerting.simplified.query-and-expressions.title">Query and expressions</Trans>
         </div>
       </div>
       <div className={base.contentIndented}>
@@ -91,7 +91,7 @@ export function QueryAndExpressionSection({ sparkJoy }: { sparkJoy?: boolean }) 
                 'alerting.simplified.query-and-expressions.link-text',
                 'Read more on our documentation website'
               )}
-              title={t('alerting.simplified.query-and-expressions.title', 'Define query and alert condition')}
+              title={t('alerting.simplified.query-and-expressions.help-title', 'Define query and alert condition')}
             />
           </Stack>
           <QueryEditor

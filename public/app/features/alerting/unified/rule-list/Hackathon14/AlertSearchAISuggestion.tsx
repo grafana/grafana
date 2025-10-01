@@ -1,14 +1,15 @@
 import { css } from '@emotion/css';
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Stack, Text, useStyles2, Icon, Grid, Spinner } from '@grafana/ui';
-import { CosmicSceneIcon } from 'app/features/browse-dashboards/hackathon14/CosmicSceneIcon';
-import { useGetRecentAlerts, useGetPopularAlerts } from 'app/features/dashboard/api/popularResourcesApi';
-import { useLLMStream, StreamStatus } from 'app/features/dashboard/components/GenAI/hooks';
-import { Role, DEFAULT_LLM_MODEL, isLLMPluginEnabled } from 'app/features/dashboard/components/GenAI/utils';
+import { Trans } from '@grafana/i18n';
+import { Card, Grid, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { AISuggestionStyleContainer } from 'app/features/browse-dashboards/hackathon14/AISuggestionStyleContainer';
+import { CosmicSceneIcon } from 'app/features/browse-dashboards/hackathon14/CosmicSceneIcon';
+import { useGetPopularAlerts, useGetRecentAlerts } from 'app/features/dashboard/api/popularResourcesApi';
+import { StreamStatus, useLLMStream } from 'app/features/dashboard/components/GenAI/hooks';
+import { DEFAULT_LLM_MODEL, Role, isLLMPluginEnabled } from 'app/features/dashboard/components/GenAI/utils';
 
 interface AlertRecommendation {
   uid: string;
@@ -27,9 +28,16 @@ interface RecommendationCardProps {
 
 const RecommendationCard = ({ recommendation, onAlertClick, styles }: RecommendationCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  let stateClass = styles.normal;
+  if (recommendation.state === 'firing') {
+    stateClass = styles.firing;
+  } else if (recommendation.state === 'pending') {
+    stateClass = styles.pending;
+  }
 
   return (
     <Card
+      noMargin
       className={styles.recommendationCard}
       onClick={() => onAlertClick(recommendation.uid)}
       onMouseEnter={() => setIsHovered(true)}
@@ -80,15 +88,7 @@ const RecommendationCard = ({ recommendation, onAlertClick, styles }: Recommenda
               {recommendation.folder}
             </Text>
           </Stack>
-          <div
-            className={`${styles.stateBadge} ${
-              recommendation.state === 'firing'
-                ? styles.firing
-                : recommendation.state === 'pending'
-                  ? styles.pending
-                  : styles.normal
-            }`}
-          >
+          <div className={`${styles.stateBadge} ${stateClass}`}>
             {recommendation.state === 'firing' && <Icon name="fire" size="xs" />}
             <Text variant="bodySmall">{recommendation.state}</Text>
           </div>
@@ -217,7 +217,7 @@ ${uniqueAlerts
   .join('\n')}`
         : 'No alert history available. Suggest general monitoring categories that might match the search.';
 
-    const filterContext = [];
+    const filterContext: string[] = [];
     if (filters?.firing) {
       filterContext.push('Only FIRING alerts');
     }
@@ -237,7 +237,7 @@ Based on this ${searchQuery ? 'search query' : 'filter criteria'} and available 
       { role: Role.user, content: userPrompt },
     ]);
     setHasRequested(true);
-  }, [searchQuery, recentData, popularData, setMessages, filters]);
+  }, [searchQuery, recentData, popularData, setMessages, filters, hasActiveFilters]);
 
   // Auto-trigger recommendations when search query or filters change
   useEffect(() => {
@@ -264,6 +264,11 @@ Based on this ${searchQuery ? 'search query' : 'filter criteria'} and available 
     return null;
   }
 
+  // Hide section entirely when finished and there are no recommendations and no error
+  if (!isGenerating && !hasRecommendations && !error && hasRequested) {
+    return null;
+  }
+
   return (
     <AISuggestionStyleContainer handleRefresh={() => {}} hasRecommendations={hasRecommendations}>
       <div className={styles.content}>
@@ -272,10 +277,12 @@ Based on this ${searchQuery ? 'search query' : 'filter criteria'} and available 
           <Stack direction="column" gap={2} alignItems="center">
             <CosmicSceneIcon />
             <Stack direction="column" gap={0.5} alignItems="center">
-              <Text variant="h5">Analyzing alert patterns...</Text>
+              <Text variant="h5">
+                <Trans i18nKey="alerting.hackathon.ai.analyzing">Analyzing alert patterns...</Trans>
+              </Text>
               <Stack direction="row" gap={1} alignItems="center">
                 <Text variant="bodySmall" color="secondary">
-                  Finding the most relevant alerts
+                  <Trans i18nKey="alerting.hackathon.ai.finding">Finding the most relevant alerts</Trans>
                 </Text>
               </Stack>
             </Stack>
@@ -296,20 +303,16 @@ Based on this ${searchQuery ? 'search query' : 'filter criteria'} and available 
         )}
 
         {error && (
-          <Card className={styles.errorCard}>
+          <Card noMargin className={styles.errorCard}>
             <Stack direction="column" gap={1} alignItems="center">
               <Icon name="exclamation-triangle" size="lg" />
-              <Text color="error">Failed to generate AI recommendations</Text>
+              <Text color="error">
+                <Trans i18nKey="alerting.hackathon.ai.failed">Failed to generate AI recommendations</Trans>
+              </Text>
               <Text variant="bodySmall" color="secondary">
-                Try the normal search instead
+                <Trans i18nKey="alerting.hackathon.ai.try-normal">Try the normal search instead</Trans>
               </Text>
             </Stack>
-          </Card>
-        )}
-
-        {!isGenerating && !hasRecommendations && !error && hasRequested && (
-          <Card className={styles.emptyCard}>
-            <Text color="secondary">No AI recommendations available for this search</Text>
           </Card>
         )}
       </div>
@@ -337,11 +340,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   recommendationCard: css({
     padding: theme.spacing(2),
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
     position: 'relative',
     background: theme.colors.background.primary,
     border: '2px solid transparent',
     borderRadius: theme.shape.radius.default,
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: 'all 0.3s ease',
+    },
 
     '&::before': {
       content: '""',
@@ -357,7 +362,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
       WebkitMaskComposite: 'xor',
       maskComposite: 'exclude',
       opacity: 0.3,
-      transition: 'opacity 0.3s ease',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'opacity 0.3s ease',
+      },
     },
 
     '&:hover': {
@@ -379,7 +386,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   alertIcon: css({
     flexShrink: 0,
     color: theme.colors.warning.main,
-    transition: 'filter 0.3s ease',
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: 'filter 0.3s ease',
+    },
   }),
 
   cardTitle: css({
@@ -395,13 +404,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: 'linear-gradient(135deg, #d946ef, #8b5cf6)',
     color: '#fff',
     fontWeight: 600,
-    transition: 'box-shadow 0.3s ease',
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: 'box-shadow 0.3s ease',
+    },
   }),
 
   metaIcon: css({
     flexShrink: 0,
     color: theme.colors.text.secondary,
-    transition: 'filter 0.3s ease',
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: 'filter 0.3s ease',
+    },
   }),
 
   stateBadge: css({

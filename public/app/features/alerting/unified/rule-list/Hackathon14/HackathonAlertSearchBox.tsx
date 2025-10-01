@@ -153,7 +153,7 @@ export const HackathonAlertSearchInput = ({
               className={styles.filterButton}
             >
               <Icon name="filter" style={{ marginRight: '4px' }} />
-              <Trans i18nKey="alerting.hackathon.filters">Filters</Trans>
+              <Trans i18nKey="alerting.hackathon.filters">More filters</Trans>
             </Button>
           </PopupCard>
         </div>

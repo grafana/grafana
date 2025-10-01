@@ -57,7 +57,7 @@ export function AnnotationsExpandable() {
       </Field>
 
       <Field
-        label={t('alerting.create-metadata.label.runbook-url', 'Runbook URL (optional)')}
+        label={t('alerting.create-metadata.label.runbook-url', 'Runbook URL')}
         description={t(
           'alerting.create-metadata.description.runbook-url',
           'Enter the webpage where you keep your runbook for the alert...'

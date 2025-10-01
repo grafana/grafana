@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { TextLink, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import SparkJoyToggle from 'app/core/components/SparkJoyToggle';
 
@@ -13,7 +13,7 @@ import { RuleListActions } from '../RuleList.v2';
 
 import { AlertSearchView } from './AlertSearchView';
 import { HackathonAlertSearchInput } from './HackathonAlertSearchBox';
-import { PopularAlerts } from './PopularAlerts';
+// import { PopularAlerts } from './PopularAlerts';
 import { RecentVisited } from './RecentVisited';
 
 export const HackathonRuleListPage = ({ onToggleSparkJoy }: { onToggleSparkJoy: () => void }) => {
@@ -24,6 +24,7 @@ export const HackathonRuleListPage = ({ onToggleSparkJoy }: { onToggleSparkJoy: 
     ownedByMe: false,
   });
   const { hasActiveFilters } = useRulesFilter();
+  const [showAllBelow, setShowAllBelow] = useState(false);
 
   const renderCenteredTitle = () => (
     <div className={styles.centeredTitle}>
@@ -66,10 +67,7 @@ export const HackathonRuleListPage = ({ onToggleSparkJoy }: { onToggleSparkJoy: 
         {isSearching ? (
           <AlertSearchView query={searchQuery} filters={searchFilters} />
         ) : (
-          <>
-            <RecentVisited />
-            <PopularAlerts />
-          </>
+          <RecentVisited showAll={showAllBelow} />
         )}
       </div>
     </AlertingPageWrapper>

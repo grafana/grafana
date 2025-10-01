@@ -526,7 +526,9 @@
       "action-buttons": {
         "edit-yaml": "Edit YAML",
         "save": "Save"
-      }
+      },
+      "button-cancel": "Cancel",
+      "button-save": "Save"
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "name",
@@ -876,6 +878,7 @@
       "export-all": "Export all",
       "learn-more": "Learn more",
       "loading": "Loading...",
+      "optional": "(optional)",
       "search-by-matchers": "Search by matchers",
       "titles": {
         "notification-templates": "Notification Templates"
@@ -901,6 +904,8 @@
       "tooltip-provisioned-contact-points": "Provisioned contact points cannot be edited in the UI"
     },
     "contact-point-selector": {
+      "alertmanager": "grafana",
+      "contact-point-picker-description": "Select who should receive a notification when the alert rule fires",
       "contact-point-picker-label-contact-point": "Contact point",
       "message": {
         "contact-point-is-required": "Contact point is required."
@@ -975,14 +980,21 @@
     },
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
     "create-metadata": {
+      "description": {
+        "description": "Enter a description of what the alert rule does...",
+        "runbook-url": "Enter the webpage where you keep your runbook for the alert...",
+        "summary": "Enter a summary of what happened and why..."
+      },
       "label": {
         "contact-point": "Notifications are delivered to",
         "dashboard": "Dashboard",
         "dashboard-and-panel": "Dashboard and panel",
+        "description": "Description (optional)",
         "evaluation-interval": "Evaluation interval",
         "labels": "Labels",
         "metric-name": "Metric name",
-        "runbook-url": "Runbook URL"
+        "runbook-url": "Runbook URL",
+        "summary": "Summary (optional)"
       },
       "view-dashboard": "View dashboard",
       "view-panel": "View panel"
@@ -1088,6 +1100,9 @@
     "duplicate-message-template": {
       "text-loading-notification-template": "Loading notification template",
       "title-error-loading-notification-template": "Error loading notification template"
+    },
+    "duration": {
+      "immediately": "immediately"
     },
     "duration-quick-pick": {
       "none": "None"
@@ -1554,6 +1569,51 @@
     },
     "group-status": {
       "content-the-group-is-being-deleted": "The group is being deleted"
+    },
+    "hackathon": {
+      "ai": {
+        "analyzing": "Analyzing alert patterns...",
+        "failed": "Failed to generate AI recommendations",
+        "finding": "Finding the most relevant alerts",
+        "try-normal": "Try the normal search instead"
+      },
+      "alert-rules": "Alert Rules",
+      "clear-filters": "Clear filters",
+      "created-by-me": "Created by me",
+      "filters": "More filters",
+      "firing": "Firing",
+      "im-looking-for": "I'm looking for:",
+      "recently-viewed": {
+        "title": "Recently Viewed"
+      },
+      "recently-viewed-subtitle": "Alerts you've explored",
+      "search": {
+        "all-alert-rules": "All Alert Rules",
+        "created-by": "Created by:",
+        "created-by-me": "Created by me",
+        "firing": "Firing",
+        "folder": "Folder:",
+        "loading": "Loading alert rules...",
+        "matched_one": "Matched Alerts ({{count}})",
+        "matched_other": "Matched Alerts ({{count}})",
+        "message": "Message",
+        "name": "Name",
+        "no-alerts": "No alert rules found",
+        "no-matches": "No matches found",
+        "placeholder": "Search for alert rules",
+        "results": "Search Results:",
+        "state": "State",
+        "uid": "UID:",
+        "view-alert": "View Alert Rule"
+      },
+      "suggestions": {
+        "ai-subtitle": "AI-powered recommendations",
+        "failed": "Failed to load suggestions",
+        "finding": "Finding suggestions...",
+        "subtitle": "Based on relevance and state",
+        "title": "Suggestions"
+      },
+      "view-all": "View All"
     },
     "header": {
       "tooltip-remove": "Remove expression \"{{refId}}\""
@@ -2756,9 +2816,30 @@
       "alertCondition": "Alert condition"
     },
     "simplified": {
-      "condition-and-recipient": "Condition and Recipient",
+      "evaluation": {
+        "after-breached": "after the condition is initially breached.",
+        "custom-delay": "with custom delay of",
+        "custom-delay-invalid": "The delay must be a multiple of the evaluation frequency.",
+        "every": "Evaluate the rule every",
+        "fire": "Fire the alert rule",
+        "immediate-warning": "Immediate firing might lead to unnecessary alerts being sent for temporary issues",
+        "wait-prefix": "Wait",
+        "wait-suffix": "after the condition is breached before firing."
+      },
+      "evaluation-and-recipient": {
+        "help-text": "Define how the alert rule is evaluated.",
+        "title": "Evaluation and Recipient"
+      },
+      "query-and-expressions": {
+        "help-content": "An alert rule consists of one or more queries and expressions that select the data you want to measure. Define queries and/or expressions and then choose one of them as the alert rule condition. This is the threshold that an alert rule must meet or exceed in order to fire. For more information on queries and expressions, see Query and transform data.",
+        "help-text": "Define query and alert condition",
+        "help-title": "Define query and alert condition",
+        "link-text": "Read more on our documentation website",
+        "title": "Query and expressions"
+      },
       "rule-definition": "Rule Definition",
       "step-number-one": "1",
+      "step-number-three": "3",
       "step-number-two": "2"
     },
     "smart-alert-type-detector": {
@@ -5961,7 +6042,11 @@
     },
     "panel-data-queries-tab-rendered": {
       "add-query": "Add query",
-      "expression": "Expression "
+      "add-query-aria-label": "Add query",
+      "expression": "Expression ",
+      "expressions-group": "Expressions",
+      "more-add-options-aria": "More add options",
+      "query-history": "Query history"
     },
     "panel-data-transformations-tab": {
       "tab-label": "Transformations"
@@ -7552,6 +7637,14 @@
     },
     "threshold": {
       "label-input": "Input"
+    },
+    "type": {
+      "classic": "Classic condition (legacy)",
+      "math": "Math",
+      "reduce": "Reduce",
+      "resample": "Resample",
+      "sql": "SQL",
+      "threshold": "Threshold"
     }
   },
   "folder-filter": {
@@ -11924,6 +12017,7 @@
     "query-group": {
       "add-query": "Add query",
       "expression": "Expression",
+      "query-history": "Query history",
       "title-data-source-help": "Data source help"
     },
     "query-group-options-editor": {
@@ -11961,6 +12055,18 @@
       "title-data-source-help": "Data source help"
     }
   },
+  "query-history": {
+    "drawer": {
+      "subtitle": "Find and reuse your previous queries",
+      "title": "Query history"
+    },
+    "empty": {
+      "description": "Your query history will appear here after you run some queries."
+    },
+    "error": {
+      "description": "There was an error loading your query history. Please try again."
+    }
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Collapse query row",
@@ -11969,7 +12075,6 @@
       "duplicate-query": "Duplicate query",
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
-      "query-options": "Query options",
       "remove-query": "Remove query",
       "save-to-query-library": "Save query",
       "show-response": "Show response"
