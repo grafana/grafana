@@ -30,8 +30,9 @@ var (
 )
 
 var appManifestData = app.ManifestData{
-	AppName: "example",
-	Group:   "example.grafana.app",
+	AppName:          "example",
+	Group:            "example.grafana.app",
+	PreferredVersion: "v1alpha1",
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v0alpha1",
@@ -94,7 +95,7 @@ var appManifestData = app.ManifestData{
 							Get: &spec3.Operation{
 								OperationProps: spec3.OperationProps{
 
-									OperationId: "GetFoo",
+									OperationId: "getFoo",
 
 									Parameters: []*spec3.Parameter{
 
@@ -124,6 +125,18 @@ var appManifestData = app.ManifestData{
 																		Type:        []string{"object"},
 																		Description: "The response type for the GET /foo method. This will generate a go type, and will also be used for the OpenAPI definition for the route.",
 																		Properties: map[string]spec.Schema{
+																			"apiVersion": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																				},
+																			},
+																			"kind": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																				},
+																			},
 																			"message": {
 																				SchemaProps: spec.SchemaProps{
 																					Type: []string{"string"},
@@ -132,6 +145,8 @@ var appManifestData = app.ManifestData{
 																		},
 																		Required: []string{
 																			"message",
+																			"apiVersion",
+																			"kind",
 																		},
 																	}},
 															}},
@@ -151,7 +166,7 @@ var appManifestData = app.ManifestData{
 						Get: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
 
-								OperationId: "GetSomething",
+								OperationId: "getSomething",
 
 								Parameters: []*spec3.Parameter{
 
@@ -180,6 +195,18 @@ var appManifestData = app.ManifestData{
 																SchemaProps: spec.SchemaProps{
 																	Type: []string{"object"},
 																	Properties: map[string]spec.Schema{
+																		"apiVersion": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																			},
+																		},
+																		"kind": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																			},
+																		},
 																		"message": {
 																			SchemaProps: spec.SchemaProps{
 																				Type: []string{"string"},
@@ -194,6 +221,8 @@ var appManifestData = app.ManifestData{
 																	Required: []string{
 																		"namespace",
 																		"message",
+																		"apiVersion",
+																		"kind",
 																	},
 																}},
 														}},
@@ -210,7 +239,7 @@ var appManifestData = app.ManifestData{
 						Get: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
 
-								OperationId: "GetOther",
+								OperationId: "getOther",
 
 								Parameters: []*spec3.Parameter{
 

@@ -1,3 +1,5 @@
+// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+
 package v1alpha1
 
 import (
@@ -7,10 +9,25 @@ import (
 )
 
 type GetFooRequestParamsObject struct {
-    metav1.TypeMeta
-    GetFooRequestParams
+    metav1.TypeMeta `json:",inline"`
+    GetFooRequestParams `json:",inline"`
+}
+
+func NewGetFooRequestParamsObject() *GetFooRequestParamsObject {
+    return &GetFooRequestParamsObject{}
 }
 
 func (o *GetFooRequestParamsObject) DeepCopyObject() runtime.Object {
-    return resource.CopyObject(o)
+    dst := NewGetFooRequestParamsObject()
+    o.DeepCopyInto(dst)
+    return dst
 }
+
+func (o *GetFooRequestParamsObject) DeepCopyInto(dst *GetFooRequestParamsObject) {
+    dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
+    dst.TypeMeta.Kind = o.TypeMeta.Kind
+    dstGetFooRequestParams := GetFooRequestParams{}
+    _ = resource.CopyObjectInto(&dstGetFooRequestParams, &o.GetFooRequestParams)
+}
+
+var _ runtime.Object = NewGetFooRequestParamsObject()

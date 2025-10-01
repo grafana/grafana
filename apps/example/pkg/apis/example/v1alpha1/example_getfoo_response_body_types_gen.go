@@ -4,11 +4,11 @@ package v1alpha1
 
 // The response type for the GET /foo method. This will generate a go type, and will also be used for the OpenAPI definition for the route.
 // +k8s:openapi-gen=true
-type GetFoo struct {
+type GetFooBody struct {
 	Message string `json:"message"`
 }
 
-// NewGetFoo creates a new GetFoo object.
-func NewGetFoo() *GetFoo {
-	return &GetFoo{}
+// NewGetFooBody creates a new GetFooBody object.
+func NewGetFooBody() *GetFooBody {
+	return &GetFooBody{}
 }

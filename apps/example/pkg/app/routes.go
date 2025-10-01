@@ -3,6 +3,9 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/apps/example/pkg/apis/example/v1alpha1"
@@ -12,7 +15,9 @@ import (
 func ExampleGetFooHandler(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
 	message := "Hello, world!"
 	return json.NewEncoder(writer).Encode(v1alpha1.GetFoo{
-		Message: message,
+		GetFooBody: v1alpha1.GetFooBody{
+			Message: message,
+		},
 	})
 }
 
@@ -23,8 +28,13 @@ func GetSomethingHandler(ctx context.Context, writer app.CustomRouteResponseWrit
 		message = request.URL.Query().Get("message")
 	}
 	return json.NewEncoder(writer).Encode(v1alpha1.GetSomething{
-		Namespace: request.ResourceIdentifier.Namespace,
-		Message:   message,
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: fmt.Sprintf("%s/%s", v1alpha1.APIGroup, v1alpha1.APIVersion),
+		},
+		GetSomethingBody: v1alpha1.GetSomethingBody{
+			Namespace: request.ResourceIdentifier.Namespace,
+			Message:   message,
+		},
 	})
 }
 

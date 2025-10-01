@@ -85,6 +85,7 @@ v1alpha1: {
                             message?: string
                         }
                     }
+                    responseMetadata: typeMeta: false // Don't generate or return kubernetes type metadata for this object
                 }
             }
         }
