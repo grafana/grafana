@@ -8328,6 +8328,21 @@
       "log-base": "Log base"
     },
     "builder": {
+      "annotations": {
+        "category": "Annotations",
+        "desc": {
+          "region-opacity": "Sets the annotation region opacity",
+          "show-line-marker": "Toggles the vertical annotation indicator line in the visualization",
+          "show-regions": "Toggles the region overlay in the visualization"
+        },
+        "lane": {
+          "desc": "Breaks each annotation frame into a separate row in the visualization",
+          "name": "Enable multi lane annotations"
+        },
+        "region-opacity": "Region opacity",
+        "show-line-marker": "Enable annotation indicator line",
+        "show-regions": "Enable region overlay"
+      },
       "axis": {
         "category-axis": "Axis",
         "color-label": "Color",
@@ -10166,7 +10181,7 @@
       "title": "Data sources"
     },
     "databases": {
-      "title": "Databases"
+      "title": "Database"
     },
     "datasources": {
       "subtitle": "Add and configure data sources",
@@ -13087,6 +13102,16 @@
     }
   },
   "transformers": {
+    "annotation-transformer-editor": {
+      "color": "Color field",
+      "default-color": "Default color",
+      "id": "Annotation ID",
+      "start-time": "Start time",
+      "tags": "Tags",
+      "text": "Text",
+      "timeEnd": "End time",
+      "title": "Title"
+    },
     "axis-editor": {
       "log-mode-options": {
         "description": {

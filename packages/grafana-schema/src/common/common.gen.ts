@@ -507,6 +507,9 @@ export enum VizOrientation {
  */
 export interface VizAnnotations {
   multiLane?: boolean;
+  regionOpacity?: number;
+  showLine?: boolean;
+  showRegions?: boolean;
 }
 
 /**
