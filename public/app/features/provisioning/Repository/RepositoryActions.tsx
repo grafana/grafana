@@ -8,7 +8,6 @@ import { getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
 
-import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import { SyncRepository } from './SyncRepository';
 
 interface RepositoryActionsProps {
@@ -37,7 +36,6 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
       <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
         <Trans i18nKey="provisioning.repository-actions.settings">Settings</Trans>
       </LinkButton>
-      <DeleteRepositoryButton name={name} repository={repository} redirectTo={PROVISIONING_URL} />
     </Stack>
   );
 }

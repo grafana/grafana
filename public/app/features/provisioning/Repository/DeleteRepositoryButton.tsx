@@ -100,7 +100,7 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
           </Menu>
         }
       >
-        <Button variant="destructive" icon="trash-alt" disabled={isLoading}>
+        <Button variant="destructive" disabled={isLoading}>
           <Stack alignItems="center">
             <Trans i18nKey="provisioning.delete-repository-button.delete">Delete</Trans>
             <Icon name={'angle-down'} />
