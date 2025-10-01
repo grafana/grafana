@@ -50,6 +50,9 @@ export function LabelsFieldInForm({
               <Trans i18nKey="alerting.labels-field-in-form.labels">Labels</Trans>
             </Text>
           )}
+          <Text variant="bodySmall" color="secondary">
+            {t('alerting.common.optional', '(optional)')}
+          </Text>
           {showHelpTooltip && (
             <Tooltip
               content={
