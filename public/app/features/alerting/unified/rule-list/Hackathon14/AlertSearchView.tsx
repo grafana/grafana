@@ -5,6 +5,7 @@ import { Card, Stack, Text, useStyles2, Icon, Badge, LinkButton } from '@grafana
 import { AlertSearchSuggestion } from './AlertSearchSuggestion';
 import { BrowsingSectionTitle } from 'app/features/browse-dashboards/hackathon14/BrowsingSectionTitle';
 import { HackathonTable, TableColumn, ExpandedContent } from 'app/features/browse-dashboards/hackathon14/HackathonTable';
+import { useGetPopularAlerts, useGetRecentAlerts } from 'app/features/dashboard/api/popularResourcesApi';
 
 interface AlertSearchViewProps {
   query: string;
@@ -17,8 +18,31 @@ interface AlertSearchViewProps {
 export const AlertSearchView = ({ query, filters }: AlertSearchViewProps) => {
   const styles = useStyles2(getStyles);
 
-  // Mock search results for now
-  const mockResults = [
+  // Fetch real alert data from API
+  const { data: popularAlerts, isLoading: popularLoading } = useGetPopularAlerts({ limit: 50, period: '30d' });
+  const { data: recentAlerts, isLoading: recentLoading } = useGetRecentAlerts({ limit: 50, period: '30d' });
+
+  const isLoading = popularLoading || recentLoading;
+
+  // Combine popular and recent alerts, removing duplicates
+  const allAlerts = [
+    ...(popularAlerts?.resources || []),
+    ...(recentAlerts?.resources || []).filter(
+      (recent) => !popularAlerts?.resources?.some((popular) => popular.uid === recent.uid)
+    ),
+  ];
+
+  // For mock structure compatibility (TODO: remove when backend provides all fields)
+  const mockResults = allAlerts.map((alert) => ({
+    uid: alert.uid,
+    title: alert.title,
+    state: 'normal', // TODO: Get from backend
+    folder: 'N/A', // TODO: Get from backend  
+    createdBy: 'unknown', // TODO: Get from backend
+  }));
+
+  // Keep original mock for fallback
+  const fallbackMockResults = [
     {
       uid: '1',
       title: 'High CPU Usage Alert',
@@ -91,8 +115,11 @@ export const AlertSearchView = ({ query, filters }: AlertSearchViewProps) => {
     },
   ];
 
+  // Use real data if available, otherwise use fallback mock
+  const resultsToUse = allAlerts.length > 0 ? mockResults : fallbackMockResults;
+
   // Filter results based on search query and filters
-  const filteredResults = mockResults.filter((result) => {
+  const filteredResults = resultsToUse.filter((result) => {
     // Filter by search query
     if (query && !result.title.toLowerCase().includes(query.toLowerCase())) {
       return false;
@@ -224,7 +251,14 @@ export const AlertSearchView = ({ query, filters }: AlertSearchViewProps) => {
 
         <AlertSearchSuggestion query={query} filters={filters} />
 
-        {filteredResults.length === 0 ? (
+        {isLoading ? (
+          <Card className={styles.emptyCard}>
+            <Stack direction="column" gap={2} alignItems="center">
+              <Icon name="fa fa-spinner" size="xxl" className={styles.emptyIcon} />
+              <Text variant="h5">Loading alert rules...</Text>
+            </Stack>
+          </Card>
+        ) : filteredResults.length === 0 ? (
           <Card className={styles.emptyCard}>
             <Stack direction="column" gap={2} alignItems="center">
               <Icon name="search" size="xxl" className={styles.emptyIcon} />

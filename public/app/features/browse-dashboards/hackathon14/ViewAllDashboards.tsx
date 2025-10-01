@@ -2,14 +2,13 @@ import { css } from '@emotion/css';
 import { useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Stack, Text, useStyles2, Icon, Grid, Pagination, Spinner, LinkButton, ToolbarButton, ButtonGroup } from '@grafana/ui';
+import { Card, Stack, Text, useStyles2, Icon, Grid, Pagination, Spinner, LinkButton, ToolbarButton, ButtonGroup, FilterInput } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 import { SparkJoyToggle } from 'app/core/components/SparkJoyToggle';
 import { setSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
-import { BrowsingSectionTitle } from './BrowsingSectionTitle';
 import { HackathonTable, TableColumn, ExpandedContent } from './HackathonTable';
 
 const DISPLAY_PAGE_SIZE = 12;
@@ -22,6 +21,7 @@ export const ViewAllDashboards = () => {
   const [allDashboards, setAllDashboards] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleToggleSparkJoy = () => {
     setSparkJoyEnabled(false);
@@ -166,12 +166,26 @@ export const ViewAllDashboards = () => {
     ),
   };
 
+  // Filter dashboards based on search query
+  const filteredDashboards = allDashboards.filter((dashboard) => {
+    if (!searchQuery) {
+      return true;
+    }
+    const query = searchQuery.toLowerCase();
+    return (
+      dashboard.name?.toLowerCase().includes(query) ||
+      dashboard.title?.toLowerCase().includes(query) ||
+      dashboard.folderName?.toLowerCase().includes(query) ||
+      dashboard.tags?.some((tag: string) => tag.toLowerCase().includes(query))
+    );
+  });
+
   // Client-side pagination
-  const totalItems = allDashboards.length;
+  const totalItems = filteredDashboards.length;
   const totalPages = Math.ceil(totalItems / DISPLAY_PAGE_SIZE);
   const startIndex = (currentPage - 1) * DISPLAY_PAGE_SIZE;
   const endIndex = startIndex + DISPLAY_PAGE_SIZE;
-  const paginatedData = allDashboards.slice(startIndex, endIndex);
+  const paginatedData = filteredDashboards.slice(startIndex, endIndex);
 
   return (
     <Page navId="dashboards/browse" actions={
@@ -184,12 +198,21 @@ export const ViewAllDashboards = () => {
       />
       <Page.Contents>
         <div className={styles.container}>
-          <div className={styles.header}>
-            <BrowsingSectionTitle
-              title="All Dashboards"
-              subtitle={`${totalItems} dashboards in your organization`}
-              icon="apps"
+          <div className={styles.searchSection}>
+            <FilterInput
+              placeholder="Search for dashboards"
+              value={searchQuery}
+              onChange={(value) => {
+                setSearchQuery(value);
+                setCurrentPage(1); // Reset to first page on search
+              }}
+              width={0}
             />
+          </div>
+          <div className={styles.header}>
+            <Text variant="h5" color="secondary">
+              {totalItems} {totalItems === 1 ? 'dashboard' : 'dashboards'} found
+            </Text>
             <ButtonGroup>
               <div className={viewMode === 'card' ? styles.activeToggle : ''}>
                 <ToolbarButton
@@ -293,6 +316,32 @@ export const ViewAllDashboards = () => {
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     padding: theme.spacing(3),
+  }),
+
+  searchSection: css({
+    marginBottom: theme.spacing(3),
+    display: 'flex',
+    justifyContent: 'center',
+    width: '100%',
+    
+    '& input': {
+      fontSize: theme.typography.size.md,
+      padding: theme.spacing(1.5, 2),
+      border: `2px solid ${theme.colors.primary.main}`,
+      borderRadius: theme.shape.radius.default,
+      backgroundColor: theme.colors.background.primary,
+      color: theme.colors.text.primary,
+
+      '&:focus': {
+        borderColor: theme.colors.primary.main,
+        boxShadow: `0 0 0 2px ${theme.colors.primary.main}25`,
+      },
+
+      '&::placeholder': {
+        color: theme.colors.text.secondary,
+        opacity: 0.8,
+      },
+    },
   }),
 
   header: css({

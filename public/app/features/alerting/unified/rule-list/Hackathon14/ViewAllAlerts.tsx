@@ -2,13 +2,12 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Stack, Text, useStyles2, Icon, Grid, Pagination, Spinner, LinkButton, ToolbarButton, ButtonGroup, Badge, Dropdown, Menu } from '@grafana/ui';
+import { Card, Stack, Text, useStyles2, Icon, Grid, Pagination, Spinner, LinkButton, ToolbarButton, ButtonGroup, Badge, Dropdown, Menu, FilterInput } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { SparkJoyToggle } from 'app/core/components/SparkJoyToggle';
 import { setSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 import { useGetPopularAlerts } from 'app/features/dashboard/api/popularResourcesApi';
 import { AlertingPageWrapper } from 'app/features/alerting/unified/components/AlertingPageWrapper';
-import { BrowsingSectionTitle } from 'app/features/browse-dashboards/hackathon14/BrowsingSectionTitle';
 import { RecentVisitCard } from 'app/features/browse-dashboards/hackathon14/RecentVisitCard';
 import { HackathonTable, TableColumn, ExpandedContent } from 'app/features/browse-dashboards/hackathon14/HackathonTable';
 
@@ -20,6 +19,7 @@ export const ViewAllAlerts = () => {
   const styles = useStyles2(getStyles);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [searchQuery, setSearchQuery] = useState('');
   
   const { data, isLoading } = useGetPopularAlerts({
     limit: 100,
@@ -56,7 +56,7 @@ export const ViewAllAlerts = () => {
     {
       key: 'details',
       header: 'Message',
-      width: '3fr',
+      width: '2.5fr',
       render: (resource) => (
         <div style={{ 
           overflow: 'hidden', 
@@ -69,6 +69,17 @@ export const ViewAllAlerts = () => {
             {resource.title}
           </Text>
         </div>
+      ),
+    },
+    {
+      key: 'group',
+      header: 'Group',
+      width: '1.5fr',
+      render: (resource) => (
+        <Text variant="bodySmall" color="secondary">
+          {/* TODO: Backend should include alert group name in response */}
+          {resource.folderTitle || 'Default'}
+        </Text>
       ),
     },
     {
@@ -110,62 +121,30 @@ export const ViewAllAlerts = () => {
   const expandedContent: ExpandedContent = {
     render: (resource) => (
       <Stack direction="column" gap={2}>
-        {/* TODO: Once backend returns annotations, show:
-            - annotations.summary: "High CPU usage on {{ $labels.instance }}"
-            - annotations.description: Full explanation if available
-        */}
-        {resource.summary && (
-          <div>
-            <Text variant="bodySmall" weight="medium" color="secondary">
-              Summary:
-            </Text>
-            <Text variant="bodySmall"> {resource.summary}</Text>
-          </div>
-        )}
-        {resource.description && (
-          <div>
-            <Text variant="bodySmall" weight="medium" color="secondary">
-              Description:
-            </Text>
-            <Text variant="bodySmall"> {resource.description}</Text>
-          </div>
-        )}
-        <Stack direction="row" gap={4}>
-          <div>
-            <Text variant="bodySmall" weight="medium" color="secondary">
-              UID:
-            </Text>
-            <Text variant="bodySmall"> {resource.uid}</Text>
-          </div>
-          {resource.lastVisited && (
-            <div>
-              <Text variant="bodySmall" weight="medium" color="secondary">
-                Last viewed:
-              </Text>
-              <Text variant="bodySmall"> {new Date(resource.lastVisited).toLocaleString()}</Text>
-            </div>
-          )}
-        </Stack>
-        <div className={styles.expandedActions}>
-          <LinkButton
-            size="sm"
-            variant="primary"
-            href={`/alerting/grafana/${resource.uid}/view`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            View Alert Rule
-          </LinkButton>
-        </div>
+       Placeholder
       </Stack>
     ),
   };
 
+  // Filter alerts based on search query
+  const allAlerts = data?.resources || [];
+  const filteredAlerts = allAlerts.filter((alert) => {
+    if (!searchQuery) {
+      return true;
+    }
+    const query = searchQuery.toLowerCase();
+    return (
+      alert.title?.toLowerCase().includes(query) ||
+      alert.folderTitle?.toLowerCase().includes(query)
+    );
+  });
+
   // Client-side pagination
-  const totalItems = data?.resources?.length || 0;
+  const totalItems = filteredAlerts.length;
   const totalPages = Math.ceil(totalItems / PAGE_SIZE);
   const startIndex = (currentPage - 1) * PAGE_SIZE;
   const endIndex = startIndex + PAGE_SIZE;
-  const paginatedData = data?.resources?.slice(startIndex, endIndex) || [];
+  const paginatedData = filteredAlerts.slice(startIndex, endIndex);
 
   return (
     <AlertingPageWrapper
@@ -181,12 +160,21 @@ export const ViewAllAlerts = () => {
         actions={[<SparkJoyToggle key="sparks-joy-toggle" value={true} onToggle={handleToggleSparkJoy} />]}
       />
       <div className={styles.container}>
-        <div className={styles.header}>
-          <BrowsingSectionTitle
-            title="All Alert Rules"
-            subtitle=""
-            icon="bell"
+        <div className={styles.searchSection}>
+          <FilterInput
+            placeholder="Search for alert rules"
+            value={searchQuery}
+            onChange={(value) => {
+              setSearchQuery(value);
+              setCurrentPage(1); // Reset to first page on search
+            }}
+            width={0}
           />
+        </div>
+        <div className={styles.header}>
+          <Text variant="h5" color="secondary">
+            {totalItems} {totalItems === 1 ? 'alert rule' : 'alert rules'} found
+          </Text>
           <ButtonGroup>
             <div className={viewMode === 'card' ? styles.activeToggle : ''}>
               <ToolbarButton
@@ -223,7 +211,7 @@ export const ViewAllAlerts = () => {
                     key={resource.uid}
                     type="alert"
                     title={resource.title}
-                    subtitle={`${resource.visitCount} views`}
+                    subtitle={`${resource.folderTitle || 'Default'}`}
                     onClick={() => handleAlertClick(resource.uid)}
                   />
                 ))}
@@ -267,6 +255,32 @@ export const ViewAllAlerts = () => {
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     padding: theme.spacing(3),
+  }),
+
+  searchSection: css({
+    marginBottom: theme.spacing(3),
+    display: 'flex',
+    justifyContent: 'center',
+    width: '100%',
+    
+    '& input': {
+      fontSize: theme.typography.size.md,
+      padding: theme.spacing(1.5, 2),
+      border: `2px solid ${theme.colors.primary.main}`,
+      borderRadius: theme.shape.radius.default,
+      backgroundColor: theme.colors.background.primary,
+      color: theme.colors.text.primary,
+
+      '&:focus': {
+        borderColor: theme.colors.primary.main,
+        boxShadow: `0 0 0 2px ${theme.colors.primary.main}25`,
+      },
+
+      '&::placeholder': {
+        color: theme.colors.text.secondary,
+        opacity: 0.8,
+      },
+    },
   }),
 
   header: css({

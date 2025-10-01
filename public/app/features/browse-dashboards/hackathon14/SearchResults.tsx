@@ -435,6 +435,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(3),
+    marginLeft: theme.spacing(6),
+    marginRight: theme.spacing(6),
   }),
 
   searchHeader: css({

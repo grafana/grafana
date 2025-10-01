@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Card, Stack, Text, useStyles2, Icon, Grid, Spinner, useTheme2, Button, ButtonGroup, Box, TextLink, LinkButton } from '@grafana/ui';
+import { Card, Stack, Text, useStyles2, Icon, Grid, Spinner, useTheme2, ButtonGroup, Box, TextLink, LinkButton, ToolbarButton } from '@grafana/ui';
 import { useGetPopularDashboards } from 'app/features/dashboard/api/popularResourcesApi';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
@@ -167,20 +167,22 @@ export const MostPopularDashboards = () => {
           actions={
             <Stack direction="row" gap={2} alignItems="center">
               <ButtonGroup>
-                <Button
-                  icon="apps"
-                  variant={viewMode === 'thumbnail' ? 'primary' : 'secondary'}
-                  onClick={() => setViewMode('thumbnail')}
-                  tooltip="Thumbnail view"
-                  size="sm"
-                />
-                <Button
-                  icon="list-ul"
-                  variant={viewMode === 'list' ? 'primary' : 'secondary'}
-                  onClick={() => setViewMode('list')}
-                  tooltip="List view"
-                  size="sm"
-                />
+                <div className={viewMode === 'thumbnail' ? styles.activeToggle : ''}>
+                  <ToolbarButton
+                    icon="apps"
+                    variant="default"
+                    onClick={() => setViewMode('thumbnail')}
+                    tooltip="Thumbnail view"
+                  />
+                </div>
+                <div className={viewMode === 'list' ? styles.activeToggle : ''}>
+                  <ToolbarButton
+                    icon="list-ul"
+                    variant="default"
+                    onClick={() => setViewMode('list')}
+                    tooltip="List view"
+                  />
+                </div>
               </ButtonGroup>
                 <TextLink color="secondary" href="/dashboards/hackathon14/view-all-dashboards" className={styles.viewAllLink}>
                   View All
@@ -572,6 +574,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
     cursor: 'pointer',
     '&:hover': {
       textDecoration: 'underline',
+    },
+  }),
+
+  activeToggle: css({
+    position: 'relative',
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      bottom: -2,
+      left: 0,
+      right: 0,
+      height: 2,
+      backgroundColor: theme.colors.primary.main,
+      borderRadius: theme.shape.radius.default,
     },
   }),
 });
