@@ -1,4 +1,3 @@
-import { BASE_URL } from '@grafana/api-clients/provisioning/v0alpha1';
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
