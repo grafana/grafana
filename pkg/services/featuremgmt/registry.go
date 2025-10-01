@@ -1521,6 +1521,16 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:              "alertingUseNewSimplifiedRoutingHashAlgorithm",
+			Description:       "",
+			Stage:             FeatureStagePublicPreview,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
+			Expression:        "true",
+		},
+		{
 			Name:              "useScopesNavigationEndpoint",
 			Description:       "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
 			Stage:             FeatureStageExperimental,
@@ -1735,13 +1745,6 @@ var (
 		{
 			Name:        "alertRuleUseFiredAtForStartsAt",
 			Description: "Use FiredAt for StartsAt when sending alerts to Alertmaanger",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "alertingGenerateSimplifiedRoutingWithOldHashes",
-			Description: "Generate simplified routing with old hashes",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,
 			Expression:  "false",
