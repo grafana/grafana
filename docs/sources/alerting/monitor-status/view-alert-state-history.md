@@ -106,8 +106,3 @@ To access the State history view, complete the following steps.
 You can also use [Grafana Explore](ref:explore) to query the data sources that store alert history.
 
 For details on querying these data sources, refer to [Alerting Meta monitoring](ref:meta-monitoring).
-
-
-## Grafana Cloud alert history
-
-Grafana Cloud users can use the **Analyze with Assistant** button to have Grafana Assistant create a summary of the alert history. This will prompt the Assistant to identify patterns, perform severity assessment, identify trends, and give actionable suggestions for any alert issues that are identified.
