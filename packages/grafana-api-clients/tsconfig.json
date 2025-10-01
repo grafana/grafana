@@ -3,6 +3,7 @@
   "compilerOptions": {
     "baseUrl": "./",
     "declaration": true,
+    "jsx": "react-jsx",
     "declarationDir": "./dist/types",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
@@ -10,5 +11,5 @@
     "allowImportingTsExtensions": true
   },
   "exclude": ["dist/**/*"],
-  "include": ["src/**/*.ts*"]
+  "include": ["../../public/app/types/*.d.ts", "../grafana-ui/src/types/*.d.ts", "src/**/*.ts*"]
 }
