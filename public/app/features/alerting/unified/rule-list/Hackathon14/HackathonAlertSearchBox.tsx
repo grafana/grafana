@@ -1,8 +1,14 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, FilterInput, Icon, useStyles2 } from '@grafana/ui';
+
+import { PopupCard } from '../../components/HoverCard';
+import { useRulesFilter } from '../../hooks/useFilteredRules';
+import { FilterOptions } from '../filter/RulesFilter.v2';
+import { emptyAdvancedFilters, formAdvancedFiltersToRuleFilter } from '../filter/utils';
 
 interface HackathonSearchInputProps {
   onSearchChange?: (value: string) => void;
@@ -13,7 +19,7 @@ interface HackathonSearchInputProps {
 export const HackathonAlertSearchInput = ({
   onSearchChange,
   onFilterChange,
-  placeholder = 'Search for alert rules',
+  placeholder = t('alerting.hackathon.search.placeholder', 'Search for alert rules'),
 }: HackathonSearchInputProps) => {
   const styles = useStyles2(getStyles);
   const [searchValue, setSearchValue] = useState('');
@@ -23,41 +29,79 @@ export const HackathonAlertSearchInput = ({
     moreFilters: false,
   });
 
+  // Advanced filters popup state (reuse same component as non-SparkJoy view)
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const popupRef = useRef<HTMLDivElement | null>(null);
+  const { updateFilters, setSearchQuery: setGlobalSearch, hasActiveFilters } = useRulesFilter();
+
   const handleSearchChange = (value: string) => {
     setSearchValue(value);
     onSearchChange?.(value);
   };
 
   const toggleFilter = (filterKey: 'firing' | 'ownedByMe' | 'moreFilters') => {
+    // Quick filters are mutually exclusive (except the popup filters)
     const newFilters = {
-      ...activeFilters,
-      [filterKey]: !activeFilters[filterKey],
+      firing: filterKey === 'firing' ? !activeFilters.firing : false,
+      ownedByMe: filterKey === 'ownedByMe' ? !activeFilters.ownedByMe : false,
+      moreFilters: filterKey === 'moreFilters' ? !activeFilters.moreFilters : activeFilters.moreFilters,
     };
     setActiveFilters(newFilters);
-    
+
     // Notify parent of filter changes (excluding moreFilters which is UI-only)
     onFilterChange?.({
       firing: newFilters.firing,
       ownedByMe: newFilters.ownedByMe,
     });
+
+    // Update global filters for SparkJoy page when quick filters are toggled
+    if (filterKey !== 'moreFilters') {
+      if (filterKey === 'firing') {
+        const next = newFilters.firing ? 'state:alerting' : '';
+        setGlobalSearch(next || undefined);
+      }
+      if (filterKey === 'ownedByMe') {
+        const next = newFilters.ownedByMe ? 'owner:me' : '';
+        setGlobalSearch(next || undefined);
+      }
+    }
+  };
+
+  const clearAllFilters = () => {
+    setActiveFilters({ firing: false, ownedByMe: false, moreFilters: false });
+    setSearchValue('');
+    onSearchChange?.('');
+    onFilterChange?.({ firing: false, ownedByMe: false });
+    updateFilters(formAdvancedFiltersToRuleFilter(emptyAdvancedFilters));
+    setGlobalSearch(undefined);
+    setIsPopupOpen(false);
   };
 
   return (
     <div className={styles.container}>
       {/* Search Input */}
       <div className={styles.searchContainer}>
-        <FilterInput
-          placeholder={placeholder}
-          value={searchValue}
-          onChange={handleSearchChange}
-          className={styles.searchInput}
-        />
+        <div className={styles.searchRow}>
+          <FilterInput
+            placeholder={placeholder}
+            value={searchValue}
+            onChange={handleSearchChange}
+            className={styles.searchInput}
+          />
+          {(hasActiveFilters || activeFilters.firing || activeFilters.ownedByMe || searchValue) && (
+            <Button variant="secondary" size="sm" onClick={clearAllFilters}>
+              <Trans i18nKey="alerting.hackathon.clear-filters">Clear filters</Trans>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filter Buttons */}
       <div className={styles.filtersContainer}>
         <div className={styles.filtersRow}>
-          <span className={styles.lookingForText}>I'm looking for:</span>
+          <span className={styles.lookingForText}>
+            <Trans i18nKey="alerting.hackathon.im-looking-for">I&apos;m looking for:</Trans>
+          </span>
 
           <Button
             variant={activeFilters.ownedByMe ? 'primary' : 'secondary'}
@@ -66,7 +110,7 @@ export const HackathonAlertSearchInput = ({
             className={styles.filterButton}
           >
             <Icon name="user" style={{ marginRight: '4px' }} />
-            Created by me
+            <Trans i18nKey="alerting.hackathon.created-by-me">Created by me</Trans>
           </Button>
 
           <Button
@@ -76,18 +120,42 @@ export const HackathonAlertSearchInput = ({
             className={styles.filterButton}
           >
             <Icon name="fire" style={{ marginRight: '4px' }} />
-            Firing
+            <Trans i18nKey="alerting.hackathon.firing">Firing</Trans>
           </Button>
 
-          <Button
-            variant={activeFilters.moreFilters ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => toggleFilter('moreFilters')}
-            className={styles.filterButton}
+          <PopupCard
+            showOn="click"
+            placement="auto"
+            disableBlur={true}
+            isOpen={isPopupOpen}
+            onClose={() => setIsPopupOpen(false)}
+            onToggle={() => setIsPopupOpen((s) => !s)}
+            content={
+              <div ref={popupRef} className={styles.popupContent}>
+                <FilterOptions
+                  onSubmit={(values) => {
+                    updateFilters(formAdvancedFiltersToRuleFilter(values));
+                    setIsPopupOpen(false);
+                  }}
+                  onClear={() => {
+                    updateFilters(formAdvancedFiltersToRuleFilter(emptyAdvancedFilters));
+                    setGlobalSearch(undefined);
+                    setIsPopupOpen(false);
+                  }}
+                  pluginsFilterEnabled={false}
+                />
+              </div>
+            }
           >
-            <Icon name="filter" style={{ marginRight: '4px' }} />
-            Filters
-          </Button>
+            <Button
+              variant={activeFilters.moreFilters ? 'primary' : 'secondary'}
+              size="sm"
+              className={styles.filterButton}
+            >
+              <Icon name="filter" style={{ marginRight: '4px' }} />
+              <Trans i18nKey="alerting.hackathon.filters">Filters</Trans>
+            </Button>
+          </PopupCard>
         </div>
       </div>
     </div>
@@ -109,6 +177,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     justifyContent: 'center',
     width: '100%',
+  }),
+  searchRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    width: '100%',
+    maxWidth: '800px',
   }),
 
   searchInput: css({
@@ -154,6 +229,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
       justifyContent: 'flex-start',
     },
   }),
+  popupContent: css({
+    maxWidth: '720px',
+  }),
 
   lookingForText: css({
     color: theme.colors.text.secondary,
@@ -168,13 +246,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
     minHeight: theme.spacing(4),
     position: 'relative',
-    transition: 'all 0.3s ease',
+    [theme.transitions.handleMotion('no-preference')]: {
+      transition: 'all 0.3s ease',
+    },
     border: '2px solid transparent',
 
     '& svg': {
       width: '14px',
       height: '14px',
-      transition: 'filter 0.3s ease',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: 'filter 0.3s ease',
+      },
     },
 
     // Subtle gradient border on hover
@@ -188,20 +270,26 @@ const getStyles = (theme: GrafanaTheme2) => ({
       borderRadius: theme.shape.radius.default,
       background: 'linear-gradient(90deg, #FF780A, #FF8C2A, #FFA040)',
       opacity: 0,
-      transition: 'opacity 0.3s ease',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: 'opacity 0.3s ease',
+      },
       zIndex: -1,
     },
 
     '&:hover': {
-      transform: 'translateY(-2px)',
-      boxShadow: '0 4px 12px rgba(255, 120, 10, 0.1)',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transform: 'translateY(-2px)',
+        boxShadow: '0 4px 12px rgba(255, 120, 10, 0.1)',
+      },
 
       '&::before': {
         opacity: 0.3,
       },
 
       '& svg': {
-        filter: 'drop-shadow(0 0 6px rgba(255, 120, 10, 0.4))',
+        [theme.transitions.handleMotion('no-preference')]: {
+          filter: 'drop-shadow(0 0 6px rgba(255, 120, 10, 0.4))',
+        },
       },
     },
 
@@ -212,7 +300,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
       },
 
       '& svg': {
-        filter: 'drop-shadow(0 0 8px rgba(255, 120, 10, 0.6))',
+        [theme.transitions.handleMotion('no-preference')]: {
+          filter: 'drop-shadow(0 0 8px rgba(255, 120, 10, 0.6))',
+        },
       },
     },
   }),

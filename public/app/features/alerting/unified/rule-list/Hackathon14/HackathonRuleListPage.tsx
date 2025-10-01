@@ -2,11 +2,14 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, useStyles2, TextLink } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { TextLink, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import SparkJoyToggle from 'app/core/components/SparkJoyToggle';
 
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
+import { useRulesFilter } from '../../hooks/useFilteredRules';
+import { RuleListActions } from '../RuleList.v2';
 
 import { AlertSearchView } from './AlertSearchView';
 import { HackathonAlertSearchInput } from './HackathonAlertSearchBox';
@@ -20,14 +23,28 @@ export const HackathonRuleListPage = ({ onToggleSparkJoy }: { onToggleSparkJoy: 
     firing: false,
     ownedByMe: false,
   });
+  const { hasActiveFilters } = useRulesFilter();
 
   const renderCenteredTitle = () => (
     <div className={styles.centeredTitle}>
-      <h1>Alert Rules</h1>
+      <div className={styles.titleBlock}>
+        <h1>
+          <Trans i18nKey="alerting.hackathon.alert-rules">Alert Rules</Trans>
+        </h1>
+        <div className={styles.centeredSubTitle}>
+          {t('nav.alerting-list.subtitle', 'Rules that determine whether an alert will fire')}
+        </div>
+      </div>
+      <div className={styles.actionsRight}>
+        <AppChromeUpdate
+          actions={[<SparkJoyToggle key="sparks-joy-toggle" value={true} onToggle={onToggleSparkJoy} />]}
+        />
+        <RuleListActions />
+      </div>
     </div>
   );
 
-  const isSearching = searchQuery.length > 0 || searchFilters.firing || searchFilters.ownedByMe;
+  const isSearching = hasActiveFilters || searchQuery.length > 0 || searchFilters.firing || searchFilters.ownedByMe;
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
@@ -43,15 +60,6 @@ export const HackathonRuleListPage = ({ onToggleSparkJoy }: { onToggleSparkJoy: 
       renderTitle={(title) => renderCenteredTitle()}
       subTitle=""
       isLoading={false}
-      // actions={<RuleListActions />}
-      actions={
-        <>        
-          <AppChromeUpdate
-            actions={[<SparkJoyToggle key="sparks-joy-toggle" value={true} onToggle={onToggleSparkJoy} />]}
-          />
-                       <Button icon="plus" variant="secondary">Add</Button>
-        </>
-      }
     >
       <div className={styles.contentContainer}>
         <HackathonAlertSearchInput onSearchChange={handleSearchChange} onFilterChange={handleFilterChange} />
@@ -65,8 +73,12 @@ export const HackathonRuleListPage = ({ onToggleSparkJoy }: { onToggleSparkJoy: 
         )}
 
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
-          <TextLink href="/alerting/list/hackathon14/view-all-alerts" color="secondary" style={{ textDecoration: 'underline' }}>
-            View All
+          <TextLink
+            href="/alerting/list/hackathon14/view-all-alerts"
+            color="secondary"
+            style={{ textDecoration: 'underline' }}
+          >
+            <Trans i18nKey="alerting.hackathon.view-all">View All</Trans>
           </TextLink>
         </div>
       </div>
@@ -84,13 +96,30 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: '0 auto',
   }),
   centeredTitle: css({
-    display: 'flex',
-    justifyContent: 'center',
+    display: 'grid',
+    gridTemplateColumns: '1fr auto 1fr',
     alignItems: 'center',
     width: '100%',
+    textAlign: 'center',
+  }),
+  titleBlock: css({
+    gridColumn: 2,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
     h1: {
-      marginBottom: 0,
+      marginBottom: theme.spacing(1),
       textAlign: 'center',
     },
+  }),
+  centeredSubTitle: css({
+    color: theme.colors.text.secondary,
+    marginBottom: 0,
+  }),
+  actionsRight: css({
+    gridColumn: 3,
+    justifySelf: 'end',
+    display: 'flex',
+    gap: theme.spacing(1),
   }),
 });

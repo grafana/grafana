@@ -229,13 +229,13 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
   );
 }
 
-interface FilterOptionsProps {
+export interface FilterOptionsProps {
   onSubmit: SubmitHandler<AdvancedFilters>;
   onClear: () => void;
   pluginsFilterEnabled: boolean;
 }
 
-const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOptionsProps) => {
+export const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOptionsProps) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const { filterState } = useRulesFilter();
