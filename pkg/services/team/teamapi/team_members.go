@@ -299,7 +299,8 @@ func (tapi *TeamAPI) removeTeamMember(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusInternalServerError, "Failed to get Team", err)
 	}
 
-	if existingTeam.IsProvisioned {
+	isGroupSyncEnabled := tapi.cfg.Raw.Section("auth.scim").Key("group_sync_enabled").MustBool(false)
+	if isGroupSyncEnabled && existingTeam.IsProvisioned {
 		return response.Error(http.StatusBadRequest, "Team memberships cannot be updated for provisioned teams", err)
 	}
 
