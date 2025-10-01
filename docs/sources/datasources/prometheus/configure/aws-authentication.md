@@ -141,7 +141,7 @@ Learn more about why this is happening: [Prometheus data source update: Redefini
 
 ## Migrate to Grafana Cloud
 
-grafana Cloud users will be automatically migrated to the relevant version of Prometheus. No action needs to be taken.
+Grafana Cloud users will be automatically migrated to the relevant version of Prometheus. No action needs to be taken.
 
 ## Migrate in air-gapped environments
 
