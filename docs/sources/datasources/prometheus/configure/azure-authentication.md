@@ -115,10 +115,10 @@ After creating a Azure Monitor Managed Service for Prometheus data source:
 | **Application (client) ID** | Your app registration client ID | `87654321-4321-4321-4321-210987654321` |
 | **Client secret**           | Your app registration secret    | `your-client-secret`                   |
 
-### Managed Identity authentication
+When using Managed Identity for authentication: 
 
-- No additional configuration required if using system-assigned identity
-- For user-assigned identity, provide the **Client ID**
+- No additional configuration required if using system-assigned identity.
+- For user-assigned identity, provide the **Client ID**.
 
 4. Set the **Prometheus server URL** to your Azure Monitor workspace endpoint:
 
@@ -148,7 +148,7 @@ datasources:
       clientSecret: 'your-client-secret'
 ```
 
-# Migrate to Azure Monitor Managed Service for Prometheus
+## Migrate to Azure Monitor Managed Service for Prometheus
 
 Learn more about why this is happening: [Prometheus data source update: Redefining our big tent philosophy](https://grafana.com/blog/2025/06/16/prometheus-data-source-update-redefining-our-big-tent-philosophy/)
 
@@ -173,9 +173,10 @@ For air-gapped Grafana installations:
 1. Enable the `prometheusTypeMigration` feature toggle. For more information on feature toggles, refer to [Manage feature toggles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#manage-feature-toggles).
 2. Restart Grafana for the changes to take effect.
 
-**Note**: This feature toggle will be removed in Grafana 13, and the migration will be automatic.
+{{< admonition type="note" >}}
+This feature toggle will be removed in Grafana 13, and the migration will be automatic.
+{{< /admonition >}}
 
-## Check migration status
 
 To determine if your Prometheus data sources have been migrated:
 
@@ -195,7 +196,7 @@ The banner displays one of the following messages:
 
 **Migration banner not appearing**
 
-- Verify the `prometheusTypeMigration` feature toggle is enabled
+- Verify the `prometheusTypeMigration` feature toggle is enabled.
 - Restart Grafana after enabling the feature toggle
 
 **Azure Monitor Managed Service for Prometheus is not installed**
@@ -210,7 +211,7 @@ The banner displays one of the following messages:
 
 ### Rolling the migration back without a backup
 
-If you do not have a backup of your Grafana instance before the migration, you can run the script below. It will find all the Azure Monitor Managed Service for Prometheus data source instances that were migrated from core Prometheus and revert them back to core Prometheus.
+If you don’t have a backup of your Grafana instance before the migration, run the following script. It reverts all the Azure Monitor Managed Service data source instances back to core Prometheus.
 
 To revert the migration:
 
@@ -370,6 +371,5 @@ echo ""
 echo "Migration completed. Full log available at: $LOG_FILE"
 ```
 
-### Getting help
 
-If you continue to experience issues check the Grafana server logs for detailed error messages and contact support with your troubleshooting results.
+If you continue to experience issues, check the Grafana server logs for detailed error messages and contact [Grafana Support](https://grafana.com/help/) with your troubleshooting results.

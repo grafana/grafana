@@ -147,7 +147,7 @@ grafana Cloud users will be automatically migrated to the relevant version of Pr
 
 For air-gapped Grafana installations:
 
-1. Download and install [Amazon Managed Service for Prometheus](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/)
+1. Download and install [Amazon Managed Service for Prometheus](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/).
 2. Follow the standard migration process
 
 ## Migrate
@@ -155,7 +155,9 @@ For air-gapped Grafana installations:
 1. Enable the `prometheusTypeMigration` feature toggle. For more information on feature toggles, refer to [Manage feature toggles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#manage-feature-toggles).
 2. Restart Grafana for the changes to take effect.
 
-**Note**: This feature toggle will be removed in Grafana 13, and the migration will be automatic.
+{{< admonition type="note" >}}
+This feature toggle will be removed in Grafana v13, and the migration will be automatic.
+{{< /admonition >}}
 
 ## Check migration status
 
@@ -192,7 +194,7 @@ The banner displays one of the following messages:
 
 ### Rolling the migration back without a backup
 
-If you do not have a backup of your Grafana instance before the migration, you can run the script below. It will find all the Amazon Managed Service for Prometheus data source instances that were migrated from core Prometheus and revert them back to core Prometheus.
+If you don’t have a backup of your Grafana instance before the migration, run the following script. It reverts all Amazon Managed Service for Prometheus data sources back to core Prometheus.
 
 To revert the migration:
 
@@ -354,4 +356,4 @@ echo "Migration completed. Full log available at: $LOG_FILE"
 
 ### Getting help
 
-If you continue to experience issues check the Grafana server logs for detailed error messages and contact support with your troubleshooting results.
+If you continue to experience issues, check the Grafana server logs for detailed error messages and contact [Grafana Support](https://grafana.com/help/) with your troubleshooting results.
