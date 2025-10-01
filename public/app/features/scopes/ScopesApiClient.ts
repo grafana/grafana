@@ -26,6 +26,21 @@ export class ScopesApiClient {
     return scopes.filter((scope) => scope !== undefined);
   }
 
+  async fetchMultipleScopeNodes(names: string[]): Promise<ScopeNode[]> {
+    if (!config.featureToggles.useMultipleScopeNodesEndpoint || names.length === 0) {
+      return Promise.resolve([]);
+    }
+
+    try {
+      const res = await getBackendSrv().get<{ items: ScopeNode[] }>(apiUrl + `/find/scope_node_children`, {
+        names: names,
+      });
+      return res?.items ?? [];
+    } catch (err) {
+      return [];
+    }
+  }
+
   /**
    * Fetches a map of nodes based on the specified options.
    *

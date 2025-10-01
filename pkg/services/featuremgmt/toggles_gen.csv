@@ -106,6 +106,7 @@ alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,fal
 alertingSaveStateCompressed,preview,@grafana/alerting-squad,false,false,false
 scopeApi,experimental,@grafana/grafana-app-platform-squad,false,false,false
 useScopeSingleNodeEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
+useMultipleScopeNodesEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 promQLScope,GA,@grafana/oss-big-tent,false,false,false
 logQLScope,privatePreview,@grafana/observability-logs,false,false,false
 sqlExpressions,preview,@grafana/grafana-datasources-core-services,false,false,false
