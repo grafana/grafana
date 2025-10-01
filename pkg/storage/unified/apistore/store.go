@@ -533,18 +533,17 @@ func (s *Storage) GuaranteedUpdate(
 	if err != nil {
 		return err
 	}
-	// NOTE: by default, the RV will **not** be set in the preconditions (it is removed here: https://github.com/kubernetes/kubernetes/blob/1ffdc16b71e48dddcc123b197434b67f87c810a0/staging/src/k8s.io/apiserver/pkg/registry/rest/update.go#L188)
+	// NOTE: by default, the RV will **not** be set in the preconditions (it is removed here: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/registry/rest/update.go#L187)
 	// instead, the RV check is done with the object from the request itself.
 	//
-	// the object from the request is retrieved in the tryUpdate function (we use the generic k8s store one). this function calls the UpdateObject function here: https://github.com/kubernetes/kubernetes/blob/034079b26e0c5cca094bd29588c08577ef975bd9/staging/src/k8s.io/apiserver/pkg/registry/generic/registry/store.go#L653
-	// and that will run a series of transformations: https://github.com/kubernetes/kubernetes/blob/034079b26e0c5cca094bd29588c08577ef975bd9/staging/src/k8s.io/apiserver/pkg/registry/rest/update.go#L220
+	// the object from the request is retrieved in the tryUpdate function (we use the generic k8s store one). this function calls the UpdateObject function here: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/registry/generic/registry/store.go#L653
+	// and that will run a series of transformations: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/registry/rest/update.go#L219
 	//
 	// the specific transformations it runs depends on what type of update it is.
-	// for patch, the transformers are set here and use the patchBytes from the request: https://github.com/kubernetes/kubernetes/blob/ef95e1fd7e1248858b426f30ac23a3b28eb3d6c9/staging/src/k8s.io/apiserver/pkg/endpoints/handlers/patch.go#L697
-	// for put, it uses the object from the request here: https://github.com/kubernetes/kubernetes/blob/ef95e1fd7e1248858b426f30ac23a3b28eb3d6c9/staging/src/k8s.io/apiserver/pkg/endpoints/handlers/update.go#L163
+	// for patch, the transformers are set here and use the patchBytes from the request: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/endpoints/handlers/patch.go#L697
+	// for put, it uses the object from the request here: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/endpoints/handlers/update.go#L163
 	//
-	//
-	// after those transformations, the RV will then be on the object so that the RV check can properly be done here: https://github.com/kubernetes/kubernetes/blob/034079b26e0c5cca094bd29588c08577ef975bd9/staging/src/k8s.io/apiserver/pkg/registry/generic/registry/store.go#L662C3-L662C21
+	// after those transformations, the RV will then be on the object so that the RV check can properly be done here: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/registry/generic/registry/store.go#L662
 	// it will be compared to the current object that we pass in below from storage.
 	if preconditions != nil && preconditions.ResourceVersion != nil {
 		req.ResourceVersion, err = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
