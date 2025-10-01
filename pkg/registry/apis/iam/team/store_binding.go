@@ -117,32 +117,32 @@ func (l *LegacyBindingStore) List(ctx context.Context, options *internalversion.
 	return &list, nil
 }
 
-func mapToBindingObject(ns claims.NamespaceInfo, b legacy.TeamBinding) iamv0alpha1.TeamBinding {
+func mapToBindingObject(ns claims.NamespaceInfo, tm legacy.TeamMember) iamv0alpha1.TeamBinding {
 	rv := time.Time{}
 	ct := time.Now()
 
-	if b.TeamMember.Updated.After(rv) {
-		rv = b.TeamMember.Updated
+	if tm.Updated.After(rv) {
+		rv = tm.Updated
 	}
-	if b.TeamMember.Created.Before(ct) {
-		ct = b.TeamMember.Created
+	if tm.Created.Before(ct) {
+		ct = tm.Created
 	}
 
 	return iamv0alpha1.TeamBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              b.TeamMember.TeamUID,
+			Name:              tm.TeamUID,
 			Namespace:         ns.Value,
 			ResourceVersion:   strconv.FormatInt(rv.UnixMilli(), 10),
 			CreationTimestamp: metav1.NewTime(ct),
 		},
 		Spec: iamv0alpha1.TeamBindingSpec{
 			TeamRef: iamv0alpha1.TeamBindingTeamRef{
-				Name: b.TeamMember.TeamUID,
+				Name: tm.TeamUID,
 			},
 			Subject: iamv0alpha1.TeamBindingspecSubject{
-				Name: b.TeamMember.UserUID,
+				Name: tm.UserUID,
 			},
-			Permission: common.MapTeamPermission(b.TeamMember.Permission),
+			Permission: common.MapTeamPermission(tm.Permission),
 		},
 	}
 }
