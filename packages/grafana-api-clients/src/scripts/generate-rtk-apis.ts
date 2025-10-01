@@ -8,12 +8,7 @@ const basePath = path.resolve(__dirname, '../../../..');
 /**
  * Helper to return consistent base API generation config
  */
-const createAPIConfig = (
-  app: string,
-  version: string,
-  filterEndpoints?: ConfigFile['filterEndpoints'],
-  additional = {}
-) => {
+const createAPIConfig = (app: string, version: string, filterEndpoints?: string[] | Function, additional = {}) => {
   const filePath = `../clients/${app}/${version}/endpoints.gen.ts`;
   return {
     [filePath]: {
