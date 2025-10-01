@@ -592,7 +592,7 @@ func (s *searchSupport) findIndexesToRebuild(ctx context.Context, now time.Time)
 	}
 }
 
-// runIndexRebuilder is a goroutine waiting for rebuild requests, and rebuils indexes specified in the request.
+// runIndexRebuilder is a goroutine waiting for rebuild requests, and rebuilds indexes specified in those requests.
 // Rebuild requests can be generated periodically (if configured), or after new documents have been imported into the storage with old RVs.
 func (s *searchSupport) runIndexRebuilder(ctx context.Context) {
 	defer s.bgTaskWg.Done()
@@ -616,7 +616,7 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"RebuildIndex")
 	defer span.End()
 
-	l := s.log.With("namespace", req.NamespacedResource.Namespace, "group", req.NamespacedResource.Group, "resource", req.NamespacedResource.Resource)
+	l := s.log.With("namespace", req.Namespace, "group", req.Group, "resource", req.Resource)
 
 	idx, err := s.search.GetIndex(ctx, req.NamespacedResource)
 	if err != nil {
@@ -671,7 +671,6 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		span.RecordError(err)
 		l.Error("failed to rebuild index", "error", err)
 	}
-	return
 }
 
 func shouldRebuildIndex(minBuildVersion *semver.Version, buildInfo IndexBuildInfo, minBuildTime time.Time, rebuildLogger *slog.Logger) bool {

@@ -144,12 +144,6 @@ type buildIndexCall struct {
 	fields SearchableDocumentFields
 }
 
-type buildEmptyIndexCall struct {
-	key    NamespacedResource
-	size   int64 // should be 0 for empty indexes
-	fields SearchableDocumentFields
-}
-
 func (m *mockSearchBackend) GetIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
