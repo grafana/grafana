@@ -326,17 +326,11 @@ export const AnnotationsPlugin2 = ({
                 },
               },
             };
-
-            frame.fields.forEach((field: Field) => {
-              const actionsModel = getActions(
-                frame,
-                field,
-                scopedVars,
-                replaceVariables,
-                field.config.actions ?? [],
-                // @todo config?
-                {}
-              );
+            frame.fields.forEach((field: Field, index) => {
+              // @todo use getFieldActions
+              const actionsModel = getActions(frame, field, scopedVars, replaceVariables, field.config.actions ?? [], {
+                valueRowIndex: i,
+              });
 
               const actionsOut: Array<ActionModel<Field>> = [];
               const actionLookup = new Set<string>();
