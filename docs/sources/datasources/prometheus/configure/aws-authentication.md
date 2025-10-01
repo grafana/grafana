@@ -136,7 +136,7 @@ Learn more about why this is happening: [Prometheus data source update: Redefini
 
 ## Before you begin
 
-- Ensure you have the organization administrator role
+- Ensure you have the organization administrator role.
 - If you are self hosting Grafana, back up your existing dashboard configurations and queries
 
 ## Migrate on grafana Cloud
