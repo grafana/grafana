@@ -7,7 +7,10 @@ import { BackendDataSourceResponse, getBackendSrv, toDataQueryResponse } from '@
 import { Alert } from '@grafana/ui';
 import { AlertRuleListItem } from 'app/features/alerting/unified/rule-list/components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton } from 'app/features/alerting/unified/rule-list/components/AlertRuleListItemLoader';
-import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
+import { getRulesDataSourceByUID } from 'app/features/alerting/unified/utils/datasource';
+import { createShareLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
+import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
+import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { isPromAlertingRuleState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { StateFilter } from './types';
@@ -33,6 +36,10 @@ export function ExternalManagedAlerts({
   alertInstanceLabelFilter,
   replaceVariables,
 }: ExternalManagedAlertsProps) {
+  // Get datasource name from UID for creating links
+  const datasource = useMemo(() => getRulesDataSourceByUID(datasourceUID), [datasourceUID]);
+  const datasourceName = datasource?.name;
+
   // construct query filter
   const filter = useMemo(
     () => createFilter({ stateFilter, alertInstanceLabelFilter }, replaceVariables),
@@ -119,8 +126,13 @@ export function ExternalManagedAlerts({
 
             const state = isPromAlertingRuleState(alertstate) ? alertstate : PromAlertingRuleState.Unknown;
 
+            // Create link to rule find page using datasource name and rule name
+            const ruleLink = createRelativeUrl(
+              `/alerting/${encodeURIComponent(datasourceName!)}/${encodeURIComponent(escapePathSeparators(alertname))}/find`
+            );
+
             const key = JSON.stringify(labels);
-            return <AlertRuleListItem key={key} name={alertname} href={'#'} state={state} />;
+            return <AlertRuleListItem key={key} name={alertname} href={ruleLink ?? '#'} state={state} />;
           })}
         </div>
       ) : (
