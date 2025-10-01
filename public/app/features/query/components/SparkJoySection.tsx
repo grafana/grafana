@@ -361,6 +361,7 @@ const QueryCard = ({ query, onClick, datasource, timeRange, isRecentQuery, times
       marginBottom: 0, // noMargin equivalent
       position: 'relative' as const,
       minHeight: '90px', // Ensure consistent height
+      width: '600px',
       display: 'flex',
       flexDirection: 'column' as const,
       transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
@@ -649,11 +650,14 @@ export const SparkJoySection = <TQuery extends DataQuery>({
     },
     columnsContainer: {
       display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
+      gridTemplateColumns: 'auto auto',
       gap: theme.spacing(3),
+      justifyContent: 'start',
+      maxWidth: '1000px', // Limit the total width
     },
     column: {
       minHeight: '200px',
+      width: '600px', // Fixed width for each column
     },
     columnHeader: {
       display: 'flex',

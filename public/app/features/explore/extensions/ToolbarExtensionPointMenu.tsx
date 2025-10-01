@@ -14,7 +14,7 @@ export function ToolbarExtensionPointMenu({ extensions, onSelect }: Props): Reac
   const showDivider = uncategorised.length > 0 && Object.keys(categorised).length > 0;
 
   return (
-    <Menu>
+    <Menu style={{ width: '300px' }}>
       <>
         {Object.keys(categorised).map((category) => (
           <Menu.Group key={category} label={truncateTitle(category, 25)}>
@@ -34,7 +34,7 @@ function renderItems(extensions: PluginExtensionLink[], onSelect: (link: PluginE
       ariaLabel={extension.title}
       icon={extension?.icon || 'plug'}
       key={extension.id}
-      label={truncateTitle(extension.title, 25)}
+      label={extension.title}
       onClick={(event) => {
         if (extension.path) {
           return onSelect(extension);

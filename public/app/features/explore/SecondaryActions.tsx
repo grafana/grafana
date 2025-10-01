@@ -196,24 +196,6 @@ export function SecondaryActions({
                       }}
                       disabled={addQueryRowButtonDisabled}
                     />
-                    {querylessExtensions.length > 0 && (
-                      <Menu.Item
-                        icon="external-link-alt"
-                        label={t('explore.toolbar.add-to-queryless-extensions', 'Go queryless')}
-                        onClick={() => {
-                          if (querylessExtensions.length === 1) {
-                            const extension = querylessExtensions[0];
-                            setSelectedExtension(extension);
-                            reportInteraction('grafana_explore_queryless_app_link_clicked', {
-                              pluginId: extension.pluginId,
-                            });
-                          }
-                          // For multiple extensions, we could show a submenu or handle differently
-                          // For now, just select the first one as per the original QuerylessAppsExtensions logic
-                        }}
-                        disabled={!Boolean(noQueriesInPane)}
-                      />
-                    )}
                   </Menu>
                 }
                 placement="bottom-start"
@@ -262,13 +244,22 @@ export function SecondaryActions({
       >
         <Trans i18nKey="explore.secondary-actions.query-inspector-button">Query inspector</Trans>
       </ToolbarButton>
-      {sparkJoy && useQueryExtensions.length > 0 && (
+      {sparkJoy && (useQueryExtensions.length > 0 || querylessExtensions.length > 0) && (
         <Dropdown
           placement="bottom-end"
           overlay={
             <ToolbarExtensionPointMenu 
-              extensions={useQueryExtensions} 
+              extensions={[...useQueryExtensions, ...querylessExtensions]} 
               onSelect={(extension) => {
+                // Handle queryless extensions
+                if (querylessExtensions.includes(extension)) {
+                  setSelectedExtension(extension);
+                  reportInteraction('grafana_explore_queryless_app_link_clicked', {
+                    pluginId: extension.pluginId,
+                  });
+                  return;
+                }
+                
                 // Handle extensions with paths (navigation)
                 if (extension.path) {
                   // This would open a navigation modal or redirect
@@ -284,7 +275,7 @@ export function SecondaryActions({
               aria-label={t('explore.secondary-actions.use-query-aria-label', 'Use query')}
               disabled={!noQueriesInPane}
               icon="external-link-alt"
-
+              className={css({ minWidth: '150px' })}
             >
               <Trans i18nKey="explore.secondary-actions.use-query">Use queries</Trans>
               <Icon name="angle-down" />

@@ -230,7 +230,7 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps & { sparkJoy?: boolean 
       />
       <EditorHeader>
         <Stack gap={1}>
-          {!(sparkJoy && app === CoreApp.Explore) && (
+          {!(sparkJoy) && (
             <Button
               data-testid={selectors.components.QueryBuilder.queryPatterns}
               variant="secondary"

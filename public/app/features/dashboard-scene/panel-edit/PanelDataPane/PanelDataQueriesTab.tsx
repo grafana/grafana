@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
@@ -13,8 +15,9 @@ import {
   SceneDataQuery,
 } from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
-import { Button, Stack, Tab } from '@grafana/ui';
+import { Button, Stack, Tab, ButtonGroup, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
+import { getSparkJoyEnabled, SPARK_JOY_LOCAL_STORAGE_KEY } from 'app/core/utils/sparkJoy';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
@@ -338,6 +341,30 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
   const { data, queries } = model.queryRunner.useState();
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
   const { setDrawerOpened } = useQueriesDrawerContext();
+  const [sparkJoy, setSparkJoy] = useState(() => getSparkJoyEnabled(true));
+
+  // Listen for sparkJoy changes in localStorage
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === SPARK_JOY_LOCAL_STORAGE_KEY) {
+        setSparkJoy(getSparkJoyEnabled(true));
+      }
+    };
+
+    // Listen for storage events from other tabs/windows
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also check for changes periodically in case the change happens in the same tab
+    const interval = setInterval(() => {
+      const currentValue = getSparkJoyEnabled(true);
+      setSparkJoy(prev => prev !== currentValue ? currentValue : prev);
+    }, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   if (!datasource || !dsSettings || !data) {
     return null;
@@ -390,49 +417,139 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         onRunQueries={model.onRunQueries}
         onUpdateDatasources={queryLibraryEnabled ? model.updateDatasourceIfNeeded : undefined}
         app={CoreApp.PanelEditor}
-        sparkJoy={true}
+        sparkJoy={sparkJoy}
       />
 
       <Stack gap={2}>
         {showAddButton && (
           <>
-            <Button
-              icon="plus"
-              onClick={model.addQueryClick}
-              variant="secondary"
-              data-testid={selectors.components.QueryTab.addQuery}
-            >
-              <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.add-query">Add query</Trans>
-            </Button>
-            {queryLibraryEnabled && (
-              <Button
-                icon="plus"
-                onClick={() =>
-                  openQueryLibraryDrawer({
-                    datasourceFilters: getDatasourceNames(datasource, queries),
-                    onSelectQuery: onSelectQueryFromLibrary,
-                    options: {
-                      context: CoreApp.PanelEditor,
-                    },
-                  })
-                }
-                variant="secondary"
-                data-testid={selectors.components.QueryTab.addQueryFromLibrary}
-              >
-                <Trans i18nKey={'dashboards.panel-queries.add-from-saved-queries'}>Add from saved queries</Trans>
-              </Button>
+            {sparkJoy ? (
+              <ButtonGroup>
+                <ToolbarButton
+                  variant="canvas"
+                  aria-label={t('dashboard-scene.panel-data-queries-tab-rendered.add-query-aria-label', 'Add query')}
+                  onClick={model.addQueryClick}
+                  icon="plus"
+                  data-testid={selectors.components.QueryTab.addQuery}
+                >
+                  <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.add-query">Add query</Trans>
+                </ToolbarButton>
+                <Dropdown
+                  overlay={
+                    <Menu>
+                      {queryLibraryEnabled && (
+                        <Menu.Item
+                          icon="book"
+                          label={t('dashboards.panel-queries.add-from-saved-queries', 'Add from saved queries')}
+                          onClick={() =>
+                            openQueryLibraryDrawer({
+                              datasourceFilters: getDatasourceNames(datasource, queries),
+                              onSelectQuery: onSelectQueryFromLibrary,
+                              options: {
+                                context: CoreApp.PanelEditor,
+                              },
+                            })
+                          }
+                          data-testid={selectors.components.QueryTab.addQueryFromLibrary}
+                        />
+                      )}
+                      <Menu.Item
+                        icon="history"
+                        label={t('dashboard-scene.panel-data-queries-tab-rendered.query-history', 'Query history')}
+                        onClick={() => setDrawerOpened(true)}
+                        data-testid={selectors.components.QueryTab.queryHistoryButton}
+                      />
+                      {config.expressionsEnabled && model.isExpressionsSupported(dsSettings) && (
+                        <>
+                          <Menu.Divider />
+                          <Menu.Group label={t('dashboard-scene.panel-data-queries-tab-rendered.expressions-group', 'Expressions')}>
+                            <Menu.Item
+                              icon="calculator-alt"
+                              label={t('expressions.type.math', 'Math')}
+                              onClick={() => model.onAddExpressionOfType(ExpressionQueryType.math)}
+                            />
+                            <Menu.Item
+                              icon="compress-arrows"
+                              label={t('expressions.type.reduce', 'Reduce')}
+                              onClick={() => model.onAddExpressionOfType(ExpressionQueryType.reduce)}
+                            />
+                            <Menu.Item
+                              icon="sync"
+                              label={t('expressions.type.resample', 'Resample')}
+                              onClick={() => model.onAddExpressionOfType(ExpressionQueryType.resample)}
+                            />
+                            <Menu.Item
+                              icon="cog"
+                              label={t('expressions.type.classic', 'Classic condition (legacy)')}
+                              onClick={() => model.onAddExpressionOfType(ExpressionQueryType.classic)}
+                            />
+                            <Menu.Item
+                              icon="sliders-v-alt"
+                              label={t('expressions.type.threshold', 'Threshold')}
+                              onClick={() => model.onAddExpressionOfType(ExpressionQueryType.threshold)}
+                            />
+                            {config.featureToggles?.sqlExpressions && (
+                              <Menu.Item
+                                icon="database"
+                                label={t('expressions.type.sql', 'SQL')}
+                                onClick={() => model.onAddExpressionOfType(ExpressionQueryType.sql)}
+                              />
+                            )}
+                          </Menu.Group>
+                        </>
+                      )}
+                    </Menu>
+                  }
+                  placement="bottom-start"
+                >
+                  <ToolbarButton 
+                    variant="canvas" 
+                    aria-label={t('dashboard-scene.panel-data-queries-tab-rendered.more-add-options-aria', 'More add options')} 
+                    icon="angle-down" 
+                  />
+                </Dropdown>
+              </ButtonGroup>
+            ) : (
+              <>
+                <Button
+                  icon="plus"
+                  onClick={model.addQueryClick}
+                  variant="secondary"
+                  data-testid={selectors.components.QueryTab.addQuery}
+                >
+                  <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.add-query">Add query</Trans>
+                </Button>
+                {queryLibraryEnabled && (
+                  <Button
+                    icon="plus"
+                    onClick={() =>
+                      openQueryLibraryDrawer({
+                        datasourceFilters: getDatasourceNames(datasource, queries),
+                        onSelectQuery: onSelectQueryFromLibrary,
+                        options: {
+                          context: CoreApp.PanelEditor,
+                        },
+                      })
+                    }
+                    variant="secondary"
+                    data-testid={selectors.components.QueryTab.addQueryFromLibrary}
+                  >
+                    <Trans i18nKey={'dashboards.panel-queries.add-from-saved-queries'}>Add from saved queries</Trans>
+                  </Button>
+                )}
+                <Button
+                  icon="history"
+                  onClick={() => setDrawerOpened(true)}
+                  variant="secondary"
+                  data-testid={selectors.components.QueryTab.queryHistoryButton}
+                >
+                  <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.query-history">Query history</Trans>
+                </Button>
+              </>
             )}
-            <Button
-              icon="history"
-              onClick={() => setDrawerOpened(true)}
-              variant="secondary"
-              data-testid={selectors.components.QueryTab.queryHistoryButton}
-            >
-              <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.query-history">Query history</Trans>
-            </Button>
           </>
         )}
-        {config.expressionsEnabled && model.isExpressionsSupported(dsSettings) && (
+        {config.expressionsEnabled && model.isExpressionsSupported(dsSettings) && !sparkJoy && (
           <ExpressionTypeDropdown handleOnSelect={model.onAddExpressionOfType}>
             <Button icon="plus" variant="secondary" data-testid={selectors.components.QueryTab.addExpression}>
               <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.expression">Expression&nbsp;</Trans>
