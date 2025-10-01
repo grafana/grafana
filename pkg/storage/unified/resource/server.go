@@ -723,6 +723,8 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 		return rsp, nil
 	}
 
+	// TODO: once we know the client is always sending the RV, require ResourceVersion > 0
+	// See: https://github.com/grafana/grafana/pull/111866
 	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
 		return &resourcepb.UpdateResponse{
 			Error: &ErrOptimisticLockingFailed,

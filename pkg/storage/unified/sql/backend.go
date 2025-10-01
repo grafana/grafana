@@ -18,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/util/sqlite"
 
@@ -405,14 +406,35 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 	// Use rvManager.ExecWithRV instead of direct transaction
 	rv, err := b.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
 		// 1. Update resource
-		_, err := dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
+		res, err := dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
+			WriteEvent:  event, // includes the RV
 			Folder:      folder,
 			GUID:        event.GUID,
 		})
 		if err != nil {
 			return event.GUID, fmt.Errorf("resource update: %w", err)
+		}
+
+		// The RV is part of the update request, and it may no longer be the most recent
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return event.GUID, fmt.Errorf("unable to verify RV: %w", err)
+		}
+		if rows == 0 {
+			rsp := b.ReadResource(ctx, &resourcepb.ReadRequest{
+				Key: event.Key,
+			})
+			if rsp.Value == nil {
+				return event.GUID, fmt.Errorf("previous value not found")
+			}
+			if event.PreviousRV != rsp.ResourceVersion {
+				return event.GUID, apierrors.NewConflict(schema.GroupResource{
+					Group:    event.Key.Group,
+					Resource: event.Key.Resource,
+				}, event.Key.Name, fmt.Errorf("update resource version does not match current version"))
+			}
+			return event.GUID, fmt.Errorf("unable to update value")
 		}
 
 		// 2. Insert into resource history

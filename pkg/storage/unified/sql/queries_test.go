@@ -63,6 +63,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 								Resource:  "rr",
 								Name:      "name",
 							},
+							PreviousRV: 1759304090100678,
 						},
 						Folder: "fldr",
 					},
