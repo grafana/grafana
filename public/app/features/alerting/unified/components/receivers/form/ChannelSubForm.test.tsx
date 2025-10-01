@@ -55,7 +55,6 @@ const ui = {
   },
 };
 
-// Use real notifiers from mockGrafanaNotifiers
 const notifiers: Notifier[] = [
   {
     dto: grafanaAlertNotifiers.webhook,
@@ -70,8 +69,6 @@ const notifiers: Notifier[] = [
     meta: { enabled: true, order: 3 },
   },
 ];
-
-// Don't mock CollapsibleSection - use the real component to ensure proper re-rendering behavior
 
 describe('ChannelSubForm', () => {
   function TestFormWrapper({ defaults, initial }: { defaults: TestChannelValues; initial?: TestChannelValues }) {
@@ -113,16 +110,12 @@ describe('ChannelSubForm', () => {
       secureFields: {},
     });
 
-    // Starts as Webhook
     expect(ui.typeSelector.get()).toHaveTextContent('Webhook');
 
-    // Webhook URL field should be visible
     expect(ui.settings.webhook.url.get()).toBeInTheDocument();
 
-    // Slack recipient field should not be present
     expect(ui.settings.slack.recipient.query()).not.toBeInTheDocument();
 
-    // Switch to Slack
     await clickSelectOption(ui.typeSelector.get(), 'Slack');
     expect(ui.typeSelector.get()).toHaveTextContent('Slack');
 
@@ -139,16 +132,13 @@ describe('ChannelSubForm', () => {
       secureFields: {},
     });
 
-    // Should render slack type initially
     expect(ui.typeSelector.get()).toHaveTextContent('Slack');
 
-    // Switch to webhook
     await clickSelectOption(ui.typeSelector.get(), 'Webhook');
     await waitFor(() => {
       expect(ui.typeSelector.get()).toHaveTextContent('Webhook');
     });
 
-    // Switch back to slack
     await clickSelectOption(ui.typeSelector.get(), 'Slack');
     await waitFor(() => {
       expect(ui.typeSelector.get()).toHaveTextContent('Slack');
@@ -165,10 +155,8 @@ describe('ChannelSubForm', () => {
 
     const { user } = renderForm(googlechatDefaults, googlechatDefaults);
 
-    // Initially Google Chat
     expect(ui.typeSelector.get()).toHaveTextContent('Google Hangouts Chat');
 
-    // Google Chat fields should be visible with secure url showing as configured
     expect(ui.settings.googlechat.url.get()).toBeDisabled();
     expect(ui.settings.googlechat.url.get()).toHaveValue('configured');
 
@@ -177,7 +165,6 @@ describe('ChannelSubForm', () => {
     expect(ui.settings.googlechat.title.input.get()).toHaveValue('Alert Title');
     expect(ui.settings.googlechat.message.input.get()).toHaveValue('Alert Message');
 
-    // Switch to webhook type
     await clickSelectOption(ui.typeSelector.get(), 'Webhook');
     expect(ui.typeSelector.get()).toHaveTextContent('Webhook');
 
