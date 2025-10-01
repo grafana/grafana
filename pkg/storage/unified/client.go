@@ -328,3 +328,7 @@ func newClientMetrics(reg prometheus.Registerer) *clientMetrics {
 		}, []string{"operation"}),
 	}
 }
+
+func ProvideStorageBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {
+	return nil, nil
+}

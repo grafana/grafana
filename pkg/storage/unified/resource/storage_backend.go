@@ -31,8 +31,8 @@ const (
 	defaultEventPruningInterval = 5 * time.Minute
 )
 
-// kvStorageBackend Unified storage backend based on KV storage.
-type kvStorageBackend struct {
+// KVStorageBackend Unified storage backend based on KV storage.
+type KVStorageBackend struct {
 	snowflake            *snowflake.Node
 	kv                   KV
 	dataStore            *dataStore
@@ -48,7 +48,7 @@ type kvStorageBackend struct {
 	//reg           prometheus.Registerer
 }
 
-var _ StorageBackend = &kvStorageBackend{}
+var _ StorageBackend = &KVStorageBackend{}
 
 type KvBackendOptions struct {
 	KvStore              KV
@@ -79,7 +79,7 @@ func NewKvStorageBackend(opts KvBackendOptions) (StorageBackend, error) {
 		eventPruningInterval = defaultEventPruningInterval
 	}
 
-	backend := &kvStorageBackend{
+	backend := &KVStorageBackend{
 		kv:                   kv,
 		dataStore:            newDataStore(kv),
 		eventStore:           eventStore,
@@ -102,7 +102,7 @@ func NewKvStorageBackend(opts KvBackendOptions) (StorageBackend, error) {
 }
 
 // runCleanupOldEvents starts a background goroutine that periodically cleans up old events
-func (k *kvStorageBackend) runCleanupOldEvents(ctx context.Context) {
+func (k *KVStorageBackend) runCleanupOldEvents(ctx context.Context) {
 	// Run cleanup every hour
 	ticker := time.NewTicker(k.eventPruningInterval)
 	defer ticker.Stop()
@@ -119,7 +119,7 @@ func (k *kvStorageBackend) runCleanupOldEvents(ctx context.Context) {
 }
 
 // cleanupOldEvents performs the actual cleanup of old events
-func (k *kvStorageBackend) cleanupOldEvents(ctx context.Context) {
+func (k *KVStorageBackend) cleanupOldEvents(ctx context.Context) {
 	cutoff := time.Now().Add(-k.eventRetentionPeriod)
 	deletedCount, err := k.eventStore.CleanupOldEvents(ctx, cutoff)
 	if err != nil {
@@ -132,7 +132,7 @@ func (k *kvStorageBackend) cleanupOldEvents(ctx context.Context) {
 	}
 }
 
-func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) error {
+func (k *KVStorageBackend) pruneEvents(ctx context.Context, key PruningKey) error {
 	if !key.Validate() {
 		return fmt.Errorf("invalid pruning key, all fields must be set: %+v", key)
 	}
@@ -167,7 +167,7 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 	return nil
 }
 
-func (k *kvStorageBackend) initPruner(ctx context.Context) error {
+func (k *KVStorageBackend) initPruner(ctx context.Context) error {
 	if !k.withPruner {
 		k.log.Debug("Pruner disabled, using noop pruner")
 		k.historyPruner = &NoopPruner{}
@@ -200,7 +200,7 @@ func (k *kvStorageBackend) initPruner(ctx context.Context) error {
 }
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
-func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
+func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
 	if err := event.Validate(); err != nil {
 		return 0, fmt.Errorf("invalid event: %w", err)
 	}
@@ -279,7 +279,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	return rv, nil
 }
 
-func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
+func (k *KVStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
 	if req.Key == nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "missing key"}}
 	}
@@ -319,7 +319,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 }
 
 // ListIterator returns an iterator for listing resources.
-func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
+func (k *KVStorageBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
 	if req.Options == nil || req.Options.Key == nil {
 		return 0, fmt.Errorf("missing options or key in ListRequest")
 	}
@@ -571,7 +571,7 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 	return pagedKeys
 }
 
-func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+func (k *KVStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
 	if !key.Valid() {
 		return 0, func(yield func(*ModifiedResource, error) bool) {
 			yield(nil, fmt.Errorf("group, resource, and namespace are required"))
@@ -614,7 +614,7 @@ func convertEventType(action DataAction) resourcepb.WatchEvent_Type {
 	}
 }
 
-func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey DataKey) ([]byte, error) {
+func (k *KVStorageBackend) getValueFromDataStore(ctx context.Context, dataKey DataKey) ([]byte, error) {
 	raw, err := k.dataStore.Get(ctx, dataKey)
 	if err != nil {
 		return []byte{}, err
@@ -628,7 +628,7 @@ func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey Da
 	return value, nil
 }
 
-func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
+func (k *KVStorageBackend) listModifiedSinceDataStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
 	return func(yield func(*ModifiedResource, error) bool) {
 		var lastSeenResource *ModifiedResource
 		var lastSeenDataKey DataKey
@@ -697,7 +697,7 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 	}
 }
 
-func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
+func (k *KVStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
 	return func(yield func(*ModifiedResource, error) bool) {
 		// store all events ordered by RV for the given tenant here
 		eventKeys := make([]EventKey, 0)
@@ -764,7 +764,7 @@ func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key 
 }
 
 // ListHistory is like ListIterator, but it returns the history of a resource.
-func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error) (int64, error) {
+func (k *KVStorageBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error) (int64, error) {
 	if err := validateListHistoryRequest(req); err != nil {
 		return 0, err
 	}
@@ -843,7 +843,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 }
 
 // processTrashEntries handles the special case of listing deleted items (trash)
-func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error, historyKeys []DataKey, lastSeenRV int64, sortAscending bool, listRV int64) (int64, error) {
+func (k *KVStorageBackend) processTrashEntries(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error, historyKeys []DataKey, lastSeenRV int64, sortAscending bool, listRV int64) (int64, error) {
 	// Filter to only deleted entries
 	deletedKeys := make([]DataKey, 0, len(historyKeys))
 	for _, key := range historyKeys {
@@ -1016,7 +1016,7 @@ func (i *kvHistoryIterator) Value() []byte {
 }
 
 // WatchWriteEvents returns a channel that receives write events.
-func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
+func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
 	// Create a channel to receive events
 	events := make(chan *WrittenEvent, 10000) // TODO: make this configurable
 
@@ -1073,7 +1073,7 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 }
 
 // GetResourceStats returns resource stats within the storage backend.
-func (k *kvStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
+func (k *KVStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
 	return k.dataStore.GetResourceStats(ctx, namespace, minCount)
 }
 

@@ -59,6 +59,7 @@ type service struct {
 	subservicesWatcher *services.FailureWatcher
 	hasSubservices     bool
 
+	backend   resource.StorageBackend
 	cfg       *setting.Cfg
 	features  featuremgmt.FeatureToggles
 	db        infraDB.DB
@@ -86,6 +87,7 @@ type service struct {
 }
 
 func ProvideUnifiedStorageGrpcService(
+	backend resource.StorageBackend,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	db infraDB.DB,
@@ -109,6 +111,7 @@ func ProvideUnifiedStorageGrpcService(
 	})
 
 	s := &service{
+		backend:            backend,
 		cfg:                cfg,
 		features:           features,
 		stopCh:             make(chan struct{}),
@@ -263,6 +266,7 @@ func (s *service) starting(ctx context.Context) error {
 	}
 
 	serverOptions := ServerOptions{
+		Backend:        s.backend,
 		DB:             s.db,
 		Cfg:            s.cfg,
 		Tracer:         s.tracing,
