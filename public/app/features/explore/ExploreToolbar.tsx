@@ -221,23 +221,23 @@ export function ExploreToolbar({
     }
   };
 
-  const navBarActions = [
-    !sparkJoy && (
-      <Button
-        key="query-history"
-        size="sm"
-        variant={'secondary'}
-        aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
-        onClick={() => setDrawerOpened(!drawerOpened)}
-        data-testid={Components.QueryTab.queryHistoryButton}
-        icon="history"
-      >
-        <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
-      </Button>
-    ),
-    <SparkJoyToggle key="sparks-joy-toggle" value={sparkJoy} onToggle={onToggleSparkJoy} />,
-    !sparkJoy && <ShortLinkButtonMenu key="share" />,
-  ];
+  const navBarActions = sparkJoy
+    ? [<SparkJoyToggle key="sparks-joy-toggle" value={sparkJoy} onToggle={onToggleSparkJoy} />]
+    : [
+        <Button
+          key="query-history"
+          size="sm"
+          variant={'secondary'}
+          aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
+          onClick={() => setDrawerOpened(!drawerOpened)}
+          data-testid={Components.QueryTab.queryHistoryButton}
+          icon="history"
+        >
+          <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
+        </Button>,
+        <ShortLinkButtonMenu key="share" />,
+        <SparkJoyToggle key="sparks-joy-toggle" value={sparkJoy} onToggle={onToggleSparkJoy} />,
+      ];
 
   return (
     <div>
