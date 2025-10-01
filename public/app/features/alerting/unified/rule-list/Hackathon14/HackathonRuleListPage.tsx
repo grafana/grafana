@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, useStyles2, TextLink } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import SparkJoyToggle from 'app/core/components/SparkJoyToggle';
 
@@ -12,7 +12,6 @@ import { AlertSearchView } from './AlertSearchView';
 import { HackathonAlertSearchInput } from './HackathonAlertSearchBox';
 import { PopularAlerts } from './PopularAlerts';
 import { RecentVisited } from './RecentVisited';
-import { Stack } from 'app/plugins/datasource/grafana-pyroscope-datasource/QueryEditor/Stack';
 
 export const HackathonRuleListPage = ({ onToggleSparkJoy }: { onToggleSparkJoy: () => void }) => {
   const styles = useStyles2(getStyles);
@@ -65,9 +64,11 @@ export const HackathonRuleListPage = ({ onToggleSparkJoy }: { onToggleSparkJoy: 
           </>
         )}
 
-        <Stack alignItems="center">
-          <Button>View All (I'm not implement yet)</Button>
-        </Stack>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
+          <TextLink href="/alerting/list/hackathon14/view-all-alerts" color="secondary" style={{ textDecoration: 'underline' }}>
+            View All
+          </TextLink>
+        </div>
       </div>
     </AlertingPageWrapper>
   );

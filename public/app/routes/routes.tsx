@@ -143,6 +143,18 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/dashboards/hackathon14/view-all-dashboards',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/browse-dashboards/BrowseDashboardsPage')
+      ),
+    },
+    {
+      path: '/dashboards/hackathon14/view-all-folders',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/browse-dashboards/BrowseDashboardsPage')
+      ),
+    },
+    {
       path: '/dashboards/f/:uid/:slug',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/browse-dashboards/BrowseDashboardsPage')

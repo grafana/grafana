@@ -25,7 +25,7 @@ export const MostPopularFolders = () => {
         subtitle="Based on your activity"
         icon="fire"
         actions={
-          <TextLink href="/dashboards" color="secondary" className={styles.viewAllLink}>
+          <TextLink href="/dashboards/hackathon14/view-all-folders" color="secondary" className={styles.viewAllLink}>
             View All
           </TextLink>
         }

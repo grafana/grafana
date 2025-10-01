@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -18,6 +19,7 @@ import { useRulesFilter } from '../hooks/useFilteredRules';
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
 import { HackathonRuleListPage } from './Hackathon14/HackathonRuleListPage';
+import { ViewAllAlerts } from './Hackathon14/ViewAllAlerts';
 import { RuleListPageTitle } from './RuleListPageTitle';
 import RulesFilter from './filter/RulesFilter';
 
@@ -133,6 +135,7 @@ const RuleListPageCurrent = ({ onToggleSparkJoy }: { onToggleSparkJoy: () => voi
 
 export default function RuleListPage() {
   const [sparkJoy, setSparkJoy] = useState<boolean>(() => getSparkJoyEnabled(true));
+  const location = useLocation();
 
   const handleToggleSparkJoy = () => {
     setSparkJoy((current) => {
@@ -141,6 +144,18 @@ export default function RuleListPage() {
       return next;
     });
   };
+
+  // Use window.location.pathname to get the full path (React Router strips matched portions)
+  const fullPathname = window.location.pathname;
+  console.log('Alert full pathname:', fullPathname);
+
+  // Check if we're on the view-all-alerts route
+  const isViewAllAlerts = fullPathname.includes('/hackathon14/view-all-alerts');
+  
+  if (isViewAllAlerts) {
+    console.log('Rendering ViewAllAlerts');
+    return <ViewAllAlerts />;
+  }
 
   if (sparkJoy) {
     return <HackathonRuleListPage onToggleSparkJoy={handleToggleSparkJoy} />;

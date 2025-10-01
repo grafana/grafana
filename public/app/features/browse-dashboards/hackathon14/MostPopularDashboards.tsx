@@ -116,7 +116,7 @@ export const MostPopularDashboards = () => {
                   size="sm"
                 />
               </ButtonGroup>
-                <TextLink color="secondary" href="/dashboards" className={styles.viewAllLink}>
+                <TextLink color="secondary" href="/dashboards/hackathon14/view-all-dashboards" className={styles.viewAllLink}>
                   View All
                 </TextLink>
             </Stack>
