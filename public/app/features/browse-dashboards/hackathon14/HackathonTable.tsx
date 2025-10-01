@@ -69,7 +69,7 @@ export const HackathonTable = ({
   }
 
   return (
-    <div className={styles.tableView}>
+    <div className={styles.tableWrapper}>
       <div className={styles.tableHeader} style={{ gridTemplateColumns }}>
         {expandable && <div className={styles.columnToggle}></div>}
         {columns.map((col) => (
@@ -79,54 +79,55 @@ export const HackathonTable = ({
         ))}
       </div>
 
-      {data.map((item) => {
-        const isExpanded = expandedRows.has(item.uid);
-        return (
-          <div key={item.uid}>
-            <div
-              className={styles.tableRow}
-              style={{ gridTemplateColumns }}
-              onClick={(e) => handleRowClick(item, e)}
-            >
-              {expandable && (
-                <div className={styles.columnToggle}>
-                  <Icon
-                    name={isExpanded ? 'angle-down' : 'angle-right'}
-                    size="sm"
-                    className={styles.expandIcon}
-                  />
-                </div>
-              )}
-              {columns.map((col) => (
-                <div key={col.key} className={styles.columnCell}>
-                  {col.render(item)}
-                </div>
-              ))}
-            </div>
+      <div className={styles.tableBody}>
+        {data.map((item) => {
+          const isExpanded = expandedRows.has(item.uid);
+          return (
+            <div key={item.uid}>
+              <div
+                className={`${styles.tableRow} ${isExpanded ? styles.rowExpanded : ''}`}
+                style={{ gridTemplateColumns }}
+                onClick={(e) => handleRowClick(item, e)}
+              >
+                {expandable && (
+                  <div className={styles.columnToggle}>
+                    <Icon
+                      name={isExpanded ? 'angle-down' : 'angle-right'}
+                      size="sm"
+                      className={styles.expandIcon}
+                    />
+                  </div>
+                )}
+                {columns.map((col) => (
+                  <div key={col.key} className={styles.columnCell}>
+                    {col.render(item)}
+                  </div>
+                ))}
+              </div>
 
-            {expandable && isExpanded && expandedContent && (
-              <div className={styles.expandedRow}>{expandedContent.render(item)}</div>
-            )}
-          </div>
-        );
-      })}
+              {expandable && isExpanded && expandedContent && (
+                <div className={styles.expandedRow}>{expandedContent.render(item)}</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tableView: css({
-    display: 'flex',
-    flexDirection: 'column',
-    border: `1px solid ${theme.colors.border.weak}`,
+  tableWrapper: css({
     borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.colors.border.weak}`,
     overflow: 'hidden',
+    background: theme.colors.background.primary,
   }),
 
   tableHeader: css({
     display: 'grid',
-    gap: theme.spacing(2),
-    padding: theme.spacing(2, 3),
+    gap: theme.spacing(1.5),
+    padding: theme.spacing(1.5, 3),
     background: theme.colors.background.secondary,
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     fontWeight: theme.typography.fontWeightMedium,
@@ -134,18 +135,28 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
   }),
 
+  tableBody: css({
+    display: 'flex',
+    flexDirection: 'column',
+  }),
+
   tableRow: css({
     display: 'grid',
-    gap: theme.spacing(2),
-    padding: theme.spacing(2, 3),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    gap: theme.spacing(1.5),
+    padding: theme.spacing(1.75, 3),
+    borderBottom: `1px solid rgba(255, 255, 255, 0.06)`,
     cursor: 'pointer',
-    transition: 'background-color 0.2s ease',
+    transition: 'background-color 0.2s ease, box-shadow 0.2s ease',
     alignItems: 'center',
 
     '&:hover': {
       background: theme.colors.background.secondary,
+      boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
     },
+  }),
+
+  rowExpanded: css({
+    background: theme.colors.background.secondary,
   }),
 
   columnToggle: css({
@@ -159,6 +170,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     minWidth: 0,
+    textTransform: 'uppercase',
+    letterSpacing: '0.02em',
   }),
 
   columnCell: css({
@@ -166,6 +179,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     minWidth: 0,
     overflow: 'hidden',
+    gap: theme.spacing(1),
   }),
 
   expandIcon: css({
@@ -176,7 +190,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   expandedRow: css({
     padding: theme.spacing(3, 3, 3, 6),
     background: theme.colors.background.secondary,
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    borderBottom: `1px solid rgba(255,255,255,0.06)`,
     borderLeft: `3px solid ${theme.colors.primary.main}`,
   }),
 

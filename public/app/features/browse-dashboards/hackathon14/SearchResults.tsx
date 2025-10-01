@@ -223,26 +223,12 @@ export const SearchResults = ({ searchState, query }: SearchResultsProps) => {
     );
   }
 
-  if (!searchState.result) {
-    return <Text>No search performed yet.</Text>;
-  }
-
   const results: any[] = [];
-  const view = searchState.result.view;
+  const view = searchState?.result?.view;
 
-  for (let i = 0; i < view.length; i++) {
+  for (let i = 0; i < view?.length; i++) {
     const item = view.get(i);
     results.push(item);
-  }
-
-  if (results?.length === 0) {
-    return (
-      <div className={styles.emptyState}>
-        <CosmicSceneIcon />
-        <Text variant="h4">No results found</Text>
-        <Text color="secondary">Try adjusting your search query or explore the cosmos 🚀</Text>
-      </div>
-    );
   }
 
   // Filter results

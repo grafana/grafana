@@ -40,14 +40,25 @@ export const MostPopularFolders = () => {
 
         {data && data.resources?.length > 0 && (
           <Grid gap={2} columns={{ xs: 1, sm: 2, md: 3, lg: 4 }}>
-            {data.resources.map((resource) => (
-              <Card key={resource.uid} className={styles.clickableCard} onClick={() => handleResourceClick(resource)}>
-                <Stack direction="row" gap={2} alignItems="flex-start">
-                  <Icon name="folder" size="xl" className={styles.folderIcon} />
-                  <Text weight="medium">{resource.title}</Text>
-                </Stack>
-              </Card>
-            ))}
+            {data.resources.map((resource) => {
+              const title = resource.title?.length > 20 ? `${resource.title.slice(0, 20)}…` : resource.title;
+              return (
+                <Card key={resource.uid} className={styles.clickableCard} onClick={() => handleResourceClick(resource)}>
+                  <Stack direction="column" gap={1}>
+                    <Stack direction="row" gap={1} alignItems="center">
+                      <Icon name="folder" size="lg" className={styles.folderIcon} />
+                      <Text weight="medium" className={styles.folderTitle} title={resource.title}>
+                        {title}
+                      </Text>
+                    </Stack>
+
+                    <Text variant="bodySmall" color="secondary" className={styles.metaText}>
+                      Last visited: {resource.lastVisited ? new Date(resource.lastVisited).toLocaleDateString() : 'N/A'}
+                    </Text>
+                  </Stack>
+                </Card>
+              );
+            })}
           </Grid>
         )}
 
@@ -64,15 +75,11 @@ export const MostPopularFolders = () => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   headerIcon: css({
-    color: '#ec4899',
-    filter: 'drop-shadow(0 0 8px rgba(236, 72, 153, 0.4))',
+    color: theme.colors.text.secondary,
   }),
 
   headerTitle: css({
-    background: 'linear-gradient(135deg, #ec4899, #8b5cf6)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
+    color: theme.colors.text.primary,
   }),
 
   folderIcon: css({
@@ -121,6 +128,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
         opacity: 0.35,
       },
     },
+  }),
+
+  folderTitle: css({
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    flex: 1,
+  }),
+
+  metaText: css({
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   }),
 
   emptyCard: css({
