@@ -790,7 +790,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		return rsp, nil
 	}
 	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
-		rsp.Error = AsErrorResult(ErrOptimisticLockingFailed)
+		rsp.Error = &ErrOptimisticLockingFailed
 		return rsp, nil
 	}
 
