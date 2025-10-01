@@ -91,8 +91,8 @@
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json"
+    "prepack": "node ../../scripts/prepare-npm-package.js",
+    "postpack": "rimraf ./raw"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "16.0.1",

@@ -10,17 +10,6 @@ try {
   const pkgJson = await PackageJson.load(cwd);
   const pkgJsonExports = pkgJson.content.exports ?? {};
 
-  // The "internal" export is not for public consumption
-  if (pkgJsonExports && pkgJsonExports['./internal']) {
-    delete pkgJsonExports['./internal'];
-  }
-
-  pkgJson.update({
-    exports: pkgJsonExports,
-  });
-
-  await pkgJson.save();
-
   // Aliasable exports point to a separate entry point. The following should not be aliased:
   // - ./package.json
   // - .
