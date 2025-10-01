@@ -293,13 +293,6 @@ func (s *Storage) Delete(
 		if err := preconditions.Check(key, out); err != nil {
 			return err
 		}
-
-		if preconditions.ResourceVersion != nil {
-			cmd.ResourceVersion, err = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
-			if err != nil {
-				return err
-			}
-		}
 		if preconditions.UID != nil {
 			cmd.Uid = string(*preconditions.UID)
 		}
@@ -319,6 +312,10 @@ func (s *Storage) Delete(
 		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
 	}
 
+	cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
+	if err != nil {
+		return resource.GetError(resource.AsErrorResult(err))
+	}
 	rsp, err := s.store.Delete(ctx, cmd)
 	if err != nil {
 		return resource.GetError(resource.AsErrorResult(err))
