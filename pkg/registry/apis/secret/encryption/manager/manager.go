@@ -21,10 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const (
-	keyIdDelimiter = '#'
-)
-
 type EncryptionManager struct {
 	tracer     trace.Tracer
 	store      contracts.DataKeyStorage
@@ -285,20 +281,6 @@ func (s *EncryptionManager) Decrypt(ctx context.Context, namespace string, paylo
 		err = fmt.Errorf("unable to decrypt empty data key id")
 		return nil, err
 	}
-
-	// payload = payload[1:]
-	// endOfKey := bytes.Index(payload, []byte{keyIdDelimiter})
-	// if endOfKey == -1 {
-	// 	err = fmt.Errorf("could not find valid key id in encrypted payload")
-	// 	return nil, err
-	// }
-	// b64Key := payload[:endOfKey]
-	// payload = payload[endOfKey+1:]
-	// keyId := make([]byte, base64.RawStdEncoding.DecodedLen(len(b64Key)))
-	// _, err = base64.RawStdEncoding.Decode(keyId, b64Key)
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	dataKey, err := s.dataKeyById(ctx, namespace, payload.DataKeyID)
 	if err != nil {

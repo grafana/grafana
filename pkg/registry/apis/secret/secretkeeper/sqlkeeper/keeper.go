@@ -30,7 +30,7 @@ func NewSQLKeeper(
 	reg prometheus.Registerer,
 ) (*SQLKeeper, error) {
 	// Run the encrypted value store migration before anything else, otherwise operations may fail
-	err := migrationExecutor.Execute(context.Background())
+	_, err := migrationExecutor.Execute(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute encrypted value store migration: %w", err)
 	}

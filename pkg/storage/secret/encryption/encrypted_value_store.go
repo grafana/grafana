@@ -1,7 +1,9 @@
 package encryption
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"time"
@@ -343,26 +345,75 @@ func (s *globalEncryptedValStorage) CountAll(ctx context.Context, untilTime *int
 }
 
 type encryptedValMigrationExecutor struct {
-	db      contracts.Database
-	dialect sqltemplate.Dialect
-	tracer  trace.Tracer
+	db                  contracts.Database
+	dialect             sqltemplate.Dialect
+	tracer              trace.Tracer
+	encryptedValueStore contracts.EncryptedValueStorage
+	globalStore         contracts.GlobalEncryptedValueStorage
 }
 
 func ProvideEncryptedValueMigrationExecutor(
 	db contracts.Database,
 	tracer trace.Tracer,
+	encryptedValueStore contracts.EncryptedValueStorage,
+	globalStore contracts.GlobalEncryptedValueStorage,
 ) (contracts.EncryptedValueMigrationExecutor, error) {
 	return &encryptedValMigrationExecutor{
-		db:      db,
-		dialect: sqltemplate.DialectForDriver(db.DriverName()),
-		tracer:  tracer,
+		db:                  db,
+		dialect:             sqltemplate.DialectForDriver(db.DriverName()),
+		tracer:              tracer,
+		encryptedValueStore: encryptedValueStore,
+		globalStore:         globalStore,
 	}, nil
 }
 
-func (s *encryptedValMigrationExecutor) Execute(ctx context.Context) error {
+func (s *encryptedValMigrationExecutor) Execute(ctx context.Context) (int, error) {
 	ctx, span := s.tracer.Start(ctx, "EncryptedValueMigrationExecutor.Execute")
 	defer span.End()
 
-	panic("not implemented")
-	return nil
+	// 1. Retrieve all encrypted values
+	encryptedValues, err := s.globalStore.ListAll(ctx, contracts.ListOpts{}, nil)
+	if err != nil {
+		return 0, fmt.Errorf("listing all encrypted values: %w", err)
+	}
+
+	// This doesn't need to be done in a single transaction because there's no risk to successful rows if other rows fail
+	rowsAffected := 0
+	for _, encryptedValue := range encryptedValues {
+		// 2. If the value already has the data key id broken out, skip it
+		if encryptedValue.DataKeyID != "" {
+			continue
+		}
+
+		// 3. Split the data key id and the encrypted data out from the encoded payload
+		payload := encryptedValue.EncryptedData
+		const keyIdDelimiter = '#'
+		payload = payload[1:]
+		endOfKey := bytes.Index(payload, []byte{keyIdDelimiter})
+		if endOfKey == -1 {
+			return 0, fmt.Errorf("could not find valid key id in encrypted payload with namespace %s and name %s and version %d", encryptedValue.Namespace, encryptedValue.Name, encryptedValue.Version)
+		}
+		b64Key := payload[:endOfKey]
+		encryptedData := payload[endOfKey+1:]
+		if len(encryptedData) == 0 {
+			return 0, fmt.Errorf("encrypted data is empty with namespace %s and name %s and version %d", encryptedValue.Namespace, encryptedValue.Name, encryptedValue.Version)
+		}
+		keyId := make([]byte, base64.RawStdEncoding.DecodedLen(len(b64Key)))
+		_, err := base64.RawStdEncoding.Decode(keyId, b64Key)
+		if err != nil {
+			return 0, fmt.Errorf("decoding key id with namespace %s and name %s and version %d: %w", encryptedValue.Namespace, encryptedValue.Name, encryptedValue.Version, err)
+		}
+
+		// 4. Update the encrypted value with the data key id and the encrypted data
+		err = s.encryptedValueStore.Update(ctx, encryptedValue.Namespace, encryptedValue.Name, encryptedValue.Version, contracts.EncryptedPayload{
+			DataKeyID:     string(keyId),
+			EncryptedData: encryptedData,
+		})
+		if err != nil {
+			return 0, fmt.Errorf("updating encrypted value with namespace %s and name %s and version %d: %w", encryptedValue.Namespace, encryptedValue.Name, encryptedValue.Version, err)
+		}
+		rowsAffected++
+	}
+
+	return rowsAffected, nil
 }

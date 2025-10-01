@@ -46,7 +46,7 @@ type GlobalEncryptedValueStorage interface {
 }
 
 type EncryptedValueMigrationExecutor interface {
-	Execute(ctx context.Context) error
+	Execute(ctx context.Context) (int, error)
 }
 
 type ConsolidationService interface {

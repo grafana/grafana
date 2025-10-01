@@ -2,15 +2,23 @@ package encryption_test
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"slices"
 	"testing"
+	"text/template"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
+	cipherService "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/storage/secret/encryption"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 	"pgregory.net/rapid"
 )
 
@@ -233,6 +241,135 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 	})
 }
 
+func TestEncryptedValueMigration(t *testing.T) {
+	t.Parallel()
+
+	sut := testutils.Setup(t)
+	tracer := noop.NewTracerProvider().Tracer("test")
+	usageStats := &usagestats.UsageStatsMock{T: t}
+	enc, err := cipherService.ProvideAESGCMCipherService(tracer, usageStats)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		namespace string
+		name      string
+		version   int64
+		plaintext string
+		dataKeyId string
+	}{
+		{
+			namespace: "test-namespace-1",
+			name:      "test-name-1",
+			version:   1,
+			plaintext: "test-plaintext-1",
+			dataKeyId: "test-data-key-id-1",
+		},
+		{
+			namespace: "test-namespace-1",
+			name:      "test-name-2",
+			version:   1,
+			plaintext: "test-plaintext-2",
+			dataKeyId: "test-data-key-id-1",
+		},
+		{
+			namespace: "test-namespace-2",
+			name:      "test-name-3",
+			version:   1,
+			plaintext: "test-plaintext-3",
+			dataKeyId: "test-data-key-id-2",
+		},
+	}
+
+	// Seed with data in the legacy format
+	for _, tc := range testCases {
+		err := createLegacyEncryptedData(t, sut, enc, tc.namespace, tc.name, tc.version, tc.plaintext, tc.dataKeyId)
+		require.NoError(t, err)
+	}
+
+	// Run the migration and blindy trust it
+	rowsAffected, err := sut.EncryptedValueMigrationExecutor.Execute(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, len(testCases), rowsAffected)
+
+	// Now validate that the data is in the new format
+	encryptedValues, err := sut.GlobalEncryptedValueStorage.ListAll(t.Context(), contracts.ListOpts{}, nil)
+	require.NoError(t, err)
+	require.Len(t, encryptedValues, 3)
+
+	for _, tc := range testCases {
+		ev, err := sut.EncryptedValueStorage.Get(t.Context(), tc.namespace, tc.name, tc.version)
+		require.NoError(t, err)
+
+		// Decrypt the encrypted data and check for equality
+		decrypted, err := enc.Decrypt(t.Context(), ev.EncryptedData, tc.dataKeyId)
+		require.NoError(t, err)
+		require.Equal(t, tc.dataKeyId, ev.DataKeyID)
+		require.Equal(t, tc.plaintext, string(decrypted))
+	}
+}
+
+// Helper function that bypasses interfaces and creates data in the legacy format directly in the database.
+// The format is "#{encoded_key_id}#{encrypted_data}".
+func createLegacyEncryptedData(t *testing.T, sut testutils.Sut, enc cipher.Cipher, namespace, name string, version int64, plaintext string, dataKeyId string) error {
+	t.Helper()
+
+	encryptedData, err := enc.Encrypt(t.Context(), []byte(plaintext), dataKeyId)
+	require.NoError(t, err)
+
+	// Encode using the legacy format
+	const keyIdDelimiter = '#'
+	prefix := make([]byte, base64.RawStdEncoding.EncodedLen(len(dataKeyId))+2)
+	base64.RawStdEncoding.Encode(prefix[1:], []byte(dataKeyId))
+	prefix[0] = keyIdDelimiter
+	prefix[len(prefix)-1] = keyIdDelimiter
+
+	blob := make([]byte, len(prefix)+len(encryptedData))
+	copy(blob, prefix)
+	copy(blob[len(prefix):], encryptedData)
+
+	createdTime := time.Now().Unix()
+
+	encryptedValue := &encryption.EncryptedValue{
+		Namespace:     namespace,
+		Name:          name,
+		Version:       version,
+		EncryptedData: blob,
+		DataKeyID:     "",
+		Created:       createdTime,
+		Updated:       createdTime,
+	}
+
+	req := struct {
+		sqltemplate.SQLTemplate
+		Row *encryption.EncryptedValue
+	}{
+		SQLTemplate: sqltemplate.New(sqltemplate.DialectForDriver(sut.Database.DriverName())),
+		Row:         encryptedValue,
+	}
+	tmpl, err := template.ParseFiles("data/encrypted_value_create.sql")
+	if err != nil {
+		return fmt.Errorf("parsing template: %w", err)
+	}
+
+	query, err := sqltemplate.Execute(tmpl, req)
+	if err != nil {
+		return fmt.Errorf("executing template: %w", err)
+	}
+
+	res, err := sut.Database.ExecContext(t.Context(), query, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("inserting row: %w", err)
+	}
+
+	if rowsAffected, err := res.RowsAffected(); err != nil {
+		return fmt.Errorf("getting rows affected: %w", err)
+	} else if rowsAffected != 1 {
+		return fmt.Errorf("expected 1 row affected, got %d", rowsAffected)
+	}
+
+	return nil
+}
+
 func TestStateMachine(t *testing.T) {
 	t.Parallel()
 
@@ -345,7 +482,7 @@ func (m *model) create(namespace, name string, version int64, encryptedData []by
 	if err != nil && !errors.Is(err, encryption.ErrEncryptedValueNotFound) {
 		return nil, err
 	}
-	// The entry being creted already exists
+	// The entry being created already exists
 	if v != nil {
 		return nil, encryption.ErrEncryptedValueAlreadyExists
 	}
