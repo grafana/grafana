@@ -626,6 +626,9 @@ func (s *Storage) GuaranteedUpdate(
 			if err != nil {
 				err = resource.GetError(resource.AsErrorResult(err))
 			} else if updateResponse.Error != nil {
+				if attempt < MaxUpdateAttempts && updateResponse.Error.Code == http.StatusConflict {
+					continue // try the read again
+				}
 				err = resource.GetError(updateResponse.Error)
 			}
 
