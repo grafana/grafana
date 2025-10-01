@@ -203,13 +203,19 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 		r.history[name] = fileName
 	}
 
+	info, ok := resources.GroupResourceToResourceInfoLookup[r.kind.Group+"/"+r.kind.Resource]
+	if !ok {
+		return fmt.Errorf("unknown group resource %s/%s", r.kind.Group, r.kind.Resource)
+	}
+
 	result := jobs.JobResourceResult{
-		Name: parsed.Meta.GetName(),
-		// TODO: need to return Kind here
-		Resource: r.kind.Resource,
-		Group:    r.kind.Group,
-		Action:   repository.FileActionCreated,
-		Path:     fileName,
+		Name:         parsed.Meta.GetName(),
+		Kind:         info.GroupVersionKind().Kind,
+		SingularName: info.GetSingularName(),
+		Resource:     r.kind.Resource,
+		Group:        r.kind.Group,
+		Action:       repository.FileActionCreated,
+		Path:         fileName,
 	}
 
 	if err != nil {

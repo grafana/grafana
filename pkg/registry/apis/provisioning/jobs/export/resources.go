@@ -97,12 +97,17 @@ func exportResource(ctx context.Context,
 	// this will work well enough for now, but needs to be revisted as we have a bigger mix of active versions
 	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) (err error) {
 		gvk := item.GroupVersionKind()
+		info, ok := resources.GroupKindToResourceInfoLookup[gvk.Group+"/"+gvk.Kind]
+		if !ok {
+			return fmt.Errorf("unknown group kind %s/%s", gvk.Group, gvk.Kind)
+		}
 		result := jobs.JobResourceResult{
-			Name: item.GetName(),
-			// TODO: need to return Kind here
-			Resource: resource,
-			Group:    gvk.Group,
-			Action:   repository.FileActionCreated,
+			Name:         item.GetName(),
+			Resource:     resource,
+			SingularName: info.GetSingularName(),
+			Kind:         gvk.Kind,
+			Group:        gvk.Group,
+			Action:       repository.FileActionCreated,
 		}
 
 		// Check if resource is already managed by a repository
