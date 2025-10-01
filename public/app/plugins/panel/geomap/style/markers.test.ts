@@ -113,7 +113,6 @@ describe('Icon Path Consistency', () => {
   });
 
   it('should use consistent paths between default and selected circle icons', () => {
-    // Default config should use the standard marker path format
     expect(defaultStyleConfig.symbol.fixed).toBe(circleIconPath);
   });
 
@@ -127,7 +126,6 @@ describe('Icon Path Consistency', () => {
   it('should create valid marker maker for default icon', async () => {
     const defaultMaker = await getMarkerMaker(); // No symbol
 
-    // Default should use the built-in circle marker
     expect(defaultMaker).toBe(circleMarker);
   });
 });
