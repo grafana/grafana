@@ -46,9 +46,8 @@ func NewResourceTuple(resource iamv0.ResourcePermissionspecResource, perm iamv0.
 		key.Object = zanzana.NewObjectEntry(zanzana.TypeFolder, "", "", "", resource.Name)
 	} else {
 		key.Object = zanzana.NewObjectEntry(
-			zanzana.TypeFolder, resource.ApiGroup, resource.Resource, "", resource.Name,
+			zanzana.TypeResource, resource.ApiGroup, resource.Resource, "", resource.Name,
 		)
-		// TODO Understand the with group_filter condition
 		key.Condition = &v1.RelationshipCondition{
 			Name: "group_filter",
 			Context: &structpb.Struct{
