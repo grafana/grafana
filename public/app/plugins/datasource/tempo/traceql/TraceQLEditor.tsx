@@ -120,6 +120,17 @@ export function TraceQLEditor(props: Props) {
             errorTimeoutId.current = window.setTimeout(() => {
               setMarkers(monaco, model, errorNodes);
             }, 500);
+
+            if (changeEvent.changes.some((c) => c.text === '')) {
+              const model = editor.getModel();
+              const position = editor.getPosition();
+              const word = model?.getWordUntilPosition(position!);
+              if (word?.word?.length! > 0) {
+                setTimeout(() => {
+                  editor.trigger('keyboard', 'editor.action.triggerSuggest', {});
+                }, 20);
+              }
+            }
           });
         }}
       />
