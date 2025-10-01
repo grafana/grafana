@@ -1,6 +1,8 @@
+//@ts-check
 import PackageJson from '@npmcli/package-json';
 import { mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
+import { inspect } from 'node:util';
 
 const cwd = process.cwd();
 
@@ -19,9 +21,18 @@ try {
 
   await pkgJson.save();
 
-  // For every export in the package.json we generate an additional "nested" package.json
-  // to hack around typescript resolutions that don't support exports. e.g. node10.
-  for (const [aliasName, pkgJsonExport] of Object.entries(pkgJsonExports)) {
+  // Aliasable exports point to a separate entry point. Wildcard exports aren't supported.
+  const aliasableExports = Object.entries(pkgJsonExports).reduce((acc, [key, val], idx) => {
+    if (key === './package.json' || key === '.' || key === './index' || key.endsWith('*')) {
+      return acc;
+    }
+    acc[key] = val;
+    return acc;
+  }, {});
+
+  // For backwards compatibility generate additional "nested" package.json for
+  // typescript resolutions that don't support exports. e.g. node10.
+  for (const [aliasName, pkgJsonExport] of Object.entries(aliasableExports)) {
     await createAliasPackageJsonFiles(pkgJson.content, aliasName, pkgJsonExport);
   }
 } catch (e) {
@@ -30,7 +41,7 @@ try {
 }
 
 async function createAliasPackageJsonFiles(packageJsonContent, aliasName, pkgJsonExport) {
-  const pkgName = `${packageJsonContent.name}/${aliasName}`;
+  const pkgName = join(packageJsonContent.name, aliasName);
   try {
     console.log(`📦 Writing alias package.json for ${pkgName}.`);
     const pkgJsonPath = join(cwd, aliasName);
@@ -38,9 +49,9 @@ async function createAliasPackageJsonFiles(packageJsonContent, aliasName, pkgJso
     const pkgJson = await PackageJson.create(pkgJsonPath, {
       data: {
         name: pkgName,
-        types: pkgJsonExport.require.types,
-        main: pkgJsonExport.require.default,
-        module: pkgJsonExport.import.default,
+        types: relative(pkgJsonPath, pkgJsonExport.types),
+        main: relative(pkgJsonPath, pkgJsonExport.require),
+        module: relative(pkgJsonPath, pkgJsonExport.import),
       },
     });
     await pkgJson.save();
