@@ -85,7 +85,7 @@ InlineSwitch.displayName = 'Switch';
 
 const translationAnimation = keyframes({
   '0%': {
-    backgroundPosition: '0%',
+    backgroundPosition: '20%',
   },
   '100%': {
     backgroundPosition: '400%',
@@ -274,6 +274,7 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
         background: rainbowLinearGradient,
         borderColor: 'transparent',
         backgroundSize: '400%',
+        backgroundPosition: '20%',
 
         '&:hover': {
           ...backgroundPositionAnimation,
