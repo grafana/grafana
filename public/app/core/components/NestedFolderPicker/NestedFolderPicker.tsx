@@ -331,7 +331,7 @@ export function NestedFolderPicker({
       <Input
         ref={refs.setReference}
         autoFocus
-        prefix={label ? <Icon name="folder" /> : null}
+        prefix={label ? <Icon name="folder" /> : <Icon name="search" />}
         placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
         value={search}
         invalid={invalid}
@@ -344,7 +344,6 @@ export function NestedFolderPicker({
         aria-owns={overlayId}
         aria-activedescendant={getDOMId(overlayId, flatTree[focusedItemIndex]?.item.uid)}
         role="combobox"
-        suffix={<Icon name="search" />}
         {...getReferenceProps()}
         onKeyDown={handleKeyDown}
       />
