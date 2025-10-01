@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
@@ -21,7 +22,6 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
-	"github.com/grafana/dskit/ring"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
@@ -179,15 +179,22 @@ type SearchOptions struct {
 	Resources DocumentBuilderSupplier
 
 	// How many threads should build indexes
-	WorkerThreads int
+	InitWorkerThreads int
 
 	// Skip building index on startup for small indexes
 	InitMinCount int
 
-	// Interval for periodic index rebuilds (0 disables periodic rebuilds)
-	RebuildInterval time.Duration
+	// How often to rebuild dashboard index. 0 disables periodic rebuilds.
+	DashboardIndexMaxAge time.Duration
 
-	Ring *ring.Ring
+	// Maximum age of file-based index that can be reused. Ignored if zero.
+	MaxIndexAge time.Duration
+
+	// Minimum build version for reusing file-based indexes. Ignored if nil.
+	MinBuildVersion *semver.Version
+
+	// Number of workers to use for index rebuilds.
+	IndexRebuildWorkers int
 }
 
 type ResourceServerOptions struct {
@@ -420,6 +427,10 @@ func (s *server) Stop(ctx context.Context) error {
 			stopFailed = true
 			s.initErr = fmt.Errorf("service stopeed with error: %w", err)
 		}
+	}
+
+	if s.search != nil {
+		s.search.stop()
 	}
 
 	// Stops the streaming
