@@ -62,6 +62,7 @@ export function ChannelSubForm<R extends ChannelValues>({
   const channelFieldPath = `items.${integrationIndex}` as const;
   const typeFieldPath = `${channelFieldPath}.type` as const;
   const settingsFieldPath = `${channelFieldPath}.settings` as const;
+  const secureFieldsPath = `${channelFieldPath}.secureFields` as const;
 
   const selectedType = watch(typeFieldPath) ?? defaultValues.type;
   const parse_mode = watch(`${settingsFieldPath}.parse_mode`);
@@ -83,10 +84,24 @@ export function ChannelSubForm<R extends ChannelValues>({
     // Restore values when switching back from a changed integration to the default one
     const subscription = watch((formValues, { name, type }) => {
       // @ts-expect-error name is valid key for formValues
-      const value = name ? formValues[name] : '';
+      const value = name ? getValues(name, formValues) : '';
       if (initialValues && name === typeFieldPath && value === initialValues.type && type === 'change') {
         setValue(settingsFieldPath, initialValues.settings);
+        setValue(secureFieldsPath, initialValues.secureFields);
       }
+
+      // Clear settings when switching integration type
+      if (name === typeFieldPath && value !== initialValues?.type && type === 'change') {
+        setValue(settingsFieldPath, {});
+        setValue(secureFieldsPath, {});
+      }
+
+      // Clear settings when switching integration type (even without initialValues)
+      if (!initialValues && name === typeFieldPath && type === 'change') {
+        setValue(settingsFieldPath, {});
+        setValue(secureFieldsPath, {});
+      }
+
       // Restore initial value of an existing oncall integration
       if (
         initialValues &&
@@ -98,7 +113,7 @@ export function ChannelSubForm<R extends ChannelValues>({
     });
 
     return () => subscription.unsubscribe();
-  }, [selectedType, initialValues, setValue, settingsFieldPath, typeFieldPath, watch]);
+  }, [selectedType, initialValues, setValue, settingsFieldPath, typeFieldPath, secureFieldsPath, getValues, watch]);
 
   const onResetSecureField = (key: string) => {
     // formSecureFields might not be up to date if this function is called multiple times in a row
@@ -234,7 +249,7 @@ export function ChannelSubForm<R extends ChannelValues>({
         </div>
       </div>
       {notifier && (
-        <div className={styles.innerContent}>
+        <div key={selectedType} className={styles.innerContent}>
           {showTelegramWarning && (
             <Alert
               title={t(
@@ -251,6 +266,7 @@ export function ChannelSubForm<R extends ChannelValues>({
             </Alert>
           )}
           <ChannelOptions<R>
+            key={`${selectedType}-mandatory`}
             defaultValues={defaultValues}
             selectedChannelOptions={mandatoryOptions.length ? mandatoryOptions : optionalOptions}
             errors={errors}
@@ -272,6 +288,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                 </Alert>
               )}
               <ChannelOptions<R>
+                key={`${selectedType}-optional`}
                 defaultValues={defaultValues}
                 selectedChannelOptions={optionalOptions}
                 onResetSecureField={onResetSecureField}
