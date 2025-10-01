@@ -82,10 +82,10 @@ export const PlotLegend = memo(
     if (annotations && annotations.length > 0) {
       annotations.forEach((anno) => {
         const props: Series = anno.props;
-        const annoConfig = anno.getConfig();
         legendItems.push({
-          disabled: !annoConfig.show,
+          disabled: !props.show,
           label: typeof props.label === 'string' ? props.label : 'annotation',
+          fieldName: 'value',
           yAxis: 1,
           color: anno.props.lineColor,
           dataTopic: DataTopic.Annotations,

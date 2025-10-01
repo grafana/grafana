@@ -55,7 +55,9 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
           label: anno.name,
           scaleKey: config.scaleKeys[0],
           theme: theme,
-          show: true,
+          show: anno.fields.some((f) => {
+            return (f.config.custom.hideFrom?.viz ?? false) === false;
+          }),
           lineColor: colorField?.values[0] ?? DEFAULT_ANNOTATION_COLOR,
         };
         uPlotSeriesAnnos.push(new UPlotSeriesBuilder(series));

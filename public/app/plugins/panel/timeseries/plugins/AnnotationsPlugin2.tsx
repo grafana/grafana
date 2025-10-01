@@ -149,7 +149,11 @@ export const AnnotationsPlugin2 = ({
     });
 
     config.addHook('draw', (u) => {
-      let annos = annoRef.current;
+      let annos = annoRef.current.filter((a) =>
+        a.fields.some((f) => {
+          return f.config.custom.hideFrom?.viz ?? false === false;
+        })
+      );
 
       const ctx = u.ctx;
 
