@@ -154,6 +154,7 @@ function mapSourceFieldNameToAnnoFieldName(
 }
 
 function convertSeriesToAnnotation(frame: DataFrame, options: ConvertFrameTypeTransformerOptions): DataFrame {
+  console.log('frame', frame);
   // TODO: ensure time field
   // TODO: ensure value field
   const mappedFrame = {
