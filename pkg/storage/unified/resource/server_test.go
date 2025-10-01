@@ -477,11 +477,12 @@ func TestSimpleServer(t *testing.T) {
 			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
 
-		_, err = server.Update(ctx, &resourcepb.UpdateRequest{
+		rsp, _ := server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
-		require.ErrorIs(t, err, ErrOptimisticLockingFailed)
+		require.Equal(t, rsp.Error.Code, ErrOptimisticLockingFailed.Code)
+		require.Equal(t, rsp.Error.Message, ErrOptimisticLockingFailed.Message)
 	})
 }
 

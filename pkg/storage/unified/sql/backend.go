@@ -18,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/util/sqlite"
 
@@ -405,14 +406,17 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 	// Use rvManager.ExecWithRV instead of direct transaction
 	rv, err := b.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
 		// 1. Update resource
-		_, err := dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
+		res, err := dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
+			WriteEvent:  event, // includes the RV
 			Folder:      folder,
 			GUID:        event.GUID,
 		})
 		if err != nil {
 			return event.GUID, fmt.Errorf("resource update: %w", err)
+		}
+		if err = b.checkConflict(res, event.Key, event.PreviousRV); err != nil {
+			return event.GUID, err
 		}
 
 		// 2. Insert into resource history
@@ -460,13 +464,16 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	}
 	rv, err := b.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
 		// 1. delete from resource
-		_, err := dbutil.Exec(ctx, tx, sqlResourceDelete, sqlResourceRequest{
+		res, err := dbutil.Exec(ctx, tx, sqlResourceDelete, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			GUID:        event.GUID,
 		})
 		if err != nil {
 			return event.GUID, fmt.Errorf("delete resource: %w", err)
+		}
+		if err = b.checkConflict(res, event.Key, event.PreviousRV); err != nil {
+			return event.GUID, err
 		}
 
 		// 2. Add event to resource history
@@ -502,6 +509,28 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	})
 
 	return rv, nil
+}
+
+func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv int64) error {
+	if rv == 0 {
+		return nil
+	}
+
+	// The RV is part of the update request, and it may no longer be the most recent
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("unable to verify RV: %w", err)
+	}
+	if rows == 1 {
+		return nil // expected one result
+	}
+	if rows > 0 {
+		return fmt.Errorf("multiple rows effected (%d)", rows)
+	}
+	return apierrors.NewConflict(schema.GroupResource{
+		Group:    key.Group,
+		Resource: key.Resource,
+	}, key.Name, fmt.Errorf("resource version does not match current value"))
 }
 
 func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
