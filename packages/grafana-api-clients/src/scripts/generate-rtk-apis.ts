@@ -1,14 +1,26 @@
 // Generates Redux Toolkit API slices for certain APIs from the OpenAPI spec
 import type { ConfigFile } from '@rtk-query/codegen-openapi';
+import { OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 
 // Grafana root path - navigate up from this script's directory
 const basePath = path.resolve(__dirname, '../../../..');
 
+// Include some types that are used inside the @rtk-query/codegen-openapi package
+// but not exported
+declare const operationKeys: readonly ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
+type OperationDefinition = {
+  path: string;
+  verb: (typeof operationKeys)[number];
+  pathItem: OpenAPIV3.PathItemObject;
+  operation: OpenAPIV3.OperationObject;
+};
+type EndpointMatcher = string[] | ((operationName: string, operationDefinition: OperationDefinition) => boolean);
+
 /**
  * Helper to return consistent base API generation config
  */
-const createAPIConfig = (app: string, version: string, filterEndpoints?: string[] | Function, additional = {}) => {
+const createAPIConfig = (app: string, version: string, filterEndpoints?: EndpointMatcher, additional = {}) => {
   const filePath = `../clients/${app}/${version}/endpoints.gen.ts`;
   return {
     [filePath]: {
