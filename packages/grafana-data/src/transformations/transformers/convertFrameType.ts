@@ -41,7 +41,6 @@ export interface OptionalAnnotationFields {
 
 export interface OptionalAnnotationOptions {
   frameName?: string;
-  // defaultColor?: string;
   colorScheme?: FieldColor;
 }
 
