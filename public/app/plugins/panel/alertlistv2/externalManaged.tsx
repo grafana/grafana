@@ -1,25 +1,18 @@
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
-import { FixedSizeList } from 'react-window';
 
 import { DataFrame, InterpolateFunction } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
 import { BackendDataSourceResponse, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
-import { AlertRuleListItem } from 'app/features/alerting/unified/rule-list/components/AlertRuleListItem';
-import { AlertRuleListItemSkeleton } from 'app/features/alerting/unified/rule-list/components/AlertRuleListItemLoader';
 import { getRulesDataSourceByUID } from 'app/features/alerting/unified/utils/datasource';
-import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { isPromAlertingRuleState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { StateFilter } from './types';
+import { ExternalAlertItem, StateFilter } from './types';
 import { createFilter } from './utils';
 
 interface ExternalManagedAlertsProps {
-  datasourceUID: string;
+  datasources: string[];
   stateFilter: StateFilter;
   alertInstanceLabelFilter?: string;
   replaceVariables: InterpolateFunction;
@@ -30,21 +23,15 @@ type Labels = {
   alertstate: 'firing' | 'pending';
 };
 
-interface AlertListItem {
-  key: string;
-  name: string;
-  href: string;
-  state: PromAlertingRuleState;
-}
-
 const metricName = 'ALERTS';
+const EXTERNAL_ITEM_HEIGHT = 52;
 
-function processAlertFrames(alertRules: DataFrame[], datasourceName?: string): AlertListItem[] {
+function processAlertFrames(alertRules: DataFrame[], datasourceName?: string): ExternalAlertItem[] {
   if (!alertRules?.length) {
     return [];
   }
 
-  const items: AlertListItem[] = [];
+  const items: ExternalAlertItem[] = [];
 
   for (const frame of alertRules) {
     const valueField = frame.fields.at(1);
@@ -66,125 +53,94 @@ function processAlertFrames(alertRules: DataFrame[], datasourceName?: string): A
         : '#';
 
     items.push({
+      type: 'external',
       key: JSON.stringify(labels),
       name: alertname,
       href: ruleLink,
       state,
+      itemHeight: EXTERNAL_ITEM_HEIGHT,
     });
   }
 
   return items;
 }
 
-export function ExternalManagedAlerts({
-  datasourceUID,
+export function useExternalAlerts({
+  datasources,
   stateFilter,
   alertInstanceLabelFilter,
   replaceVariables,
 }: ExternalManagedAlertsProps) {
-  // Get datasource name from UID for creating links
-  const datasource = useMemo(() => getRulesDataSourceByUID(datasourceUID), [datasourceUID]);
-  const datasourceName = datasource?.name;
-
   // construct query filter
   const filter = useMemo(
     () => createFilter({ stateFilter, alertInstanceLabelFilter }, replaceVariables),
     [stateFilter, alertInstanceLabelFilter, replaceVariables]
   );
 
-  const {
-    value: alertRules,
-    loading,
-    error,
-  } = useAsync(async (): Promise<DataFrame[]> => {
-    if (!datasourceUID) {
-      throw new Error('Prometheus datasource UID not configured for state history');
+  // Stabilize datasources array reference
+  const datasourcesKey = datasources.join(',');
+
+  const results = useAsync(async () => {
+    if (datasources.length === 0) {
+      return [];
     }
 
-    // Query Prometheus for ALERTS metric
-    const query = `group by (alertname, alertstate) (${metricName}{${filter}})`;
+    const allResults = await Promise.all(
+      datasources.map(async (datasourceUID) => {
+        try {
+          const datasource = getRulesDataSourceByUID(datasourceUID);
+          const datasourceName = datasource?.name;
 
-    const now = Date.now();
-    const queries = [
-      {
-        refId: 'A',
-        expr: query,
-        instant: true,
-        datasource: {
-          type: 'prometheus',
-          uid: datasourceUID,
-        },
-      },
-    ];
+          // Query Prometheus for ALERTS metric
+          const query = `group by (alertname, alertstate) (${metricName}{${filter}})`;
 
-    const data = await getBackendSrv().post<BackendDataSourceResponse>(
-      '/api/ds/query',
-      {
-        from: (now - 3600000).toString(),
-        to: now.toString(),
-        queries,
-        instant: true,
-      },
-      {
-        params: {
-          ds_type: 'prometheus',
-        },
-      }
+          const now = Date.now();
+          const queries = [
+            {
+              refId: 'A',
+              expr: query,
+              instant: true,
+              datasource: {
+                type: 'prometheus',
+                uid: datasourceUID,
+              },
+            },
+          ];
+
+          const data = await getBackendSrv().post<BackendDataSourceResponse>(
+            '/api/ds/query',
+            {
+              from: (now - 3600000).toString(),
+              to: now.toString(),
+              queries,
+              instant: true,
+            },
+            {
+              params: {
+                ds_type: 'prometheus',
+              },
+            }
+          );
+
+          const dataQueryResponse = toDataQueryResponse({ data }, queries);
+          const frames = dataQueryResponse.data ?? [];
+          return processAlertFrames(frames, datasourceName);
+        } catch (err) {
+          console.error(`Error fetching alerts from datasource ${datasourceUID}:`, err);
+          return [];
+        }
+      })
     );
 
-    const dataQueryResponse = toDataQueryResponse({ data }, queries);
-    return dataQueryResponse.data ?? [];
-  }, [datasourceUID, filter]);
+    return allResults;
+  }, [datasourcesKey, filter]);
 
-  const alertItems = useMemo(() => processAlertFrames(alertRules ?? [], datasourceName), [alertRules, datasourceName]);
+  const items = useMemo(() => {
+    if (!results.value) {
+      return [];
+    }
+    return results.value.flat();
+  }, [results.value]);
 
-  // Now handle loading and error states after all hooks
-  if (loading) {
-    return (
-      <>
-        <AlertRuleListItemSkeleton />
-        <AlertRuleListItemSkeleton />
-        <AlertRuleListItemSkeleton />
-      </>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert title={t('alertlist.external.error-title', 'Failed to fetch alerts')}>{stringifyErrorLike(error)}</Alert>
-    );
-  }
-
-  if (!alertItems.length) {
-    return (
-      <div>
-        <Trans i18nKey="alertlist.external.no-alerts">No alerts found</Trans>
-      </div>
-    );
-  }
-
-  const ITEM_HEIGHT = 52; // Height of each AlertRuleListItem
-
-  return (
-    <AutoSizer disableWidth>
-      {({ height }) => (
-        <FixedSizeList
-          height={height}
-          width="100%"
-          itemCount={alertItems.length}
-          itemSize={ITEM_HEIGHT}
-          overscanCount={5}
-        >
-          {({ index, style }) => {
-            const item = alertItems[index];
-            return (
-              <div style={style}>
-                <AlertRuleListItem key={item.key} name={item.name} href={item.href} state={item.state} />
-              </div>
-            );
-          }}
-        </FixedSizeList>
-      )}
-    </AutoSizer>
-  );
+  return [{ items, loading: results.loading, error: results.error }];
 }

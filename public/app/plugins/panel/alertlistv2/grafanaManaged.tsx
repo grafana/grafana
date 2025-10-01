@@ -1,19 +1,12 @@
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
-import { FixedSizeList } from 'react-window';
 
 import { DataFrame, InterpolateFunction } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
 import { BackendDataSourceResponse, config, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
-import { AlertRuleListItem } from 'app/features/alerting/unified/rule-list/components/AlertRuleListItem';
-import { AlertRuleListItemSkeleton } from 'app/features/alerting/unified/rule-list/components/AlertRuleListItemLoader';
-import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { rulesNav } from 'app/features/alerting/unified/utils/navigation';
 import { isPromAlertingRuleState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { StateFilter } from './types';
+import { GrafanaAlertItem, StateFilter } from './types';
 import { createFilter } from './utils';
 
 interface GrafanaManagedAlertsProps {
@@ -21,6 +14,7 @@ interface GrafanaManagedAlertsProps {
   alertInstanceLabelFilter?: string;
   folder?: { uid: string; title: string } | null;
   replaceVariables: InterpolateFunction;
+  enabled?: boolean;
 }
 
 type Labels = {
@@ -30,20 +24,14 @@ type Labels = {
   grafana_rule_uid: string;
 };
 
-interface GrafanaAlertListItem {
-  key: string;
-  name: string;
-  href: string;
-  state: PromAlertingRuleState;
-  namespace: string;
-}
+const GRAFANA_ITEM_HEIGHT = 52;
 
-function processGrafanaAlertFrames(alertRules: DataFrame[]): GrafanaAlertListItem[] {
+function processGrafanaAlertFrames(alertRules: DataFrame[]): GrafanaAlertItem[] {
   if (!alertRules?.length) {
     return [];
   }
 
-  const items: GrafanaAlertListItem[] = [];
+  const items: GrafanaAlertItem[] = [];
 
   for (const frame of alertRules) {
     const valueField = frame.fields.at(1);
@@ -59,22 +47,25 @@ function processGrafanaAlertFrames(alertRules: DataFrame[]): GrafanaAlertListIte
     const ruleLink = rulesNav.detailsPageLink('grafana', { uid: grafana_rule_uid, ruleSourceName: 'grafana' });
 
     items.push({
+      type: 'grafana',
       key: JSON.stringify(labels),
       name: alertname,
       href: ruleLink,
       state,
       namespace: labels.grafana_folder,
+      itemHeight: GRAFANA_ITEM_HEIGHT,
     });
   }
 
   return items;
 }
 
-export function GrafanaManagedAlerts({
+export function useGrafanaAlerts({
   stateFilter,
   alertInstanceLabelFilter,
   folder,
   replaceVariables,
+  enabled = true,
 }: GrafanaManagedAlertsProps) {
   // construct query filter
   const filter = useMemo(
@@ -87,6 +78,9 @@ export function GrafanaManagedAlerts({
     loading,
     error,
   } = useAsync(async (): Promise<DataFrame[]> => {
+    if (!enabled) {
+      return [];
+    }
     const datasourceUID = config.unifiedAlerting.stateHistory?.prometheusTargetDatasourceUID;
     const metricName = config.unifiedAlerting.stateHistory?.prometheusMetricName || 'GRAFANA_ALERTS';
 
@@ -127,68 +121,9 @@ export function GrafanaManagedAlerts({
 
     const dataQueryResponse = toDataQueryResponse({ data }, queries);
     return dataQueryResponse.data ?? [];
-  }, [filter]);
+  }, [filter, enabled]);
 
-  // Prepare alert items for virtualization (must be before early returns to avoid conditional hooks)
-  const alertItems = useMemo(() => processGrafanaAlertFrames(alertRules ?? []), [alertRules]);
+  const items = useMemo(() => processGrafanaAlertFrames(alertRules ?? []), [alertRules]);
 
-  // Now handle loading and error states after all hooks
-  if (loading) {
-    return (
-      <>
-        <AlertRuleListItemSkeleton />
-        <AlertRuleListItemSkeleton />
-        <AlertRuleListItemSkeleton />
-      </>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert title={t('alertlist.grafana.error-title', 'Failed to fetch Grafana alerts')}>
-        {stringifyErrorLike(error)}
-      </Alert>
-    );
-  }
-
-  if (!alertItems.length) {
-    return (
-      <div>
-        <Trans i18nKey="alertlist.grafana.no-alerts">No Grafana alerts found</Trans>
-      </div>
-    );
-  }
-
-  const ITEM_HEIGHT = 52; // Height of each AlertRuleListItem
-
-  return (
-    <AutoSizer disableWidth>
-      {({ height }) => (
-        <FixedSizeList
-          height={height}
-          width="100%"
-          itemCount={alertItems.length}
-          itemSize={ITEM_HEIGHT}
-          overscanCount={5}
-        >
-          {({ index, style }) => {
-            const item = alertItems[index];
-            return (
-              <div style={style}>
-                <AlertRuleListItem
-                  key={item.key}
-                  name={item.name}
-                  href={item.href}
-                  application="grafana"
-                  state={item.state}
-                  namespace={item.namespace}
-                  actions={<></>}
-                />
-              </div>
-            );
-          }}
-        </FixedSizeList>
-      )}
-    </AutoSizer>
-  );
+  return { items, loading, error };
 }
