@@ -31,6 +31,8 @@ func NewSQLKeeper(
 	reg prometheus.Registerer,
 ) (*SQLKeeper, error) {
 	// Run the encrypted value store migration before anything else, otherwise operations may fail
+	// TODO: This does not need to be here forever, but we may currently have on-prem deployments using GSM, so it needs to be here for now.
+	// Periodically assess whether it is safe to remove - most likely for G13 should be fine.
 	_, err := migrationExecutor.Execute(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute encrypted value store migration: %w", err)
