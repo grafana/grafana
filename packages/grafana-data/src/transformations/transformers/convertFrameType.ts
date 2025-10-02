@@ -4,6 +4,7 @@ import tinycolor from 'tinycolor2';
 import { DataTopic, FieldColor, FieldColorModeId } from '@grafana/schema';
 import { colors } from '@grafana/ui';
 
+import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
 
@@ -113,6 +114,7 @@ function convertSeriesToExemplar(frame: DataFrame): DataFrame {
  */
 const createIsRegionField = (frame: DataFrame) => {
   const timeFields = frame.fields.filter((field) => field.type === FieldType.time);
+  // @todo what if existing fields conflict with annotation field names?
   const startTimeField = timeFields.find((field) => field.name === 'time');
   const timeEndField = timeFields.find((field) => field.name === 'timeEnd');
   const isRegionValues: boolean[] =
@@ -167,7 +169,11 @@ function convertSeriesToAnnotation(
   // get rid of default color, use color
   let frameName = undefined;
   if (options.annotationOptions?.frameName) {
-    const sourceFieldForFrameName = frame.fields.find((field) => field.name === options.annotationOptions?.frameName);
+    const sourceFieldForFrameName = frame.fields.find((field) => {
+      const displayName = getFieldDisplayName(field, frame);
+      return displayName ?? field.name === options.annotationOptions?.frameName;
+    });
+
     const nameSet = new Set(sourceFieldForFrameName?.values);
     if (nameSet.size > 1) {
       // There can be only one!! @todo
@@ -179,11 +185,13 @@ function convertSeriesToAnnotation(
 
   const annoFields: Field[] = frame.fields
     .filter((sourceField) => {
-      const name = mapSourceFieldNameToAnnoFieldName(options, sourceField.name);
+      const sourceFieldName = getFieldDisplayName(sourceField, frame);
+      const name = mapSourceFieldNameToAnnoFieldName(options, sourceFieldName);
       return !!name;
     })
     .map((sourceField) => {
-      const name = mapSourceFieldNameToAnnoFieldName(options, sourceField.name) ?? sourceField.name;
+      const sourceFieldName = getFieldDisplayName(sourceField, frame);
+      const name = mapSourceFieldNameToAnnoFieldName(options, sourceFieldName) ?? sourceFieldName;
       if (name === 'tags') {
         return { ...sourceField, name, values: [...sourceField.values.map((v) => (Array.isArray(v) ? v : [v]))] };
       }
