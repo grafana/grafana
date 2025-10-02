@@ -1,25 +1,109 @@
-package sqleng
+package pgx
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewQueryDataHandlerPGX(userFacingDefaultError string, p *pgxpool.Pool, config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
+// MetaKeyExecutedQueryString is the key where the executed query should get stored
+const MetaKeyExecutedQueryString = "executedQueryString"
+
+// SQLMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
+// timeRange to be able to generate queries that use from and to.
+type SQLMacroEngine interface {
+	Interpolate(query *backend.DataQuery, timeRange backend.TimeRange, sql string) (string, error)
+}
+
+// SqlQueryResultTransformer transforms a query result row to RowValues with proper types.
+type SqlQueryResultTransformer interface {
+	// TransformQueryError transforms a query error.
+	TransformQueryError(logger log.Logger, err error) error
+	GetConverterList() []sqlutil.StringConverter
+}
+
+type JsonData struct {
+	MaxOpenConns            int    `json:"maxOpenConns"`
+	MaxIdleConns            int    `json:"maxIdleConns"`
+	ConnMaxLifetime         int    `json:"connMaxLifetime"`
+	ConnectionTimeout       int    `json:"connectionTimeout"`
+	Timescaledb             bool   `json:"timescaledb"`
+	Mode                    string `json:"sslmode"`
+	ConfigurationMethod     string `json:"tlsConfigurationMethod"`
+	TlsSkipVerify           bool   `json:"tlsSkipVerify"`
+	RootCertFile            string `json:"sslRootCertFile"`
+	CertFile                string `json:"sslCertFile"`
+	CertKeyFile             string `json:"sslKeyFile"`
+	Timezone                string `json:"timezone"`
+	Encrypt                 string `json:"encrypt"`
+	Servername              string `json:"servername"`
+	TimeInterval            string `json:"timeInterval"`
+	Database                string `json:"database"`
+	SecureDSProxy           bool   `json:"enableSecureSocksProxy"`
+	SecureDSProxyUsername   string `json:"secureSocksProxyUsername"`
+	AllowCleartextPasswords bool   `json:"allowCleartextPasswords"`
+	AuthenticationType      string `json:"authenticationType"`
+}
+
+type DataPluginConfiguration struct {
+	DSInfo            sqleng.DataSourceInfo
+	TimeColumnNames   []string
+	MetricColumnTypes []string
+	RowLimit          int64
+}
+
+type DataSourceHandler struct {
+	macroEngine            SQLMacroEngine
+	queryResultTransformer SqlQueryResultTransformer
+	timeColumnNames        []string
+	metricColumnTypes      []string
+	log                    log.Logger
+	dsInfo                 sqleng.DataSourceInfo
+	rowLimit               int64
+	userError              string
+	pool                   *pgxpool.Pool
+}
+
+type QueryJson struct {
+	RawSql       string  `json:"rawSql"`
+	Fill         bool    `json:"fill"`
+	FillInterval float64 `json:"fillInterval"`
+	FillMode     string  `json:"fillMode"`
+	FillValue    float64 `json:"fillValue"`
+	Format       string  `json:"format"`
+}
+
+func (e *DataSourceHandler) TransformQueryError(logger log.Logger, err error) error {
+	// OpError is the error type usually returned by functions in the net
+	// package. It describes the operation, network type, and address of
+	// an error. We log this error rather than return it to the client
+	// for security purposes.
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
+		return fmt.Errorf("failed to connect to server - %s", e.userError)
+	}
+
+	return e.queryResultTransformer.TransformQueryError(logger, err)
+}
+
+func NewQueryDataHandler(userFacingDefaultError string, p *pgxpool.Pool, config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
 	macroEngine SQLMacroEngine, log log.Logger) (*DataSourceHandler, error) {
 	queryDataHandler := DataSourceHandler{
 		queryResultTransformer: queryResultTransformer,
@@ -43,7 +127,12 @@ func NewQueryDataHandlerPGX(userFacingDefaultError string, p *pgxpool.Pool, conf
 	return &queryDataHandler, nil
 }
 
-func (e *DataSourceHandler) DisposePGX() {
+type DBDataResponse struct {
+	dataResponse backend.DataResponse
+	refID        string
+}
+
+func (e *DataSourceHandler) Dispose() {
 	e.log.Debug("Disposing DB...")
 
 	if e.pool != nil {
@@ -53,11 +142,11 @@ func (e *DataSourceHandler) DisposePGX() {
 	e.log.Debug("DB disposed")
 }
 
-func (e *DataSourceHandler) PingPGX(ctx context.Context) error {
+func (e *DataSourceHandler) Ping(ctx context.Context) error {
 	return e.pool.Ping(ctx)
 }
 
-func (e *DataSourceHandler) QueryDataPGX(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 	ch := make(chan DBDataResponse, len(req.Queries))
 	var wg sync.WaitGroup
@@ -83,7 +172,7 @@ func (e *DataSourceHandler) QueryDataPGX(ctx context.Context, req *backend.Query
 		}
 
 		wg.Add(1)
-		go e.executeQueryPGX(ctx, query, &wg, ch, queryjson)
+		go e.executeQuery(ctx, query, &wg, ch, queryjson)
 	}
 
 	wg.Wait()
@@ -101,7 +190,7 @@ func (e *DataSourceHandler) QueryDataPGX(ctx context.Context, req *backend.Query
 func (e *DataSourceHandler) handleQueryError(frameErr string, err error, query string, source backend.ErrorSource, ch chan DBDataResponse, queryResult DBDataResponse) {
 	var emptyFrame data.Frame
 	emptyFrame.SetMeta(&data.FrameMeta{ExecutedQueryString: query})
-	if backend.IsDownstreamError(err) {
+	if isDownstreamError(err) {
 		source = backend.ErrorSourceDownstream
 	}
 	queryResult.dataResponse.Error = fmt.Errorf("%s: %w", frameErr, err)
@@ -127,6 +216,18 @@ func (e *DataSourceHandler) handlePanic(logger log.Logger, queryResult *DBDataRe
 	}
 }
 
+// Interpolate provides global macros/substitutions for all sql datasources.
+var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) string {
+	interval := query.Interval
+
+	sql = strings.ReplaceAll(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
+	sql = strings.ReplaceAll(sql, "$__interval", gtime.FormatInterval(interval))
+	sql = strings.ReplaceAll(sql, "$__unixEpochFrom()", fmt.Sprintf("%d", timeRange.From.UTC().Unix()))
+	sql = strings.ReplaceAll(sql, "$__unixEpochTo()", fmt.Sprintf("%d", timeRange.To.UTC().Unix()))
+
+	return sql
+}
+
 func (e *DataSourceHandler) execQuery(ctx context.Context, query string) ([]*pgconn.Result, error) {
 	c, err := e.pool.Acquire(ctx)
 	if err != nil {
@@ -140,7 +241,7 @@ func (e *DataSourceHandler) execQuery(ctx context.Context, query string) ([]*pgc
 	return mrr.ReadAll()
 }
 
-func (e *DataSourceHandler) executeQueryPGX(queryContext context.Context, query backend.DataQuery, wg *sync.WaitGroup,
+func (e *DataSourceHandler) executeQuery(queryContext context.Context, query backend.DataQuery, wg *sync.WaitGroup,
 	ch chan DBDataResponse, queryJSON QueryJson) {
 	defer wg.Done()
 	queryResult := DBDataResponse{
@@ -171,7 +272,7 @@ func (e *DataSourceHandler) executeQueryPGX(queryContext context.Context, query 
 		return
 	}
 
-	qm, err := e.newProcessCfgPGX(queryContext, query, results, interpolatedQuery)
+	qm, err := e.newProcessCfg(queryContext, query, results, interpolatedQuery)
 	if err != nil {
 		e.handleQueryError("failed to get configurations", err, interpolatedQuery, backend.ErrorSourceDownstream, ch, queryResult)
 		return
@@ -184,6 +285,47 @@ func (e *DataSourceHandler) executeQueryPGX(queryContext context.Context, query 
 	}
 
 	e.processFrame(frame, qm, queryResult, ch, logger)
+}
+
+// dataQueryFormat is the type of query.
+type dataQueryFormat string
+
+const (
+	// dataQueryFormatTable identifies a table query (default).
+	dataQueryFormatTable dataQueryFormat = "table"
+	// dataQueryFormatSeries identifies a time series query.
+	dataQueryFormatSeries dataQueryFormat = "time_series"
+)
+
+type dataQueryModel struct {
+	InterpolatedQuery string // property not set until after Interpolate()
+	Format            dataQueryFormat
+	TimeRange         backend.TimeRange
+	FillMissing       *data.FillMissing // property not set until after Interpolate()
+	Interval          time.Duration
+	columnNames       []string
+	columnTypes       []string
+	timeIndex         int
+	timeEndIndex      int
+	metricIndex       int
+	metricPrefix      bool
+	queryContext      context.Context
+}
+
+func convertSQLTimeColumnsToEpochMS(frame *data.Frame, qm *dataQueryModel) error {
+	if qm.timeIndex != -1 {
+		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeIndex); err != nil {
+			return fmt.Errorf("%v: %w", "failed to convert time column", err)
+		}
+	}
+
+	if qm.timeEndIndex != -1 {
+		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeEndIndex); err != nil {
+			return fmt.Errorf("%v: %w", "failed to convert timeend column", err)
+		}
+	}
+
+	return nil
 }
 
 func (e *DataSourceHandler) processFrame(frame *data.Frame, qm *dataQueryModel, queryResult DBDataResponse, ch chan DBDataResponse, logger log.Logger) {
@@ -281,10 +423,10 @@ func (e *DataSourceHandler) processFrame(frame *data.Frame, qm *dataQueryModel, 
 	ch <- queryResult
 }
 
-func (e *DataSourceHandler) newProcessCfgPGX(queryContext context.Context, query backend.DataQuery,
+func (e *DataSourceHandler) newProcessCfg(queryContext context.Context, query backend.DataQuery,
 	results []*pgconn.Result, interpolatedQuery string) (*dataQueryModel, error) {
 	columnNames := []string{}
-	columnTypesPGX := []string{}
+	columnTypes := []string{}
 
 	// The results will contain column information in the metadata
 	for _, result := range results {
@@ -296,26 +438,26 @@ func (e *DataSourceHandler) newProcessCfgPGX(queryContext context.Context, query
 				// Handle special cases for field types
 				switch field.DataTypeOID {
 				case pgtype.TimetzOID:
-					columnTypesPGX = append(columnTypesPGX, "timetz")
+					columnTypes = append(columnTypes, "timetz")
 				case 790:
-					columnTypesPGX = append(columnTypesPGX, "money")
+					columnTypes = append(columnTypes, "money")
 				default:
-					columnTypesPGX = append(columnTypesPGX, "unknown")
+					columnTypes = append(columnTypes, "unknown")
 				}
 			} else {
-				columnTypesPGX = append(columnTypesPGX, pqtype.Name)
+				columnTypes = append(columnTypes, pqtype.Name)
 			}
 		}
 	}
 
 	qm := &dataQueryModel{
-		columnTypesPGX: columnTypesPGX,
-		columnNames:    columnNames,
-		timeIndex:      -1,
-		timeEndIndex:   -1,
-		metricIndex:    -1,
-		metricPrefix:   false,
-		queryContext:   queryContext,
+		columnTypes:  columnTypes,
+		columnNames:  columnNames,
+		timeIndex:    -1,
+		timeEndIndex: -1,
+		metricIndex:  -1,
+		metricPrefix: false,
+		queryContext: queryContext,
 	}
 
 	queryJSON := QueryJson{}
@@ -370,7 +512,7 @@ func (e *DataSourceHandler) newProcessCfgPGX(queryContext context.Context, query
 			qm.metricIndex = i
 		default:
 			if qm.metricIndex == -1 {
-				columnType := qm.columnTypesPGX[i]
+				columnType := qm.columnTypes[i]
 				for _, mct := range e.metricColumnTypes {
 					if columnType == mct {
 						qm.metricIndex = i
@@ -595,4 +737,100 @@ func getFieldTypesFromDescriptions(fieldDescriptions []pgconn.FieldDescription, 
 		}
 	}
 	return fieldTypes, nil
+}
+
+// convertSQLTimeColumnToEpochMS converts column named time to unix timestamp in milliseconds
+// to make native datetime types and epoch dates work in annotation and table queries.
+func convertSQLTimeColumnToEpochMS(frame *data.Frame, timeIndex int) error {
+	if timeIndex < 0 || timeIndex >= len(frame.Fields) {
+		return fmt.Errorf("timeIndex %d is out of range", timeIndex)
+	}
+
+	origin := frame.Fields[timeIndex]
+	valueType := origin.Type()
+	if valueType == data.FieldTypeTime || valueType == data.FieldTypeNullableTime {
+		return nil
+	}
+
+	newField := data.NewFieldFromFieldType(data.FieldTypeNullableTime, 0)
+	newField.Name = origin.Name
+	newField.Labels = origin.Labels
+
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		v, err := origin.NullableFloatAt(i)
+		if err != nil {
+			return fmt.Errorf("unable to convert data to a time field")
+		}
+		if v == nil {
+			newField.Append(nil)
+		} else {
+			timestamp := time.Unix(0, int64(epochPrecisionToMS(*v))*int64(time.Millisecond))
+			newField.Append(&timestamp)
+		}
+	}
+	frame.Fields[timeIndex] = newField
+
+	return nil
+}
+
+// convertSQLValueColumnToFloat converts timeseries value column to float.
+func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, error) {
+	if Index < 0 || Index >= len(frame.Fields) {
+		return frame, fmt.Errorf("metricIndex %d is out of range", Index)
+	}
+
+	origin := frame.Fields[Index]
+	valueType := origin.Type()
+	if valueType == data.FieldTypeFloat64 || valueType == data.FieldTypeNullableFloat64 {
+		return frame, nil
+	}
+
+	newField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, origin.Len())
+	newField.Name = origin.Name
+	newField.Labels = origin.Labels
+
+	for i := 0; i < origin.Len(); i++ {
+		v, err := origin.NullableFloatAt(i)
+		if err != nil {
+			return frame, err
+		}
+		newField.Set(i, v)
+	}
+
+	frame.Fields[Index] = newField
+
+	return frame, nil
+}
+
+// epochPrecisionToMS converts epoch precision to millisecond, if needed.
+// Only seconds to milliseconds supported right now
+func epochPrecisionToMS(value float64) float64 {
+	s := strconv.FormatFloat(value, 'e', -1, 64)
+	if strings.HasSuffix(s, "e+09") {
+		return value * float64(1e3)
+	}
+
+	if strings.HasSuffix(s, "e+18") {
+		return value / float64(time.Millisecond)
+	}
+
+	return value
+}
+
+func isDownstreamError(err error) bool {
+	if backend.IsDownstreamError(err) {
+		return true
+	}
+	resultProcessingDownstreamErrors := []error{
+		data.ErrorInputFieldsWithoutRows,
+		data.ErrorSeriesUnsorted,
+		data.ErrorNullTimeValues,
+	}
+	for _, e := range resultProcessingDownstreamErrors {
+		if errors.Is(err, e) {
+			return true
+		}
+	}
+	return false
 }

@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "PostgreSQL",
   "id": "grafana-postgresql-datasource",
+  "executable": "gpx_grafana-postgresql-datasource",
   "aliasIDs": ["postgres"],
   "category": "sql",
 
@@ -20,6 +21,9 @@
       { "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" },
       { "name": "Documentation", "url": "https://grafana.com/docs/grafana/latest/datasources/postgres/" }
     ]
+  },
+  "dependencies": {
+    "grafanaDependency": ">=11.6.0"
   },
 
   "alerting": true,
