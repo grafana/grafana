@@ -392,17 +392,17 @@ func (s *encryptedValMigrationExecutor) Execute(ctx context.Context) (int, error
 		payload = payload[1:]
 		endOfKey := bytes.Index(payload, []byte{keyIdDelimiter})
 		if endOfKey == -1 {
-			return 0, fmt.Errorf("could not find valid key id in encrypted payload with namespace %s and name %s and version %d", encryptedValue.Namespace, encryptedValue.Name, encryptedValue.Version)
+			return rowsAffected, fmt.Errorf("could not find valid key id in encrypted payload with namespace %s and name %s and version %d", encryptedValue.Namespace, encryptedValue.Name, encryptedValue.Version)
 		}
 		b64Key := payload[:endOfKey]
 		encryptedData := payload[endOfKey+1:]
 		if len(encryptedData) == 0 {
-			return 0, fmt.Errorf("encrypted data is empty with namespace %s and name %s and version %d", encryptedValue.Namespace, encryptedValue.Name, encryptedValue.Version)
+			return rowsAffected, fmt.Errorf("encrypted data is empty with namespace %s and name %s and version %d", encryptedValue.Namespace, encryptedValue.Name, encryptedValue.Version)
 		}
 		keyId := make([]byte, base64.RawStdEncoding.DecodedLen(len(b64Key)))
 		_, err := base64.RawStdEncoding.Decode(keyId, b64Key)
 		if err != nil {
-			return 0, fmt.Errorf("decoding key id with namespace %s and name %s and version %d: %w", encryptedValue.Namespace, encryptedValue.Name, encryptedValue.Version, err)
+			return rowsAffected, fmt.Errorf("decoding key id with namespace %s and name %s and version %d: %w", encryptedValue.Namespace, encryptedValue.Name, encryptedValue.Version, err)
 		}
 
 		// 4. Update the encrypted value with the data key id and the encrypted data
@@ -411,7 +411,7 @@ func (s *encryptedValMigrationExecutor) Execute(ctx context.Context) (int, error
 			EncryptedData: encryptedData,
 		})
 		if err != nil {
-			return 0, fmt.Errorf("updating encrypted value with namespace %s and name %s and version %d: %w", encryptedValue.Namespace, encryptedValue.Name, encryptedValue.Version, err)
+			return rowsAffected, fmt.Errorf("updating encrypted value with namespace %s and name %s and version %d: %w", encryptedValue.Namespace, encryptedValue.Name, encryptedValue.Version, err)
 		}
 		rowsAffected++
 	}
