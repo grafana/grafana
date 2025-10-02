@@ -16,21 +16,30 @@ weight: 300
 
 This page lists resources for developers who want to contribute to the Grafana software ecosystem or build plugins for Grafana.
 
-## General resources
+## Make technical contributions
 
-These resources are useful for all developers.
+Choose how you want to contribute to Grafana, from code to plugins to community support.
 
-- [Contributing to Grafana](https://github.com/grafana/grafana/blob/main/CONTRIBUTING.md): Start here to learn how you can contribute your skills to make Grafana even better.
+### Contribute Code to Grafana
 
-- [Developer guide](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md): A guide to help you get started developing Grafana software, includes instructions for how to configure Grafana for development.
+- [Contributing to Grafana](https://github.com/grafana/grafana/blob/main/CONTRIBUTING.md) introduces the contribution process and community resources.
+- [Developer guide](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md) shows how to set up your environment and run Grafana in development.
+- [Architecture guides](https://github.com/grafana/grafana/tree/main/contribute/architecture) explain Grafana’s background architecture.
+- [Create a pull request](https://github.com/grafana/grafana/blob/main/contribute/create-pull-request.md) walks you through preparing a clear, descriptive pull request.
+- Browse [help-wanted issues](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) to find a good first task.
+- Use the [REST APIs](https://grafana.com/docs/grafana/next/developers/http_api) to interact programmatically with the Grafana backend.
 
-- [Contributing to documentation](https://github.com/grafana/grafana/blob/main/contribute/documentation): A guide to help you contribute to Grafana documentation, includes links to beginner-friendly issues.
+### Develop a Plugin
 
-- [Architecture guides](https://github.com/grafana/grafana/tree/main/contribute/architecture): These guides explain Grafana’s background architecture.
+- Read the [plugin development guide](https://grafana.com/developers/plugin-tools) to choose a plugin type, scaffold your project, and develop locally.
 
-- [Create a pull request](https://github.com/grafana/grafana/blob/main/contribute/create-pull-request.md): A guide for new contributors about how to create your first Grafana pull request.
+### Contribute without code
 
-- [REST APIs](https://grafana.com/docs/grafana/next/developers/http_api) allow you to interact programmatically with the Grafana backend.
+- Help with [issue triage](https://github.com/grafana/grafana/blob/main/contribute/triage-issues.md) by reviewing, labeling, and clarifying open issues.
+- Submit a [feature request](https://github.com/grafana/grafana/issues/new?template=1-feature_requests.md) to propose improvements.
+- Improve our docs with the [documentation contribution guide](https://github.com/grafana/grafana/blob/main/contribute/documentation).
+- Report a bug with the [bug report template](https://github.com/grafana/grafana/issues/new?template=0-bug-report.yaml) and include steps to reproduce.
+- Report security vulnerabilities following our [security policy](https://github.com/grafana/grafana/security/policy).
 
 ## Best practices and style
 
