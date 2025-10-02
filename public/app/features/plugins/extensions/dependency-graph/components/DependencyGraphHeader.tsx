@@ -1,5 +1,6 @@
-import { DependencyGraphControls } from '../hooks/useDependencyGraphControls';
 import { t } from '@grafana/i18n';
+
+import { DependencyGraphControls } from '../hooks/useDependencyGraphControls';
 import { useDependencyGraphData } from '../hooks/useDependencyGraphData';
 
 interface DependencyGraphHeaderProps {
@@ -18,26 +19,5 @@ export function DependencyGraphHeader({ controls }: DependencyGraphHeaderProps):
     selectedContentConsumers,
   });
 
-  return (
-    <div>
-      <h2>{t('extensions.dependency-graph.title', 'Plugin Dependency Graph')}</h2>
-      <p>
-        {t(
-          'extensions.dependency-graph.description',
-          'Visualize plugin dependencies and extension points using Grafana Scenes'
-        )}
-      </p>
-      <p>
-        {t(
-          'extensions.dependency-graph.stats',
-          'Nodes: {{nodes}}, Dependencies: {{dependencies}}, Extension Points: {{extensionPoints}}',
-          {
-            nodes: graphData.nodes.length,
-            dependencies: graphData.dependencies.length,
-            extensionPoints: graphData.extensionPoints.length,
-          }
-        )}
-      </p>
-    </div>
-  );
+  return <div></div>;
 }

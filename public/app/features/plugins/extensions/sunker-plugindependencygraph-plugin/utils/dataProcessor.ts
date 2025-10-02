@@ -1,12 +1,46 @@
+import { AppPluginConfig, PanelData } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { PanelData } from '@grafana/data';
-
-import pluginData from '../data.json';
+import pluginDataFallback from '../data.json';
 import { ExposedComponent, ExtensionPoint, GraphData, PanelOptions, PluginDependency, PluginNode } from '../types';
 
 // Cache for expensive calculations
 const cache = new Map<string, GraphData>();
 const ENABLE_DEBUG_LOGS = false; // Set to true for debugging
+
+/**
+ * Gets plugin data from window.grafanaBootData.settings.apps with fallback to data.json
+ *
+ * @returns Plugin data object
+ */
+const getPluginData = (): Record<string, AppPluginConfig> => {
+  // Try to get data from window.grafanaBootData.settings.apps first
+  if (typeof window !== 'undefined' && window.grafanaBootData?.settings?.apps) {
+    if (ENABLE_DEBUG_LOGS) {
+      console.log(
+        'Using data from window.grafanaBootData.settings.apps',
+        Object.keys(window.grafanaBootData.settings.apps).length,
+        'plugins'
+      );
+    }
+    return window.grafanaBootData.settings.apps;
+  }
+
+  // Fallback to data.json
+  if (ENABLE_DEBUG_LOGS) {
+    console.log('Falling back to data.json', Object.keys(pluginDataFallback).length, 'plugins');
+    console.log('window.grafanaBootData available:', typeof window !== 'undefined' && !!window.grafanaBootData);
+    console.log(
+      'window.grafanaBootData.settings available:',
+      typeof window !== 'undefined' && !!window.grafanaBootData?.settings
+    );
+    console.log(
+      'window.grafanaBootData.settings.apps available:',
+      typeof window !== 'undefined' && !!window.grafanaBootData?.settings?.apps
+    );
+  }
+  return pluginDataFallback;
+};
 
 /**
  * Clears all cached graph data results.
@@ -66,16 +100,17 @@ export const processPluginDataToGraph = (options: PanelOptions): GraphData => {
     return cache.get(cacheKey)!;
   }
 
+  const pluginData = getPluginData();
   if (ENABLE_DEBUG_LOGS) {
-    console.log('processPluginDataToGraph - processing data.json:', Object.keys(pluginData).length, 'plugins');
+    console.log('processPluginDataToGraph - processing plugin data:', Object.keys(pluginData).length, 'plugins');
   }
 
   // Route to the appropriate processor based on visualization mode
   let result: GraphData;
   if (options.visualizationMode === 'expose') {
-    result = processPluginDataToExposeGraph(options);
+    result = processPluginDataToExposeGraph(options, pluginData);
   } else {
-    result = processPluginDataToAddGraph(options);
+    result = processPluginDataToAddGraph(options, pluginData);
   }
 
   // Cache the result
@@ -94,7 +129,7 @@ export const processPluginDataToGraph = (options: PanelOptions): GraphData => {
  * @param options - Panel options containing filtering settings
  * @returns GraphData with nodes, dependencies, and extension points for add mode
  */
-const processPluginDataToAddGraph = (options: PanelOptions): GraphData => {
+const processPluginDataToAddGraph = (options: PanelOptions, pluginData: Record<string, AppPluginConfig>): GraphData => {
   const nodes: Map<string, PluginNode> = new Map();
   const dependencies: PluginDependency[] = [];
   const extensionPoints: Map<string, ExtensionPoint> = new Map();
@@ -125,10 +160,10 @@ const processPluginDataToAddGraph = (options: PanelOptions): GraphData => {
           version: pluginInfo.version,
           description:
             isContentProvider && isContentConsumer
-              ? 'Provides and consumes extension content'
+              ? t('extensions.dependency-graph.provides-and-consumes', 'Provides and consumes extension content')
               : isContentProvider
-              ? 'Provides content to extension points'
-              : 'Defines extension points',
+                ? t('extensions.dependency-graph.provides-content', 'Provides content to extension points')
+                : t('extensions.dependency-graph.defines-extension-points', 'Defines extension points'),
         });
       }
     }
@@ -262,7 +297,7 @@ const processPluginDataToAddGraph = (options: PanelOptions): GraphData => {
         id: definingPlugin,
         name: getDisplayName(definingPlugin),
         type: getPluginType(definingPlugin),
-        description: 'Defines extension points',
+        description: t('extensions.dependency-graph.defines-extension-points', 'Defines extension points'),
       });
     }
   });
@@ -359,7 +394,10 @@ const processPluginDataToAddGraph = (options: PanelOptions): GraphData => {
  * @param options - Panel options containing filtering settings
  * @returns GraphData with nodes, dependencies, and exposed components for expose mode
  */
-export const processPluginDataToExposeGraph = (options: PanelOptions): GraphData => {
+export const processPluginDataToExposeGraph = (
+  options: PanelOptions,
+  pluginData: Record<string, AppPluginConfig>
+): GraphData => {
   if (ENABLE_DEBUG_LOGS) {
     console.log('processPluginDataToExposeGraph - processing expose mode data');
   }
@@ -379,7 +417,8 @@ export const processPluginDataToExposeGraph = (options: PanelOptions): GraphData
           exposedComponents.set(exposedComponent.id, {
             id: exposedComponent.id,
             title: exposedComponent.title || exposedComponent.id,
-            description: exposedComponent.description || 'Exposed component',
+            description:
+              exposedComponent.description || t('extensions.dependency-graph.exposed-component', 'Exposed component'),
             providingPlugin: pluginId,
             consumers: [],
           });
@@ -391,7 +430,7 @@ export const processPluginDataToExposeGraph = (options: PanelOptions): GraphData
               name: getDisplayName(pluginId),
               type: getPluginType(pluginId),
               version: pluginInfo.version,
-              description: 'Exposes components to other plugins',
+              description: t('extensions.dependency-graph.exposes-components', 'Exposes components to other plugins'),
             });
           }
         }
@@ -434,7 +473,10 @@ export const processPluginDataToExposeGraph = (options: PanelOptions): GraphData
                 name: getDisplayName(pluginId),
                 type: getPluginType(pluginId),
                 version: pluginInfo.version,
-                description: 'Consumes exposed components from other plugins',
+                description: t(
+                  'extensions.dependency-graph.consumes-components',
+                  'Consumes exposed components from other plugins'
+                ),
               });
             }
           }
@@ -561,7 +603,7 @@ interface PluginInfo {
 // Helper function to find the defining plugin and extension point details for a target
 const findExtensionPointDetails = (
   target: string,
-  pluginData: Record<string, PluginInfo>
+  pluginData: Record<string, AppPluginConfig>
 ): { definingPlugin: string; title?: string; description?: string } => {
   // First check if any plugin explicitly defines this extension point
   for (const [pluginId, pluginInfo] of Object.entries(pluginData)) {
@@ -612,7 +654,7 @@ const getDisplayName = (pluginId: string): string => {
 
   let displayName: string;
   if (pluginId === 'grafana-core') {
-    displayName = 'Grafana Core';
+    displayName = t('extensions.dependency-graph.grafana-core', 'Grafana Core');
   } else {
     displayName = pluginId
       .replace(/^grafana-/, '')
@@ -670,6 +712,7 @@ export const getAvailableContentProviders = (mode: 'add' | 'expose' = 'add'): st
   }
 
   const contentProviders = new Set<string>();
+  const pluginData = getPluginData();
 
   Object.entries(pluginData).forEach(([pluginId, pluginInfo]) => {
     const extensions = pluginInfo.extensions;
@@ -714,6 +757,7 @@ export const getAvailableContentConsumers = (mode: 'add' | 'expose' = 'add'): st
   }
 
   const contentConsumers = new Set<string>();
+  const pluginData = getPluginData();
 
   Object.entries(pluginData).forEach(([pluginId, pluginInfo]) => {
     if (mode === 'expose') {
@@ -834,6 +878,7 @@ export const getActiveContentConsumers = (mode: 'add' | 'expose' = 'add'): strin
   }
 
   const activeConsumers = new Set<string>();
+  const pluginData = getPluginData();
 
   if (mode === 'expose') {
     // In expose mode, active consumers are plugins that actually depend on components that exist
@@ -862,17 +907,20 @@ export const getActiveContentConsumers = (mode: 'add' | 'expose' = 'add'): strin
     // Also include all consumers that are actually referenced in the processed graph
     // This captures consumers like "grafana-core" that might be referenced but not defined as plugins
     try {
-      const tempGraphData = processPluginDataToExposeGraph({
-        visualizationMode: 'expose',
-        selectedContentProviders: [],
-        selectedContentConsumers: [],
-        showDependencyTypes: true,
-        showDescriptions: false,
-        layoutType: 'hierarchical',
-        linkExtensionColor: '#37872d',
-        componentExtensionColor: '#ff9900',
-        functionExtensionColor: '#e02f44',
-      });
+      const tempGraphData = processPluginDataToExposeGraph(
+        {
+          visualizationMode: 'expose',
+          selectedContentProviders: [],
+          selectedContentConsumers: [],
+          showDependencyTypes: true,
+          showDescriptions: false,
+          layoutType: 'hierarchical',
+          linkExtensionColor: '#37872d',
+          componentExtensionColor: '#ff9900',
+          functionExtensionColor: '#e02f44',
+        },
+        pluginData
+      );
 
       tempGraphData.exposedComponents?.forEach((comp) => {
         comp.consumers.forEach((consumerId) => {
