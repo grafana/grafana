@@ -406,7 +406,6 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
                 icon="plus"
                 onClick={() =>
                   openQueryLibraryDrawer({
-                    datasourceFilters: getDatasourceNames(datasource, queries),
                     onSelectQuery: onSelectQueryFromLibrary,
                     options: {
                       context: CoreApp.PanelEditor,

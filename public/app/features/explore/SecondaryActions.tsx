@@ -78,7 +78,6 @@ export function SecondaryActions({
               variant="canvas"
               onClick={() =>
                 openQueryLibraryDrawer({
-                  datasourceFilters: activeDatasources,
                   onSelectQuery: onSelectQueryFromLibrary,
                   options: { context: CoreApp.Explore },
                 })
