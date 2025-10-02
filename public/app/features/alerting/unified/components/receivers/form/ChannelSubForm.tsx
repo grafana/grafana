@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import * as React from 'react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, FieldErrors, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -90,15 +90,13 @@ export function ChannelSubForm<R extends ChannelValues>({
         setValue(secureFieldsPath, initialValues.secureFields);
       }
 
-      // Clear settings when switching integration type
-      if (name === typeFieldPath && value !== initialValues?.type && type === 'change') {
-        setValue(settingsFieldPath, {});
-        setValue(secureFieldsPath, {});
-      }
+      // When switching to a new notifier, set the default settings to remove all existing settings
+      // from the previous notifier
+      if (name === typeFieldPath && type === 'change') {
+        const newNotifier = notifiers.find(({ dto: { type } }) => type === value);
+        const defaultNotifierSettings = newNotifier ? getDefaultNotifierSettings(newNotifier) : {};
 
-      // Clear settings when switching integration type (even without initialValues)
-      if (!initialValues && name === typeFieldPath && type === 'change') {
-        setValue(settingsFieldPath, {});
+        setValue(settingsFieldPath, defaultNotifierSettings);
         setValue(secureFieldsPath, {});
       }
 
@@ -113,7 +111,19 @@ export function ChannelSubForm<R extends ChannelValues>({
     });
 
     return () => subscription.unsubscribe();
-  }, [selectedType, initialValues, setValue, settingsFieldPath, typeFieldPath, secureFieldsPath, getValues, watch]);
+  }, [
+    selectedType,
+    initialValues,
+    setValue,
+    settingsFieldPath,
+    typeFieldPath,
+    secureFieldsPath,
+    getValues,
+    watch,
+    defaultValues.settings,
+    defaultValues.secureFields,
+    notifiers,
+  ]);
 
   const onResetSecureField = (key: string) => {
     // formSecureFields might not be up to date if this function is called multiple times in a row
@@ -307,6 +317,16 @@ export function ChannelSubForm<R extends ChannelValues>({
       )}
     </div>
   );
+}
+
+function getDefaultNotifierSettings(notifier: Notifier): Record<string, string> {
+  const defaultSettings: Record<string, string> = {};
+  notifier.dto.options.forEach((option) => {
+    if (option.defaultValue?.value) {
+      defaultSettings[option.propertyName] = option.defaultValue?.value;
+    }
+  });
+  return defaultSettings;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
