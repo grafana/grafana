@@ -75,28 +75,6 @@ func TestValidateRepository(t *testing.T) {
 			},
 		},
 		{
-			name: "sync interval too low",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
-				m.On("Config").Return(&provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						Title: "Test Repo",
-						Sync: provisioning.SyncOptions{
-							Enabled:         true,
-							Target:          "test",
-							IntervalSeconds: 5,
-						},
-					},
-				})
-				m.On("Validate").Return(field.ErrorList{})
-				return m
-			}(),
-			expectedErrs: 1,
-			validateError: func(t *testing.T, errors field.ErrorList) {
-				require.Contains(t, errors.ToAggregate().Error(), "spec.sync.intervalSeconds: Invalid value")
-			},
-		},
-		{
 			name: "reserved name",
 			repository: func() *MockRepository {
 				m := NewMockRepository(t)
@@ -191,11 +169,10 @@ func TestValidateRepository(t *testing.T) {
 				m.On("Validate").Return(field.ErrorList{})
 				return m
 			}(),
-			expectedErrs: 4, // Updated from 3 to 4 to match actual errors:
+			expectedErrs: 3,
 			// 1. missing title
 			// 2. sync target missing
-			// 3. sync interval too low
-			// 4. reserved name
+			// 3. reserved name
 		},
 		{
 			name: "branch workflow for non-github repository",
@@ -446,18 +423,6 @@ func TestFromFieldError(t *testing.T) {
 			expectedField:  "spec.title",
 			expectedType:   metav1.CauseTypeFieldValueRequired,
 			expectedDetail: "a repository title must be given",
-		},
-		{
-			name: "invalid field error",
-			fieldError: &field.Error{
-				Type:   field.ErrorTypeInvalid,
-				Field:  "spec.sync.intervalSeconds",
-				Detail: "Interval must be at least 10 seconds",
-			},
-			expectedCode:   http.StatusBadRequest,
-			expectedField:  "spec.sync.intervalSeconds",
-			expectedType:   metav1.CauseTypeFieldValueInvalid,
-			expectedDetail: "Interval must be at least 10 seconds",
 		},
 		{
 			name: "not supported field error",

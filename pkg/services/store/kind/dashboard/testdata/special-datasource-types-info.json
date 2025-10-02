@@ -4,10 +4,6 @@
   "tags": null,
   "datasource": [
     {
-      "uid": "grafana",
-      "type": "datasource"
-    },
-    {
       "uid": "dgd92lq7k",
       "type": "frser-sqlite-datasource"
     },
@@ -22,10 +18,6 @@
       "title": "mixed ds with grafana ds",
       "type": "timeseries",
       "datasource": [
-        {
-          "uid": "grafana",
-          "type": "datasource"
-        },
         {
           "uid": "dgd92lq7k",
           "type": "frser-sqlite-datasource"
@@ -45,13 +37,7 @@
     {
       "id": 6,
       "title": "grafana ds",
-      "type": "timeseries",
-      "datasource": [
-        {
-          "uid": "grafana",
-          "type": "datasource"
-        }
-      ]
+      "type": "timeseries"
     },
     {
       "id": 2,

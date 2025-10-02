@@ -803,6 +803,9 @@ const (
 	// Enables the new Jira integration for contact points in cloud alert managers.
 	FlagAlertingJiraIntegration = "alertingJiraIntegration"
 
+	// FlagAlertingUseNewSimplifiedRoutingHashAlgorithm
+	FlagAlertingUseNewSimplifiedRoutingHashAlgorithm = "alertingUseNewSimplifiedRoutingHashAlgorithm"
+
 	// FlagUseScopesNavigationEndpoint
 	// Use the scopes navigation endpoint instead of the dashboardbindings endpoint
 	FlagUseScopesNavigationEndpoint = "useScopesNavigationEndpoint"

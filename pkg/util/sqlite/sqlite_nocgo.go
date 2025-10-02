@@ -67,7 +67,7 @@ func convertSQLite3URL(dsn string) (string, error) {
 	newDSN := dsn[:pos]
 
 	q := url.Values{}
-	q.Add("_pragma", "busy_timeout(5000)")
+	q.Add("_pragma", "busy_timeout(7500)") // Default of mattn/go-sqlite3 is 5s but we increase it to 7.5s to try and avoid busy errors.
 
 	for key, values := range params {
 		if alias, ok := dsnAlias[strings.ToLower(key)]; ok {
