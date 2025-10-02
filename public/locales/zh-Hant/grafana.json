@@ -10135,7 +10135,7 @@
       "title": "資料來源"
     },
     "databases": {
-      "title": "資料庫"
+      "title": ""
     },
     "datasources": {
       "subtitle": "新增並設定資料來源",
@@ -11652,6 +11652,8 @@
       "button-cancelling": "",
       "button-next": "結束",
       "button-start": "開始同步處理",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "這將刪除儲存庫設定，您將失去所有進度。確定要捨棄變更嗎？",
         "confirm": "是的，捨棄",
