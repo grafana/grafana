@@ -2,6 +2,7 @@ package prefimpl
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -80,10 +81,27 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *pref.Preference) (int64, err
 	return ID, err
 }
 
-func (s *sqlStore) DeleteByUser(ctx context.Context, userID int64) error {
-	return s.db.WithDbSession(ctx, func(dbSession *db.Session) error {
-		var rawSQL = "DELETE FROM preferences WHERE user_id = ?"
-		_, err := dbSession.Exec(rawSQL, userID)
-		return err
-	})
+func (s *sqlStore) Delete(ctx context.Context, cmd *pref.DeleteCommand) error {
+	if cmd.UserID > 0 {
+		return s.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+			var rawSQL = "DELETE FROM preferences WHERE user_id = ?"
+			_, err := dbSession.Exec(rawSQL, cmd.UserID)
+			return err
+		})
+	}
+	if cmd.TeamID > 0 {
+		return s.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+			var rawSQL = "DELETE FROM preferences WHERE team_id = ?"
+			_, err := dbSession.Exec(rawSQL, cmd.TeamID)
+			return err
+		})
+	}
+	if cmd.OrgID > 0 {
+		return s.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+			var rawSQL = "DELETE FROM preferences WHERE org_id = ? AND user_id=0 AND team_id=0"
+			_, err := dbSession.Exec(rawSQL, cmd.OrgID)
+			return err
+		})
+	}
+	return fmt.Errorf("expecting one of team, org, user to be non-zero")
 }

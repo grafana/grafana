@@ -72,7 +72,7 @@ func RegisterAPIService(
 
 	namespacer := request.GetNamespaceMapper(cfg)
 	if prefs != nil {
-		builder.legacyPrefs = legacy.NewPreferencesStorage(namespacer, sql)
+		builder.legacyPrefs = legacy.NewPreferencesStorage(prefs, namespacer, sql)
 	}
 	if stars != nil {
 		builder.legacyStars = legacy.NewDashboardStarsStorage(stars, users, namespacer, sql)

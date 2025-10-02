@@ -97,13 +97,13 @@ func (s *DashboardStarsStorage) List(ctx context.Context, options *internalversi
 		return nil, err
 	}
 
-	user := userInfo.GetUID()
-	if userInfo.GetIsGrafanaAdmin() || userInfo.GetIdentityType() == authlib.TypeAccessPolicy {
+	user := userInfo.GetIdentifier()
+	if userInfo.GetIdentityType() == authlib.TypeAccessPolicy {
 		user = "" // can see everything
 	}
 
 	list := &preferences.StarsList{}
-	found, rv, err := s.sql.GetStars(ctx, ns.OrgID, user)
+	found, rv, err := s.sql.getDashboardStars(ctx, ns.OrgID, user)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (s *DashboardStarsStorage) Get(ctx context.Context, name string, options *m
 		return nil, err
 	}
 
-	found, _, err := s.sql.GetStars(ctx, ns.OrgID, owner.Identifier)
+	found, _, err := s.sql.getDashboardStars(ctx, ns.OrgID, owner.Identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func (s *DashboardStarsStorage) write(ctx context.Context, obj *preferences.Star
 		}}, err
 	}
 
-	current, _, err := s.sql.GetStars(ctx, ns.OrgID, owner.Identifier)
+	current, _, err := s.sql.getDashboardStars(ctx, ns.OrgID, owner.Identifier)
 	if err != nil {
 		return nil, err
 	}
