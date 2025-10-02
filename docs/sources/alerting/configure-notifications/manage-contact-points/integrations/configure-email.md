@@ -29,13 +29,9 @@ refs:
 
 # Configure email for alert notifications
 
-Use the email integration to send alert notifications.
+Use the email integration to send alert notifications to one or more addresses.
 
-{{<admonition type="note">}}
-You can customize the [subject and main section of the email body](#optional-settings-using-templates), but you can't edit HTML or CSS for visual changes.
-
-In Grafana OSS and Enterprise, you can edit the full email template. However, this is not officially supported because it's an internal API and may undergo changes without prior notice.
-{{</admonition>}}
+You can customize the [subject and main section of the email body](#optional-settings-using-templates). By default, the subject and body are generated from the alert data included in the notification.
 
 ## Before you begin
 
@@ -80,7 +76,11 @@ For more details on contact points, including how to test them and enable notifi
 
 #### Optional settings using templates
 
-Use the following settings to customize the email content. Both options support using [notification templates](ref:notification-templates).
+{{<admonition type="note">}}
+You can customize the email subject and main section of the email body, but you can't edit HTML or CSS for visual changes.
+
+In Grafana OSS and Enterprise, you can edit the full email template. However, this is not officially supported because it's an internal API that may change without prior notice.
+{{</admonition>}}
 
 | Option  | Description                                                                                                                             |
 | ------- | --------------------------------------------------------------------------------------------------------------------------------------- |
