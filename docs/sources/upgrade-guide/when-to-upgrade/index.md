@@ -46,7 +46,7 @@ We provide release documentation in multiple places to address different needs:
 
 ## When to expect releases
 
-Grafana currently follows a monthly release schedule. Below are the planned releases for the end of 2025 and the first part of 2026 - though these dates may be subject to change:
+Grafana currently follows a monthly release schedule. Below are the planned releases for the end of 2025 and the first part of 2026. However, these dates may be subject to change:
 
 | **Release date** | **Grafana versions**      | **Release type** |
 | ---------------- | ------------------------- | ---------------- |
