@@ -5,9 +5,14 @@ import { memo, useContext, useEffect, useMemo } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { ModalsContext, Modal, Button, useStyles2 } from '@grafana/ui';
 import { Prompt } from 'app/core/components/FormPrompt/Prompt';
 import { contextSrv } from 'app/core/services/context_srv';
+import { ObjectMeta } from 'app/features/apiserver/types';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
+import { DashboardMeta } from 'app/types/dashboard';
 
 import { SaveLibraryVizPanelModal } from '../panel-edit/SaveLibraryVizPanelModal';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -96,7 +101,7 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
       onDiscard: () => {
         dashboard.exitEditMode({ skipConfirm: true });
         hideModal();
-        if (originalPath === '/dashboard/template') {
+        if (originalPath === DASHBOARD_LIBRARY_ROUTES.Template) {
           reportInteraction('grafana_dashboard_prompt_discard_template_dashboard', {
             datasource: new URLSearchParams(originalLocation.search).get('pluginId'),
           });
@@ -187,8 +192,9 @@ export function ignoreChanges(scene: DashboardScene | null) {
     return true;
   }
 
-  // Ignore changes if the original is empty (new dashboard)
-  if (original && 'schemaVersion' in original && isEmptyDashboard(original)) {
+  const dashboard = scene?.getSaveModel();
+  // Ignore changes if the dashboard is empty (new dashboard)
+  if (isEmptyDashboard(dashboard, scene?.serializer.metadata)) {
     return true;
   }
 
@@ -200,9 +206,21 @@ export function ignoreChanges(scene: DashboardScene | null) {
   return !canSave || fromScript || fromFile;
 }
 
-function isEmptyDashboard(dashboard: Dashboard): boolean {
+export function isEmptyDashboard(
+  dashboard: Dashboard | DashboardV2Spec,
+  metadata?: DashboardMeta | ObjectMeta
+): boolean {
   if (!dashboard) {
     return true;
+  }
+
+  if (isDashboardV2Spec(dashboard)) {
+    const hasNoPanels = Object.keys(dashboard.elements).length === 0;
+    const hasNoLinks = !dashboard.links.length;
+    const hasNoTemplates = !dashboard.variables.length;
+    const hasNoUid = !metadata || !('name' in metadata) || !metadata.name;
+
+    return hasNoPanels && hasNoLinks && hasNoTemplates && hasNoUid;
   }
 
   const hasNoPanels = !dashboard.panels?.length;

@@ -12,6 +12,8 @@ import dashboardLibrary1 from 'img/dashboard-library/dashboard_library_1.png';
 import dashboardLibrary2 from 'img/dashboard-library/dashboard_library_2.png';
 import dashboardLibrary3 from 'img/dashboard-library/dashboard_library_3.png';
 
+import { DASHBOARD_LIBRARY_ROUTES } from './types';
+
 export const DashboardLibrarySection = () => {
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
 
@@ -46,7 +48,7 @@ export const DashboardLibrarySection = () => {
     });
 
     const templateUrl =
-      `/dashboard/template?` +
+      `${DASHBOARD_LIBRARY_ROUTES.Template}?` +
       `datasource=${encodeURIComponent(initialDatasource || '')}&` +
       `title=${encodeURIComponent(dashboard.title || 'Template')}&` +
       `pluginId=${encodeURIComponent(dashboard.pluginId)}&` +
