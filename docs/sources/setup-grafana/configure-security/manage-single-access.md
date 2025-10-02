@@ -78,8 +78,7 @@ Next, design a [folder](../../../dashboards/manage-dashboards/#create-a-dashboar
 - Create an “Admins” folder (Team C’s folder) for sensitive content only Admins can access.
 - Optionally, create a personal folder for each team member so that they can work on draft content before moving it into their team folder when ready.
 
-[IMAGE HERE]
-Teams and folders in the stack, and the related admin permissions Team A and Team B have been granted
+{{< figure src="/media/docs/grafana/oac/AccessTeams01.png" max-width="750px" alt="Teams and folders in the stack, and the related admin permissions Team A and Team B have been granted" >}}
 
 ### Configure data access based on team requirements
 
@@ -95,8 +94,7 @@ However, you may need to protect data in shared resources. For example, all team
 
 If any of your teams, Team A for example, needs to build and manage their own data sources for product-specific use cases. In this case, grant the `datasources:creator` fixed role so they can create and manage their own data sources independently.
 
-[IMAGE HERE]
-Teams and data sources in the stack, and the related permissions Team A and Team B have been granted
+{{< figure src="/media/docs/grafana/oac/AccessTeams02.png" max-width="750px" alt="Teams and data sources in the stack, and the related permissions Team A and Team B have been granted" >}}
 
 #### Resources at an instance level
 
@@ -104,8 +102,7 @@ Some Grafana resources, such as service accounts, alert contact points, [Fleet M
 
 For example, users working in [Frontend Observability](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/) need a writer fixed role so that they can create and manage services.
 
-[IMAGE HERE]
-Grafana Cloud Frontend Observability resources in the stack, and the related permissions Team A have been granted.
+{{< figure src="/media/docs/grafana/oac/AccessTeams03.png" max-width="750px" alt="Grafana Cloud Frontend Observability resources in the stack, and the related permissions Team A have been granted" >}}
 
 ### Scale access management with Terraform and SSO
 
@@ -115,8 +112,7 @@ You can add any new users to your Grafana instance with an Identity Provider thr
 
 You can also use Terraform to provision teams their folders, fixed roles, and shared data source LBAC rules. For example, if you need to add a new team (Team D), you only need to add the new team to Grafana and run the Terraform script, which will automatically set them up to start using Grafana.
 
-[IMAGE HERE]
-Add new Team D from Okta and automate the rest of their IAM setup using Terraform
+{{< figure src="/media/docs/grafana/oac/AccessTeams04.png" max-width="750px" alt="Add new Team D from Okta and automate the rest of their IAM setup using Terraform" >}}
 
 ## Other resources
 
