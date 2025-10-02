@@ -55,10 +55,33 @@ type GroupResource struct {
 }
 
 var (
-	// validNameRegex validates that a name contains only lowercase alphanumeric characters, '-' or '.'
-	// and starts and ends with an alphanumeric character
-	validNameRegex = regexp.MustCompile(`^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$`)
+	// namePatternRegex validates that a name contains only alphanumeric characters, '-', '_', or '.'
+	namePatternRegex = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$`)
+	// resourceGroupRegex validates that a resource or group name contains lowercase alphanumeric characters, '-', or '.'
+	resourceGroupRegex = regexp.MustCompile(`^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$`)
 )
+
+// validateName checks if a name matches the naming convention
+func validateName(name, fieldName string) error {
+	if name == "" {
+		return fmt.Errorf("%s is required", fieldName)
+	}
+	if !namePatternRegex.MatchString(name) {
+		return fmt.Errorf("%s '%s' is invalid", fieldName, name)
+	}
+	return nil
+}
+
+// validateResourceGroup checks if a group or resource name matches the naming convention
+func validateResourceGroup(name, fieldName string) error {
+	if name == "" {
+		return fmt.Errorf("%s is required", fieldName)
+	}
+	if !resourceGroupRegex.MatchString(name) {
+		return fmt.Errorf("%s '%s' is invalid", fieldName, name)
+	}
+	return nil
+}
 
 func (k DataKey) String() string {
 	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s", k.Group, k.Resource, k.Namespace, k.Name, k.ResourceVersion, k.Action, k.Folder)
@@ -69,42 +92,30 @@ func (k DataKey) Equals(other DataKey) bool {
 }
 
 func (k DataKey) Validate() error {
-	if k.Group == "" {
-		return fmt.Errorf("group is required")
+	// Validate required fields
+	if err := validateResourceGroup(k.Group, "group"); err != nil {
+		return err
 	}
-	if k.Resource == "" {
-		return fmt.Errorf("resource is required")
+	if err := validateResourceGroup(k.Resource, "resource"); err != nil {
+		return err
 	}
-	if k.Namespace == "" {
-		return fmt.Errorf("namespace is required")
+	if err := validateName(k.Namespace, "namespace"); err != nil {
+		return err
 	}
-	if k.Name == "" {
-		return fmt.Errorf("name is required")
+	if err := validateName(k.Name, "name"); err != nil {
+		return err
 	}
+
+	// Validate resource version
 	if k.ResourceVersion <= 0 {
 		return fmt.Errorf("resource version must be positive")
 	}
-	if k.Action == "" {
-		return fmt.Errorf("action is required")
-	}
 
-	// Validate naming conventions for all required fields
-	if !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
-	}
-	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid", k.Group)
-	}
-	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid", k.Resource)
-	}
-	// if !validNameRegex.MatchString(k.Name) {
-	// 	return fmt.Errorf("name '%s' is invalid", k.Name)
-	// }
-
-	// Validate folder field if provided (optional field)
-	if k.Folder != "" && !validNameRegex.MatchString(k.Folder) {
-		return fmt.Errorf("folder '%s' is invalid", k.Folder)
+	// Validate optional folder field
+	if k.Folder != "" {
+		if !namePatternRegex.MatchString(k.Folder) {
+			return fmt.Errorf("folder '%s' is invalid", k.Folder)
+		}
 	}
 
 	// Validate action is one of the valid values
@@ -124,24 +135,26 @@ type ListRequestKey struct {
 }
 
 func (k ListRequestKey) Validate() error {
-	if k.Group == "" {
-		return fmt.Errorf("group is required")
+	// Validate required fields
+	if err := validateResourceGroup(k.Group, "group"); err != nil {
+		return err
 	}
-	if k.Resource == "" {
-		return fmt.Errorf("resource is required")
+	if err := validateResourceGroup(k.Resource, "resource"); err != nil {
+		return err
 	}
+
+	// Validate business logic constraints
 	if k.Namespace == "" && k.Name != "" {
 		return fmt.Errorf("name must be empty when namespace is empty")
 	}
-	if k.Namespace != "" && !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
+
+	// Validate optional namespace field
+	if k.Namespace != "" {
+		if err := validateName(k.Namespace, "namespace"); err != nil {
+			return err
+		}
 	}
-	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid", k.Group)
-	}
-	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid", k.Resource)
-	}
+
 	return nil
 }
 
@@ -165,30 +178,18 @@ type GetRequestKey struct {
 
 // Validate validates the get request key
 func (k GetRequestKey) Validate() error {
-	if k.Group == "" {
-		return fmt.Errorf("group is required")
+	if err := validateResourceGroup(k.Group, "group"); err != nil {
+		return err
 	}
-	if k.Resource == "" {
-		return fmt.Errorf("resource is required")
+	if err := validateResourceGroup(k.Resource, "resource"); err != nil {
+		return err
 	}
-	if k.Namespace == "" {
-		return fmt.Errorf("namespace is required")
+	if err := validateName(k.Namespace, "namespace"); err != nil {
+		return err
 	}
-	if k.Name == "" {
-		return fmt.Errorf("name is required")
+	if err := validateName(k.Name, "name"); err != nil {
+		return err
 	}
-
-	// Validate naming conventions
-	if !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
-	}
-	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid", k.Group)
-	}
-	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid", k.Resource)
-	}
-
 	return nil
 }
 
