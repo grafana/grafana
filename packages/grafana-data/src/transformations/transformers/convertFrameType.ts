@@ -143,16 +143,18 @@ const createColorField = (frame: DataFrame, color: string): Field => {
 
 function mapSourceFieldNameToAnnoFieldName(
   options: ConvertFrameTypeTransformerOptions,
-  sourceFieldName: string | undefined
+  sourceFieldDisplayName: string,
+  sourceFieldName: string
 ) {
   const annotationFieldMappingValues = Object.values(options?.annotationFieldMapping ?? []);
   const annotationFieldMappingKeys = Object.keys(options?.annotationFieldMapping ?? []);
-  const idx = annotationFieldMappingValues.findIndex((fieldName: AnnotationFieldMapping) => {
-    return sourceFieldName === fieldName;
+
+  const displayNameIdx = annotationFieldMappingValues.findIndex((fieldName: AnnotationFieldMapping) => {
+    return sourceFieldDisplayName === fieldName || fieldName === sourceFieldName;
   });
 
-  if (idx !== -1) {
-    return annotationFieldMappingKeys[idx];
+  if (displayNameIdx !== -1) {
+    return annotationFieldMappingKeys[displayNameIdx];
   }
 
   return undefined;
@@ -170,8 +172,9 @@ function convertSeriesToAnnotation(
   let frameName = undefined;
   if (options.annotationOptions?.frameName) {
     const sourceFieldForFrameName = frame.fields.find((field) => {
-      const displayName = getFieldDisplayName(field, frame);
-      return displayName ?? field.name === options.annotationOptions?.frameName;
+      // const displayName = getFieldDisplayName(field, frame);
+      // console.log('displayName', {displayName,fieldName: field.name, selectedName: options.annotationOptions?.frameName, field })
+      return field.name === options.annotationOptions?.frameName;
     });
 
     const nameSet = new Set(sourceFieldForFrameName?.values);
@@ -181,17 +184,18 @@ function convertSeriesToAnnotation(
     }
 
     frameName = sourceFieldForFrameName?.values[0];
+    // console.log('frameName', frameName)
   }
 
   const annoFields: Field[] = frame.fields
     .filter((sourceField) => {
       const sourceFieldName = getFieldDisplayName(sourceField, frame);
-      const name = mapSourceFieldNameToAnnoFieldName(options, sourceFieldName);
+      const name = mapSourceFieldNameToAnnoFieldName(options, sourceFieldName, sourceField.name);
       return !!name;
     })
     .map((sourceField) => {
       const sourceFieldName = getFieldDisplayName(sourceField, frame);
-      const name = mapSourceFieldNameToAnnoFieldName(options, sourceFieldName) ?? sourceFieldName;
+      const name = mapSourceFieldNameToAnnoFieldName(options, sourceFieldName, sourceField.name) ?? sourceFieldName;
       if (name === 'tags') {
         return { ...sourceField, name, values: [...sourceField.values.map((v) => (Array.isArray(v) ? v : [v]))] };
       }
@@ -201,9 +205,14 @@ function convertSeriesToAnnotation(
       };
     });
 
+  if (!annoFields.find((f) => f.name === 'time')) {
+    console.error('TIME FIELD IS MISSING');
+  }
+
   const mappedFrame: DataFrame = {
     ...frame,
-    name: frameName ?? frame.name ?? Math.random().toString(),
+    name: frameName ?? frame.name ?? frame.refId ?? Math.random().toString(),
+
     fields: [...frame.fields, ...annoFields],
     meta: {
       ...frame.meta,
