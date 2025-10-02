@@ -261,126 +261,135 @@ export const AnnotationsPlugin2 = ({
   }, []);
 
   if (plot) {
-    let markers = annos.flatMap((frame, frameIdx) => {
-      let vals = getVals(frame);
+    let markers = annos
+      .filter((a) => a.fields.some((f) => (f.config.custom.hideFrom?.viz ?? false) === false))
+      .flatMap((frame, frameIdx) => {
+        let vals = getVals(frame);
 
-      let markers: React.ReactNode[] = [];
+        let markers: React.ReactNode[] = [];
 
-      // Top offset for multi-lane annotations
-      const top = annotationsConfig?.multiLane ? frameIdx * ANNOTATION_LANE_SIZE : undefined;
-      for (let i = 0; i < vals.time.length; i++) {
-        let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
-        let left = Math.round(plot.valToPos(vals.time[i], 'x')) || 0; // handles -0
-        let style: React.CSSProperties | null = null;
-        let className = '';
-        let isVisible = true;
+        // Top offset for multi-lane annotations
+        const top = annotationsConfig?.multiLane ? frameIdx * ANNOTATION_LANE_SIZE : undefined;
+        for (let i = 0; i < vals.time.length; i++) {
+          let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
+          let left = Math.round(plot.valToPos(vals.time[i], 'x')) || 0; // handles -0
+          let style: React.CSSProperties | null = null;
+          let className = '';
+          let isVisible = true;
 
-        if (vals.isRegion?.[i]) {
-          let right = Math.round(plot.valToPos(vals.timeEnd?.[i], 'x')) || 0; // handles -0
+          if (vals.isRegion?.[i]) {
+            let right = Math.round(plot.valToPos(vals.timeEnd?.[i], 'x')) || 0; // handles -0
 
-          isVisible = left < plot.rect.width && right > 0;
+            isVisible = left < plot.rect.width && right > 0;
 
-          if (isVisible) {
-            let clampedLeft = Math.max(0, left);
-            let clampedRight = Math.min(plot.rect.width, right);
+            if (isVisible) {
+              let clampedLeft = Math.max(0, left);
+              let clampedRight = Math.min(plot.rect.width, right);
 
-            style = { left: clampedLeft, background: color, width: clampedRight - clampedLeft, top };
-            className = styles.annoRegion;
-          }
-        } else {
-          isVisible = left >= 0 && left <= plot.rect.width;
-
-          if (isVisible) {
-            style = { left, borderBottomColor: color, top };
-            className = styles.annoMarker;
-          }
-        }
-
-        // @TODO: Reset newRange after annotation is saved
-        if (isVisible) {
-          const isWip: boolean = frame.meta?.custom?.isWip;
-          const setAnnotation = (active: boolean) => {
-            if (active) {
-              setAnnotationIndex(`${frameIdx}:${i}`);
-            } else {
-              setAnnotationIndex(undefined);
+              style = { left: clampedLeft, background: color, width: clampedRight - clampedLeft, top };
+              className = styles.annoRegion;
             }
-          };
+          } else {
+            isVisible = left >= 0 && left <= plot.rect.width;
 
-          // Get data links
-          const links: LinkModel[] = [];
-          frame.fields.forEach((field: Field) => {
-            links.push(...getDataLinks(field, i));
-          });
+            if (isVisible) {
+              style = { left, borderBottomColor: color, top };
+              className = styles.annoMarker;
+            }
+          }
 
-          // Get link actions
-          const actions: Array<ActionModel<Field>> = [];
-          if (userCanExecuteActions) {
-            // @todo dataLinks & actions
-            const defaultField = getActionsDefaultField();
-            const scopedVars: ScopedVars = {
-              __dataContext: {
-                value: {
-                  data: annotations,
-                  field: defaultField,
-                  frame,
-                  frameIndex: 0,
-                },
-              },
+          // @TODO: Reset newRange after annotation is saved
+          if (isVisible) {
+            const isWip: boolean = frame.meta?.custom?.isWip;
+            const setAnnotation = (active: boolean) => {
+              if (active) {
+                setAnnotationIndex(`${frameIdx}:${i}`);
+              } else {
+                setAnnotationIndex(undefined);
+              }
             };
-            frame.fields.forEach((field: Field, index) => {
-              // @todo use getFieldActions
-              const actionsModel = getActions(frame, field, scopedVars, replaceVariables, field.config.actions ?? [], {
-                valueRowIndex: i,
-              });
 
-              const actionsOut: Array<ActionModel<Field>> = [];
-              const actionLookup = new Set<string>();
+            // Get data links
+            const links: LinkModel[] = [];
+            frame.fields.forEach((field: Field) => {
+              links.push(...getDataLinks(field, i));
+            });
 
-              if (actionsModel.length > 1) {
-                actions.forEach((action) => {
-                  const key = action.title;
+            // Get link actions
+            const actions: Array<ActionModel<Field>> = [];
+            if (userCanExecuteActions) {
+              // @todo dataLinks & actions
+              const defaultField = getActionsDefaultField();
+              const scopedVars: ScopedVars = {
+                __dataContext: {
+                  value: {
+                    data: annotations,
+                    field: defaultField,
+                    frame,
+                    frameIndex: 0,
+                  },
+                },
+              };
+              frame.fields.forEach((field: Field, index) => {
+                // @todo use getFieldActions
+                const actionsModel = getActions(
+                  frame,
+                  field,
+                  scopedVars,
+                  replaceVariables,
+                  field.config.actions ?? [],
+                  {
+                    valueRowIndex: i,
+                  }
+                );
 
+                const actionsOut: Array<ActionModel<Field>> = [];
+                const actionLookup = new Set<string>();
+
+                if (actionsModel.length > 1) {
+                  actions.forEach((action) => {
+                    const key = action.title;
+
+                    if (!actionLookup.has(key)) {
+                      actionsOut.push(action);
+                      actionLookup.add(key);
+                    }
+                  });
+                }
+
+                actionsModel.forEach((action) => {
+                  const key = `${action.title}/${Math.random()}`;
                   if (!actionLookup.has(key)) {
-                    actionsOut.push(action);
+                    actions.push(action);
                     actionLookup.add(key);
                   }
                 });
-              }
-
-              actionsModel.forEach((action) => {
-                const key = `${action.title}/${Math.random()}`;
-                if (!actionLookup.has(key)) {
-                  actions.push(action);
-                  actionLookup.add(key);
-                }
               });
-            });
+            }
+
+            markers.push(
+              <AnnotationMarker2
+                actions={actions}
+                links={links}
+                pinAnnotation={setAnnotation}
+                isPinned={annoIdx === `${frameIdx}:${i}`}
+                // @todo let users control if anno tooltips show on hover?
+                showOnHover={!annoIdx}
+                annoIdx={i}
+                annoVals={vals}
+                className={className}
+                style={style}
+                timeZone={timeZone}
+                key={`${frameIdx}:${i}`}
+                exitWipEdit={isWip ? exitWipEdit : null}
+                portalRoot={portalRoot}
+              />
+            );
           }
-
-          markers.push(
-            <AnnotationMarker2
-              actions={actions}
-              links={links}
-              pinAnnotation={setAnnotation}
-              isPinned={annoIdx === `${frameIdx}:${i}`}
-              // @todo let users control if anno tooltips show on hover?
-              showOnHover={!annoIdx}
-              annoIdx={i}
-              annoVals={vals}
-              className={className}
-              style={style}
-              timeZone={timeZone}
-              key={`${frameIdx}:${i}`}
-              exitWipEdit={isWip ? exitWipEdit : null}
-              portalRoot={portalRoot}
-            />
-          );
         }
-      }
 
-      return markers;
-    });
+        return markers;
+      });
 
     return createPortal(markers, xAxisRef.current!);
   }
