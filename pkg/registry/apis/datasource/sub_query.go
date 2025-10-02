@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	query_headers "github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -96,6 +97,22 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			PluginContext: pluginCtx,
 			Headers:       query_headers.ExtractKnownHeaders(req.Header),
 		})
+
+		// all errors get converted into k8 errors when sent in responder.Error and lose important context like downstream info
+		var e errutil.Error
+		if errors.As(err, &e) && e.Source == errutil.SourceDownstream {
+			responder.Object(int(backend.StatusBadRequest),
+				&query.QueryDataResponse{QueryDataResponse: backend.QueryDataResponse{Responses: map[string]backend.DataResponse{
+					"A": {
+						Error:       errors.New(e.LogMessage),
+						ErrorSource: backend.ErrorSourceDownstream,
+						Status:      backend.StatusBadRequest,
+					},
+				}}},
+			)
+			return
+		}
+
 		if err != nil {
 			responder.Error(err)
 			return
