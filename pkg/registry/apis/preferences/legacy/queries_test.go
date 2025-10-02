@@ -40,7 +40,7 @@ func TestStarsQueries(t *testing.T) {
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
-			sqlStarsQuery: {
+			sqlDashboardStarsQuery: {
 				{
 					Name: "all",
 					Data: getStarQuery(0, ""),
@@ -54,10 +54,22 @@ func TestStarsQueries(t *testing.T) {
 					Data: getStarQuery(3, "abc"),
 				},
 			},
-			sqlStarsRV: {
+			sqlDashboardStarsRV: {
 				{
 					Name: "get",
 					Data: getStarQuery(0, ""),
+				},
+			},
+			sqlQueryStarsQuery: {
+				{
+					Name: "user",
+					Data: getStarQuery(1, "abc"),
+				},
+			},
+			sqlQueryStarsQuery: {
+				{
+					Name: "org",
+					Data: getStarQuery(1, ""),
 				},
 			},
 			sqlPreferencesQuery: {

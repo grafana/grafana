@@ -26,11 +26,12 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlStarsQuery       = mustTemplate("sql_stars_query.sql")
-	sqlStarsRV          = mustTemplate("sql_stars_rv.sql")
-	sqlPreferencesQuery = mustTemplate("sql_preferences_query.sql")
-	sqlPreferencesRV    = mustTemplate("sql_preferences_rv.sql")
-	sqlTeams            = mustTemplate("sql_teams.sql")
+	sqlDashboardStarsQuery = mustTemplate("sql_dashboard_stars.sql")
+	sqlDashboardStarsRV    = mustTemplate("sql_dashboard_stars_rv.sql")
+	sqlQueryStarsQuery     = mustTemplate("sql_query_stars.sql")
+	sqlPreferencesQuery    = mustTemplate("sql_preferences_query.sql")
+	sqlPreferencesRV       = mustTemplate("sql_preferences_rv.sql")
+	sqlTeams               = mustTemplate("sql_teams.sql")
 )
 
 type starQuery struct {
@@ -39,8 +40,10 @@ type starQuery struct {
 	OrgID   int64 // >= 1 if UserID != ""
 	UserUID string
 
-	StarTable string
-	UserTable string
+	StarTable              string
+	UserTable              string
+	QueryHistoryStarsTable string
+	QueryHistoryTable      string
 }
 
 func (r starQuery) Validate() error {
@@ -57,8 +60,10 @@ func newStarQueryReq(sql *legacysql.LegacyDatabaseHelper, user string, orgId int
 		UserUID: user,
 		OrgID:   orgId,
 
-		StarTable: sql.Table("star"),
-		UserTable: sql.Table("user"),
+		StarTable:              sql.Table("star"),
+		UserTable:              sql.Table("user"),
+		QueryHistoryStarsTable: sql.Table("query_history_star"),
+		QueryHistoryTable:      sql.Table("query_history"),
 	}
 }
 
