@@ -15,6 +15,8 @@ import { getNavModel } from '../../core/selectors/navModel';
 import { ThemeProvider } from '../../core/utils/ConfigProvider';
 import { useSelector } from '../../types/store';
 
+import schema from './schema.json';
+
 export default function ThemePlayground() {
   const navIndex = useSelector((state) => state.navIndex);
   const homeNav = getNavModel(navIndex, HOME_NAV_ID).main;
@@ -57,6 +59,18 @@ export default function ThemePlayground() {
           showMiniMap={true}
           containerStyles={styles.codeEditor}
           onBlur={onBlur}
+          onBeforeEditorMount={(monaco) => {
+            monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+              validate: true,
+              schemas: [
+                {
+                  uri: 'theme-schema',
+                  fileMatch: ['*'],
+                  schema,
+                },
+              ],
+            });
+          }}
           monacoOptions={{
             alwaysConsumeMouseWheel: true,
           }}
