@@ -138,6 +138,7 @@ type Cfg struct {
 	ProvisioningDisableControllers  bool
 	ProvisioningAllowedTargets      []string
 	ProvisioningAllowImageRendering bool
+	ProvisioningMinSyncInterval     time.Duration
 	ProvisioningRepositoryTypes     []string
 	ProvisioningLokiURL             string
 	ProvisioningLokiUser            string
@@ -2125,6 +2126,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 		cfg.ProvisioningAllowedTargets = []string{"instance", "folder"}
 	}
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
+	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")
