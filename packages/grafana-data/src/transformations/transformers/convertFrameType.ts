@@ -4,6 +4,7 @@ import tinycolor from 'tinycolor2';
 import { DataTopic, FieldColor, FieldColorModeId } from '@grafana/schema';
 import { colors } from '@grafana/ui';
 
+import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
 
@@ -92,10 +93,29 @@ export function convertFrameTypes(options: ConvertFrameTypeTransformerOptions, f
 function convertSeriesToExemplar(frame: DataFrame): DataFrame {
   // TODO: ensure time field
   // TODO: ensure value field
+  const timeField = frame.fields.find((f) => f.type === FieldType.time);
+  const valueField = frame.fields.find((f) => f.type === FieldType.number);
+
+  if (!timeField || !valueField) {
+    console.warn('Missing time or value field', { timeField, valueField });
+    return {
+      ...frame,
+      name: 'exemplar',
+      meta: {
+        ...frame.meta,
+        dataTopic: DataTopic.Annotations,
+        custom: {
+          ...frame.meta?.custom,
+          resultType: 'exemplar',
+        },
+      },
+    };
+  }
 
   return {
     ...frame,
     name: 'exemplar',
+    fields: [...frame.fields, { ...timeField, name: 'Time' }, { ...valueField, name: 'Value' }],
     meta: {
       ...frame.meta,
       dataTopic: DataTopic.Annotations,
@@ -113,6 +133,7 @@ function convertSeriesToExemplar(frame: DataFrame): DataFrame {
  */
 const createIsRegionField = (frame: DataFrame) => {
   const timeFields = frame.fields.filter((field) => field.type === FieldType.time);
+  // @todo what if existing fields conflict with annotation field names?
   const startTimeField = timeFields.find((field) => field.name === 'time');
   const timeEndField = timeFields.find((field) => field.name === 'timeEnd');
   const isRegionValues: boolean[] =
@@ -141,16 +162,18 @@ const createColorField = (frame: DataFrame, color: string): Field => {
 
 function mapSourceFieldNameToAnnoFieldName(
   options: ConvertFrameTypeTransformerOptions,
-  sourceFieldName: string | undefined
+  sourceFieldDisplayName: string,
+  sourceFieldName: string
 ) {
   const annotationFieldMappingValues = Object.values(options?.annotationFieldMapping ?? []);
   const annotationFieldMappingKeys = Object.keys(options?.annotationFieldMapping ?? []);
-  const idx = annotationFieldMappingValues.findIndex((fieldName: AnnotationFieldMapping) => {
-    return sourceFieldName === fieldName;
+
+  const displayNameIdx = annotationFieldMappingValues.findIndex((fieldName: AnnotationFieldMapping) => {
+    return sourceFieldDisplayName === fieldName || fieldName === sourceFieldName;
   });
 
-  if (idx !== -1) {
-    return annotationFieldMappingKeys[idx];
+  if (displayNameIdx !== -1) {
+    return annotationFieldMappingKeys[displayNameIdx];
   }
 
   return undefined;
@@ -167,7 +190,12 @@ function convertSeriesToAnnotation(
   // get rid of default color, use color
   let frameName = undefined;
   if (options.annotationOptions?.frameName) {
-    const sourceFieldForFrameName = frame.fields.find((field) => field.name === options.annotationOptions?.frameName);
+    const sourceFieldForFrameName = frame.fields.find((field) => {
+      // const displayName = getFieldDisplayName(field, frame);
+      // console.log('displayName', {displayName,fieldName: field.name, selectedName: options.annotationOptions?.frameName, field })
+      return field.name === options.annotationOptions?.frameName;
+    });
+
     const nameSet = new Set(sourceFieldForFrameName?.values);
     if (nameSet.size > 1) {
       // There can be only one!! @todo
@@ -175,24 +203,36 @@ function convertSeriesToAnnotation(
     }
 
     frameName = sourceFieldForFrameName?.values[0];
+    // console.log('frameName', frameName)
+  }
+
+  const annoFields: Field[] = frame.fields
+    .filter((sourceField) => {
+      const sourceFieldName = getFieldDisplayName(sourceField, frame);
+      const name = mapSourceFieldNameToAnnoFieldName(options, sourceFieldName, sourceField.name);
+      return !!name;
+    })
+    .map((sourceField) => {
+      const sourceFieldName = getFieldDisplayName(sourceField, frame);
+      const name = mapSourceFieldNameToAnnoFieldName(options, sourceFieldName, sourceField.name) ?? sourceFieldName;
+      if (name === 'tags') {
+        return { ...sourceField, name, values: [...sourceField.values.map((v) => (Array.isArray(v) ? v : [v]))] };
+      }
+      return {
+        ...sourceField,
+        name,
+      };
+    });
+
+  if (!annoFields.find((f) => f.name === 'time')) {
+    console.error('TIME FIELD IS MISSING');
   }
 
   const mappedFrame: DataFrame = {
     ...frame,
-    name: frameName ?? frame.name ?? Math.random().toString(),
-    fields: [
-      ...frame.fields.map((sourceField) => {
-        const name = mapSourceFieldNameToAnnoFieldName(options, sourceField.name) ?? sourceField.name;
-        // Tags will throw errors if not array of values
-        if (name === 'tags') {
-          sourceField = { ...sourceField, values: [...sourceField.values.map((v) => (Array.isArray(v) ? v : [v]))] };
-        }
-        return {
-          ...sourceField,
-          name,
-        };
-      }),
-    ],
+    name: frameName ?? frame.name ?? frame.refId,
+
+    fields: [...frame.fields, ...annoFields],
     meta: {
       ...frame.meta,
       dataTopic: DataTopic.Annotations,
