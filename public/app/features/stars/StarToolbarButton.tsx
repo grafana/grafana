@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
+import { useAsyncRetry } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { Icon, ToolbarButton } from '@grafana/ui';
 import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/preferences/v1alpha1';
 import { contextSrv } from 'app/core/core';
@@ -64,17 +65,27 @@ export function StarToolbarButtonApiServer({ group, kind, id }: Pick<Props, 'gro
 
 function StarToolbarButtonLegacy({ dashboard }: { dashboard: Props['dashboard'] }) {
   const { meta } = dashboard.useState();
-  const isStarred = Boolean(meta.isStarred);
+  const uid = meta.uid || meta.k8s?.name;
   const tooltips = getStarTooltips();
 
+  const { value, retry } = useAsyncRetry(async () => {
+    return getBackendSrv().get('api/user/stars');
+  });
+
+  if (!value || !uid) {
+    return null;
+  }
+
+  const isStarred = value?.includes(uid);
   return (
     <ToolbarButton
       tooltip={isStarred ? tooltips.unstar : tooltips.star}
       icon={<Icon name={isStarred ? 'favorite' : 'star'} size="lg" type={isStarred ? 'mono' : 'default'} />}
       data-testid={selectors.components.NavToolbar.markAsFavorite}
-      onClick={() => {
+      onClick={async () => {
         DashboardInteractions.toolbarFavoritesClick();
-        dashboard.onStarDashboard();
+        await dashboard.onStarDashboard(isStarred);
+        retry();
       }}
     />
   );
