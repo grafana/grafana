@@ -55,14 +55,14 @@ type GroupResource struct {
 }
 
 var (
-	// permissiveNameRegex validates a general-purpose name.
+	// permissiveRegex validates a general-purpose name.
 	// It allows alphanumeric characters (upper and lower case), '-', '_', or '.'
 	// and must start and end with an alphanumeric character.
-	permissiveNameRegex = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$`)
-	// strictDNSLabelRegex validates a name that complies with DNS label standards (RFC 1123).
+	permissiveRegex = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$`)
+	// strictRegex validates a name that complies with DNS label standards (RFC 1123).
 	// It allows only lowercase alphanumeric characters, '-', or '.'
 	// and must start and end with an alphanumeric character.
-	strictDNSLabelRegex = regexp.MustCompile(`^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$`)
+	strictRegex = regexp.MustCompile(`^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$`)
 )
 
 // ensurePermissive checks if a name matches the permissive naming convention
@@ -70,7 +70,7 @@ func ensurePermissive(name, fieldName string) error {
 	if name == "" {
 		return fmt.Errorf("%s is required", fieldName)
 	}
-	if !permissiveNameRegex.MatchString(name) {
+	if !permissiveRegex.MatchString(name) {
 		return fmt.Errorf("%s '%s' is invalid", fieldName, name)
 	}
 	return nil
@@ -81,7 +81,7 @@ func ensureStrict(name, fieldName string) error {
 	if name == "" {
 		return fmt.Errorf("%s is required", fieldName)
 	}
-	if !strictDNSLabelRegex.MatchString(name) {
+	if !strictRegex.MatchString(name) {
 		return fmt.Errorf("%s '%s' is invalid", fieldName, name)
 	}
 	return nil
@@ -117,7 +117,7 @@ func (k DataKey) Validate() error {
 
 	// Validate optional folder field
 	if k.Folder != "" {
-		if !permissiveNameRegex.MatchString(k.Folder) {
+		if !permissiveRegex.MatchString(k.Folder) {
 			return fmt.Errorf("folder '%s' is invalid", k.Folder)
 		}
 	}
@@ -154,13 +154,13 @@ func (k ListRequestKey) Validate() error {
 
 	// Validate optional namespace field
 	if k.Namespace != "" {
-		if err := strictDNSLabelRegex.MatchString(k.Namespace); !err {
+		if err := strictRegex.MatchString(k.Namespace); !err {
 			return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
 		}
 	}
 
 	if k.Name != "" {
-		if err := permissiveNameRegex.MatchString(k.Name); !err {
+		if err := permissiveRegex.MatchString(k.Name); !err {
 			return fmt.Errorf("name '%s' is invalid", k.Name)
 		}
 	}

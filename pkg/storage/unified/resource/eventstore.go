@@ -54,23 +54,23 @@ func (k EventKey) Validate() error {
 	if k.Action == "" {
 		return fmt.Errorf("action cannot be empty")
 	}
-	if k.Folder != "" && !permissiveNameRegex.MatchString(k.Folder) {
+	if k.Folder != "" && !permissiveRegex.MatchString(k.Folder) {
 		return fmt.Errorf("folder '%s' is invalid", k.Folder)
 	}
 	// Validate each field against the naming rules (reusing the regex from datastore.go)
-	if !strictDNSLabelRegex.MatchString(k.Namespace) {
+	if !strictRegex.MatchString(k.Namespace) {
 		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
 	}
-	if !strictDNSLabelRegex.MatchString(k.Group) {
+	if !strictRegex.MatchString(k.Group) {
 		return fmt.Errorf("group '%s' is invalid", k.Group)
 	}
-	if !strictDNSLabelRegex.MatchString(k.Resource) {
+	if !strictRegex.MatchString(k.Resource) {
 		return fmt.Errorf("resource '%s' is invalid", k.Resource)
 	}
-	if !permissiveNameRegex.MatchString(k.Name) {
+	if !permissiveRegex.MatchString(k.Name) {
 		return fmt.Errorf("name '%s' is invalid", k.Name)
 	}
-	if k.Folder != "" && !strictDNSLabelRegex.MatchString(k.Folder) {
+	if k.Folder != "" && !strictRegex.MatchString(k.Folder) {
 		return fmt.Errorf("folder '%s' is invalid", k.Folder)
 	}
 	switch k.Action {
