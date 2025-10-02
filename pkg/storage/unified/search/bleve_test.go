@@ -14,15 +14,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Masterminds/semver"
 	"github.com/blevesearch/bleve/v2"
-	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/atomic"
 	"go.uber.org/goleak"
+
+	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -653,7 +653,7 @@ type StubAccessClient struct {
 	resourceResponses map[string]bool // key is the resource name, and bool if what the checker will return
 }
 
-func (nc *StubAccessClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest) (authlib.CheckResponse, error) {
+func (nc *StubAccessClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 	return authlib.CheckResponse{Allowed: nc.resourceResponses[req.Resource]}, nil
 }
 
@@ -827,24 +827,6 @@ func withRootDir(root string) setupOption {
 	}
 }
 
-func withBuildVersion(version string) setupOption {
-	return func(options *BleveOptions) {
-		options.BuildVersion = version
-	}
-}
-
-func withMinBuildVersion(version *semver.Version) setupOption {
-	return func(options *BleveOptions) {
-		options.MinBuildVersion = version
-	}
-}
-
-func withMaxFileIndexAge(maxAge time.Duration) setupOption {
-	return func(options *BleveOptions) {
-		options.MaxFileIndexAge = maxAge
-	}
-}
-
 func withOwnsIndexFn(fn func(key resource.NamespacedResource) (bool, error)) setupOption {
 	return func(options *BleveOptions) {
 		options.OwnsIndex = fn
@@ -978,81 +960,39 @@ func TestBuildIndex(t *testing.T) {
 		Resource:  "resource",
 	}
 
-	const alwaysRebuildDueToAge = 1 * time.Nanosecond
-	const neverRebuildDueToAge = 1 * time.Hour
-
 	for _, rebuild := range []bool{false, true} {
-		for _, version := range []string{"", "12.5.123"} {
-			for _, minBuildVersion := range []*semver.Version{nil, semver.MustParse("12.0.0"), semver.MustParse("13.0.0")} {
-				for _, maxIndexAge := range []time.Duration{0, alwaysRebuildDueToAge, neverRebuildDueToAge} {
-					shouldRebuild := rebuild
-					if minBuildVersion != nil {
-						shouldRebuild = shouldRebuild || version == "" || minBuildVersion.GreaterThan(semver.MustParse(version))
-					}
-					if maxIndexAge > 0 {
-						shouldRebuild = shouldRebuild || maxIndexAge == alwaysRebuildDueToAge
-					}
+		testName := fmt.Sprintf("rebuild=%t", rebuild)
 
-					testName := ""
-					if shouldRebuild {
-						testName += "should REBUILD index"
-					} else {
-						testName += "should REUSE index"
-					}
+		t.Run(testName, func(t *testing.T) {
+			tmpDir := t.TempDir()
 
-					if rebuild {
-						testName += " when rebuild is true"
-					} else {
-						testName += " when rebuild is false"
-					}
+			const (
+				firstIndexDocsCount  = 10
+				secondIndexDocsCount = 1000
+			)
 
-					if version != "" {
-						testName += " build version is " + version
-					} else {
-						testName += " build version is empty"
-					}
-
-					if minBuildVersion != nil {
-						testName += " min build version is " + minBuildVersion.String()
-					} else {
-						testName += " min build version is nil"
-					}
-
-					testName += " max index age is " + maxIndexAge.String()
-
-					t.Run(testName, func(t *testing.T) {
-						tmpDir := t.TempDir()
-
-						const (
-							firstIndexDocsCount  = 10
-							secondIndexDocsCount = 1000
-						)
-
-						{
-							backend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(tmpDir), withBuildVersion(version))
-							_, err := backend.BuildIndex(context.Background(), ns, firstIndexDocsCount, nil, "test", indexTestDocs(ns, firstIndexDocsCount, 100), nil, rebuild)
-							require.NoError(t, err)
-							backend.Stop()
-						}
-
-						// Make sure we pass at least 1 nanosecond (alwaysRebuildDueToAge) to ensure that the index needs to be rebuild.
-						time.Sleep(1 * time.Millisecond)
-
-						newBackend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(tmpDir), withBuildVersion(version), withMinBuildVersion(minBuildVersion), withMaxFileIndexAge(maxIndexAge))
-						idx, err := newBackend.BuildIndex(context.Background(), ns, secondIndexDocsCount, nil, "test", indexTestDocs(ns, secondIndexDocsCount, 100), nil, rebuild)
-						require.NoError(t, err)
-
-						cnt, err := idx.DocCount(context.Background(), "")
-						require.NoError(t, err)
-						if shouldRebuild {
-							require.Equal(t, int64(secondIndexDocsCount), cnt, "Index has been not rebuilt")
-						} else {
-							require.Equal(t, int64(firstIndexDocsCount), cnt, "Index has not been reused")
-						}
-					})
-				}
+			{
+				backend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(tmpDir))
+				_, err := backend.BuildIndex(context.Background(), ns, firstIndexDocsCount, nil, "test", indexTestDocs(ns, firstIndexDocsCount, 100), nil, rebuild)
+				require.NoError(t, err)
+				backend.Stop()
 			}
-		}
+
+			// Make sure we pass at least 1 nanosecond (alwaysRebuildDueToAge) to ensure that the index needs to be rebuild.
+			time.Sleep(1 * time.Millisecond)
+
+			newBackend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(tmpDir))
+			idx, err := newBackend.BuildIndex(context.Background(), ns, secondIndexDocsCount, nil, "test", indexTestDocs(ns, secondIndexDocsCount, 100), nil, rebuild)
+			require.NoError(t, err)
+
+			cnt, err := idx.DocCount(context.Background(), "")
+			require.NoError(t, err)
+			if rebuild {
+				require.Equal(t, int64(secondIndexDocsCount), cnt, "Index has been not rebuilt")
+			} else {
+				require.Equal(t, int64(firstIndexDocsCount), cnt, "Index has not been reused")
+			}
+		})
 	}
 }
 

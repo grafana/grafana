@@ -290,7 +290,7 @@ func TestAddAutogenConfig(t *testing.T) {
 				store.notificationSettings[orgId][models.AlertRuleKey{OrgID: orgId, UID: util.GenerateShortUID()}] = []models.NotificationSettings{setting}
 			}
 
-			err := AddAutogenConfig(context.Background(), &logtest.Fake{}, store, orgId, tt.existingConfig, tt.skipInvalid)
+			err := AddAutogenConfig(context.Background(), &logtest.Fake{}, store, orgId, tt.existingConfig, tt.skipInvalid, nil)
 			if tt.expErrorContains != "" {
 				require.Error(t, err)
 				require.ErrorContains(t, err, tt.expErrorContains)

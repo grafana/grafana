@@ -190,7 +190,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 				Group:     k.Group,
 				Resource:  k.Resource,
 				Verb:      utils.VerbDeleteCollection,
-			})
+			}, "")
 			if err != nil || !rsp.Allowed {
 				return sendAndClose(&resourcepb.BulkResponse{
 					Error: &resourcepb.ErrorResult{
