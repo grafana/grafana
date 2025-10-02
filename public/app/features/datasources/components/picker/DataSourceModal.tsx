@@ -3,8 +3,8 @@ import { once } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2, AdHocVariableFilter } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
+import { Trans, t } from '@grafana/i18n';
+import { config, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   Modal,
@@ -17,13 +17,21 @@ import {
   Tab,
   Button,
   IconButton,
+  FileDropzone,
+  FileDropzoneDefaultChildren,
 } from '@grafana/ui';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
+import { getSparkJoyEnabled } from 'app/core/utils/sparkJoy';
+
+import { acceptedFiles, maxFileSize } from 'app/features/dataframe-import/constants';
+import { getFileDropToQueryHandler } from 'app/plugins/datasource/grafana/utils';
 
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 import { AdHocFilter } from '../../../variables/adhoc/picker/AdHocFilter';
-import { useDatasources } from '../../hooks';
+import { useDatasource, useDatasources } from '../../hooks';
 
+import { AddNewDataSourceButton } from './AddNewDataSourceButton';
+import { BuiltInDataSourceList } from './BuiltInDataSourceList';
 import { DataSourceList } from './DataSourceList';
 import { matchDataSourceWithSearch } from './utils';
 import { createAssistantContextItem, openAssistant } from '@grafana/assistant';
@@ -79,6 +87,31 @@ export function DataSourceModal({
   onDismiss,
   reportedInteractionFrom,
 }: DataSourceModalProps) {
+  const sparkJoyEnabled = getSparkJoyEnabled(true);
+  
+  // If sparkJoy is disabled, render the original/simple modal
+  if (!sparkJoyEnabled) {
+    return <OriginalDataSourceModal 
+      tracing={tracing}
+      dashboard={dashboard}
+      mixed={mixed}
+      metrics={metrics}
+      type={type}
+      annotations={annotations}
+      variables={variables}
+      alerting={alerting}
+      pluginId={pluginId}
+      logs={logs}
+      uploadFile={uploadFile}
+      filter={filter}
+      onChange={onChange}
+      current={current}
+      onDismiss={onDismiss}
+      reportedInteractionFrom={reportedInteractionFrom}
+    />;
+  }
+  
+  // SparkJoy enabled - render the enhanced modal
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('infrastructure');
@@ -514,6 +547,216 @@ export function DataSourceModal({
   );
 }
 
+// Original DataSourceModal (when sparkJoy is disabled)
+function OriginalDataSourceModal({
+  tracing,
+  dashboard,
+  mixed,
+  metrics,
+  type,
+  annotations,
+  variables,
+  alerting,
+  pluginId,
+  logs,
+  uploadFile,
+  filter,
+  onChange,
+  current,
+  onDismiss,
+  reportedInteractionFrom,
+}: DataSourceModalProps) {
+  const styles = useStyles2(getOriginalDataSourceModalStyles);
+  const [search, setSearch] = useState('');
+  const analyticsInteractionSrc = reportedInteractionFrom || 'modal';
+  const favoriteDataSources = useFavoriteDatasources();
+
+  const onDismissModal = () => {
+    onDismiss();
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.DISMISS, src: analyticsInteractionSrc });
+  };
+  
+  const onChangeDataSource = (ds: DataSourceInstanceSettings) => {
+    onChange(ds);
+    reportInteraction(INTERACTION_EVENT_NAME, {
+      item: INTERACTION_ITEM.SELECT_DS,
+      ds_type: ds.type,
+      src: analyticsInteractionSrc,
+      is_favorite: favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined,
+    });
+  };
+
+  const grafanaDS = useDatasource('-- Grafana --');
+
+  // Get all datasources to report total_configured count
+  const dataSources = useDatasources({
+    tracing,
+    dashboard,
+    mixed,
+    metrics,
+    type,
+    annotations,
+    variables,
+    alerting,
+    pluginId,
+    logs,
+  });
+
+  // Report interaction when modal is opened
+  useEffect(() => {
+    if (dataSources.length > 0) {
+      reportInteraction(INTERACTION_EVENT_NAME, {
+        item: INTERACTION_ITEM.OPEN_MODAL,
+        src: analyticsInteractionSrc,
+        creator_team: 'grafana_plugins_catalog',
+        schema_version: '1.0.0',
+        total_configured: dataSources.length,
+      });
+    }
+  }, [analyticsInteractionSrc, dataSources.length]);
+
+  // Memoizing to keep once() cached so it avoids reporting multiple times
+  const reportSearchUsageOnce = useMemo(
+    () =>
+      once(() => {
+        reportInteraction(INTERACTION_EVENT_NAME, { item: 'search', src: analyticsInteractionSrc });
+      }),
+    [analyticsInteractionSrc]
+  );
+
+  const onFileDrop = getFileDropToQueryHandler((query, fileRejections) => {
+    if (!grafanaDS) {
+      return;
+    }
+    onChange(grafanaDS, [query]);
+
+    reportInteraction(INTERACTION_EVENT_NAME, {
+      item: INTERACTION_ITEM.UPLOAD_FILE,
+      src: analyticsInteractionSrc,
+    });
+
+    if (fileRejections.length < 1) {
+      onDismiss();
+    }
+  });
+
+  // Built-in data sources used twice because of mobile layout adjustments
+  // In mobile the list is appended to the bottom of the DS list
+  const BuiltInList = ({ className }: { className?: string }) => {
+    return (
+      <BuiltInDataSourceList
+        className={className}
+        onChange={onChangeDataSource}
+        current={current}
+        filter={filter}
+        variables={variables}
+        tracing={tracing}
+        metrics={metrics}
+        type={type}
+        annotations={annotations}
+        alerting={alerting}
+        pluginId={pluginId}
+        logs={logs}
+        dashboard={dashboard}
+        mixed={mixed}
+      />
+    );
+  };
+
+  return (
+    <Modal
+      title={t('data-source-picker.modal.title', 'Select data source')}
+      closeOnEscape={true}
+      closeOnBackdropClick={true}
+      isOpen={true}
+      className={styles.modal}
+      contentClassName={styles.modalContent}
+      onClickBackdrop={onDismissModal}
+      onDismiss={onDismissModal}
+    >
+      <div className={styles.leftColumn}>
+        <Input
+          type="search"
+          autoFocus
+          className={styles.searchInput}
+          value={search}
+          prefix={<Icon name="search" />}
+          placeholder={t('data-source-picker.modal.input-placeholder', 'Select data source')}
+          onChange={(e) => {
+            setSearch(e.currentTarget.value);
+            reportSearchUsageOnce();
+          }}
+        />
+        <ScrollContainer>
+          <DataSourceList
+            onChange={onChangeDataSource}
+            current={current}
+            onClickEmptyStateCTA={() =>
+              reportInteraction(INTERACTION_EVENT_NAME, {
+                item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
+                src: analyticsInteractionSrc,
+              })
+            }
+            filter={(ds) => (filter ? filter?.(ds) : true) && matchDataSourceWithSearch(ds, search) && !ds.meta.builtIn}
+            variables={variables}
+            tracing={tracing}
+            metrics={metrics}
+            type={type}
+            annotations={annotations}
+            alerting={alerting}
+            pluginId={pluginId}
+            logs={logs}
+            dashboard={dashboard}
+            mixed={mixed}
+            dataSources={dataSources}
+          />
+          <BuiltInList className={styles.appendBuiltInDataSourcesList} />
+        </ScrollContainer>
+      </div>
+      <div className={styles.rightColumn}>
+        <div className={styles.builtInDataSources}>
+          <div className={styles.builtInDataSourcesList}>
+            <ScrollContainer>
+              <BuiltInList />
+            </ScrollContainer>
+          </div>
+          {uploadFile && config.featureToggles.editPanelCSVDragAndDrop && (
+            <FileDropzone
+              readAs="readAsArrayBuffer"
+              fileListRenderer={() => undefined}
+              options={{
+                maxSize: maxFileSize,
+                multiple: false,
+                accept: acceptedFiles,
+                onDrop: onFileDrop,
+              }}
+            >
+              <FileDropzoneDefaultChildren />
+            </FileDropzone>
+          )}
+        </div>
+        <div className={styles.newDSSection}>
+          <span className={styles.newDSDescription}>
+            <Trans i18nKey="data-source-picker.modal.configure-new-data-source">
+              Open a new tab and configure a data source
+            </Trans>
+          </span>
+          <AddNewDataSourceButton
+            variant="secondary"
+            onClick={() => {
+              reportInteraction(INTERACTION_EVENT_NAME, {
+                item: INTERACTION_ITEM.CONFIG_NEW_DS,
+                src: analyticsInteractionSrc,
+              });
+              onDismiss();
+            }}
+          />
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 function getDataSourceModalStyles(theme: GrafanaTheme2) {
   return {
     modal: css({
@@ -683,6 +926,100 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
     }),
     filtersSection: css({
       marginTop: theme.spacing(1),
+    }),
+  };
+}
+
+function getOriginalDataSourceModalStyles(theme: GrafanaTheme2) {
+  return {
+    modal: css({
+      width: '80%',
+      maxWidth: '1200px',
+      minHeight: '80%',
+
+      [theme.breakpoints.down('md')]: {
+        width: '100%',
+      },
+    }),
+    modalContent: css({
+      display: 'flex',
+      flexDirection: 'row',
+      flex: 1,
+
+      [theme.breakpoints.down('md')]: {
+        flexDirection: 'column',
+      },
+    }),
+    leftColumn: css({
+      display: 'flex',
+      flexDirection: 'column',
+      width: '50%',
+      maxHeight: '100%',
+      paddingRight: theme.spacing(4),
+      borderRight: `1px solid ${theme.colors.border.weak}`,
+
+      [theme.breakpoints.down('md')]: {
+        width: '100%',
+        borderRight: 0,
+        paddingRight: 0,
+        flex: 1,
+        overflowY: 'auto',
+      },
+    }),
+    rightColumn: css({
+      display: 'flex',
+      flexDirection: 'column',
+      width: '50%',
+      minHeight: '100%',
+      justifyItems: 'space-evenly',
+      alignItems: 'stretch',
+      paddingLeft: theme.spacing(4),
+
+      [theme.breakpoints.down('md')]: {
+        width: '100%',
+        paddingLeft: 0,
+        flexShrink: 0,
+      },
+    }),
+    builtInDataSources: css({
+      flex: '1 1',
+      marginBottom: theme.spacing(4),
+
+      [theme.breakpoints.down('md')]: {
+        flex: 0,
+      },
+    }),
+    builtInDataSourcesList: css({
+      [theme.breakpoints.down('md')]: {
+        display: 'none',
+        marginBottom: 0,
+      },
+
+      marginBottom: theme.spacing(4),
+    }),
+    appendBuiltInDataSourcesList: css({
+      [theme.breakpoints.up('md')]: {
+        display: 'none',
+      },
+    }),
+    newDSSection: css({
+      display: 'flex',
+      flexDirection: 'row',
+      width: '100%',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    }),
+    newDSDescription: css({
+      flex: '1 0',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      color: theme.colors.text.secondary,
+    }),
+    searchInput: css({
+      width: '100%',
+      minHeight: '32px',
+      marginBottom: theme.spacing(1),
     }),
   };
 }
