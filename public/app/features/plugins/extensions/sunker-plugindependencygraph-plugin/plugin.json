@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "panel",
+  "name": "Plugin Dependency Graph",
+  "id": "sunker-plugindependencygraph-plugin",
+  "info": {
+    "keywords": ["panel", "dependency", "graph"],
+    "description": "A panel that visualizes plugin dependencies",
+    "author": {
+      "name": "Sunker"
+    },
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=11.2.0",
+    "plugins": []
+  },
+  "executable": "gpx_sunker-plugindependencygraph-plugin"
+}

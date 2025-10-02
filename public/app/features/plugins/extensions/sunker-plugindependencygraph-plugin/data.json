@@ -1,0 +1,1866 @@
+{
+  "alexanderzobnin-zabbix-app": {
+    "id": "alexanderzobnin-zabbix-app",
+    "path": "https://plugins-cdn.grafana-ops.net/alexanderzobnin-zabbix-app/6.0.2/public/plugins/alexanderzobnin-zabbix-app/module.js",
+    "version": "6.0.2",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=11.6.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-jGzLprYIegM3/QQkMt1WRoN2Jk+t139VTJBazbb6KJ0="
+  },
+  "clexporter-app": {
+    "id": "clexporter-app",
+    "path": "https://plugins-cdn.grafana-ops.net/clexporter-app/1.2.1/public/plugins/clexporter-app/module.js",
+    "version": "1.2.1",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=9.5.3",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-putU51tKkLqoJxYvIcOnFv3fMTchsPZif2Lot7SV8Oo="
+  },
+  "cloud-home-app": {
+    "id": "cloud-home-app",
+    "path": "public/plugins/cloud-home-app/module.js",
+    "version": "4.25.0",
+    "preload": true,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [
+        {
+          "id": "cloud-home-app/enable-app-observability-extension/v1",
+          "title": "Enable Application Observability",
+          "description": "Enable Application Observability"
+        }
+      ],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=9.5.0",
+      "grafanaVersion": "9.5.0",
+      "plugins": [],
+      "extensions": { "exposedComponents": ["grafana-collector-app/collector-install/v1"] }
+    }
+  },
+  "grafana-adaptive-metrics-app": {
+    "id": "grafana-adaptive-metrics-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-adaptive-metrics-app/0.30.0/public/plugins/grafana-adaptive-metrics-app/module.js",
+    "version": "0.30.0",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=11.6.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-QrH5X3ixgYrtzNRoLJC/WGOx5J2Z0W/XmDOjZkqcLQE="
+  },
+  "grafana-adaptivelogs-app": {
+    "id": "grafana-adaptivelogs-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-adaptivelogs-app/0.17.11/public/plugins/grafana-adaptivelogs-app/module.js",
+    "version": "0.17.11",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [
+        {
+          "targets": ["grafana/query-editor-row/adaptivetelemetry/v1"],
+          "title": "Adaptive Logs Temporary Exemptions Component",
+          "description": "Helps the user provide temporary exemptions to Adaptive Logs."
+        }
+      ],
+      "exposedComponents": [
+        {
+          "id": "grafana-adaptivelogs-app/temporary-exemptions/v1",
+          "title": "Adaptive Logs Temporary Exemptions",
+          "description": "Helps the user provide temporary exemptions to Adaptive Logs."
+        }
+      ],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=11.6.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-4FopfqkZw3WWgvpQ8Yi3p4iS1JWw8zIb97R8amKi5G8="
+  },
+  "grafana-adaptiveprofiles-app": {
+    "id": "grafana-adaptiveprofiles-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-adaptiveprofiles-app/0.5.1/public/plugins/grafana-adaptiveprofiles-app/module.js",
+    "version": "0.5.1",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=11.6.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-TmXDJNXqJMgV8CMJwKPKYaRNZS2EZP+fFS1qw9bFqm4="
+  },
+  "grafana-adaptivetraces-app": {
+    "id": "grafana-adaptivetraces-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-adaptivetraces-app/0.3.12/public/plugins/grafana-adaptivetraces-app/module.js",
+    "version": "0.3.12",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=11.0.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-lpssmju921ESjmxtACQTEX320Hp1pZ64PpYO8ijQuvQ="
+  },
+  "grafana-advisor-app": {
+    "id": "grafana-advisor-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-advisor-app/0.0.13/public/plugins/grafana-advisor-app/module.js",
+    "version": "0.0.13",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=12.0.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-NHz+CDTLL2L1046Y2aQNn3dTBtxU+UCI8q5AKCTv5sM="
+  },
+  "grafana-alerting-ui-app": {
+    "id": "grafana-alerting-ui-app",
+    "path": "public/plugins/grafana-alerting-ui-app/module.js",
+    "version": "v0.9.3",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "7.2.x",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    }
+  },
+  "grafana-app-observability-app": {
+    "id": "grafana-app-observability-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-app-observability-app/1.62.1-efe9e1c-nightly/public/plugins/grafana-app-observability-app/module.js",
+    "version": "1.62.1-efe9e1c-nightly",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [
+        {
+          "targets": ["grafana-setupguide-app/enable-app-observability-extension/v1"],
+          "title": "Enable Application Observability",
+          "description": "Enable Application Observability"
+        },
+        {
+          "targets": ["grafana/traceview/resource-attributes", "grafana/logsview/resource-attributes"],
+          "title": "Application Observability Service overview",
+          "description": ""
+        }
+      ],
+      "addedComponents": [
+        {
+          "targets": ["grafana-asserts-app/entity-assertions-widget/v1"],
+          "title": "Asserts widget",
+          "description": "A block with assertions for a given service"
+        }
+      ],
+      "exposedComponents": [
+        {
+          "id": "grafana-app-observability-app/overview-extension/v1",
+          "title": "Overview",
+          "description": "Overview of a service"
+        }
+      ],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=11.5.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": ["grafana-asserts-app/entity-assertions-widget/v1"] }
+    },
+    "moduleHash": "sha256-bOn2gIEQ4zKXhpuk5zwsMCR9KR62LhzIWBRuaONj7cM="
+  },
+  "grafana-asserts-app": {
+    "id": "grafana-asserts-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-asserts-app/0.0.102/public/plugins/grafana-asserts-app/module.js",
+    "version": "0.0.102",
+    "preload": true,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [
+        {
+          "targets": ["grafana/alerting/home"],
+          "title": "Asserts alerting home callout",
+          "description": "A block with a callout to the Asserts from Alerting homepage"
+        },
+        {
+          "targets": ["grafana/dynamic/nav-landing-page/nav-id-observability/v1"],
+          "title": "Landing Page",
+          "description": "Landing Page"
+        }
+      ],
+      "exposedComponents": [
+        {
+          "id": "grafana-asserts-app/entity-assertions-widget/v1",
+          "title": "Entity Assertions Widget",
+          "description": "Widget for displaying entity assertions in other apps"
+        },
+        {
+          "id": "grafana-asserts-app/entity-crosslink-widget/v1",
+          "title": "Entity Cross-link Widget",
+          "description": "Widget for displaying entity cross-links in other apps"
+        },
+        {
+          "id": "grafana-asserts-app/entity-crosslink-widget/v2",
+          "title": "Entity Cross-link Widget v2",
+          "description": "Widget for displaying entity cross-links in other apps version 2"
+        },
+        {
+          "id": "grafana-asserts-app/entity-circle/v1",
+          "title": "Entity circle",
+          "description": "A circle that displays the entity's health"
+        },
+        {
+          "id": "grafana-asserts-app/entity-circle/v2",
+          "title": "Entity circle v2",
+          "description": "A circle that displays the entity's health"
+        },
+        {
+          "id": "grafana-asserts-app/multi-entity-type-circle/v1",
+          "title": "Multi entity type circle v1",
+          "description": "A circle that displays the entity's health for multiple entity types"
+        },
+        {
+          "id": "grafana-asserts-app/related-entities-widget/v1",
+          "title": "Related Entities Widget",
+          "description": "Widget for displaying related entities in other apps"
+        },
+        {
+          "id": "grafana-asserts-app/insights-timeline-widget/v1",
+          "title": "Insights Timeline Widget",
+          "description": "Widget for displaying insights timeline in other apps"
+        }
+      ],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=12.0.0-0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": [
+          "grafana-lokiexplore-app/open-in-explore-logs-button/v1",
+          "grafana-k8s-app/object-detail-extension/v1",
+          "grafana-csp-app/service-dashboard-extension/v1",
+          "grafana-kowalski-app/overview-extension/v1",
+          "grafana-mobileo11y-app/overview-extension/v1",
+          "grafana-app-observability-app/overview-extension/v1",
+          "grafana-exploretraces-app/open-in-explore-traces-button/v1",
+          "grafana-exploretraces-app/embedded-trace-exploration/v1",
+          "grafana-dbo11y-app/mysql-queries-extension/v1",
+          "grafana-lokiexplore-app/embedded-logs-exploration/v1",
+          "grafana-metricsdrilldown-app/label-breakdown-component/v1"
+        ]
+      }
+    },
+    "moduleHash": "sha256-20VTzaDNaCGN2U6Xcx5Cp89XoUnMBHriGjvD6k267mM="
+  },
+  "grafana-assistant-app": {
+    "id": "grafana-assistant-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-assistant-app/0.2.0+12fc84adce56455e65d499c9d719aff152b1052e/public/plugins/grafana-assistant-app/module.js",
+    "version": "0.2.0+12fc84adce56455e65d499c9d719aff152b1052e",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [
+        {
+          "targets": ["grafana/extension-sidebar/v0-alpha"],
+          "title": "Grafana Assistant",
+          "description": "Opens Grafana Assistant"
+        },
+        {
+          "targets": ["grafana/dashboard/panel/menu"],
+          "title": "✨ Explain in Assistant",
+          "description": "✨ Explain in Assistant"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "✨ Open Assistant",
+          "description": "✨ Open Assistant"
+        }
+      ],
+      "addedComponents": [
+        {
+          "targets": ["grafana/extension-sidebar/v0-alpha"],
+          "title": "Grafana Assistant",
+          "description": "Opens Grafana Assistant"
+        },
+        {
+          "targets": ["grafana/datasources/config/status"],
+          "title": "Explain in Assistant",
+          "description": "Explain in Assistant"
+        },
+        {
+          "targets": ["grafana/traceview/header/actions"],
+          "title": "Analyze trace with AI assistant",
+          "description": "AI Trace Analysis"
+        }
+      ],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": [
+        {
+          "targets": ["grafana/grafana-assistant-app/add-callback-function/v0-alpha"],
+          "title": "addCallbackFunction",
+          "description": "addCallbackFunction"
+        }
+      ]
+    },
+    "dependencies": {
+      "grafanaDependency": ">=12.0.0-0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-x2MUjGhZnJ8Uo8IXynz5v3XzaM7V73X39cfIArhNeFI="
+  },
+  "grafana-attributions-app": {
+    "id": "grafana-attributions-app",
+    "path": "public/plugins/grafana-attributions-app/module.js",
+    "version": "1.0.29",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=10.0.3",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    }
+  },
+  "grafana-auth-app": {
+    "id": "grafana-auth-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-auth-app/2.11.4/public/plugins/grafana-auth-app/module.js",
+    "version": "2.11.4",
+    "preload": true,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=11.1.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-8/3JIHJSqLzgZGJOYCsL1WO6ECuRMm374oH4H4CL4Mk="
+  },
+  "grafana-ci-app": {
+    "id": "grafana-ci-app",
+    "path": "public/plugins/grafana-ci-app/module.js",
+    "version": "0.2.0",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=10.0.3",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    }
+  },
+  "grafana-cmab-app": {
+    "id": "grafana-cmab-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-cmab-app/1.3.1+c4247baf83e9700c690f29e2f971f6d20d98acee/public/plugins/grafana-cmab-app/module.js",
+    "version": "1.3.1+c4247baf83e9700c690f29e2f971f6d20d98acee",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=11.3.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-OP/SPuAtaYOAxT13hGpGUELYijaHgQXpqIttz4rnUj4="
+  },
+  "grafana-collector-app": {
+    "id": "grafana-collector-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-collector-app/4.1.1/public/plugins/grafana-collector-app/module.js",
+    "version": "4.1.1",
+    "preload": true,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [
+        {
+          "targets": ["grafana-pyroscope-app/settings/v1"],
+          "title": "Collector settings",
+          "description": "Add collector settings to the Drilldown Profiles app"
+        }
+      ],
+      "exposedComponents": [
+        {
+          "id": "grafana-collector-app/collector-install/v1",
+          "title": "Collector Installation Instructions",
+          "description": "UI for displaying collector installation instructions."
+        },
+        {
+          "id": "grafana-collector-app/deploy-pipelines/v1",
+          "title": "Deploy pipelines extension",
+          "description": "Deploy pipelines extension."
+        },
+        {
+          "id": "grafana-collector-app/instrument-services/v1",
+          "title": "Instrument services extension",
+          "description": "Instrument services extension."
+        },
+        { "id": "", "title": "", "description": "" }
+      ],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=10.0.3",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": ["grafana-k8s-app/cluster-config/v1", "grafana-k8s-app/install-alloy-helm/v1"]
+      }
+    },
+    "moduleHash": "sha256-T3bbg1pGofx4njO5H+kk98Scv+jnzHPVce3/TujQo0M="
+  },
+  "grafana-costmanagementui-app": {
+    "id": "grafana-costmanagementui-app",
+    "path": "public/plugins/grafana-costmanagementui-app/module.js",
+    "version": "0.7.4",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=10.1.2",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    }
+  },
+  "grafana-csp-app": {
+    "id": "grafana-csp-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-csp-app/3.21.0/public/plugins/grafana-csp-app/module.js",
+    "version": "3.21.0",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor AWS/ApiGateway",
+          "description": "Monitor AWS/ApiGateway"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor AWS/Billing",
+          "description": "Monitor AWS/Billing"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor AWS/Cloudfront",
+          "description": "Monitor AWS/Cloudfront"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor AWS DynamoDB",
+          "description": "Monitor AWS DynamoDB"
+        },
+        { "targets": ["grafana/commandpalette/action"], "title": "Monitor AWS/EBS", "description": "Monitor AWS/EBS" },
+        { "targets": ["grafana/commandpalette/action"], "title": "Monitor AWS EC2", "description": "Monitor AWS EC2" },
+        { "targets": ["grafana/commandpalette/action"], "title": "Monitor AWS/ECS", "description": "Monitor AWS/ECS" },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor AWS/ApplicationELB",
+          "description": "Monitor AWS/ApplicationELB"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor AWS/Kafka",
+          "description": "Monitor AWS/Kafka"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor AWS/Lambda",
+          "description": "Monitor AWS/Lambda"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor AWS/NATGateway",
+          "description": "Monitor AWS/NATGateway"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor AWS/NetworkELB",
+          "description": "Monitor AWS/NetworkELB"
+        },
+        { "targets": ["grafana/commandpalette/action"], "title": "Monitor AWS RDS", "description": "Monitor AWS RDS" },
+        { "targets": ["grafana/commandpalette/action"], "title": "Monitor AWS/S3", "description": "Monitor AWS/S3" },
+        { "targets": ["grafana/commandpalette/action"], "title": "Monitor AWS/SES", "description": "Monitor AWS/SES" },
+        { "targets": ["grafana/commandpalette/action"], "title": "Monitor AWS/SQS", "description": "Monitor AWS/SQS" },
+        { "targets": ["grafana/commandpalette/action"], "title": "Monitor AWS/VPN", "description": "Monitor AWS/VPN" },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor Azure Blob Storage",
+          "description": "Monitor Azure Blob Storage"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor SQL Database - Elastic Pools",
+          "description": "Monitor SQL Database - Elastic Pools"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor Event Hub",
+          "description": "Monitor Event Hub"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor Azure Front Door",
+          "description": "Monitor Azure Front Door"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor Azure Load Balancer",
+          "description": "Monitor Azure Load Balancer"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor Azure Queue Storage",
+          "description": "Monitor Azure Queue Storage"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor Service Bus",
+          "description": "Monitor Service Bus"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor Azure SQL Database",
+          "description": "Monitor Azure SQL Database"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor Azure Virtual Machines",
+          "description": "Monitor Azure Virtual Machines"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor Azure Virtual Networks",
+          "description": "Monitor Azure Virtual Networks"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor Azure Application Gateway",
+          "description": "Monitor Azure Application Gateway"
+        },
+        { "targets": ["grafana/commandpalette/action"], "title": "Monitor AlloyDB", "description": "Monitor AlloyDB" },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor Cloud Bigtable",
+          "description": "Monitor Cloud Bigtable"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor Storage (GCS)",
+          "description": "Monitor Storage (GCS)"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor Cloud Run",
+          "description": "Monitor Cloud Run"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor GCP Compute Engine",
+          "description": "Monitor GCP Compute Engine"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor GCP Load Balancing",
+          "description": "Monitor GCP Load Balancing"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor GCP Virtual private cloud",
+          "description": "Monitor GCP Virtual private cloud"
+        },
+        { "targets": ["grafana/commandpalette/action"], "title": "Monitor Pub/Sub", "description": "Monitor Pub/Sub" },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Monitor Cloud SQL",
+          "description": "Monitor Cloud SQL"
+        }
+      ],
+      "addedComponents": [],
+      "exposedComponents": [
+        {
+          "id": "grafana-csp-app/service-dashboard-extension/v1",
+          "title": "Service Overview dashboard",
+          "description": "Service Overview dashboard extension"
+        }
+      ],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=10.0.3",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": [
+          "grafana-dbo11y-app/mysql-queries-extension/v1",
+          "grafana-asserts-app/entity-crosslink-widget/v2",
+          "grafana-collector-app/deploy-pipelines/v1",
+          "grafana-asserts-app/entity-circle/v2",
+          "grafana-asserts-app/entity-assertions-widget/v1"
+        ]
+      }
+    },
+    "moduleHash": "sha256-OaIHbE0Q8aNt5UoBlFckG06RBCGZ6PEt0R5bD19Zi7A="
+  },
+  "grafana-dbo11y-app": {
+    "id": "grafana-dbo11y-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-dbo11y-app/1.15.0+f5d8ef4f79dfdfbfc382aea613a0bd26b06b245c/public/plugins/grafana-dbo11y-app/module.js",
+    "version": "1.15.0+f5d8ef4f79dfdfbfc382aea613a0bd26b06b245c",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [
+        {
+          "id": "grafana-dbo11y-app/mysql-queries-extension/v1",
+          "title": "MySQL Queries Overview",
+          "description": "Widget for displaying MySQL queries in other apps"
+        }
+      ],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=12.1.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": [
+          "grafana-csp-app/service-dashboard-extension/v1",
+          "grafana-asserts-app/entity-assertions-widget/v1",
+          "grafana-asserts-app/entity-circle/v1",
+          "grafana-asserts-app/entity-crosslink-widget/v2"
+        ]
+      }
+    },
+    "moduleHash": "sha256-5/9RjAJ7YfjsxV+xGQGUiQx/chin5VnzgaiDOJYPhg8="
+  },
+  "grafana-demodashboards-app": {
+    "id": "grafana-demodashboards-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-demodashboards-app/1.15.0/public/plugins/grafana-demodashboards-app/module.js",
+    "version": "1.15.0",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=11.0.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-6hJ6nRmP7crF4OrIAWlcaN6b4OMHIVHKW4be6Y+/oyw="
+  },
+  "grafana-detect-app": {
+    "id": "grafana-detect-app",
+    "path": "public/plugins/grafana-detect-app/module.js",
+    "version": "v1.2.8",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=10.0.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    }
+  },
+  "grafana-easystart-app": {
+    "id": "grafana-easystart-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-easystart-app/8.5.2/public/plugins/grafana-easystart-app/module.js",
+    "version": "8.5.2",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=10.0.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": ["grafana-k8s-app/cluster-config/v1"] }
+    },
+    "moduleHash": "sha256-VWhxa1pJPWqVPPF/yYapODYo4QXLE7/dc+DWOjiuyuA="
+  },
+  "grafana-exploretraces-app": {
+    "id": "grafana-exploretraces-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-exploretraces-app/1.1.4+9325c42f5328043e657e86f7d699121b5c374a43/public/plugins/grafana-exploretraces-app/module.js",
+    "version": "1.1.4+9325c42f5328043e657e86f7d699121b5c374a43",
+    "preload": true,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [
+        {
+          "targets": ["grafana/dashboard/panel/menu"],
+          "title": "Open in Traces Drilldown",
+          "description": "Open current query in the Traces Drilldown app"
+        },
+        {
+          "targets": ["grafana/explore/toolbar/action"],
+          "title": "Open in Grafana Traces Drilldown",
+          "description": "Try our new queryless experience for traces"
+        }
+      ],
+      "addedComponents": [
+        {
+          "targets": ["grafana-asserts-app/entity-assertions-widget/v1"],
+          "title": "Asserts widget",
+          "description": "A block with assertions for a given service"
+        },
+        {
+          "targets": ["grafana-asserts-app/insights-timeline-widget/v1"],
+          "title": "Insights Timeline Widget",
+          "description": "Widget for displaying insights timeline in other apps"
+        }
+      ],
+      "exposedComponents": [
+        {
+          "id": "grafana-exploretraces-app/open-in-explore-traces-button/v1",
+          "title": "Open in Traces Drilldown button",
+          "description": "A button that opens a traces view in the Traces Drilldown app."
+        },
+        {
+          "id": "grafana-exploretraces-app/embedded-trace-exploration/v1",
+          "title": "Embedded Trace Exploration",
+          "description": "A component that renders a trace exploration view that can be embedded in other parts of Grafana."
+        }
+      ],
+      "extensionPoints": [{ "id": "grafana-exploretraces-app/investigation/v1", "title": "", "description": "" }],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=11.5.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": [
+          "grafana-asserts-app/entity-assertions-widget/v1",
+          "grafana-asserts-app/insights-timeline-widget/v1"
+        ]
+      }
+    },
+    "moduleHash": "sha256-yY4eUXoWp2m7bKL1wTFc3WP+QI1PN56wUxEmkeunCxw="
+  },
+  "grafana-grafanadocsplugin-app": {
+    "id": "grafana-grafanadocsplugin-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/module.js",
+    "version": "1.1.16",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [
+        {
+          "targets": ["grafana/extension-sidebar/v0-alpha"],
+          "title": "Documentation-Link",
+          "description": "Opens Grafana Pathfinder"
+        },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Open Grafana Pathfinder",
+          "description": "Open Grafana Pathfinder"
+        },
+        { "targets": ["grafana/commandpalette/action"], "title": "Need help?", "description": "Get help with Grafana" },
+        {
+          "targets": ["grafana/commandpalette/action"],
+          "title": "Learn Grafana",
+          "description": "Learn how to use Grafana"
+        }
+      ],
+      "addedComponents": [
+        {
+          "targets": ["grafana/extension-sidebar/v0-alpha"],
+          "title": "Grafana Pathfinder",
+          "description": "Opens Grafana Pathfinder"
+        }
+      ],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=12.1.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-BU+g4/9Zikf+LgsDeKCt1s4fIANNE/igVACraZw+ook=",
+    "translations": {
+      "cs-CZ": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/cs-CZ/grafana-grafanadocsplugin-app.json",
+      "de-DE": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/de-DE/grafana-grafanadocsplugin-app.json",
+      "en-US": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/en-US/grafana-grafanadocsplugin-app.json",
+      "es-ES": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/es-ES/grafana-grafanadocsplugin-app.json",
+      "fr-FR": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/fr-FR/grafana-grafanadocsplugin-app.json",
+      "hu-HU": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/hu-HU/grafana-grafanadocsplugin-app.json",
+      "id-ID": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/id-ID/grafana-grafanadocsplugin-app.json",
+      "it-IT": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/it-IT/grafana-grafanadocsplugin-app.json",
+      "ja-JP": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/ja-JP/grafana-grafanadocsplugin-app.json",
+      "ko-KR": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/ko-KR/grafana-grafanadocsplugin-app.json",
+      "nl-NL": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/nl-NL/grafana-grafanadocsplugin-app.json",
+      "pl-PL": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/pl-PL/grafana-grafanadocsplugin-app.json",
+      "pt-BR": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/pt-BR/grafana-grafanadocsplugin-app.json",
+      "pt-PT": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/pt-PT/grafana-grafanadocsplugin-app.json",
+      "ru-RU": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/ru-RU/grafana-grafanadocsplugin-app.json",
+      "sv-SE": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/sv-SE/grafana-grafanadocsplugin-app.json",
+      "tr-TR": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/tr-TR/grafana-grafanadocsplugin-app.json",
+      "zh-CN": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/zh-CN/grafana-grafanadocsplugin-app.json",
+      "zh-Hans": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/zh-Hans/grafana-grafanadocsplugin-app.json",
+      "zh-Hant": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/zh-Hant/grafana-grafanadocsplugin-app.json",
+      "zh-TW": "https://plugins-cdn.grafana-ops.net/grafana-grafanadocsplugin-app/1.1.16/public/plugins/grafana-grafanadocsplugin-app/locales/zh-TW/grafana-grafanadocsplugin-app.json"
+    }
+  },
+  "grafana-incident-app": {
+    "id": "grafana-incident-app",
+    "path": "public/plugins/grafana-incident-app/module.js",
+    "version": "v1.129.0",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [
+        {
+          "targets": ["grafana/dashboard/panel/menu"],
+          "title": "Declare incident",
+          "description": "Declare an incident and attach the panel context to it"
+        },
+        {
+          "targets": ["grafana/explore/toolbar/action"],
+          "title": "Declare an incident",
+          "description": "Declare an incident"
+        }
+      ],
+      "addedComponents": [],
+      "exposedComponents": [
+        {
+          "id": "grafana-incident-app/service-center-table-component/v1",
+          "title": "Service center table component",
+          "description": "Service center table component"
+        }
+      ],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=10.3.0",
+      "grafanaVersion": "10.3.0",
+      "plugins": [],
+      "extensions": { "exposedComponents": ["grafana-incident-app/service-center-table-component/v1"] }
+    }
+  },
+  "grafana-investigations-app": {
+    "id": "grafana-investigations-app",
+    "path": "public/plugins/grafana-investigations-app/module.js",
+    "version": "0.2.4",
+    "preload": true,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [
+        {
+          "targets": [
+            "grafana-lokiexplore-app/metric-exploration/v1",
+            "grafana-explore-metrics/exploration/v1",
+            "grafana-pyroscope-app/exploration/v1",
+            "grafana-exploretraces-app/exploration/v1",
+            "grafana-lokiexplore-app/investigation/v1",
+            "grafana-explore-metrics/investigation/v1",
+            "grafana-pyroscope-app/investigation/v1",
+            "grafana-exploretraces-app/investigation/v1",
+            "grafana-metricsdrilldown-app/investigation/v1"
+          ],
+          "title": "Open and Add to Investigation",
+          "description": "Add to Investigation"
+        },
+        {
+          "targets": ["grafana/extension-sidebar/v0-alpha"],
+          "title": "Investigations",
+          "description": "Opens the investigations app"
+        }
+      ],
+      "addedComponents": [
+        {
+          "targets": ["grafana/extension-sidebar/v0-alpha"],
+          "title": "Investigations",
+          "description": "Opens the investigations app"
+        }
+      ],
+      "exposedComponents": [],
+      "extensionPoints": [
+        {
+          "id": "grafana-investigations-app/investigation-menu/v1.0",
+          "title": "",
+          "description": "Add menu items to the investigation dropdown menu"
+        }
+      ],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=12.1.0-0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    }
+  },
+  "grafana-irm-app": {
+    "id": "grafana-irm-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-irm-app/v0.59.0/public/plugins/grafana-irm-app/module.js",
+    "version": "v0.59.0",
+    "preload": true,
+    "angular": { "detected": false },
+    "loadingStrategy": "fetch",
+    "extensions": {
+      "addedLinks": [
+        {
+          "targets": ["grafana/dashboard/panel/menu"],
+          "title": "Declare incident",
+          "description": "Declare an incident and attach the panel context to it"
+        },
+        {
+          "targets": ["grafana/explore/toolbar/action"],
+          "title": "Declare an incident",
+          "description": "Declare an incident"
+        },
+        {
+          "targets": ["grafana/dashboard/panel/menu"],
+          "title": "Attach to incident",
+          "description": "Attach the current context to an existing incident"
+        },
+        {
+          "targets": ["grafana/explore/toolbar/action"],
+          "title": "Attach to an incident",
+          "description": "Attach the current context to an existing incident"
+        },
+        {
+          "targets": ["grafana-lokiexplore-app/attach-to-incident/v1"],
+          "title": "Attach to incident",
+          "description": "Attach the current context to an existing incident"
+        },
+        {
+          "targets": ["grafana-slo-app/service-actions/v1"],
+          "title": "Escalate",
+          "description": "Create an escalation"
+        },
+        {
+          "targets": ["grafana-slo-app/service-actions/v1"],
+          "title": "Declare incident",
+          "description": "Declare incident"
+        }
+      ],
+      "addedComponents": [{ "targets": ["grafana/user/profile/tab"], "title": "IRM", "description": "IRM settings" }],
+      "exposedComponents": [
+        {
+          "id": "grafana-irm-app/service-center-table-component/v1",
+          "title": "Service center table component",
+          "description": "Service center table component"
+        },
+        {
+          "id": "grafana-irm-app/irm-insights/v1",
+          "title": "IRM insights",
+          "description": "A component that shows insights about irm activity"
+        },
+        {
+          "id": "grafana-irm-app/oncall-now/v1",
+          "title": "On-call now",
+          "description": "A component that shows who is on-call for particular service"
+        },
+        {
+          "id": "grafana-irm-app/create-escalation-drawer/v1",
+          "title": "Create escalation",
+          "description": "A drawer that allows to create an escalation"
+        },
+        {
+          "id": "grafana-irm-app/declare-incident-button/v1",
+          "title": "Declare incident",
+          "description": "A button that opens a declare incident modal"
+        },
+        {
+          "id": "grafana-irm-app/declare-incident-modal/v1",
+          "title": "Declare incident",
+          "description": "A modal that allows you to declare an incident"
+        },
+        {
+          "id": "grafana-irm-app/attach-to-incident-modal/v1",
+          "title": "Attach to incident",
+          "description": "A modal that allows you to attach content to an existing incident"
+        }
+      ],
+      "extensionPoints": [
+        { "id": "plugins/grafana-irm-app/alert-group/action", "title": "Alert group action", "description": "" }
+      ],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=11.6.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": [
+          "grafana-irm-app/service-center-table-component/v1",
+          "grafana-irm-app/irm-insights/v1",
+          "grafana-asserts-app/related-entities-widget/v1",
+          "grafana/central-alert-history-scene/v1"
+        ]
+      }
+    },
+    "moduleHash": "sha256-jPJ9JTOposnQqflIAze60ckshla9X4yMF9DD86Mszq0="
+  },
+  "grafana-k8s-app": {
+    "id": "grafana-k8s-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-k8s-app/2.21.2/public/plugins/grafana-k8s-app/module.js",
+    "version": "2.21.2",
+    "preload": true,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [
+        {
+          "id": "grafana-k8s-app/object-detail-extension/v1",
+          "title": "K8s Object Detail",
+          "description": "Metrics details for various k8s objects."
+        },
+        {
+          "id": "grafana-k8s-app/cluster-config/v1",
+          "title": "K8s Cluster Config",
+          "description": "K8s Cluster configuration settings"
+        },
+        {
+          "id": "grafana-k8s-app/install-alloy-helm/v1",
+          "title": "Install Alloy Helm",
+          "description": "Install Alloy Helm"
+        }
+      ],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=9.5.0",
+      "grafanaVersion": "9.5.0",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": [
+          "grafana-asserts-app/entity-assertions-widget/v1",
+          "grafana-asserts-app/entity-crosslink-widget/v1",
+          "grafana-asserts-app/entity-crosslink-widget/v2",
+          "grafana-asserts-app/entity-circle/v2"
+        ]
+      }
+    },
+    "moduleHash": "sha256-wWdWQOq8c6x3HBaOEGJ9OQ4OTQ8mP3H0D5faXTluwcg="
+  },
+  "grafana-kowalski-app": {
+    "id": "grafana-kowalski-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-kowalski-app/1.28.1+acdb02ce/public/plugins/grafana-kowalski-app/module.js",
+    "version": "1.28.1+acdb02ce",
+    "preload": true,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [
+        {
+          "id": "grafana-kowalski-app/overview-extension/v1",
+          "title": "Overview",
+          "description": "Overview of a web application"
+        }
+      ],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=8.0.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": ["grafana-asserts-app/entity-assertions-widget/v1", "grafana-asserts-app/entity-circle/v2"]
+      }
+    },
+    "moduleHash": "sha256-iTa+48WAnFMXWgSVgMPMnac3Pb9ho0UZ5OFsBaMnjxw="
+  },
+  "grafana-labels-app": {
+    "id": "grafana-labels-app",
+    "path": "public/plugins/grafana-labels-app/module.js",
+    "version": "v0.0.24",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=10.0.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    }
+  },
+  "grafana-llm-app": {
+    "id": "grafana-llm-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-llm-app/0.22.8/public/plugins/grafana-llm-app/module.js",
+    "version": "0.22.8",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "fetch",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=9.5.2",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-EWuaqC+iv5uh+nHWgCfc0j6A/QGpYoydKoKHBve3PFE="
+  },
+  "grafana-logvolumeexplorer-app": {
+    "id": "grafana-logvolumeexplorer-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-logvolumeexplorer-app/0.16.0/public/plugins/grafana-logvolumeexplorer-app/module.js",
+    "version": "0.16.0",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=11.0.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-uwxWCvVuMqggXDrnrpe6MGXFVxxourHrlAHEvJE1j9E="
+  },
+  "grafana-lokiexplore-app": {
+    "id": "grafana-lokiexplore-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-lokiexplore-app/1.0.27+d6e536c62a1b20299088bba7b8165a9ba9bfb718/public/plugins/grafana-lokiexplore-app/module.js",
+    "version": "1.0.27+d6e536c62a1b20299088bba7b8165a9ba9bfb718",
+    "preload": true,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [
+        {
+          "targets": [
+            "grafana/dashboard/panel/menu",
+            "grafana/explore/toolbar/action",
+            "grafana-metricsdrilldown-app/open-in-logs-drilldown/v1",
+            "grafana-assistant-app/navigateToDrilldown/v1"
+          ],
+          "title": "Open in Grafana Logs Drilldown",
+          "description": "Open current query in the Grafana Logs Drilldown view"
+        }
+      ],
+      "addedComponents": [
+        {
+          "targets": ["grafana-asserts-app/insights-timeline-widget/v1"],
+          "title": "Insights Timeline Widget",
+          "description": "Widget for displaying insights timeline in other apps"
+        }
+      ],
+      "exposedComponents": [
+        {
+          "id": "grafana-lokiexplore-app/open-in-explore-logs-button/v1",
+          "title": "Open in Logs Drilldown button",
+          "description": "A button that opens a logs view in the Logs Drilldown app."
+        },
+        {
+          "id": "grafana-lokiexplore-app/embedded-logs-exploration/v1",
+          "title": "Embedded Logs Exploration",
+          "description": "A component that renders a logs exploration view that can be embedded in other parts of Grafana."
+        }
+      ],
+      "extensionPoints": [{ "id": "grafana-lokiexplore-app/investigation/v1", "title": "", "description": "" }],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=11.6.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": [
+          "grafana-adaptivelogs-app/temporary-exemptions/v1",
+          "grafana-lokiexplore-app/embedded-logs-exploration/v1",
+          "grafana-asserts-app/insights-timeline-widget/v1"
+        ]
+      }
+    },
+    "moduleHash": "sha256-/l2l8u8TeNqm4CgydyP9CS3qpMHj5uPsO5bQc+WPebw="
+  },
+  "grafana-metricsdrilldown-app": {
+    "id": "grafana-metricsdrilldown-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-metricsdrilldown-app/1.0.15/public/plugins/grafana-metricsdrilldown-app/module.js",
+    "version": "1.0.15",
+    "preload": true,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [
+        {
+          "targets": [
+            "grafana/dashboard/panel/menu",
+            "grafana/explore/toolbar/action",
+            "grafana-assistant-app/navigateToDrilldown/v1",
+            "grafana/alerting/alertingrule/queryeditor"
+          ],
+          "title": "Open in Grafana Metrics Drilldown",
+          "description": "Open current query in the Grafana Metrics Drilldown view"
+        },
+        {
+          "targets": ["grafana-metricsdrilldown-app/grafana-assistant-app/navigateToDrilldown/v0-alpha"],
+          "title": "Navigate to metrics drilldown",
+          "description": "Build a url path to the metrics drilldown"
+        }
+      ],
+      "addedComponents": [],
+      "exposedComponents": [
+        {
+          "id": "grafana-metricsdrilldown-app/label-breakdown-component/v1",
+          "title": "Label Breakdown",
+          "description": "A metrics label breakdown view from the Metrics Drilldown app."
+        }
+      ],
+      "extensionPoints": [
+        { "id": "grafana-exploremetrics-app/investigation/v1", "title": "", "description": "" },
+        { "id": "grafana-metricsdrilldown-app/open-in-logs-drilldown/v1", "title": "", "description": "" }
+      ],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=11.6.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-p2SDhIOOplhJD15OLSy40YocwM2sJwdjeR3DBLMFyPg="
+  },
+  "grafana-ml-app": {
+    "id": "grafana-ml-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-ml-app/1.32.2/public/plugins/grafana-ml-app/module.js",
+    "version": "1.32.2",
+    "preload": true,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [
+        {
+          "targets": ["grafana/dashboard/panel/menu", "grafana/explore/toolbar/action"],
+          "title": "Create forecast",
+          "description": ""
+        },
+        {
+          "targets": ["grafana/dashboard/panel/menu", "grafana/explore/toolbar/action"],
+          "title": "Detect outliers",
+          "description": ""
+        },
+        { "targets": ["grafana/dashboard/panel/menu"], "title": "Run Sift investigation", "description": "" },
+        { "targets": ["grafana/explore/toolbar/action"], "title": "Run Sift investigation", "description": "" },
+        { "targets": ["grafana/alerting/instance/action"], "title": "Run Sift investigation", "description": "" },
+        {
+          "targets": ["plugins/grafana-oncall-app/alert-group/action"],
+          "title": "Run Sift investigation",
+          "description": ""
+        },
+        {
+          "targets": ["plugins/grafana-irm-app/alert-group/action"],
+          "title": "Run Sift investigation",
+          "description": ""
+        },
+        { "targets": ["grafana/commandpalette/action"], "title": "Run Sift investigation", "description": "" },
+        { "targets": ["plugins/grafana-k8s-app/cluster/action"], "title": "Run Sift investigation", "description": "" },
+        {
+          "targets": ["plugins/grafana-k8s-app/namespace/action"],
+          "title": "Run Sift investigation",
+          "description": ""
+        },
+        {
+          "targets": ["plugins/grafana-k8s-app/workload/action"],
+          "title": "Run Sift investigation",
+          "description": ""
+        },
+        { "targets": ["plugins/grafana-k8s-app/pod/action"], "title": "Run Sift investigation", "description": "" },
+        {
+          "targets": ["plugins/grafana-sift-panel/run-investigation"],
+          "title": "Run Sift investigation",
+          "description": ""
+        },
+        {
+          "targets": ["plugins/grafana-app-observability-app/service/action"],
+          "title": "Run Sift investigation",
+          "description": ""
+        },
+        {
+          "targets": ["plugins/grafana-app-observability-app/operation/action"],
+          "title": "Run Sift investigation",
+          "description": ""
+        },
+        {
+          "targets": ["plugins/grafana-incident-app/run-sift-modal"],
+          "title": "Run Sift investigation",
+          "description": ""
+        }
+      ],
+      "addedComponents": [
+        {
+          "targets": ["plugins/grafana-incident-app/sift-analysis-modal"],
+          "title": "Sift analysis modal",
+          "description": "View details of a Sift analysis"
+        },
+        {
+          "targets": ["plugins/grafana-irm-app/sift-analysis-modal"],
+          "title": "Sift analysis modal",
+          "description": "View details of a Sift analysis"
+        },
+        {
+          "targets": ["plugins/grafana-sift-panel/view-analysis"],
+          "title": "Sift analysis modal",
+          "description": "View details of a Sift analysis"
+        },
+        {
+          "targets": ["plugins/grafana-asserts-app/sift-analysis-modal"],
+          "title": "Sift analysis modal",
+          "description": "View details of a Sift analysis"
+        },
+        {
+          "targets": ["plugins/grafana-incident-app/run-sift-modal"],
+          "title": "Start an investigation",
+          "description": "Start a Sift investigation"
+        },
+        {
+          "targets": ["plugins/grafana-irm-app/run-sift-modal"],
+          "title": "Start an investigation",
+          "description": "Start a Sift investigation"
+        },
+        { "targets": ["grafana/alerting/home"], "title": "Machine Learning", "description": "" }
+      ],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=8.0.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-D1IQpjwcqTUs3oSGBczRDZCqIpAI/jpYjOaIO0qmLag="
+  },
+  "grafana-oncall-app": {
+    "id": "grafana-oncall-app",
+    "path": "public/plugins/grafana-oncall-app/module.js",
+    "version": "v1.50.0",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [{ "targets": ["grafana/user/profile/tab"], "title": "IRM", "description": "IRM settings" }],
+      "exposedComponents": [],
+      "extensionPoints": [
+        { "id": "plugins/grafana-oncall-app/alert-group/action", "title": "Alert group action", "description": "" }
+      ],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=11.6.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    }
+  },
+  "grafana-pdc-app": {
+    "id": "grafana-pdc-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-pdc-app/0.12.15/public/plugins/grafana-pdc-app/module.js",
+    "version": "0.12.15",
+    "preload": true,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [
+        {
+          "targets": ["grafana/datasources/config"],
+          "title": "PDC Datasource Config",
+          "description": "Private data source connection settings"
+        }
+      ],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=9.5.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-kbi8bYq95Af8DvFfLte3NKKjtNySMgVqWREut6G67cM="
+  },
+  "grafana-pluginsplatformprovisioned-app": {
+    "id": "grafana-pluginsplatformprovisioned-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-pluginsplatformprovisioned-app/1.2.1+b99b7d57dfb72f1d2dc3d0aaa445c982675f0245/public/plugins/grafana-pluginsplatformprovisioned-app/module.js",
+    "version": "1.2.1+b99b7d57dfb72f1d2dc3d0aaa445c982675f0245",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=10.4.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-yQAdz2L2Co2cVV+nPK+LD6U7MCitc6n8Y097MVOP9Lk="
+  },
+  "grafana-pyroscope-app": {
+    "id": "grafana-pyroscope-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-pyroscope-app/1.10.0/public/plugins/grafana-pyroscope-app/module.js",
+    "version": "1.10.0",
+    "preload": true,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [
+        {
+          "targets": [
+            "grafana/explore/toolbar/action",
+            "grafana/traceview/details",
+            "grafana-assistant-app/navigateToDrilldown/v1"
+          ],
+          "title": "Open in Grafana Profiles Drilldown",
+          "description": "Try our new queryless experience for profiles"
+        }
+      ],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [
+        { "id": "grafana-pyroscope-app/investigation/v1", "title": "", "description": "" },
+        { "id": "grafana-pyroscope-app/settings/v1", "title": "", "description": "" }
+      ],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=11.5.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": ["grafana-o11yinsights-app/insights-launcher/v1"] }
+    },
+    "moduleHash": "sha256-Mazkh/5POiOzOvsyOTAGAyh7x/z+ffLlqsCENIpBb/w="
+  },
+  "grafana-resourcesexporter-app": {
+    "id": "grafana-resourcesexporter-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-resourcesexporter-app/0.1.0/public/plugins/grafana-resourcesexporter-app/module.js",
+    "version": "0.1.0",
+    "preload": true,
+    "angular": { "detected": false },
+    "loadingStrategy": "fetch",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=10.3.3",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-fMQw+OJpYwkQChWkIN3m8fBT8NeXDl2y4jj5hVp56zU="
+  },
+  "grafana-selfservetutorials-app": {
+    "id": "grafana-selfservetutorials-app",
+    "path": "public/plugins/grafana-selfservetutorials-app/module.js",
+    "version": "3.1.1",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=9.5.3",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    }
+  },
+  "grafana-setupguide-app": {
+    "id": "grafana-setupguide-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-setupguide-app/1.27.5/public/plugins/grafana-setupguide-app/module.js",
+    "version": "1.27.5",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [
+        { "targets": ["grafana/app/chrome/v1"], "title": "Grafana Setup Guide Overlay", "description": "" }
+      ],
+      "exposedComponents": [],
+      "extensionPoints": [
+        {
+          "id": "grafana-setupguide-app/enable-app-observability-extension/v1",
+          "title": "Enable Application Observability",
+          "description": "Enable Application Observability"
+        }
+      ],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=10.4.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": ["grafana-collector-app/collector-install/v1", "grafana-k8s-app/cluster-config/v1"]
+      }
+    },
+    "moduleHash": "sha256-7VpFnsYNqVsrpuRIjQ1wPfDpoNHlSgkz3x3w9zDrh38="
+  },
+  "grafana-slo-app": {
+    "id": "grafana-slo-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-slo-app/1.59.0+0f87899177210358b24a58da044ddaeb2c371674/public/plugins/grafana-slo-app/module.js",
+    "version": "1.59.0+0f87899177210358b24a58da044ddaeb2c371674",
+    "preload": true,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [
+        {
+          "targets": ["grafana/alerting/alertingrule/action", "grafana/alerting/recordingrule/action"],
+          "title": "Edit SLO",
+          "description": "Edit SLO"
+        },
+        {
+          "targets": ["grafana/alerting/alertingrule/action"],
+          "title": "SLO Dashboard",
+          "description": "View SLO dashboard"
+        }
+      ],
+      "addedComponents": [
+        { "targets": ["grafana/alerting/home"], "title": "SLO Alerting", "description": "Alerting based on SLOs" }
+      ],
+      "exposedComponents": [
+        {
+          "id": "grafana-slo-app/serviceDetailComponent/v1",
+          "title": "Service SLO Performance",
+          "description": "Display SLO performance"
+        },
+        { "id": "grafana-slo-app/wizard/v1", "title": "Wizard", "description": "Wizard" }
+      ],
+      "extensionPoints": [
+        { "id": "grafana-slo-app/service-actions/v1", "title": "Service actions", "description": "" }
+      ],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=9.3.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": [
+          "grafana-slo-app/serviceDetailComponent/v1",
+          "grafana-irm-app/oncall-now/v1",
+          "grafana-irm-app/create-escalation-drawer/v1",
+          "grafana-irm-app/service-center-table-component/v1",
+          "grafana-irm-app/irm-insights/v1",
+          "grafana-slo-app/wizard/v1"
+        ]
+      }
+    },
+    "moduleHash": "sha256-SUqE743xiRF5XKaKdo0ZjtQYOYHuHYJmqwar/54cuuM="
+  },
+  "grafana-synthetic-monitoring-app": {
+    "id": "grafana-synthetic-monitoring-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafana-synthetic-monitoring-app/1.35.2/public/plugins/grafana-synthetic-monitoring-app/module.js",
+    "version": "1.35.2",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=12.0.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-meIl4xCAvoEmrSHR2sg9AbGBsHbjNuufx8pnDrZWKjA="
+  },
+  "grafana-traces-app": {
+    "id": "grafana-traces-app",
+    "path": "public/plugins/grafana-traces-app/module.js",
+    "version": "1.0.15",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=10.0.3",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    }
+  },
+  "grafana-vulnerabilityobs-app": {
+    "id": "grafana-vulnerabilityobs-app",
+    "path": "public/plugins/grafana-vulnerabilityobs-app/module.js",
+    "version": "0.6.4",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=11.0.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    }
+  },
+  "grafanacloud-cardinality-management-app": {
+    "id": "grafanacloud-cardinality-management-app",
+    "path": "https://plugins-cdn.grafana-ops.net/grafanacloud-cardinality-management-app/2.4.2/public/plugins/grafanacloud-cardinality-management-app/module.js",
+    "version": "2.4.2",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">= 10.4.10 < 11 || >= 11.1.0",
+      "grafanaVersion": "*",
+      "plugins": [{ "id": "marcusolsson-treemap-panel", "type": "panel", "name": "Treemap" }],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-l4f6WFEY4GyKYUYyU5Vvg/ITdMNQeJ7Qz3oDZyoV9m0="
+  },
+  "k6-app": {
+    "id": "k6-app",
+    "path": "https://plugins-cdn.grafana-ops.net/k6-app/0.92.0/public/plugins/k6-app/module.js",
+    "version": "0.92.0",
+    "preload": false,
+    "angular": { "detected": false },
+    "loadingStrategy": "script",
+    "extensions": {
+      "addedLinks": [],
+      "addedComponents": [],
+      "exposedComponents": [],
+      "extensionPoints": [],
+      "addedFunctions": []
+    },
+    "dependencies": {
+      "grafanaDependency": ">=11.0.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": { "exposedComponents": [] }
+    },
+    "moduleHash": "sha256-1sRw01VnHPe/GXSvhEwEV7MimSlkR01CSBxXTw1JhL8="
+  }
+}

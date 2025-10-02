@@ -1,3 +1,6 @@
+// Import the scenes plugin registration
+import './sunker-plugindependencygraph-plugin/scenesPlugin';
+
 import { nanoid } from 'nanoid';
 import { ReactElement, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -65,16 +68,42 @@ function LogViewerTabContent(): ReactElement {
 // New Scenes Tab Content Component
 function NewScenesTabContent(): ReactElement {
   return (
-    <div style={{ padding: '20px', height: '100%' }}>
-      <h2>New Scenes Page</h2>
-      <p>This is the new scenes page content. You can add your scenes components here.</p>
-      <div style={{ marginTop: '20px' }}>
-        <p>Example content for the new scenes page:</p>
-        <ul>
-          <li>Scene 1: Dashboard overview</li>
-          <li>Scene 2: Analytics panel</li>
-          <li>Scene 3: Custom visualizations</li>
-        </ul>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '16px', borderBottom: '1px solid #e0e0e0' }}>
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+        <h2>Plugin Dependency Graph</h2>
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+        <p>Visualize plugin dependencies and extension points using Grafana Scenes</p>
+      </div>
+      <div style={{ flex: 1, padding: '16px' }}>
+        <AutoSizer>
+          {({ height, width }) => (
+            <VizGridLayout minHeight={height} minWidth={width}>
+              <VizPanel
+                // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+                title="Plugin Dependencies"
+                viz={{
+                  pluginId: 'grafana-extensions-plugin-dependency-graph',
+                  pluginVersion: '1.0.0',
+                  options: {
+                    visualizationMode: 'add',
+                    showDependencyTypes: true,
+                    showDescriptions: false,
+                    selectedContentProviders: [],
+                    selectedContentConsumers: [],
+                    linkExtensionColor: '#37872d',
+                    componentExtensionColor: '#ff9900',
+                    functionExtensionColor: '#e02f44',
+                  },
+                  fieldConfig: {
+                    defaults: {},
+                    overrides: [],
+                  },
+                }}
+              />
+            </VizGridLayout>
+          )}
+        </AutoSizer>
       </div>
     </div>
   );
@@ -89,7 +118,9 @@ export default function ExtensionsTabbedPage(): ReactElement {
       <Page navId="extensions">
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
           <TabsBar>
+            {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
             <Tab label="Log Viewer" active={activeTab === 0} onChangeTab={() => setActiveTab(0)} />
+            {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
             <Tab label="New Scenes" active={activeTab === 1} onChangeTab={() => setActiveTab(1)} />
           </TabsBar>
           <TabContent style={{ flex: 1 }}>
