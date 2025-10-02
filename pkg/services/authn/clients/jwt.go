@@ -77,7 +77,6 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	id := &authn.Identity{
 		AuthenticatedBy: login.JWTModule,
 		AuthID:          sub,
-		OrgID:           r.OrgID,
 		OrgRoles:        map[int64]org.RoleType{},
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
@@ -138,6 +137,15 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		if s.cfg.JWTAuth.RoleAttributeStrict && len(id.OrgRoles) == 0 {
 			return nil, errJWTInvalidRole.Errorf("could not evaluate any valid roles using IdP provided data")
 		}
+	}
+
+	// Set the requested orgID if provided, but let the sync hooks handle the validation and fallback logic
+	// The OrgSync.SyncOrgRolesHook will ensure the user gets assigned to a valid organization
+	if r.OrgID > 0 {
+		id.OrgID = r.OrgID
+	} else {
+		// No specific org requested, use default org - sync hooks will handle proper assignment  
+		id.OrgID = s.cfg.DefaultOrgID()
 	}
 
 	if id.Login == "" && id.Email == "" {
