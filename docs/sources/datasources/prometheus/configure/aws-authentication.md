@@ -130,7 +130,7 @@ datasources:
       sigV4SecretKey: '<secret key>'
 ```
 
-# Migrate to Amazon Managed Service for Prometheus
+## Migrate to Amazon Managed Service for Prometheus
 
 Learn more about why this is happening: [Prometheus data source update: Redefining our big tent philosophy](https://grafana.com/blog/2025/06/16/prometheus-data-source-update-redefining-our-big-tent-philosophy/)
 
