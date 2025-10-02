@@ -80,7 +80,6 @@ Use these options to control tooltip and hover highlight behavior across panels 
    - **Shared crosshair** - When you hover the cursor over one graph panel in the dashboard, the crosshair is also displayed on all other graph-style panels in the dashboard.
    - **Shared tooltip** - When you hover the cursor over one graph panel in the dashboard, the crosshair and tooltips are also displayed on all other graph-style panels in the dashboard.
 
-1. Toggle on the **Preload panels** switch to have all panels start loading as soon as the dashboard has been loaded.
 1. Click **Save dashboard**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
