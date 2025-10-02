@@ -17,18 +17,20 @@ function getManagedCount(managed?: ManagerStats[]) {
 
   // Loop through each managed repository
   managed?.forEach((manager) => {
+    if (manager.kind === 'repo') {
     // Loop through stats inside each manager and sum up the counts
-    manager.stats.forEach((stat) => {
-      if (stat.group === 'folder.grafana.app' || stat.group === 'dashboard.grafana.app') {
-        totalCount += stat.count;
-      }
-    });
+      manager.stats.forEach((stat) => {
+        if ((stat.group === 'folder.grafana.app' || stat.group === 'dashboard.grafana.app')) {
+          totalCount += stat.count;
+        }
+      });
+    }
   });
 
   return totalCount;
 }
 
-function getResourceCount(stats?: ResourceCount[]) {
+function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
   let counts: string[] = [];
   let resourceCount = 0;
 
@@ -43,6 +45,24 @@ function getResourceCount(stats?: ResourceCount[]) {
         resourceCount += stat.count;
         counts.push(t('provisioning.bootstrap-step.dashboards-count', '{{count}} dashboard', { count: stat.count }));
         break;
+    }
+  });
+
+  managed?.forEach((manager) => {
+    if (manager.kind !== 'repo') {
+      manager.stats.forEach((stat) => {
+        switch (stat.group) {
+          case 'folders':
+          case 'folder.grafana.app':
+            resourceCount += stat.count;
+            counts.push(t('provisioning.bootstrap-step.folders-count', '{{count}} folder', { count: stat.count }));
+            break;
+          case 'dashboard.grafana.app':
+            resourceCount += stat.count;
+            counts.push(t('provisioning.bootstrap-step.dashboards-count', '{{count}} dashboard', { count: stat.count }));
+            break;
+        }
+      });
     }
   });
 
@@ -92,7 +112,8 @@ export function useResourceStats(repoName?: string, isLegacyStorage?: boolean, s
     return {
       // managed does not exist in response when first time connecting to a repo
       managedCount: getManagedCount(resourceStatsQuery.data?.managed),
-      unmanagedCount: getResourceCount(resourceStatsQuery.data?.unmanaged).resourceCount,
+      // "unmanaged" means unmanaged by git sync. it may still be managed by other means, like terraform, plugins, file provisioning, etc.
+      unmanagedCount: getResourceCount(resourceStatsQuery.data?.unmanaged, resourceStatsQuery.data?.managed).resourceCount,
     };
   }, [resourceStatsQuery.data]);
 
