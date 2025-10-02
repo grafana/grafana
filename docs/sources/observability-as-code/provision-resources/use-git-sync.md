@@ -19,7 +19,13 @@ weight: 400
 # Manage provisioned repositories with Git Sync
 
 {{< admonition type="caution" >}}
-TBC
+
+Git Sync is available in [private preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud, and is an [experimental feature](https://grafana.com/docs/release-life-cycle/) in Grafana v12 for open source and Enterprise editions.  
+
+Support and documentation is available but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided. 
+
+You can sign up to the private preview using the [Git Sync early access form](https://forms.gle/WKkR3EVMcbqsNnkD9).
+
 {{< /admonition >}}
 
 After you have set up Git Sync, you can synchronize any changes you make in your existing provisioned folders in the UI with your configured GitHub repository. Similarly, if you push a change into your repository, those changes are mirrored in your Grafana instance.
