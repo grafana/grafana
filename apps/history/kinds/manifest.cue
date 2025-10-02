@@ -10,7 +10,7 @@ manifest: {
 			enabled: true
 		}
 		ts: {
-			enabled: true
+			enabled: false
 		}
 	}
 
