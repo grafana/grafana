@@ -17,7 +17,7 @@ require (
 	golang.org/x/sync v0.17.0 // @grafana/alerting-backend
 	golang.org/x/text v0.29.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/grpc v1.75.1 // indirect; @grafana/plugins-platform-backend
-	google.golang.org/protobuf v1.36.8 // indirect; @grafana/plugins-platform-backend
+	google.golang.org/protobuf v1.36.9 // indirect; @grafana/plugins-platform-backend
 )
 
 require (

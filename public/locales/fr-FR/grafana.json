@@ -10166,7 +10166,7 @@
       "title": "Sources de données"
     },
     "databases": {
-      "title": "Bases de données"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Ajouter et configurer des sources de données",
@@ -11692,6 +11692,8 @@
       "button-cancelling": "",
       "button-next": "Terminer",
       "button-start": "Commencer la synchronisation",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Cette action supprimera la configuration du dépôt et vous perdrez toutes vos modifications. Voulez-vous vraiment annuler vos modifications ?",
         "confirm": "Oui, annuler",
