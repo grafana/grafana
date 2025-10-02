@@ -200,11 +200,11 @@ const calculateAddLayout = (
   const providerNodes = data.nodes.filter((node) => contentProviders.has(node.id));
 
   // Place content provider apps on the left
-  const providerStartY = margin + 75;
+  const providerStartY = margin + 120; // Increased from 100 to 120 for more distance from dotted line
   providerNodes.forEach((node, index) => {
     result.push({
       ...node,
-      x: margin + 90,
+      x: margin + 113, // Adjusted from 90 to 113 to account for wider boxes (90 + 23)
       y: providerStartY + index * nodeSpacing,
     });
   });
@@ -258,7 +258,7 @@ export const getExtensionPointPositions = (
   const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
   const rightSideX = width - margin - extensionBoxWidth - LAYOUT_CONSTANTS.ARROW_SAFETY_MARGIN;
 
-  let currentGroupY = margin + 50;
+  let currentGroupY = margin + 110; // Increased from 90 to 110 for more distance from dotted line
 
   Array.from(extensionPointGroups.entries()).forEach(([definingPlugin, extensionPointIds]) => {
     const groupHeight = extensionPointIds.length * extensionPointSpacing + 50;

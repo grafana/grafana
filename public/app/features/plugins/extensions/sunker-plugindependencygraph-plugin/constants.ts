@@ -17,13 +17,13 @@ export const LAYOUT_CONSTANTS = {
   GROUP_SPACING_HEIGHT_RATIO: 0.05, // 5% of height
 
   // Node dimensions
-  MIN_NODE_WIDTH: 180,
+  MIN_NODE_WIDTH: 226, // Reduced from 231 to 226 (5 pixels narrower)
   MIN_NODE_HEIGHT: 30, // Further reduced height for consumer boxes
   NODE_WIDTH_RATIO: 0.15, // 15% of width
   NODE_HEIGHT_RATIO: 0.025, // 2.5% of height (further reduced)
 
   // Extension point dimensions
-  EXTENSION_BOX_WIDTH: 280,
+  EXTENSION_BOX_WIDTH: 400, // Increased from 380 to 400 (another 20 pixels wider)
   EXTENSION_BOX_HEIGHT: 60,
   EXTENSION_BOX_HEIGHT_NO_TYPE: 40,
 

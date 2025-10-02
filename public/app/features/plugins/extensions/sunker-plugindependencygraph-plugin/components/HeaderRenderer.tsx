@@ -4,10 +4,6 @@
  * Renders section headers and divider lines for the dependency graph.
  */
 
-import React from 'react';
-
-import { GrafanaTheme2 } from '@grafana/data';
-
 import {
   LAYOUT_CONSTANTS,
   MODE_LABELS,
@@ -16,6 +12,8 @@ import {
   getRightMargin,
 } from '../constants';
 
+import { GrafanaTheme2 } from '@grafana/data';
+import React from 'react';
 
 interface HeaderRendererProps {
   theme: GrafanaTheme2;
@@ -56,17 +54,6 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({ theme, width, is
           {MODE_LABELS.CONTENT_PROVIDER}
         </text>
 
-        {/* Dashed line under Content Provider header */}
-        <line
-          x1={margin + 10}
-          y1={LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET}
-          x2={margin + nodeWidth - 10}
-          y2={LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET}
-          stroke={theme.colors.border.medium}
-          strokeWidth={1}
-          strokeDasharray="5,5"
-        />
-
         {/* Content Consumer Header (right in expose mode) */}
         <text
           x={width - getRightMargin(width) - nodeWidth / 2}
@@ -78,11 +65,11 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({ theme, width, is
           {MODE_LABELS.CONTENT_CONSUMER}
         </text>
 
-        {/* Dashed line under Content Consumer header */}
+        {/* Horizontal dotted line across entire graph underneath headlines */}
         <line
-          x1={width - getRightMargin(width) - nodeWidth + 10}
+          x1={margin}
           y1={LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET}
-          x2={width - getRightMargin(width) - 10}
+          x2={width - getRightMargin(width)}
           y2={LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET}
           stroke={theme.colors.border.medium}
           strokeWidth={1}
@@ -108,7 +95,7 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({ theme, width, is
 
       {/* Content Provider Header */}
       <text
-        x={margin + 90}
+        x={margin + 113} // Centered over boxes at new position
         y={LAYOUT_CONSTANTS.SUB_HEADER_Y_OFFSET}
         textAnchor="middle"
         className={styles.sectionHeader}
@@ -117,20 +104,9 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({ theme, width, is
         {MODE_LABELS.CONTENT_PROVIDER}
       </text>
 
-      {/* Dashed line under Content Provider header */}
-      <line
-        x1={margin + 90 - nodeWidth / 2} // Match left edge of provider box
-        y1={LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET}
-        x2={margin + 90 + nodeWidth / 2} // Match right edge of provider box
-        y2={LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET}
-        stroke={theme.colors.border.medium}
-        strokeWidth={1}
-        strokeDasharray="5,5"
-      />
-
       {/* Content Consumer Header */}
       <text
-        x={width - margin - 150} // Center over the actual box positions
+        x={width - margin - 210} // Center over the wider boxes (400/2 + 10 for arrow safety margin)
         y={LAYOUT_CONSTANTS.SUB_HEADER_Y_OFFSET}
         textAnchor="middle"
         className={styles.sectionHeader}
@@ -139,11 +115,11 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({ theme, width, is
         {MODE_LABELS.CONTENT_CONSUMER}
       </text>
 
-      {/* Dashed line under Content Consumer header */}
+      {/* Horizontal dotted line across entire graph underneath headlines */}
       <line
-        x1={width - margin - 290 - 5} // Align with left edge of boxes with small buffer
+        x1={margin}
         y1={LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET}
-        x2={width - margin - LAYOUT_CONSTANTS.ARROW_SAFETY_MARGIN + 5} // Align with right edge of boxes with small buffer
+        x2={width - margin}
         y2={LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET}
         stroke={theme.colors.border.medium}
         strokeWidth={1}

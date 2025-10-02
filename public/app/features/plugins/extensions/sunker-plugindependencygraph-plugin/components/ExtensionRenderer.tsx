@@ -211,9 +211,8 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                   x2={width - 10}
                   y2={firstCompPos.groupY + groupHeight + (getResponsiveGroupSpacing(height) + 30) / 2}
                   stroke={theme.colors.border.medium}
-                  strokeWidth={2}
-                  strokeDasharray="8,4"
-                  opacity={0.8}
+                  strokeWidth={1}
+                  strokeDasharray="5,5"
                 />
               )}
             </g>
