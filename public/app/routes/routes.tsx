@@ -1,28 +1,29 @@
+import { useEffect } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
-import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
 
-import { AccessControlAction } from 'app/types/accessControl';
-import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
-import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components/ConfigureIRM';
-import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice';
-import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
-import { DashboardRoutes } from 'app/types/dashboard';
-import LdapPage from 'app/features/admin/ldap/LdapPage';
+import { isTruthy } from '@grafana/data';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
-import { RouteDescriptor } from '../core/navigation/types';
-import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
+import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
-import { getAppPluginRoutes } from 'app/features/plugins/routes';
+import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
+import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice';
+import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
+import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
+import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components/ConfigureIRM';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
+import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
-import { getProvisioningRoutes } from '../features/provisioning/utils/routes';
+import { AccessControlAction } from 'app/types/accessControl';
+import { DashboardRoutes } from 'app/types/dashboard';
+
+import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
+import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
-import { isTruthy } from '@grafana/data';
-import { useEffect } from 'react';
+import { getProvisioningRoutes } from '../features/provisioning/utils/routes';
 
 const isDevEnv = config.buildInfo.env === 'development';
 export const extraRoutes: RouteDescriptor[] = [];
