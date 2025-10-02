@@ -24,11 +24,6 @@
       "count": 1
     }
   },
-  "packages/grafana-alerting/src/grafana/notificationPolicies/utils.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "packages/grafana-data/src/dataframe/ArrayDataFrame.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -866,21 +861,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/Table/TableNG/Filter/Filter.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Table/TableNG/Filter/FilterPopup.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 3
-    }
-  },
-  "packages/grafana-ui/src/components/Table/TableNG/Filter/utils.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Table/TableNG/TableNG.test.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -1364,11 +1344,6 @@
       "count": 1
     }
   },
-  "public/app/features/admin/AdminFeatureTogglesTable.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "public/app/features/admin/ServerStatsCard.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -1698,11 +1673,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/QueryAndExpressionsStep.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/rule-types/RuleType.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -1809,11 +1779,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/rule-list/StateView.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/types/alerting.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 5
@@ -1898,11 +1863,6 @@
   },
   "public/app/features/auth-config/utils/data.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/browse-dashboards/components/BrowseActions/MoveModal.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -2605,11 +2565,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 24
-    }
-  },
-  "public/app/features/dashboard/state/DashboardMigratorToBackend.test.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/features/dashboard/state/DashboardModel.repeat.test.ts": {
@@ -4093,14 +4048,9 @@
       "count": 3
     }
   },
-  "public/app/plugins/datasource/graphite/datasource.test.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 3
-    }
-  },
   "public/app/plugins/datasource/graphite/datasource.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 4
+      "count": 3
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 8
@@ -4186,11 +4136,6 @@
     }
   },
   "public/app/plugins/datasource/influxdb/components/editor/query/flux/FluxQueryEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
-  "public/app/plugins/datasource/influxdb/components/editor/query/fsql/FSQLEditor.tsx": {
     "no-restricted-syntax": {
       "count": 3
     }
@@ -4443,11 +4388,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/annolist/AnnoListPanel.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/annolist/AnnotationListItem.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -4496,11 +4436,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/panel/dashlist/DashList.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
   "public/app/plugins/panel/debug/CursorView.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -4521,6 +4456,11 @@
   },
   "public/app/plugins/panel/gauge/GaugeMigrations.ts": {
     "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "public/app/plugins/panel/geomap/components/DebugOverlay.tsx": {
+    "@grafana/no-aria-label-selectors": {
       "count": 1
     }
   },

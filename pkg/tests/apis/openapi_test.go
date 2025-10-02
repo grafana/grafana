@@ -24,7 +24,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	h := NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: true,
+		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagQueryService, // Query Library
 			featuremgmt.FlagProvisioning,
@@ -44,7 +44,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, runtime.Version(), info.GoVersion)
 		require.Equal(t, "1", info.Major)
-		require.Equal(t, "33", info.Minor)
+		require.Equal(t, "34", info.Minor)
 
 		// Make sure the gitVersion is parsable
 		v, err := version.Parse(info.GitVersion)
@@ -93,6 +93,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}, {
 		Group:   "playlist.grafana.app",
 		Version: "v0alpha1",
+	}, {
+		Group:   "preferences.grafana.app",
+		Version: "v1alpha1",
 	}, {
 		Group:   "notifications.alerting.grafana.app",
 		Version: "v0alpha1",

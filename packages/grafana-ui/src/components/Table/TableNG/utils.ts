@@ -1009,3 +1009,33 @@ export function getSummaryCellTextAlign(textAlign: TextAlign, cellType: TableCel
 
   return textAlign;
 }
+
+// we keep this set to avoid spamming the heck out of the console, since it's quite likely that if we fail to parse
+// a value once, it'll happen again and again for many rows in a table, and spamming the console is slow.
+let warnedAboutStyleJsonSet = new Set<string>();
+export function parseStyleJson(rawValue: unknown): CSSProperties | void {
+  // confirms existence of value and serves as a type guard
+  if (typeof rawValue === 'string') {
+    try {
+      const parsedJsonValue = JSON.parse(rawValue);
+      if (parsedJsonValue != null && typeof parsedJsonValue === 'object' && !Array.isArray(parsedJsonValue)) {
+        return parsedJsonValue;
+      }
+    } catch (e) {
+      if (!warnedAboutStyleJsonSet.has(rawValue)) {
+        console.error(`encountered invalid cell style JSON: ${rawValue}`, e);
+        warnedAboutStyleJsonSet.add(rawValue);
+      }
+    }
+  }
+}
+
+// Safari 26 introduced rendering bugs which require us to disable several features of the table.
+export const IS_SAFARI_26 = (() => {
+  if (navigator == null) {
+    return false;
+  }
+  const userAgent = navigator.userAgent;
+  const safariVersionMatch = userAgent.match(/Version\/(\d+)\./);
+  return safariVersionMatch && parseInt(safariVersionMatch[1], 10) === 26;
+})();

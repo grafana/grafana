@@ -34,6 +34,7 @@ import {
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
+import { ExpressionDatasourceUID } from '../../expressions/types';
 
 import { QueryActionComponent, RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
@@ -386,10 +387,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
     const isEditingQueryLibrary = queryLibraryRef !== undefined;
     const isUnifiedAlerting = app === CoreApp.UnifiedAlerting;
+    const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
 
     return (
       <>
-        {!isEditingQueryLibrary && !isUnifiedAlerting && (
+        {!isEditingQueryLibrary && !isUnifiedAlerting && !isExpressionQuery && (
           <SavedQueryButtons
             query={query}
             app={app}

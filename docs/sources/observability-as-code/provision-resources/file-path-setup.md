@@ -22,7 +22,7 @@ Sign up for Grafana Cloud Git Sync early access using [this form](https://forms.
 
 {{< /admonition >}}
 
-File provisioning in Grafana lets you include resources, including folders and dashboard JSON files, that are stored in a local file system.
+Use local file provisioning to include in your Grafana instance resources (such as folders and dashboard JSON files) that are stored in a local file system.
 
 This page explains how to set up local file provisioning.
 
@@ -48,7 +48,7 @@ Refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/
 ### Limitations
 
 - A provisioned dashboard can't be deleted from within Grafana UI. The dashboard has to be deleted at the local file system and those changes synced to Grafana.
-- Changes from the local file system are one way: you can't save changes from
+- Changes from the local file system are one way: you can't save changes from the UI to GitHub.
 
 ## Before you begin
 

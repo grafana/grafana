@@ -187,7 +187,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig)
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
@@ -217,12 +217,18 @@ func (s *ModuleServer) initOperatorServer() (services.Service, error) {
 			return services.NewBasicService(
 				nil,
 				func(ctx context.Context) error {
-					context := cli.NewContext(&cli.App{}, nil, nil)
-					return op.RunFunc(standalone.BuildInfo{
-						Version:     s.version,
-						Commit:      s.commit,
-						BuildBranch: s.buildBranch,
-					}, context, s.cfg)
+					cliContext := cli.NewContext(&cli.App{}, nil, nil)
+					deps := OperatorDependencies{
+						BuildInfo: standalone.BuildInfo{
+							Version:     s.version,
+							Commit:      s.commit,
+							BuildBranch: s.buildBranch,
+						},
+						CLIContext: cliContext,
+						Config:     s.cfg,
+						Registerer: s.registerer,
+					}
+					return op.RunFunc(deps)
 				},
 				nil,
 			).WithName("operator"), nil

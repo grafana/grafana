@@ -69,13 +69,13 @@ func (e *DataSourceHandler) QueryDataPGX(ctx context.Context, req *backend.Query
 		}
 		err := json.Unmarshal(query.JSON, &queryjson)
 		if err != nil {
-			return nil, fmt.Errorf("error unmarshal query json: %w", err)
+			return nil, backend.DownstreamErrorf("error unmarshal query json: %s", err.Error())
 		}
 
 		// the fill-params are only stored inside this function, during query-interpolation. we do not support
 		// sending them in "from the outside"
 		if queryjson.Fill || queryjson.FillInterval != 0.0 || queryjson.FillMode != "" || queryjson.FillValue != 0.0 {
-			return nil, fmt.Errorf("query fill-parameters not supported")
+			return nil, backend.DownstreamErrorf("query fill-parameters not supported")
 		}
 
 		if queryjson.RawSql == "" {
@@ -127,19 +127,16 @@ func (e *DataSourceHandler) handlePanic(logger log.Logger, queryResult *DBDataRe
 	}
 }
 
-func (e *DataSourceHandler) execQuery(ctx context.Context, query string, logger log.Logger) ([]*pgconn.Result, error) {
+func (e *DataSourceHandler) execQuery(ctx context.Context, query string) ([]*pgconn.Result, error) {
 	c, err := e.pool.Acquire(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to acquire connection: %w", err)
+		return nil, backend.DownstreamErrorf("failed to acquire connection: %w", err)
 	}
 	defer c.Release()
 
 	mrr := c.Conn().PgConn().Exec(ctx, query)
-	defer func() {
-		if err := mrr.Close(); err != nil {
-			logger.Warn("Failed to close multi-result reader", "error", err)
-		}
-	}()
+	// Close returns the first error that occurred during the MultiResultReader's use. We will log that later.
+	defer mrr.Close() //nolint:errcheck
 	return mrr.ReadAll()
 }
 
@@ -168,7 +165,7 @@ func (e *DataSourceHandler) executeQueryPGX(queryContext context.Context, query 
 		return
 	}
 
-	results, err := e.execQuery(queryContext, interpolatedQuery, logger)
+	results, err := e.execQuery(queryContext, interpolatedQuery)
 	if err != nil {
 		e.handleQueryError("db query error", e.TransformQueryError(logger, err), interpolatedQuery, backend.ErrorSourceDownstream, ch, queryResult)
 		return
@@ -552,6 +549,10 @@ func convertPostgresValue(rawValue []byte, fd pgconn.FieldDescription, m *pgtype
 		err := scanPlan.Scan(rawValue, &d)
 		if err != nil {
 			return nil, err
+		}
+		// Handle null JSON values
+		if d == nil {
+			return nil, nil
 		}
 		j := json.RawMessage(*d)
 		return &j, nil

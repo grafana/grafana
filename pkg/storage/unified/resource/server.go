@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
@@ -21,9 +22,8 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
-	"github.com/grafana/dskit/ring"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
@@ -178,15 +178,22 @@ type SearchOptions struct {
 	Resources DocumentBuilderSupplier
 
 	// How many threads should build indexes
-	WorkerThreads int
+	InitWorkerThreads int
 
 	// Skip building index on startup for small indexes
 	InitMinCount int
 
-	// Interval for periodic index rebuilds (0 disables periodic rebuilds)
-	RebuildInterval time.Duration
+	// How often to rebuild dashboard index. 0 disables periodic rebuilds.
+	DashboardIndexMaxAge time.Duration
 
-	Ring *ring.Ring
+	// Maximum age of file-based index that can be reused. Ignored if zero.
+	MaxIndexAge time.Duration
+
+	// Minimum build version for reusing file-based indexes. Ignored if nil.
+	MinBuildVersion *semver.Version
+
+	// Number of workers to use for index rebuilds.
+	IndexRebuildWorkers int
 }
 
 type ResourceServerOptions struct {
@@ -235,8 +242,7 @@ type ResourceServerOptions struct {
 	QOSQueue  QOSEnqueuer
 	QOSConfig QueueConfig
 
-	Ring           *ring.Ring
-	RingLifecycler *ring.BasicLifecycler
+	OwnsIndexFn func(key NamespacedResource) (bool, error)
 }
 
 func NewResourceServer(opts ResourceServerOptions) (*server, error) {
@@ -334,7 +340,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.Ring, opts.RingLifecycler)
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.OwnsIndexFn)
 		if err != nil {
 			return nil, err
 		}
@@ -420,6 +426,10 @@ func (s *server) Stop(ctx context.Context) error {
 			stopFailed = true
 			s.initErr = fmt.Errorf("service stopeed with error: %w", err)
 		}
+	}
+
+	if s.search != nil {
+		s.search.stop()
 	}
 
 	// Stops the streaming
@@ -524,8 +534,8 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		return nil, NewBadRequestError(
 			fmt.Sprintf("key/name do not match (key: %s, name: %s)", key.Name, obj.GetName()))
 	}
-	if err := validateName(obj.GetName()); err != nil {
-		return nil, err
+	if errs := validation.IsValidGrafanaName(obj.GetName()); err != nil {
+		return nil, NewBadRequestError(errs[0])
 	}
 
 	// For folder moves, we need to check permissions on both folders
@@ -547,8 +557,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 			check.Name = key.Name
 		}
 
-		check.Folder = obj.GetFolder()
-		a, err := s.access.Check(ctx, user, check)
+		a, err := s.access.Check(ctx, user, check, obj.GetFolder())
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}
@@ -585,10 +594,9 @@ func (s *server) checkFolderMovePermissions(ctx context.Context, user claims.Aut
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
 		Name:      key.Name,
-		Folder:    oldFolder,
 	}
 
-	a, err := s.access.Check(ctx, user, updateCheck)
+	a, err := s.access.Check(ctx, user, updateCheck, oldFolder)
 	if err != nil {
 		return AsErrorResult(err)
 	}
@@ -605,10 +613,10 @@ func (s *server) checkFolderMovePermissions(ctx context.Context, user claims.Aut
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
-		Folder:    newFolder,
+		Name:      key.Name,
 	}
 
-	a, err = s.access.Check(ctx, user, createCheck)
+	a, err = s.access.Check(ctx, user, createCheck, newFolder)
 	if err != nil {
 		return AsErrorResult(err)
 	}
@@ -625,6 +633,10 @@ func (s *server) checkFolderMovePermissions(ctx context.Context, user claims.Aut
 func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Create")
 	defer span.End()
+
+	if r := verifyRequestKey(req.Key); r != nil {
+		return nil, fmt.Errorf("invalid request key: %s", r.Message)
+	}
 
 	rsp := &resourcepb.CreateResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
@@ -719,8 +731,12 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 		return rsp, nil
 	}
 
+	// TODO: once we know the client is always sending the RV, require ResourceVersion > 0
+	// See: https://github.com/grafana/grafana/pull/111866
 	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
-		return nil, ErrOptimisticLockingFailed
+		return &resourcepb.UpdateResponse{
+			Error: &ErrOptimisticLockingFailed,
+		}, nil
 	}
 
 	event, e := s.newEvent(ctx, user, req.Key, req.Value, latest.Value)
@@ -784,7 +800,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		return rsp, nil
 	}
 	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
-		rsp.Error = AsErrorResult(ErrOptimisticLockingFailed)
+		rsp.Error = &ErrOptimisticLockingFailed
 		return rsp, nil
 	}
 
@@ -794,8 +810,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		Resource:  req.Key.Resource,
 		Namespace: req.Key.Namespace,
 		Name:      req.Key.Name,
-		Folder:    latest.Folder,
-	})
+	}, latest.Folder)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
@@ -861,10 +876,6 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 			}}, nil
 	}
 
-	// if req.Key.Group == "" {
-	// 	status, _ := AsErrorResult(apierrors.NewBadRequest("missing group"))
-	// 	return &ReadResponse{Status: status}, nil
-	// }
 	if req.Key.Resource == "" {
 		return &resourcepb.ReadResponse{Error: NewBadRequestError("missing resource")}, nil
 	}
@@ -897,8 +908,7 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 		Resource:  req.Key.Resource,
 		Namespace: req.Key.Namespace,
 		Name:      req.Key.Name,
-		Folder:    rsp.Folder,
-	})
+	}, rsp.Folder)
 	if err != nil {
 		return &resourcepb.ReadResponse{Error: AsErrorResult(err)}, nil
 	}
@@ -944,6 +954,11 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}
 	}
 
+	// Fast path for getting single value in a list
+	if rsp := s.tryFastPathList(ctx, req); rsp != nil {
+		return rsp, nil
+	}
+
 	if req.Limit < 1 {
 		req.Limit = 500 // default max 500 items in a page
 	}
@@ -952,7 +967,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	rsp := &resourcepb.ListResponse{}
 
 	key := req.Options.Key
-	checker, err := s.access.Compile(ctx, user, claims.ListRequest{
+	checker, _, err := s.access.Compile(ctx, user, claims.ListRequest{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -960,7 +975,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	})
 	var trashChecker claims.ItemChecker // only for trash
 	if req.Source == resourcepb.ListRequest_TRASH {
-		trashChecker, err = s.access.Compile(ctx, user, claims.ListRequest{
+		trashChecker, _, err = s.access.Compile(ctx, user, claims.ListRequest{
 			Group:     key.Group,
 			Resource:  key.Resource,
 			Namespace: key.Namespace,
@@ -1037,6 +1052,40 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	return rsp, err
 }
 
+// Some list queries can be calculated with simple reads
+func (s *server) tryFastPathList(ctx context.Context, req *resourcepb.ListRequest) *resourcepb.ListResponse {
+	if req.Source != resourcepb.ListRequest_STORE || req.Options.Key.Namespace == "" {
+		return nil
+	}
+
+	for _, v := range req.Options.Fields {
+		if v.Key == "metadata.name" && v.Operator == `=` {
+			if len(v.Values) == 1 {
+				read := &resourcepb.ReadRequest{
+					Key:             req.Options.Key,
+					ResourceVersion: req.ResourceVersion,
+				}
+				read.Key.Name = v.Values[0]
+				found, err := s.Read(ctx, read)
+				if err != nil {
+					return &resourcepb.ListResponse{Error: AsErrorResult(err)}
+				}
+
+				// Return a value when it exists
+				rsp := &resourcepb.ListResponse{}
+				if len(found.Value) > 0 {
+					rsp.Items = []*resourcepb.ResourceWrapper{{
+						Value:           found.Value,
+						ResourceVersion: found.ResourceVersion,
+					}}
+				}
+				return rsp
+			}
+		}
+	}
+	return nil
+}
+
 // isTrashItemAuthorized checks if the user has access to the trash item.
 func (s *server) isTrashItemAuthorized(ctx context.Context, iter ListIterator, trashChecker claims.ItemChecker) bool {
 	user, ok := claims.AuthInfoFrom(ctx)
@@ -1052,6 +1101,11 @@ func (s *server) isTrashItemAuthorized(ctx context.Context, iter ListIterator, t
 
 	obj, err := utils.MetaAccessor(partial)
 	if err != nil {
+		return false
+	}
+
+	// provisioned objects should not be retrievable in the trash
+	if obj.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
 		return false
 	}
 
@@ -1097,7 +1151,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 
 	key := req.Options.Key
-	checker, err := s.access.Compile(ctx, user, claims.ListRequest{
+	checker, _, err := s.access.Compile(ctx, user, claims.ListRequest{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,

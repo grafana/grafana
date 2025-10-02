@@ -98,7 +98,7 @@ type ListUserQuery struct {
 }
 
 type ListUserResult struct {
-	Users    []user.User
+	Items    []common.UserWithRole
 	Continue int64
 	RV       int64
 }
@@ -166,19 +166,19 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDa
 	if err == nil {
 		var lastID int64
 		for rows.Next() {
-			u := user.User{}
+			u := common.UserWithRole{}
 			err = rows.Scan(&u.OrgID, &u.ID, &u.UID, &u.Login, &u.Email, &u.Name,
 				&u.Created, &u.Updated, &u.IsServiceAccount, &u.IsDisabled, &u.IsAdmin, &u.EmailVerified,
-				&u.IsProvisioned, &u.LastSeenAt,
+				&u.IsProvisioned, &u.LastSeenAt, &u.Role,
 			)
 			if err != nil {
 				return res, err
 			}
 
 			lastID = u.ID
-			res.Users = append(res.Users, u)
-			if len(res.Users) > limit {
-				res.Users = res.Users[0 : len(res.Users)-1]
+			res.Items = append(res.Items, u)
+			if len(res.Items) > limit {
+				res.Items = res.Items[0 : len(res.Items)-1]
 				res.Continue = lastID
 				break
 			}
@@ -310,7 +310,7 @@ type CreateUserCommand struct {
 }
 
 type CreateUserResult struct {
-	User user.User
+	User common.UserWithRole
 }
 
 type CreateOrgUserCommand struct {
@@ -323,15 +323,6 @@ type CreateOrgUserCommand struct {
 
 type DeleteUserCommand struct {
 	UID string
-}
-
-type DeleteUserQuery struct {
-	OrgID int64
-	UID   string
-}
-
-type DeleteUserResult struct {
-	Success bool
 }
 
 var sqlCreateUserTemplate = mustTemplate("create_user.sql")
@@ -407,7 +398,7 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 
 	req := newCreateUser(sql, &cmd)
 
-	var createdUser user.User
+	var createdUser common.UserWithRole
 	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
 		userQuery, err := sqltemplate.Execute(sqlCreateUserTemplate, req)
 		if err != nil {
@@ -438,23 +429,26 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 			return fmt.Errorf("failed to create org_user relationship: %w", err)
 		}
 
-		createdUser = user.User{
-			ID:               userID,
-			UID:              cmd.UID,
-			Login:            cmd.Login,
-			Email:            cmd.Email,
-			Name:             cmd.Name,
-			OrgID:            cmd.OrgID,
-			IsAdmin:          cmd.IsAdmin,
-			IsDisabled:       cmd.IsDisabled,
-			EmailVerified:    cmd.EmailVerified,
-			IsProvisioned:    cmd.IsProvisioned,
-			Salt:             cmd.Salt,
-			Rands:            cmd.Rands,
-			Created:          cmd.Created.Time,
-			Updated:          cmd.Updated.Time,
-			LastSeenAt:       cmd.LastSeenAt.Time,
-			IsServiceAccount: false,
+		createdUser = common.UserWithRole{
+			User: user.User{
+				ID:               userID,
+				UID:              cmd.UID,
+				Login:            cmd.Login,
+				Email:            cmd.Email,
+				Name:             cmd.Name,
+				OrgID:            cmd.OrgID,
+				IsAdmin:          cmd.IsAdmin,
+				IsDisabled:       cmd.IsDisabled,
+				EmailVerified:    cmd.EmailVerified,
+				IsProvisioned:    cmd.IsProvisioned,
+				Salt:             cmd.Salt,
+				Rands:            cmd.Rands,
+				Created:          cmd.Created.Time,
+				Updated:          cmd.Updated.Time,
+				LastSeenAt:       cmd.LastSeenAt.Time,
+				IsServiceAccount: false,
+			},
+			Role: cmd.Role,
 		}
 
 		return nil
@@ -467,20 +461,34 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 	return &CreateUserResult{User: createdUser}, nil
 }
 
-func newDeleteUser(sql *legacysql.LegacyDatabaseHelper, q *DeleteUserQuery) deleteUserQuery {
+func newDeleteUser(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteUserCommand) deleteUserQuery {
 	return deleteUserQuery{
-		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
-		UserTable:    sql.Table("user"),
-		OrgUserTable: sql.Table("org_user"),
-		Query:        q,
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		UserTable:   sql.Table("user"),
+		Command:     cmd,
 	}
 }
 
 type deleteUserQuery struct {
 	sqltemplate.SQLTemplate
-	UserTable    string
-	OrgUserTable string
-	Query        *DeleteUserQuery
+	UserTable string
+	Command   *DeleteUserCommand
+}
+
+func (r deleteUserQuery) Validate() error {
+	if r.Command.UID == "" {
+		return fmt.Errorf("user UID is required")
+	}
+
+	return nil
+}
+
+func newDeleteOrgUser(sql *legacysql.LegacyDatabaseHelper, userID int64) deleteOrgUserQuery {
+	return deleteOrgUserQuery{
+		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
+		OrgUserTable: sql.Table("org_user"),
+		UserID:       userID,
+	}
 }
 
 type deleteOrgUserQuery struct {
@@ -496,45 +504,22 @@ func (r deleteOrgUserQuery) Validate() error {
 	return nil
 }
 
-func (r deleteUserQuery) Validate() error {
-	if r.Query.UID == "" {
-		return fmt.Errorf("user UID is required")
-	}
-	if r.Query.OrgID == 0 {
-		return fmt.Errorf("org ID is required")
-	}
-	return nil
-}
-
 // DeleteUser implements LegacyIdentityStore.
-func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteUserCommand) (*DeleteUserResult, error) {
-	if ns.OrgID == 0 {
-		return nil, fmt.Errorf("expected non zero org id")
-	}
-
-	if cmd.UID == "" {
-		return nil, fmt.Errorf("user UID is required")
-	}
-
+func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteUserCommand) error {
 	sql, err := s.sql(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	query := &DeleteUserQuery{
-		OrgID: ns.OrgID,
-		UID:   cmd.UID,
-	}
-
-	req := newDeleteUser(sql, query)
+	req := newDeleteUser(sql, &cmd)
 	if err := req.Validate(); err != nil {
-		return nil, err
+		return err
 	}
 
 	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
 		userLookupReq := newGetUserInternalID(sql, &GetUserInternalIDQuery{
 			OrgID: ns.OrgID,
-			UID:   req.Query.UID,
+			UID:   req.Command.UID,
 		})
 
 		userQuery, err := sqltemplate.Execute(sqlQueryUserInternalIDTemplate, userLookupReq)
@@ -608,8 +593,8 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 	})
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &DeleteUserResult{Success: true}, nil
+	return nil
 }

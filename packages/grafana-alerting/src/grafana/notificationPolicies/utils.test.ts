@@ -12,7 +12,7 @@ import {
   computeInheritedTree,
   findMatchingRoutes,
   getInheritedProperties,
-  matchAlertInstancesToPolicyTree,
+  matchInstancesToRoute,
 } from './utils';
 
 describe('findMatchingRoutes', () => {
@@ -1072,7 +1072,7 @@ describe('matchAlertInstancesToPolicyTree', () => {
       ], // Should match parent only
     ];
 
-    const result = matchAlertInstancesToPolicyTree(instances, parentRoute);
+    const result = matchInstancesToRoute(parentRoute, instances);
 
     // Should return expanded tree with identifiers
     expect(result.expandedTree).toHaveProperty('id');
@@ -1109,13 +1109,13 @@ describe('matchAlertInstancesToPolicyTree', () => {
     });
 
     // Empty instances array
-    const result1 = matchAlertInstancesToPolicyTree([], route);
+    const result1 = matchInstancesToRoute(route, []);
     expect(result1.expandedTree).toHaveProperty('id');
     expect(result1.matchedPolicies.size).toBe(0);
 
     // Instances that don't match
     const instances: Label[][] = [[['service', 'api']]];
-    const result2 = matchAlertInstancesToPolicyTree(instances, route);
+    const result2 = matchInstancesToRoute(route, instances);
     expect(result2.expandedTree).toHaveProperty('id');
     expect(result2.matchedPolicies.size).toBe(0);
   });

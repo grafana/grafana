@@ -726,6 +726,8 @@ Set to `true` if you host Grafana behind HTTPS. Default is `false`.
 
 Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is to mitigate the risk of cross-origin information leakage. This setting also provides some protection against cross-site request forgery attacks (CSRF), [read more about SameSite here](https://owasp.org/www-community/SameSite). Valid values are `lax`, `strict`, `none`, and `disabled`. Default is `lax`. Using value `disabled` does not add any `SameSite` attribute to cookies.
 
+If you want to use OAuth/SAML for login, it is necessary to configure this attribute as `lax`.
+
 #### `allow_embedding`
 
 When `false`, the HTTP header `X-Frame-Options: deny` is set in Grafana HTTP responses which instructs browsers to not allow rendering Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>`.
@@ -791,20 +793,6 @@ The following example allows access to all plugins that have a backend:
 The following example limits access to the backend of a single plugin:
 
 `actions_allow_post_url=/api/plugins/grafana-special-app`
-
-<hr />
-
-#### `angular_support_enabled`
-
-This is set to false by default, meaning that the angular framework and support components aren't loaded.
-This means that all [plugins](../../developers/angular_deprecation/angular-plugins/) and core features that depend on angular support won't work.
-
-The core features that depend on angular are:
-
-- Old graph panel
-- Old table panel
-
-These features each have supported alternatives, and we recommend using them.
 
 #### `csrf_trusted_origins`
 
