@@ -885,6 +885,11 @@ export interface FeatureToggles {
   */
   alertingJiraIntegration?: boolean;
   /**
+  * 
+  * @default true
+  */
+  alertingUseNewSimplifiedRoutingHashAlgorithm?: boolean;
+  /**
   * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
   */
   useScopesNavigationEndpoint?: boolean;

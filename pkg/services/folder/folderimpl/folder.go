@@ -1401,13 +1401,13 @@ func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID str
 
 	// Create folder under itself is not allowed
 	if parentUID == UID {
-		return folder.ErrCircularReference
+		return folder.ErrCircularReference.Errorf("circular reference detected")
 	}
 
 	// check there is no circular reference
 	for _, ancestor := range ancestors {
 		if ancestor.UID == UID {
-			return folder.ErrCircularReference
+			return folder.ErrCircularReference.Errorf("circular reference detected")
 		}
 	}
 

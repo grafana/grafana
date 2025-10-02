@@ -87,8 +87,7 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 			Resource:  foldersV1.RESOURCE,
 			Namespace: ns.Value,
 			Name:      name,
-			Folder:    obj.GetFolder(),
-		})
+		}, obj.GetFolder())
 		return tmp.Allowed
 	}
 

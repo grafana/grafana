@@ -287,7 +287,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					Name:        a.GetName(),
 					Namespace:   a.GetNamespace(),
 					Subresource: a.GetSubresource(),
-				})
+				}, "")
 				if err != nil {
 					return authorizer.DecisionDeny, "failed to perform authorization", err
 				}
