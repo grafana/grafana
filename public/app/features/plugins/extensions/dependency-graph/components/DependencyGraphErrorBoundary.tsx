@@ -1,5 +1,7 @@
-import { Alert, Button } from '@grafana/ui';
 import { Component, ErrorInfo, ReactNode } from 'react';
+
+import { t } from '@grafana/i18n';
+import { Alert, Button } from '@grafana/ui';
 
 interface Props {
   children: ReactNode;
@@ -57,27 +59,28 @@ export class DependencyGraphErrorBoundary extends Component<Props, State> {
 
       return (
         <div style={{ padding: '20px' }}>
-          <Alert
-            title="Dependency Graph Error"
-            severity="error"
-            children={
-              <div>
-                <p>An error occurred while rendering the dependency graph.</p>
-                {this.state.error && (
-                  <details style={{ marginTop: '10px' }}>
-                    <summary>Error details</summary>
-                    <pre style={{ fontSize: '12px', marginTop: '5px' }}>
-                      {this.state.error.toString()}
-                      {this.state.errorInfo && this.state.errorInfo.componentStack}
-                    </pre>
-                  </details>
+          <Alert title={t('extensions.dependency-graph.error-title', 'Dependency Graph Error')} severity="error">
+            <div>
+              <p>
+                {t(
+                  'extensions.dependency-graph.error-message',
+                  'An error occurred while rendering the dependency graph.'
                 )}
-                <Button onClick={this.handleRetry} style={{ marginTop: '10px' }}>
-                  Try again
-                </Button>
-              </div>
-            }
-          />
+              </p>
+              {this.state.error && (
+                <details style={{ marginTop: '10px' }}>
+                  <summary>{t('extensions.dependency-graph.error-details', 'Error details')}</summary>
+                  <pre style={{ fontSize: '12px', marginTop: '5px' }}>
+                    {this.state.error.toString()}
+                    {this.state.errorInfo && this.state.errorInfo.componentStack}
+                  </pre>
+                </details>
+              )}
+              <Button onClick={this.handleRetry} style={{ marginTop: '10px' }}>
+                {t('extensions.dependency-graph.try-again', 'Try again')}
+              </Button>
+            </div>
+          </Alert>
         </div>
       );
     }

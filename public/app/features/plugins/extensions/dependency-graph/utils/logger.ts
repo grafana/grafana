@@ -13,7 +13,7 @@ export enum LogLevel {
 interface LogContext {
   component?: string;
   action?: string;
-  data?: any;
+  data?: unknown;
 }
 
 class Logger {
@@ -35,7 +35,7 @@ class Logger {
 
   debug(message: string, context?: LogContext): void {
     if (this.shouldLog(LogLevel.DEBUG)) {
-      console.debug(this.formatMessage('DEBUG', message, context));
+      console.log(this.formatMessage('DEBUG', message, context));
     }
   }
 
@@ -66,14 +66,16 @@ class Logger {
 export const logger = new Logger(process.env.NODE_ENV === 'development' ? LogLevel.DEBUG : LogLevel.INFO);
 
 // Convenience functions for common logging scenarios
-export const logGraphData = (data: any) => {
+export const logGraphData = (data: unknown) => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const graphData = data as { nodes?: unknown[]; dependencies?: unknown[]; extensionPoints?: unknown[] };
   logger.debug('Graph data processed', {
     component: 'DependencyGraph',
     action: 'dataProcessing',
     data: {
-      nodes: data.nodes?.length || 0,
-      dependencies: data.dependencies?.length || 0,
-      extensionPoints: data.extensionPoints?.length || 0,
+      nodes: graphData.nodes?.length || 0,
+      dependencies: graphData.dependencies?.length || 0,
+      extensionPoints: graphData.extensionPoints?.length || 0,
     },
   });
 };

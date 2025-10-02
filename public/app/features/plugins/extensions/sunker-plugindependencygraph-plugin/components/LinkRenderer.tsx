@@ -4,6 +4,7 @@
  * Renders dependency links/arrows between nodes in the dependency graph.
  */
 
+import { SerializedStyles } from '@emotion/react';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -12,9 +13,6 @@ import { VISUAL_CONSTANTS, getResponsiveComponentWidth, getResponsiveNodeWidth }
 import { GraphData } from '../types';
 
 import { NodeWithPosition, PositionInfo } from './GraphLayout';
-
-
-
 
 interface LinkRendererProps {
   theme: GrafanaTheme2;
@@ -30,8 +28,8 @@ interface LinkRendererProps {
   selectedContentProvider: string | null;
   highlightedExtensionPoint?: string | null;
   styles: {
-    link: string;
-    linkHighlighted: string;
+    link: SerializedStyles;
+    linkHighlighted: SerializedStyles;
   };
 }
 

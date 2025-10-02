@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
+import { t } from '@grafana/i18n';
 import { useTheme2 } from '@grafana/ui';
 
 import { GraphData, PanelOptions } from '../types';
-
 
 import { ArrowMarkers } from './ArrowMarkers';
 import { ContextMenu } from './ContextMenu';
@@ -190,10 +190,23 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
   if (!data.nodes.length) {
     return (
       <div className={styles.emptyState}>
-        <p>No plugin dependency data available</p>
-        <p>Configure your data source to provide plugin relationships</p>
+        <p>{t('extensions.dependency-graph.no-data', 'No plugin dependency data available')}</p>
         <p>
-          Debug: width={width}, height={height}, data keys: {Object.keys(data).join(', ')}
+          {t(
+            'extensions.dependency-graph.configure-data-source',
+            'Configure your data source to provide plugin relationships'
+          )}
+        </p>
+        <p>
+          {t(
+            'extensions.dependency-graph.debug-info',
+            'Debug: width={{width}}, height={{height}}, data keys: {{keys}}',
+            {
+              width,
+              height,
+              keys: Object.keys(data).join(', '),
+            }
+          )}
         </p>
       </div>
     );
@@ -251,7 +264,7 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
             fill={theme.colors.text.secondary}
             style={{ fontSize: '11px', opacity: 0.8 }}
           >
-            Click extension points to explore details
+            {t('extensions.dependency-graph.click-to-explore', 'Click extension points to explore details')}
           </text>
         )}
 
@@ -280,7 +293,12 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
           exposedComponentPositions={exposedComponentPositions}
           selectedExtensionPoint={selectedExtensionPoint}
           selectedExposedComponent={selectedExposedComponent}
-          onExtensionPointClick={handleExtensionPointClick}
+          onExtensionPointClick={(id) => {
+            // Create a mock event for the handler
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            const mockEvent = { preventDefault: () => {}, stopPropagation: () => {} } as React.MouseEvent;
+            handleExtensionPointClick(mockEvent, id || '');
+          }}
           onExposedComponentClick={handleExposedComponentClick}
           onExtensionPointRightClick={handleExtensionPointClick}
           styles={styles}
@@ -336,7 +354,7 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
               fontSize: '12px',
             }}
           >
-            Clear Highlight
+            {t('extensions.dependency-graph.clear-highlight', 'Clear Highlight')}
           </button>
         </div>
       )}

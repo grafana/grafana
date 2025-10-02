@@ -10,11 +10,11 @@
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Button, useTheme2 } from '@grafana/ui';
 
 import { LAYOUT_CONSTANTS, VISUAL_CONSTANTS } from '../constants';
 import { ExtensionPoint, GraphData, PanelOptions } from '../types';
-
 
 interface ExtensionPointDrillDownProps {
   extensionPoint: ExtensionPoint;
@@ -107,11 +107,11 @@ export const ExtensionPointDrillDown: React.FC<ExtensionPointDrillDownProps> = (
             onClick={onBack}
             style={{ marginRight: theme.spacing(1) }}
           >
-            Back
+            {t('extensions.dependency-graph.back', 'Back')}
           </Button>
           <span style={{ color: theme.colors.text.secondary, fontSize: theme.typography.bodySmall.fontSize }}>/</span>
           <h2 style={{ margin: 0, color: theme.colors.text.primary, fontSize: theme.typography.h4.fontSize }}>
-            Extension Point Details
+            {t('extensions.dependency-graph.extension-point-details', 'Extension Point Details')}
           </h2>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing(1) }}>
@@ -139,7 +139,7 @@ export const ExtensionPointDrillDown: React.FC<ExtensionPointDrillDownProps> = (
 
           {/* Left panel title */}
           <text x={leftPanelX + 20} y={panelY + 30} className="text-lg font-semibold" fill={theme.colors.text.primary}>
-            Providers ({providers.length})
+            {t('extensions.dependency-graph.providers-count', 'Providers ({{count}})', { count: providers.length })}
           </text>
 
           {/* Provider boxes */}
@@ -196,7 +196,7 @@ export const ExtensionPointDrillDown: React.FC<ExtensionPointDrillDownProps> = (
               className="text-sm"
               fill={theme.colors.text.secondary}
             >
-              No providers found
+              {t('extensions.dependency-graph.no-providers-found', 'No providers found')}
             </text>
           )}
         </g>
@@ -217,7 +217,7 @@ export const ExtensionPointDrillDown: React.FC<ExtensionPointDrillDownProps> = (
 
           {/* Right panel title */}
           <text x={rightPanelX + 20} y={panelY + 30} className="text-lg font-semibold" fill={theme.colors.text.primary}>
-            Extension Point
+            {t('extensions.dependency-graph.extension-point', 'Extension Point')}
           </text>
 
           {/* Extension point box */}
@@ -252,7 +252,9 @@ export const ExtensionPointDrillDown: React.FC<ExtensionPointDrillDownProps> = (
               className="text-xs"
               fill={theme.colors.getContrastText(extensionColor)}
             >
-              ({extensionPoint.extensionType} extension)
+              {t('extensions.dependency-graph.extension-type', '({{type}} extension)', {
+                type: extensionPoint.extensionType,
+              })}
             </text>
           )}
 
@@ -264,7 +266,7 @@ export const ExtensionPointDrillDown: React.FC<ExtensionPointDrillDownProps> = (
               className="text-sm font-semibold"
               fill={theme.colors.text.primary}
             >
-              Title: {extensionPoint.title}
+              {t('extensions.dependency-graph.title', 'Title: {{title}}', { title: extensionPoint.title })}
             </text>
           )}
 
@@ -276,7 +278,9 @@ export const ExtensionPointDrillDown: React.FC<ExtensionPointDrillDownProps> = (
               className="text-sm"
               fill={theme.colors.text.secondary}
             >
-              Description: {extensionPoint.description}
+              {t('extensions.dependency-graph.description', 'Description: {{description}}', {
+                description: extensionPoint.description,
+              })}
             </text>
           )}
 
@@ -287,7 +291,9 @@ export const ExtensionPointDrillDown: React.FC<ExtensionPointDrillDownProps> = (
             className="text-sm"
             fill={theme.colors.text.secondary}
           >
-            Defined by: {extensionPoint.definingPlugin}
+            {t('extensions.dependency-graph.defined-by', 'Defined by: {{plugin}}', {
+              plugin: extensionPoint.definingPlugin,
+            })}
           </text>
         </g>
 

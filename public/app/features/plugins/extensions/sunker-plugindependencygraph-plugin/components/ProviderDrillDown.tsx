@@ -8,11 +8,11 @@
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Button, useTheme2 } from '@grafana/ui';
 
 import { LAYOUT_CONSTANTS, VISUAL_CONSTANTS } from '../constants';
 import { GraphData, PanelOptions, PluginNode } from '../types';
-
 
 interface ProviderDrillDownProps {
   provider: PluginNode;
@@ -93,11 +93,11 @@ export const ProviderDrillDown: React.FC<ProviderDrillDownProps> = ({
             onClick={onBack}
             style={{ marginRight: theme.spacing(1) }}
           >
-            Back
+            {t('extensions.dependency-graph.back', 'Back')}
           </Button>
           <span style={{ color: theme.colors.text.secondary, fontSize: theme.typography.bodySmall.fontSize }}>/</span>
           <h2 style={{ margin: 0, color: theme.colors.text.primary, fontSize: theme.typography.h4.fontSize }}>
-            Provider Details
+            {t('extensions.dependency-graph.provider-details', 'Provider Details')}
           </h2>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing(1) }}>
@@ -125,7 +125,9 @@ export const ProviderDrillDown: React.FC<ProviderDrillDownProps> = ({
 
           {/* Left panel title */}
           <text x={leftPanelX + 20} y={panelY + 30} className="text-lg font-semibold" fill={theme.colors.text.primary}>
-            Extension Points ({extensionPoints.length})
+            {t('extensions.dependency-graph.extension-points-count', 'Extension Points ({{count}})', {
+              count: extensionPoints.length,
+            })}
           </text>
 
           {/* Extension point boxes */}
@@ -165,7 +167,9 @@ export const ProviderDrillDown: React.FC<ProviderDrillDownProps> = ({
                     className="text-xs"
                     fill={theme.colors.getContrastText(extensionColor)}
                   >
-                    ({extensionPoint.extensionType} extension)
+                    {t('extensions.dependency-graph.extension-type', '({{type}} extension)', {
+                      type: extensionPoint.extensionType,
+                    })}
                   </text>
                 )}
               </g>
@@ -181,7 +185,7 @@ export const ProviderDrillDown: React.FC<ProviderDrillDownProps> = ({
               className="text-sm"
               fill={theme.colors.text.secondary}
             >
-              No extension points found
+              {t('extensions.dependency-graph.no-extension-points-found', 'No extension points found')}
             </text>
           )}
         </g>
@@ -202,7 +206,7 @@ export const ProviderDrillDown: React.FC<ProviderDrillDownProps> = ({
 
           {/* Right panel title */}
           <text x={rightPanelX + 20} y={panelY + 30} className="text-lg font-semibold" fill={theme.colors.text.primary}>
-            Provider
+            {t('extensions.dependency-graph.provider', 'Provider')}
           </text>
 
           {/* Provider box */}
@@ -245,7 +249,9 @@ export const ProviderDrillDown: React.FC<ProviderDrillDownProps> = ({
               className="text-sm"
               fill={theme.colors.text.secondary}
             >
-              Description: {provider.description}
+              {t('extensions.dependency-graph.description', 'Description: {{description}}', {
+                description: provider.description,
+              })}
             </text>
           )}
 
@@ -256,7 +262,7 @@ export const ProviderDrillDown: React.FC<ProviderDrillDownProps> = ({
             className="text-sm"
             fill={theme.colors.text.secondary}
           >
-            Type: {provider.type}
+            {t('extensions.dependency-graph.type', 'Type: {{type}}', { type: provider.type })}
           </text>
 
           {/* Provider version */}
@@ -267,7 +273,7 @@ export const ProviderDrillDown: React.FC<ProviderDrillDownProps> = ({
               className="text-sm"
               fill={theme.colors.text.secondary}
             >
-              Version: {provider.version}
+              {t('extensions.dependency-graph.version', 'Version: {{version}}', { version: provider.version })}
             </text>
           )}
         </g>

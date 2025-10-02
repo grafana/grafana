@@ -4,12 +4,15 @@
  * Renders plugin nodes (boxes) in the dependency graph.
  */
 
-import { VISUAL_CONSTANTS, getResponsiveNodeHeight, getResponsiveNodeWidth } from '../constants';
+import { SerializedStyles } from '@emotion/react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+
+import { VISUAL_CONSTANTS, getResponsiveNodeHeight, getResponsiveNodeWidth } from '../constants';
 import { GraphData } from '../types';
+
 import { NodeWithPosition } from './GraphLayout';
-import React from 'react';
 
 interface NodeRendererProps {
   theme: GrafanaTheme2;
@@ -23,9 +26,9 @@ interface NodeRendererProps {
   onContentConsumerClick: (id: string | null) => void;
   onContentProviderClick: (id: string | null) => void;
   styles: {
-    node: string;
-    nodeBox: string;
-    appIdLabel: string;
+    node: SerializedStyles;
+    nodeBox: SerializedStyles;
+    appIdLabel: SerializedStyles;
   };
 }
 

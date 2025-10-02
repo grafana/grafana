@@ -4,6 +4,7 @@
  * Renders extension points and exposed components in the dependency graph.
  */
 
+import { SerializedStyles } from '@emotion/react';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -35,12 +36,12 @@ interface ExtensionRendererProps {
   onExposedComponentClick: (id: string | null) => void;
   onExtensionPointRightClick?: (event: React.MouseEvent, extensionPointId: string) => void;
   styles: {
-    extensionGroupBox: string;
-    extensionPointBox: string;
-    extensionPointLabel: string;
-    extensionTypeBadge: string;
-    definingPluginLabel: string;
-    descriptionInlineText: string;
+    extensionGroupBox: SerializedStyles;
+    extensionPointBox: SerializedStyles;
+    extensionPointLabel: SerializedStyles;
+    extensionTypeBadge: SerializedStyles;
+    definingPluginLabel: SerializedStyles;
+    descriptionInlineText: SerializedStyles;
   };
 }
 

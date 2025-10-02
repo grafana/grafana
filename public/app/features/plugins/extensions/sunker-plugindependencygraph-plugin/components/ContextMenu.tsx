@@ -8,6 +8,7 @@
 import React, { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Menu, useTheme2 } from '@grafana/ui';
 
 interface ContextMenuProps {
@@ -31,7 +32,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      if (menuRef.current && event.target instanceof HTMLElement && !menuRef.current.contains(event.target)) {
         onClose();
       }
     };
@@ -82,7 +83,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
     <div ref={menuRef} style={menuStyle}>
       <Menu>
         <Menu.Item
-          label="Explore Extension point usage"
+          label={t('extensions.dependency-graph.explore-extension-point-usage', 'Explore Extension point usage')}
           icon="external-link-alt"
           onClick={() => {
             onExploreExtensionPoint();
@@ -90,7 +91,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
           }}
         />
         <Menu.Item
-          label="Highlight associated arrows"
+          label={t('extensions.dependency-graph.highlight-associated-arrows', 'Highlight associated arrows')}
           icon="search"
           onClick={() => {
             onHighlightArrows();

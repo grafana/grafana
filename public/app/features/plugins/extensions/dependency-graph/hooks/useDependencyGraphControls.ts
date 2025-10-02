@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
+
+import { t } from '@grafana/i18n';
 
 import { VisualizationMode } from './useDependencyGraphData';
-import { t } from '@grafana/i18n';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 
 export interface DependencyGraphControls {
   visualizationMode: VisualizationMode;
@@ -27,7 +28,9 @@ const URL_PARAMS = {
  * Parse comma-separated string to array
  */
 const parseArrayParam = (value: string | null): string[] => {
-  if (!value) return [];
+  if (!value) {
+    return [];
+  }
   return value.split(',').filter(Boolean);
 };
 
@@ -46,8 +49,9 @@ export function useDependencyGraphControls(): DependencyGraphControls {
 
   // Initialize state from URL parameters
   const [visualizationMode, setVisualizationModeState] = useState<VisualizationMode>(() => {
-    const mode = searchParams.get(URL_PARAMS.API_MODE) as VisualizationMode;
-    return mode === 'add' || mode === 'expose' ? mode : 'add';
+    const mode = searchParams.get(URL_PARAMS.API_MODE);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return mode === 'add' || mode === 'expose' ? (mode as VisualizationMode) : 'add';
   });
 
   const [selectedContentProviders, setSelectedContentProvidersState] = useState<string[]>(() => {
@@ -107,9 +111,10 @@ export function useDependencyGraphControls(): DependencyGraphControls {
 
   // Sync state with URL parameters when they change externally
   useEffect(() => {
-    const mode = searchParams.get(URL_PARAMS.API_MODE) as VisualizationMode;
+    const mode = searchParams.get(URL_PARAMS.API_MODE);
     if (mode === 'add' || mode === 'expose') {
-      setVisualizationModeState(mode);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      setVisualizationModeState(mode as VisualizationMode);
     }
 
     const providers = parseArrayParam(searchParams.get(URL_PARAMS.CONTENT_PROVIDERS));
