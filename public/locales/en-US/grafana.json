@@ -7566,6 +7566,34 @@
       "label-input": "Input"
     }
   },
+  "extensions": {
+    "api-mode": {
+      "add": "Add",
+      "expose": "Expose",
+      "label": "API Mode"
+    },
+    "content-consumer": {
+      "label": "Content consumer",
+      "placeholder": "Select content consumers to display (active consumers by default)"
+    },
+    "content-provider": {
+      "label": "Content provider",
+      "placeholder": "Select content providers to display"
+    },
+    "dependency-graph": {
+      "consumes-components": "Consumes exposed components from other plugins",
+      "defines-extension-points": "Defines extension points",
+      "exposed-component": "Exposed component",
+      "exposes-components": "Exposes components to other plugins",
+      "grafana-core": "Grafana Core",
+      "provides-and-consumes": "Provides and consumes extension content",
+      "provides-content": "Provides content to extension points"
+    },
+    "tabs": {
+      "dependency-graph": "Dependency Graph",
+      "log-viewer": "Log Viewer"
+    }
+  },
   "folder-filter": {
     "clear-folder-button": "Clear folders",
     "noOptionsMessage-no-folders-found": "No folders found",
