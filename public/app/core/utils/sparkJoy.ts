@@ -9,3 +9,7 @@ export function getSparkJoyEnabled(defaultValue = true): boolean {
 export function setSparkJoyEnabled(enabled: boolean): void {
   store.set(SPARK_JOY_LOCAL_STORAGE_KEY, enabled);
 }
+
+export function subscribeSparkJoyEnabled(callback: () => void): void {
+  store.subscribe(SPARK_JOY_LOCAL_STORAGE_KEY, callback);
+}

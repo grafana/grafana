@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Counter, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { getSparkJoyEnabled, subscribeSparkJoyEnabled } from 'app/core/utils/sparkJoy';
 
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 
@@ -48,7 +49,20 @@ export const OptionsPaneCategory = React.memo(
       isExpanded: isOpenDefault,
     });
 
-    const isExpandedInitialValue = forceOpen || (savedState?.isExpanded ?? isOpenDefault);
+    /**
+     * Determine the inital state of the panel options
+     */
+    const isExpandedInitialValue = (() => {
+      switch (true) {
+        case forceOpen:
+          return true;
+        case savedState?.isExpanded:
+          return true;
+        default:
+          return isOpenDefault;
+      }
+    })();
+
     const [isExpanded, setIsExpanded] = useState(isExpandedInitialValue);
     const ref = useRef<HTMLDivElement>(null);
     const [queryParams, updateQueryParams] = useQueryParams();
@@ -56,13 +70,25 @@ export const OptionsPaneCategory = React.memo(
 
     // Handle opening by forceOpen param or from URL
     useEffect(() => {
-      if ((forceOpen || isOpenFromUrl) && !isExpanded) {
-        setIsExpanded(true);
-        setTimeout(() => {
-          ref.current?.scrollIntoView();
-        }, 200);
+      switch (true) {
+        case forceOpen && !isExpanded:
+        case isOpenFromUrl && !isExpanded:
+          setIsExpanded(true);
+          setTimeout(() => {
+            ref.current?.scrollIntoView();
+          }, 200);
+          break;
+        default:
+          break;
       }
-    }, [isExpanded, isOpenFromUrl, forceOpen]);
+    }, [isExpanded, isOpenFromUrl, forceOpen, isExpandedInitialValue]);
+
+    const onSparkJoyChange = useCallback(() => {
+      const shouldSparkJoy = getSparkJoyEnabled(true);
+      setIsExpanded(shouldSparkJoy ? false : isExpandedInitialValue);
+    }, [setIsExpanded, isExpandedInitialValue]);
+
+    subscribeSparkJoyEnabled(onSparkJoyChange);
 
     const onToggle = useCallback(() => {
       updateQueryParams({ [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id }, true);
