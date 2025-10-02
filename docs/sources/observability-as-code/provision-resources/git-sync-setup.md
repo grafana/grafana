@@ -53,7 +53,7 @@ When Git Sync is enabled, the database load might increase, especially for insta
 
 {{< admonition type="caution" >}}
 
-See also [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#known-limitations/) before using Git Sync.
+Refer to [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#known-limitations/) before using Git Sync.
 
 {{< /admonition >}}
 
