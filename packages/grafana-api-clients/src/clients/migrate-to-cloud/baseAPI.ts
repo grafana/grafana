@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
-import { createBaseQuery } from '@grafana/api-clients';
+import { createBaseQuery } from '../../utils/createBaseQuery';
 
 export const api = createApi({
   reducerPath: 'migrateToCloudGeneratedAPI',
