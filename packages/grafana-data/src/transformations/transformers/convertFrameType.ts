@@ -93,8 +93,6 @@ export function convertFrameTypes(options: ConvertFrameTypeTransformerOptions, f
 function convertSeriesToExemplar(frame: DataFrame): DataFrame {
   // TODO: ensure time field
   // TODO: ensure value field
-
-  console.log(' exewmplar frame', frame);
   const timeField = frame.fields.find((f) => f.type === FieldType.time);
   const valueField = frame.fields.find((f) => f.type === FieldType.number);
 
