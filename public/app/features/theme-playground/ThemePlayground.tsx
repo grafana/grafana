@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useId, useState } from 'react';
 
-import { AppEvents, createTheme, GrafanaTheme2 } from '@grafana/data';
+import { AppEvents, createTheme, GrafanaTheme2, NewThemeOptions } from '@grafana/data';
 import { experimentalThemeDefinitions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
@@ -17,38 +17,26 @@ import { useSelector } from '../../types/store';
 
 import schema from './schema.generated.json';
 
-const themeOptions = [
-  {
-    label: 'Dark',
-    value: JSON.stringify(
-      {
-        name: 'Dark',
-        colors: {
-          mode: 'dark',
-        },
-      },
-      null,
-      2
-    ),
+const themeMap: Record<string, NewThemeOptions> = {
+  dark: {
+    name: 'Dark',
+    colors: {
+      mode: 'dark',
+    },
   },
-  {
-    label: 'Light',
-    value: JSON.stringify(
-      {
-        name: 'Light',
-        colors: {
-          mode: 'light',
-        },
-      },
-      null,
-      2
-    ),
+  light: {
+    name: 'Light',
+    colors: {
+      mode: 'light',
+    },
   },
-  ...Object.values(experimentalThemeDefinitions).map((theme) => ({
-    label: theme.name,
-    value: JSON.stringify(theme, null, 2),
-  })),
-];
+  ...experimentalThemeDefinitions,
+};
+
+const themeOptions = Object.entries(themeMap).map(([key, theme]) => ({
+  label: theme.name,
+  value: key,
+}));
 
 export default function ThemePlayground() {
   const navIndex = useSelector((state) => state.navIndex);
@@ -58,19 +46,25 @@ export default function ThemePlayground() {
     parentItem: homeNav,
   };
   const baseId = useId();
-  const [baseTheme, setBaseTheme] = useState(themeOptions[0].value);
-  const [theme, setTheme] = useState(createTheme(JSON.parse(baseTheme)));
   const chromeHeaderHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, chromeHeaderHeight);
 
-  const onBlur = (value: string) => {
+  const [baseThemeId, setBaseThemeId] = useState(Object.keys(themeMap)[0]);
+  const [theme, setTheme] = useState(createTheme(themeMap[baseThemeId]));
+
+  const updateThemePreview = (themeInput: NewThemeOptions) => {
     try {
-      const themeInput = JSON.parse(value);
-      try {
-        setTheme(createTheme(themeInput));
-      } catch (error) {
-        appEvents.emit(AppEvents.alertError, ['Failed to create theme', error]);
-      }
+      const theme = createTheme(themeInput);
+      setTheme(theme);
+    } catch (error) {
+      appEvents.emit(AppEvents.alertError, ['Failed to create theme', error]);
+    }
+  };
+
+  const onEditorBlur = (value: string) => {
+    try {
+      const themeInput: NewThemeOptions = JSON.parse(value);
+      updateThemePreview(themeInput);
     } catch (error) {
       appEvents.emit(AppEvents.alertError, ['Failed to parse JSON', error]);
     }
@@ -95,10 +89,10 @@ export default function ThemePlayground() {
         <div className={styles.left}>
           <Field noMargin label={t('theme-playground.label-base-theme', 'Base theme')}>
             <Combobox
-              value={baseTheme}
+              value={baseThemeId}
               onChange={(option) => {
-                setBaseTheme(option.value);
-                onBlur(option.value);
+                setBaseThemeId(option.value);
+                updateThemePreview(themeMap[option.value]);
               }}
               options={themeOptions}
               id={baseId}
@@ -106,12 +100,12 @@ export default function ThemePlayground() {
           </Field>
           <CodeEditor
             width="100%"
-            value={baseTheme}
+            value={JSON.stringify(themeMap[baseThemeId], null, 2)}
             language="json"
             showLineNumbers={true}
             showMiniMap={true}
             containerStyles={styles.codeEditor}
-            onBlur={onBlur}
+            onBlur={onEditorBlur}
             onBeforeEditorMount={(monaco) => {
               monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
                 validate: true,
