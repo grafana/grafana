@@ -1,3 +1,4 @@
+import { SelectableValue } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 
 export type User = {
@@ -40,3 +41,11 @@ export enum QueryLibraryTab {
   RECENT = 'history',
   FEEDBACK = 'feedback',
 }
+
+export type QueryLibraryFiltersFormType = {
+  searchQuery: string;
+  datasourceFilters: Array<SelectableValue<string>>;
+  userFilters: Array<SelectableValue<string>>;
+  sortingOption: SelectableValue;
+  tagFilters: string[];
+};
