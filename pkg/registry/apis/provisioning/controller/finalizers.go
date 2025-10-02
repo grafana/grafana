@@ -120,8 +120,8 @@ func (f *finalizer) processExistingItems(
 			Group:    item.Group,
 			Resource: item.Resource,
 		})
-		logger.Error("error getting client for resource", "resource", item.Resource, "error", err)
 		if err != nil {
+			logger.Error("error getting client for resource", "resource", item.Resource, "error", err)
 			return count, err
 		}
 
