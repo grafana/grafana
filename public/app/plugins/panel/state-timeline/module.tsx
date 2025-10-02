@@ -132,6 +132,18 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
         },
         defaultValue: defaultOptions.alignValue,
       })
+      .addRadio({
+        path: 'seriesNameAlignment',
+        name: t('state-timeline.name-align-series-names', 'Align series names'),
+        category,
+        settings: {
+          options: [
+            { value: 'left', label: t('state-timeline.align-series-names-options.label-left', 'Left') },
+            { value: 'right', label: t('state-timeline.align-series-names-options.label-right', 'Right') },
+          ],
+        },
+        defaultValue: 'left',
+      })
       .addSliderInput({
         path: 'rowHeight',
         name: t('state-timeline.name-row-height', 'Row height'),
