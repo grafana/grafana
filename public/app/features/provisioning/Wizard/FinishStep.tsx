@@ -12,7 +12,12 @@ import { getGitProviderFields } from './fields';
 import { WizardFormData } from './types';
 
 export const FinishStep = memo(function FinishStep() {
-  const { register, watch, setValue } = useFormContext<WizardFormData>();
+  const {
+    register,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useFormContext<WizardFormData>();
   const settings = useGetFrontendSettingsQuery();
 
   const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
@@ -42,6 +47,8 @@ export const FinishStep = memo(function FinishStep() {
             'How often to sync changes from the repository'
           )}
           required
+          error={errors?.repository?.sync?.intervalSeconds?.message}
+          invalid={!!errors?.repository?.sync?.intervalSeconds?.message}
         >
           <Input
             {...register('repository.sync.intervalSeconds', {
