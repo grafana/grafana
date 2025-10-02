@@ -64,8 +64,9 @@ export function StarToolbarButtonApiServer({ group, kind, id }: Pick<Props, 'gro
 }
 
 function StarToolbarButtonLegacy({ dashboard }: { dashboard: Props['dashboard'] }) {
-  const { meta } = dashboard.useState();
-  const uid = meta.uid || meta.k8s?.name;
+  const { meta, uid: uidFromState } = dashboard.useState();
+  // uidFromState is used for legacy dashboards (kubernetesDashboards toggle is off)
+  const uid = meta.uid || meta.k8s?.name || uidFromState;
   const tooltips = getStarTooltips();
 
   const { value, retry } = useAsyncRetry(async () => {
