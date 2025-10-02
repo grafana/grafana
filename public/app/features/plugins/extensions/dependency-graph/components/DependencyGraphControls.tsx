@@ -1,8 +1,9 @@
+import { useCallback } from 'react';
+
+import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, MultiCombobox, Select } from '@grafana/ui';
-import React, { useCallback } from 'react';
 
 import { DependencyGraphControls } from '../hooks/useDependencyGraphControls';
-import { t } from '@grafana/i18n';
 import { useDependencyGraphData } from '../hooks/useDependencyGraphData';
 
 interface DependencyGraphControlsProps {
@@ -25,7 +26,6 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
 
   const {
     availableProviders,
-    availableConsumers,
     activeConsumers,
     contentProviderOptions,
     contentConsumerOptions,
@@ -79,8 +79,8 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
           onChange={handleProviderChange}
           placeholder={t('extensions.content-provider.placeholder', 'Select content providers to display')}
           width="auto"
-          minWidth={100}
-          maxWidth={100}
+          minWidth={20}
+          maxWidth={30}
         />
       </InlineField>
       <InlineField label={t('extensions.content-consumer.label', 'Content consumer')}>
@@ -93,8 +93,8 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
             'Select content consumers to display (active consumers by default)'
           )}
           width="auto"
-          minWidth={100}
-          maxWidth={100}
+          minWidth={20}
+          maxWidth={30}
         />
       </InlineField>
     </InlineFieldRow>

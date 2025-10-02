@@ -2,7 +2,6 @@ import { DependencyGraphControlsComponent } from './components/DependencyGraphCo
 import { DependencyGraphErrorBoundary } from './components/DependencyGraphErrorBoundary';
 import { DependencyGraphHeader } from './components/DependencyGraphHeader';
 import { DependencyGraphVisualization } from './components/DependencyGraphVisualization';
-import React from 'react';
 import { useDependencyGraphControls } from './hooks/useDependencyGraphControls';
 
 // Layout constants

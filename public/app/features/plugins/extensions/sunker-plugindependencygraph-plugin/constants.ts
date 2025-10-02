@@ -8,7 +8,7 @@
 export const LAYOUT_CONSTANTS = {
   // Minimum margins and spacing
   MIN_MARGIN: 20,
-  MIN_NODE_SPACING: 70,
+  MIN_NODE_SPACING: 5,
   MIN_GROUP_SPACING: 40,
 
   // Margin calculations
@@ -18,9 +18,9 @@ export const LAYOUT_CONSTANTS = {
 
   // Node dimensions
   MIN_NODE_WIDTH: 180,
-  MIN_NODE_HEIGHT: 50,
+  MIN_NODE_HEIGHT: 30, // Further reduced height for consumer boxes
   NODE_WIDTH_RATIO: 0.15, // 15% of width
-  NODE_HEIGHT_RATIO: 0.05, // 5% of height
+  NODE_HEIGHT_RATIO: 0.025, // 2.5% of height (further reduced)
 
   // Extension point dimensions
   EXTENSION_BOX_WIDTH: 280,
@@ -29,7 +29,7 @@ export const LAYOUT_CONSTANTS = {
 
   // Component dimensions
   MIN_COMPONENT_WIDTH: 300,
-  MIN_COMPONENT_HEIGHT: 55,
+  MIN_COMPONENT_HEIGHT: 60, // More height for better text padding
   COMPONENT_WIDTH_RATIO: 0.2, // 20% of width
   COMPONENT_HEIGHT_RATIO: 0.06, // 6% of height
 

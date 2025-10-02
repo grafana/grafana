@@ -4,15 +4,12 @@
  * Renders plugin nodes (boxes) in the dependency graph.
  */
 
-import React from 'react';
+import { VISUAL_CONSTANTS, getResponsiveNodeHeight, getResponsiveNodeWidth } from '../constants';
 
 import { GrafanaTheme2 } from '@grafana/data';
-
-import { VISUAL_CONSTANTS, getResponsiveNodeHeight, getResponsiveNodeWidth } from '../constants';
 import { GraphData } from '../types';
-
 import { NodeWithPosition } from './GraphLayout';
-
+import React from 'react';
 
 interface NodeRendererProps {
   theme: GrafanaTheme2;

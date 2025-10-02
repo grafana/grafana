@@ -1,5 +1,4 @@
 import { DependencyGraphControls } from '../hooks/useDependencyGraphControls';
-import React from 'react';
 import { t } from '@grafana/i18n';
 import { useDependencyGraphData } from '../hooks/useDependencyGraphData';
 

@@ -13,14 +13,12 @@ import {
   DISPLAY_NAMES,
   LAYOUT_CONSTANTS,
   VISUAL_CONSTANTS,
-  getResponsiveComponentHeight,
   getResponsiveComponentWidth,
   getResponsiveGroupSpacing,
 } from '../constants';
 import { GraphData, PanelOptions } from '../types';
 
 import { PositionInfo } from './GraphLayout';
-
 
 interface ExtensionRendererProps {
   theme: GrafanaTheme2;
@@ -81,7 +79,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
     });
 
     const componentBoxWidth = getResponsiveComponentWidth(width);
-    const originalComponentHeight = getResponsiveComponentHeight(height);
+    const originalComponentHeight = 60; // Fixed height to match our constants
     let componentBoxHeight = originalComponentHeight;
 
     if (options.showDescriptions) {
@@ -329,7 +327,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                           className={styles.extensionTypeBadge}
                           fill={theme.colors.getContrastText(extensionColor)}
                         >
-                          ({extensionType} extension)
+                          {/* ({extensionType} extension) */}
                         </text>
 
                         {/* Description text underneath parentheses */}

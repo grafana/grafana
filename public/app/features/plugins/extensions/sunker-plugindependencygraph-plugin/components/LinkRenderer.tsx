@@ -4,17 +4,12 @@
  * Renders dependency links/arrows between nodes in the dependency graph.
  */
 
-import React from 'react';
+import { NodeWithPosition, PositionInfo } from './GraphLayout';
+import { VISUAL_CONSTANTS, getResponsiveComponentWidth, getResponsiveNodeWidth } from '../constants';
 
 import { GrafanaTheme2 } from '@grafana/data';
-
-import { VISUAL_CONSTANTS, getResponsiveComponentWidth, getResponsiveNodeWidth } from '../constants';
 import { GraphData } from '../types';
-
-import { NodeWithPosition, PositionInfo } from './GraphLayout';
-
-
-
+import React from 'react';
 
 interface LinkRendererProps {
   theme: GrafanaTheme2;
