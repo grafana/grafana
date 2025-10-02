@@ -154,7 +154,7 @@ Grafana Cloud users will be automatically migrated to the relevant version of Pr
 
 For air-gapped environments, download and install [Azure Monitor Managed Service for Prometheus](https://grafana.com/grafana/plugins/grafana-azureprometheus-datasource/), then follow the standard migration process.
 
-## Migrate
+### Migrate
 
 1. Enable the `prometheusTypeMigration` feature toggle. For more information on feature toggles, refer to [Manage feature toggles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#manage-feature-toggles).
 2. Restart Grafana for the changes to take effect.

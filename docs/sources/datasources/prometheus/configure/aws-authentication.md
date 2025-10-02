@@ -140,7 +140,7 @@ Grafana Cloud users will be automatically migrated to the relevant version of Pr
 
 For air-gapped environments, download and install [Amazon Managed Service for Prometheus](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/), then follow the standard migration process.
 
-## Migrate
+### Migrate
 
 1. Enable the `prometheusTypeMigration` feature toggle. For more information on feature toggles, refer to [Manage feature toggles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#manage-feature-toggles).
 2. Restart Grafana for the changes to take effect.
@@ -149,7 +149,7 @@ For air-gapped environments, download and install [Amazon Managed Service for Pr
 This feature toggle will be removed in Grafana 13, and the migration will be automatic.
 {{< /admonition >}}
 
-## Check migration status
+### Check migration status
 
 To determine if your Prometheus data sources have been migrated:
 
