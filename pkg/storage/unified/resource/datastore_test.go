@@ -171,30 +171,6 @@ func TestDataKey_Validate(t *testing.T) {
 			},
 			expectError: false,
 		},
-		{
-			name: "valid - uppercase in namespace",
-			key: DataKey{
-				Namespace:       "Test-Namespace",
-				Group:           "test-group",
-				Resource:        "test-resource",
-				Name:            "test-name",
-				ResourceVersion: rv,
-				Action:          DataActionCreated,
-			},
-			expectError: false,
-		},
-		{
-			name: "valid - underscore in namespace",
-			key: DataKey{
-				Namespace:       "test_namespace",
-				Group:           "test-group",
-				Resource:        "test-resource",
-				Name:            "test-name",
-				ResourceVersion: rv,
-				Action:          DataActionCreated,
-			},
-			expectError: false,
-		},
 		// Invalid cases - empty fields
 		{
 			name: "invalid - empty namespace",
@@ -288,6 +264,32 @@ func TestDataKey_Validate(t *testing.T) {
 			errorMsg:    "action '' is invalid: must be one of 'created', 'updated', or 'deleted'",
 		},
 		// Invalid cases - invalid characters
+		{
+			name: "invalid - underscore in namespace",
+			key: DataKey{
+				Namespace:       "test_namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: true,
+			errorMsg:    "namespace 'test_namespace' is invalid",
+		},
+		{
+			name: "invalid - uppercase in namespace",
+			key: DataKey{
+				Namespace:       "Test-Namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: true,
+			errorMsg:    "namespace 'Test-Namespace' is invalid",
+		},
 		{
 			name: "invalid - uppercase in group",
 			key: DataKey{
@@ -1100,32 +1102,12 @@ func TestListRequestKey_Validate(t *testing.T) {
 			errorMsg:    "group is required",
 		},
 		{
-			name: "valid - uppercase in namespace",
-			key: ListRequestKey{
-				Namespace: "Test-Namespace",
-				Group:     "test-group",
-				Resource:  "test-resource",
-				Name:      "test-name",
-			},
-			expectError: false,
-		},
-		{
 			name: "valid - uppercase in name",
 			key: ListRequestKey{
 				Namespace: "test-namespace",
 				Group:     "test-group",
 				Resource:  "test-resource",
 				Name:      "Test-Name",
-			},
-			expectError: false,
-		},
-		{
-			name: "valid - underscore in namespace",
-			key: ListRequestKey{
-				Namespace: "test_namespace",
-				Group:     "test-group",
-				Resource:  "test-resource",
-				Name:      "test-name",
 			},
 			expectError: false,
 		},
@@ -1158,6 +1140,17 @@ func TestListRequestKey_Validate(t *testing.T) {
 			errorMsg:    "group is required",
 		},
 		// Invalid naming cases
+		{
+			name: "invalid - uppercase in namespace",
+			key: ListRequestKey{
+				Namespace: "Test-Namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "test-name",
+			},
+			expectError: true,
+			errorMsg:    "namespace 'Test-Namespace' is invalid",
+		},
 		{
 			name: "invalid - uppercase in group and resource",
 			key: ListRequestKey{
@@ -1200,6 +1193,17 @@ func TestListRequestKey_Validate(t *testing.T) {
 			},
 			expectError: true,
 			errorMsg:    "group 'test-group.' is invalid",
+		},
+		{
+			name: "invalid - underscore in namespace",
+			key: ListRequestKey{
+				Namespace: "test_namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "test-name",
+			},
+			expectError: true,
+			errorMsg:    "namespace 'test_namespace' is invalid",
 		},
 	}
 
@@ -2371,6 +2375,17 @@ func TestGetRequestKey_Validate(t *testing.T) {
 			},
 			expectErr: true,
 			wantError: "name is required",
+		},
+		{
+			name: "invalid namespace - uppercase",
+			key: GetRequestKey{
+				Group:     "apps",
+				Resource:  "resources",
+				Namespace: "Default",
+				Name:      "test-resource",
+			},
+			expectErr: true,
+			wantError: "namespace 'Default' is invalid",
 		},
 		{
 			name: "invalid group - underscore",

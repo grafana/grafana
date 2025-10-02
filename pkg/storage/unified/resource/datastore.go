@@ -55,29 +55,33 @@ type GroupResource struct {
 }
 
 var (
-	// namePatternRegex validates that a name contains only alphanumeric characters, '-', '_', or '.'
-	namePatternRegex = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$`)
-	// resourceGroupRegex validates that a resource or group name contains lowercase alphanumeric characters, '-', or '.'
-	resourceGroupRegex = regexp.MustCompile(`^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$`)
+	// permissiveNameRegex validates a general-purpose name.
+	// It allows alphanumeric characters (upper and lower case), '-', '_', or '.'
+	// and must start and end with an alphanumeric character.
+	permissiveNameRegex = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$`)
+	// strictDNSLabelRegex validates a name that complies with DNS label standards (RFC 1123).
+	// It allows only lowercase alphanumeric characters, '-', or '.'
+	// and must start and end with an alphanumeric character.
+	strictDNSLabelRegex = regexp.MustCompile(`^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$`)
 )
 
-// validateName checks if a name matches the naming convention
-func validateName(name, fieldName string) error {
+// ensurePermissive checks if a name matches the permissive naming convention
+func ensurePermissive(name, fieldName string) error {
 	if name == "" {
 		return fmt.Errorf("%s is required", fieldName)
 	}
-	if !namePatternRegex.MatchString(name) {
+	if !permissiveNameRegex.MatchString(name) {
 		return fmt.Errorf("%s '%s' is invalid", fieldName, name)
 	}
 	return nil
 }
 
-// validateResourceGroup checks if a group or resource name matches the naming convention
-func validateResourceGroup(name, fieldName string) error {
+// ensureStrict checks if a name matches the strict DNS label naming convention
+func ensureStrict(name, fieldName string) error {
 	if name == "" {
 		return fmt.Errorf("%s is required", fieldName)
 	}
-	if !resourceGroupRegex.MatchString(name) {
+	if !strictDNSLabelRegex.MatchString(name) {
 		return fmt.Errorf("%s '%s' is invalid", fieldName, name)
 	}
 	return nil
@@ -93,16 +97,16 @@ func (k DataKey) Equals(other DataKey) bool {
 
 func (k DataKey) Validate() error {
 	// Validate required fields
-	if err := validateResourceGroup(k.Group, "group"); err != nil {
+	if err := ensureStrict(k.Group, "group"); err != nil {
 		return err
 	}
-	if err := validateResourceGroup(k.Resource, "resource"); err != nil {
+	if err := ensureStrict(k.Resource, "resource"); err != nil {
 		return err
 	}
-	if err := validateName(k.Namespace, "namespace"); err != nil {
+	if err := ensureStrict(k.Namespace, "namespace"); err != nil {
 		return err
 	}
-	if err := validateName(k.Name, "name"); err != nil {
+	if err := ensurePermissive(k.Name, "name"); err != nil {
 		return err
 	}
 
@@ -113,7 +117,7 @@ func (k DataKey) Validate() error {
 
 	// Validate optional folder field
 	if k.Folder != "" {
-		if !namePatternRegex.MatchString(k.Folder) {
+		if !permissiveNameRegex.MatchString(k.Folder) {
 			return fmt.Errorf("folder '%s' is invalid", k.Folder)
 		}
 	}
@@ -136,10 +140,10 @@ type ListRequestKey struct {
 
 func (k ListRequestKey) Validate() error {
 	// Validate required fields
-	if err := validateResourceGroup(k.Group, "group"); err != nil {
+	if err := ensureStrict(k.Group, "group"); err != nil {
 		return err
 	}
-	if err := validateResourceGroup(k.Resource, "resource"); err != nil {
+	if err := ensureStrict(k.Resource, "resource"); err != nil {
 		return err
 	}
 
@@ -150,8 +154,14 @@ func (k ListRequestKey) Validate() error {
 
 	// Validate optional namespace field
 	if k.Namespace != "" {
-		if err := validateName(k.Namespace, "namespace"); err != nil {
-			return err
+		if err := strictDNSLabelRegex.MatchString(k.Namespace); !err {
+			return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
+		}
+	}
+
+	if k.Name != "" {
+		if err := permissiveNameRegex.MatchString(k.Name); !err {
+			return fmt.Errorf("name '%s' is invalid", k.Name)
 		}
 	}
 
@@ -178,16 +188,16 @@ type GetRequestKey struct {
 
 // Validate validates the get request key
 func (k GetRequestKey) Validate() error {
-	if err := validateResourceGroup(k.Group, "group"); err != nil {
+	if err := ensureStrict(k.Group, "group"); err != nil {
 		return err
 	}
-	if err := validateResourceGroup(k.Resource, "resource"); err != nil {
+	if err := ensureStrict(k.Resource, "resource"); err != nil {
 		return err
 	}
-	if err := validateName(k.Namespace, "namespace"); err != nil {
+	if err := ensureStrict(k.Namespace, "namespace"); err != nil {
 		return err
 	}
-	if err := validateName(k.Name, "name"); err != nil {
+	if err := ensurePermissive(k.Name, "name"); err != nil {
 		return err
 	}
 	return nil
