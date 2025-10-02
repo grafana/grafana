@@ -39,7 +39,9 @@ export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
             recentScopes.map((recentScopeSet) => (
               <button
                 className={styles.recentScopeButton}
-                key={recentScopeSet.map((s) => s.metadata.name).join(',')}
+                key={
+                  recentScopeSet.map((s) => s.metadata.name).join(',') + recentScopeSet[0]?.parentNode?.metadata?.name
+                }
                 onClick={() => {
                   onSelect(
                     recentScopeSet.map((s) => s.metadata.name),

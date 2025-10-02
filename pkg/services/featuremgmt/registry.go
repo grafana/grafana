@@ -181,6 +181,13 @@ var (
 			HideFromDocs:   true,
 		},
 		{
+			Name:            "kubernetesStars",
+			Description:     "Routes stars requests from /api to the /apis endpoint",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
@@ -792,6 +799,16 @@ var (
 		{
 			Name:              "useScopeSingleNodeEndpoint",
 			Description:       "Use the single node endpoint for the scope api. This is used to fetch the scope parent node.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaOperatorExperienceSquad,
+			Expression:        "false",
+			FrontendOnly:      true,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "useMultipleScopeNodesEndpoint",
+			Description:       "Makes the frontend use the 'names' param for fetching multiple scope nodes at once",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaOperatorExperienceSquad,
 			Expression:        "false",
@@ -1502,6 +1519,16 @@ var (
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
 			HideFromDocs: true,
+		},
+		{
+			Name:              "alertingUseNewSimplifiedRoutingHashAlgorithm",
+			Description:       "",
+			Stage:             FeatureStagePublicPreview,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
+			Expression:        "true",
 		},
 		{
 			Name:              "useScopesNavigationEndpoint",
