@@ -87,7 +87,6 @@ type service struct {
 }
 
 func ProvideUnifiedStorageGrpcService(
-	backend resource.StorageBackend,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	db infraDB.DB,
@@ -99,6 +98,7 @@ func ProvideUnifiedStorageGrpcService(
 	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
+	backend resource.StorageBackend,
 ) (UnifiedStorageGrpcService, error) {
 	var err error
 	tracer := otel.Tracer("unified-storage")
