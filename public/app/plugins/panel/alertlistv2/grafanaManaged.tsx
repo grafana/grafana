@@ -3,6 +3,8 @@ import { useAsync } from 'react-use';
 
 import { DataFrame, InterpolateFunction } from '@grafana/data';
 import { BackendDataSourceResponse, config, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
+import { alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
+import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
 import { rulesNav } from 'app/features/alerting/unified/utils/navigation';
 import { isPromAlertingRuleState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -15,6 +17,7 @@ interface GrafanaManagedAlertsProps {
   folder?: { uid: string; title: string } | null;
   replaceVariables: InterpolateFunction;
   enabled?: boolean;
+  hideSilenced?: boolean;
 }
 
 type Labels = {
@@ -66,11 +69,24 @@ export function useGrafanaAlerts({
   folder,
   replaceVariables,
   enabled = true,
+  hideSilenced = false,
 }: GrafanaManagedAlertsProps) {
+  // Fetch silences for Grafana alertmanager if hideSilenced is enabled
+  const datasourceUid = getDatasourceAPIUid(GRAFANA_RULES_SOURCE_NAME);
+  const { data: silences } = alertSilencesApi.useGetSilencesQuery(
+    { datasourceUid: datasourceUid ?? '' },
+    { skip: !enabled || !hideSilenced || !datasourceUid }
+  );
+
   // construct query filter
   const filter = useMemo(
-    () => createFilter({ stateFilter, folder, alertInstanceLabelFilter }, replaceVariables),
-    [folder, stateFilter, alertInstanceLabelFilter, replaceVariables]
+    () =>
+      createFilter(
+        { stateFilter, folder, alertInstanceLabelFilter },
+        replaceVariables,
+        hideSilenced ? silences : undefined
+      ),
+    [folder, stateFilter, alertInstanceLabelFilter, replaceVariables, hideSilenced, silences]
   );
 
   const {

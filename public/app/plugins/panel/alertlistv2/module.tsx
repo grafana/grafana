@@ -54,6 +54,17 @@ const unifiedAlertList = new PanelPlugin<AlertListPanelOptions>(AlertListPanel).
       defaultValue: '',
       category: filterCategory,
     })
+    .addBooleanSwitch({
+      path: 'hideSilenced',
+      name: t('alertlist.name-hide-silenced', 'Hide silenced'),
+      description: t(
+        'alertlist.description-hide-silenced',
+        'Hide alert rules that match an active silence (Grafana-managed only)'
+      ),
+      defaultValue: false,
+      category: filterCategory,
+      showIf: (options) => options.datasource.includes(GRAFANA_RULES_SOURCE_NAME),
+    })
     .addCustomEditor({
       showIf: (options) => options.datasource.includes(GRAFANA_RULES_SOURCE_NAME),
       path: 'folder',

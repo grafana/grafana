@@ -10,6 +10,7 @@ export interface AlertListPanelOptions {
   stateFilter: StateFilter;
   alertInstanceLabelFilter?: string;
   folder?: { uid: string; title: string } | null;
+  hideSilenced?: boolean;
 }
 
 // Unified alert item types for virtualization

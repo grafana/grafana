@@ -15,7 +15,7 @@ import { useGrafanaAlerts } from './grafanaManaged';
 import { AlertListPanelOptions, UnifiedAlertItem } from './types';
 
 function AlertListPanel(props: PanelProps<AlertListPanelOptions>) {
-  const { datasource, stateFilter, alertInstanceLabelFilter, folder } = props.options;
+  const { datasource, stateFilter, alertInstanceLabelFilter, folder, hideSilenced } = props.options;
   const { replaceVariables } = props;
 
   const shouldFetchGrafana = datasource.includes(GRAFANA_RULES_SOURCE_NAME);
@@ -25,6 +25,7 @@ function AlertListPanel(props: PanelProps<AlertListPanelOptions>) {
     folder,
     replaceVariables,
     enabled: shouldFetchGrafana,
+    hideSilenced,
   });
 
   const externalDatasources = datasource.filter((source) => source !== GRAFANA_RULES_SOURCE_NAME);
