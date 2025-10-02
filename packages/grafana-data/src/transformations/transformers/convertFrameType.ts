@@ -211,7 +211,7 @@ function convertSeriesToAnnotation(
 
   const mappedFrame: DataFrame = {
     ...frame,
-    name: frameName ?? frame.name ?? frame.refId ?? Math.random().toString(),
+    name: frameName ?? frame.name ?? frame.refId,
 
     fields: [...frame.fields, ...annoFields],
     meta: {
