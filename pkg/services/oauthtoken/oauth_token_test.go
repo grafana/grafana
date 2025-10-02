@@ -123,6 +123,18 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			},
 		},
 		{
+			desc:            "should skip token refresh if there's an unexpected error while looking up the user auth entry, additionally, no error should be returned",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
+			setup: func(env *environment) {
+				env.authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(nil, assert.AnError).Once()
+
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: true,
+				}
+			},
+		},
+		{
 			desc:            "should skip token refresh when the token is still valid and no id token is present",
 			identity:        userIdentity,
 			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
@@ -391,9 +403,14 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 			identity: &authn.Identity{ID: "invalid", Type: claims.TypeUser},
 		},
 		{
-			desc:            "should skip token refresh if there's an unexpected error while looking up the user oauth entry, additionally, no error should be returned",
+			desc:            "should skip token refresh when no oauth provider was found",
 			identity:        userIdentity,
-			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1},
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.SAMLAuthModule},
+		},
+		{
+			desc:            "should skip token refresh if there's an unexpected error while looking up the external session entry, additionally, no error should be returned",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
 				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(nil, assert.AnError).Once()
 
@@ -402,11 +419,11 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 				}
 			},
 		},
-		// Kinda impossible to happen, can only happen after the feature is enabled and logged in users don't have their external sessions set
+		// Edge case, can only happen after the feature is enabled and logged in users don't have their external sessions set
 		{
 			desc:            "should skip token refresh if the user doesn't have an external session",
 			identity:        userIdentity,
-			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1},
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
 				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(nil, auth.ErrExternalSessionNotFound).Once()
 
