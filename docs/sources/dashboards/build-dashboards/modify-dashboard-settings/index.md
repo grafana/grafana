@@ -70,7 +70,7 @@ Adjust dashboard time settings when you want to change the dashboard timezone, t
 1. Click **Save**.
 1. Click **Exit edit**.
 
-## Modify panel behavior
+## Modify graph tooltip behavior
 
 Use this option to control tooltip and hover highlight behavior across panels.
 
