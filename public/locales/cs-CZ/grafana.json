@@ -10228,7 +10228,7 @@
       "title": "Zdroje dat"
     },
     "databases": {
-      "title": "Databáze"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Přidávejte a konfigurujte zdroje dat",
@@ -11772,6 +11772,8 @@
       "button-cancelling": "",
       "button-next": "Dokončit",
       "button-start": "Zahájit synchronizaci",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Tímto odstraníte konfiguraci úložiště a přijdete o veškerý pokrok. Opravdu chcete zahodit změny?",
         "confirm": "Ano, zahodit",

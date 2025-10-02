@@ -10228,7 +10228,7 @@
       "title": "Источники данных"
     },
     "databases": {
-      "title": "Базы данных"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Добавление и настройка источников данных",
@@ -11772,6 +11772,8 @@
       "button-cancelling": "",
       "button-next": "Готово",
       "button-start": "Начать синхронизацию",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Конфигурация репозитория будет удалена, и вы потеряете весь прогресс. Действительно отменить изменения?",
         "confirm": "Да, отменить",

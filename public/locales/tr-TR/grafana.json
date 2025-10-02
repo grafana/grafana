@@ -10166,7 +10166,7 @@
       "title": "Veri kaynakları"
     },
     "databases": {
-      "title": "Veri tabanları "
+      "title": ""
     },
     "datasources": {
       "subtitle": "Veri kaynakları ekleyin ve yapılandırın",
@@ -11692,6 +11692,8 @@
       "button-cancelling": "",
       "button-next": "Sonlandır",
       "button-start": "Senkronizasyonu başlat",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Bu işlem, depo yapılandırmasını silecek ve tüm ilerlemeyi kaybedeceksiniz. Değişikliklerinizi silmek istediğinizden emin misiniz?",
         "confirm": "Evet, yoksay",

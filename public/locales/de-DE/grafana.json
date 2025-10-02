@@ -10166,7 +10166,7 @@
       "title": "Datenquellen"
     },
     "databases": {
-      "title": "Datenbanken"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Füge Datenquellen hinzu und konfiguriere sie",
@@ -11692,6 +11692,8 @@
       "button-cancelling": "",
       "button-next": "Fertigstellen",
       "button-start": "Synchronisierung starten",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Dadurch wird die Repository-Konfiguration gelöscht und Sie verlieren alle Fortschritte. Sind Sie sicher, dass Sie Ihre Änderungen verwerfen möchten?",
         "confirm": "Ja, verwerfen",

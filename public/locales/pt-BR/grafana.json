@@ -10166,7 +10166,7 @@
       "title": "Fontes de dados"
     },
     "databases": {
-      "title": "Bancos de dados"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Adicione e configure fontes de dados",
@@ -11692,6 +11692,8 @@
       "button-cancelling": "",
       "button-next": "Finalizar",
       "button-start": "Iniciar sincronização",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Isso excluirá a configuração do repositório e você perderá todo o progresso. Tem certeza de que deseja descartar suas alterações?",
         "confirm": "Sim, descartar",

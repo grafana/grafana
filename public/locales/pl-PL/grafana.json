@@ -10228,7 +10228,7 @@
       "title": "Źródła danych"
     },
     "databases": {
-      "title": "Bazy danych"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Dodaj i skonfiguruj źródła danych",
@@ -11772,6 +11772,8 @@
       "button-cancelling": "",
       "button-next": "Zakończ",
       "button-start": "Rozpocznij synchronizację",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Spowoduje to usunięcie konfiguracji repozytorium i utracisz wszystkie postępy. Czy na pewno chcesz odrzucić zmiany?",
         "confirm": "Tak, odrzuć",

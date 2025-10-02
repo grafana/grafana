@@ -10166,7 +10166,7 @@
       "title": "Orígenes de datos"
     },
     "databases": {
-      "title": "Bases de datos"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Añadir y configurar orígenes de datos",
@@ -11692,6 +11692,8 @@
       "button-cancelling": "",
       "button-next": "Terminar",
       "button-start": "Iniciar la sincronización",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Esto eliminará la configuración del repositorio y se perderá todo el progreso. ¿Seguro que quieres descartar los cambios?",
         "confirm": "Sí, descartar",

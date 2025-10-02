@@ -10166,7 +10166,7 @@
       "title": "Datakällor"
     },
     "databases": {
-      "title": "Databaser"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Lägg till och konfigurera datakällor",
@@ -11692,6 +11692,8 @@
       "button-cancelling": "",
       "button-next": "Slutför",
       "button-start": "Påbörja synkronisering",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Detta kommer att radera lagringsplatskonfigurationen och du kommer att förlora alla ändringar. Är du säker på att du vill kassera dina ändringar?",
         "confirm": "Ja, kassera",
