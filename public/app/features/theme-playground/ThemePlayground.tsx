@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useId, useState } from 'react';
 
-import { AppEvents, createTheme, GrafanaTheme2, NewThemeOptions } from '@grafana/data';
+import { createTheme, GrafanaTheme2, NewThemeOptions } from '@grafana/data';
 import { experimentalThemeDefinitions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
@@ -9,11 +9,12 @@ import { CodeEditor, Combobox, Field, Stack, useStyles2 } from '@grafana/ui';
 import { ThemeDemo } from '@grafana/ui/internal';
 import { Page } from 'app/core/components/Page/Page';
 
-import appEvents from '../../core/app_events';
+import { notifyApp } from '../../core/actions';
+import { createErrorNotification } from '../../core/copy/appNotification';
 import { HOME_NAV_ID } from '../../core/reducers/navModel';
 import { getNavModel } from '../../core/selectors/navModel';
 import { ThemeProvider } from '../../core/utils/ConfigProvider';
-import { useSelector } from '../../types/store';
+import { useDispatch, useSelector } from '../../types/store';
 
 import schema from './schema.generated.json';
 
@@ -48,6 +49,7 @@ export default function ThemePlayground() {
   const baseId = useId();
   const chromeHeaderHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, chromeHeaderHeight);
+  const dispatch = useDispatch();
 
   const [baseThemeId, setBaseThemeId] = useState(Object.keys(themeMap)[0]);
   const [theme, setTheme] = useState(createTheme(themeMap[baseThemeId]));
@@ -57,7 +59,7 @@ export default function ThemePlayground() {
       const theme = createTheme(themeInput);
       setTheme(theme);
     } catch (error) {
-      appEvents.emit(AppEvents.alertError, ['Failed to create theme', error]);
+      dispatch(notifyApp(createErrorNotification(`Failed to create theme: ${error}`)));
     }
   };
 
@@ -66,7 +68,7 @@ export default function ThemePlayground() {
       const themeInput: NewThemeOptions = JSON.parse(value);
       updateThemePreview(themeInput);
     } catch (error) {
-      appEvents.emit(AppEvents.alertError, ['Failed to parse JSON', error]);
+      dispatch(notifyApp(createErrorNotification(`Failed to parse JSON: ${error}`)));
     }
   };
 
