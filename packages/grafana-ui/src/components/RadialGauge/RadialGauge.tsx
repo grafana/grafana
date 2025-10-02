@@ -102,7 +102,14 @@ export function RadialGauge(props: RadialGaugeProps) {
               gradient={gradient}
             />
           ))}
-          {spotlight && <SpotlightGradient gaugeId={gaugeId} />}
+          {spotlight && (
+            <SpotlightGradient
+              startAngle={startAngle}
+              endAngle={endAngle}
+              gaugeId={gaugeId}
+              fieldDisplay={primaryValue}
+            />
+          )}
           {glowBar && <GlowGradient gaugeId={gaugeId} size={size} />}
           {glowCenter && <CenterGlowGradient gaugeId={gaugeId} color={color} />}
         </defs>
