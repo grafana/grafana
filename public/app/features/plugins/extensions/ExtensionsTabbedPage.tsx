@@ -19,7 +19,6 @@ import { Page } from 'app/core/components/Page/Page';
 import { DependencyGraphTab } from './dependency-graph/DependencyGraphTab';
 import { LogFilter, LogViewFilters } from './logs/LogViewFilters';
 import { ExtensionsLogDataSource } from './logs/dataSource';
-
 import { createFilterTransformation } from './logs/filterTransformation';
 import { log } from './logs/log';
 
