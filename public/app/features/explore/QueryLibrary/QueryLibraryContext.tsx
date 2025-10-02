@@ -74,7 +74,7 @@ export type QueryLibraryContextType = {
   setNewQuery: (query?: SavedQuery) => void;
   onSelectQuery: (query: DataQuery) => void;
   /** Set a guard function that returns true to allow closing, false to prevent closing */
-  setCloseGuard: (shouldAllowClose?: () => boolean) => void;
+  setCloseGuard: (shouldAllowClose: () => boolean) => void;
 };
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
