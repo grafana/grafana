@@ -652,6 +652,8 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
+require github.com/grafana/grafana/apps/history v0.0.0-00010101000000-000000000000
+
 require github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
