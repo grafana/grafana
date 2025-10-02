@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid';
-import { ReactElement, useMemo, useState } from 'react';
+import { ReactElement, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -13,21 +13,15 @@ import {
   useDataTransformer,
   useQueryRunner,
 } from '@grafana/scenes-react';
-import { InlineField, InlineFieldRow, MultiCombobox, Select, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { Tab, TabContent, TabsBar } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
+import { DependencyGraphTab } from './dependency-graph/DependencyGraphTab';
 import { LogFilter, LogViewFilters } from './logs/LogViewFilters';
 import { ExtensionsLogDataSource } from './logs/dataSource';
+
 import { createFilterTransformation } from './logs/filterTransformation';
 import { log } from './logs/log';
-import { DependencyGraph } from './sunker-plugindependencygraph-plugin/components/DependencyGraph';
-import {
-  getActiveContentConsumers,
-  getAvailableContentConsumers,
-  getAvailableContentProviders,
-  getDefaultOptions,
-  processPluginDataToGraph,
-} from './sunker-plugindependencygraph-plugin/utils/dataProcessor';
 
 const DATASOURCE_REF = {
   uid: nanoid(),
@@ -106,159 +100,9 @@ function LogViewerTabContent(): ReactElement {
   );
 }
 
-// New Scenes Tab Content Component
+// Dependency Graph Tab Content Component (Refactored)
 function NewScenesTabContent(): ReactElement {
-  const [visualizationMode, setVisualizationMode] = useState<'add' | 'expose'>('add');
-  const [selectedContentProviders, setSelectedContentProviders] = useState<string[]>([]);
-  const [selectedContentConsumers, setSelectedContentConsumers] = useState<string[]>([]);
-
-  // Process the plugin data for the dependency graph
-  const graphData = useMemo(() => {
-    const options = {
-      ...getDefaultOptions(),
-      visualizationMode,
-      showDependencyTypes: true,
-      showDescriptions: false,
-      selectedContentProviders,
-      selectedContentConsumers,
-      linkExtensionColor: '#37872d',
-      componentExtensionColor: '#ff9900',
-      functionExtensionColor: '#e02f44',
-    };
-    const data = processPluginDataToGraph(options);
-    console.log('Graph data:', data);
-    return data;
-  }, [visualizationMode, selectedContentProviders, selectedContentConsumers]);
-
-  const modeOptions = [
-    { label: t('extensions.api-mode.add', 'Add'), value: 'add' as const },
-    { label: t('extensions.api-mode.expose', 'Expose'), value: 'expose' as const },
-  ];
-
-  // Get available content providers based on visualization mode
-  const availableProviders = getAvailableContentProviders(visualizationMode);
-  const contentProviderOptions = availableProviders.map((provider) => ({
-    label: provider === 'grafana-core' ? t('extensions.grafana-core', 'Grafana Core') : provider,
-    value: provider,
-  }));
-
-  // If no value is set (empty array) or value is not defined, default to all providers selected
-  const selectedProviderValues =
-    !selectedContentProviders || selectedContentProviders.length === 0 ? availableProviders : selectedContentProviders;
-
-  // Get available content consumers based on visualization mode
-  const availableConsumers = getAvailableContentConsumers(visualizationMode);
-  const activeConsumers = getActiveContentConsumers(visualizationMode);
-  const contentConsumerOptions = availableConsumers.map((consumer) => ({
-    label: consumer === 'grafana-core' ? t('extensions.grafana-core', 'Grafana Core') : consumer,
-    value: consumer,
-  }));
-
-  // If no consumers are selected (empty array), show active consumers (those with providers)
-  const selectedConsumerValues =
-    !selectedContentConsumers || selectedContentConsumers.length === 0 ? activeConsumers : selectedContentConsumers;
-
-  return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '16px' }}>
-        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-        <h2>Plugin Dependency Graph</h2>
-        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-        <p>Visualize plugin dependencies and extension points using Grafana Scenes</p>
-        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-        <p>
-          Nodes: {graphData.nodes.length}, Dependencies: {graphData.dependencies.length}, Extension Points:{' '}
-          {graphData.extensionPoints.length}
-        </p>
-
-        {/* API Mode Selector */}
-        <div style={{ marginTop: '16px', marginBottom: '16px' }}>
-          <InlineFieldRow>
-            <InlineField label={t('extensions.api-mode.label', 'API Mode')}>
-              <Select
-                options={modeOptions}
-                value={visualizationMode}
-                onChange={(option) => {
-                  if (option.value === 'add' || option.value === 'expose') {
-                    setVisualizationMode(option.value);
-                  }
-                }}
-                width={12}
-              />
-            </InlineField>
-            <InlineField label={t('extensions.content-provider.label', 'Content provider')}>
-              <MultiCombobox
-                options={contentProviderOptions}
-                value={selectedProviderValues}
-                onChange={(selected) => {
-                  // Extract values from SelectableValue objects
-                  const selectedValues = selected.map((item) => item.value).filter((v): v is string => Boolean(v));
-                  // If all providers are selected, store empty array to indicate "show all"
-                  const newValue = selectedValues.length === availableProviders.length ? [] : selectedValues;
-                  setSelectedContentProviders(newValue);
-                }}
-                placeholder={t('extensions.content-provider.placeholder', 'Select content providers to display')}
-                width="auto"
-                minWidth={100}
-                maxWidth={100}
-              />
-            </InlineField>
-            <InlineField label={t('extensions.content-consumer.label', 'Content consumer')}>
-              <MultiCombobox
-                options={contentConsumerOptions}
-                value={selectedConsumerValues}
-                onChange={(selected) => {
-                  // Extract values from SelectableValue objects
-                  const selectedValues = selected.map((item) => item.value).filter((v): v is string => Boolean(v));
-                  // If active consumers are selected (default state), store empty array to indicate default behavior
-                  const isDefaultSelection =
-                    selectedValues.length === activeConsumers.length &&
-                    activeConsumers.every((consumer) => selectedValues.includes(consumer));
-                  const newValue = isDefaultSelection ? [] : selectedValues;
-                  setSelectedContentConsumers(newValue);
-                }}
-                placeholder={t(
-                  'extensions.content-consumer.placeholder',
-                  'Select content consumers to display (active consumers by default)'
-                )}
-                width="auto"
-                minWidth={100}
-                maxWidth={100}
-              />
-            </InlineField>
-          </InlineFieldRow>
-        </div>
-      </div>
-      <div style={{ flex: 1, overflow: 'visible', minHeight: '500px', width: '100%' }}>
-        <AutoSizer disableHeight>
-          {({ width }) => {
-            console.log('AutoSizer width:', width);
-            const effectiveWidth = width || 1200; // Fallback width if AutoSizer fails
-            return (
-              <div style={{ width: effectiveWidth, minHeight: '500px' }}>
-                <DependencyGraph
-                  data={graphData}
-                  options={{
-                    ...getDefaultOptions(),
-                    visualizationMode,
-                    showDependencyTypes: true,
-                    showDescriptions: false,
-                    selectedContentProviders,
-                    selectedContentConsumers,
-                    linkExtensionColor: '#37872d',
-                    componentExtensionColor: '#ff9900',
-                    functionExtensionColor: '#e02f44',
-                  }}
-                  width={effectiveWidth}
-                  height={2000} // Use a large height to allow content to expand
-                />
-              </div>
-            );
-          }}
-        </AutoSizer>
-      </div>
-    </div>
-  );
+  return <DependencyGraphTab />;
 }
 
 // Main component that renders the tabbed layout with nested routing
