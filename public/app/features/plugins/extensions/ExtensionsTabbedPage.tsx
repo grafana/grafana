@@ -13,7 +13,7 @@ import {
   useDataTransformer,
   useQueryRunner,
 } from '@grafana/scenes-react';
-import { InlineField, InlineFieldRow, Select, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { InlineField, InlineFieldRow, MultiCombobox, Select, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { LogFilter, LogViewFilters } from './logs/LogViewFilters';
@@ -21,7 +21,13 @@ import { ExtensionsLogDataSource } from './logs/dataSource';
 import { createFilterTransformation } from './logs/filterTransformation';
 import { log } from './logs/log';
 import { DependencyGraph } from './sunker-plugindependencygraph-plugin/components/DependencyGraph';
-import { getDefaultOptions, processPluginDataToGraph } from './sunker-plugindependencygraph-plugin/utils/dataProcessor';
+import {
+  getActiveContentConsumers,
+  getAvailableContentConsumers,
+  getAvailableContentProviders,
+  getDefaultOptions,
+  processPluginDataToGraph,
+} from './sunker-plugindependencygraph-plugin/utils/dataProcessor';
 
 const DATASOURCE_REF = {
   uid: nanoid(),
@@ -103,6 +109,8 @@ function LogViewerTabContent(): ReactElement {
 // New Scenes Tab Content Component
 function NewScenesTabContent(): ReactElement {
   const [visualizationMode, setVisualizationMode] = useState<'add' | 'expose'>('add');
+  const [selectedContentProviders, setSelectedContentProviders] = useState<string[]>([]);
+  const [selectedContentConsumers, setSelectedContentConsumers] = useState<string[]>([]);
 
   // Process the plugin data for the dependency graph
   const graphData = useMemo(() => {
@@ -111,8 +119,8 @@ function NewScenesTabContent(): ReactElement {
       visualizationMode,
       showDependencyTypes: true,
       showDescriptions: false,
-      selectedContentProviders: [],
-      selectedContentConsumers: [],
+      selectedContentProviders,
+      selectedContentConsumers,
       linkExtensionColor: '#37872d',
       componentExtensionColor: '#ff9900',
       functionExtensionColor: '#e02f44',
@@ -120,12 +128,35 @@ function NewScenesTabContent(): ReactElement {
     const data = processPluginDataToGraph(options);
     console.log('Graph data:', data);
     return data;
-  }, [visualizationMode]);
+  }, [visualizationMode, selectedContentProviders, selectedContentConsumers]);
 
   const modeOptions = [
     { label: t('extensions.api-mode.add', 'Add'), value: 'add' as const },
     { label: t('extensions.api-mode.expose', 'Expose'), value: 'expose' as const },
   ];
+
+  // Get available content providers based on visualization mode
+  const availableProviders = getAvailableContentProviders(visualizationMode);
+  const contentProviderOptions = availableProviders.map((provider) => ({
+    label: provider === 'grafana-core' ? t('extensions.grafana-core', 'Grafana Core') : provider,
+    value: provider,
+  }));
+
+  // If no value is set (empty array) or value is not defined, default to all providers selected
+  const selectedProviderValues =
+    !selectedContentProviders || selectedContentProviders.length === 0 ? availableProviders : selectedContentProviders;
+
+  // Get available content consumers based on visualization mode
+  const availableConsumers = getAvailableContentConsumers(visualizationMode);
+  const activeConsumers = getActiveContentConsumers(visualizationMode);
+  const contentConsumerOptions = availableConsumers.map((consumer) => ({
+    label: consumer === 'grafana-core' ? t('extensions.grafana-core', 'Grafana Core') : consumer,
+    value: consumer,
+  }));
+
+  // If no consumers are selected (empty array), show active consumers (those with providers)
+  const selectedConsumerValues =
+    !selectedContentConsumers || selectedContentConsumers.length === 0 ? activeConsumers : selectedContentConsumers;
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -155,6 +186,42 @@ function NewScenesTabContent(): ReactElement {
                 width={12}
               />
             </InlineField>
+            <InlineField label={t('extensions.content-provider.label', 'Content provider')}>
+              <MultiCombobox
+                options={contentProviderOptions}
+                value={selectedProviderValues}
+                onChange={(selected) => {
+                  // Extract values from SelectableValue objects
+                  const selectedValues = selected.map((item) => item.value).filter((v): v is string => Boolean(v));
+                  // If all providers are selected, store empty array to indicate "show all"
+                  const newValue = selectedValues.length === availableProviders.length ? [] : selectedValues;
+                  setSelectedContentProviders(newValue);
+                }}
+                placeholder={t('extensions.content-provider.placeholder', 'Select content providers to display')}
+                maxWidth={100}
+              />
+            </InlineField>
+            <InlineField label={t('extensions.content-consumer.label', 'Content consumer')}>
+              <MultiCombobox
+                options={contentConsumerOptions}
+                value={selectedConsumerValues}
+                onChange={(selected) => {
+                  // Extract values from SelectableValue objects
+                  const selectedValues = selected.map((item) => item.value).filter((v): v is string => Boolean(v));
+                  // If active consumers are selected (default state), store empty array to indicate default behavior
+                  const isDefaultSelection =
+                    selectedValues.length === activeConsumers.length &&
+                    activeConsumers.every((consumer) => selectedValues.includes(consumer));
+                  const newValue = isDefaultSelection ? [] : selectedValues;
+                  setSelectedContentConsumers(newValue);
+                }}
+                placeholder={t(
+                  'extensions.content-consumer.placeholder',
+                  'Select content consumers to display (active consumers by default)'
+                )}
+                maxWidth={100}
+              />
+            </InlineField>
           </InlineFieldRow>
         </div>
       </div>
@@ -172,8 +239,8 @@ function NewScenesTabContent(): ReactElement {
                     visualizationMode,
                     showDependencyTypes: true,
                     showDescriptions: false,
-                    selectedContentProviders: [],
-                    selectedContentConsumers: [],
+                    selectedContentProviders,
+                    selectedContentConsumers,
                     linkExtensionColor: '#37872d',
                     componentExtensionColor: '#ff9900',
                     functionExtensionColor: '#e02f44',
