@@ -111,7 +111,7 @@ After creating a Azure Monitor Managed Service for Prometheus data source:
 | **Application (client) ID** | Your app registration client ID | `87654321-4321-4321-4321-210987654321` |
 | **Client secret**           | Your app registration secret    | `your-client-secret`                   |
 
-When using Managed Identity for authentication: 
+When using Managed Identity for authentication:
 
 - No additional configuration required if using system-assigned identity.
 - For user-assigned identity, provide the **Client ID**.
@@ -162,7 +162,6 @@ For air-gapped environments, download and install [Azure Monitor Managed Service
 {{< admonition type="note" >}}
 This feature toggle will be removed in Grafana 13, and the migration will be automatic.
 {{< /admonition >}}
-
 
 To determine if your Prometheus data sources have been migrated:
 
