@@ -14,12 +14,12 @@ export default [
     input: entryPoint,
     plugins,
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-api-clients')],
-    treeshake: 'safest',
+    treeshake: false,
   },
   ...apiClients.map(([_, { import: importPath }]) => ({
     input: importPath,
     plugins,
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-api-clients')],
-    treeshake: true,
+    treeshake: false,
   })),
 ];
