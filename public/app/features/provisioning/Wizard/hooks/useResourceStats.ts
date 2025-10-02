@@ -18,9 +18,9 @@ function getManagedCount(managed?: ManagerStats[]) {
   // Loop through each managed repository
   managed?.forEach((manager) => {
     if (manager.kind === 'repo') {
-    // Loop through stats inside each manager and sum up the counts
+      // Loop through stats inside each manager and sum up the counts
       manager.stats.forEach((stat) => {
-        if ((stat.group === 'folder.grafana.app' || stat.group === 'dashboard.grafana.app')) {
+        if (stat.group === 'folder.grafana.app' || stat.group === 'dashboard.grafana.app') {
           totalCount += stat.count;
         }
       });
@@ -59,7 +59,9 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
             break;
           case 'dashboard.grafana.app':
             resourceCount += stat.count;
-            counts.push(t('provisioning.bootstrap-step.dashboards-count', '{{count}} dashboard', { count: stat.count }));
+            counts.push(
+              t('provisioning.bootstrap-step.dashboards-count', '{{count}} dashboard', { count: stat.count })
+            );
             break;
         }
       });
@@ -113,7 +115,8 @@ export function useResourceStats(repoName?: string, isLegacyStorage?: boolean, s
       // managed does not exist in response when first time connecting to a repo
       managedCount: getManagedCount(resourceStatsQuery.data?.managed),
       // "unmanaged" means unmanaged by git sync. it may still be managed by other means, like terraform, plugins, file provisioning, etc.
-      unmanagedCount: getResourceCount(resourceStatsQuery.data?.unmanaged, resourceStatsQuery.data?.managed).resourceCount,
+      unmanagedCount: getResourceCount(resourceStatsQuery.data?.unmanaged, resourceStatsQuery.data?.managed)
+        .resourceCount,
     };
   }, [resourceStatsQuery.data]);
 
