@@ -10135,7 +10135,7 @@
       "title": "Sumber data"
     },
     "databases": {
-      "title": "Database"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Tambahkan dan konfigurasikan sumber data",
@@ -11652,6 +11652,8 @@
       "button-cancelling": "",
       "button-next": "Selesai",
       "button-start": "Mulai sinkronisasi",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Ini akan menghapus konfigurasi repositori dan Anda akan kehilangan semua kemajuan. Yakin ingin membuang perubahan Anda?",
         "confirm": "Ya, buang",
