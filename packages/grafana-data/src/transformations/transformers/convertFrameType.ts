@@ -115,10 +115,7 @@ function convertSeriesToExemplar(frame: DataFrame): DataFrame {
   return {
     ...frame,
     name: 'exemplar',
-    fields: [
-      { ...timeField, name: 'Time' },
-      { ...valueField, name: 'Value' },
-    ],
+    fields: [...frame.fields, { ...timeField, name: 'Time' }, { ...valueField, name: 'Value' }],
     meta: {
       ...frame.meta,
       dataTopic: DataTopic.Annotations,
