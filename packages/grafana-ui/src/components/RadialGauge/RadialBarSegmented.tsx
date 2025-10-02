@@ -1,21 +1,19 @@
-import { DisplayProcessor } from '@grafana/data';
+import { DisplayProcessor, FieldDisplay } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
 import { RadialGradientMode } from './RadialGauge';
+import { getValueAngleForValue } from './utils';
 
 export interface RadialBarSegmentedProps {
   gaugeId: string;
-  value: number;
+  fieldDisplay: FieldDisplay;
   center: number;
-  min: number;
-  max: number;
   size: number;
   startAngle: number;
   endAngle: number;
   color: string;
   barWidth: number;
-  clockwise: boolean;
   spotlight?: boolean;
   margin: number;
   glow?: boolean;
@@ -27,9 +25,7 @@ export interface RadialBarSegmentedProps {
 export function RadialBarSegmented({
   center,
   gaugeId,
-  value,
-  min,
-  max,
+  fieldDisplay,
   startAngle,
   size,
   endAngle,
@@ -45,14 +41,12 @@ export function RadialBarSegmented({
   const segments: React.ReactNode[] = [];
   const theme = useTheme2();
 
-  const range = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
+  const { range } = getValueAngleForValue(fieldDisplay, startAngle, endAngle);
   const segmentCountAdjusted = getOptimalSegmentCount(size, segmentCount, barWidth, segmentSpacing, margin, range);
 
-  let angle = ((value - min) / (max - min)) * range;
-
-  if (angle > range) {
-    angle = range;
-  }
+  const min = fieldDisplay.field.min ?? 0;
+  const max = fieldDisplay.field.max ?? 100;
+  const value = fieldDisplay.display.numeric;
 
   const getColorForValue = (value: number) => {
     if (gradient === 'scheme') {

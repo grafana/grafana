@@ -29,7 +29,6 @@ export interface RadialGaugeProps {
    * Defaults to 0.4
    **/
   barWidthFactor?: number;
-  clockwise?: boolean;
   /** Adds a white spotlight for the end position */
   spotlight?: boolean;
   glowBar?: boolean;
@@ -64,7 +63,6 @@ export function RadialGauge(props: RadialGaugeProps) {
     shape = 'circle',
     gradient = 'none',
     barWidthFactor = 0.4,
-    clockwise = true,
     spotlight = false,
     glowBar = false,
     glowCenter = false,
@@ -87,6 +85,9 @@ export function RadialGauge(props: RadialGaugeProps) {
   const primaryValue = values[0];
   const color = primaryValue.display.color ?? theme.colors.primary.main;
   const barWidth = Math.max(barWidthFactor * (size / 7), 2);
+  const arcSize = size / 2 - barWidth;
+  const radius = arcSize / 2 - margin;
+  const center = size / 2;
 
   return (
     <div className={styles.vizWrapper} style={{ width, height }}>
@@ -108,10 +109,9 @@ export function RadialGauge(props: RadialGaugeProps) {
               endAngle={endAngle}
               gaugeId={gaugeId}
               fieldDisplay={primaryValue}
-              barWidth={barWidth}
-              size={size}
-              margin={margin}
+              radius={radius}
               roundedBars={roundedBars}
+              center={center}
             />
           )}
           {glowBar && <GlowGradient gaugeId={gaugeId} size={size} />}
@@ -119,12 +119,8 @@ export function RadialGauge(props: RadialGaugeProps) {
         </defs>
         <g>
           {values.map((displayValue, barIndex) => {
-            const value = displayValue.display.numeric;
-            const min = displayValue.field.min ?? 0;
-            const max = displayValue.field.max ?? 100;
             const barColor = getColorForBar(displayValue.display, barIndex, gradient, gaugeId);
             const barSize = size - (barWidth * 2 + 8) * barIndex;
-            const center = size / 2;
 
             let displayProcessor = getDisplayProcessor();
 
@@ -139,15 +135,12 @@ export function RadialGauge(props: RadialGaugeProps) {
                   key={barIndex}
                   center={center}
                   gaugeId={gaugeId}
-                  value={value}
-                  min={min}
-                  max={max}
+                  fieldDisplay={displayValue}
                   startAngle={startAngle}
                   endAngle={endAngle}
                   size={barSize}
                   color={barColor}
                   barWidth={barWidth}
-                  clockwise={clockwise}
                   spotlight={spotlight}
                   glow={glowBar}
                   segmentCount={segmentCount}
@@ -164,16 +157,13 @@ export function RadialGauge(props: RadialGaugeProps) {
                 key={barIndex}
                 center={center}
                 gaugeId={gaugeId}
-                value={value}
-                min={min}
-                max={max}
+                fieldDisplay={displayValue}
                 startAngle={startAngle}
                 endAngle={endAngle}
                 size={barSize}
                 color={barColor}
                 barWidth={barWidth}
                 roundedBars={roundedBars}
-                clockwise={clockwise}
                 spotlight={spotlight}
                 glow={glowBar}
               />

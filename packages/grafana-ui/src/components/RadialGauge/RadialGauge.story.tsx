@@ -27,7 +27,7 @@ const meta: Meta<StoryProps> = {
   component: RadialGauge,
   parameters: {
     controls: {
-      exclude: ['theme', 'clockwise', 'values', 'width', 'height', 'vizCount'],
+      exclude: ['theme', 'values', 'width', 'height', 'vizCount'],
     },
   },
   args: {
@@ -38,7 +38,6 @@ const meta: Meta<StoryProps> = {
     glowCenter: false,
     sparkline: false,
     value: undefined,
-    clockwise: true,
     gradient: 'hue',
     seriesCount: 0,
     segmentCount: undefined,
@@ -125,7 +124,6 @@ export const Examples: StoryFn = (args) => {
           glowBar={true}
           glowCenter={true}
           barWidthFactor={0.6}
-          clockwise
         />
         <RadialBarExample
           colorMode={FieldColorModeId.ContinuousGrYlRd}
@@ -136,7 +134,6 @@ export const Examples: StoryFn = (args) => {
           glowBar={true}
           glowCenter={true}
           shape="gauge"
-          clockwise
         />
       </Stack>
       <div>Sparklines</div>
@@ -145,7 +142,6 @@ export const Examples: StoryFn = (args) => {
           value={70}
           gradient="hue"
           color="blue"
-          clockwise
           shape="gauge"
           {...args}
           sparkline={true}
@@ -157,7 +153,6 @@ export const Examples: StoryFn = (args) => {
           value={30}
           gradient="hue"
           color="green"
-          clockwise
           shape="gauge"
           {...args}
           sparkline={true}
@@ -170,7 +165,6 @@ export const Examples: StoryFn = (args) => {
           value={50}
           gradient="hue"
           color="red"
-          clockwise
           shape="gauge"
           {...args}
           sparkline={true}
@@ -289,7 +283,6 @@ interface ExampleProps {
   shape?: RadialShape;
   min?: number;
   max?: number;
-  clockwise?: boolean;
   size?: number;
   spotlight?: boolean;
   glowBar?: boolean;
@@ -313,7 +306,6 @@ function RadialBarExample({
   shape = 'circle',
   min = 0,
   max = 100,
-  clockwise = true,
   size = 200,
   spotlight = false,
   glowBar = false,
@@ -388,7 +380,6 @@ function RadialBarExample({
       barWidthFactor={barWidthFactor}
       gradient={gradient}
       shape={shape}
-      clockwise={clockwise}
       spotlight={spotlight}
       glowBar={glowBar}
       glowCenter={glowCenter}

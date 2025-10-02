@@ -1,52 +1,39 @@
-import { GrafanaTheme2 } from '@grafana/data';
+import { FieldDisplay, GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
+import { getValueAngleForValue } from './utils';
+
 export interface RadialBarProps {
   gaugeId: string;
-  value: number;
   center: number;
-  min: number;
-  max: number;
+  fieldDisplay: FieldDisplay;
   size: number;
   startAngle: number;
   endAngle: number;
   color: string;
   barWidth: number;
   roundedBars?: boolean;
-  clockwise: boolean;
   spotlight?: boolean;
   margin: number;
   glow?: boolean;
 }
 export function RadialBar({
   center,
+  fieldDisplay,
   gaugeId,
-  value,
-  min,
-  max,
   startAngle,
   size,
   endAngle,
   color,
   barWidth,
   roundedBars,
-  clockwise,
   spotlight,
   margin,
   glow,
 }: RadialBarProps) {
   const theme = useTheme2();
-  const range = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
-  let angle = ((value - min) / (max - min)) * range;
-
-  if (angle > range) {
-    angle = range;
-  }
-
-  if (!clockwise) {
-    startAngle = endAngle - angle;
-  }
+  const { range, angle } = getValueAngleForValue(fieldDisplay, startAngle, endAngle);
 
   const trackStart = startAngle + angle;
   const trackLength = range - angle;
@@ -62,8 +49,7 @@ export function RadialBar({
         startAngle={trackStart}
         color={theme.colors.action.hover}
         barWidth={barWidth}
-        roundedBars={false}
-        clockwise={clockwise}
+        roundedBars={true}
         margin={margin}
         theme={theme}
       />
@@ -77,7 +63,6 @@ export function RadialBar({
         color={color}
         barWidth={barWidth}
         roundedBars={roundedBars}
-        clockwise={clockwise}
         spotlight={spotlight}
         glow={glow}
         margin={margin}
@@ -96,7 +81,6 @@ export interface RadialArcPathProps {
   color: string;
   barWidth: number;
   roundedBars?: boolean;
-  clockwise?: boolean;
   spotlight?: boolean;
   glow?: boolean;
   margin: number;
@@ -112,7 +96,6 @@ export function RadialArcPath({
   color,
   barWidth,
   roundedBars,
-  clockwise,
   spotlight,
   glow,
   margin,
@@ -189,8 +172,8 @@ function SpotlightSquareEffect({
   gaugeId,
   roundedBars,
 }: SpotlightEffectProps) {
-  let x1 = center + radius * Math.cos(angleRadian - 0.15);
-  let y1 = center + radius * Math.sin(angleRadian - 0.15);
+  let x1 = center + radius * Math.cos(angleRadian - 0.2);
+  let y1 = center + radius * Math.sin(angleRadian - 0.2);
   let x2 = center + radius * Math.cos(angleRadian);
   let y2 = center + radius * Math.sin(angleRadian);
 
