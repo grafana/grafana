@@ -76,7 +76,6 @@ Use these options to control tooltip and hover highlight behavior across panels 
 
 1. On the the **General** tab of the **Settings** page, scroll down to the **Panel options** section.
 1. Choose from the following options to control the tooltip and hover highlight behavior across graph-style panels (for example, time series):
-
    - **Default** - Tooltip and hover highlight behavior isn't shared across panels.
    - **Shared crosshair** - When you hover the cursor over one graph panel in the dashboard, the crosshair is also displayed on all other graph-style panels in the dashboard.
    - **Shared tooltip** - When you hover the cursor over one graph panel in the dashboard, the crosshair and tooltips are also displayed on all other graph-style panels in the dashboard.
