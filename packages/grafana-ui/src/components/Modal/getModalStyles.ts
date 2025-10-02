@@ -19,8 +19,8 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       right: 0,
       marginLeft: 'auto',
       marginRight: 'auto',
-      top: '10%',
-      maxHeight: '80%',
+      top: 0,
+      maxHeight: '100%',
       display: 'flex',
       flexDirection: 'column',
       // Centre the modal vertically on smaller height screens
@@ -42,7 +42,7 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
     }),
     modalHeader: css({
       label: 'modalHeader',
-      display: 'flex',
+      display: 'none',
       alignItems: 'center',
       minHeight: '42px',
       margin: theme.spacing(1, 2, 0, 2),

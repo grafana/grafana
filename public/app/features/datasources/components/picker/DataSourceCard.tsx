@@ -66,7 +66,7 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
       backgroundColor: 'transparent',
       // Move to list component
       marginBottom: 0,
-      padding: theme.spacing(1),
+      padding: theme.spacing(0.5, 1),
 
       '&:hover': {
         backgroundColor: theme.colors.action.hover,
