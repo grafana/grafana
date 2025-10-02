@@ -55,7 +55,7 @@ export class TimelineChart extends Component<TimelineProps> {
       getValueColor: this.getValueColor,
 
       hoverMulti: this.props.tooltip?.mode === TooltipDisplayMode.Multi,
-      xAxisConfig: calculateAnnotationLaneSizes(this.props.annotations?.length ?? 0),
+      xAxisConfig: calculateAnnotationLaneSizes(this.props.annotations?.length ?? 0, this.props.options?.annotations),
     });
   };
 

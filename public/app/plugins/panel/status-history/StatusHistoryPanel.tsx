@@ -103,6 +103,7 @@ export const StatusHistoryPanel = ({
         width={width}
         height={height - paginationHeight}
         legendItems={legendItems}
+        options={options}
         {...options}
         mode={TimelineMode.Samples}
         replaceVariables={replaceVariables}

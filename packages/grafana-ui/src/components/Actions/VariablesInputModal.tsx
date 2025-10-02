@@ -40,7 +40,7 @@ export function VariablesInputModal({ action, onDismiss, onShowConfirm, variable
         {action.variables!.map((variable) => (
           <Field key={variable.name} label={variable.name}>
             <Input
-              type="text"
+              type="datetime-local"
               value={variables[variable.key] ?? ''}
               onChange={(e) => {
                 setVariables({ ...variables, [variable.key]: e.currentTarget.value });
