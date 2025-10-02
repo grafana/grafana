@@ -3,7 +3,9 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { createBaseQuery } from '../../../utils/createBaseQuery';
 import { getAPIBaseURL } from '../../../utils/utils';
 
-export const BASE_URL = getAPIBaseURL('preferences.grafana.app', 'v1alpha1');
+export const API_GROUP = 'preferences.grafana.app' as const;
+export const API_VERSION = 'v1alpha1' as const;
+export const BASE_URL = getAPIBaseURL(API_GROUP, API_VERSION);
 
 export const api = createApi({
   reducerPath: 'preferencesAPIv1alpha1',
