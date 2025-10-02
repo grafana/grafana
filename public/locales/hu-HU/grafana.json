@@ -10166,7 +10166,7 @@
       "title": "Adatforrások"
     },
     "databases": {
-      "title": "Adatbázisok"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Adatforrások hozzáadása és konfigurálása",
@@ -11692,6 +11692,8 @@
       "button-cancelling": "",
       "button-next": "Befejezés",
       "button-start": "Szinkronizálás indítása",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Ez törli az adattár konfigurációját, és az összes előrehaladás el fog veszni. Biztosan elveti a módosításokat?",
         "confirm": "Igen, elvetés",
