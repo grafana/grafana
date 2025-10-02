@@ -198,6 +198,8 @@ function NewScenesTabContent(): ReactElement {
                   setSelectedContentProviders(newValue);
                 }}
                 placeholder={t('extensions.content-provider.placeholder', 'Select content providers to display')}
+                width="auto"
+                minWidth={100}
                 maxWidth={100}
               />
             </InlineField>
@@ -219,6 +221,8 @@ function NewScenesTabContent(): ReactElement {
                   'extensions.content-consumer.placeholder',
                   'Select content consumers to display (active consumers by default)'
                 )}
+                width="auto"
+                minWidth={100}
                 maxWidth={100}
               />
             </InlineField>
