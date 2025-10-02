@@ -28,4 +28,4 @@ export {
 
 export { UserStorage } from '../utils/userStorage';
 
-export { initOpenFeature, getOpenFeatureClient, evaluateBooleanFlag } from './openFeature';
+export { initOpenFeature, evaluateBooleanFlag } from './openFeature';

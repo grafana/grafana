@@ -28,10 +28,6 @@ export async function initOpenFeature() {
   });
 }
 
-export function getOpenFeatureClient() {
-  return OpenFeature.getClient();
-}
-
-export function evaluateBooleanFlag(flagName: FeatureFlagName, defaultValue = false): boolean {
-  return getOpenFeatureClient().getBooleanValue(flagName, defaultValue);
+export function evaluateBooleanFlag(flagName: FeatureFlagName, defaultValue: boolean): boolean {
+  return OpenFeature.getClient().getBooleanValue(flagName, defaultValue);
 }
