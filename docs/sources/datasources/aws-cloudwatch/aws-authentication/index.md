@@ -66,10 +66,6 @@ Open source Grafana enables the `AWS SDK Default`, `Credentials file`, and `Acce
 
 ## Assume a role
 
-{{< admonition type="note" >}}
-The Grafana Assume Role authentication method requires you to enter an **Assume Role ARN**. Other authentication methods can leave this field empty.
-{{< /admonition >}}
-
 Specify an IAM role to assume in the **Assume Role ARN** field.
 
 When you configure **Assume Role ARN**, Grafana uses the provided credentials to perform an [sts:AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) call. The primary authentication method only needs permission to assume the role, while the assumed role requires CloudWatch access permissions.
@@ -136,16 +132,15 @@ securityContext:
 ## Use Grafana Assume Role
 
 {{< admonition type="note" >}}
-Grafana Assume Role is only available in Grafana Cloud.
-
-It's currently only available for Amazon CloudWatch and Athena.
+Grafana Assume Role is only available in Grafana Cloud for Amazon CloudWatch and Athena data sources.
 {{< /admonition >}}
 
 The Grafana Assume Role authentication provider lets you access AWS without creating or managing long-term AWS IAM users or rotating access keys. Instead, you can create an IAM role that has permissions to access CloudWatch and trusts a Grafana AWS account.
 
 The Grafana AWS account then makes a Security Token Service (STS) request to generate temporary credentials for your AWS data. This request includes an `externalID` unique to your Grafana Cloud account, which ensures users can access only their own AWS resources.
 
-For more information, refer to the [AWS documentation on external ID](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html)
+For more information, refer to the [AWS documentation on external ID](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html).
+
 
 To use the Grafana Assume Role:
 
@@ -178,26 +173,3 @@ To use the Grafana Assume Role:
     ]
 }
 ```
-
-When you select Grafana Assume Role as the authentication method, Grafana provides and manages the external ID. This ID appears on the data source configuration page and is unique to your account. When creating an IAM role for `Grafana Assume Role`, you must set a condition that allows the Grafana AWS account to assume your IAM role only when it provides the specific external ID:
-
-```
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": {Grafana's AWS Account}
-            },
-            "Action": "sts:AssumeRole",
-            "Condition": {
-                "StringEquals": {
-                    "sts:ExternalId": {External ID unique to your account}
-                }
-            }
-        }
-    ]
-}
-```
-

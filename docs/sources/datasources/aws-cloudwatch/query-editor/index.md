@@ -257,7 +257,6 @@ This table summarizes common Metrics Insights query keywords:
 | `ORDER BY`   | Optional. Specifies the order in which time series are returned. Options are `ASC`, `DESC`.                                                                                                                  |
 | `LIMIT`      | Optional. Limits the number of time series returned.                                                                                                                                                         |
 
-
 ## Query CloudWatch Logs
 
 The logs query editor helps you write CloudWatch Logs Query Language queries across specified regions and log groups.
