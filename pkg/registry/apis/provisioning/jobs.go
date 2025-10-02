@@ -132,18 +132,21 @@ func (c *jobsConnector) Connect(
 		}
 		spec.Repository = name
 
-		err = c.statusPatcherProvider.GetStatusPatcher().Patch(ctx, cfg, map[string]interface{}{
-			"op":   "replace",
-			"path": "/status/sync",
-			"value": &provisioning.SyncStatus{
-				State:   provisioning.JobStatePending,
-				LastRef: cfg.Status.Sync.LastRef,
-				Started: time.Now().UnixMilli(),
-			},
-		})
-		if err != nil {
-			responder.Error(err)
-			return
+		// If a sync job is being created, we should update its status to pending.
+		if spec.Pull != nil {
+			err = c.statusPatcherProvider.GetStatusPatcher().Patch(ctx, cfg, map[string]interface{}{
+				"op":   "replace",
+				"path": "/status/sync",
+				"value": &provisioning.SyncStatus{
+					State:   provisioning.JobStatePending,
+					LastRef: cfg.Status.Sync.LastRef,
+					Started: time.Now().UnixMilli(),
+				},
+			})
+			if err != nil {
+				responder.Error(err)
+				return
+			}
 		}
 
 		job, err := c.jobs.GetJobQueue().Insert(ctx, cfg.Namespace, spec)
