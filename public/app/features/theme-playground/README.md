@@ -1,6 +1,3 @@
 # Regenerating the schema
 
-The schema for the theme options is generated using [ts-json-schema-generator](https://github.com/vega/ts-json-schema-generator/). To regenerate the schema (e.g. if the `NewThemeOptions` type has changed):
-
-- remove the `@internal` comment
-- run `npx ts-json-schema-generator --path 'packages/grafana-data/src/themes/createTheme.ts' --type 'NewThemeOptions'`
+The json schema for the theme options is generated using [typescript-json-schema](https://github.com/YousefED/typescript-json-schema). The schema should be regenerated automatically if the types change. If you need to manually regenerate, run `yarn themes-schema`.

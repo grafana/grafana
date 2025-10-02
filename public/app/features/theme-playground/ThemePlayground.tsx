@@ -15,7 +15,7 @@ import { getNavModel } from '../../core/selectors/navModel';
 import { ThemeProvider } from '../../core/utils/ConfigProvider';
 import { useSelector } from '../../types/store';
 
-import schema from './schema.json';
+import schema from './schema.generated.json';
 
 export default function ThemePlayground() {
   const navIndex = useSelector((state) => state.navIndex);
