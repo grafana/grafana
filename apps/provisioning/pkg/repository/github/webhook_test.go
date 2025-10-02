@@ -1566,6 +1566,32 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			name: "unauthorized to delete the webhook",
+			setupMock: func(m *MockClient) {
+				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+					Return(ErrUnauthorized)
+			},
+			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  123,
+						URL: "https://example.com/webhook",
+					},
+				},
+			},
+			webhookURL: "https://example.com/webhook",
+			// We don't return an error if access to the webhook is revoked
+			expectedError: nil,
+		},
+		{
 			name:      "no webhook URL provided",
 			setupMock: func(_ *MockClient) {},
 			config: &provisioning.Repository{
