@@ -374,15 +374,15 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     if (!queryMatches) {
       return value;
     }
+    // Use the variable specific regex against the query
+    if (!query.match(regex)) {
+      return value;
+    }
     for (const match of queryMatches) {
       // It is expected that the RegExp should be valid. As our regex matcher matches any text between two '/'
       // we also validate that the expression compiles before assuming it is a regular expression.
       try {
-        new RegExp(`/${match}/`);
-        // Use the variable specific regex against the query
-        if (!query.match(regex)) {
-          continue;
-        }
+        new RegExp(match);
 
         // If the value is a string array first escape them then join them with pipe
         // then put inside parenthesis.
