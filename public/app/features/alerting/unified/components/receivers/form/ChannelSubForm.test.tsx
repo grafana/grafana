@@ -1,13 +1,11 @@
 import 'core-js/stable/structured-clone';
 import { FormProvider, useForm } from 'react-hook-form';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render, waitFor } from 'test/test-utils';
+import { render } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { grafanaAlertNotifiers } from 'app/features/alerting/unified/mockGrafanaNotifiers';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
-
-import { OnCallIntegrationType } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
 import { ChannelSubForm } from './ChannelSubForm';
 import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
