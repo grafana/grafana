@@ -153,16 +153,7 @@ export function RadialArcPath({
         strokeDasharray="0"
         filter={glow ? `url(#glow-${gaugeId})` : undefined}
       />
-      {startAngle === 0 && renderLine(angle)}
-      {/* {spotlight && angle > 8 && roundedBars && (
-        <circle
-          r={barWidth * 0.5}
-          cx={clockwise ? x2 : x1}
-          cy={clockwise ? y2 : y1}
-          fill={`url(#spotlight-${gaugeId})`}
-        />
-      )} */}
-      {spotlight && angle > 1 && (
+      {spotlight && angle > 8 && (
         <SpotlightSquareEffect
           radius={radius}
           center={center}
@@ -198,19 +189,10 @@ function SpotlightSquareEffect({
   gaugeId,
   roundedBars,
 }: SpotlightEffectProps) {
-  // let x1 = center + (radius - barWidth / 2) * Math.cos(angleRadian);
-  // let y1 = center + (radius - barWidth / 2) * Math.sin(angleRadian);
-  // let x2 = center + (radius + barWidth / 2) * Math.cos(angleRadian);
-  // let y2 = center + (radius + barWidth / 2) * Math.sin(angleRadian);
-
-  //  const path = ['M', x1, y1, 'L', x2, y2].join(' ');
-
   let x1 = center + radius * Math.cos(angleRadian - 0.15);
   let y1 = center + radius * Math.sin(angleRadian - 0.15);
   let x2 = center + radius * Math.cos(angleRadian);
   let y2 = center + radius * Math.sin(angleRadian);
-
-  //let largeArc = angle > 180 ? 1 : 0;
 
   const path = ['M', x1, y1, 'A', radius, radius, 0, 0, 1, x2, y2].join(' ');
 
@@ -219,57 +201,9 @@ function SpotlightSquareEffect({
       d={path}
       fill="none"
       strokeWidth={barWidth}
-      //stroke={theme.colors.text.maxContrast}
       stroke={`url(#spotlight-${gaugeId})`}
       strokeLinecap={roundedBars ? 'round' : 'butt'}
       filter={glow ? `url(#glow-${gaugeId})` : undefined}
     />
   );
-}
-
-function renderLine(angle: number) {
-  const angleRad = ((angle - 90) * Math.PI) / 180;
-
-  // Point on the circle
-  const x1 = 100 + 19 * Math.cos(angleRad);
-  const y1 = 100 + 19 * Math.sin(angleRad);
-
-  const tangent = getPerpendicularVectors(angle - 90).clockwiseTangent;
-
-  // Line length for the perpendicular line
-  const lineLength = 20;
-
-  // End point of the line (starting point + tangent direction * length)
-  const x2 = x1 + tangent.x * lineLength;
-  const y2 = y1 + tangent.y * lineLength;
-
-  // console.log('x1', x1);
-  // console.log('y1', y1);
-  // console.log('tangent x1', tangent.x);
-  // console.log('tangent y1', tangent.y);
-  // console.log('x2', x2);
-  // console.log('y2', y2);
-
-  return <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="white" strokeWidth="2" />;
-}
-
-/**
- * Calculate perpendicular vectors at a point on a circle
- * @param angleDegrees - angle in degrees from positive x-axis
- * @returns object with different perpendicular vector options
- */
-export function getPerpendicularVectors(angleDegrees: number) {
-  const angleRad = (angleDegrees * Math.PI) / 180;
-  const cos = Math.cos(angleRad);
-  const sin = Math.sin(angleRad);
-
-  return {
-    // Normal vectors (perpendicular to circle surface)
-    outwardNormal: { x: cos, y: sin },
-    inwardNormal: { x: -cos, y: -sin },
-
-    // Tangent vectors (perpendicular to radius)
-    clockwiseTangent: { x: sin, y: -cos },
-    counterClockwiseTangent: { x: -sin, y: cos },
-  };
 }

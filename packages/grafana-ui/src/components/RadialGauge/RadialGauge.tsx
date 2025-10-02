@@ -108,6 +108,10 @@ export function RadialGauge(props: RadialGaugeProps) {
               endAngle={endAngle}
               gaugeId={gaugeId}
               fieldDisplay={primaryValue}
+              barWidth={barWidth}
+              size={size}
+              margin={margin}
+              roundedBars={roundedBars}
             />
           )}
           {glowBar && <GlowGradient gaugeId={gaugeId} size={size} />}
