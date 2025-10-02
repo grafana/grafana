@@ -124,7 +124,6 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
               stroke={isHighlighted ? theme.colors.success.main : theme.colors.primary.main}
               strokeWidth={isHighlighted ? VISUAL_CONSTANTS.THICK_STROKE_WIDTH : VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH}
               markerEnd={isHighlighted ? 'url(#arrowhead-highlighted)' : 'url(#arrowhead)'}
-              className={isHighlighted ? styles.linkHighlighted : styles.link}
               opacity={
                 (selectedExtensionPoint || selectedContentProvider || highlightedExtensionPoint) && !isHighlighted
                   ? VISUAL_CONSTANTS.UNSELECTED_OPACITY

@@ -7,7 +7,6 @@
 
 import React, { useEffect, useRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Menu, useTheme2 } from '@grafana/ui';
 
@@ -63,20 +62,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
     zIndex: 1000,
     minWidth: 200,
     padding: theme.spacing(0.5, 0),
-  };
-
-  const menuItemStyle: React.CSSProperties = {
-    padding: theme.spacing(1, 2),
-    cursor: 'pointer',
-    color: theme.colors.text.primary,
-    fontSize: theme.typography.bodySmall.fontSize,
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-  };
-
-  const menuItemHoverStyle: React.CSSProperties = {
-    backgroundColor: theme.colors.action.hover,
   };
 
   return (

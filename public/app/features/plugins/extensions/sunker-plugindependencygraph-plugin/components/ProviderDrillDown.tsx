@@ -7,7 +7,6 @@
 
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, useTheme2 } from '@grafana/ui';
 

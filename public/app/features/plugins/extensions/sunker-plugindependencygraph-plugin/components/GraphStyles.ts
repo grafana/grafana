@@ -27,7 +27,9 @@ export const getGraphStyles = (theme: GrafanaTheme2) => {
 
     // Node styles
     node: css({
-      ...theme.transitions.create(['filter']),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['filter']),
+      },
       '&:hover': {
         filter: `brightness(${INTERACTION_CONSTANTS.HOVER_BRIGHTNESS})`,
       },
@@ -35,7 +37,9 @@ export const getGraphStyles = (theme: GrafanaTheme2) => {
 
     nodeBox: css({
       filter: `drop-shadow(${VISUAL_CONSTANTS.SHADOW_OFFSET_X}px ${VISUAL_CONSTANTS.SHADOW_OFFSET_Y}px ${VISUAL_CONSTANTS.SHADOW_BLUR}px rgba(0, 0, 0, ${VISUAL_CONSTANTS.SHADOW_OPACITY}))`,
-      ...theme.transitions.create(),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(),
+      },
     }),
 
     nodeLabel: css({
@@ -69,7 +73,9 @@ export const getGraphStyles = (theme: GrafanaTheme2) => {
 
     // API label styles
     apiLabel: css({
-      ...theme.transitions.create(),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(),
+      },
       filter: `drop-shadow(${VISUAL_CONSTANTS.SHADOW_OFFSET_X}px ${VISUAL_CONSTANTS.SHADOW_OFFSET_Y / 2}px ${VISUAL_CONSTANTS.SHADOW_BLUR / 2}px rgba(0, 0, 0, ${VISUAL_CONSTANTS.SHADOW_OPACITY / 1.5}))`,
     }),
 
@@ -83,7 +89,9 @@ export const getGraphStyles = (theme: GrafanaTheme2) => {
 
     // Link styles
     link: css({
-      ...theme.transitions.create(),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(),
+      },
       '&:hover': {
         strokeWidth: VISUAL_CONSTANTS.THICK_STROKE_WIDTH,
         filter: `brightness(${INTERACTION_CONSTANTS.LINK_HOVER_BRIGHTNESS})`,
@@ -91,7 +99,9 @@ export const getGraphStyles = (theme: GrafanaTheme2) => {
     }),
 
     linkHighlighted: css({
-      ...theme.transitions.create(),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(),
+      },
       '&:hover': {
         strokeWidth: VISUAL_CONSTANTS.VERY_THICK_STROKE_WIDTH,
         filter: `brightness(${INTERACTION_CONSTANTS.HIGHLIGHTED_LINK_BRIGHTNESS})`,
@@ -125,14 +135,18 @@ export const getGraphStyles = (theme: GrafanaTheme2) => {
     // Extension group styles
     extensionGroupBox: css({
       filter: `drop-shadow(${VISUAL_CONSTANTS.SHADOW_OFFSET_X}px ${VISUAL_CONSTANTS.SHADOW_OFFSET_Y}px ${VISUAL_CONSTANTS.SHADOW_BLUR}px rgba(0, 0, 0, ${VISUAL_CONSTANTS.SHADOW_OPACITY}))`,
-      ...theme.transitions.create(),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(),
+      },
       '&:hover': {
         filter: `drop-shadow(${VISUAL_CONSTANTS.SHADOW_OFFSET_X}px ${VISUAL_CONSTANTS.SHADOW_OFFSET_Y}px ${VISUAL_CONSTANTS.ENHANCED_SHADOW_BLUR}px rgba(0, 0, 0, ${VISUAL_CONSTANTS.SHADOW_OPACITY + 0.05}))`,
       },
     }),
 
     extensionPointBox: css({
-      ...theme.transitions.create(['filter']),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['filter']),
+      },
       '&:hover': {
         filter: `brightness(${INTERACTION_CONSTANTS.HOVER_BRIGHTNESS})`,
       },

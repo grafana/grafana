@@ -39,7 +39,10 @@ const getPluginData = (): Record<string, AppPluginConfig> => {
       typeof window !== 'undefined' && !!window.grafanaBootData?.settings?.apps
     );
   }
-  return pluginDataFallback;
+  // Type assertion is necessary here because data.json structure doesn't exactly match AppPluginConfig
+  // but is compatible for our use case
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return pluginDataFallback as Record<string, AppPluginConfig>;
 };
 
 /**
@@ -198,7 +201,7 @@ const processPluginDataToAddGraph = (options: PanelOptions, pluginData: Record<s
     if (isContentProvider) {
       // Process addedLinks
       extensions.addedLinks?.forEach((link) => {
-        link.targets?.forEach((target) => {
+        (Array.isArray(link.targets) ? link.targets : [link.targets]).forEach((target: string) => {
           // Create dependency from this plugin to the target extension point
           dependencies.push({
             source: pluginId,
@@ -231,7 +234,7 @@ const processPluginDataToAddGraph = (options: PanelOptions, pluginData: Record<s
 
       // Process addedComponents
       extensions.addedComponents?.forEach((component) => {
-        component.targets?.forEach((target) => {
+        (Array.isArray(component.targets) ? component.targets : [component.targets]).forEach((target: string) => {
           dependencies.push({
             source: pluginId,
             target: target,
@@ -260,7 +263,7 @@ const processPluginDataToAddGraph = (options: PanelOptions, pluginData: Record<s
 
       // Process addedFunctions
       extensions.addedFunctions?.forEach((func) => {
-        func.targets?.forEach((target) => {
+        (Array.isArray(func.targets) ? func.targets : [func.targets]).forEach((target: string) => {
           dependencies.push({
             source: pluginId,
             target: target,
@@ -575,31 +578,6 @@ export const processPluginDataToExposeGraph = (
   return result;
 };
 
-// Type definition for plugin data structure (improve type safety)
-interface PluginInfo {
-  version?: string;
-  extensions: {
-    extensionPoints?: Array<{
-      id: string;
-      title?: string;
-      description?: string;
-    }>;
-    addedLinks?: Array<{ targets?: string[] }>;
-    addedComponents?: Array<{ targets?: string[] }>;
-    addedFunctions?: Array<{ targets?: string[] }>;
-    exposedComponents?: Array<{
-      id: string;
-      title?: string;
-      description?: string;
-    }>;
-  };
-  dependencies: {
-    extensions?: {
-      exposedComponents?: string[];
-    };
-  };
-}
-
 // Helper function to find the defining plugin and extension point details for a target
 const findExtensionPointDetails = (
   target: string,
@@ -801,7 +779,7 @@ export const getAvailableContentConsumers = (mode: 'add' | 'expose' = 'add'): st
 
       allExtensions.forEach((ext) => {
         if (ext.targets) {
-          ext.targets.forEach((target: string) => {
+          (Array.isArray(ext.targets) ? ext.targets : [ext.targets]).forEach((target: string) => {
             if (target.includes('grafana-core')) {
               contentConsumers.add('grafana-core');
             }
@@ -947,7 +925,11 @@ export const getActiveContentConsumers = (mode: 'add' | 'expose' = 'add'): strin
             ...(otherExtensions.addedLinks || []),
             ...(otherExtensions.addedComponents || []),
             ...(otherExtensions.addedFunctions || []),
-          ].some((item) => item.targets?.some((target: string) => extensionPointIds.includes(target)));
+          ].some((item) =>
+            (Array.isArray(item.targets) ? item.targets : [item.targets]).some((target: string) =>
+              extensionPointIds.includes(target)
+            )
+          );
         });
 
         if (hasProviders) {

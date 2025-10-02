@@ -189,7 +189,7 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
   // Empty state check
   if (!data.nodes.length) {
     return (
-      <div className={styles.emptyState}>
+      <div className={styles.emptyState.toString()}>
         <p>{t('extensions.dependency-graph.no-data', 'No plugin dependency data available')}</p>
         <p>
           {t(
@@ -248,8 +248,8 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
   }
 
   return (
-    <div className={styles.container}>
-      <svg width={width} height={contentHeight} className={styles.svg}>
+    <div className={styles.container.toString()}>
+      <svg width={width} height={contentHeight}>
         <ArrowMarkers theme={theme} />
 
         <HeaderRenderer theme={theme} width={width} isExposeMode={isExposeMode} styles={styles} />

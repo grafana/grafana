@@ -81,11 +81,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
   return (
     <g>
       {nodesToRender.map((node) => (
-        <g
-          key={node.id}
-          transform={`translate(${node.x - nodeWidth / 2}, ${node.y - nodeHeight / 2})`}
-          className={styles.node}
-        >
+        <g key={node.id} transform={`translate(${node.x - nodeWidth / 2}, ${node.y - nodeHeight / 2})`}>
           {/* Main app box */}
           <rect
             width={nodeWidth}
@@ -104,7 +100,6 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
                 : VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH
             }
             rx={VISUAL_CONSTANTS.NODE_BORDER_RADIUS}
-            className={styles.nodeBox}
             onClick={() => {
               if (isExposeMode) {
                 onContentConsumerClick(
@@ -122,7 +117,6 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
             x={nodeWidth / 2}
             y={nodeHeight / 2}
             textAnchor="middle"
-            className={styles.appIdLabel}
             fill={theme.colors.getContrastText(theme.colors.primary.main)}
           >
             {node.originalId || node.id}

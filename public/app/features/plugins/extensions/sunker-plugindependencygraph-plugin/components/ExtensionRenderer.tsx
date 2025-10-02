@@ -111,7 +111,6 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 stroke={theme.colors.border.strong}
                 strokeWidth={VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH}
                 rx={VISUAL_CONSTANTS.GROUP_BORDER_RADIUS}
-                className={styles.extensionGroupBox}
               />
 
               {/* Exposed components inside provider box */}
@@ -146,7 +145,6 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                           : VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH
                       }
                       rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
-                      className={styles.extensionPointBox}
                       onClick={() =>
                         onExposedComponentClick(
                           selectedExposedComponent === exposedComponent.id ? null : exposedComponent.id
@@ -160,7 +158,6 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       x={compPos.x + componentBoxWidth / 2}
                       y={compPos.y - 5}
                       textAnchor="middle"
-                      className={styles.extensionPointLabel}
                       fill={theme.colors.getContrastText(theme.colors.warning.main)}
                     >
                       {exposedComponent.title || exposedComponent.id}
@@ -171,7 +168,6 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       x={compPos.x + componentBoxWidth / 2}
                       y={compPos.y + 15}
                       textAnchor="middle"
-                      className={styles.extensionTypeBadge}
                       fill={theme.colors.getContrastText(theme.colors.warning.main)}
                     >
                       {exposedComponent.id}
@@ -185,7 +181,6 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                           x={compPos.x + componentBoxWidth / 2}
                           y={compPos.y + 30}
                           textAnchor="middle"
-                          className={styles.descriptionInlineText}
                           fill={theme.colors.getContrastText(theme.colors.warning.main)}
                         >
                           {exposedComponent.description}
@@ -196,13 +191,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
               })}
 
               {/* Provider plugin name header */}
-              <text
-                x={firstCompPos.x}
-                y={firstCompPos.groupY + 25}
-                textAnchor="start"
-                className={styles.definingPluginLabel}
-                fill={theme.colors.text.primary}
-              >
+              <text x={firstCompPos.x} y={firstCompPos.groupY + 25} textAnchor="start" fill={theme.colors.text.primary}>
                 {getDisplayName(providingPlugin)}
               </text>
 
@@ -271,7 +260,6 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 stroke={theme.colors.border.strong}
                 strokeWidth={VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH}
                 rx={VISUAL_CONSTANTS.GROUP_BORDER_RADIUS}
-                className={styles.extensionGroupBox}
               />
 
               {/* Extension points */}
@@ -303,7 +291,6 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                           : VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH
                       }
                       rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
-                      className={styles.extensionPointBox}
                       onClick={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
@@ -335,7 +322,6 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       x={epPos.x + extensionBoxWidth / 2}
                       y={options.showDependencyTypes ? epPos.y - 5 : epPos.y + 5}
                       textAnchor="middle"
-                      className={styles.extensionPointLabel}
                       fill={theme.colors.getContrastText(extensionColor)}
                       style={{ pointerEvents: 'none' }}
                     >
@@ -349,7 +335,6 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                           x={epPos.x + extensionBoxWidth / 2}
                           y={epPos.y + 15}
                           textAnchor="middle"
-                          className={styles.extensionTypeBadge}
                           fill={theme.colors.getContrastText(extensionColor)}
                           style={{ pointerEvents: 'none' }}
                         >
@@ -364,7 +349,6 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                               x={epPos.x + extensionBoxWidth / 2}
                               y={epPos.y + 30}
                               textAnchor="middle"
-                              className={styles.descriptionInlineText}
                               fill={theme.colors.getContrastText(extensionColor)}
                               style={{ pointerEvents: 'none' }}
                             >
@@ -378,13 +362,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
               })}
 
               {/* Defining plugin name header */}
-              <text
-                x={firstEpPos.x}
-                y={firstEpPos.groupY + 22}
-                textAnchor="start"
-                className={styles.definingPluginLabel}
-                fill={theme.colors.text.primary}
-              >
+              <text x={firstEpPos.x} y={firstEpPos.groupY + 22} textAnchor="start" fill={theme.colors.text.primary}>
                 {getDisplayName(definingPlugin)}
               </text>
             </g>

@@ -38,7 +38,6 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({ theme, width, is
           x={width / 2}
           y={LAYOUT_CONSTANTS.HEADER_Y_OFFSET}
           textAnchor="middle"
-          className={styles.sectionHeader}
           fill={theme.colors.text.primary}
           style={{ fontSize: '18px', fontWeight: 'bold' }}
         >
@@ -50,7 +49,6 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({ theme, width, is
           x={margin + nodeWidth / 2}
           y={LAYOUT_CONSTANTS.SUB_HEADER_Y_OFFSET}
           textAnchor="middle"
-          className={styles.sectionHeader}
           fill={theme.colors.text.primary}
         >
           {MODE_LABELS.CONTENT_PROVIDER}
@@ -61,7 +59,6 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({ theme, width, is
           x={width - getRightMargin(width) - nodeWidth / 2}
           y={LAYOUT_CONSTANTS.SUB_HEADER_Y_OFFSET}
           textAnchor="middle"
-          className={styles.sectionHeader}
           fill={theme.colors.text.primary}
         >
           {MODE_LABELS.CONTENT_CONSUMER}
@@ -88,7 +85,6 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({ theme, width, is
         x={width / 2}
         y={LAYOUT_CONSTANTS.HEADER_Y_OFFSET}
         textAnchor="middle"
-        className={styles.sectionHeader}
         fill={theme.colors.text.primary}
         style={{ fontSize: '18px', fontWeight: 'bold' }}
       >
@@ -100,7 +96,6 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({ theme, width, is
         x={margin + 113} // Centered over boxes at new position
         y={LAYOUT_CONSTANTS.SUB_HEADER_Y_OFFSET}
         textAnchor="middle"
-        className={styles.sectionHeader}
         fill={theme.colors.text.primary}
       >
         {MODE_LABELS.CONTENT_PROVIDER}
@@ -111,7 +106,6 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({ theme, width, is
         x={width - margin - 210} // Center over the wider boxes (400/2 + 10 for arrow safety margin)
         y={LAYOUT_CONSTANTS.SUB_HEADER_Y_OFFSET}
         textAnchor="middle"
-        className={styles.sectionHeader}
         fill={theme.colors.text.primary}
       >
         {MODE_LABELS.CONTENT_CONSUMER}
