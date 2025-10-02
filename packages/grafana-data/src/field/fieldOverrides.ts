@@ -87,8 +87,11 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
   // Prepare the Matchers
   const override: OverrideProps[] = [];
+  const overrides = source.overrides.filter(
+    (o) => o.dataTopic === options.dataTopic || (o.dataTopic === undefined && options.dataTopic === undefined)
+  );
   if (source.overrides) {
-    for (const rule of source.overrides) {
+    for (const rule of overrides) {
       const info = fieldMatchers.get(rule.matcher.id);
       if (info) {
         override.push({
