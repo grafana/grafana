@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 )
 
 const (
@@ -54,24 +55,28 @@ func (k EventKey) Validate() error {
 	if k.Action == "" {
 		return fmt.Errorf("action cannot be empty")
 	}
-	if k.Folder != "" && !permissiveRegex.MatchString(k.Folder) {
-		return fmt.Errorf("folder '%s' is invalid", k.Folder)
+	if k.Folder != "" {
+		if err := validation.IsValidGrafanaName(k.Folder); err != nil {
+			return fmt.Errorf("folder '%s' is invalid: %s", k.Folder, err[0])
+		}
 	}
 	// Validate each field against the naming rules (reusing the regex from datastore.go)
-	if !strictRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
+	if err := validation.IsValidGroup(k.Group); err != nil {
+		return fmt.Errorf("group '%s' is invalid: %s", k.Group, err[0])
 	}
-	if !strictRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid", k.Group)
+	if err := validation.IsValidResource(k.Resource); err != nil {
+		return fmt.Errorf("resource '%s' is invalid: %s", k.Resource, err[0])
 	}
-	if !strictRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid", k.Resource)
+	if err := validation.IsValidNamespace(k.Namespace); err != nil {
+		return fmt.Errorf("namespace '%s' is invalid: %s", k.Namespace, err[0])
 	}
-	if !permissiveRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid", k.Name)
+	if err := validation.IsValidGrafanaName(k.Name); err != nil {
+		return fmt.Errorf("name '%s' is invalid: %s", k.Name, err[0])
 	}
-	if k.Folder != "" && !strictRegex.MatchString(k.Folder) {
-		return fmt.Errorf("folder '%s' is invalid", k.Folder)
+	if k.Folder != "" {
+		if err := validation.IsValidGrafanaName(k.Folder); err != nil {
+			return fmt.Errorf("folder '%s' is invalid: %s", k.Folder, err[0])
+		}
 	}
 	switch k.Action {
 	case DataActionCreated, DataActionUpdated, DataActionDeleted:
