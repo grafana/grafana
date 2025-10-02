@@ -10,7 +10,9 @@ import (
 	alertingmodels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/notifytest"
+	"github.com/grafana/alerting/receivers/line"
 	receiversTesting "github.com/grafana/alerting/receivers/testing"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	apicompat "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
@@ -91,6 +93,12 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 				// Many notifiers now support HTTPClientConfig but only Webhook currently has it enabled in schema.
 				// TODO: Remove this once HTTPClientConfig is added to other schemas.
 				pathFilters = append(pathFilters, "HTTPClientConfig")
+			}
+			if integrationType == line.Type {
+				for _, l := range actual.LineConfigs {
+					assert.Equal(t, "line", l.Metadata.Type)
+					l.Metadata.Type = string(line.Type)
+				}
 			}
 			pathFilter := cmp.FilterPath(func(path cmp.Path) bool {
 				for _, filter := range pathFilters {
