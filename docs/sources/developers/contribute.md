@@ -27,7 +27,7 @@ Choose how you want to contribute to Grafana, from code to plugins to community 
 - [Architecture guides](https://github.com/grafana/grafana/tree/main/contribute/architecture) explain Grafana’s background architecture.
 - [Create a pull request](https://github.com/grafana/grafana/blob/main/contribute/create-pull-request.md) walks you through preparing a clear, descriptive pull request.
 - Browse [help-wanted issues](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) to find a good first task.
-- Use the [REST APIs](https://grafana.com/docs/grafana/next/developers/http_api) to interact programmatically with the Grafana backend.
+- Use the [REST APIs](https://www.grafana.com/docs/grafana/next/developers/http_api) to interact programmatically with the Grafana backend.
 
 ### Develop a Plugin
 
@@ -43,7 +43,7 @@ Choose how you want to contribute to Grafana, from code to plugins to community 
 
 ## Best practices and style
 
-Our [style guides](https://github.com/grafana/grafana/tree/main/contribute/style-guides) outline Grafana style for frontend, backend, documentation, and more, including best practices. Please read through them before you start editing or coding!
+Our [style guides](https://www.github.com/grafana/grafana/tree/main/contribute/style-guides) outline Grafana style for frontend, backend, documentation, and more, including best practices. Please read through them before you start editing or coding!
 
 - [Backend style guide](https://github.com/grafana/grafana/blob/main/contribute/backend/style-guide.md) explains how we want to write Go code in the future.
 
