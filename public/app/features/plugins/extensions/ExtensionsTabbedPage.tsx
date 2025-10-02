@@ -1,8 +1,11 @@
 import { nanoid } from 'nanoid';
 import { ReactElement, useMemo, useState } from 'react';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { VizConfigBuilders, sceneUtils } from '@grafana/scenes';
+import { t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizConfigBuilders, sceneUtils } from '@grafana/scenes';
 import {
   SceneContextProvider,
   VizGridLayout,
@@ -10,7 +13,7 @@ import {
   useDataTransformer,
   useQueryRunner,
 } from '@grafana/scenes-react';
-import { Tab, TabContent, TabsBar } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Select, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { LogFilter, LogViewFilters } from './logs/LogViewFilters';
@@ -26,6 +29,39 @@ const DATASOURCE_REF = {
 };
 
 const logsViz = VizConfigBuilders.logs().setOption('wrapLogMessage', true).build();
+
+// Scene object for managing tab state with URL sync
+interface ExtensionsTabState extends SceneObjectState {
+  activeTab: number;
+}
+
+class ExtensionsTabSceneObject extends SceneObjectBase<ExtensionsTabState> {
+  static Component = ExtensionsTabbedPageContent;
+
+  public constructor(state: Partial<ExtensionsTabState>) {
+    super({
+      activeTab: 0,
+      ...state,
+    });
+  }
+
+  public getActiveTabFromPath(pathname: string): number {
+    if (pathname.endsWith('/log')) {
+      return 0;
+    } else if (pathname.endsWith('/dependency-graph')) {
+      return 1;
+    }
+    return 0; // default to log tab
+  }
+
+  public getTabPath(tabIndex: number): string {
+    return tabIndex === 0 ? '/admin/extensions/log' : '/admin/extensions/dependency-graph';
+  }
+
+  public setActiveTab(tabIndex: number): void {
+    this.setState({ activeTab: tabIndex });
+  }
+}
 
 sceneUtils.registerRuntimeDataSource({
   dataSource: new ExtensionsLogDataSource(DATASOURCE_REF.type, DATASOURCE_REF.uid, log),
@@ -66,11 +102,13 @@ function LogViewerTabContent(): ReactElement {
 
 // New Scenes Tab Content Component
 function NewScenesTabContent(): ReactElement {
+  const [visualizationMode, setVisualizationMode] = useState<'add' | 'expose'>('add');
+
   // Process the plugin data for the dependency graph
   const graphData = useMemo(() => {
     const options = {
       ...getDefaultOptions(),
-      visualizationMode: 'add' as const,
+      visualizationMode,
       showDependencyTypes: true,
       showDescriptions: false,
       selectedContentProviders: [],
@@ -82,7 +120,12 @@ function NewScenesTabContent(): ReactElement {
     const data = processPluginDataToGraph(options);
     console.log('Graph data:', data);
     return data;
-  }, []);
+  }, [visualizationMode]);
+
+  const modeOptions = [
+    { label: t('extensions.api-mode.add', 'Add'), value: 'add' as const },
+    { label: t('extensions.api-mode.expose', 'Expose'), value: 'expose' as const },
+  ];
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -96,6 +139,24 @@ function NewScenesTabContent(): ReactElement {
           Nodes: {graphData.nodes.length}, Dependencies: {graphData.dependencies.length}, Extension Points:{' '}
           {graphData.extensionPoints.length}
         </p>
+
+        {/* API Mode Selector */}
+        <div style={{ marginTop: '16px', marginBottom: '16px' }}>
+          <InlineFieldRow>
+            <InlineField label={t('extensions.api-mode.label', 'API Mode')}>
+              <Select
+                options={modeOptions}
+                value={visualizationMode}
+                onChange={(option) => {
+                  if (option.value === 'add' || option.value === 'expose') {
+                    setVisualizationMode(option.value);
+                  }
+                }}
+                width={12}
+              />
+            </InlineField>
+          </InlineFieldRow>
+        </div>
       </div>
       <div style={{ flex: 1, overflow: 'visible', minHeight: '500px', width: '100%' }}>
         <AutoSizer disableHeight>
@@ -108,7 +169,7 @@ function NewScenesTabContent(): ReactElement {
                   data={graphData}
                   options={{
                     ...getDefaultOptions(),
-                    visualizationMode: 'add',
+                    visualizationMode,
                     showDependencyTypes: true,
                     showDescriptions: false,
                     selectedContentProviders: [],
@@ -129,26 +190,59 @@ function NewScenesTabContent(): ReactElement {
   );
 }
 
+// Main component that renders the tabbed layout with nested routing
+function ExtensionsTabbedPageContent({ model }: SceneComponentProps<ExtensionsTabSceneObject>): ReactElement {
+  const location = useLocation();
+  const { activeTab } = model.useState();
+
+  // Update active tab based on current path
+  const currentTab = model.getActiveTabFromPath(location.pathname);
+  if (currentTab !== activeTab) {
+    model.setState({ activeTab: currentTab });
+  }
+
+  return (
+    <Page navId="extensions">
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <TabsBar>
+          <Tab
+            label={t('extensions.tabs.log-viewer', 'Log Viewer')}
+            active={activeTab === 0}
+            onChangeTab={() => {
+              model.setActiveTab(0);
+              // Navigate to the log tab
+              locationService.push(model.getTabPath(0));
+            }}
+          />
+          <Tab
+            label={t('extensions.tabs.dependency-graph', 'Dependency Graph')}
+            active={activeTab === 1}
+            onChangeTab={() => {
+              model.setActiveTab(1);
+              // Navigate to the dependency-graph tab
+              locationService.push(model.getTabPath(1));
+            }}
+          />
+        </TabsBar>
+        <TabContent style={{ flex: 1 }}>
+          <Routes>
+            <Route path="/" element={<Navigate to="log" replace />} />
+            <Route path="log" element={<LogViewerTabContent />} />
+            <Route path="dependency-graph" element={<NewScenesTabContent />} />
+          </Routes>
+        </TabContent>
+      </div>
+    </Page>
+  );
+}
+
 // Main component that renders the tabbed layout
 export default function ExtensionsTabbedPage(): ReactElement {
-  const [activeTab, setActiveTab] = useState(0);
+  const [tabScene] = useState(() => new ExtensionsTabSceneObject({ activeTab: 0 }));
 
   return (
     <SceneContextProvider>
-      <Page navId="extensions">
-        <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-          <TabsBar>
-            {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-            <Tab label="Log Viewer" active={activeTab === 0} onChangeTab={() => setActiveTab(0)} />
-            {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-            <Tab label="New Scenes" active={activeTab === 1} onChangeTab={() => setActiveTab(1)} />
-          </TabsBar>
-          <TabContent style={{ flex: 1 }}>
-            {activeTab === 0 && <LogViewerTabContent />}
-            {activeTab === 1 && <NewScenesTabContent />}
-          </TabContent>
-        </div>
-      </Page>
+      <tabScene.Component model={tabScene} />
     </SceneContextProvider>
   );
 }

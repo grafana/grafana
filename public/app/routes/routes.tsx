@@ -1,32 +1,28 @@
-import { useEffect } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
+import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
 
-import { isTruthy } from '@grafana/data';
-import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
+import { AccessControlAction } from 'app/types/accessControl';
+import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
+import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components/ConfigureIRM';
+import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { DashboardRoutes } from 'app/types/dashboard';
+import LdapPage from 'app/features/admin/ldap/LdapPage';
+import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
-
-import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
-
+import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
-import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
-import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice';
-import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
-import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
-import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components/ConfigureIRM';
-import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
+import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
+import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
-import { AccessControlAction } from 'app/types/accessControl';
-
-import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 import { getProvisioningRoutes } from '../features/provisioning/utils/routes';
-
+import { getPublicDashboardRoutes } from '../features/dashboard/routes';
+import { isTruthy } from '@grafana/data';
+import { useEffect } from 'react';
 
 const isDevEnv = config.buildInfo.env === 'development';
 export const extraRoutes: RouteDescriptor[] = [];
@@ -219,7 +215,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () => <NavLandingPage navId="cfg/plugins" />,
     },
     {
-      path: '/admin/extensions',
+      path: '/admin/extensions/*',
       navId: 'extensions',
       roles: () =>
         contextSrv.evaluatePermission([AccessControlAction.PluginsInstall, AccessControlAction.PluginsWrite]),
