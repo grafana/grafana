@@ -16,7 +16,7 @@ func TestAsNamedService(t *testing.T) {
 		adapter := asNamedService(mockSvc)
 
 		require.NotNil(t, adapter)
-		require.NotNil(t, adapter.BasicService)
+		require.NotNil(t, adapter.NamedService)
 		require.Equal(t, mockSvc, adapter.service)
 
 		expectedName := reflect.TypeOf(mockSvc).String()
