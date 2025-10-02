@@ -10,7 +10,6 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Modify dashboard settings
 title: Modify dashboard settings
 description: Manage and edit your dashboard settings
 weight: 8
@@ -56,7 +55,7 @@ To access the dashboard setting page:
 
 Adjust dashboard time settings when you want to change the dashboard timezone, the local browser time, and specify auto-refresh time intervals.
 
-1. On the **Settings** page, scroll down to the **Time Options** section of the **General** tab.
+1. On the the **General** tab of the **Settings** page, scroll down to the **Time options** section.
 1. Specify time settings as follows.
    - **Time zone:** Specify the local time zone of the service or system that you are monitoring. This can be helpful when monitoring a system or service that operates across several time zones.
      - **Default:** Grafana uses the default selected time zone for the user profile, team, or organization. If no time zone is specified for the user profile, a team the user is a member of, or the organization, then Grafana uses the local browser time.
@@ -71,6 +70,21 @@ Adjust dashboard time settings when you want to change the dashboard timezone, t
 1. Click **Save**.
 1. Click **Exit edit**.
 
+## Modify graph tooltip behavior
+
+Use this option to control tooltip and hover highlight behavior across graph panels (for example, time series).
+
+1. On the the **General** tab of the **Settings** page, scroll down to the **Panel options** section.
+1. Choose from the following options to control the tooltip and hover highlight behavior across graph panels:
+   - **Default** - Tooltip and hover highlight behavior isn't shared across panels.
+   - **Shared crosshair** - When you hover the cursor over one graph panel in the dashboard, the crosshair is also displayed on all other graph panels in the dashboard.
+   - **Shared tooltip** - When you hover the cursor over one graph panel in the dashboard, the crosshair and tooltips are also displayed on all other graph panels in the dashboard.
+
+1. Click **Save dashboard**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
+
 ## Add tags
 
 You can add metadata to your dashboards using tags. Tags also give you the ability to filter the list of dashboards.
@@ -79,7 +93,7 @@ Tags can be up to 50 characters long, including spaces.
 
 To add tags to a dashboard, follow these steps:
 
-1. On the **Settings** page, scroll down to the **Tags** section of the **General** tab.
+1. On the the **General** tab of the **Settings** page, scroll down to the **Tags** section.
 1. In the field, enter a new or existing tag.
 
    If you're entering an existing tag, make sure that you spell it the same way or a new tag is created.
