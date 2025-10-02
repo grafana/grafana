@@ -3496,6 +3496,7 @@
       "move-modal-field-label": "Folder name",
       "move-modal-text": "This action will move the following content:",
       "move-modal-title": "Move",
+      "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
       "new-folder-name-required-phrase": "Folder name is required.",
       "selected-mix-resources-modal-text": "You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please select only provisioned resources or only non-provisioned resources and try again.",
