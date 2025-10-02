@@ -11,8 +11,8 @@ import {
   updatePackageJsonExports,
   validateGroup,
   validateVersion,
-} from './helpers';
-import { type ActionConfig, type PlopData, isPlopData } from './types';
+} from './helpers.ts';
+import { type ActionConfig, type PlopData, isPlopData } from './types.ts';
 
 export default function plopGenerator(plop: NodePlopAPI) {
   // Grafana root path
