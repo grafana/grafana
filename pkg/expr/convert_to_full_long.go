@@ -15,7 +15,7 @@ const (
 
 	// These are not types in the SDK or dataplane contract yet.
 	numericFullLongType    = "numeric_full_long"
-	timeseriesFullLongType = "time_series_full_long"
+	timeseriesFullLongType = "timeseries_full_long"
 )
 
 func ConvertToFullLong(frames data.Frames) (data.Frames, error) {
