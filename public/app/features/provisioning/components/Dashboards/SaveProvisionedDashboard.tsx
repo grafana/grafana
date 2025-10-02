@@ -13,8 +13,7 @@ export interface SaveProvisionedDashboardProps {
 }
 
 export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: SaveProvisionedDashboardProps) {
-  const { isNew, defaultValues, loadedFromRef, workflowOptions, readOnly, repository } =
-    useProvisionedDashboardData(dashboard);
+  const { isNew, defaultValues, workflowOptions, readOnly, repository } = useProvisionedDashboardData(dashboard);
 
   if (!defaultValues) {
     return null;
@@ -27,7 +26,6 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Save
       changeInfo={changeInfo}
       isNew={isNew}
       defaultValues={defaultValues}
-      loadedFromRef={loadedFromRef}
       repository={repository}
       workflowOptions={workflowOptions}
       readOnly={readOnly}

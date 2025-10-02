@@ -20,6 +20,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/authlib/types"
+
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -53,6 +54,7 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	coreRolesStorage CoreRoleStorageBackend,
 	rolesStorage RoleStorageBackend,
+	roleBindingsStorage RoleBindingStorageBackend,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
@@ -64,6 +66,7 @@ func RegisterAPIService(
 		coreRolesStorage:             coreRolesStorage,
 		rolesStorage:                 rolesStorage,
 		resourcePermissionsStorage:   resourcepermission.ProvideStorageBackend(dbProvider),
+		roleBindingsStorage:          roleBindingsStorage,
 		sso:                          ssoService,
 		authorizer:                   authorizer,
 		legacyAccessClient:           legacyAccessClient,
@@ -150,6 +153,14 @@ func (b *IdentityAccessManagementAPIBuilder) AllowedV0Alpha1Resources() []string
 func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
+	// teams + users must have shorter names because they are often used as part of another name
+	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{
+		MaximumNameLength: 80,
+	})
+	opts.StorageOptsRegister(iamv0.UserResourceInfo.GroupResource(), apistore.StorageOptions{
+		MaximumNameLength: 80,
+	})
+
 	teamResource := iamv0.TeamResourceInfo
 	teamLegacyStore := team.NewLegacyStore(b.store, b.legacyAccessClient, b.enableAuthnMutation)
 	storage[teamResource.StoragePath()] = teamLegacyStore
@@ -232,6 +243,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			return err
 		}
 		storage[iamv0.RoleInfo.StoragePath()] = roleStore
+
+		roleBindingStore, err := NewLocalStore(iamv0.RoleBindingInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.roleBindingsStorage)
+		if err != nil {
+			return err
+		}
+		storage[iamv0.RoleBindingInfo.StoragePath()] = roleBindingStore
 	}
 
 	if b.enableResourcePermissionApis {
