@@ -96,8 +96,8 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 			}
 			if integrationType == line.Type {
 				for _, l := range actual.LineConfigs {
-					assert.Equal(t, "line", l.Metadata.Type)
-					l.Metadata.Type = string(line.Type)
+					assert.Equal(t, "line", l.Type)
+					l.Type = string(line.Type)
 				}
 			}
 			pathFilter := cmp.FilterPath(func(path cmp.Path) bool {

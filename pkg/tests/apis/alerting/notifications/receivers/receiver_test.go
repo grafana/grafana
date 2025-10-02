@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting/notify/notifytest"
+	"github.com/grafana/alerting/receivers/line"
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1225,7 +1226,7 @@ func TestIntegrationCRUD(t *testing.T) {
 	t.Run("should be able to update default receiver", func(t *testing.T) {
 		require.NotNil(t, defaultReceiver)
 		newDefault := defaultReceiver.Copy().(*v0alpha1.Receiver)
-		newDefault.Spec.Integrations = append(newDefault.Spec.Integrations, createIntegration(t, "line"))
+		newDefault.Spec.Integrations = append(newDefault.Spec.Integrations, createIntegration(t, line.Type))
 
 		updatedReceiver, err := adminClient.Update(ctx, newDefault, v1.UpdateOptions{})
 		require.NoError(t, err)
