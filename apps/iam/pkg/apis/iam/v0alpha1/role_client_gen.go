@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type RoleClient struct {
@@ -74,24 +73,6 @@ func (c *RoleClient) Update(ctx context.Context, obj *Role, opts resource.Update
 
 func (c *RoleClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*Role, error) {
 	return c.client.Patch(ctx, identifier, req, opts)
-}
-
-func (c *RoleClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus RoleStatus, opts resource.UpdateOptions) (*Role, error) {
-	return c.client.Update(ctx, &Role{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       RoleKind().Kind(),
-			APIVersion: GroupVersion.Identifier(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			ResourceVersion: opts.ResourceVersion,
-			Namespace:       identifier.Namespace,
-			Name:            identifier.Name,
-		},
-		Status: newStatus,
-	}, resource.UpdateOptions{
-		Subresource:     "status",
-		ResourceVersion: opts.ResourceVersion,
-	})
 }
 
 func (c *RoleClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
