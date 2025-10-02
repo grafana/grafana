@@ -21,8 +21,6 @@ type Query struct {
 
 	// Spec is the spec of the Query
 	Spec QuerySpec `json:"spec" yaml:"spec"`
-
-	Status QueryStatus `json:"status" yaml:"status"`
 }
 
 func (o *Query) GetSpec() any {
@@ -39,15 +37,11 @@ func (o *Query) SetSpec(spec any) error {
 }
 
 func (o *Query) GetSubresources() map[string]any {
-	return map[string]any{
-		"status": o.Status,
-	}
+	return map[string]any{}
 }
 
 func (o *Query) GetSubresource(name string) (any, bool) {
 	switch name {
-	case "status":
-		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -55,13 +49,6 @@ func (o *Query) GetSubresource(name string) (any, bool) {
 
 func (o *Query) SetSubresource(name string, value any) error {
 	switch name {
-	case "status":
-		cast, ok := value.(QueryStatus)
-		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type QueryStatus", value)
-		}
-		o.Status = cast
-		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -233,7 +220,6 @@ func (o *Query) DeepCopyInto(dst *Query) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
-	o.Status.DeepCopyInto(&dst.Status)
 }
 
 // Interface compliance compile-time check
@@ -303,17 +289,5 @@ func (s *QuerySpec) DeepCopy() *QuerySpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *QuerySpec) DeepCopyInto(dst *QuerySpec) {
-	resource.CopyObjectInto(dst, s)
-}
-
-// DeepCopy creates a full deep copy of QueryStatus
-func (s *QueryStatus) DeepCopy() *QueryStatus {
-	cpy := &QueryStatus{}
-	s.DeepCopyInto(cpy)
-	return cpy
-}
-
-// DeepCopyInto deep copies QueryStatus into another QueryStatus object
-func (s *QueryStatus) DeepCopyInto(dst *QueryStatus) {
 	resource.CopyObjectInto(dst, s)
 }
