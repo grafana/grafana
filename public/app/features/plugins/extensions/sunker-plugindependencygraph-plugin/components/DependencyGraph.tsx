@@ -37,6 +37,9 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
   const isExposeMode = options.visualizationMode === 'expose';
   const styles = getGraphStyles(theme);
 
+  // Debug logging
+  console.log('DependencyGraph props:', { width, height, nodesCount: data.nodes.length });
+
   // Memoized layout calculation
   const layoutNodes = useMemo(() => calculateLayout(data, options, width, height), [data, options, width, height]);
 
@@ -51,10 +54,12 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
     [data, options, width, height, isExposeMode]
   );
 
-  const contentHeight = useMemo(
-    () => calculateContentHeight(data, options, width, height, isExposeMode),
-    [data, options, width, height, isExposeMode]
-  );
+  const contentHeight = useMemo(() => {
+    const calculatedHeight = calculateContentHeight(data, options, width, height, isExposeMode);
+    // For full height behavior, use the calculated height if it's larger than the available height
+    // This allows the content to expand beyond the viewport and make the page scrollable
+    return calculatedHeight;
+  }, [data, options, width, height, isExposeMode]);
 
   useEffect(() => {
     setNodes(layoutNodes);
@@ -99,6 +104,9 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
       <div className={styles.emptyState}>
         <p>No plugin dependency data available</p>
         <p>Configure your data source to provide plugin relationships</p>
+        <p>
+          Debug: width={width}, height={height}, data keys: {Object.keys(data).join(', ')}
+        </p>
       </div>
     );
   }

@@ -1,8 +1,5 @@
-// Import the scenes plugin registration
-import './sunker-plugindependencygraph-plugin/scenesPlugin';
-
 import { nanoid } from 'nanoid';
-import { ReactElement, useState } from 'react';
+import { ReactElement, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { VizConfigBuilders, sceneUtils } from '@grafana/scenes';
@@ -20,6 +17,8 @@ import { LogFilter, LogViewFilters } from './logs/LogViewFilters';
 import { ExtensionsLogDataSource } from './logs/dataSource';
 import { createFilterTransformation } from './logs/filterTransformation';
 import { log } from './logs/log';
+import { DependencyGraph } from './sunker-plugindependencygraph-plugin/components/DependencyGraph';
+import { getDefaultOptions, processPluginDataToGraph } from './sunker-plugindependencygraph-plugin/utils/dataProcessor';
 
 const DATASOURCE_REF = {
   uid: nanoid(),
@@ -49,7 +48,7 @@ function LogViewerTabContent(): ReactElement {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '16px', borderBottom: '1px solid #e0e0e0' }}>
+      <div style={{ padding: '16px' }}>
         <LogViewFilters provider={data} filteredProvider={filteredData} filter={filter} onChange={setFilter} />
       </div>
       <div style={{ flex: 1, padding: '16px' }}>
@@ -67,25 +66,48 @@ function LogViewerTabContent(): ReactElement {
 
 // New Scenes Tab Content Component
 function NewScenesTabContent(): ReactElement {
+  // Process the plugin data for the dependency graph
+  const graphData = useMemo(() => {
+    const options = {
+      ...getDefaultOptions(),
+      visualizationMode: 'add' as const,
+      showDependencyTypes: true,
+      showDescriptions: false,
+      selectedContentProviders: [],
+      selectedContentConsumers: [],
+      linkExtensionColor: '#37872d',
+      componentExtensionColor: '#ff9900',
+      functionExtensionColor: '#e02f44',
+    };
+    const data = processPluginDataToGraph(options);
+    console.log('Graph data:', data);
+    return data;
+  }, []);
+
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '16px', borderBottom: '1px solid #e0e0e0' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '16px' }}>
         {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <h2>Plugin Dependency Graph</h2>
         {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <p>Visualize plugin dependencies and extension points using Grafana Scenes</p>
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+        <p>
+          Nodes: {graphData.nodes.length}, Dependencies: {graphData.dependencies.length}, Extension Points:{' '}
+          {graphData.extensionPoints.length}
+        </p>
       </div>
-      <div style={{ flex: 1, padding: '16px' }}>
-        <AutoSizer>
-          {({ height, width }) => (
-            <VizGridLayout minHeight={height} minWidth={width}>
-              <VizPanel
-                // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-                title="Plugin Dependencies"
-                viz={{
-                  pluginId: 'grafana-extensions-plugin-dependency-graph',
-                  pluginVersion: '1.0.0',
-                  options: {
+      <div style={{ flex: 1, overflow: 'visible', minHeight: '500px', width: '100%' }}>
+        <AutoSizer disableHeight>
+          {({ width }) => {
+            console.log('AutoSizer width:', width);
+            const effectiveWidth = width || 1200; // Fallback width if AutoSizer fails
+            return (
+              <div style={{ width: effectiveWidth, minHeight: '500px' }}>
+                <DependencyGraph
+                  data={graphData}
+                  options={{
+                    ...getDefaultOptions(),
                     visualizationMode: 'add',
                     showDependencyTypes: true,
                     showDescriptions: false,
@@ -94,15 +116,13 @@ function NewScenesTabContent(): ReactElement {
                     linkExtensionColor: '#37872d',
                     componentExtensionColor: '#ff9900',
                     functionExtensionColor: '#e02f44',
-                  },
-                  fieldConfig: {
-                    defaults: {},
-                    overrides: [],
-                  },
-                }}
-              />
-            </VizGridLayout>
-          )}
+                  }}
+                  width={effectiveWidth}
+                  height={2000} // Use a large height to allow content to expand
+                />
+              </div>
+            );
+          }}
         </AutoSizer>
       </div>
     </div>

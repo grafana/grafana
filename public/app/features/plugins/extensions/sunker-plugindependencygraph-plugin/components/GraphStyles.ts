@@ -15,10 +15,10 @@ export const getGraphStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       width: 100%;
-      height: 100%;
+      min-height: 100%;
       background: ${theme.colors.background.primary};
       border-radius: ${theme.shape.radius.default};
-      overflow: auto;
+      border: 1px solid ${theme.colors.border.weak};
     `,
 
     svg: css`
