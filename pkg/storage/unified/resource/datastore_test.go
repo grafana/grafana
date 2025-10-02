@@ -126,10 +126,10 @@ func TestDataKey_Validate(t *testing.T) {
 		{
 			name: "valid key with dots and dashes",
 			key: DataKey{
-				Namespace:       "test-namespace-with-dashes",
-				Group:           "test-group-123",
-				Resource:        "test-resource-v1",
-				Name:            "test-name.with.dots",
+				Namespace:       "test.namespace-with-dashes",
+				Group:           "test.group-123",
+				Resource:        "test.resource-v1",
+				Name:            "test.name-with-dots",
 				ResourceVersion: rv,
 				Action:          DataActionCreated,
 			},
