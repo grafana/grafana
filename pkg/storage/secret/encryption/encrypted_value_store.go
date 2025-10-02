@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -39,9 +40,9 @@ type encryptedValStorage struct {
 	tracer  trace.Tracer
 }
 
-func (s *encryptedValStorage) Create(ctx context.Context, namespace, name string, version int64, encryptedData contracts.EncryptedPayload) (ev *contracts.EncryptedValue, err error) {
+func (s *encryptedValStorage) Create(ctx context.Context, namespace xkube.Namespace, name string, version int64, encryptedData contracts.EncryptedPayload) (ev *contracts.EncryptedValue, err error) {
 	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.Create", trace.WithAttributes(
-		attribute.String("namespace", namespace),
+		attribute.String("namespace", namespace.String()),
 	))
 	defer span.End()
 
@@ -58,7 +59,7 @@ func (s *encryptedValStorage) Create(ctx context.Context, namespace, name string
 	createdTime := time.Now().Unix()
 
 	encryptedValue := &EncryptedValue{
-		Namespace:     namespace,
+		Namespace:     namespace.String(),
 		Name:          name,
 		Version:       version,
 		EncryptedData: encryptedData.EncryptedData,
@@ -103,9 +104,9 @@ func (s *encryptedValStorage) Create(ctx context.Context, namespace, name string
 	}, nil
 }
 
-func (s *encryptedValStorage) Update(ctx context.Context, namespace, name string, version int64, encryptedData contracts.EncryptedPayload) error {
+func (s *encryptedValStorage) Update(ctx context.Context, namespace xkube.Namespace, name string, version int64, encryptedData contracts.EncryptedPayload) error {
 	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.Update", trace.WithAttributes(
-		attribute.String("namespace", namespace),
+		attribute.String("namespace", namespace.String()),
 		attribute.String("name", name),
 		attribute.Int64("version", version),
 	))
@@ -113,7 +114,7 @@ func (s *encryptedValStorage) Update(ctx context.Context, namespace, name string
 
 	req := updateEncryptedValue{
 		SQLTemplate:   sqltemplate.New(s.dialect),
-		Namespace:     namespace,
+		Namespace:     namespace.String(),
 		Name:          name,
 		Version:       version,
 		EncryptedData: encryptedData.EncryptedData,
@@ -140,9 +141,9 @@ func (s *encryptedValStorage) Update(ctx context.Context, namespace, name string
 	return nil
 }
 
-func (s *encryptedValStorage) Get(ctx context.Context, namespace, name string, version int64) (*contracts.EncryptedValue, error) {
+func (s *encryptedValStorage) Get(ctx context.Context, namespace xkube.Namespace, name string, version int64) (*contracts.EncryptedValue, error) {
 	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.Get", trace.WithAttributes(
-		attribute.String("namespace", namespace),
+		attribute.String("namespace", namespace.String()),
 		attribute.String("name", name),
 		attribute.Int64("version", version),
 	))
@@ -150,7 +151,7 @@ func (s *encryptedValStorage) Get(ctx context.Context, namespace, name string, v
 
 	req := &readEncryptedValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace,
+		Namespace:   namespace.String(),
 		Name:        name,
 		Version:     version,
 	}
@@ -191,9 +192,9 @@ func (s *encryptedValStorage) Get(ctx context.Context, namespace, name string, v
 	}, nil
 }
 
-func (s *encryptedValStorage) Delete(ctx context.Context, namespace, name string, version int64) error {
+func (s *encryptedValStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string, version int64) error {
 	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.Delete", trace.WithAttributes(
-		attribute.String("namespace", namespace),
+		attribute.String("namespace", namespace.String()),
 		attribute.String("name", name),
 		attribute.Int64("version", version),
 	))
@@ -201,7 +202,7 @@ func (s *encryptedValStorage) Delete(ctx context.Context, namespace, name string
 
 	req := deleteEncryptedValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace,
+		Namespace:   namespace.String(),
 		Name:        name,
 		Version:     version,
 	}
@@ -405,7 +406,7 @@ func (s *encryptedValMigrationExecutor) Execute(ctx context.Context) (int, error
 		}
 
 		// 4. Update the encrypted value with the data key id and the encrypted data
-		err = s.encryptedValueStore.Update(ctx, encryptedValue.Namespace, encryptedValue.Name, encryptedValue.Version, contracts.EncryptedPayload{
+		err = s.encryptedValueStore.Update(ctx, xkube.Namespace(encryptedValue.Namespace), encryptedValue.Name, encryptedValue.Version, contracts.EncryptedPayload{
 			DataKeyID:     string(keyId),
 			EncryptedData: encryptedData,
 		})

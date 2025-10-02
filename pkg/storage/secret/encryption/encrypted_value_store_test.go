@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	cipherService "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/stretchr/testify/require"
@@ -53,7 +54,7 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		obtainedEV, err := sut.EncryptedValueStorage.Get(t.Context(), createdEV.Namespace, createdEV.Name, createdEV.Version)
+		obtainedEV, err := sut.EncryptedValueStorage.Get(t.Context(), xkube.Namespace(createdEV.Namespace), createdEV.Name, createdEV.Version)
 		require.NoError(t, err)
 
 		require.Equal(t, createdEV.Namespace, obtainedEV.Namespace)
@@ -102,13 +103,13 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		err = sut.EncryptedValueStorage.Update(t.Context(), createdEV.Namespace, createdEV.Name, createdEV.Version, contracts.EncryptedPayload{
+		err = sut.EncryptedValueStorage.Update(t.Context(), xkube.Namespace(createdEV.Namespace), createdEV.Name, createdEV.Version, contracts.EncryptedPayload{
 			DataKeyID:     "test-data-key-id-updated",
 			EncryptedData: []byte("test-data-updated"),
 		})
 		require.NoError(t, err)
 
-		updatedEV, err := sut.EncryptedValueStorage.Get(t.Context(), createdEV.Namespace, createdEV.Name, createdEV.Version)
+		updatedEV, err := sut.EncryptedValueStorage.Get(t.Context(), xkube.Namespace(createdEV.Namespace), createdEV.Name, createdEV.Version)
 		require.NoError(t, err)
 
 		require.Equal(t, []byte("test-data-updated"), updatedEV.EncryptedData)
@@ -138,13 +139,13 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		_, err = sut.EncryptedValueStorage.Get(t.Context(), createdEV.Namespace, createdEV.Name, createdEV.Version)
+		_, err = sut.EncryptedValueStorage.Get(t.Context(), xkube.Namespace(createdEV.Namespace), createdEV.Name, createdEV.Version)
 		require.NoError(t, err)
 
-		err = sut.EncryptedValueStorage.Delete(t.Context(), createdEV.Namespace, createdEV.Name, createdEV.Version)
+		err = sut.EncryptedValueStorage.Delete(t.Context(), xkube.Namespace(createdEV.Namespace), createdEV.Name, createdEV.Version)
 		require.NoError(t, err)
 
-		obtainedEV, err := sut.EncryptedValueStorage.Get(t.Context(), createdEV.Namespace, createdEV.Name, createdEV.Version)
+		obtainedEV, err := sut.EncryptedValueStorage.Get(t.Context(), xkube.Namespace(createdEV.Namespace), createdEV.Name, createdEV.Version)
 		require.Error(t, err)
 		require.Nil(t, obtainedEV)
 	})
@@ -297,7 +298,7 @@ func TestEncryptedValueMigration(t *testing.T) {
 	require.Len(t, encryptedValues, 3)
 
 	for _, tc := range testCases {
-		ev, err := sut.EncryptedValueStorage.Get(t.Context(), tc.namespace, tc.name, tc.version)
+		ev, err := sut.EncryptedValueStorage.Get(t.Context(), xkube.Namespace(tc.namespace), tc.name, tc.version)
 		require.NoError(t, err)
 
 		// Decrypt the encrypted data and check for equality
@@ -388,7 +389,7 @@ func TestStateMachine(t *testing.T) {
 				plaintext := rapid.String().Draw(t, "plaintext")
 
 				_, modelErr := m.create(ns, name, version, []byte(plaintext), dataKeyId)
-				_, err := sut.EncryptedValueStorage.Create(t.Context(), ns, name, version, contracts.EncryptedPayload{
+				_, err := sut.EncryptedValueStorage.Create(t.Context(), xkube.Namespace(ns), name, version, contracts.EncryptedPayload{
 					DataKeyID:     dataKeyId,
 					EncryptedData: []byte(plaintext),
 				})
@@ -405,7 +406,7 @@ func TestStateMachine(t *testing.T) {
 				plaintext := rapid.String().Draw(t, "plaintext")
 
 				modelErr := m.update(ns, name, version, []byte(plaintext), dataKeyId)
-				err := sut.EncryptedValueStorage.Update(t.Context(), ns, name, version, contracts.EncryptedPayload{
+				err := sut.EncryptedValueStorage.Update(t.Context(), xkube.Namespace(ns), name, version, contracts.EncryptedPayload{
 					DataKeyID:     dataKeyId,
 					EncryptedData: []byte(plaintext),
 				})
@@ -420,7 +421,7 @@ func TestStateMachine(t *testing.T) {
 				version := versionGen.Draw(t, "version")
 
 				modelValue, modelErr := m.get(ns, name, version)
-				value, err := sut.EncryptedValueStorage.Get(t.Context(), ns, name, version)
+				value, err := sut.EncryptedValueStorage.Get(t.Context(), xkube.Namespace(ns), name, version)
 				if modelErr != nil || err != nil {
 					require.ErrorIs(t, err, modelErr)
 					return
@@ -438,7 +439,7 @@ func TestStateMachine(t *testing.T) {
 				version := versionGen.Draw(t, "version")
 
 				modelErr := m.delete(ns, name, version)
-				err := sut.EncryptedValueStorage.Delete(t.Context(), ns, name, version)
+				err := sut.EncryptedValueStorage.Delete(t.Context(), xkube.Namespace(ns), name, version)
 				if modelErr != nil || err != nil {
 					require.ErrorIs(t, err, modelErr)
 					return

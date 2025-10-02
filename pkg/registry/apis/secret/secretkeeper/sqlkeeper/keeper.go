@@ -8,6 +8,7 @@ import (
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/metrics"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -43,10 +44,10 @@ func NewSQLKeeper(
 	}, nil
 }
 
-func (s *SQLKeeper) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64, exposedValueOrRef string) (contracts.ExternalID, error) {
+func (s *SQLKeeper) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) (contracts.ExternalID, error) {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Store",
 		trace.WithAttributes(
-			attribute.String("namespace", namespace),
+			attribute.String("namespace", namespace.String()),
 			attribute.String("name", name),
 			attribute.Int64("version", version)),
 	)
@@ -70,9 +71,9 @@ func (s *SQLKeeper) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, n
 	return contracts.ExternalID(""), nil
 }
 
-func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64) (secretv1beta1.ExposedSecureValue, error) {
+func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (secretv1beta1.ExposedSecureValue, error) {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Expose", trace.WithAttributes(
-		attribute.String("namespace", namespace),
+		attribute.String("namespace", namespace.String()),
 		attribute.String("name", name),
 		attribute.Int64("version", version),
 	))
@@ -95,9 +96,9 @@ func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, 
 	return exposedValue, nil
 }
 
-func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64) error {
+func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) error {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Delete", trace.WithAttributes(
-		attribute.String("namespace", namespace),
+		attribute.String("namespace", namespace.String()),
 		attribute.String("name", name),
 		attribute.Int64("version", version),
 	))
@@ -114,9 +115,9 @@ func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, 
 	return nil
 }
 
-func (s *SQLKeeper) Update(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64, exposedValueOrRef string) error {
+func (s *SQLKeeper) Update(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) error {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Update", trace.WithAttributes(
-		attribute.String("namespace", namespace),
+		attribute.String("namespace", namespace.String()),
 		attribute.String("name", name),
 		attribute.Int64("version", version),
 	))
