@@ -3502,8 +3502,7 @@
         "type": "object",
         "required": [
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -3528,14 +3527,6 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccountSpec"
-              }
-            ]
-          },
-          "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccountStatus"
               }
             ]
           }
@@ -3618,66 +3609,11 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccountStatus": {
-        "type": "object",
-        "properties": {
-          "additionalFields": {
-            "description": "additionalFields is reserved for future use",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "operatorStates": {
-            "description": "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
-            "type": "object",
-            "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccountstatusOperatorState"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccountstatusOperatorState": {
-        "type": "object",
-        "required": [
-          "lastEvaluation",
-          "state"
-        ],
-        "properties": {
-          "descriptiveState": {
-            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
-            "type": "string"
-          },
-          "details": {
-            "description": "details contains any extra information that is operator-specific",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "lastEvaluation": {
-            "description": "lastEvaluation is the ResourceVersion last evaluated",
-            "type": "string",
-            "default": ""
-          },
-          "state": {
-            "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team": {
         "type": "object",
         "required": [
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -3704,14 +3640,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamSpec"
               }
             ]
-          },
-          "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamStatus"
-              }
-            ]
           }
         },
         "x-kubernetes-group-version-kind": [
@@ -3726,8 +3654,7 @@
         "type": "object",
         "required": [
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -3752,14 +3679,6 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingSpec"
-              }
-            ]
-          },
-          "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingStatus"
               }
             ]
           }
@@ -3843,30 +3762,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingStatus": {
-        "type": "object",
-        "properties": {
-          "additionalFields": {
-            "description": "additionalFields is reserved for future use",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "operatorStates": {
-            "description": "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
-            "type": "object",
-            "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingstatusOperatorState"
-                }
-              ]
-            }
-          }
-        }
-      },
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingTeamRef": {
         "type": "object",
         "required": [
@@ -3894,36 +3789,6 @@
           },
           "permission": {
             "description": "permission of the identity in the team",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingstatusOperatorState": {
-        "type": "object",
-        "required": [
-          "lastEvaluation",
-          "state"
-        ],
-        "properties": {
-          "descriptiveState": {
-            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
-            "type": "string"
-          },
-          "details": {
-            "description": "details contains any extra information that is operator-specific",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "lastEvaluation": {
-            "description": "lastEvaluation is the ResourceVersion last evaluated",
-            "type": "string",
-            "default": ""
-          },
-          "state": {
-            "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
             "type": "string",
             "default": ""
           }
@@ -3999,66 +3864,11 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamStatus": {
-        "type": "object",
-        "properties": {
-          "additionalFields": {
-            "description": "additionalFields is reserved for future use",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "operatorStates": {
-            "description": "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
-            "type": "object",
-            "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamstatusOperatorState"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamstatusOperatorState": {
-        "type": "object",
-        "required": [
-          "lastEvaluation",
-          "state"
-        ],
-        "properties": {
-          "descriptiveState": {
-            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
-            "type": "string"
-          },
-          "details": {
-            "description": "details contains any extra information that is operator-specific",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "lastEvaluation": {
-            "description": "lastEvaluation is the ResourceVersion last evaluated",
-            "type": "string",
-            "default": ""
-          },
-          "state": {
-            "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User": {
         "type": "object",
         "required": [
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -4083,14 +3893,6 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserSpec"
-              }
-            ]
-          },
-          "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserStatus"
               }
             ]
           }
@@ -4188,60 +3990,6 @@
             "default": false
           },
           "role": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserStatus": {
-        "type": "object",
-        "properties": {
-          "additionalFields": {
-            "description": "additionalFields is reserved for future use",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "operatorStates": {
-            "description": "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
-            "type": "object",
-            "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserstatusOperatorState"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserstatusOperatorState": {
-        "type": "object",
-        "required": [
-          "lastEvaluation",
-          "state"
-        ],
-        "properties": {
-          "descriptiveState": {
-            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
-            "type": "string"
-          },
-          "details": {
-            "description": "details contains any extra information that is operator-specific",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "lastEvaluation": {
-            "description": "lastEvaluation is the ResourceVersion last evaluated",
-            "type": "string",
-            "default": ""
-          },
-          "state": {
-            "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
             "type": "string",
             "default": ""
           }
@@ -4705,8 +4453,7 @@
         "type": "object",
         "required": [
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -4722,9 +4469,6 @@
           },
           "spec": {
             "description": "Spec is the spec of the CoreRole",
-            "default": {}
-          },
-          "status": {
             "default": {}
           }
         }
@@ -4864,8 +4608,7 @@
         "type": "object",
         "required": [
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -4882,9 +4625,6 @@
           "spec": {
             "description": "Spec is the spec of the GlobalRole",
             "default": {}
-          },
-          "status": {
-            "default": {}
           }
         }
       },
@@ -4892,8 +4632,7 @@
         "type": "object",
         "required": [
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -4909,9 +4648,6 @@
           },
           "spec": {
             "description": "Spec is the spec of the GlobalRoleBinding",
-            "default": {}
-          },
-          "status": {
             "default": {}
           }
         }
@@ -5182,8 +4918,7 @@
         "type": "object",
         "required": [
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -5199,9 +4934,6 @@
           },
           "spec": {
             "description": "Spec is the spec of the ResourcePermission",
-            "default": {}
-          },
-          "status": {
             "default": {}
           }
         }
@@ -5353,8 +5085,7 @@
         "type": "object",
         "required": [
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -5371,9 +5102,6 @@
           "spec": {
             "description": "Spec is the spec of the Role",
             "default": {}
-          },
-          "status": {
-            "default": {}
           }
         }
       },
@@ -5381,8 +5109,7 @@
         "type": "object",
         "required": [
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -5398,9 +5125,6 @@
           },
           "spec": {
             "description": "Spec is the spec of the RoleBinding",
-            "default": {}
-          },
-          "status": {
             "default": {}
           }
         }
@@ -5671,8 +5395,7 @@
         "type": "object",
         "required": [
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -5688,9 +5411,6 @@
           },
           "spec": {
             "description": "Spec is the spec of the ServiceAccount",
-            "default": {}
-          },
-          "status": {
             "default": {}
           }
         }
@@ -5801,8 +5521,7 @@
         "type": "object",
         "required": [
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -5819,9 +5538,6 @@
           "spec": {
             "description": "Spec is the spec of the Team",
             "default": {}
-          },
-          "status": {
-            "default": {}
           }
         }
       },
@@ -5829,8 +5545,7 @@
         "type": "object",
         "required": [
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -5846,9 +5561,6 @@
           },
           "spec": {
             "description": "Spec is the spec of the TeamBinding",
-            "default": {}
-          },
-          "status": {
             "default": {}
           }
         }
@@ -6084,8 +5796,7 @@
         "type": "object",
         "required": [
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -6101,9 +5812,6 @@
           },
           "spec": {
             "description": "Spec is the spec of the User",
-            "default": {}
-          },
-          "status": {
             "default": {}
           }
         }

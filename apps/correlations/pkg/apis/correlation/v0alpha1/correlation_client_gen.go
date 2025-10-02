@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type CorrelationClient struct {
@@ -74,24 +73,6 @@ func (c *CorrelationClient) Update(ctx context.Context, obj *Correlation, opts r
 
 func (c *CorrelationClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*Correlation, error) {
 	return c.client.Patch(ctx, identifier, req, opts)
-}
-
-func (c *CorrelationClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus CorrelationStatus, opts resource.UpdateOptions) (*Correlation, error) {
-	return c.client.Update(ctx, &Correlation{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       CorrelationKind().Kind(),
-			APIVersion: GroupVersion.Identifier(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			ResourceVersion: opts.ResourceVersion,
-			Namespace:       identifier.Namespace,
-			Name:            identifier.Name,
-		},
-		Status: newStatus,
-	}, resource.UpdateOptions{
-		Subresource:     "status",
-		ResourceVersion: opts.ResourceVersion,
-	})
 }
 
 func (c *CorrelationClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
