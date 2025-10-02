@@ -194,9 +194,9 @@ The following sections contain troubleshooting guidance.
 - If you are using self-hosted Grafana, check your .ini for `grafana-azureprometheus-datasource` is included in `forward_settings_to_plugins` under the `[azure]` heading.
 - If you are using Grafana Cloud, contact Grafana support.
 
-### Rollback without a backup
+### Rollback self-hosted Grafana without a backup
 
-If you don’t have a backup of your Grafana instance before the migration, run the following script. It reverts all the Azure Monitor Managed Service data source instances back to core Prometheus.
+If you don’t have a backup of your Grafana instance before the migration, remove the `prometheusTypeMigration` feature toggle, and run the following script. It reverts all the Azure Monitor Managed Service data source instances back to core Prometheus.
 
 To revert the migration:
 
