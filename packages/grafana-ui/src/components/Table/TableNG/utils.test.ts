@@ -448,28 +448,28 @@ describe('TableNG utils', () => {
 
   describe('getComparator', () => {
     it('should compare numbers correctly', () => {
-      const comparator = getComparator(FieldType.number);
+      const comparator = getComparator(FieldType.number, 0);
       expect(comparator(1, 2)).toBeLessThan(0);
       expect(comparator(2, 1)).toBeGreaterThan(0);
       expect(comparator(1, 1)).toBe(0);
     });
 
     it('should handle undefined values', () => {
-      const comparator = getComparator(FieldType.number);
+      const comparator = getComparator(FieldType.number, 0);
       expect(comparator(undefined, 1)).toBeLessThan(0);
       expect(comparator(1, undefined)).toBeGreaterThan(0);
       expect(comparator(undefined, undefined)).toBe(0);
     });
 
     it('should compare strings case-insensitively', () => {
-      const comparator = getComparator(FieldType.string);
+      const comparator = getComparator(FieldType.string, 0);
       expect(comparator('a', 'B')).toBeLessThan(0);
       expect(comparator('B', 'a')).toBeGreaterThan(0);
       expect(comparator('a', 'a')).toBe(0);
     });
 
-    it('should handle time values', () => {
-      const comparator = getComparator(FieldType.time);
+    it('should handle numeric time values', () => {
+      const comparator = getComparator(FieldType.time, 1672531200000);
       const t1 = 1672531200000; // 2023-01-01
       const t2 = 1672617600000; // 2023-01-02
 
@@ -478,16 +478,24 @@ describe('TableNG utils', () => {
       expect(comparator(t1, t1)).toBe(0);
     });
 
+    it('should handle string time values', () => {
+      const comparator = getComparator(FieldType.time, '2020-01-01T00:00:00Z');
+      const t1 = '2020-01-01T00:00:00Z';
+      const t2 = '2020-01-02T00:00:00Z';
+
+      expect(comparator(t1, t2)).toBeLessThan(0);
+      expect(comparator(t2, t1)).toBeGreaterThan(0);
+      expect(comparator(t1, t1)).toBe(0);
+    });
+
     it('should handle boolean values', () => {
-      const comparator = getComparator(FieldType.boolean);
+      const comparator = getComparator(FieldType.boolean, false);
       expect(comparator(false, true)).toBeLessThan(0);
       expect(comparator(true, false)).toBeGreaterThan(0);
       expect(comparator(true, true)).toBe(0);
     });
 
     it('should compare frame values', () => {
-      const comparator = getComparator(FieldType.frame);
-
       // simulate using `first`.
       const frame1: DataFrameWithValue = {
         value: 1,
@@ -501,6 +509,8 @@ describe('TableNG utils', () => {
         value: 4,
         ...createDataFrame({ fields: [{ name: 'a', values: [4, 5, 6, 7] }] }),
       };
+
+      const comparator = getComparator(FieldType.frame, frame1);
 
       expect(comparator(frame1, frame2)).toBeLessThan(0);
       expect(comparator(frame2, frame1)).toBeGreaterThan(0);

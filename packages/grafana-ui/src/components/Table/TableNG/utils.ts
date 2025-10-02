@@ -635,7 +635,7 @@ export function applySort(
 
     for (let i = 0; i < sortColumns.length; i++) {
       const { columnKey, direction } = sortColumns[i];
-      const compare = getComparator(columnTypes[columnKey]);
+      const compare = getComparator(columnTypes[columnKey], a[columnKey]);
       const sortDir = direction === 'ASC' ? 1 : -1;
 
       result = sortDir * compare(a[columnKey], b[columnKey]);
@@ -721,12 +721,13 @@ const frameCompare: Comparator = (a, b) => {
 /**
  * @internal
  */
-export function getComparator(sortColumnType: FieldType): Comparator {
+export function getComparator(sortColumnType: FieldType, exampleValue: unknown): Comparator {
   switch (sortColumnType) {
     // Handle sorting for frame type fields (sparklines)
     case FieldType.frame:
       return frameCompare;
     case FieldType.time:
+      return typeof exampleValue === 'string' ? strCompare : numCompare;
     case FieldType.number:
     case FieldType.boolean:
       return numCompare;
