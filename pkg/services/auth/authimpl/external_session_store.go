@@ -56,6 +56,8 @@ func (s *store) Get(ctx context.Context, ID int64) (*auth.ExternalSession, error
 	return externalSession, nil
 }
 
+// List returns a list of external sessions that match the given query.
+// If the result set contains more than one entry, the entries are sorted by ID in descending order.
 func (s *store) List(ctx context.Context, query *auth.ListExternalSessionQuery) ([]*auth.ExternalSession, error) {
 	ctx, span := s.tracer.Start(ctx, "externalsession.List")
 	defer span.End()
