@@ -124,12 +124,12 @@ func TestDataKey_Validate(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "valid key with dots and dashes",
+			name: "invalid key with dots and dashes",
 			key: DataKey{
 				Namespace:       "test.namespace-with-dashes",
 				Group:           "test.group-123",
 				Resource:        "test.resource-v1",
-				Name:            "test.name-with-dots",
+				Name:            "test-resource.v1",
 				ResourceVersion: rv,
 				Action:          DataActionCreated,
 			},
@@ -2332,11 +2332,11 @@ func TestGetRequestKey_Validate(t *testing.T) {
 		},
 		// Invalid cases
 		{
-			name: "invalid - key with dots and dashes",
+			name: "invalid - keys with dots and dashes",
 			key: GetRequestKey{
-				Group:     "apps.v1",
-				Resource:  "deployment-configs",
-				Namespace: "default-ns",
+				Namespace: "test.namespace-with-dashes",
+				Group:     "test.group-123",
+				Resource:  "test.resource-v1",
 				Name:      "test-resource.v1",
 			},
 			expectErr: true,
