@@ -38,8 +38,6 @@ This code should not be edited, but it can be useful to look at when working thr
 Navigate to [localhost:3000/swagger?api=example.grafana.app-v1alpha1](http://localhost:3000/swagger?api=example.grafana.app-v1alpha1) to view the swagger for the app's `v1alpha1` version 
 (this version has the most capabilities/endpoints). You can use the `Execute` button to make requests via the swagger UI.
 
-You can also interact with the grafana API server via a kubeconfig set up for it, or via `cURL` using the `-u <username>:<password>` flag.
-
 Create a new `Example` resource with via swagger with:
 ```json
 {
@@ -101,3 +99,15 @@ Update `custom` subresource:
 }
 ```
 (`metadata.resourceVersion` is required for an update, use the value you get from a GET request)
+
+## cURL
+
+You can also interact with the grafana API server via a kubeconfig set up for it, or via `curl` using the `-u <username>:<password>` flag. 
+Currently, cluster-scoped custom routes are erased from the swagger as part of grafana's APIServer code, but can still be called via `curl`, like so:
+```bash
+curl -u admin:admin http://localhost:3000/apis/example.grafana.app/v1alpha1/other
+```
+```
+% curl -u admin:admin http://localhost:3000/apis/example.grafana.app/v1alpha1/other
+{"message":"This is a cluster route"}
+```

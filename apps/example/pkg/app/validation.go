@@ -10,6 +10,7 @@ import (
 
 var _ simple.KindValidator = NewValidator()
 
+// Validator implements simple.KindValidator
 type Validator struct{}
 
 func NewValidator() *Validator {

@@ -70,11 +70,6 @@ examplev1alpha1: exampleKind & {
                 response: {
                     message: string
                 }
-                request: {
-                    query: {
-                        message?: string
-                    }
-                }
             }
         }
     }

@@ -21,10 +21,6 @@ import (
 // and is used for routing non-storage API requests, admission control, conversion, and can run
 // reconcilers on kinds.
 func New(cfg app.Config) (app.App, error) {
-	logging.DefaultLogger = logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	}))
-
 	// APIPath needs to be set to `/apis`, as it defaults to empty
 	cfg.KubeConfig.APIPath = "/apis"
 	// We create a client to work with our Example kind in our reconciler
@@ -36,6 +32,11 @@ func New(cfg app.Config) (app.App, error) {
 	exampleConfig, ok := cfg.SpecificConfig.(*ExampleConfig)
 	if ok && exampleConfig.EnableReconciler {
 		reconciler = NewExampleReconciler(client)
+		// Set the default logger if the reconciler is enabled--this should be done in grafana's API server handling instead,
+		// and will be corrected in a future PR
+		logging.DefaultLogger = logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelDebug, // Temporarily hardcoded to debug for the example
+		}))
 	}
 
 	// This is the configuration for our App.

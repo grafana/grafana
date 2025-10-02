@@ -40,7 +40,7 @@ func GetSomethingHandler(ctx context.Context, writer app.CustomRouteResponseWrit
 
 // GetOtherHandler handles requests for the GET /other cluster-scoped resource route
 func GetOtherHandler(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
-	message := "This is a namespaced route"
+	message := "This is a cluster route"
 	if request.URL.Query().Has("message") {
 		message = request.URL.Query().Get("message")
 	}
