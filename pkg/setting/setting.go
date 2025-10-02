@@ -138,6 +138,7 @@ type Cfg struct {
 	ProvisioningDisableControllers  bool
 	ProvisioningAllowedTargets      []string
 	ProvisioningAllowImageRendering bool
+	ProvisioningMinSyncInterval     time.Duration
 	ProvisioningRepositoryTypes     []string
 	ProvisioningLokiURL             string
 	ProvisioningLokiUser            string
@@ -575,13 +576,14 @@ type Cfg struct {
 	MaxPageSizeBytes                           int
 	IndexPath                                  string
 	IndexWorkers                               int
+	IndexRebuildWorkers                        int
 	IndexMaxBatchSize                          int
 	IndexFileThreshold                         int
 	IndexMinCount                              int
 	IndexRebuildInterval                       time.Duration
 	IndexCacheTTL                              time.Duration
-	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will not be reused between restarts.
-	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will not be reused between restarts.
+	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
+	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	EnableSharding                             bool
 	QOSEnabled                                 bool
 	QOSNumberWorker                            int
@@ -2124,6 +2126,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 		cfg.ProvisioningAllowedTargets = []string{"instance", "folder"}
 	}
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
+	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

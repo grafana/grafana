@@ -195,7 +195,7 @@ func TestNotificationSettingsLabels(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			labels := tt.notificationSettings.ToLabels()
+			labels := tt.notificationSettings.ToLabels(nil)
 			require.Equal(t, tt.labels, labels)
 		})
 	}
@@ -219,7 +219,7 @@ func TestNotificationSettings_TimeIntervals(t *testing.T) {
 		ActiveTimeIntervals: []string{timeInterval},
 	}
 
-	require.NotEqual(t, activeSettings.Fingerprint(), muteSettings.Fingerprint())
+	require.NotEqual(t, activeSettings.Fingerprint(nil), muteSettings.Fingerprint(nil))
 }
 
 func TestNormalizedGroupBy(t *testing.T) {

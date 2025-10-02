@@ -479,6 +479,11 @@ export interface FeatureToggles {
   */
   useScopeSingleNodeEndpoint?: boolean;
   /**
+  * Makes the frontend use the 'names' param for fetching multiple scope nodes at once
+  * @default false
+  */
+  useMultipleScopeNodesEndpoint?: boolean;
+  /**
   * In-development feature that will allow injection of labels into prometheus queries.
   * @default true
   */
@@ -879,6 +884,11 @@ export interface FeatureToggles {
   * Enables the new Jira integration for contact points in cloud alert managers.
   */
   alertingJiraIntegration?: boolean;
+  /**
+  * 
+  * @default true
+  */
+  alertingUseNewSimplifiedRoutingHashAlgorithm?: boolean;
   /**
   * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
   */
