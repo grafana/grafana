@@ -1,22 +1,21 @@
 import { memo } from 'react';
-import { Series } from 'uplot';
 
 import { DataFrame, getFieldDisplayName, getFieldSeriesColor } from '@grafana/data';
 import { VizLegendOptions, AxisPlacement, DataTopic } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { DEFAULT_ANNOTATION_COLOR } from '../../utils/colors';
 import { VizLayout, VizLayoutLegendProps } from '../VizLayout/VizLayout';
 import { VizLegend } from '../VizLegend/VizLegend';
 import { VizLegendItem } from '../VizLegend/types';
 
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
-import { UPlotSeriesBuilder } from './config/UPlotSeriesBuilder';
 import { getDisplayValuesForCalcs } from './utils';
 
 interface PlotLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
   data: DataFrame[];
   config: UPlotConfigBuilder;
-  annotations?: UPlotSeriesBuilder[];
+  annotations?: DataFrame[];
 }
 
 /**
@@ -81,13 +80,14 @@ export const PlotLegend = memo(
 
     if (annotations && annotations.length > 0) {
       annotations.forEach((anno) => {
-        const props: Series = anno.props;
+        const valField = anno.fields.find((f) => f.name !== 'time' && f.name !== 'isRegion' && f.name !== 'color');
+
         legendItems.push({
-          disabled: !props.show,
-          label: typeof props.label === 'string' ? props.label : 'annotation',
-          fieldName: 'value',
+          disabled: valField?.config.custom.hideFrom?.viz ?? false,
+          label: anno.name ?? 'annotation',
+          fieldName: valField?.name ?? 'value',
           yAxis: 1,
-          color: anno.props.lineColor,
+          color: anno.fields.find((f) => f.name === 'color')?.values[0] ?? DEFAULT_ANNOTATION_COLOR,
           dataTopic: DataTopic.Annotations,
         });
       });
