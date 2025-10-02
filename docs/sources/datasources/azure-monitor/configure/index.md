@@ -69,6 +69,17 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+  private-data-source-connect:
+    - pattern: /docs/grafana/
+      destination:  docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
+    - pattern: /docs/grafana-cloud/
+      destination:  docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
+  configure-pdc:
+    - pattern: /docs/grafana/
+      destination:  /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
+
 ---
 
 # Configure the Azure Monitor data source
@@ -162,21 +173,16 @@ Enable Basic Logs - Toggle to allow querying Azure Monitor Basic Logs tables. Th
 | **Default Subscription** | Select which Azure subscription to query by default. Click "Load Subscriptions" to populate the dropdown with subscriptions accessible to the workload identity. |
 | **Enable Basic Logs** | Toggle to allow querying Azure Monitor Basic Logs tables. These are lower-cost logs with some query limitations, and enabling this incurs per-query costs when querying basic log tables in dashboard panels. |
 
+**Private data source connect** - _Only for Grafana Cloud users._
 
+Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](ref:private-data-source-connect) and [Configure Grafana private data source connect (PDC)](ref:configure-pdc) for instructions on setting up a PDC connection.
 
+Click **Manage private data source connect** to open your PDC connection page and view your configuration details.
 
-Additional settings - Applies to current user, managed identity and workload identity
+After configuring your MSSQL data source options, click **Save & test** at the bottom to test the connection. You should see a confirmation dialog box that says:
 
+**Database Connection OK**
 
-Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy, request timeout, and forwarded cookies.
-
-Advanced HTTP settings
-Allowed cookies
-New cookie (hit enter to add)
-
-Add
-Timeout
-Timeout in seconds
 
 
 ### Configure Azure Active Directory (AD) authentication

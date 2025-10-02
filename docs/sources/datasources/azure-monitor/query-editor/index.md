@@ -45,27 +45,21 @@ The Azure Monitor data source can query data from Azure Monitor Metrics and Logs
 
 For details, see the [query editor documentation](query-editor/).
 
-
-
-
-<!-- For more information on writing Transact-SQL statements, refer to [Write Transact-SQL statements](https://learn.microsoft.com/en-us/sql/t-sql/tutorial-writing-transact-sql-statements?view=sql-server-ver17) and [Transact-SQL reference](https://learn.microsoft.com/en-us/sql/t-sql/language-reference?view=sql-server-ver17) in the Microsoft SQL Server documentation. -->
-
-<!-- 
-The Microsoft SQL Server query editor has two modes: -->
-
-
-
-
-
-
 ## Choose a query editing mode
 
-The Azure Monitor data source's query editor has three modes depending on which Azure service you want to query:
+The Azure Monitor data source's query editor has four modes depending on which Azure service you want to query:
 
 - **Metrics** for [Azure Monitor Metrics](#query-azure-monitor-metrics)
 - **Logs** for [Azure Monitor Logs](#query-azure-monitor-logs)
-- [**Azure Resource Graph**](#query-azure-resource-graph)
 - **Traces** for [Application Insights Traces](#query-application-insights-traces)
+- [**Azure Resource Graph**](#query-azure-resource-graph)
+
+
+
+## Metrics query editor components
+
+Resource - Click **Select a resource**. In the **Select a resource** window, browse or select from S**Subscriptions** Resource types and locations drop-downs. 
+
 
 ## Query Azure Monitor Metrics
 
