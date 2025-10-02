@@ -40,9 +40,9 @@ const getPluginData = (): Record<string, AppPluginConfig> => {
     );
   }
   // Type assertion is necessary here because data.json structure doesn't exactly match AppPluginConfig
-  // but is compatible for our use case
+  // but is compatible for our use case. Using double assertion as suggested by TypeScript error.
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return pluginDataFallback as Record<string, AppPluginConfig>;
+  return pluginDataFallback as unknown as Record<string, AppPluginConfig>;
 };
 
 /**
