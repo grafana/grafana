@@ -33,7 +33,8 @@
       "serviceaccount": "Service Account",
       "team": "Team",
       "title": "Permissions",
-      "user": "User"
+      "user": "User",
+      "loading": "Loading permissions..."
     }
   },
   "action-editor": {
@@ -12223,9 +12224,6 @@
       "title-disable-service-account": "Disable service account",
       "tokens": "Tokens",
       "tooltip-managed-service-account-cannot-modified": "This is a managed service account and cannot be modified"
-    },
-    "service-account-permissions": {
-      "title-permissions": "Permissions"
     },
     "service-account-profile": {
       "information": "Information",

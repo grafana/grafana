@@ -16,7 +16,6 @@ export const ServiceAccountPermissions = (props: ServiceAccountPermissionsProps)
 
   return (
     <Permissions
-      title={t('serviceaccounts.service-account-permissions.title-permissions', 'Permissions')}
       addPermissionTitle="Add permission"
       buttonLabel="Add permission"
       resource="serviceaccounts"
