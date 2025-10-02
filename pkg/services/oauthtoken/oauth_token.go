@@ -133,6 +133,9 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 		return nil
 	}
 
+	// externalSession can be nil if Grafana was updated from a version where the
+	// external session table was not used yet (did not exist) and the user has not logged in since
+	// the version update (therefore no external session was created for the user yet).
 	if externalSession != nil {
 		tokenRefreshMetadata.ExternalSessionID = externalSession.ID
 	}
@@ -266,6 +269,12 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 	}
 
 	ctxLogger = ctxLogger.New("userID", userID)
+
+	if !strings.HasPrefix(tokenRefreshMetadata.AuthModule, "oauth_") {
+		ctxLogger.Warn("The specified user's auth provider is not oauth",
+			"authmodule", tokenRefreshMetadata.AuthModule)
+		return nil, nil
+	}
 
 	provider := strings.TrimPrefix(tokenRefreshMetadata.AuthModule, "oauth_")
 	currentOAuthInfo := o.SocialService.GetOAuthInfoProvider(provider)
