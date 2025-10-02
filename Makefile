@@ -17,6 +17,7 @@ GO_RACE_FLAG := $(if $(GO_RACE),-race)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(GO_RACE_FLAG)
+GO_BUILD_FLAGS += $(if $(GO_BUILD_CGO),-cgo-enabled=$(GO_BUILD_CGO))
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
 GIT_BASE = remotes/origin/main
 
@@ -244,6 +245,10 @@ build-go-fast: gen-go ## Build all Go binaries.
 build-backend: ## Build Grafana backend.
 	@echo "build backend"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build-backend
+
+.PHONY: build-air
+build-air: build-backend
+	@cp ./bin/grafana ./bin/grafana-air
 
 .PHONY: build-server
 build-server: ## Build Grafana server.
