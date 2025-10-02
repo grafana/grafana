@@ -49,7 +49,7 @@ func NewLegacySQL(db legacysql.LegacyDatabaseProvider) *LegacySQL {
 }
 
 // NOTE: this does not support paging -- lets check if that will be a problem in cloud
-func (s *LegacySQL) GetStars(ctx context.Context, orgId int64, user string) ([]dashboardStars, int64, error) {
+func (s *LegacySQL) getDashboardStars(ctx context.Context, orgId int64, user string) ([]dashboardStars, int64, error) {
 	var max sql.NullString
 	sql, err := s.db(ctx)
 	if err != nil {
