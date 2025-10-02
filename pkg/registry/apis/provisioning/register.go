@@ -494,7 +494,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
 		repoGetter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, jobHistory)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, b, jobHistory)
 
 	// Add any extra storage
 	for _, extra := range b.extras {
