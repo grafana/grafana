@@ -57,6 +57,9 @@ export default function ThemePlayground() {
           showMiniMap={true}
           containerStyles={styles.codeEditor}
           onBlur={onBlur}
+          monacoOptions={{
+            alwaysConsumeMouseWheel: true,
+          }}
         />
         <ThemeProvider value={createTheme(theme)}>
           <ThemeDemo />
@@ -71,7 +74,7 @@ const getStyles = (theme: GrafanaTheme2, chromeHeaderHeight: number | undefined)
     height: '40vh',
     minWidth: '300px',
     position: 'sticky',
-    top: chromeHeaderHeight ? `calc(${chromeHeaderHeight}px + ${theme.spacing(1)})` : 0,
+    top: chromeHeaderHeight ? `calc(${chromeHeaderHeight}px + ${theme.spacing(4)})` : 0,
     width: '100%',
     zIndex: theme.zIndex.activePanel,
     [theme.breakpoints.up('md')]: {

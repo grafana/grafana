@@ -1,0 +1,526 @@
+{
+  "$ref": "#/definitions/NewThemeOptions",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "NewThemeOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "colors": {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "additionalProperties": false,
+              "properties": {
+                "disabledBackground": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "disabledOpacity": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "disabledText": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "focus": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "hover": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "hoverOpacity": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "selected": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "selectedBorder": {
+                  "additionalProperties": false,
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "background": {
+              "additionalProperties": false,
+              "properties": {
+                "canvas": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "elevated": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "primary": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "secondary": {
+                  "additionalProperties": false,
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "border": {
+              "additionalProperties": false,
+              "properties": {
+                "medium": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "strong": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "weak": {
+                  "additionalProperties": false,
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "contrastThreshold": {
+              "additionalProperties": false,
+              "type": "object"
+            },
+            "error": {
+              "additionalProperties": false,
+              "properties": {
+                "border": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "borderTransparent": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "contrastText": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "main": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "name": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "shade": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "text": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "transparent": {
+                  "additionalProperties": false,
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "gradients": {
+              "additionalProperties": false,
+              "properties": {
+                "brandHorizontal": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "brandVertical": {
+                  "additionalProperties": false,
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "hoverFactor": {
+              "additionalProperties": false,
+              "type": "object"
+            },
+            "info": {
+              "additionalProperties": false,
+              "properties": {
+                "border": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "borderTransparent": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "contrastText": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "main": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "name": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "shade": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "text": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "transparent": {
+                  "additionalProperties": false,
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "mode": {
+              "additionalProperties": false,
+              "type": "object"
+            },
+            "primary": {
+              "additionalProperties": false,
+              "properties": {
+                "border": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "borderTransparent": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "contrastText": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "main": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "name": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "shade": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "text": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "transparent": {
+                  "additionalProperties": false,
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "secondary": {
+              "additionalProperties": false,
+              "properties": {
+                "border": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "borderTransparent": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "contrastText": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "main": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "name": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "shade": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "text": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "transparent": {
+                  "additionalProperties": false,
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "success": {
+              "additionalProperties": false,
+              "properties": {
+                "border": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "borderTransparent": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "contrastText": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "main": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "name": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "shade": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "text": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "transparent": {
+                  "additionalProperties": false,
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "text": {
+              "additionalProperties": false,
+              "properties": {
+                "disabled": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "link": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "maxContrast": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "primary": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "secondary": {
+                  "additionalProperties": false,
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "tonalOffset": {
+              "additionalProperties": false,
+              "type": "object"
+            },
+            "warning": {
+              "additionalProperties": false,
+              "properties": {
+                "border": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "borderTransparent": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "contrastText": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "main": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "name": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "shade": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "text": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "transparent": {
+                  "additionalProperties": false,
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "name": {
+          "type": "string"
+        },
+        "shape": {
+          "additionalProperties": false,
+          "properties": {
+            "borderRadius": {
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "spacing": {
+          "additionalProperties": false,
+          "properties": {
+            "gridSize": {
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "typography": {
+          "$ref": "#/definitions/ThemeTypographyInput"
+        },
+        "visualization": {
+          "$ref": "#/definitions/ThemeVisualizationColorsInput"
+        }
+      },
+      "type": "object"
+    },
+    "ThemeTypographyInput": {
+      "additionalProperties": false,
+      "properties": {
+        "fontFamily": {
+          "type": "string"
+        },
+        "fontFamilyMonospace": {
+          "type": "string"
+        },
+        "fontSize": {
+          "type": "number"
+        },
+        "fontWeightBold": {
+          "type": "number"
+        },
+        "fontWeightLight": {
+          "type": "number"
+        },
+        "fontWeightMedium": {
+          "type": "number"
+        },
+        "fontWeightRegular": {
+          "type": "number"
+        },
+        "htmlFontSize": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "ThemeVisualizationColorsInput": {
+      "additionalProperties": false,
+      "properties": {
+        "hues": {
+          "items": {
+            "$ref": "#/definitions/ThemeVizHue"
+          },
+          "type": "array"
+        },
+        "palette": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "ThemeVizColor<alias-498742091-559-644-498742091-0-16072>": {
+      "additionalProperties": false,
+      "properties": {
+        "aliases": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "color": {
+          "type": "string"
+        },
+        "name": {
+          "enum": [
+            "super-light-red",
+            "super-light-orange",
+            "super-light-yellow",
+            "super-light-green",
+            "super-light-blue",
+            "super-light-purple",
+            "light-red",
+            "light-orange",
+            "light-yellow",
+            "light-green",
+            "light-blue",
+            "light-purple",
+            "red",
+            "orange",
+            "yellow",
+            "green",
+            "blue",
+            "purple",
+            "semi-dark-red",
+            "semi-dark-orange",
+            "semi-dark-yellow",
+            "semi-dark-green",
+            "semi-dark-blue",
+            "semi-dark-purple",
+            "dark-red",
+            "dark-orange",
+            "dark-yellow",
+            "dark-green",
+            "dark-blue",
+            "dark-purple"
+          ],
+          "type": "string"
+        },
+        "primary": {
+          "type": "boolean"
+        }
+      },
+      "required": ["color", "name"],
+      "type": "object"
+    },
+    "ThemeVizHue": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "enum": ["red", "orange", "yellow", "green", "blue", "purple"],
+          "type": "string"
+        },
+        "shades": {
+          "items": {
+            "$ref": "#/definitions/ThemeVizColor%3Calias-498742091-559-644-498742091-0-16072%3E"
+          },
+          "type": "array"
+        }
+      },
+      "required": ["name", "shades"],
+      "type": "object"
+    }
+  }
+}
