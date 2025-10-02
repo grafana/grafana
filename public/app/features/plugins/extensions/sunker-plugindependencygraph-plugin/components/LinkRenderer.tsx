@@ -4,12 +4,17 @@
  * Renders dependency links/arrows between nodes in the dependency graph.
  */
 
-import { NodeWithPosition, PositionInfo } from './GraphLayout';
-import { VISUAL_CONSTANTS, getResponsiveComponentWidth, getResponsiveNodeWidth } from '../constants';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+
+import { VISUAL_CONSTANTS, getResponsiveComponentWidth, getResponsiveNodeWidth } from '../constants';
 import { GraphData } from '../types';
-import React from 'react';
+
+import { NodeWithPosition, PositionInfo } from './GraphLayout';
+
+
+
 
 interface LinkRendererProps {
   theme: GrafanaTheme2;
@@ -23,6 +28,7 @@ interface LinkRendererProps {
   selectedExposedComponent: string | null;
   selectedContentConsumer: string | null;
   selectedContentProvider: string | null;
+  highlightedExtensionPoint?: string | null;
   styles: {
     link: string;
     linkHighlighted: string;
@@ -41,6 +47,7 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
   selectedExposedComponent,
   selectedContentConsumer,
   selectedContentProvider,
+  highlightedExtensionPoint,
   styles,
 }) => {
   if (isExposeMode) {
@@ -107,7 +114,8 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
         // Check if this arrow should be highlighted
         const isHighlighted =
           (selectedExtensionPoint ? extensionPointIds.includes(selectedExtensionPoint) : false) ||
-          selectedContentProvider === sourceId;
+          selectedContentProvider === sourceId ||
+          (highlightedExtensionPoint ? extensionPointIds.includes(highlightedExtensionPoint) : false);
 
         arrows.push(
           <g key={`${sourceId}-${definingPlugin}-${arrowIndex}`}>
@@ -120,7 +128,7 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
               markerEnd={isHighlighted ? 'url(#arrowhead-highlighted)' : 'url(#arrowhead)'}
               className={isHighlighted ? styles.linkHighlighted : styles.link}
               opacity={
-                (selectedExtensionPoint || selectedContentProvider) && !isHighlighted
+                (selectedExtensionPoint || selectedContentProvider || highlightedExtensionPoint) && !isHighlighted
                   ? VISUAL_CONSTANTS.UNSELECTED_OPACITY
                   : VISUAL_CONSTANTS.SELECTED_OPACITY
               }

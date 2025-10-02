@@ -5,5 +5,8 @@ export { NodeRenderer } from './NodeRenderer';
 export { LinkRenderer } from './LinkRenderer';
 export { ExtensionRenderer } from './ExtensionRenderer';
 export { ArrowMarkers } from './ArrowMarkers';
+export { ContextMenu } from './ContextMenu';
+export { ExtensionPointDrillDown } from './ExtensionPointDrillDown';
+export { ProviderDrillDown } from './ProviderDrillDown';
 export * from './GraphLayout';
 export { getGraphStyles } from './GraphStyles';

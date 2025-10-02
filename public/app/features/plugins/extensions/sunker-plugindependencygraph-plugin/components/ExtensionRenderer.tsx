@@ -33,6 +33,7 @@ interface ExtensionRendererProps {
   selectedExposedComponent: string | null;
   onExtensionPointClick: (id: string | null) => void;
   onExposedComponentClick: (id: string | null) => void;
+  onExtensionPointRightClick?: (event: React.MouseEvent, extensionPointId: string) => void;
   styles: {
     extensionGroupBox: string;
     extensionPointBox: string;
@@ -56,6 +57,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
   selectedExposedComponent,
   onExtensionPointClick,
   onExposedComponentClick,
+  onExtensionPointRightClick,
   styles,
 }) => {
   if (isExposeMode) {
@@ -301,8 +303,30 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       }
                       rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
                       className={styles.extensionPointBox}
-                      onClick={() => onExtensionPointClick(selectedExtensionPoint === epId ? null : epId)}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        // Left-click for context menu
+                        onExtensionPointRightClick?.(event, epId);
+                      }}
                       style={{ cursor: 'pointer' }}
+                    />
+
+                    {/* Invisible overlay to capture all clicks in the extension point area */}
+                    <rect
+                      x={epPos.x}
+                      y={epPos.y - originalHeight / 2}
+                      width={extensionBoxWidth}
+                      height={extensionBoxHeight}
+                      fill="transparent"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        console.log('Left-click detected on extension point:', epId);
+                        // Left-click for context menu
+                        onExtensionPointRightClick?.(event, epId);
+                      }}
+                      style={{ cursor: 'pointer', pointerEvents: 'all' }}
                     />
 
                     {/* Extension point ID - first line */}
@@ -312,6 +336,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       textAnchor="middle"
                       className={styles.extensionPointLabel}
                       fill={theme.colors.getContrastText(extensionColor)}
+                      style={{ pointerEvents: 'none' }}
                     >
                       {epId}
                     </text>
@@ -325,6 +350,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                           textAnchor="middle"
                           className={styles.extensionTypeBadge}
                           fill={theme.colors.getContrastText(extensionColor)}
+                          style={{ pointerEvents: 'none' }}
                         >
                           {/* ({extensionType} extension) */}
                         </text>
@@ -339,6 +365,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                               textAnchor="middle"
                               className={styles.descriptionInlineText}
                               fill={theme.colors.getContrastText(extensionColor)}
+                              style={{ pointerEvents: 'none' }}
                             >
                               {extensionPoint.description}
                             </text>
