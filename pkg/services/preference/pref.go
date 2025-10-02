@@ -10,5 +10,5 @@ type Service interface {
 	Save(context.Context, *SavePreferenceCommand) error
 	Patch(context.Context, *PatchPreferenceCommand) error
 	GetDefaults() *Preference
-	Delete(ctx context.Context, orgId, userId, teamId int64) error
+	Delete(context.Context, *DeleteCommand) error
 }

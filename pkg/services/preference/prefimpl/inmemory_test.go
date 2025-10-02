@@ -121,6 +121,6 @@ func (s *inmemStore) Update(ctx context.Context, preference *pref.Preference) er
 	return nil
 }
 
-func (s *inmemStore) Delete(ctx context.Context, orgId, userId, teamId int64) error {
+func (s *inmemStore) Delete(context.Context, *pref.DeleteCommand) error {
 	panic("not yet implemented")
 }

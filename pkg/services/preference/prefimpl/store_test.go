@@ -186,7 +186,7 @@ func testIntegrationPreferencesDataAccess(t *testing.T, fn getStore) {
 	})
 	t.Run("delete preference by user", func(t *testing.T) {
 		userId := int64(1)
-		err := prefStore.Delete(context.Background(), 0, userId, 0)
+		err := prefStore.Delete(context.Background(), &pref.DeleteCommand{UserID: userId})
 		require.NoError(t, err)
 		query := &pref.Preference{OrgID: 0, UserID: userId, TeamID: 0}
 		_, err = prefStore.Get(context.Background(), query)

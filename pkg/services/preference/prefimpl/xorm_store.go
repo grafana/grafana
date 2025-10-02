@@ -81,25 +81,25 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *pref.Preference) (int64, err
 	return ID, err
 }
 
-func (s *sqlStore) Delete(ctx context.Context, orgId, userId, teamId int64) error {
-	if userId > 0 {
+func (s *sqlStore) Delete(ctx context.Context, cmd *pref.DeleteCommand) error {
+	if cmd.UserID > 0 {
 		return s.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 			var rawSQL = "DELETE FROM preferences WHERE user_id = ?"
-			_, err := dbSession.Exec(rawSQL, userId)
+			_, err := dbSession.Exec(rawSQL, cmd.UserID)
 			return err
 		})
 	}
-	if teamId > 0 {
+	if cmd.TeamID > 0 {
 		return s.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 			var rawSQL = "DELETE FROM preferences WHERE team_id = ?"
-			_, err := dbSession.Exec(rawSQL, teamId)
+			_, err := dbSession.Exec(rawSQL, cmd.TeamID)
 			return err
 		})
 	}
-	if orgId > 0 {
+	if cmd.OrgID > 0 {
 		return s.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 			var rawSQL = "DELETE FROM preferences WHERE org_id = ? AND user_id=0 AND team_id=0"
-			_, err := dbSession.Exec(rawSQL, orgId)
+			_, err := dbSession.Exec(rawSQL, cmd.OrgID)
 			return err
 		})
 	}

@@ -239,29 +239,29 @@ func (s *preferenceStorage) Delete(ctx context.Context, name string, deleteValid
 		return nil, false, fmt.Errorf("invalid name")
 	}
 
-	var orgId, userId, teamId int64
+	cmd := &pref.DeleteCommand{}
 
 	switch owner.Owner {
 	case utils.TeamResourceOwner:
-		teamId, err = user.GetInternalID()
+		cmd.TeamID, err = user.GetInternalID()
 		if err != nil {
 			return nil, false, err
 		}
 
 	case utils.UserResourceOwner:
-		userId, err = user.GetInternalID()
+		cmd.UserID, err = user.GetInternalID()
 		if err != nil {
 			return nil, false, err
 		}
 
 	case utils.NamespaceResourceOwner:
-		orgId = user.GetOrgID()
+		cmd.OrgID = user.GetOrgID()
 
 	default:
 		return nil, false, fmt.Errorf("unsupported owner")
 	}
 
-	err = s.prefs.Delete(ctx, orgId, userId, teamId)
+	err = s.prefs.Delete(ctx, cmd)
 	return nil, (err == nil), err
 }
 

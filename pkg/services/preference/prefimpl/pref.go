@@ -272,8 +272,8 @@ func (s *Service) GetDefaults() *pref.Preference {
 	}
 }
 
-func (s *Service) Delete(ctx context.Context, orgId, userId, teamId int64) error {
-	return s.store.Delete(ctx, orgId, userId, teamId)
+func (s *Service) Delete(ctx context.Context, cmd *pref.DeleteCommand) error {
+	return s.store.Delete(ctx, cmd)
 }
 
 func parseCookiePreferences(prefs []pref.CookieType) (map[string]struct{}, error) {
