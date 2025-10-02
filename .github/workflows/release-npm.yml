@@ -39,12 +39,14 @@ permissions: {}
 
 jobs:
   # If called with version_type 'canary' or 'stable', build + publish to NPM
-  # If called with version_type 'nightly', just tag the given version with nightly tag. It was already published by the canary build.
+  # If called with version_type 'nightly', do nothing (we're not yet tagging them with the nightly tag)
 
   publish:
     name: Publish NPM packages
     runs-on: github-hosted-ubuntu-x64-small
     if: inputs.version_type == 'canary' || inputs.version_type == 'stable'
+    # Required for this workflow to have permission to publish NPM packages
+    environment: npm-publish
     permissions:
       contents: read
       id-token: write
@@ -130,18 +132,3 @@ jobs:
         env:
           NPM_TAG: ${{ steps.npm-tag.outputs.NPM_TAG }}
         run: ./scripts/publish-npm-packages.sh --dist-tag "$NPM_TAG" --registry 'https://registry.npmjs.org/'
-
-  # TODO: finish this step
-  tag-nightly:
-    name: Tag nightly release
-    runs-on: github-hosted-ubuntu-x64-small
-    if: inputs.version_type == 'nightly'
-
-    steps:
-      - name: Checkout workflow ref
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      # TODO: tag the given release with nightly
-
