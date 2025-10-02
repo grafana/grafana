@@ -12,6 +12,7 @@ use (
 	./apps/correlations
 	./apps/dashboard
 	./apps/folder
+	./apps/history
 	./apps/iam
 	./apps/investigations
 	./apps/playlist

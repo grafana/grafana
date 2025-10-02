@@ -268,6 +268,7 @@ replace (
 	github.com/grafana/grafana/apps/correlations => ./apps/correlations
 	github.com/grafana/grafana/apps/dashboard => ./apps/dashboard
 	github.com/grafana/grafana/apps/folder => ./apps/folder
+	github.com/grafana/grafana/apps/history => ./apps/history
 	github.com/grafana/grafana/apps/iam => ./apps/iam
 	github.com/grafana/grafana/apps/investigations => ./apps/investigations
 	github.com/grafana/grafana/apps/playlist => ./apps/playlist

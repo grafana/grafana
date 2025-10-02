@@ -2188,6 +2188,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesHistory",
+        "resourceVersion": "1759416296904",
+        "creationTimestamp": "2025-10-02T14:44:56Z"
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes query history",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesLibraryPanels",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-06-25T22:21:56Z"
