@@ -48,6 +48,7 @@ import {
   predicateByName,
   parseStyleJson,
   calculateFooterHeight,
+  displayJsonValue,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -1355,10 +1356,35 @@ describe('TableNG utils', () => {
   });
 
   describe('displayJsonValue', () => {
-    it.todo('should parse and then stringify string values');
-    it.todo('should not throw for non-serializable string values');
-    it.todo('should stringify non-string values');
-    it.todo('should not throw for non-serializable non-string values');
+    let field: Field;
+    beforeEach(() => {
+      field = {
+        name: 'test',
+        type: FieldType.string,
+        config: {},
+        state: { displayName: 'Test Display Name' },
+        values: [],
+        display: (val: unknown) => ({ text: String(val), numeric: NaN }),
+      };
+    });
+
+    it('should parse and then stringify string values', () => {
+      expect(displayJsonValue(field)('{"valid": "json"}').text).toBe('{\n "valid": "json"\n}');
+    });
+
+    it('should not throw for non-serializable string values', () => {
+      expect(displayJsonValue(field)('{"invalid": "json').text).toBe('{"invalid": "json');
+    });
+
+    it('should stringify non-string values', () => {
+      expect(displayJsonValue(field)(42).text).toBe('42');
+    });
+
+    it('should use the underlying field.display method to format values and return numeric values', () => {
+      field.display = (val: unknown) => ({ text: `**${val}**`, numeric: Number(val), suffix: 'ms' });
+      expect(displayJsonValue(field)(42).text).toBe('**42**ms');
+      expect(displayJsonValue(field)(42).numeric).toBe(42);
+    });
   });
 
   describe('applySort', () => {
