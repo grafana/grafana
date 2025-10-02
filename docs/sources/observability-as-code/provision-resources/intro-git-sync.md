@@ -33,7 +33,7 @@ Because dashboards are defined in JSON files, you can enable as-code workflows w
 
 Git Sync is bidirectional and works both with changes done directly in GitHub as well as in the Grafana UI.
 
-### Making changes in Grafana
+### Make changes in Grafana
 
 Whenever you modify a dashboard directly from the UI, Grafana can commit changes to Git upon saving. You can configure settings to either enforce PR approvals before merging in your repository, or allow direct commits.
 
@@ -42,7 +42,7 @@ Grafana periodically polls GitHub at a regular internal to synchronize any chang
 - If you enable the [webhooks feature](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/git-sync-setup/#configure-webhooks-and-image-rendering), repository notifications appear almost immediately.
 - Without webhooks, Grafana polls for changes at the specified interval.
 
-### Making changes in your GitHub repositories
+### Make changes in your GitHub repositories
 
 With Git Sync, you can make changes in your provisioned files in GitHub and see them in Grafana. Automated workflows ensure those changes are automatically represented in the Grafana database by updating Git. The Grafana UI reads the database and updates the UI to reflect these changes.
 
