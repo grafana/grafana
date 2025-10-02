@@ -88,13 +88,19 @@ export function ChannelSubForm<R extends ChannelValues>({
       if (initialValues && name === typeFieldPath && value === initialValues.type && type === 'change') {
         setValue(settingsFieldPath, initialValues.settings);
         setValue(secureFieldsPath, initialValues.secureFields);
-      }
-
-      // When switching to a new notifier, set the default settings to remove all existing settings
-      // from the previous notifier
-      if (name === typeFieldPath && type === 'change') {
+      } else if (name === typeFieldPath && type === 'change') {
+        // When switching to a new notifier, set the default settings to remove all existing settings
+        // from the previous notifier
         const newNotifier = notifiers.find(({ dto: { type } }) => type === value);
         const defaultNotifierSettings = newNotifier ? getDefaultNotifierSettings(newNotifier) : {};
+
+        // Not sure why, but verriding settingsFieldPath is not enough if notifiers have the same settings fields, like url, title
+        const currentSettings = getValues(settingsFieldPath) ?? {};
+        Object.keys(currentSettings).forEach((key) => {
+          if (!defaultNotifierSettings[key]) {
+            setValue(`${settingsFieldPath}.${key}`, defaultNotifierSettings[key]);
+          }
+        });
 
         setValue(settingsFieldPath, defaultNotifierSettings);
         setValue(secureFieldsPath, {});

@@ -7,6 +7,8 @@ import { byRole, byTestId } from 'testing-library-selector';
 import { grafanaAlertNotifiers } from 'app/features/alerting/unified/mockGrafanaNotifiers';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 
+import { OnCallIntegrationType } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
+
 import { ChannelSubForm } from './ChannelSubForm';
 import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
 import { Notifier } from './notifiers';
@@ -28,6 +30,7 @@ const ui = {
   settings: {
     webhook: {
       url: byRole('textbox', { name: /^URL/ }),
+      optionalSettings: byRole('button', { name: /optional webhook settings/i }),
       title: {
         container: byTestId('items.0.settings.title'),
         input: byRole('textbox', { name: /^Title/ }),
@@ -41,33 +44,29 @@ const ui = {
       recipient: byTestId('items.0.settings.recipient'),
       token: byTestId('items.0.settings.token'),
       username: byTestId('items.0.settings.username'),
+      webhookUrl: byRole('textbox', { name: /^Webhook URL/ }),
     },
     googlechat: {
       optionalSettings: byRole('button', { name: /optional google hangouts chat settings/i }),
       url: byRole('textbox', { name: /^URL/ }),
       title: {
         input: byRole('textbox', { name: /^Title/ }),
+        container: byTestId('items.0.settings.title'),
       },
       message: {
         input: byRole('textbox', { name: /^Message/ }),
+        container: byTestId('items.0.settings.message'),
       },
     },
   },
 };
 
 const notifiers: Notifier[] = [
-  {
-    dto: grafanaAlertNotifiers.webhook,
-    meta: { enabled: true, order: 1 },
-  },
-  {
-    dto: grafanaAlertNotifiers.slack,
-    meta: { enabled: true, order: 2 },
-  },
-  {
-    dto: grafanaAlertNotifiers.googlechat,
-    meta: { enabled: true, order: 3 },
-  },
+  { dto: grafanaAlertNotifiers.webhook, meta: { enabled: true, order: 1 } },
+  { dto: grafanaAlertNotifiers.slack, meta: { enabled: true, order: 2 } },
+  { dto: grafanaAlertNotifiers.googlechat, meta: { enabled: true, order: 3 } },
+  { dto: grafanaAlertNotifiers.sns, meta: { enabled: true, order: 4 } },
+  { dto: grafanaAlertNotifiers.oncall, meta: { enabled: true, order: 5 } },
 ];
 
 describe('ChannelSubForm', () => {
@@ -124,28 +123,7 @@ describe('ChannelSubForm', () => {
     expect(ui.settings.slack.username.get()).toBeInTheDocument();
   });
 
-  it('maintains form context properly during type switching', async () => {
-    renderForm({
-      __id: 'id-0',
-      type: 'slack',
-      settings: { recipient: '#alerts' },
-      secureFields: {},
-    });
-
-    expect(ui.typeSelector.get()).toHaveTextContent('Slack');
-
-    await clickSelectOption(ui.typeSelector.get(), 'Webhook');
-    await waitFor(() => {
-      expect(ui.typeSelector.get()).toHaveTextContent('Webhook');
-    });
-
-    await clickSelectOption(ui.typeSelector.get(), 'Slack');
-    await waitFor(() => {
-      expect(ui.typeSelector.get()).toHaveTextContent('Slack');
-    });
-  });
-
-  it('should clear settings and secure fields when switching integration types', async () => {
+  it('should clear secure fields when switching integration types', async () => {
     const googlechatDefaults: TestChannelValues = {
       __id: 'id-0',
       type: 'googlechat',
@@ -176,5 +154,97 @@ describe('ChannelSubForm', () => {
     // If value for templated fields is empty the input should not be present
     expect(ui.settings.webhook.message.input.query()).not.toBeInTheDocument();
     expect(ui.settings.webhook.title.input.query()).not.toBeInTheDocument();
+  });
+
+  it('should clear settings when switching from webhook to googlechat', async () => {
+    const webhookDefaults: TestChannelValues = {
+      __id: 'id-0',
+      type: 'webhook',
+      settings: { url: 'https://example.com/webhook', title: 'Webhook Title', message: 'Webhook Message' },
+      secureFields: {},
+    };
+
+    const { user } = renderForm(webhookDefaults, webhookDefaults);
+
+    expect(ui.typeSelector.get()).toHaveTextContent('Webhook');
+
+    expect(ui.settings.webhook.url.get()).toHaveValue('https://example.com/webhook');
+
+    await user.click(ui.settings.webhook.optionalSettings.get());
+    expect(ui.settings.webhook.title.input.get()).toHaveValue('Webhook Title');
+    expect(ui.settings.webhook.message.input.get()).toHaveValue('Webhook Message');
+
+    await clickSelectOption(ui.typeSelector.get(), 'Google Hangouts Chat');
+    expect(ui.typeSelector.get()).toHaveTextContent('Google Hangouts Chat');
+
+    // Google Chat URL field should now be present and empty (settings cleared)
+    expect(ui.settings.googlechat.url.get()).toHaveValue('');
+    expect(ui.settings.googlechat.title.container.get()).toBeInTheDocument();
+    expect(ui.settings.googlechat.message.container.get()).toBeInTheDocument();
+
+    // If value for templated fields is empty the input should not be present
+    expect(ui.settings.googlechat.message.input.query()).not.toBeInTheDocument();
+    expect(ui.settings.googlechat.title.input.query()).not.toBeInTheDocument();
+  });
+
+  it('should restore initial values when switching back to original type', async () => {
+    const googlechatDefaults: TestChannelValues = {
+      __id: 'id-0',
+      type: 'googlechat',
+      settings: { title: 'Original Title', message: 'Original Message' },
+      secureFields: { url: true },
+    };
+
+    const { user } = renderForm(googlechatDefaults, googlechatDefaults);
+
+    expect(ui.typeSelector.get()).toHaveTextContent('Google Hangouts Chat');
+
+    expect(ui.settings.googlechat.url.get()).toBeDisabled();
+    expect(ui.settings.googlechat.url.get()).toHaveValue('configured');
+
+    await user.click(ui.settings.googlechat.optionalSettings.get());
+
+    expect(ui.settings.googlechat.title.input.get()).toHaveValue('Original Title');
+    expect(ui.settings.googlechat.message.input.get()).toHaveValue('Original Message');
+
+    // Switch to a different type
+    await clickSelectOption(ui.typeSelector.get(), 'Webhook');
+    expect(ui.typeSelector.get()).toHaveTextContent('Webhook');
+    expect(ui.settings.webhook.url.get()).toHaveValue('');
+
+    // Switch back to the original type
+    await clickSelectOption(ui.typeSelector.get(), 'Google Hangouts Chat');
+    expect(ui.typeSelector.get()).toHaveTextContent('Google Hangouts Chat');
+
+    // Original settings and secure fields should be restored
+    expect(ui.settings.googlechat.url.get()).toBeDisabled();
+    expect(ui.settings.googlechat.url.get()).toHaveValue('configured');
+
+    expect(ui.settings.googlechat.title.input.get()).toHaveValue('Original Title');
+    expect(ui.settings.googlechat.message.input.get()).toHaveValue('Original Message');
+  });
+
+  it('should maintain secure field isolation across multiple type switches', async () => {
+    const googlechatDefaults: TestChannelValues = {
+      __id: 'id-0',
+      type: 'googlechat',
+      settings: {},
+      secureFields: { url: true },
+    };
+
+    renderForm(googlechatDefaults, googlechatDefaults);
+
+    expect(ui.typeSelector.get()).toHaveTextContent('Google Hangouts Chat');
+    expect(ui.settings.googlechat.url.get()).toBeDisabled();
+    expect(ui.settings.googlechat.url.get()).toHaveValue('configured');
+
+    // Switch to Slack
+    await clickSelectOption(ui.typeSelector.get(), 'Slack');
+    expect(ui.typeSelector.get()).toHaveTextContent('Slack');
+
+    // Slack should not have any secure fields from Google Chat
+    const slackUrl = ui.settings.slack.webhookUrl.get();
+    expect(slackUrl).toBeEnabled();
+    expect(slackUrl).toHaveValue('');
   });
 });
