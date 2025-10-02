@@ -3000,6 +3000,9 @@ __metadata:
     plop: "npm:^4.0.1"
     rollup: "npm:^4.22.4"
     typescript: "npm:5.9.2"
+  peerDependencies:
+    "@grafana/runtime": ">=11.6 <= 12.x"
+    "@reduxjs/toolkit": ^2.8.0
   languageName: unknown
   linkType: soft
 

@@ -97,5 +97,9 @@
     "plop": "^4.0.1",
     "rollup": "^4.22.4",
     "typescript": "5.9.2"
+  },
+  "peerDependencies": {
+    "@grafana/runtime": ">=11.6 <= 12.x",
+    "@reduxjs/toolkit": "^2.8.0"
   }
 }
