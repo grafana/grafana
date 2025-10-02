@@ -69,15 +69,15 @@ function StarToolbarButtonLegacy({ dashboard }: { dashboard: Props['dashboard'] 
   const uid = meta.uid || meta.k8s?.name || uidFromState;
   const tooltips = getStarTooltips();
 
-  const { value, retry } = useAsyncRetry(async () => {
+  const { value: starredUids, retry } = useAsyncRetry(async () => {
     return getBackendSrv().get('api/user/stars');
   });
 
-  if (!value || !uid) {
+  if (!starredUids || !uid) {
     return null;
   }
 
-  const isStarred = value?.includes(uid);
+  const isStarred = starredUids?.includes(uid);
   return (
     <ToolbarButton
       tooltip={isStarred ? tooltips.unstar : tooltips.star}
