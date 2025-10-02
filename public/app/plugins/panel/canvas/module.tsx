@@ -74,6 +74,14 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
       ],
     },
   });
+
+  builder.addBooleanSwitch({
+    path: 'tooltip.disableForOneClick',
+    name: t('canvas.tooltip-options.label-disable-one-click', 'Disable for one-click elements'),
+    category,
+    defaultValue: false,
+    showIf: (options) => options.tooltip?.mode !== TooltipDisplayMode.None,
+  });
 };
 
 export const plugin = new PanelPlugin<Options>(CanvasPanel)
@@ -97,7 +105,10 @@ export const plugin = new PanelPlugin<Options>(CanvasPanel)
       },
     },
   })
-  .setMigrationHandler(canvasMigrationHandler)
+  .setMigrationHandler(canvasMigrationHandler, (panel) => {
+    const pluginVersion = panel?.pluginVersion ?? '';
+    return parseFloat(pluginVersion) <= 12.2;
+  })
   .setPanelOptions((builder, context) => {
     const state: InstanceState = context.instanceState;
 

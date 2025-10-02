@@ -1,11 +1,14 @@
+import { HttpResponse } from 'msw';
 import { render } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
+import { OrgRole } from '@grafana/data';
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
-import { grantUserPermissions } from '../mocks';
+import { grantUserPermissions, grantUserRole } from '../mocks';
+import { setGrafanaRuleGroupExportResolver } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
 import { RulesFilter } from '../search/rulesSearchParser';
 import { testWithFeatureToggles } from '../test/test-utils';
@@ -162,11 +165,16 @@ describe('RuleListActions', () => {
       newAlertRuleForExport: byRole('link', { name: /new alert rule for export/i }),
       newGrafanaRecordingRule: byRole('link', { name: /new grafana recording rule/i }),
       newDataSourceRecordingRule: byRole('link', { name: /new data source recording rule/i }),
+      importAlertRules: byRole('link', { name: /import alert rules/i }),
+      exportAllGrafanaRules: byRole('menuitem', { name: /export all grafana rules/i }),
     },
+    exportDrawer: byRole('dialog', { name: /export/i }),
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default to Viewer role (non-admin)
+    grantUserRole(OrgRole.Viewer);
   });
 
   it.each([
@@ -242,6 +250,96 @@ describe('RuleListActions', () => {
     expect(ui.menuOptions.newAlertRuleForExport.query(menu)).toBeInTheDocument();
     expect(ui.menuOptions.newGrafanaRecordingRule.query(menu)).toBeInTheDocument();
     expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).toBeInTheDocument();
+  });
+
+  describe('Import Alert Rules', () => {
+    testWithFeatureToggles(['alertingMigrationUI']);
+
+    it('should show "Import alert rules" option when user has required permissions and feature toggle is enabled', async () => {
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+      ]);
+
+      const { user } = render(<RuleListActions />);
+
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.importAlertRules.query(menu)).toBeInTheDocument();
+    });
+
+    it('should not show "Import alert rules" option when user lacks required permissions', async () => {
+      // Keep default Viewer role and only read permissions
+      grantUserPermissions([AccessControlAction.AlertingRuleRead]);
+
+      const { user } = render(<RuleListActions />);
+
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.importAlertRules.query(menu)).not.toBeInTheDocument();
+    });
+
+    it('should have correct URL for "Import alert rules" menu item', async () => {
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+      ]);
+
+      const { user } = render(<RuleListActions />);
+
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+      const importMenuItem = ui.menuOptions.importAlertRules.get(menu);
+
+      expect(importMenuItem).toHaveAttribute('href', '/alerting/import-datasource-managed-rules');
+    });
+  });
+
+  describe('Export All Grafana Rules', () => {
+    it('should show "Export all Grafana rules" option when user has export permissions', async () => {
+      grantUserPermissions([AccessControlAction.AlertingRuleRead]);
+
+      const { user } = render(<RuleListActions />);
+
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.exportAllGrafanaRules.query(menu)).toBeInTheDocument();
+    });
+
+    it('should not show "Export all Grafana rules" option when user lacks export permissions', async () => {
+      grantUserPermissions([]); // No permissions
+
+      const { user } = render(<RuleListActions />);
+
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.exportAllGrafanaRules.query(menu)).not.toBeInTheDocument();
+    });
+
+    it('should open export drawer when "Export all Grafana rules" is clicked', async () => {
+      // Set up MSW mock for export endpoint
+      setGrafanaRuleGroupExportResolver(() => {
+        return HttpResponse.text('# Mock YAML export content\ngroups: []');
+      });
+
+      grantUserPermissions([AccessControlAction.AlertingRuleRead]);
+
+      const { user } = render(<RuleListActions />);
+
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+      const exportMenuItem = ui.menuOptions.exportAllGrafanaRules.get(menu);
+
+      await user.click(exportMenuItem);
+
+      expect(ui.exportDrawer.query()).toBeInTheDocument();
+    });
   });
 });
 

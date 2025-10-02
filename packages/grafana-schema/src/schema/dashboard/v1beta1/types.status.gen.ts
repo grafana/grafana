@@ -6,18 +6,16 @@ export interface ConversionStatus {
 	// If true, means that the dashboard is not valid,
 	// and the caller should instead fetch the stored version.
 	failed: boolean;
-	// The version which was stored when the dashboard was created / updated.
-	// Fetching this version should always succeed.
-	storedVersion: string;
 	// The error message from the conversion.
 	// Empty if the conversion has not failed.
-	error: string;
+	error?: string;
+	// The version which was stored when the dashboard was created / updated.
+	// Fetching this version should always succeed.
+	storedVersion?: string;
 }
 
 export const defaultConversionStatus = (): ConversionStatus => ({
 	failed: false,
-	storedVersion: "",
-	error: "",
 });
 
 export interface Status {

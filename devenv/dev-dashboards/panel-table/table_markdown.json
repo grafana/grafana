@@ -36,8 +36,7 @@
             "cellOptions": {
               "type": "auto"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {

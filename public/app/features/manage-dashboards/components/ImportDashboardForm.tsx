@@ -121,7 +121,7 @@ export const ImportDashboardForm = ({
           const current = watchDataSources ?? [];
           return (
             <Field
-              label={input.label}
+              label={input.pluginId}
               description={input.description}
               key={dataSourceOption}
               invalid={errors.dataSources && !!errors.dataSources[index]}

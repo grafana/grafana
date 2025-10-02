@@ -78,10 +78,8 @@ func (f *DefaultPluginFactory) newPlugin(p plugins.FoundPlugin, class plugins.Cl
 		return nil, err
 	}
 
-	if f.features.LocalizationForPlugins {
-		if err := setTranslations(plugin, f.assetPath, info); err != nil {
-			return nil, err
-		}
+	if err := setTranslations(plugin, f.assetPath, info); err != nil {
+		return nil, err
 	}
 
 	return plugin, nil

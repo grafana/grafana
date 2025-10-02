@@ -24,18 +24,28 @@ export class ValidationSrv {
     );
   }
 
-  validateNewFolderName(name?: string) {
-    return this.validate(
-      this.rootName,
-      name,
-      t(
-        'manage-dashboards.validation-srv.message-same-name-general',
-        'A folder or dashboard in the general folder with the same name already exists'
-      )
-    );
+  validateNewFolderName(name?: string, parentFolderUid?: string) {
+    const validationMessage = parentFolderUid
+      ? t(
+          'manage-dashboards.validation-srv.message-same-name-current-folder',
+          'A dashboard or a folder with the same name already exists in the current folder'
+        )
+      : t(
+          'manage-dashboards.validation-srv.message-same-name-general',
+          'A folder or dashboard with the same name already exists in the root folder'
+        );
+
+    return this.validate(parentFolderUid || this.rootName, name, validationMessage);
   }
 
-  private async validate(folderUID: string, name: string | undefined, existingErrorMessage: string) {
+  private async validate(
+    /** Folder in which to validate newly created resource */
+    folderUID: string,
+    /** Name of the resource being created */
+    name: string | undefined,
+    /** Error message to throw if the resource already exists */
+    existingErrorMessage: string
+  ) {
     name = (name || '').trim();
     const nameLowerCased = name.toLowerCase();
 
@@ -59,7 +69,7 @@ export class ValidationSrv {
     const searcher = getGrafanaSearcher();
 
     const dashboardResults = await searcher.search({
-      kind: ['dashboard'],
+      kind: ['dashboard', 'folder'],
       query: name,
       location: folderUID || 'general',
     });

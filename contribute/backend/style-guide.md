@@ -60,13 +60,12 @@ You only need to define `TestMain` in one `_test.go` file within each package.
 
 We run unit and integration tests separately, to help keep our CI pipeline running smoothly and provide a better developer experience.
 
-To properly mark a test as being an integration test, you must format your test function definition as follows, with the function name starting with `TestIntegration` and the check for `testing.Short()`:
+To properly mark a test as being an integration test, you must format your test function definition as follows, with the function name starting with `TestIntegration` and the check for running in Short mode by using `testutil.SkipIntegrationTestInShortMode(t)` function:
 
 ```go
 func TestIntegrationFoo(t *testing.T) {
-    if testing.Short() {
-        t.Skip("skipping integration test")
-    }
+    testutil.SkipIntegrationTestInShortMode(t)
+
     // function body
 }
 ```

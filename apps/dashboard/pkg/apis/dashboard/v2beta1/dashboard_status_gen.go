@@ -9,12 +9,12 @@ type DashboardConversionStatus struct {
 	// If true, means that the dashboard is not valid,
 	// and the caller should instead fetch the stored version.
 	Failed bool `json:"failed"`
-	// The version which was stored when the dashboard was created / updated.
-	// Fetching this version should always succeed.
-	StoredVersion string `json:"storedVersion"`
 	// The error message from the conversion.
 	// Empty if the conversion has not failed.
-	Error string `json:"error"`
+	Error *string `json:"error,omitempty"`
+	// The version which was stored when the dashboard was created / updated.
+	// Fetching this version should always succeed.
+	StoredVersion *string `json:"storedVersion,omitempty"`
 }
 
 // NewDashboardConversionStatus creates a new DashboardConversionStatus object.

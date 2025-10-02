@@ -13,6 +13,8 @@ export const FIELD_GAP_MULTIPLIER = 1.5;
 
 export const DEFAULT_LINE_HEIGHT = 22;
 
+export const LOG_LIST_CONTROLS_WIDTH = 32;
+
 export class LogLineVirtualization {
   private ctx: CanvasRenderingContext2D | null = null;
   private gridSize;
@@ -180,7 +182,8 @@ export class LogLineVirtualization {
   calculateFieldDimensions = (
     logs: LogListModel[],
     displayedFields: string[] = [],
-    timestampResolution: LogLineTimestampResolution
+    timestampResolution: LogLineTimestampResolution,
+    showUniqueLabels?: boolean
   ) => {
     if (!logs.length) {
       return [];
@@ -212,6 +215,12 @@ export class LogLineVirtualization {
         width: levelWidth,
       },
     ];
+    if (showUniqueLabels) {
+      dimensions.push({
+        field: 'unique-labels',
+        width: 0,
+      });
+    }
     for (const field in fieldWidths) {
       dimensions.push({
         field,
@@ -317,7 +326,7 @@ export interface LogFieldDimension {
   width: number;
 }
 
-export function hasUnderOrOverflow(
+export function getLogLineDOMHeight(
   virtualization: LogLineVirtualization,
   element: HTMLDivElement,
   calculatedHeight?: number,

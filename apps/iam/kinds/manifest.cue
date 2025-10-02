@@ -10,7 +10,7 @@ manifest: {
 
 v0alpha1: {
     kinds: [
-		globalrolev0alpha1, 
+		globalrolev0alpha1,
 		globalrolebindingv0alpha1,
 		corerolev0alpha1,
 		rolev0alpha1,

@@ -2,28 +2,38 @@ import { css, cx } from '@emotion/css';
 
 import { VariableHide, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { sceneGraph, useSceneObjectState, SceneVariable, SceneVariableState, ControlsLabel } from '@grafana/scenes';
+import {
+  sceneGraph,
+  useSceneObjectState,
+  SceneVariable,
+  SceneVariableState,
+  ControlsLabel,
+  ControlsLayout,
+} from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
-  const variables = sceneGraph.getVariables(dashboard)!.useState();
+  const { variables } = sceneGraph.getVariables(dashboard)!.useState();
 
   return (
     <>
-      {variables.variables.map((variable) => (
-        <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
-      ))}
+      {variables
+        .filter((v) => v.state.hide !== VariableHide.inControlsMenu)
+        .map((variable) => (
+          <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
+        ))}
     </>
   );
 }
 
 interface VariableSelectProps {
   variable: SceneVariable;
+  inMenu?: boolean;
 }
 
-export function VariableValueSelectWrapper({ variable }: VariableSelectProps) {
+export function VariableValueSelectWrapper({ variable, inMenu }: VariableSelectProps) {
   const state = useSceneObjectState<SceneVariableState>(variable, { shouldActivateOrKeepAlive: true });
   const { isSelected, onSelect, isSelectable } = useElementSelection(variable.state.key);
   const styles = useStyles2(getStyles);
@@ -54,6 +64,15 @@ export function VariableValueSelectWrapper({ variable }: VariableSelectProps) {
     }
   };
 
+  if (inMenu) {
+    return (
+      <div className={styles.verticalContainer} data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}>
+        <VariableLabel variable={variable} layout={'vertical'} />
+        <variable.Component model={variable} />
+      </div>
+    );
+  }
+
   return (
     <div
       className={cx(
@@ -70,7 +89,15 @@ export function VariableValueSelectWrapper({ variable }: VariableSelectProps) {
   );
 }
 
-function VariableLabel({ variable, className }: { variable: SceneVariable; className?: string }) {
+function VariableLabel({
+  variable,
+  className,
+  layout,
+}: {
+  variable: SceneVariable;
+  className?: string;
+  layout?: ControlsLayout;
+}) {
   const { state } = variable;
 
   if (variable.state.hide === VariableHide.hideLabel) {
@@ -87,7 +114,7 @@ function VariableLabel({ variable, className }: { variable: SceneVariable; class
       onCancel={() => variable.onCancel?.()}
       label={labelOrName}
       error={state.error}
-      layout={'horizontal'}
+      layout={layout ?? 'horizontal'}
       description={state.description ?? undefined}
       className={className}
     />
@@ -102,6 +129,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
       borderTopLeftRadius: 'unset',
       borderBottomLeftRadius: 'unset',
     }),
+  }),
+  verticalContainer: css({
+    display: 'flex',
+    flexDirection: 'column',
   }),
   labelWrapper: css({
     display: 'flex',

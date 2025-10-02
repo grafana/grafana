@@ -1178,20 +1178,10 @@
             ]
           },
           "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistSpec"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistSpec"
           },
           "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistStatus"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
@@ -1201,6 +1191,29 @@
             "version": "v0alpha1"
           }
         ]
+      },
+      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistItem": {
+        "type": "object",
+        "required": [
+          "type",
+          "value"
+        ],
+        "properties": {
+          "type": {
+            "description": "type of the item.",
+            "type": "string",
+            "enum": [
+              "dashboard_by_tag",
+              "dashboard_by_uid",
+              "dashboard_by_id"
+            ]
+          },
+          "value": {
+            "description": "Value depends on type and describes the playlist item.\n - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This\n is not portable as the numerical identifier is non-deterministic between different instances.\n Will be replaced by dashboard_by_uid in the future. (deprecated)\n - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All\n dashboards behind the tag will be added to the playlist.\n - dashboard_by_uid: The value is the dashboard UID",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistList": {
         "type": "object",
@@ -1245,6 +1258,41 @@
           }
         ]
       },
+      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistOperatorState": {
+        "type": "object",
+        "required": [
+          "lastEvaluation",
+          "state"
+        ],
+        "properties": {
+          "descriptiveState": {
+            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
+            "type": "string"
+          },
+          "details": {
+            "description": "details contains any extra information that is operator-specific",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "lastEvaluation": {
+            "description": "lastEvaluation is the ResourceVersion last evaluated",
+            "type": "string"
+          },
+          "state": {
+            "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
+            "type": "string",
+            "enum": [
+              "success",
+              "in_progress",
+              "failed"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
       "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistSpec": {
         "type": "object",
         "required": [
@@ -1259,32 +1307,14 @@
           "items": {
             "type": "array",
             "items": {
-              "type": "object",
-              "required": [
-                "type",
-                "value"
-              ],
-              "properties": {
-                "type": {
-                  "description": "type of the item.",
-                  "type": "string",
-                  "enum": [
-                    "dashboard_by_tag",
-                    "dashboard_by_uid",
-                    "dashboard_by_id"
-                  ]
-                },
-                "value": {
-                  "description": "Value depends on type and describes the playlist item.\n - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This\n is not portable as the numerical identifier is non-deterministic between different instances.\n Will be replaced by dashboard_by_uid in the future. (deprecated)\n - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All\n dashboards behind the tag will be added to the playlist.\n - dashboard_by_uid: The value is the dashboard UID",
-                  "type": "string"
-                }
-              }
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistItem"
             }
           },
           "title": {
             "type": "string"
           }
-        }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistStatus": {
         "type": "object",
@@ -1292,44 +1322,20 @@
           "additionalFields": {
             "description": "additionalFields is reserved for future use",
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {}
+            }
           },
           "operatorStates": {
             "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
             "type": "object",
             "additionalProperties": {
-              "type": "object",
-              "required": [
-                "lastEvaluation",
-                "state"
-              ],
-              "properties": {
-                "descriptiveState": {
-                  "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
-                  "type": "string"
-                },
-                "details": {
-                  "description": "details contains any extra information that is operator-specific",
-                  "type": "object",
-                  "additionalProperties": true
-                },
-                "lastEvaluation": {
-                  "description": "lastEvaluation is the ResourceVersion last evaluated",
-                  "type": "string"
-                },
-                "state": {
-                  "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
-                  "type": "string",
-                  "enum": [
-                    "success",
-                    "in_progress",
-                    "failed"
-                  ]
-                }
-              }
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistOperatorState"
             }
           }
-        }
+        },
+        "additionalProperties": false
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",

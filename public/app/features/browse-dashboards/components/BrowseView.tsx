@@ -1,9 +1,16 @@
-import { useCallback } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { useCallback, useMemo } from 'react';
 
+import { OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { CallToActionCard, EmptyState, LinkButton, TextLink } from '@grafana/ui';
+import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { contextSrv } from 'app/core/core';
+import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { DashboardViewItem } from 'app/features/search/types';
-import { useDispatch } from 'app/types/store';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/services';
 import { fetchNextChildrenPage } from '../state/actions';
@@ -13,6 +20,7 @@ import {
   useChildrenByParentUIDState,
   useBrowseLoadingStatus,
   useLoadNextChildrenPage,
+  rootItemsSelector,
 } from '../state/hooks';
 import { setFolderOpenState, setItemSelectionState, setAllSelection } from '../state/slice';
 import { BrowseDashboardsState, DashboardTreeSelection, SelectionState, BrowseDashboardsPermissions } from '../types';
@@ -34,6 +42,30 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
   const selectedItems = useCheckboxSelectionState();
   const childrenByParentUID = useChildrenByParentUIDState();
   const canSelect = canSelectItems(permissions);
+  const isProvisionedInstance = useIsProvisionedInstance();
+  const provisioningEnabled = config.featureToggles.provisioning;
+  const hasNoRole = contextSrv.user.orgRole === OrgRole.None;
+  const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled || hasNoRole ? skipToken : undefined);
+  const rootItems = useSelector(rootItemsSelector);
+
+  const [, stateManager] = useSearchStateManager();
+
+  const excludeUIDs = useMemo(() => {
+    if (isProvisionedInstance || !provisioningEnabled) {
+      return [];
+    }
+    if (provisioningEnabled) {
+      // if only one repo folder and no local folders, then don't exclude it from selection
+      if (rootItems?.items.length === 1 && settingsData?.items.length === 1) {
+        return [];
+      }
+      // loop through settingsData to find all available repo name, and exclude them from select all action
+      // repo root folder is not actionable on browse dashboards page
+      return settingsData?.items.map((repo) => repo.name);
+    }
+
+    return [];
+  }, [isProvisionedInstance, settingsData, provisioningEnabled, rootItems]);
 
   const handleFolderClick = useCallback(
     (clickedFolderUID: string, isOpen: boolean) => {
@@ -51,6 +83,13 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
       dispatch(setItemSelectionState({ item, isSelected }));
     },
     [dispatch]
+  );
+
+  const handleTagClick = useCallback(
+    (tag: string) => {
+      stateManager.onAddTag(tag);
+    },
+    [stateManager]
   );
 
   const isSelected = useCallback(
@@ -164,10 +203,11 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
       height={height}
       isSelected={isSelected}
       onFolderClick={handleFolderClick}
-      onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState, folderUID }))}
+      onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState, folderUID, excludeUIDs }))}
       onItemSelectionChange={handleItemSelectionChange}
       isItemLoaded={isItemLoaded}
       requestLoadMore={handleLoadMore}
+      onTagClick={handleTagClick}
     />
   );
 }

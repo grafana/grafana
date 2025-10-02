@@ -24,6 +24,7 @@
     }
   },
   "include": [
+    "eslint.config.js",
     "public/app/**/*.ts*",
     "public/swagger/**/*.ts*",
     "public/e2e-test/**/*.ts",

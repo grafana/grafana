@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Ensure we're in the Grafana root directory
+cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 1
+
 . scripts/grafana-server/variables
 
 LICENSE_PATH=""

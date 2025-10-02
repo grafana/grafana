@@ -51,7 +51,7 @@ test.describe(
           .getByGrafanaSelector(selectors.components.Panels.Panel.title(title))
           .getByRole('row')
           .nth(1)
-          .getByRole('cell')
+          .getByRole('gridcell')
           .first();
         const time = await timeCell.textContent();
         if (time) {
@@ -79,7 +79,7 @@ test.describe(
           .getByGrafanaSelector(selectors.components.Panels.Panel.title(title))
           .getByRole('row')
           .nth(1)
-          .getByRole('cell')
+          .getByRole('gridcell')
           .first();
         await expect(async () => {
           const inUtc = timesInUtc[title];

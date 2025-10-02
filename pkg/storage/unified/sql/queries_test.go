@@ -31,6 +31,21 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						},
 					},
 				},
+				{
+					Name: "with rv",
+					Data: &sqlResourceRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						WriteEvent: resource.WriteEvent{
+							Key: &resourcepb.ResourceKey{
+								Namespace: "nn",
+								Group:     "gg",
+								Resource:  "rr",
+								Name:      "name",
+							},
+							PreviousRV: 1234,
+						},
+					},
+				},
 			},
 			sqlResourceInsert: {
 				{
@@ -63,6 +78,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 								Resource:  "rr",
 								Name:      "name",
 							},
+							PreviousRV: 1759304090100678,
 						},
 						Folder: "fldr",
 					},
@@ -117,6 +133,19 @@ func TestUnifiedStorageQueries(t *testing.T) {
 							},
 						},
 						Response: new(resourcepb.ResourceWrapper),
+					},
+				},
+			},
+			sqlResourceHistoryListModifiedSince: {
+				{
+					Name: "single path",
+					Data: &sqlResourceListModifiedSinceRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+						Group:       "group",
+						Resource:    "res",
+						SinceRv:     10000,
+						LatestRv:    20000,
 					},
 				},
 			},
