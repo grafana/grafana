@@ -72,7 +72,7 @@ Adjust dashboard time settings when you want to change the dashboard timezone, t
 
 ## Modify graph tooltip behavior
 
-Use this option to control tooltip and hover highlight behavior across panels.
+Use this option to control tooltip and hover highlight behavior across graph panels.
 
 1. On the the **General** tab of the **Settings** page, scroll down to the **Panel options** section.
 1. Choose from the following options to control the tooltip and hover highlight behavior across graph-style panels (for example, time series):
