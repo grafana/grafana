@@ -133,7 +133,8 @@ func TestDataKey_Validate(t *testing.T) {
 				ResourceVersion: rv,
 				Action:          DataActionCreated,
 			},
-			expectError: false,
+			expectError: true,
+			errorMsg:    "resource 'test.resource-v1' is invalid: resource must consist of alphanumeric characters and dashes, and must start with an alphabetic character (e.g. 'dashboards',  or 'folders', regex used for validation is '^[A-Za-z][A-Za-z0-9-]*$')",
 		},
 		{
 			name: "valid key with numbers",
@@ -257,7 +258,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          DataActionCreated,
 			},
 			expectError: true,
-			errorMsg:    "name '' is invalid: name is too short",
+			errorMsg:    "name '' is invalid: name may not be empty",
 		},
 		{
 			name: "invalid - empty action",
@@ -2300,16 +2301,6 @@ func TestGetRequestKey_Validate(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name: "valid - key with dots and dashes",
-			key: GetRequestKey{
-				Group:     "apps.v1",
-				Resource:  "deployment-configs",
-				Namespace: "default-ns",
-				Name:      "test-resource.v1",
-			},
-			expectErr: false,
-		},
-		{
 			name: "valid - namespace uppercase",
 			key: GetRequestKey{
 				Group:     "apps",
@@ -2340,6 +2331,17 @@ func TestGetRequestKey_Validate(t *testing.T) {
 			expectErr: false,
 		},
 		// Invalid cases
+		{
+			name: "invalid - key with dots and dashes",
+			key: GetRequestKey{
+				Group:     "apps.v1",
+				Resource:  "deployment-configs",
+				Namespace: "default-ns",
+				Name:      "test-resource.v1",
+			},
+			expectErr: true,
+			wantError: "resource 'test.resource-v1' is invalid: resource must consist of alphanumeric characters and dashes, and must start with an alphabetic character (e.g. 'dashboards',  or 'folders', regex used for validation is '^[A-Za-z][A-Za-z0-9-]*$')",
+		},
 		{
 			name: "invalid - missing group",
 			key: GetRequestKey{
