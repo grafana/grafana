@@ -274,11 +274,15 @@ func (r *githubWebhookRepository) deleteWebhook(ctx context.Context) error {
 	id := r.config.Status.Webhook.ID
 
 	err := r.gh.DeleteWebhook(ctx, r.owner, r.repo, id)
-	if err != nil && !errors.Is(err, ErrResourceNotFound) {
+	if err != nil && !errors.Is(err, ErrResourceNotFound) && !errors.Is(err, ErrUnauthorized) {
 		return fmt.Errorf("delete webhook: %w", err)
 	}
 	if errors.Is(err, ErrResourceNotFound) {
-		logger.Info("webhook does not exist", "url", r.config.Status.Webhook.URL, "id", id)
+		logger.Warn("webhook no longer exists", "url", r.config.Status.Webhook.URL, "id", id)
+		return nil
+	}
+	if errors.Is(err, ErrUnauthorized) {
+		logger.Warn("webhook deletion failed. no longer authorized to delete this webhook", "url", r.config.Status.Webhook.URL, "id", id)
 		return nil
 	}
 
