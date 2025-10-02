@@ -192,7 +192,7 @@ export function ignoreChanges(scene: DashboardScene | null) {
     return true;
   }
 
-  const dashboard = scene?.getSaveModel();
+  const dashboard = scene.getSaveModel();
   // Ignore changes if the dashboard is empty (new dashboard)
   if (isEmptyDashboard(dashboard, scene?.serializer.metadata)) {
     return true;
@@ -210,10 +210,6 @@ export function isEmptyDashboard(
   dashboard: Dashboard | DashboardV2Spec,
   metadata?: DashboardMeta | ObjectMeta
 ): boolean {
-  if (!dashboard) {
-    return true;
-  }
-
   if (isDashboardV2Spec(dashboard)) {
     const hasNoPanels = Object.keys(dashboard.elements).length === 0;
     const hasNoLinks = !dashboard.links.length;
