@@ -191,7 +191,10 @@ func (s *preferenceStorage) save(ctx context.Context, obj runtime.Object) (runti
 			return nil, err
 		}
 	case utils.TeamResourceOwner:
-		return nil, fmt.Errorf("TODO, get team from: %s", owner.Identifier)
+		cmd.TeamID, err = s.sql.getLegacyTeamID(ctx, user.GetOrgID(), owner.Identifier)
+		if err != nil {
+			return nil, err
+		}
 
 	default:
 		return nil, fmt.Errorf("unsupported name")
@@ -236,19 +239,30 @@ func (s *preferenceStorage) Delete(ctx context.Context, name string, deleteValid
 		return nil, false, fmt.Errorf("invalid name")
 	}
 
+	var orgId, userId, teamId int64
+
 	switch owner.Owner {
-	case utils.UserResourceOwner:
-		id, err := user.GetInternalID()
+	case utils.TeamResourceOwner:
+		teamId, err = user.GetInternalID()
 		if err != nil {
 			return nil, false, err
 		}
-		err = s.prefs.DeleteByUser(ctx, id)
-		return nil, (err == nil), err
+
+	case utils.UserResourceOwner:
+		userId, err = user.GetInternalID()
+		if err != nil {
+			return nil, false, err
+		}
+
+	case utils.NamespaceResourceOwner:
+		orgId = user.GetOrgID()
 
 	default:
+		return nil, false, fmt.Errorf("unsupported owner")
 	}
 
-	return nil, false, fmt.Errorf("unsupported delete")
+	err = s.prefs.Delete(ctx, orgId, userId, teamId)
+	return nil, (err == nil), err
 }
 
 func asPreferencesResource(ns string, p *preferenceModel) preferences.Preferences {

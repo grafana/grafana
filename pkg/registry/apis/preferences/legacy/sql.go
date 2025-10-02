@@ -299,3 +299,15 @@ func (s *LegacySQL) GetTeams(ctx context.Context, id authlib.AuthInfo, admin boo
 	err = sess.Select(ctx, &teams, q, req.GetArgs()...)
 	return teams, err
 }
+
+func (s *LegacySQL) getLegacyTeamID(ctx context.Context, orgId int64, team string) (int64, error) {
+	sql, err := s.db(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	var id int64
+	sess := sql.DB.GetSqlxSession()
+	err = sess.Select(ctx, &id, "SELECT id FROM team WHERE org_id=? AND uid=?", orgId, team)
+	return id, err
+}
