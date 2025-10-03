@@ -1,5 +1,6 @@
 import { render, screen, userEvent, within } from 'test/test-utils';
 
+import { base64UrlEncode } from '@grafana/alerting';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   setMuteTimingsListError,
@@ -10,7 +11,7 @@ import { captureRequests } from 'app/features/alerting/unified/mocks/server/even
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { grantUserPermissions } from '../../mocks';
-import { TIME_INTERVAL_UID_HAPPY_PATH } from '../../mocks/server/handlers/k8s/timeIntervals.k8s';
+import { TIME_INTERVAL_NAME_HAPPY_PATH } from '../../mocks/server/handlers/k8s/timeIntervals.k8s';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
@@ -113,8 +114,9 @@ describe('MuteTimingsTable', () => {
       await user.click(await screen.findByRole('button', { name: /delete/i }));
 
       const requests = await capture;
+      const encodedName = base64UrlEncode(TIME_INTERVAL_NAME_HAPPY_PATH);
       const deleteRequest = requests.find(
-        (r) => r.url.includes(`timeintervals/${TIME_INTERVAL_UID_HAPPY_PATH}`) && r.method === 'DELETE'
+        (r) => r.url.includes(`timeintervals/${encodedName}`) && r.method === 'DELETE'
       );
 
       expect(deleteRequest).toBeDefined();
