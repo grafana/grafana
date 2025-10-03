@@ -12,6 +12,7 @@ import { ClickOutsideWrapper, floatingUtils, useStyles2 } from '@grafana/ui';
 
 import { AnnotationEditor2 } from './AnnotationEditor2';
 import { AnnotationTooltip2 } from './AnnotationTooltip2';
+import { AnnotationTooltip2Cluster } from './AnnotationTooltip2Cluster';
 
 interface AnnoBoxProps {
   annoVals: Record<string, any[]>;
@@ -62,16 +63,29 @@ export const AnnotationMarker2 = ({
 
   const contents =
     (isPinned && !editing) || (showOnHover && isHovering && !editing) ? (
-      <AnnotationTooltip2
-        actions={actions}
-        links={links}
-        onClose={onClose}
-        isPinned={isPinned}
-        annoIdx={annoIdx}
-        annoVals={annoVals}
-        timeZone={timeZone}
-        onEdit={() => setEditing(true)}
-      />
+      annoVals.isRegion[annoIdx] && annoVals.clusterIdx[annoIdx] ? (
+        <AnnotationTooltip2Cluster
+          actions={actions}
+          links={links}
+          onClose={onClose}
+          isPinned={isPinned}
+          annoIdx={annoIdx}
+          annoVals={annoVals}
+          timeZone={timeZone}
+          onEdit={() => setEditing(true)}
+        />
+      ) : (
+        <AnnotationTooltip2
+          actions={actions}
+          links={links}
+          onClose={onClose}
+          isPinned={isPinned}
+          annoIdx={annoIdx}
+          annoVals={annoVals}
+          timeZone={timeZone}
+          onEdit={() => setEditing(true)}
+        />
+      )
     ) : editing ? (
       <AnnotationEditor2
         isPinned={isPinned}

@@ -247,6 +247,8 @@ export const AnnotationsPlugin2 = ({
                 vals.push(`Cluster ${ci}`);
               } else if (field.name === 'text') {
                 vals.push(idxs.join());
+              } else if (field.name === 'clusterIdx') {
+                vals.push(ci);
               } else {
                 vals.push(null);
               }
@@ -350,7 +352,7 @@ export const AnnotationsPlugin2 = ({
             if (annotationsConfig?.showRegions !== false || annotationsConfig.showLine !== false) {
               for (let i = 0; i < vals.time.length; i++) {
                 // skip rendering annos that are clustered (have non-null cluster index)
-                if (clusterIdx?.[i] != null) {
+                if (clusterIdx?.[i] != null && !vals.isRegion[i]) {
                   continue;
                 }
 
