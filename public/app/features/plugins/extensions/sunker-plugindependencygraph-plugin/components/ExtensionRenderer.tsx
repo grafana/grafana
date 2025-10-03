@@ -4,13 +4,6 @@
  * Renders extension points and exposed components in the dependency graph.
  */
 
-import { SerializedStyles } from '@emotion/react';
-import React from 'react';
-
-import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
-
 import {
   COLOR_DEFAULTS,
   DISPLAY_NAMES,
@@ -21,7 +14,11 @@ import {
 } from '../constants';
 import { GraphData, PanelOptions } from '../types';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { PositionInfo } from './GraphLayout';
+import React from 'react';
+import { SerializedStyles } from '@emotion/react';
+import { locationService } from '@grafana/runtime';
 
 interface ExtensionRendererProps {
   theme: GrafanaTheme2;
@@ -344,69 +341,101 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
       return null;
     }
 
+    // Group extension points by their defining plugin
+    const extensionPointGroups = new Map<string, string[]>();
+    data.extensionPoints.forEach((ep) => {
+      if (!extensionPointGroups.has(ep.definingPlugin)) {
+        extensionPointGroups.set(ep.definingPlugin, []);
+      }
+      extensionPointGroups.get(ep.definingPlugin)!.push(ep.id);
+    });
+
     const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
     const extensionBoxHeight = 60;
 
     return (
       <g>
-        {data.extensionPoints.map((ep) => {
-          const epPos = extensionPointModePositions.get(ep.id);
-          if (!epPos) {
+        {Array.from(extensionPointGroups.entries()).map(([definingPlugin, extensionPointIds]) => {
+          const firstEpPos = extensionPointModePositions.get(extensionPointIds[0]);
+          if (!firstEpPos) {
             return null;
           }
 
+          const groupHeight = firstEpPos.groupHeight;
+
           return (
-            <g key={ep.id}>
-              {/* Extension point box */}
+            <g key={definingPlugin}>
+              {/* Defining plugin group box */}
               <rect
-                x={epPos.x}
-                y={epPos.y - extensionBoxHeight / 2}
-                width={extensionBoxWidth}
-                height={extensionBoxHeight}
-                fill={theme.colors.primary.main}
+                x={firstEpPos.x - 20}
+                y={firstEpPos.groupY}
+                width={extensionBoxWidth + 40}
+                height={groupHeight}
+                fill={theme.colors.background.secondary}
                 stroke={theme.colors.border.strong}
-                strokeWidth={VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH}
-                rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
+                strokeWidth={VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH}
+                rx={VISUAL_CONSTANTS.GROUP_BORDER_RADIUS}
               />
 
-              {/* Extension point ID */}
-              <text
-                x={epPos.x + extensionBoxWidth / 2}
-                y={epPos.y - 5}
-                textAnchor="middle"
-                fill={theme.colors.getContrastText(theme.colors.primary.main)}
-                style={{ fontSize: '12px', pointerEvents: 'none' }}
-              >
-                <tspan>{ep.id}</tspan>
-              </text>
+              {/* Extension points inside defining plugin box */}
+              {extensionPointIds.map((epId) => {
+                const epPos = extensionPointModePositions.get(epId);
+                if (!epPos) {
+                  return null;
+                }
 
-              {/* "Defined in [appname]" */}
-              <text
-                x={epPos.x + extensionBoxWidth / 2}
-                y={epPos.y + 10}
-                textAnchor="middle"
-                fill={theme.colors.getContrastText(theme.colors.primary.main)}
-                style={{ fontSize: '11px', pointerEvents: 'none' }}
-              >
-                <tspan>
-                  <Trans i18nKey="extensions.defined-in" values={{ plugin: ep.definingPlugin }}>
-                    Defined in {{ plugin: ep.definingPlugin }}
-                  </Trans>
-                </tspan>
-              </text>
+                const extensionPoint = data.extensionPoints?.find((ep) => ep.id === epId);
+                if (!extensionPoint) {
+                  return null;
+                }
 
-              {/* Extension point description */}
-              {options.showDescriptions && ep.description && ep.description.trim() !== '' && (
-                <text
-                  x={epPos.x + extensionBoxWidth / 2}
-                  y={epPos.y + 25}
-                  textAnchor="middle"
-                  fill={theme.colors.getContrastText(theme.colors.primary.main)}
-                  style={{ pointerEvents: 'none' }}
-                >
-                  <tspan>{ep.description}</tspan>
-                </text>
-              )}
+                return (
+                  <g key={epId}>
+                    {/* Extension point box */}
+                    <rect
+                      x={epPos.x}
+                      y={epPos.y - extensionBoxHeight / 2}
+                      width={extensionBoxWidth}
+                      height={extensionBoxHeight}
+                      fill={theme.colors.primary.main}
+                      stroke={theme.colors.border.strong}
+                      strokeWidth={VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH}
+                      rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
+                    />
+
+                    {/* Extension point ID */}
+                    <text
+                      x={epPos.x + extensionBoxWidth / 2}
+                      y={epPos.y - 5}
+                      textAnchor="middle"
+                      fill={theme.colors.getContrastText(theme.colors.primary.main)}
+                      style={{ fontSize: '12px', pointerEvents: 'none' }}
+                    >
+                      <tspan>{epId}</tspan>
+                    </text>
+
+                    {/* Extension point description */}
+                    {options.showDescriptions &&
+                      extensionPoint.description &&
+                      extensionPoint.description.trim() !== '' && (
+                        <text
+                          x={epPos.x + extensionBoxWidth / 2}
+                          y={epPos.y + 25}
+                          textAnchor="middle"
+                          fill={theme.colors.getContrastText(theme.colors.primary.main)}
+                          style={{ pointerEvents: 'none' }}
+                        >
+                          <tspan>{extensionPoint.description}</tspan>
+                        </text>
+                      )}
+                  </g>
+                );
+              })}
+
+              {/* Defining plugin name header */}
+              <text x={firstEpPos.x} y={firstEpPos.groupY + 25} textAnchor="start" fill={theme.colors.text.primary}>
+                {getDisplayName(definingPlugin)}
+              </text>
             </g>
           );
         })}
@@ -491,6 +520,9 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                         currentUrl.searchParams.set('apiMode', 'extensionpoint');
                         currentUrl.searchParams.set('extensionPoints', epId);
                         locationService.push(currentUrl.pathname + currentUrl.search);
+
+                        // Scroll to top of the page after navigation
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
                       style={{ cursor: 'pointer' }}
                     />
@@ -504,22 +536,6 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       style={{ pointerEvents: 'none' }}
                     >
                       {epId}
-                    </text>
-
-                    {/* "Defined in [appname]" - second line */}
-                    <text
-                      x={epPos.x + extensionBoxWidth / 2}
-                      y={epPos.y + 15}
-                      textAnchor="middle"
-                      fill={theme.colors.getContrastText(extensionColor)}
-                      style={{ pointerEvents: 'none', fontSize: '11px' }}
-                    >
-                      <Trans
-                        i18nKey="extensions.defined-in"
-                        values={{ plugin: extensionPoint?.definingPlugin || 'unknown' }}
-                      >
-                        Defined in {{ plugin: extensionPoint?.definingPlugin || 'unknown' }}
-                      </Trans>
                     </text>
 
                     {/* Extension type - third line in parentheses */}

@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import {
   getActiveContentConsumers,
   getAvailableContentConsumers,
@@ -8,7 +6,9 @@ import {
   getDefaultOptions,
   processPluginDataToGraph,
 } from '../../sunker-plugindependencygraph-plugin/utils/dataProcessor';
+
 import { logGraphData } from '../utils/logger';
+import { useMemo } from 'react';
 
 export type VisualizationMode = 'add' | 'expose' | 'extensionpoint';
 
@@ -16,7 +16,7 @@ export interface DependencyGraphOptions {
   visualizationMode: VisualizationMode;
   selectedContentProviders: string[];
   selectedContentConsumers: string[];
-  selectedExtensionPoints: string[];
+  selectedExtensionPoints?: string[];
 }
 
 export interface DependencyGraphData {

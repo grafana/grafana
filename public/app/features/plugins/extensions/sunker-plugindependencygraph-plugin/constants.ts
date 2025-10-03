@@ -127,7 +127,7 @@ export const MODE_LABELS = {
   CONTENT_CONSUMER: 'Content consumer',
   COMPONENTS: 'Components',
   EXTENSIONS: 'Extensions',
-  EXTENSION_POINTS: 'Extension Points',
+  EXTENSION_POINTS: 'Extension Point',
 } as const;
 
 export const DISPLAY_NAMES = {

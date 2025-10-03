@@ -131,6 +131,9 @@ export function useDependencyGraphControls(): DependencyGraphControls {
     if (mode === 'add' || mode === 'expose' || mode === 'extensionpoint') {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       setVisualizationModeState(mode as VisualizationMode);
+    } else {
+      // Default to 'add' mode when no apiMode parameter is present
+      setVisualizationModeState('add');
     }
 
     const providers = parseArrayParam(searchParams.get(URL_PARAMS.CONTENT_PROVIDERS));
@@ -146,7 +149,6 @@ export function useDependencyGraphControls(): DependencyGraphControls {
   const modeOptions = [
     { label: t('extensions.api-mode.add', 'Add'), value: 'add' as const },
     { label: t('extensions.api-mode.expose', 'Expose'), value: 'expose' as const },
-    { label: t('extensions.api-mode.extensionpoint', 'Extension Point'), value: 'extensionpoint' as const },
   ];
 
   return {

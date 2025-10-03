@@ -4,6 +4,7 @@
  * Handles layout calculations for both add and expose modes of the dependency graph.
  */
 
+import { GraphData, PanelOptions, PluginNode } from '../types';
 import {
   LAYOUT_CONSTANTS,
   getResponsiveGroupSpacing,
@@ -12,7 +13,6 @@ import {
   getResponsiveNodeWidth,
   getRightMargin,
 } from '../constants';
-import { GraphData, PanelOptions, PluginNode } from '../types';
 
 export interface NodeWithPosition extends PluginNode {
   x: number;
@@ -451,8 +451,9 @@ export const getExtensionPositions = (
 /**
  * Calculate positions for extension points in extension point mode visualization.
  *
- * Extension points are positioned on the right side of the visualization.
- * Each extension point box shows the extension point title and description.
+ * Extension points are positioned on the right side of the visualization,
+ * grouped by their defining plugin. Each group contains multiple extension
+ * points with consistent spacing.
  *
  * @param data - Graph data containing extension points
  * @param options - Panel options that affect spacing (e.g., showDescriptions)
@@ -472,46 +473,43 @@ export const getExtensionPointModePositions = (
     return new Map();
   }
 
+  // Group extension points by their defining plugin
+  const extensionPointGroups = new Map<string, string[]>();
+  data.extensionPoints.forEach((ep) => {
+    if (!extensionPointGroups.has(ep.definingPlugin)) {
+      extensionPointGroups.set(ep.definingPlugin, []);
+    }
+    extensionPointGroups.get(ep.definingPlugin)!.push(ep.id);
+  });
+
   const positions = new Map<string, PositionInfo>();
   const margin = getResponsiveMargin(width);
 
+  let extensionPointSpacing = 70;
+  if (options.showDescriptions) {
+    extensionPointSpacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
+  }
+
+  const groupSpacing = getResponsiveGroupSpacing(height) + 30;
   const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
   const rightSideX = width - margin - extensionBoxWidth - LAYOUT_CONSTANTS.ARROW_SAFETY_MARGIN;
 
-  // Calculate total height of all extension sections to center the extension point
-  let totalExtensionsHeight = 0;
-  if (data.extensions) {
-    const extensionGroups = new Map<string, string[]>();
-    data.extensions.forEach((ext) => {
-      if (!extensionGroups.has(ext.providingPlugin)) {
-        extensionGroups.set(ext.providingPlugin, []);
-      }
-      extensionGroups.get(ext.providingPlugin)!.push(ext.id);
+  let currentGroupY = margin + LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET + 30;
+
+  // Process each defining plugin section
+  Array.from(extensionPointGroups.entries()).forEach(([definingPlugin, extensionPointIds]) => {
+    const groupHeight = extensionPointIds.length * extensionPointSpacing + 50;
+
+    extensionPointIds.forEach((epId, index) => {
+      positions.set(epId, {
+        x: rightSideX,
+        y: currentGroupY + 70 + index * extensionPointSpacing,
+        groupY: currentGroupY,
+        groupHeight: groupHeight,
+      });
     });
 
-    let extensionSpacing = 70;
-    if (options.showDescriptions) {
-      extensionSpacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
-    }
-    const groupSpacing = getResponsiveGroupSpacing(height) + 30;
-
-    Array.from(extensionGroups.entries()).forEach(([providingPlugin, extensionIds]) => {
-      const groupHeight = extensionIds.length * extensionSpacing + 50;
-      totalExtensionsHeight += groupHeight + groupSpacing;
-    });
-  }
-
-  const startY = margin + LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET + 30;
-  const centerY = startY + totalExtensionsHeight / 2;
-
-  // Position the extension point in the center of all extension sections
-  data.extensionPoints.forEach((ep) => {
-    positions.set(ep.id, {
-      x: rightSideX,
-      y: centerY,
-      groupY: startY,
-      groupHeight: totalExtensionsHeight,
-    });
+    currentGroupY += groupHeight + groupSpacing;
   });
 
   return positions;

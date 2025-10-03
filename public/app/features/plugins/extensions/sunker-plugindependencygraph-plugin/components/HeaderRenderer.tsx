@@ -4,11 +4,6 @@
  * Renders section headers and divider lines for the dependency graph.
  */
 
-import { SerializedStyles } from '@emotion/react';
-import React from 'react';
-
-import { GrafanaTheme2 } from '@grafana/data';
-
 import {
   LAYOUT_CONSTANTS,
   MODE_LABELS,
@@ -16,6 +11,10 @@ import {
   getResponsiveNodeWidth,
   getRightMargin,
 } from '../constants';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import React from 'react';
+import { SerializedStyles } from '@emotion/react';
 
 interface HeaderRendererProps {
   theme: GrafanaTheme2;
