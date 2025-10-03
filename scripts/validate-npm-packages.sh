@@ -9,8 +9,13 @@ ARTIFACTS_DIR="./npm-artifacts"
 for file in "$ARTIFACTS_DIR"/*.tgz; do
   echo "🔍 Checking NPM package: $file"
 
-  # Ignore named-exports for now as builds aren't compatible yet.
-  yarn attw "$file" --ignore-rules "named-exports" "false-cjs"
+  if [[ "$file" == *"@grafana-i18n"* ]]; then
+    IGNORE_RULES="named-exports false-cjs untyped-resolution"
+  else
+    IGNORE_RULES="named-exports false-cjs"
+  fi
+  # shellcheck disable=SC2086
+  yarn attw "$file" --ignore-rules $IGNORE_RULES --profile node16
   yarn publint "$file"
 done
 
