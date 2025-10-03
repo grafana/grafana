@@ -17,13 +17,14 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
+
 	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
 )
 
 func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
 	ctx, span := tracer.Start(ctx, "ofrep.proxy.evalAllFlags")
 	defer span.End()
-	
+
 	r = r.WithContext(ctx)
 
 	proxy, err := b.newProxy(ofrepPath)
@@ -71,7 +72,7 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, w h
 func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
 	ctx, span := tracer.Start(ctx, "ofrep.proxy.evalFlag")
 	defer span.End()
-	
+
 	r = r.WithContext(ctx)
 
 	proxy, err := b.newProxy(path.Join(ofrepPath, flagKey))
