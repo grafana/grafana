@@ -69,8 +69,10 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, w h
 }
 
 func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
-	_, span := tracer.Start(ctx, "ofrep.proxy.evalFlag")
+	ctx, span := tracer.Start(ctx, "ofrep.proxy.evalFlag")
 	defer span.End()
+	
+	r = r.WithContext(ctx)
 
 	proxy, err := b.newProxy(path.Join(ofrepPath, flagKey))
 	if err != nil {
