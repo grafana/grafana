@@ -506,6 +506,7 @@ export enum VizOrientation {
  * Breaks out each annotation frame into multiple lanes on the x-axis
  */
 export interface VizAnnotations {
+  clustering?: boolean;
   multiLane?: boolean;
   regionOpacity?: number;
   showLine?: boolean;

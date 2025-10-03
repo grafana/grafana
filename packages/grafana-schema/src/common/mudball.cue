@@ -164,6 +164,7 @@ VizAnnotations: {
 	showRegions?: bool
 	regionOpacity?: number
 	showLine?: bool
+	clustering?: bool
 } @cuetsy(kind="interface")
 
 // TODO docs
