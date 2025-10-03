@@ -110,6 +110,10 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	lastRef := repo.Config().Status.Sync.LastRef
 	syncStatus.LastRef = lastRef
 
+	if syncStatus.State == "" {
+		syncStatus.State = provisioning.JobStateWorking
+	}
+
 	// Update sync status at start using JSON patch
 	patchOperations := []map[string]interface{}{
 		{
