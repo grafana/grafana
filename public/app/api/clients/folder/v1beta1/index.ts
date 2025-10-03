@@ -24,24 +24,6 @@ export const folderAPIv1beta1 = generatedAPI
         // We don't want delete to invalidate getFolder tags, as that would lead to unnecessary 404s
         invalidatesTags: (result, error) => (error ? [] : [{ type: 'Folder', id: 'LIST' }]),
       },
-      updateFolder: {
-        query: (queryArg) => ({
-          url: `/folders/${queryArg.name}`,
-          method: 'PATCH',
-          // We need to stringify the body and set the correct header for the call to work with k8s api.
-          body: JSON.stringify(queryArg.patch),
-          headers: {
-            'Content-Type': 'application/strategic-merge-patch+json',
-          },
-          params: {
-            pretty: queryArg.pretty,
-            dryRun: queryArg.dryRun,
-            fieldManager: queryArg.fieldManager,
-            fieldValidation: queryArg.fieldValidation,
-            force: queryArg.force,
-          },
-        }),
-      },
     },
   })
   .injectEndpoints({

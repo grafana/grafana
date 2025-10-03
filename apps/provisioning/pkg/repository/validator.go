@@ -1,10 +1,10 @@
 package repository
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"slices"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -12,57 +12,27 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// RepositoryValidator interface for validating repositories against existing ones
-type RepositoryValidator interface {
-	VerifyAgainstExistingRepositories(ctx context.Context, cfg *provisioning.Repository) *field.Error
+type RepositoryValidator struct {
+	allowedTargets      []provisioning.SyncTargetType
+	allowImageRendering bool
+	minSyncInterval     time.Duration
 }
 
-func TestRepository(ctx context.Context, repo Repository) (*provisioning.TestResults, error) {
-	return TestRepositoryWithValidator(ctx, repo, nil)
+func NewValidator(minSyncInterval time.Duration, allowedTargets []provisioning.SyncTargetType, allowImageRendering bool) RepositoryValidator {
+	// do not allow minsync interval to be less than 10
+	if minSyncInterval <= 10*time.Second {
+		minSyncInterval = 10 * time.Second
+	}
+
+	return RepositoryValidator{
+		allowedTargets:      allowedTargets,
+		allowImageRendering: allowImageRendering,
+		minSyncInterval:     minSyncInterval,
+	}
 }
 
-func TestRepositoryWithValidator(ctx context.Context, repo Repository, validator RepositoryValidator) (*provisioning.TestResults, error) {
-	errors := ValidateRepository(repo)
-	if len(errors) > 0 {
-		rsp := &provisioning.TestResults{
-			Code:    http.StatusUnprocessableEntity, // Invalid
-			Success: false,
-			Errors:  make([]provisioning.ErrorDetails, len(errors)),
-		}
-		for i, err := range errors {
-			rsp.Errors[i] = provisioning.ErrorDetails{
-				Type:   metav1.CauseType(err.Type),
-				Field:  err.Field,
-				Detail: err.Detail,
-			}
-		}
-		return rsp, nil
-	}
-
-	rsp, err := repo.Test(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if rsp.Success && validator != nil {
-		cfg := repo.Config()
-		if validationErr := validator.VerifyAgainstExistingRepositories(ctx, cfg); validationErr != nil {
-			rsp = &provisioning.TestResults{
-				Success: false,
-				Code:    http.StatusUnprocessableEntity,
-				Errors: []provisioning.ErrorDetails{{
-					Type:   metav1.CauseType(validationErr.Type),
-					Field:  validationErr.Field,
-					Detail: validationErr.Detail,
-				}},
-			}
-		}
-	}
-
-	return rsp, nil
-}
-
-func ValidateRepository(repo Repository) field.ErrorList {
+// ValidateRepository solely does configuration checks on the repository object. It does not run a health check or compare against existing repositories.
+func (v *RepositoryValidator) ValidateRepository(repo Repository) field.ErrorList {
 	list := repo.Validate()
 	cfg := repo.Config()
 
@@ -70,9 +40,22 @@ func ValidateRepository(repo Repository) field.ErrorList {
 		list = append(list, field.Required(field.NewPath("spec", "title"), "a repository title must be given"))
 	}
 
-	if cfg.Spec.Sync.Enabled && cfg.Spec.Sync.Target == "" {
-		list = append(list, field.Required(field.NewPath("spec", "sync", "target"),
-			"The target type is required when sync is enabled"))
+	if cfg.Spec.Sync.Enabled {
+		if cfg.Spec.Sync.Target == "" {
+			list = append(list, field.Required(field.NewPath("spec", "sync", "target"),
+				"The target type is required when sync is enabled"))
+		} else if !slices.Contains(v.allowedTargets, cfg.Spec.Sync.Target) {
+			list = append(list,
+				field.Invalid(
+					field.NewPath("spec", "target"),
+					cfg.Spec.Sync.Target,
+					"sync target is not supported"))
+		}
+
+		if cfg.Spec.Sync.IntervalSeconds < int64(v.minSyncInterval.Seconds()) {
+			list = append(list, field.Invalid(field.NewPath("spec", "sync", "intervalSeconds"),
+				cfg.Spec.Sync.IntervalSeconds, fmt.Sprintf("Interval must be at least %d seconds", int64(v.minSyncInterval.Seconds()))))
+		}
 	}
 
 	// Reserved names (for now)
@@ -129,6 +112,13 @@ func ValidateRepository(repo Repository) field.ErrorList {
 				),
 			)
 		}
+	}
+
+	if !v.allowImageRendering && cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews {
+		list = append(list,
+			field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
+				cfg.Spec.GitHub.GenerateDashboardPreviews,
+				"image rendering is not enabled"))
 	}
 
 	return list
