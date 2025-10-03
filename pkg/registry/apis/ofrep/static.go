@@ -9,7 +9,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-func (b *APIBuilder) evalAllFlagsStatic(ctx context.Context, isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
+func (b *APIBuilder) evalAllFlagsStatic(ctx context.Context, isAuthedUser bool, w http.ResponseWriter) {
 	_, span := tracer.Start(ctx, "ofrep.static.evalAllFlags")
 	defer span.End()
 
