@@ -247,6 +247,8 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, span := tracer.Start(r.Context(), "ofrep.handler.evalFlag")
 	defer span.End()
+	
+	r = r.WithContext(ctx)
 
 	if !b.validateNamespace(r) {
 		_ = tracing.Errorf(span, namespaceMismatchMsg)
