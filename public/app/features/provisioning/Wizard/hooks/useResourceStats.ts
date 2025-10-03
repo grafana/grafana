@@ -49,7 +49,7 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
   });
 
   managed?.forEach((manager) => {
-    if (manager.kind !== 'repo') {
+    if (manager.kind !== ManagerKind.Repo) {
       manager.stats.forEach((stat) => {
         switch (stat.group) {
           case 'folders':
