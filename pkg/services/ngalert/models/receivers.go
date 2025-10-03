@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
 )
@@ -572,7 +573,7 @@ func (integration *Integration) Validate(decryptFn DecryptFn) error {
 		return err
 	}
 
-	return ValidateIntegration(context.Background(), alertingNotify.GrafanaIntegrationConfig{
+	return ValidateIntegration(context.Background(), models.IntegrationConfig{
 		UID:                   decrypted.UID,
 		Name:                  decrypted.Name,
 		Type:                  decrypted.Config.Type,
@@ -582,7 +583,7 @@ func (integration *Integration) Validate(decryptFn DecryptFn) error {
 	}, alertingNotify.NoopDecrypt)
 }
 
-func ValidateIntegration(ctx context.Context, integration alertingNotify.GrafanaIntegrationConfig, decryptFunc alertingNotify.GetDecryptedValueFn) error {
+func ValidateIntegration(ctx context.Context, integration models.IntegrationConfig, decryptFunc alertingNotify.GetDecryptedValueFn) error {
 	if integration.Type == "" {
 		return fmt.Errorf("type should not be an empty string")
 	}
@@ -591,8 +592,8 @@ func ValidateIntegration(ctx context.Context, integration alertingNotify.Grafana
 	}
 
 	_, err := alertingNotify.BuildReceiverConfiguration(ctx, &alertingNotify.APIReceiver{
-		GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
-			Integrations: []*alertingNotify.GrafanaIntegrationConfig{&integration},
+		ReceiverConfig: models.ReceiverConfig{
+			Integrations: []*models.IntegrationConfig{&integration},
 		},
 	}, alertingNotify.DecodeSecretsFromBase64, decryptFunc)
 	if err != nil {
