@@ -49,7 +49,7 @@ export function RepositoryList({ items }: Props) {
               <>
                 {' '}
                 <Trans i18nKey="provisioning.folder-repository-list.unmanaged-resources" count={unmanagedCount}>
-                  {{ count: unmanagedCount }} resources aren&apos;t managed by git sync.
+                  {{ count: unmanagedCount }} resources aren&apos;t managed by Git sync.
                 </Trans>
               </>
             )}
