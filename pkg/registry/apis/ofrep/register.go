@@ -288,6 +288,8 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, span := tracer.Start(r.Context(), "ofrep.handler.evalAllFlags")
 	defer span.End()
+	
+	r = r.WithContext(r)
 
 	if !b.validateNamespace(r) {
 		_ = tracing.Errorf(span, namespaceMismatchMsg)
