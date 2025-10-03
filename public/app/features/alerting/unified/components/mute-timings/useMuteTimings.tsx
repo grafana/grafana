@@ -11,7 +11,6 @@ import {
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
 import {
-  encodeFieldSelector,
   isK8sEntityProvisioned,
   shouldUseK8sApi,
   stringifyFieldSelector,
