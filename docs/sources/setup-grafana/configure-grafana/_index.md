@@ -1934,7 +1934,7 @@ This value is the starting point for exponential backoff.
 
 The maximum delay between retries during exponential backoff. Default is `4s`.
 
-Once the retry delay reaches `max_retry_delay`, all subsequent retries use this delay.
+After the retry delay reaches `max_retry_delay`, all subsequent retries use this delay.
 
 To avoid overlapping retries with scheduled evaluations, `max_retry_delay` must be less than the rule’s evaluation interval.
 
