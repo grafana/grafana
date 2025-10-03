@@ -177,20 +177,54 @@ func convertToK8sResources(
 	namespaceMapper request.NamespaceMapper,
 	continueToken string,
 ) (*model.AlertRuleList, error) {
+	startTotal := time.Now()
+
 	k8sRules := &model.AlertRuleList{
 		ListMeta: metav1.ListMeta{
 			Continue: continueToken,
 		},
 		Items: make([]model.AlertRule, 0, len(rules)),
 	}
-	for _, rule := range rules {
+
+	// Sample timing for first 10 rules to estimate per-rule cost
+	var sampleDurations []time.Duration
+
+	for i, rule := range rules {
+		var startRule time.Time
+		if i < 10 {
+			startRule = time.Now()
+		}
+
 		provenance := provenanceMap[rule.UID]
 		k8sRule, err := convertToK8sResource(orgID, rule, provenance, namespaceMapper)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert to k8s resource: %w", err)
 		}
 		k8sRules.Items = append(k8sRules.Items, *k8sRule)
+
+		if i < 10 {
+			sampleDurations = append(sampleDurations, time.Since(startRule))
+		}
 	}
+
+	totalDuration := time.Since(startTotal)
+
+	// Calculate average per-rule time from samples
+	var avgPerRule time.Duration
+	if len(sampleDurations) > 0 {
+		var sum time.Duration
+		for _, d := range sampleDurations {
+			sum += d
+		}
+		avgPerRule = sum / time.Duration(len(sampleDurations))
+	}
+
+	logger.Info("K8s conversion performance",
+		"total_ms", totalDuration.Milliseconds(),
+		"rule_count", len(rules),
+		"avg_per_rule_us", avgPerRule.Microseconds(),
+		"org_id", orgID)
+
 	return k8sRules, nil
 }
 

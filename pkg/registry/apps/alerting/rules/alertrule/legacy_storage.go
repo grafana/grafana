@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -15,10 +16,13 @@ import (
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
+
+var logger = log.New("alerting.rules.k8s")
 
 var (
 	_ grafanarest.Storage = (*legacyStorage)(nil)
@@ -53,6 +57,8 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOptions) (runtime.Object, error) {
+	startTotal := time.Now()
+
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -63,6 +69,8 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
+	// Time: Provisioning layer (DB + authorization)
+	startProvisioning := time.Now()
 	rules, provenanceMap, continueToken, err := s.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
 		RuleType:      ngmodels.RuleTypeFilterAlerting,
 		Limit:         opts.Limit,
@@ -70,10 +78,27 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		// TODO: add field selectors for filtering
 		// TODO: add label selectors for filtering on group and folders
 	})
+	provisioningDuration := time.Since(startProvisioning)
+
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResources(info.OrgID, rules, provenanceMap, s.namespacer, continueToken)
+
+	// Time: K8s conversion
+	startConversion := time.Now()
+	result, err := convertToK8sResources(info.OrgID, rules, provenanceMap, s.namespacer, continueToken)
+	conversionDuration := time.Since(startConversion)
+
+	totalDuration := time.Since(startTotal)
+
+	logger.Info("K8s AlertRules List performance",
+		"rule_count", len(rules),
+		"total_ms", totalDuration.Milliseconds(),
+		"provisioning_ms", provisioningDuration.Milliseconds(),
+		"conversion_ms", conversionDuration.Milliseconds(),
+		"org_id", info.OrgID)
+
+	return result, err
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {

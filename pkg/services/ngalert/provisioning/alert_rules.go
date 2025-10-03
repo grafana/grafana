@@ -98,12 +98,19 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 		ContinueToken: opts.ContinueToken,
 	}
 
+	// Time: Authorization check
+	startAuthz := time.Now()
 	can, err := service.authz.CanReadAllRules(ctx, user)
 	if err != nil {
 		return nil, nil, "", err
 	}
+	authzDuration := time.Since(startAuthz)
+
+	// Time: Folder filtering (if needed)
+	var folderFilterDuration time.Duration
 	// If user does not have blanket privilege to read rules, filter to only folders they have rule access to
 	if !can {
+		startFolderFilter := time.Now()
 		fq := folder.GetFoldersQuery{
 			OrgID:        user.GetOrgID(),
 			SignedInUser: user,
@@ -123,12 +130,20 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 			}
 		}
 		q.NamespaceUIDs = folderUIDs
+		folderFilterDuration = time.Since(startFolderFilter)
 	}
 
+	// Time: Database query
+	startDB := time.Now()
 	rules, nextToken, err = service.ruleStore.ListAlertRulesPaginated(ctx, &q)
+	dbDuration := time.Since(startDB)
+
 	if err != nil {
 		return nil, nil, "", err
 	}
+
+	// Time: Provenance lookup
+	startProvenance := time.Now()
 	provenances = make(map[string]models.Provenance)
 	if len(rules) > 0 {
 		resourceType := rules[0].ResourceType()
@@ -137,6 +152,15 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 			return nil, nil, "", err
 		}
 	}
+	provenanceDuration := time.Since(startProvenance)
+
+	service.log.Info("Provisioning ListAlertRules performance",
+		"authz_ms", authzDuration.Milliseconds(),
+		"folder_filter_ms", folderFilterDuration.Milliseconds(),
+		"db_ms", dbDuration.Milliseconds(),
+		"provenance_ms", provenanceDuration.Milliseconds(),
+		"rule_count", len(rules),
+		"org_id", user.GetOrgID())
 
 	return rules, provenances, nextToken, nil
 }

@@ -3,14 +3,17 @@ package store
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
+	"runtime"
 	"slices"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/google/uuid"
+	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -28,6 +31,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+// json is a drop-in replacement for encoding/json using json-iterator for better performance
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 // AlertRuleMaxTitleLength is the maximum length of the alert rule title
 const AlertRuleMaxTitleLength = 190
@@ -716,9 +722,90 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 	return result, err
 }
 
+// convertAlertRulesInParallel converts a slice of raw alertRule structs to models.AlertRule
+// using parallel processing for improved performance with large result sets.
+// It maintains the order of results and handles per-rule errors gracefully.
+func (st DBstore) convertAlertRulesInParallel(rawRules []alertRule, query *ngmodels.ListAlertRulesExtendedQuery, groupsSet map[string]struct{}) []*ngmodels.AlertRule {
+	if len(rawRules) == 0 {
+		return nil
+	}
+
+	// Determine optimal worker count based on CPU cores and workload size
+	// Use all available CPUs, but cap at the number of rules to avoid idle workers
+	numCPU := runtime.NumCPU()
+	workerCount := numCPU
+	if len(rawRules) < numCPU {
+		workerCount = len(rawRules)
+	}
+	// Cap at reasonable maximum to avoid excessive goroutine overhead
+	if workerCount > 32 {
+		workerCount = 32
+	}
+
+	// Allocate result slices - maintain order by index
+	results := make([]*ngmodels.AlertRule, len(rawRules))
+
+	// Create work channel and worker pool
+	type workItem struct {
+		index int
+		rule  alertRule
+	}
+	workChan := make(chan workItem, len(rawRules))
+
+	var wg sync.WaitGroup
+
+	// Start workers
+	for i := 0; i < workerCount; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for item := range workChan {
+				// Convert the alertRule to models.AlertRule
+				converted, err := alertRuleToModelsAlertRule(item.rule, st.Logger)
+				if err != nil {
+					st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "convertAlertRulesInParallel", "error", err)
+					continue
+				}
+
+				// Apply post-conversion filters
+				if !shouldIncludeRule(&converted, query, groupsSet) {
+					continue
+				}
+
+				// Store result at the correct index to maintain order
+				results[item.index] = &converted
+			}
+		}()
+	}
+
+	// Send work to workers
+	for i, rule := range rawRules {
+		workChan <- workItem{index: i, rule: rule}
+	}
+	close(workChan)
+
+	// Wait for all workers to complete
+	wg.Wait()
+
+	// Compact results by removing nil entries (filtered or errored rules)
+	compacted := make([]*ngmodels.AlertRule, 0, len(results))
+	for _, r := range results {
+		if r != nil {
+			compacted = append(compacted, r)
+		}
+	}
+
+	return compacted
+}
+
 // ListAlertRulesPaginated is a handler for retrieving alert rules of specific organization paginated.
 func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (result ngmodels.RulesGroup, nextToken string, err error) {
+	startTotal := time.Now()
+	var queryBuildDuration, rowScanDuration, conversionDuration time.Duration
+
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		// Time: Query building
+		startQueryBuild := time.Now()
 		q, groupsSet, err := st.buildListAlertRulesQuery(sess, query)
 		if err != nil {
 			return err
@@ -734,14 +821,25 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 			q = buildCursorCondition(q, cursor)
 		}
 
+		var expectedSize int
 		if query.Limit > 0 {
 			// Ensure we clamp to the max int available on the platform
 			lim := min(query.Limit, math.MaxInt)
 			// Fetch one extra rule to determine if there are more results
 			q = q.Limit(int(lim) + 1)
+			expectedSize = int(lim) + 1
+		} else {
+			// No limit - estimate a reasonable initial capacity to reduce allocations
+			// For large datasets, this will still grow but avoids many small reallocations
+			expectedSize = 1000
 		}
+		queryBuildDuration = time.Since(startQueryBuild)
 
-		alertRules := make([]*ngmodels.AlertRule, 0)
+		// Time: Row scanning from database
+		startRowScan := time.Now()
+		// First, scan all rows from the database into memory
+		// Pre-allocate with expected size to reduce memory reallocations
+		rawRules := make([]alertRule, 0, expectedSize)
 		rule := new(alertRule)
 		rows, err := q.Rows(rule)
 		if err != nil {
@@ -751,13 +849,22 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 			_ = rows.Close()
 		}()
 
-		// Deserialize each rule separately in case any of them contain invalid JSON.
 		for rows.Next() {
-			converted, ok := st.handleRuleRow(rows, query, groupsSet)
-			if ok {
-				alertRules = append(alertRules, converted)
+			rule := new(alertRule)
+			err := rows.Scan(rule)
+			if err != nil {
+				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "ListAlertRulesPaginated", "error", err)
+				continue
 			}
+			rawRules = append(rawRules, *rule)
 		}
+		rowScanDuration = time.Since(startRowScan)
+
+		// Time: Parallel conversion (JSON deserialization + filtering)
+		startConversion := time.Now()
+		// Convert rules in parallel using worker pool for better performance
+		alertRules := st.convertAlertRulesInParallel(rawRules, query, groupsSet)
+		conversionDuration = time.Since(startConversion)
 
 		genToken := query.Limit > 0 && len(alertRules) > int(query.Limit)
 		if genToken {
@@ -779,6 +886,17 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 		result = alertRules
 		return nil
 	})
+
+	totalDuration := time.Since(startTotal)
+
+	st.Logger.Info("Store ListAlertRulesPaginated performance",
+		"query_build_ms", queryBuildDuration.Milliseconds(),
+		"row_scan_ms", rowScanDuration.Milliseconds(),
+		"conversion_ms", conversionDuration.Milliseconds(),
+		"total_ms", totalDuration.Milliseconds(),
+		"rule_count", len(result),
+		"org_id", query.OrgID)
+
 	return result, nextToken, err
 }
 

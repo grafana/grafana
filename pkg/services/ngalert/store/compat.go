@@ -1,7 +1,6 @@
 package store
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
