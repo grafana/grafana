@@ -56,14 +56,15 @@ func NewSearchOptions(
 		}
 
 		return resource.SearchOptions{
-			Backend:              bleve,
-			Resources:            docs,
-			InitWorkerThreads:    cfg.IndexWorkers,
-			IndexRebuildWorkers:  cfg.IndexRebuildWorkers,
-			InitMinCount:         cfg.IndexMinCount,
-			DashboardIndexMaxAge: cfg.IndexRebuildInterval,
-			MaxIndexAge:          cfg.MaxFileIndexAge,
-			MinBuildVersion:      minVersion,
+			Backend:                bleve,
+			Resources:              docs,
+			InitWorkerThreads:      cfg.IndexWorkers,
+			IndexRebuildWorkers:    cfg.IndexRebuildWorkers,
+			InitMinCount:           cfg.IndexMinCount,
+			DashboardIndexMaxAge:   cfg.IndexRebuildInterval,
+			MaxIndexAge:            cfg.MaxFileIndexAge,
+			MinBuildVersion:        minVersion,
+			IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
 		}, nil
 	}
 	return resource.SearchOptions{}, nil
