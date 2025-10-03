@@ -107,8 +107,13 @@ func (s *DashboardStarsStorage) List(ctx context.Context, options *internalversi
 	if err != nil {
 		return nil, err
 	}
+	history, err := s.sql.getHistoryStars(ctx, ns.OrgID, "")
+	if err != nil {
+		return nil, err
+	}
 	for _, v := range found {
-		list.Items = append(list.Items, asStarsResource(s.namespacer(v.OrgID), &v))
+		list.Items = append(list.Items,
+			asStarsResource(s.namespacer(v.OrgID), &v, history[v.UserUID]))
 	}
 	if rv > 0 {
 		list.ResourceVersion = strconv.FormatInt(rv, 10)
@@ -141,10 +146,16 @@ func (s *DashboardStarsStorage) Get(ctx context.Context, name string, options *m
 	if err != nil {
 		return nil, err
 	}
+
+	history, err := s.sql.getHistoryStars(ctx, ns.OrgID, owner.Identifier)
+	if err != nil {
+		return nil, err
+	}
+
 	if len(found) == 0 || len(found[0].Dashboards) == 0 {
 		return nil, apiserrors.NewNotFound(preferences.StarsResourceInfo.GroupResource(), name)
 	}
-	obj := asStarsResource(ns.Value, &found[0])
+	obj := asStarsResource(ns.Value, &found[0], history[owner.Identifier])
 	return &obj, nil
 }
 
@@ -283,8 +294,8 @@ func (s *DashboardStarsStorage) DeleteCollection(ctx context.Context, deleteVali
 	return nil, fmt.Errorf("not implemented yet")
 }
 
-func asStarsResource(ns string, v *dashboardStars) preferences.Stars {
-	return preferences.Stars{
+func asStarsResource(ns string, v *dashboardStars, history []string) preferences.Stars {
+	stars := preferences.Stars{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              fmt.Sprintf("user-%s", v.UserUID),
 			Namespace:         ns,
@@ -299,4 +310,12 @@ func asStarsResource(ns string, v *dashboardStars) preferences.Stars {
 			}},
 		},
 	}
+	if len(history) > 0 {
+		stars.Spec.Resource = append(stars.Spec.Resource, preferences.StarsResource{
+			Group: "history.grafana.app",
+			Kind:  "Query",
+			Names: history,
+		})
+	}
+	return stars
 }

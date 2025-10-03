@@ -65,6 +65,9 @@ func (s *LegacySQL) getDashboardStars(ctx context.Context, orgId int64, user str
 
 	sess := sql.DB.GetSqlxSession()
 	rows, err := sess.Query(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return nil, 0, err
+	}
 	defer func() {
 		if rows != nil {
 			_ = rows.Close()
@@ -130,6 +133,54 @@ func (s *LegacySQL) getDashboardStars(ctx context.Context, orgId int64, user str
 	}
 
 	return stars, updated.UnixMilli(), err
+}
+
+func (s *LegacySQL) getHistoryStars(ctx context.Context, orgId int64, user string) (map[string][]string, error) {
+	if user == "" {
+		return nil, fmt.Errorf("expecting uer UID")
+	}
+
+	sql, err := s.db(ctx)
+	if err != nil {
+		return nil, err
+	}
+	req := newStarQueryReq(sql, user, orgId)
+
+	q, err := sqltemplate.Execute(sqlQueryStarsQuery, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryStarsQuery.Name(), err)
+	}
+
+	sess := sql.DB.GetSqlxSession()
+	rows, err := sess.Query(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+
+	last := user
+	res := make(map[string][]string)
+	buffer := make([]string, 0, 10)
+	var uid string
+
+	for rows.Next() {
+		err := rows.Scan(&uid, &user)
+		if err != nil {
+			return nil, err
+		}
+		if user != last && len(buffer) > 0 {
+			res[last] = buffer
+			buffer = make([]string, 0, 10)
+		}
+		buffer = append(buffer, uid)
+		last = user
+	}
+	res[last] = buffer
+	return res, nil
 }
 
 // List all defined preferences in an org (valid for admin users only)
