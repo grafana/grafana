@@ -58,20 +58,20 @@ For more information, refer to [this GitHub issue](https://github.com/grafana/gr
 
 ## High load on database caused by a high number of alert instances
 
-If you have a high number of alert instances, it can happen that the load on the database gets very high, as each state
-transition of an alert instance is saved in the database after every evaluation.
+If you have a high number of alert rules or alert instances, the load on the database can get very high.
 
-### Compressed alert state
+By default, Grafana performs one SQL update per alert rule after each evaluation, which updates all alert instances belonging to the rule.
 
-When the `alertingSaveStateCompressed` feature toggle is enabled, Grafana saves the alert rule state in a compressed form. Instead of performing an individual SQL update for each alert instance, Grafana performs a single SQL update per alert rule, updating all alert instances belonging to that rule.
-
-This can significantly reduce database overhead for alert rules with many alert instances.
+You can change this behavior by disabling the `alertingSaveStateCompressed` feature flag. In this case, Grafana performs a separate SQL update for each state change of an alert instance. This configuration is rarely recommended, as it can add significant database overhead for alert rules with many instances.
 
 ### Save state periodically
 
-High load can be also prevented by writing to the database periodically, instead of after every evaluation.
+You can also reduce database load by writing states periodically instead of after every evaluation.
 
-To save state periodically, enable the `alertingSaveStatePeriodic` feature toggle.
+To save state periodically:
+
+1. Enable the `alertingSaveStatePeriodic` feature toggle.
+1. Disable the `alertingSaveStateCompressed` feature toggle.
 
 By default, it saves the states every 5 minutes to the database and on each shutdown. The periodic interval
 can also be configured using the `state_periodic_save_interval` configuration flag. During this process, Grafana deletes all existing alert instances from the database and then writes the entire current set of instances back in batches in a single transaction.
