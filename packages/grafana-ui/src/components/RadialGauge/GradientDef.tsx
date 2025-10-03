@@ -30,6 +30,14 @@ export function GradientDef({
   const colorModeId = fieldDisplay.field.color?.mode;
   const valuePercent = fieldDisplay.display.percent ?? 0;
   const colorMode = getFieldColorMode(colorModeId);
+  const x2 = shape === 'circle' ? 0 : width;
+  const y2 = shape === 'circle' ? height : 0;
+
+  // this makes it so the gradient is always brightest at the current value
+  const transform =
+    shape === 'circle'
+      ? `rotate(${360 * valuePercent - 180} ${center} ${center})`
+      : `translate(-${width * (1 - valuePercent)}, 0)`;
 
   switch (gradient) {
     case 'shade': {
@@ -37,11 +45,17 @@ export function GradientDef({
       const color1 = tinycolor(color).darken(5);
 
       return (
-        <linearGradient x1="0" y1="1" x2="1" y2="1" id={getGradientId(gaugeId, index)}>
+        <linearGradient
+          x1="0"
+          y1="0"
+          x2={x2}
+          y2={y2}
+          id={getGradientId(gaugeId, index)}
+          gradientUnits="userSpaceOnUse"
+          gradientTransform={transform}
+        >
           <stop offset="0%" stopColor={color1.toString()} stopOpacity={1} />
-          <stop offset="50%" stopColor={tinycolor(color).lighten(15).toString()} stopOpacity={1} />
-          <stop offset="53%" stopColor={tinycolor(color).lighten(15).toString()} stopOpacity={1} />
-          <stop offset="90%" stopColor={color} stopOpacity={1} />
+          <stop offset="100%" stopColor={tinycolor(color).lighten(15).toString()} stopOpacity={1} />
         </linearGradient>
       );
     }
@@ -65,15 +79,6 @@ export function GradientDef({
       const color = fieldDisplay.display.color ?? 'gray';
       const color1 = tinycolor(color).spin(-20).darken(5);
       const color2 = tinycolor(color).saturate(20).spin(20).brighten(10);
-      const percent = fieldDisplay.display.percent ?? 0;
-      const x2 = shape === 'circle' ? 0 : width;
-      const y2 = shape === 'circle' ? height : 0;
-
-      // this makes it so the gradient is always brightest at the current value
-      const transform =
-        shape === 'circle'
-          ? `rotate(${360 * percent - 180} ${center} ${center})`
-          : `translate(-${width * (1 - percent)}, 0)`;
 
       return (
         <linearGradient
