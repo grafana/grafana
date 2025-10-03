@@ -111,7 +111,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 			ctxLogger.Error("Failed to refresh OAuth access token", "id", id.ID, "error", refreshErr)
 
 			// log the user out
-			if err := s.sessionService.RevokeToken(ctx, id.SessionToken, false); err != nil {
+			if err := s.sessionService.RevokeToken(ctx, id.SessionToken, false); err != nil && !errors.Is(err, auth.ErrUserTokenNotFound) {
 				ctxLogger.Warn("Failed to revoke session token", "id", id.ID, "tokenId", id.SessionToken.Id, "error", err)
 			}
 

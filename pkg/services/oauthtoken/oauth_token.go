@@ -360,7 +360,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 
 	// Silence ErrNoRefreshTokenFound
 	if errors.Is(cmdErr, ErrNoRefreshTokenFound) {
-		return nil, nil
+		return nil, ErrNoRefreshTokenFound
 	}
 
 	return newToken, cmdErr
@@ -413,8 +413,10 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 
 	ctxLogger := logger.FromContext(ctx).New("userID", userID)
 
+	// tryGetOrRefreshOAuthToken assumes that the AuthModule has RefreshToken enabled
+	// which is checked by the caller (TryTokenRefresh)
 	if persistedToken.RefreshToken == "" {
-		ctxLogger.Warn("No refresh token available", "authmodule", usr.GetAuthenticatedBy())
+		ctxLogger.Error("No refresh token available", "authmodule", tokenRefreshMetadata.AuthModule)
 		span.SetStatus(codes.Error, ErrNoRefreshTokenFound.Error())
 		return nil, ErrNoRefreshTokenFound
 	}
@@ -441,34 +443,48 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 
 	start := time.Now()
 	// TokenSource handles refreshing the token if it has expired
-	token, err := connect.TokenSource(ctx, persistedToken).Token()
+	token, refreshErr := connect.TokenSource(ctx, persistedToken).Token()
 	duration := time.Since(start)
 	o.tokenRefreshDuration.WithLabelValues(tokenRefreshMetadata.AuthModule, fmt.Sprintf("%t", err == nil)).Observe(duration.Seconds())
 
-	if err != nil {
+	if refreshErr != nil {
 		span.SetAttributes(attribute.Bool("token_refreshed", false))
 		ctxLogger.Error("Failed to retrieve oauth access token",
-			"provider", tokenRefreshMetadata.AuthModule, "error", err)
+			"provider", tokenRefreshMetadata.AuthModule, "error", refreshErr)
 
 		// token refresh failed, invalidate the old token
 		if err := o.InvalidateOAuthTokens(ctx, usr, tokenRefreshMetadata); err != nil {
 			ctxLogger.Warn("Failed to invalidate OAuth tokens", "authID", tokenRefreshMetadata.AuthID, "error", err)
 		}
 
-		return nil, err
+		// // Update the external session with the new token if we the user has an external session,
+		// // regardless of the feature flag state to keep the `user_external_session` table in sync.
+		// // ExternalSessionID should always be set except for some edge cases:
+		// // - when Grafana was updated to a version where the `improvedExternalSessionHandling` feature flag
+		// //   was enabled after the user logged in
+		// if tokenRefreshMetadata.ExternalSessionID != 0 {
+		// 	sessionToken, err := o.sessionService.GetTokenByExternalSessionID(ctx, tokenRefreshMetadata.ExternalSessionID)
+		// 	if err != nil {
+		// 		ctxLogger.Error("Failed to get session token by external session ID", "error", err)
+		// 		span.SetStatus(codes.Error, "Failed to get session token by external session ID")
+		// 		return nil, err
+		// 	}
+
+		// 	// Remove the associated internal session
+		// 	if err := o.sessionService.RevokeToken(ctx, sessionToken, false); err != nil {
+		// 		ctxLogger.Error("Failed to revoke internal session token", "error", err)
+		// 		span.SetStatus(codes.Error, "Failed to revoke internal session token")
+		// 		return nil, err
+		// 	}
+		// }
+
+		return nil, refreshErr
 	}
 
 	span.SetAttributes(attribute.Bool("token_refreshed", true))
 
 	// If the tokens are not the same, update the entry in the DB
 	if !tokensEq(persistedToken, token) {
-		updateAuthCommand := &login.UpdateAuthInfoCommand{
-			UserId:     userID,
-			AuthModule: tokenRefreshMetadata.AuthModule,
-			AuthId:     tokenRefreshMetadata.AuthID,
-			OAuthToken: token,
-		}
-
 		if o.Cfg.Env == setting.Dev {
 			ctxLogger.Debug("Oauth got token",
 				"auth_module", usr.GetAuthenticatedBy(),
@@ -479,6 +495,12 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 		}
 
 		if !o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
+			updateAuthCommand := &login.UpdateAuthInfoCommand{
+				UserId:     userID,
+				AuthModule: tokenRefreshMetadata.AuthModule,
+				AuthId:     tokenRefreshMetadata.AuthID,
+				OAuthToken: token,
+			}
 			if err := o.AuthInfoService.UpdateAuthInfo(ctx, updateAuthCommand); err != nil {
 				ctxLogger.Error("Failed to update auth info during token refresh", "authID", tokenRefreshMetadata.AuthID, "error", err)
 				span.SetStatus(codes.Error, "Failed to update auth info during token refresh")
@@ -543,6 +565,11 @@ func needTokenRefresh(ctx context.Context, persistedToken *oauth2.Token) bool {
 	var hasAccessTokenExpired, hasIdTokenExpired bool
 
 	ctxLogger := logger.FromContext(ctx)
+
+	if persistedToken.AccessToken == "" {
+		ctxLogger.Debug("Access token has been cleared, need to refresh")
+		return true
+	}
 
 	idTokenExp, err := GetIDTokenExpiry(persistedToken)
 	if err != nil {

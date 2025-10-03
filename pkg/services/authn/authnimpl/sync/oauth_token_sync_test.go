@@ -78,6 +78,14 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			expectRevokeTokenCalled:     false,
 			expectToken:                 &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},
 		},
+		{
+			desc:                        "should not invalidate session if token refresh fails with no refresh token",
+			identity:                    &authn.Identity{ID: "1", Type: claims.TypeUser, SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
+			expectedTryRefreshErr:       oauthtoken.ErrNoRefreshTokenFound,
+			expectTryRefreshTokenCalled: true,
+			expectRevokeTokenCalled:     true,
+			expectedErr:                 oauthtoken.ErrNoRefreshTokenFound,
+		},
 
 		// TODO: address coverage of oauthtoken sync
 	}
