@@ -182,9 +182,9 @@ The following table lists the default RBAC OnCall role assignments to the basic 
 | Editor        | `plugins:grafana-oncall-app:editor` | Default [Editor](ref:rbac-basic-roles) assignments.                                                                                                      |
 | Viewer        | `plugins:grafana-oncall-app:reader` | Default [Viewer](ref:rbac-basic-roles) assignments.                                                                                                      |
 
-### Private Datasource Connect roles
+### Private Data Source Connect roles
 
-The following table lists how Private Datasource Connect fixed roles are assigned to the basic roles:
+The following table lists how Private Data Source Connect fixed roles are assigned to the basic roles:
 
 | Basic role      | Associated fixed roles                                      | Description                                                                 |
 | --------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------- |
@@ -193,4 +193,4 @@ The following table lists how Private Datasource Connect fixed roles are assigne
 | Editor          | `plugins:grafana-pdc-app.private-networks:write`            | Default [Editor](ref:rbac-basic-roles) assignments.                                                              |
 | Viewer          | `plugins:grafana-pdc-app.private-networks:read`             | Default [Viewer](ref:rbac-basic-roles) assignments.                                                              |
 
-> **Note:** These Private Datasource Connect fixed roles must be granted alongside the `fixed:datasources:writer` role for the permissions to take effect.
+> **Note:** These Private Data Source Connect fixed roles must be granted alongside the `fixed:datasources:writer` role for the permissions to take effect.
