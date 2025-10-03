@@ -117,9 +117,13 @@ func PostableGrafanaReceiversToIntegrations(postables []*apimodels.PostableGrafa
 }
 
 func PostableGrafanaReceiverToIntegration(p *apimodels.PostableGrafanaReceiver) (*models.Integration, error) {
-	config, err := models.IntegrationConfigFromType(p.Type, nil)
+	integrationType, err := alertingNotify.IntegrationTypeFromString(p.Type)
 	if err != nil {
 		return nil, err
+	}
+	config, ok := alertingNotify.GetSchemaVersionForIntegration(integrationType, schema.V1)
+	if !ok {
+		return nil, fmt.Errorf("integration type [%s] does not have schema of version %s", integrationType, schema.V1)
 	}
 	integration := &models.Integration{
 		UID:                   p.UID,
