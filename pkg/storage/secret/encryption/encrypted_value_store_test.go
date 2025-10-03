@@ -2,6 +2,7 @@ package encryption_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -245,68 +246,214 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 func TestEncryptedValueMigration(t *testing.T) {
 	t.Parallel()
 
-	sut := testutils.Setup(t)
-	tracer := noop.NewTracerProvider().Tracer("test")
-	usageStats := &usagestats.UsageStatsMock{T: t}
-	enc, err := cipherService.ProvideAESGCMCipherService(tracer, usageStats)
-	require.NoError(t, err)
+	t.Run("golden path - successful migration of legacy format", func(t *testing.T) {
+		t.Parallel()
 
-	testCases := []struct {
-		namespace string
-		name      string
-		version   int64
-		plaintext string
-		dataKeyId string
-	}{
-		{
-			namespace: "test-namespace-1",
-			name:      "test-name-1",
-			version:   1,
-			plaintext: "test-plaintext-1",
-			dataKeyId: "test-data-key-id-1",
-		},
-		{
-			namespace: "test-namespace-1",
-			name:      "test-name-2",
-			version:   1,
-			plaintext: "test-plaintext-2",
-			dataKeyId: "test-data-key-id-1",
-		},
-		{
-			namespace: "test-namespace-2",
-			name:      "test-name-3",
-			version:   1,
-			plaintext: "test-plaintext-3",
-			dataKeyId: "test-data-key-id-2",
-		},
-	}
-
-	// Seed with data in the legacy format
-	for _, tc := range testCases {
-		err := createLegacyEncryptedData(t, sut, enc, tc.namespace, tc.name, tc.version, tc.plaintext, tc.dataKeyId)
-		require.NoError(t, err)
-	}
-
-	// Run the migration and blindy trust it
-	rowsAffected, err := sut.EncryptedValueMigrationExecutor.Execute(t.Context())
-	require.NoError(t, err)
-	require.Equal(t, len(testCases), rowsAffected)
-
-	// Now validate that the data is in the new format
-	encryptedValues, err := sut.GlobalEncryptedValueStorage.ListAll(t.Context(), contracts.ListOpts{}, nil)
-	require.NoError(t, err)
-	require.Len(t, encryptedValues, 3)
-
-	for _, tc := range testCases {
-		ev, err := sut.EncryptedValueStorage.Get(t.Context(), xkube.Namespace(tc.namespace), tc.name, tc.version)
+		sut := testutils.Setup(t)
+		tracer := noop.NewTracerProvider().Tracer("test")
+		usageStats := &usagestats.UsageStatsMock{T: t}
+		enc, err := cipherService.ProvideAESGCMCipherService(tracer, usageStats)
 		require.NoError(t, err)
 
-		// Decrypt the encrypted data and check for equality
-		decrypted, err := enc.Decrypt(t.Context(), ev.EncryptedData, tc.dataKeyId)
+		testCases := []struct {
+			namespace string
+			name      string
+			version   int64
+			plaintext string
+			dataKeyId string
+		}{
+			{
+				namespace: "test-namespace-1",
+				name:      "test-name-1",
+				version:   1,
+				plaintext: "test-plaintext-1",
+				dataKeyId: "test-data-key-id-1",
+			},
+			{
+				namespace: "test-namespace-1",
+				name:      "test-name-2",
+				version:   1,
+				plaintext: "test-plaintext-2",
+				dataKeyId: "test-data-key-id-1",
+			},
+			{
+				namespace: "test-namespace-2",
+				name:      "test-name-3",
+				version:   1,
+				plaintext: "test-plaintext-3",
+				dataKeyId: "test-data-key-id-2",
+			},
+		}
+
+		// Seed with data in the legacy format
+		for _, tc := range testCases {
+			err := createLegacyEncryptedData(t, sut, enc, tc.namespace, tc.name, tc.version, tc.plaintext, tc.dataKeyId)
+			require.NoError(t, err)
+		}
+
+		// Run the migration and blindy trust it
+		rowsAffected, err := sut.EncryptedValueMigrationExecutor.Execute(t.Context())
 		require.NoError(t, err)
-		require.Equal(t, tc.dataKeyId, ev.DataKeyID)
-		require.Equal(t, tc.plaintext, string(decrypted))
-	}
+		require.Equal(t, len(testCases), rowsAffected)
+
+		// Now validate that the data is in the new format
+		encryptedValues, err := sut.GlobalEncryptedValueStorage.ListAll(t.Context(), contracts.ListOpts{}, nil)
+		require.NoError(t, err)
+		require.Len(t, encryptedValues, 3)
+
+		for _, tc := range testCases {
+			ev, err := sut.EncryptedValueStorage.Get(t.Context(), xkube.Namespace(tc.namespace), tc.name, tc.version)
+			require.NoError(t, err)
+
+			// Decrypt the encrypted data and check for equality
+			decrypted, err := enc.Decrypt(t.Context(), ev.EncryptedData, tc.dataKeyId)
+			require.NoError(t, err)
+			require.Equal(t, tc.dataKeyId, ev.DataKeyID)
+			require.Equal(t, tc.plaintext, string(decrypted))
+		}
+	})
+
+	t.Run("error conditions - handles corrupt data gracefully", func(t *testing.T) {
+		t.Parallel()
+
+		tracer := noop.NewTracerProvider().Tracer("test")
+		sut := testutils.Setup(t)
+
+		t.Run("global store list error", func(t *testing.T) {
+			mockGlobalStore := &mockGlobalEncryptedValueStorage{
+				listAllError: errors.New("database connection failed"),
+			}
+
+			migrationExecutor, err := encryption.ProvideEncryptedValueMigrationExecutor(
+				sut.Database,
+				tracer,
+				sut.EncryptedValueStorage,
+				mockGlobalStore,
+			)
+			require.NoError(t, err)
+
+			rowsAffected, err := migrationExecutor.Execute(t.Context())
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "listing all encrypted values")
+			require.Equal(t, 0, rowsAffected)
+		})
+
+		t.Run("corrupt data - missing key delimiter", func(t *testing.T) {
+			mockGlobalStore := &mockGlobalEncryptedValueStorage{
+				encryptedValues: []*contracts.EncryptedValue{
+					{
+						Namespace: "test-ns",
+						Name:      "test-name",
+						Version:   1,
+						EncryptedPayload: contracts.EncryptedPayload{
+							EncryptedData: []byte("corrupt-data-without-delimiter"),
+							DataKeyID:     "", // Empty to trigger migration
+						},
+					},
+				},
+			}
+
+			migrationExecutor, err := encryption.ProvideEncryptedValueMigrationExecutor(
+				sut.Database,
+				tracer,
+				sut.EncryptedValueStorage,
+				mockGlobalStore,
+			)
+			require.NoError(t, err)
+
+			rowsAffected, err := migrationExecutor.Execute(t.Context())
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "could not find valid key id in encrypted payload")
+			require.Equal(t, 0, rowsAffected)
+		})
+
+		t.Run("corrupt data - empty encrypted data", func(t *testing.T) {
+			mockGlobalStore := &mockGlobalEncryptedValueStorage{
+				encryptedValues: []*contracts.EncryptedValue{
+					{
+						Namespace: "test-ns",
+						Name:      "test-name",
+						Version:   1,
+						EncryptedPayload: contracts.EncryptedPayload{
+							EncryptedData: []byte("#dGVzdA#"), // Valid key but no encrypted data after delimiter
+							DataKeyID:     "",                 // Empty to trigger migration
+						},
+					},
+				},
+			}
+
+			migrationExecutor, err := encryption.ProvideEncryptedValueMigrationExecutor(
+				sut.Database,
+				tracer,
+				sut.EncryptedValueStorage,
+				mockGlobalStore,
+			)
+			require.NoError(t, err)
+
+			rowsAffected, err := migrationExecutor.Execute(t.Context())
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "encrypted data is empty")
+			require.Equal(t, 0, rowsAffected)
+		})
+
+		t.Run("corrupt data - invalid base64 key", func(t *testing.T) {
+			mockGlobalStore := &mockGlobalEncryptedValueStorage{
+				encryptedValues: []*contracts.EncryptedValue{
+					{
+						Namespace: "test-ns",
+						Name:      "test-name",
+						Version:   1,
+						EncryptedPayload: contracts.EncryptedPayload{
+							EncryptedData: []byte("#invalid-base64!@#$%^&*()#somedata"),
+							DataKeyID:     "", // Empty to trigger migration
+						},
+					},
+				},
+			}
+
+			migrationExecutor, err := encryption.ProvideEncryptedValueMigrationExecutor(
+				sut.Database,
+				tracer,
+				sut.EncryptedValueStorage,
+				mockGlobalStore,
+			)
+			require.NoError(t, err)
+
+			rowsAffected, err := migrationExecutor.Execute(t.Context())
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "decoding key id")
+			require.Equal(t, 0, rowsAffected)
+		})
+
+		t.Run("update failure", func(t *testing.T) {
+			mockGlobalStore := &mockGlobalEncryptedValueStorage{
+				encryptedValues: []*contracts.EncryptedValue{
+					{
+						Namespace: "nonexistent-ns",
+						Name:      "nonexistent-name",
+						Version:   999,
+						EncryptedPayload: contracts.EncryptedPayload{
+							EncryptedData: []byte("#dGVzdA#someencrypteddata"),
+							DataKeyID:     "", // Empty to trigger migration
+						},
+					},
+				},
+			}
+
+			migrationExecutor, err := encryption.ProvideEncryptedValueMigrationExecutor(
+				sut.Database,
+				tracer,
+				sut.EncryptedValueStorage,
+				mockGlobalStore,
+			)
+			require.NoError(t, err)
+
+			rowsAffected, err := migrationExecutor.Execute(t.Context())
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "updating encrypted value")
+			require.Equal(t, 0, rowsAffected)
+		})
+	})
 }
 
 // Helper function that bypasses interfaces and creates data in the legacy format directly in the database.
@@ -543,4 +690,26 @@ func (m *model) delete(namespace, name string, version int64) error {
 		return v.namespace == namespace && v.name == name && v.version == version
 	})
 	return nil
+}
+
+// mockGlobalEncryptedValueStorage is a mock implementation of contracts.GlobalEncryptedValueStorage
+// used for testing error conditions in the migration executor
+type mockGlobalEncryptedValueStorage struct {
+	encryptedValues []*contracts.EncryptedValue
+	listAllError    error
+	countAllError   error
+}
+
+func (m *mockGlobalEncryptedValueStorage) ListAll(ctx context.Context, opts contracts.ListOpts, untilTime *int64) ([]*contracts.EncryptedValue, error) {
+	if m.listAllError != nil {
+		return nil, m.listAllError
+	}
+	return m.encryptedValues, nil
+}
+
+func (m *mockGlobalEncryptedValueStorage) CountAll(ctx context.Context, untilTime *int64) (int64, error) {
+	if m.countAllError != nil {
+		return 0, m.countAllError
+	}
+	return int64(len(m.encryptedValues)), nil
 }
