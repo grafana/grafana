@@ -433,16 +433,6 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
   );
 }
 
-function getDatasourceNames(datasource: DataSourceApi, queries: DataQuery[]): string[] {
-  if (datasource.uid === '-- Mixed --') {
-    // If datasource is mixed, the datasource UID is on the query. Here we map the UIDs to datasource names.
-    const dsSrv = getDataSourceSrv();
-    return queries.map((ds) => dsSrv.getInstanceSettings(ds.datasource)?.name).filter((name) => name !== undefined);
-  } else {
-    return [datasource.name];
-  }
-}
-
 interface QueriesTabProps extends PanelDataTabHeaderProps {
   model: PanelDataQueriesTab;
 }
