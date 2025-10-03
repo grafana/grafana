@@ -150,15 +150,16 @@ func (s *folderStorage) DeleteCollection(ctx context.Context, deleteValidation r
 }
 
 func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid, parentUID string) error {
-	var permissions []accesscontrol.SetResourcePermissionCommand
-
 	isNested := parentUID != ""
-	if !isNested {
-		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
-		}...)
+	if isNested {
+		return nil
 	}
+	
+	permissions := []accesscontrol.SetResourcePermissionCommand{
+		{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+		{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+	}
+	
 	_, err := s.folderPermissionsSvc.SetPermissions(ctx, orgID, uid, permissions...)
 	if err != nil {
 		return err
