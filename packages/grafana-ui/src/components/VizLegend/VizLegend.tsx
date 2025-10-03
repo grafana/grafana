@@ -74,7 +74,7 @@ export function VizLegend<T>({
         onLabelClick(item, event);
       }
       if (item.dataTopic === DataTopic.Annotations && onAnnotationVisibilityChange) {
-        onAnnotationVisibilityChange(item.fieldName ?? item.label, SeriesVisibilityChangeMode.ToggleSelection);
+        onAnnotationVisibilityChange(item.fieldName ?? 'value', item.label, SeriesVisibilityChangeMode.ToggleSelection);
       } else if (onToggleSeriesVisibility) {
         onToggleSeriesVisibility(
           item.fieldName ?? item.label,

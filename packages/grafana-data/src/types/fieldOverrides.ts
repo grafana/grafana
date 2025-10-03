@@ -24,6 +24,7 @@ export interface ConfigOverrideRule {
   matcher: MatcherConfig;
   properties: DynamicConfigValue[];
   dataTopic?: DataTopic;
+  frame?: string;
 }
 
 /**

@@ -35,7 +35,7 @@ export interface PanelContext {
   onSeriesColorChange?: (label: string, color: string) => void;
 
   onToggleSeriesVisibility?: (label: string, mode: SeriesVisibilityChangeMode) => void;
-  onAnnotationVisibilityChange?: (label: string, mode: SeriesVisibilityChangeMode) => void;
+  onAnnotationVisibilityChange?: (label: string, frame: string, mode: SeriesVisibilityChangeMode) => void;
 
   canAddAnnotations?: () => boolean;
   canEditAnnotations?: (dashboardUID?: string) => boolean;
