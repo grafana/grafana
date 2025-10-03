@@ -142,8 +142,6 @@ export const AnnotationsPlugin2 = ({
     return annos;
   }, [annotations, newRange]);
 
-  // or returns modified anno array with regions, indicating which are clustered and contents to render in tooltip
-  // returns region cluster[] Cluster { time, timeEnd, annos: [], color? }
   const { annos } = useMemo(() => {
     const annos2: DataFrame[] = [];
 
