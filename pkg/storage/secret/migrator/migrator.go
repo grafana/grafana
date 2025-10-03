@@ -200,4 +200,15 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("add lease_created index to "+TableNameSecureValue, migrator.NewAddIndexMigration(secureValueTable, &migrator.Index{
 		Cols: []string{"lease_created"},
 	}))
+
+	mg.AddMigration("add data_key_id column to "+TableNameEncryptedValue, migrator.NewAddColumnMigration(encryptedValueTable, &migrator.Column{
+		Name:     "data_key_id",
+		Type:     migrator.DB_NVarchar,
+		Length:   100,
+		Nullable: false,
+		Default:  "''",
+	}))
+	mg.AddMigration("add data_key_id index to "+TableNameEncryptedValue, migrator.NewAddIndexMigration(encryptedValueTable, &migrator.Index{
+		Cols: []string{"data_key_id"},
+	}))
 }

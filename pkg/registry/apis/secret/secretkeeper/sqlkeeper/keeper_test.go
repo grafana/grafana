@@ -8,6 +8,7 @@ import (
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -16,10 +17,10 @@ func TestMain(m *testing.M) {
 }
 
 func Test_SQLKeeperSetup(t *testing.T) {
-	namespace1 := "namespace1"
+	namespace1 := xkube.Namespace("namespace1")
 	name1 := "name1"
 	version1 := int64(1)
-	namespace2 := "namespace2"
+	namespace2 := xkube.Namespace("namespace2")
 	name2 := "name2"
 	plaintext1 := "very secret string in namespace 1"
 	plaintext2 := "very secret string in namespace 2"
