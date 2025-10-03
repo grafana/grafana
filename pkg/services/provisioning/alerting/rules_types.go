@@ -151,10 +151,6 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 		noDataState = models.NoData
 	}
 	alertRule.NoDataState = noDataState
-	alertRule.Condition = rule.Condition.Value()
-	if alertRule.Condition == "" {
-		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: no condition set", alertRule.Title)
-	}
 	alertRule.Annotations = rule.Annotations.Raw
 	alertRule.Labels = rule.Labels.Value()
 	for _, queryV1 := range rule.Data {
@@ -181,6 +177,10 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 			return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
 		}
 		alertRule.Record = &record
+	}
+	alertRule.Condition = rule.Condition.Value()
+	if alertRule.Condition == "" && alertRule.Record == nil {
+		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: no condition set", alertRule.Title)
 	}
 	return alertRule, nil
 }
