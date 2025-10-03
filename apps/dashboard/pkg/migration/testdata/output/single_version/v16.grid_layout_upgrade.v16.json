@@ -113,43 +113,44 @@
         "y": 17
       },
       "id": 15,
-      "panels": [],
+      "panels": [
+        {
+          "gridPos": {
+            "h": 6,
+            "w": 8,
+            "x": 0,
+            "y": 18
+          },
+          "id": 6,
+          "minSpan": 4,
+          "title": "Temperature",
+          "type": "gauge"
+        },
+        {
+          "gridPos": {
+            "h": 6,
+            "w": 8,
+            "x": 8,
+            "y": 18
+          },
+          "id": 7,
+          "title": "Uptime",
+          "type": "stat"
+        },
+        {
+          "gridPos": {
+            "h": 6,
+            "w": 8,
+            "x": 16,
+            "y": 18
+          },
+          "id": 8,
+          "title": "Load Average",
+          "type": "bargauge"
+        }
+      ],
       "title": "Visible Row Title",
       "type": "row"
-    },
-    {
-      "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 0,
-        "y": 18
-      },
-      "id": 6,
-      "minSpan": 4,
-      "title": "Temperature",
-      "type": "gauge"
-    },
-    {
-      "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 8,
-        "y": 18
-      },
-      "id": 7,
-      "title": "Uptime",
-      "type": "stat"
-    },
-    {
-      "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 16,
-        "y": 18
-      },
-      "id": 8,
-      "title": "Load Average",
-      "type": "bargauge"
     },
     {
       "gridPos": {

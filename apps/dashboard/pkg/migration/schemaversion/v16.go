@@ -158,8 +158,8 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 			delete(panel, "span")
 
 			// Exact logic from lines 1082-1086 in TS
-			if rowPanel != nil && isCollapsed {
-				// Add to collapsed row's nested panels
+			// Condition matches line 1047 in TS
+			if rowPanel != nil && (isCollapsed || GetBoolValue(row, "showTitle")) {
 				if rowPanelPanels, ok := rowPanel["panels"].([]interface{}); ok {
 					rowPanel["panels"] = append(rowPanelPanels, panel)
 				}
