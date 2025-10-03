@@ -154,7 +154,7 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 	if isNested {
 		return nil
 	}
-	
+
 	permissions := []accesscontrol.SetResourcePermissionCommand{
 		{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 		{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
@@ -170,7 +170,7 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 			UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 		})
 	}
-	
+
 	_, err := s.folderPermissionsSvc.SetPermissions(ctx, orgID, uid, permissions...)
 	if err != nil {
 		return err
