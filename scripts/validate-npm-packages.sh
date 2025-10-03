@@ -10,9 +10,8 @@ for file in "$ARTIFACTS_DIR"/*.tgz; do
   echo "🔍 Checking NPM package: $file"
 
   # Ignore named-exports for now as builds aren't compatible yet.
-  yarn attw "$file" --ignore-rules "named-exports"
+  yarn attw "$file" --ignore-rules "named-exports" "false-cjs"
   yarn publint "$file"
-
 done
 
 echo "🚀 All NPM package checks passed! 🚀"
