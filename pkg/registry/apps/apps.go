@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
+	"github.com/grafana/grafana/pkg/registry/apps/logs"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
@@ -36,6 +37,7 @@ func ProvideAppInstallers(
 	rulesAppInstaller *rules.AlertingRulesAppInstaller,
 	correlationsAppInstaller *correlations.CorrelationsAppInstaller,
 	alertingNotificationAppInstaller *notifications.AlertingNotificationsAppInstaller,
+	logsAppInstaller *logs.LogsAppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
@@ -49,6 +51,9 @@ func ProvideAppInstallers(
 	}
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesCorrelations) {
 		installers = append(installers, correlationsAppInstaller)
+	}
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesCorrelations) {
+		installers = append(installers, logsAppInstaller )
 	}
 	if alertingNotificationAppInstaller != nil {
 		installers = append(installers, alertingNotificationAppInstaller)
