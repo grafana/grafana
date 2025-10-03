@@ -3484,6 +3484,7 @@
       "move-modal-field-label": "文件夹名称",
       "move-modal-text": "此操作将移动以下内容：",
       "move-modal-title": "移动",
+      "move-provisioned-folder": "",
       "moving": "正在移动...",
       "new-folder-name-required-phrase": "文件夹名称是必需项。",
       "selected-mix-resources-modal-text": "您已选择了已预置和未预置的资源。这些资源无法一起处理。请仅选择已预置的资源或未预置的资源，然后重试。",

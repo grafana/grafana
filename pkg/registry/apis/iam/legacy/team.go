@@ -265,6 +265,91 @@ func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo
 	return &CreateTeamResult{Team: createdTeam}, nil
 }
 
+type UpdateTeamCommand struct {
+	UID           string
+	Name          string
+	Updated       DBTime
+	Email         string
+	ExternalID    string
+	IsProvisioned bool
+	ExternalUID   string
+}
+
+type UpdateTeamResult struct {
+	Team team.Team
+}
+
+var sqlUpdateTeamTemplate = mustTemplate("update_team.sql")
+
+func newUpdateTeam(sql *legacysql.LegacyDatabaseHelper, cmd *UpdateTeamCommand) updateTeamQuery {
+	return updateTeamQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		TeamTable:   sql.Table("team"),
+		Command:     cmd,
+	}
+}
+
+type updateTeamQuery struct {
+	sqltemplate.SQLTemplate
+	TeamTable string
+	Command   *UpdateTeamCommand
+}
+
+func (r updateTeamQuery) Validate() error {
+	return nil
+}
+
+func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateTeamCommand) (*UpdateTeamResult, error) {
+	now := time.Now().UTC().Truncate(time.Second)
+
+	cmd.Updated = NewDBTime(now)
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newUpdateTeam(sql, &cmd)
+
+	var updatedTeam team.Team
+	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		_, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{
+			OrgID: ns.OrgID,
+			UID:   cmd.UID,
+		})
+		if err != nil {
+			return fmt.Errorf("team not found: %w", err)
+		}
+
+		teamQuery, err := sqltemplate.Execute(sqlUpdateTeamTemplate, req)
+		if err != nil {
+			return fmt.Errorf("failed to execute team update template %q: %w", sqlUpdateTeamTemplate.Name(), err)
+		}
+
+		_, err = st.Exec(ctx, teamQuery, req.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to update team: %w", err)
+		}
+
+		updatedTeam = team.Team{
+			UID:           cmd.UID,
+			Name:          cmd.Name,
+			Email:         cmd.Email,
+			ExternalUID:   cmd.ExternalUID,
+			IsProvisioned: cmd.IsProvisioned,
+			Updated:       cmd.Updated.Time,
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &UpdateTeamResult{Team: updatedTeam}, nil
+}
+
 type DeleteTeamCommand struct {
 	UID string
 }
@@ -336,7 +421,7 @@ type ListTeamBindingsQuery struct {
 }
 
 type ListTeamBindingsResult struct {
-	Bindings []TeamBinding
+	Bindings []TeamMember
 	Continue int64
 	RV       int64
 }
@@ -358,11 +443,6 @@ type TeamMember struct {
 
 func (m TeamMember) MemberID() string {
 	return claims.NewTypeID(claims.TypeUser, m.UserUID)
-}
-
-type TeamBinding struct {
-	TeamUID string
-	Members []TeamMember
 }
 
 var sqlQueryTeamBindingsTemplate = mustTemplate("team_bindings_query.sql")
@@ -420,11 +500,11 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 		return nil, err
 	}
 
-	res := &ListTeamBindingsResult{}
-	grouped := map[string][]TeamMember{}
+	res := &ListTeamBindingsResult{
+		Bindings: make([]TeamMember, 0, int(query.Pagination.Limit)),
+	}
 
 	var lastID int64
-	var atTeamLimit bool
 
 	for rows.Next() {
 		m := TeamMember{}
@@ -433,30 +513,17 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 			return res, err
 		}
 
-		lastID = m.TeamID
-		members, ok := grouped[m.TeamUID]
-		if ok {
-			grouped[m.TeamUID] = append(members, m)
-		} else if !atTeamLimit {
-			grouped[m.TeamUID] = []TeamMember{m}
-		}
+		res.Bindings = append(res.Bindings, m)
 
-		if len(grouped) >= int(query.Pagination.Limit)-1 {
-			atTeamLimit = true
+		lastID = m.ID
+
+		if len(res.Bindings) >= int(query.Pagination.Limit)-1 {
 			res.Continue = lastID
 		}
 	}
 
 	if query.UID == "" {
 		res.RV, err = sql.GetResourceVersion(ctx, "team_member", "updated")
-	}
-
-	res.Bindings = make([]TeamBinding, 0, len(grouped))
-	for uid, members := range grouped {
-		res.Bindings = append(res.Bindings, TeamBinding{
-			TeamUID: uid,
-			Members: members,
-		})
 	}
 
 	return res, err
