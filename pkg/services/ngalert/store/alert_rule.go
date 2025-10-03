@@ -65,6 +65,8 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 			_ = st.Bus.Publish(ctx, &RuleChangeEvent{
 				RuleKeys: keys,
 			})
+			// Invalidate cache for the affected organization
+			st.invalidateAlertRulesCache(orgID)
 		}
 
 		rows, err = sess.Table("alert_instance").Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
@@ -403,6 +405,10 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			_ = st.Bus.Publish(ctx, &RuleChangeEvent{
 				RuleKeys: keys,
 			})
+			// Invalidate cache for the affected organization
+			if len(newRules) > 0 {
+				st.invalidateAlertRulesCache(newRules[0].OrgID)
+			}
 		}
 		return nil
 	})
@@ -467,6 +473,10 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			_ = st.Bus.Publish(ctx, &RuleChangeEvent{
 				RuleKeys: keys,
 			})
+			// Invalidate cache for the affected organization
+			if len(rules) > 0 {
+				st.invalidateAlertRulesCache(rules[0].New.OrgID)
+			}
 		}
 		return nil
 	})
@@ -801,7 +811,47 @@ func (st DBstore) convertAlertRulesInParallel(rawRules []alertRule, query *ngmod
 // ListAlertRulesPaginated is a handler for retrieving alert rules of specific organization paginated.
 func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (result ngmodels.RulesGroup, nextToken string, err error) {
 	startTotal := time.Now()
-	var queryBuildDuration, rowScanDuration, conversionDuration time.Duration
+	var queryBuildDuration, rowScanDuration, conversionDuration, cacheRetrievalDuration time.Duration
+	cacheHit := false
+
+	// Check if we can use cache: only if no complex filtering is applied
+	// We can use cache when we have simple queries (no dashboard filtering, no specific rule UIDs, etc.)
+	canUseCache := len(query.NamespaceUIDs) == 0 && len(query.RuleUIDs) == 0 &&
+		query.DashboardUID == "" && query.ContinueToken == ""
+
+	if canUseCache {
+		startCache := time.Now()
+		if cachedRules, found := st.getCachedAlertRules(query.OrgID, query.RuleType); found {
+			cacheRetrievalDuration = time.Since(startCache)
+			cacheHit = true
+
+			// Apply pagination to cached results
+			result = cachedRules
+			if query.Limit > 0 && len(result) > int(query.Limit) {
+				// Generate next token
+				result = result[:query.Limit]
+				lastRule := result[len(result)-1]
+				cursor := continueCursor{
+					NamespaceUID: lastRule.NamespaceUID,
+					RuleGroup:    lastRule.RuleGroup,
+					RuleGroupIdx: int64(lastRule.RuleGroupIndex),
+					ID:           lastRule.ID,
+				}
+				nextToken = encodeCursor(cursor)
+			}
+
+			totalDuration := time.Since(startTotal)
+			st.Logger.Info("Store ListAlertRulesPaginated performance",
+				"cache_hit", true,
+				"cache_retrieval_ms", cacheRetrievalDuration.Milliseconds(),
+				"total_ms", totalDuration.Milliseconds(),
+				"rule_count", len(result),
+				"org_id", query.OrgID)
+
+			return result, nextToken, nil
+		}
+		cacheRetrievalDuration = time.Since(startCache)
+	}
 
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		// Time: Query building
@@ -866,6 +916,11 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 		alertRules := st.convertAlertRulesInParallel(rawRules, query, groupsSet)
 		conversionDuration = time.Since(startConversion)
 
+		// Cache the full result set if this was a cacheable query
+		if canUseCache {
+			st.setCachedAlertRules(query.OrgID, query.RuleType, alertRules)
+		}
+
 		genToken := query.Limit > 0 && len(alertRules) > int(query.Limit)
 		if genToken {
 			// Remove the extra item we fetched
@@ -890,6 +945,8 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 	totalDuration := time.Since(startTotal)
 
 	st.Logger.Info("Store ListAlertRulesPaginated performance",
+		"cache_hit", cacheHit,
+		"cache_retrieval_ms", cacheRetrievalDuration.Milliseconds(),
 		"query_build_ms", queryBuildDuration.Milliseconds(),
 		"row_scan_ms", rowScanDuration.Milliseconds(),
 		"conversion_ms", conversionDuration.Milliseconds(),

@@ -53,7 +53,7 @@ interface GetIteratorResult {
 
 // Feature flag to enable K8s API for rules fetching
 // TODO: Replace with proper feature flag from config.featureToggles
-const USE_K8S_RULES_API = false;
+const USE_K8S_RULES_API = true;
 
 export function useFilteredRulesIteratorProvider() {
   const allExternalRulesSources = getExternalRulesSources();

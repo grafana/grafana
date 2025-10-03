@@ -327,7 +327,7 @@ func (d *AlertsRouter) Send(ctx context.Context, key models.AlertRuleKey, alerts
 	if d.sendAlertsTo[key.OrgID] == models.ExternalAlertmanagers && len(d.alertmanagersFor(key.OrgID)) > 0 {
 		logger.Debug("All alerts for the given org should be routed to external notifiers only. skipping the internal notifier.")
 	} else {
-		logger.Info("Sending alerts to local notifier", "count", len(alerts.PostableAlerts))
+		// logger.Info("Sending alerts to local notifier", "count", len(alerts.PostableAlerts))
 		n, err := d.multiOrgNotifier.AlertmanagerFor(key.OrgID)
 		if err == nil {
 			localNotifierExist = true
