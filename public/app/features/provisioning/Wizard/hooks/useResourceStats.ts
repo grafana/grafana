@@ -11,6 +11,7 @@ import {
   useGetRepositoryFilesQuery,
   useGetResourceStatsQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { ManagerKind } from 'app/features/apiserver/types';
 
 function getManagedCount(managed?: ManagerStats[]) {
   let totalCount = 0;
