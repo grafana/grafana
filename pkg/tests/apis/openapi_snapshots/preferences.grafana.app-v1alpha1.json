@@ -1682,8 +1682,7 @@
         "type": "object",
         "required": [
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -1708,14 +1707,6 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesSpec"
-              }
-            ]
-          },
-          "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesStatus"
               }
             ]
           }
@@ -1862,66 +1853,11 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesStatus": {
-        "type": "object",
-        "properties": {
-          "additionalFields": {
-            "description": "additionalFields is reserved for future use",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "operatorStates": {
-            "description": "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
-            "type": "object",
-            "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesstatusOperatorState"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesstatusOperatorState": {
-        "type": "object",
-        "required": [
-          "lastEvaluation",
-          "state"
-        ],
-        "properties": {
-          "descriptiveState": {
-            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
-            "type": "string"
-          },
-          "details": {
-            "description": "details contains any extra information that is operator-specific",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "lastEvaluation": {
-            "description": "lastEvaluation is the ResourceVersion last evaluated",
-            "type": "string",
-            "default": ""
-          },
-          "state": {
-            "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
       "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Stars": {
         "type": "object",
         "required": [
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -1946,14 +1882,6 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.StarsSpec"
-              }
-            ]
-          },
-          "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.StarsStatus"
               }
             ]
           }
@@ -2052,60 +1980,6 @@
                 }
               ]
             }
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.StarsStatus": {
-        "type": "object",
-        "properties": {
-          "additionalFields": {
-            "description": "additionalFields is reserved for future use",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "operatorStates": {
-            "description": "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
-            "type": "object",
-            "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.StarsstatusOperatorState"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.StarsstatusOperatorState": {
-        "type": "object",
-        "required": [
-          "lastEvaluation",
-          "state"
-        ],
-        "properties": {
-          "descriptiveState": {
-            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
-            "type": "string"
-          },
-          "details": {
-            "description": "details contains any extra information that is operator-specific",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "lastEvaluation": {
-            "description": "lastEvaluation is the ResourceVersion last evaluated",
-            "type": "string",
-            "default": ""
-          },
-          "state": {
-            "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-            "type": "string",
-            "default": ""
           }
         }
       },

@@ -265,6 +265,91 @@ func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo
 	return &CreateTeamResult{Team: createdTeam}, nil
 }
 
+type UpdateTeamCommand struct {
+	UID           string
+	Name          string
+	Updated       DBTime
+	Email         string
+	ExternalID    string
+	IsProvisioned bool
+	ExternalUID   string
+}
+
+type UpdateTeamResult struct {
+	Team team.Team
+}
+
+var sqlUpdateTeamTemplate = mustTemplate("update_team.sql")
+
+func newUpdateTeam(sql *legacysql.LegacyDatabaseHelper, cmd *UpdateTeamCommand) updateTeamQuery {
+	return updateTeamQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		TeamTable:   sql.Table("team"),
+		Command:     cmd,
+	}
+}
+
+type updateTeamQuery struct {
+	sqltemplate.SQLTemplate
+	TeamTable string
+	Command   *UpdateTeamCommand
+}
+
+func (r updateTeamQuery) Validate() error {
+	return nil
+}
+
+func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateTeamCommand) (*UpdateTeamResult, error) {
+	now := time.Now().UTC().Truncate(time.Second)
+
+	cmd.Updated = NewDBTime(now)
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newUpdateTeam(sql, &cmd)
+
+	var updatedTeam team.Team
+	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		_, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{
+			OrgID: ns.OrgID,
+			UID:   cmd.UID,
+		})
+		if err != nil {
+			return fmt.Errorf("team not found: %w", err)
+		}
+
+		teamQuery, err := sqltemplate.Execute(sqlUpdateTeamTemplate, req)
+		if err != nil {
+			return fmt.Errorf("failed to execute team update template %q: %w", sqlUpdateTeamTemplate.Name(), err)
+		}
+
+		_, err = st.Exec(ctx, teamQuery, req.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to update team: %w", err)
+		}
+
+		updatedTeam = team.Team{
+			UID:           cmd.UID,
+			Name:          cmd.Name,
+			Email:         cmd.Email,
+			ExternalUID:   cmd.ExternalUID,
+			IsProvisioned: cmd.IsProvisioned,
+			Updated:       cmd.Updated.Time,
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &UpdateTeamResult{Team: updatedTeam}, nil
+}
+
 type DeleteTeamCommand struct {
 	UID string
 }

@@ -678,28 +678,6 @@ export type PreferencesSpec = {
   /** day of the week (sunday, monday, etc) */
   weekStart?: string;
 };
-export type PreferencesstatusOperatorState = {
-  /** descriptiveState is an optional more descriptive state field which has no requirements on format */
-  descriptiveState?: string;
-  /** details contains any extra information that is operator-specific */
-  details?: {
-    [key: string]: object;
-  };
-  /** lastEvaluation is the ResourceVersion last evaluated */
-  lastEvaluation: string;
-  /** state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation. */
-  state: string;
-};
-export type PreferencesStatus = {
-  /** additionalFields is reserved for future use */
-  additionalFields?: {
-    [key: string]: object;
-  };
-  /** operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
-  operatorStates?: {
-    [key: string]: PreferencesstatusOperatorState;
-  };
-};
 export type Preferences = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -708,7 +686,6 @@ export type Preferences = {
   metadata: ObjectMeta;
   /** Spec is the spec of the Preferences */
   spec: PreferencesSpec;
-  status: PreferencesStatus;
 };
 export type ListMeta = {
   /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
@@ -782,28 +759,6 @@ export type StarsResource = {
 export type StarsSpec = {
   resource: StarsResource[];
 };
-export type StarsstatusOperatorState = {
-  /** descriptiveState is an optional more descriptive state field which has no requirements on format */
-  descriptiveState?: string;
-  /** details contains any extra information that is operator-specific */
-  details?: {
-    [key: string]: object;
-  };
-  /** lastEvaluation is the ResourceVersion last evaluated */
-  lastEvaluation: string;
-  /** state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation. */
-  state: string;
-};
-export type StarsStatus = {
-  /** additionalFields is reserved for future use */
-  additionalFields?: {
-    [key: string]: object;
-  };
-  /** operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
-  operatorStates?: {
-    [key: string]: StarsstatusOperatorState;
-  };
-};
 export type Stars = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -812,7 +767,6 @@ export type Stars = {
   metadata: ObjectMeta;
   /** Spec is the spec of the Stars */
   spec: StarsSpec;
-  status: StarsStatus;
 };
 export type StarsList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
