@@ -128,22 +128,18 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 				continue
 			}
 
-			// Set default span (line 1063 in TS)
-			span := GetFloatValue(panel, "span", defaultPanelSpan)
+			// Check if panel already has gridPos but no valid span
+			// If span is missing or zero, and gridPos exists, preserve gridPos dimensions
+			var panelWidth, panelHeight int
+			span := GetFloatValue(panel, "span", 0)
+			existingGridPos, hasGridPos := panel["gridPos"].(map[string]interface{})
 
-			// Handle minSpan conversion (lines 1064-1066 in TS)
-			if minSpan, hasMinSpan := panel["minSpan"]; hasMinSpan {
-				if minSpanFloat, ok := ConvertToFloat(minSpan); ok && minSpanFloat > 0 {
-					panel["minSpan"] = int(math.Min(float64(gridColumnCount), (float64(gridColumnCount)/12.0)*minSpanFloat))
-				}
-			}
-
-			panelWidth := int(math.Floor(span * widthFactor))
-			panelHeight := rowGridHeight
-			if panelHeightValue, hasHeight := panel["height"]; hasHeight {
-				if h, ok := ConvertToFloat(panelHeightValue); ok {
-					panelHeight = getGridHeight(h)
-				}
+			if hasGridPos && span == 0 {
+				// Panel already has gridPos but no valid span - preserve its dimensions
+				panelWidth = GetIntValue(existingGridPos, "w", int(defaultPanelSpan*widthFactor))
+				panelHeight = GetIntValue(existingGridPos, "h", rowGridHeight)
+			} else {
+				panelWidth, panelHeight = calculatePanelDimensionsFromSpan(span, panel, widthFactor, rowGridHeight)
 			}
 
 			panelPos := rowArea.getPanelPosition(panelHeight, panelWidth)
@@ -314,4 +310,28 @@ func getGridHeight(height float64) int {
 		height = minPanelHeight
 	}
 	return int(math.Ceil(height / panelHeightStep))
+}
+
+func calculatePanelDimensionsFromSpan(span float64, panel map[string]interface{}, widthFactor float64, defaultHeight int) (int, int) {
+	// Set default span if still 0
+	if span == 0 {
+		span = defaultPanelSpan
+	}
+
+	if minSpan, hasMinSpan := panel["minSpan"]; hasMinSpan {
+		if minSpanFloat, ok := ConvertToFloat(minSpan); ok && minSpanFloat > 0 {
+			panel["minSpan"] = int(math.Min(float64(gridColumnCount), (float64(gridColumnCount)/12.0)*minSpanFloat))
+		}
+	}
+
+	panelWidth := int(math.Floor(span * widthFactor))
+	panelHeight := defaultHeight
+
+	if panelHeightValue, hasHeight := panel["height"]; hasHeight {
+		if h, ok := ConvertToFloat(panelHeightValue); ok {
+			panelHeight = getGridHeight(h)
+		}
+	}
+
+	return panelWidth, panelHeight
 }
