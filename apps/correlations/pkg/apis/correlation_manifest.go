@@ -10,11 +10,10 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/kube-openapi/pkg/spec3"
-
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	v0alpha1 "github.com/grafana/grafana/apps/correlations/pkg/apis/correlation/v0alpha1"
 )
@@ -26,8 +25,9 @@ var (
 )
 
 var appManifestData = app.ManifestData{
-	AppName: "correlation",
-	Group:   "correlations.grafana.app",
+	AppName:          "correlation",
+	Group:            "correlations.grafana.app",
+	PreferredVersion: "v0alpha1",
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v0alpha1",

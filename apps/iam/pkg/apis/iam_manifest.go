@@ -17,9 +17,12 @@ import (
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
 
+var ()
+
 var appManifestData = app.ManifestData{
-	AppName: "iam",
-	Group:   "iam.grafana.app",
+	AppName:          "iam",
+	Group:            "iam.grafana.app",
+	PreferredVersion: "v0alpha1",
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v0alpha1",
