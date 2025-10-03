@@ -58,7 +58,7 @@ export function JobSummary({ summary }: Props) {
       <InteractiveTable
         data={summary}
         columns={getSummaryColumns()}
-        getRowId={(item) => item.resource || ''}
+        getRowId={(item) => item.kind || ''}
         pageSize={10}
       />
     </Stack>
