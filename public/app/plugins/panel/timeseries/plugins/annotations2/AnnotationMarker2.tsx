@@ -63,7 +63,7 @@ export const AnnotationMarker2 = ({
 
   const contents =
     (isPinned && !editing) || (showOnHover && isHovering && !editing) ? (
-      annoVals.isRegion[annoIdx] && annoVals.clusterIdx[annoIdx] ? (
+      annoVals.isRegion[annoIdx] && annoVals.clusterIdx?.[annoIdx] ? (
         <AnnotationTooltip2Cluster
           actions={actions}
           links={links}
