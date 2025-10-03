@@ -122,9 +122,15 @@ func (r *InstallAPIRegistry) Add(ctx context.Context, plugin *plugins.Plugin) er
 	if err != nil {
 		return err
 	}
-	pluginInstall := toPluginInstall(plugin)
+	pluginInstall, err := toPluginInstall(plugin)
+	if err != nil {
+		return fmt.Errorf("failed to create plugin install: %w", err)
+	}
 	_, err = installClient.Add(ctx, pluginInstall)
-	return err
+	if err != nil {
+		logging.FromContext(ctx).Error("failed to add plugin install", "err", err)
+	}
+	return nil
 }
 
 func (r *InstallAPIRegistry) Remove(ctx context.Context, id, version string) error {

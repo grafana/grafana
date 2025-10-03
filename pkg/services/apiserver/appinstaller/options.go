@@ -11,8 +11,12 @@ import (
 
 type Options interface {
 	AddFlags(fs *pflag.FlagSet)
-	ApplyTo(config *genericapiserver.RecommendedConfig) error
+	ApplyTo(recommendedConfig *genericapiserver.RecommendedConfig, specificConfig any) error
 	Validate() []error
+}
+
+type SpecificConfigProvider interface {
+	GetSpecificConfig() any
 }
 
 type OptionsProvider interface {
@@ -22,10 +26,18 @@ type OptionsProvider interface {
 
 type optionsAdapter struct {
 	Options
+	installer appsdkapiserver.AppInstaller
 }
 
 func (o *optionsAdapter) ValidateOptions() []error {
 	return o.Options.Validate()
+}
+
+func (o *optionsAdapter) ApplyTo(config *genericapiserver.RecommendedConfig) error {
+	if specificConfigProvider, ok := o.installer.(SpecificConfigProvider); ok {
+		return o.Options.ApplyTo(config, specificConfigProvider.GetSpecificConfig())
+	}
+	return o.Options.ApplyTo(config, nil)
 }
 
 func RegisterOptions(
@@ -34,7 +46,10 @@ func RegisterOptions(
 ) {
 	for _, installer := range appInstallers {
 		if optionsProvider, ok := installer.(OptionsProvider); ok {
-			opts.APIOptions = append(opts.APIOptions, &optionsAdapter{Options: optionsProvider.GetOptions()})
+			opts.APIOptions = append(opts.APIOptions, &optionsAdapter{
+				Options:   optionsProvider.GetOptions(),
+				installer: installer,
+			})
 		}
 	}
 }

@@ -23,7 +23,9 @@ var (
 	configReady       = make(chan struct{})
 	getClientRegistry = sync.OnceValue(func() *k8s.ClientRegistry {
 		<-configReady
-		reg := k8s.NewClientRegistry(appConfig.KubeConfig, k8s.ClientConfig{
+		kubeConfig := appConfig.KubeConfig
+		kubeConfig.APIPath = "apis"
+		reg := k8s.NewClientRegistry(kubeConfig, k8s.ClientConfig{
 			MetricsConfig: metrics.Config{
 				Namespace: appConfig.ManifestData.AppName,
 			},
@@ -34,8 +36,11 @@ var (
 
 func NewInstallClient() (InstallClient, error) {
 	clientRegistry := getClientRegistry()
+	if clientRegistry == nil {
+		return nil, ErrInstallAPINotEnabled
+	}
 	cfg, ok := appConfig.SpecificConfig.(*Config)
-	if !ok {
+	if !ok || cfg == nil || cfg.ResourceConfig == nil {
 		return nil, ErrInvalidAppConfig
 	}
 

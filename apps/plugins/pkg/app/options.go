@@ -20,23 +20,23 @@ const (
 	InstallSourceTypeAPI  InstallSourceType = "api"
 )
 
-func (i InstallSourceType) String() string {
-	return string(i)
+func (i *InstallSourceType) String() string {
+	return string(*i)
 }
 
-func (i InstallSourceType) Set(value string) error {
+func (i *InstallSourceType) Set(value string) error {
 	switch value {
 	case "disk":
-		i = InstallSourceTypeDisk
+		*i = InstallSourceTypeDisk
 	case "api":
-		i = InstallSourceTypeAPI
+		*i = InstallSourceTypeAPI
 	default:
 		return fmt.Errorf("invalid install source type: %s", value)
 	}
 	return nil
 }
 
-func (i InstallSourceType) Type() string {
+func (i *InstallSourceType) Type() string {
 	return "InstallSourceType"
 }
 
@@ -49,7 +49,13 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	fs.Var(&o.InstallSource, "grafana.plugins.install-source", "Source for plugin installations. Options: disk, api")
 }
 
-func (o *Options) ApplyTo(config *genericapiserver.RecommendedConfig) error {
+func (o *Options) ApplyTo(config *genericapiserver.RecommendedConfig, specificConfig any) error {
+	appConfig, ok := specificConfig.(*Config)
+	if !ok {
+		return fmt.Errorf("specificConfig is not a *Config")
+	}
+	appConfig.ResourceConfig = config.MergedResourceConfig
+	appConfig.InstallSource = o.InstallSource
 	return nil
 }
 

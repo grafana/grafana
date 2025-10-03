@@ -15,6 +15,6 @@ type PluginRegistry interface {
 
 // Config is the configuration for the plugins app.
 type Config struct {
-	InMemoryRegistry PluginRegistry
-	ResourceConfig   *serverstorage.ResourceConfig
+	InstallSource  InstallSourceType
+	ResourceConfig serverstorage.APIResourceConfigSource
 }

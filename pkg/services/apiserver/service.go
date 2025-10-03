@@ -2,7 +2,6 @@ package apiserver
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"path"
@@ -36,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -99,6 +99,10 @@ type service struct {
 	storageStatus     dualwrite.Service
 	kvStore           kvstore.KVStore
 
+	pluginClient       plugins.Client
+	datasources        datasource.ScopedPluginDatasourceProvider
+	contextProvider    datasource.PluginContextWrapper
+	pluginStore        pluginstore.Store
 	unified            resource.ResourceClient
 	secrets            secret.InlineSecureValueSupport
 	restConfigProvider RestConfigProvider
@@ -118,6 +122,10 @@ func ProvideService(
 	serverLockService *serverlock.ServerLockService,
 	db db.DB,
 	kvStore kvstore.KVStore,
+	pluginClient plugins.Client,
+	datasources datasource.ScopedPluginDatasourceProvider,
+	contextProvider datasource.PluginContextWrapper,
+	pluginStore pluginstore.Store,
 	storageStatus dualwrite.Service,
 	unified resource.ResourceClient,
 	secrets secret.InlineSecureValueSupport,
@@ -144,6 +152,10 @@ func ProvideService(
 		db:                                db, // For Unified storage
 		metrics:                           reg,
 		kvStore:                           kvStore,
+		pluginClient:                      pluginClient,
+		datasources:                       datasources,
+		contextProvider:                   contextProvider,
+		pluginStore:                       pluginStore,
 		serverLockService:                 serverLockService,
 		storageStatus:                     storageStatus,
 		unified:                           unified,
@@ -281,6 +293,8 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	appinstaller.ApplyGrafanaConfig(s.cfg, s.appInstallers)
+
 	if errs := o.Validate(); len(errs) != 0 {
 		return errs[0]
 	}
@@ -290,20 +304,17 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	serverConfig := genericapiserver.NewRecommendedConfig(s.codecs)
-	if err := o.ApplyTo(serverConfig); err != nil {
-		return err
-	}
+
 	serverConfig.EffectiveVersion = builder.GetEffectiveVersion(
 		s.cfg.BuildStamp,
 		s.cfg.BuildVersion,
 		s.cfg.BuildCommit,
 		s.cfg.BuildBranch,
 	)
-
-	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, appinstaller.NewAPIResourceConfig(s.appInstallers), s.scheme); err != nil {
+	defaultAPIResourceConfig := appinstaller.NewAPIResourceConfig(s.appInstallers)
+	if err := o.ApplyTo(serverConfig, defaultAPIResourceConfig, s.scheme); err != nil {
 		return err
 	}
-
 	serverConfig.Authorization.Authorizer = s.authorizer
 	serverConfig.Authentication.Authenticator = authenticator.NewAuthenticator(serverConfig.Authentication.Authenticator)
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
@@ -457,13 +468,6 @@ func (s *service) start(ctx context.Context) error {
 	// used by local clients to make requests to the server
 	s.restConfig = runningServer.LoopbackClientConfig
 
-	for _, installer := range s.appInstallers {
-		err := installer.InitializeApp(*s.restConfig)
-		if err != nil && !errors.Is(err, appsdkapiserver.ErrAppAlreadyInitialized) {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -496,11 +500,11 @@ func (s *service) startDataplaneAggregator(
 	config := &dataplaneaggregator.Config{
 		GenericConfig: serverConfig,
 		ExtraConfig: dataplaneaggregator.ExtraConfig{
-			//PluginClient:          s.pluginClient,
+			PluginClient: s.pluginClient,
 			PluginContextProvider: &pluginContextProvider{
-				//pluginStore:     s.pluginStore,
-				//datasources:     s.datasources,
-				//contextProvider: s.contextProvider,
+				pluginStore:     s.pluginStore,
+				datasources:     s.datasources,
+				contextProvider: s.contextProvider,
 			},
 		},
 	}

@@ -14,7 +14,7 @@ type ServiceWrapper struct {
 	inMemoryRegistry *InMemory
 }
 
-func ProvideServiceWrapper(installRegistry *InstallAPIRegistry, inMemoryRegistry *InMemory) *ServiceWrapper {
+func ProvideService(installRegistry *InstallAPIRegistry, inMemoryRegistry *InMemory) *ServiceWrapper {
 	return &ServiceWrapper{
 		installRegistry:  installRegistry,
 		inMemoryRegistry: inMemoryRegistry,

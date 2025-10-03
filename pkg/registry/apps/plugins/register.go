@@ -32,7 +32,7 @@ var (
 type PluginsAppInstaller struct {
 	appsdkapiserver.AppInstaller
 	namespaceMapper request.NamespaceMapper
-	pluginRegistry  pluginsapp.PluginRegistry
+	pluginRegistry  *registry.InMemoryAdapter
 	pluginConfig    *pluginsapp.Config
 	pluginOptions   *pluginsapp.Options
 }
@@ -49,13 +49,13 @@ func RegisterAppInstaller(
 		namespaceMapper: request.GetNamespaceMapper(cfg),
 		pluginRegistry:  inMemoryRegistry,
 		pluginOptions:   pluginsapp.NewOptions(),
+		pluginConfig:    &pluginsapp.Config{},
 	}
-	installer.pluginConfig = &pluginsapp.Config{}
 	provider := simple.NewAppProvider(apis.LocalManifest(), installer.pluginConfig, pluginsapp.New)
 	appConfig := app.Config{
 		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
 		ManifestData:   *apis.LocalManifest().ManifestData,
-		SpecificConfig: installer.pluginConfig,
+		SpecificConfig: installer.GetSpecificConfig(),
 	}
 	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, &apis.GoTypeAssociator{})
 	if err != nil {
@@ -79,14 +79,13 @@ func (p *PluginsAppInstaller) InstallAPIs(
 		pluginMetaGVR: pluginsapp.NewPluginMetaStorage(p.namespaceMapper),
 	}
 
-	pluginConfig := p.GetConfig()
-	if pluginConfig.InMemoryRegistry != nil {
+	if p.pluginConfig.InstallSource == pluginsapp.InstallSourceTypeDisk {
 		pluginInstallGVR := schema.GroupVersionResource{
 			Group:    pluginsv0alpha1.GroupVersion.Group,
 			Version:  pluginsv0alpha1.GroupVersion.Version,
 			Resource: pluginsv0alpha1.PluginInstallKind().Plural(),
 		}
-		registryAdapter := p.pluginConfig.InMemoryRegistry
+		registryAdapter := p.pluginRegistry
 		replacedStorage[pluginInstallGVR] = pluginsapp.NewPluginInstallStorage(p.namespaceMapper, registryAdapter)
 	}
 
@@ -107,7 +106,7 @@ func (p *PluginsAppInstaller) GetOptions() appinstaller.Options {
 	return p.pluginOptions
 }
 
-// ApplyGrafanaConfig applies the grafana config to the plugins app.
+// ApplyGrafanaConfig applies the grafana config to the plugins app options.
 func (p *PluginsAppInstaller) ApplyGrafanaConfig(cfg *setting.Cfg) error {
 	section := cfg.Raw.Section("plugins")
 	installSource := section.Key("install_source").MustString(p.pluginOptions.InstallSource.String())
@@ -117,10 +116,6 @@ func (p *PluginsAppInstaller) ApplyGrafanaConfig(cfg *setting.Cfg) error {
 	return nil
 }
 
-// GetConfig returns the config for the plugins app.
-func (p *PluginsAppInstaller) GetConfig() *pluginsapp.Config {
-	if p.pluginOptions.InstallSource == pluginsapp.InstallSourceTypeDisk {
-		p.pluginConfig.InMemoryRegistry = p.pluginRegistry
-	}
+func (p *PluginsAppInstaller) GetSpecificConfig() any {
 	return p.pluginConfig
 }

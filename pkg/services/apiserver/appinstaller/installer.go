@@ -153,6 +153,7 @@ func InstallAPIs(
 			builderMetrics:    builderMetrics,
 			apiResourceConfig: apiResourceConfig,
 		}
+
 		if err := installer.InstallAPIs(wrapper, restOpsGetter); err != nil {
 			return fmt.Errorf("failed to install APIs for app %s: %w", installer.ManifestData().AppName, err)
 		}

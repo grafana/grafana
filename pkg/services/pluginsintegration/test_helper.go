@@ -48,7 +48,7 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	require.NoError(t, err)
 
 	cdn := pluginscdn.ProvideService(pCfg)
-	reg := registry.ProvideService()
+	reg := registry.ProvideService(registry.ProvideInstallAPIRegistry(), registry.ProvideInMemory())
 	angularInspector := angularinspector.NewStaticInspector()
 	proc := process.ProvideService()
 
@@ -87,7 +87,7 @@ type LoaderOpts struct {
 
 func CreateTestLoader(t *testing.T, cfg *pluginsCfg.PluginManagementCfg, opts LoaderOpts) *loader.Loader {
 	if opts.Discoverer == nil {
-		opts.Discoverer = pipeline.ProvideDiscoveryStage(cfg, registry.ProvideService())
+		opts.Discoverer = pipeline.ProvideDiscoveryStage(cfg, registry.ProvideService(registry.ProvideInstallAPIRegistry(), registry.ProvideInMemory()))
 	}
 
 	if opts.Bootstrapper == nil {
@@ -99,14 +99,14 @@ func CreateTestLoader(t *testing.T, cfg *pluginsCfg.PluginManagementCfg, opts Lo
 	}
 
 	if opts.Initializer == nil {
-		reg := registry.ProvideService()
+		reg := registry.ProvideService(registry.ProvideInstallAPIRegistry(), registry.ProvideInMemory())
 		coreRegistry := coreplugin.NewRegistry(make(map[string]backendplugin.PluginFactoryFunc))
 		opts.Initializer = pipeline.ProvideInitializationStage(cfg, reg, provider.ProvideService(coreRegistry), process.ProvideService(), &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), nil, tracing.InitializeTracerForTest(), provisionedplugins.NewNoop())
 	}
 
 	if opts.Terminator == nil {
 		var err error
-		reg := registry.ProvideService()
+		reg := registry.ProvideService(registry.ProvideInstallAPIRegistry(), registry.ProvideInMemory())
 		opts.Terminator, err = pipeline.ProvideTerminationStage(cfg, reg, process.ProvideService())
 		require.NoError(t, err)
 	}

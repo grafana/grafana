@@ -7,6 +7,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/discovery/aggregated"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
+	serverstorage "k8s.io/apiserver/pkg/server/storage"
 
 	"github.com/spf13/pflag"
 )
@@ -89,7 +90,7 @@ func (o *Options) Validate() []error {
 	return nil
 }
 
-func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) error {
+func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig, apiResourceConfig *serverstorage.ResourceConfig, scheme *runtime.Scheme) error {
 	serverConfig.AggregatedDiscoveryGroupManager = aggregated.NewResourceManager("apis")
 
 	// avoid picking up an in-cluster service account token
@@ -111,12 +112,23 @@ func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) erro
 		return err
 	}
 
+	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, apiResourceConfig, scheme); err != nil {
+		return err
+	}
+
 	if !o.ExtraOptions.DevMode {
 		if err := serverConfig.SecureServing.Listener.Close(); err != nil {
 			return err
 		}
 		serverConfig.SecureServing = nil
 	}
+
+	for _, api := range o.APIOptions {
+		if err := api.ApplyTo(serverConfig); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
