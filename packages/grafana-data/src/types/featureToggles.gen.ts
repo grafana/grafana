@@ -1202,4 +1202,9 @@ export interface FeatureToggles {
   * @default false
   */
   cdnPluginsLoadFirst?: boolean;
+  /**
+  * Enable loading plugins via declarative URLs
+  * @default false
+  */
+  cdnPluginsUrls?: boolean;
 }

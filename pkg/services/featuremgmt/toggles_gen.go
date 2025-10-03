@@ -1077,4 +1077,8 @@ const (
 	// FlagCdnPluginsLoadFirst
 	// Prioritize loading plugins from the CDN before other sources
 	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"
+
+	// FlagCdnPluginsUrls
+	// Enable loading plugins via declarative URLs
+	FlagCdnPluginsUrls = "cdnPluginsUrls"
 )

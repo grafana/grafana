@@ -2084,6 +2084,14 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
 		},
+		{
+			Name:         "cdnPluginsUrls",
+			Description:  "Enable loading plugins via declarative URLs",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
 	}
 )
 
