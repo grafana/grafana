@@ -8697,6 +8697,9 @@
       "tooltip-hide": "Hide password",
       "tooltip-show": "Show password"
     },
+    "range-slider": {
+      "drag-handle-aria-label": "Use arrow keys to change the value"
+    },
     "row-expander": {
       "aria-label-expand": "Expand row",
       "collapse": "Collapse row",
