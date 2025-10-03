@@ -10,15 +10,81 @@ import {
   PanelOptions,
   PluginDependency,
   PluginNode,
-  RawExtensionComponent,
-  RawExtensionFunction,
-  RawExtensionLink,
-  RawPluginData,
 } from '../types';
+
 
 // Cache for expensive calculations
 const cache = new Map<string, GraphData>();
-const ENABLE_DEBUG_LOGS = false; // Set to true for debugging
+const ENABLE_DEBUG_LOGS = true; // Set to true for debugging
+
+// Type guard helpers
+function hasExtensionPointsProperty(obj: unknown): obj is { extensionPoints: unknown[] } {
+  return (
+    obj !== null &&
+    typeof obj === 'object' &&
+    'extensionPoints' in obj &&
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    Array.isArray((obj as unknown as Record<string, unknown>).extensionPoints)
+  );
+}
+
+function hasAddedLinksProperty(obj: unknown): obj is { addedLinks: unknown[] } {
+  return (
+    obj !== null &&
+    typeof obj === 'object' &&
+    'addedLinks' in obj &&
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    Array.isArray((obj as unknown as Record<string, unknown>).addedLinks)
+  );
+}
+
+function hasAddedComponentsProperty(obj: unknown): obj is { addedComponents: unknown[] } {
+  return (
+    obj !== null &&
+    typeof obj === 'object' &&
+    'addedComponents' in obj &&
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    Array.isArray((obj as unknown as Record<string, unknown>).addedComponents)
+  );
+}
+
+function hasAddedFunctionsProperty(obj: unknown): obj is { addedFunctions: unknown[] } {
+  return (
+    obj !== null &&
+    typeof obj === 'object' &&
+    'addedFunctions' in obj &&
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    Array.isArray((obj as unknown as Record<string, unknown>).addedFunctions)
+  );
+}
+
+function hasDescriptionProperty(obj: unknown): obj is { description: string } {
+  return (
+    obj !== null &&
+    typeof obj === 'object' &&
+    'description' in obj &&
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    typeof (obj as unknown as Record<string, unknown>).description === 'string'
+  );
+}
+
+function isExtensionPointObject(
+  obj: unknown
+): obj is { id: string; title?: string; description?: string; definingPlugin?: string } {
+  return (
+    obj !== null &&
+    typeof obj === 'object' &&
+    'id' in obj &&
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    typeof (obj as unknown as Record<string, unknown>).id === 'string'
+  );
+}
+
+function isExtensionObject(
+  obj: unknown
+): obj is { targets?: string | string[]; id?: string; title?: string; description?: string } {
+  return obj !== null && typeof obj === 'object';
+}
 
 /**
  * Gets plugin data from window.grafanaBootData.settings.apps with fallback to data.json
@@ -26,33 +92,11 @@ const ENABLE_DEBUG_LOGS = false; // Set to true for debugging
  * @returns Plugin data object
  */
 const getPluginData = (): Record<string, AppPluginConfig> => {
-  // Try to get data from window.grafanaBootData.settings.apps first
-  if (typeof window !== 'undefined' && window.grafanaBootData?.settings?.apps) {
-    if (ENABLE_DEBUG_LOGS) {
-      console.log(
-        'Using data from window.grafanaBootData.settings.apps',
-        Object.keys(window.grafanaBootData.settings.apps).length,
-        'plugins'
-      );
-    }
-    return window.grafanaBootData.settings.apps;
-  }
-
-  // Fallback to data.json
+  // Temporarily use data.json directly instead of window.grafanaBootData.settings.apps
   if (ENABLE_DEBUG_LOGS) {
-    console.log('Falling back to data.json', Object.keys(pluginDataFallback).length, 'plugins');
-    console.log('window.grafanaBootData available:', typeof window !== 'undefined' && !!window.grafanaBootData);
-    console.log(
-      'window.grafanaBootData.settings available:',
-      typeof window !== 'undefined' && !!window.grafanaBootData?.settings
-    );
-    console.log(
-      'window.grafanaBootData.settings.apps available:',
-      typeof window !== 'undefined' && !!window.grafanaBootData?.settings?.apps
-    );
+    console.log('Using data.json directly', Object.keys(pluginDataFallback).length, 'plugins');
   }
-  // Type assertion is necessary here because data.json structure doesn't exactly match AppPluginConfig
-  // but is compatible for our use case. Using double assertion as suggested by TypeScript error.
+  // Type assertion to handle the temporary switch to data.json
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return pluginDataFallback as unknown as Record<string, AppPluginConfig>;
 };
@@ -82,6 +126,7 @@ const getCacheKey = (options: PanelOptions): string => {
     mode: options.visualizationMode,
     providers: options.selectedContentProviders?.slice().sort(), // slice to avoid mutating original
     consumers: options.selectedContentConsumers?.slice().sort(),
+    extensionPoints: options.selectedExtensionPoints?.slice().sort(), // Add extension points to cache key
   });
 };
 
@@ -106,6 +151,10 @@ const getCacheKey = (options: PanelOptions): string => {
  * ```
  */
 export const processPluginDataToGraph = (options: PanelOptions): GraphData => {
+  if (ENABLE_DEBUG_LOGS) {
+    console.log('processPluginDataToGraph - called with options:', options);
+  }
+
   // Check cache first
   const cacheKey = getCacheKey(options);
   if (cache.has(cacheKey)) {
@@ -123,10 +172,19 @@ export const processPluginDataToGraph = (options: PanelOptions): GraphData => {
   // Route to the appropriate processor based on visualization mode
   let result: GraphData;
   if (options.visualizationMode === 'expose') {
+    if (ENABLE_DEBUG_LOGS) {
+      console.log('processPluginDataToGraph - routing to expose mode');
+    }
     result = processPluginDataToExposeGraph(options, pluginData);
   } else if (options.visualizationMode === 'extensionpoint') {
+    if (ENABLE_DEBUG_LOGS) {
+      console.log('processPluginDataToGraph - routing to extension point mode');
+    }
     result = processPluginDataToExtensionPointGraph(options, pluginData);
   } else {
+    if (ENABLE_DEBUG_LOGS) {
+      console.log('processPluginDataToGraph - routing to add mode');
+    }
     result = processPluginDataToAddGraph(options, pluginData);
   }
 
@@ -604,7 +662,10 @@ export const processPluginDataToExposeGraph = (
  * @param pluginData - Raw plugin data from data.json or window.grafanaBootData
  * @returns Processed graph data for extension point mode visualization
  */
-export const processPluginDataToExtensionPointGraph = (options: PanelOptions, pluginData: RawPluginData): GraphData => {
+export const processPluginDataToExtensionPointGraph = (
+  options: PanelOptions,
+  pluginData: Record<string, AppPluginConfig>
+): GraphData => {
   if (ENABLE_DEBUG_LOGS) {
     console.log('processPluginDataToExtensionPointGraph - processing extension point mode data');
   }
@@ -618,11 +679,18 @@ export const processPluginDataToExtensionPointGraph = (options: PanelOptions, pl
   const selectedExtensionPoints = options.selectedExtensionPoints || [];
   const shouldFilterExtensionPoints = selectedExtensionPoints.length > 0;
 
+  if (ENABLE_DEBUG_LOGS) {
+    console.log('processPluginDataToExtensionPointGraph - selectedExtensionPoints:', selectedExtensionPoints);
+    console.log('processPluginDataToExtensionPointGraph - shouldFilterExtensionPoints:', shouldFilterExtensionPoints);
+  }
+
   Object.entries(pluginData).forEach(([pluginId, pluginInfo]) => {
-    const extensions = pluginInfo.extensions;
-    if (extensions.extensionPoints && extensions.extensionPoints.length > 0) {
-      extensions.extensionPoints.forEach((extensionPoint) => {
-        if (extensionPoint && extensionPoint.id && extensionPoint.id.trim() !== '') {
+    const pluginExtensions = pluginInfo.extensions;
+    // Type guard to check if pluginExtensions has extensionPoints property
+    if (hasExtensionPointsProperty(pluginExtensions) && pluginExtensions.extensionPoints.length > 0) {
+      const extensionPointsArray = pluginExtensions.extensionPoints;
+      extensionPointsArray.forEach((extensionPoint) => {
+        if (isExtensionPointObject(extensionPoint) && extensionPoint.id.trim() !== '') {
           // Filter by selected extension points if specified
           if (shouldFilterExtensionPoints && !selectedExtensionPoints.includes(extensionPoint.id)) {
             return;
@@ -644,19 +712,37 @@ export const processPluginDataToExtensionPointGraph = (options: PanelOptions, pl
   // Second pass: collect all extensions (links, components, functions) and their targets
   Object.entries(pluginData).forEach(([pluginId, pluginInfo]) => {
     const pluginExtensions = pluginInfo.extensions;
+    if (!pluginExtensions) {
+      return;
+    }
 
     // Process added links
-    if (pluginExtensions.addedLinks && pluginExtensions.addedLinks.length > 0) {
-      pluginExtensions.addedLinks.forEach((link: RawExtensionLink) => {
-        if (link && link.targets && Array.isArray(link.targets) && link.targets.length > 0) {
-          link.targets.forEach((target: string) => {
+    if (hasAddedLinksProperty(pluginExtensions) && pluginExtensions.addedLinks.length > 0) {
+      const addedLinks = pluginExtensions.addedLinks;
+      addedLinks.forEach((link) => {
+        if (isExtensionObject(link) && link.targets) {
+          const targets = Array.isArray(link.targets) ? link.targets : [link.targets];
+          targets.forEach((target: string) => {
             if (target && target.trim() !== '') {
               // Filter by selected extension points if specified
               if (shouldFilterExtensionPoints && !selectedExtensionPoints.includes(target)) {
                 return;
               }
 
-              const extensionId = `${pluginId}-link-${target}`;
+              const extensionId = `${pluginId}-link-${target}-${link.title || 'Link Extension'}`.replace(
+                /[^a-zA-Z0-9-]/g,
+                '-'
+              );
+
+              if (ENABLE_DEBUG_LOGS && target === 'grafana-slo-app/service-actions/v1') {
+                console.log('Adding extension:', {
+                  pluginId,
+                  target,
+                  title: link.title,
+                  extensionId,
+                });
+              }
+
               extensions.set(extensionId, {
                 id: extensionId,
                 title: link.title || 'Link Extension',
@@ -672,17 +758,22 @@ export const processPluginDataToExtensionPointGraph = (options: PanelOptions, pl
     }
 
     // Process added components
-    if (pluginExtensions.addedComponents && pluginExtensions.addedComponents.length > 0) {
-      pluginExtensions.addedComponents.forEach((component: RawExtensionComponent) => {
-        if (component && component.targets && Array.isArray(component.targets) && component.targets.length > 0) {
-          component.targets.forEach((target: string) => {
+    if (hasAddedComponentsProperty(pluginExtensions) && pluginExtensions.addedComponents.length > 0) {
+      const addedComponents = pluginExtensions.addedComponents;
+      addedComponents.forEach((component) => {
+        if (isExtensionObject(component) && component.targets) {
+          const targets = Array.isArray(component.targets) ? component.targets : [component.targets];
+          targets.forEach((target: string) => {
             if (target && target.trim() !== '') {
               // Filter by selected extension points if specified
               if (shouldFilterExtensionPoints && !selectedExtensionPoints.includes(target)) {
                 return;
               }
 
-              const extensionId = `${pluginId}-component-${target}`;
+              const extensionId = `${pluginId}-component-${target}-${component.title || 'Component Extension'}`.replace(
+                /[^a-zA-Z0-9-]/g,
+                '-'
+              );
               extensions.set(extensionId, {
                 id: extensionId,
                 title: component.title || 'Component Extension',
@@ -698,17 +789,22 @@ export const processPluginDataToExtensionPointGraph = (options: PanelOptions, pl
     }
 
     // Process added functions
-    if (pluginExtensions.addedFunctions && pluginExtensions.addedFunctions.length > 0) {
-      pluginExtensions.addedFunctions.forEach((func: RawExtensionFunction) => {
-        if (func && func.targets && Array.isArray(func.targets) && func.targets.length > 0) {
-          func.targets.forEach((target: string) => {
+    if (hasAddedFunctionsProperty(pluginExtensions) && pluginExtensions.addedFunctions.length > 0) {
+      const addedFunctions = pluginExtensions.addedFunctions;
+      addedFunctions.forEach((func) => {
+        if (isExtensionObject(func) && func.targets) {
+          const targets = Array.isArray(func.targets) ? func.targets : [func.targets];
+          targets.forEach((target: string) => {
             if (target && target.trim() !== '') {
               // Filter by selected extension points if specified
               if (shouldFilterExtensionPoints && !selectedExtensionPoints.includes(target)) {
                 return;
               }
 
-              const extensionId = `${pluginId}-function-${target}`;
+              const extensionId = `${pluginId}-function-${target}-${func.title || 'Function Extension'}`.replace(
+                /[^a-zA-Z0-9-]/g,
+                '-'
+              );
               extensions.set(extensionId, {
                 id: extensionId,
                 title: func.title || 'Function Extension',
@@ -725,6 +821,7 @@ export const processPluginDataToExtensionPointGraph = (options: PanelOptions, pl
   });
 
   // Third pass: create plugin nodes for all plugins that have extensions or extension points
+  // Only include plugins that have extensions/extension points that are actually in the filtered results
   const allPluginIds = new Set<string>();
   extensions.forEach((extension) => allPluginIds.add(extension.providingPlugin));
   extensionPoints.forEach((ep) => allPluginIds.add(ep.definingPlugin));
@@ -737,7 +834,7 @@ export const processPluginDataToExtensionPointGraph = (options: PanelOptions, pl
         name: pluginId,
         type: 'app',
         version: pluginInfo.version,
-        description: pluginInfo.description || '',
+        description: hasDescriptionProperty(pluginInfo) ? pluginInfo.description : '',
       });
     }
   });
@@ -751,6 +848,16 @@ export const processPluginDataToExtensionPointGraph = (options: PanelOptions, pl
 
   if (ENABLE_DEBUG_LOGS) {
     console.log('processPluginDataToExtensionPointGraph - final result:', result);
+    console.log('processPluginDataToExtensionPointGraph - extensions count:', extensions.size);
+    console.log(
+      'processPluginDataToExtensionPointGraph - extensions:',
+      Array.from(extensions.values()).map((e) => ({
+        id: e.id,
+        title: e.title,
+        plugin: e.providingPlugin,
+        target: e.targetExtensionPoint,
+      }))
+    );
   }
 
   return result;
@@ -1189,7 +1296,7 @@ export const getDefaultOptions = (): PanelOptions => ({
   // Filtering options
   selectedContentProviders: [], // Empty array means all providers are selected
   selectedContentConsumers: [], // Empty array means all consumers are selected
-  selectedExtensionPoints: [], // Empty array means all extension points are selected
+  selectedExtensionPoints: [], // Will be populated with all available extension points by default
 
   // Color options for extension types
   linkExtensionColor: '#37872d', // Green for link extensions

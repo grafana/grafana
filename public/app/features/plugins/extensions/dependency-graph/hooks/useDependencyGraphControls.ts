@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
-
-import { t } from '@grafana/i18n';
 
 import { VisualizationMode } from './useDependencyGraphData';
+import { t } from '@grafana/i18n';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 
 export interface DependencyGraphControls {
   visualizationMode: VisualizationMode;
   selectedContentProviders: string[];
   selectedContentConsumers: string[];
+  selectedExtensionPoints: string[];
   setVisualizationMode: (mode: VisualizationMode) => void;
   setSelectedContentProviders: (providers: string[]) => void;
   setSelectedContentConsumers: (consumers: string[]) => void;
+  setSelectedExtensionPoints: (extensionPoints: string[]) => void;
   modeOptions: Array<{ label: string; value: VisualizationMode }>;
 }
 
@@ -22,6 +23,7 @@ const URL_PARAMS = {
   API_MODE: 'apiMode',
   CONTENT_PROVIDERS: 'contentProviders',
   CONTENT_CONSUMERS: 'contentConsumers',
+  EXTENSION_POINTS: 'extensionPoints',
 } as const;
 
 /**
@@ -51,7 +53,7 @@ export function useDependencyGraphControls(): DependencyGraphControls {
   const [visualizationMode, setVisualizationModeState] = useState<VisualizationMode>(() => {
     const mode = searchParams.get(URL_PARAMS.API_MODE);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return mode === 'add' || mode === 'expose' ? (mode as VisualizationMode) : 'add';
+    return mode === 'add' || mode === 'expose' || mode === 'extensionpoint' ? (mode as VisualizationMode) : 'add';
   });
 
   const [selectedContentProviders, setSelectedContentProvidersState] = useState<string[]>(() => {
@@ -60,6 +62,10 @@ export function useDependencyGraphControls(): DependencyGraphControls {
 
   const [selectedContentConsumers, setSelectedContentConsumersState] = useState<string[]>(() => {
     return parseArrayParam(searchParams.get(URL_PARAMS.CONTENT_CONSUMERS));
+  });
+
+  const [selectedExtensionPoints, setSelectedExtensionPointsState] = useState<string[]>(() => {
+    return parseArrayParam(searchParams.get(URL_PARAMS.EXTENSION_POINTS));
   });
 
   // Update URL parameters when state changes
@@ -109,10 +115,20 @@ export function useDependencyGraphControls(): DependencyGraphControls {
     [updateUrlParams]
   );
 
+  const setSelectedExtensionPoints = useCallback(
+    (extensionPoints: string[]) => {
+      setSelectedExtensionPointsState(extensionPoints);
+      updateUrlParams({
+        [URL_PARAMS.EXTENSION_POINTS]: extensionPoints.length > 0 ? serializeArrayParam(extensionPoints) : null,
+      });
+    },
+    [updateUrlParams]
+  );
+
   // Sync state with URL parameters when they change externally
   useEffect(() => {
     const mode = searchParams.get(URL_PARAMS.API_MODE);
-    if (mode === 'add' || mode === 'expose') {
+    if (mode === 'add' || mode === 'expose' || mode === 'extensionpoint') {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       setVisualizationModeState(mode as VisualizationMode);
     }
@@ -122,6 +138,9 @@ export function useDependencyGraphControls(): DependencyGraphControls {
 
     const consumers = parseArrayParam(searchParams.get(URL_PARAMS.CONTENT_CONSUMERS));
     setSelectedContentConsumersState(consumers);
+
+    const extensionPoints = parseArrayParam(searchParams.get(URL_PARAMS.EXTENSION_POINTS));
+    setSelectedExtensionPointsState(extensionPoints);
   }, [searchParams]);
 
   const modeOptions = [
@@ -134,9 +153,11 @@ export function useDependencyGraphControls(): DependencyGraphControls {
     visualizationMode,
     selectedContentProviders,
     selectedContentConsumers,
+    selectedExtensionPoints,
     setVisualizationMode,
     setSelectedContentProviders,
     setSelectedContentConsumers,
+    setSelectedExtensionPoints,
     modeOptions,
   };
 }

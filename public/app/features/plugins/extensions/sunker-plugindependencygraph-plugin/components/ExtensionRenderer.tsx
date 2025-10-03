@@ -4,11 +4,6 @@
  * Renders extension points and exposed components in the dependency graph.
  */
 
-import { SerializedStyles } from '@emotion/react';
-import React from 'react';
-
-import { GrafanaTheme2 } from '@grafana/data';
-
 import {
   COLOR_DEFAULTS,
   DISPLAY_NAMES,
@@ -19,7 +14,11 @@ import {
 } from '../constants';
 import { GraphData, PanelOptions } from '../types';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { PositionInfo } from './GraphLayout';
+import React from 'react';
+import { SerializedStyles } from '@emotion/react';
+import { Trans } from '@grafana/i18n';
 
 interface ExtensionRendererProps {
   theme: GrafanaTheme2;
@@ -367,25 +366,42 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
               />
 
-              {/* Extension point title */}
+              {/* Extension point ID */}
               <text
                 x={epPos.x + extensionBoxWidth / 2}
                 y={epPos.y - 5}
                 textAnchor="middle"
                 fill={theme.colors.getContrastText(theme.colors.primary.main)}
+                style={{ fontSize: '12px', pointerEvents: 'none' }}
               >
-                {ep.title || ep.id}
+                <tspan>{ep.id}</tspan>
+              </text>
+
+              {/* "Defined in [appname]" */}
+              <text
+                x={epPos.x + extensionBoxWidth / 2}
+                y={epPos.y + 10}
+                textAnchor="middle"
+                fill={theme.colors.getContrastText(theme.colors.primary.main)}
+                style={{ fontSize: '11px', pointerEvents: 'none' }}
+              >
+                <tspan>
+                  <Trans i18nKey="extensions.defined-in" values={{ plugin: ep.definingPlugin }}>
+                    Defined in {{ plugin: ep.definingPlugin }}
+                  </Trans>
+                </tspan>
               </text>
 
               {/* Extension point description */}
               {options.showDescriptions && ep.description && ep.description.trim() !== '' && (
                 <text
                   x={epPos.x + extensionBoxWidth / 2}
-                  y={epPos.y + 15}
+                  y={epPos.y + 25}
                   textAnchor="middle"
                   fill={theme.colors.getContrastText(theme.colors.primary.main)}
+                  style={{ pointerEvents: 'none' }}
                 >
-                  {ep.description}
+                  <tspan>{ep.description}</tspan>
                 </text>
               )}
             </g>
@@ -479,12 +495,28 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       {epId}
                     </text>
 
-                    {/* Extension type - second line in parentheses */}
+                    {/* "Defined in [appname]" - second line */}
+                    <text
+                      x={epPos.x + extensionBoxWidth / 2}
+                      y={epPos.y + 15}
+                      textAnchor="middle"
+                      fill={theme.colors.getContrastText(extensionColor)}
+                      style={{ pointerEvents: 'none', fontSize: '11px' }}
+                    >
+                      <Trans
+                        i18nKey="extensions.defined-in"
+                        values={{ plugin: extensionPoint?.definingPlugin || 'unknown' }}
+                      >
+                        Defined in {{ plugin: extensionPoint?.definingPlugin || 'unknown' }}
+                      </Trans>
+                    </text>
+
+                    {/* Extension type - third line in parentheses */}
                     {options.showDependencyTypes && (
                       <g>
                         <text
                           x={epPos.x + extensionBoxWidth / 2}
-                          y={epPos.y + 15}
+                          y={epPos.y + 30}
                           textAnchor="middle"
                           fill={theme.colors.getContrastText(extensionColor)}
                           style={{ pointerEvents: 'none' }}
@@ -498,7 +530,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                           extensionPoint.description.trim() !== '' && (
                             <text
                               x={epPos.x + extensionBoxWidth / 2}
-                              y={epPos.y + 30}
+                              y={epPos.y + 45}
                               textAnchor="middle"
                               fill={theme.colors.getContrastText(extensionColor)}
                               style={{ pointerEvents: 'none' }}

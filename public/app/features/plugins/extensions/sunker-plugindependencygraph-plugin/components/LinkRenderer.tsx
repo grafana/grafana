@@ -14,6 +14,8 @@ import { GraphData } from '../types';
 
 import { NodeWithPosition, PositionInfo } from './GraphLayout';
 
+
+
 interface LinkRendererProps {
   theme: GrafanaTheme2;
   data: GraphData;
@@ -209,37 +211,23 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
 
     const arrows: React.ReactElement[] = [];
 
-    // Group extensions by their providing plugin (app)
-    const extensionGroups = new Map<string, string[]>();
-    data.extensions.forEach((ext) => {
-      if (!extensionGroups.has(ext.providingPlugin)) {
-        extensionGroups.set(ext.providingPlugin, []);
-      }
-      extensionGroups.get(ext.providingPlugin)!.push(ext.id);
-    });
-
-    // Create one arrow per app (not per extension)
-    Array.from(extensionGroups.entries()).forEach(([providingPlugin, extensionIds]) => {
-      // Get the first extension position to determine the app section position
-      const firstExtPos = extensionPositions.get(extensionIds[0]);
-      if (!firstExtPos) {
+    // Create one arrow per extension (not per app)
+    data.extensions.forEach((extension) => {
+      // Get the extension position
+      const extPos = extensionPositions.get(extension.id);
+      if (!extPos) {
         return;
       }
 
-      // Get the extension point position (assuming all extensions target the same extension point)
-      const extension = data.extensions?.find((ext) => ext.id === extensionIds[0]);
-      if (!extension) {
-        return;
-      }
-
+      // Get the extension point position
       const epPos = extensionPointModePositions.get(extension.targetExtensionPoint);
       if (!epPos) {
         return;
       }
 
       const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
-      const startX = firstExtPos.x + extensionBoxWidth + 20; // Start from the right edge of the app section
-      const startY = firstExtPos.groupY + firstExtPos.groupHeight / 2; // Center vertically in the app section
+      const startX = extPos.x + extensionBoxWidth + 20; // Start from the right edge of the extension box
+      const startY = extPos.y; // Center vertically on the extension box
       const endX = epPos.x - 2; // End at left edge of extension point box
       const endY = epPos.y;
 
@@ -251,7 +239,7 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
       const pathData = `M ${startX} ${startY} C ${controlX1} ${startY}, ${controlX2} ${endY}, ${endX} ${endY}`;
 
       arrows.push(
-        <g key={`${providingPlugin}-${extension.targetExtensionPoint}`}>
+        <g key={`${extension.id}-${extension.targetExtensionPoint}`}>
           <path
             d={pathData}
             fill="none"

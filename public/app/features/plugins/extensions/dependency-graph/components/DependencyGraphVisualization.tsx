@@ -1,9 +1,8 @@
 import AutoSizer from 'react-virtualized-auto-sizer';
-
 import { DependencyGraph } from '../../sunker-plugindependencygraph-plugin/components/DependencyGraph';
 import { DependencyGraphControls } from '../hooks/useDependencyGraphControls';
-import { useDependencyGraphData } from '../hooks/useDependencyGraphData';
 import { logAutoSizer } from '../utils/logger';
+import { useDependencyGraphData } from '../hooks/useDependencyGraphData';
 
 interface DependencyGraphVisualizationProps {
   controls: DependencyGraphControls;
@@ -20,12 +19,13 @@ const LAYOUT_CONSTANTS = {
  * Reusable component for rendering the dependency graph visualization
  */
 export function DependencyGraphVisualization({ controls }: DependencyGraphVisualizationProps): JSX.Element {
-  const { visualizationMode, selectedContentProviders, selectedContentConsumers } = controls;
+  const { visualizationMode, selectedContentProviders, selectedContentConsumers, selectedExtensionPoints } = controls;
 
   const { graphData } = useDependencyGraphData({
     visualizationMode,
     selectedContentProviders,
     selectedContentConsumers,
+    selectedExtensionPoints,
   });
 
   return (
@@ -44,7 +44,7 @@ export function DependencyGraphVisualization({ controls }: DependencyGraphVisual
                   showDescriptions: false,
                   selectedContentProviders,
                   selectedContentConsumers,
-                  selectedExtensionPoints: [],
+                  selectedExtensionPoints,
                   linkExtensionColor: '#37872d',
                   componentExtensionColor: '#ff9900',
                   functionExtensionColor: '#e02f44',

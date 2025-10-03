@@ -1,10 +1,9 @@
-import { useCallback } from 'react';
-
-import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, MultiCombobox, Select } from '@grafana/ui';
+import { VisualizationMode, useDependencyGraphData } from '../hooks/useDependencyGraphData';
 
 import { DependencyGraphControls } from '../hooks/useDependencyGraphControls';
-import { VisualizationMode, useDependencyGraphData } from '../hooks/useDependencyGraphData';
+import { t } from '@grafana/i18n';
+import { useCallback } from 'react';
 
 interface DependencyGraphControlsProps {
   controls: DependencyGraphControls;
@@ -18,23 +17,29 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
     visualizationMode,
     selectedContentProviders,
     selectedContentConsumers,
+    selectedExtensionPoints,
     setVisualizationMode,
     setSelectedContentProviders,
     setSelectedContentConsumers,
+    setSelectedExtensionPoints,
     modeOptions,
   } = controls;
 
   const {
     availableProviders,
     activeConsumers,
+    availableExtensionPoints,
     contentProviderOptions,
     contentConsumerOptions,
+    extensionPointOptions,
     selectedProviderValues,
     selectedConsumerValues,
+    selectedExtensionPointValues,
   } = useDependencyGraphData({
     visualizationMode,
     selectedContentProviders,
     selectedContentConsumers,
+    selectedExtensionPoints,
   });
 
   const handleModeChange = useCallback(
@@ -67,6 +72,15 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
     [activeConsumers, setSelectedContentConsumers]
   );
 
+  const handleExtensionPointChange = useCallback(
+    (selected: Array<{ value?: string }>) => {
+      const selectedValues = selected.map((item) => item.value).filter((v): v is string => Boolean(v));
+      const newValue = selectedValues.length === availableExtensionPoints.length ? [] : selectedValues;
+      setSelectedExtensionPoints(newValue);
+    },
+    [availableExtensionPoints.length, setSelectedExtensionPoints]
+  );
+
   return (
     <InlineFieldRow>
       <InlineField label={t('extensions.api-mode.label', 'API Mode')}>
@@ -77,31 +91,47 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
           width={12}
         />
       </InlineField>
-      <InlineField label={t('extensions.content-provider.label', 'Content provider')}>
-        <MultiCombobox
-          options={contentProviderOptions}
-          value={selectedProviderValues}
-          onChange={handleProviderChange}
-          placeholder={t('extensions.content-provider.placeholder', 'Select content providers to display')}
-          width="auto"
-          minWidth={20}
-          maxWidth={30}
-        />
-      </InlineField>
-      <InlineField label={t('extensions.content-consumer.label', 'Content consumer')}>
-        <MultiCombobox
-          options={contentConsumerOptions}
-          value={selectedConsumerValues}
-          onChange={handleConsumerChange}
-          placeholder={t(
-            'extensions.content-consumer.placeholder',
-            'Select content consumers to display (active consumers by default)'
-          )}
-          width="auto"
-          minWidth={20}
-          maxWidth={30}
-        />
-      </InlineField>
+      {visualizationMode === 'extensionpoint' ? (
+        <InlineField label={t('extensions.extension-points.label', 'Extension Points')}>
+          <MultiCombobox
+            options={extensionPointOptions}
+            value={selectedExtensionPointValues}
+            onChange={handleExtensionPointChange}
+            placeholder={t('extensions.extension-points.placeholder', 'Select extension points to display')}
+            width="auto"
+            minWidth={20}
+            maxWidth={30}
+          />
+        </InlineField>
+      ) : (
+        <>
+          <InlineField label={t('extensions.content-provider.label', 'Content provider')}>
+            <MultiCombobox
+              options={contentProviderOptions}
+              value={selectedProviderValues}
+              onChange={handleProviderChange}
+              placeholder={t('extensions.content-provider.placeholder', 'Select content providers to display')}
+              width="auto"
+              minWidth={20}
+              maxWidth={30}
+            />
+          </InlineField>
+          <InlineField label={t('extensions.content-consumer.label', 'Content consumer')}>
+            <MultiCombobox
+              options={contentConsumerOptions}
+              value={selectedConsumerValues}
+              onChange={handleConsumerChange}
+              placeholder={t(
+                'extensions.content-consumer.placeholder',
+                'Select content consumers to display (active consumers by default)'
+              )}
+              width="auto"
+              minWidth={20}
+              maxWidth={30}
+            />
+          </InlineField>
+        </>
+      )}
     </InlineFieldRow>
   );
 }
