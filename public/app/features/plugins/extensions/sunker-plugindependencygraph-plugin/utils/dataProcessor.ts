@@ -12,7 +12,6 @@ import {
   PluginNode,
 } from '../types';
 
-
 // Cache for expensive calculations
 const cache = new Map<string, GraphData>();
 const ENABLE_DEBUG_LOGS = true; // Set to true for debugging
@@ -684,6 +683,7 @@ export const processPluginDataToExtensionPointGraph = (
     console.log('processPluginDataToExtensionPointGraph - shouldFilterExtensionPoints:', shouldFilterExtensionPoints);
   }
 
+  // Collect explicitly defined extension points
   Object.entries(pluginData).forEach(([pluginId, pluginInfo]) => {
     const pluginExtensions = pluginInfo.extensions;
     // Type guard to check if pluginExtensions has extensionPoints property
@@ -708,6 +708,24 @@ export const processPluginDataToExtensionPointGraph = (
       });
     }
   });
+
+  // If filtering by selected extension points, also add any targets that are not explicitly defined
+  if (shouldFilterExtensionPoints) {
+    selectedExtensionPoints.forEach((targetId) => {
+      if (!extensionPoints.has(targetId)) {
+        // This target is not explicitly defined as an extension point, but we need to show it
+        const extensionDetails = findExtensionPointDetails(targetId, pluginData);
+        extensionPoints.set(targetId, {
+          id: targetId,
+          definingPlugin: extensionDetails.definingPlugin,
+          providers: [], // Will be populated later
+          extensionType: 'link', // Default type
+          title: extensionDetails.title || '',
+          description: extensionDetails.description || '',
+        });
+      }
+    });
+  }
 
   // Second pass: collect all extensions (links, components, functions) and their targets
   Object.entries(pluginData).forEach(([pluginId, pluginInfo]) => {

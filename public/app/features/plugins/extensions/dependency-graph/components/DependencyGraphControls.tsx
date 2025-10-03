@@ -1,9 +1,10 @@
+import { useCallback } from 'react';
+
+import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, MultiCombobox, Select } from '@grafana/ui';
-import { VisualizationMode, useDependencyGraphData } from '../hooks/useDependencyGraphData';
 
 import { DependencyGraphControls } from '../hooks/useDependencyGraphControls';
-import { t } from '@grafana/i18n';
-import { useCallback } from 'react';
+import { VisualizationMode, useDependencyGraphData } from '../hooks/useDependencyGraphData';
 
 interface DependencyGraphControlsProps {
   controls: DependencyGraphControls;

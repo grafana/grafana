@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 
 import {
-  clearCache,
   getActiveContentConsumers,
   getAvailableContentConsumers,
   getAvailableContentProviders,

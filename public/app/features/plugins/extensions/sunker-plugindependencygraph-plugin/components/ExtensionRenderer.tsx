@@ -4,6 +4,13 @@
  * Renders extension points and exposed components in the dependency graph.
  */
 
+import { SerializedStyles } from '@emotion/react';
+import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
+
 import {
   COLOR_DEFAULTS,
   DISPLAY_NAMES,
@@ -14,11 +21,7 @@ import {
 } from '../constants';
 import { GraphData, PanelOptions } from '../types';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { PositionInfo } from './GraphLayout';
-import React from 'react';
-import { SerializedStyles } from '@emotion/react';
-import { Trans } from '@grafana/i18n';
 
 interface ExtensionRendererProps {
   theme: GrafanaTheme2;
@@ -482,6 +485,14 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       stroke={theme.colors.border.strong}
                       strokeWidth={VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH}
                       rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
+                      onClick={() => {
+                        // Navigate to extension point mode with this specific extension point selected
+                        const currentUrl = new URL(window.location.href);
+                        currentUrl.searchParams.set('apiMode', 'extensionpoint');
+                        currentUrl.searchParams.set('extensionPoints', epId);
+                        locationService.push(currentUrl.pathname + currentUrl.search);
+                      }}
+                      style={{ cursor: 'pointer' }}
                     />
 
                     {/* Extension point ID - first line */}
