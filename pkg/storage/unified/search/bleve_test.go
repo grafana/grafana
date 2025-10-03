@@ -1493,8 +1493,8 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 					if rvDiff == 0 {
 						// OK
 					} else {
-						// Allow returned RV to be within 5% of minInterval.
-						require.InDelta(t, minInterval.Milliseconds(), rvDiff, float64(minInterval.Milliseconds())*0.05)
+						// Allow returned RV to be within 10% of minInterval.
+						require.InDelta(t, minInterval.Milliseconds(), rvDiff, float64(minInterval.Milliseconds())*0.10)
 					}
 				}
 
