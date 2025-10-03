@@ -417,6 +417,10 @@ export const AnnotationsPlugin2 = ({
       // Top offset for multi-lane annotations
       const top = annotationsConfig?.multiLane ? frameIdx * ANNOTATION_LANE_SIZE : undefined;
       for (let i = 0; i < vals.time.length; i++) {
+        if (!vals.isRegion[i] && vals.clusterIdx?.[i] != null) {
+          continue;
+        }
+
         let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
         let left = Math.round(plot.valToPos(vals.time[i], 'x')) || 0; // handles -0
         let style: React.CSSProperties | null = null;
