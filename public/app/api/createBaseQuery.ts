@@ -19,8 +19,12 @@ export function createBaseQuery({ baseURL }: CreateBaseQueryOptions): BaseQueryF
         ...requestOptions.headers,
       };
 
-      // Add Content-Type header for PATCH requests to /apis/ endpoints
-      if (requestOptions.method?.toUpperCase() === 'PATCH' && baseURL?.startsWith('/apis/')) {
+      // Add Content-Type header for PATCH requests to /apis/ endpoints if not already set
+      if (
+        requestOptions.method?.toUpperCase() === 'PATCH' &&
+        baseURL?.startsWith('/apis/') &&
+        !headers['Content-Type']
+      ) {
         headers['Content-Type'] = 'application/strategic-merge-patch+json';
       }
 
