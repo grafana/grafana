@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # This script is used to validate the npm packages that are published to npmjs.org are in the correct format.
 # It won't catch things like malformed JS or Types but it will assert that the package has
