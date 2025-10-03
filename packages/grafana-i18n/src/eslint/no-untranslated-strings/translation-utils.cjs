@@ -7,7 +7,7 @@
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXChild} JSXChild */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.Property} Property */
 /** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleFixer} RuleFixer */
-/** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleContext<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT',  [{forceFix: string[]}]>} RuleContextWithOptions */
+/** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleContext<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT',  [{forceFix: string[], calleesToIgnore: string[], basePaths: string[]}]>} RuleContextWithOptions */
 const { AST_NODE_TYPES } = require('@typescript-eslint/utils');
 
 /**
@@ -150,9 +150,12 @@ function getTDeclaration(node, context) {
  */
 function getTranslationPrefix(context) {
   const filename = context.filename;
-  const match = filename.match(/public\/app\/features\/(.+?)\//);
-  if (match) {
-    return match[1];
+  const basePaths = context.options[0]?.basePaths ?? ['src'];
+  for (const path of basePaths) {
+    const match = filename.match(new RegExp(`${path}/(.+?)/`));
+    if (match) {
+      return match[1];
+    }
   }
   return null;
 }
