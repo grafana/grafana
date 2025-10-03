@@ -39,7 +39,7 @@ func (b *APIBuilder) evalAllFlagsStatic(ctx context.Context, isAuthedUser bool, 
 	writeResponse(http.StatusOK, result, b.logger, w)
 }
 
-func (b *APIBuilder) evalFlagStatic(ctx context.Context, flagKey string, w http.ResponseWriter, r *http.Request) {
+func (b *APIBuilder) evalFlagStatic(ctx context.Context, flagKey string, w http.ResponseWriter) {
 	_, span := tracer.Start(ctx, "ofrep.static.evalFlag")
 	defer span.End()
 
