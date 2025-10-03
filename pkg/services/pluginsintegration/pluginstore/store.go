@@ -44,7 +44,8 @@ func (s *Service) Run(ctx context.Context) error {
 	if err := s.StartAsync(ctx); err != nil {
 		return err
 	}
-	return s.AwaitTerminated(ctx)
+	stopCtx := context.Background()
+	return s.AwaitTerminated(stopCtx)
 }
 
 func NewPluginStoreForTest(pluginRegistry registry.Service, pluginLoader loader.Service, pluginSources sources.Registry) (*Service, error) {

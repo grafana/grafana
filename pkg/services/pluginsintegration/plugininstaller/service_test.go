@@ -205,12 +205,25 @@ func TestService_Run(t *testing.T) {
 					&pluginchecker.FakePluginPreinstall{},
 				),
 			)
+			require.NoError(t, err)
+
+			t.Cleanup(func() {
+				s.StopAsync()
+				err := s.AwaitTerminated(context.Background())
+				if tt.shouldThrowError {
+					require.ErrorContains(t, err, "Failed to install plugin")
+					return
+				}
+				require.NoError(t, err)
+			})
+
+			err = s.StartAsync(context.Background())
+			require.NoError(t, err)
+			err = s.AwaitRunning(context.Background())
 			if tt.shouldThrowError {
 				require.ErrorContains(t, err, "Failed to install plugin")
 				return
 			}
-			require.NoError(t, err)
-			err = s.Run(context.Background())
 			require.NoError(t, err)
 
 			if tt.shouldInstall {
@@ -234,6 +247,7 @@ func TestService_Run(t *testing.T) {
 						expectedInstalled++
 					}
 				}
+				<-s.installComplete
 				require.Equal(t, expectedInstalled, installed)
 				require.Equal(t, expectedInstalledFromURL, installedFromURL)
 			}

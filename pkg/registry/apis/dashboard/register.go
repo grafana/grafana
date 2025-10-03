@@ -16,6 +16,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -97,7 +98,8 @@ type DashboardsAPIBuilder struct {
 	unified                      resource.ResourceClient
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	dashboardPermissions         dashboards.PermissionsRegistrationService
-	dashboardPermissionsSvc      accesscontrol.DashboardPermissionsService
+	dashboardPermissionsSvc      accesscontrol.DashboardPermissionsService // TODO: once kubernetesAuthzResourcePermissionApis is enabled, rely solely on resourcePermissionsSvc and add integration test afterDelete hook
+	resourcePermissionsSvc       *dynamic.NamespaceableResourceInterface
 	scheme                       *runtime.Scheme
 	search                       *SearchHandler
 	dashStore                    dashboards.Store
@@ -171,17 +173,17 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceInfoProvider) *DashboardsAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceInfoProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider)
 	return &DashboardsAPIBuilder{
-		minRefreshInterval:   "10s",
-		accessClient:         ac,
-		authorizer:           authsvc.NewResourceAuthorizer(ac),
-		features:             features,
-		dashboardService:     &dashsvc.DashboardServiceImpl{}, // for validation helpers only
-		folderClientProvider: folderClientProvider,
-
-		isStandalone: true,
+		minRefreshInterval:     "10s",
+		accessClient:           ac,
+		authorizer:             authsvc.NewResourceAuthorizer(ac),
+		features:               features,
+		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
+		folderClientProvider:   folderClientProvider,
+		resourcePermissionsSvc: resourcePermissionsSvc,
+		isStandalone:           true,
 	}
 }
 
@@ -461,6 +463,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		RequireDeprecatedInternalID: true,
 	}
 
+	// TODO: merge this into one option
 	if b.isStandalone {
 		// TODO: Sets default root permissions
 	} else {
@@ -563,11 +566,12 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	apiGroupInfo.VersionedResourcesStorageMap[dashboards.GroupVersion().Version] = storage
 
 	if b.isStandalone {
-		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
+		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
 		if err != nil {
 			return err
 		}
-		storage[dashboards.StoragePath()] = store
+		unified.AfterDelete = b.afterDelete
+		storage[dashboards.StoragePath()] = unified
 
 		return nil
 	}
@@ -577,13 +581,14 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		return err
 	}
 
-	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
+	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
+	unified.AfterDelete = b.afterDelete
 
 	gr := dashboards.GroupResource()
-	dw, err := opts.DualWriteBuilder(gr, legacyStore, store)
+	dw, err := opts.DualWriteBuilder(gr, legacyStore, unified)
 	if err != nil {
 		return err
 	}
@@ -627,6 +632,28 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	}
 
 	return nil
+}
+
+func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptions) {
+	if util.IsInterfaceNil(b.resourcePermissionsSvc) {
+		return
+	}
+
+	ctx := context.Background()
+	log := logging.DefaultLogger
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		log.Error("Failed to access deleted dashboard object metadata", "error", err)
+		return
+	}
+
+	log.Debug("deleting dashboard permissions", "uid", meta.GetName(), "namespace", meta.GetNamespace())
+	client := (*b.resourcePermissionsSvc).Namespace(meta.GetNamespace())
+	name := fmt.Sprintf("%s-%s-%s", dashv1.DashboardResourceInfo.GroupVersionResource().Group, dashv1.DashboardResourceInfo.GroupVersionResource().Resource, meta.GetName())
+	err = client.Delete(ctx, name, metav1.DeleteOptions{})
+	if err != nil {
+		log.Error("failed to delete dashboard permissions", "error", err)
+	}
 }
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {

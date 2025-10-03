@@ -81,20 +81,6 @@
         "title-access-denied": "Zugriff verweigert"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "Einige Funktionen sind stabil (GA) und standardmäßig aktiviert, während andere zurzeit in ihrer vorläufigen Beta-Phase sind und für eine frühzeitige Anwendung verfügbar sind.",
-      "confirm-modal-body-2": "Wir raten Ihnen, die Auswirkungen jeder Funktionsänderung zu kennen, bevor Sie Änderungen vornehmen.",
-      "confirmText-save-changes": "Änderungen speichern",
-      "get-stage-cell": {
-        "beta": "Beta",
-        "content-general-availability": "Allgemeine Verfügbarkeit",
-        "deprecated": "Veraltet",
-        "ga": "GA"
-      },
-      "save-changes": "Änderungen speichern",
-      "saving": "Wird gespeichert …",
-      "title-apply-feature-toggle-changes": "Änderungen des Funktionsschalters anwenden"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "Organisation löschen",
       "confirmText-delete": "Löschen",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "Einstellungsaktualisierungen während der Laufzeit",
       "title-sort-dashboards-by-popularity-in-search": "Dashboards je nach Beliebtheit beim Suchen sortieren",
       "title-team-sync": "Teamsynchronisierung"
-    },
-    "feature-toggles": {
-      "restart-pending": "Ein Neustart für Ihre Grafana-Instanz steht bevor, damit die neuesten Änderungen am Funktionsschalter angewendet werden",
-      "restart-required": "Das Speichern von Änderungen am Funktionsschalter führt zu einem Neustart der Instanz, der einige Minuten dauern kann",
-      "sub-title": "Zeige die Funktionsschalter an und bearbeite sie. Unter <2>grafana.com</2> erfährst du mehr über Funktionsschalter."
     },
     "get-enterprise": {
       "contact-us": "Kontaktieren Sie uns, um eine kostenlose Testversion zu erhalten.",
@@ -2181,7 +2162,6 @@
       "body-queries-expressions-configured": "Erstellen Sie mindestens eine Abfrage oder einen Ausdruck für eine Warnung",
       "confirmText-deactivate": "Deaktivieren",
       "expressions": "Ausdrücke",
-      "loading-data-sources": "Datenquellen werden geladen ...",
       "manipulate-returned-queries-other-operations": "Manipulieren Sie Daten, die von Abfragen mit mathematischen und anderen Operationen zurückgegeben werden.",
       "message": {
         "a-valid-expression-is-required": "Ein gültiger Ausdruck ist erforderlich"
@@ -3516,6 +3496,7 @@
       "move-modal-field-label": "Ordnername",
       "move-modal-text": "Diese Aktion wird folgenden Inhalt verschieben:",
       "move-modal-title": "Verschieben",
+      "move-provisioned-folder": "",
       "moving": "Verschieben...",
       "new-folder-name-required-phrase": "Ordnername ist erforderlich.",
       "selected-mix-resources-modal-text": "Sie haben sowohl bereitgestellte als auch nicht bereitgestellte Ressourcen ausgewählt. Diese können nicht zusammen verarbeitet werden. Bitte wählen Sie nur bereitgestellte Ressourcen oder nur nicht bereitgestellte Ressourcen aus und versuchen Sie es dann erneut.",
@@ -10186,7 +10167,7 @@
       "title": "Datenquellen"
     },
     "databases": {
-      "title": "Datenbanken"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Füge Datenquellen hinzu und konfiguriere sie",
@@ -11712,6 +11693,8 @@
       "button-cancelling": "",
       "button-next": "Fertigstellen",
       "button-start": "Synchronisierung starten",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Dadurch wird die Repository-Konfiguration gelöscht und Sie verlieren alle Fortschritte. Sind Sie sicher, dass Sie Ihre Änderungen verwerfen möchten?",
         "confirm": "Ja, verwerfen",
@@ -12090,8 +12073,8 @@
       "title": "Bereiche auswählen"
     },
     "tree": {
-      "collapse": "Einklappen",
-      "expand": "Ausklappen",
+      "collapse": "",
+      "expand": "",
       "headline": {
         "noResults": "Keine Ergebnisse für deine Abfrage gefunden",
         "recommended": "Empfohlen",

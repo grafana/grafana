@@ -1,7 +1,5 @@
 import { VariableModel } from '@grafana/schema/dist/esm/index';
 import { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { EditableDashboardElementInfo } from 'app/features/dashboard-scene/scene/types/EditableDashboardElement';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DashboardModel } from '../state/DashboardModel';
@@ -28,31 +26,11 @@ export function trackDashboardLoaded(dashboard: DashboardModel, duration?: numbe
   });
 }
 
-export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: number) {
-  const trackingInformation = dashboard.getTrackingInformation();
-
-  DashboardInteractions.dashboardInitialized({
-    theme: undefined,
-    duration,
-    isScene: true,
-    ...trackingInformation,
-  });
+export function trackDashboardCreatedOrSaved(isNew: boolean | undefined, trackingProps: { name: string; url: string }) {
+  DashboardInteractions.dashboardCreatedOrSaved(isNew, trackingProps);
 }
 
-export const trackDeleteDashboardElement = (element: EditableDashboardElementInfo) => {
-  switch (element?.typeName) {
-    case 'Row':
-      DashboardInteractions.trackRemoveRowClick();
-      break;
-    case 'Tab':
-      DashboardInteractions.trackRemoveTabClick();
-      break;
-    default:
-      break;
-  }
-};
-
-export function getPanelPluginCounts(panels: string[] | string[]) {
+export function getPanelPluginCounts(panels: string[]) {
   return panels.reduce((r: Record<string, number>, p) => {
     r[panelName(p)] = 1 + r[panelName(p)] || 1;
     return r;

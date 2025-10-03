@@ -81,20 +81,6 @@
         "title-access-denied": "Acesso negado"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "Alguns recursos estão estáveis (GA) e habilitados por padrão, enquanto outros estão atualmente em fase Beta preliminar, disponíveis para acesso antecipado.",
-      "confirm-modal-body-2": "Aconselhamos que você entenda o que cada mudança de recurso pode causar antes de fazer alterações.",
-      "confirmText-save-changes": "Salvar alterações",
-      "get-stage-cell": {
-        "beta": "Beta",
-        "content-general-availability": "Disponibilidade geral",
-        "deprecated": "Descontinuado",
-        "ga": "GA"
-      },
-      "save-changes": "Salvar alterações",
-      "saving": "Salvando...",
-      "title-apply-feature-toggle-changes": "Aplicar alterações de alternância de recursos"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "Excluir org.",
       "confirmText-delete": "Excluir",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "Atualizações de configurações em tempo de execução",
       "title-sort-dashboards-by-popularity-in-search": "Classificar painéis por popularidade na pesquisa",
       "title-team-sync": "Sincronização de equipe"
-    },
-    "feature-toggles": {
-      "restart-pending": "Há uma reinicialização pendente para que sua instância da Grafana aplique as alterações mais recentes de alternância de recursos",
-      "restart-required": "Salvar as alterações de alternância de recursos solicitará a reinicialização da instância, o que pode levar alguns minutos",
-      "sub-title": "Visualize e edite feature toggles. Leia mais sobre feature toggles em <2>grafana.com</2>."
     },
     "get-enterprise": {
       "contact-us": "Contate-nos e faça uma avaliação grátis",
@@ -2181,7 +2162,6 @@
       "body-queries-expressions-configured": "Crie pelo menos uma consulta ou expressão para receber alertas",
       "confirmText-deactivate": "Desativar",
       "expressions": "Expressões",
-      "loading-data-sources": "Carregando fontes de dados…",
       "manipulate-returned-queries-other-operations": "Manipule os dados que retornaram das consultas usando operações matemáticas e outras operações.",
       "message": {
         "a-valid-expression-is-required": "Uma expressão válida é necessária"
@@ -3516,6 +3496,7 @@
       "move-modal-field-label": "Nome da pasta",
       "move-modal-text": "Esta ação moverá o seguinte conteúdo:",
       "move-modal-title": "Mover",
+      "move-provisioned-folder": "",
       "moving": "Movendo...",
       "new-folder-name-required-phrase": "O nome da pasta é obrigatório.",
       "selected-mix-resources-modal-text": "Você selecionou recursos provisionados e não provisionados. Não éo possível processá-los juntos. Selecione apenas um dos tipos de recurso e tente novamente.",
@@ -10186,7 +10167,7 @@
       "title": "Fontes de dados"
     },
     "databases": {
-      "title": "Bancos de dados"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Adicione e configure fontes de dados",
@@ -11712,6 +11693,8 @@
       "button-cancelling": "",
       "button-next": "Finalizar",
       "button-start": "Iniciar sincronização",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Isso excluirá a configuração do repositório e você perderá todo o progresso. Tem certeza de que deseja descartar suas alterações?",
         "confirm": "Sim, descartar",
@@ -12090,8 +12073,8 @@
       "title": "Selecionar escopos"
     },
     "tree": {
-      "collapse": "Recolher",
-      "expand": "Expandir",
+      "collapse": "",
+      "expand": "",
       "headline": {
         "noResults": "Nenhum resultado encontrado para sua consulta",
         "recommended": "Recomendado",

@@ -81,20 +81,6 @@
         "title-access-denied": "アクセス拒否"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "一部機能は安定版（GA）として標準で有効になっていますが、いくつかの機能は現在暫定的なベータ版の段階であり、早期導入することが可能です。",
-      "confirm-modal-body-2": "変更する前に、各機能の変更がもたらす影響を理解することをお勧めします。",
-      "confirmText-save-changes": "変更を保存",
-      "get-stage-cell": {
-        "beta": "ベータ版",
-        "content-general-availability": "一般提供",
-        "deprecated": "非推奨",
-        "ga": "GA"
-      },
-      "save-changes": "変更を保存",
-      "saving": "保存中…",
-      "title-apply-feature-toggle-changes": "機能の切り替え変更を適用する"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "組織を削除",
       "confirmText-delete": "削除",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "実行中の設定更新",
       "title-sort-dashboards-by-popularity-in-search": "検索時に人気度順にダッシュボードを並べ替え",
       "title-team-sync": "チーム同期"
-    },
-    "feature-toggles": {
-      "restart-pending": "最新の機能切り替えの変更を適用するために、Grafanaインスタンスの再起動は保留中です",
-      "restart-required": "機能切り替えの変更を保存すると、インスタンスの再起動が必要となります。これには数分かかる場合があります",
-      "sub-title": "機能トグルを表示および編集します。機能トグルの詳細については、<2>grafana.com</2>をご覧ください。"
     },
     "get-enterprise": {
       "contact-us": "お問い合わせいただくと、無料トライアルをご利用いただけます",
@@ -2173,7 +2154,6 @@
       "body-queries-expressions-configured": "アラート対象となるクエリまたは式を少なくとも1つ作成してください",
       "confirmText-deactivate": "無効化する",
       "expressions": "式",
-      "loading-data-sources": "データソース読み込み中...",
       "manipulate-returned-queries-other-operations": "数式やその他の演算を使用してクエリから返されたデータを操作します。",
       "message": {
         "a-valid-expression-is-required": "有効な式の入力が必要です"
@@ -3504,6 +3484,7 @@
       "move-modal-field-label": "フォルダ名",
       "move-modal-text": "この操作により、次のコンテンツが移動されます。",
       "move-modal-title": "移動",
+      "move-provisioned-folder": "",
       "moving": "移動中…",
       "new-folder-name-required-phrase": "フォルダ名が必要です。",
       "selected-mix-resources-modal-text": "プロビジョニング済みのリソースと未プロビジョニングのリソースの両方が選択されています。これらは同時に処理できません。プロビジョニングされたリソースのみまたはプロビジョニングされていないリソースのみを選択して、再試行してください。",
@@ -10155,7 +10136,7 @@
       "title": "データソース"
     },
     "databases": {
-      "title": "データベース"
+      "title": ""
     },
     "datasources": {
       "subtitle": "データソースを追加および構成する",
@@ -11672,6 +11653,8 @@
       "button-cancelling": "",
       "button-next": "完了",
       "button-start": "同期を開始",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "この操作によりリポジトリの設定が削除され、すべての変更内容が失われます。本当に破棄してもよろしいですか？",
         "confirm": "はい、破棄します",
@@ -12047,8 +12030,8 @@
       "title": "スコープを選択"
     },
     "tree": {
-      "collapse": "折りたたみ表示",
-      "expand": "展開",
+      "collapse": "",
+      "expand": "",
       "headline": {
         "noResults": "クエリに一致する結果が見つかりませんでした。",
         "recommended": "おすすめ",

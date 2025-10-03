@@ -81,20 +81,6 @@
         "title-access-denied": "액세스 거부됨"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "일부 기능은 안정적이며(GA 단계) 기본적으로 활성화되어 있지만, 일부 기능은 현재 예비 베타 단계에 있으며 조기 도입이 가능하도록 제공하고 있습니다.",
-      "confirm-modal-body-2": "변경 사항을 적용하기 전에 각 기능의 변경이 어떤 영향을 미칠지 파악하는 것이 좋습니다.",
-      "confirmText-save-changes": "변경 사항 저장",
-      "get-stage-cell": {
-        "beta": "베타",
-        "content-general-availability": "정식 제공",
-        "deprecated": "사용 중단됨",
-        "ga": "GA 단계"
-      },
-      "save-changes": "변경 사항 저장",
-      "saving": "저장 중...",
-      "title-apply-feature-toggle-changes": "기능 토글 변경 사항 적용"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "조직 삭제",
       "confirmText-delete": "삭제",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "런타임에서 설정 업데이트",
       "title-sort-dashboards-by-popularity-in-search": "검색 시 인기도에 따라 대시보드 정렬",
       "title-team-sync": "팀 동기화"
-    },
-    "feature-toggles": {
-      "restart-pending": "최신 기능 토글 변경 사항을 적용하기 위해 Grafana 인스턴스의 재시작이 보류 중입니다",
-      "restart-required": "기능 토글 변경 사항을 저장하면 인스턴스가 다시 시작되며, 몇 분이 소요될 수 있습니다",
-      "sub-title": "기능 토글을 보고 편집합니다. <2>grafana.com</2>에서 기능 토글에 대해 자세히 알아보세요."
     },
     "get-enterprise": {
       "contact-us": "무료 체험 문의하기",
@@ -2173,7 +2154,6 @@
       "body-queries-expressions-configured": "경고할 쿼리 또는 표현식을 하나 이상 생성합니다",
       "confirmText-deactivate": "비활성화",
       "expressions": "표현식",
-      "loading-data-sources": "데이터 소스 로딩 중...",
       "manipulate-returned-queries-other-operations": "쿼리에서 반환된 데이터를 수학 및 기타 연산으로 조작합니다.",
       "message": {
         "a-valid-expression-is-required": "유효한 표현식이 필요합니다."
@@ -3504,6 +3484,7 @@
       "move-modal-field-label": "폴더 이름",
       "move-modal-text": "이 작업을 수행하면 다음 콘텐츠가 이동됩니다.",
       "move-modal-title": "이동",
+      "move-provisioned-folder": "",
       "moving": "이동 중...",
       "new-folder-name-required-phrase": "폴더 이름은 필수 입력 항목입니다.",
       "selected-mix-resources-modal-text": "프로비저닝된 리소스와 프로비저닝되지 않은 리소스를 모두 선택하셨습니다. 이 두 가지는 함께 처리할 수 없습니다. 프로비저닝된 리소스만 또는 프로비저닝되지 않은 리소스만 선택한 후 다시 시도해 주세요.",
@@ -10155,7 +10136,7 @@
       "title": "데이터 소스"
     },
     "databases": {
-      "title": "데이터베이스"
+      "title": ""
     },
     "datasources": {
       "subtitle": "데이터 소스 추가 및 구성",
@@ -11672,6 +11653,8 @@
       "button-cancelling": "",
       "button-next": "완료",
       "button-start": "동기화 시작",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "이렇게 하면 리포지토리 구성이 삭제되고 지금까지의 작업 내용이 모두 사라집니다. 정말 변경 사항을 취소하시겠어요?",
         "confirm": "네, 취소해 주세요",
@@ -12047,8 +12030,8 @@
       "title": "범위 선택"
     },
     "tree": {
-      "collapse": "접기",
-      "expand": "펼치기",
+      "collapse": "",
+      "expand": "",
       "headline": {
         "noResults": "쿼리에 대해 찾은 결과 없음",
         "recommended": "권장",

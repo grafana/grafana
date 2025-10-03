@@ -81,20 +81,6 @@
         "title-access-denied": "Accès refusé"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "Certaines fonctionnalités sont stables (GA) et activées par défaut, tandis que d’autres sont actuellement dans leur phase bêta préliminaire, disponibles pour une adoption précoce.",
-      "confirm-modal-body-2": "Nous vous conseillons de comprendre les implications de chaque changement de fonctionnalité avant d’apporter des modifications.",
-      "confirmText-save-changes": "Enregistrer les modifications",
-      "get-stage-cell": {
-        "beta": "Bêta",
-        "content-general-availability": "Disponibilité générale",
-        "deprecated": "Obsolète",
-        "ga": "GA"
-      },
-      "save-changes": "Enregistrer les modifications",
-      "saving": "Enregistrement en cours...",
-      "title-apply-feature-toggle-changes": "Appliquer les modifications de basculement de fonctionnalité"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "Supprimer l’organisation",
       "confirmText-delete": "Supprimer",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "Mises à jour des paramètres au moment de l’exécution",
       "title-sort-dashboards-by-popularity-in-search": "Trier les tableaux de bord par popularité dans la recherche",
       "title-team-sync": "Synchronisation d’équipe"
-    },
-    "feature-toggles": {
-      "restart-pending": "Un redémarrage est en attente pour que votre instance Grafana applique les dernières modifications de basculement de fonctionnalité",
-      "restart-required": "L’enregistrement des modifications de basculement de fonctionnalité entraînera un redémarrage de l’instance, ce qui peut prendre quelques minutes",
-      "sub-title": "Afficher et modifier les commutateurs de fonctionnalités. Pour en savoir plus sur les commutateurs de fonctionnalités, consultez <2>grafana.com</2>."
     },
     "get-enterprise": {
       "contact-us": "Contactez-nous et profitez d'un essai gratuit",
@@ -2181,7 +2162,6 @@
       "body-queries-expressions-configured": "Créer au moins une requête ou une expression pour laquelle une alerte doit être émise",
       "confirmText-deactivate": "Désactiver",
       "expressions": "Expressions",
-      "loading-data-sources": "Chargement des sources de données…",
       "manipulate-returned-queries-other-operations": "Manipulez les données renvoyées par les requêtes avec des opérations mathématiques et autres.",
       "message": {
         "a-valid-expression-is-required": "Une expression valide est obligatoire"
@@ -3516,6 +3496,7 @@
       "move-modal-field-label": "Nom du dossier",
       "move-modal-text": "Cette action déplacera le contenu suivant :",
       "move-modal-title": "Déplacer",
+      "move-provisioned-folder": "",
       "moving": "Déplacement...",
       "new-folder-name-required-phrase": "Vous devez saisir le nom du dossier.",
       "selected-mix-resources-modal-text": "Vous avez sélectionné à la fois des ressources provisionnées et non provisionnées. Ces deux types ne peuvent être traités simultanément. Veuillez sélectionner uniquement des ressources provisionnées ou uniquement des ressources non provisionnées, puis réessayer.",
@@ -10186,7 +10167,7 @@
       "title": "Sources de données"
     },
     "databases": {
-      "title": "Bases de données"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Ajouter et configurer des sources de données",
@@ -11712,6 +11693,8 @@
       "button-cancelling": "",
       "button-next": "Terminer",
       "button-start": "Commencer la synchronisation",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Cette action supprimera la configuration du dépôt et vous perdrez toutes vos modifications. Voulez-vous vraiment annuler vos modifications ?",
         "confirm": "Oui, annuler",
@@ -12090,8 +12073,8 @@
       "title": "Sélectionner les portées"
     },
     "tree": {
-      "collapse": "Réduire",
-      "expand": "Développer",
+      "collapse": "",
+      "expand": "",
       "headline": {
         "noResults": "Aucun résultat n'a été trouvé pour votre requête",
         "recommended": "Recommandé",

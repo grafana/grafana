@@ -84,7 +84,6 @@ type service struct {
 	features featuremgmt.FeatureToggles
 	log      log.Logger
 
-	stopCh    chan struct{}
 	stoppedCh chan error
 
 	db       db.DB
@@ -139,7 +138,6 @@ func ProvideService(
 		cfg:                               cfg,
 		features:                          features,
 		rr:                                rr,
-		stopCh:                            make(chan struct{}),
 		builders:                          []builder.APIGroupBuilder{},
 		authorizer:                        authorizer.NewGrafanaBuiltInSTAuthorizer(cfg),
 		tracing:                           tracing,
@@ -229,11 +227,8 @@ func (s *service) Run(ctx context.Context) error {
 	if err := s.StartAsync(ctx); err != nil {
 		return err
 	}
-
-	if err := s.AwaitRunning(ctx); err != nil {
-		return err
-	}
-	return s.AwaitTerminated(ctx)
+	stopCtx := context.Background()
+	return s.AwaitTerminated(stopCtx)
 }
 
 func (s *service) RegisterAPI(b builder.APIGroupBuilder) {

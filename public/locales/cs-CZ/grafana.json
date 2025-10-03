@@ -81,20 +81,6 @@
         "title-access-denied": "Přístup nebyl povolen"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "Některé funkce jsou stabilní (GA) a povolené ve výchozím nastavení, zatímco některé funkce jsou v současné době ve fázi předběžné beta verze, připravené k implementaci.",
-      "confirm-modal-body-2": "Před provedením úprav doporučujeme porozumět důsledkům každé změny funkce.",
-      "confirmText-save-changes": "Uložit změny",
-      "get-stage-cell": {
-        "beta": "Beta",
-        "content-general-availability": "Obecná dostupnost",
-        "deprecated": "Zastaralé",
-        "ga": "GA"
-      },
-      "save-changes": "Uložit změny",
-      "saving": "Ukládání…",
-      "title-apply-feature-toggle-changes": "Použít změny přepínače funkce"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "Odstranit organizaci",
       "confirmText-delete": "Odstranit",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "Aktualizace nastavení po spuštění",
       "title-sort-dashboards-by-popularity-in-search": "Seřadit nástěnky podle oblíbenosti ve vyhledávání",
       "title-team-sync": "Synchronizace týmu"
-    },
-    "feature-toggles": {
-      "restart-pending": "Probíhá restartování vaší instance Grafana pro použití nejnovějších změn funkce přepínače",
-      "restart-required": "Uložením změn funkce přepínače dojde k resetování instance, což může trvat několik minut",
-      "sub-title": "Zobrazit a upravit přepínače funkcí. Další informace o přepínání funkcí najdete na <2>grafana.com</2>."
     },
     "get-enterprise": {
       "contact-us": "Kontaktujte nás a získejte bezplatnou zkušební verzi",
@@ -2197,7 +2178,6 @@
       "body-queries-expressions-configured": "Vytvořte alespoň jeden dotaz nebo výraz, na který chcete být upozorněni",
       "confirmText-deactivate": "Deaktivovat",
       "expressions": "Výrazy",
-      "loading-data-sources": "Načítání zdrojů dat…",
       "manipulate-returned-queries-other-operations": "Spravujte data získaná z dotazů pomocí matematických a dalších operací.",
       "message": {
         "a-valid-expression-is-required": "Je vyžadován platný výraz"
@@ -3540,6 +3520,7 @@
       "move-modal-field-label": "Název složky",
       "move-modal-text": "Tato akce přesune následující obsah:",
       "move-modal-title": "Přesunout",
+      "move-provisioned-folder": "",
       "moving": "Probíhá přesouvání…",
       "new-folder-name-required-phrase": "Název složky je povinný.",
       "selected-mix-resources-modal-text": "Vybrali jste přidělené i nepřidělené zdroje. Tyto zdroje nelze zpracovat společně. Vyberte pouze přidělené nebo nepřidělené zdroje a zkuste to znovu.",
@@ -10248,7 +10229,7 @@
       "title": "Zdroje dat"
     },
     "databases": {
-      "title": "Databáze"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Přidávejte a konfigurujte zdroje dat",
@@ -11792,6 +11773,8 @@
       "button-cancelling": "",
       "button-next": "Dokončit",
       "button-start": "Zahájit synchronizaci",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Tímto odstraníte konfiguraci úložiště a přijdete o veškerý pokrok. Opravdu chcete zahodit změny?",
         "confirm": "Ano, zahodit",
@@ -12176,8 +12159,8 @@
       "title": "Vyberte rozsahy"
     },
     "tree": {
-      "collapse": "Sbalit",
-      "expand": "Rozbalit",
+      "collapse": "",
+      "expand": "",
       "headline": {
         "noResults": "Nebyly nalezeny žádné výsledky pro váš dotaz",
         "recommended": "Doporučeno",
