@@ -182,9 +182,16 @@ The following table lists the default RBAC OnCall role assignments to the basic 
 | Editor        | `plugins:grafana-oncall-app:editor` | Default [Editor](ref:rbac-basic-roles) assignments.                                                                                                      |
 | Viewer        | `plugins:grafana-oncall-app:reader` | Default [Viewer](ref:rbac-basic-roles) assignments.                                                                                                      |
 
+<<<<<<< HEAD
 ### Private Data Source Connect roles
 
 The following table lists how Private Data Source Connect fixed roles are assigned to the basic roles:
+=======
+
+### Private data source connect roles
+
+The following table lists how Private data source connect fixed roles are assigned to the basic roles:
+>>>>>>> 0355930f8d2 (docs(rbac): update to 'Private data source connect roles' wording throughout)
 
 | Basic role      | Associated fixed roles                                      | Description                                                                 |
 | --------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------- |
@@ -193,4 +200,8 @@ The following table lists how Private Data Source Connect fixed roles are assign
 | Editor          | `plugins:grafana-pdc-app.private-networks:write`            | Default [Editor](ref:rbac-basic-roles) assignments.                                                              |
 | Viewer          | `plugins:grafana-pdc-app.private-networks:read`             | Default [Viewer](ref:rbac-basic-roles) assignments.                                                              |
 
+<<<<<<< HEAD
 > **Note:** These Private Data Source Connect fixed roles must be granted alongside the `fixed:datasources:writer` role for the permissions to take effect.
+=======
+> **Note:** These Private data source connect fixed roles must be granted alongside the `fixed:datasources:writer` role for the permissions to take effect.
+>>>>>>> 0355930f8d2 (docs(rbac): update to 'Private data source connect roles' wording throughout)
