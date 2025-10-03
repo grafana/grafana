@@ -17,7 +17,7 @@ function getManagedCount(managed?: ManagerStats[]) {
 
   // Loop through each managed repository
   managed?.forEach((manager) => {
-    if (manager.kind === 'repo') {
+    if (manager.kind === ManagerKind.Repo) {
       // Loop through stats inside each manager and sum up the counts
       manager.stats.forEach((stat) => {
         if (stat.group === 'folder.grafana.app' || stat.group === 'dashboard.grafana.app') {
