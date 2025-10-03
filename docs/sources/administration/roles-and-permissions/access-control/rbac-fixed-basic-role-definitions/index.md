@@ -182,13 +182,12 @@ The following table lists the default RBAC OnCall role assignments to the basic 
 | Editor        | `plugins:grafana-oncall-app:editor` | Default [Editor](ref:rbac-basic-roles) assignments.                                                                                                      |
 | Viewer        | `plugins:grafana-oncall-app:reader` | Default [Viewer](ref:rbac-basic-roles) assignments.                                                                                                      |
 
-
 ### Private data source connect roles
 
 The following table lists how private data source connect fixed roles are assigned to the basic roles:
 
-| Basic role      | Associated fixed roles                                                                 | Description                                                                 |
-| --------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Grafana Admin   | `plugins:grafana-pdc-app.private-networks:write`, `plugins:grafana-pdc-app.private-networks:read` | Default [Grafana server administrator](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators) assignments. |
+| Basic role    | Associated fixed roles                                                                            | Description                                                                                                                                              |
+| ------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Grafana Admin | `plugins:grafana-pdc-app.private-networks:write`, `plugins:grafana-pdc-app.private-networks:read` | Default [Grafana server administrator](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators) assignments. |
 
 > **Note:** These private data source connect fixed roles must be granted alongside the `fixed:datasources:writer` role for the permissions to take effect.
