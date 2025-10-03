@@ -11,6 +11,8 @@ permissions: {}
 
 jobs:
   test:
+    name: Feature toggles documentation is in sync with source
+
     runs-on: ubuntu-latest
 
     permissions:
