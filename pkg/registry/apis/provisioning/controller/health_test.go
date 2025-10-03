@@ -401,6 +401,26 @@ func TestRefreshHealth(t *testing.T) {
 			expectPatch:    false,
 		},
 		{
+			name: "no status change - no patch needed for unhealthy repo (recent check)",
+			testResult: &provisioning.TestResults{
+				Success: false,
+				Code:    500,
+				Errors: []provisioning.ErrorDetails{
+					{Detail: "connection failed"},
+					{Detail: "timeout"},
+				},
+			},
+			testError: nil,
+			existingStatus: provisioning.HealthStatus{
+				Healthy: false,
+				Checked: time.Now().Add(-15 * time.Second).UnixMilli(),
+				Message: []string{"connection failed", "timeout"},
+			},
+			expectError:    false,
+			expectedHealth: false,
+			expectPatch:    false,
+		},
+		{
 			name: "status unchanged but timestamp needs update (old check)",
 			testResult: &provisioning.TestResults{
 				Success: true,
@@ -413,6 +433,26 @@ func TestRefreshHealth(t *testing.T) {
 			},
 			expectError:    false,
 			expectedHealth: true,
+			expectPatch:    true,
+		},
+		{
+			name: "status unchanged but timestamp needs update (old unhealthy check)",
+			testResult: &provisioning.TestResults{
+				Success: false,
+				Code:    500,
+				Errors: []provisioning.ErrorDetails{
+					{Detail: "connection failed"},
+					{Detail: "timeout"},
+				},
+			},
+			testError: nil,
+			existingStatus: provisioning.HealthStatus{
+				Healthy: false,
+				Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
+				Message: []string{"connection failed", "timeout"},
+			},
+			expectError:    false,
+			expectedHealth: false,
 			expectPatch:    true,
 		},
 		{
