@@ -28,7 +28,9 @@ func mustTemplate(filename string) *template.Template {
 var (
 	sqlDashboardStarsQuery = mustTemplate("sql_dashboard_stars.sql")
 	sqlDashboardStarsRV    = mustTemplate("sql_dashboard_stars_rv.sql")
-	sqlQueryStarsQuery     = mustTemplate("sql_query_stars.sql")
+	sqlHistoryStarsQuery   = mustTemplate("sql_history_stars.sql")
+	sqlHistoryStarsInsert  = mustTemplate("sql_history_stars_insert.sql")
+	sqlHistoryStarsDelete  = mustTemplate("sql_history_stars_delete.sql")
 	sqlPreferencesQuery    = mustTemplate("sql_preferences_query.sql")
 	sqlPreferencesRV       = mustTemplate("sql_preferences_rv.sql")
 	sqlTeams               = mustTemplate("sql_teams.sql")
@@ -37,8 +39,11 @@ var (
 type starQuery struct {
 	sqltemplate.SQLTemplate
 
-	OrgID   int64 // >= 1 if UserID != ""
-	UserUID string
+	OrgID     int64 // >= 1 if UserID != ""
+	UserUID   string
+	UserID    int64 // for stars
+	QueryUIDs []string
+	QueryUID  string
 
 	StarTable              string
 	UserTable              string

@@ -6,6 +6,4 @@ SELECT s.query_uid, u.uid as user_uid
  {{ if .UserUID }}
    AND u.uid = {{ .Arg .UserUID }}
 {{ end }}
-ORDER BY 
-  s.org_id asc, s.user_id asc, s.query_uid asc 
- ;
+ ORDER BY s.org_id asc, s.user_id asc, s.query_uid asc 

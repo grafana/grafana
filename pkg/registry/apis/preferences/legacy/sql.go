@@ -12,6 +12,7 @@ import (
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -146,9 +147,9 @@ func (s *LegacySQL) getHistoryStars(ctx context.Context, orgId int64, user strin
 	}
 	req := newStarQueryReq(sql, user, orgId)
 
-	q, err := sqltemplate.Execute(sqlQueryStarsQuery, req)
+	q, err := sqltemplate.Execute(sqlHistoryStarsQuery, req)
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlQueryStarsQuery.Name(), err)
+		return nil, fmt.Errorf("execute template %q: %w", sqlHistoryStarsQuery.Name(), err)
 	}
 
 	sess := sql.DB.GetSqlxSession()
@@ -181,6 +182,46 @@ func (s *LegacySQL) getHistoryStars(ctx context.Context, orgId int64, user strin
 	}
 	res[last] = buffer
 	return res, nil
+}
+
+func (s *LegacySQL) removeHistoryStar(ctx context.Context, user *user.User, stars []string) error {
+	sql, err := s.db(ctx)
+	if err != nil {
+		return err
+	}
+	req := newStarQueryReq(sql, "", user.OrgID)
+	req.UserID = user.ID
+	if len(stars) > 0 {
+		req.QueryUIDs = stars
+	}
+
+	q, err := sqltemplate.Execute(sqlHistoryStarsDelete, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlHistoryStarsDelete.Name(), err)
+	}
+
+	sess := sql.DB.GetSqlxSession()
+	_, err = sess.Exec(ctx, q, req.GetArgs()...)
+	return err
+}
+
+func (s *LegacySQL) addHistoryStar(ctx context.Context, user *user.User, star string) error {
+	sql, err := s.db(ctx)
+	if err != nil {
+		return err
+	}
+	req := newStarQueryReq(sql, "", user.OrgID)
+	req.UserID = user.ID
+	req.QueryUID = star
+
+	q, err := sqltemplate.Execute(sqlHistoryStarsDelete, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlHistoryStarsDelete.Name(), err)
+	}
+
+	sess := sql.DB.GetSqlxSession()
+	_, err = sess.Exec(ctx, q, req.GetArgs()...)
+	return err
 }
 
 // List all defined preferences in an org (valid for admin users only)
