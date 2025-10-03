@@ -150,15 +150,14 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         console.log('yes');
       }
 
-
       // Find any matching rules and then override
       for (const rule of override) {
         const isRuleMatch = rule.match(field, newFrame, options.data!);
         const isFrameMatch = rule.frame === undefined || rule.frame === originalFrame.name;
-        console.log(options.dataTopic, rule.frame, originalFrame.name, field.name, isRuleMatch, isFrameMatch)
+        console.log(options.dataTopic, rule.frame, originalFrame.name, field.name, isRuleMatch, isFrameMatch);
         if (
-            (options.dataTopic === DataTopic.Annotations && !isRuleMatch && !isFrameMatch) ||
-            (options.dataTopic === undefined && isRuleMatch)
+          (options.dataTopic === DataTopic.Annotations && !isRuleMatch && !isFrameMatch) ||
+          (options.dataTopic === undefined && isRuleMatch)
         ) {
           for (const prop of rule.properties) {
             // config.scopedVars is set already here
@@ -267,8 +266,10 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       }
     }
 
-    const fields = newFrame.fields.map(f => {return {name: f.name, hide:f.config.custom.hideFrom}});
-    console.log(newFrame.name, fields)
+    const fields = newFrame.fields.map((f) => {
+      return { name: f.name, hide: f.config?.custom?.hideFrom };
+    });
+    console.log(newFrame.name, fields);
 
     return newFrame;
   });
