@@ -3496,6 +3496,7 @@
       "move-modal-field-label": "Nome da pasta",
       "move-modal-text": "Esta ação moverá o seguinte conteúdo:",
       "move-modal-title": "Mover",
+      "move-provisioned-folder": "",
       "moving": "A mover...",
       "new-folder-name-required-phrase": "O nome da pasta é obrigatório.",
       "selected-mix-resources-modal-text": "Selecionou recursos provisionados e não provisionados. Estes não podem ser processados em conjunto. Selecione apenas recursos provisionados ou apenas recursos não provisionados e tente novamente.",
@@ -10166,7 +10167,7 @@
       "title": "Origens de dados"
     },
     "databases": {
-      "title": "Bases de dados"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Adicionar e configurar origens de dados",
@@ -11692,6 +11693,8 @@
       "button-cancelling": "",
       "button-next": "Concluir",
       "button-start": "Iniciar sincronização",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Isto eliminará a configuração do repositório e todo o progresso será perdido. Tem a certeza de que pretende rejeitar as suas alterações?",
         "confirm": "Sim, rejeitar",

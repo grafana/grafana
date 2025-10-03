@@ -803,6 +803,9 @@ const (
 	// Enables the new Jira integration for contact points in cloud alert managers.
 	FlagAlertingJiraIntegration = "alertingJiraIntegration"
 
+	// FlagAlertingUseNewSimplifiedRoutingHashAlgorithm
+	FlagAlertingUseNewSimplifiedRoutingHashAlgorithm = "alertingUseNewSimplifiedRoutingHashAlgorithm"
+
 	// FlagUseScopesNavigationEndpoint
 	// Use the scopes navigation endpoint instead of the dashboardbindings endpoint
 	FlagUseScopesNavigationEndpoint = "useScopesNavigationEndpoint"
@@ -914,10 +917,6 @@ const (
 	// FlagAlertRuleUseFiredAtForStartsAt
 	// Use FiredAt for StartsAt when sending alerts to Alertmaanger
 	FlagAlertRuleUseFiredAtForStartsAt = "alertRuleUseFiredAtForStartsAt"
-
-	// FlagAlertingGenerateSimplifiedRoutingWithOldHashes
-	// Generate simplified routing with old hashes
-	FlagAlertingGenerateSimplifiedRoutingWithOldHashes = "alertingGenerateSimplifiedRoutingWithOldHashes"
 
 	// FlagAlertingBulkActionsInUI
 	// Enables the alerting bulk actions in the UI

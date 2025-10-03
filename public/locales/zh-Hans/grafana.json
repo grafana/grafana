@@ -3484,6 +3484,7 @@
       "move-modal-field-label": "文件夹名称",
       "move-modal-text": "此操作将移动以下内容：",
       "move-modal-title": "移动",
+      "move-provisioned-folder": "",
       "moving": "正在移动...",
       "new-folder-name-required-phrase": "文件夹名称是必需项。",
       "selected-mix-resources-modal-text": "您已选择了已预置和未预置的资源。这些资源无法一起处理。请仅选择已预置的资源或未预置的资源，然后重试。",
@@ -10135,7 +10136,7 @@
       "title": "数据源"
     },
     "databases": {
-      "title": "数据库"
+      "title": ""
     },
     "datasources": {
       "subtitle": "添加并配置数据源",
@@ -11652,6 +11653,8 @@
       "button-cancelling": "",
       "button-next": "完成",
       "button-start": "开始同步",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "此操作将删除存储库配置，您将丢失所有进度。您确定要丢弃更改吗？",
         "confirm": "是，丢弃",

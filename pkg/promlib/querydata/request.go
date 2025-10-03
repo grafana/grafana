@@ -129,7 +129,7 @@ func (s *QueryData) handleQuery(ctx context.Context, bq backend.DataQuery, fromA
 	hasPromQLScopeFeatureFlag bool) *backend.DataResponse {
 	traceCtx, span := s.tracer.Start(ctx, "datasource.prometheus")
 	defer span.End()
-	query, err := models.Parse(span, bq, s.TimeInterval, s.intervalCalculator, fromAlert, hasPromQLScopeFeatureFlag)
+	query, err := models.Parse(ctx, s.log, span, bq, s.TimeInterval, s.intervalCalculator, fromAlert, hasPromQLScopeFeatureFlag)
 	if err != nil {
 		return &backend.DataResponse{
 			Error: err,
@@ -145,7 +145,7 @@ func (s *QueryData) handleQuery(ctx context.Context, bq backend.DataQuery, fromA
 
 func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *models.Query) *backend.DataResponse {
 	logger := s.log.FromContext(traceCtx)
-	logger.Debug("Sending query", "start", q.Start, "end", q.End, "step", q.Step, "query", q.Expr /*, "queryTimeout", s.QueryTimeout*/)
+	logger.Debug("Sending query", "start", q.Start, "end", q.End, "step", q.Step, "query", q.Expr)
 
 	dr := &backend.DataResponse{
 		Frames: data.Frames{},

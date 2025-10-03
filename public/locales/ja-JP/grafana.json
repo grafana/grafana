@@ -3484,6 +3484,7 @@
       "move-modal-field-label": "フォルダ名",
       "move-modal-text": "この操作により、次のコンテンツが移動されます。",
       "move-modal-title": "移動",
+      "move-provisioned-folder": "",
       "moving": "移動中…",
       "new-folder-name-required-phrase": "フォルダ名が必要です。",
       "selected-mix-resources-modal-text": "プロビジョニング済みのリソースと未プロビジョニングのリソースの両方が選択されています。これらは同時に処理できません。プロビジョニングされたリソースのみまたはプロビジョニングされていないリソースのみを選択して、再試行してください。",
@@ -10135,7 +10136,7 @@
       "title": "データソース"
     },
     "databases": {
-      "title": "データベース"
+      "title": ""
     },
     "datasources": {
       "subtitle": "データソースを追加および構成する",
@@ -11652,6 +11653,8 @@
       "button-cancelling": "",
       "button-next": "完了",
       "button-start": "同期を開始",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "この操作によりリポジトリの設定が削除され、すべての変更内容が失われます。本当に破棄してもよろしいですか？",
         "confirm": "はい、破棄します",
