@@ -6,6 +6,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/prometheus/client_golang/prometheus"
@@ -24,6 +25,7 @@ func ProvideService(
 	encryptionManager contracts.EncryptionManager,
 	migrationExecutor contracts.EncryptedValueMigrationExecutor,
 	reg prometheus.Registerer,
+	_ *secret.DependencyRegisterer, // noop import so wire runs DB migrations before instantiating this service -- can be nil when manually instantiating
 ) (*OSSKeeperService, error) {
 	systemKeeper, err := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, store, migrationExecutor, reg)
 	if err != nil {
