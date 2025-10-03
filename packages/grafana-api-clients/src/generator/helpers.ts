@@ -47,13 +47,7 @@ export const getFilesToFormat = (groupName: string, version: string, isEnterpris
     `${apiClientBasePath}/${groupName}/${version}/baseAPI.ts`,
     `${apiClientBasePath}/${groupName}/${version}/index.ts`,
     generateScriptPath,
-    ...(isEnterprise
-      ? []
-      : [
-          `public/app/core/reducers/root.ts`,
-          `public/app/store/configureStore.ts`,
-          `packages/grafana-api-clients/package.json`,
-        ]),
+    ...(isEnterprise ? [] : [`packages/grafana-api-clients/src/index.ts`, `packages/grafana-api-clients/package.json`]),
   ];
 };
 
