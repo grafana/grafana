@@ -8725,6 +8725,9 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Use right y-axis"
     },
+    "slider": {
+      "drag-handle-aria-label": "Use arrow keys to change the value"
+    },
     "spinner": {
       "aria-label": "Loading"
     },
