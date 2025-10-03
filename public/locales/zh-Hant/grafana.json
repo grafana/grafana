@@ -3484,6 +3484,7 @@
       "move-modal-field-label": "資料夾名稱",
       "move-modal-text": "此動作將移動以下內容：",
       "move-modal-title": "移動",
+      "move-provisioned-folder": "",
       "moving": "正在移動…",
       "new-folder-name-required-phrase": "必須要有資料夾名稱。",
       "selected-mix-resources-modal-text": "您已選取已佈建和非佈建資源。這些資源無法一起處理。請僅選取已佈建的資源或僅選取非佈建資源，然後再試一次。",
