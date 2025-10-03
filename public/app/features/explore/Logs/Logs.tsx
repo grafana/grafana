@@ -799,28 +799,30 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           onClickHideField={hideField}
         />
       )}
-      <PanelChrome
-        title={t('explore.unthemed-logs.title-logs-volume', 'Logs volume')}
-        collapsible
-        collapsed={!logsVolumeEnabled}
-        onToggleCollapse={onToggleLogsVolumeCollapse}
-      >
-        {logsVolumeEnabled && (
-          <LogsVolumePanelList
-            toggleLegendRef={toggleLegendRef}
-            absoluteRange={absoluteRange}
-            width={width}
-            logsVolumeData={logsVolumeData}
-            onUpdateTimeRange={onChangeTime}
-            timeZone={timeZone}
-            splitOpen={splitOpen}
-            onLoadLogsVolume={loadLogsVolumeData}
-            onDisplayedSeriesChanged={onDisplayedSeriesChanged}
-            eventBus={logsVolumeEventBus}
-            onClose={() => onToggleLogsVolumeCollapse(true)}
-          />
-        )}
-      </PanelChrome>
+      <div className={styles.logsVolumePanel}>
+        <PanelChrome
+          title={t('explore.unthemed-logs.title-logs-volume', 'Logs volume')}
+          collapsible
+          collapsed={!logsVolumeEnabled}
+          onToggleCollapse={onToggleLogsVolumeCollapse}
+        >
+          {logsVolumeEnabled && (
+            <LogsVolumePanelList
+              toggleLegendRef={toggleLegendRef}
+              absoluteRange={absoluteRange}
+              width={width}
+              logsVolumeData={logsVolumeData}
+              onUpdateTimeRange={onChangeTime}
+              timeZone={timeZone}
+              splitOpen={splitOpen}
+              onLoadLogsVolume={loadLogsVolumeData}
+              onDisplayedSeriesChanged={onDisplayedSeriesChanged}
+              eventBus={logsVolumeEventBus}
+              onClose={() => onToggleLogsVolumeCollapse(true)}
+            />
+          )}
+        </PanelChrome>
+      </div>
       <PanelChrome
         titleItems={[
           config.featureToggles.logsExploreTableVisualisation ? (
@@ -1277,6 +1279,9 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     stickyNavigation: css({
       overflow: 'visible',
       ...(config.featureToggles.logsInfiniteScrolling && { marginBottom: '0px' }),
+    }),
+    logsVolumePanel: css({
+      marginBottom: theme.spacing(1.5),
     }),
   };
 };
