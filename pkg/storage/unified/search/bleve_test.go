@@ -1487,9 +1487,16 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 				rv, err := idx.UpdateIndex(t.Context(), "test")
 				require.NoError(t, err)
 
-				// Our update function returns unix timestamp in millis. We expect it to not change at all, or change by minInterval at least.
-				rvDiff := rv - prevRV
-				require.True(t, rvDiff == 0 || rvDiff >= minInterval.Milliseconds(), "rv=%d must be equal to prevRV=%d, or greater by minInterval. diff=%d", rv, prevRV, rvDiff)
+				// Our update function returns unix timestamp in millis. We expect it to not change at all, or change by minInterval.
+				if prevRV > 0 {
+					rvDiff := rv - prevRV
+					if rvDiff == 0 {
+						// OK
+					} else {
+						// Allow returned RV to be within 5% of minInterval.
+						require.InDelta(t, minInterval.Milliseconds(), rvDiff, float64(minInterval.Milliseconds())*0.05)
+					}
+				}
 
 				prevRV = rv
 				require.Equal(t, int64(10), searchTitle(t, idx, "Document", 10, ns).TotalHits)
@@ -1497,12 +1504,18 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 		}()
 	}
 
-	time.Sleep(1 * time.Second)
+	// Run updates and searches for this time.
+	testTime := 1 * time.Second
+
+	time.Sleep(testTime)
 	cancel()
 	wg.Wait()
 
-	t.Log("Attempted updates:", attemptedUpdates.Load(), "update calls:", updateCalls.Load())
+	expectedUpdateCalls := int64(testTime / minInterval)
+	require.InDelta(t, expectedUpdateCalls, updateCalls.Load(), float64(expectedUpdateCalls/4))
 	require.Greater(t, attemptedUpdates.Load(), updateCalls.Load())
+
+	t.Log("Attempted updates:", attemptedUpdates.Load(), "update calls:", updateCalls.Load())
 }
 
 func TestIndexUpdateWithErrors(t *testing.T) {
