@@ -17,7 +17,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { InlineField, Select, Themeable2 } from '@grafana/ui';
 
-import { parseLogsFrame } from '../../logs/logsFrame';
+import { DEFAULT_URL_COLUMNS, parseLogsFrame } from '../../logs/logsFrame';
 
 import { LogsColumnSearch } from './LogsColumnSearch';
 import { LogsTable } from './LogsTable';
@@ -91,6 +91,24 @@ export function LogsTableWrap(props: Props) {
     },
     [props.panelState?.columns]
   );
+
+  const getColumnsFromDisplayedFields = useCallback(
+    (fieldNames: FieldNameMetaStore, columnIndex: number) => {
+      const previouslySelected = props.panelState?.displayedFields;
+      if (previouslySelected) {
+        Object.values(previouslySelected).forEach((key) => {
+          columnIndex++;
+          if (fieldNames[key]) {
+            fieldNames[key].active = true;
+            fieldNames[key].index = columnIndex;
+          }
+        });
+      }
+      return fieldNames;
+    },
+    [props.panelState?.displayedFields]
+  );
+
   const logsFrame = parseLogsFrame(currentDataFrame);
 
   useEffect(() => {
@@ -118,6 +136,7 @@ export function LogsTableWrap(props: Props) {
    * Keeps the filteredColumnsWithMeta state in sync with the columnsWithMeta state,
    * which can be updated by explore browser history state changes
    * This prevents an edge case bug where the user is navigating while a search is open.
+   * Also syncs displayedFields from URL on load.
    */
   useEffect(() => {
     if (!columnsWithMeta || !filteredColumnsWithMeta) {
@@ -249,12 +268,16 @@ export function LogsTableWrap(props: Props) {
     const active = Object.keys(pendingLabelState).filter((key) => pendingLabelState[key].active);
 
     // If nothing is selected, then select the default columns
+    // Keep track of the column index to set the displayed fields in the correct order
+    let columnIndex = 0;
     if (active.length === 0) {
       if (logsFrame?.bodyField?.name) {
         pendingLabelState[logsFrame.bodyField.name].active = true;
+        columnIndex++;
       }
       if (logsFrame?.timeField?.name) {
         pendingLabelState[logsFrame.timeField.name].active = true;
+        columnIndex++;
       }
     }
 
@@ -263,10 +286,19 @@ export function LogsTableWrap(props: Props) {
       pendingLabelState[logsFrame.timeField.name].type = 'TIME_FIELD';
     }
 
+    // Sync displayed fields from URL
+    pendingLabelState = getColumnsFromDisplayedFields(pendingLabelState, columnIndex);
+
+    // if (props.panelState?.displayedFields) {
+    //   props.panelState?.displayedFields.forEach((field) => {
+    //     pendingLabelState[field].active = true;
+    //   });
+    // }
+
     setColumnsWithMeta(pendingLabelState);
 
     // The panel state is updated when the user interacts with the multi-select sidebar
-  }, [currentDataFrame, getColumnsFromProps]);
+  }, [currentDataFrame, getColumnsFromProps, getColumnsFromDisplayedFields, props.panelState?.displayedFields]);
 
   const [sidebarWidth, setSidebarWidth] = useState(220);
   const tableWidth = props.width - sidebarWidth;
@@ -358,10 +390,14 @@ export function LogsTableWrap(props: Props) {
     );
 
     const defaultColumns = { 0: logsFrame?.timeField.name ?? '', 1: logsFrame?.bodyField.name ?? '' };
+    // Sync displayed fields with the table selected fields, remove the default columns
+    const newDisplayedFields = Object.values(newColumns).filter((column) => !DEFAULT_URL_COLUMNS.includes(column));
+
     const newPanelState: ExploreLogsPanelState = {
       ...props.panelState,
       // URL format requires our array of values be an object, so we convert it using object.assign
       columns: Object.keys(newColumns).length ? newColumns : defaultColumns,
+      displayedFields: newDisplayedFields,
       refId: currentDataFrame.refId,
       visualisationType: 'table',
       labelFieldName: logsFrame?.getLabelFieldName() ?? undefined,
