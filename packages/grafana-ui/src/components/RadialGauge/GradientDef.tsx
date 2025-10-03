@@ -11,9 +11,11 @@ interface GradientDefProps {
   gaugeId: string;
   gradient: RadialGradientMode;
   angle: number;
+  width: number;
+  height: number;
 }
 
-export function GradientDef({ fieldDisplay, index, theme, gaugeId, gradient, angle }: GradientDefProps) {
+export function GradientDef({ fieldDisplay, index, theme, gaugeId, gradient, angle, width, height }: GradientDefProps) {
   const colorModeId = fieldDisplay.field.color?.mode;
   const valuePercent = fieldDisplay.display.percent ?? 0;
   const colorMode = getFieldColorMode(colorModeId);
@@ -52,15 +54,17 @@ export function GradientDef({ fieldDisplay, index, theme, gaugeId, gradient, ang
       const color = fieldDisplay.display.color ?? 'gray';
       const color1 = tinycolor(color).spin(-20).darken(5);
       const color2 = tinycolor(color).saturate(20).spin(20).brighten(10);
+      const percent = fieldDisplay.display.percent ?? 0;
 
       return (
         <linearGradient
           x1="0"
           y1="0"
-          x2="1"
+          x2={width}
           y2="0"
           id={getGradientId(gaugeId, index)}
-          gradientTransform={`rotate(${angle / 4})`}
+          gradientUnits="userSpaceOnUse"
+          gradientTransform={`translate(-${width * (1 - percent)}, 0)`}
         >
           {theme.isDark ? (
             <>

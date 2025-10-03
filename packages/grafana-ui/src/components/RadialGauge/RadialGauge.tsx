@@ -105,6 +105,8 @@ export function RadialGauge(props: RadialGaugeProps) {
               gaugeId={gaugeId}
               gradient={gradient}
               angle={angle}
+              width={svgWidth}
+              height={svgHeight}
             />
           ))}
           {spotlight && (
