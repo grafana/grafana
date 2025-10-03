@@ -104,9 +104,10 @@ export function RadialGauge(props: RadialGaugeProps) {
               theme={theme}
               gaugeId={gaugeId}
               gradient={gradient}
-              angle={angle}
               width={svgWidth}
-              height={svgHeight}
+              height={height}
+              shape={shape}
+              center={center}
             />
           ))}
           {spotlight && (
@@ -116,6 +117,7 @@ export function RadialGauge(props: RadialGaugeProps) {
               radius={radius}
               roundedBars={roundedBars}
               center={center}
+              theme={theme}
             />
           )}
           {glowBar && <GlowGradient gaugeId={gaugeId} size={size} />}

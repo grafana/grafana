@@ -1,3 +1,5 @@
+import { GrafanaTheme2 } from '@grafana/data';
+
 export interface GlowGradientProps {
   gaugeId: string;
   size: number;
@@ -23,12 +25,14 @@ export function SpotlightGradient({
   center,
   roundedBars,
   angle,
+  theme,
 }: {
   gaugeId: string;
   angle: number;
   radius: number;
   center: number;
   roundedBars: boolean;
+  theme: GrafanaTheme2;
 }) {
   const angleRadian = ((angle - 90) * Math.PI) / 180;
 
@@ -37,11 +41,13 @@ export function SpotlightGradient({
   let x2 = center + radius * Math.cos(angleRadian);
   let y2 = center + radius * Math.sin(angleRadian);
 
+  const color = theme.colors.text.maxContrast;
+
   return (
     <linearGradient x1={x1} y1={y1} x2={x2} y2={y2} id={`spotlight-${gaugeId}`} gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stopColor="white" stopOpacity={0.0} />
-      <stop offset="95%" stopColor="white" stopOpacity={0.5} />
-      {roundedBars && <stop offset="100%" stopColor="white" stopOpacity={roundedBars ? 0.7 : 1} />}
+      <stop offset="0%" stopColor={color} stopOpacity={0.0} />
+      <stop offset="95%" stopColor={color} stopOpacity={0.5} />
+      {roundedBars && <stop offset="100%" stopColor={color} stopOpacity={roundedBars ? 0.7 : 1} />}
     </linearGradient>
   );
 }
