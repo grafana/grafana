@@ -81,20 +81,6 @@
         "title-access-denied": "Odmowa dostępu"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "Niektóre funkcje są stabilne (GA) i domyślnie włączone, podczas gdy inne są obecnie we wstępnej fazie beta i dostępne do wczesnego wdrożenia.",
-      "confirm-modal-body-2": "Przed wprowadzeniem modyfikacji zalecamy przeanalizowanie konsekwencji każdej zmiany funkcji.",
-      "confirmText-save-changes": "Zapisz zmiany",
-      "get-stage-cell": {
-        "beta": "Beta",
-        "content-general-availability": "Ogólna dostępność",
-        "deprecated": "Wycofane",
-        "ga": "Ogólna dostępność"
-      },
-      "save-changes": "Zapisz zmiany",
-      "saving": "Zapisywanie…",
-      "title-apply-feature-toggle-changes": "Zastosuj zmiany przełącznika funkcji"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "Usuń organizację",
       "confirmText-delete": "Usuń",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "Aktualizacje ustawień w czasie uruchomienia",
       "title-sort-dashboards-by-popularity-in-search": "Sortowanie pulpitów według popularności w wynikach wyszukiwania",
       "title-team-sync": "Synchronizacja z zespołem"
-    },
-    "feature-toggles": {
-      "restart-pending": "Oczekiwanie na ponowne uruchomienie instancji Grafany w celu zastosowania najnowszych zmian przełączników funkcji",
-      "restart-required": "Zapisanie zmian przełączników funkcji spowoduje ponowne uruchomienie instancji, co może potrwać kilka minut",
-      "sub-title": "Przełączniki wyświetlania i edycji funkcji. Więcej informacji na temat przełączników funkcji można znaleźć na stronie <2>grafana.com</2>."
     },
     "get-enterprise": {
       "contact-us": "Skontaktuj się z nami i skorzystaj z bezpłatnej wersji próbnej",
@@ -2197,7 +2178,6 @@
       "body-queries-expressions-configured": "Utwórz co najmniej jedno zapytanie lub wyrażenie, które będzie powodować wyświetlenie alertu",
       "confirmText-deactivate": "Wyłącz",
       "expressions": "Wyrażenia",
-      "loading-data-sources": "Wczytywanie źródeł danych…",
       "manipulate-returned-queries-other-operations": "Manipulowanie danymi zwracanymi z zapytań za pomocą działań matematycznych i innych operacji.",
       "message": {
         "a-valid-expression-is-required": "Wymagane jest prawidłowe wyrażenie"
@@ -3540,6 +3520,7 @@
       "move-modal-field-label": "Nazwa folderu",
       "move-modal-text": "To działanie spowoduje przeniesienie następującej zawartości:",
       "move-modal-title": "Przenieś",
+      "move-provisioned-folder": "",
       "moving": "Przenoszenie…",
       "new-folder-name-required-phrase": "Wymagana jest nazwa folderu.",
       "selected-mix-resources-modal-text": "Wybrano zarówno zasoby udostępnione, jak i nieudostępnione. Nie można ich przetwarzać razem. Wybierz tylko zasoby udostępnione lub tylko zasoby nieudostępnione i spróbuj ponownie.",
@@ -10248,7 +10229,7 @@
       "title": "Źródła danych"
     },
     "databases": {
-      "title": "Bazy danych"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Dodaj i skonfiguruj źródła danych",
@@ -11792,6 +11773,8 @@
       "button-cancelling": "",
       "button-next": "Zakończ",
       "button-start": "Rozpocznij synchronizację",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Spowoduje to usunięcie konfiguracji repozytorium i utracisz wszystkie postępy. Czy na pewno chcesz odrzucić zmiany?",
         "confirm": "Tak, odrzuć",
@@ -12176,8 +12159,8 @@
       "title": "Wybierz zakresy"
     },
     "tree": {
-      "collapse": "Zwiń",
-      "expand": "Rozwiń",
+      "collapse": "",
+      "expand": "",
       "headline": {
         "noResults": "Nie znaleziono wyników dla tego zapytania",
         "recommended": "Zalecane",

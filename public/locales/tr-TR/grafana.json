@@ -81,20 +81,6 @@
         "title-access-denied": "Erişim reddedildi"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "Bazı özellikler kararlı sürümdedir (Genel Kullanım/GA) ve varsayılan olarak etkindir, bazıları ise henüz ön aşamada olan Beta aşamasındadır ve erken benimseme için kullanılabilir durumdadır.",
-      "confirm-modal-body-2": "Özelliklerde değişiklik yapmadan önce etkilerini gözden geçirmenizi öneririz.",
-      "confirmText-save-changes": "Değişiklikleri kaydet",
-      "get-stage-cell": {
-        "beta": "Beta",
-        "content-general-availability": "Genel kullanılabilirlik",
-        "deprecated": "Kullanımdan kaldırıldı",
-        "ga": "Genel kullanıma açıldı (GA)"
-      },
-      "save-changes": "Değişiklikleri kaydet",
-      "saving": "Kaydediliyor…",
-      "title-apply-feature-toggle-changes": "Özellik geçişi değişikliklerini uygula"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "Kuruluşu sil",
       "confirmText-delete": "Sil",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "Çalışma zamanında ayar güncellemeleri",
       "title-sort-dashboards-by-popularity-in-search": "Aramada panoları popülerliğe göre sırala",
       "title-team-sync": "Ekip Senkronizasyonu"
-    },
-    "feature-toggles": {
-      "restart-pending": "Grafana örneğinizde en son özellik değişikliklerini uygulamak için yeniden başlatma bekleniyor",
-      "restart-required": "Özellik geçişi değişikliklerini kaydetmek örneğin yeniden başlatılmasını gerektirecek, bu işlem birkaç dakika sürebilir",
-      "sub-title": "Özellik anahtarlarını görüntüleyin ve düzenleyin. Özellik anahtarları hakkında daha fazla bilgi için <2>grafana.com</2> adresini ziyaret edin."
     },
     "get-enterprise": {
       "contact-us": "Bizimle iletişime geçerek ücretsiz deneme sürümünü edinin.",
@@ -2181,7 +2162,6 @@
       "body-queries-expressions-configured": "Uyarı oluşturabilmek için en az bir sorgu veya ifade oluşturun",
       "confirmText-deactivate": "Devre dışı bırak",
       "expressions": "İfadeler",
-      "loading-data-sources": "Veri kaynakları yükleniyor...",
       "manipulate-returned-queries-other-operations": "Sorgulardan dönen verileri matematik ve diğer işlemlerle düzenleyin.",
       "message": {
         "a-valid-expression-is-required": "Geçerli bir ifade gereklidir"
@@ -3516,6 +3496,7 @@
       "move-modal-field-label": "Klasör adı",
       "move-modal-text": "Bu işlem aşağıdaki içerikleri taşıyacaktır:",
       "move-modal-title": "Taşı",
+      "move-provisioned-folder": "",
       "moving": "Taşınıyor...",
       "new-folder-name-required-phrase": "Klasör adı gereklidir.",
       "selected-mix-resources-modal-text": "Hem sağlanmış hem de sağlanmamış kaynakları seçtiniz. Bunlar birlikte işlenemez. Lütfen yalnızca sağlanmış kaynakları veya yalnızca sağlanmamış kaynakları seçin ve tekrar deneyin.",
@@ -10186,7 +10167,7 @@
       "title": "Veri kaynakları"
     },
     "databases": {
-      "title": "Veri tabanları "
+      "title": ""
     },
     "datasources": {
       "subtitle": "Veri kaynakları ekleyin ve yapılandırın",
@@ -11712,6 +11693,8 @@
       "button-cancelling": "",
       "button-next": "Sonlandır",
       "button-start": "Senkronizasyonu başlat",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Bu işlem, depo yapılandırmasını silecek ve tüm ilerlemeyi kaybedeceksiniz. Değişikliklerinizi silmek istediğinizden emin misiniz?",
         "confirm": "Evet, yoksay",
@@ -12090,8 +12073,8 @@
       "title": "Kapsam seçin"
     },
     "tree": {
-      "collapse": "Daralt",
-      "expand": "Genişlet",
+      "collapse": "",
+      "expand": "",
       "headline": {
         "noResults": "Sorgunuz için sonuç bulunamadı",
         "recommended": "Önerilen",

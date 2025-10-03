@@ -3496,6 +3496,7 @@
       "move-modal-field-label": "Folder name",
       "move-modal-text": "This action will move the following content:",
       "move-modal-title": "Move",
+      "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
       "new-folder-name-required-phrase": "Folder name is required.",
       "selected-mix-resources-modal-text": "You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please select only provisioned resources or only non-provisioned resources and try again.",
@@ -10166,7 +10167,7 @@
       "title": "Data sources"
     },
     "databases": {
-      "title": "Databases"
+      "title": "Database"
     },
     "datasources": {
       "subtitle": "Add and configure data sources",
@@ -11692,6 +11693,8 @@
       "button-cancelling": "Cancelling...",
       "button-next": "Finish",
       "button-start": "Begin synchronization",
+      "check-status-button": "Check repository status",
+      "check-status-message": "Repository connecting, synchronize will be ready soon.",
       "discard-modal": {
         "body": "This will delete the repository configuration and you will lose all progress. Are you sure you want to discard your changes?",
         "confirm": "Yes, discard",

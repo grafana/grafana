@@ -81,20 +81,6 @@
         "title-access-denied": "Accesso negato"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "Alcune funzionalità sono stabili (GA) e attive per impostazione predefinita, mentre altre sono ancora in fase beta preliminare e disponibili su richiesta in anteprima.",
-      "confirm-modal-body-2": "Si consiglia di comprendere le implicazioni di ogni modifica delle funzionalità prima di applicarle.",
-      "confirmText-save-changes": "Salva modifiche",
-      "get-stage-cell": {
-        "beta": "Beta",
-        "content-general-availability": "Disponibilità generale",
-        "deprecated": "Obsoleto",
-        "ga": "GA"
-      },
-      "save-changes": "Salva modifiche",
-      "saving": "Salvataggio in corso...",
-      "title-apply-feature-toggle-changes": "Applica le modifiche al toggle delle funzionalità"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "Elimina org",
       "confirmText-delete": "Elimina",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "Aggiornamenti delle impostazioni in fase di esecuzione",
       "title-sort-dashboards-by-popularity-in-search": "Ordina le dashboard in base alla popolarità nella ricerca",
       "title-team-sync": "Sincronizzazione del team"
-    },
-    "feature-toggles": {
-      "restart-pending": "È in sospeso un riavvio per l'istanza Grafana per applicare le ultime modifiche al toggle delle funzionalità",
-      "restart-required": "Il salvataggio delle modifiche al toggle delle funzionalità richiederà il riavvio dell'istanza, che potrebbe richiedere alcuni minuti",
-      "sub-title": "Visualizza e modifica gli interruttori della funzionalità. Scopri di più sugli interruttori della funzionalità su <2>grafana.com</2>."
     },
     "get-enterprise": {
       "contact-us": "Contattaci e ricevi una prova gratuita",
@@ -2181,7 +2162,6 @@
       "body-queries-expressions-configured": "Crea almeno una query o un'espressione su cui ricevere un avviso",
       "confirmText-deactivate": "Disattiva",
       "expressions": "Espressioni",
-      "loading-data-sources": "Caricamento delle origini dei dati in corso...",
       "manipulate-returned-queries-other-operations": "Modifica i dati che trovi nelle query usando operazioni matematiche e di altro tipo.",
       "message": {
         "a-valid-expression-is-required": "È richiesta un'espressione valida"
@@ -3516,6 +3496,7 @@
       "move-modal-field-label": "Nome cartella",
       "move-modal-text": "Questa azione sposterà il seguente contenuto:",
       "move-modal-title": "Sposta",
+      "move-provisioned-folder": "",
       "moving": "Spostamento in corso...",
       "new-folder-name-required-phrase": "Il nome della cartella è obbligatorio.",
       "selected-mix-resources-modal-text": "Hai selezionato sia risorse sottoposte a provisioning che risorse non sottoposte a provisioning. Non possono essere elaborate insieme. Seleziona solo risorse sottoposte a provisioning o solo risorse non sottoposte a provisioning e riprova.",
@@ -10186,7 +10167,7 @@
       "title": "Fonti dei dati"
     },
     "databases": {
-      "title": "Database"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Aggiungi e configura origini dati",
@@ -11712,6 +11693,8 @@
       "button-cancelling": "",
       "button-next": "Fine",
       "button-start": "Inizia la sincronizzazione",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Questa operazione eliminerà la configurazione del repository e perderai tutti i progressi. Vuoi davvero eliminare le modifiche?",
         "confirm": "Sì, elimina",
@@ -12090,8 +12073,8 @@
       "title": "Seleziona gli ambiti"
     },
     "tree": {
-      "collapse": "Riduci",
-      "expand": "Espandi",
+      "collapse": "",
+      "expand": "",
       "headline": {
         "noResults": "Nessun risultato trovato per la ricerca",
         "recommended": "Consigliato",

@@ -81,20 +81,6 @@
         "title-access-denied": "Åtkomst nekad"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "Vissa funktioner är stabila (GA) och aktiverade som standard, medan vissa för närvarande är i sin preliminära betafas och finns tillgängliga för tidig tillämpning.",
-      "confirm-modal-body-2": "Vi rekommenderar att du ser till att du förstår konsekvenserna av varje funktionsändring innan du gör några ändringar.",
-      "confirmText-save-changes": "Spara ändringarna",
-      "get-stage-cell": {
-        "beta": "Beta",
-        "content-general-availability": "Allmän tillgänglighet",
-        "deprecated": "Föråldrat",
-        "ga": "GA"
-      },
-      "save-changes": "Spara ändringarna",
-      "saving": "Sparar ...",
-      "title-apply-feature-toggle-changes": "Tillämpa ändringarna för funktionsväxlare"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "Radera org",
       "confirmText-delete": "Radera",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "Inställningarna uppdateras vid körning",
       "title-sort-dashboards-by-popularity-in-search": "Sortera instrumentpaneler efter popularitet vid sökningar",
       "title-team-sync": "Teamsynkronisering"
-    },
-    "feature-toggles": {
-      "restart-pending": "En omstart väntar för din Grafana-instans för att tillämpa de senaste ändringarna för växling av funktion",
-      "restart-required": "Om du sparar ändringar av funktionen kommer en omstart av instansen att uppmanas, vilket kan ta några minuter",
-      "sub-title": "Visa och redigera funktionsväxlare. Läs mer om funktionsväxlare på <2>grafana.com</2>."
     },
     "get-enterprise": {
       "contact-us": "Kontakta oss och få en gratis provperiod",
@@ -2181,7 +2162,6 @@
       "body-queries-expressions-configured": "Skapa minst en fråga eller ett uttryck att bli larmad för",
       "confirmText-deactivate": "Inaktivera",
       "expressions": "Uttryck",
-      "loading-data-sources": "Laddar datakällor …",
       "manipulate-returned-queries-other-operations": "Manipulera data som returneras från frågor med matematikfunktioner och andra operationer.",
       "message": {
         "a-valid-expression-is-required": "Ett giltigt uttryck krävs"
@@ -3516,6 +3496,7 @@
       "move-modal-field-label": "Mappnamn",
       "move-modal-text": "Denna åtgärd flyttar följande innehåll:",
       "move-modal-title": "Flytta",
+      "move-provisioned-folder": "",
       "moving": "Flyttar ...",
       "new-folder-name-required-phrase": "Mappnamn krävs.",
       "selected-mix-resources-modal-text": "Du har valt både provisionerade och icke-provisionerade resurser. Dessa kan inte hanteras tillsammans. Välj enbart provisionerade eller enbart icke-provisionerade resurser och försök igen.",
@@ -10186,7 +10167,7 @@
       "title": "Datakällor"
     },
     "databases": {
-      "title": "Databaser"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Lägg till och konfigurera datakällor",
@@ -11712,6 +11693,8 @@
       "button-cancelling": "",
       "button-next": "Slutför",
       "button-start": "Påbörja synkronisering",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Detta kommer att radera lagringsplatskonfigurationen och du kommer att förlora alla ändringar. Är du säker på att du vill kassera dina ändringar?",
         "confirm": "Ja, kassera",
@@ -12090,8 +12073,8 @@
       "title": "Välj omfattningar"
     },
     "tree": {
-      "collapse": "Minimera",
-      "expand": "Expandera",
+      "collapse": "",
+      "expand": "",
       "headline": {
         "noResults": "Inga resultat hittades för din fråga",
         "recommended": "Rekommenderas",

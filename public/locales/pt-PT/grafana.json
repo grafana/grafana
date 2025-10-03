@@ -81,20 +81,6 @@
         "title-access-denied": "Acesso negado"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "Algumas funcionalidades são estáveis (GA) e ativadas por predefinição, enquanto outras estão atualmente na sua fase Beta preliminar, disponíveis para utilizar antecipadamente.",
-      "confirm-modal-body-2": "Aconselhamos a compreensão das implicações de cada alteração de funcionalidade antes de efetuar modificações.",
-      "confirmText-save-changes": "Guardar alterações",
-      "get-stage-cell": {
-        "beta": "Beta",
-        "content-general-availability": "Disponibilidade geral",
-        "deprecated": "Obsoleto",
-        "ga": "GA"
-      },
-      "save-changes": "Guardar alterações",
-      "saving": "A guardar...",
-      "title-apply-feature-toggle-changes": "Aplicar as alterações da alternância de funcionalidades"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "Eliminar organização",
       "confirmText-delete": "Eliminar",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "Atualizações das definições em tempo de execução",
       "title-sort-dashboards-by-popularity-in-search": "Ordenar painéis de controlo por popularidade na pesquisa",
       "title-team-sync": "Sincronização de equipa"
-    },
-    "feature-toggles": {
-      "restart-pending": "Está pendente um reinício para a sua instância Grafana aplicar as alterações de alternância de funcionalidades mais recentes",
-      "restart-required": "Guardar as alterações de alternância de funcionalidades solicitará uma reinicialização da instância, o que pode demorar alguns minutos",
-      "sub-title": "Ver e editar opções de funcionalidades. Leia mais sobre opções de funcionalidades em <2>grafana.com</2>."
     },
     "get-enterprise": {
       "contact-us": "Contacte-nos e obtenha um teste gratuito",
@@ -2181,7 +2162,6 @@
       "body-queries-expressions-configured": "Criar pelo menos uma consulta ou expressão para receber alertas de",
       "confirmText-deactivate": "Desativar",
       "expressions": "Expressões",
-      "loading-data-sources": "A carregar origens de dados...",
       "manipulate-returned-queries-other-operations": "Manipule os dados devolvidos das consultas com operações matemáticas e outras.",
       "message": {
         "a-valid-expression-is-required": "É necessária uma expressão válida"
@@ -3516,6 +3496,7 @@
       "move-modal-field-label": "Nome da pasta",
       "move-modal-text": "Esta ação moverá o seguinte conteúdo:",
       "move-modal-title": "Mover",
+      "move-provisioned-folder": "",
       "moving": "A mover...",
       "new-folder-name-required-phrase": "O nome da pasta é obrigatório.",
       "selected-mix-resources-modal-text": "Selecionou recursos provisionados e não provisionados. Estes não podem ser processados em conjunto. Selecione apenas recursos provisionados ou apenas recursos não provisionados e tente novamente.",
@@ -10186,7 +10167,7 @@
       "title": "Origens de dados"
     },
     "databases": {
-      "title": "Bases de dados"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Adicionar e configurar origens de dados",
@@ -11712,6 +11693,8 @@
       "button-cancelling": "",
       "button-next": "Concluir",
       "button-start": "Iniciar sincronização",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Isto eliminará a configuração do repositório e todo o progresso será perdido. Tem a certeza de que pretende rejeitar as suas alterações?",
         "confirm": "Sim, rejeitar",
@@ -12090,8 +12073,8 @@
       "title": "Selecionar âmbitos"
     },
     "tree": {
-      "collapse": "Recolher",
-      "expand": "Expandir",
+      "collapse": "",
+      "expand": "",
       "headline": {
         "noResults": "Não foram encontrados resultados para a sua consulta",
         "recommended": "Recomendado",
