@@ -28,6 +28,17 @@ export function addAnnotationOptions<
   });
 
   builder.addBooleanSwitch({
+    path: 'annotations.clustering',
+    category,
+    name: t('grafana-ui.builder.annotations.clustering.name', 'Enable annotation clustering'),
+    description: t(
+      'grafana-ui.builder.annotations.clustering.desc',
+      'Combines high density point annotations into region annotations'
+    ),
+    defaultValue: false,
+  });
+
+  builder.addBooleanSwitch({
     path: 'annotations.showLine',
     category,
     name: t('grafana-ui.builder.annotations.show-line-marker', 'Enable annotation indicator line'),
