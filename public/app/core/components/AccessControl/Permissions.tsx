@@ -55,7 +55,7 @@ export const Permissions = ({
   const [isAdding, setIsAdding] = useState(false);
   const [desc, setDesc] = useState(INITIAL_DESCRIPTION);
 
-  const [state, fetchPermissions] = useAsyncFn(async () => {
+  const [permissions, fetchPermissions] = useAsyncFn(async () => {
     let items = await getPermissions(resource, resourceId);
     if (getWarnings) {
       items = getWarnings(items);
@@ -63,14 +63,12 @@ export const Permissions = ({
     return items;
   }, [resource, resourceId]);
 
-  const items = useMemo(() => state.value || [], [state.value]);
-
   useEffect(() => {
     getDescription(resource).then((r) => {
       setDesc(r);
       return fetchPermissions();
     });
-  }, [resource, resourceId, fetchPermissions]);
+  }, [resource, fetchPermissions]);
 
   const onAdd = (state: SetPermission) => {
     let promise: Promise<void> | null = null;
@@ -119,34 +117,34 @@ export const Permissions = ({
   const teams = useMemo(
     () =>
       sortBy(
-        items.filter((i) => i.teamId),
+        (permissions.value || []).filter((i) => i.teamId),
         ['team', 'isManaged']
       ),
-    [items]
+    [permissions.value]
   );
   const users = useMemo(
     () =>
       sortBy(
-        items.filter((i) => i.userId && !i.isServiceAccount),
+        (permissions.value || []).filter((i) => i.userId && !i.isServiceAccount),
         ['userLogin', 'isManaged']
       ),
-    [items]
+    [permissions.value]
   );
   const serviceAccounts = useMemo(
     () =>
       sortBy(
-        items.filter((i) => i.userId && i.isServiceAccount),
+        (permissions.value || []).filter((i) => i.userId && i.isServiceAccount),
         ['userLogin', 'isManaged']
       ),
-    [items]
+    [permissions.value]
   );
   const builtInRoles = useMemo(
     () =>
       sortBy(
-        items.filter((i) => i.builtInRole),
+        (permissions.value || []).filter((i) => i.builtInRole),
         ['builtInRole', 'isManaged']
       ),
-    [items]
+    [permissions.value]
   );
 
   const titleRole = t('access-control.permissions.role', 'Role');
@@ -154,7 +152,7 @@ export const Permissions = ({
   const titleServiceAccount = t('access-control.permissions.serviceaccount', 'Service Account');
   const titleTeam = t('access-control.permissions.team', 'Team');
 
-  if (state.loading) {
+  if (permissions.loading) {
     return <LoadingPlaceholder text={t('access-control.permissions.loading', 'Loading permissions...')} />;
   }
 
@@ -176,7 +174,7 @@ export const Permissions = ({
             />
           </Box>
         )}
-        {items.length === 0 && (
+        {permissions.value?.length === 0 && (
           <Box>
             <Text>{emptyLabel}</Text>
           </Box>
@@ -240,7 +238,7 @@ export const Permissions = ({
           </>
         )}
       </div>
-      {epilogue && epilogue(items)}
+      {epilogue && epilogue(permissions.value || [])}
     </>
   );
 };
