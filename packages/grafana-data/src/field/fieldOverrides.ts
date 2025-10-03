@@ -146,15 +146,11 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       // will be filled in by panel's field configuration
       setFieldConfigDefaults(config, source.defaults, context);
 
-      if (override.length > 0) {
-        console.log('yes');
-      }
-
       // Find any matching rules and then override
       for (const rule of override) {
         const isRuleMatch = rule.match(field, newFrame, options.data!);
         const isFrameMatch = rule.frame === undefined || rule.frame === originalFrame.name;
-        console.log(options.dataTopic, rule.frame, originalFrame.name, field.name, isRuleMatch, isFrameMatch);
+        //console.log(options.dataTopic, rule.frame, originalFrame.name, field.name, isRuleMatch, isFrameMatch);
         if (
           (options.dataTopic === DataTopic.Annotations && !isRuleMatch && !isFrameMatch) ||
           (options.dataTopic === undefined && isRuleMatch)
@@ -163,8 +159,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
             // config.scopedVars is set already here
             setDynamicConfigValue(config, prop, context);
           }
-        } else {
-          console.log(rule.frame, originalFrame.name, 'not set');
         }
       }
 
@@ -265,11 +259,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         });
       }
     }
-
-    const fields = newFrame.fields.map((f) => {
-      return { name: f.name, hide: f.config?.custom?.hideFrom };
-    });
-    console.log(newFrame.name, fields);
 
     return newFrame;
   });

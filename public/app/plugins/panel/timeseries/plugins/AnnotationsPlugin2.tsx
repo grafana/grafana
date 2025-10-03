@@ -151,8 +151,7 @@ export const AnnotationsPlugin2 = ({
     config.addHook('draw', (u) => {
       let annos = annoRef.current.filter((a) => {
         const wat = a.fields.filter((f) => (f.config.custom.hideFrom?.viz ?? false) === false);
-        console.log(a.name, wat);
-        return !a.fields.some((f) => (f.config.custom.hideFrom?.viz ?? false) === false);
+        return wat.length === a.fields.length; //!a.fields.some((f) => (f.config.custom.hideFrom?.viz ?? false) === false);
       });
 
       const ctx = u.ctx;
@@ -263,8 +262,14 @@ export const AnnotationsPlugin2 = ({
   }, []);
 
   if (plot) {
-    let markers = annos
-      .filter((a) => a.fields.some((f) => (f.config.custom.hideFrom?.viz ?? false) === false))
+    const wat = annos.filter((a) => {
+      return a.fields.filter((f) => (f.config.custom.hideFrom?.viz ?? false) === false).length === a.fields.length;
+    });
+    // console.log(a.name, wat);
+    //return wat.length === a.fields.length;
+    let markers = wat // annos
+      //.filter((a) => a.fields.some((f) => (f.config.custom.hideFrom?.viz ?? false) === false))
+
       .flatMap((frame, frameIdx) => {
         let vals = getVals(frame);
 
