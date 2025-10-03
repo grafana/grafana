@@ -21,8 +21,10 @@ import (
 )
 
 func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
-	_, span := tracer.Start(ctx, "ofrep.proxy.evalAllFlags")
+	ctx, span := tracer.Start(ctx, "ofrep.proxy.evalAllFlags")
 	defer span.End()
+	
+	r = r.WithContext(ctx)
 
 	proxy, err := b.newProxy(ofrepPath)
 	if err != nil {
