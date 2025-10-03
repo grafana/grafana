@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"slices"
 	"strings"
 	"time"
 
@@ -92,7 +91,6 @@ type APIBuilder struct {
 
 	allowedTargets      []provisioning.SyncTargetType
 	allowImageRendering bool
-	minSyncInterval     time.Duration
 
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
@@ -117,6 +115,7 @@ type APIBuilder struct {
 	access           authlib.AccessChecker
 	statusPatcher    *appcontroller.RepositoryStatusPatcher
 	healthChecker    *controller.HealthChecker
+	validator        repository.RepositoryValidator
 	// Extras provides additional functionality to the API.
 	extras       []Extra
 	extraWorkers []jobs.Worker
@@ -158,11 +157,6 @@ func NewAPIBuilder(
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceListerForMigrations(unified, legacyMigrator, storageStatus)
 
-	// do not allow minsync interval to be less than 10
-	if minSyncInterval <= 10*time.Second {
-		minSyncInterval = 10 * time.Second
-	}
-
 	b := &APIBuilder{
 		onlyApiServer:       onlyApiServer,
 		tracer:              tracer,
@@ -179,11 +173,11 @@ func NewAPIBuilder(
 		access:              access,
 		jobHistoryConfig:    jobHistoryConfig,
 		extraWorkers:        extraWorkers,
-		allowedTargets:      allowedTargets,
 		restConfigGetter:    restConfigGetter,
+		allowedTargets:      allowedTargets,
 		allowImageRendering: allowImageRendering,
-		minSyncInterval:     minSyncInterval,
 		registry:            registry,
+		validator:           repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering),
 	}
 
 	for _, builder := range extraBuilders {
@@ -484,7 +478,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, repository.NewRepositoryTesterWithExistingChecker(repository.NewSimpleRepositoryTester(b.validator), b.VerifyAgainstExistingRepositories))
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
@@ -585,28 +579,13 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return err
 	}
 
-	list := repository.ValidateRepository(repo)
+	// ALL configuration validations should be done in ValidateRepository -
+	// this is how the UI is able to show proper validation errors
+	//
+	// the only time to add configuration checks here is if you need to compare
+	// the incoming change to the current configuration
+	list := b.validator.ValidateRepository(repo)
 	cfg := repo.Config()
-
-	if !slices.Contains(b.allowedTargets, cfg.Spec.Sync.Target) {
-		list = append(list,
-			field.Invalid(
-				field.NewPath("spec", "target"),
-				cfg.Spec.Sync.Target,
-				"sync target is not supported"))
-	}
-
-	if cfg.Spec.Sync.Enabled && cfg.Spec.Sync.IntervalSeconds < int64(b.minSyncInterval.Seconds()) {
-		list = append(list, field.Invalid(field.NewPath("spec", "sync", "intervalSeconds"),
-			cfg.Spec.Sync.IntervalSeconds, fmt.Sprintf("Interval must be at least %d seconds", int64(b.minSyncInterval.Seconds()))))
-	}
-
-	if !b.allowImageRendering && cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews {
-		list = append(list,
-			field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
-				cfg.Spec.GitHub.GenerateDashboardPreviews,
-				"image rendering is not enabled"))
-	}
 
 	if a.GetOperation() == admission.Update {
 		oldRepo, err := b.asRepository(ctx, a.GetOldObject(), nil)
@@ -683,7 +662,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
-			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry)
+			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewSimpleRepositoryTester(b.validator))
 
 			// if running solely CRUD, skip the rest of the setup
 			if b.onlyApiServer {

@@ -23,14 +23,16 @@ type StatusPatcher interface {
 type HealthChecker struct {
 	statusPatcher StatusPatcher
 	healthMetrics healthMetrics
+	tester        repository.SimpleRepositoryTester
 }
 
 // NewHealthChecker creates a new health checker
-func NewHealthChecker(statusPatcher StatusPatcher, registry prometheus.Registerer) *HealthChecker {
+func NewHealthChecker(statusPatcher StatusPatcher, registry prometheus.Registerer, tester repository.SimpleRepositoryTester) *HealthChecker {
 	healthMetrics := registerHealthMetrics(registry)
 	return &HealthChecker{
 		statusPatcher: statusPatcher,
 		healthMetrics: healthMetrics,
+		tester:        tester,
 	}
 }
 
@@ -176,7 +178,7 @@ func (hc *HealthChecker) refreshHealth(ctx context.Context, repo repository.Repo
 		hc.healthMetrics.RecordHealthCheck(outcome, time.Since(start).Seconds())
 	}()
 
-	res, err := repository.TestRepository(ctx, repo)
+	res, err := hc.tester.TestRepository(ctx, repo)
 	if err != nil {
 		outcome = utils.ErrorOutcome
 		logger.Error("failed to test repository", "error", err)
