@@ -6,6 +6,7 @@ import {
   FieldConfigSource,
   FieldType,
   GrafanaTheme2,
+  PanelData,
   cacheFieldDisplayNames,
   formattedValueToString,
   getDisplayProcessor,
@@ -41,9 +42,10 @@ import { setClassicPaletteIdxs } from '../timeseries/utils';
 import { BarsOptions, getConfig} from './bars';
 import { singleBarMarker } from './barmarkers';
 import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
-import { ResolvedMarker } from './markerTypes';
-export var markerList: ResolvedMarker[] = [];
-// import { isLegendOrdered } from './utils';
+import { ResolvedMarker, PreparedMarker, Marker } from './markerTypes';
+
+// import { isLegendOrdered, prepMarkerList } from './utils';
+import { markersLayer } from '../geomap/layers/data/markersLayer';
 
 interface BarSeries {
   series: DataFrame[];
@@ -138,6 +140,7 @@ export function prepSeries(
 
     setClassicPaletteIdxs(series, theme, 0);
 
+
     return {
       series,
       _rest,
@@ -162,9 +165,11 @@ export interface PrepConfigOpts {
   options: Options;
   timeZone: TimeZone;
   theme: GrafanaTheme2;
+  preparedMarkers: PreparedMarker[];
+  markerData: Field[];
 }
 
-export const prepConfig = ({ series, totalSeries, color, orientation, options, timeZone, theme }: PrepConfigOpts) => {
+export const prepConfig = ({ series, totalSeries, color, orientation, options, timeZone, theme, preparedMarkers, markerData }: PrepConfigOpts) => {
   let {
     showValue,
     groupWidth,
@@ -178,7 +183,6 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     xTickLabelSpacing = 0,
     legend,
     fullHighlight,
-    markers,
   } = options;
   // this and color is kept up to date by returned prepData()
   let frame = series[0];
@@ -265,7 +269,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
       };
     }
   }
-
+  
   const opts: BarsOptions = {
     xOri: vizOrientation.xOri,
     xDir: vizOrientation.xDir,
@@ -283,7 +287,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     showValue,
     legend,
 
-    markers: markers?.filter((m) => m.xValue !== undefined) as any,
+    markers: preparedMarkers,
 
     xSpacing: xTickLabelSpacing,
     xTimeAuto: frame.fields[0]?.type === FieldType.time && !frame.fields[0].config.unit?.startsWith('time:'),
@@ -292,41 +296,16 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     hoverMulti: tooltip.mode === TooltipDisplayMode.Multi,
   };
 
-    markerList = [];
-    const fields = series[0].fields
   
-      const values = frame.fields[0]!.values; 
-      for (const m of markers ?? []) {
-        m.groupIdx = -1;
-        // Find index of marker xValue in the field values
-        const idx = values.findIndex((v) => v === m.xValue);
-        if (idx !== -1) {
-          m.groupIdx = idx;
-        }
-        var i = -1;
-        i = fields.findIndex((f) => f.name === m.yField);
-        const fi = fields[i];
-        if( i > 0){
-        m.yScaleKey =  fi.config.unit ?? FIXED_UNIT;
-       
-        }
-        else{
-          m.yScaleKey =  FIXED_UNIT;
-        }
-        m.seriesIdx = i;
-        
-      }
-        
-  // End of copilot-generated code
-    const config = getConfig(opts, theme);
+  const config = getConfig(opts, theme);
 
   builder.setCursor(config.cursor);
 
   builder.addHook('init', config.init);
   builder.addHook('drawClear', config.drawClear);
 
-  // Pass persisted markers (if any) from options to the draw hook so they render
-  builder.addHook('draw', singleBarMarker(builder, markerList)); // example marker
+
+  builder.addHook('draw', singleBarMarker(builder, config.resolvedMarkers));
 
 
 
@@ -380,6 +359,22 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
   // let seriesIndex = 0;
   // const legendOrdered = isLegendOrdered(legend);
 
+  //Calculate min and max marker values
+  var markerMin = 0;
+  var markerMax = 0;
+  for(let i = 0; i < markerData.length; i++) {
+
+    const vals = markerData[i].values.toArray().filter(v => v != null);
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    if (min < markerMin) {
+      markerMin = min;
+    }
+    if (max > markerMax) {
+      markerMax = max;
+    }
+  }
+
   // iterate the y values
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
@@ -397,12 +392,24 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     let softMin = customConfig.axisSoftMin;
     let softMax = customConfig.axisSoftMax;
 
+
+    //move soft min and max to accomodate marker values
     if (softMin == null && field.config.min == null) {
-      softMin = 0;
+      if(stacking === StackingMode.Percent) {
+        softMin = 0;
+      }
+      else {
+        softMin = markerMin;
+      }
     }
 
     if (softMax == null && field.config.max == null) {
-      softMax = 0;
+      if(stacking === StackingMode.Percent) {
+        softMax = 0;
+      }
+      else {
+        softMax = markerMax;
+      }
     }
 
     // Render thresholds in graph
@@ -458,6 +465,9 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
       max: field.config.max,
       softMin,
       softMax,
+      // range: (u: uPlot, dataMin: number, dataMax: number) => {
+      //   return [-50, 50];
+      // },
       centeredZero: customConfig.axisCenteredZero,
       orientation: vizOrientation.yOri,
       direction: vizOrientation.yDir,
@@ -599,4 +609,84 @@ function getScaleOrientation(orientation: VizOrientation) {
   };
 
   
+}
+
+export function prepareMarkers(vizFields: Field[], allFields: Field[], markers: Marker[]): PreparedMarker[] {
+  var prepMarkerList = [];
+  for (const m of markers ?? []) {
+
+    const i = allFields.findIndex((f) => f.name === m.dataField);
+
+    if(i === -1) continue; 
+
+    const fi = allFields[i];
+
+    const targetIdx = vizFields.findIndex((f) => f.name === m.targetField);
+
+    for(let j=0; j< fi.values.length; j++){
+      const pm : PreparedMarker = {
+        id: m.id * fi.values.length + j,
+        groupIdx: j,
+        yValue: fi.values[j],
+        seriesIdx: targetIdx, 
+        yScaleKey: fi.config.unit || FIXED_UNIT,
+        opts: m.opts ,
+        dataIdx: i,
+      };
+
+      prepMarkerList.push(pm);
+    }  
+  }
+  return prepMarkerList
+}
+
+export function hideMarkerSeries(data: PanelData, markers: Marker[]): {barData : PanelData, markerData: Field[]} {
+  const barData = deepCopy(data);
+  const markerData: Field[] = [];
+  for (const m of markers ?? []) {
+
+    const i = barData.series[0].fields.findIndex((f) => f.name === m.dataField);
+
+    if(i === -1) continue; 
+    var fi = null;
+    if(true){fi = barData.series[0].fields.splice(i,1)[0];}
+    else{
+      fi = barData.series[0].fields[i];
+      data.series[0].fields[i].state = {...fi.state, hideFrom: {legend: true, tooltip: true, viz: true}};
+      barData.series[0].fields[i].state = {...fi.state, hideFrom: {legend: true, tooltip: true, viz: true}};
+    }
+    markerData.push(fi);
+    
+  }
+  return { barData, markerData };
+}
+
+
+function deepCopy<T>(obj: T, seen = new Map<any, any>()): T {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  if (seen.has(obj)) {
+    return seen.get(obj);
+  }
+
+  if (Array.isArray(obj)) {
+    const newArr: any[] = [];
+    seen.set(obj, newArr);
+    for (const item of obj) {
+      newArr.push(deepCopy(item, seen));
+    }
+    return newArr as unknown as T;
+  }
+
+  const result: any = {};
+  seen.set(obj, result);
+
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      result[key] = deepCopy((obj as any)[key], seen);
+    }
+  }
+  return result;
 }

@@ -1,28 +1,32 @@
+import data from '../../../features/alerting/unified/components/rules/central-state-history/__fixtures__/alert-state-history';
 
 
 export type BarMarkerOpts = {
-  label?: string;
-  width?: number;
-  color?: string;
-  shape?: string;
+  label: string;
+  width: number;
+  color: string;
+  shape: string;
   isRotated: boolean
 };
+
+export interface Marker {
+  id: number;
+  // optional direct index into aligned x (dataIdx)
+  targetField: string;
+  dataField: string;
+  opts: BarMarkerOpts 
+}
 /**
  * User-specified marker persisted in panel options (runtime shape).
  * Keep this file stable so it can be imported without touching generated files.
  */
-export interface Marker {
+export interface PreparedMarker {
   id: number;
-  // canonical reference value for the x-axis group; can be the raw x value or timestamp
-  xValue: string | number 
   // optional direct index into aligned x (dataIdx)
   groupIdx?: number | null;
-  // optional reference to series by name or index
-  yField?: string | null;
   yScaleKey?: string;
   yValue? : number | null;
-  // the y value a marker is set at.
-  seriesField?: string | null;
+  dataIdx?: number | null; // needed for tooltip lookup
   seriesIdx?: number | null;
   opts: BarMarkerOpts 
 }
@@ -35,7 +39,9 @@ export interface ResolvedMarker {
   id: number;
   x: number
   y:  number
-  opts?: BarMarkerOpts | null;
+  opts: BarMarkerOpts | null;
+  sidx?: number
+  didx?: number
 }
 
 export default {};

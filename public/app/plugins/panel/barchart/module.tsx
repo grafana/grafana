@@ -22,7 +22,7 @@ import { changeToBarChartPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
 import { BarMarkersEditor } from './BarMarkersEditor';
-import { markerList } from './utils';
+import { resolvedMarkerList } from './utils';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
   .setPanelChangeHandler(changeToBarChartPanelMigrationHandler)
@@ -258,7 +258,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         name: 'markers',
         editor: BarMarkersEditor,
       
-      })
+      });
+
 
     builder.addFieldNamePicker({
       path: 'colorByField',

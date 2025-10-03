@@ -19,14 +19,16 @@ import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
 import { Options } from './panelcfg.gen';
-import { prepConfig, prepSeries } from './utils';
+import { hideMarkerSeries, prepConfig, prepSeries, prepareMarkers} from './utils';
+import { BarChartDisplayValues } from './types';
 
 
 const charWidth = measureText('M', UPLOT_AXIS_FONT_SIZE).width;
 const toRads = Math.PI / 180;
 
 export const BarChartPanel = (props: PanelProps<Options>) => {
-  const { data, options, fieldConfig, width, height, timeZone, id, replaceVariables } = props;
+  const { options, fieldConfig, width, height, timeZone, id, replaceVariables } = props;
+  var { data } = props;
 
   // will need this if joining on time to re-create data links
   // const { dataLinkPostProcessor } = usePanelContext();
@@ -48,8 +50,9 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     fullHighlight,
     xField,
     colorByField, 
-    // maybe marker options here?
+    markers
   } = options;
+
 
   // size-dependent, calculated opts that should cause viz re-config
   let { orientation, xTickLabelMaxLength = 0 } = options;
@@ -70,11 +73,15 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
         // auto max length clamps to half viz height, subracts 3 chars for ... ellipsis
         Math.floor(height / 2 / Math.sin(Math.abs(xTickLabelRotation * toRads)) / charWidth - 3);
 
+  const { barData, markerData} = useMemo(() => hideMarkerSeries(data, markers), [data, markers]);
+
   // TODO: config data links
   const info = useMemo(
-    () => prepSeries(data.series, fieldConfig, stacking, theme, xField, colorByField),
-    [data.series, fieldConfig, stacking, theme, xField, colorByField]
+    () => prepSeries(barData.series, fieldConfig, stacking, theme, xField, colorByField),
+    [barData.series, fieldConfig, stacking, theme, xField, colorByField]
   );
+
+
 
   const vizSeries = useMemo(
     () =>
@@ -84,6 +91,9 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       })),
     [info.series]
   );
+  
+  //maybe move this inside prepConfig?
+  const preparedMarkers = prepareMarkers(vizSeries[0]?.fields ?? [], markerData ?? [], markers);
 
   const xGroupsCount = vizSeries[0]?.length ?? 0;
   const seriesCount = vizSeries[0]?.fields.length ?? 0;
@@ -94,7 +104,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       
       return xGroupsCount === 0
         ? { builder: null, prepData: null }
-        : prepConfig({ series: vizSeries, totalSeries, color: info.color, orientation, options, timeZone, theme });
+        : prepConfig({ series: vizSeries, totalSeries, color: info.color, orientation, options, timeZone, theme, preparedMarkers, markerData });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -120,6 +130,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       xField,
       colorByField,
       xTickLabelMaxLength, // maybe not?
+      preparedMarkers,
       // props.fieldConfig, // usePrevious hideFrom on all fields?
     ]
   );
@@ -134,7 +145,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       <PanelDataErrorView
         panelId={id}
         fieldConfig={fieldConfig}
-        data={data}
+        data={barData}
         message={info.warn ?? ''}
         needsNumberField={true}
       />
@@ -218,6 +229,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
               }}
             />
           )}
+          
+
         </UPlotChart>
       )}
     </VizLayout>

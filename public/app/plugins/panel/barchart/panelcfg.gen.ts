@@ -35,21 +35,16 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
   /**
    * Custom markers persisted with the panel. Each marker targets an x-group or index.
    */
-  markers?: Array<{
+  markers: Array<{
     id: number;
-    xValue?: (string | number | number);
-    groupIdx?: number;
-    yField?: string;
-    yScaleKey?: string;
-    yValue?: (number | number);
-    seriesField?: string;
-    seriesIdx?: number;
-    opts?: {
-      label?: string;
-      color?: string;
-      width?: (number | 20);
-      shape?: string;
-      isRotated?: boolean;
+    targetField: string;
+    dataField: string;
+    opts: {
+      label: string;
+      color: string;
+      width: number;
+      shape: string;
+      isRotated: boolean;
     };
   }>;
   /**
@@ -114,6 +109,7 @@ export interface FieldConfig extends common.AxisConfig, common.HideableFieldConf
    * Threshold rendering
    */
   thresholdsStyle?: common.GraphThresholdsStyleConfig;
+
 }
 
 export const defaultFieldConfig: Partial<FieldConfig> = {

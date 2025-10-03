@@ -53,21 +53,16 @@ composableKinds: PanelCfg: {
 					// Controls the width of bars. 1 = Max width, 0 = Min width.
 					barWidth: float64 & >=0 & <=1 | *0.97
 				// Custom markers persisted with the panel. Each marker targets an x-group or index.
-				markers?: [...{
+				markers: [...{
 					id: number
-					xValue?: string | float | int
-					groupIdx?: int
-					yField?: string
-					yScaleKey?: string
-					yValue?: float | int
-					seriesField?: string
-					seriesIdx?: int
-					opts?: {
-						label?: string
-						color?: string
-						width?: float | *20
-						shape?: string
-						isRotated?: bool | *false
+					targetField: string
+					dataField: string
+					opts: {
+						label: string
+						color: string
+						width: float 
+						shape: string 
+						isRotated: bool 
 					}
 				}]
 					// Controls the width of groups. 1 = max with, 0 = min width.
