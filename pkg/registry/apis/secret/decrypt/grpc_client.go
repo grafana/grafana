@@ -40,8 +40,8 @@ type TLSConfig struct {
 	InsecureSkipVerify bool
 }
 
-func NewGRPCDecryptClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tracer, address string) (*GRPCDecryptClient, error) {
-	return NewGRPCDecryptClientWithTLS(tokenExchanger, tracer, address, TLSConfig{})
+func NewGRPCDecryptClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tracer, address string, clientLoadBalancingEnabled bool) (*GRPCDecryptClient, error) {
+	return NewGRPCDecryptClientWithTLS(tokenExchanger, tracer, address, TLSConfig{}, clientLoadBalancingEnabled)
 }
 
 func NewGRPCDecryptClientWithTLS(
@@ -49,6 +49,7 @@ func NewGRPCDecryptClientWithTLS(
 	tracer trace.Tracer,
 	address string,
 	tlsConfig TLSConfig,
+	clientLoadBalancingEnabled bool,
 ) (*GRPCDecryptClient, error) {
 	var opts []grpc.DialOption
 	if tlsConfig.UseTLS {
@@ -60,6 +61,15 @@ func NewGRPCDecryptClientWithTLS(
 		opts = append(opts, grpc.WithTransportCredentials(creds))
 	} else {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+
+	if clientLoadBalancingEnabled {
+		// Use round_robin to balances requests more evenly over the available replicas.
+		opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`))
+
+		// Disable looking up service config from TXT DNS records.
+		// This reduces the number of requests made to the DNS servers.
+		opts = append(opts, grpc.WithDisableServiceConfig())
 	}
 
 	conn, err := grpc.NewClient(address, opts...)
