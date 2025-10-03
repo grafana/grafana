@@ -49,7 +49,7 @@ export function RadialBar({
         startAngle={trackStart}
         color={theme.colors.action.hover}
         barWidth={barWidth}
-        roundedBars={true}
+        roundedBars={roundedBars}
         margin={margin}
         theme={theme}
       />
@@ -119,7 +119,7 @@ export function RadialArcPath({
   let x2 = center + radius * Math.cos(endRadians);
   let y2 = center + radius * Math.sin(endRadians);
 
-  let largeArc = angle > 180 ? 1 : 0;
+  let largeArc = endDeg - startDeg > 180 ? 1 : 0;
 
   const path = ['M', x1, y1, 'A', radius, radius, 0, largeArc, 1, x2, y2].join(' ');
 

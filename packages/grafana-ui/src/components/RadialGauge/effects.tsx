@@ -1,7 +1,3 @@
-import { FieldDisplay } from '@grafana/data';
-
-import { getValueAngleForValue } from './utils';
-
 export interface GlowGradientProps {
   gaugeId: string;
   size: number;
@@ -23,25 +19,18 @@ export function GlowGradient({ gaugeId, size }: GlowGradientProps) {
 
 export function SpotlightGradient({
   gaugeId,
-  fieldDisplay,
-  startAngle,
-  endAngle,
   radius,
   center,
   roundedBars,
+  angle,
 }: {
   gaugeId: string;
-  fieldDisplay: FieldDisplay;
-  startAngle: number;
-  endAngle: number;
+  angle: number;
   radius: number;
   center: number;
   roundedBars: boolean;
 }) {
-  const { angle } = getValueAngleForValue(fieldDisplay, startAngle, endAngle);
-
-  let spotlightAngle = angle + startAngle;
-  const angleRadian = ((spotlightAngle - 90) * Math.PI) / 180;
+  const angleRadian = ((angle - 90) * Math.PI) / 180;
 
   let x1 = center + radius * Math.cos(angleRadian - 0.2);
   let y1 = center + radius * Math.sin(angleRadian - 0.2);

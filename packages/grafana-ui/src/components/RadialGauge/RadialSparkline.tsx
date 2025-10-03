@@ -22,14 +22,13 @@ export function RadialSparkline({ sparkline, size, theme, barWidth, margin, colo
   }
 
   const height = size / 8;
-  const widthFactor = shape === 'gauge' ? 0.8 : 0.65;
-  const width = size * widthFactor - barWidth * 1.2 - margin * 2;
-  const marginFactor = shape === 'gauge' ? 0.4 : 0.5;
-  const barWidthFactor = shape === 'gauge' ? 0.5 : 1.5;
+  const widthFactor = shape === 'gauge' ? 0.8 : 0.7;
+  const width = size * widthFactor - barWidth * 1.5 - margin * 2;
+  const barWidthFactor = shape === 'gauge' ? 0 : 0.25;
 
   const styles = css({
     position: 'absolute',
-    marginTop: size * marginFactor - barWidth * barWidthFactor + height / 3,
+    bottom: barWidthFactor * size,
   });
 
   const config: FieldConfig<GraphFieldConfig> = {

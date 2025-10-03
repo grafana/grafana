@@ -23,7 +23,6 @@ export function RadialBarPanel({
         values={[value]}
         width={width}
         height={height}
-        clockwise
         barWidthFactor={options.barWidthFactor}
         gradient={options.gradient}
         spotlight={options.effects?.spotlight}

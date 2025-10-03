@@ -10,8 +10,10 @@ interface GradientDefProps {
   theme: GrafanaTheme2;
   gaugeId: string;
   gradient: RadialGradientMode;
+  angle: number;
 }
-export function GradientDef({ fieldDisplay, index, theme, gaugeId, gradient }: GradientDefProps) {
+
+export function GradientDef({ fieldDisplay, index, theme, gaugeId, gradient, angle }: GradientDefProps) {
   const colorModeId = fieldDisplay.field.color?.mode;
   const valuePercent = fieldDisplay.display.percent ?? 0;
   const colorMode = getFieldColorMode(colorModeId);
@@ -52,7 +54,14 @@ export function GradientDef({ fieldDisplay, index, theme, gaugeId, gradient }: G
       const color2 = tinycolor(color).saturate(20).spin(20).brighten(10);
 
       return (
-        <linearGradient x1="0" y1="1" x2="1" y2="1" id={getGradientId(gaugeId, index)}>
+        <linearGradient
+          x1="0"
+          y1="0"
+          x2="1"
+          y2="0"
+          id={getGradientId(gaugeId, index)}
+          gradientTransform={`rotate(${angle / 4})`}
+        >
           {theme.isDark ? (
             <>
               <stop offset="0%" stopColor={color1.darken(10).toString()} stopOpacity={1} />
