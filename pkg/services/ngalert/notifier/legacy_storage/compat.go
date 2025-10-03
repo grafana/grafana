@@ -7,6 +7,7 @@ import (
 	"maps"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers/schema"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -26,7 +27,7 @@ func IntegrationToPostableGrafanaReceiver(integration *models.Integration) (*api
 	postable := &apimodels.PostableGrafanaReceiver{
 		UID:                   integration.UID,
 		Name:                  integration.Name,
-		Type:                  integration.Config.Type,
+		Type:                  string(integration.Config.Type()),
 		DisableResolveMessage: integration.DisableResolveMessage,
 		SecureSettings:        maps.Clone(integration.SecureSettings),
 	}
@@ -136,7 +137,7 @@ func PostableGrafanaReceiverToIntegration(p *apimodels.PostableGrafanaReceiver) 
 
 	if p.Settings != nil {
 		if err := json.Unmarshal(p.Settings, &integration.Settings); err != nil {
-			return nil, fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", integration.Config.Type, p.Name, err)
+			return nil, fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", integration.Config.Type(), p.Name, err)
 		}
 	}
 
