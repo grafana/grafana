@@ -2,9 +2,11 @@ package team
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,14 +29,16 @@ var (
 	_ rest.SingularNameProvider = (*LegacyBindingStore)(nil)
 	_ rest.Getter               = (*LegacyBindingStore)(nil)
 	_ rest.Lister               = (*LegacyBindingStore)(nil)
+	_ rest.Creater              = (*LegacyBindingStore)(nil)
 )
 
-func NewLegacyBindingStore(store legacy.LegacyIdentityStore) *LegacyBindingStore {
-	return &LegacyBindingStore{store}
+func NewLegacyBindingStore(store legacy.LegacyIdentityStore, enableAuthnMutation bool) *LegacyBindingStore {
+	return &LegacyBindingStore{store, enableAuthnMutation}
 }
 
 type LegacyBindingStore struct {
-	store legacy.LegacyIdentityStore
+	store               legacy.LegacyIdentityStore
+	enableAuthnMutation bool
 }
 
 // Destroy implements rest.Storage.
@@ -63,6 +67,66 @@ func (l *LegacyBindingStore) GetSingularName() string {
 // ConvertToTable implements rest.Lister.
 func (l *LegacyBindingStore) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return bindingResource.TableConverter().ConvertToTable(ctx, object, tableOptions)
+}
+
+func (l *LegacyBindingStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	if !l.enableAuthnMutation {
+		return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "create")
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	teamMemberObj, ok := obj.(*iamv0alpha1.TeamBinding)
+	if !ok {
+		return nil, fmt.Errorf("expected TeamBinding object, got %T", obj)
+	}
+
+	// Fetch the user by ID
+	userObj, err := l.store.GetUserInternalID(ctx, ns, legacy.GetUserInternalIDQuery{
+		UID: teamMemberObj.Spec.Subject.Name,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch user by id %s: %w", teamMemberObj.Spec.Subject.Name, err)
+	}
+
+	// Fetch the team by ID
+	teamObj, err := l.store.GetTeamInternalID(ctx, ns, legacy.GetTeamInternalIDQuery{
+		UID: teamMemberObj.Spec.TeamRef.Name,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch team by id %s: %w", teamMemberObj.Spec.TeamRef.Name, err)
+	}
+
+	if createValidation != nil {
+		if err := createValidation(ctx, obj); err != nil {
+			return nil, err
+		}
+	}
+
+	var permission team.PermissionType
+	switch teamMemberObj.Spec.Permission {
+	case iamv0alpha1.TeamBindingTeamPermissionAdmin:
+		permission = team.PermissionTypeAdmin
+	case iamv0alpha1.TeamBindingTeamPermissionMember:
+		permission = team.PermissionTypeMember
+	}
+
+	createCmd := legacy.CreateTeamMemberCommand{
+		TeamID:     teamObj.ID,
+		UserID:     userObj.ID,
+		Permission: permission,
+	}
+
+	result, err := l.store.CreateTeamMember(ctx, ns, createCmd)
+	if err != nil {
+		return nil, err
+	}
+
+	iamTeam := mapToBindingObject(ns, result.TeamMember)
+	return &iamTeam, nil
 }
 
 // Get implements rest.Getter.

@@ -529,6 +529,83 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 	return res, err
 }
 
+type CreateTeamMemberCommand struct {
+	TeamID     int64
+	UserID     int64
+	Created    DBTime
+	Updated    DBTime
+	External   bool
+	Permission team.PermissionType
+}
+
+type CreateTeamMemberResult struct {
+	TeamMember TeamMember
+}
+
+var sqlCreateTeamMemberQuery = mustTemplate("create_team_member_query.sql")
+
+func newCreateTeamMember(sql *legacysql.LegacyDatabaseHelper, cmd *CreateTeamMemberCommand) createTeamMemberQuery {
+	return createTeamMemberQuery{
+		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
+		TeamMemberTable: sql.Table("team_member"),
+		Command:         cmd,
+	}
+}
+
+type createTeamMemberQuery struct {
+	sqltemplate.SQLTemplate
+	TeamMemberTable string
+	Command         *CreateTeamMemberCommand
+}
+
+func (r createTeamMemberQuery) Validate() error {
+	return nil
+}
+
+func (s *legacySQLStore) CreateTeamMember(ctx context.Context, ns claims.NamespaceInfo, cmd CreateTeamMemberCommand) (*CreateTeamMemberResult, error) {
+	now := time.Now().UTC().Truncate(time.Second)
+	cmd.Created = NewDBTime(now)
+	cmd.Updated = NewDBTime(now)
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newCreateTeamMember(sql, &cmd)
+
+	var createdTeamMember TeamMember
+	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		teamMemberQuery, err := sqltemplate.Execute(sqlCreateTeamMemberQuery, req)
+		if err != nil {
+			return fmt.Errorf("failed to execute team member template %q: %w", sqlCreateTeamMemberQuery.Name(), err)
+		}
+
+		teamMemberID, err := st.ExecWithReturningId(ctx, teamMemberQuery, req.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to create team member: %w", err)
+		}
+
+		createdTeamMember = TeamMember{
+			ID:         teamMemberID,
+			TeamID:     cmd.TeamID,
+			UserID:     cmd.UserID,
+			Created:    cmd.Created.Time,
+			Updated:    cmd.Updated.Time,
+			External:   cmd.External,
+			Permission: cmd.Permission,
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &CreateTeamMemberResult{TeamMember: createdTeamMember}, nil
+}
+
 type ListTeamMembersQuery struct {
 	UID        string
 	OrgID      int64

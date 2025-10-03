@@ -181,7 +181,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	teamBindingResource := iamv0.TeamBindingResourceInfo
-	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
+	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store, b.enableAuthnMutation)
 
 	// User store registration
 	userResource := iamv0.UserResourceInfo
