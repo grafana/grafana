@@ -33,16 +33,26 @@ export interface ExposedComponent {
   consumers: string[]; // apps that depend on this exposed component
 }
 
+export interface Extension {
+  id: string; // extension ID (e.g., "grafana-asserts-app/entity-assertions-widget/v1")
+  title: string; // extension title
+  description?: string; // extension description
+  type: 'link' | 'component' | 'function'; // type of extension
+  providingPlugin: string; // plugin that provides this extension
+  targetExtensionPoint: string; // extension point this extension targets
+}
+
 export interface GraphData {
   nodes: PluginNode[];
   dependencies: PluginDependency[];
   extensionPoints: ExtensionPoint[];
   exposedComponents?: ExposedComponent[]; // For expose mode visualization
+  extensions?: Extension[]; // For extension point mode visualization
 }
 
 export interface PanelOptions {
   // Visualization mode
-  visualizationMode: 'add' | 'expose';
+  visualizationMode: 'add' | 'expose' | 'extensionpoint';
 
   // Visualization options
   showDependencyTypes: boolean;
@@ -54,9 +64,46 @@ export interface PanelOptions {
   // Filtering options
   selectedContentProviders: string[];
   selectedContentConsumers: string[];
+  selectedExtensionPoints: string[];
 
   // Color options for extension types
   linkExtensionColor: string;
   componentExtensionColor: string;
   functionExtensionColor: string;
+}
+
+// Raw data interfaces for type safety
+export interface RawPluginInfo {
+  version?: string;
+  description?: string;
+}
+
+export interface RawExtensionLink {
+  title?: string;
+  description?: string;
+  targets?: string[];
+}
+
+export interface RawExtensionComponent {
+  title?: string;
+  description?: string;
+  targets?: string[];
+}
+
+export interface RawExtensionFunction {
+  title?: string;
+  description?: string;
+  targets?: string[];
+}
+
+export interface RawPluginExtensions {
+  addedLinks?: RawExtensionLink[];
+  addedComponents?: RawExtensionComponent[];
+  addedFunctions?: RawExtensionFunction[];
+}
+
+export interface RawPluginData {
+  [pluginId: string]: RawPluginInfo & {
+    extensions?: RawPluginExtensions;
+  };
 }

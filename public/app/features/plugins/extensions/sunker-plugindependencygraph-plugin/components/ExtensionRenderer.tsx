@@ -28,13 +28,13 @@ interface ExtensionRendererProps {
   width: number;
   height: number;
   isExposeMode: boolean;
+  isExtensionPointMode: boolean;
   extensionPointPositions: Map<string, PositionInfo>;
   exposedComponentPositions: Map<string, PositionInfo>;
-  selectedExtensionPoint: string | null;
+  extensionPositions: Map<string, PositionInfo>;
+  extensionPointModePositions: Map<string, PositionInfo>;
   selectedExposedComponent: string | null;
-  onExtensionPointClick: (id: string | null) => void;
   onExposedComponentClick: (id: string | null) => void;
-  onExtensionPointRightClick?: (event: React.MouseEvent, extensionPointId: string) => void;
   styles: {
     extensionGroupBox: SerializedStyles;
     extensionPointBox: SerializedStyles;
@@ -52,17 +52,19 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
   width,
   height,
   isExposeMode,
+  isExtensionPointMode,
   extensionPointPositions,
   exposedComponentPositions,
-  selectedExtensionPoint,
+  extensionPositions,
+  extensionPointModePositions,
   selectedExposedComponent,
-  onExtensionPointClick,
   onExposedComponentClick,
-  onExtensionPointRightClick,
   styles,
 }) => {
   if (isExposeMode) {
     return renderExposedComponents();
+  } else if (isExtensionPointMode) {
+    return renderExtensionPointMode();
   } else {
     return renderExtensionPoints();
   }
@@ -214,6 +216,185 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
     );
   }
 
+  function renderExtensionPointMode() {
+    if (!data.extensions || !data.extensionPoints) {
+      return null;
+    }
+
+    return (
+      <g>
+        {/* Render extensions on the left side */}
+        {renderExtensions()}
+
+        {/* Render extension points on the right side */}
+        {renderExtensionPointsForMode()}
+      </g>
+    );
+  }
+
+  function renderExtensions() {
+    if (!data.extensions) {
+      return null;
+    }
+
+    // Group extensions by their providing plugin (app)
+    const extensionGroups = new Map<string, string[]>();
+    data.extensions.forEach((ext) => {
+      if (!extensionGroups.has(ext.providingPlugin)) {
+        extensionGroups.set(ext.providingPlugin, []);
+      }
+      extensionGroups.get(ext.providingPlugin)!.push(ext.id);
+    });
+
+    const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
+    const extensionBoxHeight = 60;
+
+    return (
+      <g>
+        {Array.from(extensionGroups.entries()).map(([providingPlugin, extensionIds]) => {
+          const firstExtPos = extensionPositions.get(extensionIds[0]);
+          if (!firstExtPos) {
+            return null;
+          }
+
+          const groupHeight = firstExtPos.groupHeight;
+
+          return (
+            <g key={providingPlugin}>
+              {/* App section box */}
+              <rect
+                x={firstExtPos.x - 20}
+                y={firstExtPos.groupY}
+                width={extensionBoxWidth + 40}
+                height={groupHeight}
+                fill={theme.colors.background.secondary}
+                stroke={theme.colors.border.strong}
+                strokeWidth={VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH}
+                rx={VISUAL_CONSTANTS.GROUP_BORDER_RADIUS}
+              />
+
+              {/* Extensions inside app section */}
+              {extensionIds.map((extId) => {
+                const extPos = extensionPositions.get(extId);
+                if (!extPos) {
+                  return null;
+                }
+
+                const extension = data.extensions?.find((ext) => ext.id === extId);
+                if (!extension) {
+                  return null;
+                }
+
+                const extensionColor = getExtensionColor(extension.type);
+
+                return (
+                  <g key={extId}>
+                    {/* Individual extension box */}
+                    <rect
+                      x={extPos.x}
+                      y={extPos.y - extensionBoxHeight / 2}
+                      width={extensionBoxWidth}
+                      height={extensionBoxHeight}
+                      fill={extensionColor}
+                      stroke={theme.colors.border.strong}
+                      strokeWidth={VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH}
+                      rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
+                    />
+
+                    {/* Extension title */}
+                    <text
+                      x={extPos.x + extensionBoxWidth / 2}
+                      y={extPos.y - 5}
+                      textAnchor="middle"
+                      fill={theme.colors.getContrastText(extensionColor)}
+                    >
+                      {extension.title || extension.id}
+                    </text>
+
+                    {/* Extension description */}
+                    {options.showDescriptions && extension.description && extension.description.trim() !== '' && (
+                      <text
+                        x={extPos.x + extensionBoxWidth / 2}
+                        y={extPos.y + 15}
+                        textAnchor="middle"
+                        fill={theme.colors.getContrastText(extensionColor)}
+                      >
+                        {extension.description}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
+
+              {/* App name header */}
+              <text x={firstExtPos.x} y={firstExtPos.groupY + 25} textAnchor="start" fill={theme.colors.text.primary}>
+                {getDisplayName(providingPlugin)}
+              </text>
+            </g>
+          );
+        })}
+      </g>
+    );
+  }
+
+  function renderExtensionPointsForMode() {
+    if (!data.extensionPoints) {
+      return null;
+    }
+
+    const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
+    const extensionBoxHeight = 60;
+
+    return (
+      <g>
+        {data.extensionPoints.map((ep) => {
+          const epPos = extensionPointModePositions.get(ep.id);
+          if (!epPos) {
+            return null;
+          }
+
+          return (
+            <g key={ep.id}>
+              {/* Extension point box */}
+              <rect
+                x={epPos.x}
+                y={epPos.y - extensionBoxHeight / 2}
+                width={extensionBoxWidth}
+                height={extensionBoxHeight}
+                fill={theme.colors.primary.main}
+                stroke={theme.colors.border.strong}
+                strokeWidth={VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH}
+                rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
+              />
+
+              {/* Extension point title */}
+              <text
+                x={epPos.x + extensionBoxWidth / 2}
+                y={epPos.y - 5}
+                textAnchor="middle"
+                fill={theme.colors.getContrastText(theme.colors.primary.main)}
+              >
+                {ep.title || ep.id}
+              </text>
+
+              {/* Extension point description */}
+              {options.showDescriptions && ep.description && ep.description.trim() !== '' && (
+                <text
+                  x={epPos.x + extensionBoxWidth / 2}
+                  y={epPos.y + 15}
+                  textAnchor="middle"
+                  fill={theme.colors.getContrastText(theme.colors.primary.main)}
+                >
+                  {ep.description}
+                </text>
+              )}
+            </g>
+          );
+        })}
+      </g>
+    );
+  }
+
   function renderExtensionPoints() {
     if (!data.extensionPoints) {
       return null;
@@ -282,39 +463,9 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       width={extensionBoxWidth}
                       height={extensionBoxHeight}
                       fill={extensionColor}
-                      stroke={
-                        selectedExtensionPoint === epId ? theme.colors.primary.border : theme.colors.border.strong
-                      }
-                      strokeWidth={
-                        selectedExtensionPoint === epId
-                          ? VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH
-                          : VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH
-                      }
+                      stroke={theme.colors.border.strong}
+                      strokeWidth={VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH}
                       rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        // Left-click for context menu
-                        onExtensionPointRightClick?.(event, epId);
-                      }}
-                      style={{ cursor: 'pointer' }}
-                    />
-
-                    {/* Invisible overlay to capture all clicks in the extension point area */}
-                    <rect
-                      x={epPos.x}
-                      y={epPos.y - originalHeight / 2}
-                      width={extensionBoxWidth}
-                      height={extensionBoxHeight}
-                      fill="transparent"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        console.log('Left-click detected on extension point:', epId);
-                        // Left-click for context menu
-                        onExtensionPointRightClick?.(event, epId);
-                      }}
-                      style={{ cursor: 'pointer', pointerEvents: 'all' }}
                     />
 
                     {/* Extension point ID - first line */}

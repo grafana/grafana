@@ -21,12 +21,19 @@ interface HeaderRendererProps {
   theme: GrafanaTheme2;
   width: number;
   isExposeMode: boolean;
+  isExtensionPointMode: boolean;
   styles: {
     sectionHeader: SerializedStyles;
   };
 }
 
-export const HeaderRenderer: React.FC<HeaderRendererProps> = ({ theme, width, isExposeMode, styles }) => {
+export const HeaderRenderer: React.FC<HeaderRendererProps> = ({
+  theme,
+  width,
+  isExposeMode,
+  isExtensionPointMode,
+  styles,
+}) => {
   const margin = getResponsiveMargin(width);
   const nodeWidth = getResponsiveNodeWidth(width);
 
@@ -50,6 +57,7 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({ theme, width, is
           y={LAYOUT_CONSTANTS.SUB_HEADER_Y_OFFSET}
           textAnchor="middle"
           fill={theme.colors.text.primary}
+          style={{ fontSize: '18px', fontWeight: 'bold' }}
         >
           {MODE_LABELS.CONTENT_PROVIDER}
         </text>
@@ -60,6 +68,7 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({ theme, width, is
           y={LAYOUT_CONSTANTS.SUB_HEADER_Y_OFFSET}
           textAnchor="middle"
           fill={theme.colors.text.primary}
+          style={{ fontSize: '18px', fontWeight: 'bold' }}
         >
           {MODE_LABELS.CONTENT_CONSUMER}
         </text>
@@ -69,6 +78,56 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({ theme, width, is
           x1={margin}
           y1={LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET}
           x2={width - getRightMargin(width)}
+          y2={LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET}
+          stroke={theme.colors.border.medium}
+          strokeWidth={1}
+          strokeDasharray="5,5"
+        />
+      </g>
+    );
+  }
+
+  if (isExtensionPointMode) {
+    return (
+      <g>
+        {/* Main mode heading - centered "Extension Point Usage" */}
+        <text
+          x={width / 2}
+          y={LAYOUT_CONSTANTS.HEADER_Y_OFFSET}
+          textAnchor="middle"
+          fill={theme.colors.text.primary}
+          style={{ fontSize: '18px', fontWeight: 'bold' }}
+        >
+          {MODE_LABELS.EXTENSION_POINT_MODE}
+        </text>
+
+        {/* Extensions Header (left in extension point mode) */}
+        <text
+          x={margin + 220} // Position over extension boxes on the left
+          y={LAYOUT_CONSTANTS.SUB_HEADER_Y_OFFSET}
+          textAnchor="middle"
+          fill={theme.colors.text.primary}
+          style={{ fontSize: '18px', fontWeight: 'bold' }}
+        >
+          {MODE_LABELS.EXTENSIONS}
+        </text>
+
+        {/* Extension Points Header (right in extension point mode) */}
+        <text
+          x={width - margin - 210} // Position over extension point boxes on the right
+          y={LAYOUT_CONSTANTS.SUB_HEADER_Y_OFFSET}
+          textAnchor="middle"
+          fill={theme.colors.text.primary}
+          style={{ fontSize: '18px', fontWeight: 'bold' }}
+        >
+          {MODE_LABELS.EXTENSION_POINTS}
+        </text>
+
+        {/* Horizontal dotted line across entire graph underneath headlines */}
+        <line
+          x1={margin}
+          y1={LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET}
+          x2={width - margin}
           y2={LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET}
           stroke={theme.colors.border.medium}
           strokeWidth={1}
@@ -97,6 +156,7 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({ theme, width, is
         y={LAYOUT_CONSTANTS.SUB_HEADER_Y_OFFSET}
         textAnchor="middle"
         fill={theme.colors.text.primary}
+        style={{ fontSize: '18px', fontWeight: 'bold' }}
       >
         {MODE_LABELS.CONTENT_PROVIDER}
       </text>
@@ -107,6 +167,7 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({ theme, width, is
         y={LAYOUT_CONSTANTS.SUB_HEADER_Y_OFFSET}
         textAnchor="middle"
         fill={theme.colors.text.primary}
+        style={{ fontSize: '18px', fontWeight: 'bold' }}
       >
         {MODE_LABELS.CONTENT_CONSUMER}
       </text>

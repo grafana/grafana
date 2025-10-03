@@ -2,7 +2,7 @@ import React from 'react';
 
 import { PanelPlugin, StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { MultiSelect } from '@grafana/ui';
+import { MultiCombobox, MultiSelect } from '@grafana/ui';
 
 import { PluginDependencyGraphPanel } from './components/PluginDependencyGraphPanel';
 import { PanelOptions } from './types';
@@ -10,6 +10,7 @@ import {
   getActiveContentConsumers,
   getAvailableContentConsumers,
   getAvailableContentProviders,
+  getAvailableExtensionPoints,
 } from './utils/dataProcessor';
 
 // Custom multiselect editor for content providers
@@ -79,6 +80,34 @@ const ContentConsumerMultiSelect: React.FC<StandardEditorProps<string[]>> = ({ v
   );
 };
 
+// Custom multiselect editor for extension points
+const ExtensionPointMultiSelect: React.FC<StandardEditorProps<string[]>> = ({ value, onChange, context }) => {
+  const availableExtensionPoints = getAvailableExtensionPoints();
+
+  const options = availableExtensionPoints.map((extensionPoint) => ({
+    label: extensionPoint,
+    value: extensionPoint,
+  }));
+
+  // If no value is set (empty array) or value is not defined, default to all extension points selected
+  const selectedValues = !value || value.length === 0 ? availableExtensionPoints : value;
+
+  return (
+    <MultiCombobox
+      options={options}
+      value={selectedValues}
+      onChange={(selected) => {
+        // Extract values from SelectableValue objects
+        const selectedValues = selected.map((item) => item.value).filter((value): value is string => Boolean(value));
+        // If all extension points are selected, store empty array to indicate "show all"
+        const newValue = selectedValues.length === availableExtensionPoints.length ? [] : selectedValues;
+        onChange(newValue);
+      }}
+      placeholder={t('extensions.dependency-graph.select-extension-points', 'Select extension points to display')}
+    />
+  );
+};
+
 export const plugin = new PanelPlugin<PanelOptions>(PluginDependencyGraphPanel).setPanelOptions((builder) => {
   return (
     builder
@@ -87,13 +116,17 @@ export const plugin = new PanelPlugin<PanelOptions>(PluginDependencyGraphPanel).
         name: t('extensions.dependency-graph.visualization-mode', 'Visualization Mode'),
         description: t(
           'extensions.dependency-graph.visualization-mode-description',
-          'Choose between Add mode (plugins adding to extension points) or Expose mode (plugins exposing components)'
+          'Choose between Add mode (plugins adding to extension points), Expose mode (plugins exposing components), or Extension Point mode (extensions and extension points)'
         ),
         defaultValue: 'add',
         settings: {
           options: [
             { label: t('extensions.dependency-graph.add-mode', 'Add Mode (Extensions)'), value: 'add' },
             { label: t('extensions.dependency-graph.expose-mode', 'Expose Mode (Components)'), value: 'expose' },
+            {
+              label: t('extensions.dependency-graph.extensionpoint-mode', 'Extension Point Mode'),
+              value: 'extensionpoint',
+            },
           ],
         },
       })
@@ -171,6 +204,19 @@ export const plugin = new PanelPlugin<PanelOptions>(PluginDependencyGraphPanel).
         ),
         editor: ContentConsumerMultiSelect,
         category: ['Filtering'],
+        showIf: (currentConfig) => currentConfig.visualizationMode !== 'extensionpoint',
+      })
+      .addCustomEditor({
+        id: 'extensionPointFilter',
+        path: 'selectedExtensionPoints',
+        name: t('extensions.dependency-graph.extension-points', 'Extension Points'),
+        description: t(
+          'extensions.dependency-graph.extension-points-description',
+          'Extension Point Mode: select which extension points to display (right side)'
+        ),
+        editor: ExtensionPointMultiSelect,
+        category: ['Filtering'],
+        showIf: (currentConfig) => currentConfig.visualizationMode === 'extensionpoint',
       })
   );
 });

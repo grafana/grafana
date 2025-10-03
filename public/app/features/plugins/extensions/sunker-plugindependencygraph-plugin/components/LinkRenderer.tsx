@@ -9,7 +9,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { VISUAL_CONSTANTS, getResponsiveComponentWidth, getResponsiveNodeWidth } from '../constants';
+import { LAYOUT_CONSTANTS, VISUAL_CONSTANTS, getResponsiveComponentWidth, getResponsiveNodeWidth } from '../constants';
 import { GraphData } from '../types';
 
 import { NodeWithPosition, PositionInfo } from './GraphLayout';
@@ -20,13 +20,14 @@ interface LinkRendererProps {
   nodes: NodeWithPosition[];
   extensionPointPositions: Map<string, PositionInfo>;
   exposedComponentPositions: Map<string, PositionInfo>;
+  extensionPositions: Map<string, PositionInfo>;
+  extensionPointModePositions: Map<string, PositionInfo>;
   width: number;
   isExposeMode: boolean;
-  selectedExtensionPoint: string | null;
+  isExtensionPointMode: boolean;
   selectedExposedComponent: string | null;
   selectedContentConsumer: string | null;
   selectedContentProvider: string | null;
-  highlightedExtensionPoint?: string | null;
   styles: {
     link: SerializedStyles;
     linkHighlighted: SerializedStyles;
@@ -39,17 +40,22 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
   nodes,
   extensionPointPositions,
   exposedComponentPositions,
+  extensionPositions,
+  extensionPointModePositions,
   width,
   isExposeMode,
-  selectedExtensionPoint,
+  isExtensionPointMode,
   selectedExposedComponent,
   selectedContentConsumer,
   selectedContentProvider,
-  highlightedExtensionPoint,
   styles,
 }) => {
   if (isExposeMode) {
     return renderExposeDependencyLinks();
+  }
+
+  if (isExtensionPointMode) {
+    return renderExtensionPointModeLinks();
   }
 
   return renderAddDependencyLinks();
@@ -110,10 +116,7 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
         const pathData = `M ${startX} ${startY} C ${controlX1} ${startY}, ${controlX2} ${endY}, ${endX} ${endY}`;
 
         // Check if this arrow should be highlighted
-        const isHighlighted =
-          (selectedExtensionPoint ? extensionPointIds.includes(selectedExtensionPoint) : false) ||
-          selectedContentProvider === sourceId ||
-          (highlightedExtensionPoint ? extensionPointIds.includes(highlightedExtensionPoint) : false);
+        const isHighlighted = selectedContentProvider === sourceId;
 
         arrows.push(
           <g key={`${sourceId}-${definingPlugin}-${arrowIndex}`}>
@@ -125,7 +128,7 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
               strokeWidth={isHighlighted ? VISUAL_CONSTANTS.THICK_STROKE_WIDTH : VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH}
               markerEnd={isHighlighted ? 'url(#arrowhead-highlighted)' : 'url(#arrowhead)'}
               opacity={
-                (selectedExtensionPoint || selectedContentProvider || highlightedExtensionPoint) && !isHighlighted
+                selectedContentProvider && !isHighlighted
                   ? VISUAL_CONSTANTS.UNSELECTED_OPACITY
                   : VISUAL_CONSTANTS.SELECTED_OPACITY
               }
@@ -194,6 +197,70 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
           );
         }
       });
+    });
+
+    return <g>{arrows}</g>;
+  }
+
+  function renderExtensionPointModeLinks() {
+    if (!data.extensions || !data.extensionPoints) {
+      return <g></g>;
+    }
+
+    const arrows: React.ReactElement[] = [];
+
+    // Group extensions by their providing plugin (app)
+    const extensionGroups = new Map<string, string[]>();
+    data.extensions.forEach((ext) => {
+      if (!extensionGroups.has(ext.providingPlugin)) {
+        extensionGroups.set(ext.providingPlugin, []);
+      }
+      extensionGroups.get(ext.providingPlugin)!.push(ext.id);
+    });
+
+    // Create one arrow per app (not per extension)
+    Array.from(extensionGroups.entries()).forEach(([providingPlugin, extensionIds]) => {
+      // Get the first extension position to determine the app section position
+      const firstExtPos = extensionPositions.get(extensionIds[0]);
+      if (!firstExtPos) {
+        return;
+      }
+
+      // Get the extension point position (assuming all extensions target the same extension point)
+      const extension = data.extensions?.find((ext) => ext.id === extensionIds[0]);
+      if (!extension) {
+        return;
+      }
+
+      const epPos = extensionPointModePositions.get(extension.targetExtensionPoint);
+      if (!epPos) {
+        return;
+      }
+
+      const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
+      const startX = firstExtPos.x + extensionBoxWidth + 20; // Start from the right edge of the app section
+      const startY = firstExtPos.groupY + firstExtPos.groupHeight / 2; // Center vertically in the app section
+      const endX = epPos.x - 2; // End at left edge of extension point box
+      const endY = epPos.y;
+
+      // Calculate control points for a curved path
+      const midX = (startX + endX) / 2;
+      const controlX1 = startX + (midX - startX) * 0.6;
+      const controlX2 = endX - (endX - midX) * 0.6;
+
+      const pathData = `M ${startX} ${startY} C ${controlX1} ${startY}, ${controlX2} ${endY}, ${endX} ${endY}`;
+
+      arrows.push(
+        <g key={`${providingPlugin}-${extension.targetExtensionPoint}`}>
+          <path
+            d={pathData}
+            fill="none"
+            stroke={theme.colors.primary.main}
+            strokeWidth={VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH}
+            markerEnd="url(#arrowhead)"
+          />
+        </g>
+      );
     });
 
     return <g>{arrows}</g>;

@@ -127,6 +127,7 @@ export function useDependencyGraphControls(): DependencyGraphControls {
   const modeOptions = [
     { label: t('extensions.api-mode.add', 'Add'), value: 'add' as const },
     { label: t('extensions.api-mode.expose', 'Expose'), value: 'expose' as const },
+    { label: t('extensions.api-mode.extensionpoint', 'Extension Point'), value: 'extensionpoint' as const },
   ];
 
   return {

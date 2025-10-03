@@ -122,9 +122,12 @@ export const INTERACTION_CONSTANTS = {
 export const MODE_LABELS = {
   ADD_MODE: 'Add APIs',
   EXPOSE_MODE: 'Expose APIs',
+  EXTENSION_POINT_MODE: 'Extension Point Usage',
   CONTENT_PROVIDER: 'Content provider',
   CONTENT_CONSUMER: 'Content consumer',
   COMPONENTS: 'Components',
+  EXTENSIONS: 'Extensions',
+  EXTENSION_POINTS: 'Extension Points',
 } as const;
 
 export const DISPLAY_NAMES = {

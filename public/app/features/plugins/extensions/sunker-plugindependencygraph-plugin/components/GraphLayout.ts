@@ -59,9 +59,12 @@ export const calculateLayout = (
   const margin = getResponsiveMargin(width);
   const nodeSpacing = getResponsiveNodeSpacing(height);
   const isExposeMode = options.visualizationMode === 'expose';
+  const isExtensionPointMode = options.visualizationMode === 'extensionpoint';
 
   if (isExposeMode) {
     return calculateExposeLayout(data, options, width, height, margin);
+  } else if (isExtensionPointMode) {
+    return calculateExtensionPointLayout(data, options, width, height, margin);
   } else {
     return calculateAddLayout(data, width, height, margin, nodeSpacing);
   }
@@ -169,6 +172,27 @@ const calculateExposeLayout = (
     });
   }
 
+  return result;
+};
+
+/**
+ * Calculate layout for extension point mode
+ */
+const calculateExtensionPointLayout = (
+  data: GraphData,
+  options: PanelOptions,
+  width: number,
+  height: number,
+  margin: number
+): NodeWithPosition[] => {
+  const result: NodeWithPosition[] = [];
+
+  if (!data.extensions || !data.extensionPoints) {
+    return result;
+  }
+
+  // For extension point mode, we don't need to position plugin nodes
+  // The extensions and extension points will be positioned separately
   return result;
 };
 
@@ -359,6 +383,141 @@ export const getExposedComponentPositions = (
 };
 
 /**
+ * Calculate positions for extensions in extension point mode visualization.
+ *
+ * Extensions are positioned on the left side of the visualization,
+ * grouped by their providing plugin. Each extension box shows the
+ * extension title and description.
+ *
+ * @param data - Graph data containing extensions
+ * @param options - Panel options that affect spacing (e.g., showDescriptions)
+ * @param width - Panel width for responsive positioning
+ * @param height - Panel height for responsive spacing
+ * @param isExtensionPointMode - If false, returns empty map (other modes don't use extensions)
+ * @returns Map of extension IDs to their position information
+ */
+export const getExtensionPositions = (
+  data: GraphData,
+  options: PanelOptions,
+  width: number,
+  height: number,
+  isExtensionPointMode: boolean
+): Map<string, PositionInfo> => {
+  if (!isExtensionPointMode || !data.extensions) {
+    return new Map();
+  }
+
+  // Group extensions by their providing plugin (app)
+  const extensionGroups = new Map<string, string[]>();
+  data.extensions.forEach((ext) => {
+    if (!extensionGroups.has(ext.providingPlugin)) {
+      extensionGroups.set(ext.providingPlugin, []);
+    }
+    extensionGroups.get(ext.providingPlugin)!.push(ext.id);
+  });
+
+  const positions = new Map<string, PositionInfo>();
+  const margin = getResponsiveMargin(width);
+
+  let extensionSpacing = 70;
+  if (options.showDescriptions) {
+    extensionSpacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
+  }
+
+  const groupSpacing = getResponsiveGroupSpacing(height) + 30;
+  const leftSideX = margin + 20; // Position on the left side
+
+  let currentGroupY = margin + LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET + 30;
+
+  // Process each app section
+  Array.from(extensionGroups.entries()).forEach(([providingPlugin, extensionIds]) => {
+    const groupHeight = extensionIds.length * extensionSpacing + 50;
+
+    extensionIds.forEach((extId, index) => {
+      positions.set(extId, {
+        x: leftSideX,
+        y: currentGroupY + 70 + index * extensionSpacing,
+        groupY: currentGroupY,
+        groupHeight: groupHeight,
+      });
+    });
+
+    currentGroupY += groupHeight + groupSpacing;
+  });
+
+  return positions;
+};
+
+/**
+ * Calculate positions for extension points in extension point mode visualization.
+ *
+ * Extension points are positioned on the right side of the visualization.
+ * Each extension point box shows the extension point title and description.
+ *
+ * @param data - Graph data containing extension points
+ * @param options - Panel options that affect spacing (e.g., showDescriptions)
+ * @param width - Panel width for responsive positioning
+ * @param height - Panel height for responsive spacing
+ * @param isExtensionPointMode - If false, returns empty map (other modes don't use this layout)
+ * @returns Map of extension point IDs to their position information
+ */
+export const getExtensionPointModePositions = (
+  data: GraphData,
+  options: PanelOptions,
+  width: number,
+  height: number,
+  isExtensionPointMode: boolean
+): Map<string, PositionInfo> => {
+  if (!isExtensionPointMode || !data.extensionPoints) {
+    return new Map();
+  }
+
+  const positions = new Map<string, PositionInfo>();
+  const margin = getResponsiveMargin(width);
+
+  const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
+  const rightSideX = width - margin - extensionBoxWidth - LAYOUT_CONSTANTS.ARROW_SAFETY_MARGIN;
+
+  // Calculate total height of all extension sections to center the extension point
+  let totalExtensionsHeight = 0;
+  if (data.extensions) {
+    const extensionGroups = new Map<string, string[]>();
+    data.extensions.forEach((ext) => {
+      if (!extensionGroups.has(ext.providingPlugin)) {
+        extensionGroups.set(ext.providingPlugin, []);
+      }
+      extensionGroups.get(ext.providingPlugin)!.push(ext.id);
+    });
+
+    let extensionSpacing = 70;
+    if (options.showDescriptions) {
+      extensionSpacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
+    }
+    const groupSpacing = getResponsiveGroupSpacing(height) + 30;
+
+    Array.from(extensionGroups.entries()).forEach(([providingPlugin, extensionIds]) => {
+      const groupHeight = extensionIds.length * extensionSpacing + 50;
+      totalExtensionsHeight += groupHeight + groupSpacing;
+    });
+  }
+
+  const startY = margin + LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET + 30;
+  const centerY = startY + totalExtensionsHeight / 2;
+
+  // Position the extension point in the center of all extension sections
+  data.extensionPoints.forEach((ep) => {
+    positions.set(ep.id, {
+      x: rightSideX,
+      y: centerY,
+      groupY: startY,
+      groupHeight: totalExtensionsHeight,
+    });
+  });
+
+  return positions;
+};
+
+/**
  * Calculate the minimum height required to display all graph content.
  *
  * This function determines how tall the SVG container needs to be to accommodate
@@ -390,7 +549,23 @@ export const calculateContentHeight = (
   const groupSpacing = getResponsiveGroupSpacing(height);
   let totalHeight = margin + LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET + 40; // Start with margin + header space
 
-  if (isExposeMode && data.exposedComponents && data.exposedComponents.length > 0) {
+  const isExtensionPointMode = options.visualizationMode === 'extensionpoint';
+
+  if (isExtensionPointMode && data.extensions && data.extensions.length > 0) {
+    // Group extensions by their providing plugin (app)
+    const extensionGroups = new Map<string, string[]>();
+    data.extensions.forEach((ext) => {
+      if (!extensionGroups.has(ext.providingPlugin)) {
+        extensionGroups.set(ext.providingPlugin, []);
+      }
+      extensionGroups.get(ext.providingPlugin)!.push(ext.id);
+    });
+
+    Array.from(extensionGroups.entries()).forEach(([providingPlugin, extensionIds]) => {
+      const groupHeight = extensionIds.length * spacing + 50;
+      totalHeight += groupHeight + groupSpacing;
+    });
+  } else if (isExposeMode && data.exposedComponents && data.exposedComponents.length > 0) {
     // Group exposed components by their providing plugin
     const exposedComponentGroups = new Map<string, string[]>();
     data.exposedComponents.forEach((comp) => {

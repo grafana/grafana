@@ -9,7 +9,7 @@ import {
 } from '../../sunker-plugindependencygraph-plugin/utils/dataProcessor';
 import { logGraphData } from '../utils/logger';
 
-export type VisualizationMode = 'add' | 'expose';
+export type VisualizationMode = 'add' | 'expose' | 'extensionpoint';
 
 export interface DependencyGraphOptions {
   visualizationMode: VisualizationMode;

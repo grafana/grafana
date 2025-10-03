@@ -44,6 +44,7 @@ export function DependencyGraphVisualization({ controls }: DependencyGraphVisual
                   showDescriptions: false,
                   selectedContentProviders,
                   selectedContentConsumers,
+                  selectedExtensionPoints: [],
                   linkExtensionColor: '#37872d',
                   componentExtensionColor: '#ff9900',
                   functionExtensionColor: '#e02f44',

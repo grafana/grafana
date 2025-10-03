@@ -4,7 +4,7 @@ import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, MultiCombobox, Select } from '@grafana/ui';
 
 import { DependencyGraphControls } from '../hooks/useDependencyGraphControls';
-import { useDependencyGraphData } from '../hooks/useDependencyGraphData';
+import { VisualizationMode, useDependencyGraphData } from '../hooks/useDependencyGraphData';
 
 interface DependencyGraphControlsProps {
   controls: DependencyGraphControls;
@@ -38,8 +38,8 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
   });
 
   const handleModeChange = useCallback(
-    (option: { value?: 'add' | 'expose' }) => {
-      if (option.value === 'add' || option.value === 'expose') {
+    (option: { value?: VisualizationMode }) => {
+      if (option.value && (option.value === 'add' || option.value === 'expose' || option.value === 'extensionpoint')) {
         setVisualizationMode(option.value);
       }
     },
@@ -70,7 +70,12 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
   return (
     <InlineFieldRow>
       <InlineField label={t('extensions.api-mode.label', 'API Mode')}>
-        <Select options={modeOptions} value={visualizationMode} onChange={handleModeChange} width={12} />
+        <Select<VisualizationMode>
+          options={modeOptions}
+          value={visualizationMode}
+          onChange={handleModeChange}
+          width={12}
+        />
       </InlineField>
       <InlineField label={t('extensions.content-provider.label', 'Content provider')}>
         <MultiCombobox

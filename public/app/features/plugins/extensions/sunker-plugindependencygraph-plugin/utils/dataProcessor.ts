@@ -2,7 +2,19 @@ import { AppPluginConfig, PanelData } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import pluginDataFallback from '../data.json';
-import { ExposedComponent, ExtensionPoint, GraphData, PanelOptions, PluginDependency, PluginNode } from '../types';
+import {
+  ExposedComponent,
+  Extension,
+  ExtensionPoint,
+  GraphData,
+  PanelOptions,
+  PluginDependency,
+  PluginNode,
+  RawExtensionComponent,
+  RawExtensionFunction,
+  RawExtensionLink,
+  RawPluginData,
+} from '../types';
 
 // Cache for expensive calculations
 const cache = new Map<string, GraphData>();
@@ -112,6 +124,8 @@ export const processPluginDataToGraph = (options: PanelOptions): GraphData => {
   let result: GraphData;
   if (options.visualizationMode === 'expose') {
     result = processPluginDataToExposeGraph(options, pluginData);
+  } else if (options.visualizationMode === 'extensionpoint') {
+    result = processPluginDataToExtensionPointGraph(options, pluginData);
   } else {
     result = processPluginDataToAddGraph(options, pluginData);
   }
@@ -578,6 +592,170 @@ export const processPluginDataToExposeGraph = (
   return result;
 };
 
+/**
+ * Processes plugin data for "extensionpoint" mode visualization.
+ *
+ * In extension point mode, the visualization shows:
+ * - Extensions (left side): Link, component, and function extensions that extend extension points
+ * - Extension Points (right side): The extension points being extended
+ * - Arrows: From extensions to their target extension points
+ *
+ * @param options - Panel options including filtering settings
+ * @param pluginData - Raw plugin data from data.json or window.grafanaBootData
+ * @returns Processed graph data for extension point mode visualization
+ */
+export const processPluginDataToExtensionPointGraph = (options: PanelOptions, pluginData: RawPluginData): GraphData => {
+  if (ENABLE_DEBUG_LOGS) {
+    console.log('processPluginDataToExtensionPointGraph - processing extension point mode data');
+  }
+
+  const nodes: Map<string, PluginNode> = new Map();
+  const dependencies: PluginDependency[] = [];
+  const extensionPoints: Map<string, ExtensionPoint> = new Map();
+  const extensions: Map<string, Extension> = new Map();
+
+  // First pass: collect all extension points (filtered by selectedExtensionPoints if specified)
+  const selectedExtensionPoints = options.selectedExtensionPoints || [];
+  const shouldFilterExtensionPoints = selectedExtensionPoints.length > 0;
+
+  Object.entries(pluginData).forEach(([pluginId, pluginInfo]) => {
+    const extensions = pluginInfo.extensions;
+    if (extensions.extensionPoints && extensions.extensionPoints.length > 0) {
+      extensions.extensionPoints.forEach((extensionPoint) => {
+        if (extensionPoint && extensionPoint.id && extensionPoint.id.trim() !== '') {
+          // Filter by selected extension points if specified
+          if (shouldFilterExtensionPoints && !selectedExtensionPoints.includes(extensionPoint.id)) {
+            return;
+          }
+
+          extensionPoints.set(extensionPoint.id, {
+            id: extensionPoint.id,
+            definingPlugin: pluginId,
+            providers: [], // Will be populated later
+            extensionType: 'link', // Default type
+            title: extensionPoint.title,
+            description: extensionPoint.description,
+          });
+        }
+      });
+    }
+  });
+
+  // Second pass: collect all extensions (links, components, functions) and their targets
+  Object.entries(pluginData).forEach(([pluginId, pluginInfo]) => {
+    const pluginExtensions = pluginInfo.extensions;
+
+    // Process added links
+    if (pluginExtensions.addedLinks && pluginExtensions.addedLinks.length > 0) {
+      pluginExtensions.addedLinks.forEach((link: RawExtensionLink) => {
+        if (link && link.targets && Array.isArray(link.targets) && link.targets.length > 0) {
+          link.targets.forEach((target: string) => {
+            if (target && target.trim() !== '') {
+              // Filter by selected extension points if specified
+              if (shouldFilterExtensionPoints && !selectedExtensionPoints.includes(target)) {
+                return;
+              }
+
+              const extensionId = `${pluginId}-link-${target}`;
+              extensions.set(extensionId, {
+                id: extensionId,
+                title: link.title || 'Link Extension',
+                description: link.description,
+                type: 'link' as const,
+                providingPlugin: pluginId,
+                targetExtensionPoint: target,
+              });
+            }
+          });
+        }
+      });
+    }
+
+    // Process added components
+    if (pluginExtensions.addedComponents && pluginExtensions.addedComponents.length > 0) {
+      pluginExtensions.addedComponents.forEach((component: RawExtensionComponent) => {
+        if (component && component.targets && Array.isArray(component.targets) && component.targets.length > 0) {
+          component.targets.forEach((target: string) => {
+            if (target && target.trim() !== '') {
+              // Filter by selected extension points if specified
+              if (shouldFilterExtensionPoints && !selectedExtensionPoints.includes(target)) {
+                return;
+              }
+
+              const extensionId = `${pluginId}-component-${target}`;
+              extensions.set(extensionId, {
+                id: extensionId,
+                title: component.title || 'Component Extension',
+                description: component.description,
+                type: 'component' as const,
+                providingPlugin: pluginId,
+                targetExtensionPoint: target,
+              });
+            }
+          });
+        }
+      });
+    }
+
+    // Process added functions
+    if (pluginExtensions.addedFunctions && pluginExtensions.addedFunctions.length > 0) {
+      pluginExtensions.addedFunctions.forEach((func: RawExtensionFunction) => {
+        if (func && func.targets && Array.isArray(func.targets) && func.targets.length > 0) {
+          func.targets.forEach((target: string) => {
+            if (target && target.trim() !== '') {
+              // Filter by selected extension points if specified
+              if (shouldFilterExtensionPoints && !selectedExtensionPoints.includes(target)) {
+                return;
+              }
+
+              const extensionId = `${pluginId}-function-${target}`;
+              extensions.set(extensionId, {
+                id: extensionId,
+                title: func.title || 'Function Extension',
+                description: func.description,
+                type: 'function' as const,
+                providingPlugin: pluginId,
+                targetExtensionPoint: target,
+              });
+            }
+          });
+        }
+      });
+    }
+  });
+
+  // Third pass: create plugin nodes for all plugins that have extensions or extension points
+  const allPluginIds = new Set<string>();
+  extensions.forEach((extension) => allPluginIds.add(extension.providingPlugin));
+  extensionPoints.forEach((ep) => allPluginIds.add(ep.definingPlugin));
+
+  allPluginIds.forEach((pluginId) => {
+    const pluginInfo = pluginData[pluginId];
+    if (pluginInfo) {
+      nodes.set(pluginId, {
+        id: pluginId,
+        name: pluginId,
+        type: 'app',
+        version: pluginInfo.version,
+        description: pluginInfo.description || '',
+      });
+    }
+  });
+
+  const result: GraphData = {
+    nodes: Array.from(nodes.values()),
+    dependencies,
+    extensionPoints: Array.from(extensionPoints.values()),
+    extensions: Array.from(extensions.values()),
+  };
+
+  if (ENABLE_DEBUG_LOGS) {
+    console.log('processPluginDataToExtensionPointGraph - final result:', result);
+  }
+
+  return result;
+};
+
 // Helper function to find the defining plugin and extension point details for a target
 const findExtensionPointDetails = (
   target: string,
@@ -677,14 +855,15 @@ export const processTableDataToGraph = (data: PanelData, options: PanelOptions):
 const availableProvidersCache = new Map<string, string[]>();
 const availableConsumersCache = new Map<string, string[]>();
 const activeConsumersCache = new Map<string, string[]>();
+const availableExtensionPointsCache = new Map<string, string[]>();
 
 /**
  * Gets all available content provider plugin IDs for the specified visualization mode.
  *
- * @param mode - Visualization mode: 'add' (plugins that add extensions) or 'expose' (plugins that expose components)
+ * @param mode - Visualization mode: 'add' (plugins that add extensions), 'expose' (plugins that expose components), or 'extensionpoint' (plugins that provide extensions)
  * @returns Sorted array of plugin IDs that act as content providers
  */
-export const getAvailableContentProviders = (mode: 'add' | 'expose' = 'add'): string[] => {
+export const getAvailableContentProviders = (mode: 'add' | 'expose' | 'extensionpoint' = 'add'): string[] => {
   if (availableProvidersCache.has(mode)) {
     return availableProvidersCache.get(mode)!;
   }
@@ -703,6 +882,16 @@ export const getAvailableContentProviders = (mode: 'add' | 'expose' = 'add'): st
         extensions.exposedComponents.some((comp) => comp && comp.id && comp.id.trim() !== '');
 
       if (exposesComponents) {
+        contentProviders.add(pluginId);
+      }
+    } else if (mode === 'extensionpoint') {
+      // In extension point mode, content providers are plugins that provide extensions
+      const providesExtensions =
+        (extensions.addedLinks && extensions.addedLinks.length > 0) ||
+        (extensions.addedComponents && extensions.addedComponents.length > 0) ||
+        (extensions.addedFunctions && extensions.addedFunctions.length > 0);
+
+      if (providesExtensions) {
         contentProviders.add(pluginId);
       }
     } else {
@@ -729,7 +918,7 @@ export const getAvailableContentProviders = (mode: 'add' | 'expose' = 'add'): st
  * @param mode - Visualization mode: 'add' (plugins that define extension points) or 'expose' (plugins that consume exposed components)
  * @returns Sorted array of plugin IDs that act as content consumers
  */
-export const getAvailableContentConsumers = (mode: 'add' | 'expose' = 'add'): string[] => {
+export const getAvailableContentConsumers = (mode: 'add' | 'expose' | 'extensionpoint' = 'add'): string[] => {
   if (availableConsumersCache.has(mode)) {
     return availableConsumersCache.get(mode)!;
   }
@@ -747,6 +936,12 @@ export const getAvailableContentConsumers = (mode: 'add' | 'expose' = 'add'): st
       if (dependsOnExposedComponents) {
         contentConsumers.add(pluginId);
       }
+    } else if (mode === 'extensionpoint') {
+      // In extension point mode, content consumers are plugins that define extension points
+      const extensions = pluginInfo.extensions;
+      if (extensions.extensionPoints && extensions.extensionPoints.length > 0) {
+        contentConsumers.add(pluginId);
+      }
     } else {
       // In add mode, content consumers are plugins that define extension points
       const extensions = pluginInfo.extensions;
@@ -758,7 +953,7 @@ export const getAvailableContentConsumers = (mode: 'add' | 'expose' = 'add'): st
 
   // For both modes, also check if grafana-core is referenced anywhere and add it
   // This handles cases where grafana-core might be referenced but not defined as a plugin
-  if (mode === 'add') {
+  if (mode === 'add' || mode === 'extensionpoint') {
     // Check if grafana-core is referenced as a target in any dependencies or extension points
     Object.values(pluginData).forEach((pluginInfo) => {
       // Check extension point targets
@@ -850,7 +1045,7 @@ export const getAvailableContentConsumers = (mode: 'add' | 'expose' = 'add'): st
  * @param mode - Visualization mode: 'add' or 'expose'
  * @returns Sorted array of plugin IDs that are active content consumers
  */
-export const getActiveContentConsumers = (mode: 'add' | 'expose' = 'add'): string[] => {
+export const getActiveContentConsumers = (mode: 'add' | 'expose' | 'extensionpoint' = 'add'): string[] => {
   if (activeConsumersCache.has(mode)) {
     return activeConsumersCache.get(mode)!;
   }
@@ -890,6 +1085,7 @@ export const getActiveContentConsumers = (mode: 'add' | 'expose' = 'add'): strin
           visualizationMode: 'expose',
           selectedContentProviders: [],
           selectedContentConsumers: [],
+          selectedExtensionPoints: [],
           showDependencyTypes: true,
           showDescriptions: false,
           layoutType: 'hierarchical',
@@ -947,6 +1143,35 @@ export const getActiveContentConsumers = (mode: 'add' | 'expose' = 'add'): strin
   return result;
 };
 
+/**
+ * Gets all available extension point IDs for the extension point mode.
+ *
+ * @returns Sorted array of extension point IDs
+ */
+export const getAvailableExtensionPoints = (): string[] => {
+  if (availableExtensionPointsCache.has('extensionpoint')) {
+    return availableExtensionPointsCache.get('extensionpoint')!;
+  }
+
+  const extensionPoints = new Set<string>();
+  const pluginData = getPluginData();
+
+  Object.entries(pluginData).forEach(([pluginId, pluginInfo]) => {
+    const extensions = pluginInfo.extensions;
+    if (extensions.extensionPoints && extensions.extensionPoints.length > 0) {
+      extensions.extensionPoints.forEach((ep) => {
+        if (ep && ep.id && ep.id.trim() !== '') {
+          extensionPoints.add(ep.id);
+        }
+      });
+    }
+  });
+
+  const result = Array.from(extensionPoints).sort();
+  availableExtensionPointsCache.set('extensionpoint', result);
+  return result;
+};
+
 // Create sample data for demonstration that matches the new data format
 export const createSampleData = (): GraphData => {
   // This will now use the actual data from data.json
@@ -964,6 +1189,7 @@ export const getDefaultOptions = (): PanelOptions => ({
   // Filtering options
   selectedContentProviders: [], // Empty array means all providers are selected
   selectedContentConsumers: [], // Empty array means all consumers are selected
+  selectedExtensionPoints: [], // Empty array means all extension points are selected
 
   // Color options for extension types
   linkExtensionColor: '#37872d', // Green for link extensions
