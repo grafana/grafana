@@ -9,10 +9,11 @@ import (
 	"net/http"
 	"path"
 	"slices"
-	"sort"
 	"strings"
 	"testing"
 
+	"github.com/grafana/alerting/notify/notifytest"
+	"github.com/grafana/alerting/receivers/line"
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1225,7 +1226,7 @@ func TestIntegrationCRUD(t *testing.T) {
 	t.Run("should be able to update default receiver", func(t *testing.T) {
 		require.NotNil(t, defaultReceiver)
 		newDefault := defaultReceiver.Copy().(*v0alpha1.Receiver)
-		newDefault.Spec.Integrations = append(newDefault.Spec.Integrations, createIntegration(t, "line"))
+		newDefault.Spec.Integrations = append(newDefault.Spec.Integrations, createIntegration(t, line.Type))
 
 		updatedReceiver, err := adminClient.Update(ctx, newDefault, v1.UpdateOptions{})
 		require.NoError(t, err)
@@ -1266,10 +1267,10 @@ func TestIntegrationCRUD(t *testing.T) {
 
 	var receiver *v0alpha1.Receiver
 	t.Run("should correctly persist all known integrations", func(t *testing.T) {
-		integrations := make([]v0alpha1.ReceiverIntegration, 0, len(notify.AllKnownConfigsForTesting))
-		keysIter := maps.Keys(notify.AllKnownConfigsForTesting)
+		integrations := make([]v0alpha1.ReceiverIntegration, 0, len(notifytest.AllKnownV1ConfigsForTesting))
+		keysIter := maps.Keys(notifytest.AllKnownV1ConfigsForTesting)
 		keys := slices.Collect(keysIter)
-		sort.Strings(keys)
+		slices.Sort(keys)
 		for _, key := range keys {
 			integrations = append(integrations, createIntegration(t, key))
 		}
@@ -1300,7 +1301,7 @@ func TestIntegrationCRUD(t *testing.T) {
 
 		export := legacyCli.ExportReceiverTyped(t, receiver.Spec.Title, true)
 		for _, integration := range export.Receivers {
-			expected := notify.AllKnownConfigsForTesting[strings.ToLower(integration.Type)] // to lower because there is LINE that is in different casing in API
+			expected := notifytest.AllKnownV1ConfigsForTesting[schema.IntegrationType(integration.Type)]
 			assert.JSONEqf(t, expected.Config, string(integration.Settings), "integration %s", integration.Type)
 		}
 	})
@@ -1313,7 +1314,7 @@ func TestIntegrationCRUD(t *testing.T) {
 			for _, integration := range get.Spec.Integrations {
 				integrationType := schema.IntegrationType(integration.Type)
 				t.Run(integration.Type, func(t *testing.T) {
-					expected := notify.AllKnownConfigsForTesting[strings.ToLower(integration.Type)]
+					expected := notifytest.AllKnownV1ConfigsForTesting[schema.IntegrationType(integration.Type)]
 					var fields map[string]any
 					require.NoError(t, json.Unmarshal([]byte(expected.Config), &fields))
 					typeSchema, ok := notify.GetSchemaVersionForIntegration(integrationType, schema.V1)
@@ -1336,11 +1337,11 @@ func TestIntegrationCRUD(t *testing.T) {
 	})
 
 	t.Run("should fail to persist receiver with invalid config", func(t *testing.T) {
-		keysIter := maps.Keys(notify.AllKnownConfigsForTesting)
+		keysIter := maps.Keys(notifytest.AllKnownV1ConfigsForTesting)
 		keys := slices.Collect(keysIter)
-		sort.Strings(keys)
+		slices.Sort(keys)
 		for _, key := range keys {
-			t.Run(key, func(t *testing.T) {
+			t.Run(string(key), func(t *testing.T) {
 				integration := createIntegration(t, key)
 				// Make the integration invalid, so it fails to create. This is usually done by sending empty settings.
 				clear(integration.Settings)
@@ -1503,18 +1504,18 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig)
 	require.NoError(t, err)
 }
 
-func createIntegration(t *testing.T, integrationType string) v0alpha1.ReceiverIntegration {
-	cfg, ok := notify.AllKnownConfigsForTesting[integrationType]
+func createIntegration(t *testing.T, integrationType schema.IntegrationType) v0alpha1.ReceiverIntegration {
+	cfg, ok := notifytest.AllKnownV1ConfigsForTesting[integrationType]
 	require.Truef(t, ok, "no known config for integration type %s", integrationType)
-	return createIntegrationWithSettings(t, integrationType, "v1", cfg.Config)
+	return createIntegrationWithSettings(t, integrationType, schema.V1, cfg.Config)
 }
-func createIntegrationWithSettings(t *testing.T, integrationType string, integrationVersion string, settingsJson string) v0alpha1.ReceiverIntegration {
+func createIntegrationWithSettings(t *testing.T, integrationType schema.IntegrationType, integrationVersion schema.Version, settingsJson string) v0alpha1.ReceiverIntegration {
 	settings := common.Unstructured{}
 	require.NoError(t, settings.UnmarshalJSON([]byte(settingsJson)))
 	return v0alpha1.ReceiverIntegration{
 		Settings:              settings.Object,
-		Type:                  integrationType,
-		Version:               integrationVersion,
+		Type:                  string(integrationType),
+		Version:               string(integrationVersion),
 		DisableResolveMessage: util.Pointer(false),
 	}
 }

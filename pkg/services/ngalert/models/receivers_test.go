@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/notifytest"
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,8 +41,7 @@ func TestReceiver_EncryptDecrypt(t *testing.T) {
 	encryptFn := Base64Enrypt
 	decryptnFn := Base64Decrypt
 	// Test that all known integration types encrypt and decrypt their secrets.
-	for it := range alertingNotify.AllKnownConfigsForTesting {
-		integrationType := schema.IntegrationType(it)
+	for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
 		t.Run(string(integrationType), func(t *testing.T) {
 			decrypedIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
 			encrypted := decrypedIntegration.Clone()
@@ -76,8 +76,7 @@ func TestIntegration_Redact(t *testing.T) {
 		return "TESTREDACTED"
 	}
 	// Test that all known integration types redact their secrets.
-	for it := range alertingNotify.AllKnownConfigsForTesting {
-		integrationType := schema.IntegrationType(it)
+	for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
 		t.Run(string(integrationType), func(t *testing.T) {
 			validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
 
@@ -106,8 +105,7 @@ func TestIntegration_Validate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Test that all known integration types are valid.
-	for it := range alertingNotify.AllKnownConfigsForTesting {
-		integrationType := schema.IntegrationType(it)
+	for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
 		t.Run(string(integrationType), func(t *testing.T) {
 			validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
 			assert.NoError(t, validIntegration.Encrypt(Base64Enrypt))
@@ -242,8 +240,7 @@ func TestIntegration_WithExistingSecureFields(t *testing.T) {
 
 func TestSecretsIntegrationConfig(t *testing.T) {
 	// Test that all known integration types have a config and correctly mark their secrets as secure.
-	for it := range alertingNotify.AllKnownConfigsForTesting {
-		integrationType := schema.IntegrationType(it)
+	for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
 		t.Run(string(integrationType), func(t *testing.T) {
 			schemaType, ok := alertingNotify.GetSchemaForIntegration(integrationType)
 			require.True(t, ok)
@@ -272,8 +269,8 @@ func TestSecretsIntegrationConfig(t *testing.T) {
 	}
 
 	t.Run("Unknown version returns error", func(t *testing.T) {
-		for s := range maps.Keys(alertingNotify.AllKnownConfigsForTesting) {
-			schemaType, _ := alertingNotify.GetSchemaForIntegration(schema.IntegrationType(s))
+		for s := range maps.Keys(notifytest.AllKnownV1ConfigsForTesting) {
+			schemaType, _ := alertingNotify.GetSchemaForIntegration(s)
 			_, err := IntegrationConfigFromSchema(schemaType, "unknown")
 			require.Error(t, err)
 			return
@@ -285,8 +282,8 @@ func TestIntegration_SecureFields(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Test that all known integration types have a config and correctly mark their secrets as secure.
-	for it := range alertingNotify.AllKnownConfigsForTesting {
-		integrationType := schema.IntegrationType(it)
+	for it := range notifytest.AllKnownV1ConfigsForTesting {
+		integrationType := it
 		t.Run(string(integrationType), func(t *testing.T) {
 			t.Run("contains SecureSettings", func(t *testing.T) {
 				validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
