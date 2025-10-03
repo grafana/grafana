@@ -6,7 +6,6 @@ import {
   formatEndpoints,
   formatFiles,
   getFilesToFormat,
-  getOperationIds,
   runGenerateApis,
   updatePackageJsonExports,
   validateGroup,
@@ -178,20 +177,10 @@ export default function plopGenerator(plop: NodePlopAPI) {
             : 'Reducer path should end with "API" or "API<version>" (e.g. dashboardAPI, dashboardAPIv0alpha1)',
       },
       {
-        type: 'checkbox',
+        type: 'input',
         name: 'endpoints',
-        loop: false,
-        pageSize: 50,
         default: undefined,
-        choices: (answers) => {
-          const apiSpecRaw = fs.readFileSync(path.join(openapiDir, `${answers.apiInfo}`), 'utf-8');
-          const apiSpec = JSON.parse(apiSpecRaw);
-          const operationIds = getOperationIds(apiSpec);
-
-          return operationIds;
-        },
         message: 'Endpoints to include (comma-separated, optional):',
-        validate: () => true,
       },
     ],
     actions: function (data) {

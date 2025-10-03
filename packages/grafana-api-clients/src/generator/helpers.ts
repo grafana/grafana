@@ -166,6 +166,10 @@ export const updatePackageJsonExports =
     }
   };
 
+/**
+ * TODO: Make this work more generically with endpoints that don't have operationIds defined -
+ * then we can allow selection of endpoints in the generator
+ */
 export const getOperationIds = (apiSpec: OpenAPIV3.Document) => {
   return (
     Object.values(apiSpec.paths).flatMap((path) => {
