@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/screenshot"
@@ -753,7 +754,7 @@ func ParseFormattedState(stateStr string) (eval.State, string, error) {
 }
 
 // GetRuleExtraLabels returns a map of built-in labels that should be added to an alert before it is sent to the Alertmanager or its state is cached.
-func GetRuleExtraLabels(l log.Logger, rule *models.AlertRule, folderTitle string, includeFolder bool) map[string]string {
+func GetRuleExtraLabels(l log.Logger, rule *models.AlertRule, folderTitle string, includeFolder bool, features featuremgmt.FeatureToggles) map[string]string {
 	extraLabels := make(map[string]string, 4)
 
 	extraLabels[alertingModels.NamespaceUIDLabel] = rule.NamespaceUID
@@ -771,7 +772,7 @@ func GetRuleExtraLabels(l log.Logger, rule *models.AlertRule, folderTitle string
 			ignored, _ := json.Marshal(rule.NotificationSettings[1:])
 			l.Error("Detected multiple notification settings, which is not supported. Only the first will be applied", "ignored_settings", string(ignored))
 		}
-		return mergeLabels(extraLabels, rule.NotificationSettings[0].ToLabels())
+		return mergeLabels(extraLabels, rule.NotificationSettings[0].ToLabels(features))
 	}
 	return extraLabels
 }

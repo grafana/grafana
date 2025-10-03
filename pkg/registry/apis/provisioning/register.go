@@ -92,6 +92,7 @@ type APIBuilder struct {
 
 	allowedTargets      []provisioning.SyncTargetType
 	allowImageRendering bool
+	minSyncInterval     time.Duration
 
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
@@ -144,6 +145,7 @@ func NewAPIBuilder(
 	allowedTargets []provisioning.SyncTargetType,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
+	minSyncInterval time.Duration,
 	registry prometheus.Registerer,
 	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 ) *APIBuilder {
@@ -155,6 +157,11 @@ func NewAPIBuilder(
 	}
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceListerForMigrations(unified, legacyMigrator, storageStatus)
+
+	// do not allow minsync interval to be less than 10
+	if minSyncInterval <= 10*time.Second {
+		minSyncInterval = 10 * time.Second
+	}
 
 	b := &APIBuilder{
 		onlyApiServer:       onlyApiServer,
@@ -175,6 +182,7 @@ func NewAPIBuilder(
 		allowedTargets:      allowedTargets,
 		restConfigGetter:    restConfigGetter,
 		allowImageRendering: allowImageRendering,
+		minSyncInterval:     minSyncInterval,
 		registry:            registry,
 	}
 
@@ -261,6 +269,7 @@ func RegisterAPIService(
 		allowedTargets,
 		nil, // will use loopback instead
 		cfg.ProvisioningAllowImageRendering,
+		cfg.ProvisioningMinSyncInterval,
 		reg,
 		nil,
 	)
@@ -287,7 +296,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					Name:        a.GetName(),
 					Namespace:   a.GetNamespace(),
 					Subresource: a.GetSubresource(),
-				})
+				}, "")
 				if err != nil {
 					return authorizer.DecisionDeny, "failed to perform authorization", err
 				}
@@ -485,7 +494,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
 		repoGetter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, jobHistory)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, b, jobHistory)
 
 	// Add any extra storage
 	for _, extra := range b.extras {
@@ -585,6 +594,11 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 				field.NewPath("spec", "target"),
 				cfg.Spec.Sync.Target,
 				"sync target is not supported"))
+	}
+
+	if cfg.Spec.Sync.Enabled && cfg.Spec.Sync.IntervalSeconds < int64(b.minSyncInterval.Seconds()) {
+		list = append(list, field.Invalid(field.NewPath("spec", "sync", "intervalSeconds"),
+			cfg.Spec.Sync.IntervalSeconds, fmt.Sprintf("Interval must be at least %d seconds", int64(b.minSyncInterval.Seconds()))))
 	}
 
 	if !b.allowImageRendering && cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews {

@@ -223,7 +223,7 @@ Team provisioning requires `group_sync_enabled = true` in the SCIM configuration
 {{< /admonition >}}
 
 {{< admonition type="warning" >}}
-Teams provisioned through SCIM cannot be deleted manually from Grafana - they can only be deleted by removing their corresponding groups from the identity provider.
+Teams provisioned through SCIM cannot be deleted manually from Grafana - they can only be deleted by removing their corresponding groups from the identity provider. Optionally, you can disable SCIM group sync to allow manual deletion of teams.
 {{< /admonition >}}
 
 For detailed configuration steps specific to the identity provider, see:
