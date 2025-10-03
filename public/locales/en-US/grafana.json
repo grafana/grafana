@@ -11353,7 +11353,7 @@
       "all-resources-managed_one": "All {{count}} resource is managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
       "no-results-matching-your-query": "No results matching your query",
-      "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed by git sync.",
+      "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed by Git sync.",
       "placeholder-search": "Search",
       "unmanaged-resources_one": "{{count}} resource isn't managed by git sync.",
       "unmanaged-resources_other": "{{count}} resources aren't managed by git sync."
