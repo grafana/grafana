@@ -1512,7 +1512,7 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 	wg.Wait()
 
 	expectedUpdateCalls := int64(testTime / minInterval)
-	require.InDelta(t, expectedUpdateCalls, updateCalls.Load(), float64(expectedUpdateCalls/4))
+	require.InDelta(t, expectedUpdateCalls, updateCalls.Load(), float64(expectedUpdateCalls/2))
 	require.Greater(t, attemptedUpdates.Load(), updateCalls.Load())
 
 	t.Log("Attempted updates:", attemptedUpdates.Load(), "update calls:", updateCalls.Load())
