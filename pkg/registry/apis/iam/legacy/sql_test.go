@@ -60,6 +60,12 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	updateTeam := func(cmd *UpdateTeamCommand) sqltemplate.SQLTemplate {
+		v := newUpdateTeam(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	listTeams := func(q *ListTeamQuery) sqltemplate.SQLTemplate {
 		v := newListTeams(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -389,6 +395,19 @@ func TestIdentityQueries(t *testing.T) {
 						ExternalUID:   "team-2-uid",
 						OrgID:         1,
 						Created:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+					}),
+				},
+			},
+			sqlUpdateTeamTemplate: {
+				{
+					Name: "update_team_basic",
+					Data: updateTeam(&UpdateTeamCommand{
+						UID:           "team-1",
+						Name:          "Team 1",
+						Email:         "team1@example.com",
+						IsProvisioned: true,
+						ExternalUID:   "team-1-uid",
 						Updated:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
 					}),
 				},

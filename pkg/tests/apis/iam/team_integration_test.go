@@ -38,17 +38,18 @@ func TestIntegrationTeams(t *testing.T) {
 					featuremgmt.FlagKubernetesAuthnMutation,
 				},
 			})
+
 			doTeamCRUDTestsUsingTheNewAPIs(t, helper)
 
 			if mode < 3 {
-				doTeamCRUDTestsUsingTheLegacyAPIs(t, helper)
+				doTeamCRUDTestsUsingTheLegacyAPIs(t, helper, mode)
 			}
 		})
 	}
 }
 
 func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
-	t.Run("should create/get/delete team using the new APIs as a GrafanaAdmin", func(t *testing.T) {
+	t.Run("should create/get/update/delete team using the new APIs as a GrafanaAdmin", func(t *testing.T) {
 		ctx := context.Background()
 
 		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -57,6 +58,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 			GVR:       gvrTeams,
 		})
 
+		// Create the team
 		created, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
@@ -69,6 +71,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		createdUID := created.GetName()
 		require.NotEmpty(t, createdUID)
 
+		// Get the team
 		fetched, err := teamClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, fetched)
@@ -81,6 +84,26 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, createdUID, fetched.GetName())
 		require.Equal(t, "default", fetched.GetNamespace())
 
+		// Update the team
+		updatedTeam, err := teamClient.Resource.Update(ctx, helper.LoadYAMLOrJSONFile("testdata/team-test-update-v0.yaml"), metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, updatedTeam)
+
+		updatedSpec := updatedTeam.Object["spec"].(map[string]interface{})
+		require.Equal(t, "Test Team 2", updatedSpec["title"])
+		require.Equal(t, "testteam2@example123.com", updatedSpec["email"])
+		require.Equal(t, false, updatedSpec["provisioned"])
+
+		verifiedTeam, err := teamClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, verifiedTeam)
+
+		verifiedSpec := verifiedTeam.Object["spec"].(map[string]interface{})
+		require.Equal(t, "Test Team 2", verifiedSpec["title"])
+		require.Equal(t, "testteam2@example123.com", verifiedSpec["email"])
+		require.Equal(t, false, verifiedSpec["provisioned"])
+
+		// Delete the team
 		err = teamClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
 		require.NoError(t, err)
 
@@ -202,12 +225,14 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 }
 
-func doTeamCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper) {
-	t.Run("should create team using legacy APIs and get/delete it using the new APIs", func(t *testing.T) {
+func doTeamCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWriterMode) {
+	t.Run("should create team using legacy APIs and get/update/delete it using the new APIs", func(t *testing.T) {
 		ctx := context.Background()
+
 		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Admin,
-			GVR:  gvrTeams,
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
 		})
 
 		legacyTeamPayload := `{
@@ -243,6 +268,31 @@ func doTeamCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper)
 		require.Equal(t, rsp.Result.UID, team.GetName())
 		require.Equal(t, "default", team.GetNamespace())
 
+		// Updating the team is not supported in Mode2 if the team has been created using the legacy APIs
+		if mode < rest.Mode2 {
+			team.Object["spec"].(map[string]interface{})["title"] = "Updated Test Team 2"
+			team.Object["spec"].(map[string]interface{})["email"] = "updated@example.com"
+
+			updatedTeam, err := teamClient.Resource.Update(ctx, team, metav1.UpdateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, updatedTeam)
+
+			updatedSpec := updatedTeam.Object["spec"].(map[string]interface{})
+			require.Equal(t, "Updated Test Team 2", updatedSpec["title"])
+			require.Equal(t, "updated@example.com", updatedSpec["email"])
+			require.Equal(t, false, updatedSpec["provisioned"])
+
+			verifiedTeam, err := teamClient.Resource.Get(ctx, rsp.Result.UID, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, verifiedTeam)
+
+			verifiedSpec := verifiedTeam.Object["spec"].(map[string]interface{})
+			require.Equal(t, "Updated Test Team 2", verifiedSpec["title"])
+			require.Equal(t, "updated@example.com", verifiedSpec["email"])
+			require.Equal(t, false, verifiedSpec["provisioned"])
+		}
+
+		// Delete the team
 		err = teamClient.Resource.Delete(ctx, rsp.Result.UID, metav1.DeleteOptions{})
 		require.NoError(t, err)
 
