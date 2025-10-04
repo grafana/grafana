@@ -846,7 +846,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 							Format: "",
 						},
 					},
-					"resource": {
+					"kind": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",

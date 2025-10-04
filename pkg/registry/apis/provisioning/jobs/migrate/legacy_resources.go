@@ -204,11 +204,11 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 	}
 
 	result := jobs.JobResourceResult{
-		Name:     parsed.Meta.GetName(),
-		Resource: r.kind.Resource,
-		Group:    r.kind.Group,
-		Action:   repository.FileActionCreated,
-		Path:     fileName,
+		Name:   parsed.Meta.GetName(),
+		Group:  r.kind.Group,
+		Kind:   parsed.GVK.Kind,
+		Action: repository.FileActionCreated,
+		Path:   fileName,
 	}
 
 	if err != nil {

@@ -63,11 +63,11 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 				}
 
 				progress.Record(ensureFolderCtx, jobs.JobResourceResult{
-					Path:     safeSegment,
-					Action:   repository.FileActionCreated,
-					Resource: resources.FolderResource.Resource,
-					Group:    resources.FolderResource.Group,
-					Name:     folder,
+					Path:   safeSegment,
+					Action: repository.FileActionCreated,
+					Group:  resources.FolderResource.Group,
+					Kind:   resources.FolderKind.Kind,
+					Name:   folder,
 				})
 				ensureFolderSpan.End()
 				continue
@@ -95,7 +95,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 				result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
 			}
 			result.Name = name
-			result.Resource = gvk.Kind
+			result.Kind = gvk.Kind
 			result.Group = gvk.Group
 			writeSpan.End()
 		case repository.FileActionDeleted:
@@ -106,7 +106,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 				result.Error = fmt.Errorf("removing resource from file %s: %w", change.Path, err)
 			}
 			result.Name = name
-			result.Resource = gvk.Kind
+			result.Kind = gvk.Kind
 			result.Group = gvk.Group
 			removeSpan.End()
 		case repository.FileActionRenamed:
@@ -117,7 +117,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 				result.Error = fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err)
 			}
 			result.Name = name
-			result.Resource = gvk.Kind
+			result.Kind = gvk.Kind
 			result.Group = gvk.Group
 			renameSpan.End()
 		case repository.FileActionIgnored:

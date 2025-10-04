@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestIncrementalSync_ContextCancelled(t *testing.T) {
@@ -131,11 +132,11 @@ func TestIncrementalSync(t *testing.T) {
 
 				// Mock progress recording
 				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action:   repository.FileActionCreated,
-					Path:     "unsupported/path/",
-					Resource: resources.FolderResource.Resource,
-					Group:    resources.FolderResource.Group,
-					Name:     "test-folder",
+					Action: repository.FileActionCreated,
+					Path:   "unsupported/path/",
+					Kind:   resources.FolderKind.Kind,
+					Group:  resources.FolderResource.Group,
+					Name:   "test-folder",
 				}).Return()
 
 				progress.On("TooManyErrors").Return(nil)
@@ -190,11 +191,11 @@ func TestIncrementalSync(t *testing.T) {
 
 				// Mock progress recording
 				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action:   repository.FileActionDeleted,
-					Path:     "dashboards/old.json",
-					Name:     "old-dashboard",
-					Resource: "Dashboard",
-					Group:    "dashboards",
+					Action: repository.FileActionDeleted,
+					Path:   "dashboards/old.json",
+					Name:   "old-dashboard",
+					Kind:   "Dashboard",
+					Group:  "dashboards",
 				}).Return()
 
 				progress.On("TooManyErrors").Return(nil)
@@ -226,11 +227,11 @@ func TestIncrementalSync(t *testing.T) {
 
 				// Mock progress recording
 				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action:   repository.FileActionRenamed,
-					Path:     "dashboards/new.json",
-					Name:     "renamed-dashboard",
-					Resource: "Dashboard",
-					Group:    "dashboards",
+					Action: repository.FileActionRenamed,
+					Path:   "dashboards/new.json",
+					Name:   "renamed-dashboard",
+					Kind:   "Dashboard",
+					Group:  "dashboards",
 				}).Return()
 
 				progress.On("TooManyErrors").Return(nil)
@@ -310,7 +311,7 @@ func TestIncrementalSync(t *testing.T) {
 					return result.Action == repository.FileActionCreated &&
 						result.Path == "dashboards/test.json" &&
 						result.Name == "test-dashboard" &&
-						result.Resource == "Dashboard" &&
+						result.Kind == "Dashboard" &&
 						result.Group == "dashboards" &&
 						result.Error != nil &&
 						result.Error.Error() == "writing resource from file dashboards/test.json: write failed"
@@ -346,7 +347,7 @@ func TestIncrementalSync(t *testing.T) {
 					return result.Action == repository.FileActionDeleted &&
 						result.Path == "dashboards/old.json" &&
 						result.Name == "old-dashboard" &&
-						result.Resource == "Dashboard" &&
+						result.Kind == "Dashboard" &&
 						result.Group == "dashboards" &&
 						result.Error != nil &&
 						result.Error.Error() == "removing resource from file dashboards/old.json: delete failed"
