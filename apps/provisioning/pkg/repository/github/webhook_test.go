@@ -69,6 +69,36 @@ func TestParseWebhooks(t *testing.T) {
 				},
 			},
 		}},
+		{"push", "keep_file_only", provisioning.WebhookResponse{
+			Code: http.StatusAccepted,
+			Job: &provisioning.JobSpec{
+				Repository: "unit-test-repo",
+				Action:     provisioning.JobActionPull,
+				Pull: &provisioning.SyncJobOptions{
+					Incremental: false,
+				},
+			},
+		}},
+		{"push", "keep_file_with_others", provisioning.WebhookResponse{
+			Code: http.StatusAccepted,
+			Job: &provisioning.JobSpec{
+				Repository: "unit-test-repo",
+				Action:     provisioning.JobActionPull,
+				Pull: &provisioning.SyncJobOptions{
+					Incremental: true,
+				},
+			},
+		}},
+		{"push", "multiple_keep_files", provisioning.WebhookResponse{
+			Code: http.StatusAccepted,
+			Job: &provisioning.JobSpec{
+				Repository: "unit-test-repo",
+				Action:     provisioning.JobActionPull,
+				Pull: &provisioning.SyncJobOptions{
+					Incremental: false,
+				},
+			},
+		}},
 		{"issue_comment", "created", provisioning.WebhookResponse{
 			Code: http.StatusNotImplemented,
 		}},

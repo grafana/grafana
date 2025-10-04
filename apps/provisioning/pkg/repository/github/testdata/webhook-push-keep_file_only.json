@@ -1,0 +1,105 @@
+{
+  "ref": "refs/heads/main",
+  "before": "72096e3adc646c5a5b8a91744f962b12bac06045",
+  "after": "1234567890abcdef1234567890abcdef12345678",
+  "repository": {
+    "id": 888020043,
+    "node_id": "R_kgDONO4cSw",
+    "name": "git-ui-sync-demo",
+    "full_name": "grafana/git-ui-sync-demo",
+    "private": true,
+    "owner": {
+      "name": "grafana",
+      "email": "hello@grafana.com",
+      "login": "grafana",
+      "id": 7195757,
+      "node_id": "MDEyOk9yZ2FuaXphdGlvbjcxOTU3NTc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7195757?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/grafana",
+      "html_url": "https://github.com/grafana",
+      "type": "Organization",
+      "site_admin": false
+    },
+    "html_url": "https://github.com/grafana/git-ui-sync-demo",
+    "description": "A repository containing Grafana dashboards to demo the Github Sync feature in Grafana.",
+    "fork": false,
+    "url": "https://github.com/grafana/git-ui-sync-demo",
+    "default_branch": "main",
+    "master_branch": "main",
+    "organization": "grafana"
+  },
+  "pusher": {
+    "name": "testuser",
+    "email": "test@grafana.com"
+  },
+  "organization": {
+    "login": "grafana",
+    "id": 7195757,
+    "node_id": "MDEyOk9yZ2FuaXphdGlvbjcxOTU3NTc=",
+    "url": "https://api.github.com/orgs/grafana",
+    "avatar_url": "https://avatars.githubusercontent.com/u/7195757?v=4"
+  },
+  "sender": {
+    "login": "testuser",
+    "id": 123456,
+    "node_id": "MDQ6VXNlcjEyMzQ1Ng==",
+    "avatar_url": "https://avatars.githubusercontent.com/u/123456?v=4",
+    "type": "User",
+    "site_admin": false
+  },
+  "created": false,
+  "deleted": false,
+  "forced": false,
+  "base_ref": null,
+  "compare": "https://github.com/grafana/git-ui-sync-demo/compare/72096e3adc64...1234567890ab",
+  "commits": [
+    {
+      "id": "1234567890abcdef1234567890abcdef12345678",
+      "tree_id": "abcdef1234567890abcdef1234567890abcdef12",
+      "distinct": true,
+      "message": "Remove empty folder by deleting .keep file",
+      "timestamp": "2024-12-09T11:00:48+03:00",
+      "url": "https://github.com/grafana/git-ui-sync-demo/commit/1234567890abcdef1234567890abcdef12345678",
+      "author": {
+        "name": "Test User",
+        "email": "test@grafana.com",
+        "username": "testuser"
+      },
+      "committer": {
+        "name": "Test User",
+        "email": "test@grafana.com",
+        "username": "testuser"
+      },
+      "added": [],
+      "removed": [
+        "empty-folder/.keep"
+      ],
+      "modified": []
+    }
+  ],
+  "head_commit": {
+    "id": "1234567890abcdef1234567890abcdef12345678",
+    "tree_id": "abcdef1234567890abcdef1234567890abcdef12",
+    "distinct": true,
+    "message": "Remove empty folder by deleting .keep file",
+    "timestamp": "2024-12-09T11:00:48+03:00",
+    "url": "https://github.com/grafana/git-ui-sync-demo/commit/1234567890abcdef1234567890abcdef12345678",
+    "author": {
+      "name": "Test User",
+      "email": "test@grafana.com",
+      "username": "testuser"
+    },
+    "committer": {
+      "name": "Test User",
+      "email": "test@grafana.com",
+      "username": "testuser"
+    },
+    "added": [],
+    "removed": [
+      "empty-folder/.keep"
+    ],
+    "modified": []
+  }
+}
+
