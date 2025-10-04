@@ -104,6 +104,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 			// TODO: should we use the clients or the resource manager instead?
 			client, gvk, err := clients.ForResource(deleteCtx, versionlessGVR)
 			if err != nil {
+				result.Kind = versionlessGVR.Resource // could not find a kind
 				result.Error = fmt.Errorf("get client for deleted object: %w", err)
 				progress.Record(deleteCtx, result)
 				continue
@@ -111,7 +112,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 			result.Kind = gvk.Kind
 
 			if err := client.Delete(deleteCtx, change.Existing.Name, metav1.DeleteOptions{}); err != nil {
-				result.Error = fmt.Errorf("deleting resource %s/%s %s: %w", change.Existing.Group, change.Existing.Resource, change.Existing.Name, err)
+				result.Error = fmt.Errorf("deleting resource %s/%s %s: %w", change.Existing.Group, gvk.Kind, change.Existing.Name, err)
 			}
 			progress.Record(deleteCtx, result)
 			deleteSpan.End()

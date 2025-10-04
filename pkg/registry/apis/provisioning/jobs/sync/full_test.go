@@ -553,7 +553,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				progress.On("Record", mock.Anything, jobs.JobResourceResult{
 					Name:   "test-dashboard",
 					Group:  "dashboards",
-					Kind:   "Dashboard",
+					Kind:   "dashboards", // could not find a real kind
 					Action: repository.FileActionDeleted,
 					Path:   "dashboards/test.json",
 					Error:  fmt.Errorf("get client for deleted object: %w", errors.New("didn't work")),
