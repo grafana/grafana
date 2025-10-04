@@ -106,6 +106,8 @@ describe('PlaylistForm', () => {
       await userEvent.click(screen.getByRole('button', { name: /save/i }));
       expect(onSubmitMock).toHaveBeenCalledTimes(1);
       expect(onSubmitMock).toHaveBeenCalledWith({
+        apiVersion: 'playlist.grafana.app/v0alpha1',
+        kind: 'Playlist',
         spec: {
           title: 'A test playlist',
           interval: '10m',
