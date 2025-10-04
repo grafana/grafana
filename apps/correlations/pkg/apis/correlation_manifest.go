@@ -25,8 +25,9 @@ var (
 )
 
 var appManifestData = app.ManifestData{
-	AppName: "correlation",
-	Group:   "correlations.grafana.app",
+	AppName:          "correlation",
+	Group:            "correlations.grafana.app",
+	PreferredVersion: "v0alpha1",
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v0alpha1",
