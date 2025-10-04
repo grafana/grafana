@@ -301,7 +301,6 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 	}
 	folder := meta.GetFolder()
 	if folder != "" {
-		// check to see if the folder is empty or not
 		childCount, err := r.folders.Client().Get(ctx, folder, metav1.GetOptions{}, "counts")
 		if err != nil {
 			span.RecordError(err)
