@@ -137,10 +137,6 @@ func (s *LegacySQL) getDashboardStars(ctx context.Context, orgId int64, user str
 }
 
 func (s *LegacySQL) getHistoryStars(ctx context.Context, orgId int64, user string) (map[string][]string, error) {
-	if user == "" {
-		return nil, fmt.Errorf("expecting uer UID")
-	}
-
 	sql, err := s.db(ctx)
 	if err != nil {
 		return nil, err
