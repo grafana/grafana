@@ -139,15 +139,37 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	if err != nil {
 		setupSpan.End()
 		logger.Error("failed to create repository resources client", "error", err)
-		err = fmt.Errorf("create repository resources client: %w", err)
-		return tracing.Error(span, err)
+		setupError := fmt.Errorf("create repository resources client: %w", err)
+		syncStatus.State = provisioning.JobStateError
+		syncStatus.Finished = time.Now().UnixMilli()
+		syncStatus.Message = []string{setupError.Error()}
+		if updateErr := r.patchStatus(ctx, cfg, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/sync",
+			"value": syncStatus,
+		}); updateErr != nil {
+			logger.Error("failed to update sync status after setup error", "error", updateErr)
+		}
+
+		return tracing.Error(span, setupError)
 	}
 	clients, err := r.clients.Clients(setupCtx, cfg.Namespace)
 	if err != nil {
 		setupSpan.End()
 		logger.Error("failed to get clients for the repository", "error", err)
-		err = fmt.Errorf("get clients for %s: %w", cfg.Name, err)
-		return tracing.Error(span, err)
+		setupError := fmt.Errorf("get clients for %s: %w", cfg.Name, err)
+		syncStatus.State = provisioning.JobStateError
+		syncStatus.Finished = time.Now().UnixMilli()
+		syncStatus.Message = []string{setupError.Error()}
+		if updateErr := r.patchStatus(ctx, cfg, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/sync",
+			"value": syncStatus,
+		}); updateErr != nil {
+			logger.Error("failed to update sync status after setup error", "error", updateErr)
+		}
+
+		return tracing.Error(span, setupError)
 	}
 	setupSpan.End()
 

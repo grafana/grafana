@@ -153,10 +153,37 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Initial status update succeeds
 				pr.On("SetMessage", mock.Anything, "update sync status at start").Return()
-				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything).Return(nil)
+				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything).Return(nil).Once()
 
 				// Repository resources creation fails
 				rrf.On("Client", mock.Anything, mock.Anything).Return(nil, errors.New("failed to create repository resources client"))
+
+				// Status update with error should be called
+				rpf.On("Execute", mock.Anything, repoConfig, mock.MatchedBy(func(patch map[string]interface{}) bool {
+					if patch["op"] != "replace" || patch["path"] != "/status/sync" {
+						return false
+					}
+
+					syncStatus := patch["value"].(provisioning.SyncStatus)
+					if syncStatus.State != provisioning.JobStateError {
+						return false
+					}
+
+					if syncStatus.Finished == 0 {
+						return false
+					}
+
+					if len(syncStatus.Message) == 0 {
+						return false
+					}
+
+					expectedMsg := "create repository resources client: failed to create repository resources client"
+					if syncStatus.Message[0] != expectedMsg {
+						return false
+					}
+
+					return true
+				})).Return(nil).Once()
 			},
 			expectedError: "create repository resources client: failed to create repository resources client",
 		},
@@ -185,13 +212,40 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Initial status update succeeds
 				pr.On("SetMessage", mock.Anything, "update sync status at start").Return()
-				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything).Return(nil)
+				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything).Return(nil).Once()
 
 				// Repository resources creation succeeds
 				rrf.On("Client", mock.Anything, mock.Anything).Return(&resources.MockRepositoryResources{}, nil)
 
 				// Getting clients for namespace fails
 				cf.On("Clients", mock.Anything, "test-namespace").Return(nil, errors.New("failed to get clients"))
+
+				// Status update with error should be called
+				rpf.On("Execute", mock.Anything, repoConfig, mock.MatchedBy(func(patch map[string]interface{}) bool {
+					if patch["op"] != "replace" || patch["path"] != "/status/sync" {
+						return false
+					}
+
+					syncStatus := patch["value"].(provisioning.SyncStatus)
+					if syncStatus.State != provisioning.JobStateError {
+						return false
+					}
+
+					if syncStatus.Finished == 0 {
+						return false
+					}
+
+					if len(syncStatus.Message) == 0 {
+						return false
+					}
+
+					expectedMsg := "get clients for test-repo: failed to get clients"
+					if syncStatus.Message[0] != expectedMsg {
+						return false
+					}
+
+					return true
+				})).Return(nil).Once()
 			},
 			expectedError: "get clients for test-repo: failed to get clients",
 		},
