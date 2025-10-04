@@ -126,7 +126,14 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	globalEncryptedValueStorage, err := encryptionstorage.ProvideGlobalEncryptedValueStorage(database, tracer)
 	require.NoError(t, err)
 
-	sqlKeeper := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encryptedValueStorage, nil)
+	// Initialize a noop migration executor for the sql keeper so it doesn't interfere with initialization
+	noopMigrationExecutor := &NoopMigrationExecutor{}
+	sqlKeeper, err := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encryptedValueStorage, noopMigrationExecutor, nil)
+	require.NoError(t, err)
+
+	// Initialize a real migration executor for test
+	realMigrationExecutor, err := encryptionstorage.ProvideEncryptedValueMigrationExecutor(database, tracer, encryptedValueStorage, globalEncryptedValueStorage)
+	require.NoError(t, err)
 
 	var keeperService contracts.KeeperService = newKeeperServiceWrapper(sqlKeeper)
 
@@ -158,39 +165,41 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		keeperService)
 
 	return Sut{
-		SecureValueService:          secureValueService,
-		SecureValueMetadataStorage:  secureValueMetadataStorage,
-		DecryptStorage:              decryptStorage,
-		DecryptService:              decryptService,
-		EncryptedValueStorage:       encryptedValueStorage,
-		GlobalEncryptedValueStorage: globalEncryptedValueStorage,
-		SQLKeeper:                   sqlKeeper,
-		Database:                    database,
-		AccessClient:                accessClient,
-		ConsolidationService:        consolidationService,
-		EncryptionManager:           encryptionManager,
-		GlobalDataKeyStore:          globalDataKeyStore,
-		GarbageCollectionWorker:     garbageCollectionWorker,
-		Clock:                       clock,
-		KeeperService:               keeperService,
-		KeeperMetadataStorage:       keeperMetadataStorage,
+		SecureValueService:              secureValueService,
+		SecureValueMetadataStorage:      secureValueMetadataStorage,
+		DecryptStorage:                  decryptStorage,
+		DecryptService:                  decryptService,
+		EncryptedValueStorage:           encryptedValueStorage,
+		GlobalEncryptedValueStorage:     globalEncryptedValueStorage,
+		EncryptedValueMigrationExecutor: realMigrationExecutor,
+		SQLKeeper:                       sqlKeeper,
+		Database:                        database,
+		AccessClient:                    accessClient,
+		ConsolidationService:            consolidationService,
+		EncryptionManager:               encryptionManager,
+		GlobalDataKeyStore:              globalDataKeyStore,
+		GarbageCollectionWorker:         garbageCollectionWorker,
+		Clock:                           clock,
+		KeeperService:                   keeperService,
+		KeeperMetadataStorage:           keeperMetadataStorage,
 	}
 }
 
 type Sut struct {
-	SecureValueService          contracts.SecureValueService
-	SecureValueMetadataStorage  contracts.SecureValueMetadataStorage
-	DecryptStorage              contracts.DecryptStorage
-	DecryptService              decryptcontracts.DecryptService
-	EncryptedValueStorage       contracts.EncryptedValueStorage
-	GlobalEncryptedValueStorage contracts.GlobalEncryptedValueStorage
-	SQLKeeper                   *sqlkeeper.SQLKeeper
-	Database                    *database.Database
-	AccessClient                types.AccessClient
-	ConsolidationService        contracts.ConsolidationService
-	EncryptionManager           contracts.EncryptionManager
-	GlobalDataKeyStore          contracts.GlobalDataKeyStorage
-	GarbageCollectionWorker     *garbagecollectionworker.Worker
+	SecureValueService              contracts.SecureValueService
+	SecureValueMetadataStorage      contracts.SecureValueMetadataStorage
+	DecryptStorage                  contracts.DecryptStorage
+	DecryptService                  decryptcontracts.DecryptService
+	EncryptedValueStorage           contracts.EncryptedValueStorage
+	GlobalEncryptedValueStorage     contracts.GlobalEncryptedValueStorage
+	EncryptedValueMigrationExecutor contracts.EncryptedValueMigrationExecutor
+	SQLKeeper                       *sqlkeeper.SQLKeeper
+	Database                        *database.Database
+	AccessClient                    types.AccessClient
+	ConsolidationService            contracts.ConsolidationService
+	EncryptionManager               contracts.EncryptionManager
+	GlobalDataKeyStore              contracts.GlobalDataKeyStorage
+	GarbageCollectionWorker         *garbagecollectionworker.Worker
 	// The fake clock passed to implementations to make testing easier
 	Clock                 *FakeClock
 	KeeperService         contracts.KeeperService
@@ -365,4 +374,11 @@ func (c *FakeClock) Now() time.Time {
 
 func (c *FakeClock) AdvanceBy(duration time.Duration) {
 	c.Current = c.Current.Add(duration)
+}
+
+type NoopMigrationExecutor struct {
+}
+
+func (e *NoopMigrationExecutor) Execute(ctx context.Context) (int, error) {
+	return 0, nil
 }

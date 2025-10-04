@@ -9,6 +9,7 @@ import (
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/mitchellh/copystructure"
 	"github.com/stretchr/testify/require"
@@ -58,7 +59,7 @@ func TestBasic(t *testing.T) {
 		require.NoError(t, err)
 
 		// Get the secret value once to make sure it's reachable
-		exposedValue, err := keeper.Expose(t.Context(), keeperCfg, sv.Namespace, sv.Name, sv.Status.Version)
+		exposedValue, err := keeper.Expose(t.Context(), keeperCfg, xkube.Namespace(sv.Namespace), sv.Name, sv.Status.Version)
 		require.NoError(t, err)
 		require.NotEmpty(t, exposedValue.DangerouslyExposeAndConsumeValue())
 
@@ -78,7 +79,7 @@ func TestBasic(t *testing.T) {
 		require.Empty(t, svs)
 
 		// Try to get the secreet value again to make sure it's been deleted from the keeper
-		exposedValue, err = keeper.Expose(t.Context(), keeperCfg, sv.Namespace, sv.Name, sv.Status.Version)
+		exposedValue, err = keeper.Expose(t.Context(), keeperCfg, xkube.Namespace(sv.Namespace), sv.Name, sv.Status.Version)
 		require.ErrorIs(t, err, encryption.ErrEncryptedValueNotFound)
 		require.Empty(t, exposedValue)
 	})
