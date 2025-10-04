@@ -8,8 +8,8 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/emicklei/go-restful/v3 v3.12.2 h1:DhwDP0vY3k8ZzE0RunuJy8GhNpPL6zqLkDf9B/a0/xU=
-github.com/emicklei/go-restful/v3 v3.12.2/go.mod h1:6n3XBCmQQb25CM2LCACGz8ukIrRry+4bhvbpWn3mrbc=
+github.com/emicklei/go-restful/v3 v3.13.0 h1:C4Bl2xDndpU6nJ4bc1jXd+uTmYPVUwkD6bFY/oTyCes=
+github.com/emicklei/go-restful/v3 v3.13.0/go.mod h1:6n3XBCmQQb25CM2LCACGz8ukIrRry+4bhvbpWn3mrbc=
 github.com/fxamacker/cbor/v2 v2.9.0 h1:NpKPmjDBgUfBms6tr6JZkTHtfFGcMKsw3eGcmD/sapM=
 github.com/fxamacker/cbor/v2 v2.9.0/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
 github.com/go-jose/go-jose/v3 v3.0.4 h1:Wp5HA7bLQcKnf6YYao/4kpRpVMp/yf6+pJKV8WFSaNY=
@@ -58,8 +58,8 @@ github.com/grafana/authlib/types v0.0.0-20250926065801-df98203cff37 h1:qEwZ+7MbP
 github.com/grafana/authlib/types v0.0.0-20250926065801-df98203cff37/go.mod h1:qeWYbnWzaYGl88JlL9+DsP1GT2Cudm58rLtx13fKZdw=
 github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4 h1:jSojuc7njleS3UOz223WDlXOinmuLAIPI0z2vtq8EgI=
 github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4/go.mod h1:VahT+GtfQIM+o8ht2StR6J9g+Ef+C2Vokh5uuSmOD/4=
-github.com/grafana/grafana-app-sdk v0.45.0 h1:niFqYovxuw9vnUB9qoxEgmupqriG7Gns9ZGwB2uuOyE=
-github.com/grafana/grafana-app-sdk v0.45.0/go.mod h1:1pYGEBrgG8i6pKmmsNXvtAr15jZ4iLtyHU4yj7T6XaI=
+github.com/grafana/grafana-app-sdk v0.46.0 h1:gvzQvCQgZJ/73BfAcbDt/6TAMhnVikVPxZt/UwDl+oc=
+github.com/grafana/grafana-app-sdk v0.46.0/go.mod h1:LCTrqR1SwBS13XGVYveBmM7giJDDjzuXK+M9VzPuPWc=
 github.com/grafana/grafana-app-sdk/logging v0.45.0 h1:0SH6nYZpiLBZRwUq4J6+1vo8xuHKJjnO95/2pGOoA8w=
 github.com/grafana/grafana-app-sdk/logging v0.45.0/go.mod h1:Gh/nBWnspK3oDNWtiM5qUF/fardHzOIEez+SPI3JeHA=
 github.com/grafana/grafana/apps/secret v0.0.0-20250902093454-b56b7add012f h1:f+Z5Xpfp1WNYjUe23ginerWsHWUsRgOWrr3WGu3SlWs=

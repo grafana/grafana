@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/simple"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
@@ -22,8 +23,10 @@ func New(cfg app.Config) (app.App, error) {
 		Name:       "alerting.notification",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
-			ErrorHandler: func(ctx context.Context, err error) {
-				logging.DefaultLogger.With("error", err).Error("Informer processing error")
+			InformerOptions: operator.InformerOptions{
+				ErrorHandler: func(ctx context.Context, err error) {
+					logging.DefaultLogger.With("error", err).Error("Informer processing error")
+				},
 			},
 		},
 		ManagedKinds: managedKinds,

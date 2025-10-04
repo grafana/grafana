@@ -21,8 +21,9 @@ import (
 )
 
 var appManifestData = app.ManifestData{
-	AppName: "dashboard",
-	Group:   "dashboard.grafana.app",
+	AppName:          "dashboard",
+	Group:            "dashboard.grafana.app",
+	PreferredVersion: "v1beta1",
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v0alpha1",
