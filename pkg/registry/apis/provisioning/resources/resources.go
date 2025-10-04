@@ -10,13 +10,16 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 var (
@@ -238,8 +241,11 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	return parsed.Obj.GetName(), parsed.GVK, err
 }
 
-func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, schema.GroupVersionKind, error) {
-	name, gvk, err := r.RemoveResourceFromFile(ctx, previousPath, previousRef)
+func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string, tracer tracing.Tracer) (string, schema.GroupVersionKind, error) {
+	ctx, span := tracer.Start(ctx, "renameResourceFile")
+	defer span.End()
+
+	name, gvk, err := r.RemoveResourceFromFile(ctx, previousPath, previousRef, tracer)
 	if err != nil {
 		return name, gvk, fmt.Errorf("failed to remove resource: %w", err)
 	}
@@ -247,34 +253,81 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	return r.WriteResourceFromFile(ctx, newPath, newRef)
 }
 
-func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, schema.GroupVersionKind, error) {
+func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string, tracer tracing.Tracer) (string, schema.GroupVersionKind, error) {
+	ctx, span := tracer.Start(ctx, "removeResourceFromFile")
+	defer span.End()
+
 	info, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
+		span.RecordError(err)
 		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	obj, gvk, _ := DecodeYAMLObject(bytes.NewBuffer(info.Data))
 	if obj == nil {
+		span.RecordError(err)
 		return "", schema.GroupVersionKind{}, fmt.Errorf("no object found")
 	}
 
 	objName := obj.GetName()
 	if objName == "" {
+		span.RecordError(err)
 		return "", schema.GroupVersionKind{}, ErrMissingName
 	}
 
 	client, _, err := r.clients.ForKind(ctx, *gvk)
 	if err != nil {
+		span.RecordError(err)
 		return "", schema.GroupVersionKind{}, fmt.Errorf("unable to get client for deleted object: %w", err)
 	}
 
 	err = client.Delete(ctx, objName, metav1.DeleteOptions{})
 	if err != nil {
+		span.RecordError(err)
+
 		if apierrors.IsNotFound(err) {
 			return objName, schema.GroupVersionKind{}, nil // Already deleted or simply non-existing, nothing to do
 		}
 
 		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to delete: %w", err)
+	}
+	span.AddEvent("object deleted")
+
+	// best effort to delete the parent folder if the resource is in a folder and it is now empty
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		span.RecordError(err)
+		return objName, schema.GroupVersionKind{}, nil
+	}
+	folder := meta.GetFolder()
+	if folder != "" {
+		// check to see if the folder is empty or not
+		childCount, err := r.folders.Client().Get(ctx, folder, metav1.GetOptions{}, "counts")
+		if err != nil {
+			span.RecordError(err)
+			return objName, schema.GroupVersionKind{}, nil
+		}
+		var childCountStats folders.DescendantCounts
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(childCount.Object, &childCountStats); err != nil {
+			span.RecordError(err)
+			return objName, schema.GroupVersionKind{}, nil
+		}
+		for _, count := range childCountStats.Counts {
+			// if there are any children to the folder, don't delete it
+			if count.Count > 0 {
+				span.AddEvent("parent folder is not empty, skipping deletion")
+				return objName, schema.GroupVersionKind{}, nil
+			}
+		}
+
+		span.AddEvent("parent folder is empty, deleting")
+		err = r.folders.Client().Delete(ctx, folder, metav1.DeleteOptions{})
+		if err != nil {
+			span.RecordError(err)
+			return objName, schema.GroupVersionKind{}, nil
+		}
+
+		span.AddEvent("parent folder deleted")
 	}
 
 	return objName, schema.GroupVersionKind{}, nil

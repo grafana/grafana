@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Convert git changes into resource file changes
@@ -88,7 +90,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
-			writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
+			writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file", trace.WithAttributes(attribute.String("path", change.Path)))
 			name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
 			if err != nil {
 				writeSpan.RecordError(err)
@@ -99,8 +101,8 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 			result.Group = gvk.Group
 			writeSpan.End()
 		case repository.FileActionDeleted:
-			removeCtx, removeSpan := tracer.Start(ctx, "provisioning.sync.incremental.remove_resource_from_file")
-			name, gvk, err := repositoryResources.RemoveResourceFromFile(removeCtx, change.Path, change.PreviousRef)
+			removeCtx, removeSpan := tracer.Start(ctx, "provisioning.sync.incremental.remove_resource_from_file", trace.WithAttributes(attribute.String("path", change.Path)))
+			name, gvk, err := repositoryResources.RemoveResourceFromFile(removeCtx, change.Path, change.PreviousRef, tracer)
 			if err != nil {
 				removeSpan.RecordError(err)
 				result.Error = fmt.Errorf("removing resource from file %s: %w", change.Path, err)
@@ -110,8 +112,8 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 			result.Group = gvk.Group
 			removeSpan.End()
 		case repository.FileActionRenamed:
-			renameCtx, renameSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_resource_file")
-			name, gvk, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)
+			renameCtx, renameSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_resource_file", trace.WithAttributes(attribute.String("previous_path", change.PreviousPath), attribute.String("path", change.Path)))
+			name, gvk, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, tracer)
 			if err != nil {
 				renameSpan.RecordError(err)
 				result.Error = fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err)

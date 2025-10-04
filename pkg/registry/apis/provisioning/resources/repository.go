@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 //go:generate mockery --name RepositoryResourcesFactory --structname MockRepositoryResourcesFactory --inpackage --filename repository_resources_factory_mock.go --with-expecter
@@ -32,9 +33,9 @@ type RepositoryResources interface {
 	WriteResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error)
 	// Resource from file
 	WriteResourceFromFile(ctx context.Context, path, ref string) (string, schema.GroupVersionKind, error)
-	RemoveResourceFromFile(ctx context.Context, path, ref string) (string, schema.GroupVersionKind, error)
+	RemoveResourceFromFile(ctx context.Context, path, ref string, tracer tracing.Tracer) (string, schema.GroupVersionKind, error)
 	FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error)
-	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string) (string, schema.GroupVersionKind, error)
+	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string, tracer tracing.Tracer) (string, schema.GroupVersionKind, error)
 	// Stats
 	Stats(ctx context.Context) (*provisioning.ResourceStats, error)
 	List(ctx context.Context) (*provisioning.ResourceList, error)

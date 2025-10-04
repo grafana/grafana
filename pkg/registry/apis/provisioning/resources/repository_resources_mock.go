@@ -8,6 +8,7 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 
+	tracing "github.com/grafana/grafana/pkg/infra/tracing"
 	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -297,9 +298,9 @@ func (_c *MockRepositoryResources_List_Call) RunAndReturn(run func(context.Conte
 	return _c
 }
 
-// RemoveResourceFromFile provides a mock function with given fields: ctx, path, ref
-func (_m *MockRepositoryResources) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, schema.GroupVersionKind, error) {
-	ret := _m.Called(ctx, path, ref)
+// RemoveResourceFromFile provides a mock function with given fields: ctx, path, ref, tracer
+func (_m *MockRepositoryResources) RemoveResourceFromFile(ctx context.Context, path string, ref string, tracer tracing.Tracer) (string, schema.GroupVersionKind, error) {
+	ret := _m.Called(ctx, path, ref, tracer)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveResourceFromFile")
@@ -308,23 +309,23 @@ func (_m *MockRepositoryResources) RemoveResourceFromFile(ctx context.Context, p
 	var r0 string
 	var r1 schema.GroupVersionKind
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (string, schema.GroupVersionKind, error)); ok {
-		return rf(ctx, path, ref)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, tracing.Tracer) (string, schema.GroupVersionKind, error)); ok {
+		return rf(ctx, path, ref, tracer)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) string); ok {
-		r0 = rf(ctx, path, ref)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, tracing.Tracer) string); ok {
+		r0 = rf(ctx, path, ref, tracer)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) schema.GroupVersionKind); ok {
-		r1 = rf(ctx, path, ref)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, tracing.Tracer) schema.GroupVersionKind); ok {
+		r1 = rf(ctx, path, ref, tracer)
 	} else {
 		r1 = ret.Get(1).(schema.GroupVersionKind)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, string, string) error); ok {
-		r2 = rf(ctx, path, ref)
+	if rf, ok := ret.Get(2).(func(context.Context, string, string, tracing.Tracer) error); ok {
+		r2 = rf(ctx, path, ref, tracer)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -341,13 +342,14 @@ type MockRepositoryResources_RemoveResourceFromFile_Call struct {
 //   - ctx context.Context
 //   - path string
 //   - ref string
-func (_e *MockRepositoryResources_Expecter) RemoveResourceFromFile(ctx interface{}, path interface{}, ref interface{}) *MockRepositoryResources_RemoveResourceFromFile_Call {
-	return &MockRepositoryResources_RemoveResourceFromFile_Call{Call: _e.mock.On("RemoveResourceFromFile", ctx, path, ref)}
+//   - tracer tracing.Tracer
+func (_e *MockRepositoryResources_Expecter) RemoveResourceFromFile(ctx interface{}, path interface{}, ref interface{}, tracer interface{}) *MockRepositoryResources_RemoveResourceFromFile_Call {
+	return &MockRepositoryResources_RemoveResourceFromFile_Call{Call: _e.mock.On("RemoveResourceFromFile", ctx, path, ref, tracer)}
 }
 
-func (_c *MockRepositoryResources_RemoveResourceFromFile_Call) Run(run func(ctx context.Context, path string, ref string)) *MockRepositoryResources_RemoveResourceFromFile_Call {
+func (_c *MockRepositoryResources_RemoveResourceFromFile_Call) Run(run func(ctx context.Context, path string, ref string, tracer tracing.Tracer)) *MockRepositoryResources_RemoveResourceFromFile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(tracing.Tracer))
 	})
 	return _c
 }
@@ -357,14 +359,14 @@ func (_c *MockRepositoryResources_RemoveResourceFromFile_Call) Return(_a0 string
 	return _c
 }
 
-func (_c *MockRepositoryResources_RemoveResourceFromFile_Call) RunAndReturn(run func(context.Context, string, string) (string, schema.GroupVersionKind, error)) *MockRepositoryResources_RemoveResourceFromFile_Call {
+func (_c *MockRepositoryResources_RemoveResourceFromFile_Call) RunAndReturn(run func(context.Context, string, string, tracing.Tracer) (string, schema.GroupVersionKind, error)) *MockRepositoryResources_RemoveResourceFromFile_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// RenameResourceFile provides a mock function with given fields: ctx, path, previousRef, newPath, newRef
-func (_m *MockRepositoryResources) RenameResourceFile(ctx context.Context, path string, previousRef string, newPath string, newRef string) (string, schema.GroupVersionKind, error) {
-	ret := _m.Called(ctx, path, previousRef, newPath, newRef)
+// RenameResourceFile provides a mock function with given fields: ctx, path, previousRef, newPath, newRef, tracer
+func (_m *MockRepositoryResources) RenameResourceFile(ctx context.Context, path string, previousRef string, newPath string, newRef string, tracer tracing.Tracer) (string, schema.GroupVersionKind, error) {
+	ret := _m.Called(ctx, path, previousRef, newPath, newRef, tracer)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RenameResourceFile")
@@ -373,23 +375,23 @@ func (_m *MockRepositoryResources) RenameResourceFile(ctx context.Context, path 
 	var r0 string
 	var r1 schema.GroupVersionKind
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) (string, schema.GroupVersionKind, error)); ok {
-		return rf(ctx, path, previousRef, newPath, newRef)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, tracing.Tracer) (string, schema.GroupVersionKind, error)); ok {
+		return rf(ctx, path, previousRef, newPath, newRef, tracer)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) string); ok {
-		r0 = rf(ctx, path, previousRef, newPath, newRef)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, tracing.Tracer) string); ok {
+		r0 = rf(ctx, path, previousRef, newPath, newRef, tracer)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) schema.GroupVersionKind); ok {
-		r1 = rf(ctx, path, previousRef, newPath, newRef)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string, tracing.Tracer) schema.GroupVersionKind); ok {
+		r1 = rf(ctx, path, previousRef, newPath, newRef, tracer)
 	} else {
 		r1 = ret.Get(1).(schema.GroupVersionKind)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, string, string, string, string) error); ok {
-		r2 = rf(ctx, path, previousRef, newPath, newRef)
+	if rf, ok := ret.Get(2).(func(context.Context, string, string, string, string, tracing.Tracer) error); ok {
+		r2 = rf(ctx, path, previousRef, newPath, newRef, tracer)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -408,13 +410,14 @@ type MockRepositoryResources_RenameResourceFile_Call struct {
 //   - previousRef string
 //   - newPath string
 //   - newRef string
-func (_e *MockRepositoryResources_Expecter) RenameResourceFile(ctx interface{}, path interface{}, previousRef interface{}, newPath interface{}, newRef interface{}) *MockRepositoryResources_RenameResourceFile_Call {
-	return &MockRepositoryResources_RenameResourceFile_Call{Call: _e.mock.On("RenameResourceFile", ctx, path, previousRef, newPath, newRef)}
+//   - tracer tracing.Tracer
+func (_e *MockRepositoryResources_Expecter) RenameResourceFile(ctx interface{}, path interface{}, previousRef interface{}, newPath interface{}, newRef interface{}, tracer interface{}) *MockRepositoryResources_RenameResourceFile_Call {
+	return &MockRepositoryResources_RenameResourceFile_Call{Call: _e.mock.On("RenameResourceFile", ctx, path, previousRef, newPath, newRef, tracer)}
 }
 
-func (_c *MockRepositoryResources_RenameResourceFile_Call) Run(run func(ctx context.Context, path string, previousRef string, newPath string, newRef string)) *MockRepositoryResources_RenameResourceFile_Call {
+func (_c *MockRepositoryResources_RenameResourceFile_Call) Run(run func(ctx context.Context, path string, previousRef string, newPath string, newRef string, tracer tracing.Tracer)) *MockRepositoryResources_RenameResourceFile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(tracing.Tracer))
 	})
 	return _c
 }
@@ -424,7 +427,7 @@ func (_c *MockRepositoryResources_RenameResourceFile_Call) Return(_a0 string, _a
 	return _c
 }
 
-func (_c *MockRepositoryResources_RenameResourceFile_Call) RunAndReturn(run func(context.Context, string, string, string, string) (string, schema.GroupVersionKind, error)) *MockRepositoryResources_RenameResourceFile_Call {
+func (_c *MockRepositoryResources_RenameResourceFile_Call) RunAndReturn(run func(context.Context, string, string, string, string, tracing.Tracer) (string, schema.GroupVersionKind, error)) *MockRepositoryResources_RenameResourceFile_Call {
 	_c.Call.Return(run)
 	return _c
 }
