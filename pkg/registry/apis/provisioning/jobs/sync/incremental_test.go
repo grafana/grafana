@@ -187,7 +187,7 @@ func TestIncrementalSync(t *testing.T) {
 
 				// Mock resource deletion
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
-					Return("old-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("old-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
 
 				// Mock progress recording
 				progress.On("Record", mock.Anything, jobs.JobResourceResult{
@@ -223,7 +223,7 @@ func TestIncrementalSync(t *testing.T) {
 
 				// Mock resource rename
 				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/old.json", "old-ref", "dashboards/new.json", "new-ref").
-					Return("renamed-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("renamed-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
 
 				// Mock progress recording
 				progress.On("Record", mock.Anything, jobs.JobResourceResult{
@@ -340,7 +340,7 @@ func TestIncrementalSync(t *testing.T) {
 
 				// Mock resource deletion error
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
-					Return("old-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("delete failed"))
+					Return("old-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("delete failed"))
 
 				// Mock progress recording with error
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
