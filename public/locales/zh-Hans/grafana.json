@@ -3228,7 +3228,7 @@
       "define-allowed-teams-ids-label": "定义允许的团队 ID",
       "display-name-description": "将在登录页面上显示为“使用... 登录”。如果您使用多个身份提供程序或 SSO 协议，这将很有帮助。",
       "display-name-label": "显示名称",
-      "domain-hint-description": "用于指示 Azure AD/Entra ID 租户中用户领域并简化登录流程的参数。",
+      "domain-hint-description": "",
       "domain-hint-label": "域提示",
       "domain-hint-valid-domain": "此字段必须是有效的域。",
       "email-attribute-name-description": "用于在 OAuth2 ID 令牌的属性映射中查找用户电子邮箱的密钥的名称。",
@@ -8674,6 +8674,9 @@
       "tooltip-hide": "隐藏密码",
       "tooltip-show": "显示密码"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "展开行",
       "collapse": "折叠行",
@@ -8701,6 +8704,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "使用右侧 Y 轴"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "正在加载"

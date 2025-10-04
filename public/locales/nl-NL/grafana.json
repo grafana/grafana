@@ -3240,7 +3240,7 @@
       "define-allowed-teams-ids-label": "Toegestane team-id's definiëren",
       "display-name-description": "Wordt weergegeven op de inlogpagina als 'Aanmelden met ...'. Handig als je meer dan één identiteitsprovider of SSO-protocol gebruikt.",
       "display-name-label": "Weergavenaam",
-      "domain-hint-description": "Parameter om het domein van de gebruiker in de Azure AD/Entra ID-tenant aan te geven en het inlogproces te stroomlijnen.",
+      "domain-hint-description": "",
       "domain-hint-label": "Domeinhint",
       "domain-hint-valid-domain": "Dit veld moet een geldig domein zijn.",
       "email-attribute-name-description": "Naam van de sleutel die moet worden gebruikt voor het opzoeken van gebruikers-e-mails in de attribuutkaart van het OAuth2 ID-token.",
@@ -8697,6 +8697,9 @@
       "tooltip-hide": "Wachtwoord verbergen",
       "tooltip-show": "Wachtwoord weergeven"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Rij uitvouwen",
       "collapse": "Rij samenvouwen",
@@ -8724,6 +8727,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Rechter y-as gebruiken"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Bezig met laden"

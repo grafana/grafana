@@ -3240,7 +3240,7 @@
       "define-allowed-teams-ids-label": "Erlaubte Team-IDs festlegen",
       "display-name-description": "Wird auf der Anmeldeseite als „Anmelden mit …“ angezeigt. Hilfreich, wenn Sie mehr als einen Identitätsanbieter oder SSO-Protokolle nutzen.",
       "display-name-label": "Anzeigename",
-      "domain-hint-description": "Parameter zur Angabe des Bereichs des Nutzers im Azure AD/Entra ID-Tenant und zur Optimierung des Anmeldeprozesses.",
+      "domain-hint-description": "",
       "domain-hint-label": "Domain-Hinweis",
       "domain-hint-valid-domain": "Dieses Feld muss eine gültige Domain sein.",
       "email-attribute-name-description": "Name des Keys, der für die Nutzer-E-Mail-Suche in der Attributzuordnung des OAuth2-ID-Tokens verwendet wird.",
@@ -8697,6 +8697,9 @@
       "tooltip-hide": "Passwort verbergen",
       "tooltip-show": "Passwort anzeigen"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Zeile ausklappen",
       "collapse": "Zeile einklappen",
@@ -8724,6 +8727,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Rechte y-Achse verwenden"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Wird geladen"

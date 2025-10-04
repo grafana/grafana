@@ -3228,7 +3228,7 @@
       "define-allowed-teams-ids-label": "許可されたチームIDを定義する",
       "display-name-description": "ログインページに「...でサインイン」と表示されます。複数のIDプロバイダーまたはSSOプロトコルを使用する場合に役立ちます。",
       "display-name-label": "表示名",
-      "domain-hint-description": "Azure AD/Entra IDテナントでユーザーの領域を示し、ログインプロセスを合理化するためのパラメーター。",
+      "domain-hint-description": "",
       "domain-hint-label": "ドメインヒント",
       "domain-hint-valid-domain": "このフィールドには有効なドメインを入力する必要があります。",
       "email-attribute-name-description": "OAuth2 IDトークンの属性マップ内でユーザーメール検索に使用するキーの名前。",
@@ -8674,6 +8674,9 @@
       "tooltip-hide": "パスワードを非表示",
       "tooltip-show": "パスワードを表示"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "行を展開する",
       "collapse": "行を折りたたむ",
@@ -8701,6 +8704,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "右y軸を使用"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "読込中"

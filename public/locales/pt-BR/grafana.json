@@ -3240,7 +3240,7 @@
       "define-allowed-teams-ids-label": "Definir IDs das equipes permitidas",
       "display-name-description": "Será exibido na página de login como \"Entrar com...\". É uma opção conveniente caso você use mais de um provedor de identidade ou protocolos SSO.",
       "display-name-label": "Nome de exibição",
-      "domain-hint-description": "Parâmetro para indicar o âmbito do usuário no locatário do Azure AD/Entra ID e agilizar o processo de login.",
+      "domain-hint-description": "",
       "domain-hint-label": "Dica de domínio",
       "domain-hint-valid-domain": "Este campo deve ser um domínio válido.",
       "email-attribute-name-description": "Nome da chave a ser usada para a consulta de e-mail do usuário no mapa de atributos do token de ID OAuth2.",
@@ -8697,6 +8697,9 @@
       "tooltip-hide": "Ocultar senha",
       "tooltip-show": "Exibir senha"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Expandir linha",
       "collapse": "Recolher linha",
@@ -8724,6 +8727,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Usar o eixo y à direita"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Carregando"

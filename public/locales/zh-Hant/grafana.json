@@ -3228,7 +3228,7 @@
       "define-allowed-teams-ids-label": "定義允許的團隊 ID",
       "display-name-description": "將在登入頁面上顯示為「使用...登入」。如果您使用多個身分提供者或 SSO 協定，這項功能會很有幫助。",
       "display-name-label": "顯示名稱",
-      "domain-hint-description": "用於指示 Azure AD/Entra ID 租用戶中使用者領域的參數，並簡化登入流程。",
+      "domain-hint-description": "",
       "domain-hint-label": "網域提示",
       "domain-hint-valid-domain": "此欄位必須為有效的網域。",
       "email-attribute-name-description": "設定用來在 OAuth2 ID 權杖的屬性對應中查找使用者電子郵件的金鑰名稱。",
@@ -8674,6 +8674,9 @@
       "tooltip-hide": "隱藏密碼",
       "tooltip-show": "顯示密碼"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "展開列",
       "collapse": "收闔列",
@@ -8701,6 +8704,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "使用右 y 軸"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "正在載入"
