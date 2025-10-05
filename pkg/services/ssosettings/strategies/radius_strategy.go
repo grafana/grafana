@@ -36,6 +36,7 @@ func (s *RADIUSStrategy) GetProviderConfig(_ context.Context, _ string) (map[str
 		"skip_org_role_sync":     section.Key("skip_org_role_sync").MustBool(false),
 		"class_mappings":         section.Key("class_mappings").Value(),
 		"radius_timeout_seconds": section.Key("timeout_seconds").MustInt(10),
+		"email_suffix":           section.Key("email_suffix").Value(),
 	}
 
 	return result, nil

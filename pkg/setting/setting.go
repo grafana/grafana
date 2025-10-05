@@ -423,6 +423,7 @@ type Cfg struct {
 	RADIUSSkipOrgRoleSync bool
 	RADIUSAllowSignup     bool
 	RADIUSTimeoutSeconds  int
+	RADIUSEmailSuffix     string
 	RADIUSClassMappings   []*RADIUSClassToOrgRole
 
 	DefaultTheme    string
@@ -1497,10 +1498,11 @@ func (cfg *Cfg) readRADIUSConfig() {
 	cfg.RADIUSSkipOrgRoleSync = radiusSec.Key("skip_org_role_sync").MustBool(false)
 	cfg.RADIUSAllowSignup = radiusSec.Key("allow_sign_up").MustBool(true)
 	cfg.RADIUSTimeoutSeconds = radiusSec.Key("timeout_seconds").MustInt(10)
+	cfg.RADIUSEmailSuffix = radiusSec.Key("email_suffix").MustString("")
 	if cfg.RADIUSTimeoutSeconds <= 0 { // defensive default
 		cfg.RADIUSTimeoutSeconds = 10
 	}
-	if cfg.RADIUSTimeoutSeconds > 300 { // apply safety cap matching validation logic
+	if cfg.RADIUSTimeoutSeconds > 300 { // realistically nobody needs more than a 5 minute timeout
 		cfg.Logger.Warn("auth.radius.timeout_seconds capped at 300s", "configured", cfg.RADIUSTimeoutSeconds)
 		cfg.RADIUSTimeoutSeconds = 300
 	}

@@ -31,6 +31,7 @@ var (
 		"skip_org_role_sync":     false,
 		"class_mappings":         `[{"class":"admin","orgId":1,"orgRole":"Admin","isGrafanaAdmin":true},{"class":"users","orgId":1,"orgRole":"Viewer","isGrafanaAdmin":false}]`,
 		"radius_timeout_seconds": 10,
+		"email_suffix":           "",
 	}
 
 	expectedRADIUSConfigEmpty = map[string]interface{}{
@@ -42,6 +43,7 @@ var (
 		"skip_org_role_sync":     false,
 		"class_mappings":         "",
 		"radius_timeout_seconds": 10,
+		"email_suffix":           "",
 	}
 )
 

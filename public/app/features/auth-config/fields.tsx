@@ -309,6 +309,7 @@ export const getSectionFields = (): Section => {
           'radiusPort',
           'radiusSecret',
           'radiusTimeoutSeconds',
+          'emailSuffix',
           'allowSignUp',
           'skipOrgRoleSync',
         ],
@@ -1019,6 +1020,22 @@ export function fieldMap(provider: string): Record<string, FieldData> {
             return !isNaN(num) && num.toString() === stringValue && num > 0 && num <= 300;
         },
         message: t('auth-config.fields.radius-timeout-seconds-invalid', 'Timeout must be an integer between 1 and 300 seconds'),
+      },
+    },
+    emailSuffix: {
+      label: t('auth-config.fields.radius-email-suffix-label', 'Email suffix'),
+      type: 'text',
+      description: t(
+        'auth-config.fields.radius-email-suffix-description',
+        'Optional domain suffix used to construct user email when the RADIUS username has no "@". Example: example.com -> user@example.com.'
+      ),
+      validation: {
+        validate: (value) => {
+          if (!value) { return true; }
+          if (typeof value !== 'string') { return false; }
+          return !/\s/.test(value);
+        },
+        message: t('auth-config.fields.radius-email-suffix-invalid', 'Email suffix must not contain spaces'),
       },
     },
     classMappings: {

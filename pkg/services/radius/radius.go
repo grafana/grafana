@@ -47,6 +47,7 @@ type Config struct {
 	AllowSignUp     bool
 	ClassMappings   []*ClassToOrgRole
 	TimeoutSeconds  int
+	EmailSuffix     string // optional domain suffix to construct user email if RADIUS does not supply one
 }
 
 // ClassToOrgRole maps RADIUS class attributes to Grafana organization roles
@@ -85,6 +86,7 @@ func ProvideService(cfg *setting.Cfg, ssoSettings ssosettings.Service) Service {
 		AllowSignUp:     cfg.RADIUSAllowSignup,
 		ClassMappings:   classMappings,
 		TimeoutSeconds:  cfg.RADIUSTimeoutSeconds,
+		EmailSuffix:     cfg.RADIUSEmailSuffix,
 	}
 
 	svc := &serviceImpl{
@@ -186,9 +188,25 @@ func (s *serviceImpl) Login(query *login.LoginUserQuery) (*login.ExternalUserInf
 		AuthId:     query.Username,
 		Name:       query.Username, // Use RADIUS username as display name
 		Login:      query.Username,
-		// Email will default to Login since RADIUS doesn't provide email
+		// Email will be constructed with suffix if configured; otherwise defaults to Login
 		Groups:   classes, // Use classes as groups
 		OrgRoles: map[int64]org.RoleType{},
+	}
+
+	// build email if we have a suffix and username lacks '@'
+	if s.cfg.EmailSuffix != "" {
+		if strings.Contains(query.Username, "@") {
+			extUser.Email = query.Username // already an email-like username
+		} else {
+			// ensure suffix starts with '@'
+			suffix := s.cfg.EmailSuffix
+			if !strings.HasPrefix(suffix, "@") {
+				suffix = "@" + suffix
+			}
+			extUser.Email = query.Username + suffix
+		}
+	} else {
+		extUser.Email = query.Username
 	}
 
 	// If SkipOrgRoleSync is true, return basic user info
@@ -203,9 +221,10 @@ func (s *serviceImpl) Login(query *login.LoginUserQuery) (*login.ExternalUserInf
 		s.applyClassMapping(extUser, c)
 	}
 
-	// Default role if no mappings found
+	// If no roles were mapped, deny access
 	if len(extUser.OrgRoles) == 0 {
-		extUser.OrgRoles[1] = org.RoleViewer
+		s.log.Debug("No matching RADIUS class mappings found; denying login", "username", query.Username, "classes", classes)
+		return nil, ErrInvalidCredentials
 	}
 
 	return extUser, nil
@@ -220,9 +239,23 @@ func (s *serviceImpl) User(username string) (*login.ExternalUserInfo, error) {
 		AuthId:     username,
 		Name:       username, // Use RADIUS username as display name
 		Login:      username,
-		// Email will default to Login since RADIUS doesn't provide email
-		Groups:   []string{},
-		OrgRoles: map[int64]org.RoleType{},
+		Groups:     []string{},
+		OrgRoles:   map[int64]org.RoleType{},
+	}
+
+	// build email if suffix configured
+	if s.cfg.EmailSuffix != "" {
+		if strings.Contains(username, "@") {
+			extUser.Email = username
+		} else {
+			suffix := s.cfg.EmailSuffix
+			if !strings.HasPrefix(suffix, "@") {
+				suffix = "@" + suffix
+			}
+			extUser.Email = username + suffix
+		}
+	} else {
+		extUser.Email = username
 	}
 
 	if !s.cfg.SkipOrgRoleSync {
@@ -247,8 +280,14 @@ func (s *serviceImpl) Reload(ctx context.Context, settings models.SSOSettings) e
 	cfg.Port = resolveInt(settings.Settings["radius_port"], 1812)
 	cfg.Secret = resolveString(settings.Settings["radius_secret"], "")
 	cfg.TimeoutSeconds = resolveInt(settings.Settings["radius_timeout_seconds"], 10)
+	cfg.EmailSuffix = resolveString(settings.Settings["email_suffix"], "")
 	if cfg.TimeoutSeconds <= 0 || cfg.TimeoutSeconds > 300 {
 		cfg.TimeoutSeconds = 10
+	}
+	// normalize email suffix (strip whitespace)
+	cfg.EmailSuffix = strings.TrimSpace(cfg.EmailSuffix)
+	if cfg.EmailSuffix == "@" { // nothing meaningful
+		cfg.EmailSuffix = ""
 	}
 
 	classMappings, err := resolveClassMappings(settings.Settings["class_mappings"])
@@ -288,6 +327,12 @@ func (s *serviceImpl) Validate(ctx context.Context, settings models.SSOSettings,
 	timeoutSeconds := resolveInt(settings.Settings["radius_timeout_seconds"], 10)
 	if timeoutSeconds <= 0 || timeoutSeconds > 300 { // realistically nobody needs more than a 5 minute timeout
 		return fmt.Errorf("RADIUS timeout must be between 1 and 300 seconds")
+	}
+
+	// Basic validation for optional email suffix
+	emailSuffix := resolveString(settings.Settings["email_suffix"], "")
+	if strings.Contains(emailSuffix, " ") {
+		return fmt.Errorf("email suffix must not contain spaces")
 	}
 
 	_, err := resolveClassMappings(settings.Settings["class_mappings"])
