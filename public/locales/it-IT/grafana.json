@@ -3240,7 +3240,7 @@
       "define-allowed-teams-ids-label": "Definisci gli ID dei team consentiti",
       "display-name-description": "Verrà visualizzato nella pagina di accesso come \"Accedi con...\". Utile se utilizzi più di un provider di identità o protocolli SSO.",
       "display-name-label": "Visualizza nome",
-      "domain-hint-description": "Parametro per indicare il dominio dell'utente nel tenant Azure AD/Entra ID e semplificare il processo di accesso.",
+      "domain-hint-description": "",
       "domain-hint-label": "Suggerimento dominio",
       "domain-hint-valid-domain": "Questo campo deve essere un dominio valido.",
       "email-attribute-name-description": "Nome della chiave da utilizzare per la ricerca dell'e-mail dell'utente all'interno della mappa degli attributi del token ID di OAuth2.",
@@ -3496,6 +3496,7 @@
       "move-modal-field-label": "Nome cartella",
       "move-modal-text": "Questa azione sposterà il seguente contenuto:",
       "move-modal-title": "Sposta",
+      "move-provisioned-folder": "",
       "moving": "Spostamento in corso...",
       "new-folder-name-required-phrase": "Il nome della cartella è obbligatorio.",
       "selected-mix-resources-modal-text": "Hai selezionato sia risorse sottoposte a provisioning che risorse non sottoposte a provisioning. Non possono essere elaborate insieme. Seleziona solo risorse sottoposte a provisioning o solo risorse non sottoposte a provisioning e riprova.",
@@ -8696,6 +8697,9 @@
       "tooltip-hide": "Nascondi password",
       "tooltip-show": "Mostra password"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Espandi riga",
       "collapse": "Riduci riga",
@@ -8723,6 +8727,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Usa l'asse y destro"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Caricamento"
@@ -10166,7 +10173,7 @@
       "title": "Fonti dei dati"
     },
     "databases": {
-      "title": "Database"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Aggiungi e configura origini dati",
@@ -11692,6 +11699,8 @@
       "button-cancelling": "",
       "button-next": "Fine",
       "button-start": "Inizia la sincronizzazione",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Questa operazione eliminerà la configurazione del repository e perderai tutti i progressi. Vuoi davvero eliminare le modifiche?",
         "confirm": "Sì, elimina",

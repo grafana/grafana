@@ -464,7 +464,7 @@ export interface FeatureToggles {
   */
   alertingSaveStatePeriodic?: boolean;
   /**
-  * Enables the compressed protobuf-based alert state storage
+  * Enables the compressed protobuf-based alert state storage. Default is enabled.
   * @default true
   */
   alertingSaveStateCompressed?: boolean;
@@ -885,6 +885,11 @@ export interface FeatureToggles {
   */
   alertingJiraIntegration?: boolean;
   /**
+  * 
+  * @default true
+  */
+  alertingUseNewSimplifiedRoutingHashAlgorithm?: boolean;
+  /**
   * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
   */
   useScopesNavigationEndpoint?: boolean;
@@ -1197,4 +1202,9 @@ export interface FeatureToggles {
   * @default false
   */
   cdnPluginsLoadFirst?: boolean;
+  /**
+  * Enable loading plugins via declarative URLs
+  * @default false
+  */
+  cdnPluginsUrls?: boolean;
 }

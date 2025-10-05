@@ -3264,7 +3264,7 @@
       "define-allowed-teams-ids-label": "Zdefiniuj dozwolone identyfikatory zespołów",
       "display-name-description": "Nazwa będzie się wyświetlać na stronie logowania jako część tekstu „Zaloguj się za pomocą...”. To przydatne, jeśli korzystasz z więcej niż jednego dostawcy tożsamości lub protokołów SSO.",
       "display-name-label": "Nazwa wyświetlana",
-      "domain-hint-description": "Parametr wskazujący dziedzinę użytkownika w dzierżawie Azure AD/Entra ID i usprawniający proces logowania.",
+      "domain-hint-description": "",
       "domain-hint-label": "Wskazówka dotycząca domeny",
       "domain-hint-valid-domain": "To pole musi zawierać prawidłową domenę.",
       "email-attribute-name-description": "Nazwa klucza używanego do wyszukiwania adresu e-mail użytkownika w mapie atrybutów tokena OAuth2 ID.",
@@ -3520,6 +3520,7 @@
       "move-modal-field-label": "Nazwa folderu",
       "move-modal-text": "To działanie spowoduje przeniesienie następującej zawartości:",
       "move-modal-title": "Przenieś",
+      "move-provisioned-folder": "",
       "moving": "Przenoszenie…",
       "new-folder-name-required-phrase": "Wymagana jest nazwa folderu.",
       "selected-mix-resources-modal-text": "Wybrano zarówno zasoby udostępnione, jak i nieudostępnione. Nie można ich przetwarzać razem. Wybierz tylko zasoby udostępnione lub tylko zasoby nieudostępnione i spróbuj ponownie.",
@@ -8742,6 +8743,9 @@
       "tooltip-hide": "Ukryj hasło",
       "tooltip-show": "Pokaż hasło"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Rozwiń wiersz",
       "collapse": "Zwiń wiersz",
@@ -8769,6 +8773,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Użyj prawej półosi OY"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Ładowanie"
@@ -10228,7 +10235,7 @@
       "title": "Źródła danych"
     },
     "databases": {
-      "title": "Bazy danych"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Dodaj i skonfiguruj źródła danych",
@@ -11772,6 +11779,8 @@
       "button-cancelling": "",
       "button-next": "Zakończ",
       "button-start": "Rozpocznij synchronizację",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Spowoduje to usunięcie konfiguracji repozytorium i utracisz wszystkie postępy. Czy na pewno chcesz odrzucić zmiany?",
         "confirm": "Tak, odrzuć",

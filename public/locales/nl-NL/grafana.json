@@ -3240,7 +3240,7 @@
       "define-allowed-teams-ids-label": "Toegestane team-id's definiëren",
       "display-name-description": "Wordt weergegeven op de inlogpagina als 'Aanmelden met ...'. Handig als je meer dan één identiteitsprovider of SSO-protocol gebruikt.",
       "display-name-label": "Weergavenaam",
-      "domain-hint-description": "Parameter om het domein van de gebruiker in de Azure AD/Entra ID-tenant aan te geven en het inlogproces te stroomlijnen.",
+      "domain-hint-description": "",
       "domain-hint-label": "Domeinhint",
       "domain-hint-valid-domain": "Dit veld moet een geldig domein zijn.",
       "email-attribute-name-description": "Naam van de sleutel die moet worden gebruikt voor het opzoeken van gebruikers-e-mails in de attribuutkaart van het OAuth2 ID-token.",
@@ -3496,6 +3496,7 @@
       "move-modal-field-label": "Mapnaam",
       "move-modal-text": "Met deze actie wordt de volgende inhoud verplaatst:",
       "move-modal-title": "Verplaatsen",
+      "move-provisioned-folder": "",
       "moving": "Bezig met verplaatsen ...",
       "new-folder-name-required-phrase": "Mapnaam is vereist.",
       "selected-mix-resources-modal-text": "Je hebt zowel toegewezen als niet-toegewezen bronnen geselecteerd. Deze kunnen niet samen worden verwerkt. Selecteer alleen toegewezen bronnen of alleen niet-toegewezen bronnen en probeer het opnieuw.",
@@ -8696,6 +8697,9 @@
       "tooltip-hide": "Wachtwoord verbergen",
       "tooltip-show": "Wachtwoord weergeven"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Rij uitvouwen",
       "collapse": "Rij samenvouwen",
@@ -8723,6 +8727,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Rechter y-as gebruiken"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Bezig met laden"
@@ -10166,7 +10173,7 @@
       "title": "Gegevensbronnen"
     },
     "databases": {
-      "title": "Databases"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Gegevensbronnen toevoegen en configureren",
@@ -11692,6 +11699,8 @@
       "button-cancelling": "",
       "button-next": "Voltooien",
       "button-start": "Synchronisatie starten",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Hiermee wordt de repository-configuratie verwijderd en verlies je alle voortgang. Weet je zeker dat je je wijzigingen wilt negeren?",
         "confirm": "Ja, verwijderen",

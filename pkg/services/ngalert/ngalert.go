@@ -220,7 +220,7 @@ func (ng *AlertNG) init() error {
 			Timeout:           ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
 		}
 		autogenFn := func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, skipInvalid bool) error {
-			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, skipInvalid)
+			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, skipInvalid, ng.FeatureToggles)
 		}
 
 		// This function will be used by the MOA to create new Alertmanagers.
