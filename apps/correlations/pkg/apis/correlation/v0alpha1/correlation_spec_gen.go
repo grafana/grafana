@@ -33,10 +33,10 @@ type CorrelationTargetSpec map[string]interface{}
 
 // +k8s:openapi-gen=true
 type CorrelationTransformationSpec struct {
-	Type       string `json:"type"`
-	Expression string `json:"expression"`
-	Field      string `json:"field"`
-	MapValue   string `json:"mapValue"`
+	Type       CorrelationTransformationSpecType `json:"type"`
+	Expression string                            `json:"expression"`
+	Field      string                            `json:"field"`
+	MapValue   string                            `json:"mapValue"`
 }
 
 // NewCorrelationTransformationSpec creates a new CorrelationTransformationSpec object.
@@ -70,3 +70,11 @@ func NewCorrelationSpec() *CorrelationSpec {
 		Config:     *NewCorrelationConfigSpec(),
 	}
 }
+
+// +k8s:openapi-gen=true
+type CorrelationTransformationSpecType string
+
+const (
+	CorrelationTransformationSpecTypeRegex  CorrelationTransformationSpecType = "regex"
+	CorrelationTransformationSpecTypeLogfmt CorrelationTransformationSpecType = "logfmt"
+)

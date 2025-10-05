@@ -29,14 +29,14 @@ export type TargetSpec = Record<string, any>;
 export const defaultTargetSpec = (): TargetSpec => ({});
 
 export interface TransformationSpec {
-	type: string;
+	type: "regex" | "logfmt";
 	expression: string;
 	field: string;
 	mapValue: string;
 }
 
 export const defaultTransformationSpec = (): TransformationSpec => ({
-	type: "",
+	type: "regex",
 	expression: "",
 	field: "",
 	mapValue: "",
