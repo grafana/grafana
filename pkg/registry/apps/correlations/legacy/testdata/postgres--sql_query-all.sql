@@ -1,4 +1,4 @@
-SELECT c.uid,c.org_id,c.type,c.config,c.description,c.label,c.provisioned,
+SELECT c.uid,c.org_id,c."type",c.config,c.description,c.label,c.provisioned,
  src."type" as src_type, src.uid as src_uid,
  tgt."type" as tgt_type, tgt.uid as tgt_uid
  FROM "grafana"."correlation" AS c
