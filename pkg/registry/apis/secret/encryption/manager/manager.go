@@ -1,8 +1,10 @@
 package manager
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"strconv"
@@ -18,8 +20,11 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/util"
+)
+
+const (
+	keyIdDelimiter = '#'
 )
 
 type EncryptionManager struct {
@@ -94,9 +99,12 @@ func (s *EncryptionManager) registerUsageMetrics() {
 	})
 }
 
-func (s *EncryptionManager) Encrypt(ctx context.Context, namespace xkube.Namespace, payload []byte) (contracts.EncryptedPayload, error) {
+// TODO: Why do we need to use a global variable for this?
+var b64 = base64.RawStdEncoding
+
+func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, payload []byte) ([]byte, error) {
 	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.Encrypt", trace.WithAttributes(
-		attribute.String("namespace", namespace.String()),
+		attribute.String("namespace", namespace),
 	))
 	defer span.End()
 
@@ -120,30 +128,34 @@ func (s *EncryptionManager) Encrypt(ctx context.Context, namespace xkube.Namespa
 	id, dataKey, err = s.currentDataKey(ctx, namespace, label)
 	if err != nil {
 		s.log.Error("Failed to get current data key", "error", err, "label", label)
-		return contracts.EncryptedPayload{}, err
+		return nil, err
 	}
 
 	var encrypted []byte
 	encrypted, err = s.cipher.Encrypt(ctx, payload, string(dataKey))
 	if err != nil {
 		s.log.Error("Failed to encrypt secret", "error", err)
-		return contracts.EncryptedPayload{}, err
+		return nil, err
 	}
 
-	encryptedPayload := contracts.EncryptedPayload{
-		DataKeyID:     id,
-		EncryptedData: encrypted,
-	}
+	prefix := make([]byte, b64.EncodedLen(len(id))+2)
+	b64.Encode(prefix[1:], []byte(id))
+	prefix[0] = keyIdDelimiter
+	prefix[len(prefix)-1] = keyIdDelimiter
 
-	return encryptedPayload, nil
+	blob := make([]byte, len(prefix)+len(encrypted))
+	copy(blob, prefix)
+	copy(blob[len(prefix):], encrypted)
+
+	return blob, nil
 }
 
 // currentDataKey looks up for current data key in cache or database by name, and decrypts it.
 // If there's no current data key in cache nor in database it generates a new random data key,
 // and stores it into both the in-memory cache and database (encrypted by the encryption provider).
-func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace xkube.Namespace, label string) (string, []byte, error) {
+func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace string, label string) (string, []byte, error) {
 	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.CurrentDataKey", trace.WithAttributes(
-		attribute.String("namespace", namespace.String()),
+		attribute.String("namespace", namespace),
 		attribute.String("label", label),
 	))
 	defer span.End()
@@ -154,14 +166,14 @@ func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace xkube.
 	defer s.mtx.Unlock()
 
 	// We try to fetch the data key, either from cache or database
-	id, dataKey, err := s.dataKeyByLabel(ctx, namespace.String(), label)
+	id, dataKey, err := s.dataKeyByLabel(ctx, namespace, label)
 	if err != nil {
 		return "", nil, err
 	}
 
 	// If no existing data key was found, create a new one
 	if dataKey == nil {
-		id, dataKey, err = s.newDataKey(ctx, namespace.String(), label)
+		id, dataKey, err = s.newDataKey(ctx, namespace, label)
 		if err != nil {
 			return "", nil, err
 		}
@@ -252,9 +264,9 @@ func newRandomDataKey() ([]byte, error) {
 	return rawDataKey, nil
 }
 
-func (s *EncryptionManager) Decrypt(ctx context.Context, namespace xkube.Namespace, payload contracts.EncryptedPayload) ([]byte, error) {
+func (s *EncryptionManager) Decrypt(ctx context.Context, namespace string, payload []byte) ([]byte, error) {
 	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.Decrypt", trace.WithAttributes(
-		attribute.String("namespace", namespace.String()),
+		attribute.String("namespace", namespace),
 	))
 	defer span.End()
 
@@ -273,26 +285,48 @@ func (s *EncryptionManager) Decrypt(ctx context.Context, namespace xkube.Namespa
 		}
 	}()
 
-	if len(payload.EncryptedData) == 0 {
+	if len(payload) == 0 {
 		err = fmt.Errorf("unable to decrypt empty payload")
 		return nil, err
 	}
 
-	if payload.DataKeyID == "" {
-		err = fmt.Errorf("unable to decrypt empty data key id")
+	payload = payload[1:]
+	endOfKey := bytes.Index(payload, []byte{keyIdDelimiter})
+	if endOfKey == -1 {
+		err = fmt.Errorf("could not find valid key id in encrypted payload")
+		return nil, err
+	}
+	b64Key := payload[:endOfKey]
+	payload = payload[endOfKey+1:]
+	keyId := make([]byte, b64.DecodedLen(len(b64Key)))
+	_, err = b64.Decode(keyId, b64Key)
+	if err != nil {
 		return nil, err
 	}
 
-	dataKey, err := s.dataKeyById(ctx, namespace.String(), payload.DataKeyID)
+	dataKey, err := s.dataKeyById(ctx, namespace, string(keyId))
 	if err != nil {
-		s.log.FromContext(ctx).Error("Failed to lookup data key by id", "id", payload.DataKeyID, "error", err)
+		s.log.FromContext(ctx).Error("Failed to lookup data key by id", "id", string(keyId), "error", err)
 		return nil, err
 	}
 
 	var decrypted []byte
-	decrypted, err = s.cipher.Decrypt(ctx, payload.EncryptedData, string(dataKey))
+	decrypted, err = s.cipher.Decrypt(ctx, payload, string(dataKey))
 
 	return decrypted, err
+}
+
+func (s *EncryptionManager) GetDecryptedValue(ctx context.Context, namespace string, sjd map[string][]byte, key, fallback string) string {
+	if value, ok := sjd[key]; ok {
+		decryptedData, err := s.Decrypt(ctx, namespace, value)
+		if err != nil {
+			return fallback
+		}
+
+		return string(decryptedData)
+	}
+
+	return fallback
 }
 
 // dataKeyById looks up for data key in the database and returns it decrypted.
