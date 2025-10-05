@@ -81,20 +81,6 @@
         "title-access-denied": "Access denied"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "Some features are stable (GA) and enabled by default, whereas some are currently in their preliminary Beta phase, available for early adoption.",
-      "confirm-modal-body-2": "We advise understanding the implications of each feature change before making modifications.",
-      "confirmText-save-changes": "Save changes",
-      "get-stage-cell": {
-        "beta": "Beta",
-        "content-general-availability": "General availability",
-        "deprecated": "Deprecated",
-        "ga": "GA"
-      },
-      "save-changes": "Save changes",
-      "saving": "Saving...",
-      "title-apply-feature-toggle-changes": "Apply feature toggle changes"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "Delete org",
       "confirmText-delete": "Delete",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "Settings updates at runtime",
       "title-sort-dashboards-by-popularity-in-search": "Sort dashboards by popularity in search",
       "title-team-sync": "Team Sync"
-    },
-    "feature-toggles": {
-      "restart-pending": "A restart is pending for your Grafana instance to apply the latest feature toggle changes",
-      "restart-required": "Saving feature toggle changes will prompt a restart of the instance, which may take a few minutes",
-      "sub-title": "View and edit feature toggles. Read more about feature toggles at <2>grafana.com</2>."
     },
     "get-enterprise": {
       "contact-us": "Contact us and get a free trial",
@@ -2181,7 +2162,6 @@
       "body-queries-expressions-configured": "Create at least one query or expression to be alerted on",
       "confirmText-deactivate": "Deactivate",
       "expressions": "Expressions",
-      "loading-data-sources": "Loading data sources...",
       "manipulate-returned-queries-other-operations": "Manipulate data returned from queries with math and other operations.",
       "message": {
         "a-valid-expression-is-required": "A valid expression is required"
@@ -3260,7 +3240,7 @@
       "define-allowed-teams-ids-label": "Define allowed teams IDs",
       "display-name-description": "Will be displayed on the login page as \"Sign in with ...\". Helpful if you use more than one identity providers or SSO protocols.",
       "display-name-label": "Display name",
-      "domain-hint-description": "Parameter to indicate the realm of the user in the Azure AD/Entra ID tenant and streamline the login process.",
+      "domain-hint-description": "Parameter to indicate the realm of the user in the Entra ID tenant and streamline the login process.",
       "domain-hint-label": "Domain hint",
       "domain-hint-valid-domain": "This field must be a valid domain.",
       "email-attribute-name-description": "Name of the key to use for user email lookup within the attributes map of OAuth2 ID token.",
@@ -3516,6 +3496,7 @@
       "move-modal-field-label": "Folder name",
       "move-modal-text": "This action will move the following content:",
       "move-modal-title": "Move",
+      "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
       "new-folder-name-required-phrase": "Folder name is required.",
       "selected-mix-resources-modal-text": "You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please select only provisioned resources or only non-provisioned resources and try again.",
@@ -8720,6 +8701,9 @@
       "tooltip-hide": "Hide password",
       "tooltip-show": "Show password"
     },
+    "range-slider": {
+      "drag-handle-aria-label": "Use arrow keys to change the value"
+    },
     "row-expander": {
       "aria-label-expand": "Expand row",
       "collapse": "Collapse row",
@@ -8747,6 +8731,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Use right y-axis"
+    },
+    "slider": {
+      "drag-handle-aria-label": "Use arrow keys to change the value"
     },
     "spinner": {
       "aria-label": "Loading"
@@ -10190,7 +10177,7 @@
       "title": "Data sources"
     },
     "databases": {
-      "title": "Databases"
+      "title": "Database"
     },
     "datasources": {
       "subtitle": "Add and configure data sources",
@@ -11376,10 +11363,10 @@
       "all-resources-managed_one": "All {{count}} resource is managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
       "no-results-matching-your-query": "No results matching your query",
-      "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed.",
+      "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed by Git sync.",
       "placeholder-search": "Search",
-      "unmanaged-resources_one": "{{count}} resource isn't managed as code yet.",
-      "unmanaged-resources_other": "{{count}} resources aren't managed as code yet."
+      "unmanaged-resources_one": "{{count}} resource isn't managed by git sync.",
+      "unmanaged-resources_other": "{{count}} resources aren't managed by git sync."
     },
     "get-default-values": {
       "title": {
@@ -11716,6 +11703,8 @@
       "button-cancelling": "Cancelling...",
       "button-next": "Finish",
       "button-start": "Begin synchronization",
+      "check-status-button": "Check repository status",
+      "check-status-message": "Repository connecting, synchronize will be ready soon.",
       "discard-modal": {
         "body": "This will delete the repository configuration and you will lose all progress. Are you sure you want to discard your changes?",
         "confirm": "Yes, discard",
@@ -12094,8 +12083,8 @@
       "title": "Select scopes"
     },
     "tree": {
-      "collapse": "Collapse",
-      "expand": "Expand",
+      "collapse": "Collapse {{title}}",
+      "expand": "Expand {{title}}",
       "headline": {
         "noResults": "No results found for your query",
         "recommended": "Recommended",

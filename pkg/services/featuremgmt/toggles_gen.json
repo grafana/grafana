@@ -555,14 +555,14 @@
     {
       "metadata": {
         "name": "alertingSaveStateCompressed",
-        "resourceVersion": "1754657532777",
+        "resourceVersion": "1759485036332",
         "creationTimestamp": "2025-01-27T17:47:33Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-08-08 12:52:12.777935 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-10-03 09:50:36.332762 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Enables the compressed protobuf-based alert state storage",
+        "description": "Enables the compressed protobuf-based alert state storage. Default is enabled.",
         "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
         "expression": "true"
@@ -608,6 +608,46 @@
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingUseNewSimplifiedRoutingHashAlgorithm",
+        "resourceVersion": "1759339813575",
+        "creationTimestamp": "2025-10-01T17:28:42Z",
+        "deletionTimestamp": "2025-10-01T17:29:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-01 17:30:13.575464 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "",
+        "stage": "preview",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingUseOldSimplifiedRoutingHashAlgorithm",
+        "resourceVersion": "1759339782639",
+        "creationTimestamp": "2025-10-01T17:29:29Z",
+        "deletionTimestamp": "2025-10-01T17:30:13Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-01 17:29:42.63941 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "",
+        "stage": "deprecated",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -865,6 +905,19 @@
     },
     {
       "metadata": {
+        "name": "cdnPluginsUrls",
+        "resourceVersion": "1759489886228",
+        "creationTimestamp": "2025-10-03T11:11:26Z"
+      },
+      "spec": {
+        "description": "Enable loading plugins via declarative URLs",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "cloudRBACRoles",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-01-10T13:19:01Z"
@@ -1023,6 +1076,19 @@
         "description": "Supports __from and __to macros that always use the dashboard level time range",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardLibrary",
+        "resourceVersion": "1758902532246",
+        "creationTimestamp": "2025-09-26T16:02:12Z"
+      },
+      "spec": {
+        "description": "Enable suggested dashboards when creating new dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
         "frontend": true
       }
     },
@@ -1564,6 +1630,7 @@
         "name": "featureToggleAdminPage",
         "resourceVersion": "1758022099771",
         "creationTimestamp": "2023-07-18T20:43:32Z",
+        "deletionTimestamp": "2025-09-29T13:36:16Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-09-16 11:28:19.771156 +0000 UTC"
         }
@@ -2169,6 +2236,19 @@
       },
       "spec": {
         "description": "Routes snapshot requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesStars",
+        "resourceVersion": "1759149842036",
+        "creationTimestamp": "2025-09-29T12:44:02Z"
+      },
+      "spec": {
+        "description": "Routes stars requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
@@ -3522,6 +3602,20 @@
     },
     {
       "metadata": {
+        "name": "templateDashboards",
+        "resourceVersion": "1758897202631",
+        "creationTimestamp": "2025-09-26T14:33:22Z",
+        "deletionTimestamp": "2025-09-26T16:02:12Z"
+      },
+      "spec": {
+        "description": "Enables template dashboards suggestions when creating new dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "templateVariablesUsesCombobox",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-01-31T09:53:13Z"
@@ -3802,6 +3896,22 @@
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "useMultipleScopeNodesEndpoint",
+        "resourceVersion": "1759237515008",
+        "creationTimestamp": "2025-09-30T13:05:15Z"
+      },
+      "spec": {
+        "description": "Makes the frontend use the 'names' param for fetching multiple scope nodes at once",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
