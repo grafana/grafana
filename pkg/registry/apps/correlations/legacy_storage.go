@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	correlationsV0 "github.com/grafana/grafana/apps/correlations/pkg/apis/correlation/v0alpha1"
@@ -60,9 +61,24 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	if err != nil {
 		return nil, err
 	}
-	// TODO... field selector for Source
 	uids := []string{}
-
+	if options.FieldSelector != nil {
+		for _, r := range options.FieldSelector.Requirements() {
+			switch r.Field {
+			case "spec.datasource":
+				switch r.Operator {
+				case selection.Equals, selection.DoubleEquals:
+					uids = []string{r.Value}
+				case selection.In:
+					uids = strings.Split(r.Value, ";")
+				default:
+					return nil, fmt.Errorf("unsupported operation")
+				}
+			default:
+				return nil, fmt.Errorf("unsupported field")
+			}
+		}
+	}
 	return s.sql.List(ctx, orgID, "", uids)
 }
 

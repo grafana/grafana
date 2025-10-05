@@ -23,6 +23,7 @@ func NewLegacySQL(db legacysql.LegacyDatabaseProvider) *LegacySQL {
 	return &LegacySQL{db: db, startup: time.Now()}
 }
 
+// Using custom SQL so we can get the types as part of the query
 func (s *LegacySQL) List(ctx context.Context, orgId int64, name string, src []string) (*correlations.CorrelationList, error) {
 	sql, err := s.db(ctx)
 	if err != nil {
@@ -95,7 +96,7 @@ func (s *LegacySQL) List(ctx context.Context, orgId int64, name string, src []st
 				return nil, err
 			}
 			v.SetManagerProperties(utils.ManagerProperties{
-				Kind: utils.ManagerKindClassicFP,
+				Kind: utils.ManagerKindClassicFP, // nolint:staticcheck
 			})
 		}
 

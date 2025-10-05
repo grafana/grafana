@@ -31,7 +31,7 @@ ConfigSpec: {
 TargetSpec:  [string]: _
 
 TransformationSpec: {
-	type: string
+	type: "regex" | "logfmt"
 	expression: string
 	field: string
 	mapValue: string
