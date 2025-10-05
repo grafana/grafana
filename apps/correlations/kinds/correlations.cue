@@ -5,12 +5,11 @@ correlationsv0alpha1: {
 	pluralName: "Correlations"
 	schema: {
 		spec: {
-			source_ds_ref:  DataSourceRef
-			target_ds_ref?:  DataSourceRef
-			label:       string
 			description?: string
+			label:       string
+			datasource:  DataSourceRef
+			target:  [...DataSourceRef]
 			config:      ConfigSpec
-			provisioned: bool
 			type:        CorrelationType
 		}
 	}

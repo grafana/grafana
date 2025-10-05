@@ -54,19 +54,19 @@ const (
 
 // +k8s:openapi-gen=true
 type CorrelationSpec struct {
-	SourceDsRef CorrelationDataSourceRef   `json:"source_ds_ref"`
-	TargetDsRef *CorrelationDataSourceRef  `json:"target_ds_ref,omitempty"`
-	Label       string                     `json:"label"`
 	Description *string                    `json:"description,omitempty"`
+	Label       string                     `json:"label"`
+	Datasource  CorrelationDataSourceRef   `json:"datasource"`
+	Target      []CorrelationDataSourceRef `json:"target"`
 	Config      CorrelationConfigSpec      `json:"config"`
-	Provisioned bool                       `json:"provisioned"`
 	Type        CorrelationCorrelationType `json:"type"`
 }
 
 // NewCorrelationSpec creates a new CorrelationSpec object.
 func NewCorrelationSpec() *CorrelationSpec {
 	return &CorrelationSpec{
-		SourceDsRef: *NewCorrelationDataSourceRef(),
-		Config:      *NewCorrelationConfigSpec(),
+		Datasource: *NewCorrelationDataSourceRef(),
+		Target:     []CorrelationDataSourceRef{},
+		Config:     *NewCorrelationConfigSpec(),
 	}
 }

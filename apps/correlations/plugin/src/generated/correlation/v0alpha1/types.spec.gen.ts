@@ -50,20 +50,19 @@ export enum CorrelationType {
 export const defaultCorrelationType = (): CorrelationType => (CorrelationType.Query);
 
 export interface Spec {
-	source_ds_ref: DataSourceRef;
-	target_ds_ref?: DataSourceRef;
-	label: string;
 	description?: string;
+	label: string;
+	datasource: DataSourceRef;
+	target: DataSourceRef[];
 	config: ConfigSpec;
-	provisioned: boolean;
 	type: CorrelationType;
 }
 
 export const defaultSpec = (): Spec => ({
-	source_ds_ref: defaultDataSourceRef(),
 	label: "",
+	datasource: defaultDataSourceRef(),
+	target: [],
 	config: defaultConfigSpec(),
-	provisioned: false,
 	type: CorrelationType.Query,
 });
 
