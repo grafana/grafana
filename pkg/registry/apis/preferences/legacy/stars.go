@@ -260,7 +260,7 @@ func (s *DashboardStarsStorage) write(ctx context.Context, obj *preferences.Star
 				return nil, err
 			}
 		} else {
-			added, removed, _ := calculateChanges(history, stars)
+			added, removed, _ := preferences.Changes(history, stars)
 			if len(removed) > 0 {
 				_ = s.sql.removeHistoryStar(ctx, user, nil)
 			}
@@ -274,25 +274,6 @@ func (s *DashboardStarsStorage) write(ctx context.Context, obj *preferences.Star
 		return s.Get(ctx, obj.Name, &metav1.GetOptions{})
 	}
 	return obj, nil // nothing required
-}
-
-func calculateChanges(current []string, target []string) (added []string, removed []string, same []string) {
-	lookup := map[string]bool{}
-	for _, k := range current {
-		lookup[k] = true
-	}
-	for _, k := range target {
-		if lookup[k] {
-			same = append(same, k)
-			delete(lookup, k)
-		} else {
-			added = append(added, k)
-		}
-	}
-	for k := range lookup {
-		removed = append(removed, k)
-	}
-	return
 }
 
 // Create implements rest.Creater.
@@ -363,5 +344,6 @@ func asStarsResource(ns string, v *dashboardStars, history []string) preferences
 			Names: history,
 		})
 	}
+	stars.Spec.Normalize()
 	return stars
 }

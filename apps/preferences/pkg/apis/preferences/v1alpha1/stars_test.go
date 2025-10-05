@@ -191,4 +191,45 @@ func TestStarsWrite(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("changes", func(t *testing.T) {
+		tests := []struct {
+			name    string
+			current []string
+			target  []string
+			added   []string
+			removed []string
+			same    []string
+		}{{
+			name:    "same",
+			current: []string{"a"},
+			target:  []string{"a"},
+			same:    []string{"a"},
+		}, {
+			name:    "adding one",
+			current: []string{"a"},
+			target:  []string{"a", "b"},
+			same:    []string{"a"},
+			added:   []string{"b"},
+		}, {
+			name:    "removing one",
+			current: []string{"a", "b"},
+			target:  []string{"a"},
+			same:    []string{"a"},
+			removed: []string{"b"},
+		}, {
+			name:    "removed to empty",
+			current: []string{"a"},
+			target:  []string{},
+			removed: []string{"a"},
+		}}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				a, r, s := Changes(tt.current, tt.target)
+				require.Equal(t, tt.added, a, "added")
+				require.Equal(t, tt.removed, r, "removed")
+				require.Equal(t, tt.same, s, "same")
+			})
+		}
+	})
 }

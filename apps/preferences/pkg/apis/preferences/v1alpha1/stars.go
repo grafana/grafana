@@ -59,3 +59,22 @@ func (stars *StarsSpec) Normalize() {
 	}
 	stars.Resource = resources
 }
+
+func Changes(current []string, target []string) (added []string, removed []string, same []string) {
+	lookup := map[string]bool{}
+	for _, k := range current {
+		lookup[k] = true
+	}
+	for _, k := range target {
+		if lookup[k] {
+			same = append(same, k)
+			delete(lookup, k)
+		} else {
+			added = append(added, k)
+		}
+	}
+	for k := range lookup {
+		removed = append(removed, k)
+	}
+	return
+}

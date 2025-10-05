@@ -196,7 +196,7 @@ func TestIntegrationStars(t *testing.T) {
 			rspObj, err = starsClient.Resource.Get(ctx, "user-"+starsClient.Args.User.Identity.GetIdentifier(), metav1.GetOptions{})
 			require.NoError(t, err)
 
-			if mode < grafanarest.Mode4 {
+			if mode < grafanarest.Mode3 {
 				after = typed(t, rspObj, &preferences.Stars{})
 				jj, err := json.MarshalIndent(after.Spec, "", "  ")
 				require.NoError(t, err)
