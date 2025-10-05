@@ -817,15 +817,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "promQLScope",
-			Description:       "In-development feature that will allow injection of labels into prometheus queries.",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             grafanaOSSBigTent,
-			Expression:        "true",
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:              "logQLScope",
 			Description:       "In-development feature that will allow injection of labels into loki queries.",
 			Stage:             FeatureStagePrivatePreview,
