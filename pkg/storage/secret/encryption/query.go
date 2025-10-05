@@ -74,7 +74,6 @@ type updateEncryptedValue struct {
 	Name          string
 	Version       int64
 	EncryptedData []byte
-	DataKeyID     string
 	Updated       int64
 }
 
