@@ -94,7 +94,9 @@ func New(cfg app.Config) (app.App, error) {
 							if err != nil {
 								logging.FromContext(ctx).Warn("unable to create background identity", "err", err)
 							} else {
-								_, _ = client.UpdateStatus(ctx, id, info.Status, resource.UpdateOptions{})
+								_, _ = client.UpdateStatus(ctx, id, info.Status, resource.UpdateOptions{
+									ResourceVersion: info.ResourceVersion,
+								})
 							}
 						}()
 
