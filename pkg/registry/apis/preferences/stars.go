@@ -33,7 +33,7 @@ func (s *starStorage) List(ctx context.Context, options *internalversion.ListOpt
 	// Get the single user stars
 	case authlib.TypeUser:
 		stars := &preferences.StarsList{}
-		obj, _ := s.Storage.Get(ctx, "user-"+user.GetIdentifier(), &v1.GetOptions{})
+		obj, _ := s.Get(ctx, "user-"+user.GetIdentifier(), &v1.GetOptions{})
 		if obj != nil {
 			s, ok := obj.(*preferences.Stars)
 			if ok {
