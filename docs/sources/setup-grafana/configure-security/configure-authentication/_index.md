@@ -35,6 +35,7 @@ The following table shows all supported authentication methods and the features 
 | [SAML](saml/) (Enterprise only)     | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           | yes          |
 | [LDAP](ldap/)                       | yes               | yes          | yes          | yes                   | yes       | yes            | yes         | no                   | N/A        | N/A           | N/A          |
 | [JWT Proxy](jwt/)                   | no                | yes          | yes          | yes                   | no        | no             | N/A         | no                   | N/A        | N/A           | N/A          |
+| [RADIUS](radius/)                   | yes               | yes          | yes          | yes                   | no        | yes            | N/A         | yes                  | N/A        | N/A           | N/A          |
 
 Fields explanation:
 
