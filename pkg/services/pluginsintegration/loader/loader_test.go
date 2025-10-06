@@ -20,13 +20,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
@@ -1550,21 +1548,19 @@ type loaderDepOpts struct {
 func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Service, proc process.Manager,
 	backendFactory plugins.BackendFactoryProvider, errTracker pluginerrs.ErrorTracker,
 ) *Loader {
-	assets := assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg), pluginassets.ProvideService())
 	angularInspector := angularinspector.NewStaticInspector()
 
 	terminate, err := pipeline.ProvideTerminationStage(cfg, reg, proc)
 	require.NoError(t, err)
 
 	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
-		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
+		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginassets.ProvideService()),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
 		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop()),
 		terminate, errTracker)
 }
 
 func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loaderDepOpts) *Loader {
-	assets := assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg), pluginassets.ProvideService())
 	reg := fakes.NewFakePluginRegistry()
 	proc := fakes.NewFakeProcessManager()
 
@@ -1588,7 +1584,7 @@ func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loade
 	}
 
 	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
-		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
+		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginassets.ProvideService()),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
 		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop()),
 		terminate, errTracker)
