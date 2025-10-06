@@ -1,6 +1,6 @@
 import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 
-import { colorManipulator, DataFrame, dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
+import { colorManipulator, DataFrame, dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone, Field } from '@grafana/data';
 import {
   StackingMode,
   VisibilityMode,
@@ -19,7 +19,7 @@ import { distribute, SPACE_BETWEEN } from './distribute';
 import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
 import { PreparedMarker, ResolvedMarker } from './markerTypes';
 import { Builder } from '@react-awesome-query-builder/ui';
-import { resolve } from 'path';
+import { format, resolve } from 'path';
 import { reset } from 'ol/transform';
 import { group } from 'console';
 import { data } from 'jquery';
@@ -66,6 +66,7 @@ export interface BarsOptions {
   hoverMulti?: boolean;
   legend?: VizLegendOptions;
   markers?: PreparedMarker[];
+  markerData?: Field[];
   xSpacing?: number;
   xTimeAuto?: boolean;
   negY?: boolean[];
@@ -154,7 +155,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
   let qt: Quadtree;
   const numSeries = 30; // !!
-  const hovered: Array<Rect | null> = Array(numSeries).fill(null);
+  const hovered: Array<Rect | null> = Array(numSeries + 1).fill(null);
   let hRect: Rect | null;
   let resolvedMarkers: ResolvedMarker[] = [];
 
@@ -326,6 +327,13 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     },
     // collect rendered bar geometry
     each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
+
+    // for (const marker of opts.markers ?? []) {
+    //     if(seriesIdx === marker.dataIdx) {
+    //       return;
+    //   }
+    // }
+      
       // we get back raw canvas coords (included axes & padding)
       // translate to the plotting area origin
       lft -= u.bbox.left;
@@ -486,7 +494,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
                 y: o.y - u.bbox.top - (o.opts?.width ? o.opts.width : 25) / 2,
                 w: o.opts?.width ? o.opts.width : 25,
                 h: o.opts?.width ? o.opts.width : 25,
-                sidx: o.sidx ?? -1,
+                sidx: 3,
                 didx: dataIdx
               });
             }
@@ -542,8 +550,19 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     points: {
       fill: 'rgba(255,255,255,0.4)',
       bbox: (u, seriesIdx) => {
-        let hRect2 = hovered[seriesIdx];
-        let isHovered = hRect2 != null;
+        var hRect2 = hovered[seriesIdx];
+        var isHovered = hRect2 != null;
+
+        if(seriesIdx === u.data.length -1 && ! isHovered){
+          for(const mData of opts.markerData ?? []){
+            seriesIdx++
+            hRect2 = hovered[seriesIdx]
+            isHovered = hRect2 != null;
+            if(isHovered){
+              break;
+            }
+          }
+        }
 
         return {
           left: isHovered ? hRect2!.x / uPlot.pxRatio : -10,
@@ -551,12 +570,14 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           width: isHovered ? hRect2!.w / uPlot.pxRatio : 0,
           height: isHovered ? hRect2!.h / uPlot.pxRatio : 0,
         };
-      },
+      }
+      
     },
     focus: {
       prox: 1e3,
       dist: (u, seriesIdx) => (hRect?.sidx === seriesIdx ? 0 : Infinity),
     },
+    
   };
 
   // Build bars

@@ -44,8 +44,7 @@ import { singleBarMarker } from './barmarkers';
 import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
 import { ResolvedMarker, PreparedMarker, Marker } from './markerTypes';
 
-// import { isLegendOrdered, prepMarkerList } from './utils';
-import { markersLayer } from '../geomap/layers/data/markersLayer';
+
 
 interface BarSeries {
   series: DataFrame[];
@@ -288,6 +287,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     legend,
 
     markers: preparedMarkers,
+    markerData: markerData,
 
     xSpacing: xTickLabelSpacing,
     xTimeAuto: frame.fields[0]?.type === FieldType.time && !frame.fields[0].config.unit?.startsWith('time:'),
@@ -649,20 +649,19 @@ export function hideMarkerSeries(data: PanelData, markers: Marker[]): {barData :
 
     if(i === -1) continue; 
     var fi = null;
-    if(true){fi = barData.series[0].fields.splice(i,1)[0];}
+    if(false){fi = barData.series[0].fields.splice(i,1)[0];}
     else{
       fi = barData.series[0].fields[i];
-      data.series[0].fields[i].state = {...fi.state, hideFrom: {legend: true, tooltip: true, viz: true}};
-      barData.series[0].fields[i].state = {...fi.state, hideFrom: {legend: true, tooltip: true, viz: true}};
+      barData.series[0].fields[i].config.custom.hideFrom = {legend: false, tooltip: false, viz: true};
     }
     markerData.push(fi);
     
   }
-  return { barData, markerData };
+  return { barData, markerData};
 }
 
 
-function deepCopy<T>(obj: T, seen = new Map<any, any>()): T {
+export function deepCopy<T>(obj: T, seen = new Map<any, any>()): T {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }

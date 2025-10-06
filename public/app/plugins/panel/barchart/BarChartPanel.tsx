@@ -19,8 +19,9 @@ import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
 import { Options } from './panelcfg.gen';
-import { hideMarkerSeries, prepConfig, prepSeries, prepareMarkers} from './utils';
+import { hideMarkerSeries, prepConfig, prepSeries, prepareMarkers, deepCopy} from './utils';
 import { BarChartDisplayValues } from './types';
+import { Tooltip } from '../../../../../packages/grafana-ui/src/components/Tooltip/Tooltip';
 
 
 const charWidth = measureText('M', UPLOT_AXIS_FONT_SIZE).width;
@@ -93,7 +94,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
   );
   
   //maybe move this inside prepConfig?
-  const preparedMarkers = prepareMarkers(vizSeries[0]?.fields ?? [], markerData ?? [], markers);
+  const preparedMarkers = prepareMarkers(vizSeries[0]?.fields ?? [], markerData, markers);
 
   const xGroupsCount = vizSeries[0]?.length ?? 0;
   const seriesCount = vizSeries[0]?.fields.length ?? 0;
@@ -104,7 +105,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       
       return xGroupsCount === 0
         ? { builder: null, prepData: null }
-        : prepConfig({ series: vizSeries, totalSeries, color: info.color, orientation, options, timeZone, theme, preparedMarkers, markerData });
+        : prepConfig({ series: vizSeries, totalSeries: totalSeries + 1, color: info.color, orientation, options, timeZone, theme, preparedMarkers, markerData });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -157,6 +158,9 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       <BarChartLegend data={info.series!} colorField={info.color} {...legend} />
     ) : null;
 
+  const tooltipSeries = deepCopy(vizSeries[0]);
+  tooltipSeries.fields.push(...markerData);
+
   return (
     <VizLayout
       width={props.width}
@@ -174,10 +178,10 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                 options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
               }
               getDataLinks={(seriesIdx, dataIdx) =>
-                vizSeries[0].fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
+                tooltipSeries.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
               }
               getAdHocFilters={(_seriesIdx, dataIdx) => {
-                const xField = vizSeries[0].fields[0];
+                const xField = tooltipSeries.fields[0];
 
                 // Check if the field supports filtering
                 // We only show filters on filterable fields (xField.config.filterable).
@@ -212,7 +216,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
               render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks, adHocFilters) => {
                 return (
                   <TimeSeriesTooltip
-                    series={vizSeries[0]}
+                    series={tooltipSeries}
                     _rest={info._rest}
                     dataIdxs={dataIdxs}
                     seriesIdx={seriesIdx}
