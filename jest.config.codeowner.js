@@ -5,26 +5,6 @@ const baseConfig = require('./jest.config.js');
 
 const CODEOWNERS_MANIFEST_FILENAMES_BY_TEAM_PATH = 'codeowners-manifest/filenames-by-team.json';
 
-/**
- * Create a filesystem-safe directory structure for different owner types
- * @param {string} owner - CODEOWNERS owner (username, team, or email)
- * @returns {string} Directory path relative to coverage/by-team/
- */
-function createOwnerDirectory(owner) {
-  if (owner.includes('@') && owner.includes('/')) {
-    // Example: @grafana/dataviz-squad
-    const [org, team] = owner.substring(1).split('/');
-    return `teams/${org}/${team}`;
-  } else if (owner.startsWith('@')) {
-    // Example: @jesdavpet
-    return `users/${owner.substring(1)}`;
-  } else {
-    // Example: user@domain.tld
-    const [user, domain] = owner.split('@');
-    return `emails/${user}-at-${domain}`;
-  }
-}
-
 const teamName = process.env.TEAM_NAME;
 if (!teamName) {
   console.error('ERROR: TEAM_NAME environment variable is required');
@@ -69,38 +49,20 @@ const sourceFiles = teamFiles.filter((file) => {
   );
 });
 
-const teamDirectories = [...new Set(teamFiles.map((file) => path.dirname(file)))];
 const teamTestPatterns = [];
 
-teamFiles.forEach((file) => {
-  if (['.ts', '.tsx', '.js', '.jsx'].includes(path.extname(file))) {
-    const dir = path.dirname(file);
-    const basename = path.basename(file, path.extname(file));
+sourceFiles.forEach((file) => {
+  const dir = path.dirname(file);
+  const basename = path.basename(file, path.extname(file));
 
-    teamTestPatterns.push(`<rootDir>/${dir}/${basename}.test.{ts,tsx,js,jsx}`);
-    teamTestPatterns.push(`<rootDir>/${dir}/__tests__/${basename}.test.{ts,tsx,js,jsx}`);
-    teamTestPatterns.push(`<rootDir>/${dir}/__tests__/**/${basename}.test.{ts,tsx,js,jsx}`);
-  }
+  teamTestPatterns.push(`<rootDir>/${dir}/${basename}.test.{ts,tsx,js,jsx}`);
+  teamTestPatterns.push(`<rootDir>/${dir}/__tests__/${basename}.test.{ts,tsx,js,jsx}`);
+  teamTestPatterns.push(`<rootDir>/${dir}/__tests__/**/${basename}.test.{ts,tsx,js,jsx}`);
 });
-
-teamDirectories.forEach((dir) => {
-  teamTestPatterns.push(`<rootDir>/${dir}/**/*.test.{ts,tsx,js,jsx}`);
-});
-
-const uniqueTestPatterns = [...new Set(teamTestPatterns)];
 
 console.log(
   `🧪 Collecting coverage for ${sourceFiles.length} testable files of ${teamFiles.length} files owned by ${teamName}.`
 );
-
-const sourcePaths = [
-  ...new Set(
-    sourceFiles.map((file) => {
-      const parts = file.split('/');
-      return parts.length > 1 ? parts[0] : '.';
-    })
-  ),
-];
 
 module.exports = {
   ...baseConfig,
@@ -117,23 +79,10 @@ module.exports = {
       {
         name: `Coverage Report - ${teamName} owned files`,
         outputDir: outputDir,
-        reports: [['console-summary'], ['v8'], ['json'], ['lcov']], // Use v8 native Monocart format
+        reports: [['console-summary'], ['v8'], ['json'], ['lcov']],
 
-        // Use specific directories and filter to only include team files
         all: {
-          dir: [
-            ...new Set(
-              sourceFiles.map((file) => {
-                const parts = file.split('/');
-                // Get the top-level directory (packages, public, etc.)
-                return parts.length > 1 ? parts[0] : '.';
-              })
-            ),
-          ],
-          filter: (filePath) => {
-            // Only include files that are in our team's sourceFiles list
-            return sourceFiles.includes(filePath);
-          },
+          filter: (filePath) => sourceFiles.includes(filePath),
         },
         cleanCache: true,
         onEnd: (coverageResults) => {
@@ -144,15 +93,30 @@ module.exports = {
     ],
   ],
 
-  // Override base config's testRegex to avoid conflicts with testMatch
   testRegex: undefined,
 
-  // Use specific test patterns for the team's files
   testMatch:
-    uniqueTestPatterns.length > 0
-      ? uniqueTestPatterns
-      : [
-          // Fallback pattern if no specific patterns found
-          '<rootDir>/this-pattern-will-match-nothing/**/*.test.{ts,tsx,js,jsx}',
-        ],
+    teamTestPatterns.length > 0
+      ? teamTestPatterns
+      : ['<rootDir>/this-pattern-will-match-nothing/**/*.test.{ts,tsx,js,jsx}'],
 };
+
+/**
+ * Create a filesystem-safe directory structure for different owner types
+ * @param {string} owner - CODEOWNERS owner (username, team, or email)
+ * @returns {string} Directory path relative to coverage/by-team/
+ */
+function createOwnerDirectory(owner) {
+  if (owner.includes('@') && owner.includes('/')) {
+    // Example: @grafana/dataviz-squad
+    const [org, team] = owner.substring(1).split('/');
+    return `teams/${org}/${team}`;
+  } else if (owner.startsWith('@')) {
+    // Example: @jesdavpet
+    return `users/${owner.substring(1)}`;
+  } else {
+    // Example: user@domain.tld
+    const [user, domain] = owner.split('@');
+    return `emails/${user}-at-${domain}`;
+  }
+}
