@@ -2,7 +2,7 @@ import { ReducersMapObject } from '@reduxjs/toolkit';
 import { AnyAction, combineReducers } from 'redux';
 
 import { alertingAPI as alertingPackageAPI } from '@grafana/alerting/unstable';
-import { allReducers } from '@grafana/api-clients';
+import { allReducers } from '@grafana/api-clients/rtkq';
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
