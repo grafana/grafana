@@ -325,3 +325,59 @@ func TestValidateOnUpdate(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateOnBindingCreate(t *testing.T) {
+	tests := []struct {
+		name      string
+		requester *identity.StaticRequester
+		obj       *iamv0alpha1.TeamBinding
+		want      error
+	}{
+		{
+			name: "valid team binding create",
+			requester: &identity.StaticRequester{
+				Type:    types.TypeUser,
+				OrgRole: identity.RoleAdmin,
+			},
+			obj: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "invalid team binding - invalid permission",
+			requester: &identity.StaticRequester{
+				Type:    types.TypeUser,
+				OrgRole: identity.RoleAdmin,
+			},
+			obj: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: "invalid",
+				},
+			},
+			want: apierrors.NewBadRequest("invalid permission"),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := identity.WithRequester(context.Background(), test.requester)
+			err := ValidateOnBindingCreate(ctx, test.obj)
+			assert.Equal(t, test.want, err)
+		})
+	}
+}
