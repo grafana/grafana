@@ -1,12 +1,26 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
   "editable": true,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "gdev-prometheus"
-      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -51,8 +65,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -94,8 +107,7 @@
       "type": "timeseries"
     }
   ],
-  "refresh": "",
-  "schemaVersion": 41,
+  "schemaVersion": 13,
   "tags": [],
   "templating": {
     "list": []
@@ -104,6 +116,8 @@
     "from": "now-6h",
     "to": "now"
   },
+  "timepicker": {},
   "timezone": "browser",
-  "title": "Dashboard with minimal graph panel settings"
+  "title": "Dashboard with minimal graph panel settings",
+  "weekStart": ""
 }
