@@ -44,7 +44,7 @@ type Opts struct {
 // New returns a new Bootstrap stage.
 func New(cfg *config.PluginManagementCfg, opts Opts) *Bootstrap {
 	if opts.ConstructFunc == nil {
-		opts.ConstructFunc = DefaultConstructFunc(cfg, signature.DefaultCalculator(cfg), pluginassets.ProvideService())
+		opts.ConstructFunc = DefaultConstructFunc(cfg, signature.DefaultCalculator(cfg), pluginassets.NewLocalProvider())
 	}
 
 	if opts.DecorateFuncs == nil {

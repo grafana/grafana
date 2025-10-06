@@ -50,7 +50,7 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	proc := process.ProvideService()
 
 	disc := pipeline.ProvideDiscoveryStage(pCfg, reg)
-	boot := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), pluginassets.ProvideService())
+	boot := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), pluginassets.NewLocalProvider())
 	valid := pipeline.ProvideValidationStage(pCfg, signature.NewValidator(signature.NewUnsignedAuthorizer(pCfg)), angularInspector)
 	init := pipeline.ProvideInitializationStage(pCfg, reg, provider.ProvideService(coreRegistry), proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), nil, tracing.InitializeTracerForTest(), provisionedplugins.NewNoop())
 	term, err := pipeline.ProvideTerminationStage(pCfg, reg, proc)
@@ -88,7 +88,7 @@ func CreateTestLoader(t *testing.T, cfg *pluginsCfg.PluginManagementCfg, opts Lo
 	}
 
 	if opts.Bootstrapper == nil {
-		opts.Bootstrapper = pipeline.ProvideBootstrapStage(cfg, signature.ProvideService(cfg, statickey.New()), pluginassets.ProvideService())
+		opts.Bootstrapper = pipeline.ProvideBootstrapStage(cfg, signature.ProvideService(cfg, statickey.New()), pluginassets.NewLocalProvider())
 	}
 
 	if opts.Validator == nil {

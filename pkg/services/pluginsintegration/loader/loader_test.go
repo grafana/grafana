@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var compareOpts = []cmp.Option{cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log", "mu"), fsComparer}
@@ -466,7 +465,8 @@ func TestLoader_Load(t *testing.T) {
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		errTracker := pluginerrs.ProvideErrorTracker()
-		l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr, errTracker)
+
+		l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr, errTracker, pluginassets.NewLocalProvider())
 
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := l.Load(context.Background(), sources.NewLocalSource(tt.class, tt.pluginPaths))
@@ -584,91 +584,6 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 	})
 }
 
-func TestLoader_Load_CustomSource(t *testing.T) {
-	t.Run("Load a plugin", func(t *testing.T) {
-		cfg := &config.PluginManagementCfg{
-			PluginsCDNURLTemplate: "https://cdn.example.com",
-			PluginSettings: setting.PluginSettings{
-				"grafana-worldmap-panel": {"cdn": "true"},
-			},
-		}
-
-		pluginPaths := []string{filepath.Join(testDataDir(t), "cdn")}
-		expected := []*plugins.Plugin{{
-			JSONData: plugins.JSONData{
-				ID:   "grafana-worldmap-panel",
-				Type: plugins.TypePanel,
-				Name: "Worldmap Panel",
-				Info: plugins.Info{
-					Version: "0.3.3",
-					Links: []plugins.InfoLink{
-						{Name: "Project site", URL: "https://github.com/grafana/worldmap-panel"},
-						{Name: "MIT License", URL: "https://github.com/grafana/worldmap-panel/blob/master/LICENSE"},
-					},
-					Logos: plugins.Logos{
-						// Path substitution
-						Small: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
-						Large: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
-					},
-					Screenshots: []plugins.Screenshots{
-						{
-							Name: "World",
-							Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-world.png",
-						},
-						{
-							Name: "USA",
-							Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-usa.png",
-						},
-						{
-							Name: "Light Theme",
-							Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-light-theme.png",
-						},
-					},
-				},
-				Dependencies: plugins.Dependencies{
-					GrafanaVersion: "3.x.x",
-					Plugins:        []plugins.Dependency{},
-					Extensions: plugins.ExtensionsDependencies{
-						ExposedComponents: []string{},
-					},
-				},
-				Extensions: plugins.Extensions{
-					AddedLinks:      []plugins.AddedLink{},
-					AddedComponents: []plugins.AddedComponent{},
-					AddedFunctions:  []plugins.AddedFunction{},
-
-					ExposedComponents: []plugins.ExposedComponent{},
-					ExtensionPoints:   []plugins.ExtensionPoint{},
-				},
-			},
-			FS:           mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "cdn/plugin")),
-			Class:        plugins.ClassExternal,
-			Signature:    plugins.SignatureStatusValid,
-			BaseURL:      "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
-			Module:       "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js",
-			Translations: map[string]string{},
-		}}
-
-		l := newLoader(t, cfg, fakes.NewFakePluginRegistry(), fakes.NewFakeProcessManager(), fakes.NewFakeBackendProcessProvider(), newFakeErrorTracker())
-		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
-			PluginClassFunc: func(ctx context.Context) plugins.Class {
-				return plugins.ClassExternal
-			},
-			DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, pluginPaths).Discover,
-			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
-				return plugins.Signature{
-					Status: plugins.SignatureStatusValid,
-				}, true
-			},
-		})
-
-		require.NoError(t, err)
-		if !cmp.Equal(got, expected, compareOpts...) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
-		}
-	})
-}
-
 func TestLoader_Load_MultiplePlugins(t *testing.T) {
 	t.Run("Load multiple", func(t *testing.T) {
 		tests := []struct {
@@ -751,7 +666,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 			procMgr := fakes.NewFakeProcessManager()
 			errTracker := pluginerrs.ProvideErrorTracker()
 
-			l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr, errTracker)
+			l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr, errTracker, pluginassets.NewLocalProvider())
 			t.Run(tt.name, func(t *testing.T) {
 				got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -862,7 +777,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
-		l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr, newFakeErrorTracker())
+		l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr, fakes.NewFakeErrorTracker(), pluginassets.NewLocalProvider())
 
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -929,7 +844,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		cfg := &config.PluginManagementCfg{GrafanaAppURL: defaultAppURL}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeErrorTracker())
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, fakes.NewFakeErrorTracker(), pluginassets.NewLocalProvider())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
@@ -1016,7 +931,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		cfg := &config.PluginManagementCfg{}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeErrorTracker())
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, fakes.NewFakeErrorTracker(), pluginassets.NewLocalProvider())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
@@ -1116,7 +1031,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 		}
 		procMgr := fakes.NewFakeProcessManager()
 		cfg := &config.PluginManagementCfg{}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeErrorTracker())
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, fakes.NewFakeErrorTracker(), pluginassets.NewLocalProvider())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
@@ -1316,7 +1231,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		procMgr := fakes.NewFakeProcessManager()
 		reg := fakes.NewFakePluginRegistry()
 		cfg := &config.PluginManagementCfg{}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeErrorTracker())
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, fakes.NewFakeErrorTracker(), pluginassets.NewLocalProvider())
 
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -1517,7 +1432,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		cfg := &config.PluginManagementCfg{}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeErrorTracker())
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, fakes.NewFakeErrorTracker(), pluginassets.NewLocalProvider())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
@@ -1546,7 +1461,7 @@ type loaderDepOpts struct {
 }
 
 func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Service, proc process.Manager,
-	backendFactory plugins.BackendFactoryProvider, errTracker pluginerrs.ErrorTracker,
+	backendFactory plugins.BackendFactoryProvider, errTracker pluginerrs.ErrorTracker, pluginAssetsProvider pluginassets.Provider,
 ) *Loader {
 	angularInspector := angularinspector.NewStaticInspector()
 
@@ -1554,7 +1469,7 @@ func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Servi
 	require.NoError(t, err)
 
 	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
-		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginassets.ProvideService()),
+		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginAssetsProvider),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
 		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop()),
 		terminate, errTracker)
@@ -1584,7 +1499,7 @@ func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loade
 	}
 
 	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
-		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginassets.ProvideService()),
+		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginassets.NewLocalProvider()),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
 		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop()),
 		terminate, errTracker)

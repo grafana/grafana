@@ -153,7 +153,7 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(sources.Registry), new(*sources.Service)),
 	checkregistry.ProvideService,
 	wire.Bind(new(checkregistry.CheckService), new(*checkregistry.Service)),
-	pluginassets2.ProvideService,
+	pluginassets2.NewLocalProvider,
 	wire.Bind(new(pluginassets2.Provider), new(*pluginassets2.LocalProvider)),
 )
 

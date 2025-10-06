@@ -123,7 +123,6 @@ func defaultLogoPath(pluginType plugins.Type) string {
 	return path.Join("public/img", fmt.Sprintf("icn-%s.svg", string(pluginType)))
 }
 
-
 func getTranslations(assetProvider pluginassets.Provider, n pluginassets.PluginInfo) (map[string]string, error) {
 	pathToTranslations, err := assetProvider.AssetPath(n, "locales")
 	if err != nil {
