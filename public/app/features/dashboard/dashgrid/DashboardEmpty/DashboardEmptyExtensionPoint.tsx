@@ -2,6 +2,7 @@ import { type ComponentType } from 'react';
 
 import { PluginExtensionPoints } from '@grafana/data';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 
 interface DashboardEmptyExtensionPointProps {
   DefaultUI: ComponentType;
@@ -25,7 +26,7 @@ function InternalDashboardEmptyExtensionPoint(props: DashboardEmptyExtensionPoin
   });
 
   if (isLoading) {
-    return <props.DefaultUI />;
+    return <PageLoader />;
   }
 
   return (
