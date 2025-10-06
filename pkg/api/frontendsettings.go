@@ -350,6 +350,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			MaxIdleConns:    hs.Cfg.SqlDatasourceMaxIdleConnsDefault,
 			ConnMaxLifetime: hs.Cfg.SqlDatasourceMaxConnLifetimeDefault,
 		},
+		OpenFeatureContext: hs.openFeatureContext(),
 	}
 
 	if hs.Cfg.UnifiedAlerting.StateHistory.Enabled {
@@ -450,6 +451,26 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 func isSupportBundlesEnabled(hs *HTTPServer) bool {
 	return hs.Cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
+}
+
+func (hs *HTTPServer) openFeatureContext() dtos.FrontendSettingsOpenFeatureContextDTO {
+	attrs := hs.Cfg.OpenFeature.ContextAttrs
+
+	getStringPtr := func(key string) *string {
+		if val, ok := attrs[key]; ok && val != "" {
+			return &val
+		}
+		return nil
+	}
+
+	return dtos.FrontendSettingsOpenFeatureContextDTO{
+		StackID:        getStringPtr("stackId"),
+		Slug:           getStringPtr("slug"),
+		Namespace:      getStringPtr("namespace"),
+		Channel:        getStringPtr("channel"),
+		Plan:           getStringPtr("plan"),
+		GrafanaVersion: getStringPtr("grafana_version"),
+	}
 }
 
 func getShortCommitHash(commitHash string, maxLength int) string {

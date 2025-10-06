@@ -40,7 +40,12 @@ func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize OpenFeature: %w", err)
 	}
-	openfeature.SetEvaluationContext(openfeature.NewEvaluationContext(cfg.OpenFeature.TargetingKey, cfg.OpenFeature.ContextAttrs))
+	// Convert map[string]string to map[string]any for OpenFeature SDK
+	contextAttrs := make(map[string]any)
+	for k, v := range cfg.OpenFeature.ContextAttrs {
+		contextAttrs[k] = v
+	}
+	openfeature.SetEvaluationContext(openfeature.NewEvaluationContext(cfg.OpenFeature.TargetingKey, contextAttrs))
 
 	return nil
 }

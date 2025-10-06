@@ -165,6 +165,15 @@ type FrontendSettingsSqlConnectionLimitsDTO struct {
 	ConnMaxLifetime int `json:"connMaxLifetime"`
 }
 
+type FrontendSettingsOpenFeatureContextDTO struct {
+	StackID        *string `json:"stackId"`
+	Slug           *string `json:"slug"`
+	Namespace      *string `json:"namespace"`
+	Channel        *string `json:"channel"`
+	Plan           *string `json:"plan"`
+	GrafanaVersion *string `json:"grafanaVersion"`
+}
+
 type FrontendSettingsDTO struct {
 	DefaultDatasource    string                           `json:"defaultDatasource"`
 	Datasources          map[string]plugins.DataSourceDTO `json:"datasources"`
@@ -305,6 +314,7 @@ type FrontendSettingsDTO struct {
 
 	LocalFileSystemAvailable bool `json:"localFileSystemAvailable"`
 	// Experimental Scope settings
-	ListScopesEndpoint          string `json:"listScopesEndpoint"`
-	ListDashboardScopesEndpoint string `json:"listDashboardScopesEndpoint"`
+	ListScopesEndpoint          string                                `json:"listScopesEndpoint"`
+	ListDashboardScopesEndpoint string                                `json:"listDashboardScopesEndpoint"`
+	OpenFeatureContext          FrontendSettingsOpenFeatureContextDTO `json:"openFeatureContext"`
 }
