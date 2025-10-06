@@ -13685,6 +13685,7 @@
         }
       }
     },
+    "query-validation-message": "One or more queries failed to return fields. This transformation can only reference fields from queries with a successful and visible result.",
     "range-matcher-editor": {
       "and": "and",
       "placeholder-from": "From",
