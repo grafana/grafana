@@ -1,4 +1,4 @@
-import { generatedAPI, type Playlist, type PlaylistSpec } from '@grafana/api-clients/playlist/v0alpha1';
+import { generatedAPI, type Playlist, type PlaylistSpec } from '@grafana/api-clients/rtkq/playlist/v0alpha1';
 import { getBackendSrv } from '@grafana/runtime';
 
 import { notifyApp } from '../../../../core/actions';
@@ -86,4 +86,4 @@ export const {
 } = playlistAPIv0alpha1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export type { Playlist, PlaylistSpec } from '@grafana/api-clients/playlist/v0alpha1';
+export type { Playlist, PlaylistSpec } from '@grafana/api-clients/rtkq/playlist/v0alpha1';

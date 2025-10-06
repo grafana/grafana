@@ -1,4 +1,4 @@
-import { generatedAPI } from '@grafana/api-clients/advisor/v0alpha1';
+import { generatedAPI } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
 
 export const advisorAPIv0alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
@@ -40,4 +40,4 @@ export const {
 } = advisorAPIv0alpha1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export { type Check, type CheckType } from '@grafana/api-clients/advisor/v0alpha1';
+export { type Check, type CheckType } from '@grafana/api-clients/rtkq/advisor/v0alpha1';

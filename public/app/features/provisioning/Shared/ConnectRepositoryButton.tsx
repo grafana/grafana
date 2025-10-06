@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { useGetFrontendSettingsQuery, Repository } from '@grafana/api-clients/provisioning/v0alpha1';
+import { useGetFrontendSettingsQuery, Repository } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Dropdown, Icon, Menu, Stack } from '@grafana/ui';
 

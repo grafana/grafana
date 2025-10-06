@@ -1,4 +1,4 @@
-import { ListRepositoryApiArg } from '@grafana/api-clients/provisioning/v0alpha1';
+import { ListRepositoryApiArg } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 
 import { parseListOptionsSelector } from '../../../../features/apiserver/client';
 import { ListOptions } from '../../../../features/apiserver/types';

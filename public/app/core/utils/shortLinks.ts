@@ -1,6 +1,6 @@
 import memoizeOne from 'memoize-one';
 
-import { generatedAPI } from '@grafana/api-clients/shorturl/v1alpha1';
+import { generatedAPI } from '@grafana/api-clients/rtkq/shorturl/v1alpha1';
 import { AbsoluteTimeRange, LogRowModel, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv, config, locationService } from '@grafana/runtime';

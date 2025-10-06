@@ -1,4 +1,4 @@
-import { ResourceStats } from '@grafana/api-clients/folder/v1beta1';
+import { ResourceStats } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
