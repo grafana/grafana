@@ -5,7 +5,8 @@ import (
 )
 
 // ModuleRegisterer is used to inject enterprise dskit modules into
-// the target module manager.
+// the module manager. This abstraction allows enterprise builds to register
+// additional modules while keeping the core server decoupled from enterprise-specific dependencies.
 type ModuleRegisterer interface {
 	RegisterModules(manager modules.Registry)
 }
