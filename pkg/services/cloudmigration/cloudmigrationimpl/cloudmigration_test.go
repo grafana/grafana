@@ -14,12 +14,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -63,7 +61,7 @@ func Test_NoopServiceDoesNothing(t *testing.T) {
 func Test_CreateGetAndDeleteToken(t *testing.T) {
 	t.Parallel()
 
-	s := setUpServiceTest(t, false)
+	s := setUpServiceTest(t)
 
 	createResp, err := s.CreateToken(context.Background())
 	assert.NoError(t, err)
@@ -88,7 +86,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 	t.Parallel()
 
 	setupTest := func(ctx context.Context) (service *Service, snapshotUID string, sessionUID string) {
-		s := setUpServiceTest(t, false).(*Service)
+		s := setUpServiceTest(t).(*Service)
 
 		gmsClientFake := &gmsClientMock{}
 		s.gmsClient = gmsClientFake
@@ -365,7 +363,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 	t.Parallel()
 
-	s := setUpServiceTest(t, false).(*Service)
+	s := setUpServiceTest(t).(*Service)
 
 	gmsClientMock := &gmsClientMock{
 		getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
@@ -463,7 +461,7 @@ func Test_SortFolders(t *testing.T) {
 func TestDeleteSession(t *testing.T) {
 	t.Parallel()
 
-	s := setUpServiceTest(t, false).(*Service)
+	s := setUpServiceTest(t).(*Service)
 	user := &user.SignedInUser{UserUID: "user123"}
 
 	t.Run("when deleting a session that does not exist in the database, it returns an error", func(t *testing.T) {
@@ -515,7 +513,7 @@ func TestReportEvent(t *testing.T) {
 
 		gmsMock := &gmsClientMock{}
 
-		s := setUpServiceTest(t, false).(*Service)
+		s := setUpServiceTest(t).(*Service)
 		s.gmsClient = gmsMock
 
 		require.NotPanics(t, func() {
@@ -533,7 +531,7 @@ func TestReportEvent(t *testing.T) {
 
 		gmsMock := &gmsClientMock{}
 
-		s := setUpServiceTest(t, false).(*Service)
+		s := setUpServiceTest(t).(*Service)
 		s.gmsClient = gmsMock
 
 		require.NotPanics(t, func() {
@@ -547,7 +545,7 @@ func TestReportEvent(t *testing.T) {
 func TestGetFolderNamesForFolderUIDs(t *testing.T) {
 	t.Parallel()
 
-	s := setUpServiceTest(t, false).(*Service)
+	s := setUpServiceTest(t).(*Service)
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
@@ -616,7 +614,7 @@ func TestGetParentNames(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	s := setUpServiceTest(t, false).(*Service)
+	s := setUpServiceTest(t).(*Service)
 
 	user := &user.SignedInUser{OrgID: 1}
 
@@ -705,7 +703,7 @@ func TestGetParentNames(t *testing.T) {
 func TestGetLibraryElementsCommands(t *testing.T) {
 	t.Parallel()
 
-	s := setUpServiceTest(t, false).(*Service)
+	s := setUpServiceTest(t).(*Service)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
@@ -771,7 +769,7 @@ func TestIsPublicSignatureType(t *testing.T) {
 func TestGetPlugins(t *testing.T) {
 	t.Parallel()
 
-	s := setUpServiceTest(t, false).(*Service)
+	s := setUpServiceTest(t).(*Service)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
@@ -869,7 +867,7 @@ func TestGetPlugins(t *testing.T) {
 
 type configOverrides func(c *setting.Cfg)
 
-func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...configOverrides) cloudmigration.Service {
+func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigration.Service {
 	secretsService := secretsfakes.NewFakeSecretsService()
 	rr := routing.NewRouteRegister()
 	tracer := tracing.InitializeTracerForTest()
@@ -888,17 +886,6 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...conf
 	cfg.CloudMigration.SnapshotFolder = filepath.Join(os.TempDir(), uuid.NewString())
 
 	dashboardService := dashboards.NewFakeDashboardService(t)
-	if withDashboardMock {
-		dashboardService.On("GetAllDashboards", mock.Anything).Return(
-			[]*dashboards.Dashboard{
-				{
-					UID:  "1",
-					Data: simplejson.New(),
-				},
-			},
-			nil,
-		)
-	}
 
 	dsService := &datafakes.FakeDataSourceService{
 		DataSources: []*datasources.DataSource{
