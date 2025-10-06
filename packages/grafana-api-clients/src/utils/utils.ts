@@ -1,4 +1,4 @@
-import { config, isFetchError } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 
 export const getAPINamespace = () => config.namespace;
 
@@ -10,25 +10,4 @@ export const getAPINamespace = () => config.namespace;
  */
 export const getAPIBaseURL = (group: string, version: string) => {
   return `/apis/${group}/${version}/namespaces/${getAPINamespace()}` as const;
-};
-
-/**
- * Extract error message from various error formats
- * @param e the raw error
- * @returns string error message
- */
-export const handleError = (e: unknown) => {
-  if (!e) {
-    return new Error('Unknown error');
-  } else if (e instanceof Error) {
-    return e;
-  } else if (typeof e === 'object' && 'error' in e) {
-    if (e.error instanceof Error) {
-      return e.error;
-    } else if (isFetchError(e.error)) {
-      if (Array.isArray(e.error.data.errors) && e.error.data.errors.length) {
-        return e.error.data.errors.join('\n');
-      }
-    }
-  }
 };
