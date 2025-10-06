@@ -74,6 +74,7 @@ const functions = [
   'absent',
   'ceil',
   'changes',
+  'clamp',
   'clamp_max',
   'clamp_min',
   'day_of_month',
