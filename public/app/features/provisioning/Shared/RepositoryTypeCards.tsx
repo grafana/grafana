@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { useGetFrontendSettingsQuery } from '@grafana/api-clients/provisioning/v0alpha1';
+import { useGetFrontendSettingsQuery } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { Trans } from '@grafana/i18n';
 import { Card, Stack, Text, useStyles2 } from '@grafana/ui';
 

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { useGetUserPreferencesQuery } from '@grafana/api-clients/legacy/preferences';
+import { useGetUserPreferencesQuery } from '@grafana/api-clients/rtkq/legacy/preferences';
 import { config } from '@grafana/runtime';
 
 import { contextSrv } from '../../../services/context_srv';

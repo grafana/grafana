@@ -1,18 +1,14 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
-{{#if isEnterprise}}
-import { createBaseQuery, getAPIBaseURL } from '@grafana/api-clients';
-{{else}}
 import { createBaseQuery } from '../../../../utils/createBaseQuery';
 import { getAPIBaseURL } from '../../../../utils/utils';
-{{/if}}
 
-export const API_GROUP = '{{group}}' as const;
-export const API_VERSION = '{{version}}' as const;
+export const API_GROUP = 'playlist.grafana.app' as const;
+export const API_VERSION = 'v0alpha1' as const;
 export const BASE_URL = getAPIBaseURL(API_GROUP, API_VERSION);
 
 export const api = createApi({
-  reducerPath: '{{reducerPath}}',
+  reducerPath: 'playlistAPIv0alpha1',
   baseQuery: createBaseQuery({
     baseURL: BASE_URL,
   }),

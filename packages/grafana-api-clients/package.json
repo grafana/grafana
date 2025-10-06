@@ -23,49 +23,57 @@
       "import": "./src/index.ts",
       "require": "./src/index.ts"
     },
-    "./advisor/v0alpha1": {
-      "import": "./src/clients/advisor/v0alpha1/index.ts",
-      "require": "./src/clients/advisor/v0alpha1/index.ts"
+    "./rtkq": {
+      "import": "./src/rtkq.ts",
+      "require": "./src/rtkq.ts"
     },
-    "./folder/v1beta1": {
-      "import": "./src/clients/folder/v1beta1/index.ts",
-      "require": "./src/clients/folder/v1beta1/index.ts"
+    "./rtkq/advisor/v0alpha1": {
+      "import": "./src/clients/rtkq/advisor/v0alpha1/index.ts",
+      "require": "./src/clients/rtkq/advisor/v0alpha1/index.ts"
     },
-    "./iam/v0alpha1": {
-      "import": "./src/clients/iam/v0alpha1/index.ts",
-      "require": "./src/clients/iam/v0alpha1/index.ts"
+    "./rtkq/folder/v1beta1": {
+      "import": "./src/clients/rtkq/folder/v1beta1/index.ts",
+      "require": "./src/clients/rtkq/folder/v1beta1/index.ts"
     },
-    "./playlist/v0alpha1": {
-      "import": "./src/clients/playlist/v0alpha1/index.ts",
-      "require": "./src/clients/playlist/v0alpha1/index.ts"
+    "./rtkq/iam/v0alpha1": {
+      "import": "./src/clients/rtkq/iam/v0alpha1/index.ts",
+      "require": "./src/clients/rtkq/iam/v0alpha1/index.ts"
     },
-    "./preferences/v1alpha1": {
-      "import": "./src/clients/preferences/v1alpha1/index.ts",
-      "require": "./src/clients/preferences/v1alpha1/index.ts"
+    "./rtkq/playlist/v0alpha1": {
+      "import": "./src/clients/rtkq/playlist/v0alpha1/index.ts",
+      "require": "./src/clients/rtkq/playlist/v0alpha1/index.ts"
     },
-    "./provisioning/v0alpha1": {
-      "import": "./src/clients/provisioning/v0alpha1/index.ts",
-      "require": "./src/clients/provisioning/v0alpha1/index.ts"
+    "./rtkq/preferences/v1alpha1": {
+      "import": "./src/clients/rtkq/preferences/v1alpha1/index.ts",
+      "require": "./src/clients/rtkq/preferences/v1alpha1/index.ts"
     },
-    "./rules.alerting/v0alpha1": {
-      "import": "./src/clients/rules.alerting/v0alpha1/index.ts",
-      "require": "./src/clients/rules.alerting/v0alpha1/index.ts"
+    "./rtkq/provisioning/v0alpha1": {
+      "import": "./src/clients/rtkq/provisioning/v0alpha1/index.ts",
+      "require": "./src/clients/rtkq/provisioning/v0alpha1/index.ts"
     },
-    "./shorturl/v1alpha1": {
-      "import": "./src/clients/shorturl/v1alpha1/index.ts",
-      "require": "./src/clients/shorturl/v1alpha1/index.ts"
+    "./rtkq/rules.alerting/v0alpha1": {
+      "import": "./src/clients/rtkq/rules.alerting/v0alpha1/index.ts",
+      "require": "./src/clients/rtkq/rules.alerting/v0alpha1/index.ts"
     },
-    "./legacy/migrate-to-cloud": {
-      "import": "./src/clients/migrate-to-cloud/index.ts",
-      "require": "./src/clients/migrate-to-cloud/index.ts"
+    "./rtkq/shorturl/v1alpha1": {
+      "import": "./src/clients/rtkq/shorturl/v1alpha1/index.ts",
+      "require": "./src/clients/rtkq/shorturl/v1alpha1/index.ts"
     },
-    "./legacy/preferences": {
-      "import": "./src/clients/preferences/user/index.ts",
-      "require": "./src/clients/preferences/user/index.ts"
+    "./rtkq/legacy/migrate-to-cloud": {
+      "import": "./src/clients/rtkq/migrate-to-cloud/index.ts",
+      "require": "./src/clients/rtkq/migrate-to-cloud/index.ts"
     },
-    "./dashboard/v0alpha1": {
-      "import": "./src/clients/dashboard/v0alpha1/index.ts",
-      "require": "./src/clients/dashboard/v0alpha1/index.ts"
+    "./rtkq/legacy/preferences": {
+      "import": "./src/clients/rtkq/preferences/user/index.ts",
+      "require": "./src/clients/rtkq/preferences/user/index.ts"
+    },
+    "./rtkq/dashboard/v0alpha1": {
+      "import": "./src/clients/rtkq/dashboard/v0alpha1/index.ts",
+      "require": "./src/clients/rtkq/dashboard/v0alpha1/index.ts"
+    },
+    "./banners/v0alpha1": {
+      "import": "./src/clients/rtkq/banners/v0alpha1/index.ts",
+      "require": "./src/clients/rtkq/banners/v0alpha1/index.ts"
     }
   },
   "publishConfig": {

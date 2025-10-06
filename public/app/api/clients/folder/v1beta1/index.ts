@@ -1,4 +1,4 @@
-import { generatedAPI } from '@grafana/api-clients/folder/v1beta1';
+import { generatedAPI } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { DescendantCount } from 'app/types/folders';
 
 import { getParsedCounts } from './utils';
@@ -85,4 +85,4 @@ export {
   type FolderList,
   type CreateFolderApiArg,
   type ReplaceFolderApiArg,
-} from '@grafana/api-clients/folder/v1beta1';
+} from '@grafana/api-clients/rtkq/folder/v1beta1';

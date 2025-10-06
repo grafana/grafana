@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash';
 
-import { BASE_URL as v0alphaBaseURL } from '@grafana/api-clients/dashboard/v0alpha1';
+import { BASE_URL as v0alphaBaseURL } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';

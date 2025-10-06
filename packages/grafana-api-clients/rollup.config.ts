@@ -5,9 +5,22 @@ import { cjsOutput, entryPoint, esmOutput, plugins } from '../rollup.config.part
 const rq = createRequire(import.meta.url);
 const pkg = rq('./package.json');
 
-const apiClients = Object.entries<{ import: string; require: string }>(pkg.exports).filter(
-  ([key]) => key !== './package.json' && key.startsWith('./')
+const apiClients = Object.entries<{ import: string; require: string }>(pkg.exports).filter(([key]) =>
+  key.startsWith('./rtkq/')
 );
+
+const apiClientConfigs = apiClients.map(([name, { import: importPath }]) => {
+  const baseCjsOutput = cjsOutput(pkg);
+  const entryFileNames = name.replace('./', '') + '.cjs';
+  const cjsOutputConfig = { ...baseCjsOutput, entryFileNames };
+  return {
+    input: importPath.replace('./', ''),
+
+    plugins,
+    output: [cjsOutputConfig, esmOutput(pkg, 'grafana-api-clients')],
+    treeshake: false,
+  };
+});
 
 export default [
   {
@@ -16,10 +29,11 @@ export default [
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-api-clients')],
     treeshake: false,
   },
-  ...apiClients.map(([_, { import: importPath }]) => ({
-    input: importPath,
+  {
+    input: 'src/rtkq.ts',
     plugins,
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-api-clients')],
     treeshake: false,
-  })),
+  },
+  ...apiClientConfigs,
 ];

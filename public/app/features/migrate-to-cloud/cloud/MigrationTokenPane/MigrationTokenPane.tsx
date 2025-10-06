@@ -4,7 +4,7 @@ import {
   useCreateCloudMigrationTokenMutation,
   useDeleteCloudMigrationTokenMutation,
   useGetCloudMigrationTokenQuery,
-} from '@grafana/api-clients/legacy/migrate-to-cloud';
+} from '@grafana/api-clients/rtkq/legacy/migrate-to-cloud';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Box, Button, Text } from '@grafana/ui';

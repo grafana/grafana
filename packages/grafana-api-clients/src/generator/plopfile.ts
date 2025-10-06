@@ -30,13 +30,12 @@ export default function plopGenerator(plop: NodePlopAPI) {
 
     const apiClientBasePath = isEnterprise
       ? 'public/app/extensions/api/clients'
-      : 'packages/grafana-api-clients/src/clients';
+      : 'packages/grafana-api-clients/src/clients/rtkq';
     const generateScriptPath = isEnterprise
       ? 'local/generate-enterprise-apis.ts'
       : 'packages/grafana-api-clients/src/scripts/generate-rtk-apis.ts';
 
-    // Using app path, so the imports work on any file level
-    const clientImportPath = isEnterprise ? '../extensions/api/clients' : '@grafana/api-clients';
+    const clientImportPath = isEnterprise ? '../extensions/api/clients' : './clients';
 
     const apiPathPrefix = isEnterprise ? '../public/app/extensions/api/clients' : '../clients';
 
@@ -71,25 +70,19 @@ export default function plopGenerator(plop: NodePlopAPI) {
       actions.push(
         {
           type: 'modify',
-          path: path.join(basePath, 'public/app/core/reducers/root.ts'),
+          path: '../rtkq.ts',
           pattern: '// PLOP_INJECT_IMPORT',
           template: `import { generatedAPI as ${reducerPath} } from '${clientImportPath}/${groupName}/${version}';\n// PLOP_INJECT_IMPORT`,
         },
         {
           type: 'modify',
-          path: path.join(basePath, 'public/app/core/reducers/root.ts'),
+          path: '../rtkq.ts',
           pattern: '// PLOP_INJECT_REDUCER',
           template: `[${reducerPath}.reducerPath]: ${reducerPath}.reducer,\n  // PLOP_INJECT_REDUCER`,
         },
         {
           type: 'modify',
-          path: path.join(basePath, 'public/app/store/configureStore.ts'),
-          pattern: '// PLOP_INJECT_IMPORT',
-          template: `import { generatedAPI as ${reducerPath} } from '${clientImportPath}/${groupName}/${version}';\n// PLOP_INJECT_IMPORT`,
-        },
-        {
-          type: 'modify',
-          path: path.join(basePath, 'public/app/store/configureStore.ts'),
+          path: '../rtkq.ts',
           pattern: '// PLOP_INJECT_MIDDLEWARE',
           template: `${reducerPath}.middleware,\n        // PLOP_INJECT_MIDDLEWARE`,
         },
