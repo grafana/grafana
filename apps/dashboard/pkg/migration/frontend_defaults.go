@@ -198,7 +198,7 @@ func sortPanelsByGridPos(dashboard map[string]interface{}) {
 		return
 	}
 
-	sort.Slice(panels, func(i, j int) bool {
+	sort.SliceStable(panels, func(i, j int) bool {
 		panelA := panels[i]
 		panelB := panels[j]
 
@@ -831,7 +831,7 @@ func cleanupPanelList(panels []interface{}) {
 
 // sortPanelsByGridPosition sorts panels by grid position (matches frontend sortPanelsByGridPos behavior)
 func sortPanelsByGridPosition(panels []interface{}) {
-	sort.Slice(panels, func(i, j int) bool {
+	sort.SliceStable(panels, func(i, j int) bool {
 		panelA, okA := panels[i].(map[string]interface{})
 		panelB, okB := panels[j].(map[string]interface{})
 		if !okA || !okB {
