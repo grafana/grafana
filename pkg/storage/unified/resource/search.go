@@ -88,7 +88,7 @@ type ResourceIndex interface {
 
 	// UpdateIndex updates the index with the latest data (using update function provided when index was built) to guarantee strong consistency during the search.
 	// Returns RV to which index was updated.
-	UpdateIndex(ctx context.Context, reason string) (int64, error)
+	UpdateIndex(ctx context.Context) (int64, error)
 
 	// BuildInfo returns build information about the index.
 	BuildInfo() (IndexBuildInfo, error)
@@ -102,7 +102,7 @@ type UpdateFn func(context context.Context, index ResourceIndex, sinceRV int64) 
 // SearchBackend contains the technology specific logic to support search
 type SearchBackend interface {
 	// GetIndex returns existing index, or nil.
-	GetIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error)
+	GetIndex(key NamespacedResource) ResourceIndex
 
 	// BuildIndex builds an index from scratch.
 	// Depending on the size, the backend may choose different options (eg: memory vs disk).
@@ -540,23 +540,18 @@ func (s *searchSupport) runPeriodicScanForIndexesToRebuild(ctx context.Context) 
 			s.log.Info("stopping periodic index rebuild due to context cancellation")
 			return
 		case <-ticker.C:
-			s.findIndexesToRebuild(ctx, time.Now())
+			s.findIndexesToRebuild(time.Now())
 		}
 	}
 }
 
-func (s *searchSupport) findIndexesToRebuild(ctx context.Context, now time.Time) {
+func (s *searchSupport) findIndexesToRebuild(now time.Time) {
 	// Check all open indexes and see if any of them need to be rebuilt.
 	// This is done periodically to make sure that the indexes are up to date.
 
 	keys := s.search.GetOpenIndexes()
 	for _, key := range keys {
-		idx, err := s.search.GetIndex(ctx, key)
-		if err != nil {
-			s.log.Error("failed to check index to rebuild", "key", key, "error", err)
-			continue
-		}
-
+		idx := s.search.GetIndex(key)
 		if idx == nil {
 			// This can happen if index was closed in the meantime.
 			continue
@@ -618,13 +613,7 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 
 	l := s.log.With("namespace", req.Namespace, "group", req.Group, "resource", req.Resource)
 
-	idx, err := s.search.GetIndex(ctx, req.NamespacedResource)
-	if err != nil {
-		span.RecordError(err)
-		l.Error("failed to get index to rebuild", "error", err)
-		return
-	}
-
+	idx := s.search.GetIndex(req.NamespacedResource)
 	if idx == nil {
 		span.AddEvent("index not found")
 		l.Error("index not found")
@@ -716,11 +705,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 		attribute.String("namespace", key.Namespace),
 	)
 
-	idx, err := s.search.GetIndex(ctx, key)
-	if err != nil {
-		return nil, tracing.Error(span, err)
-	}
-
+	idx := s.search.GetIndex(key)
 	if idx == nil {
 		span.AddEvent("Building index")
 		ch := s.buildIndex.DoChan(key.String(), func() (interface{}, error) {
@@ -730,8 +715,8 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 
 			// Recheck if some other goroutine managed to build an index in the meantime.
 			// (That is, it finished running this function and stored the index into the cache)
-			idx, err := s.search.GetIndex(ctx, key)
-			if err == nil && idx != nil {
+			idx := s.search.GetIndex(key)
+			if idx != nil {
 				return idx, nil
 			}
 
@@ -773,7 +758,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 
 	span.AddEvent("Updating index")
 	start := time.Now()
-	rv, err := idx.UpdateIndex(ctx, reason)
+	rv, err := idx.UpdateIndex(ctx)
 	if err != nil {
 		return nil, tracing.Error(span, fmt.Errorf("failed to update index to guarantee strong consistency: %w", err))
 	}
