@@ -863,7 +863,7 @@ export class PrometheusDatasource
 }
 
 function targetHasScopes(target: PromQuery): boolean {
-  return target.scopes && target.scopes.length > 0;
+  return !!(target.scopes && target.scopes.length > 0);
 }
 
 export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQueryMapping {
