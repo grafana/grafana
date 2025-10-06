@@ -425,14 +425,29 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 			Status:    status,
 		})
 		assert.NoError(t, err)
-		_, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
+		snapshot, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
 			SnapshotUID: uid,
 			SessionUID:  sess.UID,
 		})
 		assert.NoError(t, err)
-		require.Eventually(t, func() bool { return gmsClientMock.GetSnapshotStatusCallCount() == i+1 }, time.Second, 10*time.Millisecond)
+		assert.Equal(t, status, snapshot.Status)
+
+		require.Eventually(
+			t,
+			func() bool { return gmsClientMock.GetSnapshotStatusCallCount() == i+1 },
+			2*time.Second,
+			100*time.Millisecond,
+			"GMS client mock GetSnapshotStatus count: %d", gmsClientMock.GetSnapshotStatusCallCount(),
+		)
 	}
-	assert.Never(t, func() bool { return gmsClientMock.GetSnapshotStatusCallCount() > 2 }, time.Second, 10*time.Millisecond)
+
+	assert.Never(
+		t,
+		func() bool { return gmsClientMock.GetSnapshotStatusCallCount() > 2 },
+		2*time.Second,
+		100*time.Millisecond,
+		"GMS client mock GetSnapshotStatus called more than expected: %d times", gmsClientMock.GetSnapshotStatusCallCount(),
+	)
 }
 
 // Implementation inspired by ChatGPT, OpenAI's language model.
