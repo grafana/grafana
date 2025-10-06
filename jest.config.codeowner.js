@@ -61,7 +61,7 @@ module.exports = {
   ...baseConfig,
 
   collectCoverage: true,
-  coverageReporters: [],
+  coverageReporters: ['none'],
   coverageDirectory: '/tmp/jest-coverage-ignore',
 
   coverageProvider: 'v8',
@@ -72,7 +72,7 @@ module.exports = {
       {
         name: `Coverage Report - ${teamName} owned files`,
         outputDir: outputDir,
-        reports: [['console-summary'], ['v8'], ['json'], ['lcov']],
+        reports: ['console-summary', 'v8', 'json', 'lcov'],
 
         all: {
           filter: (filePath) => sourceFiles.includes(filePath),
