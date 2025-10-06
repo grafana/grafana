@@ -1,4 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import * as React from 'react';
+import { useDebounce } from 'react-use';
 
 import {
   DataFrame,
@@ -9,9 +11,11 @@ import {
   VariableOrigin,
   VariableSuggestion,
   SpecialValue,
+  TransformerUIProps,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
+import { FieldValidationMessage } from '@grafana/ui';
 
 import { variableRegex } from '../variables/utils';
 
@@ -45,8 +49,60 @@ export const getAllFieldNamesFromDataFrames = (frames: DataFrame[], withBaseFiel
   return names;
 };
 
+export const detectPartialQueryFailures = (frames: DataFrame[]) => {
+  const hasSuccessful = frames.some(({ fields }) => fields.length > 0);
+  const hasEmpty = frames.some(({ fields }) => !fields.length);
+  return hasSuccessful && hasEmpty;
+};
+
 export function useAllFieldNamesFromDataFrames(frames: DataFrame[], withBaseFieldNames = false): string[] {
   return useMemo(() => getAllFieldNamesFromDataFrames(frames, withBaseFieldNames), [frames, withBaseFieldNames]);
+}
+
+export const TransformerMissingFieldsMessage = () => {
+  return React.createElement(
+    FieldValidationMessage,
+    null,
+    t(
+      'transformers.query-validation-message',
+      'One or more queries failed to return fields. This transformation can only reference fields from queries with a successful and visible result.'
+    )
+  );
+};
+
+type ExpandedTransformerUIProps<T> = TransformerUIProps<T> & { fieldNames: string[] };
+type DataFieldsErrorWrapperOptions = { withBaseFieldNames?: boolean };
+
+export const TIMEOUT = 300;
+
+export function DataFieldsErrorWrapper<T>(
+  Component: React.ComponentType<ExpandedTransformerUIProps<T>>,
+  { withBaseFieldNames = false }: DataFieldsErrorWrapperOptions = {}
+): React.ComponentType<TransformerUIProps<T>> {
+  function WrappedComponent({ input, ...props }: TransformerUIProps<T>) {
+    const [showError, setShowError] = useState(false);
+
+    const fieldNames = useAllFieldNamesFromDataFrames(input, withBaseFieldNames);
+    const hasPartialQueryFailures = detectPartialQueryFailures(input);
+    const hasErrorCondition = fieldNames.length === 0 || hasPartialQueryFailures;
+
+    useDebounce(() => setShowError(hasErrorCondition), TIMEOUT, [hasErrorCondition]);
+
+    const wrappedComponent = React.createElement(Component, { ...props, input, fieldNames });
+
+    if (showError) {
+      return React.createElement(
+        React.Fragment,
+        null,
+        React.createElement(TransformerMissingFieldsMessage),
+        wrappedComponent
+      );
+    }
+
+    return wrappedComponent;
+  }
+
+  return WrappedComponent;
 }
 
 export function getDistinctLabels(input: DataFrame[]): Set<string> {
