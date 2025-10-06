@@ -63,6 +63,7 @@ composableKinds: PanelCfg: {
 						width: float 
 						shape: string 
 						isRotated: bool 
+						opacity: number
 					}
 				}]
 					// Controls the width of groups. 1 = max with, 0 = min width.

@@ -29,7 +29,7 @@ const toRads = Math.PI / 180;
 
 export const BarChartPanel = (props: PanelProps<Options>) => {
   const { options, fieldConfig, width, height, timeZone, id, replaceVariables } = props;
-  var { data } = props;
+  const { data } = props;
 
   // will need this if joining on time to re-create data links
   // const { dataLinkPostProcessor } = usePanelContext();
@@ -50,7 +50,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     xTickLabelSpacing,
     fullHighlight,
     xField,
-    colorByField, 
+    colorByField,
     markers
   } = options;
 
@@ -94,7 +94,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
   );
   
   //maybe move this inside prepConfig?
-  const preparedMarkers = prepareMarkers(vizSeries[0]?.fields ?? [], markerData, markers);
+  const preparedMarkers = prepareMarkers(vizSeries[0]?.fields ?? [], markerData ?? [], markers ?? [], stacking);
 
   const xGroupsCount = vizSeries[0]?.length ?? 0;
   const seriesCount = vizSeries[0]?.fields.length ?? 0;

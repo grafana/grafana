@@ -45,6 +45,7 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
       width: number;
       shape: string;
       isRotated: boolean;
+      opacity: number;
     };
   }>;
   /**
@@ -109,7 +110,6 @@ export interface FieldConfig extends common.AxisConfig, common.HideableFieldConf
    * Threshold rendering
    */
   thresholdsStyle?: common.GraphThresholdsStyleConfig;
-
 }
 
 export const defaultFieldConfig: Partial<FieldConfig> = {

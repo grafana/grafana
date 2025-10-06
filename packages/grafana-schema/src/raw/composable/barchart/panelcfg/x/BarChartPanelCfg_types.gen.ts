@@ -47,6 +47,7 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
       width: number;
       shape: string;
       isRotated: boolean;
+      opacity: number;
     };
   }>;
   /**

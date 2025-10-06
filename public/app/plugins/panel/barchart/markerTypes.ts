@@ -7,6 +7,7 @@ export type BarMarkerOpts = {
   color: string;
   shape: string;
   isRotated: boolean
+  opacity: number;
 };
 
 export interface Marker {

@@ -55,11 +55,11 @@ export function singleBarMarker(_builder: UPlotConfigBuilder, markers: ResolvedM
 
       ctx.beginPath();
 
-        ctx.globalAlpha = 0.8;
+        ctx.globalAlpha = m.opts.opacity;
         switch (shape) {
           case 'line': {
             ctx.strokeStyle = color;
-            ctx.lineWidth = width / 16 + 2;
+            ctx.lineWidth = width / 32 + 2;
             if (isRotated) {
           ctx.moveTo(x, y - width / 2);
           ctx.lineTo(x, y + width / 2);

@@ -474,7 +474,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           };
           
               //Calculate marker positions and fill markerList to prepare drawing
-          const m = populateMarkerList(markers ?? [], dataIdx, seriesIdx, labels, xOri, lft, top, wid, hgt, theme, u);
+          const m = populateMarkerList(markers ?? [], dataIdx, seriesIdx, labels, xOri, lft, top, wid, hgt, u, barRect.x + u.bbox.left, barRect.y + u.bbox.top);
 
           resolvedMarkers.push(...m);
           
@@ -494,7 +494,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
                 y: o.y - u.bbox.top - (o.opts?.width ? o.opts.width : 25) / 2,
                 w: o.opts?.width ? o.opts.width : 25,
                 h: o.opts?.width ? o.opts.width : 25,
-                sidx: 3,
+                sidx: o.sidx ?? -1,
                 didx: dataIdx
               });
             }
@@ -740,7 +740,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
 
 function populateMarkerList(markers: PreparedMarker[], dataIdx: number, seriesIdx: number, labels: ValueLabelTable,
-   xOri: ScaleOrientation, lft: number, top: number, wid: number, hgt: number, theme: GrafanaTheme2, u: uPlot){ 
+   xOri: ScaleOrientation, lft: number, top: number, wid: number, hgt: number, u: uPlot, barX: number, barY: number){ 
     
   const resolvedMarkerList: ResolvedMarker[] = [];
   // Match markers to bars and compute marker positions
@@ -754,7 +754,7 @@ function populateMarkerList(markers: PreparedMarker[], dataIdx: number, seriesId
           
             
           // Compute marker position at center of bar
-          const markerX = (labels[dataIdx][seriesIdx].x);
+          const markerX = (barX + (wid/2));
           const markerY = (marker.yValue);
 
           let resolvedY: number;
@@ -773,7 +773,7 @@ function populateMarkerList(markers: PreparedMarker[], dataIdx: number, seriesId
           resolvedMarkerList.push(m);
           }
           else{
-            const markerY = (labels[dataIdx][seriesIdx].y);
+            const markerY = (barY + (hgt/2));
             const markerX = (marker.yValue);
 
             let resolvedX: number;
