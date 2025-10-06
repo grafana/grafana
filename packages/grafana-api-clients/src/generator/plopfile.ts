@@ -30,7 +30,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
 
     const apiClientBasePath = isEnterprise
       ? 'public/app/extensions/api/clients'
-      : 'packages/grafana-api-clients/src/clients';
+      : 'packages/grafana-api-clients/src/clients/rtkq';
     const generateScriptPath = isEnterprise
       ? 'local/generate-enterprise-apis.ts'
       : 'packages/grafana-api-clients/src/scripts/generate-rtk-apis.ts';
@@ -71,19 +71,19 @@ export default function plopGenerator(plop: NodePlopAPI) {
       actions.push(
         {
           type: 'modify',
-          path: '../index.ts',
+          path: '../rtkq.ts',
           pattern: '// PLOP_INJECT_IMPORT',
           template: `import { generatedAPI as ${reducerPath} } from '${clientImportPath}/${groupName}/${version}';\n// PLOP_INJECT_IMPORT`,
         },
         {
           type: 'modify',
-          path: '../index.ts',
+          path: '../rtkq.ts',
           pattern: '// PLOP_INJECT_REDUCER',
           template: `[${reducerPath}.reducerPath]: ${reducerPath}.reducer,\n  // PLOP_INJECT_REDUCER`,
         },
         {
           type: 'modify',
-          path: '../index.ts',
+          path: '../rtkq.ts',
           pattern: '// PLOP_INJECT_MIDDLEWARE',
           template: `${reducerPath}.middleware,\n        // PLOP_INJECT_MIDDLEWARE`,
         },

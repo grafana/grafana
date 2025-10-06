@@ -47,7 +47,13 @@ export const getFilesToFormat = (groupName: string, version: string, isEnterpris
     `${apiClientBasePath}/${groupName}/${version}/baseAPI.ts`,
     `${apiClientBasePath}/${groupName}/${version}/index.ts`,
     generateScriptPath,
-    ...(isEnterprise ? [] : [`packages/grafana-api-clients/src/index.ts`, `packages/grafana-api-clients/package.json`]),
+    ...(isEnterprise
+      ? []
+      : [
+          `packages/grafana-api-clients/src/index.ts`,
+          `packages/grafana-api-clients/src/rtkq.ts`,
+          `packages/grafana-api-clients/package.json`,
+        ]),
   ];
 };
 
@@ -135,10 +141,10 @@ export const updatePackageJsonExports =
       const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
       // Create the new export entry
-      const newExportKey = `./${groupName}/${version}`;
+      const newExportKey = `./rtkq/${groupName}/${version}`;
       const newExportValue = {
-        import: `./src/clients/${groupName}/${version}/index.ts`,
-        require: `./src/clients/${groupName}/${version}/index.ts`,
+        import: `./src/clients/rtkq/${groupName}/${version}/index.ts`,
+        require: `./src/clients/rtkq/${groupName}/${version}/index.ts`,
       };
 
       // Check if export already exists
