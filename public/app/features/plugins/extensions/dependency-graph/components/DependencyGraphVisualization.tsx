@@ -1,8 +1,9 @@
 import AutoSizer from 'react-virtualized-auto-sizer';
+
 import { DependencyGraph } from '../../sunker-plugindependencygraph-plugin/components/DependencyGraph';
 import { DependencyGraphControls } from '../hooks/useDependencyGraphControls';
-import { logAutoSizer } from '../utils/logger';
 import { useDependencyGraphData } from '../hooks/useDependencyGraphData';
+import { logAutoSizer } from '../utils/logger';
 
 interface DependencyGraphVisualizationProps {
   controls: DependencyGraphControls;

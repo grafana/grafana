@@ -4,6 +4,12 @@
  * Renders extension points and exposed components in the dependency graph.
  */
 
+import { SerializedStyles } from '@emotion/react';
+import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+
 import {
   COLOR_DEFAULTS,
   DISPLAY_NAMES,
@@ -14,11 +20,7 @@ import {
 } from '../constants';
 import { GraphData, PanelOptions } from '../types';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { PositionInfo } from './GraphLayout';
-import React from 'react';
-import { SerializedStyles } from '@emotion/react';
-import { locationService } from '@grafana/runtime';
 
 interface ExtensionRendererProps {
   theme: GrafanaTheme2;

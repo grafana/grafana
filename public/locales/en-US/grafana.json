@@ -7570,9 +7570,9 @@
     "api-mode": {
       "add": "Add",
       "expose": "Expose",
-      "extensionpoint": "Extension Point",
       "label": "API Mode"
     },
+    "back-to-add-api-mode": "Back to Add API mode",
     "content-consumer": {
       "label": "Content consumer",
       "placeholder": "Select content consumers to display (active consumers by default)"
@@ -7581,7 +7581,6 @@
       "label": "Content provider",
       "placeholder": "Select content providers to display"
     },
-    "defined-in": "Defined in {{plugin}}",
     "dependency-graph": {
       "add-mode": "Add Mode (Extensions)",
       "component-extension-color": "Component Extension Color",
@@ -7621,10 +7620,6 @@
       "try-again": "Try again",
       "visualization-mode": "Visualization Mode",
       "visualization-mode-description": "Choose between Add mode (plugins adding to extension points), Expose mode (plugins exposing components), or Extension Point mode (extensions and extension points)"
-    },
-    "extension-points": {
-      "label": "Extension Points",
-      "placeholder": "Select extension points to display"
     },
     "tabs": {
       "dependency-graph": "Dependency Graph",

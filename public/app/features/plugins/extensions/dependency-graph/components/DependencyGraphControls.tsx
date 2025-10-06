@@ -1,10 +1,11 @@
+import { useCallback } from 'react';
+
+import { Trans, t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, MultiCombobox, Select } from '@grafana/ui';
-import { VisualizationMode, useDependencyGraphData } from '../hooks/useDependencyGraphData';
 
 import { DependencyGraphControls } from '../hooks/useDependencyGraphControls';
-import { locationService } from '@grafana/runtime';
-import { t } from '@grafana/i18n';
-import { useCallback } from 'react';
+import { VisualizationMode, useDependencyGraphData } from '../hooks/useDependencyGraphData';
 
 interface DependencyGraphControlsProps {
   controls: DependencyGraphControls;
@@ -127,7 +128,7 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
         >
-          Back to Add API mode
+          <Trans i18nKey="extensions.back-to-add-api-mode">Back to Add API mode</Trans>
         </Button>
       )}
     </>

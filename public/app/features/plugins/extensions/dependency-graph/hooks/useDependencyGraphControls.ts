@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
+
+import { t } from '@grafana/i18n';
 
 import { VisualizationMode } from './useDependencyGraphData';
-import { t } from '@grafana/i18n';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 
 export interface DependencyGraphControls {
   visualizationMode: VisualizationMode;

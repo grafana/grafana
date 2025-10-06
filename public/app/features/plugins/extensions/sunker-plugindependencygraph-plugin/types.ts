@@ -76,7 +76,7 @@ export interface PanelOptions {
 export interface RawPluginInfo {
   version?: string;
   description?: string;
-  dependencies?: any; // Plugin dependencies
+  dependencies?: Record<string, unknown>; // Plugin dependencies
 }
 
 export interface RawExtensionLink {
@@ -101,8 +101,8 @@ export interface RawPluginExtensions {
   addedLinks?: RawExtensionLink[];
   addedComponents?: RawExtensionComponent[];
   addedFunctions?: RawExtensionFunction[];
-  extensionPoints?: any[]; // Extension points defined by the plugin
-  exposedComponents?: any[]; // Exposed components
+  extensionPoints?: Array<Record<string, unknown>>; // Extension points defined by the plugin
+  exposedComponents?: Array<Record<string, unknown>>; // Exposed components
 }
 
 export interface RawPluginData {
