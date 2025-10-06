@@ -203,9 +203,10 @@ func TestExportFromPayload(t *testing.T) {
 	})
 
 	t.Run("hcl body with simplified routing is as expected", func(t *testing.T) {
-		// reload file
-		requestFile = "post-rulegroup-simplified-routing.json"
+		requestFile := "post-rulegroup-simplified-routing.json"
+
 		rawBody, err := testData.ReadFile(path.Join("test-data", requestFile))
+		require.NoError(t, err)
 
 		var buf bytes.Buffer
 		require.NoError(t, json.Compact(&buf, rawBody))
