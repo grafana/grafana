@@ -3228,7 +3228,7 @@
       "define-allowed-teams-ids-label": "定义允许的团队 ID",
       "display-name-description": "将在登录页面上显示为“使用... 登录”。如果您使用多个身份提供程序或 SSO 协议，这将很有帮助。",
       "display-name-label": "显示名称",
-      "domain-hint-description": "用于指示 Azure AD/Entra ID 租户中用户领域并简化登录流程的参数。",
+      "domain-hint-description": "",
       "domain-hint-label": "域提示",
       "domain-hint-valid-domain": "此字段必须是有效的域。",
       "email-attribute-name-description": "用于在 OAuth2 ID 令牌的属性映射中查找用户电子邮箱的密钥的名称。",
@@ -3484,6 +3484,7 @@
       "move-modal-field-label": "文件夹名称",
       "move-modal-text": "此操作将移动以下内容：",
       "move-modal-title": "移动",
+      "move-provisioned-folder": "",
       "moving": "正在移动...",
       "new-folder-name-required-phrase": "文件夹名称是必需项。",
       "selected-mix-resources-modal-text": "您已选择了已预置和未预置的资源。这些资源无法一起处理。请仅选择已预置的资源或未预置的资源，然后重试。",
@@ -8673,6 +8674,9 @@
       "tooltip-hide": "隐藏密码",
       "tooltip-show": "显示密码"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "展开行",
       "collapse": "折叠行",
@@ -8700,6 +8704,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "使用右侧 Y 轴"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "正在加载"
