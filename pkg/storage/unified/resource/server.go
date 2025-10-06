@@ -22,6 +22,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -194,6 +195,10 @@ type SearchOptions struct {
 
 	// Number of workers to use for index rebuilds.
 	IndexRebuildWorkers int
+
+	// Minimum time between index updates. This is also used as a delay after a successful write operation, to guarantee
+	// that subsequent search will observe the effect of the writing.
+	IndexMinUpdateInterval time.Duration
 }
 
 type ResourceServerOptions struct {
@@ -336,6 +341,8 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		reg:              opts.Reg,
 		queue:            opts.QOSQueue,
 		queueConfig:      opts.QOSConfig,
+
+		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
 
 	if opts.Search.Resources != nil {
@@ -386,6 +393,11 @@ type server struct {
 	reg              prometheus.Registerer
 	queue            QOSEnqueuer
 	queueConfig      QueueConfig
+
+	// This value is used by storage server to artificially delay returning response after successful
+	// write operations to make sure that subsequent search by the same client will return up-to-date results.
+	// Set from SearchOptions.IndexMinUpdateInterval.
+	artificialSuccessfulWriteDelay time.Duration
 }
 
 // Init implements ResourceServer.
@@ -661,6 +673,8 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		})
 	}
 
+	s.sleepAfterSuccessfulWriteOperation(res, err)
+
 	return res, err
 }
 
@@ -682,6 +696,37 @@ func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resource
 	}
 	s.log.Debug("server.WriteEvent", "type", event.Type, "rv", rsp.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "name", event.Key.Name, "resource", event.Key.Resource)
 	return rsp, nil
+}
+
+type responseWithErrorResult interface {
+	GetError() *resourcepb.ErrorResult
+}
+
+// sleepAfterSuccessfulWriteOperation will sleep for a specified time if the operation was successful.
+// Returns boolean indicating whether the sleep was performed or not (used in testing).
+//
+// This sleep is performed to guarantee search-after-write consistency, when rate-limiting updates to search index.
+func (s *server) sleepAfterSuccessfulWriteOperation(res responseWithErrorResult, err error) bool {
+	if s.artificialSuccessfulWriteDelay <= 0 {
+		return false
+	}
+
+	if err != nil {
+		// No sleep necessary if operation failed.
+		return false
+	}
+
+	// We expect that non-nil interface values with typed nils can still handle GetError() call.
+	if res != nil {
+		errRes := res.GetError()
+		if errRes != nil {
+			// No sleep necessary if operation failed.
+			return false
+		}
+	}
+
+	time.Sleep(s.artificialSuccessfulWriteDelay)
+	return true
 }
 
 func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*resourcepb.UpdateResponse, error) {
@@ -714,6 +759,8 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 			return &resourcepb.UpdateResponse{Error: e}
 		})
 	}
+
+	s.sleepAfterSuccessfulWriteOperation(res, err)
 
 	return res, err
 }
@@ -786,6 +833,8 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 			return &resourcepb.DeleteResponse{Error: e}
 		})
 	}
+
+	s.sleepAfterSuccessfulWriteOperation(res, err)
 
 	return res, err
 }
