@@ -21,11 +21,11 @@ type EndpointMatcher = string[] | ((operationName: string, operationDefinition: 
  * Helper to return consistent base API generation config
  */
 const createAPIConfig = (app: string, version: string, filterEndpoints?: EndpointMatcher, additional = {}) => {
-  const filePath = `../clients/${app}/${version}/endpoints.gen.ts`;
+  const filePath = `../clients/rtkq/${app}/${version}/endpoints.gen.ts`;
   return {
     [filePath]: {
       schemaFile: path.join(basePath, `data/openapi/${app}.grafana.app-${version}.json`),
-      apiFile: `../clients/${app}/${version}/baseAPI.ts`,
+      apiFile: `../clients/rtkq/${app}/${version}/baseAPI.ts`,
       filterEndpoints,
       tag: true,
       ...additional,
@@ -39,9 +39,9 @@ const config: ConfigFile = {
   exportName: 'generatedAPI',
 
   outputFiles: {
-    '../clients/migrate-to-cloud/endpoints.gen.ts': {
+    '../clients/rtkq/migrate-to-cloud/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
-      apiFile: '../clients/migrate-to-cloud/baseAPI.ts',
+      apiFile: '../clients/rtkq/migrate-to-cloud/baseAPI.ts',
       hooks: true,
       filterEndpoints: [
         'getSessionList',
@@ -65,10 +65,10 @@ const config: ConfigFile = {
         'getResourceDependencies',
       ],
     },
-    '../clients/preferences/user/endpoints.gen.ts': {
+    '../clients/rtkq/preferences/user/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
       hooks: true,
-      apiFile: '../clients/preferences/user/baseAPI.ts',
+      apiFile: '../clients/rtkq/preferences/user/baseAPI.ts',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
     ...createAPIConfig('iam', 'v0alpha1', ['getDisplayMapping']),
