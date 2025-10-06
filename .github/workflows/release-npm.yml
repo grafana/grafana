@@ -39,12 +39,14 @@ permissions: {}
 
 jobs:
   # If called with version_type 'canary' or 'stable', build + publish to NPM
-  # If called with version_type 'nightly', just tag the given version with nightly tag. It was already published by the canary build.
+  # If called with version_type 'nightly', do nothing (we're not yet tagging them with the nightly tag)
 
   publish:
     name: Publish NPM packages
     runs-on: github-hosted-ubuntu-x64-small
     if: inputs.version_type == 'canary' || inputs.version_type == 'stable'
+    # Required for this workflow to have permission to publish NPM packages
+    environment: npm-publish
     permissions:
       contents: read
       id-token: write
@@ -89,11 +91,8 @@ jobs:
           persist-credentials: false
           ref: ${{ inputs.grafana_commit }}
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'yarn'
-          cache-dependency-path: 'yarn.lock'
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
 
       # Trusted Publishing is only available in npm v11.5.1 and later
       - name: Update npm
@@ -121,6 +120,9 @@ jobs:
       - name: Debug packed files
         run: tree -a ./npm-artifacts
 
+      - name: Validate packages
+        run: ./scripts/validate-npm-packages.sh
+
       - name: Debug OIDC Claims
         uses: github/actions-oidc-debugger@2e9ba5d3f4bebaad1f91a2cede055115738b7ae8
         with:
@@ -130,17 +132,3 @@ jobs:
         env:
           NPM_TAG: ${{ steps.npm-tag.outputs.NPM_TAG }}
         run: ./scripts/publish-npm-packages.sh --dist-tag "$NPM_TAG" --registry 'https://registry.npmjs.org/'
-
-  # TODO: finish this step
-  tag-nightly:
-    name: Tag nightly release
-    runs-on: github-hosted-ubuntu-x64-small
-    if: inputs.version_type == 'nightly'
-
-    steps:
-      - name: Checkout workflow ref
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      # TODO: tag the given release with nightly
