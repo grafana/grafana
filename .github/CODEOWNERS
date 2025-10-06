@@ -11,6 +11,8 @@
 # In each subsection folders are ordered first by depth, then alphabetically.
 # This should make it easy to add new rules without breaking existing ones.
 
+/.cursorrules @grafana/grafana-developer-enablement-squad
+
 # Documentation
 /.changelog-archive @grafana/grafana-developer-enablement-squad
 /CHANGELOG.md @grafana/grafana-developer-enablement-squad
