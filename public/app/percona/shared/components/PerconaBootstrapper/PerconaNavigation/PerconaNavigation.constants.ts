@@ -429,12 +429,6 @@ export const PMM_NAV_MYSQL: NavModelItem = {
       url: `${config.appSubUrl}/d/mysql-performance-schema/mysql-performance-schema-details`,
     },
     {
-      id: 'mysql-query-response-time-details',
-      text: 'Query response time',
-      icon: 'sitemap',
-      url: `${config.appSubUrl}/d/mysql-queryresponsetime/mysql-query-response-time-details`,
-    },
-    {
       id: 'mysql-table-details',
       text: 'Table details',
       icon: 'sitemap',
