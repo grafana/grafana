@@ -8,6 +8,7 @@ import { SerializedStyles } from '@emotion/react';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 
 import {
@@ -194,7 +195,14 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
               })}
 
               {/* Provider plugin name header */}
-              <text x={firstCompPos.x} y={firstCompPos.groupY + 25} textAnchor="start" fill={theme.colors.text.primary}>
+              <text
+                x={firstCompPos.x}
+                y={firstCompPos.groupY + 25}
+                textAnchor="start"
+                fill={theme.colors.text.primary}
+                fontSize="16"
+                fontWeight="bold"
+              >
                 {getDisplayName(providingPlugin)}
               </text>
 
@@ -343,13 +351,18 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
       return null;
     }
 
-    // Group extension points by their defining plugin
-    const extensionPointGroups = new Map<string, string[]>();
+    // Group extension points by their defining plugin, then by type
+    const extensionPointGroups = new Map<string, Map<string, string[]>>();
     data.extensionPoints.forEach((ep) => {
       if (!extensionPointGroups.has(ep.definingPlugin)) {
-        extensionPointGroups.set(ep.definingPlugin, []);
+        extensionPointGroups.set(ep.definingPlugin, new Map());
       }
-      extensionPointGroups.get(ep.definingPlugin)!.push(ep.id);
+      const pluginGroup = extensionPointGroups.get(ep.definingPlugin)!;
+      const extensionType = ep.extensionType || 'link';
+      if (!pluginGroup.has(extensionType)) {
+        pluginGroup.set(extensionType, []);
+      }
+      pluginGroup.get(extensionType)!.push(ep.id);
     });
 
     const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
@@ -357,8 +370,10 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
 
     return (
       <g>
-        {Array.from(extensionPointGroups.entries()).map(([definingPlugin, extensionPointIds]) => {
-          const firstEpPos = extensionPointModePositions.get(extensionPointIds[0]);
+        {Array.from(extensionPointGroups.entries()).map(([definingPlugin, typeGroups]) => {
+          // Get the first extension point to get group positioning info
+          const firstTypeGroup = Array.from(typeGroups.values())[0];
+          const firstEpPos = firstTypeGroup ? extensionPointModePositions.get(firstTypeGroup[0]) : null;
           if (!firstEpPos) {
             return null;
           }
@@ -379,63 +394,82 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 rx={VISUAL_CONSTANTS.GROUP_BORDER_RADIUS}
               />
 
-              {/* Extension points inside defining plugin box */}
-              {extensionPointIds.map((epId) => {
-                const epPos = extensionPointModePositions.get(epId);
-                if (!epPos) {
-                  return null;
-                }
-
-                const extensionPoint = data.extensionPoints?.find((ep) => ep.id === epId);
-                if (!extensionPoint) {
+              {/* Render extension points by type (no headers in extension point mode) */}
+              {['function', 'component', 'link'].map((type) => {
+                const extensionPointIds = typeGroups.get(type);
+                if (!extensionPointIds || extensionPointIds.length === 0) {
                   return null;
                 }
 
                 return (
-                  <g key={epId}>
-                    {/* Extension point box */}
-                    <rect
-                      x={epPos.x}
-                      y={epPos.y - extensionBoxHeight / 2}
-                      width={extensionBoxWidth}
-                      height={extensionBoxHeight}
-                      fill={theme.colors.primary.main}
-                      stroke={theme.colors.border.strong}
-                      strokeWidth={VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH}
-                      rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
-                    />
+                  <g key={`${definingPlugin}-${type}`}>
+                    {/* Extension points for this type */}
+                    {extensionPointIds.map((epId) => {
+                      const epPos = extensionPointModePositions.get(epId);
+                      if (!epPos) {
+                        return null;
+                      }
 
-                    {/* Extension point ID */}
-                    <text
-                      x={epPos.x + extensionBoxWidth / 2}
-                      y={epPos.y - 5}
-                      textAnchor="middle"
-                      fill={theme.colors.getContrastText(theme.colors.primary.main)}
-                      style={{ fontSize: '12px', pointerEvents: 'none' }}
-                    >
-                      <tspan>{epId}</tspan>
-                    </text>
+                      const extensionPoint = data.extensionPoints?.find((ep) => ep.id === epId);
+                      if (!extensionPoint) {
+                        return null;
+                      }
 
-                    {/* Extension point description */}
-                    {options.showDescriptions &&
-                      extensionPoint.description &&
-                      extensionPoint.description.trim() !== '' && (
-                        <text
-                          x={epPos.x + extensionBoxWidth / 2}
-                          y={epPos.y + 25}
-                          textAnchor="middle"
-                          fill={theme.colors.getContrastText(theme.colors.primary.main)}
-                          style={{ pointerEvents: 'none' }}
-                        >
-                          <tspan>{extensionPoint.description}</tspan>
-                        </text>
-                      )}
+                      return (
+                        <g key={epId}>
+                          {/* Extension point box */}
+                          <rect
+                            x={epPos.x}
+                            y={epPos.y - extensionBoxHeight / 2}
+                            width={extensionBoxWidth}
+                            height={extensionBoxHeight}
+                            fill={theme.colors.primary.main}
+                            stroke={theme.colors.border.strong}
+                            strokeWidth={VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH}
+                            rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
+                          />
+
+                          {/* Extension point ID */}
+                          <text
+                            x={epPos.x + extensionBoxWidth / 2}
+                            y={epPos.y - 5}
+                            textAnchor="middle"
+                            fill={theme.colors.getContrastText(theme.colors.primary.main)}
+                            style={{ fontSize: '12px', pointerEvents: 'none' }}
+                          >
+                            <tspan>{epId}</tspan>
+                          </text>
+
+                          {/* Extension point description */}
+                          {options.showDescriptions &&
+                            extensionPoint.description &&
+                            extensionPoint.description.trim() !== '' && (
+                              <text
+                                x={epPos.x + extensionBoxWidth / 2}
+                                y={epPos.y + 25}
+                                textAnchor="middle"
+                                fill={theme.colors.getContrastText(theme.colors.primary.main)}
+                                style={{ pointerEvents: 'none' }}
+                              >
+                                <tspan>{extensionPoint.description}</tspan>
+                              </text>
+                            )}
+                        </g>
+                      );
+                    })}
                   </g>
                 );
               })}
 
               {/* Defining plugin name header */}
-              <text x={firstEpPos.x} y={firstEpPos.groupY + 25} textAnchor="start" fill={theme.colors.text.primary}>
+              <text
+                x={firstEpPos.x}
+                y={firstEpPos.groupY + 25}
+                textAnchor="start"
+                fill={theme.colors.text.primary}
+                fontSize="16"
+                fontWeight="bold"
+              >
                 {getDisplayName(definingPlugin)}
               </text>
             </g>
@@ -450,13 +484,18 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
       return null;
     }
 
-    // Group extension points by their defining plugin
-    const extensionPointGroups = new Map<string, string[]>();
+    // Group extension points by their defining plugin, then by type
+    const extensionPointGroups = new Map<string, Map<string, string[]>>();
     data.extensionPoints.forEach((ep) => {
       if (!extensionPointGroups.has(ep.definingPlugin)) {
-        extensionPointGroups.set(ep.definingPlugin, []);
+        extensionPointGroups.set(ep.definingPlugin, new Map());
       }
-      extensionPointGroups.get(ep.definingPlugin)!.push(ep.id);
+      const pluginGroup = extensionPointGroups.get(ep.definingPlugin)!;
+      const extensionType = ep.extensionType || 'link';
+      if (!pluginGroup.has(extensionType)) {
+        pluginGroup.set(extensionType, []);
+      }
+      pluginGroup.get(extensionType)!.push(ep.id);
     });
 
     const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
@@ -471,13 +510,27 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
 
     return (
       <g>
-        {Array.from(extensionPointGroups.entries()).map(([definingPlugin, extensionPointIds]) => {
-          const firstEpPos = extensionPointPositions.get(extensionPointIds[0]);
+        {Array.from(extensionPointGroups.entries()).map(([definingPlugin, typeGroups]) => {
+          // Get the first extension point to get group positioning info
+          const firstTypeGroup = Array.from(typeGroups.values())[0];
+          const firstEpPos = firstTypeGroup ? extensionPointPositions.get(firstTypeGroup[0]) : null;
           if (!firstEpPos) {
+            console.warn(`No first EP position found for plugin ${definingPlugin}`);
             return null;
           }
 
           const groupHeight = firstEpPos.groupHeight;
+
+          // Debug: Log all type groups for this plugin
+          console.log(`=== RENDERING ${definingPlugin} ===`);
+          console.log(
+            `Type groups:`,
+            Array.from(typeGroups.entries()).map(([type, ids]) => `${type}: ${ids.length} items`)
+          );
+          console.log(
+            `Extension point positions available:`,
+            Array.from(extensionPointPositions.keys()).filter((key) => key.includes(definingPlugin))
+          );
 
           return (
             <g key={definingPlugin}>
@@ -493,88 +546,162 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 rx={VISUAL_CONSTANTS.GROUP_BORDER_RADIUS}
               />
 
-              {/* Extension points */}
-              {extensionPointIds.map((epId) => {
-                const epPos = extensionPointPositions.get(epId);
-                if (!epPos) {
+              {/* Render extension points by type with headers */}
+              {['function', 'component', 'link'].map((type) => {
+                const extensionPointIds = typeGroups.get(type);
+                console.log(
+                  `CHECKING TYPE ${type} for ${definingPlugin}: ${extensionPointIds ? extensionPointIds.length : 0} extension points`
+                );
+                if (!extensionPointIds || extensionPointIds.length === 0) {
+                  console.log(`SKIPPING TYPE ${type} for ${definingPlugin} - no extension points`);
                   return null;
                 }
 
-                const extensionPoint = data.extensionPoints?.find((ep) => ep.id === epId);
-                const extensionType = extensionPoint?.extensionType || 'link';
-                const extensionColor = getExtensionColor(extensionType);
+                const firstEpInType = extensionPointPositions.get(extensionPointIds[0]);
+
+                if (!firstEpInType) {
+                  console.warn(
+                    `No position found for first extension point of type ${type} in plugin ${definingPlugin}`
+                  );
+                  return null;
+                }
+
+                // Ensure we have valid positioning data
+                if (typeof firstEpInType.y !== 'number' || isNaN(firstEpInType.y)) {
+                  console.warn(
+                    `Invalid Y position for extension point ${extensionPointIds[0]} in plugin ${definingPlugin}`
+                  );
+                  return null;
+                }
+
+                // Calculate header position using the stored typeHeaderY
+                const headerY = firstEpInType.typeHeaderY || firstEpInType.y - 40;
+                const headerX = firstEpPos.x + extensionBoxWidth / 2;
+
+                // Ensure header position is valid
+                if (isNaN(headerY) || isNaN(headerX)) {
+                  console.warn(
+                    `Invalid header position for type ${type} in plugin ${definingPlugin}: x=${headerX}, y=${headerY}`
+                  );
+                  return null;
+                }
 
                 return (
-                  <g key={epId}>
-                    {/* Extension point box with type-specific color */}
-                    <rect
-                      x={epPos.x}
-                      y={epPos.y - originalHeight / 2}
-                      width={extensionBoxWidth}
-                      height={extensionBoxHeight}
-                      fill={extensionColor}
-                      stroke={theme.colors.border.strong}
-                      strokeWidth={VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH}
-                      rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
-                      onClick={() => {
-                        // Navigate to extension point mode with this specific extension point selected
-                        const currentUrl = new URL(window.location.href);
-                        currentUrl.searchParams.set('apiMode', 'extensionpoint');
-                        currentUrl.searchParams.set('extensionPoints', epId);
-                        locationService.push(currentUrl.pathname + currentUrl.search);
-
-                        // Scroll to top of the page after navigation
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }}
-                      style={{ cursor: 'pointer' }}
-                    />
-
-                    {/* Extension point ID - first line */}
+                  <g key={`${definingPlugin}-${type}`}>
+                    {/* Type header - always show if there are extension points of this type */}
                     <text
-                      x={epPos.x + extensionBoxWidth / 2}
-                      y={options.showDependencyTypes ? epPos.y - 5 : epPos.y + 5}
-                      textAnchor="middle"
-                      fill={theme.colors.getContrastText(extensionColor)}
-                      style={{ pointerEvents: 'none' }}
+                      x={firstEpPos.x}
+                      y={headerY}
+                      textAnchor="start"
+                      fill={theme.colors.text.primary}
+                      fontSize="12"
+                      fontWeight="normal"
+                      style={{
+                        pointerEvents: 'none',
+                        zIndex: 1000,
+                      }}
                     >
-                      {epId}
+                      {type === 'function' ? (
+                        <Trans i18nKey="extensions.dependency-graph.function-extensions">Function extensions</Trans>
+                      ) : type === 'component' ? (
+                        <Trans i18nKey="extensions.dependency-graph.component-extensions">Component extensions</Trans>
+                      ) : (
+                        <Trans i18nKey="extensions.dependency-graph.link-extensions">Link extensions</Trans>
+                      )}
                     </text>
 
-                    {/* Extension type - third line in parentheses */}
-                    {options.showDependencyTypes && (
-                      <g>
-                        <text
-                          x={epPos.x + extensionBoxWidth / 2}
-                          y={epPos.y + 30}
-                          textAnchor="middle"
-                          fill={theme.colors.getContrastText(extensionColor)}
-                          style={{ pointerEvents: 'none' }}
-                        >
-                          {/* ({extensionType} extension) */}
-                        </text>
+                    {/* Extension points for this type */}
+                    {extensionPointIds.map((epId) => {
+                      const epPos = extensionPointPositions.get(epId);
+                      if (!epPos) {
+                        return null;
+                      }
 
-                        {/* Description text underneath parentheses */}
-                        {options.showDescriptions &&
-                          extensionPoint?.description &&
-                          extensionPoint.description.trim() !== '' && (
-                            <text
-                              x={epPos.x + extensionBoxWidth / 2}
-                              y={epPos.y + 45}
-                              textAnchor="middle"
-                              fill={theme.colors.getContrastText(extensionColor)}
-                              style={{ pointerEvents: 'none' }}
-                            >
-                              {extensionPoint.description}
-                            </text>
+                      const extensionPoint = data.extensionPoints?.find((ep) => ep.id === epId);
+                      const extensionType = extensionPoint?.extensionType || 'link';
+                      const extensionColor = getExtensionColor(extensionType);
+
+                      return (
+                        <g key={epId}>
+                          {/* Extension point box with type-specific color */}
+                          <rect
+                            x={epPos.x}
+                            y={epPos.y - originalHeight / 2}
+                            width={extensionBoxWidth}
+                            height={extensionBoxHeight}
+                            fill={extensionColor}
+                            stroke={theme.colors.border.strong}
+                            strokeWidth={VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH}
+                            rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
+                            onClick={() => {
+                              // Navigate to extension point mode with this specific extension point selected
+                              const currentUrl = new URL(window.location.href);
+                              currentUrl.searchParams.set('apiMode', 'extensionpoint');
+                              currentUrl.searchParams.set('extensionPoints', epId);
+                              locationService.push(currentUrl.pathname + currentUrl.search);
+
+                              // Scroll to top of the page after navigation
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            style={{ cursor: 'pointer' }}
+                          />
+
+                          {/* Extension point ID - first line */}
+                          <text
+                            x={epPos.x + extensionBoxWidth / 2}
+                            y={options.showDependencyTypes ? epPos.y - 5 : epPos.y + 5}
+                            textAnchor="middle"
+                            fill={theme.colors.getContrastText(extensionColor)}
+                            style={{ pointerEvents: 'none' }}
+                          >
+                            {epId}
+                          </text>
+
+                          {/* Extension type - third line in parentheses */}
+                          {options.showDependencyTypes && (
+                            <g>
+                              <text
+                                x={epPos.x + extensionBoxWidth / 2}
+                                y={epPos.y + 30}
+                                textAnchor="middle"
+                                fill={theme.colors.getContrastText(extensionColor)}
+                                style={{ pointerEvents: 'none' }}
+                              >
+                                {/* ({extensionType} extension) */}
+                              </text>
+
+                              {/* Description text underneath parentheses */}
+                              {options.showDescriptions &&
+                                extensionPoint?.description &&
+                                extensionPoint.description.trim() !== '' && (
+                                  <text
+                                    x={epPos.x + extensionBoxWidth / 2}
+                                    y={epPos.y + 45}
+                                    textAnchor="middle"
+                                    fill={theme.colors.getContrastText(extensionColor)}
+                                    style={{ pointerEvents: 'none' }}
+                                  >
+                                    {extensionPoint.description}
+                                  </text>
+                                )}
+                            </g>
                           )}
-                      </g>
-                    )}
+                        </g>
+                      );
+                    })}
                   </g>
                 );
               })}
 
               {/* Defining plugin name header */}
-              <text x={firstEpPos.x} y={firstEpPos.groupY + 22} textAnchor="start" fill={theme.colors.text.primary}>
+              <text
+                x={firstEpPos.x}
+                y={firstEpPos.groupY + 22}
+                textAnchor="start"
+                fill={theme.colors.text.primary}
+                fontSize="16"
+                fontWeight="bold"
+              >
                 {getDisplayName(definingPlugin)}
               </text>
             </g>

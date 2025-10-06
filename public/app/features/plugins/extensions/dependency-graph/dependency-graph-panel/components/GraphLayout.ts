@@ -25,6 +25,8 @@ export interface PositionInfo {
   y: number;
   groupY: number;
   groupHeight: number;
+  typeHeaderY?: number; // Y position for type header
+  extensionType?: string; // Extension type for this position
 }
 
 /**
@@ -261,13 +263,41 @@ export const getExtensionPointPositions = (
     return new Map();
   }
 
-  // Group extension points by their defining plugin
-  const extensionPointGroups = new Map<string, string[]>();
+  // Group extension points by their defining plugin, then by type
+  const extensionPointGroups = new Map<string, Map<string, string[]>>();
   data.extensionPoints.forEach((ep) => {
-    if (!extensionPointGroups.has(ep.definingPlugin)) {
-      extensionPointGroups.set(ep.definingPlugin, []);
+    try {
+      if (!ep.definingPlugin || !ep.id) {
+        console.warn('Invalid extension point data:', ep);
+        return;
+      }
+
+      if (!extensionPointGroups.has(ep.definingPlugin)) {
+        extensionPointGroups.set(ep.definingPlugin, new Map());
+      }
+      const pluginGroup = extensionPointGroups.get(ep.definingPlugin)!;
+      let extensionType = ep.extensionType || 'link';
+
+      // Validate extension type
+      if (!['function', 'component', 'link'].includes(extensionType)) {
+        console.warn(`Invalid extension type ${extensionType} for extension point ${ep.id}, defaulting to 'link'`);
+        extensionType = 'link';
+      }
+
+      if (!pluginGroup.has(extensionType)) {
+        pluginGroup.set(extensionType, []);
+      }
+      pluginGroup.get(extensionType)!.push(ep.id);
+    } catch (error) {
+      console.warn(`Error processing extension point ${ep.id}:`, error);
     }
-    extensionPointGroups.get(ep.definingPlugin)!.push(ep.id);
+  });
+
+  // Sort extension points within each type group
+  extensionPointGroups.forEach((typeGroups) => {
+    typeGroups.forEach((extensionPointIds) => {
+      extensionPointIds.sort();
+    });
   });
 
   const positions = new Map<string, PositionInfo>();
@@ -279,24 +309,61 @@ export const getExtensionPointPositions = (
   }
 
   const groupSpacing = 40;
+  const typeHeaderSpacing = 40; // Increased space for type headers
   const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
   const rightSideX = width - margin - extensionBoxWidth - LAYOUT_CONSTANTS.ARROW_SAFETY_MARGIN;
 
   let currentGroupY = margin + 110; // Increased from 90 to 110 for more distance from dotted line
 
-  Array.from(extensionPointGroups.entries()).forEach(([definingPlugin, extensionPointIds]) => {
-    const groupHeight = extensionPointIds.length * extensionPointSpacing + 50;
+  Array.from(extensionPointGroups.entries()).forEach(([definingPlugin, typeGroups]) => {
+    // Calculate total height for this plugin group
+    let totalGroupHeight = 50; // Base group height
+    const typeOrder = ['function', 'component', 'link'];
 
-    extensionPointIds.forEach((epId, index) => {
-      positions.set(epId, {
-        x: rightSideX,
-        y: currentGroupY + 70 + index * extensionPointSpacing,
-        groupY: currentGroupY,
-        groupHeight: groupHeight,
-      });
+    typeOrder.forEach((type) => {
+      const extensionPointIds = typeGroups.get(type);
+      if (extensionPointIds && extensionPointIds.length > 0) {
+        totalGroupHeight += typeHeaderSpacing; // Space for type header
+        totalGroupHeight += extensionPointIds.length * extensionPointSpacing;
+      }
     });
 
-    currentGroupY += groupHeight + groupSpacing;
+    let currentY = currentGroupY + 60;
+
+    // Position extension points by type
+    typeOrder.forEach((type) => {
+      const extensionPointIds = typeGroups.get(type);
+      if (extensionPointIds && extensionPointIds.length > 0) {
+        // Add space for type header
+        currentY += typeHeaderSpacing;
+
+        const typeHeaderY = currentY - typeHeaderSpacing;
+        extensionPointIds.forEach((epId, index) => {
+          const yPosition = currentY + index * extensionPointSpacing;
+
+          // Validate positions before setting
+          if (isNaN(yPosition) || isNaN(typeHeaderY) || isNaN(rightSideX)) {
+            console.warn(
+              `Invalid position calculated for extension point ${epId}: y=${yPosition}, typeHeaderY=${typeHeaderY}, x=${rightSideX}`
+            );
+            return;
+          }
+
+          positions.set(epId, {
+            x: rightSideX,
+            y: yPosition,
+            groupY: currentGroupY,
+            groupHeight: totalGroupHeight,
+            typeHeaderY: typeHeaderY, // Store type header position
+            extensionType: type,
+          });
+        });
+
+        currentY += extensionPointIds.length * extensionPointSpacing;
+      }
+    });
+
+    currentGroupY += totalGroupHeight + groupSpacing;
   });
 
   return positions;
@@ -473,13 +540,25 @@ export const getExtensionPointModePositions = (
     return new Map();
   }
 
-  // Group extension points by their defining plugin
-  const extensionPointGroups = new Map<string, string[]>();
+  // Group extension points by their defining plugin, then by type
+  const extensionPointGroups = new Map<string, Map<string, string[]>>();
   data.extensionPoints.forEach((ep) => {
     if (!extensionPointGroups.has(ep.definingPlugin)) {
-      extensionPointGroups.set(ep.definingPlugin, []);
+      extensionPointGroups.set(ep.definingPlugin, new Map());
     }
-    extensionPointGroups.get(ep.definingPlugin)!.push(ep.id);
+    const pluginGroup = extensionPointGroups.get(ep.definingPlugin)!;
+    const extensionType = ep.extensionType || 'link';
+    if (!pluginGroup.has(extensionType)) {
+      pluginGroup.set(extensionType, []);
+    }
+    pluginGroup.get(extensionType)!.push(ep.id);
+  });
+
+  // Sort extension points within each type group
+  extensionPointGroups.forEach((typeGroups) => {
+    typeGroups.forEach((extensionPointIds) => {
+      extensionPointIds.sort();
+    });
   });
 
   const positions = new Map<string, PositionInfo>();
@@ -497,19 +576,39 @@ export const getExtensionPointModePositions = (
   let currentGroupY = margin + LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET + 30;
 
   // Process each defining plugin section
-  Array.from(extensionPointGroups.entries()).forEach(([definingPlugin, extensionPointIds]) => {
-    const groupHeight = extensionPointIds.length * extensionPointSpacing + 50;
+  Array.from(extensionPointGroups.entries()).forEach(([definingPlugin, typeGroups]) => {
+    // Calculate total height for this plugin group (no header spacing in extension point mode)
+    let totalGroupHeight = 50; // Base group height
+    const typeOrder = ['function', 'component', 'link'];
 
-    extensionPointIds.forEach((epId, index) => {
-      positions.set(epId, {
-        x: rightSideX,
-        y: currentGroupY + 70 + index * extensionPointSpacing,
-        groupY: currentGroupY,
-        groupHeight: groupHeight,
-      });
+    typeOrder.forEach((type) => {
+      const extensionPointIds = typeGroups.get(type);
+      if (extensionPointIds && extensionPointIds.length > 0) {
+        totalGroupHeight += extensionPointIds.length * extensionPointSpacing;
+      }
     });
 
-    currentGroupY += groupHeight + groupSpacing;
+    let currentY = currentGroupY + 60;
+
+    // Position extension points by type (no header spacing in extension point mode)
+    typeOrder.forEach((type) => {
+      const extensionPointIds = typeGroups.get(type);
+      if (extensionPointIds && extensionPointIds.length > 0) {
+        extensionPointIds.forEach((epId, index) => {
+          positions.set(epId, {
+            x: rightSideX,
+            y: currentY + index * extensionPointSpacing,
+            groupY: currentGroupY,
+            groupHeight: totalGroupHeight,
+            extensionType: type,
+          });
+        });
+
+        currentY += extensionPointIds.length * extensionPointSpacing;
+      }
+    });
+
+    currentGroupY += totalGroupHeight + groupSpacing;
   });
 
   return positions;
@@ -590,17 +689,38 @@ export const calculateContentHeight = (
       totalHeight += groupHeight + groupSpacing;
     });
   } else if (!isExposeMode && data.extensionPoints && data.extensionPoints.length > 0) {
-    // Group extension points by their defining plugin to calculate total height
-    const extensionPointGroups = new Map<string, string[]>();
+    // Group extension points by their defining plugin, then by type to calculate total height
+    const extensionPointGroups = new Map<string, Map<string, string[]>>();
     data.extensionPoints.forEach((ep) => {
       if (!extensionPointGroups.has(ep.definingPlugin)) {
-        extensionPointGroups.set(ep.definingPlugin, []);
+        extensionPointGroups.set(ep.definingPlugin, new Map());
       }
-      extensionPointGroups.get(ep.definingPlugin)!.push(ep.id);
+      const pluginGroup = extensionPointGroups.get(ep.definingPlugin)!;
+      let extensionType = ep.extensionType || 'link';
+
+      if (!['function', 'component', 'link'].includes(extensionType)) {
+        extensionType = 'link';
+      }
+
+      if (!pluginGroup.has(extensionType)) {
+        pluginGroup.set(extensionType, []);
+      }
+      pluginGroup.get(extensionType)!.push(ep.id);
     });
 
-    Array.from(extensionPointGroups.entries()).forEach(([_, extensionPointIds]) => {
-      const groupHeight = extensionPointIds.length * spacing + 5;
+    Array.from(extensionPointGroups.entries()).forEach(([_, typeGroups]) => {
+      let groupHeight = 50; // Base group height
+      const typeHeaderSpacing = 40; // Space for type headers
+      const typeOrder = ['function', 'component', 'link'];
+
+      typeOrder.forEach((type) => {
+        const extensionPointIds = typeGroups.get(type);
+        if (extensionPointIds && extensionPointIds.length > 0) {
+          groupHeight += typeHeaderSpacing; // Space for type header
+          groupHeight += extensionPointIds.length * spacing;
+        }
+      });
+
       totalHeight += groupHeight + groupSpacing;
     });
   } else {

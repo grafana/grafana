@@ -1,7 +1,4 @@
 import { AppPluginConfig, PanelData } from '@grafana/data';
-import { t } from '@grafana/i18n';
-
-import pluginDataFallback from '../data.json';
 import {
   ExposedComponent,
   Extension,
@@ -11,6 +8,9 @@ import {
   PluginDependency,
   PluginNode,
 } from '../types';
+
+import pluginDataFallback from '../data.json';
+import { t } from '@grafana/i18n';
 
 // Cache for expensive calculations
 const cache = new Map<string, GraphData>();
@@ -252,11 +252,12 @@ const processPluginDataToAddGraph = (options: PanelOptions, pluginData: Record<s
           console.log(`Extension point ${index} raw data:`, extensionPoint);
         }
         if (!extensionPoints.has(extensionPoint.id)) {
+          const extensionType = determineExtensionPointType(extensionPoint.id, pluginData);
           const processedExtensionPoint = {
             id: extensionPoint.id,
             definingPlugin: pluginId,
             providers: [],
-            extensionType: 'link' as const, // Default type, could be enhanced later
+            extensionType: extensionType,
             title: extensionPoint.title,
             description: extensionPoint.description,
           };
@@ -449,6 +450,7 @@ const processPluginDataToAddGraph = (options: PanelOptions, pluginData: Record<s
         title: ep.title,
         description: ep.description,
         definingPlugin: ep.definingPlugin,
+        extensionType: ep.extensionType,
       });
     });
   }
@@ -700,7 +702,7 @@ export const processPluginDataToExtensionPointGraph = (
             id: extensionPoint.id,
             definingPlugin: pluginId,
             providers: [], // Will be populated later
-            extensionType: 'link', // Default type
+            extensionType: determineExtensionPointType(extensionPoint.id, pluginData),
             title: extensionPoint.title,
             description: extensionPoint.description,
           });
@@ -719,7 +721,7 @@ export const processPluginDataToExtensionPointGraph = (
           id: targetId,
           definingPlugin: extensionDetails.definingPlugin,
           providers: [], // Will be populated later
-          extensionType: 'link', // Default type
+          extensionType: determineExtensionPointType(targetId, pluginData),
           title: extensionDetails.title || '',
           description: extensionDetails.description || '',
         });
@@ -879,6 +881,89 @@ export const processPluginDataToExtensionPointGraph = (
   }
 
   return result;
+};
+
+// Helper function to determine extension point type based on what extensions target it
+const determineExtensionPointType = (
+  extensionPointId: string,
+  pluginData: Record<string, AppPluginConfig>
+): 'link' | 'component' | 'function' => {
+  try {
+    const types = new Set<'link' | 'component' | 'function'>();
+
+    // Check all plugins for extensions that target this extension point
+    Object.entries(pluginData).forEach(([pluginId, pluginInfo]) => {
+      try {
+        const extensions = pluginInfo.extensions;
+        if (!extensions) {
+          return;
+        }
+
+        // Check added links
+        if (hasAddedLinksProperty(extensions) && extensions.addedLinks.length > 0) {
+          extensions.addedLinks.forEach((link) => {
+            if (isExtensionObject(link) && link.targets) {
+              const targets = Array.isArray(link.targets) ? link.targets : [link.targets];
+              if (targets.includes(extensionPointId)) {
+                types.add('link');
+              }
+            }
+          });
+        }
+
+        // Check added components
+        if (hasAddedComponentsProperty(extensions) && extensions.addedComponents.length > 0) {
+          extensions.addedComponents.forEach((component) => {
+            if (isExtensionObject(component) && component.targets) {
+              const targets = Array.isArray(component.targets) ? component.targets : [component.targets];
+              if (targets.includes(extensionPointId)) {
+                types.add('component');
+              }
+            }
+          });
+        }
+
+        // Check added functions
+        if (hasAddedFunctionsProperty(extensions) && extensions.addedFunctions.length > 0) {
+          extensions.addedFunctions.forEach((func) => {
+            if (isExtensionObject(func) && func.targets) {
+              const targets = Array.isArray(func.targets) ? func.targets : [func.targets];
+              if (targets.includes(extensionPointId)) {
+                types.add('function');
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.warn(`Error processing extensions for plugin ${pluginId}:`, error);
+      }
+    });
+
+    // Use a more balanced approach: if multiple types exist, prefer the most common one
+
+    // If only one type, return it
+    if (types.size === 1) {
+      return Array.from(types)[0];
+    }
+
+    // If multiple types, use a more balanced priority: link > component > function
+    // This is because link extension points are more common and should be the default
+    if (types.has('link')) {
+      return 'link';
+    }
+    if (types.has('component')) {
+      return 'component';
+    }
+    if (types.has('function')) {
+      return 'function';
+    }
+
+    // Default fallback
+    return 'link';
+  } catch (error) {
+    console.warn(`Error determining extension point type for ${extensionPointId}:`, error);
+    return 'link'; // Safe fallback
+  }
 };
 
 // Helper function to find the defining plugin and extension point details for a target
