@@ -40,7 +40,9 @@ import (
 )
 
 type SetupConfig struct {
-	KeeperService contracts.KeeperService
+	KeeperService            contracts.KeeperService
+	StackID                  string
+	DataKeyMigrationExecutor contracts.EncryptedValueMigrationExecutor
 }
 
 func defaultSetupCfg() SetupConfig {
@@ -95,6 +97,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		GCWorkerMaxBatchSize:          2,
 		GCWorkerMaxConcurrentCleanups: 2,
 	}
+	cfg.StackID = setupCfg.StackID
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
 	require.NoError(t, err)
 
@@ -126,9 +129,12 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	globalEncryptedValueStorage, err := encryptionstorage.ProvideGlobalEncryptedValueStorage(database, tracer)
 	require.NoError(t, err)
 
-	// Initialize a noop migration executor for the sql keeper so it doesn't interfere with initialization
-	noopMigrationExecutor := &NoopMigrationExecutor{}
-	sqlKeeper, err := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encryptedValueStorage, noopMigrationExecutor, nil)
+	// Initialize a noop migration executor for the sql keeper so it doesn't interfere with initialization, or use the one provided
+	var fakeMigrationExecutor contracts.EncryptedValueMigrationExecutor = setupCfg.DataKeyMigrationExecutor
+	if fakeMigrationExecutor == nil {
+		fakeMigrationExecutor = &NoopMigrationExecutor{}
+	}
+	sqlKeeper, err := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encryptedValueStorage, fakeMigrationExecutor, nil, cfg)
 	require.NoError(t, err)
 
 	// Initialize a real migration executor for test

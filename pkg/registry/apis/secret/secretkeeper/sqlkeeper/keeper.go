@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/metrics"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -30,16 +31,21 @@ func NewSQLKeeper(
 	store contracts.EncryptedValueStorage,
 	migrationExecutor contracts.EncryptedValueMigrationExecutor,
 	reg prometheus.Registerer,
+	cfg *setting.Cfg,
 ) (*SQLKeeper, error) {
-	// Run the encrypted value store migration before anything else, otherwise operations may fail
-	// TODO: This does not need to be here forever, but we may currently have on-prem deployments using GSM, so it needs to be here for now.
-	// Periodically assess whether it is safe to remove - most likely for G13 should be fine.
-	log := logging.FromContext(context.Background())
-	log.Debug("sqlkeeper: executing encrypted value store migration")
-	rowsAffected, err := migrationExecutor.Execute(context.Background())
-	log.Debug("sqlkeeper: encrypted value store migration completed", "rows_affected", rowsAffected)
-	if err != nil {
-		return nil, fmt.Errorf("error encountered during encrypted value store migration: %w", err)
+
+	// Only run the migration if running as an MT api server
+	if cfg.StackID == "" {
+		// Run the encrypted value store migration before anything else, otherwise operations may fail
+		// TODO: This does not need to be here forever, but we may currently have on-prem deployments using GSM, so it needs to be here for now.
+		// Periodically assess whether it is safe to remove - most likely for G13 should be fine.
+		log := logging.FromContext(context.Background())
+		log.Debug("sqlkeeper: executing encrypted value store migration")
+		rowsAffected, err := migrationExecutor.Execute(context.Background())
+		log.Debug("sqlkeeper: encrypted value store migration completed", "rows_affected", rowsAffected)
+		if err != nil {
+			return nil, fmt.Errorf("error encountered during encrypted value store migration: %w", err)
+		}
 	}
 
 	return &SQLKeeper{

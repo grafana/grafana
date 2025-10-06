@@ -1,6 +1,7 @@
 package sqlkeeper_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -146,4 +147,31 @@ func Test_SQLKeeperSetup(t *testing.T) {
 		err = sut.SQLKeeper.Update(t.Context(), nil, namespace1, "non_existing_name", version1, plaintext2)
 		require.Error(t, err)
 	})
+
+	t.Run("data key migration only runs if the stack ID is not set", func(t *testing.T) {
+		t.Parallel()
+
+		m := &mockMigrationExecutor{}
+
+		testutils.Setup(t, testutils.WithMutateCfg(func(cfg *testutils.SetupConfig) {
+			cfg.StackID = "test-123"
+			cfg.DataKeyMigrationExecutor = m
+		}))
+		assert.False(t, m.wasExecuted)
+
+		testutils.Setup(t, testutils.WithMutateCfg(func(cfg *testutils.SetupConfig) {
+			cfg.StackID = ""
+			cfg.DataKeyMigrationExecutor = m
+		}))
+		assert.True(t, m.wasExecuted)
+	})
+}
+
+type mockMigrationExecutor struct {
+	wasExecuted bool
+}
+
+func (m *mockMigrationExecutor) Execute(ctx context.Context) (int, error) {
+	m.wasExecuted = true
+	return 0, nil
 }
