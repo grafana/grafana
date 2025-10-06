@@ -14,25 +14,19 @@ if (!teamName) {
 const outputDir = `./coverage/by-team/${createOwnerDirectory(teamName)}`;
 
 const codeownersFilePath = path.join(__dirname, CODEOWNERS_MANIFEST_FILENAMES_BY_TEAM_PATH);
-let teamFiles = [];
 
-try {
-  if (!fs.existsSync(codeownersFilePath)) {
-    console.error(`Codeowners file not found at ${codeownersFilePath} ...`);
-    console.error('Please run: yarn codeowners-manifest first to generate the mapping file');
-    process.exit(1);
-  }
+if (!fs.existsSync(codeownersFilePath)) {
+  console.error(`Codeowners file not found at ${codeownersFilePath} ...`);
+  console.error('Please run: yarn codeowners-manifest first to generate the mapping file');
+  process.exit(1);
+}
 
-  const codeownersData = JSON.parse(fs.readFileSync(codeownersFilePath, 'utf8'));
-  teamFiles = codeownersData[teamName] || [];
+const codeownersData = JSON.parse(fs.readFileSync(codeownersFilePath, 'utf8'));
+const teamFiles = codeownersData[teamName] || [];
 
-  if (teamFiles.length === 0) {
-    console.error(`ERROR: No files found for team "${teamName}"`);
-    console.error('Available teams:', Object.keys(codeownersData).join(', '));
-    process.exit(1);
-  }
-} catch (error) {
-  console.error('ERROR: Failed to read or parse codeowners mapping file:', error.message);
+if (teamFiles.length === 0) {
+  console.error(`ERROR: No files found for team "${teamName}"`);
+  console.error('Available teams:', Object.keys(codeownersData).join(', '));
   process.exit(1);
 }
 
@@ -49,19 +43,18 @@ const sourceFiles = teamFiles.filter((file) => {
   );
 });
 
-const teamTestPatterns = [];
-
-sourceFiles.forEach((file) => {
-  const dir = path.dirname(file);
-  const basename = path.basename(file, path.extname(file));
-
-  teamTestPatterns.push(`<rootDir>/${dir}/${basename}.test.{ts,tsx,js,jsx}`);
-  teamTestPatterns.push(`<rootDir>/${dir}/__tests__/${basename}.test.{ts,tsx,js,jsx}`);
-  teamTestPatterns.push(`<rootDir>/${dir}/__tests__/**/${basename}.test.{ts,tsx,js,jsx}`);
+const testFiles = teamFiles.filter((file) => {
+  const ext = path.extname(file);
+  return ['.ts', '.tsx', '.js', '.jsx'].includes(ext) && (file.includes('.test.') || file.includes('.spec.'));
 });
 
+if (testFiles.length === 0) {
+  console.log(`No test files found for team ${teamName}`);
+  process.exit(0);
+}
+
 console.log(
-  `🧪 Collecting coverage for ${sourceFiles.length} testable files of ${teamFiles.length} files owned by ${teamName}.`
+  `🧪 Collecting coverage for ${sourceFiles.length} testable files and running ${testFiles.length} test files of ${teamFiles.length} files owned by ${teamName}.`
 );
 
 module.exports = {
@@ -95,10 +88,7 @@ module.exports = {
 
   testRegex: undefined,
 
-  testMatch:
-    teamTestPatterns.length > 0
-      ? teamTestPatterns
-      : ['<rootDir>/this-pattern-will-match-nothing/**/*.test.{ts,tsx,js,jsx}'],
+  testMatch: testFiles.map((file) => `<rootDir>/${file}`),
 };
 
 /**
