@@ -77,8 +77,6 @@ type BleveOptions struct {
 
 	Logger *slog.Logger
 
-	UseFullNgram bool
-
 	// This function is called to check whether the index is owned by the current instance.
 	// Indexes that are not owned by current instance are eligible for cleanup.
 	// If nil, all indexes are owned by the current instance.
@@ -97,9 +95,6 @@ type bleveBackend struct {
 	cache   map[resource.NamespacedResource]*bleveIndex
 
 	indexMetrics *resource.BleveIndexMetrics
-
-	// if true will use ngram instead of edge_ngram for title indexes. See custom_analyzers.go
-	useFullNgram bool
 
 	bgTasksCancel func()
 	bgTasksWg     sync.WaitGroup
@@ -149,7 +144,6 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 		opts:         opts,
 		ownsIndexFn:  ownFn,
 		indexMetrics: indexMetrics,
-		useFullNgram: opts.UseFullNgram,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -376,7 +370,7 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("reason", indexBuildReason),
 	)
 
-	mapper, err := GetBleveMappings(fields, b.useFullNgram)
+	mapper, err := GetBleveMappings(fields)
 	if err != nil {
 		return nil, err
 	}

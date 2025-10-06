@@ -13,7 +13,7 @@ import (
 )
 
 func TestDocumentMapping(t *testing.T) {
-	mappings, err := search.GetBleveMappings(nil, false)
+	mappings, err := search.GetBleveMappings(nil)
 	require.NoError(t, err)
 	data := resource.IndexableDocument{
 		Title:       "title",

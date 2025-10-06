@@ -3870,20 +3870,6 @@
     },
     {
       "metadata": {
-        "name": "unifiedStorageUseFullNgram",
-        "resourceVersion": "1758820248165",
-        "creationTimestamp": "2025-09-25T17:10:48Z"
-      },
-      "spec": {
-        "description": "Use full n-gram indexing instead of edge n-gram for unified storage search",
-        "stage": "experimental",
-        "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
         "name": "useKubernetesShortURLsAPI",
         "resourceVersion": "1756914263808",
         "creationTimestamp": "2025-09-03T10:49:07Z",

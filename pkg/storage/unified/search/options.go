@@ -46,7 +46,6 @@ func NewSearchOptions(
 			BatchSize:     cfg.IndexMaxBatchSize,         // This is the batch size for how many objects to add to the index at once
 			IndexCacheTTL: cfg.IndexCacheTTL,             // How long to keep the index cache in memory
 			BuildVersion:  cfg.BuildVersion,
-			UseFullNgram:  features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageUseFullNgram),
 			OwnsIndex:     ownsIndexFn,
 		}, tracer, indexMetrics)
 
