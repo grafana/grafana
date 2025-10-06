@@ -269,16 +269,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       // Get the Prometheus datasource instance
       const promDs = await getDataSourceSrv().get(this.serviceMap.datasourceUid);
 
-      // Note: getDataSourceSrv().get() returns a generic DataSourceApi type, not the specific Prometheus type
-      // So we don't have that ds type that has the checkMetricExists method, so we need to check for it at runtime
-      // Runtime check for checkMetricExists method to avoid TypeScript type assertions
-      // (Grafana linting rules forbid "as" type assertions, so we use duck typing instead)
-      if (!('checkMetricExists' in promDs) || typeof promDs.checkMetricExists !== 'function') {
+      // Use type guard to check if datasource supports checkMetricExists method
+      if (!hasCheckMetricExists(promDs)) {
         console.warn('Prometheus datasource does not support checkMetricExists method');
         return false;
       }
 
-      // Use the new generic method from Prometheus datasource
       return await promDs.checkMetricExists(metricName, timeRange);
     } catch (error) {
       console.warn('Failed to check for native histograms using new method:', error);
@@ -1648,4 +1644,13 @@ export function makeServiceGraphViewRequest(metrics: string[]): PromQuery[] {
       instant: true,
     };
   });
+}
+
+// Type guard to check if a datasource has the checkMetricExists method
+function hasCheckMetricExists(
+  ds: unknown
+): ds is { checkMetricExists: (metricName: string, timeRange?: TimeRange) => Promise<boolean> } {
+  return (
+    ds != null && typeof ds === 'object' && 'checkMetricExists' in ds && typeof ds.checkMetricExists === 'function'
+  );
 }
