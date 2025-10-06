@@ -13,8 +13,6 @@ import { Stack } from '../Layout/Stack/Stack';
 
 import { SubMenu } from './SubMenu';
 
-export const MENU_ITEM_PADDING = 4;
-
 /** @internal */
 export type MenuItemElement = HTMLAnchorElement & HTMLButtonElement & HTMLDivElement;
 
@@ -215,6 +213,8 @@ export const MenuItem = React.memo(
 MenuItem.displayName = 'MenuItem';
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const menuPadding = theme.components.menu.padding * theme.spacing.gridSize;
+
   return {
     item: css({
       background: 'none',
@@ -227,7 +227,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'center',
       padding: theme.spacing(0.5, 1.5),
       minHeight: theme.spacing(4),
-      borderRadius: getInternalRadius(theme, MENU_ITEM_PADDING, { parentBorderWidth: 0 }),
+      borderRadius: getInternalRadius(theme, menuPadding, { parentBorderWidth: 0 }),
       margin: 0,
       border: 'none',
       width: '100%',
