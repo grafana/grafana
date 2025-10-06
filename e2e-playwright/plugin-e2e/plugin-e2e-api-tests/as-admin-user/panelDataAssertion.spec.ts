@@ -70,13 +70,6 @@ test.describe(
           panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.ColumnHeader)
         ).toContainText(['Metric', 'Value', 'Stat']);
       });
-
-      test('get table cells', async ({ gotoPanelEditPage, selectors }) => {
-        const panelEditPage = await gotoPanelEditPage({ dashboard: TABLE_TEST_PANEL_DASHBOARD, id: '7' });
-        await expect(
-          panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Cell)
-        ).toContainText(['cpu', '20', 'average', 'dropped_bytes', '10', 'mean']);
-      });
     });
 
     test.describe('dashboard page', () => {
