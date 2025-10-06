@@ -878,10 +878,6 @@ const (
 	// use multi-tenant path for awsTempCredentials
 	FlagMultiTenantTempCredentials = "multiTenantTempCredentials"
 
-	// FlagLocalizationForPlugins
-	// Enables localization for plugins
-	FlagLocalizationForPlugins = "localizationForPlugins"
-
 	// FlagUnifiedNavbars
 	// Enables unified navbars
 	FlagUnifiedNavbars = "unifiedNavbars"

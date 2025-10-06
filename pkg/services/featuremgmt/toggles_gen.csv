@@ -217,7 +217,6 @@ unifiedStorageGrpcConnectionPool,experimental,@grafana/search-and-storage,false,
 alertingRulePermanentlyDelete,GA,@grafana/alerting-squad,false,false,true
 alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,true
 multiTenantTempCredentials,experimental,@grafana/aws-datasources,false,false,false
-localizationForPlugins,experimental,@grafana/plugins-platform-backend,false,false,false
 unifiedNavbars,GA,@grafana/plugins-platform-backend,false,false,true
 logsPanelControls,preview,@grafana/observability-logs,false,false,true
 metricsFromProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,true
