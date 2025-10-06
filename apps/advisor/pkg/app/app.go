@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
@@ -47,7 +48,13 @@ func New(cfg app.Config) (app.App, error) {
 	simpleConfig := simple.AppConfig{
 		Name:           "advisor",
 		KubeConfig:     cfg.KubeConfig,
-		InformerConfig: simple.AppInformerConfig{},
+		InformerConfig: simple.AppInformerConfig{
+			InformerOptions: operator.InformerOptions{
+				ErrorHandler: func(ctx context.Context, err error) {
+					log.WithContext(ctx).Error("Informer processing error", "error", err)
+				},
+			},
+		},
 		ManagedKinds: []simple.AppManagedKind{
 			{
 				Kind: advisorv0alpha1.CheckKind(),

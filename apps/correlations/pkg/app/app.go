@@ -11,9 +11,8 @@ import (
 
 func New(cfg app.Config) (app.App, error) {
 	simpleConfig := simple.AppConfig{
-		Name:           "correlation",
-		KubeConfig:     cfg.KubeConfig,
-		InformerConfig: simple.AppInformerConfig{},
+		Name:       "correlation",
+		KubeConfig: cfg.KubeConfig,
 		ManagedKinds: []simple.AppManagedKind{
 			{
 				Kind: correlationsv0alpha1.CorrelationKind(),

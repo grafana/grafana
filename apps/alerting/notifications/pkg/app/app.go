@@ -16,10 +16,9 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	c := simple.AppConfig{
-		Name:           "alerting.notification",
-		KubeConfig:     cfg.KubeConfig,
-		InformerConfig: simple.AppInformerConfig{},
-		ManagedKinds:   managedKinds,
+		Name:       "alerting.notification",
+		KubeConfig: cfg.KubeConfig,
+		ManagedKinds: managedKinds,
 	}
 
 	a, err := simple.NewApp(c)
