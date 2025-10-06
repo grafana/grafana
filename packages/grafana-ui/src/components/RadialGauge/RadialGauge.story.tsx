@@ -39,7 +39,7 @@ const meta: Meta<StoryProps> = {
     sparkline: false,
     value: undefined,
     gradient: 'hue',
-    seriesCount: 0,
+    seriesCount: 1,
     segmentCount: undefined,
     segmentSpacing: undefined,
     roundedBars: true,

@@ -80,20 +80,27 @@ export function RadialGauge(props: RadialGaugeProps) {
 
   const startAngle = shape === 'gauge' ? 250 : 0;
   const endAngle = shape === 'gauge' ? 110 : 360;
-  const size = Math.min(width, height);
 
-  const { svgHeight, svgWidth, margin } = calculateDimensions(width, height, shape, glowBar, spotlight, barWidthFactor);
+  const { svgHeight, svgWidth, margin, size } = calculateDimensions(
+    width,
+    height,
+    shape,
+    glowBar,
+    spotlight,
+    barWidthFactor
+  );
+
   const primaryValue = values[0];
   const color = primaryValue.display.color ?? theme.colors.primary.main;
   const barWidth = Math.max(barWidthFactor * (size / 7), 2);
-  const arcSize = size / 2 - barWidth;
-  const radius = arcSize / 2 - margin;
+  const innerDiameter = size - barWidth - margin;
+  const radius = innerDiameter / 2;
   const center = size / 2;
 
   const { angle } = getValueAngleForValue(primaryValue, startAngle, endAngle);
 
   return (
-    <div className={styles.vizWrapper} style={{ width: svgWidth, height: svgHeight }}>
+    <div className={styles.vizWrapper} style={{ width, height }}>
       <svg width={svgWidth} height={svgHeight}>
         <defs>
           {values.map((displayValue, barIndex) => (
@@ -108,6 +115,8 @@ export function RadialGauge(props: RadialGaugeProps) {
               height={height}
               shape={shape}
               center={center}
+              radius={radius}
+              barWidth={barWidth}
             />
           ))}
           {spotlight && (
@@ -214,21 +223,20 @@ function calculateDimensions(
   glow: boolean | undefined,
   spotlight: boolean | undefined,
   barWidth: number
-): { svgWidth: number; svgHeight: number; margin: number } {
+): { svgWidth: number; svgHeight: number; margin: number; size: number } {
   let margin = 0;
   let svgWidth = width;
   let svgHeight = height;
-
-  if (shape === 'gauge') {
-    // For gauge we need more margin to accommodate the text in the middle
-    svgHeight = width * 0.7;
-  }
+  let size = Math.min(width, height);
 
   if (glow) {
     margin = 0.035 * width;
   }
 
-  return { svgWidth, svgHeight, margin };
+  if (shape === 'gauge') {
+  }
+
+  return { svgWidth, svgHeight, margin, size };
 }
 
 function getColorForBar(displayValue: DisplayValue, barIndex: number, gradient: RadialGradientMode, gaugeId: string) {

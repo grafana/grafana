@@ -14,6 +14,8 @@ interface GradientDefProps {
   height: number;
   shape: RadialShape;
   center: number;
+  radius: number;
+  barWidth: number;
 }
 
 export function GradientDef({
@@ -26,6 +28,8 @@ export function GradientDef({
   height,
   shape,
   center,
+  radius,
+  barWidth,
 }: GradientDefProps) {
   const colorModeId = fieldDisplay.field.color?.mode;
   const valuePercent = fieldDisplay.display.percent ?? 0;
@@ -59,22 +63,6 @@ export function GradientDef({
         </linearGradient>
       );
     }
-    case 'scheme': {
-      if (colorMode.isContinuous && colorMode.getColors) {
-        const colors = colorMode.getColors(theme);
-        const count = colors.length;
-
-        return (
-          <linearGradient x1="0" y1="1" x2={1 / valuePercent} y2="1" id={getGradientId(gaugeId, index)}>
-            {colors.map((stopColor, i) => (
-              <stop key={i} offset={`${(i / (count - 1)).toFixed(2)}`} stopColor={stopColor} stopOpacity={1}></stop>
-            ))}
-          </linearGradient>
-        );
-      }
-
-      return null;
-    }
     case 'hue': {
       const color = fieldDisplay.display.color ?? 'gray';
       const color1 = tinycolor(color).spin(-20).darken(5);
@@ -104,6 +92,42 @@ export function GradientDef({
         </linearGradient>
       );
     }
+    case 'scheme': {
+      if (colorMode.getColors) {
+        const colors = colorMode.getColors(theme);
+        const count = colors.length;
+
+        return (
+          <linearGradient x1="0" y1="1" x2={1 / valuePercent} y2="1" id={getGradientId(gaugeId, index)}>
+            {colors.map((stopColor, i) => (
+              <stop key={i} offset={`${(i / (count - 1)).toFixed(2)}`} stopColor={stopColor} stopOpacity={1} />
+            ))}
+          </linearGradient>
+        );
+      } else {
+        return (
+          <linearGradient x1="0" y1="1" x2={0} y2="1" id={getGradientId(gaugeId, index)}>
+            <stop stopColor={fieldDisplay.display.color ?? 'gray'} stopOpacity={1} />
+          </linearGradient>
+        );
+      }
+    }
+    // case 'radial': {
+    // const color = fieldDisplay.display.color ?? 'gray';
+    //  const color1 = tinycolor(color).darken(5);
+    //     <radialGradient
+    //       cx={center}
+    //       cy={center}
+    //       r={radius + barWidth / 2}
+    //       fr={radius - barWidth / 2}
+    //       id={getGradientId(gaugeId, index)}
+    //       gradientUnits="userSpaceOnUse"
+    //       //gradientTransform={transform}
+    //     >
+    //       <stop offset="0%" stopColor={tinycolor(color).lighten(20).toString()} stopOpacity={1} />
+    //       <stop offset="100%" stopColor={color1.toString()} stopOpacity={1} />
+    //     </radialGradient>
+    // }
   }
 
   return null;
