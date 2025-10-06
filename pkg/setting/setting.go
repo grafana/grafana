@@ -384,6 +384,7 @@ type Cfg struct {
 
 	StackID string
 	Slug    string
+	IsCloud bool // This simply identifies an instance running in Cloud, and is NOT for controlling enablement of Cloud features on-prem.
 
 	LocalFileSystemAvailable bool
 
@@ -1180,6 +1181,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.StackID = valueAsString(iniFile.Section("environment"), "stack_id", "")
 	cfg.Slug = valueAsString(iniFile.Section("environment"), "stack_slug", "")
+	// This simply identifies an instance running in Cloud, and is NOT for controlling enablement of Cloud features on-prem.
+	cfg.IsCloud = iniFile.Section("environment").Key("is_cloud").MustBool(false)
 	cfg.LocalFileSystemAvailable = iniFile.Section("environment").Key("local_file_system_available").MustBool(true)
 	cfg.InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
