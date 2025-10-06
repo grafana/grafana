@@ -3,6 +3,7 @@ import { chain, truncate } from 'lodash';
 import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
+import { AlertLabels, StateText } from '@grafana/alerting/unstable';
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -40,6 +41,7 @@ import { useHasRulerV2 } from '../../hooks/useHasRuler';
 import { useRuleGroupConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { useReturnTo } from '../../hooks/useReturnTo';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
+import { normalizeHealth, normalizeState } from '../../rule-list/components/util';
 import { Annotation } from '../../utils/constants';
 import { getRulesSourceUid, ruleIdentifierToRuleSourceIdentifier } from '../../utils/datasource';
 import { labelsSize } from '../../utils/labels';
@@ -54,7 +56,6 @@ import {
   prometheusRuleType,
   rulerRuleType,
 } from '../../utils/rules';
-import { AlertLabels } from '../AlertLabels';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { WithReturnButton } from '../WithReturnButton';
@@ -63,9 +64,7 @@ import { RedirectToCloneRule } from '../rules/CloneRule';
 
 import { ContactPointLink } from './ContactPointLink';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
-import PausedBadge from './PausedBadge';
 import { useAlertRule } from './RuleContext';
-import { RecordingBadge, StateBadge } from './StateBadges';
 import { AlertVersionHistory } from './tabs/AlertVersionHistory';
 import { Details } from './tabs/Details';
 import { History } from './tabs/History';
@@ -175,7 +174,7 @@ const RuleViewer = () => {
           {activeTab === ActiveTab.VersionHistory && rulerRuleType.grafana.rule(rule.rulerRule) && (
             <AlertVersionHistory rule={rule.rulerRule} />
           )}
-          {activeTab === ActiveTab.Enrichment && <RulePageEnrichmentSectionExtension />}
+          {activeTab === ActiveTab.Enrichment && rule.uid && <RulePageEnrichmentSectionExtension ruleUid={rule.uid} />}
         </TabContent>
       </Stack>
       {duplicateRuleIdentifier && (
@@ -307,6 +306,9 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
 
   const { returnTo } = useReturnTo(returnToHref);
 
+  const textHealth = normalizeHealth(health);
+  const textState = normalizeState(state);
+
   return (
     <Stack direction="row" gap={1} minWidth={0} alignItems="center">
       {returnToHref && (
@@ -321,15 +323,9 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
       <Text variant="h1" truncate>
         {name}
       </Text>
-      {paused ? (
-        <PausedBadge />
-      ) : (
-        <>
-          {/* recording rules won't have a state */}
-          {state && <StateBadge state={state} health={health} />}
-          {isRecordingRule && <RecordingBadge health={health} />}
-        </>
-      )}
+      {/* recording rules won't have a state */}
+      {state && <StateText type="alerting" state={textState} health={textHealth} isPaused={paused} />}
+      {isRecordingRule && <StateText type="recording" health={textHealth} isPaused={paused} />}
     </Stack>
   );
 };
@@ -346,7 +342,7 @@ const PrometheusConsistencyCheck = withErrorBoundary(
   ({ ruleIdentifier }: PrometheusConsistencyCheckProps) => {
     const [ref, { width }] = useMeasure<HTMLDivElement>();
 
-    const { hasRuler } = useHasRulerV2(ruleIdentifierToRuleSourceIdentifier(ruleIdentifier));
+    const { hasRuler } = useHasRulerV2(ruleIdentifierToRuleSourceIdentifier(ruleIdentifier).uid);
     const { result: ruleLocation } = useRuleLocation(ruleIdentifier);
 
     const { waitForGroupConsistency, groupConsistent } = useRuleGroupConsistencyCheck();
@@ -485,6 +481,8 @@ function usePageNav(rule: CombinedRule) {
           setActiveTab(ActiveTab.Details);
         },
       },
+      // Enterprise extensions (e.g. Alert enrichment) should appear after Details
+      ...useRuleViewExtensionsNav(activeTab, setActiveTabFromString),
       {
         text: t('alerting.use-page-nav.page-nav.text.versions', 'Versions'),
         active: activeTab === ActiveTab.VersionHistory,
@@ -493,8 +491,6 @@ function usePageNav(rule: CombinedRule) {
         },
         hideFromTabs: !isGrafanaAlertRule && !isGrafanaRecordingRule,
       },
-      // Enterprise extensions can append additional tabs here
-      ...useRuleViewExtensionsNav(activeTab, setActiveTabFromString),
     ],
     parentItem: {
       text: groupName,

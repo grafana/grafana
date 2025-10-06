@@ -36,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
-	servicetracing "github.com/grafana/grafana/pkg/modules/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -86,7 +85,6 @@ type service struct {
 	features featuremgmt.FeatureToggles
 	log      log.Logger
 
-	stopCh    chan struct{}
 	stoppedCh chan error
 
 	db       db.DB
@@ -149,7 +147,6 @@ func ProvideService(
 		cfg:                               cfg,
 		features:                          features,
 		rr:                                rr,
-		stopCh:                            make(chan struct{}),
 		builders:                          []builder.APIGroupBuilder{},
 		authorizer:                        authorizer.NewGrafanaBuiltInSTAuthorizer(cfg),
 		tracing:                           tracing,
@@ -172,8 +169,7 @@ func ProvideService(
 		dualWriterMetrics:                 grafanarest.NewDualWriterMetrics(reg),
 	}
 	// This will be used when running as a dskit service
-	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
-	s.NamedService = servicetracing.NewServiceTracer(tracing.GetTracerProvider(), service)
+	s.NamedService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
 
 	// TODO: this is very hacky
 	// We need to register the routes in ProvideService to make sure
@@ -244,11 +240,8 @@ func (s *service) Run(ctx context.Context) error {
 	if err := s.StartAsync(ctx); err != nil {
 		return err
 	}
-
-	if err := s.AwaitRunning(ctx); err != nil {
-		return err
-	}
-	return s.AwaitTerminated(ctx)
+	stopCtx := context.Background()
+	return s.AwaitTerminated(stopCtx)
 }
 
 func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
@@ -583,7 +576,6 @@ func (s *service) running(ctx context.Context) error {
 			return err
 		}
 	case <-ctx.Done():
-		return ctx.Err()
 	}
 	return nil
 }

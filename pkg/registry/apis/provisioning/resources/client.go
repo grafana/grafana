@@ -22,6 +22,7 @@ import (
 var (
 	UserResource              = iam.UserResourceInfo.GroupVersionResource()
 	FolderResource            = folders.FolderResourceInfo.GroupVersionResource()
+	FolderKind                = folders.FolderResourceInfo.GroupVersionKind()
 	DashboardResource         = dashboardV1.DashboardResourceInfo.GroupVersionResource()
 	DashboardResourceV2alpha1 = dashboardV2alpha1.DashboardResourceInfo.GroupVersionResource()
 	DashboardResourceV2beta1  = dashboardV2beta1.DashboardResourceInfo.GroupVersionResource()
@@ -259,7 +260,7 @@ func (c *resourceClients) ForResource(ctx context.Context, gvr schema.GroupVersi
 			Resource: gvr.Resource,
 		})
 		if err != nil {
-			return nil, schema.GroupVersionKind{}, err
+			return nil, schema.GroupVersionKind{}, fmt.Errorf("getting preferred version for %s: %w", versionless.String(), err)
 		}
 
 		info, ok := c.byResource[gvr]
@@ -270,7 +271,7 @@ func (c *resourceClients) ForResource(ctx context.Context, gvr schema.GroupVersi
 	} else {
 		gvk, err = discovery.GetKindForResource(gvr)
 		if err != nil {
-			return nil, schema.GroupVersionKind{}, err
+			return nil, schema.GroupVersionKind{}, fmt.Errorf("getting kind for resource for %s: %w", gvr.String(), err)
 		}
 	}
 	info = &clientInfo{

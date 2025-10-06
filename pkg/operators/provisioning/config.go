@@ -23,6 +23,7 @@ import (
 	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -32,11 +33,13 @@ import (
 
 // provisioningControllerConfig contains the configuration that overlaps for the jobs and repo controllers
 type provisioningControllerConfig struct {
-	provisioningClient *client.Clientset
-	resyncInterval     time.Duration
-	repoFactory        repository.Factory
-	unified            resources.ResourceStore
-	clients            resources.ClientFactory
+	provisioningClient  *client.Clientset
+	resyncInterval      time.Duration
+	repoFactory         repository.Factory
+	unified             resources.ResourceStore
+	clients             resources.ClientFactory
+	tokenExchangeClient *authn.TokenExchangeClient
+	tlsConfig           rest.TLSClientConfig
 }
 
 // expects:
@@ -64,10 +67,11 @@ type provisioningControllerConfig struct {
 // tls_key_file =
 // tls_ca_file =
 // resync_interval =
-// repository_types =
 // home_path =
 // local_permitted_prefixes =
-func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerConfig, err error) {
+// [provisioning]
+// repository_types =
+func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controllerCfg *provisioningControllerConfig, err error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
 	}
@@ -128,7 +132,7 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 		return nil, fmt.Errorf("failed to setup decrypter: %w", err)
 	}
 
-	repoFactory, err := setupRepoFactory(cfg, decrypter, provisioningClient)
+	repoFactory, err := setupRepoFactory(cfg, decrypter, provisioningClient, registry)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup repository getter: %w", err)
 	}
@@ -177,11 +181,13 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders)
 
 	return &provisioningControllerConfig{
-		provisioningClient: provisioningClient,
-		repoFactory:        repoFactory,
-		unified:            unified,
-		clients:            clients,
-		resyncInterval:     operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
+		provisioningClient:  provisioningClient,
+		repoFactory:         repoFactory,
+		unified:             unified,
+		clients:             clients,
+		resyncInterval:      operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
+		tokenExchangeClient: tokenExchangeClient,
+		tlsConfig:           tlsConfig,
 	}, nil
 }
 
@@ -218,9 +224,14 @@ func setupRepoFactory(
 	cfg *setting.Cfg,
 	decrypter repository.Decrypter,
 	provisioningClient *client.Clientset,
+	registry prometheus.Registerer,
 ) (repository.Factory, error) {
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
-	repoTypes := operatorSec.Key("repository_types").Strings("|")
+	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
+	repoTypes := provisioningSec.Key("repository_types").Strings("|")
+	if len(repoTypes) == 0 {
+		repoTypes = []string{"github"}
+	}
 
 	// TODO: This depends on the different flavor of Grafana
 	// https://github.com/grafana/git-ui-sync-project/issues/495
@@ -234,11 +245,13 @@ func setupRepoFactory(
 		alreadyRegistered[provisioning.RepositoryType(t)] = struct{}{}
 
 		switch provisioning.RepositoryType(t) {
+		case provisioning.GitRepositoryType:
+			extras = append(extras, git.Extra(decrypter))
 		case provisioning.GitHubRepositoryType:
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
 			if provisioningAppURL != "" {
-				webhook = webhooks.ProvideWebhooks(provisioningAppURL)
+				webhook = webhooks.ProvideWebhooks(provisioningAppURL, registry)
 			}
 
 			extras = append(extras, github.Extra(
@@ -267,7 +280,7 @@ func setupRepoFactory(
 		}
 	}
 
-	repoFactory, err := repository.ProvideFactory(extras)
+	repoFactory, err := repository.ProvideFactory(alreadyRegistered, extras)
 	if err != nil {
 		return nil, fmt.Errorf("create repository factory: %w", err)
 	}

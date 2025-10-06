@@ -10,20 +10,27 @@ export { getContactPointDescription } from './grafana/contactPoints/utils';
 
 // Notification Policies
 export {
-  useMatchAlertInstancesToNotificationPolicies,
+  useMatchInstancesToRouteTrees,
+  matchInstancesToRouteTrees,
   type RouteMatch,
   type InstanceMatchResult,
 } from './grafana/notificationPolicies/hooks/useMatchPolicies';
 export {
   type TreeMatch,
   type RouteMatchResult,
-  matchAlertInstancesToPolicyTree,
+  matchInstancesToRoute,
   findMatchingRoutes,
   getInheritedProperties,
   computeInheritedTree,
 } from './grafana/notificationPolicies/utils';
 export { USER_DEFINED_TREE_NAME } from './grafana/notificationPolicies/consts';
 export * from './grafana/notificationPolicies/types';
+
+// Rules
+export { StateText } from './grafana/rules/components/state/StateText';
+export { StateIcon } from './grafana/rules/components/state/StateIcon';
+export { AlertLabel, type AlertLabelProps } from './grafana/rules/components/labels/AlertLabel';
+export { AlertLabels, type AlertLabelsProps } from './grafana/rules/components/labels/AlertLabels';
 
 // Matchers
 export { type LabelMatcher, type Label } from './grafana/matchers/types';

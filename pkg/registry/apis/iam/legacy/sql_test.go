@@ -31,18 +31,14 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
-	deleteUser := func(q *DeleteUserQuery) sqltemplate.SQLTemplate {
+	deleteUser := func(q *DeleteUserCommand) sqltemplate.SQLTemplate {
 		v := newDeleteUser(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
 
 	deleteOrgUser := func(userID int64) sqltemplate.SQLTemplate {
-		v := deleteOrgUserQuery{
-			SQLTemplate:  mocks.NewTestingSQLTemplate(),
-			OrgUserTable: nodb.Table("org_user"),
-			UserID:       userID,
-		}
+		v := newDeleteOrgUser(nodb, userID)
 		return &v
 	}
 
@@ -54,6 +50,18 @@ func TestIdentityQueries(t *testing.T) {
 
 	createUser := func(cmd *CreateUserCommand) sqltemplate.SQLTemplate {
 		v := newCreateUser(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	createTeam := func(cmd *CreateTeamCommand) sqltemplate.SQLTemplate {
+		v := newCreateTeam(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	updateTeam := func(cmd *UpdateTeamCommand) sqltemplate.SQLTemplate {
+		v := newUpdateTeam(nodb, cmd)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
@@ -72,6 +80,12 @@ func TestIdentityQueries(t *testing.T) {
 
 	listTeamMembers := func(q *ListTeamMembersQuery) sqltemplate.SQLTemplate {
 		v := newListTeamMembers(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	deleteTeam := func(q *DeleteTeamCommand) sqltemplate.SQLTemplate {
+		v := newDeleteTeam(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
@@ -337,16 +351,14 @@ func TestIdentityQueries(t *testing.T) {
 			sqlDeleteUserTemplate: {
 				{
 					Name: "delete_user_basic",
-					Data: deleteUser(&DeleteUserQuery{
-						OrgID: 1,
-						UID:   "user-1",
+					Data: deleteUser(&DeleteUserCommand{
+						UID: "user-1",
 					}),
 				},
 				{
 					Name: "delete_user_different_org",
-					Data: deleteUser(&DeleteUserQuery{
-						OrgID: 2,
-						UID:   "user-abc",
+					Data: deleteUser(&DeleteUserCommand{
+						UID: "user-abc",
 					}),
 				},
 			},
@@ -358,6 +370,54 @@ func TestIdentityQueries(t *testing.T) {
 				{
 					Name: "delete_org_user_different_id",
 					Data: deleteOrgUser(456),
+				},
+			},
+			sqlCreateTeamTemplate: {
+				{
+					Name: "create_team_non_provisioned",
+					Data: createTeam(&CreateTeamCommand{
+						UID:           "team-1",
+						Name:          "Team 1",
+						Email:         "team1@example.com",
+						IsProvisioned: false,
+						OrgID:         1,
+						Created:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+					}),
+				},
+				{
+					Name: "create_team_provisioned",
+					Data: createTeam(&CreateTeamCommand{
+						UID:           "team-2",
+						Name:          "Team 2",
+						Email:         "team2@example.com",
+						IsProvisioned: true,
+						ExternalUID:   "team-2-uid",
+						OrgID:         1,
+						Created:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+					}),
+				},
+			},
+			sqlUpdateTeamTemplate: {
+				{
+					Name: "update_team_basic",
+					Data: updateTeam(&UpdateTeamCommand{
+						UID:           "team-1",
+						Name:          "Team 1",
+						Email:         "team1@example.com",
+						IsProvisioned: true,
+						ExternalUID:   "team-1-uid",
+						Updated:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+					}),
+				},
+			},
+			sqlDeleteTeamTemplate: {
+				{
+					Name: "delete_team_basic",
+					Data: deleteTeam(&DeleteTeamCommand{
+						UID: "team-1",
+					}),
 				},
 			},
 			sqlCreateOrgUserTemplate: {
