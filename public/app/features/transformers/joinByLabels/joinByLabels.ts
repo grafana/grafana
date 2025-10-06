@@ -5,7 +5,7 @@ import {
   DataTransformerID,
   Field,
   FieldType,
-  getTransformationLegacyRefId,
+  getTransformationDynamicRefId,
   SynchronousDataTransformerInfo,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -38,6 +38,7 @@ export const getJoinByLabelsTransformer: () => SynchronousDataTransformerInfo<Jo
       return [joinByLabels(options, data)];
     };
   },
+  usesDynamicRefId: true,
 });
 
 interface JoinValues {
@@ -119,7 +120,7 @@ export function joinByLabels(options: JoinByLabelsTransformOptions, data: DataFr
   const frame: DataFrame = {
     fields: [],
     length: nameValues[0].length,
-    refId: options.refId ?? getTransformationLegacyRefId(DataTransformerID.joinByLabels, data),
+    refId: options.refId ?? getTransformationDynamicRefId(DataTransformerID.joinByLabels, data),
   };
   for (let i = 0; i < join.length; i++) {
     frame.fields.push({

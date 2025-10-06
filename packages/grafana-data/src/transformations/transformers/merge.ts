@@ -6,7 +6,7 @@ import { DataFrame, Field } from '../../types/dataFrame';
 import { DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
-import { getTransformationLegacyRefId } from './utils';
+import { getTransformationDynamicRefId } from './utils';
 
 interface ValuePointer {
   key: string;
@@ -47,7 +47,7 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
         const fieldIndexByName: Record<string, Record<number, number>> = {};
         const fieldNamesForKey: string[] = [];
         const dataFrame = new MutableDataFrame({
-          refId: options.refId ?? getTransformationLegacyRefId(DataTransformerID.merge, data),
+          refId: options.refId ?? getTransformationDynamicRefId(DataTransformerID.merge, data),
           fields: [],
         });
 
@@ -125,6 +125,7 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
         return [dataFrame];
       })
     ),
+  usesDynamicRefId: true,
 };
 
 const copyFieldStructure = (field: Field): Field => {

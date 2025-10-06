@@ -10,6 +10,7 @@ import {
   getFrameMatchers,
   transformDataFrame,
   DataFrame,
+  getTransformationDynamicRefId,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -60,6 +61,8 @@ export const TransformationOperationRow = ({
   const [output, setOutput] = useState<DataFrame[]>([]);
   // output of previous transformation
   const [prevOutput, setPrevOutput] = useState<DataFrame[]>([]);
+
+  const dynamicRefId = getTransformationDynamicRefId(uiConfig.id, data.series);
 
   const onDisableToggle = useCallback(
     (index: number) => {
@@ -167,6 +170,7 @@ export const TransformationOperationRow = ({
         transformationTypeName={`${index + 1} - ${uiConfig.name}`}
         disabled
         onChange={onChange}
+        dynamicRefId={uiConfig.transformation.usesDynamicRefId ? dynamicRefId : undefined}
       />
     );
   };

@@ -268,7 +268,7 @@ export { fuzzySearch } from './utils/fuzzySearch';
 
 // Transformations
 export { standardTransformers } from './transformations/transformers';
-export { getTransformationLegacyRefId } from './transformations/transformers/utils';
+export { getTransformationDynamicRefId } from './transformations/transformers/utils';
 export {
   fieldMatchers,
   frameMatchers,

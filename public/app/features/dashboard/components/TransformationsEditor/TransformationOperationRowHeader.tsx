@@ -14,10 +14,11 @@ export interface Props {
   transformationTypeName: string;
   disabled?: boolean;
   onChange: (index: number, config: DataTransformerConfig) => void;
+  dynamicRefId?: string;
 }
 
 export const TransformationOperationRowHeader = (props: Props) => {
-  const { index, transformation, transformations, onChange, disabled, transformationTypeName } = props;
+  const { index, transformation, transformations, onChange, disabled, transformationTypeName, dynamicRefId } = props;
 
   const styles = useStyles2(getStyles);
   const [isRefIdEditing, toggleIsRefIdEditing] = useToggle(false);
@@ -97,6 +98,7 @@ export const TransformationOperationRowHeader = (props: Props) => {
         >
           <span className={cx(styles.refIdStyle, !isStaticRefId && styles.placeholderText)}>
             {transformation.refId ||
+              dynamicRefId ||
               t(
                 'dashboard.transformation-operation-row.transformation-editor-row-header.edit-refId-placeholder',
                 '(Auto)'

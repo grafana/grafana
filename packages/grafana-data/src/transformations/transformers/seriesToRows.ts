@@ -15,7 +15,7 @@ import {
 import { DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
-import { getTransformationLegacyRefId } from './utils';
+import { getTransformationDynamicRefId } from './utils';
 
 export interface SeriesToRowsTransformerOptions {
   refId?: string;
@@ -41,7 +41,7 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
         const timeFieldByIndex: Record<number, number> = {};
         const targetFields = new Set<string>();
         const dataFrame = new MutableDataFrame({
-          refId: options.refId ?? getTransformationLegacyRefId(DataTransformerID.seriesToRows, data),
+          refId: options.refId ?? getTransformationDynamicRefId(DataTransformerID.seriesToRows, data),
           fields: [],
         });
         const metricField: Field = {
@@ -93,6 +93,7 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
         return [sortDataFrame(dataFrame, 0, true)];
       })
     ),
+  usesDynamicRefId: true,
 };
 
 const copyFieldStructure = (field: Field, name: string): Field => {

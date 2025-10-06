@@ -7,7 +7,7 @@ import { FieldMatcherID } from '../matchers/ids';
 
 import { DataTransformerID } from './ids';
 import { joinDataFrames } from './joinDataFrames';
-import { getTransformationLegacyRefId } from './utils';
+import { getTransformationDynamicRefId } from './utils';
 
 export enum JoinMode {
   outer = 'outer', // best for time series, non duplicated join on values
@@ -44,11 +44,13 @@ export const joinByFieldTransformer: SynchronousDataTransformerInfo<JoinByFieldO
         }
         const joined = joinDataFrames({ frames: data, joinBy, mode: options.mode });
         if (joined) {
-          joined.refId = options.refId ?? getTransformationLegacyRefId(DataTransformerID.joinByField, data);
+          joined.refId = options.refId ?? getTransformationDynamicRefId(DataTransformerID.joinByField, data);
           return [joined];
         }
       }
       return data;
     };
   },
+
+  usesDynamicRefId: true,
 };
