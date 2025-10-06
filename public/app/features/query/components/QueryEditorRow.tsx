@@ -592,13 +592,7 @@ function SavedQueryButtons(props: {
   datasourceFilters: string[];
 }) {
   const { renderSavedQueryButtons } = useQueryLibraryContext();
-  return renderSavedQueryButtons(
-    props.query,
-    props.app,
-    props.onUpdateSuccess,
-    props.onSelectQuery,
-    props.datasourceFilters
-  );
+  return renderSavedQueryButtons(props.query, props.app, props.onUpdateSuccess, props.onSelectQuery);
 }
 
 // Will render editing header only if query library is enabled

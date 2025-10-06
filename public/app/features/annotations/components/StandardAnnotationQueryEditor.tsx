@@ -310,7 +310,6 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
           <AnnotationQueryEditorActionsWrapper
             annotation={annotation}
             datasource={datasource}
-            datasourceInstanceSettings={datasourceInstanceSettings}
             onQueryReplace={this.onQueryReplace}
           >
             <QueryEditor
