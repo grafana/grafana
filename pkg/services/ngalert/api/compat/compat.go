@@ -483,12 +483,12 @@ func AlertRuleNotificationSettingsExportFromNotificationSettings(ns []models.Not
 
 	return &definitions.AlertRuleNotificationSettingsExport{
 		Receiver:            m.Receiver,
-		GroupBy:             m.GroupBy,
+		GroupBy:             NilIfEmpty(util.Pointer(m.GroupBy)),
 		GroupWait:           toStringIfNotNil(m.GroupWait),
 		GroupInterval:       toStringIfNotNil(m.GroupInterval),
 		RepeatInterval:      toStringIfNotNil(m.RepeatInterval),
-		MuteTimeIntervals:   m.MuteTimeIntervals,
-		ActiveTimeIntervals: m.ActiveTimeIntervals,
+		MuteTimeIntervals:   NilIfEmpty(util.Pointer(m.MuteTimeIntervals)),
+		ActiveTimeIntervals: NilIfEmpty(util.Pointer(m.ActiveTimeIntervals)),
 	}
 }
 
