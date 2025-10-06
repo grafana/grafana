@@ -3240,7 +3240,7 @@
       "define-allowed-teams-ids-label": "Define allowed teams IDs",
       "display-name-description": "Will be displayed on the login page as \"Sign in with ...\". Helpful if you use more than one identity providers or SSO protocols.",
       "display-name-label": "Display name",
-      "domain-hint-description": "Parameter to indicate the realm of the user in the Azure AD/Entra ID tenant and streamline the login process.",
+      "domain-hint-description": "Parameter to indicate the realm of the user in the Entra ID tenant and streamline the login process.",
       "domain-hint-label": "Domain hint",
       "domain-hint-valid-domain": "This field must be a valid domain.",
       "email-attribute-name-description": "Name of the key to use for user email lookup within the attributes map of OAuth2 ID token.",
@@ -8697,6 +8697,9 @@
       "tooltip-hide": "Hide password",
       "tooltip-show": "Show password"
     },
+    "range-slider": {
+      "drag-handle-aria-label": "Use arrow keys to change the value"
+    },
     "row-expander": {
       "aria-label-expand": "Expand row",
       "collapse": "Collapse row",
@@ -8724,6 +8727,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Use right y-axis"
+    },
+    "slider": {
+      "drag-handle-aria-label": "Use arrow keys to change the value"
     },
     "spinner": {
       "aria-label": "Loading"
@@ -11353,10 +11359,10 @@
       "all-resources-managed_one": "All {{count}} resource is managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
       "no-results-matching-your-query": "No results matching your query",
-      "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed.",
+      "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed by Git sync.",
       "placeholder-search": "Search",
-      "unmanaged-resources_one": "{{count}} resource isn't managed as code yet.",
-      "unmanaged-resources_other": "{{count}} resources aren't managed as code yet."
+      "unmanaged-resources_one": "{{count}} resource isn't managed by git sync.",
+      "unmanaged-resources_other": "{{count}} resources aren't managed by git sync."
     },
     "get-default-values": {
       "title": {

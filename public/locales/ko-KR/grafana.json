@@ -3228,7 +3228,7 @@
       "define-allowed-teams-ids-label": "허용된 팀 ID 정의",
       "display-name-description": "로그인 페이지에 '다음으로 로그인'으로 표시됩니다. 두 개 이상의 ID 제공자 또는 SSO 프로토콜을 사용하는 경우 유용합니다.",
       "display-name-label": "표시 이름",
-      "domain-hint-description": "Azure AD/Entra ID 테넌트에서 사용자의 영역을 나타내고 로그인 프로세스를 간소화하는 매개변수입니다.",
+      "domain-hint-description": "",
       "domain-hint-label": "도메인 힌트",
       "domain-hint-valid-domain": "이 필드는 유효한 도메인이어야 합니다.",
       "email-attribute-name-description": "OAuth2 ID 토큰의 속성 맵 내에서 사용자 이메일 조회에 사용할 키의 이름입니다.",
@@ -8674,6 +8674,9 @@
       "tooltip-hide": "비밀번호 숨기기",
       "tooltip-show": "비밀번호"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "행 펼치기",
       "collapse": "행 접기",
@@ -8701,6 +8704,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "오른쪽 y축 사용"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "로딩 중"

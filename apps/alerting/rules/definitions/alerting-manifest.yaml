@@ -5,6 +5,7 @@ metadata:
 spec:
   appName: alerting
   group: rules.alerting.grafana.app
+  preferredVersion: v0alpha1
   versions:
   - kinds:
     - conversion: false
