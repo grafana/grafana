@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('node:fs');
-const { writeFile } = require('node:fs/promises');
+const { writeFile, readFile } = require('node:fs/promises');
 
 const {
   CODEOWNERS_FILE_PATH,
@@ -43,19 +43,16 @@ async function generateCodeownersManifestComplete(
   const newMetadata = generateCodeownersMetadata(codeownersFilePath, manifestDir, 'metadata.json');
 
   let isCacheUpToDate = false;
-  const hasExistingMetadata = fs.existsSync(metadataPath);
-  if (hasExistingMetadata) {
-    try {
-      const existingMetadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
-      if (
-        existingMetadata.filesHash === newMetadata.filesHash &&
-        existingMetadata.codeownersHash === newMetadata.codeownersHash
-      ) {
-        isCacheUpToDate = true;
-      }
-    } catch (error) {
-      isCacheUpToDate = false;
+  try {
+    const existingMetadata = JSON.parse(await readFile(metadataPath, 'utf8'));
+    if (
+      existingMetadata.filesHash === newMetadata.filesHash &&
+      existingMetadata.codeownersHash === newMetadata.codeownersHash
+    ) {
+      isCacheUpToDate = true;
     }
+  } catch (error) {
+    isCacheUpToDate = false;
   }
 
   if (!isCacheUpToDate) {
