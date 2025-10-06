@@ -138,6 +138,7 @@ type Cfg struct {
 	ProvisioningDisableControllers  bool
 	ProvisioningAllowedTargets      []string
 	ProvisioningAllowImageRendering bool
+	ProvisioningMinSyncInterval     time.Duration
 	ProvisioningRepositoryTypes     []string
 	ProvisioningLokiURL             string
 	ProvisioningLokiUser            string
@@ -543,9 +544,6 @@ type Cfg struct {
 	// Cloud Migration
 	CloudMigration CloudMigrationSettings
 
-	// Feature Management Settings
-	FeatureManagement FeatureMgmtSettings
-
 	// Alerting
 	AlertingEvaluationTimeout   time.Duration
 	AlertingNotificationTimeout time.Duration
@@ -578,13 +576,15 @@ type Cfg struct {
 	MaxPageSizeBytes                           int
 	IndexPath                                  string
 	IndexWorkers                               int
+	IndexRebuildWorkers                        int
 	IndexMaxBatchSize                          int
 	IndexFileThreshold                         int
 	IndexMinCount                              int
 	IndexRebuildInterval                       time.Duration
 	IndexCacheTTL                              time.Duration
-	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will not be reused between restarts.
-	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will not be reused between restarts.
+	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
+	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
+	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	EnableSharding                             bool
 	QOSEnabled                                 bool
 	QOSNumberWorker                            int
@@ -1429,7 +1429,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	logSection := iniFile.Section("log")
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
 
-	cfg.readFeatureManagementConfig()
 	cfg.readPublicDashboardsSettings()
 	cfg.readCloudMigrationSettings()
 	cfg.readSecretsManagerSettings()
@@ -2128,6 +2127,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 		cfg.ProvisioningAllowedTargets = []string{"instance", "folder"}
 	}
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
+	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

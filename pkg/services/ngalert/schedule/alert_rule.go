@@ -471,7 +471,7 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 		e.scheduledAt,
 		e.rule,
 		results,
-		state.GetRuleExtraLabels(logger, e.rule, e.folderTitle, !a.disableGrafanaFolder),
+		state.GetRuleExtraLabels(logger, e.rule, e.folderTitle, !a.disableGrafanaFolder, a.featureToggles),
 		func(ctx context.Context, statesToSend state.StateTransitions) {
 			start := a.clock.Now()
 			alerts := a.send(ctx, logger, statesToSend)

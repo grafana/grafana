@@ -20,7 +20,7 @@ shorturl: {
 				response: {
 					url: string
 				}
-				responseMetadata: typeMeta: false // Don't include kube typeMeta
+				responseMetadata: typeMeta: false
 			}
 		}
 	}
