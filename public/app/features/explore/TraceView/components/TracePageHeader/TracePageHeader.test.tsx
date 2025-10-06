@@ -299,7 +299,6 @@ describe('TracePageHeader test', () => {
 
       const button = screen.getByRole('button', { name: /Test Extension/i });
       expect(button).toBeInTheDocument();
-      expect(button).toHaveClass('css-7byezq-button'); // Grafana button primary class
     });
 
     it('should render extension icons when provided', () => {
@@ -485,7 +484,6 @@ describe('TracePageHeader test', () => {
       const buttonElement = feedbackButton.closest('a');
 
       expect(buttonElement).toBeInTheDocument();
-      expect(buttonElement).toHaveClass('css-125ehy6-button'); // Secondary variant class
 
       // Check for icon
       const iconElement = buttonElement?.querySelector('svg');

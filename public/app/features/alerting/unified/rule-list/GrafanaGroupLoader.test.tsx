@@ -1,5 +1,5 @@
 import { render } from 'test/test-utils';
-import { byRole, byTitle } from 'testing-library-selector';
+import { byLabelText, byRole } from 'testing-library-selector';
 
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -29,7 +29,7 @@ setupMswServer();
 
 const ui = {
   ruleItem: (ruleName: string) => byRole('treeitem', { name: ruleName }),
-  ruleStatus: (status: string) => byTitle(status),
+  ruleStatus: (status: string) => byLabelText(status),
   ruleLink: (ruleName: string) => byRole('link', { name: ruleName }),
   editButton: () => byRole('link', { name: 'Edit' }),
   moreButton: () => byRole('button', { name: 'More' }),

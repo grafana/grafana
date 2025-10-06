@@ -4,6 +4,7 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -56,6 +57,31 @@ func TestTemplates(t *testing.T) {
 		return &v
 	}
 
+	getPageQuery := func(q *PageQuery) sqltemplate.SQLTemplate {
+		v := pageQueryTemplate{
+			SQLTemplate:        sqltemplate.New(nodb.DialectForDriver()),
+			Query:              q,
+			PermissionTable:    nodb.Table("permission"),
+			RoleTable:          nodb.Table("role"),
+			ManagedRolePattern: "managed:%",
+		}
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	getLastestUpdateQuery := func(orgID int64, scopePatterns []string) sqltemplate.SQLTemplate {
+		v := latestUpdateTemplate{
+			SQLTemplate:     sqltemplate.New(nodb.DialectForDriver()),
+			OrgID:           orgID,
+			ScopePatterns:   scopePatterns,
+			PermissionTable: nodb.Table("permission"),
+			RoleTable:       nodb.Table("role"),
+			ManagedPattern:  "managed:%",
+		}
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	getListResourcePermissionsQuery := func(q *ListResourcePermissionsQuery) sqltemplate.SQLTemplate {
 		v := listResourcePermissionsQueryTemplate{
 			SQLTemplate:        sqltemplate.New(nodb.DialectForDriver()),
@@ -80,6 +106,7 @@ func TestTemplates(t *testing.T) {
 			PermissionTable:    nodb.Table("permission"),
 			RoleTable:          nodb.Table("role"),
 			ManagedRolePattern: "managed:%",
+			RoleName:           q.RoleName,
 		}
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
@@ -133,6 +160,25 @@ func TestTemplates(t *testing.T) {
 					}),
 				},
 			},
+			pageQueryTplt: {
+				{
+					Name: "basic_page_query",
+					Data: getPageQuery(&PageQuery{
+						ScopePatterns: []string{"folders:uid:%", "dashboards:uid:%"},
+						OrgID:         3,
+						Pagination: common.Pagination{
+							Limit:    100,
+							Continue: 5,
+						},
+					}),
+				},
+			},
+			latestUpdateTplt: {
+				{
+					Name: "basic_latest_update_query",
+					Data: getLastestUpdateQuery(3, []string{"folders:uid:%", "dashboards:uid:%"}),
+				},
+			},
 			resourcePermissionsQueryTplt: {
 				{
 					Name: "basic_query",
@@ -141,7 +187,7 @@ func TestTemplates(t *testing.T) {
 				{
 					Name: "with_all_fields",
 					Data: getListResourcePermissionsQuery(&ListResourcePermissionsQuery{
-						Scope:      "123",
+						Scopes:     []string{"123"},
 						OrgID:      3,
 						ActionSets: []string{"folders:admin", "folders:edit", "folders:view"},
 					}),
@@ -153,6 +199,14 @@ func TestTemplates(t *testing.T) {
 					Data: getDeleteResourcePermissionsQuery(&DeleteResourcePermissionsQuery{
 						Scope: "dash_123",
 						OrgID: 3,
+					}),
+				},
+				{
+					Name: "specific_role_cleanup_query",
+					Data: getDeleteResourcePermissionsQuery(&DeleteResourcePermissionsQuery{
+						Scope:    "dash_123",
+						OrgID:    3,
+						RoleName: "managed:users:1:permissions",
 					}),
 				},
 			},
