@@ -15,7 +15,7 @@ type OpenFeatureSettings struct {
 	ProviderType string
 	URL          *url.URL
 	TargetingKey string
-	ContextAttrs map[string]any
+	ContextAttrs map[string]string
 }
 
 func (cfg *Cfg) readOpenFeatureSettings() error {
@@ -38,7 +38,7 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 
 	// build the eval context attributes using [feature_toggles.openfeature.context] section
 	ctxConf := cfg.Raw.Section("feature_toggles.openfeature.context")
-	attrs := map[string]any{}
+	attrs := map[string]string{}
 	for _, key := range ctxConf.KeyStrings() {
 		attrs[key] = ctxConf.Key(key).String()
 	}
