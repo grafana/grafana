@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V12 migrates template variables to update their refresh and hide properties.
 // This migration ensures that:
 // 1. Variables with refresh=true get refresh=1, and variables with refresh=false get refresh=0
@@ -23,7 +25,7 @@ package schemaversion
 //	    { "type": "query", "name": "var2", "refresh": 0, "hide": 1 }
 //	  ]
 //	}
-func V12(dashboard map[string]interface{}) error {
+func V12(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 12
 
 	templating, ok := dashboard["templating"].(map[string]interface{})
