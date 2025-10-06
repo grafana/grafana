@@ -121,6 +121,15 @@
       "internalConsoleOptions": "neverOpen"
     },
     {
+      "name": "Debug ESLint with stats reporter",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": ["run", "eslint", "${file}", "--format", "./scripts/cli/eslint-stats-reporter.mjs"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
       "name": "Debug Go test",
       "type": "go",
       "request": "launch",

@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/authlib/types"
 	decryptv1beta1 "github.com/grafana/grafana/apps/secret/decrypt/v1beta1"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
@@ -30,7 +31,7 @@ type GRPCDecryptClient struct {
 	tokenExchanger authnlib.TokenExchanger
 }
 
-var _ contracts.DecryptService = &GRPCDecryptClient{}
+var _ decrypt.DecryptService = &GRPCDecryptClient{}
 
 type TLSConfig struct {
 	UseTLS             bool
@@ -101,7 +102,7 @@ func createTLSCredentials(config TLSConfig) (credentials.TransportCredentials, e
 }
 
 // Decrypt a set of secure value names in a given namespace for a specific service name.
-func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, namespace string, names ...string) (map[string]contracts.DecryptResult, error) {
+func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, namespace string, names ...string) (map[string]decrypt.DecryptResult, error) {
 	_, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return nil, err
@@ -114,7 +115,7 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 		}
 	}
 	if len(unique) < 1 {
-		return map[string]contracts.DecryptResult{}, nil
+		return map[string]decrypt.DecryptResult{}, nil
 	}
 
 	tokenExchangerInterceptor := authnlib.NewGrpcClientInterceptor(
@@ -149,14 +150,14 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 		return nil, fmt.Errorf("grpc decrypt failed: %w", err)
 	}
 
-	results := make(map[string]contracts.DecryptResult, len(resp.GetDecryptedValues()))
+	results := make(map[string]decrypt.DecryptResult, len(resp.GetDecryptedValues()))
 
 	for name, result := range resp.GetDecryptedValues() {
 		if result.GetErrorMessage() != "" {
-			results[name] = contracts.NewDecryptResultErr(errors.New(result.GetErrorMessage()))
+			results[name] = decrypt.NewDecryptResultErr(errors.New(result.GetErrorMessage()))
 		} else {
 			exposedSecureValue := secretv1beta1.NewExposedSecureValue(result.GetValue())
-			results[name] = contracts.NewDecryptResultValue(&exposedSecureValue)
+			results[name] = decrypt.NewDecryptResultValue(&exposedSecureValue)
 		}
 	}
 

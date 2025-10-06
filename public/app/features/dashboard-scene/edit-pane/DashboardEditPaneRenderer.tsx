@@ -8,6 +8,8 @@ import { Trans, t } from '@grafana/i18n';
 import { useSceneObjectState } from '@grafana/scenes';
 import { useStyles2, useSplitter, ToolbarButton, ScrollContainer, Text, Icon, clearButtonStyles } from '@grafana/ui';
 
+import { DashboardInteractions } from '../utils/interactions';
+
 import { DashboardEditPane } from './DashboardEditPane';
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
@@ -15,7 +17,7 @@ import { useEditableElement } from './useEditableElement';
 
 export interface Props {
   editPane: DashboardEditPane;
-  isCollapsed: boolean;
+  isEditPaneCollapsed: boolean;
   openOverlay?: boolean;
   onToggleCollapse: () => void;
 }
@@ -23,7 +25,7 @@ export interface Props {
 /**
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
-export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleCollapse, openOverlay }: Props) {
+export function DashboardEditPaneRenderer({ editPane, isEditPaneCollapsed, onToggleCollapse, openOverlay }: Props) {
   const { selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const styles = useStyles2(getStyles);
   const clearButton = useStyles2(clearButtonStyles);
@@ -53,7 +55,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     return null;
   }
 
-  if (isCollapsed) {
+  if (isEditPaneCollapsed) {
     return (
       <>
         <div className={styles.expandOptionsWrapper}>
@@ -111,7 +113,10 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
         <div {...splitter.secondaryProps} className={cx(splitter.secondaryProps.className, styles.paneContent)}>
           <button
             type="button"
-            onClick={() => setOutlineCollapsed(!outlineCollapsed)}
+            onClick={() => {
+              DashboardInteractions.dashboardOutlineClicked();
+              setOutlineCollapsed(!outlineCollapsed);
+            }}
             className={cx(clearButton, styles.outlineCollapseButton)}
             data-testid={selectors.components.PanelEditor.Outline.section}
           >

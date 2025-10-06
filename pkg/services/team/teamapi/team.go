@@ -431,7 +431,8 @@ func (tapi *TeamAPI) validateTeam(c *contextmodel.ReqContext, teamID int64, prov
 		return response.Error(http.StatusInternalServerError, "Failed to get Team", err)
 	}
 
-	if teamDTO.IsProvisioned {
+	isGroupSyncEnabled := tapi.cfg.Raw.Section("auth.scim").Key("group_sync_enabled").MustBool(false)
+	if isGroupSyncEnabled && teamDTO.IsProvisioned {
 		return response.Error(http.StatusBadRequest, provisionedMessage, err)
 	}
 

@@ -2,6 +2,8 @@ import { Page, Locator } from '@playwright/test';
 
 import { test, expect, E2ESelectorGroups } from '@grafana/plugin-e2e';
 
+import { getCell, getCellHeight, getColumnIdx } from './table-utils';
+
 const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 
 test.use({ viewport: { width: 2000, height: 1080 } });
@@ -9,36 +11,6 @@ test.use({ viewport: { width: 2000, height: 1080 } });
 // helper utils
 const waitForTableLoad = async (loc: Page | Locator) => {
   await expect(loc.locator('.rdg')).toBeVisible();
-};
-
-const getCell = async (loc: Page | Locator, rowIdx: number, colIdx: number) =>
-  loc
-    .getByRole('row')
-    .nth(rowIdx)
-    .getByRole(rowIdx === 0 ? 'columnheader' : 'gridcell')
-    .nth(colIdx);
-
-const getCellHeight = async (loc: Page | Locator, rowIdx: number, colIdx: number) => {
-  const cell = await getCell(loc, rowIdx, colIdx);
-  return (await cell.boundingBox())?.height ?? 0;
-};
-
-const getColumnIdx = async (loc: Page | Locator, columnName: string) => {
-  // find the index of the column "Long text." The kitchen sink table will change over time, but
-  // we can just find the column programatically and use it throughout the test.
-  let result = -1;
-  const colCount = await loc.getByRole('columnheader').count();
-  for (let colIdx = 0; colIdx < colCount; colIdx++) {
-    const cell = await getCell(loc, 0, colIdx);
-    if ((await cell.textContent()) === columnName) {
-      result = colIdx;
-      break;
-    }
-  }
-  if (result === -1) {
-    throw new Error(`Could not find the "${columnName}" column in the table`);
-  }
-  return result;
 };
 
 const disableAllTextWrap = async (loc: Page | Locator, selectors: E2ESelectorGroups) => {
@@ -55,7 +27,11 @@ const disableAllTextWrap = async (loc: Page | Locator, selectors: E2ESelectorGro
 };
 
 test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] }, () => {
-  test('Tests word wrap, hover overflow, and cell inspect', async ({ gotoDashboardPage, selectors, page }) => {
+  test('Tests word wrap, hover overflow, max cell height, and cell inspect', async ({
+    gotoDashboardPage,
+    selectors,
+    page,
+  }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '1' }),
@@ -73,10 +49,19 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // text wrapping is enabled by default on this panel.
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeGreaterThan(100);
 
+    // set a max row height, watch the height decrease, then clear it to continue.
+    const maxRowHeightInput = page.getByLabel('Max row height').last();
+    await maxRowHeightInput.fill('80');
+    await expect(async () => {
+      await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
+    }).toPass();
+    await maxRowHeightInput.clear();
+
+    // toggle the lorem ipsum column's wrap text toggle and confirm that the height shrinks.
     await dashboardPage
       .getByGrafanaSelector(selectors.components.OptionsGroup.group('panel-options-override-12'))
-      .getByText('Wrap text')
-      .click();
+      .getByLabel('Wrap text')
+      .click({ force: true });
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
     // test that hover overflow works.
@@ -419,6 +404,50 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
     ).not.toBeVisible();
+  });
+
+  test('Styling overrides with styling from field', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+    ).toBeVisible();
+
+    await waitForTableLoad(page);
+
+    const infoColumnIdx = await getColumnIdx(page, 'Info');
+    const dataLinkColumnIdx = await getColumnIdx(page, 'Data Link');
+    const stateColumnHeader = page.getByRole('columnheader').nth(infoColumnIdx);
+
+    // filter to only "Up," which we have a style override on.
+    await stateColumnHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    const filterContainer = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Visualization.TableNG.Filters.Container
+    );
+
+    await expect(filterContainer).toBeVisible();
+
+    await filterContainer.getByTitle('up', { exact: true }).locator('label').click();
+    await filterContainer.getByRole('button', { name: 'Ok' }).click();
+
+    const cell = await getCell(page, 1, dataLinkColumnIdx);
+    await expect(cell).toBeVisible();
+    await expect(cell).toHaveCSS('text-decoration', /line-through/);
+
+    // now filter out "up," and confirm that the style override isn't present.
+    await stateColumnHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    await expect(filterContainer).toBeVisible();
+
+    // select all, then click the first value to unselect it, filtering it out.
+    await filterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
+    await filterContainer.getByTitle('up', { exact: true }).locator('label').click();
+    await filterContainer.getByRole('button', { name: 'Ok' }).click();
+
+    await expect(cell).toBeVisible();
+    await expect(cell).not.toHaveCSS('text-decoration', /line-through/);
   });
 
   test('Empty Table panel', async ({ gotoDashboardPage, selectors }) => {

@@ -2,13 +2,14 @@ import { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { sceneGraph, SceneGridLayout } from '@grafana/scenes';
 import { RadioButtonGroup, Select } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 
-import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
+import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
 import { dashboardEditActions } from '../../edit-pane/shared';
 
 import { DashboardGridItem } from './DashboardGridItem';
@@ -62,7 +63,13 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
     )
   );
 
-  return [repeatCategory, conditionalRenderingCategory];
+  const options = [repeatCategory];
+
+  if (config.featureToggles.dashboardNewLayouts) {
+    options.push(conditionalRenderingCategory);
+  }
+
+  return options;
 }
 
 interface OptionComponentProps {

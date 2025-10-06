@@ -267,7 +267,6 @@ type (
 	ObjectMatchers            = definition.ObjectMatchers
 	PostableApiReceiver       = definition.PostableApiReceiver
 	PostableGrafanaReceivers  = definition.PostableGrafanaReceivers
-	ReceiverType              = definition.ReceiverType
 )
 
 type MergeResult definition.MergeResult
@@ -295,9 +294,6 @@ func (m MergeResult) LogContext() []any {
 }
 
 const (
-	GrafanaReceiverType      = definition.GrafanaReceiverType
-	AlertmanagerReceiverType = definition.AlertmanagerReceiverType
-
 	errInvalidExtraConfigurationMsg = "Invalid Alertmanager configuration: {{.Public.Error}}"
 )
 
@@ -607,15 +603,15 @@ type AlertGroups = amv2.AlertGroups
 
 type AlertGroup = amv2.AlertGroup
 
-type Receiver = alertingmodels.Receiver
+type Receiver = alertingmodels.ReceiverStatus
 
 // swagger:response receiversResponse
 type ReceiversResponse struct {
 	// in:body
-	Body []alertingmodels.Receiver
+	Body []alertingmodels.ReceiverStatus
 }
 
-type Integration = alertingmodels.Integration
+type Integration = alertingmodels.IntegrationStatus
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups
 type AlertsParams struct {
@@ -718,9 +714,6 @@ func (c *ExtraConfiguration) GetSanitizedAlertmanagerConfigYAML() (string, error
 	if err != nil {
 		return "", err
 	}
-
-	// Remove global settings as they are not used in Grafana
-	prometheusConfig.Global = nil
 
 	configYAML, err := yaml.Marshal(prometheusConfig)
 	if err != nil {
@@ -873,12 +866,8 @@ func (c *PostableUserConfig) validate() error {
 func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafanaReceiver {
 	UIDs := make(map[string]*PostableGrafanaReceiver)
 	for _, r := range c.AlertmanagerConfig.Receivers {
-		switch r.Type() {
-		case GrafanaReceiverType:
-			for _, gr := range r.GrafanaManagedReceivers {
-				UIDs[gr.UID] = gr
-			}
-		default:
+		for _, gr := range r.GrafanaManagedReceivers {
+			UIDs[gr.UID] = gr
 		}
 	}
 	return UIDs
@@ -978,12 +967,8 @@ func (c *GettableUserConfig) MarshalJSON() ([]byte, error) {
 func (c *GettableUserConfig) GetGrafanaReceiverMap() map[string]*GettableGrafanaReceiver {
 	UIDs := make(map[string]*GettableGrafanaReceiver)
 	for _, r := range c.AlertmanagerConfig.Receivers {
-		switch r.Type() {
-		case GrafanaReceiverType:
-			for _, gr := range r.GrafanaManagedReceivers {
-				UIDs[gr.UID] = gr
-			}
-		default:
+		for _, gr := range r.GrafanaManagedReceivers {
+			UIDs[gr.UID] = gr
 		}
 	}
 	return UIDs
@@ -1100,47 +1085,7 @@ type GettableApiReceiver struct {
 
 func (r *GettableApiReceiver) UnmarshalJSON(b []byte) error {
 	type plain GettableApiReceiver
-	if err := json.Unmarshal(b, (*plain)(r)); err != nil {
-		return err
-	}
-
-	hasGrafanaReceivers := len(r.GrafanaManagedReceivers) > 0
-
-	if hasGrafanaReceivers {
-		if len(r.EmailConfigs) > 0 {
-			return fmt.Errorf("cannot have both Alertmanager EmailConfigs & Grafana receivers together")
-		}
-		if len(r.PagerdutyConfigs) > 0 {
-			return fmt.Errorf("cannot have both Alertmanager PagerdutyConfigs & Grafana receivers together")
-		}
-		if len(r.SlackConfigs) > 0 {
-			return fmt.Errorf("cannot have both Alertmanager SlackConfigs & Grafana receivers together")
-		}
-		if len(r.WebhookConfigs) > 0 {
-			return fmt.Errorf("cannot have both Alertmanager WebhookConfigs & Grafana receivers together")
-		}
-		if len(r.OpsGenieConfigs) > 0 {
-			return fmt.Errorf("cannot have both Alertmanager OpsGenieConfigs & Grafana receivers together")
-		}
-		if len(r.WechatConfigs) > 0 {
-			return fmt.Errorf("cannot have both Alertmanager WechatConfigs & Grafana receivers together")
-		}
-		if len(r.PushoverConfigs) > 0 {
-			return fmt.Errorf("cannot have both Alertmanager PushoverConfigs & Grafana receivers together")
-		}
-		if len(r.VictorOpsConfigs) > 0 {
-			return fmt.Errorf("cannot have both Alertmanager VictorOpsConfigs & Grafana receivers together")
-		}
-	}
-
-	return nil
-}
-
-func (r *GettableApiReceiver) Type() ReceiverType {
-	if len(r.GrafanaManagedReceivers) > 0 {
-		return GrafanaReceiverType
-	}
-	return AlertmanagerReceiverType
+	return json.Unmarshal(b, (*plain)(r))
 }
 
 func (r *GettableApiReceiver) GetName() string {

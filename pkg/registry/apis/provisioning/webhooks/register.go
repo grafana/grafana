@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // WebhookExtraBuilder is a function that returns an ExtraBuilder.
@@ -25,9 +26,10 @@ import (
 type WebhookExtraBuilder struct {
 	provisioningapis.ExtraBuilder
 	isPublic    bool
-	urlProvider func(namespace string) string
+	urlProvider func(ctx context.Context, namespace string) string
 }
 
+// FIXME: separate the URL provider from connector to simplify operators
 func (b *WebhookExtraBuilder) WebhookURL(ctx context.Context, r *provisioning.Repository) string {
 	if !b.isPublic {
 		return ""
@@ -36,7 +38,7 @@ func (b *WebhookExtraBuilder) WebhookURL(ctx context.Context, r *provisioning.Re
 	gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
 	webhookURL := fmt.Sprintf(
 		"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
-		b.urlProvider(r.GetNamespace()),
+		b.urlProvider(ctx, r.GetNamespace()),
 		gvr.Group,
 		gvr.Version,
 		r.GetNamespace(),
@@ -57,16 +59,17 @@ func isPublicURL(url string) bool {
 		!strings.HasPrefix(url, "https://172.16.")
 }
 
-func ProvideWebhooks(
+func ProvideWebhooksWithImages(
 	cfg *setting.Cfg,
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
 	configProvider apiserver.RestConfigProvider,
+	registry prometheus.Registerer,
 ) *WebhookExtraBuilder {
-	urlProvider := func(_ string) string {
+	urlProvider := func(_ context.Context, _ string) string {
 		return cfg.AppURL
 	}
-	isPublic := isPublicURL(urlProvider(""))
+	isPublic := isPublicURL(urlProvider(context.Background(), ""))
 
 	return &WebhookExtraBuilder{
 		isPublic:    isPublic,
@@ -81,13 +84,14 @@ func ProvideWebhooks(
 				isPublic,
 				b,
 				screenshotRenderer,
+				registry,
 			)
 
-			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urlProvider)
+			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urlProvider, registry)
 			commenter := pullrequest.NewCommenter()
-			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
+			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
 
-			return NewWebhookExtra(
+			return NewWebhookExtraWithImages(
 				render,
 				webhook,
 				urlProvider,
@@ -97,21 +101,40 @@ func ProvideWebhooks(
 	}
 }
 
-// WebhookExtra implements the Extra interface for webhooks
+func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer) *WebhookExtraBuilder {
+	urlProvider := func(_ context.Context, _ string) string {
+		return provisioningURL
+	}
+
+	isPublic := isPublicURL(urlProvider(context.Background(), ""))
+
+	return &WebhookExtraBuilder{
+		isPublic:    isPublic,
+		urlProvider: urlProvider,
+		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
+			screenshotRenderer := pullrequest.NewNoOpRenderer()
+			webhook := NewWebhookConnector(isPublic, b, screenshotRenderer, registry)
+
+			return NewWebhookExtra(webhook)
+		},
+	}
+}
+
+// WebhookExtraWithImages implements the Extra interface for webhooks
 // to wrap around
-type WebhookExtra struct {
+type WebhookExtraWithImages struct {
 	render  *renderConnector
 	webhook *webhookConnector
 	workers []jobs.Worker
 }
 
-func NewWebhookExtra(
+func NewWebhookExtraWithImages(
 	render *renderConnector,
 	webhook *webhookConnector,
-	urlProvider func(namespace string) string,
+	urlProvider func(ctx context.Context, namespace string) string,
 	workers []jobs.Worker,
-) *WebhookExtra {
-	return &WebhookExtra{
+) *WebhookExtraWithImages {
+	return &WebhookExtraWithImages{
 		render:  render,
 		webhook: webhook,
 		workers: workers,
@@ -119,7 +142,7 @@ func NewWebhookExtra(
 }
 
 // Authorize delegates authorization to the webhook connector
-func (e *WebhookExtra) Authorize(ctx context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error) {
+func (e *WebhookExtraWithImages) Authorize(ctx context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error) {
 	webhookDecision, webhookReason, webhookErr := e.webhook.Authorize(ctx, a)
 	if webhookDecision != authorizer.DecisionNoOpinion {
 		return webhookDecision, webhookReason, webhookErr
@@ -129,7 +152,7 @@ func (e *WebhookExtra) Authorize(ctx context.Context, a authorizer.Attributes) (
 }
 
 // UpdateStorage updates the storage with both render and webhook connectors
-func (e *WebhookExtra) UpdateStorage(storage map[string]rest.Storage) error {
+func (e *WebhookExtraWithImages) UpdateStorage(storage map[string]rest.Storage) error {
 	if err := e.webhook.UpdateStorage(storage); err != nil {
 		return err
 	}
@@ -138,7 +161,7 @@ func (e *WebhookExtra) UpdateStorage(storage map[string]rest.Storage) error {
 }
 
 // PostProcessOpenAPI processes OpenAPI specs for both connectors
-func (e *WebhookExtra) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
+func (e *WebhookExtraWithImages) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 	if err := e.webhook.PostProcessOpenAPI(oas); err != nil {
 		return err
 	}
@@ -146,7 +169,25 @@ func (e *WebhookExtra) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 	return e.render.PostProcessOpenAPI(oas)
 }
 
-// GetJobWorkers returns job workers from the webhook connector
-func (e *WebhookExtra) GetJobWorkers() []jobs.Worker {
-	return e.workers
+type WebhookExtra struct {
+	webhook *webhookConnector
+}
+
+func NewWebhookExtra(webhook *webhookConnector) *WebhookExtra {
+	return &WebhookExtra{webhook: webhook}
+}
+
+// Authorize delegates authorization to the webhook connector
+func (e *WebhookExtra) Authorize(ctx context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error) {
+	return e.webhook.Authorize(ctx, a)
+}
+
+// UpdateStorage updates the storage with webhook connector
+func (e *WebhookExtra) UpdateStorage(storage map[string]rest.Storage) error {
+	return e.webhook.UpdateStorage(storage)
+}
+
+// PostProcessOpenAPI processes OpenAPI specs for webhook connectors
+func (e *WebhookExtra) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
+	return e.webhook.PostProcessOpenAPI(oas)
 }

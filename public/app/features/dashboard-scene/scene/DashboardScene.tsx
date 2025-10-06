@@ -36,6 +36,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import {
   AnnoKeyManagerAllowsEdits,
+  AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
   ManagerKind,
@@ -414,6 +415,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         dashboardRef: this.getRef(),
         saveAsCopy,
         onSaveSuccess,
+        showVariablesWarning: this.hasVariableErrors(),
       }),
     });
   }
@@ -587,13 +589,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.setState({ overlay: undefined });
   }
 
-  public async onStarDashboard() {
+  public async onStarDashboard(isStarred?: boolean) {
     const { meta, uid } = this.state;
+    isStarred = isStarred ?? Boolean(meta.isStarred);
     if (!uid) {
       return;
     }
     try {
-      const result = await getDashboardSrv().starDashboard(uid, Boolean(meta.isStarred));
+      const result = await getDashboardSrv().starDashboard(uid, isStarred);
 
       this.setState({
         meta: {
@@ -679,7 +682,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   canEditDashboard() {
     const { meta } = this.state;
 
-    return Boolean(meta.canEdit || meta.canMakeEditable);
+    return Boolean(meta.canEdit || meta.canMakeEditable || config.viewersCanEdit);
   }
 
   public getInitialSaveModel() {
@@ -712,6 +715,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public getTrackingInformation() {
     return this.serializer.getTrackingInformation(this);
+  }
+
+  public getDynamicDashboardsTrackingInformation() {
+    return this.serializer.getDynamicDashboardsTrackingInformation(this);
   }
 
   public async onDashboardDelete() {
@@ -772,6 +779,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return this.state.meta.k8s?.annotations?.[AnnoKeyManagerKind];
   }
 
+  getManagerIdentity(): string | undefined {
+    // get repo name if any
+    return this.state.meta.k8s?.annotations?.[AnnoKeyManagerIdentity];
+  }
+
   isManaged() {
     return Boolean(this.getManagerKind());
   }
@@ -791,6 +803,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   getPath() {
     return this.state.meta.k8s?.annotations?.[AnnoKeySourcePath];
+  }
+
+  private hasVariableErrors(): boolean {
+    return Boolean(this.state.$variables?.state.variables.find((v) => Boolean(v.state.error)));
   }
 }
 

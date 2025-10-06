@@ -333,7 +333,7 @@ test.describe(
         .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('region'))
         .locator('..')
         .locator('input');
-      await regionVariable.fill('uk south');
+      await regionVariable.fill('uk west');
       await regionVariable.press('ArrowDown');
       await regionVariable.press('Enter');
 

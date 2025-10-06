@@ -6,12 +6,13 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideDecryptService(cfg *setting.Cfg, tracer trace.Tracer, decryptStorage contracts.DecryptStorage) (contracts.DecryptService, error) {
+func ProvideDecryptService(cfg *setting.Cfg, tracer trace.Tracer, decryptStorage contracts.DecryptStorage) (decrypt.DecryptService, error) {
 	if cfg.SecretsManagement.GrpcClientEnable {
 		grpcClientConfig := grpcutils.ReadGrpcClientConfig(cfg)
 

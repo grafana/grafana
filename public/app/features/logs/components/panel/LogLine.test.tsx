@@ -613,4 +613,34 @@ describe('getGridTemplateColumns', () => {
       )
     ).toBe('23px 4px 4px 20px');
   });
+
+  test('Gets the template columns with unique labels', () => {
+    expect(
+      getGridTemplateColumns(
+        [
+          {
+            field: 'timestamp',
+            width: 23,
+          },
+          {
+            field: 'level',
+            width: 4,
+          },
+          {
+            field: 'unique-labels',
+            width: 0,
+          },
+          {
+            field: 'field',
+            width: 4,
+          },
+          {
+            field: LOG_LINE_BODY_FIELD_NAME,
+            width: 20,
+          },
+        ],
+        ['field']
+      )
+    ).toBe('23px 4px max-content 4px 20px');
+  });
 });
