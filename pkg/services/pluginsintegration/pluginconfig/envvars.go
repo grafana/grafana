@@ -13,23 +13,27 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 )
 
 var _ envvars.Provider = (*EnvVarsProvider)(nil)
 
 type EnvVarsProvider struct {
-	cfg     *PluginInstanceCfg
-	license plugins.Licensing
-	logger  log.Logger
+	cfg         *PluginInstanceCfg
+	license     plugins.Licensing
+	logger      log.Logger
+	ssoSettings ssosettings.Service
 }
 
-func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing) *EnvVarsProvider {
+func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing, ssoSettings ssosettings.Service) *EnvVarsProvider {
 	return &EnvVarsProvider{
-		cfg:     cfg,
-		license: license,
-		logger:  log.New("plugins.envvars"),
+		cfg:         cfg,
+		license:     license,
+		logger:      log.New("plugins.envvars"),
+		ssoSettings: ssoSettings,
 	}
 }
 
@@ -63,7 +67,18 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	hostEnv = append(hostEnv, p.featureToggleEnableVars(ctx)...)
 	hostEnv = append(hostEnv, p.awsEnvVars(plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.secureSocksProxyEnvVars()...)
-	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(p.cfg.Azure)...)
+
+	azureSettings := p.cfg.Azure
+	if azureSettings == nil {
+		azureSettings = &azsettings.AzureSettings{}
+	}
+	azureAdSettings, err := p.ssoSettings.GetForProvider(context.Background(), social.AzureADProviderName)
+	if err != nil {
+		p.logger.Error("Failed to get SSO settings", "error", err)
+	}
+	azureSettings = GetAzureSettings(azureSettings, azureAdSettings)
+
+	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(azureSettings)...)
 	hostEnv = append(hostEnv, p.tracingEnvVars(plugin)...)
 	hostEnv = append(hostEnv, p.pluginSettingsEnvVars(plugin.PluginID())...)
 

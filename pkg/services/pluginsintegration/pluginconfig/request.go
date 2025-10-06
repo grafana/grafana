@@ -9,7 +9,10 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins/auth"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
@@ -23,12 +26,16 @@ type PluginRequestConfigProvider interface {
 }
 
 type RequestConfigProvider struct {
-	cfg *PluginInstanceCfg
+	cfg         *PluginInstanceCfg
+	ssoSettings ssosettings.Service
+	logger      log.Logger
 }
 
-func NewRequestConfigProvider(cfg *PluginInstanceCfg) *RequestConfigProvider {
+func NewRequestConfigProvider(cfg *PluginInstanceCfg, ssoSettings ssosettings.Service) *RequestConfigProvider {
 	return &RequestConfigProvider{
-		cfg: cfg,
+		cfg:         cfg,
+		ssoSettings: ssoSettings,
+		logger:      log.New("pluginsintegration.pluginrequestconfig"),
 	}
 }
 
@@ -89,8 +96,18 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 	if s.cfg.AzureAuthEnabled {
 		m[azsettings.AzureAuthEnabled] = strconv.FormatBool(s.cfg.AzureAuthEnabled)
 	}
+
 	azureSettings := s.cfg.Azure
-	if azureSettings != nil && slices.Contains[[]string, string](azureSettings.ForwardSettingsPlugins, pluginID) {
+	if azureSettings == nil {
+		azureSettings = &azsettings.AzureSettings{}
+	}
+	azureAdSettings, err := s.ssoSettings.GetForProvider(context.Background(), social.AzureADProviderName)
+	if err != nil {
+		s.logger.Error("Failed to get SSO settings", "error", err)
+	}
+	azureSettings = GetAzureSettings(azureSettings, azureAdSettings)
+
+	if azureSettings != nil && slices.Contains(azureSettings.ForwardSettingsPlugins, pluginID) {
 		if azureSettings.Cloud != "" {
 			m[azsettings.AzureCloud] = azureSettings.Cloud
 		}

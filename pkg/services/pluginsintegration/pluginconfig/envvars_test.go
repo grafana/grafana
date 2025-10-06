@@ -46,7 +46,7 @@ func TestPluginEnvVarsProvider_PluginEnvVars(t *testing.T) {
 			Features:             featuremgmt.WithFeatures(),
 		}
 
-		provider := NewEnvVarsProvider(cfg, licensing)
+		provider := NewEnvVarsProvider(cfg, licensing, mockSsoSettingsService)
 		envVars := provider.PluginEnvVars(context.Background(), p)
 		assert.Len(t, envVars, 6)
 		assert.Equal(t, "GF_VERSION=", envVars[0])
@@ -77,7 +77,7 @@ func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		provider := NewEnvVarsProvider(pCfg, nil)
+		provider := NewEnvVarsProvider(pCfg, nil, mockSsoSettingsService)
 		envVars := provider.PluginEnvVars(context.Background(), p)
 
 		// We want to test that the envvars.Provider does not add any of the host env vars.
@@ -93,7 +93,7 @@ func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
 		cfg := setting.NewCfg()
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
-		provider := NewEnvVarsProvider(pCfg, nil)
+		provider := NewEnvVarsProvider(pCfg, nil, mockSsoSettingsService)
 
 		t.Run("should populate allowed host env vars", func(t *testing.T) {
 			// Set all allowed variables
@@ -418,7 +418,7 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			p := NewEnvVarsProvider(tc.cfg, nil)
+			p := NewEnvVarsProvider(tc.cfg, nil, mockSsoSettingsService)
 			envVars := p.PluginEnvVars(context.Background(), tc.plugin)
 			tc.exp(t, envVars)
 		})
@@ -473,7 +473,7 @@ func TestPluginEnvVarsProvider_authEnvVars(t *testing.T) {
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		provider := NewEnvVarsProvider(pCfg, nil)
+		provider := NewEnvVarsProvider(pCfg, nil, mockSsoSettingsService)
 		envVars := provider.PluginEnvVars(context.Background(), p)
 		assert.Equal(t, "GF_VERSION=", envVars[0])
 		assert.Equal(t, "GF_APP_URL=https://myorg.com/", envVars[1])
@@ -521,7 +521,7 @@ func TestPluginEnvVarsProvider_awsEnvVars(t *testing.T) {
 				Features:                  featuremgmt.WithFeatures(),
 			}
 
-			provider := NewEnvVarsProvider(cfg, nil)
+			provider := NewEnvVarsProvider(cfg, nil, mockSsoSettingsService)
 			envVars := provider.PluginEnvVars(context.Background(), p)
 			assert.ElementsMatch(t, tc.expected, envVars)
 		}
@@ -540,7 +540,7 @@ func TestPluginEnvVarsProvider_featureToggleEnvVar(t *testing.T) {
 			Features: featuremgmt.WithFeatures(expectedFeatures[0], true, expectedFeatures[1], true),
 		}
 
-		p := NewEnvVarsProvider(cfg, nil)
+		p := NewEnvVarsProvider(cfg, nil, mockSsoSettingsService)
 		envVars := p.PluginEnvVars(context.Background(), &plugins.Plugin{})
 		assert.Equal(t, 2, len(envVars))
 
@@ -591,7 +591,7 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		provider := NewEnvVarsProvider(pCfg, nil)
+		provider := NewEnvVarsProvider(pCfg, nil, mockSsoSettingsService)
 		envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{})
 		assert.ElementsMatch(t, []string{"GF_VERSION=", "GFAZPL_AZURE_CLOUD=AzureCloud", "GFAZPL_AZURE_AUTH_ENABLED=true",
 			"GFAZPL_MANAGED_IDENTITY_ENABLED=true",
