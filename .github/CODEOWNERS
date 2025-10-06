@@ -736,7 +736,7 @@
 /packages/grafana-test-utils @grafana/grafana-frontend-platform
 
 # @grafana/api-clients
-/packages/grafana-api-clients/ @grafana/grafana-search-navigate-organise
+/packages/grafana-api-clients/ @grafana/grafana-frontend-platform @grafana/grafana-search-navigate-organise
 
 # root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
