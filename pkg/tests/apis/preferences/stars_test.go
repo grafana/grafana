@@ -196,11 +196,10 @@ func TestIntegrationStars(t *testing.T) {
 			rspObj, err = starsClient.Resource.Get(ctx, "user-"+starsClient.Args.User.Identity.GetIdentifier(), metav1.GetOptions{})
 			require.NoError(t, err)
 
-			if mode < grafanarest.Mode3 {
-				after = typed(t, rspObj, &preferences.Stars{})
-				jj, err := json.MarshalIndent(after.Spec, "", "  ")
-				require.NoError(t, err)
-				require.JSONEq(t, `{
+			after = typed(t, rspObj, &preferences.Stars{})
+			jj, err := json.MarshalIndent(after.Spec, "", "  ")
+			require.NoError(t, err)
+			require.JSONEq(t, `{
 					"resource": [
 						{
 							"group": "dashboard.grafana.app",
@@ -220,7 +219,6 @@ func TestIntegrationStars(t *testing.T) {
 						}
 					]
 				}`, string(jj))
-			}
 
 			// Viewer does not have any stars
 			rsp, err = starsClientViewer.Resource.List(ctx, metav1.ListOptions{})
