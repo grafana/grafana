@@ -42,18 +42,28 @@ async function generateCodeownersManifest(
   let codeownersByFilename = {};
   let filenamesByCodeowner = {};
 
+  lineReader.on('error', (error) => {
+    console.error('Error reading file:', error);
+    throw error;
+  });
+
   lineReader.on('line', (line) => {
-    const { path, owners: fileOwners } = JSON.parse(line.toString().trim());
+    try {
+      const { path, owners: fileOwners } = JSON.parse(line.toString().trim());
 
-    for (let owner of fileOwners) {
-      codeowners.add(owner);
-    }
+      for (let owner of fileOwners) {
+        codeowners.add(owner);
+      }
 
-    codeownersByFilename[path] = fileOwners;
+      codeownersByFilename[path] = fileOwners;
 
-    for (let owner of fileOwners) {
-      const filenames = filenamesByCodeowner[owner] || [];
-      filenamesByCodeowner[owner] = filenames.concat(path);
+      for (let owner of fileOwners) {
+        const filenames = filenamesByCodeowner[owner] || [];
+        filenamesByCodeowner[owner] = filenames.concat(path);
+      }
+    } catch (parseError) {
+      console.error(`Error parsing line: ${line}`, parseError);
+      throw parseError;
     }
   });
 
