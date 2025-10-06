@@ -7,6 +7,7 @@ import { SliderProps } from './types';
 const sliderProps: SliderProps = {
   min: 10,
   max: 20,
+  inputId: 'slider-test',
 };
 
 describe('Slider', () => {

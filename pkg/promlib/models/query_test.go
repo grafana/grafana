@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 	"github.com/grafana/grafana/pkg/promlib/models"
 )
@@ -44,7 +45,7 @@ func TestParse(t *testing.T) {
 			RefID:     "A",
 		}
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, true, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, true, false)
 		require.NoError(t, err)
 		require.Equal(t, false, res.ExemplarQuery)
 	})
@@ -61,7 +62,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*30, res.Step)
 	})
@@ -79,7 +80,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*15, res.Step)
 	})
@@ -97,7 +98,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*20, res.Step)
 	})
@@ -115,7 +116,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*2, res.Step)
 	})
@@ -133,7 +134,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "240s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "240s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*4, res.Step)
 	})
@@ -152,7 +153,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [2m]})", res.Expr)
 		require.Equal(t, 120*time.Second, res.Step)
@@ -173,7 +174,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [2m]})", res.Expr)
 	})
@@ -192,7 +193,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [120000]})", res.Expr)
 	})
@@ -211,7 +212,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [120000]}) + rate(ALERTS{job=\"test\" [2m]})", res.Expr)
 	})
@@ -230,7 +231,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [120000]}) + rate(ALERTS{job=\"test\" [2m]})", res.Expr)
 	})
@@ -248,7 +249,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [172800s]})", res.Expr)
 	})
@@ -266,7 +267,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [172800]})", res.Expr)
 	})
@@ -284,7 +285,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [172800s]})", res.Expr)
 	})
@@ -302,7 +303,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [0]})", res.Expr)
 	})
@@ -320,7 +321,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [1]})", res.Expr)
 	})
@@ -338,7 +339,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [172800000]})", res.Expr)
 	})
@@ -356,7 +357,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [20]})", res.Expr)
 	})
@@ -375,7 +376,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [20m0s]})", res.Expr)
 	})
@@ -394,7 +395,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, 1*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [1m0s]})", res.Expr)
 		require.Equal(t, 1*time.Minute, res.Step)
@@ -413,7 +414,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, 2*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [135000]})", res.Expr)
 	})
@@ -431,7 +432,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, 2*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [135000]}) + rate(ALERTS{job=\"test\" [2m15s]})", res.Expr)
 	})
@@ -450,7 +451,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, 2*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "A", res.RefId)
 	})
@@ -468,7 +469,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, 2*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [135000]}) + rate(ALERTS{job=\"test\" [2m15s]})", res.Expr)
 	})
@@ -487,7 +488,7 @@ func TestParse(t *testing.T) {
 			"range": true
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, true, res.RangeQuery)
 	})
@@ -507,7 +508,7 @@ func TestParse(t *testing.T) {
 			"instant": true
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, true, res.RangeQuery)
 		require.Equal(t, true, res.InstantQuery)
@@ -526,7 +527,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, true, res.RangeQuery)
 	})
@@ -659,7 +660,7 @@ func TestRateInterval(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			q := mockQuery(tt.args.expr, tt.args.interval, tt.args.intervalMs, tt.args.timeRange)
 			q.MaxDataPoints = 12384
-			res, err := models.Parse(span, q, tt.args.dsScrapeInterval, intervalCalculator, false, false)
+			res, err := models.Parse(context.Background(), log.New(), span, q, tt.args.dsScrapeInterval, intervalCalculator, false, false)
 			require.NoError(t, err)
 			require.Equal(t, tt.want.Expr, res.Expr)
 			require.Equal(t, tt.want.Step, res.Step)
@@ -694,7 +695,7 @@ func TestRateInterval(t *testing.T) {
 			"utcOffsetSec":3600
 		}`),
 		}
-		res, err := models.Parse(span, query, "30s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, query, "30s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "sum(rate(process_cpu_seconds_total[2m0s]))", res.Expr)
 		require.Equal(t, 30*time.Second, res.Step)
@@ -729,7 +730,7 @@ func TestRateInterval(t *testing.T) {
 		    "maxDataPoints": 1055
 		}`),
 		}
-		res, err := models.Parse(span, query, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, query, "15s", intervalCalculator, false, false)
 		require.NoError(t, err)
 		require.Equal(t, "sum(rate(cache_requests_total[1m0s]))", res.Expr)
 		require.Equal(t, 15*time.Second, res.Step)

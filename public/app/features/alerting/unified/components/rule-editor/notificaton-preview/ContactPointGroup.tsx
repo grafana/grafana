@@ -3,6 +3,7 @@ import { PropsWithChildren, ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useToggle } from 'react-use';
 
+import { base64UrlEncode } from '@grafana/alerting';
 import { alertingAPI, getContactPointDescription } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -23,8 +24,10 @@ interface ContactPointGroupProps extends PropsWithChildren {
 
 export function GrafanaContactPointGroup({ name, matchedInstancesCount, children }: ContactPointGroupProps) {
   // find receiver by name – since this is what we store in the alert rule definition
+  const encodedName = base64UrlEncode(name);
+
   const { data, isLoading } = alertingAPI.endpoints.listReceiver.useQuery({
-    fieldSelector: stringifyFieldSelector([['spec.title', name]]),
+    fieldSelector: stringifyFieldSelector([['metadata.name', encodedName]]),
   });
 
   // grab the first result from the fieldSelector result
