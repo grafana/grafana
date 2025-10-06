@@ -3264,7 +3264,7 @@
       "define-allowed-teams-ids-label": "Definovat povolená ID týmů",
       "display-name-description": "Zobrazí se na přihlašovací stránce jako „Přihlásit se přes…“. Užitečné, pokud používáte více než jednoho poskytovatele identity nebo protokoly SSO.",
       "display-name-label": "Zobrazované jméno",
-      "domain-hint-description": "Parametr pro označení oblasti uživatele v instanci Azure AD / Entra ID a zjednodušení procesu přihlášení.",
+      "domain-hint-description": "",
       "domain-hint-label": "Nápověda k doméně",
       "domain-hint-valid-domain": "Toto pole musí být platná doména.",
       "email-attribute-name-description": "Název klíče, který se použije pro vyhledání e-mailu uživatele v mapě atributů ID tokenu OAuth2.",
@@ -3520,6 +3520,7 @@
       "move-modal-field-label": "Název složky",
       "move-modal-text": "Tato akce přesune následující obsah:",
       "move-modal-title": "Přesunout",
+      "move-provisioned-folder": "",
       "moving": "Probíhá přesouvání…",
       "new-folder-name-required-phrase": "Název složky je povinný.",
       "selected-mix-resources-modal-text": "Vybrali jste přidělené i nepřidělené zdroje. Tyto zdroje nelze zpracovat společně. Vyberte pouze přidělené nebo nepřidělené zdroje a zkuste to znovu.",
@@ -8742,6 +8743,9 @@
       "tooltip-hide": "Skrýt heslo",
       "tooltip-show": "Zobrazit heslo"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Rozbalit řádek",
       "collapse": "Sbalit řádek",
@@ -8769,6 +8773,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Použít pravou osu y"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Načítání"

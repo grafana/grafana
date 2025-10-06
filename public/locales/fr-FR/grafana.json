@@ -3240,7 +3240,7 @@
       "define-allowed-teams-ids-label": "Définir les ID des équipes autorisées",
       "display-name-description": "Sera affiché sur la page de connexion comme « Se connecter avec... ». Utile si vous utilisez plusieurs fournisseurs d’identité ou protocoles SSO.",
       "display-name-label": "Pseudo",
-      "domain-hint-description": "Paramètre permettant d’indiquer le domaine de l’utilisateur dans le locataire Azure AD/Entra ID pour simplifier le processus de connexion.",
+      "domain-hint-description": "",
       "domain-hint-label": "Indice de domaine",
       "domain-hint-valid-domain": "Ce champ doit contenir un domaine valide.",
       "email-attribute-name-description": "Nom de la clé à utiliser pour la recherche d’e-mail de l’utilisateur dans la carte d’attributs du jeton d’identification OAuth2.",
@@ -3496,6 +3496,7 @@
       "move-modal-field-label": "Nom du dossier",
       "move-modal-text": "Cette action déplacera le contenu suivant :",
       "move-modal-title": "Déplacer",
+      "move-provisioned-folder": "",
       "moving": "Déplacement...",
       "new-folder-name-required-phrase": "Vous devez saisir le nom du dossier.",
       "selected-mix-resources-modal-text": "Vous avez sélectionné à la fois des ressources provisionnées et non provisionnées. Ces deux types ne peuvent être traités simultanément. Veuillez sélectionner uniquement des ressources provisionnées ou uniquement des ressources non provisionnées, puis réessayer.",
@@ -8696,6 +8697,9 @@
       "tooltip-hide": "Masquer le mot de passe",
       "tooltip-show": "Afficher le mot de passe"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Développer la ligne",
       "collapse": "Réduire la ligne",
@@ -8723,6 +8727,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Utiliser l'axe y droit"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Chargement en cours"

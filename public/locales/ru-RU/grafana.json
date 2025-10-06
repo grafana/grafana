@@ -3264,7 +3264,7 @@
       "define-allowed-teams-ids-label": "Определить идентификаторы разрешенных команд",
       "display-name-description": "Будет отображаться на странице входа как «Войти с помощью...». Параметр полезен, если вы используете несколько поставщиков удостоверений или протоколов единого входа.",
       "display-name-label": "Отображаемое имя",
-      "domain-hint-description": "Параметр, указывающий область пользователя в клиенте Azure AD/Entra ID и упрощающий процесс входа.",
+      "domain-hint-description": "",
       "domain-hint-label": "Подсказка домена",
       "domain-hint-valid-domain": "В этом поле должен быть указан действительный домен.",
       "email-attribute-name-description": "Имя ключа, используемого для поиска адреса эл. почты пользователя в карте атрибутов идентификационного токена OAuth2.",
@@ -3520,6 +3520,7 @@
       "move-modal-field-label": "Имя папки",
       "move-modal-text": "Это действие приведет к перемещению следующего контента:",
       "move-modal-title": "Перемещение",
+      "move-provisioned-folder": "",
       "moving": "Перемещение...",
       "new-folder-name-required-phrase": "Необходимо указать имя папки.",
       "selected-mix-resources-modal-text": "Вы выбрали как подготовленные, так и неподготовленные ресурсы. Совместная обработка невозможна. Выберите только подготовленные или неподготовленные ресурсы и повторите попытку.",
@@ -8742,6 +8743,9 @@
       "tooltip-hide": "Скрыть пароль",
       "tooltip-show": "Показать пароль"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Развернуть строку",
       "collapse": "Свернуть строку",
@@ -8769,6 +8773,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Использовать правую ось y"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Загрузка"

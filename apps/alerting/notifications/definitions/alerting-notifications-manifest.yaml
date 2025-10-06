@@ -5,6 +5,7 @@ metadata:
 spec:
   appName: alerting-notifications
   group: notifications.alerting.grafana.app
+  preferredVersion: v0alpha1
   versions:
   - kinds:
     - conversion: false
