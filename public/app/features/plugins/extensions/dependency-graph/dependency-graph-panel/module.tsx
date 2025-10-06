@@ -204,7 +204,7 @@ export const plugin = new PanelPlugin<PanelOptions>(PluginDependencyGraphPanel).
         ),
         editor: ContentConsumerMultiSelect,
         category: ['Filtering'],
-        showIf: (currentConfig: any) => currentConfig.visualizationMode !== 'extensionpoint',
+        showIf: (currentConfig: PanelOptions) => currentConfig.visualizationMode !== 'extensionpoint',
       })
       .addCustomEditor({
         id: 'extensionPointFilter',
@@ -216,7 +216,7 @@ export const plugin = new PanelPlugin<PanelOptions>(PluginDependencyGraphPanel).
         ),
         editor: ExtensionPointMultiSelect,
         category: ['Filtering'],
-        showIf: (currentConfig: any) => currentConfig.visualizationMode === 'extensionpoint',
+        showIf: (currentConfig: PanelOptions) => currentConfig.visualizationMode === 'extensionpoint',
       })
   );
 });
