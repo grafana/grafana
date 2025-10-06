@@ -340,7 +340,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   useEffect(() => {
     if (!shallowCompare(displayedFields, panelState?.logs?.displayedFields ?? [])) {
-      console.log('siyncinynng');
       updatePanelState({
         ...panelState?.logs,
         displayedFields,
