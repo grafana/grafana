@@ -846,7 +846,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 							Format: "",
 						},
 					},
-					"resource": {
+					"kind": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -1587,6 +1587,13 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.WebhookStatus"),
 						},
 					},
+					"deleteError": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Error information during repository deletion (if any)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"observedGeneration", "health", "sync", "webhook"},
 			},
@@ -1734,6 +1741,30 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 							Format:      "",
 						},
 					},
+					"allowedTargets": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The valid targets (can disable instance or folder types)",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+										Enum:    []interface{}{"folder", "instance"},
+									},
+								},
+							},
+						},
+					},
+					"allowImageRendering": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether image rendering is allowed for dashboard previews",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"availableRepositoryTypes": {
 						SchemaProps: spec.SchemaProps{
 							Description: "AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)",
@@ -1769,7 +1800,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 						},
 					},
 				},
-				Required: []string{"items"},
+				Required: []string{"allowImageRendering", "items"},
 			},
 		},
 		Dependencies: []string{

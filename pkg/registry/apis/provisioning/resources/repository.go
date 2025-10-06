@@ -28,13 +28,14 @@ type RepositoryResources interface {
 	EnsureFolderPathExist(ctx context.Context, filePath string) (parent string, err error)
 	EnsureFolderExists(ctx context.Context, folder Folder, parentID string) error
 	EnsureFolderTreeExists(ctx context.Context, ref, path string, tree FolderTree, fn func(folder Folder, created bool, err error) error) error
+	RemoveFolder(ctx context.Context, folderName string) error
 	// File from Resource
 	WriteResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error)
 	// Resource from file
 	WriteResourceFromFile(ctx context.Context, path, ref string) (string, schema.GroupVersionKind, error)
-	RemoveResourceFromFile(ctx context.Context, path, ref string) (string, schema.GroupVersionKind, error)
+	RemoveResourceFromFile(ctx context.Context, path, ref string) (string, string, schema.GroupVersionKind, error)
 	FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error)
-	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string) (string, schema.GroupVersionKind, error)
+	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string) (string, string, schema.GroupVersionKind, error)
 	// Stats
 	Stats(ctx context.Context) (*provisioning.ResourceStats, error)
 	List(ctx context.Context) (*provisioning.ResourceList, error)
@@ -64,7 +65,7 @@ func (r *repositoryResources) List(ctx context.Context) (*provisioning.ResourceL
 // FindResourcePath finds the repository file path for a resource by its name and GroupVersionKind
 func (r *repositoryResources) FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error) {
 	// Use ForKind to get the dynamic client for this resource type
-	client, gvr, err := r.clients.ForKind(gvk)
+	client, gvr, err := r.clients.ForKind(ctx, gvk)
 	if err != nil {
 		return "", fmt.Errorf("get client for kind %s: %w", gvk.Kind, err)
 	}
@@ -107,7 +108,7 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 		return nil, fmt.Errorf("create clients: %w", err)
 	}
 
-	folderClient, err := clients.Folder()
+	folderClient, err := clients.Folder(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("create folder client: %w", err)
 	}

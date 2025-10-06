@@ -27,7 +27,14 @@ var appsNamespace = NamespacedResource{
 
 func setupTestStorageBackend(t *testing.T) *kvStorageBackend {
 	kv := setupTestKV(t)
-	return NewKvStorageBackend(kv)
+	opts := KvBackendOptions{
+		KvStore:    kv,
+		WithPruner: true,
+	}
+	backend, err := NewKvStorageBackend(opts)
+	kvBackend := backend.(*kvStorageBackend)
+	require.NoError(t, err)
+	return kvBackend
 }
 
 func TestNewKvStorageBackend(t *testing.T) {
@@ -36,7 +43,7 @@ func TestNewKvStorageBackend(t *testing.T) {
 	assert.NotNil(t, backend)
 	assert.NotNil(t, backend.kv)
 	assert.NotNil(t, backend.dataStore)
-	assert.NotNil(t, backend.metaStore)
+
 	assert.NotNil(t, backend.eventStore)
 	assert.NotNil(t, backend.notifier)
 	assert.NotNil(t, backend.snowflake)
@@ -118,25 +125,6 @@ func TestKvStorageBackend_WriteEvent_Success(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, dataReader.Close())
 			assert.Equal(t, objectToJSONBytes(t, testObj), dataValue)
-
-			// Verify metadata was written to metaStore
-			metaKey := MetaDataKey{
-				Namespace:       "default",
-				Group:           "apps",
-				Resource:        "resources",
-				Name:            "test-resource",
-				ResourceVersion: rv,
-				Action:          expectedAction,
-				Folder:          "",
-			}
-
-			m, err := backend.metaStore.Get(ctx, metaKey)
-			require.NoError(t, err)
-			require.NotNil(t, m)
-			require.Equal(t, "test-resource", m.Key.Name)
-			require.Equal(t, "default", m.Key.Namespace)
-			require.Equal(t, "apps", m.Key.Group)
-			require.Equal(t, "resources", m.Key.Resource)
 
 			// Verify event was written to eventStore
 			eventKey := EventKey{
@@ -1053,6 +1041,36 @@ func TestKvStorageBackend_ListTrash_Success(t *testing.T) {
 	rv2, err := backend.WriteEvent(ctx, writeEvent)
 	require.NoError(t, err)
 
+	// Do the same for a provisioned object
+	provisionedObj, err := createTestObjectWithName("provisioned-obj", appsNamespace, "test-data")
+	require.NoError(t, err)
+	metaAccessorProvisioned, err := utils.MetaAccessor(provisionedObj)
+	require.NoError(t, err)
+	metaAccessorProvisioned.SetAnnotation(utils.AnnoKeyManagerKind, "repo")
+
+	writeEventProvisioned := WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "provisioned-obj",
+		},
+		Value:      objectToJSONBytes(t, provisionedObj),
+		Object:     metaAccessorProvisioned,
+		PreviousRV: 0,
+	}
+
+	rv3, err := backend.WriteEvent(ctx, writeEventProvisioned)
+	require.NoError(t, err)
+
+	writeEventProvisioned.Type = resourcepb.WatchEvent_DELETED
+	writeEventProvisioned.PreviousRV = rv3
+	writeEventProvisioned.Object = metaAccessorProvisioned
+	writeEventProvisioned.ObjectOld = metaAccessorProvisioned
+	_, err = backend.WriteEvent(ctx, writeEventProvisioned)
+	require.NoError(t, err)
+
 	// List the trash (deleted items)
 	listReq := &resourcepb.ListRequest{
 		Options: &resourcepb.ListOptions{
@@ -1093,7 +1111,7 @@ func TestKvStorageBackend_ListTrash_Success(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Greater(t, rv, int64(0))
-	require.Len(t, trashItems, 1) // Should have the deleted item
+	require.Len(t, trashItems, 1) // Should have the non-provisioned deleted item
 
 	// Verify the trash item
 	require.Equal(t, "test-resource", trashItems[0].name)
@@ -1178,6 +1196,218 @@ func TestKvStorageBackend_GetResourceStats_Success(t *testing.T) {
 	require.Equal(t, "apps", filteredStats[0].Group)
 	require.Equal(t, "resources", filteredStats[0].Resource)
 	require.Equal(t, int64(2), filteredStats[0].Count)
+}
+
+func TestKvStorageBackend_PruneEvents(t *testing.T) {
+	t.Run("will prune oldest events when exceeding limit", func(t *testing.T) {
+		backend := setupTestStorageBackend(t)
+		ctx := context.Background()
+
+		// Create a resource
+		ns := NamespacedResource{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+		}
+		testObj, err := createTestObjectWithName("test-resource", ns, "test-data")
+		require.NoError(t, err)
+		metaAccessor, err := utils.MetaAccessor(testObj)
+		require.NoError(t, err)
+		writeEvent := WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resources",
+				Name:      "test-resource",
+			},
+			Value:      objectToJSONBytes(t, testObj),
+			Object:     metaAccessor,
+			PreviousRV: 0,
+		}
+		rv1, err := backend.WriteEvent(ctx, writeEvent)
+		require.NoError(t, err)
+
+		// Update the resource prunerMaxEvents times. This will create one more event than the pruner limit.
+		previousRV := rv1
+		for i := 0; i < prunerMaxEvents; i++ {
+			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
+			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
+			writeEvent.Value = objectToJSONBytes(t, testObj)
+			writeEvent.PreviousRV = previousRV
+			newRv, err := backend.WriteEvent(ctx, writeEvent)
+			require.NoError(t, err)
+			previousRV = newRv
+		}
+
+		pruningKey := PruningKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "test-resource",
+		}
+
+		err = backend.pruneEvents(ctx, pruningKey)
+		require.NoError(t, err)
+
+		// Verify the first event has been pruned (rv1)
+		eventKey1 := DataKey{
+			Namespace:       "default",
+			Group:           "apps",
+			Resource:        "resources",
+			Name:            "test-resource",
+			ResourceVersion: rv1,
+		}
+
+		_, err = backend.dataStore.Get(ctx, eventKey1)
+		require.Error(t, err) // Should return error as event is pruned
+
+		// assert prunerMaxEvents most recent events exist
+		counter := 0
+		for datakey, err := range backend.dataStore.Keys(ctx, ListRequestKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "test-resource",
+		}, SortOrderDesc) {
+			require.NoError(t, err)
+			require.NotEqual(t, rv1, datakey.ResourceVersion)
+			counter++
+		}
+		require.Equal(t, prunerMaxEvents, counter)
+	})
+
+	t.Run("will not prune events when less than limit", func(t *testing.T) {
+		backend := setupTestStorageBackend(t)
+		ctx := context.Background()
+
+		// Create a resource
+		ns := NamespacedResource{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+		}
+		testObj, err := createTestObjectWithName("test-resource", ns, "test-data")
+		require.NoError(t, err)
+		metaAccessor, err := utils.MetaAccessor(testObj)
+		require.NoError(t, err)
+		writeEvent := WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resources",
+				Name:      "test-resource",
+			},
+			Value:      objectToJSONBytes(t, testObj),
+			Object:     metaAccessor,
+			PreviousRV: 0,
+		}
+		rv1, err := backend.WriteEvent(ctx, writeEvent)
+		require.NoError(t, err)
+
+		// Update the resource prunerMaxEvents-1 times. This will create same number of events as the pruner limit.
+		previousRV := rv1
+		for i := 0; i < prunerMaxEvents-1; i++ {
+			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
+			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
+			writeEvent.Value = objectToJSONBytes(t, testObj)
+			writeEvent.PreviousRV = previousRV
+			newRv, err := backend.WriteEvent(ctx, writeEvent)
+			require.NoError(t, err)
+			previousRV = newRv
+		}
+
+		pruningKey := PruningKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "test-resource",
+		}
+
+		err = backend.pruneEvents(ctx, pruningKey)
+		require.NoError(t, err)
+
+		// assert all events exist
+		counter := 0
+		for _, err := range backend.dataStore.Keys(ctx, ListRequestKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "test-resource",
+		}, SortOrderDesc) {
+			require.NoError(t, err)
+			counter++
+		}
+		require.Equal(t, prunerMaxEvents, counter)
+	})
+
+	t.Run("will not prune deleted events", func(t *testing.T) {
+		backend := setupTestStorageBackend(t)
+		ctx := context.Background()
+
+		// Create a resource
+		ns := NamespacedResource{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+		}
+		testObj, err := createTestObjectWithName("test-resource", ns, "test-data")
+		require.NoError(t, err)
+		metaAccessor, err := utils.MetaAccessor(testObj)
+		require.NoError(t, err)
+		writeEvent := WriteEvent{
+			Type: resourcepb.WatchEvent_DELETED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resources",
+				Name:      "test-resource",
+			},
+			Value:      objectToJSONBytes(t, testObj),
+			Object:     metaAccessor,
+			ObjectOld:  metaAccessor,
+			PreviousRV: 0,
+		}
+		rv1, err := backend.WriteEvent(ctx, writeEvent)
+		require.NoError(t, err)
+
+		// Add prunerMaxEvents+1 deleted events
+		// Multiple deleted events for a resource shouldn't happen - this is just to ensure the pruner won't remove deleted events
+		previousRV := rv1
+		for i := 0; i < prunerMaxEvents; i++ {
+			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("delete-%d", i)
+			writeEvent.Type = resourcepb.WatchEvent_DELETED
+			writeEvent.Value = objectToJSONBytes(t, testObj)
+			writeEvent.PreviousRV = previousRV
+			newRv, err := backend.WriteEvent(ctx, writeEvent)
+			require.NoError(t, err)
+			previousRV = newRv
+		}
+
+		pruningKey := PruningKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "test-resource",
+		}
+
+		err = backend.pruneEvents(ctx, pruningKey)
+		require.NoError(t, err)
+
+		// assert all deleted events exist
+		counter := 0
+		for _, err := range backend.dataStore.Keys(ctx, ListRequestKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "test-resource",
+		}, SortOrderDesc) {
+			require.NoError(t, err)
+			counter++
+		}
+		require.Equal(t, prunerMaxEvents+1, counter)
+	})
 }
 
 // createTestObject creates a test unstructured object with standard values

@@ -18,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/util/sqlite"
 
@@ -91,29 +92,6 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	}, nil
 }
 
-// pruningKey is a comparable key for pruning history.
-type pruningKey struct {
-	namespace string
-	group     string
-	resource  string
-	name      string
-}
-
-// Small abstraction to allow for different pruner implementations.
-// This can be removed once the debouncer is deployed.
-type pruner interface {
-	Add(key pruningKey) error
-	Start(ctx context.Context)
-}
-
-type noopPruner struct{}
-
-func (p *noopPruner) Add(key pruningKey) error {
-	return nil
-}
-
-func (p *noopPruner) Start(ctx context.Context) {}
-
 type backend struct {
 	//general
 	isHA bool
@@ -148,7 +126,7 @@ type backend struct {
 	// testing
 	simulatedNetworkLatency time.Duration
 
-	historyPruner pruner
+	historyPruner resource.Pruner
 	withPruner    bool
 }
 
@@ -205,26 +183,26 @@ func (b *backend) initLocked(ctx context.Context) error {
 func (b *backend) initPruner(ctx context.Context) error {
 	if !b.withPruner {
 		b.log.Debug("using noop history pruner")
-		b.historyPruner = &noopPruner{}
+		b.historyPruner = &resource.NoopPruner{}
 		return nil
 	}
 	b.log.Debug("using debounced history pruner")
 	// Initialize history pruner.
-	pruner, err := debouncer.NewGroup(debouncer.DebouncerOpts[pruningKey]{
+	pruner, err := debouncer.NewGroup(debouncer.DebouncerOpts[resource.PruningKey]{
 		Name:       "history_pruner",
 		BufferSize: 1000,
 		MinWait:    time.Second * 30,
 		MaxWait:    time.Minute * 5,
-		ProcessHandler: func(ctx context.Context, key pruningKey) error {
+		ProcessHandler: func(ctx context.Context, key resource.PruningKey) error {
 			return b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 				res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, &sqlPruneHistoryRequest{
 					SQLTemplate:  sqltemplate.New(b.dialect),
 					HistoryLimit: defaultPrunerHistoryLimit,
 					Key: &resourcepb.ResourceKey{
-						Namespace: key.namespace,
-						Group:     key.group,
-						Resource:  key.resource,
-						Name:      key.name,
+						Namespace: key.Namespace,
+						Group:     key.Group,
+						Resource:  key.Resource,
+						Name:      key.Name,
 					},
 				})
 				if err != nil {
@@ -235,20 +213,20 @@ func (b *backend) initPruner(ctx context.Context) error {
 					return fmt.Errorf("failed to get rows affected: %w", err)
 				}
 				b.log.Debug("pruned history successfully",
-					"namespace", key.namespace,
-					"group", key.group,
-					"resource", key.resource,
-					"name", key.name,
+					"namespace", key.Namespace,
+					"group", key.Group,
+					"resource", key.Resource,
+					"name", key.Name,
 					"rows", rows)
 				return nil
 			})
 		},
-		ErrorHandler: func(key pruningKey, err error) {
+		ErrorHandler: func(key resource.PruningKey, err error) {
 			b.log.Error("failed to prune history",
-				"namespace", key.namespace,
-				"group", key.group,
-				"resource", key.resource,
-				"name", key.name,
+				"namespace", key.Namespace,
+				"group", key.Group,
+				"resource", key.Resource,
+				"name", key.Name,
 				"error", err)
 		},
 		Reg: b.reg,
@@ -361,11 +339,11 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		}); err != nil {
 			return event.GUID, fmt.Errorf("insert into resource history: %w", err)
 		}
-		_ = b.historyPruner.Add(pruningKey{
-			namespace: event.Key.Namespace,
-			group:     event.Key.Group,
-			resource:  event.Key.Resource,
-			name:      event.Key.Name,
+		_ = b.historyPruner.Add(resource.PruningKey{
+			Namespace: event.Key.Namespace,
+			Group:     event.Key.Group,
+			Resource:  event.Key.Resource,
+			Name:      event.Key.Name,
 		})
 		if b.simulatedNetworkLatency > 0 {
 			time.Sleep(b.simulatedNetworkLatency)
@@ -428,14 +406,17 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 	// Use rvManager.ExecWithRV instead of direct transaction
 	rv, err := b.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
 		// 1. Update resource
-		_, err := dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
+		res, err := dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
+			WriteEvent:  event, // includes the RV
 			Folder:      folder,
 			GUID:        event.GUID,
 		})
 		if err != nil {
 			return event.GUID, fmt.Errorf("resource update: %w", err)
+		}
+		if err = b.checkConflict(res, event.Key, event.PreviousRV); err != nil {
+			return event.GUID, err
 		}
 
 		// 2. Insert into resource history
@@ -448,11 +429,11 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		}); err != nil {
 			return event.GUID, fmt.Errorf("insert into resource history: %w", err)
 		}
-		_ = b.historyPruner.Add(pruningKey{
-			namespace: event.Key.Namespace,
-			group:     event.Key.Group,
-			resource:  event.Key.Resource,
-			name:      event.Key.Name,
+		_ = b.historyPruner.Add(resource.PruningKey{
+			Namespace: event.Key.Namespace,
+			Group:     event.Key.Group,
+			Resource:  event.Key.Resource,
+			Name:      event.Key.Name,
 		})
 		return event.GUID, nil
 	})
@@ -483,13 +464,16 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	}
 	rv, err := b.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
 		// 1. delete from resource
-		_, err := dbutil.Exec(ctx, tx, sqlResourceDelete, sqlResourceRequest{
+		res, err := dbutil.Exec(ctx, tx, sqlResourceDelete, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			GUID:        event.GUID,
 		})
 		if err != nil {
 			return event.GUID, fmt.Errorf("delete resource: %w", err)
+		}
+		if err = b.checkConflict(res, event.Key, event.PreviousRV); err != nil {
+			return event.GUID, err
 		}
 
 		// 2. Add event to resource history
@@ -502,11 +486,11 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		}); err != nil {
 			return event.GUID, fmt.Errorf("insert into resource history: %w", err)
 		}
-		_ = b.historyPruner.Add(pruningKey{
-			namespace: event.Key.Namespace,
-			group:     event.Key.Group,
-			resource:  event.Key.Resource,
-			name:      event.Key.Name,
+		_ = b.historyPruner.Add(resource.PruningKey{
+			Namespace: event.Key.Namespace,
+			Group:     event.Key.Group,
+			Resource:  event.Key.Resource,
+			Name:      event.Key.Name,
 		})
 		return event.GUID, nil
 	})
@@ -525,6 +509,28 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	})
 
 	return rv, nil
+}
+
+func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv int64) error {
+	if rv == 0 {
+		return nil
+	}
+
+	// The RV is part of the update request, and it may no longer be the most recent
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("unable to verify RV: %w", err)
+	}
+	if rows == 1 {
+		return nil // expected one result
+	}
+	if rows > 0 {
+		return fmt.Errorf("multiple rows effected (%d)", rows)
+	}
+	return apierrors.NewConflict(schema.GroupResource{
+		Group:    key.Group,
+		Resource: key.Resource,
+	}, key.Name, fmt.Errorf("resource version does not match current value"))
 }
 
 func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
