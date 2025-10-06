@@ -133,9 +133,17 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 			return nil, err
 		}
 
-		id.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, externalOrgs, role)
-		if s.cfg.JWTAuth.RoleAttributeStrict && len(id.OrgRoles) == 0 {
-			return nil, errJWTInvalidRole.Errorf("could not evaluate any valid roles using IdP provided data")
+		// Only map org roles if we have external org data or role mapping configuration
+		if len(externalOrgs) > 0 || len(s.cfg.JWTAuth.OrgMapping) > 0 {
+			id.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, externalOrgs, role)
+			if s.cfg.JWTAuth.RoleAttributeStrict && len(id.OrgRoles) == 0 {
+				return nil, errJWTInvalidRole.Errorf("could not evaluate any valid roles using IdP provided data")
+			}
+		} else {
+			// No JWT org claims and no org mapping config - leave OrgRoles empty
+			// This allows URL-based org switching without interfering with sync
+			s.log.Debug("No JWT org claims or org mapping found - allowing URL-based org switching")
+			id.OrgRoles = map[int64]org.RoleType{}
 		}
 	}
 
@@ -144,7 +152,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	if r.OrgID > 0 {
 		id.OrgID = r.OrgID
 	} else {
-		// No specific org requested, use default org - sync hooks will handle proper assignment  
+		// No specific org requested, use default org - sync hooks will handle proper assignment
 		id.OrgID = s.cfg.DefaultOrgID()
 	}
 
