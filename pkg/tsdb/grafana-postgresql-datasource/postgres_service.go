@@ -20,8 +20,9 @@ type Service struct {
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) *Service {
 	logger := backend.NewLoggerWith("logger", "tsdb.postgres")
+	usePGX := features.IsEnabled(context.Background(), featuremgmt.FlagPostgresDSUsePGX)
 	s := &Service{
-		im:       datasource.NewInstanceManager(NewInstanceSettings(logger, features, cfg.DataPath)),
+		im:       datasource.NewInstanceManager(NewInstanceSettings(logger, usePGX, cfg.DataPath)),
 		features: features,
 	}
 	return s
