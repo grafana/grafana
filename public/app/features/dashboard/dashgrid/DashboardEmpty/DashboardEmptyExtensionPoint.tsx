@@ -1,11 +1,9 @@
-import { type ComponentType } from 'react';
-
 import { PluginExtensionPoints } from '@grafana/data';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 
 interface DashboardEmptyExtensionPointProps {
-  DefaultUI: ComponentType;
+  renderDefaultUI: () => JSX.Element;
   onAddVisualization?: () => void;
   onAddLibraryPanel?: () => void;
   onImportDashboard?: () => void;
@@ -13,7 +11,7 @@ interface DashboardEmptyExtensionPointProps {
 
 export function DashboardEmptyExtensionPoint(props: DashboardEmptyExtensionPointProps): JSX.Element | null {
   if (config.featureToggles.enableDashboardEmptyExtensions !== true) {
-    return <props.DefaultUI />;
+    return props.renderDefaultUI();
   }
 
   return <InternalDashboardEmptyExtensionPoint {...props} />;
@@ -37,6 +35,6 @@ function InternalDashboardEmptyExtensionPoint(props: DashboardEmptyExtensionPoin
       // And, currently, we only want to allow setupguide-app to be able to do this.
       limit: 1,
       pluginId: 'grafana-setupguide-app',
-    }) ?? <props.DefaultUI />
+    }) ?? props.renderDefaultUI()
   );
 }
