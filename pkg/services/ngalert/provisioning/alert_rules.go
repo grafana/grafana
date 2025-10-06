@@ -85,17 +85,34 @@ type ListAlertRulesOptions struct {
 	RuleType      models.RuleTypeFilter
 	Limit         int64
 	ContinueToken string
-	// TODO: plumb more options
+
+	// Filter options for in-memory filtering
+	Namespace        string   // folder UID or name
+	GroupName        string   // rule group name
+	RuleName         string   // rule title
+	Labels           []string // label matcher strings like "severity=critical"
+	DashboardUID     string   // filter by dashboard annotation
+	ContactPointName string   // notification receiver name
+	HidePluginRules  bool     // hide rules with __grafana_origin label
 }
 
 func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identity.Requester, opts ListAlertRulesOptions) (rules []*models.AlertRule, provenances map[string]models.Provenance, nextToken string, err error) {
 	q := models.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: models.ListAlertRulesQuery{
-			OrgID: user.GetOrgID(),
+			OrgID:        user.GetOrgID(),
+			DashboardUID: opts.DashboardUID,
 		},
 		RuleType:      opts.RuleType,
 		Limit:         opts.Limit,
 		ContinueToken: opts.ContinueToken,
+
+		// Pass filter options to store layer
+		Namespace:        opts.Namespace,
+		GroupName:        opts.GroupName,
+		RuleName:         opts.RuleName,
+		Labels:           opts.Labels,
+		ContactPointName: opts.ContactPointName,
+		HidePluginRules:  opts.HidePluginRules,
 	}
 
 	// Time: Authorization check

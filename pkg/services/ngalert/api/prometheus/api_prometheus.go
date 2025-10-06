@@ -476,8 +476,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		}
 	}
 
-	ruleGroups := opts.Query["rule_group"]
-
+	// Note: rule_group is extracted for substring filtering later, not passed to store for exact matching
 	receiverName := opts.Query.Get("receiver_name")
 
 	maxGroups := getInt64WithDefault(opts.Query, "group_limit", -1)
@@ -487,17 +486,76 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		return ruleResponse
 	}
 
+	// Extract rule type filter (alerting/recording)
+	ruleType := ngmodels.RuleTypeFilterAll
+	if typeParam := opts.Query.Get("type"); typeParam != "" {
+		switch typeParam {
+		case "alerting":
+			ruleType = ngmodels.RuleTypeFilterAlerting
+		case "recording":
+			ruleType = ngmodels.RuleTypeFilterRecording
+		}
+	}
+
+	// Extract label filters for backend filtering
+	labelFilters := make([]string, 0)
+	if len(matchers) > 0 {
+		for _, matcher := range matchers {
+			// Convert Prometheus matcher to string format for backend
+			// Prometheus MatchType: MatchEqual=0, MatchNotEqual=1, MatchRegexp=2, MatchNotRegexp=3
+			var op string
+			switch matcher.Type {
+			case 0: // MatchEqual
+				op = "="
+			case 1: // MatchNotEqual
+				op = "!="
+			case 2: // MatchRegexp
+				op = "=~"
+			case 3: // MatchNotRegexp
+				op = "!~"
+			default:
+				op = "="
+			}
+			labelFilters = append(labelFilters, fmt.Sprintf("%s%s%s", matcher.Name, op, matcher.Value))
+		}
+	}
+
+	// Extract hide_plugins filter
+	hidePlugins := getBoolWithDefault(opts.Query, "hide_plugins", false)
+
+	// Extract datasource_uid filter (can be multiple)
+	datasourceUIDs := opts.Query["datasource_uid"]
+
+	// Check if we have filters that will be applied after grouping
+	namespaceFilter := opts.Query.Get("namespace")
+	ruleGroupFilter := opts.Query.Get("rule_group")
+	ruleNameFilter := opts.Query.Get("rule_name")
+	hasPostGroupFilters := namespaceFilter != "" || ruleGroupFilter != ""
+
+	// If we have post-group filters, don't paginate at store level - we need all groups to filter properly
+	storeLevelLimit := maxGroups
+	storeLevelToken := nextToken
+	if hasPostGroupFilters {
+		storeLevelLimit = 0  // 0 means no limit
+		storeLevelToken = "" // No pagination at store level
+	}
+
 	byGroupQuery := ngmodels.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
 			OrgID:         opts.OrgID,
 			NamespaceUIDs: namespaceUIDs,
 			DashboardUID:  dashboardUID,
 			PanelID:       panelID,
-			RuleGroups:    ruleGroups,
-			ReceiverName:  receiverName,
+			// Don't pass RuleGroups - we'll do substring filtering after grouping
+			ReceiverName: receiverName,
 		},
-		Limit:         maxGroups,
-		ContinueToken: nextToken,
+		RuleType:        ruleType,
+		Labels:          labelFilters,
+		RuleName:        ruleNameFilter,
+		HidePluginRules: hidePlugins,
+		DatasourceUIDs:  datasourceUIDs,
+		Limit:           storeLevelLimit,
+		ContinueToken:   storeLevelToken,
 	}
 	ruleList, continueToken, err := store.ListAlertRulesByGroup(opts.Ctx, &byGroupQuery)
 	if err != nil {
@@ -507,13 +565,62 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		return ruleResponse
 	}
 
-	ruleNames := opts.Query["rule_name"]
-	ruleNamesSet := make(map[string]struct{}, len(ruleNames))
-	for _, rn := range ruleNames {
-		ruleNamesSet[rn] = struct{}{}
+	// Don't pass ruleNamesSet for exact matching - we're doing substring filtering at store level
+	groupedRules := getGroupedRules(log, ruleList, nil, opts.AllowedNamespaces)
+
+	// Filter by namespace (folder name) if provided - case-insensitive substring match
+	if namespaceFilter != "" {
+		filteredGroups := make([]*ruleGroup, 0, len(groupedRules))
+		lowerFilter := strings.ToLower(namespaceFilter)
+		for _, rg := range groupedRules {
+			if strings.Contains(strings.ToLower(rg.Folder), lowerFilter) {
+				filteredGroups = append(filteredGroups, rg)
+			}
+		}
+		groupedRules = filteredGroups
 	}
 
-	groupedRules := getGroupedRules(log, ruleList, ruleNamesSet, opts.AllowedNamespaces)
+	// Filter by rule_group (group name) if provided - case-insensitive substring match
+	if ruleGroupFilter != "" {
+		filteredGroups := make([]*ruleGroup, 0, len(groupedRules))
+		lowerFilter := strings.ToLower(ruleGroupFilter)
+		for _, rg := range groupedRules {
+			if strings.Contains(strings.ToLower(rg.GroupKey.RuleGroup), lowerFilter) {
+				filteredGroups = append(filteredGroups, rg)
+			}
+		}
+		groupedRules = filteredGroups
+	}
+
+	// Apply pagination at API level if we did post-group filtering
+	if hasPostGroupFilters && maxGroups > 0 {
+		// Handle pagination token
+		startIdx := 0
+		if nextToken != "" {
+			// Find the starting position based on token
+			for i, rg := range groupedRules {
+				groupToken := getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup)
+				if tokenGreaterThanOrEqual(groupToken, nextToken) {
+					startIdx = i
+					break
+				}
+			}
+		}
+
+		// Apply limit and generate next token
+		endIdx := startIdx + int(maxGroups)
+		if endIdx > len(groupedRules) {
+			endIdx = len(groupedRules)
+			continueToken = "" // No more groups
+		} else {
+			// Generate next token from the group after the last one we're returning
+			nextGroup := groupedRules[endIdx]
+			continueToken = getRuleGroupNextToken(nextGroup.Folder, nextGroup.GroupKey.RuleGroup)
+		}
+
+		groupedRules = groupedRules[startIdx:endIdx]
+	}
+
 	rulesTotals := make(map[string]int64, len(groupedRules))
 	for _, rg := range groupedRules {
 		ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator)

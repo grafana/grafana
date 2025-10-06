@@ -13,22 +13,27 @@ const (
 	AlertRuleCacheTTL = 5 * time.Minute
 )
 
-// alertRuleCacheKey generates a cache key for alert rules based on orgID and rule type
+// alertRuleCacheKey generates a cache key for alert rules based on orgID only
+// We cache all rules together (alerting + recording) and filter by type in-memory
 func alertRuleCacheKey(orgID int64, ruleType ngmodels.RuleTypeFilter) string {
-	return fmt.Sprintf("alert-rules:%d:%s", orgID, ruleType)
+	return fmt.Sprintf("alert-rules:%d", orgID)
 }
 
 // getCachedAlertRules retrieves cached alert rules for an organization and rule type
 func (st *DBstore) getCachedAlertRules(orgID int64, ruleType ngmodels.RuleTypeFilter) (ngmodels.RulesGroup, bool) {
 	if st.CacheService == nil {
+		st.Logger.Info("Cache service is nil")
 		return nil, false
 	}
 
 	key := alertRuleCacheKey(orgID, ruleType)
+	st.Logger.Info("Cache get", "key", key)
 	cached, found := st.CacheService.Get(key)
 	if !found {
+		st.Logger.Info("Cache miss", "key", key)
 		return nil, false
 	}
+	st.Logger.Info("Cache hit!", "key", key, "rules_count", len(cached.(ngmodels.RulesGroup)))
 
 	rules, ok := cached.(ngmodels.RulesGroup)
 	if !ok {
@@ -43,11 +48,14 @@ func (st *DBstore) getCachedAlertRules(orgID int64, ruleType ngmodels.RuleTypeFi
 // setCachedAlertRules stores alert rules in the cache for an organization and rule type
 func (st *DBstore) setCachedAlertRules(orgID int64, ruleType ngmodels.RuleTypeFilter, rules ngmodels.RulesGroup) {
 	if st.CacheService == nil {
+		st.Logger.Info("Cache service is nil - cannot set cache")
 		return
 	}
 
 	key := alertRuleCacheKey(orgID, ruleType)
+	st.Logger.Info("Setting cache", "key", key, "rules_count", len(rules), "ttl", AlertRuleCacheTTL)
 	st.CacheService.Set(key, rules, AlertRuleCacheTTL)
+	st.Logger.Info("Cache set complete", "key", key)
 }
 
 // invalidateAlertRulesCache invalidates all cached alert rules for an organization
@@ -57,10 +65,9 @@ func (st *DBstore) invalidateAlertRulesCache(orgID int64) {
 		return
 	}
 
-	// Invalidate both alerting and recording rule caches for the org
-	st.CacheService.Delete(alertRuleCacheKey(orgID, ngmodels.RuleTypeFilterAlerting))
-	st.CacheService.Delete(alertRuleCacheKey(orgID, ngmodels.RuleTypeFilterRecording))
-	st.CacheService.Delete(alertRuleCacheKey(orgID, ngmodels.RuleTypeFilterAll))
+	// Since we only cache by orgID (not by rule type), just delete one key
+	key := alertRuleCacheKey(orgID, ngmodels.RuleTypeFilterAll) // ruleType param ignored, just for signature
+	st.CacheService.Delete(key)
 
-	st.Logger.Debug("Invalidated alert rules cache", "org_id", orgID)
+	st.Logger.Debug("Invalidated alert rules cache", "org_id", orgID, "key", key)
 }
