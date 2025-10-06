@@ -39,8 +39,8 @@ async function generateCodeownersManifest(
   });
 
   let codeowners = new Set();
-  let codeownersByFilename = {};
-  let filenamesByCodeowner = {};
+  let codeownersByFilename = new Map();
+  let filenamesByCodeowner = new Map();
 
   lineReader.on('error', (error) => {
     console.error('Error reading file:', error);
@@ -55,11 +55,11 @@ async function generateCodeownersManifest(
         codeowners.add(owner);
       }
 
-      codeownersByFilename[path] = fileOwners;
+      codeownersByFilename.set(path, fileOwners);
 
       for (let owner of fileOwners) {
-        const filenames = filenamesByCodeowner[owner] || [];
-        filenamesByCodeowner[owner] = filenames.concat(path);
+        const filenames = filenamesByCodeowner.get(owner) || [];
+        filenamesByCodeowner.set(owner, filenames.concat(path));
       }
     } catch (parseError) {
       console.error(`Error parsing line: ${line}`, parseError);
@@ -71,8 +71,8 @@ async function generateCodeownersManifest(
 
   await Promise.all([
     writeFile(codeownersJsonPath, JSON.stringify(Array.from(codeowners).sort(), null, 2)),
-    writeFile(codeownersByFilenamePath, JSON.stringify(codeownersByFilename, null, 2)),
-    writeFile(filenamesByCodeownerPath, JSON.stringify(filenamesByCodeowner, null, 2)),
+    writeFile(codeownersByFilenamePath, JSON.stringify(Object.fromEntries(codeownersByFilename), null, 2)),
+    writeFile(filenamesByCodeownerPath, JSON.stringify(Object.fromEntries(filenamesByCodeowner), null, 2)),
   ]);
 }
 
