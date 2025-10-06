@@ -102,17 +102,6 @@ Template variables in the code editor can interfere with autocompletion.
 
 To run the query, click **Run query** above the code editor.
 
-### Metrics editor
-
-When you select `Builder` mode within the Metric search editor, a new Account field is displayed. Use the `Account` field to specify which of the linked monitoring accounts to target for the given query. By default, the `All` option is specified, which will target all linked accounts.
-
-While in `Code` mode, you can specify any math expression. If the Monitoring account badge displays in the query editor header, all `SEARCH` expressions entered in this field will be cross-account by default and can query metrics from linked accounts. Note that while queries run cross-account, the autocomplete feature currently doesn't fetch cross-account resources, so you'll need to manually specify resource names when writing cross-account queries.
-You can limit the search to one or a set of accounts, as documented in the [AWS documentation](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html).
-
-### Logs editor
-
-The Log group selector specifies the target log groups for the logs query. When the Monitoring account badge appears in the query editor header, you can search and select log groups across multiple accounts. Use the `Account` field to filter log groups by account. For large numbers of log groups, use prefix search to narrow the selection.
-
 ## Query CloudWatch metrics
 
 You can create two types of queries in the CloudWatch query editor:
@@ -189,6 +178,13 @@ To apply arithmetic operations, assign a unique string ID to the raw metric, the
 If you use the expression field to reference another query, such as `queryA * 2`, you can't create an alert rule based on that query.
 {{< /admonition >}}
 
+### Query metrics across AWS monitoring accounts
+
+When you select `Builder` mode within the Metric search editor, a new Account field is displayed. Use the `Account` field to specify which of the linked monitoring accounts to target for the given query. By default, the `All` option is specified, which will target all linked accounts.
+
+While in `Code` mode, you can specify any math expression. If the Monitoring account badge displays in the query editor header, all `SEARCH` expressions entered in this field will be cross-account by default and can query metrics from linked accounts. Note that while queries run cross-account, the autocomplete feature currently doesn't fetch cross-account resources, so you'll need to manually specify resource names when writing cross-account queries.
+You can limit the search to one or a set of accounts, as documented in the [AWS documentation](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html).
+
 ### Period macro
 
 If you use a CloudWatch [`SEARCH`](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) expression, consider using the `$__period_auto` macro rather than specifying a period explicitly. The `$__period_auto` macro will resolve to a [CloudWatch period](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html) that is suitable for the chosen time range.
@@ -259,9 +255,11 @@ This table summarizes common Metrics Insights query keywords:
 
 ## Query CloudWatch Logs
 
-The logs query editor helps you write CloudWatch Logs Query Language queries across specified regions and log groups.
+The logs query editor helps you write CloudWatch Logs Query Language queries across specified regions and log groups. 
 
-It supports querying CloudWatch logs with three query language options:
+Use the Log group selector to choose the target log groups for your query. When the Monitoring account badge appears in the query editor header, you can search and select log groups across multiple accounts. Use the `Account` field to filter log groups by account, and for large numbers of log groups, use prefix search to narrow the selection.
+
+You can query CloudWatch Logs using three supported query language options:
 
 - **Logs Insights QL** - The AWS native query language specifically designed for CloudWatch Logs. It uses a SQL-like syntax with commands like `fields`, `filter`, `stats`, and `sort`. It's optimized for the CloudWatch log structure and offers built-in functions for parsing timestamps, extracting fields from JSON logs, and performing aggregations.
 - **OpenSearch PPL** - The OpenSearch query language is based on Elasticsearch's query DSL (Domain Specific Language). It uses a pipe-based syntax similar to Unix command-line tools or the Splunk search language, and supports complex boolean logic, range queries, wildcard matching, and full-text search capabilities.
