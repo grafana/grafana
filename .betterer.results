@@ -5240,9 +5240,6 @@ exports[`better eslint`] = {
     "public/app/features/panel/panellinks/linkSuppliers.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/features/panel/panellinks/link_srv.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/playlist/PlaylistCard.tsx:5381": [
       [0, 0, 0, "\'@grafana/ui/src/unstable\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
