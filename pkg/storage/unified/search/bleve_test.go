@@ -903,8 +903,7 @@ func TestBuildIndexExpiration(t *testing.T) {
 			backend.runEvictExpiredOrUnownedIndexes(time.Now().Add(5 * time.Minute))
 
 			if tc.expectedEviction {
-				idx, err := backend.GetIndex(context.Background(), ns)
-				require.NoError(t, err)
+				idx := backend.GetIndex(ns)
 				require.Nil(t, idx)
 
 				_, err = builtIndex.DocCount(context.Background(), "")
@@ -913,8 +912,7 @@ func TestBuildIndexExpiration(t *testing.T) {
 				// Verify that there are no open indexes.
 				checkOpenIndexes(t, reg, 0, 0)
 			} else {
-				idx, err := backend.GetIndex(context.Background(), ns)
-				require.NoError(t, err)
+				idx := backend.GetIndex(ns)
 				require.NotNil(t, idx)
 
 				cnt, err := builtIndex.DocCount(context.Background(), "")
@@ -1246,7 +1244,7 @@ func TestIndexUpdate(t *testing.T) {
 	require.Equal(t, int64(0), resp.TotalHits)
 
 	// Update index.
-	_, err = idx.UpdateIndex(context.Background(), "test")
+	_, err = idx.UpdateIndex(context.Background())
 	require.NoError(t, err)
 
 	// Verify that index was updated -- number of docs didn't change, but we can search "gen_1" documents now.
@@ -1254,7 +1252,7 @@ func TestIndexUpdate(t *testing.T) {
 	require.Equal(t, int64(5), searchTitle(t, idx, "gen_1", 10, ns).TotalHits)
 
 	// Update index again.
-	_, err = idx.UpdateIndex(context.Background(), "test")
+	_, err = idx.UpdateIndex(context.Background())
 	require.NoError(t, err)
 	// Verify that index was updated again -- we can search "gen_2" now. "gen_1" documents are gone.
 	require.Equal(t, 10, docCount(t, idx))
@@ -1298,13 +1296,13 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	_, err = idx.UpdateIndex(ctx, "test")
+	_, err = idx.UpdateIndex(ctx)
 	require.NoError(t, err)
 
 	_, err = be.BuildIndex(t.Context(), ns, 10 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), updaterFn, false)
 	require.NoError(t, err)
 
-	_, err = idx.UpdateIndex(ctx, "test")
+	_, err = idx.UpdateIndex(ctx)
 	require.Contains(t, err.Error(), bleve.ErrorIndexClosed.Error())
 }
 
@@ -1340,10 +1338,8 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 				case <-time.After(time.Duration(i) * time.Millisecond): // introduce small jitter
 				}
 
-				idx, err := be.GetIndex(ctx, ns)
-				require.NoError(t, err) // GetIndex doesn't really return error.
-
-				_, err = idx.UpdateIndex(ctx, "test")
+				idx := be.GetIndex(ns)
+				_, err = idx.UpdateIndex(ctx)
 				if err != nil {
 					if errors.Is(err, bleve.ErrorIndexClosed) || errors.Is(err, context.Canceled) {
 						continue
@@ -1424,7 +1420,7 @@ func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
 			prevRV := int64(0)
 			for ctx.Err() == nil {
 				// We use t.Context() here to avoid getting errors from context cancellation.
-				rv, err := idx.UpdateIndex(t.Context(), "test")
+				rv, err := idx.UpdateIndex(t.Context())
 				require.NoError(t, err)
 				require.Greater(t, rv, prevRV) // Each update should return new RV (that's how our update function works)
 				require.Equal(t, int64(10), searchTitle(t, idx, "Document", 10, ns).TotalHits)
@@ -1484,7 +1480,7 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 				attemptedUpdates.Inc()
 
 				// We use t.Context() here to avoid getting errors from context cancellation.
-				rv, err := idx.UpdateIndex(t.Context(), "test")
+				rv, err := idx.UpdateIndex(t.Context())
 				require.NoError(t, err)
 
 				// Our update function returns unix timestamp in millis. We expect it to not change at all, or change by minInterval.
@@ -1536,7 +1532,7 @@ func TestIndexUpdateWithErrors(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("update fail", func(t *testing.T) {
-		_, err = idx.UpdateIndex(t.Context(), "test")
+		_, err = idx.UpdateIndex(t.Context())
 		require.ErrorIs(t, err, updateErr)
 	})
 
@@ -1544,7 +1540,7 @@ func TestIndexUpdateWithErrors(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 		defer cancel()
 
-		_, err = idx.UpdateIndex(ctx, "test")
+		_, err = idx.UpdateIndex(ctx)
 		require.ErrorIs(t, err, context.DeadlineExceeded)
 	})
 
@@ -1553,7 +1549,7 @@ func TestIndexUpdateWithErrors(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 
-		_, err = idx.UpdateIndex(ctx, "test")
+		_, err = idx.UpdateIndex(ctx)
 		require.ErrorIs(t, err, context.Canceled)
 	})
 }
