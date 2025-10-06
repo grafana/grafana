@@ -65,12 +65,12 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	if options.FieldSelector != nil {
 		for _, r := range options.FieldSelector.Requirements() {
 			switch r.Field {
-			case "spec.datasource":
+			case "spec.datasource.name":
 				switch r.Operator {
 				case selection.Equals, selection.DoubleEquals:
 					uids = []string{r.Value}
 				case selection.In:
-					uids = strings.Split(r.Value, ";")
+					uids = strings.Split(r.Value, ";") // ??? not sure how/if this supports multiple values
 				default:
 					return nil, fmt.Errorf("unsupported operation")
 				}

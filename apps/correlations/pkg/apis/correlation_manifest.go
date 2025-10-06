@@ -39,6 +39,9 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaCorrelationv0alpha1,
+					SelectableFields: []string{
+						"spec.datasource.name",
+					},
 				},
 			},
 			Routes: app.ManifestVersionRoutes{

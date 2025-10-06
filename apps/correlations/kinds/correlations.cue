@@ -13,6 +13,9 @@ correlationsv0alpha1: {
 			type:        CorrelationType
 		}
 	}
+	selectableFields: [
+		"spec.datasource.name"
+	]
 }
 
 DataSourceRef: {
