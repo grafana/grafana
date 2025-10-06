@@ -67,7 +67,9 @@
     "plugin:build:commit": "nx run-many -t build:commit --projects='tag:scope:plugin'",
     "plugin:build:dev": "nx run-many -t dev --projects='tag:scope:plugin' --maxParallel=100",
     "plugin:test:ci": "nx run-many -t test:ci --projects='tag:scope:plugin' --maxParallel=2",
-    "plugin:i18n-extract": "nx run-many -t i18n-extract --projects='tag:scope:plugin'"
+    "plugin:i18n-extract": "nx run-many -t i18n-extract --projects='tag:scope:plugin'",
+    "generate-apis": "yarn workspace @grafana/api-clients generate-apis",
+    "generate:api-client": "yarn workspace @grafana/api-clients generate:api-client"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v%[1]s-%[2]s/",
