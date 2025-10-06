@@ -282,7 +282,7 @@ LIMIT
     <>
       <div className={styles.sqlContainer}>
         {renderSQLButtons()}
-        <div className={`${styles.contentContainer} ${isSchemaInspectorOpen ? 'with-schema' : ''}`}>
+        <div className={`${styles.contentContainer} ${isSchemaInspectorOpen ? styles.contentContainerWithSchema : ''}`}>
           <div ref={containerRef} className={styles.editorContainer}>
             <SQLEditor
               query={query.expression || initialQuery}
@@ -294,11 +294,9 @@ LIMIT
               {({ formatQuery }) => renderToolbox(formatQuery)}
             </SQLEditor>
           </div>
-          {isSchemaInspectorOpen && (
-            <div className={styles.schemaInspector}>
-              <SchemaInspectorPanel />
-            </div>
-          )}
+          <div className={`${styles.schemaInspector} ${isSchemaInspectorOpen ? styles.schemaInspectorOpen : ''}`}>
+            {isSchemaInspectorOpen && <SchemaInspectorPanel />}
+          </div>
         </div>
       </div>
       <Suspense fallback={null}>
@@ -366,18 +364,16 @@ const getStyles = (theme: GrafanaTheme2, editorHeight: number) => ({
     gridArea: 'content',
     display: 'grid',
     gap: theme.spacing(1),
-    gridTemplateColumns: '1fr',
-    gridTemplateAreas: '"editor"',
+    gridTemplateColumns: '1fr 0fr',
+    gridTemplateAreas: '"editor schema"',
     '@media (prefers-reduced-motion: no-preference)': {
       transition: theme.transitions.create(['grid-template-columns'], {
         duration: theme.transitions.duration.standard,
       }),
     },
-
-    '&.with-schema': {
-      gridTemplateColumns: '1fr 1fr',
-      gridTemplateAreas: '"editor schema"',
-    },
+  }),
+  contentContainerWithSchema: css({
+    gridTemplateColumns: '1fr 1fr',
   }),
   editorContainer: css({
     gridArea: 'editor',
@@ -410,27 +406,13 @@ const getStyles = (theme: GrafanaTheme2, editorHeight: number) => ({
   }),
   schemaInspector: css({
     gridArea: 'schema',
-    height: editorHeight, // Use 100% height to match the grid row height
+    height: editorHeight,
+    overflow: 'hidden',
+    minWidth: 0,
+  }),
+  schemaInspectorOpen: css({
     border: `1px solid ${theme.colors.border.weak}`,
     paddingLeft: theme.spacing(1),
-    overflow: 'hidden',
-    '@media (prefers-reduced-motion: no-preference)': {
-      transition: theme.transitions.create(['transform', 'opacity'], {
-        duration: theme.transitions.duration.standard,
-      }),
-      animation: 'slideInFromRight 0.3s ease-in-out',
-
-      '@keyframes slideInFromRight': {
-        '0%': {
-          transform: 'translateX(100%)',
-          opacity: 0,
-        },
-        '100%': {
-          transform: 'translateX(0)',
-          opacity: 1,
-        },
-      },
-    },
   }),
   schemaFields: css({
     display: 'flex',
