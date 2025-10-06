@@ -2,13 +2,13 @@ import { configureStore } from '@reduxjs/toolkit';
 import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 
-import { notificationsAPI } from '../src/unstable';
+import { notificationsAPIv0alpha1 } from '../src/unstable';
 
 // create an empty store
 export const store = configureStore({
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(notificationsAPI.middleware),
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(notificationsAPIv0alpha1.middleware),
   reducer: {
-    [notificationsAPI.reducerPath]: notificationsAPI.reducer,
+    [notificationsAPIv0alpha1.reducerPath]: notificationsAPIv0alpha1.reducer,
   },
 });
 
@@ -35,7 +35,7 @@ export const getDefaultWrapper = () => {
 function useResetQueryCacheAfterUnmount() {
   useEffect(() => {
     return () => {
-      store.dispatch(notificationsAPI.util.resetApiState());
+      store.dispatch(notificationsAPIv0alpha1.util.resetApiState());
     };
   }, []);
 }
