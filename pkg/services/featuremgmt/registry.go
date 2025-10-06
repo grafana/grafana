@@ -782,7 +782,7 @@ var (
 		},
 		{
 			Name:         "alertingSaveStateCompressed",
-			Description:  "Enables the compressed protobuf-based alert state storage",
+			Description:  "Enables the compressed protobuf-based alert state storage. Default is enabled.",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
@@ -1521,6 +1521,16 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:              "alertingUseNewSimplifiedRoutingHashAlgorithm",
+			Description:       "",
+			Stage:             FeatureStagePublicPreview,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
+			Expression:        "true",
+		},
+		{
 			Name:              "useScopesNavigationEndpoint",
 			Description:       "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
 			Stage:             FeatureStageExperimental,
@@ -1666,13 +1676,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			HideFromDocs: true,
 			Owner:        awsDatasourcesSquad,
-		},
-		{
-			Name:         "localizationForPlugins",
-			Description:  "Enables localization for plugins",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaPluginsPlatformSquad,
-			FrontendOnly: false,
 		},
 		{
 			Name:         "unifiedNavbars",
@@ -2069,6 +2072,14 @@ var (
 		{
 			Name:         "cdnPluginsLoadFirst",
 			Description:  "Prioritize loading plugins from the CDN before other sources",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "cdnPluginsUrls",
+			Description:  "Enable loading plugins via declarative URLs",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,

@@ -3240,7 +3240,7 @@
       "define-allowed-teams-ids-label": "Engedélyezett csapatazonosítók meghatározása",
       "display-name-description": "A bejelentkezési oldalon „Bejelentkezés ezzel” felirattal jelenik meg. Hasznos, ha egynél több identitásszolgáltatót vagy SSO-protokollt használ.",
       "display-name-label": "Megjelenített név",
-      "domain-hint-description": "Paraméter, amely jelzi a felhasználó tartományát az Azure AD/Entra ID bérlőben, és egyszerűsíti a bejelentkezést.",
+      "domain-hint-description": "",
       "domain-hint-label": "Tipp a domainhez",
       "domain-hint-valid-domain": "Ebben a mezőben csak érvényes domain szerepelhet.",
       "email-attribute-name-description": "Az OAuth2-azonosítótoken attribútumtérképén belül a felhasználói e-mail-kereséshez használandó kulcs neve.",
@@ -3496,6 +3496,7 @@
       "move-modal-field-label": "Mappa neve",
       "move-modal-text": "Ez a művelet áthelyezi a következő tartalmat:",
       "move-modal-title": "Áthelyezés",
+      "move-provisioned-folder": "",
       "moving": "Áthelyezés...",
       "new-folder-name-required-phrase": "A mappa nevének megadása kötelező.",
       "selected-mix-resources-modal-text": "Kiépített és nem kiépített erőforrásokat is kijelölt. Ezeket nem lehet egyszerre feldolgozni. Kérjük, válasszon csak kiépített vagy csak nem kiépített erőforrásokat, majd próbálja újra.",
@@ -8696,6 +8697,9 @@
       "tooltip-hide": "Jelszó elrejtése",
       "tooltip-show": "Jelszó megjelenítése"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Sor kibontása",
       "collapse": "Sor összecsukása",
@@ -8723,6 +8727,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Jobb y tengely használata"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Betöltés"
@@ -10166,7 +10173,7 @@
       "title": "Adatforrások"
     },
     "databases": {
-      "title": "Adatbázisok"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Adatforrások hozzáadása és konfigurálása",
@@ -11692,6 +11699,8 @@
       "button-cancelling": "",
       "button-next": "Befejezés",
       "button-start": "Szinkronizálás indítása",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Ez törli az adattár konfigurációját, és az összes előrehaladás el fog veszni. Biztosan elveti a módosításokat?",
         "confirm": "Igen, elvetés",

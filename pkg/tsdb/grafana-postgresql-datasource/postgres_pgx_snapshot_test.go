@@ -186,7 +186,7 @@ func TestIntegrationPostgresPGXSnapshots(t *testing.T) {
 
 			query := makeQuery(rawSQL, test.format)
 
-			result, err := handler.QueryDataPGX(context.Background(), &query)
+			result, err := handler.QueryData(context.Background(), &query)
 			require.Len(t, result.Responses, 1)
 			response, found := result.Responses["A"]
 			require.True(t, found)
