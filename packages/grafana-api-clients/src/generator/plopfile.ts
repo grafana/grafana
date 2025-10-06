@@ -35,7 +35,6 @@ export default function plopGenerator(plop: NodePlopAPI) {
       ? 'local/generate-enterprise-apis.ts'
       : 'packages/grafana-api-clients/src/scripts/generate-rtk-apis.ts';
 
-    // Using app path, so the imports work on any file level
     const clientImportPath = isEnterprise ? '../extensions/api/clients' : './clients';
 
     const apiPathPrefix = isEnterprise ? '../public/app/extensions/api/clients' : '../clients';

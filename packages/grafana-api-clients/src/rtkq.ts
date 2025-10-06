@@ -1,3 +1,6 @@
+/**
+ * Don't manually add to this file! Use the `generate:api-client` command to add new API clients.
+ */
 import { generatedAPI as advisorAPIv0alpha1 } from './clients/rtkq/advisor/v0alpha1';
 import { generatedAPI as dashboardAPIv0alpha1 } from './clients/rtkq/dashboard/v0alpha1';
 import { generatedAPI as folderAPIv1beta1 } from './clients/rtkq/folder/v1beta1';

@@ -17,11 +17,7 @@ const apiClientConfigs = apiClients.map(([name, { import: importPath }]) => {
     input: importPath.replace('./', ''),
 
     plugins,
-    output: [
-      // TODO: Add cjs output
-      cjsOutputConfig,
-      esmOutput(pkg, 'grafana-api-clients'),
-    ],
+    output: [cjsOutputConfig, esmOutput(pkg, 'grafana-api-clients')],
     treeshake: false,
   };
 });
@@ -29,6 +25,12 @@ const apiClientConfigs = apiClients.map(([name, { import: importPath }]) => {
 export default [
   {
     input: entryPoint,
+    plugins,
+    output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-api-clients')],
+    treeshake: false,
+  },
+  {
+    input: 'src/rtkq.ts',
     plugins,
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-api-clients')],
     treeshake: false,
