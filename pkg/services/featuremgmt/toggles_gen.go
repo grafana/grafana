@@ -878,10 +878,6 @@ const (
 	// use multi-tenant path for awsTempCredentials
 	FlagMultiTenantTempCredentials = "multiTenantTempCredentials"
 
-	// FlagLocalizationForPlugins
-	// Enables localization for plugins
-	FlagLocalizationForPlugins = "localizationForPlugins"
-
 	// FlagUnifiedNavbars
 	// Enables unified navbars
 	FlagUnifiedNavbars = "unifiedNavbars"
@@ -1077,4 +1073,8 @@ const (
 	// FlagCdnPluginsLoadFirst
 	// Prioritize loading plugins from the CDN before other sources
 	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"
+
+	// FlagCdnPluginsUrls
+	// Enable loading plugins via declarative URLs
+	FlagCdnPluginsUrls = "cdnPluginsUrls"
 )

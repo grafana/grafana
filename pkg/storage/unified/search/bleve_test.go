@@ -833,6 +833,12 @@ func withOwnsIndexFn(fn func(key resource.NamespacedResource) (bool, error)) set
 	}
 }
 
+func withIndexMinUpdateInterval(d time.Duration) setupOption {
+	return func(options *BleveOptions) {
+		options.IndexMinUpdateInterval = d
+	}
+}
+
 func TestBuildIndexExpiration(t *testing.T) {
 	ns := resource.NamespacedResource{
 		Namespace: "test",
@@ -1132,6 +1138,37 @@ func updateTestDocs(ns resource.NamespacedResource, docs int) resource.UpdateFn 
 	}
 }
 
+func updateTestDocsReturningMillisTimestamp(ns resource.NamespacedResource, docs int) (resource.UpdateFn, *atomic.Int64) {
+	cnt := 0
+	updateCalls := atomic.NewInt64(0)
+
+	return func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
+		now := time.Now()
+		updateCalls.Inc()
+
+		cnt++
+
+		var items []*resource.BulkIndexItem
+		for i := 0; i < docs; i++ {
+			items = append(items, &resource.BulkIndexItem{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					Key: &resourcepb.ResourceKey{
+						Namespace: ns.Namespace,
+						Group:     ns.Group,
+						Resource:  ns.Resource,
+						Name:      fmt.Sprintf("doc%d", i),
+					},
+					Title: fmt.Sprintf("Document %d (gen_%d)", i, cnt),
+				},
+			})
+		}
+
+		err := index.BulkIndex(&resource.BulkIndexRequest{Items: items})
+		return now.UnixMilli(), docs, err
+	}, updateCalls
+}
+
 func TestCleanOldIndexes(t *testing.T) {
 	dir := t.TempDir()
 
@@ -1353,7 +1390,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 	cancel()
 	wg.Wait()
 
-	fmt.Println("Updates:", updates.Load(), "searches:", searches.Load(), "rebuilds:", rebuilds.Load())
+	t.Log("Updates:", updates.Load(), "searches:", searches.Load(), "rebuilds:", rebuilds.Load())
 }
 
 // Verify concurrent updates and searches work as expected.
@@ -1415,7 +1452,72 @@ func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
 	require.Greater(t, rvUpdatedByMultipleGoroutines, int64(0))
 }
 
-// Verify concurrent updates and searches work as expected.
+func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	const minInterval = 100 * time.Millisecond
+	be, _ := setupBleveBackend(t, withIndexMinUpdateInterval(minInterval))
+
+	updateFn, updateCalls := updateTestDocsReturningMillisTimestamp(ns, 5)
+	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), updateFn, false)
+	require.NoError(t, err)
+
+	wg := sync.WaitGroup{}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	attemptedUpdates := atomic.NewInt64(0)
+
+	// Verify that each returned RV (unix timestamp in millis) is either the same as before, or at least minInterval later.
+	const searchConcurrency = 25
+	for i := 0; i < searchConcurrency; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			prevRV := int64(0)
+			for ctx.Err() == nil {
+				attemptedUpdates.Inc()
+
+				// We use t.Context() here to avoid getting errors from context cancellation.
+				rv, err := idx.UpdateIndex(t.Context(), "test")
+				require.NoError(t, err)
+
+				// Our update function returns unix timestamp in millis. We expect it to not change at all, or change by minInterval.
+				if prevRV > 0 {
+					rvDiff := rv - prevRV
+					if rvDiff == 0 {
+						// OK
+					} else {
+						// Allow returned RV to be within 10% of minInterval.
+						require.InDelta(t, minInterval.Milliseconds(), rvDiff, float64(minInterval.Milliseconds())*0.10)
+					}
+				}
+
+				prevRV = rv
+				require.Equal(t, int64(10), searchTitle(t, idx, "Document", 10, ns).TotalHits)
+			}
+		}()
+	}
+
+	// Run updates and searches for this time.
+	testTime := 1 * time.Second
+
+	time.Sleep(testTime)
+	cancel()
+	wg.Wait()
+
+	expectedUpdateCalls := int64(testTime / minInterval)
+	require.InDelta(t, expectedUpdateCalls, updateCalls.Load(), float64(expectedUpdateCalls/2))
+	require.Greater(t, attemptedUpdates.Load(), updateCalls.Load())
+
+	t.Log("Attempted updates:", attemptedUpdates.Load(), "update calls:", updateCalls.Load())
+}
+
 func TestIndexUpdateWithErrors(t *testing.T) {
 	ns := resource.NamespacedResource{
 		Namespace: "test",

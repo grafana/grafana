@@ -970,10 +970,6 @@ export interface FeatureToggles {
   */
   multiTenantTempCredentials?: boolean;
   /**
-  * Enables localization for plugins
-  */
-  localizationForPlugins?: boolean;
-  /**
   * Enables unified navbars
   * @default false
   */
@@ -1202,4 +1198,9 @@ export interface FeatureToggles {
   * @default false
   */
   cdnPluginsLoadFirst?: boolean;
+  /**
+  * Enable loading plugins via declarative URLs
+  * @default false
+  */
+  cdnPluginsUrls?: boolean;
 }
